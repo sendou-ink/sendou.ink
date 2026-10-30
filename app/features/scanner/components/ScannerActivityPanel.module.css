@@ -1,0 +1,79 @@
+.spinner {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+}
+
+.elapsed {
+	flex-shrink: 0;
+	align-self: flex-start;
+	min-width: 7ch;
+	text-align: end;
+	font-size: var(--font-2xs);
+	font-variant-numeric: tabular-nums;
+	color: var(--color-success);
+}
+
+.errorBadge {
+	display: flex;
+	flex-shrink: 0;
+	align-self: flex-start;
+}
+
+.preview {
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-higher);
+	object-fit: contain;
+}
+
+.block {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1-5);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-high);
+	font-weight: var(--weight-semi);
+}
+
+.gameText {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.stats {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: var(--s-2);
+	margin: 0;
+
+	& div {
+		display: flex;
+		flex-direction: column;
+	}
+
+	& dt {
+		font-size: var(--font-2xs);
+		color: var(--color-text-high);
+	}
+
+	& dd {
+		margin: 0;
+		font-size: var(--font-sm);
+		font-weight: var(--weight-bold);
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+.controls {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+
+	& > * {
+		width: 100%;
+	}
+}

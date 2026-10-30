@@ -136,19 +136,18 @@ export const action = defineAction(
 							tournamentId,
 						}),
 					);
-					errorToastIfFalsy(
-						await TournamentTeamRepository.insert({
-							team: {
-								name,
-								prefersNotToHost: toDBBoolean(data.prefersNotToHost),
-								teamId: linkedTeamId,
-							},
-							userId: user.id,
-							tournamentId,
-							avatarImgId,
-						}),
-						"You are already in a team",
-					);
+					const createdTeam = await TournamentTeamRepository.insert({
+						team: {
+							name,
+							prefersNotToHost: toDBBoolean(data.prefersNotToHost),
+							teamId: linkedTeamId,
+						},
+						userId: user.id,
+						tournamentId,
+						avatarImgId,
+					});
+					errorToastIfFalsy(createdTeam, "You are already in a team");
+					ChatSystemMessage.notifyRoomsChanged(createdTeam.roomsChangedUserIds);
 					await SavedCalendarEventRepository.unsaveByUserId({
 						userId: user.id,
 						tournamentId,

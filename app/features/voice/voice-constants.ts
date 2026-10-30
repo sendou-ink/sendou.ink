@@ -1,12 +1,10 @@
-import type { ChatRoomType } from "~/features/chat/chat-types";
-
-/** SendouQ and lobbies only during the beta. */
-export const VOICE_ROOM_TYPES = [
-	"SQ_GROUP",
-	"SQ_MATCH",
-	"LOBBY",
-	"LOBBY_TEAM",
-] as const satisfies ChatRoomType[];
+export const VOICE_FEATURES = [
+	"SENDOUQ",
+	"LOBBIES",
+	"TOURNAMENTS",
+	"LFG",
+] as const;
+export type VoiceFeature = (typeof VOICE_FEATURES)[number];
 
 export const VOICE_TOKEN_LIFETIME_MINUTES = 120;
 export const VOICE_JOIN_SOUND = "voice_join";
@@ -42,6 +40,7 @@ export const VOICE_CLIENT_ERROR_KINDS = [
 	"MIC_NOT_FOUND",
 	"AUTOPLAY_BLOCKED",
 	"JOIN_FAILED",
+	"CONNECTION_LOST",
 ] as const;
 export type VoiceClientErrorKind = (typeof VOICE_CLIENT_ERROR_KINDS)[number];
 

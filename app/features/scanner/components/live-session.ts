@@ -36,6 +36,7 @@ import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
 import type { DetectedEvent } from "../core/detectors/types";
 import type { ScannerMatch } from "../core/scanner-match";
 import { TimelineBuilder } from "../core/timeline/index";
+import { publishCaptureStatus } from "../scanner-activity";
 import {
 	deleteClip,
 	requestPersistentStorage,
@@ -150,6 +151,7 @@ let audioTimer: ReturnType<typeof setInterval> | null = null;
 let releaseCaptureLock: (() => void) | null = null;
 /** the last capture's Stop work (its final clips landing), which the next capture waits out */
 let captureEnding: Promise<void> = Promise.resolve();
+let clipStoreSettled = false;
 let unsubscribeFeed: (() => void) | null = null;
 let timeline = new TimelineBuilder();
 const storedIds = new WeakMap<DetectedEvent, number>();
@@ -198,6 +200,7 @@ function subscribe(listener: () => void): () => void {
 
 function set(patch: Partial<LiveSnapshot>): void {
 	snapshot = { ...snapshot, ...patch };
+	publishCaptureStatus(snapshot.status);
 	for (const listener of listeners) listener();
 }
 
@@ -386,6 +389,8 @@ function endCapture(next: LiveSnapshot): void {
  * another tab, whose session they are. A capture started meanwhile waits.
  */
 export function settleClipStore(): void {
+	if (clipStoreSettled) return;
+	clipStoreSettled = true;
 	captureEnding = captureEnding
 		.then(() =>
 			Promise.allSettled([

@@ -18,7 +18,7 @@ A **group** is a `TournamentTeam` with `isLooking` set: either a **placeholder**
 	SubPost --> [*]: deleted, or the player joins a team
 	Team --> [*]`} />
 
-A group of two or more gets a chat room (`TOURNAMENT_TEAM`), lasting a week past the tournament's start. Registering or joining a team any other way (the register and join pages, an organizer adding the player, the public API) takes the player out of the queue first through `TournamentLFGRepository.leaveLfg`, and starting a bracket clears `isLooking` of every team.
+A group of two or more gets a chat room (`TOURNAMENT_TEAM`, through `TournamentTeamRepository.ensureChatRoom` like every other team of two or more), lasting a week past the tournament's start or two months for a league. Registering or joining a team any other way (the register and join pages, an organizer adding the player, the public API) takes the player out of the queue first through `TournamentLFGRepository.leaveLfg`, and starting a bracket clears `isLooking` of every team.
 
 ## Where to start reading
 

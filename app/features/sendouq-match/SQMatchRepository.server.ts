@@ -108,13 +108,22 @@ export async function findAllByChatRoomIds(chatRoomIds: number[]) {
 		.execute();
 }
 
-/** Just enough of a match to tell still being played apart from over, for the header status. */
+/** Just enough of a match to tell still being played apart from over and which game is on, for the header status. */
 export async function findLiveStateById(id: number) {
 	return db
 		.selectFrom("GroupMatch")
 		.select((eb) => [
 			isLockedSubquery(eb, id).as("isLocked"),
 			isCanceledSubquery(eb, id).as("isCanceled"),
+			"GroupMatch.alphaGroupId",
+			"GroupMatch.bravoGroupId",
+			jsonArrayFrom(
+				eb
+					.selectFrom("GroupMatchMap")
+					.select("GroupMatchMap.winnerGroupId")
+					.where("GroupMatchMap.matchId", "=", id)
+					.orderBy("GroupMatchMap.index", "asc"),
+			).as("mapList"),
 		])
 		.where("GroupMatch.id", "=", id)
 		.executeTakeFirst();

@@ -43,6 +43,16 @@ opens it, for anyone, through the same handoff Inspect uses.
   event feed (`components/events-feed.ts`, sessions built once per refresh),
   the clip list (`clips-feed.ts`), the VoD list (`vods-feed.ts`) and the
   localStorage settings (`settings.ts`: source, upload toggle, clip toggle).
+- **Header button** (`components/ScannerActivity.tsx`): the site header
+  shows the capture while it runs or failed, and idle (start from any page)
+  once this browser has captured before; idle is left out on mobile. The
+  header imports only `scanner-activity.ts`, which holds nothing but the
+  capture status `live-session.ts` publishes on transitions, so browsing
+  without a capture loads no scanner code and a running one never
+  re-renders the header per frame. The popover's content
+  (`ScannerActivityLive.tsx`, the live preview included) is lazy and mounts
+  only while open; starting from there sets the upload user and settles the
+  clip store as the scanner page does.
 - **Sessions** are client-only and derived at render (`core/sessions.ts`):
   live events ordered by `detectedAt`, split wherever a gap of ≥ 2 h opens,
   keyed by the first event's `detectedAt` (the URL id). A VoD is its own

@@ -41,7 +41,7 @@ export const SHOWCASE_SECTIONS = [
 	{ id: "game-selects", title: "Game Selects" },
 	{ id: "form-fields", title: "Form Fields" },
 	{ id: "schedule", title: "Schedule" },
-	{ id: "global-status-indicator", title: "Global Status Indicator" },
+	{ id: "header-activities", title: "Header Activities" },
 	{ id: "miscellaneous", title: "Miscellaneous" },
 ] as const;
 

@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import * as ChatRoomResolver from "~/features/chat/ChatRoomResolver.server";
 import { defineAction } from "~/form/define-action.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -32,9 +33,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const room = await ChatRoomResolver.requireRoom(roomId, "VIEW");
 
+	const feature = VoiceAccess.featureOf(room);
 	const available =
-		VoiceAccess.isVoiceRoomType(room.type) &&
-		(await VoiceAvailability.isAvailable());
+		feature !== null && (await VoiceAvailability.isAvailable(feature));
+
+	const userIds = available
+		? await VoicePresence.reconciledUserIdsOf(room)
+		: [];
 
 	return {
 		available,
@@ -43,7 +48,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			VoiceAccess.canJoin(room, user.id) &&
 			!(await VoiceRepository.hasBeenKicked({ roomId, userId: user.id })),
 		canKick: available && VoiceAccess.canKick(room, user.id),
-		userIds: available ? await VoicePresence.reconciledUserIdsOf(room) : [],
+		userIds,
+		memberUserIds: room.participantUserIds,
+		guests: await ChatRepository.findAllParticipantsByUserIds(
+			userIds.filter((userId) => !room.participantUserIds.includes(userId)),
+		),
 	};
 };
 
@@ -67,7 +76,8 @@ export const action = defineAction(
 				) {
 					forbidden();
 				}
-				badRequestIfFalsy(await VoiceAvailability.isAvailable());
+				const feature = badRequestIfFalsy(VoiceAccess.featureOf(room));
+				badRequestIfFalsy(await VoiceAvailability.isAvailable(feature));
 
 				const tokenExpiresAt = Math.min(
 					dateToDatabaseTimestamp(
@@ -101,6 +111,7 @@ export const action = defineAction(
 				const voiceSessionId = await VoiceRepository.insertOwnSession({
 					roomId,
 					roomType: room.type,
+					feature,
 					platform: data.platform,
 					eligibleMemberCount: voiceChatPreferences.filter(
 						(preference) =>

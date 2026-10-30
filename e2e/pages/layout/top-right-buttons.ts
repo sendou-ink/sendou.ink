@@ -19,8 +19,8 @@ export class TopRightButtons {
 		};
 	}
 
-	/** The header's status indicator showing what the user has going on, e.g. "Waiting for match". */
+	/** The header's button of what the user has going on in SendouQ or a tournament, e.g. "Waiting for match". */
 	globalStatus(text: string) {
-		return this.page.getByRole("banner").getByRole("link", { name: text });
+		return this.page.getByRole("banner").getByRole("button", { name: text });
 	}
 }

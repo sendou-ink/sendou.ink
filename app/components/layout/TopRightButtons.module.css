@@ -32,13 +32,38 @@
 	}
 
 	@container (width < 540px) {
-		.withStatus .supportWrapper {
+		.container:has(.activities:not(:empty)) .supportWrapper {
 			display: none;
 		}
 
-		.withStatus .supportWrapperCompact {
+		.container:has(.activities:not(:empty)) .supportWrapperCompact {
 			display: block;
 		}
+	}
+}
+
+.activities {
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+	height: var(--field-size-sm);
+	padding-inline: var(--s-0-5);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+	flex-shrink: 0;
+
+	@media (prefers-reduced-motion: no-preference) {
+		transition-property: padding-inline, border-inline-width, margin-inline-end;
+		transition-duration: 150ms;
+	}
+
+	/* collapsed (cancelling the gap) when empty or only holding activities animating out, the delay waits for their fade */
+	&:not(:has(> :not([data-presence="exit"]))) {
+		padding-inline: 0;
+		border-inline-width: 0;
+		margin-inline-end: calc(-1 * var(--s-2));
+		transition-delay: 150ms;
 	}
 }
 
@@ -69,7 +94,7 @@
 
 @media screen and (max-width: 599px) {
 	@container (width < 371px) {
-		.withStatus .searchWrapper {
+		.container:has(.activities:not(:empty)) .searchWrapper {
 			width: var(--field-size-sm);
 			min-width: 0;
 			flex-shrink: 0;
@@ -87,7 +112,7 @@
 	}
 
 	@container (width < 470px) {
-		.withStatus .searchWrapper {
+		.container:has(.activities:not(:empty)) .searchWrapper {
 			width: var(--field-size-sm);
 			min-width: 0;
 			flex-shrink: 0;

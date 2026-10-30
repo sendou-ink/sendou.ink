@@ -6,12 +6,26 @@ import { databaseTimestampNow } from "~/utils/dates";
 import { commonUserJsonObject } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 import {
-	VOICE_ROOM_TYPES,
+	VOICE_FEATURES,
 	VOICE_TOKEN_LIFETIME_MINUTES,
+	type VoiceFeature,
 	type VoiceLeaveReason,
 } from "./voice-constants";
 
 const MAX_SESSION_SECONDS = VOICE_TOKEN_LIFETIME_MINUTES * 60;
+
+const KILL_SWITCH_COLUMN_BY_FEATURE = {
+	SENDOUQ: "isSendouQDisabled",
+	LOBBIES: "isLobbiesDisabled",
+	TOURNAMENTS: "isTournamentsDisabled",
+	LFG: "isLfgDisabled",
+} as const satisfies Record<VoiceFeature, keyof Tables["VoiceSettings"]>;
+
+const participantSeconds = () =>
+	sql<number>`coalesce(sum(coalesce(
+		"VoiceSession"."durationSeconds",
+		min(coalesce("VoiceSession"."leftAt", ${databaseTimestampNow()}) - "VoiceSession"."connectedAt", ${MAX_SESSION_SECONDS})
+	)), 0)`;
 
 const LATEST_ERRORS_LIMIT = 50;
 const LATEST_FEEDBACK_LIMIT = 30;
@@ -19,12 +33,15 @@ const LATEST_FEEDBACK_LIMIT = 30;
 export async function findSettings() {
 	const row = await db
 		.selectFrom("VoiceSettings")
-		.select(["VoiceSettings.isDisabled", "VoiceSettings.updatedAt"])
+		.selectAll()
 		.orderBy("VoiceSettings.id", "asc")
 		.executeTakeFirst();
 
 	return {
 		isDisabled: Boolean(row?.isDisabled),
+		disabledFeatures: VOICE_FEATURES.filter((feature) =>
+			Boolean(row?.[KILL_SWITCH_COLUMN_BY_FEATURE[feature]]),
+		),
 		updatedAt: row?.updatedAt ?? null,
 	};
 }
@@ -32,17 +49,39 @@ export async function findSettings() {
 export async function sumParticipantMinutesSince(since: number) {
 	const row = await db
 		.selectFrom("VoiceSession")
-		.select(
-			sql<number>`coalesce(sum(coalesce(
-				"VoiceSession"."durationSeconds",
-				min(coalesce("VoiceSession"."leftAt", ${databaseTimestampNow()}) - "VoiceSession"."connectedAt", ${MAX_SESSION_SECONDS})
-			)), 0) / 60.0`.as("minutes"),
-		)
+		.select(sql<number>`${participantSeconds()} / 60.0`.as("minutes"))
 		.where("VoiceSession.connectedAt", "is not", null)
 		.where("VoiceSession.createdAt", ">=", since)
 		.executeTakeFirstOrThrow();
 
 	return row.minutes;
+}
+
+export async function sumParticipantMinutesByFeatureSince(
+	since: number,
+): Promise<Record<VoiceFeature, number>> {
+	const rows = await db
+		.selectFrom("VoiceSession")
+		.select([
+			"VoiceSession.feature",
+			sql<number>`${participantSeconds()} / 60.0`.as("minutes"),
+		])
+		.where("VoiceSession.connectedAt", "is not", null)
+		.where("VoiceSession.createdAt", ">=", since)
+		.groupBy("VoiceSession.feature")
+		.execute();
+
+	const minutesByFeature: Record<VoiceFeature, number> = {
+		SENDOUQ: 0,
+		LOBBIES: 0,
+		TOURNAMENTS: 0,
+		LFG: 0,
+	};
+	for (const row of rows) {
+		minutesByFeature[row.feature] += row.minutes;
+	}
+
+	return minutesByFeature;
 }
 
 export async function hasFeedbackSince({
@@ -133,7 +172,6 @@ export function findDailyAdoptionSince(since: number) {
 				)
 				.as("conversationRoomCount"),
 		])
-		.where("ChatRoom.type", "in", [...VOICE_ROOM_TYPES])
 		.where("ChatRoom.createdAt", ">=", since)
 		.groupBy([day, "ChatRoom.type"])
 		.orderBy("day", "asc")
@@ -364,7 +402,12 @@ export function findLatestFeedbackComments() {
 export async function insertOwnSession(
 	args: Pick<
 		TablesInsertable["VoiceSession"],
-		"roomId" | "roomType" | "platform" | "eligibleMemberCount" | "vcPreference"
+		| "roomId"
+		| "roomType"
+		| "feature"
+		| "platform"
+		| "eligibleMemberCount"
+		| "vcPreference"
 	>,
 ) {
 	const { id } = await db
@@ -537,11 +580,18 @@ export async function insertOwnFeedback(
 		.execute();
 }
 
-export async function updateSettings({ isDisabled }: { isDisabled: boolean }) {
+export async function updateSettings({
+	feature,
+	isDisabled,
+}: {
+	feature?: VoiceFeature;
+	isDisabled: boolean;
+}) {
 	await db
 		.updateTable("VoiceSettings")
 		.set({
-			isDisabled: toDBBoolean(isDisabled),
+			[feature ? KILL_SWITCH_COLUMN_BY_FEATURE[feature] : "isDisabled"]:
+				toDBBoolean(isDisabled),
 			updatedAt: databaseTimestampNow(),
 			updatedByUserId: actorId(),
 		})

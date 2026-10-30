@@ -1,6 +1,7 @@
 import cachified from "@epic-web/cachified";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { cache, ttl } from "~/utils/cache.server";
+import { databaseTimestampToDate } from "~/utils/dates";
 import { TOURNAMENT } from "../tournament-constants";
 
 const CACHE_KEY = "pending-check-ins";
@@ -8,7 +9,10 @@ const CACHE_TTL_MS = 60 * 1000;
 
 export interface PendingCheckIn {
 	tournamentId: number;
+	tournamentName: string;
 	logoUrl: string;
+	/** Check-in closes as the tournament starts (ms timestamp). */
+	checkInClosesAt: number;
 }
 
 /**
@@ -51,7 +55,9 @@ async function resolveByUserId() {
 
 		result.set(row.userId, {
 			tournamentId: row.tournamentId,
+			tournamentName: row.tournamentName,
 			logoUrl: row.logoUrl,
+			checkInClosesAt: databaseTimestampToDate(row.startsAt).getTime(),
 		});
 	}
 

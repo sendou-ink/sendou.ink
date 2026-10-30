@@ -1,11 +1,8 @@
 /**
  * Rules of a group in a tournament's LFG queue: who puts a registered team in it, which of two groups
- * survives their merge and how long the chat room of a group lasts.
+ * survives their merge.
  */
-import { add } from "date-fns";
 import type { Tables } from "~/db/tables";
-
-const PICKUP_CHAT_EXPIRES_AFTER_DAYS = 7;
 
 type TeamMemberRole = Tables["TournamentTeamMember"]["role"];
 
@@ -34,9 +31,4 @@ export function survivingTeamId({
 	}
 
 	return ourGroup.id;
-}
-
-/** When the chat room of a group expires: a week after the tournament starts, so it lasts through the event. */
-export function pickupChatRoomExpiresAt(tournamentStartTime: Date) {
-	return add(tournamentStartTime, { days: PICKUP_CHAT_EXPIRES_AFTER_DAYS });
 }

@@ -21,6 +21,7 @@ export function FakeVoiceCall({
 	React.useEffect(() => {
 		voiceClient.registerCallHandle({
 			setLocalAudio: () => {},
+			ensureMic: async () => true,
 			leave: async () => {},
 			resumeAudio: () => {},
 		});
@@ -51,6 +52,7 @@ export function FakeVoiceCall({
 				sessionId: String(userId),
 				isLocal: userId === user.id,
 				audioEnabled: false,
+				deafened: false,
 			})),
 		);
 	}, [user, presentUserIdsKey]);

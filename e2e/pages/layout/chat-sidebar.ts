@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 
 /**
  * The chat sidebar and the chats open inside it. The same component renders in the desktop
@@ -34,10 +34,6 @@ export class ChatSidebar {
 			splitPanelHeaders: page.locator("[class*='splitPanelHeader']:visible"),
 			/** Only shown while the split view is too short to stack its panels. */
 			roomTabs: page.locator("[class*='splitView']:visible").getByRole("tab"),
-			/** The shown room's, while the viewer isn't in its call. */
-			joinVoiceButton: page.getByRole("button", { name: "Join voice" }),
-			/** The shown room's while in its call, or the strip's of a call elsewhere. */
-			leaveVoiceButton: page.getByRole("button", { name: "Leave voice" }),
 		};
 	}
 
@@ -62,12 +58,6 @@ export class ChatSidebar {
 	/** Shows the split view's room behind the tab, e.g. "Group". */
 	async selectRoomTab(label: string) {
 		await this.locators.roomTabs.filter({ hasText: label }).click();
-	}
-
-	/** Joins the shown room's voice call, waiting until connected. */
-	async joinVoice() {
-		await this.locators.joinVoiceButton.click();
-		await expect(this.locators.leaveVoiceButton).toBeVisible();
 	}
 
 	roomRow(title: string) {

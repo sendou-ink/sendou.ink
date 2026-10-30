@@ -1,4 +1,3 @@
-import { addDays } from "date-fns";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
@@ -106,10 +105,7 @@ export const { create } = defineFactory({
 		}
 
 		if (isLooking) {
-			await TournamentLFGRepository.startLooking({
-				teamId: team.id,
-				chatRoomExpiresAt: addDays(new Date(), 7),
-			});
+			await TournamentLFGRepository.startLooking({ teamId: team.id });
 		}
 
 		for (const targetTeamId of likedTeamIds ?? []) {

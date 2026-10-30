@@ -23,8 +23,6 @@ import {
 import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import { Chat } from "~/features/chat/components/Chat";
 import * as LogLayout from "~/features/chat/core/LogLayout";
-import { VoiceBar, VoiceCallStrip } from "~/features/voice/components/VoiceBar";
-import { useVoiceSnapshot } from "~/features/voice/voice-hooks";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
@@ -245,7 +243,6 @@ function RoomList({
 	return (
 		<div className={styles.sidebar}>
 			<SidebarHeader onClose={onClose} />
-			<ActiveVoiceCallStrip />
 			<div className={styles.roomList}>
 				{!hasAnyRoom ? (
 					<div className={styles.emptyState}>
@@ -464,8 +461,6 @@ function SingleChatView({
 					</button>
 				) : null}
 			</div>
-			<ActiveVoiceCallStrip />
-			{room ? <VoiceBar key={room.id} room={room} /> : null}
 			<div className={styles.chatContainer}>
 				{/* keyed so switching rooms starts the scroller and its unseen state over */}
 				{room ? <RoomChat key={room.id} room={room} /> : null}
@@ -518,12 +513,6 @@ function CombinedChatView({
 		};
 	}, [backgroundRoomIdsKey, setHiddenRoomIds]);
 
-	const { call } = useVoiceSnapshot();
-	const backgroundCallRoom =
-		call && call.roomId !== selectedRoomId
-			? rooms.find((room) => room.id === call.roomId)
-			: undefined;
-
 	const primary = rooms[0];
 	const display = roomDisplay(primary);
 	const headerContent = (
@@ -569,7 +558,6 @@ function CombinedChatView({
 					</button>
 				) : null}
 			</div>
-			<ActiveVoiceCallStrip />
 			<div ref={splitViewRef} className={styles.splitView}>
 				<SendouTabs
 					selectedKey={roomTabId(selectedRoomId)}
@@ -598,9 +586,6 @@ function CombinedChatView({
 								</SendouTab>
 							))}
 						</SendouTabList>
-						{backgroundCallRoom ? (
-							<VoiceBar key={backgroundCallRoom.id} room={backgroundCallRoom} />
-						) : null}
 					</div>
 					{rooms.map((room) => (
 						<SplitPanel
@@ -642,7 +627,6 @@ function SplitPanel({
 			onFocus={onFocus}
 		>
 			<div className={styles.splitPanelHeader}>{roomShortLabel(room, t)}</div>
-			<VoiceBar room={room} />
 			<div className={styles.chatContainer}>
 				<RoomChat room={room} />
 			</div>
@@ -671,27 +655,6 @@ function RoomChat({ room }: { room: ChatRoomListItem }) {
 			mentionableUsers={room.participants}
 			disabled={expired}
 			readOnly={!expired && !room.canPost}
-		/>
-	);
-}
-
-function ActiveVoiceCallStrip() {
-	const { call } = useVoiceSnapshot();
-	const chatContext = useChatContext()!;
-	const roomDisplay = useRoomDisplay();
-
-	if (!call || chatContext.activeRoomIds.includes(call.roomId)) return null;
-
-	const room = chatContext.roomForId(call.roomId);
-	if (!room) return null;
-
-	return (
-		<VoiceCallStrip
-			title={roomDisplay(room).title}
-			onOpen={() => {
-				chatContext.ensureMessagesLoaded(room.id);
-				chatContext.setActiveRoomIds([room.id]);
-			}}
 		/>
 	);
 }

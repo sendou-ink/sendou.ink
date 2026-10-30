@@ -2,6 +2,7 @@ import * as v from "valibot";
 import { _action, id } from "~/utils/schema";
 import {
 	VOICE_CLIENT_ERROR_KINDS,
+	VOICE_FEATURES,
 	VOICE_FEEDBACK_COMMENT_MAX_LENGTH,
 	VOICE_INPUT_MODES,
 	VOICE_LEAVE_REASONS,
@@ -75,4 +76,12 @@ export const voiceTelemetrySchema = v.variant("kind", [
 export const voiceDashboardActionSchema = v.union([
 	v.object({ _action: _action("DISABLE") }),
 	v.object({ _action: _action("ENABLE") }),
+	v.object({
+		_action: _action("DISABLE_FEATURE"),
+		feature: v.picklist(VOICE_FEATURES),
+	}),
+	v.object({
+		_action: _action("ENABLE_FEATURE"),
+		feature: v.picklist(VOICE_FEATURES),
+	}),
 ]);

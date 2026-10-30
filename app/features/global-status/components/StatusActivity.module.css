@@ -1,0 +1,49 @@
+.iconContainer {
+	display: flex;
+	flex-shrink: 0;
+}
+
+.logo {
+	flex-shrink: 0;
+	border-radius: var(--radius-avatar);
+	object-fit: cover;
+}
+
+.headerBadge {
+	display: flex;
+	align-self: flex-start;
+
+	&:empty {
+		display: none;
+	}
+}
+
+.waiting {
+	position: relative;
+	display: flex;
+	flex-shrink: 0;
+
+	& > :first-child {
+		opacity: 0.6;
+	}
+
+	& .waitingMark {
+		position: absolute;
+		right: -4px;
+		bottom: -4px;
+		display: grid;
+		place-items: center;
+		width: 14px;
+		height: 14px;
+		border-radius: var(--radius-full);
+		background-color: var(--color-bg-higher);
+		box-shadow: 0 0 0 1.5px var(--color-bg);
+		color: var(--color-text);
+
+		& svg {
+			width: 10px;
+			height: 10px;
+			stroke-width: 2.5;
+		}
+	}
+}

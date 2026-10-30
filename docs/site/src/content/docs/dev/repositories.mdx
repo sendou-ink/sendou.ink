@@ -156,6 +156,27 @@ return Pagination.findPage({
 - **The order is total.** `id` is appended as the last sort key so equal keys never swap between pages.
 - Pair it with `paginate()` (`~/utils/remix.server`) in the loader, which redirects a page past the end to the last one.
 
+## Pagination
+
+Numbered pages go through `Pagination.findPage` (`~/db/pagination.server`) instead of fetching every row and slicing in JS. `LFGRepository.findBoardPage` is the reference.
+
+```ts
+return Pagination.findPage({
+	query: db.selectFrom("LFGPost").where(...), // filters only, no selections
+	id: "LFGPost.id",
+	orderBy: [["LFGPost.updatedAt", "desc"]],
+	page,
+	pageSize,
+	containingId: postId, // optional: serve the page this row is on
+	rowsByIds: (ids) => postsQuery().where("LFGPost.id", "in", ids).execute(),
+});
+```
+
+- **Two phases.** `query` is sorted and sliced into one page's ids, the total riding along as a window count; `rowsByIds` then selects the expensive fields (JSON subqueries, aggregates) for those ids only. The rows come back in phase one's order whatever order `rowsByIds` returns them in.
+- **Filters must be SQL.** Filtering fetched rows in JS gives short pages; a filter SQL can't express (e.g. one over cached skill tiers) is resolved to an id list first and passed in as a filter.
+- **The order is total.** `id` is appended as the last sort key so equal keys never swap between pages.
+- Pair it with `paginate()` (`~/utils/remix.server`) in the loader, which redirects a page past the end to the last one.
+
 ## Documentation
 
 Repositories are modules, so exported functions get a JSDoc one-liner saying what they return, plus any scoping that isn't visible from the name ("excludes private builds", "latest row per season"). Non-obvious SQL gets a comment explaining *why* it's written that way — especially when the obvious form was rejected for performance reasons.

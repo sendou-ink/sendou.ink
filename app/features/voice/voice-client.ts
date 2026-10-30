@@ -1,6 +1,7 @@
 import * as v from "valibot";
 import type { ServerEvent } from "~/features/events/events-types";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
+import type { CommonUser } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { VOICE_TELEMETRY_ROUTE, voiceRoomDataRoute } from "~/utils/urls";
 import * as Sounds from "../chat/core/Sounds";
@@ -13,8 +14,11 @@ import {
 	type VoiceLeaveReason,
 	type VoicePlatform,
 } from "./voice-constants";
+import { voiceSettingsPersisted } from "./voice-persisted";
 
 const REJOIN_AFTER_RELOAD_WINDOW_MS = 30_000;
+const RECONNECT_DELAYS_MS = [1_000, 2_000, 5_000, 10_000, 20_000];
+const RECONNECT_GIVE_UP_MS = 2 * 60_000;
 
 const callToRejoinPersisted = PersistedState.define({
 	key: "voiceCallToRejoin",
@@ -35,15 +39,22 @@ export interface VoiceRoomState {
 	canJoin: boolean;
 	canKick: boolean;
 	userIds: number[];
+	memberUserIds: number[];
+	guests: CommonUser[];
 }
 
-export type VoiceCallStatus = "JOINING" | "CONNECTED" | "FAILED";
+export type VoiceCallStatus =
+	| "JOINING"
+	| "CONNECTED"
+	| "RECONNECTING"
+	| "FAILED";
 
 export interface VoiceCallParticipant {
 	userId: number;
 	sessionId: string;
 	isLocal: boolean;
 	audioEnabled: boolean;
+	deafened: boolean;
 }
 
 export interface VoiceCall {
@@ -59,6 +70,7 @@ export interface VoiceCall {
 	speakingSessionIds: string[];
 	audioBlocked: boolean;
 	errorKind: VoiceClientErrorKind | null;
+	latencyMs: number | null;
 }
 
 export interface VoiceSnapshot {
@@ -66,10 +78,12 @@ export interface VoiceSnapshot {
 	call: VoiceCall | null;
 	volumeByUserId: ReadonlyMap<number, number>;
 	pendingFeedback: { roomId: number; voiceSessionId: number } | null;
+	inputMode: VoiceInputMode;
 }
 
 export interface VoiceCallHandle {
 	setLocalAudio: (enabled: boolean) => void;
+	ensureMic: (options: { mayAsk: boolean }) => Promise<boolean>;
 	leave: () => Promise<void>;
 	resumeAudio: () => void;
 }
@@ -94,7 +108,12 @@ interface VoiceClientDeps {
 	saveMicEnabled: (enabled: boolean) => void;
 	rememberCallForReload: (roomId: number) => void;
 	takeCallToRejoin: () => number | null;
+	now: () => number;
+	wait: (ms: number) => Promise<void>;
+	waitUntilOnline: () => Promise<void>;
 }
+
+type JoinResult = { roomUrl: string; token: string; voiceSessionId: number };
 
 export interface VoiceClient {
 	getSnapshot: () => VoiceSnapshot;
@@ -108,18 +127,20 @@ export interface VoiceClient {
 	leave: (reason?: VoiceLeaveReason) => Promise<void>;
 	leaveOnPageClose: () => void;
 	kick: (roomId: number, userId: number) => Promise<void>;
-	setMicEnabled: (enabled: boolean) => void;
-	setDeafened: (deafened: boolean) => void;
+	setMicEnabled: (enabled: boolean) => Promise<void>;
+	setDeafened: (deafened: boolean) => Promise<void>;
 	setInputMode: (mode: VoiceInputMode) => void;
 	setVolume: (userId: number, volume: number) => void;
 	registerCallHandle: (handle: VoiceCallHandle | null) => void;
 	markConnected: (dailySessionId: string) => void;
 	markFailed: (kind: VoiceClientErrorKind | null, detail: string) => void;
+	reconnect: (detail: string | null) => Promise<void>;
+	setConnectionInterrupted: (interrupted: boolean) => void;
 	updateParticipants: (participants: VoiceCallParticipant[]) => void;
 	setSpeaking: (sessionId: string, speaking: boolean) => void;
 	setAudioBlocked: (blocked: boolean) => void;
+	setLatency: (latencyMs: number | null) => void;
 	flagError: (kind: VoiceClientErrorKind, detail: string | null) => void;
-	resumeAudio: () => void;
 	setSummary: (summary: VoiceTelemetrySummary) => void;
 	flushSummary: () => void;
 	submitFeedback: (feedback: {
@@ -135,13 +156,19 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		call: null,
 		volumeByUserId: new Map(),
 		pendingFeedback: null,
+		inputMode: "OPEN_MIC",
 	};
 	let callHandle: VoiceCallHandle | null = null;
 	let latestSummary: VoiceTelemetrySummary | null = null;
-	let preferredInputMode: VoiceInputMode = "OPEN_MIC";
 	let micEnabledBeforeDeafen = false;
+	let micWanted = false;
 	let joinAttempt = 0;
 	let latestJoinRequest: Promise<unknown> = Promise.resolve();
+	let reconnection: {
+		lostAt: number;
+		retries: number;
+		lostVoiceSessionIds: number[];
+	} | null = null;
 	const listeners = new Set<() => void>();
 
 	const update = (patch: Partial<VoiceSnapshot>) => {
@@ -152,6 +179,46 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 	const updateCall = (patch: Partial<VoiceCall>) => {
 		if (!snapshot.call) return;
 		update({ call: { ...snapshot.call, ...patch } });
+	};
+
+	const resumeBlockedAudio = () => {
+		if (!snapshot.call?.audioBlocked) return;
+		callHandle?.resumeAudio();
+		updateCall({ audioBlocked: false });
+	};
+
+	const deafen = (call: VoiceCall) => {
+		micEnabledBeforeDeafen = call.micEnabled;
+		if (call.micEnabled) callHandle?.setLocalAudio(false);
+		updateCall({ deafened: true, micEnabled: false, ...silencedLocally(call) });
+	};
+
+	const enableMic = async ({ byUser }: { byUser: boolean }) => {
+		const attempt = joinAttempt;
+		micWanted = true;
+		const hasMic = (await callHandle?.ensureMic({ mayAsk: byUser })) ?? false;
+
+		const call = snapshot.call;
+		if (!call || attempt !== joinAttempt || !micWanted || !hasMic) {
+			return false;
+		}
+		if (call.deafened && !byUser) {
+			micEnabledBeforeDeafen = true;
+			return false;
+		}
+
+		callHandle?.setLocalAudio(true);
+		updateCall({
+			micEnabled: true,
+			deafened: false,
+			errorKind: isMicError(call.errorKind) ? null : call.errorKind,
+		});
+		return true;
+	};
+
+	const loadRoom = async (roomId: number) => {
+		const room = await deps.fetchRoom(roomId);
+		if (room) setRoom(roomId, room);
 	};
 
 	const setRoom = (roomId: number, room: VoiceRoomState) => {
@@ -191,6 +258,9 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		const call = snapshot.call;
 		if (!call) return;
 
+		leaveLostSessions(call.roomId);
+		reconnection = null;
+
 		sendSummary(false);
 		if (call.status === "CONNECTED") deps.playSound(VOICE_LEAVE_SOUND);
 		// not awaited: clearing the call unmounts its call object, whose leave then never settles
@@ -224,6 +294,7 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		}
 		if (snapshot.call) await leave();
 
+		reconnection = null;
 		const attempt = ++joinAttempt;
 		update({
 			pendingFeedback: null,
@@ -234,18 +305,41 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 				status: "JOINING",
 				micEnabled: false,
 				deafened: false,
-				inputMode: preferredInputMode,
+				inputMode: snapshot.inputMode,
 				participants: [],
 				speakingSessionIds: [],
 				audioBlocked: false,
 				errorKind: null,
+				latencyMs: null,
 			},
 		});
 		latestSummary = null;
 
+		const result = await requestJoin(roomId, attempt);
+		if (result === "SUPERSEDED") return;
+
+		if (!result) {
+			if (isAutomatic) {
+				update({ call: null });
+				return;
+			}
+			updateCall({ status: "FAILED", errorKind: "JOIN_FAILED" });
+			reportError("JOIN_FAILED", "join request was refused");
+			return;
+		}
+		updateCall({
+			voiceSessionId: result.voiceSessionId,
+			credentials: { roomUrl: result.roomUrl, token: result.token },
+		});
+	};
+
+	const requestJoin = async (
+		roomId: number,
+		attempt: number,
+	): Promise<JoinResult | null | "SUPERSEDED"> => {
 		await latestJoinRequest;
 		const isSuperseded = () => attempt !== joinAttempt || !snapshot.call;
-		if (isSuperseded()) return;
+		if (isSuperseded()) return "SUPERSEDED";
 
 		const request = deps.postRoomAction(roomId, {
 			_action: "JOIN",
@@ -261,18 +355,77 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 					leaveReason: "LEFT",
 				});
 			}
-			return;
+			return "SUPERSEDED";
 		}
 
-		if (!isJoinResult(result)) {
-			if (isAutomatic) {
-				update({ call: null });
-				return;
-			}
-			updateCall({ status: "FAILED", errorKind: "JOIN_FAILED" });
-			reportError("JOIN_FAILED", "join request was refused");
-			return;
+		return isJoinResult(result) ? result : null;
+	};
+
+	const leaveLostSessions = (roomId: number) => {
+		if (!reconnection) return;
+
+		for (const voiceSessionId of reconnection.lostVoiceSessionIds) {
+			void deps.postRoomAction(roomId, {
+				_action: "LEAVE",
+				voiceSessionId,
+				leaveReason: "CONNECTION_LOST",
+			});
 		}
+		reconnection.lostVoiceSessionIds = [];
+	};
+
+	const reconnect = async (detail: string | null): Promise<void> => {
+		const call = snapshot.call;
+		if (!call) return;
+
+		const attempt = ++joinAttempt;
+		reconnection ??= {
+			lostAt: deps.now(),
+			retries: 0,
+			lostVoiceSessionIds: [],
+		};
+		const delay = RECONNECT_DELAYS_MS[reconnection.retries++];
+
+		if (call.voiceSessionId) {
+			sendSummary(false);
+			reconnection.lostVoiceSessionIds.push(call.voiceSessionId);
+		}
+
+		void callHandle?.leave().catch((error) => {
+			logger.error("Leaving the lost voice call failed", error);
+		});
+		updateCall({
+			status: "RECONNECTING",
+			voiceSessionId: null,
+			credentials: null,
+			micEnabled: false,
+			participants: [],
+			speakingSessionIds: [],
+			audioBlocked: false,
+			latencyMs: null,
+		});
+		latestSummary = null;
+
+		const giveUp = () => {
+			leaveLostSessions(call.roomId);
+			reconnection = null;
+			updateCall({ status: "FAILED", errorKind: "CONNECTION_LOST" });
+			reportError("CONNECTION_LOST", detail);
+		};
+		if (delay === undefined) return giveUp();
+
+		await deps.wait(delay);
+		await deps.waitUntilOnline();
+		if (attempt !== joinAttempt || !snapshot.call || !reconnection) return;
+		leaveLostSessions(call.roomId);
+		if (deps.now() - reconnection.lostAt > RECONNECT_GIVE_UP_MS) {
+			return giveUp();
+		}
+
+		const result = await requestJoin(call.roomId, attempt);
+		if (result === "SUPERSEDED") return;
+		if (!result) return reconnect(detail);
+
 		updateCall({
 			voiceSessionId: result.voiceSessionId,
 			credentials: { roomUrl: result.roomUrl, token: result.token },
@@ -292,11 +445,15 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 				const room = snapshot.roomsById.get(event.roomId);
 				if (!room) return;
 				setRoom(event.roomId, { ...room, userIds: event.userIds });
+
+				const hasUnknownUser = event.userIds.some(
+					(userId) =>
+						!room.memberUserIds.includes(userId) &&
+						!room.guests.some((guest) => guest.id === userId),
+				);
+				if (hasUnknownUser) void loadRoom(event.roomId);
 			}),
-		loadRoom: async (roomId) => {
-			const room = await deps.fetchRoom(roomId);
-			if (room) setRoom(roomId, room);
-		},
+		loadRoom: (roomId) => loadRoom(roomId),
 		join: (roomId) => join(roomId),
 		follow: async ({ roomIds, targetRoomId }) => {
 			const call = snapshot.call;
@@ -325,39 +482,43 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		kick: async (roomId, userId) => {
 			await deps.postRoomAction(roomId, { _action: "KICK", userId });
 		},
-		setMicEnabled: (enabled) => {
-			if (!snapshot.call) return;
-			if (snapshot.call.inputMode === "OPEN_MIC") deps.saveMicEnabled(enabled);
-			callHandle?.setLocalAudio(enabled);
-			updateCall(
-				enabled
-					? { micEnabled: true, deafened: false }
-					: { micEnabled: false, ...silencedLocally(snapshot.call) },
-			);
+		setMicEnabled: async (enabled) => {
+			const call = snapshot.call;
+			if (!call) return;
+
+			if (!enabled) {
+				micWanted = false;
+				if (call.inputMode === "OPEN_MIC") deps.saveMicEnabled(false);
+				callHandle?.setLocalAudio(false);
+				updateCall({ micEnabled: false, ...silencedLocally(call) });
+				return;
+			}
+
+			resumeBlockedAudio();
+			const isEnabled = await enableMic({ byUser: true });
+			if (isEnabled && snapshot.call?.inputMode === "OPEN_MIC") {
+				deps.saveMicEnabled(true);
+			}
 		},
-		setDeafened: (deafened) => {
+		setDeafened: async (deafened) => {
 			const call = snapshot.call;
 			if (!call || call.deafened === deafened) return;
 
 			if (deafened) {
-				micEnabledBeforeDeafen = call.micEnabled;
-				if (call.micEnabled) callHandle?.setLocalAudio(false);
-				updateCall({
-					deafened: true,
-					micEnabled: false,
-					...silencedLocally(call),
-				});
+				deafen(call);
 				return;
 			}
 
-			const restoreMic =
-				call.inputMode === "OPEN_MIC" && micEnabledBeforeDeafen;
-			if (restoreMic) callHandle?.setLocalAudio(true);
-			updateCall({ deafened: false, micEnabled: restoreMic });
+			resumeBlockedAudio();
+			updateCall({ deafened: false });
+			if (call.inputMode === "OPEN_MIC" && micEnabledBeforeDeafen) {
+				await enableMic({ byUser: true });
+			}
 		},
 		setInputMode: (mode) => {
-			preferredInputMode = mode;
+			if (snapshot.inputMode !== mode) update({ inputMode: mode });
 			if (!snapshot.call || snapshot.call.inputMode === mode) return;
+			micWanted = false;
 			callHandle?.setLocalAudio(false);
 			updateCall({
 				inputMode: mode,
@@ -377,9 +538,16 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 			const call = snapshot.call;
 			if (!call?.voiceSessionId) return;
 
-			const restoreMic = call.inputMode === "OPEN_MIC" && deps.loadMicEnabled();
-			if (restoreMic) callHandle?.setLocalAudio(true);
-			updateCall({ status: "CONNECTED", micEnabled: restoreMic });
+			reconnection = null;
+			updateCall({ status: "CONNECTED" });
+
+			if (call.inputMode === "OPEN_MIC" && deps.loadMicEnabled()) {
+				if (call.deafened) {
+					micEnabledBeforeDeafen = true;
+				} else {
+					void enableMic({ byUser: false });
+				}
+			}
 			deps.playSound(VOICE_JOIN_SOUND);
 			void deps.postRoomAction(call.roomId, {
 				_action: "CONNECTED",
@@ -389,8 +557,23 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		},
 		markFailed: (kind, detail) => {
 			if (!snapshot.call) return;
+			if (reconnection) {
+				void reconnect(detail);
+				return;
+			}
 			updateCall({ status: "FAILED", errorKind: kind });
 			if (kind) reportError(kind, detail);
+		},
+		reconnect,
+		setConnectionInterrupted: (interrupted) => {
+			const call = snapshot.call;
+			if (!call || reconnection) return;
+
+			if (interrupted && call.status === "CONNECTED") {
+				updateCall({ status: "RECONNECTING" });
+			} else if (!interrupted && call.status === "RECONNECTING") {
+				updateCall({ status: "CONNECTED" });
+			}
 		},
 		updateParticipants: (participants) => {
 			const call = snapshot.call;
@@ -404,12 +587,12 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 				(participant) => participant.isLocal,
 			);
 			if (call.status === "CONNECTED" && hasBaseline) {
-				const remoteSessionIdsOf = (list: VoiceCallParticipant[]) =>
+				const remoteUserIdsOf = (list: VoiceCallParticipant[]) =>
 					list
 						.filter((participant) => !participant.isLocal)
-						.map((participant) => participant.sessionId);
-				const before = remoteSessionIdsOf(call.participants);
-				const after = remoteSessionIdsOf(participants);
+						.map((participant) => participant.userId);
+				const before = remoteUserIdsOf(call.participants);
+				const after = remoteUserIdsOf(participants);
 
 				if (after.some((id) => !before.includes(id))) {
 					deps.playSound(VOICE_JOIN_SOUND);
@@ -444,17 +627,20 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 			});
 		},
 		setAudioBlocked: (blocked) => {
-			if (snapshot.call?.audioBlocked === blocked) return;
+			const call = snapshot.call;
+			if (!call || call.audioBlocked === blocked) return;
+
 			updateCall({ audioBlocked: blocked });
+			if (blocked && !call.deafened) deafen(call);
+		},
+		setLatency: (latencyMs) => {
+			if (snapshot.call?.latencyMs === latencyMs) return;
+			updateCall({ latencyMs });
 		},
 		flagError: (kind, detail) => {
 			if (snapshot.call?.errorKind === kind) return;
 			updateCall({ errorKind: kind });
 			reportError(kind, detail);
-		},
-		resumeAudio: () => {
-			callHandle?.resumeAudio();
-			updateCall({ audioBlocked: false });
 		},
 		setSummary: (summary) => {
 			latestSummary = summary;
@@ -494,9 +680,11 @@ function silencedLocally(
 	};
 }
 
-function isJoinResult(
-	value: unknown,
-): value is { roomUrl: string; token: string; voiceSessionId: number } {
+function isMicError(kind: VoiceClientErrorKind | null) {
+	return kind === "MIC_DENIED" || kind === "MIC_NOT_FOUND";
+}
+
+function isJoinResult(value: unknown): value is JoinResult {
 	return (
 		typeof value === "object" &&
 		value !== null &&
@@ -566,7 +754,11 @@ export const voiceClient = createVoiceClient({
 	beaconTelemetry: (body) => beacon(VOICE_TELEMETRY_ROUTE, body),
 	addServerEventListener: (listener) => eventsClient.addEventListener(listener),
 	platform: detectPlatform,
-	playSound: Sounds.play,
+	playSound: (soundCode) => {
+		if (PersistedState.read(voiceSettingsPersisted).sounds) {
+			Sounds.playIgnoringSetting(soundCode);
+		}
+	},
 	loadMicEnabled: () => PersistedState.read(micEnabledPersisted),
 	saveMicEnabled: (enabled) =>
 		PersistedState.write(micEnabledPersisted, enabled),
@@ -582,6 +774,13 @@ export const voiceClient = createVoiceClient({
 			? remembered.roomId
 			: null;
 	},
+	now: () => Date.now(),
+	wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+	waitUntilOnline: () =>
+		new Promise((resolve) => {
+			if (navigator.onLine) return resolve();
+			window.addEventListener("online", () => resolve(), { once: true });
+		}),
 });
 
 function isPageReload() {

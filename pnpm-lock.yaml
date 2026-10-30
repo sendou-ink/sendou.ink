@@ -52,6 +52,9 @@ importers:
       '@react-router/serve':
         specifier: 8.1.0
         version: 8.1.0(patch_hash=f7425beb70a2ce35ca7235672d8df524901983a27c25aa7de489bc559d54d7f1)(react-router@8.5.0(patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e33f48f7b)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(typescript@7.0.2)
+      '@sapphi-red/web-noise-suppressor':
+        specifier: 0.4.1
+        version: 0.4.1
       '@techstark/opencv-js':
         specifier: 5.0.0-release.1
         version: 5.0.0-release.1(patch_hash=810344500e8099b2f8d80c7c3fc28977abfcd115a2616abd1329f7f89f0534b6)
@@ -2238,6 +2241,9 @@ packages:
 
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
+
+  '@sapphi-red/web-noise-suppressor@0.4.1':
+    resolution: {integrity: sha512-hy2GnF079+zi4n9BZUf+GGIQ1IofApAk6rgGMyMQ3soHfz/GKu1pcCsmePyIHVvUuv1LrFudw9BmmBqoOKay5w==}
 
   '@sentry-internal/browser-utils@8.55.2':
     resolution: {integrity: sha512-GnKod+gL/Y+1FUM/RGV8q6le1CoyiGbT40MitEK7eVwWe+bfTRq1gN7ioupyHFMUg1RlQkDQ4/sENmio/uow5A==}
@@ -7914,6 +7920,8 @@ snapshots:
     optional: true
 
   '@rolldown/pluginutils@1.0.1': {}
+
+  '@sapphi-red/web-noise-suppressor@0.4.1': {}
 
   '@sentry-internal/browser-utils@8.55.2':
     dependencies:

@@ -1,0 +1,74 @@
+.panel {
+	gap: var(--s-3);
+
+	& > section {
+		margin-inline: calc(var(--s-2) * -1);
+		padding: var(--s-3) var(--s-2) 0;
+		border-block-start: var(--border-width) solid var(--color-border);
+	}
+}
+
+.slider {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	align-items: center;
+	column-gap: var(--s-2);
+
+	& > span:first-child {
+		grid-column: 1 / -1;
+	}
+
+	& input {
+		width: 100%;
+		accent-color: var(--color-fill-accent);
+	}
+}
+
+.sliderValue {
+	width: 5ch;
+	text-align: end;
+	font-size: var(--font-2xs);
+	font-variant-numeric: tabular-nums;
+	color: var(--color-text-high);
+}
+
+.levelRow {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.meterRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+
+	& > :first-child {
+		flex-grow: 1;
+	}
+}
+
+.level {
+	--level: 0%;
+
+	position: relative;
+	height: 8px;
+	border-radius: var(--radius-full);
+	background:
+		repeating-linear-gradient(90deg, transparent 0 3px, var(--color-bg) 3px 5px),
+		linear-gradient(
+			90deg,
+			var(--color-success) var(--level),
+			var(--color-bg-higher) var(--level)
+		);
+	overflow: hidden;
+
+	&[data-gated="true"]::before {
+		content: "";
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: var(--sensitivity);
+		width: 2px;
+		background-color: var(--color-text-high);
+	}
+}

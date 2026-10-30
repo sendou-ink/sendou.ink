@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, type Mock, test, vi } from "vitest";
 import type { ServerEvent } from "~/features/events/events-types";
 import {
 	createVoiceClient,
@@ -16,6 +16,8 @@ const roomState = (
 	canJoin: true,
 	canKick: false,
 	userIds: [],
+	memberUserIds: [],
+	guests: [],
 	...overrides,
 });
 
@@ -33,8 +35,19 @@ const participant = (
 	sessionId,
 	isLocal: false,
 	audioEnabled: true,
+	deafened: false,
 	...overrides,
 });
+
+/** A call handle whose microphone is there (`hasMic`) or can't be had. */
+function fakeCallHandle({ hasMic = true }: { hasMic?: boolean } = {}) {
+	return {
+		setLocalAudio: vi.fn(),
+		ensureMic: vi.fn(async (_options: { mayAsk: boolean }) => hasMic),
+		leave: vi.fn(async () => {}),
+		resumeAudio: vi.fn(),
+	};
+}
 
 function pendingJoins() {
 	const resolvers: Array<(result: unknown) => void> = [];
@@ -55,6 +68,24 @@ function pendingJoins() {
 			await new Promise((resolve) => setTimeout(resolve));
 		},
 	};
+}
+
+/** Grants every join, each with a new voice session id starting from 10. */
+function joinsInTurn() {
+	let nextSessionId = 10;
+
+	return async (_roomId: number, body: object) =>
+		"_action" in body && body._action === "JOIN"
+			? joinResult(nextSessionId++)
+			: null;
+}
+
+function joinRequestCount(
+	postRoomAction: Mock<(roomId: number, body: object) => Promise<unknown>>,
+) {
+	return postRoomAction.mock.calls.filter(
+		([, body]) => "_action" in body && body._action === "JOIN",
+	).length;
 }
 
 function setup({
@@ -81,6 +112,9 @@ function setup({
 		saveMicEnabled: vi.fn(),
 		rememberCallForReload: vi.fn(),
 		takeCallToRejoin: vi.fn((): number | null => null),
+		now: vi.fn(() => 0),
+		wait: vi.fn(async (_ms: number) => {}),
+		waitUntilOnline: vi.fn(async () => {}),
 	};
 	const client = createVoiceClient(deps);
 	client.start();
@@ -94,7 +128,8 @@ function setup({
 
 describe("createVoiceClient", () => {
 	test("applies presence events to loaded rooms", async () => {
-		const { client, emit } = setup();
+		const { client, deps, emit } = setup();
+		deps.fetchRoom.mockResolvedValue(roomState({ memberUserIds: [5, 6] }));
 		await client.loadRoom(ROOM_ID);
 
 		emit({ kind: "voicePresence", roomId: ROOM_ID, userIds: [5, 6] });
@@ -102,6 +137,17 @@ describe("createVoiceClient", () => {
 		expect(client.getSnapshot().roomsById.get(ROOM_ID)?.userIds).toEqual([
 			5, 6,
 		]);
+		expect(deps.fetchRoom).toHaveBeenCalledTimes(1);
+	});
+
+	test("refetches the room when someone from outside it joins the call", async () => {
+		const { client, deps, emit } = setup();
+		deps.fetchRoom.mockResolvedValue(roomState({ memberUserIds: [5] }));
+		await client.loadRoom(ROOM_ID);
+
+		emit({ kind: "voicePresence", roomId: ROOM_ID, userIds: [5, 7] });
+
+		expect(deps.fetchRoom).toHaveBeenCalledTimes(2);
 	});
 
 	test("ignores presence events of rooms it never loaded", () => {
@@ -311,9 +357,8 @@ describe("createVoiceClient", () => {
 		const { client, deps } = setup();
 		await client.join(ROOM_ID);
 		client.registerCallHandle({
-			setLocalAudio: () => {},
+			...fakeCallHandle(),
 			leave: () => new Promise(() => {}),
-			resumeAudio: () => {},
 		});
 
 		await client.leave();
@@ -325,43 +370,85 @@ describe("createVoiceClient", () => {
 		});
 	});
 
-	test("the microphone follows the controls through the call handle", async () => {
+	test("unmuting gets the microphone, asking for it, then sends it", async () => {
 		const { client } = setup();
-		const setLocalAudio = vi.fn();
+		const handle = fakeCallHandle();
 		await client.join(ROOM_ID);
-		client.registerCallHandle({
-			setLocalAudio,
-			leave: async () => {},
-			resumeAudio: () => {},
-		});
+		client.registerCallHandle(handle);
 
-		client.setMicEnabled(true);
+		await client.setMicEnabled(true);
 
-		expect(setLocalAudio).toHaveBeenCalledWith(true);
+		expect(handle.ensureMic).toHaveBeenCalledWith({ mayAsk: true });
+		expect(handle.setLocalAudio).toHaveBeenCalledWith(true);
 		expect(client.getSnapshot().call?.micEnabled).toBe(true);
+	});
+
+	test("unmuting without a microphone to be had stays muted and isn't remembered", async () => {
+		const { client, deps } = setup();
+		const handle = fakeCallHandle({ hasMic: false });
+		await client.join(ROOM_ID);
+		client.registerCallHandle(handle);
+
+		await client.setMicEnabled(true);
+
+		expect(handle.setLocalAudio).not.toHaveBeenCalledWith(true);
+		expect(client.getSnapshot().call?.micEnabled).toBe(false);
+		expect(deps.saveMicEnabled).not.toHaveBeenCalled();
+	});
+
+	test("letting go of push to talk while the microphone is still coming keeps it muted", async () => {
+		const { client } = setup();
+		const handle = fakeCallHandle();
+		await client.join(ROOM_ID);
+		client.registerCallHandle(handle);
+		client.setInputMode("PUSH_TO_TALK");
+
+		const pressing = client.setMicEnabled(true);
+		await client.setMicEnabled(false);
+		await pressing;
+
+		expect(client.getSnapshot().call?.micEnabled).toBe(false);
 	});
 
 	test("deafening mutes the microphone and undeafening restores it", async () => {
 		const { client } = setup();
-		const setLocalAudio = vi.fn();
+		const handle = fakeCallHandle();
 		await client.join(ROOM_ID);
-		client.registerCallHandle({
-			setLocalAudio,
-			leave: async () => {},
-			resumeAudio: () => {},
-		});
-		client.setMicEnabled(true);
+		client.registerCallHandle(handle);
+		await client.setMicEnabled(true);
 
-		client.setDeafened(true);
-		expect(setLocalAudio).toHaveBeenLastCalledWith(false);
+		await client.setDeafened(true);
+		expect(handle.setLocalAudio).toHaveBeenLastCalledWith(false);
 		expect(client.getSnapshot().call).toMatchObject({
 			deafened: true,
 			micEnabled: false,
 		});
 
-		client.setDeafened(false);
-		expect(setLocalAudio).toHaveBeenLastCalledWith(true);
+		await client.setDeafened(false);
+		expect(handle.setLocalAudio).toHaveBeenLastCalledWith(true);
 		expect(client.getSnapshot().call).toMatchObject({
+			deafened: false,
+			micEnabled: true,
+		});
+	});
+
+	test("audio the browser holds back deafens the call until undeafening lets it play", async () => {
+		const { client } = setup();
+		const handle = fakeCallHandle();
+		await client.join(ROOM_ID);
+		client.registerCallHandle(handle);
+		await client.setMicEnabled(true);
+
+		client.setAudioBlocked(true);
+		expect(client.getSnapshot().call).toMatchObject({
+			deafened: true,
+			micEnabled: false,
+		});
+
+		await client.setDeafened(false);
+		expect(handle.resumeAudio).toHaveBeenCalled();
+		expect(client.getSnapshot().call).toMatchObject({
+			audioBlocked: false,
 			deafened: false,
 			micEnabled: true,
 		});
@@ -382,41 +469,64 @@ describe("createVoiceClient", () => {
 	test("muting the own microphone clears the own speaking indicator right away", async () => {
 		const { client } = setup();
 		await client.join(ROOM_ID);
+		client.registerCallHandle(fakeCallHandle());
 		client.updateParticipants([
 			participant("local", { audioEnabled: true, isLocal: true }),
 		]);
-		client.setMicEnabled(true);
+		await client.setMicEnabled(true);
 		client.setSpeaking("local", true);
 
-		client.setMicEnabled(false);
+		await client.setMicEnabled(false);
 
 		expect(client.getSnapshot().call?.speakingSessionIds).toEqual([]);
 	});
 
-	test("a new call restores the open mic choice of the previous one", async () => {
+	test("a new call restores the open mic choice of the previous one, without asking for the microphone", async () => {
 		const { client, deps } = setup();
-		const setLocalAudio = vi.fn();
+		const handle = fakeCallHandle();
 		deps.loadMicEnabled.mockReturnValue(true);
 		await client.join(ROOM_ID);
-		client.registerCallHandle({
-			setLocalAudio,
-			leave: async () => {},
-			resumeAudio: () => {},
-		});
+		client.registerCallHandle(handle);
 
 		client.markConnected("local");
 
-		expect(setLocalAudio).toHaveBeenCalledWith(true);
-		expect(client.getSnapshot().call?.micEnabled).toBe(true);
+		await vi.waitFor(() =>
+			expect(client.getSnapshot().call?.micEnabled).toBe(true),
+		);
+		expect(handle.ensureMic).toHaveBeenCalledWith({ mayAsk: false });
+	});
+
+	test("a new call stays muted when the microphone can't be had without asking", async () => {
+		const { client, deps } = setup();
+		const handle = fakeCallHandle({ hasMic: false });
+		deps.loadMicEnabled.mockReturnValue(true);
+		await client.join(ROOM_ID);
+		client.registerCallHandle(handle);
+
+		client.markConnected("local");
+
+		await vi.waitFor(() => expect(handle.ensureMic).toHaveBeenCalled());
+		expect(client.getSnapshot().call?.micEnabled).toBe(false);
+	});
+
+	test("an input mode picked outside a call is the next call's", async () => {
+		const { client } = setup();
+
+		client.setInputMode("PUSH_TO_TALK");
+		expect(client.getSnapshot().inputMode).toBe("PUSH_TO_TALK");
+		await client.join(ROOM_ID);
+
+		expect(client.getSnapshot().call?.inputMode).toBe("PUSH_TO_TALK");
 	});
 
 	test("toggling the open mic is remembered, push to talk isn't", async () => {
 		const { client, deps } = setup();
 		await client.join(ROOM_ID);
+		client.registerCallHandle(fakeCallHandle());
 
-		client.setMicEnabled(true);
+		await client.setMicEnabled(true);
 		client.setInputMode("PUSH_TO_TALK");
-		client.setMicEnabled(false);
+		await client.setMicEnabled(false);
 
 		expect(deps.saveMicEnabled.mock.calls).toEqual([[true]]);
 	});
@@ -424,9 +534,10 @@ describe("createVoiceClient", () => {
 	test("unmuting the microphone undeafens", async () => {
 		const { client } = setup();
 		await client.join(ROOM_ID);
-		client.setDeafened(true);
+		client.registerCallHandle(fakeCallHandle());
+		await client.setDeafened(true);
 
-		client.setMicEnabled(true);
+		await client.setMicEnabled(true);
 
 		expect(client.getSnapshot().call).toMatchObject({
 			deafened: false,
@@ -468,6 +579,24 @@ describe("createVoiceClient", () => {
 		]);
 	});
 
+	test("someone rejoining with a new connection plays no sounds", async () => {
+		const { client, deps } = setup();
+		await client.join(ROOM_ID);
+		client.updateParticipants([
+			participant("local", { isLocal: true, userId: 1 }),
+			participant("remote"),
+		]);
+		client.markConnected("local");
+		deps.playSound.mockClear();
+
+		client.updateParticipants([
+			participant("local", { isLocal: true, userId: 1 }),
+			participant("remote-rejoined"),
+		]);
+
+		expect(deps.playSound).not.toHaveBeenCalled();
+	});
+
 	test("leaving a connected call plays the leave sound, a call that never connected doesn't", async () => {
 		const { client, deps } = setup();
 		await client.join(ROOM_ID);
@@ -480,5 +609,179 @@ describe("createVoiceClient", () => {
 		await client.leave();
 
 		expect(deps.playSound).toHaveBeenCalledWith("voice_leave");
+	});
+
+	test("a lost connection leaves the old session and rejoins the room", async () => {
+		const { client, deps } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+
+		await client.reconnect("connection error");
+
+		expect(deps.postRoomAction).toHaveBeenCalledWith(ROOM_ID, {
+			_action: "LEAVE",
+			voiceSessionId: 10,
+			leaveReason: "CONNECTION_LOST",
+		});
+		expect(client.getSnapshot().call).toMatchObject({
+			status: "RECONNECTING",
+			voiceSessionId: 11,
+			credentials: { token: "token-11" },
+		});
+
+		client.markConnected("local-2");
+
+		expect(client.getSnapshot().call?.status).toBe("CONNECTED");
+	});
+
+	test("rejoining after a lost connection keeps the call deafened", async () => {
+		const { client } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+		await client.setDeafened(true);
+
+		await client.reconnect(null);
+
+		expect(client.getSnapshot().call?.deafened).toBe(true);
+	});
+
+	test("a lost connection forgets the latency of the old one", async () => {
+		const { client } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+		client.setLatency(40);
+
+		await client.reconnect(null);
+
+		expect(client.getSnapshot().call?.latencyMs).toBeNull();
+	});
+
+	test("rejoining after a lost connection waits for the network to come back", async () => {
+		const { client, deps } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+		let goOnline = () => {};
+		deps.waitUntilOnline.mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					goOnline = resolve;
+				}),
+		);
+
+		const reconnecting = client.reconnect(null);
+		await new Promise((resolve) => setTimeout(resolve));
+		expect(joinRequestCount(deps.postRoomAction)).toBe(1);
+		expect(deps.postRoomAction).not.toHaveBeenCalledWith(
+			ROOM_ID,
+			expect.objectContaining({ _action: "LEAVE" }),
+		);
+
+		goOnline();
+		await reconnecting;
+
+		expect(deps.postRoomAction).toHaveBeenCalledWith(ROOM_ID, {
+			_action: "LEAVE",
+			voiceSessionId: 10,
+			leaveReason: "CONNECTION_LOST",
+		});
+		expect(client.getSnapshot().call?.voiceSessionId).toBe(11);
+	});
+
+	test("a call that fails to connect while rejoining tries again", async () => {
+		const { client } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+		await client.reconnect(null);
+
+		client.markFailed("JOIN_FAILED", "network");
+
+		await vi.waitFor(() =>
+			expect(client.getSnapshot().call).toMatchObject({
+				status: "RECONNECTING",
+				voiceSessionId: 12,
+			}),
+		);
+	});
+
+	test("rejoining gives up when every retry is refused and reports it", async () => {
+		let isFirstJoin = true;
+		const { client, deps } = setup({
+			postRoomAction: async (_roomId, body) => {
+				if (!("_action" in body) || body._action !== "JOIN") return null;
+				if (!isFirstJoin) return null;
+				isFirstJoin = false;
+				return joinResult(10);
+			},
+		});
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+
+		await client.reconnect("connection error");
+
+		expect(client.getSnapshot().call).toMatchObject({
+			status: "FAILED",
+			errorKind: "CONNECTION_LOST",
+		});
+		expect(deps.wait).toHaveBeenCalledTimes(5);
+		expect(deps.postTelemetry).toHaveBeenCalledWith(
+			expect.objectContaining({
+				kind: "ERROR",
+				errorKind: "CONNECTION_LOST",
+				detail: "connection error",
+			}),
+		);
+	});
+
+	test("a page that comes back long after the connection was lost doesn't rejoin", async () => {
+		const { client, deps } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+		deps.waitUntilOnline.mockImplementation(async () => {
+			deps.now.mockReturnValue(10 * 60_000);
+		});
+
+		await client.reconnect(null);
+
+		expect(client.getSnapshot().call?.status).toBe("FAILED");
+		expect(joinRequestCount(deps.postRoomAction)).toBe(1);
+	});
+
+	test("leaving while waiting to rejoin stops the rejoin", async () => {
+		const { client, deps } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+		let goOnline = () => {};
+		deps.waitUntilOnline.mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					goOnline = resolve;
+				}),
+		);
+
+		const reconnecting = client.reconnect(null);
+		await new Promise((resolve) => setTimeout(resolve));
+		await client.leave();
+		goOnline();
+		await reconnecting;
+
+		expect(client.getSnapshot().call).toBeNull();
+		expect(joinRequestCount(deps.postRoomAction)).toBe(1);
+		expect(deps.postRoomAction).toHaveBeenCalledWith(ROOM_ID, {
+			_action: "LEAVE",
+			voiceSessionId: 10,
+			leaveReason: "CONNECTION_LOST",
+		});
+	});
+
+	test("a connection Daily recovers on its own shows as reconnecting meanwhile", async () => {
+		const { client } = setup();
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+
+		client.setConnectionInterrupted(true);
+		expect(client.getSnapshot().call?.status).toBe("RECONNECTING");
+
+		client.setConnectionInterrupted(false);
+		expect(client.getSnapshot().call?.status).toBe("CONNECTED");
 	});
 });

@@ -28,9 +28,6 @@ import { setUploadUser } from "./upload";
 import { VodView } from "./VodView";
 import { cancelVodScan } from "./vod-scan";
 
-/** settleClipStore() runs once per page load, not per mount */
-let storeSettled = false;
-
 export function ScannerApp() {
 	const [view] = useSearchParam(scannerSearchParams, "view");
 	const user = useUser();
@@ -43,11 +40,7 @@ export function ScannerApp() {
 
 	useEffect(() => retryUploadsWhileOpen(), []);
 
-	useEffect(() => {
-		if (storeSettled) return;
-		storeSettled = true;
-		settleClipStore();
-	}, []);
+	useEffect(() => settleClipStore(), []);
 
 	// a file scan has no Cancel button: leaving the page is how it is stopped
 	useEffect(

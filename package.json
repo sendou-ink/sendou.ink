@@ -83,6 +83,7 @@
 		"@epic-web/cachified": "5.6.3",
 		"@react-router/node": "8.5.0",
 		"@react-router/serve": "8.1.0",
+		"@sapphi-red/web-noise-suppressor": "0.4.1",
 		"@techstark/opencv-js": "5.0.0-release.1",
 		"@tldraw/tldraw": "3.12.1",
 		"@zumer/snapdom": "3.3.6",

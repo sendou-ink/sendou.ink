@@ -21,7 +21,10 @@ import {
 	tournamentCtxTeam,
 } from "~/features/tournament-bracket/core/tests/test-utils";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import {
 	lobbyPage,
 	SENDOUQ_LOOKING_PAGE,
@@ -81,16 +84,18 @@ describe("resolveGlobalStatus", () => {
 	}: {
 		isCheckedIn?: boolean;
 	} = {}) => {
+		const startsAt = dateToDatabaseTimestamp(addMinutes(new Date(), 30));
 		const { id: tournamentId } = await TournamentFactory.create({
 			authorId: users.id(8),
-			startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+			name: "Pending Cup",
+			startTimes: [startsAt],
 		});
 		await TournamentTeamFactory.create(
 			{ tournamentId, memberUserIds: userIds([1, 2, 3, 4]) },
 			{ isCheckedIn },
 		);
 
-		return tournamentId;
+		return { tournamentId, startsAt };
 	};
 
 	test("returns null for a user with nothing ongoing", async () => {
@@ -195,6 +200,25 @@ describe("resolveGlobalStatus", () => {
 		expect(await resolveGlobalStatus(users.id(1))).toEqual({
 			state: "SQ_MATCH",
 			url: sendouQMatchPage(match.id),
+			sqMatchId: match.id,
+			gameNumber: 1,
+		});
+	});
+
+	test("resolves the game being played of a match mid-way", async () => {
+		const match = await SQMatchFactory.create(
+			{
+				alphaUserIds: userIds([1, 2, 3, 4]),
+				bravoUserIds: userIds([5, 6, 7, 8]),
+			},
+			{ reportedMapCount: 2 },
+		);
+		await refreshSendouQInstance();
+
+		expect(await resolveGlobalStatus(users.id(5))).toMatchObject({
+			state: "SQ_MATCH",
+			sqMatchId: match.id,
+			gameNumber: 3,
 		});
 	});
 
@@ -211,16 +235,20 @@ describe("resolveGlobalStatus", () => {
 		expect(await resolveGlobalStatus(users.id(5))).toEqual({
 			state: "SQ_MATCH",
 			url: sendouQMatchPage(match.id),
+			sqMatchId: match.id,
+			gameNumber: 4,
 		});
 	});
 
 	test("resolves a tournament the user has yet to check in to", async () => {
-		const tournamentId = await tournamentWithCheckInOpen();
+		const { tournamentId, startsAt } = await tournamentWithCheckInOpen();
 
 		expect(await resolveGlobalStatus(users.id(1))).toEqual({
 			state: "TO_CHECKIN",
 			url: tournamentRegisterPage(tournamentId),
 			logoUrl: expect.any(String),
+			tournamentName: "Pending Cup",
+			checkInClosesAt: databaseTimestampToDate(startsAt).getTime(),
 		});
 	});
 
@@ -299,20 +327,25 @@ describe("resolveGlobalStatus", () => {
 		expect((await resolveGlobalStatus(users.id(1)))?.state).toBe("SQ_QUEUED");
 	});
 
-	test("resolves an ongoing tournament match with the tournament's logo", async () => {
-		RunningTournaments.add(
-			runningTournamentWithMatch({
-				tournamentId: 1,
-				teamOneUserIds: userIds([1]),
-				teamTwoUserIds: userIds([2]),
-			}),
-		);
+	test("resolves an ongoing tournament match with the tournament's logo, name and round", async () => {
+		const tournament = runningTournamentWithMatch({
+			tournamentId: 1,
+			teamOneUserIds: userIds([1]),
+			teamTwoUserIds: userIds([2]),
+		});
+		RunningTournaments.add(tournament);
+		const match = tournament.bracketByIdx(0)!.data.match[0];
 
 		const status = await resolveGlobalStatus(users.id(1));
 
 		expect(status?.state).toBe("TO_MATCH");
 		expect(status?.url).toMatch(/^\/to\/1\/matches\/\d+$/);
 		expect(status?.logoUrl).toBe("/test.avif");
+		expect(status?.tournamentName).toBe("test");
+		expect(status?.roundName).toBeDefined();
+		expect(status?.roundName).toBe(
+			tournament.matchContextNamesById(match.id).roundName,
+		);
 	});
 
 	test("resolves a match locked for cast as waiting for it, linking to the match in the bracket", async () => {
@@ -336,20 +369,25 @@ describe("resolveGlobalStatus", () => {
 			}),
 		);
 		expect(status?.scrollToMatchId).toBe(lockedMatch.id);
+		expect(status?.tournamentName).toBe("test");
+		expect(status?.roundName).toBe(
+			tournament.matchContextNamesById(lockedMatch.id).roundName,
+		);
 	});
 
-	test("resolves an open regular check-in", async () => {
-		RunningTournaments.add(
-			runningTournamentWithOpenCheckIn({
-				tournamentId: 1,
-				teamUserIds: userIds([1]),
-			}),
-		);
+	test("resolves an open regular check-in, closing as the tournament starts", async () => {
+		const tournament = runningTournamentWithOpenCheckIn({
+			tournamentId: 1,
+			teamUserIds: userIds([1]),
+		});
+		RunningTournaments.add(tournament);
 
 		const status = await resolveGlobalStatus(users.id(1));
 
 		expect(status?.state).toBe("TO_CHECKIN");
 		expect(status?.url).toBe(tournamentRegisterPage(1));
+		expect(status?.tournamentName).toBe("test");
+		expect(status?.checkInClosesAt).toBe(tournament.ctx.startsAt.getTime());
 	});
 
 	test("ignores leagues", async () => {

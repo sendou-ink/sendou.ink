@@ -72,6 +72,31 @@ describe("VoiceRepository.sumParticipantMinutesSince", () => {
 	});
 });
 
+describe("VoiceRepository.sumParticipantMinutesByFeatureSince", () => {
+	test("counts each session towards its own feature", async () => {
+		await VoiceSessionFactory.create(
+			{ userId: playerId(), roomType: "TOURNAMENT_TEAM", feature: "LFG" },
+			{ dailySessionId: "daily-1", connectedAt: subMinutes(new Date(), 30) },
+		);
+		await VoiceSessionFactory.create(
+			{
+				userId: otherPlayerId(),
+				roomType: "TOURNAMENT_TEAM",
+				feature: "TOURNAMENTS",
+			},
+			{ dailySessionId: "daily-2", connectedAt: subMinutes(new Date(), 10) },
+		);
+
+		const minutes = await VoiceRepository.sumParticipantMinutesByFeatureSince(
+			dateToDatabaseTimestamp(subDays(new Date(), 7)),
+		);
+
+		expect(minutes.LFG).toBeCloseTo(30, 0);
+		expect(minutes.TOURNAMENTS).toBeCloseTo(10, 0);
+		expect(minutes.SENDOUQ).toBe(0);
+	});
+});
+
 describe("VoiceRepository.updateFromLeftWebhook", () => {
 	test("keeps the leave the client reported while taking Daily's duration", async () => {
 		const session = await VoiceSessionFactory.create(
@@ -136,6 +161,7 @@ describe("VoiceRepository.insertOwnSession", () => {
 			VoiceRepository.insertOwnSession({
 				roomId: null,
 				roomType: "SQ_MATCH",
+				feature: "SENDOUQ",
 				platform: "DESKTOP",
 				eligibleMemberCount: 8,
 				vcPreference: "YES",

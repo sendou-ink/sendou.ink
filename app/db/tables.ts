@@ -76,6 +76,7 @@ import type { UserReportCategory } from "~/features/user-report/user-report-cons
 import type { videoMatchTypes } from "~/features/vods/vods-constants";
 import type {
 	VoiceClientErrorKind,
+	VoiceFeature,
 	VoiceInputMode,
 	VoiceLeaveReason,
 	VoiceNetworkQualityState,
@@ -1266,6 +1267,7 @@ export interface VoiceSession {
 	/** `null` once the chat room has been deleted. The session stays for the statistics. */
 	roomId: number | null;
 	roomType: ChatRoomType;
+	feature: VoiceFeature;
 	userId: number;
 	platform: VoicePlatform;
 	/** Members of the room who could have joined voice when this session started based on voice chat settings. We need these to check for adoption. */
@@ -1309,6 +1311,10 @@ export interface VoiceSettings {
 	id: GeneratedAlways<number>;
 	/** Manual kill switch. */
 	isDisabled: Generated<DBBoolean>;
+	isSendouQDisabled: Generated<DBBoolean>;
+	isLobbiesDisabled: Generated<DBBoolean>;
+	isTournamentsDisabled: Generated<DBBoolean>;
+	isLfgDisabled: Generated<DBBoolean>;
 	updatedAt: number | null;
 	updatedByUserId: number | null;
 }

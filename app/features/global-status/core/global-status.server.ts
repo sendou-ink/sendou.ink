@@ -1,6 +1,7 @@
 import * as R from "remeda";
 import { groupExpiresAt } from "~/features/sendouq/core/groups";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import * as SendouQMatch from "~/features/sendouq-match/core/SendouQMatch";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import type {
@@ -88,6 +89,8 @@ async function resolvePendingCheckInStatus(
 		state: "TO_CHECKIN",
 		url: tournamentRegisterPage(pendingCheckIn.tournamentId),
 		logoUrl: pendingCheckIn.logoUrl,
+		tournamentName: pendingCheckIn.tournamentName,
+		checkInClosesAt: pendingCheckIn.checkInClosesAt,
 	};
 }
 
@@ -131,7 +134,16 @@ async function resolveSendouQMatchStatus(
 	const match = await SQMatchRepository.findLiveStateById(matchId);
 	if (!match || match.isLocked || match.isCanceled) return null;
 
-	return { state: "SQ_MATCH", url: sendouQMatchPage(matchId) };
+	return {
+		state: "SQ_MATCH",
+		url: sendouQMatchPage(matchId),
+		sqMatchId: matchId,
+		gameNumber: SendouQMatch.currentGameNumber({
+			groupAlpha: { id: match.alphaGroupId },
+			groupBravo: { id: match.bravoGroupId },
+			mapList: match.mapList,
+		}),
+	};
 }
 
 function resolveTournamentStatus(
@@ -150,6 +162,9 @@ function resolveTournamentStatus(
 	const { tournament, status } = mostUrgent;
 	const tournamentId = tournament.ctx.id;
 	const logoUrl = tournament.ctx.logoUrl ?? undefined;
+	const tournamentName = tournament.ctx.name;
+	const roundName = (matchId: number) =>
+		tournament.matchContextNamesById(matchId).roundName;
 
 	switch (status.type) {
 		case "MATCH":
@@ -157,36 +172,51 @@ function resolveTournamentStatus(
 				state: "TO_MATCH",
 				url: tournamentMatchPage({ tournamentId, matchId: status.matchId }),
 				logoUrl,
+				tournamentName,
+				roundName: roundName(status.matchId),
 			};
 		case "CHECKIN":
+			if ("bracketIdx" in status) {
+				return {
+					state: "TO_CHECKIN",
+					url: tournamentBracketsPage({
+						tournamentId,
+						bracketIdx: status.bracketIdx,
+					}),
+					logoUrl,
+					tournamentName,
+				};
+			}
+
 			return {
 				state: "TO_CHECKIN",
-				url:
-					"bracketIdx" in status
-						? tournamentBracketsPage({
-								tournamentId,
-								bracketIdx: status.bracketIdx,
-							})
-						: tournamentRegisterPage(tournamentId),
+				url: tournamentRegisterPage(tournamentId),
 				logoUrl,
+				tournamentName,
+				checkInClosesAt: tournament.regularCheckInEndsAt.getTime(),
 			};
 		case "WAITING_FOR_CAST":
 			return {
 				state: "TO_WAITING_FOR_CAST",
 				...waitedMatchLink(tournament, status),
 				logoUrl,
+				tournamentName,
+				roundName: roundName(status.matchId),
 			};
 		case "WAITING_FOR_MATCH":
 			return {
 				state: "TO_WAITING_FOR_MATCH",
 				...waitedMatchLink(tournament, status),
 				logoUrl,
+				tournamentName,
+				roundName: roundName(status.matchId),
 			};
 		default:
 			return {
 				state: "TO_WAITING_FOR_MATCH",
 				url: tournamentBracketsPage({ tournamentId }),
 				logoUrl,
+				tournamentName,
 			};
 	}
 }

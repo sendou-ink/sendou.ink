@@ -31,4 +31,14 @@ export interface GlobalStatus {
 	groupId?: number;
 	/** When the queued group drops out of the looking pool, flipping the status to `SQ_EXPIRED`. */
 	expiresAt?: number;
+	/** Tournament a `TO_` state is about. */
+	tournamentName?: string;
+	/** Round of the tournament match being played or waited on, e.g. "Winners Round 3". */
+	roundName?: string;
+	/** When the check-in closes (ms timestamp), known for the registration check-in only. */
+	checkInClosesAt?: number;
+	/** SendouQ match of the `SQ_MATCH` state. */
+	sqMatchId?: number;
+	/** Game of the SendouQ match being played, starting from 1. */
+	gameNumber?: number;
 }

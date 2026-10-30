@@ -9,9 +9,23 @@ export const action = defineAction(
 	async ({ body }) => {
 		requireVoiceDashboardAccess();
 
-		await VoiceRepository.updateSettings({
-			isDisabled: body._action === "DISABLE",
-		});
+		switch (body._action) {
+			case "DISABLE":
+			case "ENABLE": {
+				await VoiceRepository.updateSettings({
+					isDisabled: body._action === "DISABLE",
+				});
+				break;
+			}
+			case "DISABLE_FEATURE":
+			case "ENABLE_FEATURE": {
+				await VoiceRepository.updateSettings({
+					feature: body.feature,
+					isDisabled: body._action === "DISABLE_FEATURE",
+				});
+				break;
+			}
+		}
 		VoiceAvailability.clearCache();
 
 		return null;

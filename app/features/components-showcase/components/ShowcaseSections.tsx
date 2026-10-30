@@ -63,7 +63,7 @@ import {
 	type ChangelogGraphicEntry,
 } from "~/features/changelog/components/ChangelogGraphic";
 import * as DamageCombos from "~/features/comp-analyzer/core/DamageCombos";
-import { GlobalStatusIndicator } from "~/features/global-status/components/GlobalStatusIndicator";
+import { StatusActivity } from "~/features/global-status/components/StatusActivity";
 import { GlobalStatusPreviewProvider } from "~/features/global-status/GlobalStatusProvider";
 import type { GlobalStatus } from "~/features/global-status/global-status-types";
 import { CompGraphic } from "~/features/img-export/components/CompGraphic";
@@ -81,12 +81,23 @@ import {
 	type TournamentRunGraphicMatch,
 } from "~/features/img-export/components/TournamentRunGraphic";
 import type { SeasonActivity } from "~/features/mmr/components/SeasonActivityCalendar";
+import { ScannerActivity } from "~/features/scanner/components/ScannerActivity";
+import {
+	type ScannerActivityState,
+	setScannerActivityOverride,
+} from "~/features/scanner/scanner-activity";
 import {
 	Trophy,
 	TrophyContextProvider,
 } from "~/features/trophies/components/Trophy";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import type { UserCardData } from "~/features/user-card/user-card-types";
+import { VoiceActivity } from "~/features/voice/components/VoiceActivity";
+import {
+	setVoiceActivityOverride,
+	useVoiceActivityOverride,
+	type VoiceActivityState,
+} from "~/features/voice/voice-activity";
 import type { CustomFieldRenderProps } from "~/form/FormField";
 import { DatetimeFormField } from "~/form/fields/DatetimeFormField";
 import { SendouForm } from "~/form/SendouForm";
@@ -146,7 +157,7 @@ const SECTION_COMPONENTS: Record<ShowcaseSectionId, () => React.ReactNode> = {
 	"game-selects": GameSelectSection,
 	"form-fields": FormFieldsSection,
 	schedule: ScheduleSection,
-	"global-status-indicator": GlobalStatusIndicatorSection,
+	"header-activities": HeaderActivitiesSection,
 	miscellaneous: MiscSection,
 };
 
@@ -3108,6 +3119,11 @@ function ScheduleSection() {
 const SEED_TOURNAMENT_LOGO_URL =
 	"http://127.0.0.1:9000/sendou/paddling-pool.png";
 
+const SEED_TOURNAMENT = {
+	tournamentName: "Paddling Pool 51",
+	logoUrl: SEED_TOURNAMENT_LOGO_URL,
+};
+
 const GLOBAL_STATUS_EXAMPLES: Array<{
 	id: string;
 	name: string;
@@ -3115,12 +3131,16 @@ const GLOBAL_STATUS_EXAMPLES: Array<{
 }> = [
 	{
 		id: "sq-preparing",
-		name: "SendouQ: Preparing",
-		status: { state: "SQ_PREPARING", url: SENDOUQ_PREPARING_PAGE },
+		name: "Preparing",
+		status: {
+			state: "SQ_PREPARING",
+			url: SENDOUQ_PREPARING_PAGE,
+			groupSize: { members: 2, max: 4 },
+		},
 	},
 	{
 		id: "sq-queued-likes-seen",
-		name: "SendouQ: In queue (likes seen)",
+		name: "In queue (likes seen)",
 		status: {
 			state: "SQ_QUEUED",
 			url: SENDOUQ_LOOKING_PAGE,
@@ -3130,110 +3150,306 @@ const GLOBAL_STATUS_EXAMPLES: Array<{
 	},
 	{
 		id: "sq-queued-new-likes",
-		name: "SendouQ: In queue (new likes)",
+		name: "In queue (new likes)",
 		status: {
 			state: "SQ_QUEUED",
 			url: SENDOUQ_LOOKING_PAGE,
 			count: 5,
 			countNeedsAction: true,
-			groupSize: { members: 2, max: 4 },
+			groupSize: { members: 3, max: 4 },
 		},
 	},
 	{
 		id: "sq-expired",
-		name: "SendouQ: Group inactive",
+		name: "Group inactive",
 		status: { state: "SQ_EXPIRED", url: SENDOUQ_LOOKING_PAGE },
 	},
 	{
 		id: "sq-ready-check",
-		name: "SendouQ: Ready check",
+		name: "Ready check",
 		status: { state: "SQ_READY_CHECK", url: SENDOUQ_LOOKING_PAGE },
 	},
 	{
 		id: "sq-match",
-		name: "SendouQ: In match",
-		status: { state: "SQ_MATCH", url: sendouQMatchPage(123) },
-	},
-	{
-		id: "to-checkin",
-		name: "Tournament: Check in",
+		name: "In match",
 		status: {
-			state: "TO_CHECKIN",
-			url: tournamentPage(1),
-			logoUrl: SEED_TOURNAMENT_LOGO_URL,
+			state: "SQ_MATCH",
+			url: sendouQMatchPage(123),
+			sqMatchId: 123,
+			gameNumber: 3,
 		},
 	},
 	{
-		id: "to-match",
-		name: "Tournament: In match",
+		id: "to-checkin",
+		name: "Tournament check-in",
 		status: {
-			state: "TO_MATCH",
+			state: "TO_CHECKIN",
 			url: tournamentPage(1),
-			logoUrl: SEED_TOURNAMENT_LOGO_URL,
+			checkInClosesAt: Date.now() + 12 * 60 * 1000,
+			...SEED_TOURNAMENT,
 		},
 	},
 	{
 		id: "to-waiting-for-match",
-		name: "Tournament: Waiting for match",
+		name: "Tournament waiting",
 		status: {
 			state: "TO_WAITING_FOR_MATCH",
 			url: tournamentPage(1),
-			logoUrl: SEED_TOURNAMENT_LOGO_URL,
+			roundName: "Winners Round 3",
+			...SEED_TOURNAMENT,
 		},
 	},
 	{
 		id: "to-waiting-for-cast",
-		name: "Tournament: Waiting for cast",
+		name: "Tournament waiting for cast",
 		status: {
 			state: "TO_WAITING_FOR_CAST",
 			url: tournamentPage(1),
-			logoUrl: SEED_TOURNAMENT_LOGO_URL,
+			roundName: "Grand Finals",
+			...SEED_TOURNAMENT,
+		},
+	},
+	{
+		id: "to-match",
+		name: "Tournament match",
+		status: {
+			state: "TO_MATCH",
+			url: tournamentPage(1),
+			roundName: "Winners Round 3",
+			...SEED_TOURNAMENT,
 		},
 	},
 ];
 
-const GLOBAL_STATUS_SELECT_ITEMS = [
-	{ id: "none", name: "None" },
-	...GLOBAL_STATUS_EXAMPLES.map(({ id, name }) => ({ id, name })),
+const MOCK_VOICE_USERS = [
+	{ id: 274, username: "Sendou", isLocal: true },
+	{ id: 2, username: "hfcRed", speaking: true },
+	{ id: 3, username: "julu", muted: true },
+	{ id: 4, username: "Xol", muted: true },
 ];
 
-function GlobalStatusIndicatorSection() {
-	const [status, setStatus] = useState<GlobalStatus | null>(null);
+const VOICE_EXAMPLES: Array<{
+	id: VoiceActivityState["status"];
+	name: string;
+}> = [
+	{ id: "AVAILABLE", name: "Available to join" },
+	{ id: "JOINING", name: "Connecting" },
+	{ id: "CONNECTED", name: "Connected" },
+	{ id: "RECONNECTING", name: "Reconnecting" },
+	{ id: "FAILED", name: "Failed" },
+];
 
-	const selectedId =
+const SCANNER_EXAMPLES = [
+	{ id: "idle", name: "Idle" },
+	{ id: "starting", name: "Starting" },
+	{ id: "capturing", name: "Capturing" },
+	{ id: "inGame", name: "In game" },
+	{ id: "uploading", name: "Uploading" },
+	{ id: "error", name: "Error" },
+] as const;
+
+type ScannerExampleId = (typeof SCANNER_EXAMPLES)[number]["id"];
+
+function HeaderActivitiesSection() {
+	const [status, setStatus] = useState<GlobalStatus | null>(null);
+	const voiceOverride = useVoiceActivityOverride();
+	const [scannerExample, setScannerExample] = useState<
+		ScannerExampleId | "none"
+	>("none");
+
+	const selectedStatusId =
 		GLOBAL_STATUS_EXAMPLES.find((example) => example.status === status)?.id ??
 		"none";
+	const selectedVoiceId = voiceOverride?.status ?? "none";
 
 	return (
 		<Section>
 			<div className="stack md">
-				<ComponentRow label="Status (shown next to the search & add new buttons in the header)">
-					<div className="stack md">
-						<SendouSelect
-							items={GLOBAL_STATUS_SELECT_ITEMS}
-							label="Status"
-							selectedKey={selectedId}
-							onSelectionChange={(key) =>
-								setStatus(
-									GLOBAL_STATUS_EXAMPLES.find((example) => example.id === key)
-										?.status ?? null,
-								)
-							}
-						>
-							{(item) => (
-								<SendouSelectItem key={item.id} id={item.id}>
-									{item.name}
-								</SendouSelectItem>
-							)}
-						</SendouSelect>
+				<ComponentRow label="Activities (shown next to the search & add new buttons in the header)">
+					<div className="stack horizontal sm">
 						<GlobalStatusPreviewProvider status={status}>
-							<GlobalStatusIndicator />
+							<StatusActivity />
 						</GlobalStatusPreviewProvider>
+						<VoiceActivity />
+						<ScannerActivity />
 					</div>
+				</ComponentRow>
+				<ComponentRow label="SendouQ / tournament">
+					<SendouChipRadioGroup wrap>
+						{[{ id: "none", name: "None" }, ...GLOBAL_STATUS_EXAMPLES].map(
+							(example) => (
+								<SendouChipRadio
+									key={example.id}
+									name="header-status"
+									value={example.id}
+									checked={selectedStatusId === example.id}
+									onChange={() =>
+										setStatus(
+											GLOBAL_STATUS_EXAMPLES.find(
+												(candidate) => candidate.id === example.id,
+											)?.status ?? null,
+										)
+									}
+								>
+									{example.name}
+								</SendouChipRadio>
+							),
+						)}
+					</SendouChipRadioGroup>
+				</ComponentRow>
+				<ComponentRow label="Voice">
+					<div className="stack sm">
+						<SendouChipRadioGroup wrap>
+							{[{ id: "none", name: "None" }, ...VOICE_EXAMPLES].map(
+								(example) => (
+									<SendouChipRadio
+										key={example.id}
+										name="header-voice"
+										value={example.id}
+										checked={selectedVoiceId === example.id}
+										onChange={() =>
+											setVoiceActivityOverride(
+												example.id === "none"
+													? null
+													: mockVoiceActivity(
+															example.id as VoiceActivityState["status"],
+															voiceOverride?.inputMode ?? "OPEN_MIC",
+														),
+											)
+										}
+									>
+										{example.name}
+									</SendouChipRadio>
+								),
+							)}
+						</SendouChipRadioGroup>
+						<SendouSwitch
+							size="small"
+							isDisabled={!voiceOverride}
+							isSelected={voiceOverride?.inputMode === "PUSH_TO_TALK"}
+							onChange={(pushToTalk) => {
+								if (!voiceOverride) return;
+								setVoiceActivityOverride(
+									mockVoiceActivity(
+										voiceOverride.status,
+										pushToTalk ? "PUSH_TO_TALK" : "OPEN_MIC",
+									),
+								);
+							}}
+						>
+							Push to talk
+						</SendouSwitch>
+					</div>
+				</ComponentRow>
+				<ComponentRow label="Scanner">
+					<SendouChipRadioGroup wrap>
+						{[{ id: "none", name: "None" } as const, ...SCANNER_EXAMPLES].map(
+							(example) => (
+								<SendouChipRadio
+									key={example.id}
+									name="header-scanner"
+									value={example.id}
+									checked={scannerExample === example.id}
+									onChange={() => {
+										setScannerExample(example.id);
+										setScannerActivityOverride(
+											example.id === "none"
+												? null
+												: mockScannerActivity(example.id),
+										);
+									}}
+								>
+									{example.name}
+								</SendouChipRadio>
+							),
+						)}
+					</SendouChipRadioGroup>
 				</ComponentRow>
 			</div>
 		</Section>
 	);
+}
+
+function mockVoiceActivity(
+	status: VoiceActivityState["status"],
+	inputMode: VoiceActivityState["inputMode"],
+): VoiceActivityState {
+	const isConnected = status === "CONNECTED";
+	const micEnabled = inputMode === "OPEN_MIC";
+
+	return {
+		status,
+		roomId: 1,
+		roomType: "SQ_MATCH",
+		roomTitle: "Match #12345",
+		participants: MOCK_VOICE_USERS.filter(
+			(user) => status !== "AVAILABLE" || !user.isLocal,
+		).map((user) => ({
+			key: String(user.id),
+			userId: user.id,
+			user: {
+				id: user.id,
+				username: user.username,
+				customUrl: null,
+				avatar: null,
+			},
+			isLocal: Boolean(user.isLocal),
+			speaking: isConnected && Boolean(user.speaking),
+			muted: user.isLocal ? !micEnabled : Boolean(user.muted),
+			deafened: false,
+			volume: 1,
+		})),
+		micEnabled,
+		deafened: false,
+		inputMode,
+		errorKind: null,
+		canKick: true,
+		latencyMs: isConnected ? 32 : null,
+	};
+}
+
+function mockScannerActivity(id: ScannerExampleId): ScannerActivityState {
+	const isRunning = id === "capturing" || id === "inGame" || id === "uploading";
+
+	return {
+		status:
+			id === "idle" || id === "starting" || id === "error"
+				? id
+				: ("running" as const),
+		error:
+			id === "error"
+				? "The capture source was disconnected — check the capture card or OBS Virtual Camera and start the capture again"
+				: null,
+		since: isRunning ? Date.now() - (60 * 60 + 23 * 60 + 45) * 1000 : null,
+		sourceName: id === "idle" ? null : "Elgato HD60 X",
+		stream: isRunning ? mockCaptureStream() : null,
+		game: id === "inGame" ? { mode: "SZ", stageId: 10, score: [42, 67] } : null,
+		uploadingCount: id === "uploading" ? 1 : 0,
+		stats: isRunning
+			? { games: 5, uploaded: id === "uploading" ? 4 : 5, clips: 12 }
+			: null,
+	};
+}
+
+/** A still picture as a stream, standing in for a capture card's preview. */
+function mockCaptureStream() {
+	const canvas = document.createElement("canvas");
+	canvas.width = 1280;
+	canvas.height = 720;
+	const stream = canvas.captureStream(1);
+	const context = canvas.getContext("2d");
+	if (!context) return stream;
+
+	const gradient = context.createLinearGradient(0, 0, 1280, 720);
+	gradient.addColorStop(0, "#5b2de0");
+	gradient.addColorStop(1, "#d6f022");
+	context.fillStyle = gradient;
+	context.fillRect(0, 0, 1280, 720);
+	context.fillStyle = "white";
+	context.font = "bold 72px sans-serif";
+	context.fillText("Capture preview", 380, 380);
+
+	return stream;
 }
 
 function MiscSection() {

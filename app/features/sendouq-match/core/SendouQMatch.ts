@@ -26,6 +26,21 @@ export function score(match: {
 	};
 }
 
+/**
+ * Game being played, starting from 1: the first unreported map. Once the score
+ * is decisive (e.g. awaiting the other team's confirmation) it stays on the
+ * set-ending game.
+ */
+export function currentGameNumber(match: Parameters<typeof score>[0]) {
+	const reportedCount = match.mapList.filter(
+		(map) => map.winnerGroupId !== null,
+	).length;
+
+	if (score(match).isDecisive) return reportedCount;
+
+	return Math.min(reportedCount + 1, match.mapList.length);
+}
+
 /** Members of both groups of the match, alpha's first. */
 export function allMembers<T>(match: {
 	groupAlpha: { members: T[] };

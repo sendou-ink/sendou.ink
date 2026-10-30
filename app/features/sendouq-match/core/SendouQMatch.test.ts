@@ -45,6 +45,36 @@ describe("SendouQMatch.score()", () => {
 	});
 });
 
+describe("SendouQMatch.currentGameNumber()", () => {
+	const A = ALPHA_ID;
+	const B = BRAVO_ID;
+
+	test.each([
+		{
+			why: "no maps reported",
+			winners: [null, null, null, null, null, null, null],
+			expected: 1,
+		},
+		{
+			why: "first map reported",
+			winners: [A, null, null, null, null, null, null],
+			expected: 2,
+		},
+		{
+			why: "set-ending map awaiting confirmation",
+			winners: [A, A, A, A, null, null, null],
+			expected: 4,
+		},
+		{
+			why: "decided on the last map",
+			winners: [A, B, A, B, A, B, A],
+			expected: 7,
+		},
+	])("$why", ({ winners, expected }) => {
+		expect(SendouQMatch.currentGameNumber(matchWith(winners))).toBe(expected);
+	});
+});
+
 describe("SendouQMatch.canSeeFriendCodes()", () => {
 	const recent = dateToDatabaseTimestamp(subDays(new Date(), 1));
 	const old = dateToDatabaseTimestamp(subMonths(new Date(), 2));

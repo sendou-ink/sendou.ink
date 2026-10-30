@@ -2,6 +2,7 @@ import Daily, {
 	type DailyCall,
 	type DailyEventObjectCameraError,
 	type DailyEventObjectFatalError,
+	type DailyEventObjectNetworkConnectionEvent,
 } from "@daily-co/daily-js";
 import {
 	DailyAudioTrack,
@@ -9,21 +10,34 @@ import {
 	useAudioLevelObserver,
 	useDaily,
 	useDailyEvent,
+	useMeetingState,
 	useNetwork,
 	useParticipantIds,
 } from "@daily-co/daily-react";
 import * as React from "react";
+import * as R from "remeda";
 import { useLatestRef } from "~/hooks/useLatestRef";
+import { usePersistedState } from "~/modules/persisted-state/hooks";
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { logger } from "~/utils/logger";
+import {
+	canPickOutputDevice,
+	MicCaptureError,
+	micCapture,
+} from "../voice-audio";
 import { type VoiceCallParticipant, voiceClient } from "../voice-client";
 import { VOICE_TELEMETRY_INTERVAL_MS } from "../voice-constants";
 import { useVoiceSnapshot } from "../voice-hooks";
+import { DEFAULT_DEVICE_ID, voiceSettingsPersisted } from "../voice-persisted";
 
 const SPEAKING_LEVEL = 0.04;
 const TELEMETRY_TICK_MS = 1_000;
+const LATENCY_POLL_MS = 2_000;
+const WATCHED_CONNECTIONS = ["signaling", "sfu"];
 
 const audioElements = new Set<HTMLAudioElement>();
 let previousTeardown: Promise<void> = Promise.resolve();
+let pendingMic: Promise<boolean> | null = null;
 
 export function VoiceCall({
 	roomId,
@@ -40,10 +54,12 @@ export function VoiceCall({
 		let unmounted = false;
 		let created: DailyCall | null = null;
 
-		void previousTeardown.then(() => {
+		const setup = previousTeardown.then(() => {
 			if (unmounted) return;
+
+			// the mic is only acquired on unmute, see `ensureMic`
 			created = Daily.createCallObject({
-				audioSource: true,
+				audioSource: false,
 				videoSource: false,
 				startVideoOff: true,
 				startAudioOff: true,
@@ -54,8 +70,9 @@ export function VoiceCall({
 
 		return () => {
 			unmounted = true;
-			previousTeardown = previousTeardown
+			previousTeardown = setup
 				.then(() => (created ? teardownCallObject(created) : undefined))
+				.finally(() => micCapture.stop())
 				.catch((error: unknown) => {
 					logger.error("Tearing down the voice call failed", error);
 				});
@@ -70,10 +87,19 @@ export function VoiceCall({
 		callObject.setLocalVideo(false);
 		voiceClient.registerCallHandle({
 			setLocalAudio: (enabled) => callObject.setLocalAudio(enabled),
+			ensureMic: (options) => ensureMic(callObject, options),
 			leave: () => callObject.leave(),
 			resumeAudio: () => {
+				micCapture.resume();
 				for (const audio of audioElements) {
-					void audio.play().catch(() => {});
+					void audio.play().catch((error: unknown) => {
+						if (
+							error instanceof DOMException &&
+							error.name === "NotAllowedError"
+						) {
+							voiceClient.setAudioBlocked(true);
+						}
+					});
 				}
 			},
 		});
@@ -101,9 +127,12 @@ export function VoiceCall({
 	return (
 		<DailyProvider callObject={callObject}>
 			<CallEvents roomId={roomId} />
+			<MicSettingsSync />
+			<DeafenedSync />
 			<ParticipantsSync />
 			<RemoteAudio />
 			<Telemetry />
+			<Latency />
 			<ScreenWakeLock />
 		</DailyProvider>
 	);
@@ -129,7 +158,7 @@ function CallEvents({ roomId }: { roomId: number }) {
 						return;
 					}
 					case "connection-error": {
-						void voiceClient.leave("CONNECTION_LOST");
+						void voiceClient.reconnect(event.errorMsg);
 						return;
 					}
 					default: {
@@ -139,6 +168,19 @@ function CallEvents({ roomId }: { roomId: number }) {
 			},
 			[roomId],
 		),
+	);
+
+	const interruptedConnections = React.useRef(new Set<string>());
+	useDailyEvent(
+		"network-connection",
+		React.useCallback((event: DailyEventObjectNetworkConnectionEvent) => {
+			if (!WATCHED_CONNECTIONS.includes(event.type)) return;
+
+			const interrupted = interruptedConnections.current;
+			if (event.event === "interrupted") interrupted.add(event.type);
+			if (event.event === "connected") interrupted.delete(event.type);
+			voiceClient.setConnectionInterrupted(interrupted.size > 0);
+		}, []),
 	);
 
 	useDailyEvent(
@@ -152,6 +194,34 @@ function CallEvents({ roomId }: { roomId: number }) {
 			}
 		}, []),
 	);
+
+	return null;
+}
+
+function MicSettingsSync() {
+	const [settings] = usePersistedState(voiceSettingsPersisted);
+	const { call } = useVoiceSnapshot();
+	const gateAlwaysOpen = call?.inputMode === "PUSH_TO_TALK";
+
+	React.useEffect(() => {
+		micCapture.update(settings, { gateAlwaysOpen });
+	}, [settings, gateAlwaysOpen]);
+
+	return null;
+}
+
+function DeafenedSync() {
+	const daily = useDaily();
+	const isJoined = useMeetingState() === "joined-meeting";
+	const deafened = useVoiceSnapshot().call?.deafened ?? false;
+
+	React.useEffect(() => {
+		if (!daily || !isJoined) return;
+
+		daily.setUserData({ deafened }).catch((error: unknown) => {
+			logger.warn("Sharing the deafen state failed", error);
+		});
+	}, [daily, isJoined, deafened]);
 
 	return null;
 }
@@ -221,8 +291,14 @@ function ParticipantAudio({
 	userId: number;
 }) {
 	const { volumeByUserId, call } = useVoiceSnapshot();
+	const [{ outputVolume, outputDeviceId }] = usePersistedState(
+		voiceSettingsPersisted,
+	);
 	const audioRef = React.useRef<HTMLAudioElement>(null);
-	const volume = volumeByUserId.get(userId) ?? 1;
+	const volume = Math.min(
+		1,
+		(volumeByUserId.get(userId) ?? 1) * (outputVolume / 100),
+	);
 	const deafened = call?.deafened ?? false;
 
 	React.useEffect(() => {
@@ -233,6 +309,20 @@ function ParticipantAudio({
 		audio.volume = volume;
 		audio.muted = volume === 0 || deafened;
 	}, [volume, deafened]);
+
+	React.useEffect(() => {
+		const audio = audioRef.current;
+		if (!audio || !canPickOutputDevice()) return;
+
+		audio
+			.setSinkId(outputDeviceId === DEFAULT_DEVICE_ID ? "" : outputDeviceId)
+			.catch((error: unknown) => {
+				logger.warn(
+					"Playing the voice call on the picked device failed",
+					error,
+				);
+			});
+	}, [outputDeviceId]);
 
 	React.useEffect(() => {
 		const audio = audioRef.current;
@@ -292,6 +382,37 @@ function Telemetry() {
 	return null;
 }
 
+function Latency() {
+	const daily = useDaily();
+	const isJoined = useMeetingState() === "joined-meeting";
+
+	React.useEffect(() => {
+		if (!daily || !isJoined) return;
+
+		const poll = setInterval(async () => {
+			try {
+				const { stats } = await daily.getNetworkStats();
+				const roundTripSeconds =
+					"latest" in stats ? stats.latest.networkRoundTripTime : null;
+				voiceClient.setLatency(
+					roundTripSeconds === null
+						? null
+						: Math.round(roundTripSeconds * 1000),
+				);
+			} catch (error) {
+				logger.warn("Reading the voice call network stats failed", error);
+			}
+		}, LATENCY_POLL_MS);
+
+		return () => {
+			clearInterval(poll);
+			voiceClient.setLatency(null);
+		};
+	}, [daily, isJoined]);
+
+	return null;
+}
+
 function ScreenWakeLock() {
 	React.useEffect(() => {
 		if (!("wakeLock" in navigator)) return;
@@ -322,19 +443,104 @@ function ScreenWakeLock() {
 }
 
 function participantsOf(daily: DailyCall): VoiceCallParticipant[] {
-	return Object.values(daily.participants()).flatMap((participant) => {
-		const userId = Number(participant.user_id);
-		if (!Number.isInteger(userId)) return [];
+	const newestByUserId = new Map<number, VoiceCallParticipant>();
+	const oldestFirst = R.sortBy(Object.values(daily.participants()), [
+		(participant) =>
+			participant.local
+				? Number.POSITIVE_INFINITY
+				: (participant.joined_at?.getTime() ?? 0),
+		"asc",
+	]);
 
-		return {
+	for (const participant of oldestFirst) {
+		const userId = Number(participant.user_id);
+		if (!Number.isInteger(userId)) continue;
+
+		newestByUserId.set(userId, {
 			userId,
 			sessionId: participant.session_id,
 			isLocal: participant.local,
 			audioEnabled:
 				participant.tracks.audio.state === "playable" ||
 				participant.tracks.audio.state === "sendable",
-		};
+			deafened: isSharedDeafened(participant.userData),
+		});
+	}
+
+	return [...newestByUserId.values()];
+}
+
+function isSharedDeafened(userData: unknown) {
+	return (
+		typeof userData === "object" &&
+		userData !== null &&
+		"deafened" in userData &&
+		userData.deafened === true
+	);
+}
+
+async function ensureMic(
+	callObject: DailyCall,
+	{ mayAsk }: { mayAsk: boolean },
+): Promise<boolean> {
+	if (micCapture.isCapturing()) return true;
+
+	if (pendingMic) {
+		const hasMic = await pendingMic;
+		if (hasMic || !mayAsk) return hasMic;
+		return ensureMic(callObject, { mayAsk });
+	}
+
+	pendingMic = acquireMic(callObject, { mayAsk }).finally(() => {
+		pendingMic = null;
 	});
+	return pendingMic;
+}
+
+async function acquireMic(
+	callObject: DailyCall,
+	{ mayAsk }: { mayAsk: boolean },
+) {
+	if (!mayAsk && !(await isMicPermissionGranted())) return false;
+
+	const track = await startMicCapture();
+	if (!track) return false;
+
+	try {
+		await callObject.setInputDevicesAsync({ audioSource: track });
+		return true;
+	} catch (error) {
+		logger.error("Handing the microphone to the voice call failed", error);
+		micCapture.stop();
+		return false;
+	}
+}
+
+async function isMicPermissionGranted() {
+	try {
+		const status = await navigator.permissions.query({
+			name: "microphone" as PermissionName,
+		});
+		return status.state === "granted";
+	} catch {
+		return false;
+	}
+}
+
+async function startMicCapture(): Promise<MediaStreamTrack | false> {
+	try {
+		return await micCapture.start(PersistedState.read(voiceSettingsPersisted), {
+			gateAlwaysOpen:
+				voiceClient.getSnapshot().call?.inputMode === "PUSH_TO_TALK",
+		});
+	} catch (error) {
+		if (error instanceof MicCaptureError) {
+			voiceClient.flagError(error.kind, error.message);
+		} else {
+			logger.error("Acquiring the microphone failed", error);
+		}
+		return false;
+	}
 }
 
 async function teardownCallObject(callObject: DailyCall) {

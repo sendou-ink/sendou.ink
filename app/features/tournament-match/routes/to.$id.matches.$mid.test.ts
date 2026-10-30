@@ -560,9 +560,10 @@ describe("Tournament match page", () => {
 			]);
 		});
 
-		test("opens only the match chat for a participant whose team has no chat", async () => {
+		test("opens a registered team's own chat after the match chat too", async () => {
 			expect(await surfacedRooms(opponentUserIds()[0])).toEqual([
 				{ type: "TOURNAMENT_MATCH", autoOpen: true },
+				{ type: "TOURNAMENT_TEAM", autoOpen: true },
 			]);
 		});
 

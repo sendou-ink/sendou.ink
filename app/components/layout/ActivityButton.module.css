@@ -1,0 +1,113 @@
+.item {
+	position: relative;
+	display: flex;
+	flex-shrink: 0;
+}
+
+.button {
+	display: grid;
+	place-items: center;
+	width: calc(var(--field-size-sm) - 6px);
+	height: calc(var(--field-size-sm) - 6px);
+	padding: 0;
+	border: none;
+	border-radius: calc(var(--radius-field) - 2px);
+	background: none;
+	color: var(--color-text);
+	cursor: pointer;
+
+	& svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
+}
+
+.success {
+	color: var(--color-success);
+}
+
+.error {
+	color: var(--color-error);
+}
+
+.corner {
+	position: absolute;
+	top: -5px;
+	right: -5px;
+	z-index: 1;
+	display: flex;
+	pointer-events: none;
+
+	& > span:only-child:empty {
+		box-shadow: 0 0 0 2px var(--color-bg-nav);
+	}
+}
+
+/* where the corner badges sit, so a dot and a rec dot line up; z-index as the next button is positioned too and would paint over it */
+.dot {
+	--dot-top: -5px;
+	--dot-right: -5px;
+	z-index: 1;
+}
+
+.badge {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 var(--s-1);
+	border-radius: var(--radius-full);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+}
+
+.countBadge {
+	background-color: var(--color-bg-higher);
+	color: var(--color-text-high);
+}
+
+.countActionBadge {
+	background-color: var(--color-fill-accent);
+	color: var(--color-fg-on-accent);
+}
+
+.alertBadge {
+	background-color: var(--color-warning-low);
+	border: 1.5px solid var(--color-warning);
+	color: var(--color-warning-high);
+}
+
+.errorBadge {
+	padding: 0;
+	background-color: var(--color-error-low);
+	border: 1.5px solid var(--color-error);
+	color: var(--color-error-high);
+
+	& svg {
+		width: 11px;
+		height: 11px;
+		stroke-width: 3.5;
+	}
+}
+
+.recDot {
+	width: var(--s-2);
+	height: var(--s-2);
+	flex-shrink: 0;
+	border-radius: var(--radius-full);
+	background-color: var(--color-error);
+}
+
+.recDotStopped {
+	background-color: transparent;
+	box-shadow: inset 0 0 0 2px var(--color-error);
+}

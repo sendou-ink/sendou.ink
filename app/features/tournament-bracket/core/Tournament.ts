@@ -1104,9 +1104,7 @@ export class Tournament {
 		let bracketName: string | undefined;
 		let roundName: string | undefined;
 
-		for (const bracket of this.brackets) {
-			if (bracket.preview) continue;
-
+		search: for (const bracket of this.startedBrackets) {
 			for (const match of bracket.data.match) {
 				if (match.id === matchId) {
 					bracketName = bracket.name;
@@ -1193,6 +1191,8 @@ export class Tournament {
 					} else {
 						assertUnreachable(bracket.type);
 					}
+
+					break search;
 				}
 			}
 		}

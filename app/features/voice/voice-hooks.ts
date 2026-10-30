@@ -6,13 +6,13 @@ import {
 	type VoiceSnapshot,
 	voiceClient,
 } from "./voice-client";
-import { VOICE_ROOM_TYPES } from "./voice-constants";
 
 const SERVER_SNAPSHOT: VoiceSnapshot = {
 	roomsById: new Map(),
 	call: null,
 	volumeByUserId: new Map(),
 	pendingFeedback: null,
+	inputMode: "OPEN_MIC",
 };
 const getServerSnapshot = () => SERVER_SNAPSHOT;
 
@@ -24,24 +24,37 @@ export function useVoiceSnapshot(): VoiceSnapshot {
 	);
 }
 
-export function useVoiceRoom(room: {
-	id: number;
-	type: ChatRoomType;
-}): VoiceRoomState | null {
+export function useVoiceRooms(
+	rooms: Array<{
+		id: number;
+		type: ChatRoomType;
+	}>,
+): Map<number, VoiceRoomState> {
 	const snapshot = useVoiceSnapshot();
-	const hasVoice = VOICE_ROOM_TYPES.some((type) => type === room.type);
+	const voiceRoomIds = rooms.map((room) => room.id);
+	const voiceRoomIdsKey = voiceRoomIds.join(",");
 
 	React.useEffect(() => {
-		if (!hasVoice) return;
-		void voiceClient.loadRoom(room.id);
-	}, [hasVoice, room.id]);
+		if (!voiceRoomIdsKey) return;
+		for (const roomId of voiceRoomIdsKey.split(",")) {
+			void voiceClient.loadRoom(Number(roomId));
+		}
+	}, [voiceRoomIdsKey]);
 
 	useEventStreamCatchUp({
-		enabled: hasVoice,
-		onCatchUp: () => void voiceClient.loadRoom(room.id),
+		enabled: voiceRoomIds.length > 0,
+		onCatchUp: () => {
+			for (const roomId of voiceRoomIds) void voiceClient.loadRoom(roomId);
+		},
 	});
 
-	return hasVoice ? (snapshot.roomsById.get(room.id) ?? null) : null;
+	const roomsById = new Map<number, VoiceRoomState>();
+	for (const roomId of voiceRoomIds) {
+		const room = snapshot.roomsById.get(roomId);
+		if (room) roomsById.set(roomId, room);
+	}
+
+	return roomsById;
 }
 
 /**

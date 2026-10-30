@@ -41,6 +41,8 @@ type Options = {
 	canceledByStaffUserId?: number;
 	/** Alpha wins every map and reports, bravo still to confirm. Alpha's group goes inactive. */
 	isReported?: boolean;
+	/** Alpha wins and reports this many maps, short of ending the set, so the match is mid-way. */
+	reportedMapCount?: number;
 	/** When the match was made, for one that should look older than now. */
 	createdAt?: Date;
 	/** When the two groups had agreed on the score. Needs `isConcluded`. */
@@ -97,6 +99,7 @@ export const { create } = defineFactory({
 		{
 			isConcluded,
 			isReported,
+			reportedMapCount,
 			cancel,
 			canceledByStaffUserId,
 			createdAt,
@@ -109,6 +112,10 @@ export const { create } = defineFactory({
 
 		if (isReported) {
 			await reportMatch(match.id);
+		}
+
+		if (reportedMapCount) {
+			await reportMaps(match.id, reportedMapCount);
 		}
 
 		if (cancel) {
@@ -199,6 +206,25 @@ async function playOutMatch(matchId: number) {
 		confirmation.status === "MATCH_FINALIZED",
 		`Confirming the score resulted in ${confirmation.status}`,
 	);
+}
+
+async function reportMaps(matchId: number, count: number) {
+	const match = await SQMatchRepository.findById(matchId);
+	invariant(match, "Match not found");
+
+	for (let reportedCount = 0; reportedCount < count; reportedCount++) {
+		const result = await SQMatchRepository.reportMapWinner({
+			matchId,
+			winnerId: match.groupAlpha.id,
+			reportedByUserId: match.groupAlpha.members[0].id,
+			reportedCount,
+		});
+
+		invariant(
+			result.status === "MAP_REPORTED",
+			`Reporting map ${reportedCount + 1} resulted in ${result.status}`,
+		);
+	}
 }
 
 /** Reports every map as alpha, up to the score being in but not yet confirmed. */

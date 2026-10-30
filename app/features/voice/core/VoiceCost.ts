@@ -13,6 +13,13 @@ export function monthlyCostUsd(participantMinutes: number) {
 	return billable * VOICE_PRICE_PER_MINUTE_USD;
 }
 
+export function budgetMinutes() {
+	return (
+		VOICE_FREE_MINUTES_PER_MONTH +
+		VOICE_MONTHLY_BUDGET_USD / VOICE_PRICE_PER_MINUTE_USD
+	);
+}
+
 export function isOverBudget(participantMinutes: number) {
 	return monthlyCostUsd(participantMinutes) >= VOICE_MONTHLY_BUDGET_USD;
 }

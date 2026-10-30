@@ -32,6 +32,7 @@ export default function AdminVoicePage() {
 			<h1>Voice beta</h1>
 			<Status data={data} />
 			<Cost cost={data.cost} />
+			<Features features={data.features} cost={data.cost} />
 			<LiveRooms liveRooms={data.liveRooms} />
 			<p className="text-lighter text-sm">
 				The panels below cover the last {data.statsDays} days.
@@ -117,6 +118,91 @@ function Cost({ cost }: { cost: LoaderData["cost"] }) {
 				value={usedShare}
 				aria-label="Share of the monthly budget used"
 			/>
+		</section>
+	);
+}
+
+const FEATURE_NAMES = {
+	SENDOUQ: "SendouQ",
+	LOBBIES: "Lobbies",
+	TOURNAMENTS: "Tournaments",
+	LFG: "Tournament LFG",
+} as const;
+
+function Features({
+	features,
+	cost,
+}: {
+	features: LoaderData["features"];
+	cost: LoaderData["cost"];
+}) {
+	return (
+		<section className="stack sm">
+			<h2>Features</h2>
+			<p className="text-lighter text-sm">
+				Participant-minutes this month and the share of the monthly budget each
+				feature has used.
+			</p>
+			<table className={styles.table}>
+				<thead>
+					<tr>
+						<th>Feature</th>
+						<th>Minutes</th>
+						<th>Share of budget</th>
+						<th>Kill switch</th>
+					</tr>
+				</thead>
+				<tbody>
+					{features.map(({ feature, isDisabled, monthMinutes }) => (
+						<tr key={feature}>
+							<td>{FEATURE_NAMES[feature]}</td>
+							<td>{formatNumber(monthMinutes)}</td>
+							<td>
+								<meter
+									className={styles.featureMeter}
+									min={0}
+									max={1}
+									low={0.3}
+									high={0.6}
+									optimum={0}
+									value={Math.min(1, monthMinutes / cost.budgetMinutes)}
+									aria-label={`Share of the monthly budget used by ${FEATURE_NAMES[feature]}`}
+								/>{" "}
+								{percent(monthMinutes, cost.budgetMinutes)}
+							</td>
+							<td>
+								{isDisabled ? (
+									<ActionButton
+										schema={voiceDashboardActionSchema}
+										action="ENABLE_FEATURE"
+										fields={{ feature }}
+										size="small"
+									>
+										Enable
+									</ActionButton>
+								) : (
+									<ActionButton
+										schema={voiceDashboardActionSchema}
+										action="DISABLE_FEATURE"
+										fields={{ feature }}
+										size="small"
+										variant="destructive"
+										confirm={{
+											dialogHeading: `Disable voice in ${FEATURE_NAMES[feature]}?`,
+											description:
+												"Nobody can join its calls until it is enabled again. People already in a call stay until they leave.",
+											submitButtonText: "Disable",
+											submitButtonVariant: "destructive",
+										}}
+									>
+										Disable
+									</ActionButton>
+								)}
+							</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
 		</section>
 	);
 }
