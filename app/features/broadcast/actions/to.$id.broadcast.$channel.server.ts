@@ -38,6 +38,22 @@ export const action = defineAction(
 				});
 				break;
 			}
+			case "SET_NEXT_TRANSITION": {
+				await BroadcastRepository.updateNext({
+					...key,
+					patch: { transition: body.transition },
+				});
+				break;
+			}
+			case "SET_NEXT_INK": {
+				await BroadcastRepository.updateNext({
+					...key,
+					patch: {
+						ink: body.key ? { key: body.key, isFlipped: body.isFlipped } : null,
+					},
+				});
+				break;
+			}
 			case "SET_NEXT_SWAP_SIDES": {
 				await BroadcastRepository.updateNext({
 					...key,
@@ -114,7 +130,14 @@ export const action = defineAction(
 			case "UPDATE_THEME": {
 				await BroadcastRepository.updateSettings({
 					...key,
-					settings: { css: body.css ?? "" },
+					patch: { css: body.css ?? "", stinger: body.stinger },
+				});
+				break;
+			}
+			case "UPDATE_INFO": {
+				await BroadcastRepository.updateSettings({
+					...key,
+					patch: { headline: body.headline ?? "", casters: body.casters },
 				});
 				break;
 			}

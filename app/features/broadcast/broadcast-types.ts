@@ -5,12 +5,28 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import type {
+	BROADCAST_INK_COLORS,
 	BROADCAST_SCENES,
+	BROADCAST_STINGERS,
 	BROADCAST_STREAM_ROLES,
+	BROADCAST_TRANSITIONS,
 	BROADCAST_VIEWS,
 } from "./broadcast-constants";
 
 export type BroadcastScene = (typeof BROADCAST_SCENES)[number];
+
+export type BroadcastTransition = (typeof BROADCAST_TRANSITIONS)[number];
+
+export type BroadcastStinger = (typeof BROADCAST_STINGERS)[number];
+
+export type BroadcastInkColorKey = (typeof BROADCAST_INK_COLORS)[number]["key"];
+
+/** The teams' in-game ink colors. */
+export interface BroadcastInk {
+	key: BroadcastInkColorKey;
+	/** The featured match's second team has the pair's first color. */
+	isFlipped: boolean;
+}
 
 export type BroadcastView = (typeof BROADCAST_VIEWS)[number];
 
@@ -21,6 +37,10 @@ export interface ProducerState {
 	scene: BroadcastScene;
 	/** Shows the featured match's second team on the left. */
 	swapSides: boolean;
+	/** How a Take puts this state on air, kept on `live` so the overlay knows how the last Take played. */
+	transition: BroadcastTransition;
+	/** `null` uses the theme's team colors. */
+	ink: BroadcastInk | null;
 }
 
 export interface BroadcastStoredState {
@@ -43,6 +63,12 @@ export interface LiveResults {
 export interface BroadcastSettings {
 	/** Injected unlayered after the overlays' own styles. */
 	css: string;
+	/** Design of the stinger transition. */
+	stinger: BroadcastStinger;
+	/** Message of the full screen scenes, e.g. "Top 8 starts at 18:00 CEST". */
+	headline: string;
+	/** Names under the camera frames of the casters scene, one frame per caster. */
+	casters: string[];
 }
 
 /** Team and player values the producer edited, shown instead of the tournament's in both live and next. */
@@ -114,7 +140,21 @@ export interface MatchProgress {
 	/** Game being played or about to be, the last one once the set is over. */
 	gameNumber: number;
 	/** `null` when not picked yet or the set is over. */
-	currentMap: { mode: ModeShort; stageId: StageId } | null;
+	currentMap: BroadcastMap | null;
+	/** Every game the set can have, e.g. 5 for a Bo5, in playing order. */
+	games: BroadcastGame[];
+}
+
+export interface BroadcastMap {
+	mode: ModeShort;
+	stageId: StageId;
+}
+
+export interface BroadcastGame {
+	/** `null` when not picked yet, or for a game the set ended before. */
+	map: BroadcastMap | null;
+	/** Index of the winning team in bracket order, `null` when not played yet. */
+	winner: 0 | 1 | null;
 }
 
 export interface BroadcastTeam {

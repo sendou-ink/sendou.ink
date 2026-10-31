@@ -54,6 +54,35 @@ describe("BroadcastRepository.updateNext", () => {
 		expect(broadcast?.state.next).toEqual({
 			scene: "rosters",
 			swapSides: true,
+			transition: "stinger",
+			ink: null,
+		});
+	});
+});
+
+describe("BroadcastRepository.updateSettings", () => {
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test("keeps the settings another form saved", async () => {
+		const key = await createBroadcastKey();
+
+		await BroadcastRepository.updateSettings({
+			...key,
+			patch: { css: "body { color: red; }", stinger: "burst" },
+		});
+		await BroadcastRepository.updateSettings({
+			...key,
+			patch: { headline: "Finals at 18:00", casters: ["Sendou", "Kalle"] },
+		});
+
+		const broadcast = await BroadcastRepository.findByChannel(key);
+		expect(broadcast?.settings).toEqual({
+			css: "body { color: red; }",
+			stinger: "burst",
+			headline: "Finals at 18:00",
+			casters: ["Sendou", "Kalle"],
 		});
 	});
 });

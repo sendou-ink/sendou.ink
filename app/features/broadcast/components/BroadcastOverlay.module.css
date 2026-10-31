@@ -1,46 +1,152 @@
-:root {
-	--bc-accent: #8c6cf8;
-	--bc-bg: #0f0d1c;
-	--bc-surface: rgb(20 18 38 / 92%);
-	--bc-text: #fff;
-	--bc-text-muted: #b9b4d6;
-	--bc-team-a: #f0a01f;
-	--bc-team-b: #3f8cf5;
+/*
+ * Theming contract, see feature-readmes/broadcast.mdx:
+ * - tokens on [data-broadcast] (defaults follow sendou.ink's dark theme)
+ * - the global bc-* keyframes below and in Stinger.module.css, redefine one to change every element using it,
+ *   or point a --bc-anim-* token at keyframes of your own (for the whole canvas or any part of it)
+ * - [data-part] and state attributes ([data-team], [data-status]...) on the markup
+ */
+.canvas {
+	/* colors */
+	--bc-bg: var(--color-bg);
+	--bc-surface: var(--color-bg-high);
+	--bc-border: var(--color-border);
+	--bc-text: var(--color-text);
+	--bc-text-muted: var(--color-text-high);
+	--bc-accent: var(--color-fill-accent);
+	--bc-accent-text: var(--color-fg-on-accent);
+	--bc-team-a: var(--color-chart-alpha);
+	--bc-team-b: var(--color-chart-bravo);
+	--bc-team-a-text: var(--color-text-on-dark);
+	--bc-team-b-text: var(--color-text-on-dark);
+
+	/* shapes */
 	--bc-font-display: lexend, sans-serif;
 	--bc-font-body: lexend, sans-serif;
-	--bc-radius: 12px;
-	--bc-transition-duration: 400ms;
-}
+	--bc-radius: var(--radius-box);
+	--bc-radius-small: var(--radius-field);
+	--bc-border-width: var(--border-width);
 
-.canvas {
+	/* motion */
+	--bc-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+	--bc-ease-in: cubic-bezier(0.6, 0, 0.8, 0.2);
+	--bc-stinger-ease: cubic-bezier(0.8, 0, 0.18, 1);
+	--bc-enter-duration: 500ms;
+	--bc-enter-distance: 24px;
+	--bc-stagger: 70ms;
+	--bc-transition-duration: 400ms;
+	--bc-stinger-duration: 2200ms;
+
+	/* the keyframes each kind of animation uses, see the bc-* keyframes */
+	--bc-anim-enter: bc-enter;
+	--bc-anim-exit: bc-exit;
+	--bc-anim-reveal: bc-reveal;
+	--bc-anim-count: bc-count;
+	--bc-anim-pulse: bc-pulse;
+	--bc-anim-zoom: bc-zoom;
+	--bc-anim-fade-in: bc-fade-in;
+	--bc-anim-fade-out: bc-fade-out;
+	--bc-anim-alert-slide: bc-alert-slide;
+	--bc-anim-panel-slide-in: bc-panel-slide-in;
+	--bc-anim-panel-slide-out: bc-panel-slide-out;
+	--bc-anim-panel-iris-in: bc-panel-iris-in;
+	--bc-anim-panel-iris-out: bc-panel-iris-out;
+
 	position: relative;
 	width: 1920px;
 	height: 1080px;
 	overflow: hidden;
 	color: var(--bc-text);
 	font-family: var(--bc-font-body);
+	-webkit-font-smoothing: antialiased;
+
+	/* the color of the team an element is about, for any scene */
+	& [data-team="a"] {
+		--team-color: var(--bc-team-a);
+		--team-color-text: var(--bc-team-a-text);
+	}
+
+	& [data-team="b"] {
+		--team-color: var(--bc-team-b);
+		--team-color-text: var(--bc-team-b-text);
+	}
 }
 
 .scene {
 	position: absolute;
 	inset: 0;
+	/* the scenes' entrance animations add this to their delays */
+	--scene-enter-delay: 0ms;
+
+	/* waits for the stinger to start revealing the scene, see Stinger.module.css for the phases */
+	&[data-entrance="stinger"] {
+		--scene-enter-delay: calc(var(--bc-stinger-duration) * 0.34);
+	}
 
 	&[data-transition="in"] {
-		animation: fade-in var(--bc-transition-duration) ease both;
+		animation: var(--bc-anim-fade-in) var(--bc-transition-duration) ease both;
 	}
 
 	&[data-transition="out"] {
-		animation: fade-out var(--bc-transition-duration) ease both;
+		animation: var(--bc-anim-fade-out) var(--bc-transition-duration) ease both;
 	}
 }
 
-@keyframes fade-in {
+/* An element appearing, from where its --bc-enter-x / --bc-enter-y put it. */
+@keyframes :global(bc-enter) {
+	from {
+		opacity: 0;
+		transform: translate(var(--bc-enter-x, 0), var(--bc-enter-y, 0));
+	}
+}
+
+/* An element leaving, towards --bc-exit-x / --bc-exit-y. */
+@keyframes :global(bc-exit) {
+	to {
+		opacity: 0;
+		transform: translate(var(--bc-exit-x, 0), var(--bc-exit-y, 0));
+	}
+}
+
+/* A headline wiping in from the start. */
+@keyframes :global(bc-reveal) {
+	from {
+		clip-path: inset(0 100% 0 0);
+	}
+
+	to {
+		clip-path: inset(0 0 0 0);
+	}
+}
+
+/* A changed number (scores) coming in. */
+@keyframes :global(bc-count) {
+	from {
+		opacity: 0;
+		transform: translateY(60%);
+	}
+}
+
+/* Something that wants attention (match point, the replay dot), looped. */
+@keyframes :global(bc-pulse) {
+	50% {
+		opacity: 0.55;
+	}
+}
+
+/* Slow movement of a picture, e.g. the stage in the map intro. */
+@keyframes :global(bc-zoom) {
+	from {
+		transform: scale(1.12);
+	}
+}
+
+@keyframes :global(bc-fade-in) {
 	from {
 		opacity: 0;
 	}
 }
 
-@keyframes fade-out {
+@keyframes :global(bc-fade-out) {
 	to {
 		opacity: 0;
 	}

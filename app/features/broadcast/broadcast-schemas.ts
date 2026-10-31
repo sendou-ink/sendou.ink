@@ -4,23 +4,32 @@ import {
 	array,
 	fieldset,
 	idConstant,
+	select,
 	stringConstant,
 	textAreaOptional,
 	textField,
+	textFieldOptional,
 	weaponPool,
 } from "~/form/fields";
 import { _action, coerceNumber, id } from "~/utils/schema";
 import {
+	BROADCAST_CASTER_NAME_MAX_LENGTH,
 	BROADCAST_CSS_MAX_LENGTH,
+	BROADCAST_HEADLINE_MAX_LENGTH,
+	BROADCAST_INK_COLORS,
+	BROADCAST_MAX_CASTERS,
 	BROADCAST_MAX_PLAYERS_PER_TEAM,
 	BROADCAST_PLAYER_NAME_MAX_LENGTH,
 	BROADCAST_SCENES,
+	BROADCAST_STINGERS,
+	BROADCAST_TRANSITIONS,
 	BROADCAST_WEAPONS_PER_PLAYER,
 } from "./broadcast-constants";
 
 const nonNegativeInteger = v.pipe(coerceNumber(), v.integer(), v.minValue(0));
 const channelSlug = v.pipe(v.string(), v.minLength(1), v.maxLength(100));
 const scene = v.picklist(BROADCAST_SCENES);
+const transition = v.picklist(BROADCAST_TRANSITIONS);
 const booleanString = v.pipe(
 	v.picklist(["true", "false"]),
 	v.transform((value) => value === "true"),
@@ -30,10 +39,33 @@ export const broadcastParamsSchema = v.object({ id, channel: channelSlug });
 
 export const broadcastThemeFormSchema = v.object({
 	_action: stringConstant("UPDATE_THEME"),
+	stinger: select({
+		label: "labels.broadcastStinger",
+		bottomText: "bottomTexts.broadcastStinger",
+		items: BROADCAST_STINGERS.map((stinger) => ({
+			value: stinger,
+			label: `options.broadcastStinger.${stinger}` as const,
+		})),
+	}),
 	css: textAreaOptional({
 		label: "labels.broadcastCss",
 		bottomText: "bottomTexts.broadcastCss",
 		maxLength: BROADCAST_CSS_MAX_LENGTH,
+	}),
+});
+
+export const broadcastInfoFormSchema = v.object({
+	_action: stringConstant("UPDATE_INFO"),
+	headline: textFieldOptional({
+		label: "labels.broadcastHeadline",
+		bottomText: "bottomTexts.broadcastHeadline",
+		maxLength: BROADCAST_HEADLINE_MAX_LENGTH,
+	}),
+	casters: array({
+		label: "labels.broadcastCasters",
+		bottomText: "bottomTexts.broadcastCasters",
+		max: BROADCAST_MAX_CASTERS,
+		field: textField({ maxLength: BROADCAST_CASTER_NAME_MAX_LENGTH }),
 	}),
 });
 
@@ -67,6 +99,13 @@ export const broadcastTeamFormSchema = v.object({
 
 export const broadcastActionSchema = v.union([
 	v.object({ _action: _action("SET_NEXT_SCENE"), scene }),
+	v.object({ _action: _action("SET_NEXT_TRANSITION"), transition }),
+	v.object({
+		_action: _action("SET_NEXT_INK"),
+		/** `undefined` goes back to the theme's team colors. */
+		key: v.optional(v.picklist(BROADCAST_INK_COLORS.map((color) => color.key))),
+		isFlipped: booleanString,
+	}),
 	v.object({
 		_action: _action("SET_NEXT_SWAP_SIDES"),
 		swapSides: booleanString,
@@ -85,5 +124,6 @@ export const broadcastActionSchema = v.union([
 	}),
 	v.object({ _action: _action("RESET_TEAM"), teamId: id }),
 	broadcastThemeFormSchema,
+	broadcastInfoFormSchema,
 	broadcastTeamFormSchema,
 ]);
