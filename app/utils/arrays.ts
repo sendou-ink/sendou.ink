@@ -47,21 +47,3 @@ export function diff<T extends string | number>(arr1: T[], arr2: T[]): T[] {
 
 	return result;
 }
-
-/** Alternates elements of both arrays, then appends the longer array's rest: `flatZip([1, 2, 3], ['a']) → [1, 'a', 2, 3]`. */
-export function flatZip<T, U>(arr1: T[], arr2: U[]): Array<T | U> {
-	const result: Array<T | U> = [];
-	const minLength = Math.min(arr1.length, arr2.length);
-
-	for (let i = 0; i < minLength; i++) {
-		result.push(arr1[i], arr2[i]);
-	}
-
-	if (arr1.length > minLength) {
-		result.push(...arr1.slice(minLength));
-	} else if (arr2.length > minLength) {
-		result.push(...arr2.slice(minLength));
-	}
-
-	return result;
-}

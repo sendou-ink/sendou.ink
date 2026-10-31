@@ -1,8 +1,9 @@
-// a map both teams picked, else one from the pool neither picked; seeded
+// a map both teams picked, else one from the pool neither picked, played longest ago; seeded
 
 import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import type { ModeWithStage } from "../in-game-lists/types";
+import { leastRecentlyPlayed } from "./recently-played";
 import type { TournamentMapListMap, TournamentMaplistInput } from "./types";
 
 type StarterMapArgs = Pick<
@@ -23,18 +24,13 @@ export function starterMap(args: StarterMapArgs): Array<TournamentMapListMap> {
 		args.modesIncluded.includes(map.mode) &&
 		(fixedMode === null || map.mode === fixedMode);
 
-	const isRecentlyPlayed = (map: ModeWithStage) => {
-		return Boolean(
-			args.recentlyPlayedMaps?.some(
-				(recent) => recent.stageId === map.stageId && recent.mode === map.mode,
-			),
-		);
-	};
+	const leastRecent = <T extends ModeWithStage>(maps: T[]) =>
+		leastRecentlyPlayed(maps, args.recentlyPlayedMaps);
 
 	const commonMap = resolveRandomCommonMap(
 		args.teams,
 		seededShuffle,
-		isRecentlyPlayed,
+		leastRecent,
 		isAllowedMode,
 	);
 	if (commonMap) {
@@ -49,8 +45,7 @@ export function starterMap(args: StarterMapArgs): Array<TournamentMapListMap> {
 
 	const neitherPicked = poolMaps.filter((map) => !pickedByATeam(map));
 
-	const randomMap =
-		neitherPicked.find((map) => !isRecentlyPlayed(map)) ?? neitherPicked[0];
+	const randomMap = leastRecent(neitherPicked);
 	if (randomMap) {
 		return [{ ...randomMap, source: "RANDOM" }];
 	}
@@ -59,8 +54,7 @@ export function starterMap(args: StarterMapArgs): Array<TournamentMapListMap> {
 		`starterMap: fallback choice, both teams together picked every pool map. Team IDs: ${args.teams.map((t) => t.id).join(", ")}`,
 	);
 
-	const fallbackMap =
-		poolMaps.find((map) => !isRecentlyPlayed(map)) ?? poolMaps[0];
+	const fallbackMap = leastRecent(poolMaps);
 
 	return fallbackMap ? [{ ...fallbackMap, source: "RANDOM" }] : [];
 }
@@ -68,7 +62,7 @@ export function starterMap(args: StarterMapArgs): Array<TournamentMapListMap> {
 function resolveRandomCommonMap(
 	teams: StarterMapArgs["teams"],
 	shuffle: <T>(o: T[]) => T[],
-	isRecentlyPlayed: (map: ModeWithStage) => boolean,
+	leastRecent: (maps: ModeWithStage[]) => ModeWithStage | undefined,
 	isAllowedMode: (map: ModeWithStage) => boolean,
 ): ModeWithStage | null {
 	const teamOnePicks = shuffle(teams[0].maps.stageModePairs);
@@ -82,7 +76,5 @@ function resolveRandomCommonMap(
 			),
 	);
 
-	return (
-		commonMaps.find((map) => !isRecentlyPlayed(map)) ?? commonMaps[0] ?? null
-	);
+	return leastRecent(commonMaps) ?? null;
 }

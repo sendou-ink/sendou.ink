@@ -3,6 +3,8 @@ import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import { err, ok, type Result } from "~/utils/result";
 import type { ModeShort, StageId } from "../in-game-lists/types";
+import { RECENTLY_PLAYED_MAPS_WINDOW } from "./constants";
+import { mapsAgo } from "./recently-played";
 import type {
 	TournamentMapListMap,
 	TournamentMaplistInput,
@@ -23,6 +25,8 @@ const UNFAIR_PENALTY = 100;
 const FALLBACK_NEUTRAL_MAP_PENALTY = 5;
 /** Below the bad last map penalty (1) so a common map still decides the match when a fixed mode order runs the picks dry. */
 const EARLY_NEUTRAL_MAP_PENALTY = 0.5;
+/** Below the early neutral map penalty so recency only chooses between a team's picks, never trades one for a random map. */
+const MAX_RECENCY_PENALTY = 0.4;
 
 type MapListGenerationError =
 	| "MAX_RECURSION_DEPTH_EXCEEDED"
@@ -425,15 +429,14 @@ function generateWithInput(
 		return score;
 	}
 
+	/** Fades linearly over a team's recent maps, the team that played the map more recently counts. */
 	function recencyPenalty(map: Pick<TournamentMapListMap, "stageId" | "mode">) {
-		if (!input.recentlyPlayedMaps) return 0;
-
-		const recentIndex = input.recentlyPlayedMaps.findIndex(
-			(recent) => recent.stageId === map.stageId && recent.mode === map.mode,
+		return (
+			(MAX_RECENCY_PENALTY *
+				(RECENTLY_PLAYED_MAPS_WINDOW -
+					mapsAgo(map, input.recentlyPlayedMaps))) /
+			RECENTLY_PLAYED_MAPS_WINDOW
 		);
-		if (recentIndex === -1) return 0;
-
-		return Math.max(10 - Math.floor(recentIndex / 2) * 2, 0);
 	}
 
 	/** A map both teams picked decides the match whenever there is one that could. */

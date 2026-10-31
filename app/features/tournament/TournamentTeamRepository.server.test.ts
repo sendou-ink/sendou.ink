@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
@@ -10,6 +11,7 @@ import { withUserId } from "~/utils/Test";
 import * as TournamentTeamRepository from "./TournamentTeamRepository.server";
 
 const TEAM_COUNT = 4;
+const NOT_PLAYED_MATCH_ID = -1;
 
 /** Pools of two teams each, followed by a final between the two pool winners. */
 const POOLS_TO_FINAL: TournamentSettings["bracketProgression"] = [
@@ -568,7 +570,40 @@ describe("TournamentTeamRepository", () => {
 				});
 
 			expect(recentMaps).toEqual([
-				{ mode: "SZ", stageId: 1 },
+				[{ mode: "SZ", stageId: 1 }],
+				[{ mode: "SZ", stageId: 1 }],
+			]);
+		});
+
+		test("lists each map once, most recently played first, however many players played it", async () => {
+			const players = await UserFactory.createMany(TEAM_COUNT * 2);
+			const tournament = await TournamentFactory.createPlayed(
+				{
+					authorId: organizerId(),
+					bracketProgression: POOLS_TO_FINAL,
+					minMembersPerTeam: 2,
+				},
+				{
+					teamRosters: R.chunk(
+						players.map((player) => player.id),
+						2,
+					),
+					playedOut: 0,
+					maps: POOL_MAPS,
+				},
+			);
+			const [final] = await TournamentFactory.playOut(tournament.id, 1, {
+				maps: FINAL_MAPS,
+			});
+
+			const [winnerMaps] =
+				await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
+					teamIds: [final.winnerTeamId, final.loserTeamId],
+					excludeMatchId: NOT_PLAYED_MATCH_ID,
+				});
+
+			expect(winnerMaps).toEqual([
+				{ mode: "TC", stageId: 2 },
 				{ mode: "SZ", stageId: 1 },
 			]);
 		});

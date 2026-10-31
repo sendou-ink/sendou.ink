@@ -20,7 +20,8 @@ export interface TournamentMaplistInput {
 	modesIncluded: ModeShort[];
 	/** Fixed mode of each slot. Without it the modes rotate in `modesIncluded` order from a seeded start. */
 	modeOrder?: ModeShort[] | null;
-	recentlyPlayedMaps?: ModeWithStage[];
+	/** Each team's distinct recently played maps, most recent first. */
+	recentlyPlayedMaps?: [ModeWithStage[], ModeWithStage[]];
 }
 
 export type TournamentMaplistSource = number | (typeof sourceTypes)[number];

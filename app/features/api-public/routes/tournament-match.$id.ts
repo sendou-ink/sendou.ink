@@ -119,7 +119,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 							excludeMatchId: matchId,
 						}).catch((error) => {
 							logger.error("Failed to fetch recently played maps", error);
-							return [];
+							return undefined;
 						})
 					: undefined,
 		})

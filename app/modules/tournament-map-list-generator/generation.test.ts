@@ -1,9 +1,15 @@
+import * as R from "remeda";
 import { describe, expect, test } from "vitest";
+import { modeStageKey } from "~/features/map-list-generator/core/MapList";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { SENDOUQ_MAP_POOL } from "~/features/match-profile/banned-maps";
 import { unwrap, unwrapErr } from "~/utils/result";
 import { rankedModesShort } from "../in-game-lists/modes";
-import type { RankedModeShort } from "../in-game-lists/types";
+import type {
+	ModeWithStage,
+	RankedModeShort,
+	StageId,
+} from "../in-game-lists/types";
 import { generateBalancedMapList } from "./balanced-map-list";
 import { starterMap } from "./starter-map";
 import type { TournamentMaplistInput } from "./types";
@@ -914,25 +920,22 @@ describe("TournamentMapListGeneratorOneMode", () => {
 	});
 });
 
+type RecentlyPlayedMaps = NonNullable<
+	TournamentMaplistInput["recentlyPlayedMaps"]
+>;
+
 describe("Recently played maps", () => {
+	const splatZones = (stageIds: readonly StageId[]) =>
+		stageIds.map((stageId) => ({ mode: "SZ" as const, stageId }));
+
 	test("One mode Bo7 avoids recently played maps when a full avoiding list exists", () => {
-		const team1Pool = new MapPool(
-			([1, 2, 3, 4, 5, 6] as const).map((stageId) => ({
-				mode: "SZ" as const,
-				stageId,
-			})),
-		);
-		const team2Pool = new MapPool(
-			([7, 8, 9, 10, 11, 12] as const).map((stageId) => ({
-				mode: "SZ" as const,
-				stageId,
-			})),
-		);
+		const team1Pool = new MapPool(splatZones([1, 2, 3, 4, 5, 6]));
+		const team2Pool = new MapPool(splatZones([7, 8, 9, 10, 11, 12]));
 		// the bo5 both teams played right before this match
-		const recentlyPlayedMaps = ([1, 7, 2, 8, 3] as const).map((stageId) => ({
-			mode: "SZ" as const,
-			stageId,
-		}));
+		const recentlyPlayedMaps: RecentlyPlayedMaps = [
+			splatZones([3, 2, 1]),
+			splatZones([8, 7]),
+		];
 
 		const mapList = generateMaps({
 			count: 7,
@@ -945,19 +948,13 @@ describe("Recently played maps", () => {
 			recentlyPlayedMaps,
 		});
 
-		const recentMapsInList = mapList.filter((map) =>
-			recentlyPlayedMaps.some(
-				(recent) => recent.mode === map.mode && recent.stageId === map.stageId,
-			),
-		);
-
-		expect(recentMapsInList).toEqual([]);
+		expect(mapList.filter(isIn(recentlyPlayedMaps))).toEqual([]);
 	});
 
 	test("Avoids recently played maps when possible", () => {
-		const recentlyPlayedMaps = [
-			{ mode: "SZ" as const, stageId: 4 as const },
-			{ mode: "TC" as const, stageId: 5 as const },
+		const recentlyPlayedMaps: RecentlyPlayedMaps = [
+			[{ mode: "SZ", stageId: 4 }],
+			[{ mode: "TC", stageId: 5 }],
 		];
 
 		const mapList = generateMaps({
@@ -965,31 +962,29 @@ describe("Recently played maps", () => {
 			recentlyPlayedMaps,
 		});
 
-		const hasRecentMap = mapList.some((map) =>
-			recentlyPlayedMaps.some(
-				(recent) => recent.mode === map.mode && recent.stageId === map.stageId,
-			),
-		);
-
-		expect(hasRecentMap).toBe(false);
+		expect(mapList.some(isIn(recentlyPlayedMaps))).toBe(false);
 	});
 
 	test("Works correctly with no recently played maps", () => {
 		const mapList = generateMaps({
-			recentlyPlayedMaps: [],
+			recentlyPlayedMaps: [[], []],
 		});
 
 		expect(mapList.length).toBe(5);
 	});
 
 	test("Penalties decrease for maps further back in history", () => {
-		const recentlyPlayedMaps = [
-			{ mode: "SZ" as const, stageId: 4 as const },
-			{ mode: "SZ" as const, stageId: 5 as const },
-			{ mode: "TC" as const, stageId: 5 as const },
-			{ mode: "TC" as const, stageId: 6 as const },
-			{ mode: "RM" as const, stageId: 7 as const },
-			{ mode: "RM" as const, stageId: 8 as const },
+		const recentlyPlayedMaps: RecentlyPlayedMaps = [
+			[
+				{ mode: "SZ", stageId: 4 },
+				{ mode: "TC", stageId: 5 },
+				{ mode: "RM", stageId: 7 },
+			],
+			[
+				{ mode: "SZ", stageId: 5 },
+				{ mode: "TC", stageId: 6 },
+				{ mode: "RM", stageId: 8 },
+			],
 		];
 
 		const mapListWithRecent = generateMaps({
@@ -997,32 +992,134 @@ describe("Recently played maps", () => {
 			recentlyPlayedMaps,
 		});
 
-		const hasVeryRecentMap = mapListWithRecent.some((map) =>
-			recentlyPlayedMaps
-				.slice(0, 2)
-				.some(
-					(recent) =>
-						recent.mode === map.mode && recent.stageId === map.stageId,
-				),
-		);
-
-		expect(hasVeryRecentMap).toBe(false);
+		const mostRecentMaps: RecentlyPlayedMaps = [
+			recentlyPlayedMaps[0].slice(0, 1),
+			recentlyPlayedMaps[1].slice(0, 1),
+		];
+		expect(mapListWithRecent.some(isIn(mostRecentMaps))).toBe(false);
 	});
 
 	test("Still generates valid maplist even with many recently played maps", () => {
-		const recentlyPlayedMaps = [
-			...team1Picks.stageModePairs,
-			...team2Picks.stageModePairs,
-		];
-
 		const mapList = generateMaps({
 			seed: "many-recent",
-			recentlyPlayedMaps,
+			recentlyPlayedMaps: [
+				team1Picks.stageModePairs,
+				team2Picks.stageModePairs,
+			],
 		});
 
 		expect(mapList.length).toBe(5);
 	});
+
+	test.each(["1", "2", "3", "4", "5"])(
+		"Uses the pick a team played longest ago (seed %s)",
+		(seed) => {
+			const mapList = generateMaps({
+				count: 3,
+				seed,
+				teams: [
+					{ id: 1, maps: new MapPool(splatZones([1, 2, 3])) },
+					{ id: 2, maps: new MapPool(splatZones([7, 8, 9])) },
+				],
+				modesIncluded: ["SZ"],
+				recentlyPlayedMaps: [splatZones([3, 1, 2]), splatZones([9, 7, 8])],
+			});
+
+			expect(
+				mapList
+					.filter((map) => map.source === 1 || map.source === 2)
+					.map((map) => map.stageId)
+					.toSorted(),
+			).toEqual([2, 8]);
+		},
+	);
+
+	test("Uses each team's pick over a random map even when every pick was played recently", () => {
+		const team1Pool = splatZones([1, 2, 3]);
+		const team2Pool = splatZones([7, 8, 9]);
+
+		const mapList = generateMaps({
+			count: 3,
+			seed: "all-recent",
+			teams: [
+				{ id: 1, maps: new MapPool(team1Pool) },
+				{ id: 2, maps: new MapPool(team2Pool) },
+			],
+			modesIncluded: ["SZ"],
+			modeOrder: ["SZ", "SZ", "SZ"],
+			recentlyPlayedMaps: [team1Pool, team2Pool],
+		});
+
+		expect(
+			mapList
+				.slice(0, 2)
+				.map((map) => map.source)
+				.toSorted(),
+		).toEqual([1, 2]);
+	});
+
+	test.each(["a", "b", "c", "d", "e"])(
+		"Rotates through every pick of a team before repeating one (seed %s)",
+		(seedPrefix) => {
+			const team1Pool = splatZones([1, 2, 3, 4, 5, 6]);
+			const team2Pool = splatZones([7, 8, 9, 10, 11, 12]);
+			const playedMostRecentFirst: ModeWithStage[] = [];
+			const team1PicksUsed: StageId[] = [];
+
+			for (const set of [1, 2, 3, 4, 5, 6]) {
+				const recent = R.uniqueBy(playedMostRecentFirst, (map) =>
+					modeStageKey(map.mode, map.stageId),
+				);
+
+				const mapList = generateMaps({
+					count: 3,
+					seed: `${seedPrefix}-${set}`,
+					teams: [
+						{ id: 1, maps: new MapPool(team1Pool) },
+						{ id: 2, maps: new MapPool(team2Pool) },
+					],
+					modesIncluded: ["SZ"],
+					recentlyPlayedMaps: [recent, recent],
+				});
+
+				team1PicksUsed.push(
+					...mapList
+						.filter((map) => map.source === 1)
+						.map((map) => map.stageId),
+				);
+				playedMostRecentFirst.unshift(...mapList.toReversed());
+			}
+
+			expect(team1PicksUsed.toSorted((a, b) => a - b)).toEqual([
+				1, 2, 3, 4, 5, 6,
+			]);
+		},
+	);
+
+	test("A map counts as recent when the other team played it", () => {
+		const mapList = generateMaps({
+			count: 3,
+			seed: "other-team",
+			teams: [
+				{ id: 1, maps: new MapPool(splatZones([1, 2])) },
+				{ id: 2, maps: new MapPool(splatZones([7])) },
+			],
+			modesIncluded: ["SZ"],
+			recentlyPlayedMaps: [[], splatZones([1])],
+		});
+
+		expect(mapList.find((map) => map.source === 1)?.stageId).toBe(2);
+	});
 });
+
+function isIn(recentlyPlayedMaps: RecentlyPlayedMaps) {
+	return (map: { mode: string; stageId: number }) =>
+		recentlyPlayedMaps.some((teamMaps) =>
+			teamMaps.some(
+				(recent) => recent.mode === map.mode && recent.stageId === map.stageId,
+			),
+		);
+}
 
 describe("starterMap", () => {
 	const args = {
@@ -1071,6 +1168,61 @@ describe("starterMap", () => {
 
 		expect(map.mode).toBe("SZ");
 		expect(map.source).toBe("RANDOM");
+	});
+
+	test.each([
+		{ why: "one common map not played", recent: [[1], [2]], expected: 3 },
+		{
+			why: "map only the other team played",
+			recent: [[], [1, 3]],
+			expected: 2,
+		},
+		{ why: "every common map played", recent: [[1, 3, 2], [3]], expected: 2 },
+	] as const)(
+		"uses the common map played longest ago ($why)",
+		({ recent, expected }) => {
+			const [map] = starterMap({
+				...args,
+				modesIncluded: ["SZ"],
+				teams: [
+					{
+						id: 1,
+						maps: new MapPool({ ...MapPool.EMPTY.parsed, SZ: [1, 2, 3] }),
+					},
+					{
+						id: 2,
+						maps: new MapPool({ ...MapPool.EMPTY.parsed, SZ: [1, 2, 3] }),
+					},
+				],
+				recentlyPlayedMaps: [
+					recent[0].map((stageId) => ({ mode: "SZ", stageId })),
+					recent[1].map((stageId) => ({ mode: "SZ", stageId })),
+				],
+			});
+
+			expect(map).toEqual({ mode: "SZ", stageId: expected, source: "BOTH" });
+		},
+	);
+
+	test("draws the pool map neither team picked that was played longest ago", () => {
+		const [map] = starterMap({
+			...args,
+			modesIncluded: ["SZ"],
+			pool: new MapPool({ ...MapPool.EMPTY.parsed, SZ: [1, 2, 3, 4, 5] }),
+			teams: [
+				{ id: 1, maps: new MapPool({ ...MapPool.EMPTY.parsed, SZ: [1] }) },
+				{ id: 2, maps: new MapPool({ ...MapPool.EMPTY.parsed, SZ: [2] }) },
+			],
+			recentlyPlayedMaps: [
+				[
+					{ mode: "SZ", stageId: 3 },
+					{ mode: "SZ", stageId: 4 },
+				],
+				[{ mode: "SZ", stageId: 5 }],
+			],
+		});
+
+		expect(map).toEqual({ mode: "SZ", stageId: 4, source: "RANDOM" });
 	});
 
 	test("falls back to a picked pool map when the mode has nothing left", () => {

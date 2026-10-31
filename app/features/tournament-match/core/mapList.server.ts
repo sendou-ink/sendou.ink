@@ -12,6 +12,7 @@ import { starterMap } from "~/modules/tournament-map-list-generator/starter-map"
 import type {
 	DBTournamentMaplistSource,
 	TournamentMapListMap,
+	TournamentMaplistInput,
 	TournamentMaplistSource,
 } from "~/modules/tournament-map-list-generator/types";
 import { syncCached } from "~/utils/cache.server";
@@ -37,8 +38,8 @@ interface ResolveCurrentMapListArgs {
 		stageId: StageId | null;
 		type: Tables["TournamentMatchPickBanEvent"]["type"];
 	}>;
-	/** Both teams' recently played maps interleaved, most recent first. */
-	recentlyPlayedMaps?: Array<{ mode: ModeShort; stageId: StageId }>;
+	/** Each team's distinct recently played maps, most recent first. */
+	recentlyPlayedMaps?: TournamentMaplistInput["recentlyPlayedMaps"];
 }
 
 export function resolveMapList(
@@ -118,7 +119,7 @@ export async function resolveMatchMapList({
 					excludeMatchId: match.id,
 				}).catch((error) => {
 					logger.error("Failed to fetch recently played maps", error);
-					return [];
+					return undefined;
 				})
 			: undefined;
 

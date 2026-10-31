@@ -6,8 +6,12 @@ import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { flatZip } from "~/utils/arrays";
+import type {
+	ModeShort,
+	ModeWithStage,
+	StageId,
+} from "~/modules/in-game-lists/types";
+import { RECENTLY_PLAYED_MAPS_WINDOW } from "~/modules/tournament-map-list-generator/constants";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import { invariant } from "~/utils/invariant";
@@ -992,11 +996,7 @@ async function replaceCounterpickMaps(
 		.execute();
 }
 
-async function findTeamRecentMaps(
-	teamId: number,
-	excludeMatchId: number,
-	limit: number,
-) {
+async function findTeamRecentMaps(teamId: number, excludeMatchId: number) {
 	return db
 		.selectFrom("TournamentMatchGameResult")
 		.innerJoin(
@@ -1010,8 +1010,13 @@ async function findTeamRecentMaps(
 		])
 		.where("TournamentMatchGameResultParticipant.tournamentTeamId", "=", teamId)
 		.where("TournamentMatchGameResult.matchId", "!=", excludeMatchId)
-		.orderBy("TournamentMatchGameResult.createdAt", "desc")
-		.limit(limit)
+		.groupBy([
+			"TournamentMatchGameResult.mode",
+			"TournamentMatchGameResult.stageId",
+		])
+		.orderBy(({ fn }) => fn.max("TournamentMatchGameResult.createdAt"), "desc")
+		.orderBy(({ fn }) => fn.max("TournamentMatchGameResult.id"), "desc")
+		.limit(RECENTLY_PLAYED_MAPS_WINDOW)
 		.execute();
 }
 
@@ -1152,23 +1157,19 @@ export async function findMapPoolsByTeamIds(tournamentTeamIds: number[]) {
 	return result;
 }
 
+/** Each team's distinct recently played maps, most recent first, in the order of `teamIds`. */
 export async function findRecentlyPlayedMapsByIds({
 	teamIds,
 	excludeMatchId,
-	limit = 5,
 }: {
 	teamIds: [number, number];
 	/** The match the maps are resolved for, left out so its own played games don't change the map list mid-set. */
 	excludeMatchId: number;
-	/** Recent maps per team, default 5. */
-	limit?: number;
-}): Promise<Array<{ mode: ModeShort; stageId: StageId }>> {
-	const [teamOneMaps, teamTwoMaps] = await Promise.all([
-		findTeamRecentMaps(teamIds[0], excludeMatchId, limit),
-		findTeamRecentMaps(teamIds[1], excludeMatchId, limit),
-	]);
+}): Promise<[ModeWithStage[], ModeWithStage[]]> {
+	const teamOneMaps = await findTeamRecentMaps(teamIds[0], excludeMatchId);
+	const teamTwoMaps = await findTeamRecentMaps(teamIds[1], excludeMatchId);
 
-	return flatZip(teamOneMaps, teamTwoMaps);
+	return [teamOneMaps, teamTwoMaps];
 }
 
 /** @returns the members who lose the room when the team is deleted, empty when the team has none. */
