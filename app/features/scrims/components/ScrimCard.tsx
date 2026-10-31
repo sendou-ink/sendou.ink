@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
+import { ExpandableText } from "~/components/ExpandableText";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -141,7 +142,9 @@ export function ScrimPostCard({
 				) : null}
 			</div>
 
-			{post.text ? <ScrimExpandableText text={post.text} /> : null}
+			{post.text ? (
+				<ExpandableText text={post.text} className={styles.textContent} />
+			) : null}
 
 			{action === "REQUEST" || action === "VIEW_REQUEST" ? (
 				<ScrimFitStripe post={post} />
@@ -392,38 +395,6 @@ function ScrimInfoItem({
 	);
 }
 
-function ScrimExpandableText({ text }: { text: string }) {
-	const { t } = useTranslation(["common"]);
-	const [isExpanded, setIsExpanded] = useState(false);
-	const [isOverflowing, setIsOverflowing] = useState(false);
-
-	const measureRef = (node: HTMLDivElement | null) => {
-		if (!node) return;
-		if (node.scrollHeight - node.clientHeight > 1) {
-			setIsOverflowing(true);
-		}
-	};
-
-	return (
-		<div className={styles.textContent}>
-			<div ref={measureRef} className={clsx(!isExpanded && styles.clampedText)}>
-				{text}
-			</div>
-			{isOverflowing ? (
-				<button
-					type="button"
-					onClick={() => setIsExpanded(!isExpanded)}
-					className={styles.expandButton}
-				>
-					{isExpanded
-						? t("common:actions.showLess")
-						: t("common:actions.showMore")}
-				</button>
-			) : null}
-		</div>
-	);
-}
-
 function ScrimActionButtons({
 	action,
 	post,
@@ -605,7 +576,9 @@ export function ScrimRequestCard({
 				</div>
 			</div>
 
-			{request.message ? <ScrimExpandableText text={request.message} /> : null}
+			{request.message ? (
+				<ExpandableText text={request.message} className={styles.textContent} />
+			) : null}
 
 			{showFooter ? (
 				<div className={clsx(styles.footer, styles.requestFooter)}>

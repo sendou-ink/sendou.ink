@@ -4,7 +4,9 @@ import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
+import { ExpandableText } from "~/components/ExpandableText";
 import { LinkButton } from "~/components/elements/Button";
+import { ModeImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { useUser } from "~/features/auth/core/user";
 import type { SerializeFrom } from "~/utils/remix";
@@ -50,6 +52,11 @@ export function LobbyCard({ lobby }: { lobby: LobbyListItem }) {
 						}}
 					/>
 				</LobbyInfoItem>
+				<LobbyInfoItem label={t("lobbies:details.modes")}>
+					{lobby.modes.map((mode) => (
+						<ModeImage key={mode} mode={mode} size={18} />
+					))}
+				</LobbyInfoItem>
 				{lobby.endedAt === null ? (
 					<LobbyInfoItem label={t("lobbies:card.players")}>
 						{lobby.playerCount}/{lobby.roomSize}
@@ -73,6 +80,12 @@ export function LobbyCard({ lobby }: { lobby: LobbyListItem }) {
 					</LobbyInfoItem>
 				) : null}
 			</div>
+			{lobby.description ? (
+				<ExpandableText
+					text={lobby.description}
+					className={styles.description}
+				/>
+			) : null}
 			<div className={styles.footer}>
 				<LobbyCardActions lobby={lobby} />
 			</div>

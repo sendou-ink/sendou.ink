@@ -86,6 +86,13 @@
 	color: var(--color-fg-accent);
 }
 
+.description {
+	padding-inline: var(--s-4);
+	padding-bottom: var(--s-3);
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
 .footer {
 	display: flex;
 	justify-content: center;

@@ -261,8 +261,10 @@ export async function findAllByChatRoomIds(chatRoomIds: number[]) {
 const listColumns = [
 	"Lobby.id",
 	"Lobby.name",
+	"Lobby.description",
 	"Lobby.label",
 	"Lobby.startsAt",
+	"Lobby.modes",
 	"Lobby.roomSize",
 	"Lobby.weaponRandomizer",
 	"Lobby.endedAt",
