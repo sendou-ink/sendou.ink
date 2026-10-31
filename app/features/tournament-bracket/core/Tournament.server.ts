@@ -1,4 +1,4 @@
-import { isAfter, sub, subDays } from "date-fns";
+import { isAfter, minutesToMilliseconds, sub, subDays } from "date-fns";
 import { type Params, redirect } from "react-router";
 import { ServerConfig } from "~/config.server";
 import {
@@ -14,7 +14,6 @@ import * as BracketRepository from "~/features/tournament-bracket/BracketReposit
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import { LRUCache } from "~/modules/cache";
 import { hasPermission } from "~/modules/permissions/utils";
-import { IN_MILLISECONDS } from "~/utils/cache.server";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -302,7 +301,7 @@ export async function notifyTournamentStatusChanged(
 }
 
 const TOURNAMENT_DATA_CACHE_MAX_ENTRIES = 250;
-const TOURNAMENT_DATA_CACHE_TTL_MS = IN_MILLISECONDS.HALF_HOUR;
+const TOURNAMENT_DATA_CACHE_TTL_MS = minutesToMilliseconds(30);
 
 type TournamentDataCacheEntry = {
 	storedAt: number;

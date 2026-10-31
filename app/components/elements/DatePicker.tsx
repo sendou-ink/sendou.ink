@@ -1,5 +1,4 @@
-import { format, parse } from "date-fns";
-import { isValidDate } from "~/utils/dates";
+import { format, isValid, parse } from "date-fns";
 
 const DATE_INPUT_FORMAT = "yyyy-MM-dd";
 const DATETIME_INPUT_FORMAT = "yyyy-MM-dd'T'HH:mm";
@@ -71,5 +70,5 @@ function parseInputValue(
 		new Date(),
 	);
 
-	return isValidDate(date) ? date : null;
+	return isValid(date) ? date : null;
 }

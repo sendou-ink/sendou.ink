@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { addMilliseconds } from "date-fns";
+import { addMilliseconds, roundToNearestHours } from "date-fns";
 import { SquareArrowOutUpRight, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -39,7 +39,7 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { databaseTimestampToDate, getDateAtNextFullHour } from "~/utils/dates";
+import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -191,7 +191,7 @@ function useDefaultValues() {
 	const startTime = data.isAddingTournament
 		? data.eventToEdit?.startTimes?.[0]
 			? databaseTimestampToDate(data.eventToEdit.startTimes[0])
-			: getDateAtNextFullHour(new Date())
+			: roundToNearestHours(new Date(), { roundingMethod: "ceil" })
 		: null;
 
 	const bracketProgressionValues = settings?.bracketProgression
@@ -232,7 +232,7 @@ function useDefaultValues() {
 			? []
 			: (data.eventToEdit?.startTimes?.map((t) =>
 					databaseTimestampToDate(t),
-				) ?? [getDateAtNextFullHour(new Date())]),
+				) ?? [roundToNearestHours(new Date(), { roundingMethod: "ceil" })]),
 		startTime,
 		// tournaments hide this field, the action coalesces the empty value to the default
 		bracketUrl: data.isAddingTournament

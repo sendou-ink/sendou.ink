@@ -15,7 +15,6 @@ import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { WeaponImage } from "~/components/Image";
 import { WeaponBuildsLayout } from "~/features/builds/components/WeaponBuildsLayout";
 import type { Ability as AbilityType } from "~/modules/in-game-lists/types";
-import { roundToNDecimalPlaces } from "~/utils/number";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BUILDS_PAGE,
@@ -523,7 +522,7 @@ function AbilityPointDistribution({
 			return t("builds:stats.distribution.run", {
 				weapon: weaponName,
 				ability: abilityName,
-				percentage: roundToNDecimalPlaces(100 - skippedPercentage, 1),
+				percentage: R.round(100 - skippedPercentage, 1),
 			});
 		}
 

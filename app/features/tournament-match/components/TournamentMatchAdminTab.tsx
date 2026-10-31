@@ -1,3 +1,4 @@
+import { roundToNearestHours } from "date-fns";
 import { Ban, Lock, LockOpen, RotateCcw, SquarePen } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -24,7 +25,7 @@ import type { MatchStatus } from "~/features/tournament-bracket/core/engine";
 import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import { databaseTimestampToDate, getDateAtNextFullHour } from "~/utils/dates";
+import { databaseTimestampToDate } from "~/utils/dates";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { type MatchPageTeam, useMatch } from "../match-page-context";
 import { organizerSetLeagueTimeSchema } from "../tournament-match-schemas";
@@ -107,7 +108,7 @@ function AdminScheduleSection({
 				defaultValues={{
 					scheduledAt: schedule.scheduledAt
 						? databaseTimestampToDate(schedule.scheduledAt)
-						: getDateAtNextFullHour(new Date()),
+						: roundToNearestHours(new Date(), { roundingMethod: "ceil" }),
 				}}
 				submitButtonText={t("tournament:match.admin.setTime")}
 				submitButtonSize="small"

@@ -23,7 +23,7 @@ import {
 	ZIPCASTER_ID,
 } from "~/modules/in-game-lists/weapon-ids";
 import { invariant } from "~/utils/invariant";
-import { cutToNDecimalPlaces, roundToNDecimalPlaces } from "~/utils/number";
+import { cutToNDecimalPlaces } from "~/utils/number";
 import { assertUnreachable } from "~/utils/types";
 import {
 	DAMAGE_TYPE,
@@ -232,9 +232,10 @@ function tenacitySecondsToSpecial({
 
 	// Special Charge Up does not affect Tenacity's fill rate, so the unmodified points are used
 	const secondsToSpecial = (playerDeficit: TenacityPlayerDeficit) =>
-		roundToNDecimalPlaces(
+		R.round(
 			mainWeaponParams.SpecialPoint /
 				TENACITY_SPECIAL_POINTS_PER_SECOND[playerDeficit],
+			2,
 		);
 
 	return {
@@ -286,13 +287,15 @@ function specialLost(
 function subWeaponInkConsumptionPercentage(args: StatFunctionInput) {
 	return {
 		modifiedBy: "ISS" as const,
-		baseValue: roundToNDecimalPlaces(
+		baseValue: R.round(
 			(args.subWeaponParams.InkConsume * 100) / inkTankSize(args.weaponSplId),
+			2,
 		),
-		value: roundToNDecimalPlaces(
+		value: R.round(
 			// + 0.0045 forces e.g. 50.0005 to round up, else it shows 50% as if two subs fit
 			(subWeaponConsume(args).inkConsume * 100 + 0.0045) /
 				inkTankSize(args.weaponSplId),
+			2,
 		),
 	};
 }
@@ -383,12 +386,11 @@ function mainWeaponInkConsumptionPercentages(
 		invariant(typeof inkConsume === "number");
 
 		result[`mainWeaponInkConsumptionPercentage_${type}`] = {
-			baseValue: roundToNDecimalPlaces(
+			baseValue: R.round(
 				(baseInkConsume * 100) / inkTankSize(args.weaponSplId),
+				2,
 			),
-			value: roundToNDecimalPlaces(
-				(inkConsume * 100) / inkTankSize(args.weaponSplId),
-			),
+			value: R.round((inkConsume * 100) / inkTankSize(args.weaponSplId), 2),
 			modifiedBy: "ISM",
 		};
 	}
@@ -601,7 +603,7 @@ function specialWeaponDamages(
 					result.push({
 						type,
 						value: subValue.Damage / 10,
-						distance: roundToNDecimalPlaces(subValue.Distance * distanceRate),
+						distance: R.round(subValue.Distance * distanceRate, 2),
 						id: nanoid(),
 						multiShots: weaponIdToMultiShotCount(args.weaponSplId),
 					});
@@ -1187,8 +1189,8 @@ function shotSpreadAir(
 	const reducedExtraSpread = extraSpread * (1 - effect);
 
 	return {
-		baseValue: roundToNDecimalPlaces(jumpSpread),
-		value: roundToNDecimalPlaces(reducedExtraSpread + groundSpread),
+		baseValue: R.round(jumpSpread, 2),
+		value: R.round(reducedExtraSpread + groundSpread, 2),
 		modifiedBy: SHOT_SPREAD_AIR_ABILITY,
 	};
 }
@@ -1220,8 +1222,8 @@ function shotAutofireSpreadAir(
 	const reducedExtraSpread = extraSpread * (1 - effect);
 
 	return {
-		baseValue: roundToNDecimalPlaces(jumpSpread),
-		value: roundToNDecimalPlaces(reducedExtraSpread + groundSpread),
+		baseValue: R.round(jumpSpread, 2),
+		value: R.round(reducedExtraSpread + groundSpread, 2),
 		modifiedBy: SHOT_SPREAD_AIR_ABILITY,
 	};
 }
@@ -1386,11 +1388,11 @@ export function subStats(
 		const toValue = (rawEffect: number) => {
 			switch (type) {
 				case "NO_CHANGE":
-					return roundToNDecimalPlaces(rawEffect);
+					return R.round(rawEffect, 2);
 				case "SUB_VELOCITY":
-					return roundToNDecimalPlaces(rawEffect, 3);
+					return R.round(rawEffect, 3);
 				case "HP":
-					return roundToNDecimalPlaces(hpDivided(rawEffect), 1);
+					return R.round(hpDivided(rawEffect), 1);
 				case "TIME":
 					return framesToSeconds(rawEffect);
 				default:
@@ -1506,8 +1508,8 @@ function subDefToxicMistMovementReduction(
 	});
 
 	return {
-		baseValue: roundToNDecimalPlaces(baseEffect * 100),
-		value: roundToNDecimalPlaces(effect * 100),
+		baseValue: R.round(baseEffect * 100, 2),
+		value: R.round(effect * 100, 2),
 		modifiedBy: SUB_DEF_TOXIC_MIST_MOVEMENT_REDUCTION_KEY,
 	};
 }
@@ -1601,8 +1603,8 @@ function specialDamageDistance(
 	});
 
 	return {
-		baseValue: roundToNDecimalPlaces(baseEffect, 4),
-		value: roundToNDecimalPlaces(effect, 4),
+		baseValue: R.round(baseEffect, 4),
+		value: R.round(effect, 4),
 		modifiedBy: SPECIAL_DAMAGE_DISTANCE_KEY,
 	};
 }
@@ -1626,8 +1628,8 @@ function specialPaintRadius(
 		});
 
 		return {
-			baseValue: roundToNDecimalPlaces(baseEffect, 4),
-			value: roundToNDecimalPlaces(effect, 4),
+			baseValue: R.round(baseEffect, 4),
+			value: R.round(effect, 4),
 			modifiedBy: SPECIAL_PAINT_RADIUS_KEY,
 		};
 	}
@@ -1709,10 +1711,8 @@ function specialHookInkConsumptionPercentage(
 	});
 
 	return {
-		baseValue: roundToNDecimalPlaces(
-			(baseEffect * 100) / ZIPCASTER_INKTANK_SIZE,
-		),
-		value: roundToNDecimalPlaces((effect * 100) / ZIPCASTER_INKTANK_SIZE),
+		baseValue: R.round((baseEffect * 100) / ZIPCASTER_INKTANK_SIZE, 2),
+		value: R.round((effect * 100) / ZIPCASTER_INKTANK_SIZE, 2),
 		modifiedBy: SPECIAL_HOOK_INK_CONSUMPTION_PERCENTAGE_KEY,
 	};
 }
@@ -1740,10 +1740,8 @@ function specialInkConsumptionPerSecondPercentage(
 	});
 
 	return {
-		baseValue: roundToNDecimalPlaces(
-			(baseEffect * 100) / ZIPCASTER_INKTANK_SIZE,
-		),
-		value: roundToNDecimalPlaces((effect * 100) / ZIPCASTER_INKTANK_SIZE),
+		baseValue: R.round((baseEffect * 100) / ZIPCASTER_INKTANK_SIZE, 2),
+		value: R.round((effect * 100) / ZIPCASTER_INKTANK_SIZE, 2),
 		modifiedBy: SPECIAL_INK_CONSUMPTION_PER_SECOND_PERCENTAGE_KEY,
 	};
 }
@@ -1771,8 +1769,8 @@ function specialReticleRadius(
 	});
 
 	return {
-		baseValue: roundToNDecimalPlaces(baseEffect),
-		value: roundToNDecimalPlaces(effect),
+		baseValue: R.round(baseEffect, 2),
+		value: R.round(effect, 2),
 		modifiedBy: SPECIAL_RETICLE_RADIUS_KEY,
 	};
 }
@@ -1800,8 +1798,8 @@ function specialThrowDistance(
 	});
 
 	return {
-		baseValue: roundToNDecimalPlaces(baseEffect),
-		value: roundToNDecimalPlaces(effect),
+		baseValue: R.round(baseEffect, 2),
+		value: R.round(effect, 2),
 		modifiedBy: SPECIAL_THROW_DISTANCE_KEY,
 	};
 }
@@ -1829,8 +1827,8 @@ function specialMoveSpeed(
 	});
 
 	return {
-		baseValue: roundToNDecimalPlaces(baseEffect, 4),
-		value: roundToNDecimalPlaces(effect, 4),
+		baseValue: R.round(baseEffect, 4),
+		value: R.round(effect, 4),
 		modifiedBy: SPECIAL_MOVE_SPEED_KEY,
 	};
 }
@@ -1858,8 +1856,8 @@ function specialAutoChargeRate(
 	});
 
 	return {
-		baseValue: roundToNDecimalPlaces(baseEffect * 100),
-		value: roundToNDecimalPlaces(effect * 100),
+		baseValue: R.round(baseEffect * 100, 2),
+		value: R.round(effect * 100, 2),
 		modifiedBy: SPECIAL_AUTO_CHARGE_RATE_KEY,
 	};
 }
@@ -1887,8 +1885,8 @@ function specialMaxRadius(
 	});
 
 	return {
-		baseValue: roundToNDecimalPlaces(baseEffect),
-		value: roundToNDecimalPlaces(effect),
+		baseValue: R.round(baseEffect, 2),
+		value: R.round(effect, 2),
 		modifiedBy: SPECIAL_MAX_RADIUS_KEY,
 	};
 }
@@ -1917,8 +1915,8 @@ function specialRadiusRangeMax(
 	});
 
 	return {
-		baseValue: roundToNDecimalPlaces(radiusMax.baseEffect),
-		value: roundToNDecimalPlaces(radiusMax.effect),
+		baseValue: R.round(radiusMax.baseEffect, 2),
+		value: R.round(radiusMax.effect, 2),
 		modifiedBy: SPECIAL_RADIUS_RANGE_KEY,
 	};
 }
@@ -1946,8 +1944,8 @@ function specialRadiusRangeMin(
 	});
 
 	return {
-		baseValue: roundToNDecimalPlaces(radiusMin.baseEffect),
-		value: roundToNDecimalPlaces(radiusMin.effect),
+		baseValue: R.round(radiusMin.baseEffect, 2),
+		value: R.round(radiusMin.effect, 2),
 		modifiedBy: SPECIAL_RADIUS_RANGE_KEY,
 	};
 }

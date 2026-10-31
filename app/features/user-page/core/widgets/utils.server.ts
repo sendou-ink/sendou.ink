@@ -1,7 +1,8 @@
 import { cachified } from "@epic-web/cachified";
+import { hoursToMilliseconds } from "date-fns";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import { cache, ttl } from "~/utils/cache.server";
 
 type LeaderboardTopData = {
 	times: number;
@@ -23,8 +24,8 @@ export function cachedUserSQLeaderboardTopData() {
 	return cachified({
 		key: SQ_LEADERBOARD_TOP_CACHE_KEY,
 		cache,
-		ttl: ttl(IN_MILLISECONDS.TWO_HOURS),
-		staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_DAYS),
+		ttl: ttl(hoursToMilliseconds(2)),
+		staleWhileRevalidate: ttl(hoursToMilliseconds(48)),
 		getFreshValue: userSQLeaderboardTopData,
 	});
 }

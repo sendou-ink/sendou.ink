@@ -20,7 +20,6 @@ import type {
 	TournamentMaplistSource,
 } from "~/modules/tournament-map-list-generator/types";
 import { logger } from "~/utils/logger";
-import { averageArray } from "~/utils/number";
 import type { MatchTiers } from "../SQMatchRepository.server";
 
 type WeightsMap = Map<string, number>;
@@ -299,7 +298,7 @@ export function mapModePreferencesToModeList(
 				.filter((preference) => preference.mode === mode)
 				.map(({ preference }) => (preference === "AVOID" ? -1 : 1));
 
-			const average = averageArray(preferences.length > 0 ? preferences : [0]);
+			const average = R.mean(preferences) ?? 0;
 			const roundedAverage = Math.round(average);
 			const scoresMap = i === 0 ? groupOneScores : groupTwoScores;
 

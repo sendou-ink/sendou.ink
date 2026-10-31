@@ -1,4 +1,5 @@
 import cachified from "@epic-web/cachified";
+import { hoursToMilliseconds } from "date-fns";
 import type { Tables } from "~/db/tables";
 import { getUser } from "~/features/auth/core/user.server";
 import * as Changelog from "~/features/front-page/core/Changelog.server";
@@ -7,7 +8,7 @@ import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepos
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SplatoonRotationRepository from "~/features/splatoon-rotations/SplatoonRotationRepository.server";
-import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import { cache, ttl } from "~/utils/cache.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { avatarUrl, teamPage, userPage } from "~/utils/urls";
@@ -24,8 +25,8 @@ export const loader = async () => {
 			cachified({
 				key: "front-changelog",
 				cache,
-				ttl: ttl(IN_MILLISECONDS.ONE_HOUR),
-				staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
+				ttl: ttl(hoursToMilliseconds(1)),
+				staleWhileRevalidate: ttl(hoursToMilliseconds(2)),
 				async getFreshValue() {
 					return Changelog.get();
 				},
@@ -65,8 +66,8 @@ function cachedLeaderboards(): Promise<{
 	return cachified({
 		key: "front-leaderboard",
 		cache,
-		ttl: ttl(IN_MILLISECONDS.ONE_HOUR),
-		staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
+		ttl: ttl(hoursToMilliseconds(1)),
+		staleWhileRevalidate: ttl(hoursToMilliseconds(2)),
 		async getFreshValue() {
 			const season = Seasons.currentOrPrevious()?.nth ?? 1;
 

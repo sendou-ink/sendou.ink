@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import * as R from "remeda";
 import {
 	mainWeaponIds,
 	specialWeaponIds,
@@ -133,10 +134,6 @@ function stripTypeFields(obj: unknown): unknown {
 	return result;
 }
 
-function deepEqual(a: unknown, b: unknown): boolean {
-	return JSON.stringify(a) === JSON.stringify(b);
-}
-
 function getLeafPaths(
 	obj: unknown,
 	prefix = "",
@@ -226,7 +223,7 @@ function mergeWithHistory(
 				? getNestedValue(nextParams, paramPath)
 				: latestValue;
 
-			if (!deepEqual(versionValue, nextValue)) {
+			if (!R.isDeepEqual(versionValue, nextValue)) {
 				setNestedValueWithVersionedKey(
 					result,
 					paramPath,

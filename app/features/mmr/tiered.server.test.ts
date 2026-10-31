@@ -1,9 +1,10 @@
+import { minutesToMilliseconds } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { USER_SKILLS_CACHE_KEY } from "~/features/sendouq/q-constants";
-import { cache, IN_MILLISECONDS } from "~/utils/cache.server";
+import { cache } from "~/utils/cache.server";
 import { rankedUserSkill, userSkills } from "./tiered.server";
 
 const SEASON = 1;
@@ -40,7 +41,7 @@ describe("userSkills", () => {
 	test("expires a season whose initial skills are not seeded yet", async () => {
 		await userSkills(SEASON);
 
-		expect(cachedTtl()).toBe(IN_MILLISECONDS.HALF_HOUR);
+		expect(cachedTtl()).toBe(minutesToMilliseconds(30));
 	});
 });
 

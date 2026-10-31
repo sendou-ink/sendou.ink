@@ -3,6 +3,7 @@ import React, { type JSX } from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { useLoaderData } from "react-router";
+import * as R from "remeda";
 import { Ability } from "~/components/Ability";
 import { BackLink } from "~/components/BackLink";
 import { CircleBackdrop } from "~/components/CircleBackdrop";
@@ -49,7 +50,6 @@ import {
 	useSearchParam,
 	useSearchParamsTyped,
 } from "~/modules/search-params/hooks";
-import { roundToNDecimalPlaces } from "~/utils/number";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -507,7 +507,7 @@ function DamageReceiversGrid({
 								</div>
 								<div className={styles.hp}>
 									<span data-testid={`hp-${damageToReceiver.receiver}`}>
-										{roundToNDecimalPlaces(damageToReceiver.hitPoints)}
+										{R.round(damageToReceiver.hitPoints, 2)}
 									</span>
 									{t("analyzer:suffix.hp")}
 								</div>

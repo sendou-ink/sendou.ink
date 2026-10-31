@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import * as R from "remeda";
 import { lineOf, parseFile, ROOT } from "./ast.ts";
 
 const PACKAGE_FILE = "package.json";
@@ -221,7 +222,7 @@ function leadingComment(file: string) {
 	const firstSentence =
 		firstParagraph.match(/^.+?\.(?=\s|$)/)?.[0] ?? firstParagraph;
 
-	return capitalize(shorten(firstSentence.replace(/[.:]$/, "")));
+	return R.capitalize(shorten(firstSentence.replace(/[.:]$/, "")));
 }
 
 /** Cuts a long sentence at its first `: ` or ` — ` that leaves enough to say what the script does. */
@@ -232,8 +233,4 @@ function shorten(sentence: string) {
 		(match) => match.index >= MIN_SHORTENED_LENGTH,
 	);
 	return cut ? sentence.slice(0, cut.index) : sentence;
-}
-
-function capitalize(text: string) {
-	return text.charAt(0).toUpperCase() + text.slice(1);
 }

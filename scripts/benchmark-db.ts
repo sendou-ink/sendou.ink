@@ -1,7 +1,7 @@
+import * as R from "remeda";
 import { userAsyncLocalStorage } from "~/features/auth/core/user-context.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { logger } from "~/utils/logger";
-import { roundToNDecimalPlaces } from "~/utils/number";
 import { type BenchmarkCase, buildCases } from "./benchmark-db/cases";
 import { resolveFixtures } from "./benchmark-db/fixtures";
 
@@ -236,5 +236,5 @@ function printSummary(results: CaseResult[], skipped: string[]) {
 }
 
 function formatMs(ms: number) {
-	return `${roundToNDecimalPlaces(ms)}ms`;
+	return `${R.round(ms, 2)}ms`;
 }

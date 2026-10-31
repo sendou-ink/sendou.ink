@@ -3,7 +3,6 @@ import { abilities } from "~/modules/in-game-lists/abilities";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { Ability, MainWeaponId } from "~/modules/in-game-lists/types";
 import { invariant } from "~/utils/invariant";
-import { roundToNDecimalPlaces } from "~/utils/number";
 import { MAIN_SLOT_AP } from "../build-analyzer/analyzer-constants";
 import type * as BuildRepository from "../builds/BuildRepository.server";
 import {
@@ -200,7 +199,7 @@ function isSingleAbilityBuild(build: NewestBuild) {
 function ratio(part: number, whole: number) {
 	if (whole === 0) return 0;
 
-	return roundToNDecimalPlaces(part / whole, 1);
+	return R.round(part / whole, 1);
 }
 
 function percentage(part: number, whole: number) {

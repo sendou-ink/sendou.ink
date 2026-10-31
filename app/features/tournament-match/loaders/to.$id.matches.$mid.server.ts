@@ -1,4 +1,5 @@
 import cachified from "@epic-web/cachified";
+import { hoursToMilliseconds } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
 import type { WindowSchedule } from "~/features/availability/availability-types";
 import * as Availability from "~/features/availability/core/Availability";
@@ -24,7 +25,7 @@ import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-
 import { showsOneGroupAtATime } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import { cache, ttl } from "~/utils/cache.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
@@ -120,7 +121,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 					key: `no-screen-mid-${matchId}-${match.opponentOne.id}-${match.opponentTwo.id}`,
 					cache,
 					// avoid preferences from other test runs leaking in
-					ttl: IS_E2E_TEST_RUN ? -1 : ttl(IN_MILLISECONDS.TWO_DAYS),
+					ttl: IS_E2E_TEST_RUN ? -1 : ttl(hoursToMilliseconds(48)),
 					async getFreshValue() {
 						return UserRepository.anyUserPrefersNoScreen(
 							match.players.map((p) => p.id),

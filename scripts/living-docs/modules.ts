@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { Node } from "oxc-parser";
+import * as R from "remeda";
 import {
 	type JsDoc,
 	jsDocOf,
@@ -170,7 +171,7 @@ export function documentModule(
 		],
 		dependencies: importsOf(modulePath).filter(isModuleFile),
 		dependents: groupUsages(
-			uniqueBy(productionUsages, (usage) => usage.file),
+			R.uniqueBy(productionUsages, (usage) => usage.file),
 			routePathsByFile,
 		),
 	} satisfies ModuleDoc;
@@ -320,7 +321,7 @@ function groupUsages(
 				line,
 				routes: routePathsByFile.get(file) ?? [],
 			}));
-		const unique = uniqueBy(items, (item) => item.file);
+		const unique = R.uniqueBy(items, (item) => item.file);
 		if (unique.length > 0) {
 			groups.push({
 				kind: kind.id,
@@ -332,14 +333,4 @@ function groupUsages(
 	}
 
 	return groups;
-}
-
-function uniqueBy<T>(items: T[], key: (item: T) => string) {
-	const seen = new Set<string>();
-
-	return items.filter((item) => {
-		if (seen.has(key(item))) return false;
-		seen.add(key(item));
-		return true;
-	});
 }

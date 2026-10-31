@@ -1,4 +1,5 @@
 import cachified from "@epic-web/cachified";
+import { hoursToMilliseconds } from "date-fns";
 import * as R from "remeda";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -8,7 +9,7 @@ import {
 } from "~/features/tournament/tournament-utils";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
-import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import { cache, ttl } from "~/utils/cache.server";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -165,7 +166,7 @@ async function cachedTournaments() {
 	return cachified({
 		key: SHOWCASE_TOURNAMENTS_CACHE_KEY,
 		cache,
-		ttl: ttl(IN_MILLISECONDS.TWO_HOURS),
+		ttl: ttl(hoursToMilliseconds(2)),
 		async getFreshValue() {
 			const tournaments = await TournamentRepository.findAllForShowcase();
 			const mapped = tournaments.map(mapTournamentFromDB);

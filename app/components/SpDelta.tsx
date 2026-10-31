@@ -1,11 +1,11 @@
 import clsx from "clsx";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { roundToNDecimalPlaces } from "~/utils/number";
+import * as R from "remeda";
 import styles from "./SpDelta.module.css";
 
 /** SP change as a colored chevron (none for zero) and the size. */
 export function SpDelta({ diff }: { diff: number }) {
-	const rounded = roundToNDecimalPlaces(diff);
+	const rounded = R.round(diff, 2);
 	const Icon = rounded > 0 ? ChevronUp : ChevronDown;
 
 	return (

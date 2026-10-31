@@ -138,25 +138,6 @@ export function weekNumberToDateRange({
 	return { startTime, endTime };
 }
 
-export function isValidDate(date: Date) {
-	return !Number.isNaN(date.getTime());
-}
-
-export function getDateAtNextFullHour(date: Date) {
-	const copiedDate = new Date(date.getTime());
-	if (
-		date.getMinutes() > 0 ||
-		date.getSeconds() > 0 ||
-		date.getMilliseconds() > 0
-	) {
-		copiedDate.setHours(date.getHours() + 1);
-		copiedDate.setMinutes(0);
-	}
-	copiedDate.setSeconds(0);
-	copiedDate.setMilliseconds(0);
-	return copiedDate;
-}
-
 export function dateToYYYYMMDD(date: Date) {
 	return date.toISOString().split("T")[0];
 }

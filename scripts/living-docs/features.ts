@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import * as R from "remeda";
 import { ROOT } from "./ast.ts";
 import { featureModulePaths } from "./modules.ts";
 import { featureRepositoryPaths } from "./repositories.ts";
@@ -118,7 +119,7 @@ export function discoverFeatures(
 
 	const features = featureIds.map((id) => ({
 		id,
-		label: LABELS[id] ?? capitalize(id.replaceAll("-", " ")),
+		label: LABELS[id] ?? R.capitalize(id.replaceAll("-", " ")),
 		navIcon: NAV_ICONS[id] ?? null,
 		readmePath: readmePathOf(id),
 		modulePaths: featureModulePaths(`${FEATURES_DIR}/${id}`),
@@ -160,8 +161,4 @@ function readmePathOf(featureId: string) {
 	const readmePath = FEATURE_README_PATTERN.replace("*", featureId);
 
 	return fs.existsSync(path.join(ROOT, readmePath)) ? readmePath : null;
-}
-
-function capitalize(text: string) {
-	return text.charAt(0).toUpperCase() + text.slice(1);
 }

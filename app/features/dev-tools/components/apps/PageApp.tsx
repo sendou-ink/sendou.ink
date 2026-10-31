@@ -1,6 +1,7 @@
 import { Check, FileSearch, Trash2, X } from "lucide-react";
 import * as React from "react";
 import { useFetcher, useLocation, useMatches, useNavigate } from "react-router";
+import * as R from "remeda";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -668,7 +669,7 @@ function StorageSection() {
 									{row.status === "ok" ? (
 										<JsonTree value={row.decoded} openDepth={0} />
 									) : (
-										<code>{truncate(row.raw, 160)}</code>
+										<code>{R.truncate(row.raw, 160, { omission: "…" })}</code>
 									)}
 								</td>
 								<td>
@@ -735,8 +736,4 @@ function fileBaseName(path: string) {
 			.at(-1)
 			?.replace(/\.tsx?$/, "") ?? path
 	);
-}
-
-function truncate(text: string, length: number) {
-	return text.length > length ? `${text.slice(0, length)}…` : text;
 }

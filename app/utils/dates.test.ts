@@ -1,29 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import {
-	getDateAtNextFullHour,
-	weekNumberToDate,
-	weekNumberToDateRange,
-} from "./dates";
-
-describe("getDateAtNextFullHour", () => {
-	test("returns a date sitting exactly on a full hour (no leftover minutes/seconds/milliseconds)", () => {
-		const result = getDateAtNextFullHour(new Date(2024, 0, 1, 14, 30, 0, 500));
-
-		expect(result).toEqual(new Date(2024, 0, 1, 15, 0, 0, 0));
-	});
-
-	test("advances to the next hour when only seconds/milliseconds are past the hour", () => {
-		const result = getDateAtNextFullHour(new Date(2024, 0, 1, 14, 0, 30, 0));
-
-		expect(result).toEqual(new Date(2024, 0, 1, 15, 0, 0, 0));
-	});
-
-	test("keeps the same hour when already exactly on a full hour", () => {
-		const result = getDateAtNextFullHour(new Date(2024, 0, 1, 14, 0, 0, 0));
-
-		expect(result).toEqual(new Date(2024, 0, 1, 14, 0, 0, 0));
-	});
-});
+import { weekNumberToDate, weekNumberToDateRange } from "./dates";
 
 describe("weekNumberToDate", () => {
 	// the bug only manifests west of UTC

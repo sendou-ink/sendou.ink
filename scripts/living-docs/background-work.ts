@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { Node } from "oxc-parser";
+import * as R from "remeda";
 import { appRoutes } from "./app-routes.ts";
 import {
 	jsDocOf,
@@ -185,7 +186,7 @@ export function documentBackgroundWork(): BackgroundWork {
 		outboundWebhooks: outboundWebhooks(sourceFiles, callSite),
 		notificationTypes: notificationTypes().map((notification) => ({
 			...notification,
-			senders: uniqueBy(
+			senders: R.uniqueBy(
 				notificationSenders.filter(
 					(sender) => sender.type === notification.type,
 				),
@@ -873,16 +874,6 @@ function stringValue(node: Node | null | undefined) {
 	return node?.type === "Literal" && typeof node.value === "string"
 		? node.value
 		: undefined;
-}
-
-function uniqueBy<T>(items: T[], key: (item: T) => string) {
-	const seen = new Set<string>();
-	return items.filter((item) => {
-		const itemKey = key(item);
-		if (seen.has(itemKey)) return false;
-		seen.add(itemKey);
-		return true;
-	});
 }
 
 /** Multiline source as one line, e.g. a call with an object argument. */

@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from "node:timers/promises";
 import * as v from "valibot";
 import { ServerConfig } from "~/config.server";
 import { STAFF_DISCORD_IDS } from "~/features/admin/admin-constants";
@@ -101,10 +102,6 @@ async function fetchPatronData(urlToFetch: string) {
 	}
 
 	throw new Error("Unexpected end of fetch retry loop");
-}
-
-function sleep(ms: number) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function parsePatronData({

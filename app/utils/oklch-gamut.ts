@@ -1,3 +1,5 @@
+import * as R from "remeda";
+
 export interface Oklch {
 	/** Lightness, 0-1 */
 	l: number;
@@ -211,15 +213,11 @@ function find_gamut_intersection(
 	return t;
 }
 
-function clamp(x: number, min: number, max: number): number {
-	return Math.min(Math.max(x, min), max);
-}
-
 function maximum_chroma_for_lh(L: number, h: number): number {
 	const a = Math.cos(h);
 	const b = Math.sin(h);
 
-	const L0 = clamp(L, 0, 1);
+	const L0 = R.clamp(L, { min: 0, max: 1 });
 
 	const t = find_gamut_intersection(a, b, L, 1, L0);
 
@@ -273,7 +271,9 @@ function relativeLuminance(color: Oklch): number {
 	const { r, g, b } = oklchToLinearSrgb(color);
 
 	return (
-		0.2126 * clamp(r, 0, 1) + 0.7152 * clamp(g, 0, 1) + 0.0722 * clamp(b, 0, 1)
+		0.2126 * R.clamp(r, { min: 0, max: 1 }) +
+		0.7152 * R.clamp(g, { min: 0, max: 1 }) +
+		0.0722 * R.clamp(b, { min: 0, max: 1 })
 	);
 }
 

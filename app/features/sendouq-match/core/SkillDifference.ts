@@ -1,6 +1,6 @@
+import * as R from "remeda";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { defaultOrdinal, ordinalToSp } from "~/features/mmr/mmr-utils";
-import { roundToNDecimalPlaces } from "~/utils/number";
 
 type CalculatingSkill = {
 	calculated: false;
@@ -43,7 +43,7 @@ export function forUser(change: RatingChange): UserSkillDifference {
 
 	return {
 		calculated,
-		spDiff: roundToNDecimalPlaces(newSp - oldSp),
+		spDiff: R.round(newSp - oldSp, 2),
 		oldSp,
 		newSp,
 	};

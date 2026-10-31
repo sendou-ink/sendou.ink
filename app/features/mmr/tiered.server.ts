@@ -1,6 +1,7 @@
 import { cachified } from "@epic-web/cachified";
+import { minutesToMilliseconds } from "date-fns";
 import type { Tables } from "~/db/tables";
-import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import { cache, ttl } from "~/utils/cache.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards/leaderboards-constants";
 import { USER_SKILLS_CACHE_KEY } from "../sendouq/q-constants";
 import {
@@ -68,7 +69,7 @@ export function userSkills(season: number, { forceFresh = false } = {}) {
 			const value = await freshUserSkills(season);
 
 			if (Object.keys(value.userSkills).length === 0) {
-				context.metadata.ttl = ttl(IN_MILLISECONDS.HALF_HOUR);
+				context.metadata.ttl = ttl(minutesToMilliseconds(30));
 			}
 
 			return value;

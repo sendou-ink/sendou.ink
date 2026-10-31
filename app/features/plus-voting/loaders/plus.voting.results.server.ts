@@ -1,10 +1,10 @@
+import * as R from "remeda";
 import { getUser } from "~/features/auth/core/user.server";
 import { lastCompletedVoting } from "~/features/plus-voting/core";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { invariant } from "~/utils/invariant";
 import type { UserWithPlusTier } from "~/utils/kysely.server";
-import { roundToNDecimalPlaces } from "~/utils/number";
 
 export const loader = async () => {
 	const user = getUser();
@@ -69,12 +69,13 @@ function ownScores({
 				tier: result.tier,
 				score: databaseAvgToPercentage(result.score),
 				passedVoting: result.passedVoting,
-				betterThan: roundToNDecimalPlaces(
+				betterThan: R.round(
 					(resultsOfOwnTierExcludingOwn().filter(
 						(otherResult) => otherResult.score <= result.score,
 					).length /
 						resultsOfOwnTierExcludingOwn().length) *
 						100,
+					2,
 				),
 			};
 
@@ -90,5 +91,5 @@ function ownScores({
 function databaseAvgToPercentage(score: number) {
 	const scoreNormalized = score + 1;
 
-	return roundToNDecimalPlaces((scoreNormalized / 2) * 100);
+	return R.round((scoreNormalized / 2) * 100, 2);
 }

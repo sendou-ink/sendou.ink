@@ -1,3 +1,5 @@
+import * as R from "remeda";
+
 const VARIABLE_REGEX = /\{\{\s*([^{}]+?)\s*\}\}/g;
 const NESTING_REGEX = /\$t\([^)]*\)/g;
 const TAG_REGEX = /<(\/?)([a-zA-Z0-9]+)\s*(\/?)>/g;
@@ -76,16 +78,16 @@ export function validate({
 		return issues;
 	}
 
-	const sourceTagCounts = countBy(sourceTags.map(tagPlaceholder));
-	const translationTagCounts = countBy(translationTags.map(tagPlaceholder));
+	const sourceTagCounts = R.countBy(sourceTags, tagPlaceholder);
+	const translationTagCounts = R.countBy(translationTags, tagPlaceholder);
 
-	for (const [placeholder, count] of sourceTagCounts) {
-		if ((translationTagCounts.get(placeholder) ?? 0) < count) {
+	for (const [placeholder, count] of Object.entries(sourceTagCounts)) {
+		if ((translationTagCounts[placeholder] ?? 0) < count) {
 			issues.push({ type: "MISSING_PLACEHOLDER", placeholder });
 		}
 	}
-	for (const [placeholder, count] of translationTagCounts) {
-		if ((sourceTagCounts.get(placeholder) ?? 0) < count) {
+	for (const [placeholder, count] of Object.entries(translationTagCounts)) {
+		if ((sourceTagCounts[placeholder] ?? 0) < count) {
 			issues.push({ type: "UNKNOWN_PLACEHOLDER", placeholder });
 		}
 	}
@@ -210,12 +212,4 @@ function normalizePlaceholder(raw: string) {
 	}
 
 	return raw;
-}
-
-function countBy(values: string[]) {
-	const result = new Map<string, number>();
-	for (const value of values) {
-		result.set(value, (result.get(value) ?? 0) + 1);
-	}
-	return result;
 }

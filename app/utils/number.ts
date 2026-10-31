@@ -1,11 +1,4 @@
-import * as R from "remeda";
-
 const NICE_STEP_MULTIPLIERS = [1, 2, 5, 10];
-
-/** Rounds to `n` decimal places (default 2). */
-export function roundToNDecimalPlaces(num: number, n = 2) {
-	return Number((Math.round(num * 10 ** n) / 10 ** n).toFixed(n));
-}
 
 /** Truncates to `n` decimal places without rounding, dropping trailing zeros (3.0001 → 3). */
 export function cutToNDecimalPlaces(num: number, n = 2) {
@@ -15,13 +8,6 @@ export function cutToNDecimalPlaces(num: number, n = 2) {
 	const truncatedNum = Math.trunc(scaled) / multiplier;
 	const result = truncatedNum.toFixed(n);
 	return Number(n > 0 ? result.replace(/\.?0+$/, "") : result);
-}
-
-/** Arithmetic mean, 0 for an empty array. */
-export function averageArray(arr: number[]) {
-	if (arr.length === 0) return 0;
-
-	return R.sum(arr) / arr.length;
 }
 
 /** Parses a trimmed string into a number; `null` for `null`, empty or non-numeric input. */

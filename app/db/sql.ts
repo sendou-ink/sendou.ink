@@ -1,11 +1,11 @@
 import { DatabaseSync } from "node:sqlite";
 import { styleText } from "node:util";
 import { Kysely, type LogEvent } from "kysely";
+import * as R from "remeda";
 import { format } from "sql-formatter";
 import { ServerConfig } from "~/config.server";
 import { devToolsServerHooks } from "~/features/dev-tools/dev-tools-server-hooks.server";
 import { logger } from "~/utils/logger";
-import { roundToNDecimalPlaces } from "~/utils/number";
 import { EmptyValuesNoopPlugin } from "./empty-values-noop-plugin";
 import { JSON_COLUMNS } from "./json-columns";
 import { computedJsonColumns } from "./json-selections";
@@ -110,7 +110,7 @@ function logQuery(event: LogEvent) {
 		console.log(
 			styleText(
 				millisToColor(event.queryDurationMillis),
-				`${roundToNDecimalPlaces(event.queryDurationMillis, 1)}ms`,
+				`${R.round(event.queryDurationMillis, 1)}ms`,
 			),
 		);
 		// biome-ignore lint/suspicious/noConsole: dev only

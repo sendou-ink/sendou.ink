@@ -1,4 +1,5 @@
 import { cachified } from "@epic-web/cachified";
+import { hoursToMilliseconds, minutesToMilliseconds } from "date-fns";
 import * as R from "remeda";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import type {
@@ -12,7 +13,7 @@ import { userSkills } from "~/features/mmr/tiered.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
-import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import { cache, ttl } from "~/utils/cache.server";
 import type { Unwrapped } from "~/utils/types";
 import { DEFAULT_LEADERBOARD_MAX_SIZE } from "../leaderboards-constants";
 import { seasonHasTopTen } from "../leaderboards-utils";
@@ -24,8 +25,8 @@ export async function cachedFullUserLeaderboard(season: number) {
 	return cachified({
 		key: `user-leaderboard-season-${season}`,
 		cache,
-		ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
-		staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
+		ttl: ttl(minutesToMilliseconds(30)),
+		staleWhileRevalidate: ttl(hoursToMilliseconds(2)),
 		async getFreshValue() {
 			const leaderboard =
 				await LeaderboardRepository.findUserSPLeaderboard(season);
@@ -62,8 +63,8 @@ export async function cachedTeamLeaderboard({
 	return cachified({
 		key: teamLeaderboardCacheKey({ season, onlyOneEntryPerUser }),
 		cache,
-		ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
-		staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
+		ttl: ttl(minutesToMilliseconds(30)),
+		staleWhileRevalidate: ttl(hoursToMilliseconds(2)),
 		async getFreshValue() {
 			return LeaderboardRepository.findTeamLeaderboardBySeason({
 				season,

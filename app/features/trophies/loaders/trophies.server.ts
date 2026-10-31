@@ -1,6 +1,7 @@
 import { cachified } from "@epic-web/cachified";
+import { hoursToMilliseconds } from "date-fns";
 import * as R from "remeda";
-import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import { cache, ttl } from "~/utils/cache.server";
 import * as XpTrophy from "../core/XpTrophy";
 import * as TrophyRepository from "../TrophyRepository.server";
 
@@ -11,7 +12,7 @@ export const loader = async () => {
 		cachified({
 			key: TROPHIES_CACHE_KEY,
 			cache,
-			ttl: ttl(IN_MILLISECONDS.TWO_HOURS),
+			ttl: ttl(hoursToMilliseconds(2)),
 			async getFreshValue() {
 				return TrophyRepository.all();
 			},

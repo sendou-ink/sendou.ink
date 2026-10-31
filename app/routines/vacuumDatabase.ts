@@ -1,7 +1,7 @@
 import { CompiledQuery, sql } from "kysely";
+import * as R from "remeda";
 import { db } from "../db/sql";
 import { logger } from "../utils/logger";
-import { roundToNDecimalPlaces } from "../utils/number";
 import { Routine } from "./routine.server";
 
 const BYTES_IN_MB = 1024 * 1024;
@@ -63,5 +63,5 @@ async function databaseSizeInBytes() {
 }
 
 function inMb(bytes: number) {
-	return roundToNDecimalPlaces(bytes / BYTES_IN_MB, 1);
+	return R.round(bytes / BYTES_IN_MB, 1);
 }

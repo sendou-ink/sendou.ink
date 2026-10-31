@@ -13,7 +13,6 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import { invariant } from "~/utils/invariant";
-import { roundToNDecimalPlaces } from "~/utils/number";
 import {
 	DAMAGE_RECEIVERS,
 	damagePriorities,
@@ -309,14 +308,14 @@ export function calculateDamage({
 						baseMultiplier() *
 						(damage.objectShredder ? objectShredderMultiplier : 1);
 
-					const damagePerHit = roundToNDecimalPlaces(dmg() * multiplier);
+					const damagePerHit = R.round(dmg() * multiplier, 2);
 
 					const hitsToDestroy = Math.ceil(damageReceiverHp / damagePerHit);
 
 					return {
 						value: damagePerHit,
 						hitsToDestroy,
-						multiplier: roundToNDecimalPlaces(multiplier, 2),
+						multiplier: R.round(multiplier, 2),
 						type: damage.type,
 						id: `${damage.id}-${String(damage.objectShredder)}`,
 						distance: damage.distance,

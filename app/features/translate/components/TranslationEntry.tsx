@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import * as React from "react";
 import { Link } from "react-router";
+import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import { toastQueue } from "~/components/elements/Toast";
 import { useUnsavedChangesChecker } from "~/form/UnsavedChangesGuard";
@@ -269,7 +270,7 @@ function FormTexts({
 		<div className={styles.texts}>
 			{isPlural && form.pluralCategory ? (
 				<div className={styles.pluralCategory}>
-					{capitalize(form.pluralCategory)}
+					{R.capitalize(form.pluralCategory)}
 					<span className="text-lighter">
 						{" "}
 						e.g. {pluralExamples(language, form.pluralCategory).join(", ")}
@@ -379,8 +380,4 @@ function issueMessage(issue: TranslationSyntax.SyntaxIssue) {
 		case "UNSUPPORTED_MARKUP":
 			return "Tags can't have attributes or other HTML syntax";
 	}
-}
-
-function capitalize(text: string) {
-	return `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
 }

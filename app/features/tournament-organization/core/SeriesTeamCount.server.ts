@@ -1,7 +1,7 @@
 import { cachified } from "@epic-web/cachified";
-import { subDays } from "date-fns";
+import { hoursToMilliseconds, subDays } from "date-fns";
 import * as R from "remeda";
-import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import { cache, ttl } from "~/utils/cache.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 
@@ -52,7 +52,7 @@ function cachedSeriesTeamCounts() {
 	return cachified({
 		key: CACHE_KEY,
 		cache,
-		ttl: ttl(IN_MILLISECONDS.TWO_HOURS),
+		ttl: ttl(hoursToMilliseconds(2)),
 		getFreshValue: seriesTeamCounts,
 	});
 }

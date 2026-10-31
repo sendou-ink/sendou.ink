@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { roundToNearestHours } from "date-fns";
 import { Check, Lock, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ActionButton } from "~/components/ActionButton";
@@ -29,7 +30,7 @@ import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-sc
 import { SendouForm } from "~/form/SendouForm";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import { databaseTimestampToDate, getDateAtNextFullHour } from "~/utils/dates";
+import { databaseTimestampToDate } from "~/utils/dates";
 import * as LeagueScheduling from "../core/LeagueScheduling";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { type MatchPageTeam, useMatch } from "../match-page-context";
@@ -308,7 +309,7 @@ function ProposeTimesForm({
 	const { t } = useTranslation(["tournament"]);
 
 	const earliest = Math.max(
-		getDateAtNextFullHour(new Date()).getTime(),
+		roundToNearestHours(new Date(), { roundingMethod: "ceil" }).getTime(),
 		isPlayableAt !== null ? databaseTimestampToDate(isPlayableAt).getTime() : 0,
 	);
 	const hasProposed = ownProposedAts.length > 0;

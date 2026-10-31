@@ -1,7 +1,7 @@
+import * as R from "remeda";
 import { describe, expect, test } from "vitest";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
-import { roundToNDecimalPlaces } from "~/utils/number";
 import { damageTypeToWeaponType } from "../analyzer-constants";
 import { buildStats } from "./stats";
 import { mainWeaponParams } from "./utils";
@@ -337,7 +337,7 @@ describe("Analyze build", () => {
 
 		expect(
 			analyzedJr.stats.mainWeaponInkConsumptionPercentage_NORMAL?.baseValue,
-		).toBe(roundToNDecimalPlaces((jrParams.InkConsume! * 100) / 1.1));
+		).toBe(R.round((jrParams.InkConsume! * 100) / 1.1, 2));
 	});
 
 	test.each([
