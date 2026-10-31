@@ -47,6 +47,20 @@ export function checkInOpensAt(startsAt: number) {
 	return startsAt - CHECK_IN_LEAD_MINUTES * SECONDS_PER_MINUTE;
 }
 
+/** When the status next changes by the clock alone: check-in opening, then the start. `null` once started. */
+export function nextStatusChangeAt({
+	status: lobbyStatus,
+	startsAt,
+}: {
+	status: LobbyStatus;
+	startsAt: number;
+}) {
+	if (lobbyStatus === "UPCOMING") return checkInOpensAt(startsAt);
+	if (lobbyStatus === "CHECK_IN") return startsAt;
+
+	return null;
+}
+
 /** Whether a lobby has gone long enough without anything happening to be closed. */
 export function isAutoCloseDue({
 	status: lobbyStatus,

@@ -1,9 +1,10 @@
 import type { Page } from "@playwright/test";
-import { addMinutes, subHours, subMinutes } from "date-fns";
+import { addMinutes, addSeconds, subHours, subMinutes } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import type {
-	LobbyRoomSize,
-	LobbyWeaponRandomizer,
+import {
+	CHECK_IN_LEAD_MINUTES,
+	type LobbyRoomSize,
+	type LobbyWeaponRandomizer,
 } from "~/features/lobbies/lobbies-constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { openSecondUser } from "./helpers/chat";
@@ -40,7 +41,8 @@ test.describe("Lobbies", () => {
 	/**
 	 * Only a supporter can make a lobby, others sign up for it. Signing up before the start reserves
 	 * a spot, check-in opening 10 minutes before the start with a notification to the signed
-	 * up, and once the lobby has started signing up checks in right away. Past the room size
+	 * up, the check-in button appearing on an open page as it does. Checking in shows the room's
+	 * pool and pass. Once the lobby has started signing up checks in right away. Past the room size
 	 * sign-ups go to the waitlist, the first on it taking a spot someone frees and being
 	 * notified of it. When the lobby starts the waitlisted stay on the waitlist, unless
 	 * someone with a spot didn't check in: then a waitlisted player checking in plays in
@@ -148,6 +150,47 @@ test.describe("Lobbies", () => {
 			await expect(lobbyPage.locators.startBanner).toContainText(
 				"1/8 checked in",
 			);
+		});
+
+		test("check-in opening shows the check-in button on an open page, checking in the room's pool and pass", async ({
+			page,
+			factories,
+		}) => {
+			const host = await factories.UserFactory.create();
+			const signedUp = await factories.UserFactory.create();
+			const lobby = await factories.LobbyFactory.create(
+				{
+					hostUserId: host.id,
+					startsAt: dateToDatabaseTimestamp(
+						addSeconds(addMinutes(new Date(), CHECK_IN_LEAD_MINUTES), 10),
+					),
+				},
+				{ signedUpUserIds: [signedUp.id] },
+			);
+			const lobbyPage = new LobbyPage(page);
+
+			await test.step("Before check-in opens there is no check-in button", async () => {
+				await impersonate(page, signedUp.id);
+				await lobbyPage.goto(lobby.id);
+
+				await expect(lobbyPage.locators.viewerStatus).toContainText(
+					"check-in opens 10 minutes before the start",
+				);
+				await isNotVisible(lobbyPage.locators.checkInButton);
+			});
+
+			await test.step("The check-in button appears as check-in opens", async () => {
+				await expect(lobbyPage.locators.checkInButton).toBeVisible({
+					timeout: 20_000,
+				});
+			});
+
+			await test.step("Checking in shows the room's pool and pass", async () => {
+				await lobbyPage.checkIn();
+
+				await expect(lobbyPage.locators.roomPool).toBeVisible();
+				await expect(lobbyPage.locators.roomPass).toBeVisible();
+			});
 		});
 
 		test("past the room size sign-ups go to the waitlist", async ({
@@ -765,8 +808,8 @@ test.describe("Lobbies", () => {
 	 * out, rotating in for the next one. When the room is short of 8 the waitlist is asked,
 	 * with a notification, who is ready to take the open spot, and confirming fills it. The
 	 * first on the waitlist has priority on the spot for 3 minutes, others confirming before
-	 * them waiting. Once the priority runs out the spot goes to whoever confirms first. Signing
-	 * up while a spot is open counts as confirming.
+	 * them waiting, without the room's pool and pass. Once the priority runs out the spot goes
+	 * to whoever confirms first. Signing up while a spot is open counts as confirming.
 	 */
 	test.describe("Between sets", () => {
 		test("the next set opens on the Rosters tab with the teams reshuffled", async ({
@@ -908,6 +951,25 @@ test.describe("Lobbies", () => {
 					"You're playing",
 				);
 			});
+		});
+
+		test("a player checked in but left waiting for a spot doesn't see the room's pool and pass", async ({
+			page,
+			factories,
+		}) => {
+			const { lobby, waitlist } = await lobbyWithOpenSpot(page, factories);
+			const third = waitlist[2];
+			const lobbyPage = new LobbyPage(page);
+
+			await impersonate(page, third.id);
+			await lobbyPage.goto(lobby.id);
+			await lobbyPage.confirmReady();
+
+			await expect(lobbyPage.locators.readyCheck).toContainText(
+				"Confirmed, waiting for the others",
+			);
+			await isNotVisible(lobbyPage.locators.roomPool);
+			await isNotVisible(lobbyPage.locators.roomPass);
 		});
 
 		test("signing up while the waitlist has priority counts as ready", async ({

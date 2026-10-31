@@ -16,7 +16,7 @@ import { LobbyParticipants } from "../components/LobbyParticipants";
 import { LobbyStartBanner } from "../components/LobbyStartBanner";
 import { LobbyViewerPanel } from "../components/LobbyViewerPanel";
 import { type LobbyLoaderData, loader } from "../loaders/lobbies.$id.server";
-import { useLobbyView } from "../lobbies-hooks";
+import { useLobbyView, useRevalidateOnStatusChange } from "../lobbies-hooks";
 import { lobbyChannel } from "../lobbies-utils";
 
 export { action, loader };
@@ -47,6 +47,7 @@ export default function LobbyPage() {
 
 	useTopicRevalidation(lobbyChannel(data.lobby.id), !isEnded);
 	useVoiceFollow(data.teamChatRoomId);
+	useRevalidateOnStatusChange();
 
 	return (
 		<Main>

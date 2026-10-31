@@ -55,6 +55,9 @@ export class LobbyPage {
 			forfeitNote: page.getByTestId("lobby-forfeit-note"),
 			waitingBanner: page.getByTestId("lobby-waiting-banner"),
 			startBanner: page.getByTestId("lobby-start-banner"),
+			// the in-game private battle to join, shown to those with a place in the room
+			roomPool: page.getByRole("main").getByText("Pool", { exact: true }),
+			roomPass: page.getByTestId("room-pass"),
 			description: page.getByTestId("lobby-description"),
 			weaponRandomizer: page.getByTestId("lobby-weapon-randomizer"),
 			rosterRolledWeapons: page

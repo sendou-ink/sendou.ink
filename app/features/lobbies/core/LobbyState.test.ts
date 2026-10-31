@@ -204,3 +204,21 @@ describe("LobbyState.checkInOpensAt", () => {
 		expect(LobbyState.checkInOpensAt(STARTS_AT)).toBe(STARTS_AT - 10 * MINUTE);
 	});
 });
+
+describe("LobbyState.nextStatusChangeAt", () => {
+	test.each([
+		{
+			why: "upcoming → check-in opening",
+			status: "UPCOMING",
+			expected: STARTS_AT - 10 * MINUTE,
+		},
+		{ why: "check-in → the start", status: "CHECK_IN", expected: STARTS_AT },
+		{ why: "pending", status: "PENDING", expected: null },
+		{ why: "active", status: "ACTIVE", expected: null },
+		{ why: "ended", status: "ENDED", expected: null },
+	] as const)("$why", ({ status, expected }) => {
+		expect(LobbyState.nextStatusChangeAt({ status, startsAt: STARTS_AT })).toBe(
+			expected,
+		);
+	});
+});
