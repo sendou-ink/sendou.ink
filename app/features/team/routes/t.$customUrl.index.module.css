@@ -114,4 +114,11 @@
 	.actionButtons {
 		justify-content: flex-end;
 	}
+
+	/* takes the place of the layout's avatar spacer (4rem tall, one stack gap above) */
+	.actionButtonsBesideAvatar {
+		min-height: 4rem;
+		margin-block-start: calc(-4rem - var(--s-2));
+		padding-inline-start: calc(10rem + var(--s-6));
+	}
 }

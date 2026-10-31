@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import {
 	CalendarDays,
 	LogOut,
@@ -126,13 +127,16 @@ function ActionButtons() {
 	const canManageRoster = useHasPermission(team, "MANAGE_ROSTER");
 	const canEditTeam = useHasPermission(team, "EDIT");
 	const isMember = isTeamMember({ user, team });
-
 	if (!isMember && !canManageRoster && !canEditTeam) {
 		return null;
 	}
 
 	return (
-		<div className={styles.actionButtons}>
+		<div
+			className={clsx(styles.actionButtons, {
+				[styles.actionButtonsBesideAvatar]: team.avatarUrl,
+			})}
+		>
 			{isMember ? (
 				<LinkButton
 					size="small"
