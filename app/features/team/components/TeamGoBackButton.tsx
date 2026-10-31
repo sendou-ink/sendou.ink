@@ -18,6 +18,7 @@ export function TeamGoBackButton() {
 			<LinkButton
 				to={teamPage(layoutData.team.customUrl)}
 				prefetch="intent"
+				preventScrollReset
 				icon={<ChevronLeft />}
 				variant="outlined"
 				size="small"

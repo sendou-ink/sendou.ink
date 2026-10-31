@@ -139,6 +139,7 @@ function ActionButtons() {
 					to={teamSchedulePage(team.customUrl)}
 					variant="outlined"
 					prefetch="intent"
+					preventScrollReset
 					icon={<CalendarDays />}
 					testId="team-schedule-button"
 				>
@@ -151,6 +152,7 @@ function ActionButtons() {
 					to={manageTeamRosterPage(team.customUrl)}
 					variant="outlined"
 					prefetch="intent"
+					preventScrollReset
 					icon={<Users />}
 					testId="manage-roster-button"
 				>
@@ -163,6 +165,7 @@ function ActionButtons() {
 					to={editTeamPage(team.customUrl)}
 					variant="outlined"
 					prefetch="intent"
+					preventScrollReset
 					icon={<SquarePen />}
 					testId="edit-team-button"
 				>
@@ -327,7 +330,11 @@ function ResultsBanner({
 	results: NonNullable<TeamLoaderData["results"]>;
 }) {
 	return (
-		<Link className={styles.results} to={teamResultsPage(customUrl)}>
+		<Link
+			className={styles.results}
+			to={teamResultsPage(customUrl)}
+			preventScrollReset
+		>
 			<div>View {results.count} results</div>
 			<ul className={styles.resultsPlacements}>
 				{results.placements.map(({ placement, count }) => {
