@@ -108,6 +108,58 @@ export async function findAllOpenRoomIdsByUserId(
 			.where("TournamentTeamMember.userId", "=", userId)
 			.where(openRoom("TournamentTeam.chatRoomId"))
 			.execute(),
+		// open broadcast rooms are few, so unlike the others this starts from them; mirrors
+		// who `organizerPermissions` lets manage matches
+		db
+			.selectFrom("TournamentBroadcast")
+			.select("TournamentBroadcast.chatRoomId as id")
+			.where(openRoom("TournamentBroadcast.chatRoomId"))
+			.where((eb) =>
+				eb.or([
+					eb.exists(
+						eb
+							.selectFrom("TournamentStaff")
+							.select("TournamentStaff.userId")
+							.whereRef(
+								"TournamentStaff.tournamentId",
+								"=",
+								"TournamentBroadcast.tournamentId",
+							)
+							.where("TournamentStaff.userId", "=", userId),
+					),
+					eb.exists(
+						eb
+							.selectFrom("CalendarEvent")
+							.leftJoin("TournamentOrganizationMember", (join) =>
+								join
+									.onRef(
+										"TournamentOrganizationMember.organizationId",
+										"=",
+										"CalendarEvent.organizationId",
+									)
+									.on("TournamentOrganizationMember.userId", "=", userId)
+									.on("TournamentOrganizationMember.role", "!=", "MEMBER"),
+							)
+							.select("CalendarEvent.id")
+							.whereRef(
+								"CalendarEvent.tournamentId",
+								"=",
+								"TournamentBroadcast.tournamentId",
+							)
+							.where((innerEb) =>
+								innerEb.or([
+									innerEb("CalendarEvent.authorId", "=", userId),
+									innerEb(
+										"TournamentOrganizationMember.userId",
+										"is not",
+										null,
+									),
+								]),
+							),
+					),
+				]),
+			)
+			.execute(),
 		db
 			.selectFrom("ScrimPostUser")
 			.innerJoin("ScrimPost", "ScrimPost.id", "ScrimPostUser.scrimPostId")
@@ -450,6 +502,7 @@ type ChatRoomOwnerColumn =
 	| "GroupMatch.chatRoomId"
 	| "TournamentMatch.chatRoomId"
 	| "TournamentTeam.chatRoomId"
+	| "TournamentBroadcast.chatRoomId"
 	| "ScrimPost.chatRoomId"
 	| "Lobby.chatRoomId"
 	| "LobbySet.alphaChatRoomId"
@@ -461,6 +514,7 @@ const OWNER_COLUMNS_BY_ROOM_TYPE = {
 	SQ_MATCH: ["GroupMatch.chatRoomId"],
 	TOURNAMENT_MATCH: ["TournamentMatch.chatRoomId"],
 	TOURNAMENT_TEAM: ["TournamentTeam.chatRoomId"],
+	TOURNAMENT_BROADCAST: ["TournamentBroadcast.chatRoomId"],
 	SCRIM: ["ScrimPost.chatRoomId"],
 	LOBBY: ["Lobby.chatRoomId"],
 	LOBBY_TEAM: ["LobbySet.alphaChatRoomId", "LobbySet.bravoChatRoomId"],

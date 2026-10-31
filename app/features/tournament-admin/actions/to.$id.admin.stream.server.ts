@@ -1,4 +1,6 @@
 import type { Params } from "react-router";
+import { ensureChatRoom } from "~/features/broadcast/broadcast-utils.server";
+import * as CastChannel from "~/features/broadcast/core/CastChannel";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
 	clearTournamentDataCache,
@@ -20,6 +22,10 @@ export const action = defineAction(
 		});
 
 		clearTournamentDataCache(tournamentId);
+
+		for (const channel of CastChannel.list(body.castAccounts)) {
+			await ensureChatRoom({ tournament, channel });
+		}
 
 		return null;
 	},

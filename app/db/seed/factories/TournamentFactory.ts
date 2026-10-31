@@ -23,6 +23,7 @@ import { invariant } from "~/utils/invariant";
 import { backdate } from "../core/backdate";
 import { defineFactory } from "../core/defineFactory";
 import { eventDefaults } from "./CalendarEventFactory";
+import * as TournamentBroadcastFactory from "./TournamentBroadcastFactory";
 import * as TournamentTeamFactory from "./TournamentTeamFactory";
 
 const SINGLE_ELIMINATION: TournamentSettings["bracketProgression"] = [
@@ -264,7 +265,7 @@ export async function startBracket(
 	return startedBracket.data.match.map((match) => ({ id: match.id }));
 }
 
-/** Marks a match casted by a Twitch account, adding the account to the cast accounts first like the stream page does. */
+/** Marks a match casted by a Twitch account, adding the account to the cast accounts (and its broadcast chat room) first like the stream page does. */
 export async function castMatch({
 	tournamentId,
 	matchId,
@@ -285,6 +286,10 @@ export async function castMatch({
 			...(tournament.castAccounts ?? []),
 			{ ...castAccount, name: twitchAccount },
 		],
+	});
+	await TournamentBroadcastFactory.create({
+		tournamentId,
+		channel: castAccount,
 	});
 	await TournamentRepository.setMatchAsCasted({
 		tournamentId,

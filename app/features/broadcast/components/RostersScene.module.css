@@ -1,0 +1,118 @@
+.rosters {
+	display: flex;
+	flex-direction: column;
+	gap: 64px;
+	height: 100%;
+	padding: 72px 120px;
+	background: var(--bc-bg);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: 32px;
+	font-family: var(--bc-font-display);
+}
+
+.tournamentLogo {
+	width: 120px;
+	height: 120px;
+	border-radius: var(--bc-radius);
+	object-fit: cover;
+}
+
+.tournamentName {
+	font-size: 56px;
+	font-weight: 800;
+	line-height: 1.1;
+}
+
+.round {
+	font-size: 32px;
+	color: var(--bc-text-muted);
+}
+
+.teams {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 64px;
+}
+
+.team {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	padding: 32px;
+	border-top: 8px solid var(--bc-team-a);
+	border-radius: var(--bc-radius);
+	background: var(--bc-surface);
+
+	&[data-team="b"] {
+		border-top-color: var(--bc-team-b);
+	}
+}
+
+.teamHeader {
+	display: flex;
+	align-items: center;
+	gap: 24px;
+}
+
+.teamLogo {
+	width: 88px;
+	height: 88px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.teamName {
+	min-width: 0;
+	overflow: hidden;
+	font-family: var(--bc-font-display);
+	font-size: 48px;
+	font-weight: 800;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.players {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 0;
+	list-style: none;
+}
+
+.player {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+
+	&[data-active="false"] {
+		opacity: 0.4;
+	}
+}
+
+.avatar {
+	flex-shrink: 0;
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	background: var(--bc-bg);
+	object-fit: cover;
+}
+
+.playerName {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	font-size: 34px;
+	font-weight: 600;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.weapons {
+	display: flex;
+	gap: 8px;
+}
