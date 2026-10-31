@@ -41,7 +41,6 @@ import {
 	PLAYERS_PER_SET,
 	PLAYERS_PER_TEAM,
 } from "../lobbies-constants";
-import { BACKLINE_MIN_RANGE } from "./PlayerRoles";
 import rawWeaponRollData from "./weapon-roll-data.json";
 
 export interface WeaponRollOptions {
@@ -99,6 +98,9 @@ const RANDOMIZER_OPTIONS: Record<
 
 export const WEAPON_TIERS = ["FRONTLINE", "MIDLINE", "BACKLINE"] as const;
 export type WeaponTier = (typeof WEAPON_TIERS)[number];
+
+/** Range from which a weapon counts as backline. Jet Squelcher (21.1) is above, Douser Dualies FF (19.4) below. */
+const BACKLINE_MIN_RANGE = 21;
 
 /** Range below which a weapon counts as frontline. Splattershot (11.9) is below, Splat Brella (11.0) too. */
 const FRONTLINE_MAX_RANGE = 12.5;

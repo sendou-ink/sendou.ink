@@ -108,6 +108,47 @@ describe("TeamShuffle.shuffle", () => {
 		expect(sameTeam(result, 1, 2)).toBe(false);
 	});
 
+	test("gives both teams a player with a backline weapon over teammate variety", () => {
+		const history = TeamShuffle.teammateHistory([
+			{ alpha: [1, 2, 3, 4], bravo: [5, 6, 7, 8] },
+		]);
+
+		for (let i = 0; i < 20; i++) {
+			const result = TeamShuffle.shuffle({
+				players: [
+					player(1, { roles: ["BACKLINE_IN_POOL"] }),
+					player(2, { roles: ["BACKLINE_IN_POOL"] }),
+					...players(8).slice(2),
+				],
+				history,
+			});
+
+			expect(sameTeam(result, 1, 2)).toBe(false);
+		}
+	});
+
+	test("separates backline only players over teammate variety, even when a flex player covers the other team", () => {
+		// 1 and 2 are the only pair who haven't been teammates yet
+		const history = TeamShuffle.teammateHistory([
+			{ alpha: [1, 3, 4, 5], bravo: [2, 6, 7, 8] },
+			{ alpha: [1, 6, 7, 8], bravo: [2, 3, 4, 5] },
+		]);
+
+		for (let i = 0; i < 20; i++) {
+			const result = TeamShuffle.shuffle({
+				players: [
+					player(1, { roles: ["BACKLINE", "BACKLINE_IN_POOL"] }),
+					player(2, { roles: ["BACKLINE", "BACKLINE_IN_POOL"] }),
+					player(3, { roles: ["BACKLINE_IN_POOL"] }),
+					...players(8).slice(3),
+				],
+				history,
+			});
+
+			expect(sameTeam(result, 1, 2)).toBe(false);
+		}
+	});
+
 	test("sits out the players over 8", () => {
 		const result = TeamShuffle.shuffle({
 			players: players(10),
@@ -164,7 +205,13 @@ describe("TeamShuffle.roleStackCost", () => {
 		},
 		{
 			why: "an odd one out is free",
-			alpha: [["BACKLINE"], [], [], []],
+			alpha: [["TACTICOOLER"], [], [], []],
+			bravo: [[], [], [], []],
+			expected: 0,
+		},
+		{
+			why: "other roles don't count",
+			alpha: [["BACKLINE"], ["BACKLINE"], [], []],
 			bravo: [[], [], [], []],
 			expected: 0,
 		},
@@ -175,9 +222,36 @@ describe("TeamShuffle.roleStackCost", () => {
 		expected: number;
 	}>)("$why", ({ alpha, bravo, expected }) => {
 		expect(
-			TeamShuffle.roleStackCost({
-				alpha: alpha.map((roles, i) => withRoles(i + 1, roles)),
-				bravo: bravo.map((roles, i) => withRoles(i + 5, roles)),
+			TeamShuffle.roleStackCost(
+				{
+					alpha: alpha.map((roles, i) => withRoles(i + 1, roles)),
+					bravo: bravo.map((roles, i) => withRoles(i + 5, roles)),
+				},
+				"TACTICOOLER",
+			),
+		).toBe(expected);
+	});
+});
+
+describe("TeamShuffle.backlineCoverageCost", () => {
+	const withBackline = player(1, { roles: ["BACKLINE_IN_POOL"] });
+
+	test.each([
+		{ why: "one on each team", alpha: [1], bravo: [5], expected: 0 },
+		{ why: "both on one team", alpha: [1, 2], bravo: [], expected: 1 },
+		{ why: "nobody has one", alpha: [], bravo: [], expected: 2 },
+	])("$why", ({ alpha, bravo, expected }) => {
+		const team = (userIds: number[], from: number) =>
+			Array.from({ length: 4 }, (_, i) =>
+				userIds.includes(from + i)
+					? { ...withBackline, userId: from + i }
+					: player(from + i),
+			);
+
+		expect(
+			TeamShuffle.backlineCoverageCost({
+				alpha: team(alpha, 1),
+				bravo: team(bravo, 5),
 			}),
 		).toBe(expected);
 	});
@@ -230,16 +304,18 @@ describe("TeamShuffle.teammateRepeatCost", () => {
 
 describe("TeamShuffle.splitCost", () => {
 	test("weighs the cost terms", () => {
-		const coolers = split([
-			player(1, { roles: ["TACTICOOLER"] }),
-			player(2, { roles: ["TACTICOOLER"] }),
+		const stacked = split([
+			player(1, { roles: ["TACTICOOLER", "BACKLINE", "BACKLINE_IN_POOL"] }),
+			player(2, { roles: ["TACTICOOLER", "BACKLINE", "BACKLINE_IN_POOL"] }),
 			player(3),
 			player(4),
 		]);
 
-		expect(TeamShuffle.splitCost(coolers, NO_HISTORY)).toBeCloseTo(
-			TeamShuffle.BALANCE_WEIGHT * TeamShuffle.balanceCost(coolers) +
-				2 * TeamShuffle.ROLE_STACK_WEIGHT,
+		expect(TeamShuffle.splitCost(stacked, NO_HISTORY)).toBeCloseTo(
+			TeamShuffle.BALANCE_WEIGHT * TeamShuffle.balanceCost(stacked) +
+				TeamShuffle.BACKLINE_COVERAGE_WEIGHT +
+				2 * TeamShuffle.BACKLINE_STACK_WEIGHT +
+				2 * TeamShuffle.TACTICOOLER_STACK_WEIGHT,
 		);
 	});
 });

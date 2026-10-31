@@ -10,8 +10,10 @@
  * Cost terms, in priority order:
  *
  * 1. {@link balanceCost}: how far the predicted win probability is from 50%, from the lobby-local ratings
- * 2. {@link teammateRepeatCost}: playing with the same teammates again, especially those of the previous set
- * 3. {@link roleStackCost}: stacking players of the same role (Tacticooler, backline) on one team
+ * 2. {@link backlineCoverageCost}: a team with nobody who has a backline weapon in their pool
+ * 3. {@link roleStackCost} of `BACKLINE`: stacking players who mostly play backline on one team
+ * 4. {@link teammateRepeatCost}: playing with the same teammates again, especially those of the previous set
+ * 5. {@link roleStackCost} of `TACTICOOLER`: stacking Tacticooler players on one team
  *
  * To add a cost term: write a function of the shape `(split, context) => number` where a lower number is
  * better, export a weight constant for it next to the others and add it to {@link splitCost}. Add a
@@ -27,14 +29,20 @@ import type { PlayerRole } from "./PlayerRoles";
 /** Weight of {@link balanceCost}. Highest priority: a 10 percentage point imbalance costs 10. */
 export const BALANCE_WEIGHT = 100;
 
+/** Weight of {@link backlineCoverageCost}, per team without a backline. Beats a repeated teammate pair. */
+export const BACKLINE_COVERAGE_WEIGHT = 5;
+
+/** Weight of {@link roleStackCost} of `BACKLINE`. Two on one team cost as much as a team without a backline. */
+export const BACKLINE_STACK_WEIGHT = 2.5;
+
 /** Weight of {@link teammateRepeatCost}, per set two teammates have already played together. */
 export const TEAMMATE_REPEAT_WEIGHT = 1;
 
 /** Extra weight on top of {@link TEAMMATE_REPEAT_WEIGHT} for teammates who were teammates in the previous set. */
 export const PREVIOUS_SET_TEAMMATE_WEIGHT = 2;
 
-/** Weight of {@link roleStackCost}, per player of a role more than evenly spread. */
-export const ROLE_STACK_WEIGHT = 0.5;
+/** Weight of {@link roleStackCost} of `TACTICOOLER`. */
+export const TACTICOOLER_STACK_WEIGHT = 0.5;
 
 /** Costs closer than this count as a tie, picked between randomly. */
 const TIE_EPSILON = 0.000_001;
@@ -132,8 +140,10 @@ export function pickSitOuts(
 export function splitCost(split: Split, history: TeammateHistory) {
 	return (
 		BALANCE_WEIGHT * balanceCost(split) +
+		BACKLINE_COVERAGE_WEIGHT * backlineCoverageCost(split) +
+		BACKLINE_STACK_WEIGHT * roleStackCost(split, "BACKLINE") +
 		teammateRepeatCost(split, history) +
-		ROLE_STACK_WEIGHT * roleStackCost(split)
+		TACTICOOLER_STACK_WEIGHT * roleStackCost(split, "TACTICOOLER")
 	);
 }
 
@@ -145,6 +155,16 @@ export function balanceCost(split: Split) {
 			split.bravo.map((player) => player.rating),
 		) - 0.5,
 	);
+}
+
+/**
+ * Teams (0-2) without a player who has a backline weapon in their pool. When the room doesn't have one for both
+ * teams every split costs the same, so this only steers splits where both teams can have one.
+ */
+export function backlineCoverageCost(split: Split) {
+	return [split.alpha, split.bravo].filter(
+		(team) => !team.some((player) => player.roles.includes("BACKLINE_IN_POOL")),
+	).length;
 }
 
 /**
@@ -170,21 +190,15 @@ export function teammateRepeatCost(split: Split, history: TeammateHistory) {
 	return cost;
 }
 
-/** Per role, how many players more than an even spread one team has (an odd count can't be even, so is free). */
-export function roleStackCost(split: Split) {
-	const roles: PlayerRole[] = ["TACTICOOLER", "BACKLINE"];
-	const countOf = (team: ShufflePlayer[], role: PlayerRole) =>
+/** How many players of the role one team has more than an even spread (an odd count can't be even, so is free). */
+export function roleStackCost(split: Split, role: PlayerRole) {
+	const countOf = (team: ShufflePlayer[]) =>
 		team.filter((player) => player.roles.includes(role)).length;
 
-	let cost = 0;
-	for (const role of roles) {
-		const alpha = countOf(split.alpha, role);
-		const bravo = countOf(split.bravo, role);
+	const alpha = countOf(split.alpha);
+	const bravo = countOf(split.bravo);
 
-		cost += Math.abs(alpha - bravo) - ((alpha + bravo) % 2);
-	}
-
-	return cost;
+	return Math.abs(alpha - bravo) - ((alpha + bravo) % 2);
 }
 
 /** Order independent key of two users, for {@link TeammateHistory}. */
