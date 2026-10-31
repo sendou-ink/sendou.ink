@@ -50,9 +50,11 @@ export function LobbyCard({ lobby }: { lobby: LobbyListItem }) {
 						}}
 					/>
 				</LobbyInfoItem>
-				<LobbyInfoItem label={t("lobbies:card.players")}>
-					{lobby.playerCount}/{lobby.roomSize}
-				</LobbyInfoItem>
+				{lobby.endedAt === null ? (
+					<LobbyInfoItem label={t("lobbies:card.players")}>
+						{lobby.playerCount}/{lobby.roomSize}
+					</LobbyInfoItem>
+				) : null}
 				<LobbyInfoItem label={t("lobbies:card.host")}>
 					{lobby.hostUsername}
 				</LobbyInfoItem>
