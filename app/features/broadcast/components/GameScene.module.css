@@ -1,0 +1,93 @@
+.scorebug {
+	position: absolute;
+	bottom: 24px;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	align-items: stretch;
+	border-radius: var(--bc-radius);
+	background: var(--bc-surface);
+	overflow: hidden;
+	font-family: var(--bc-font-display);
+}
+
+.team {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	width: 520px;
+	padding: 12px 20px;
+	border-bottom: 6px solid var(--bc-team-a);
+
+	&[data-team="b"] {
+		flex-direction: row-reverse;
+		border-bottom-color: var(--bc-team-b);
+	}
+}
+
+.teamLogo {
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.teamName {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	font-size: 30px;
+	font-weight: 700;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+
+	[data-team="b"] & {
+		text-align: right;
+	}
+}
+
+.teamScore {
+	min-width: 48px;
+	font-size: 48px;
+	font-weight: 800;
+	text-align: center;
+}
+
+.gameInfo {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	min-width: 280px;
+	padding: 8px 24px;
+	text-align: center;
+}
+
+.round {
+	font-size: 20px;
+	font-weight: 700;
+	color: var(--bc-accent);
+}
+
+.gameCount {
+	font-size: 18px;
+	color: var(--bc-text-muted);
+}
+
+.map {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 20px;
+	font-weight: 600;
+}
+
+.tournamentLogo {
+	align-self: center;
+	width: 56px;
+	height: 56px;
+	margin-left: 16px;
+	border-radius: var(--bc-radius);
+	object-fit: cover;
+}

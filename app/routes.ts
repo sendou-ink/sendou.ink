@@ -236,6 +236,11 @@ export default [
 			"features/tournament/routes/to.$id.teams.$tid.comps.ts",
 		),
 		route("streams", "features/tournament/routes/to.$id.streams.tsx"),
+		route("broadcast", "features/broadcast/routes/to.$id.broadcast.tsx"),
+		route(
+			"broadcast/:channel",
+			"features/broadcast/routes/to.$id.broadcast.$channel.tsx",
+		),
 
 		route("looking", "features/tournament-lfg/routes/to.$id.looking.tsx"),
 
@@ -261,6 +266,15 @@ export default [
 			"features/tournament-match/routes/to.$id.matches.$mid.tsx",
 		),
 	]),
+
+	route(
+		"/to/:id/broadcast/:channel/stream",
+		"features/broadcast/routes/to.$id.broadcast.$channel.stream.ts",
+	),
+	route(
+		"/to/:id/broadcast/:channel/program",
+		"features/broadcast/routes/to.$id.broadcast.$channel.program.tsx",
+	),
 
 	route("/org/new", "features/tournament-organization/routes/org.new.tsx"),
 	...prefix("/org/:slug", [

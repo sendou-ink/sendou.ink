@@ -8,6 +8,7 @@ const ALL_NAMESPACES = [
 	"common",
 	"analyzer",
 	"badges",
+	"broadcast",
 	"builds",
 	"calendar",
 	"contributions",

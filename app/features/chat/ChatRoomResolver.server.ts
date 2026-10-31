@@ -1,6 +1,12 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import { ADMIN_ID, STAFF_IDS } from "~/features/admin/admin-constants";
+import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.server";
+import {
+	broadcastDashboardPage,
+	tournamentBroadcastsPage,
+} from "~/features/broadcast/broadcast-urls";
+import * as CastChannel from "~/features/broadcast/core/CastChannel";
 import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
 import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
@@ -106,6 +112,7 @@ export async function resolveAll(roomIds: number[]): Promise<ResolvedRoom[]> {
 			resolveSqMatchRooms(byType("SQ_MATCH")),
 			resolveTournamentMatchRooms(byType("TOURNAMENT_MATCH")),
 			resolveTournamentTeamRooms(byType("TOURNAMENT_TEAM")),
+			resolveTournamentBroadcastRooms(byType("TOURNAMENT_BROADCAST")),
 			resolveScrimRooms(byType("SCRIM")),
 			resolveLobbyRooms(byType("LOBBY")),
 			resolveLobbyTeamRooms(byType("LOBBY_TEAM")),
@@ -231,6 +238,48 @@ async function resolveTournamentTeamRooms(
 		labelByUserId: organizerLabels(organizers.get(owner.tournamentId)),
 		inactive: Boolean(owner.isFinalized),
 	}));
+}
+
+async function resolveTournamentBroadcastRooms(
+	rooms: ChatRoomRow[],
+): Promise<ResolvedRoom[]> {
+	if (rooms.length === 0) return [];
+
+	const owners = await BroadcastRepository.findAllByChatRoomIds(
+		rooms.map((room) => room.id),
+	);
+
+	const organizers =
+		await TournamentRepository.findOrganizerPermissionsByTournamentIds(
+			R.unique(owners.map((owner) => owner.tournamentId)),
+		);
+
+	return joinOwners(rooms, owners, (owner) => {
+		// `undefined` once the cast account was removed from the tournament
+		const channel = CastChannel.list(owner.castAccounts).find(
+			(castChannel) =>
+				castChannel.platform === owner.platform &&
+				castChannel.account === owner.account,
+		);
+
+		return {
+			titleParams: {
+				channelName: channel?.name ?? owner.account,
+				tournamentName: owner.tournamentName,
+			},
+			url: channel
+				? broadcastDashboardPage({
+						tournamentId: owner.tournamentId,
+						slug: channel.slug,
+					})
+				: tournamentBroadcastsPage(owner.tournamentId),
+			imageUrl: owner.logoUrl,
+			participantUserIds:
+				organizers.get(owner.tournamentId)?.MANAGE_MATCHES ?? [],
+			observerUserIds: [],
+			inactive: Boolean(owner.isFinalized) || !channel,
+		};
+	});
 }
 
 async function resolveScrimRooms(

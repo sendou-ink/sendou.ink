@@ -334,6 +334,7 @@ describe("ChatRepository.deleteOrphanedRooms", () => {
 		"SQ_MATCH",
 		"TOURNAMENT_MATCH",
 		"TOURNAMENT_TEAM",
+		"TOURNAMENT_BROADCAST",
 		"SCRIM",
 	] as const)("deletes an orphaned %s room", async (type) => {
 		const orphanedRoom = await ChatRoomFactory.create({ type });

@@ -1,0 +1,98 @@
+.dashboard {
+	container-type: inline-size;
+}
+
+.switcher {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	align-items: start;
+	gap: var(--s-4);
+
+	@container (width < 760px) {
+		grid-template-columns: 1fr;
+	}
+}
+
+.takeForm {
+	display: contents;
+}
+
+.take {
+	align-self: center;
+
+	@container (width < 760px) {
+		width: 100%;
+	}
+}
+
+.scenes {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+	gap: var(--s-3);
+}
+
+.sceneForm {
+	display: contents;
+}
+
+.sceneTile {
+	position: relative;
+	flex-direction: column;
+	gap: var(--s-2);
+	width: 100%;
+	height: auto;
+	aspect-ratio: 4 / 3;
+	border: 2px solid var(--color-border);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	line-height: 1.2;
+	text-align: center;
+	white-space: normal;
+	--button-hover-bg: var(--color-bg-higher);
+}
+
+.sceneTileNext {
+	border-color: var(--color-fg-accent);
+	background-color: var(--color-bg-accent);
+	color: var(--color-fg-accent);
+	--button-hover-bg: var(--color-bg-accent);
+}
+
+.sceneIcon {
+	width: 22px;
+	height: 22px;
+}
+
+.liveBadge {
+	position: absolute;
+	top: 0;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	padding: 0 var(--s-1-5);
+	border-radius: var(--radius-field);
+	background-color: var(--color-error);
+	color: var(--color-text-on-dark);
+	font-size: var(--font-2xs);
+	text-transform: uppercase;
+}
+
+.teams {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+	gap: var(--s-8);
+}
+
+.viewHeader {
+	font-size: var(--font-md);
+	text-transform: uppercase;
+
+	&[data-view="live"] {
+		color: var(--color-error);
+	}
+}
+
+.health {
+	margin-inline: 0;
+}

@@ -234,4 +234,10 @@ export type SendouRouteHandle = {
 	 * width) so a descendant like the bracket can grow wider than the page.
 	 */
 	mainBreakout?: boolean;
+
+	/**
+	 * Renders the page alone on a transparent body: no layout, ads, chat or other providers.
+	 * For pages embedded elsewhere, e.g. broadcast overlays in OBS.
+	 */
+	bare?: boolean;
 };

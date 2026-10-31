@@ -15,6 +15,7 @@ import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactor
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { TournamentSettings } from "~/db/tables-json";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { broadcastDashboardPage } from "~/features/broadcast/broadcast-urls";
 import * as LobbyProgression from "~/features/lobbies/core/LobbyProgression.server";
 import * as LobbySet from "~/features/lobbies/core/LobbySet";
 import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
@@ -48,6 +49,8 @@ import {
 } from "~/utils/urls";
 
 const MAX_RECENT_RUNS = 10;
+
+const BROADCAST_SCENARIO_TWITCH_ACCOUNT = "sendouink";
 
 const SCENARIO_CATEGORIES = [
 	"SendouQ",
@@ -328,6 +331,39 @@ const SCENARIOS: Scenario[] = [
 				path: tournamentMatchPage({
 					tournamentId: tournament.id,
 					matchId: match.matchId,
+				}),
+			};
+		},
+	}),
+	defineScenario({
+		id: "tournament-broadcast",
+		title: "Broadcasting a tournament",
+		description:
+			"The bracket just started and its first match is cast on a Twitch channel. You organize and land on the channel's broadcast dashboard.",
+		category: "Tournaments",
+		params: { teams: teamsParam, format: formatParam },
+		run: async ({ teams, format }) => {
+			const [organizerId] = await freshUserIds(1);
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId,
+				bracketProgression: BRACKET_FORMATS[format],
+				startTimes: [dateToDatabaseTimestamp(subMinutes(new Date(), 30))],
+			});
+			await registerTeams(tournament.id, teams, { isCheckedIn: true });
+			await TournamentFactory.startBracket(tournament.id);
+
+			const match = await firstPlayableMatch(tournament.id);
+			await TournamentFactory.castMatch({
+				tournamentId: tournament.id,
+				matchId: match.matchId,
+				twitchAccount: BROADCAST_SCENARIO_TWITCH_ACCOUNT,
+			});
+
+			return {
+				userId: organizerId,
+				path: broadcastDashboardPage({
+					tournamentId: tournament.id,
+					slug: BROADCAST_SCENARIO_TWITCH_ACCOUNT,
 				}),
 			};
 		},

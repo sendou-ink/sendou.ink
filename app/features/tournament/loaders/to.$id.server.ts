@@ -1,6 +1,7 @@
 import { isAfter, subDays } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
+import { isBroadcastEnabled } from "~/features/broadcast/broadcast-utils.server";
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
@@ -21,6 +22,8 @@ export type TournamentLoaderData = {
 	tournament: TournamentLayoutData;
 	/** Count for the streams tab badge; the streams view loads the actual streams itself. */
 	streamsCount: number;
+	/** The tournament's organization may use broadcast overlays, organizers and streamers get the tab. */
+	isBroadcastEnabled: boolean;
 	friendCodes:
 		| Awaited<
 				ReturnType<typeof TournamentRepository.findFriendCodesByTournamentId>
@@ -62,6 +65,7 @@ export const loader = async ({
 			bracketsMeta: await bracketsMetaCached(tournamentId),
 		},
 		streamsCount: LiveStream.groupByStreamer(tournament.streams).length,
+		isBroadcastEnabled: isBroadcastEnabled(tournament),
 		friendCodes: showFriendCodes
 			? await TournamentRepository.findFriendCodesByTournamentId(tournamentId)
 			: undefined,

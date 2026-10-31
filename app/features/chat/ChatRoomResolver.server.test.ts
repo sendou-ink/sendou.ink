@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, test } from "vitest";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
+import * as TournamentBroadcastFactory from "~/db/seed/factories/TournamentBroadcastFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
+import * as TournamentStaffFactory from "~/db/seed/factories/TournamentStaffFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
@@ -66,6 +69,25 @@ const setupStartedTournamentMatch = async () => {
 		teamAlphaUserIds,
 		teamBravoUserIds,
 	};
+};
+
+const setupBroadcast = async () => {
+	const authorId = users.id(2);
+	const castAccount = {
+		platform: "TWITCH" as const,
+		account: "sendouink",
+		name: "Sendou.ink",
+	};
+	const tournament = await TournamentFactory.create(
+		{ authorId },
+		{ castAccounts: [castAccount] },
+	);
+	const { chatRoomId } = await TournamentBroadcastFactory.create({
+		tournamentId: tournament.id,
+		channel: castAccount,
+	});
+
+	return { tournament, authorId, castAccount, chatRoomId };
 };
 
 const setupAcceptedScrim = async () => {
@@ -216,6 +238,38 @@ describe("ChatRoomResolver.resolve", () => {
 		expect((await resolveOrThrow(chatRoomId)).inactive).toBe(true);
 	});
 
+	test("resolves a TOURNAMENT_BROADCAST room to the tournament's organizers and streamers", async () => {
+		const { tournament, authorId, chatRoomId } = await setupBroadcast();
+		await TournamentStaffFactory.create({
+			tournamentId: tournament.id,
+			userId: users.id(3),
+			role: "STREAMER",
+		});
+
+		const room = await resolveOrThrow(chatRoomId);
+
+		expect(room.type).toBe("TOURNAMENT_BROADCAST");
+		expect(room.participantUserIds.sort(byId)).toEqual(
+			[authorId, users.id(3)].sort(byId),
+		);
+		expect(room.titleParams.channelName).toBe("Sendou.ink");
+		expect(room.url).toBe(`/to/${tournament.id}/broadcast/sendouink`);
+		expect(room.inactive).toBe(false);
+	});
+
+	test("marks a TOURNAMENT_BROADCAST room inactive once its cast account is removed", async () => {
+		const { tournament, chatRoomId } = await setupBroadcast();
+		await TournamentRepository.updateCastAccounts({
+			tournamentId: tournament.id,
+			castAccounts: [],
+		});
+
+		const room = await resolveOrThrow(chatRoomId);
+
+		expect(room.inactive).toBe(true);
+		expect(room.url).toBe(`/to/${tournament.id}/broadcast`);
+	});
+
 	test("resolves a SCRIM room to the post's users plus the accepted request's users", async () => {
 		const { chatRoomId, postUserIds, requestUserIds, startsAt } =
 			await setupAcceptedScrim();
@@ -275,6 +329,48 @@ describe("ChatRoomResolver.findAllByUserId", () => {
 		const rooms = await ChatRoomResolver.findAllByUserId(teamAlphaUserIds[0]);
 
 		expect(rooms.map((room) => room.roomId)).toContain(chatRoomId);
+	});
+
+	test("returns broadcast rooms to the tournament's author, staff and organization staff", async () => {
+		const orgStreamerId = users.id(4);
+		const orgMemberId = users.id(5);
+		const organization = await TournamentOrganizationFactory.create(
+			{ ownerId: users.id(6) },
+			{
+				members: [
+					{ userId: orgStreamerId, role: "STREAMER" },
+					{ userId: orgMemberId, role: "MEMBER" },
+				],
+			},
+		);
+		const tournament = await TournamentFactory.create({
+			authorId: users.id(2),
+			organizationId: organization.id,
+		});
+		await TournamentStaffFactory.create({
+			tournamentId: tournament.id,
+			userId: users.id(3),
+			role: "ORGANIZER",
+		});
+		const { chatRoomId } = await TournamentBroadcastFactory.create({
+			tournamentId: tournament.id,
+		});
+
+		const roomIdsOf = async (userId: number) =>
+			(await ChatRoomResolver.findAllByUserId(userId)).map(
+				(room) => room.roomId,
+			);
+
+		for (const userId of [
+			users.id(2),
+			users.id(3),
+			orgStreamerId,
+			users.id(6),
+		]) {
+			expect(await roomIdsOf(userId)).toEqual([chatRoomId]);
+		}
+		expect(await roomIdsOf(orgMemberId)).toEqual([]);
+		expect(await roomIdsOf(outsiderId())).toEqual([]);
 	});
 
 	test("returns scrim rooms for both sides", async () => {

@@ -7,6 +7,8 @@ export type ChatRoomType =
 	| "SQ_MATCH"
 	| "TOURNAMENT_MATCH"
 	| "TOURNAMENT_TEAM"
+	/** The organizers and streamers producing one of a tournament's broadcasts */
+	| "TOURNAMENT_BROADCAST"
 	| "SCRIM"
 	/** A lobby's common room: everyone signed up */
 	| "LOBBY"

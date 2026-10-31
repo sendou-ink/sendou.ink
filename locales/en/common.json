@@ -443,6 +443,8 @@
 	"chat.room.match": "Match #{{id}}",
 	"chat.room.matchShort": "Match",
 	"chat.room.teamShort": "Team",
+	"chat.room.broadcast": "{{channel}} broadcast",
+	"chat.room.broadcastShort": "Broadcast",
 	"chat.room.scrim": "Scrim",
 	"chat.room.lobby": "Lobby",
 	"chat.room.lobbyTeamAlpha": "Team Alpha",
