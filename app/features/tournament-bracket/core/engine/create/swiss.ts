@@ -1,5 +1,5 @@
+import * as R from "remeda";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { nullFilledArray } from "~/utils/arrays";
 import { invariant } from "~/utils/invariant";
 import type {
 	BracketData,
@@ -14,7 +14,7 @@ export function createSwiss(input: ResolvedCreateBracketInput): BracketData {
 	const roundCount =
 		input.settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT;
 
-	const group = nullFilledArray(groupCount).map((_, i) => ({
+	const group = R.times(groupCount, (i) => ({
 		id: i,
 		stageId: 0,
 		number: i + 1,
@@ -29,7 +29,7 @@ export function createSwiss(input: ResolvedCreateBracketInput): BracketData {
 			roundCount,
 		}),
 		round: group.flatMap((g) =>
-			nullFilledArray(roundCount).map((_, i) => ({
+			R.times(roundCount, (i) => ({
 				id: roundId++,
 				groupId: g.id,
 				section: null,
@@ -121,7 +121,7 @@ function firstRoundMatches({
 		if (!seeding) return [];
 		if (groupCount === 1) return [seeding.map((id) => id!)];
 
-		const seedingGroups: number[][] = nullFilledArray(groupCount).map(() => []);
+		const seedingGroups: number[][] = R.times(groupCount, () => []);
 
 		for (let i = 0; i < seeding.length; i++) {
 			const groupIndex = i % groupCount;

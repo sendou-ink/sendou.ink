@@ -129,13 +129,14 @@ export const userEditProfileBaseSchema = v.object({
 	}),
 });
 
+const checkedIds = v.optional(
+	preprocess((value) => (Array.isArray(value) ? value : [value]), v.array(id)),
+	[],
+);
+
 export const editHighlightsActionSchema = v.object({
-	[HIGHLIGHT_CHECKBOX_NAME]: v.optional(
-		v.union([v.array(v.string()), v.string()]),
-	),
-	[HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME]: v.optional(
-		v.union([v.array(v.string()), v.string()]),
-	),
+	[HIGHLIGHT_CHECKBOX_NAME]: checkedIds,
+	[HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME]: checkedIds,
 });
 
 export const addModNoteSchema = v.object({

@@ -1,11 +1,11 @@
 import { redirect } from "react-router";
+import * as R from "remeda";
 import { notify } from "~/features/notifications/core/notify.server";
 import { defineAction } from "~/form/define-action.server";
 import {
 	requirePermission,
 	requireRole,
 } from "~/modules/permissions/guards.server";
-import { diff } from "~/utils/arrays";
 import { notFoundIfNullish } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
@@ -61,7 +61,7 @@ export const action = defineAction(
 				});
 
 				notify({
-					userIds: diff(oldOwners, body.ownerIds),
+					userIds: R.difference(body.ownerIds, oldOwners),
 					notification: {
 						type: "BADGE_ADDED",
 						meta: {

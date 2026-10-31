@@ -2,7 +2,6 @@ import { hoursToMilliseconds } from "date-fns";
 import * as R from "remeda";
 import type { PreparedMaps } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { nullFilledArray } from "~/utils/arrays";
 import { invariant } from "~/utils/invariant";
 import { isEliminationType } from "../tournament-bracket-utils";
 import type { Bracket } from "./Bracket";
@@ -255,9 +254,7 @@ function trimMapsByTeamCount({
 	bracket,
 }: TrimPreparedEliminationMapsAgs & { preparedMaps: PreparedMaps }) {
 	const actualRounds = mapListRounds(
-		bracket.generateMatchesData(
-			nullFilledArray(teamCount).map((_, i) => i + 1),
-		),
+		bracket.generateMatchesData(R.times(teamCount, (i) => i + 1)),
 	);
 
 	const sections = R.unique(preparedMaps.maps.map((r) => r.section));
@@ -444,7 +441,7 @@ function advancingFromSource({
 
 	const data = Engine.create({
 		type: bracket.type,
-		seeding: nullFilledArray(participantCount).map((_, i) => i + 1),
+		seeding: R.times(participantCount, (i) => i + 1),
 		settings: bracket.settings,
 	});
 

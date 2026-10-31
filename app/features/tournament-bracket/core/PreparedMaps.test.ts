@@ -4,7 +4,6 @@ import { describe, expect, test } from "vitest";
 import type { PreparedMaps as PreparedMapsType } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import type { StageId } from "~/modules/in-game-lists/types";
-import { nullFilledArray } from "~/utils/arrays";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as Engine from "./engine";
 import type { BracketData } from "./engine/types";
@@ -286,7 +285,7 @@ describe("PreparedMaps - eliminationTeamCountOptions", () => {
 	}) {
 		const bracketData = Engine.create({
 			type,
-			seeding: nullFilledArray(teamCount).map((_, i) => i + 1),
+			seeding: R.times(teamCount, (i) => i + 1),
 			settings: {},
 		});
 
@@ -953,10 +952,11 @@ describe("PreparedMaps - eliminationTeamCountPrefill", () => {
 		firstId?: number;
 		memberCount?: number;
 	}) =>
-		nullFilledArray(count).map((_, i) =>
+		R.times(count, (i) =>
 			tournamentCtxTeam(firstId + i, {
-				memberUserIds: nullFilledArray(memberCount).map(
-					(_member, memberIdx) => (firstId + i) * 10 + memberIdx,
+				memberUserIds: R.times(
+					memberCount,
+					(memberIdx) => (firstId + i) * 10 + memberIdx,
 				),
 			}),
 		);
@@ -1122,7 +1122,7 @@ describe("PreparedMaps - eliminationTeamCountPrefill", () => {
 	test("prefills a follow-up bracket with the real participant count of a source bracket that started", () => {
 		const startedGroups = Engine.create({
 			type: "round_robin",
-			seeding: nullFilledArray(12).map((_, i) => i + 1),
+			seeding: R.times(12, (i) => i + 1),
 			settings: {},
 		});
 
@@ -1272,7 +1272,7 @@ describe("PreparedMaps.mapListRounds", () => {
 	test("returns every round of a round robin bracket with many groups", () => {
 		const data = Engine.create({
 			type: "round_robin",
-			seeding: nullFilledArray(8).map((_, i) => i + 1),
+			seeding: R.times(8, (i) => i + 1),
 			settings: { teamsPerGroup: 4 },
 		});
 
@@ -1587,7 +1587,7 @@ describe("PreparedMaps.eliminationTeamCountPrefill (grouped source bracket)", ()
 			const tournament = testTournament({
 				ctx: {
 					startsAt: dateToDatabaseTimestamp(subHours(new Date(), 1)),
-					teams: nullFilledArray(teamCount).map((_, i) =>
+					teams: R.times(teamCount, (i) =>
 						tournamentCtxTeam(i + 1, {
 							memberUserIds: [i * 10, i * 10 + 1, i * 10 + 2, i * 10 + 3],
 						}),
@@ -1630,7 +1630,7 @@ function eliminationData({
 }) {
 	return Engine.create({
 		type,
-		seeding: nullFilledArray(teamCount).map((_, i) => i + 1),
+		seeding: R.times(teamCount, (i) => i + 1),
 		settings,
 	});
 }

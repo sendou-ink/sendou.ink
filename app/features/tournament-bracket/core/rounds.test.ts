@@ -1,6 +1,6 @@
+import * as R from "remeda";
 import { describe, expect, test } from "vitest";
 import type { TournamentStageSettings } from "~/db/tables-json";
-import { nullFilledArray } from "~/utils/arrays";
 import * as Engine from "./engine";
 import { getRounds } from "./rounds";
 
@@ -328,7 +328,7 @@ function createBracket({
 }) {
 	return Engine.create({
 		type,
-		seeding: nullFilledArray(teamCount).map((_, i) => i + 1),
+		seeding: R.times(teamCount, (i) => i + 1),
 		settings,
 	});
 }

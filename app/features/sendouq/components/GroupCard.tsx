@@ -4,6 +4,7 @@ import { Check, Hourglass, Mic, Volume2, VolumeX, X } from "lucide-react";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import * as R from "remeda";
 import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -27,7 +28,6 @@ import {
 import { SendouForm } from "~/form/SendouForm";
 import { languagesUnified } from "~/modules/i18n/config";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
-import { nullFilledArray } from "~/utils/arrays";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import { SENDOUQ_LOOKING_PAGE, TIERS_PAGE, tierImageUrl } from "~/utils/urls";
 import type {
@@ -404,7 +404,7 @@ export function HiddenGroupCard({
 	return (
 		<section className={styles.group} data-testid="sendouq-hidden-group-card">
 			<div className="stack md">
-				{nullFilledArray(memberCount).map((_, i) => (
+				{R.times(memberCount, (i) => (
 					<div className={clsx(styles.member, styles.hiddenMember)} key={i}>
 						<span className={styles.hiddenMemberName}>???</span>
 						<div className={clsx("ml-auto", styles.memberActions)}>

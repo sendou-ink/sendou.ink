@@ -10,6 +10,7 @@ import {
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { type FetcherWithComponents, Link, useFetcher } from "react-router";
+import * as R from "remeda";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
 import { SendouDialog } from "~/components/elements/Dialog";
 import {
@@ -38,7 +39,6 @@ import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import * as LeagueScheduling from "~/features/tournament-match/core/LeagueScheduling";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { nullFilledArray } from "~/utils/arrays";
 import { invariant } from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import { SendouButton } from "../../../components/elements/Button";
@@ -851,18 +851,17 @@ function teamCountAdjustedBracketData({
 		case "round_robin":
 			// full bracket (no bye round) even if registration is underway
 			return bracket.generateMatchesData(
-				nullFilledArray(
+				R.times(
 					bracket.settings?.teamsPerGroup ??
 						TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP,
-				).map((_, i) => i + 1),
+					(i) => i + 1,
+				),
 			);
 		case "single_elimination":
 		case "double_elimination":
 			// groups share map lists
 			return PreparedMaps.mapListData(
-				bracket.generateMatchesData(
-					nullFilledArray(teamCount).map((_, i) => i + 1),
-				),
+				bracket.generateMatchesData(R.times(teamCount, (i) => i + 1)),
 			);
 	}
 }
@@ -1127,7 +1126,7 @@ function RoundMapList({
 			</div>
 			<ol className="pl-0">
 				{maps.pickBan === "CUSTOM"
-					? nullFilledArray(maps.count).map((_, i) => (
+					? R.times(maps.count, (i) => (
 							<MysteryRow
 								key={i}
 								number={i + 1}
@@ -1135,61 +1134,64 @@ function RoundMapList({
 								isCustomFlow
 							/>
 						))
-					: nullFilledArray(
+					: R.times(
 							maps.pickBan === "BAN_2" ? maps.count + 2 : maps.count,
-						).map((_, i) => {
-							const map = maps.list?.[i];
+							(i) => {
+								const map = maps.list?.[i];
 
-							if (map) {
+								if (map) {
+									return (
+										<MapListRow
+											key={i}
+											map={map}
+											number={i + 1}
+											onHoverMap={onHoverMap}
+											hoveredMap={hoveredMap}
+											onMapChange={(newMap) => {
+												onRoundMapListChange({
+													...maps,
+													list: maps.list?.map((m, j) =>
+														i === j ? newMap : m,
+													),
+												});
+											}}
+										/>
+									);
+								}
+
+								const isTeamsPick = !maps.list && i === 0;
+								const isCounterpicks =
+									!isTeamsPick && maps.pickBan === "COUNTERPICK";
+								const mode = maps.modes?.[i];
+
+								if (mode) {
+									return (
+										<ModeListRow
+											key={i}
+											mode={mode}
+											number={i + 1}
+											isCounterpicks={isCounterpicks}
+											onModeChange={(newMode) => {
+												onRoundMapListChange({
+													...maps,
+													modes: maps.modes?.map((m, j) =>
+														i === j ? newMode : m,
+													),
+												});
+											}}
+										/>
+									);
+								}
+
 								return (
-									<MapListRow
+									<MysteryRow
 										key={i}
-										map={map}
-										number={i + 1}
-										onHoverMap={onHoverMap}
-										hoveredMap={hoveredMap}
-										onMapChange={(newMap) => {
-											onRoundMapListChange({
-												...maps,
-												list: maps.list?.map((m, j) => (i === j ? newMap : m)),
-											});
-										}}
-									/>
-								);
-							}
-
-							const isTeamsPick = !maps.list && i === 0;
-							const isCounterpicks =
-								!isTeamsPick && maps.pickBan === "COUNTERPICK";
-							const mode = maps.modes?.[i];
-
-							if (mode) {
-								return (
-									<ModeListRow
-										key={i}
-										mode={mode}
 										number={i + 1}
 										isCounterpicks={isCounterpicks}
-										onModeChange={(newMode) => {
-											onRoundMapListChange({
-												...maps,
-												modes: maps.modes?.map((m, j) =>
-													i === j ? newMode : m,
-												),
-											});
-										}}
 									/>
 								);
-							}
-
-							return (
-								<MysteryRow
-									key={i}
-									number={i + 1}
-									isCounterpicks={isCounterpicks}
-								/>
-							);
-						})}
+							},
+						)}
 			</ol>
 		</div>
 	);

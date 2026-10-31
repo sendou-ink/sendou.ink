@@ -1,5 +1,6 @@
 import { sql } from "kysely";
 import type { LoaderFunctionArgs } from "react-router";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { TournamentSettings } from "~/db/tables-json";
 import { getUser } from "~/features/auth/core/user.server";
@@ -20,7 +21,6 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
-import { nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	concatUserSubmittedImagePrefix,
@@ -272,13 +272,14 @@ function seedsOfStartedTournament({
 				? team.startingBracketIdx
 				: null,
 			memberUserIds: team.members.map((member) => member.userId),
-			avgSeedingSkillOrdinal: nullifyingAvg(
-				team.members
-					.map((member) =>
-						settings.isRanked ? member.rankedOrdinal : member.unrankedOrdinal,
-					)
-					.filter((ordinal) => typeof ordinal === "number"),
-			),
+			avgSeedingSkillOrdinal:
+				R.mean(
+					team.members
+						.map((member) =>
+							settings.isRanked ? member.rankedOrdinal : member.unrankedOrdinal,
+						)
+						.filter((ordinal) => typeof ordinal === "number"),
+				) ?? null,
 		})),
 		settings.minMembersPerTeam ?? 4,
 	);
@@ -304,9 +305,7 @@ function validStartingBracketIdx(
 }
 
 function toSeedingPowerSP(ordinals: (number | null)[]) {
-	const avg = nullifyingAvg(
-		ordinals.filter((ordinal) => typeof ordinal === "number"),
-	);
+	const avg = R.mean(ordinals.filter((ordinal) => typeof ordinal === "number"));
 
 	if (typeof avg !== "number") return null;
 

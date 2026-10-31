@@ -2,10 +2,10 @@ import type { TFunction } from "i18next";
 import { Map as MapIcon } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useTournament } from "~/features/tournament/tournament-context";
-import { nullFilledArray } from "~/utils/arrays";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { useMatch } from "../match-page-context";
 import { pickInfoText } from "../tournament-match-utils";
@@ -27,11 +27,10 @@ export function OrganizerMatchMapListDialog({
 		(map) => map.bannedByTournamentTeamId,
 	);
 
-	const playableSlots = nullFilledArray(
+	const playableSlots = R.times(
 		Math.max(data.mapList?.length ?? 0, data.match.roundMaps?.count ?? 0),
-	)
-		.map((_, i) => ({ key: i, map: data.mapList?.[i] }))
-		.filter(({ map }) => !map?.bannedByTournamentTeamId);
+		(i) => ({ key: i, map: data.mapList?.[i] }),
+	).filter(({ map }) => !map?.bannedByTournamentTeamId);
 
 	return (
 		<>

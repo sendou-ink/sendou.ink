@@ -6,7 +6,6 @@ import {
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
 } from "~/features/user-page/user-page-constants";
 import { defineAction } from "~/form/define-action.server";
-import { normalizeFormFieldArray } from "~/utils/arrays";
 import { userResultsPage } from "~/utils/urls";
 import { editHighlightsActionSchema } from "../user-page-schemas";
 
@@ -15,16 +14,9 @@ export const action = defineAction(
 	async ({ body }) => {
 		const user = requireUser();
 
-		const resultTeamIds = normalizeFormFieldArray(
-			body[HIGHLIGHT_CHECKBOX_NAME],
-		).map((id) => Number.parseInt(id, 10));
-		const resultTournamentTeamIds = normalizeFormFieldArray(
-			body[HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME],
-		).map((id) => Number.parseInt(id, 10));
-
 		await UserRepository.updateOwnResultHighlights({
-			resultTeamIds,
-			resultTournamentTeamIds,
+			resultTeamIds: body[HIGHLIGHT_CHECKBOX_NAME],
+			resultTournamentTeamIds: body[HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME],
 		});
 
 		throw redirect(userResultsPage(user));

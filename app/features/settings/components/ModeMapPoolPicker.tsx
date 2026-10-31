@@ -2,11 +2,11 @@ import clsx from "clsx";
 import { Check } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import { Divider } from "~/components/Divider";
 import { ModeImage } from "~/components/Image";
 import { shortStageName, stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { nullFilledArray } from "~/utils/arrays";
 import { stageImageUrl } from "~/utils/urls";
 import styles from "./ModeMapPoolPicker.module.css";
 
@@ -32,7 +32,7 @@ export function ModeMapPoolPicker({
 
 	const stages: (StageId | null)[] = [
 		...pool,
-		...nullFilledArray(amountToPick - pool.length),
+		...R.times(amountToPick - pool.length, () => null),
 	];
 
 	const handlePickedStageClick = (stageId: StageId) => {
@@ -55,7 +55,7 @@ export function ModeMapPoolPicker({
 	return (
 		<div className={clsx(styles.container, "stack sm")}>
 			<div className="stack sm horizontal justify-center">
-				{nullFilledArray(amountToPick).map((_, index) => {
+				{R.times(amountToPick, (index) => {
 					return (
 						<MapSlot
 							key={index}

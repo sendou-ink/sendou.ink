@@ -30,7 +30,6 @@ import type { TournamentOrganizationRole } from "~/features/tournament-organizat
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { isSupporter } from "~/modules/permissions/utils";
-import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import {
@@ -608,11 +607,12 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
 			...member,
 			isFreshAccount: accountCreatedInTheLastSixMonths(discordId),
 		})),
-		avgSeedingSkillOrdinal: nullifyingAvg(
-			team.members
-				.map((member) => member.ordinal)
-				.filter((memberOrdinal) => typeof memberOrdinal === "number"),
-		),
+		avgSeedingSkillOrdinal:
+			R.mean(
+				team.members
+					.map((member) => member.ordinal)
+					.filter((memberOrdinal) => typeof memberOrdinal === "number"),
+			) ?? null,
 	}));
 }
 
@@ -1326,7 +1326,7 @@ export function upsertPreparedMaps({
 
 		const preparedMaps: Array<PreparedMaps | null> =
 			tournament.preparedMaps ??
-			nullFilledArray(tournament.settings.bracketProgression.length);
+			R.times(tournament.settings.bracketProgression.length, () => null);
 
 		preparedMaps[bracketIdx] = {
 			...maps,

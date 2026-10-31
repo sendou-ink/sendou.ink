@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
+import * as R from "remeda";
 import { Divider } from "~/components/Divider";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormMessage } from "~/components/FormMessage";
@@ -7,7 +8,6 @@ import { AvailabilityWindowText } from "~/features/availability/components/Regis
 import type { CustomFieldRenderProps } from "~/form";
 import { SendouForm, useFormValue } from "~/form/SendouForm";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import { nullFilledArray } from "~/utils/arrays";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -65,8 +65,9 @@ export function ScrimRequestModal({
 							? { mode: "TEAM", teamId: data.teams[0].id }
 							: {
 									mode: "PICKUP",
-									users: nullFilledArray(
+									users: R.times(
 										SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER,
+										() => null,
 									) as unknown as number[],
 								},
 					message: "",

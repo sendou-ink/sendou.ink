@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { type MetaFunction, useLoaderData } from "react-router";
+import * as R from "remeda";
 import type * as v from "valibot";
 import {
 	BaseVisibilityFormField,
@@ -8,7 +9,6 @@ import {
 import type { CustomFieldRenderProps } from "~/form";
 import { FormField as UntypedFormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
-import { nullFilledArray } from "~/utils/arrays";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Main } from "../../../components/Main";
@@ -57,8 +57,9 @@ export default function NewScrimPage() {
 						? { mode: "TEAM", teamId: defaultTeam.id }
 						: {
 								mode: "PICKUP",
-								users: nullFilledArray(
+								users: R.times(
 									SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER,
+									() => null,
 								) as unknown as number[],
 							},
 					managedByAnyone: true,

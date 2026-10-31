@@ -61,7 +61,6 @@ import {
 	useSearchParam,
 	useSearchParamsTyped,
 } from "~/modules/search-params/hooks";
-import { nullFilledArray } from "~/utils/arrays";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -1230,7 +1229,7 @@ function statKeyGraphSeries({
 	statKey: keyof AnalyzedBuild["stats"];
 	mainWeaponId: MainWeaponId;
 }) {
-	const analyzedBuilds = nullFilledArray(MAX_AP + 1).map((_, i) =>
+	const analyzedBuilds = R.times(MAX_AP + 1, (i) =>
 		buildStats({
 			abilityPoints: new Map([[stackableAbility, i]]),
 			weaponSplId: mainWeaponId,
@@ -1250,14 +1249,13 @@ function statKeyGraphSeries({
 	];
 
 	if (mainOnlyAbility) {
-		const mainOnlyAbilityAnalyzedBuilds = nullFilledArray(MAX_AP + 1).map(
-			(_, i) =>
-				buildStats({
-					abilityPoints: new Map([[stackableAbility, i]]),
-					weaponSplId: mainWeaponId,
-					mainOnlyAbilities: [mainOnlyAbility],
-					hasTacticooler: false,
-				}),
+		const mainOnlyAbilityAnalyzedBuilds = R.times(MAX_AP + 1, (i) =>
+			buildStats({
+				abilityPoints: new Map([[stackableAbility, i]]),
+				weaponSplId: mainWeaponId,
+				mainOnlyAbilities: [mainOnlyAbility],
+				hasTacticooler: false,
+			}),
 		);
 
 		result.push({
@@ -1291,7 +1289,7 @@ function subDefenseGraphSeries({
 	subWeaponId: SubWeaponId;
 	distanceLabel: string;
 }) {
-	const analyzedBuilds = nullFilledArray(MAX_AP + 1).map((_, i) =>
+	const analyzedBuilds = R.times(MAX_AP + 1, (i) =>
 		buildStats({
 			abilityPoints: new Map([["SRU", i]]),
 			weaponSplId: 0,
@@ -1515,7 +1513,7 @@ function LdeIntensitySelect({
 			aria-label="Last-Ditch Effort intensity"
 			className={styles.ldeIntensitySelect}
 		>
-			{nullFilledArray(LDE_CLOCK_INTENSITY + 1).map((_, intensity) => (
+			{R.times(LDE_CLOCK_INTENSITY + 1, (intensity) => (
 				<SendouSelectItem key={intensity} id={intensity}>
 					{intensityLabel(intensity)}
 				</SendouSelectItem>
