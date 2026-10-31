@@ -13,16 +13,56 @@
 	}
 }
 
+.takeColumn {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	align-self: center;
+	gap: var(--s-3);
+}
+
 .takeForm {
 	display: contents;
 }
 
 .take {
-	align-self: center;
-
 	@container (width < 760px) {
 		width: 100%;
 	}
+}
+
+.transitionBus {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1-5);
+}
+
+.busLabel {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.transitions {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	width: 100%;
+
+	@container (width < 760px) {
+		flex-direction: row;
+	}
+}
+
+.transitionForm {
+	display: contents;
+}
+
+.transition {
+	width: 100%;
 }
 
 .scenes {
@@ -95,4 +135,48 @@
 
 .health {
 	margin-inline: 0;
+}
+
+.inkSwatches {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+	gap: var(--s-2);
+}
+
+.inkSwatchForm {
+	display: contents;
+}
+
+.inkSwatch {
+	display: flex;
+	gap: 0;
+	width: 100%;
+	height: 36px;
+	padding: 0;
+	overflow: hidden;
+	border: 2px solid var(--color-border);
+	border-radius: var(--radius-field);
+
+	& span {
+		flex: 1;
+		align-self: stretch;
+	}
+}
+
+.inkSwatchSelected {
+	border-color: var(--color-fg-accent);
+	outline: 2px solid var(--color-fg-accent);
+	outline-offset: 2px;
+}
+
+.inkTeam {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1-5);
+}
+
+.inkDot {
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
 }

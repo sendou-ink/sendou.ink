@@ -1,3 +1,4 @@
+import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { BROADCAST_CANVAS } from "../broadcast-constants";
 import styles from "./BroadcastPreview.module.css";
@@ -6,9 +7,12 @@ import styles from "./BroadcastPreview.module.css";
 export function BroadcastPreview({
 	src,
 	title,
+	iframeRef,
 }: {
 	src: string;
 	title: string;
+	/** e.g. to post the overlay a message */
+	iframeRef?: React.Ref<HTMLIFrameElement>;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 
@@ -18,6 +22,7 @@ export function BroadcastPreview({
 				{t("broadcast:dashboard.gameplay")}
 			</span>
 			<iframe
+				ref={iframeRef}
 				key={src}
 				src={src}
 				title={title}

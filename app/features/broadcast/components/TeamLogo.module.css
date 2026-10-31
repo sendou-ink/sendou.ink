@@ -1,0 +1,22 @@
+.logo {
+	flex-shrink: 0;
+	aspect-ratio: 1;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.monogram {
+	display: grid;
+	place-items: center;
+	background: var(--team-color, var(--bc-surface));
+	color: var(--team-color-text, var(--bc-text));
+	font-family: var(--bc-font-display);
+	font-weight: 700;
+	line-height: 1;
+	/* scales with the logo's size */
+	container-type: size;
+
+	& span {
+		font-size: 50cqh;
+	}
+}

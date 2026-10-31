@@ -1,5 +1,11 @@
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import type { LiveResults, MatchProgress } from "../broadcast-types";
+import type {
+	BroadcastGame,
+	BroadcastMap,
+	BroadcastMatch,
+	LiveResults,
+	MatchProgress,
+} from "../broadcast-types";
 
 interface Result {
 	winnerTeamId: number;
@@ -9,7 +15,7 @@ interface Result {
 
 /**
  * How far the set is after its first `resultCount` results (capped to the reported ones). A game already
- * reported shows the map it was played on, the one after the last report the map list's next map.
+ * reported shows the map it was played on, the ones after the last report the map list's maps.
  */
 export function atResultCount({
 	results,
@@ -17,7 +23,8 @@ export function atResultCount({
 	teamIds,
 	bracketScores,
 	isSetOver,
-	upcomingMap,
+	plannedMaps,
+	gameCount,
 }: {
 	/** In playing order. */
 	results: Result[];
@@ -27,13 +34,35 @@ export function atResultCount({
 	/** As the bracket has them, used once every result is counted (an admin can end a set with a score of their own). */
 	bracketScores: [number, number];
 	isSetOver: boolean;
-	/** Map of the game after the last reported one. */
-	upcomingMap: MatchProgress["currentMap"];
+	/** The set's map list without the banned maps, in playing order, as far as it is known. */
+	plannedMaps: BroadcastMap[];
+	/** How many games the set can have at most, e.g. 5 for a Bo5. */
+	gameCount: number;
 }): MatchProgress {
 	const count = Math.min(Math.max(resultCount, 0), results.length);
 	const counted = results.slice(0, count);
 	const isOver = isSetOver && count === results.length;
 	const nextGame = results[count];
+
+	const games: BroadcastGame[] = Array.from(
+		{ length: Math.max(gameCount, results.length) },
+		(_, i) => {
+			const result = counted[i];
+			if (result) {
+				return {
+					map: { mode: result.mode, stageId: result.stageId },
+					winner: result.winnerTeamId === teamIds[0] ? 0 : 1,
+				};
+			}
+
+			const played = results[i];
+			const planned = played
+				? { mode: played.mode, stageId: played.stageId }
+				: plannedMaps[i];
+
+			return { map: isOver ? null : (planned ?? null), winner: null };
+		},
+	);
 
 	return {
 		resultCount: count,
@@ -47,7 +76,8 @@ export function atResultCount({
 			? null
 			: nextGame
 				? { mode: nextGame.mode, stageId: nextGame.stageId }
-				: upcomingMap,
+				: (plannedMaps[count] ?? null),
+		games,
 	};
 }
 
@@ -66,8 +96,35 @@ export function liveResultCount({
 	return Math.min(liveResults.count, resultCount);
 }
 
+/** Whether each team (in bracket order) takes the set by winning the game being played. */
+export function isOnMatchPoint(
+	match: Pick<BroadcastMatch, "countType" | "count">,
+	progress: Pick<MatchProgress, "scores" | "isOver">,
+): [boolean, boolean] {
+	const needed = winsNeeded(match);
+	if (needed === null || progress.isOver) return [false, false];
+
+	return [progress.scores[0] === needed - 1, progress.scores[1] === needed - 1];
+}
+
+/** Index of the team (in bracket order) that won the set, `null` while it is going. */
+export function winner(progress: Pick<MatchProgress, "scores" | "isOver">) {
+	if (!progress.isOver || progress.scores[0] === progress.scores[1]) {
+		return null;
+	}
+
+	return progress.scores[0] > progress.scores[1] ? 0 : 1;
+}
+
 function score(results: Result[], teamId: number | null) {
 	if (teamId === null) return 0;
 
 	return results.filter((result) => result.winnerTeamId === teamId).length;
+}
+
+/** Game wins that take the set, e.g. 3 in a Bo5. `null` for a play all set, which has no such number. */
+function winsNeeded(match: Pick<BroadcastMatch, "countType" | "count">) {
+	if (match.countType !== "BEST_OF") return null;
+
+	return Math.ceil(match.count / 2);
 }

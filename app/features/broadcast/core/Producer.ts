@@ -18,12 +18,17 @@ const SCENE_AFTER: Record<BroadcastScene, BroadcastScene> = {
 	ending: "starting",
 };
 
-/** State of a broadcast nothing has been written to yet: rosters on air, game staged. */
+/** State of a broadcast nothing has been written to yet: rosters on air, game staged, both with a stinger. */
 export function initialState(): BroadcastStoredState {
 	return {
 		takeId: 0,
-		live: { scene: "rosters", swapSides: false },
-		next: { scene: "game", swapSides: false },
+		live: {
+			scene: "rosters",
+			swapSides: false,
+			transition: "stinger",
+			ink: null,
+		},
+		next: { scene: "game", swapSides: false, transition: "stinger", ink: null },
 		liveResults: null,
 	};
 }

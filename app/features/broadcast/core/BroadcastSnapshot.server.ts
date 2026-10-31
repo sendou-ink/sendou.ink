@@ -59,7 +59,8 @@ export async function build({
 		snapshot: {
 			v: 1,
 			...(stored?.state ?? Producer.initialState()),
-			settings: stored?.settings ?? DEFAULT_BROADCAST_SETTINGS,
+			// settings added later are missing from broadcasts written before
+			settings: { ...DEFAULT_BROADCAST_SETTINGS, ...stored?.settings },
 			tournament: {
 				name: tournament.ctx.name,
 				logoUrl: tournament.ctx.logoUrl,
@@ -120,9 +121,9 @@ async function featuredMatch({
 	const mapList = isOver
 		? null
 		: await resolveMatchMapList({ match, tournament });
-	const upcomingMap = mapList?.filter((map) => !map.bannedByTournamentTeamId)[
-		results.length
-	];
+	const plannedMaps = (mapList ?? [])
+		.filter((map) => !map.bannedByTournamentTeamId)
+		.map((map) => ({ mode: map.mode, stageId: map.stageId }));
 	const progressAt = (resultCount: number) =>
 		SetProgress.atResultCount({
 			results,
@@ -133,9 +134,8 @@ async function featuredMatch({
 				match.opponentTwo?.score ?? 0,
 			],
 			isSetOver: isOver,
-			upcomingMap: upcomingMap
-				? { mode: upcomingMap.mode, stageId: upcomingMap.stageId }
-				: null,
+			plannedMaps,
+			gameCount: match.roundMaps.count,
 		});
 
 	const players = await BroadcastRepository.findAllPlayersByTournamentTeamIds(

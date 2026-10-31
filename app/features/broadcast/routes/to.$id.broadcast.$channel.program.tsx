@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import { fixedLanguageMiddleware } from "~/modules/i18n/i18next.server";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { BROADCAST_REHEARSE_MESSAGE } from "../broadcast-constants";
 import { useBroadcastStream } from "../broadcast-hooks";
 import { broadcastOverlaySearchParams } from "../broadcast-search-params";
 import { broadcastStreamUrl } from "../broadcast-urls";
@@ -44,5 +46,32 @@ export default function BroadcastOverlayPage() {
 		}),
 		initialState: data.state,
 	});
-	return <BroadcastOverlay state={state} view={view} />;
+	const rehearsals = useRehearsals({ isEnabled: preview });
+
+	return <BroadcastOverlay state={state} view={view} rehearsals={rehearsals} />;
+}
+
+/** How many times the dashboard embedding this preview asked it to play the staged transition. */
+function useRehearsals({ isEnabled }: { isEnabled: boolean }) {
+	const [rehearsals, setRehearsals] = useState(0);
+
+	useEffect(() => {
+		if (!isEnabled) return;
+
+		const onMessage = (event: MessageEvent) => {
+			if (
+				event.origin !== window.location.origin ||
+				event.data !== BROADCAST_REHEARSE_MESSAGE
+			) {
+				return;
+			}
+
+			setRehearsals((count) => count + 1);
+		};
+
+		window.addEventListener("message", onMessage);
+		return () => window.removeEventListener("message", onMessage);
+	}, [isEnabled]);
+
+	return rehearsals;
 }

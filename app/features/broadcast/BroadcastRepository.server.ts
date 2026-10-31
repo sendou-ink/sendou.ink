@@ -119,17 +119,10 @@ export async function updateNext({
 
 	await insertIfMissing(key);
 
-	const pathValuePairs = sql.join(
-		entries.map(
-			([field, value]) =>
-				sql`${`$.next.${field}`}, json(${JSON.stringify(value)})`,
-		),
-	);
-
 	await db
 		.updateTable("TournamentBroadcast")
 		.set({
-			state: sql<string>`json_set("TournamentBroadcast"."state", ${pathValuePairs})`,
+			state: sql<string>`json_set("TournamentBroadcast"."state", ${jsonSetPairs(entries, "$.next")})`,
 		})
 		.where("TournamentBroadcast.tournamentId", "=", key.tournamentId)
 		.where("TournamentBroadcast.platform", "=", key.channel.platform)
@@ -182,15 +175,21 @@ export async function replaceState({
 	return result.numUpdatedRows > 0n;
 }
 
+/** Sets the given settings, leaving the others as they are (the theme and the show info are saved by separate forms). */
 export async function updateSettings({
-	settings,
+	patch,
 	...key
-}: BroadcastKey & { settings: BroadcastSettings }) {
+}: BroadcastKey & { patch: Partial<BroadcastSettings> }) {
+	const entries = Object.entries(patch);
+	if (entries.length === 0) return;
+
 	await insertIfMissing(key);
 
 	await db
 		.updateTable("TournamentBroadcast")
-		.set({ settings: JSON.stringify(settings) })
+		.set({
+			settings: sql<string>`json_set("TournamentBroadcast"."settings", ${jsonSetPairs(entries)})`,
+		})
 		.where("TournamentBroadcast.tournamentId", "=", key.tournamentId)
 		.where("TournamentBroadcast.platform", "=", key.channel.platform)
 		.where("TournamentBroadcast.account", "=", key.channel.account)
@@ -303,4 +302,13 @@ function insertIfMissing(
 			oc.columns(["tournamentId", "platform", "account"]).doNothing(),
 		)
 		.execute();
+}
+
+function jsonSetPairs(entries: Array<[string, unknown]>, basePath = "$") {
+	return sql.join(
+		entries.map(
+			([field, value]) =>
+				sql`${`${basePath}.${field}`}, json(${JSON.stringify(value)})`,
+		),
+	);
 }

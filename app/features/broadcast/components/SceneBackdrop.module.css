@@ -1,0 +1,28 @@
+.backdrop {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	background: var(--bc-bg);
+	animation: var(--bc-anim-fade-in) var(--bc-enter-duration) var(--bc-ease) both;
+}
+
+.alertStripes {
+	position: absolute;
+	right: -200px;
+	bottom: 0;
+	left: -200px;
+	height: 24px;
+	background: repeating-linear-gradient(
+		-45deg,
+		var(--bc-accent) 0 24px,
+		transparent 24px 48px
+	);
+	animation: var(--bc-anim-alert-slide) 4s linear infinite;
+}
+
+/* the stripes moving along, one period of them per loop */
+@keyframes :global(bc-alert-slide) {
+	to {
+		transform: translateX(-67.88px);
+	}
+}

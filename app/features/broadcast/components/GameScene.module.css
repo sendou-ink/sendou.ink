@@ -1,93 +1,208 @@
-.scorebug {
+.scoreboard {
 	position: absolute;
-	bottom: 24px;
-	left: 50%;
-	transform: translateX(-50%);
+	top: 36px;
+	left: 36px;
 	display: flex;
+	flex-direction: column;
 	align-items: stretch;
-	border-radius: var(--bc-radius);
-	background: var(--bc-surface);
-	overflow: hidden;
+	gap: 6px;
+	width: max-content;
+	min-width: 360px;
 	font-family: var(--bc-font-display);
 }
 
-.team {
+.row {
+	--bc-enter-x: calc(var(--bc-enter-distance) * -1);
+
+	position: relative;
 	display: flex;
-	align-items: center;
-	gap: 16px;
-	width: 520px;
-	padding: 12px 20px;
-	border-bottom: 6px solid var(--bc-team-a);
+	height: 54px;
+	overflow: visible;
+	border-bottom: 4px solid var(--team-color);
+	border-radius: var(--bc-radius-small) var(--bc-radius-small) 0 0;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + var(--i) * var(--bc-stagger)) both;
 
-	&[data-team="b"] {
-		flex-direction: row-reverse;
-		border-bottom-color: var(--bc-team-b);
+	&[data-loser] .teamName {
+		color: var(--bc-text-muted);
 	}
-}
-
-.teamLogo {
-	width: 56px;
-	height: 56px;
-	border-radius: 50%;
-	object-fit: cover;
 }
 
 .teamName {
 	flex: 1;
-	min-width: 0;
+	display: flex;
+	align-items: center;
+	max-width: 520px;
+	padding: 0 22px 0 18px;
 	overflow: hidden;
-	font-size: 30px;
+	border-radius: var(--bc-radius-small) 0 0 0;
+	background: var(--bc-surface);
+	font-size: 28px;
 	font-weight: 700;
 	text-overflow: ellipsis;
+	text-transform: uppercase;
 	white-space: nowrap;
+	transition: color var(--bc-transition-duration);
+}
 
-	[data-team="b"] & {
-		text-align: right;
+.score {
+	display: grid;
+	place-items: center;
+	width: 58px;
+	overflow: hidden;
+	border-radius: 0 var(--bc-radius-small) 0 0;
+	background: var(--team-color);
+	color: var(--team-color-text);
+	font-size: 34px;
+	font-weight: 700;
+	transition:
+		background var(--bc-transition-duration),
+		color var(--bc-transition-duration);
+}
+
+.scoreValue {
+	animation: var(--bc-anim-count) var(--bc-enter-duration) var(--bc-ease) both;
+}
+
+.matchPoint {
+	position: absolute;
+	top: 50%;
+	left: calc(100% + 10px);
+	margin-top: -14px;
+	padding: 4px 10px;
+	border-radius: var(--bc-radius-small);
+	background: var(--team-color);
+	color: var(--team-color-text);
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 20px;
+	text-transform: uppercase;
+	white-space: nowrap;
+	animation:
+		var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease) both,
+		var(--bc-anim-pulse) 1.8s ease-in-out var(--bc-enter-duration) infinite;
+}
+
+.infoBar {
+	position: absolute;
+	right: 36px;
+	bottom: 36px;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 6px;
+	font-family: var(--bc-font-body);
+}
+
+.infoRow {
+	--bc-enter-x: var(--bc-enter-distance);
+
+	display: flex;
+	align-items: stretch;
+	height: 50px;
+	overflow: hidden;
+	border-radius: var(--bc-radius-small);
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + 3 * var(--bc-stagger)) both;
+
+	& + & {
+		animation-delay: calc(var(--scene-enter-delay) + 4 * var(--bc-stagger));
 	}
 }
 
-.teamScore {
-	min-width: 48px;
-	font-size: 48px;
-	font-weight: 800;
-	text-align: center;
+.infoText {
+	display: flex;
+	align-items: center;
+	max-width: 900px;
+	padding: 0 22px;
+	overflow: hidden;
+	background: var(--bc-surface);
+	font-size: 22px;
+	font-weight: 600;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
-.gameInfo {
+.infoIcon {
+	display: grid;
+	flex-shrink: 0;
+	place-items: center;
+	width: 50px;
+	height: 50px;
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+	object-fit: cover;
+
+	& svg {
+		width: 26px;
+		height: 26px;
+	}
+}
+
+.mapIntro {
+	--bc-enter-y: calc(var(--bc-enter-distance) * -1);
+	--bc-exit-y: calc(var(--bc-enter-distance) * -1);
+
+	position: relative;
+	height: 132px;
+	margin-top: 8px;
+	overflow: hidden;
+	border: var(--bc-border-width) solid var(--bc-border);
+	border-radius: var(--bc-radius);
+	background: var(--bc-bg);
+	animation:
+		var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + 5 * var(--bc-stagger)) both,
+		var(--bc-anim-exit) var(--bc-enter-duration) var(--bc-ease-in)
+		calc(var(--scene-enter-delay) + 8s) forwards;
+
+	&::after {
+		position: absolute;
+		inset: 0;
+		background: var(--bc-bg);
+		opacity: 0.7;
+		content: "";
+	}
+}
+
+.mapIntroImage {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	animation: var(--bc-anim-zoom) 9s ease-out var(--scene-enter-delay) both;
+}
+
+.mapIntroText {
+	position: relative;
+	z-index: 1;
 	display: flex;
 	flex-direction: column;
-	align-items: center;
 	justify-content: center;
 	gap: 2px;
-	min-width: 280px;
-	padding: 8px 24px;
-	text-align: center;
+	height: 100%;
+	padding: 0 20px;
 }
 
-.round {
-	font-size: 20px;
-	font-weight: 700;
+.mapIntroGame {
 	color: var(--bc-accent);
+	font-size: 16px;
+	font-weight: 700;
+	text-transform: uppercase;
 }
 
-.gameCount {
-	font-size: 18px;
-	color: var(--bc-text-muted);
-}
-
-.map {
+.mapIntroMode {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	font-size: 20px;
+	color: var(--bc-text-muted);
+	font-size: 18px;
 	font-weight: 600;
 }
 
-.tournamentLogo {
-	align-self: center;
-	width: 56px;
-	height: 56px;
-	margin-left: 16px;
-	border-radius: var(--bc-radius);
-	object-fit: cover;
+.mapIntroStage {
+	font-size: 32px;
+	font-weight: 700;
+	line-height: 1.1;
 }
