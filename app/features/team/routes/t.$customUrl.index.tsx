@@ -24,10 +24,14 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { WeaponImage } from "~/components/Image";
+import { NoteAvatar } from "~/components/NoteAvatar";
 import { Placement } from "~/components/Placement";
-import { UserLink } from "~/components/UserLink";
 import { useUser } from "~/features/auth/core/user";
 import type { TeamLoaderData } from "~/features/team/loaders/t.$customUrl.server";
+import {
+	UserCard,
+	useUserCardData,
+} from "~/features/user-card/components/UserCard";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { invariant } from "~/utils/invariant";
@@ -36,7 +40,6 @@ import {
 	manageTeamRosterPage,
 	teamResultsPage,
 	teamSchedulePage,
-	userPage,
 } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.index.server";
 import type * as TeamRepository from "../TeamRepository.server";
@@ -361,6 +364,7 @@ function MemberRow({
 	number: number;
 }) {
 	const { t } = useTranslation(["team"]);
+	const cardData = useUserCardData(member.id);
 
 	return (
 		<div
@@ -383,15 +387,16 @@ function MemberRow({
 				</span>
 			) : null}
 			<div className={styles.memberSection}>
-				<Link
-					to={userPage(member)}
-					className={styles.memberAvatarNameContainer}
-				>
-					<div className={styles.memberAvatar}>
-						<Avatar user={member} size="md" />
-					</div>
-					{member.username}
-				</Link>
+				<UserCard userId={member.id}>
+					<span className={styles.memberAvatarNameContainer}>
+						<NoteAvatar sentiment={cardData?.privateNote?.sentiment}>
+							<div className={styles.memberAvatar}>
+								<Avatar user={member} size="md" />
+							</div>
+						</NoteAvatar>
+						{member.username}
+					</span>
+				</UserCard>
 				<div className="stack horizontal md">
 					{member.weapons.map((weapon) => (
 						<WeaponImage
@@ -413,13 +418,19 @@ function MobileMemberCard({
 	member: TeamRepository.findByCustomUrl["members"][number];
 }) {
 	const { t } = useTranslation(["team"]);
+	const cardData = useUserCardData(member.id);
 
 	return (
 		<div className={styles.memberCardContainer}>
 			<div className={styles.memberCard}>
-				<UserLink user={member} size="md" direction="vertical">
-					<div className={styles.memberCardName}>{member.username}</div>
-				</UserLink>
+				<UserCard userId={member.id}>
+					<span className={styles.memberCardUser}>
+						<NoteAvatar sentiment={cardData?.privateNote?.sentiment}>
+							<Avatar user={member} size="md" />
+						</NoteAvatar>
+						<span className={styles.memberCardName}>{member.username}</span>
+					</span>
+				</UserCard>
 				{member.weapons.length > 0 ? (
 					<div className="stack horizontal md">
 						{member.weapons.map((weapon) => (

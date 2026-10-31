@@ -73,6 +73,7 @@
 }
 
 .memberRoleMobile {
+	text-align: center;
 	color: var(--color-text-high);
 	font-weight: var(--weight-bold);
 }
@@ -81,7 +82,6 @@
 	width: 16rem;
 	margin: 0 auto;
 	display: flex;
-	text-align: center;
 	flex-direction: column;
 }
 
@@ -97,7 +97,15 @@
 	font-weight: var(--weight-bold);
 }
 
+.memberCardUser {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1-5);
+}
+
 .memberCardName {
+	text-align: center;
 	font-weight: var(--weight-bold);
 	margin-block-start: var(--s-0-5);
 }

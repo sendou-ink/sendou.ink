@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import * as TeamRepository from "../TeamRepository.server";
@@ -17,6 +18,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const results = await TeamRepository.findResultPlacementsById(team.id);
 
 	return {
+		...(await UserCardRepository.findAllByUserIds({
+			userIds: team.members.map((member) => member.id),
+		})),
 		team,
 		customTheme: canAddCustomizedColors(team) ? team.customTheme : null,
 		results: resultsMapped(results),
