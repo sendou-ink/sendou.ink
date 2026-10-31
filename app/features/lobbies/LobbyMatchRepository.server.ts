@@ -8,6 +8,7 @@ import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeap
 import type { ModeWithStage } from "~/modules/in-game-lists/types";
 import { databaseTimestampNow } from "~/utils/dates";
 import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
+import { toDBBoolean } from "~/utils/sql";
 import type { Unwrapped } from "~/utils/types";
 import * as LobbySet from "./core/LobbySet";
 import type { LobbyRolledWeapons, LobbySide } from "./lobbies-constants";
@@ -29,6 +30,7 @@ export function findAllSetsByLobbyId(lobbyId: number, trx?: Transaction<DB>) {
 			"LobbySet.alphaChatRoomId",
 			"LobbySet.bravoChatRoomId",
 			"LobbySet.rolledWeapons",
+			"LobbySet.noScreen",
 			"LobbySet.createdAt",
 			jsonArrayFrom(
 				eb
@@ -147,6 +149,7 @@ export function insertSet({
 	bravo,
 	sittingOut,
 	rolledWeapons,
+	noScreen,
 }: {
 	lobbyId: number;
 	bestOf: Tables["LobbySet"]["bestOf"];
@@ -155,6 +158,7 @@ export function insertSet({
 	bravo: number[];
 	sittingOut: number[];
 	rolledWeapons: LobbyRolledWeapons | null;
+	noScreen: boolean;
 }) {
 	return db.transaction().execute(async (trx) => {
 		const lobby = await trx
@@ -179,6 +183,7 @@ export function insertSet({
 				alphaChatRoomId,
 				bravoChatRoomId,
 				rolledWeapons: rolledWeapons ? JSON.stringify(rolledWeapons) : null,
+				noScreen: toDBBoolean(noScreen),
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();

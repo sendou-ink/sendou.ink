@@ -107,6 +107,7 @@ export function LobbyMatchBanner() {
 			<MatchBanner
 				stageId={currentGame.stageId}
 				mode={currentGame.mode}
+				screenLegal={!currentSet.noScreen}
 				joinPool={joinInfo?.pool}
 				joinPass={joinInfo?.pass}
 			/>

@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
+import {
+	SPLATTERCOLOR_SCREEN_ID,
+	weaponIdToBaseWeaponId,
+} from "~/modules/in-game-lists/weapon-ids";
 import { seededRandom } from "~/utils/random";
 import * as WeaponRoll from "./WeaponRoll";
 
@@ -73,6 +76,21 @@ describe("WeaponRoll.roll", () => {
 			previous = next;
 		}
 	});
+
+	test("never rolls a weapon with Splattercolor Screen when avoiding it", () => {
+		for (let i = 0; i < 50; i++) {
+			const result = WeaponRoll.roll(WeaponRoll.DEFAULT_WEAPON_ROLL_OPTIONS, {
+				noScreen: true,
+				random: seeded(`no-screen-${i}`),
+			});
+
+			for (const weaponId of [...result.alpha, ...result.bravo]) {
+				expect(WeaponRoll.specialOf(weaponId)).not.toBe(
+					SPLATTERCOLOR_SCREEN_ID,
+				);
+			}
+		}
+	});
 });
 
 describe("WeaponRoll.repeatFactor", () => {
@@ -99,6 +117,20 @@ describe("WeaponRoll.rollForSet", () => {
 			expect(
 				new Set([...ALPHA, ...BRAVO].map(weaponIdToBaseWeaponId)).size,
 			).toBe(8);
+		}
+	});
+
+	test("never rolls a weapon with Splattercolor Screen when a player avoids it", () => {
+		for (let i = 0; i < 50; i++) {
+			const { ALPHA, BRAVO } = WeaponRoll.rollForSet("BALANCED", {
+				noScreen: true,
+			});
+
+			for (const weaponId of [...ALPHA, ...BRAVO]) {
+				expect(WeaponRoll.specialOf(weaponId)).not.toBe(
+					SPLATTERCOLOR_SCREEN_ID,
+				);
+			}
 		}
 	});
 });

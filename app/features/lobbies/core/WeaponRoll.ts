@@ -30,6 +30,7 @@ import type {
 } from "~/modules/in-game-lists/types";
 import {
 	mainWeaponIds,
+	SPLATTERCOLOR_SCREEN_ID,
 	type weaponCategories,
 	weaponIdToBaseWeaponId,
 	weaponIdToCategory,
@@ -179,14 +180,19 @@ export interface WeaponRollResult {
 
 /**
  * Rolls the weapons of both sides, see the top of the file. `recentRolls` are the weapons of the lobby's previous
- * sets, newest first. `random` is injectable for tests.
+ * sets, newest first. `noScreen` never rolls a weapon with Splattercolor Screen. `random` is injectable for tests.
  */
 export function roll(
 	options: WeaponRollOptions,
 	{
 		recentRolls = [],
+		noScreen = false,
 		random = Math.random,
-	}: { recentRolls?: MainWeaponId[][]; random?: () => number } = {},
+	}: {
+		recentRolls?: MainWeaponId[][];
+		noScreen?: boolean;
+		random?: () => number;
+	} = {},
 ): WeaponRollResult {
 	const repeatFactors = new Map<MainWeaponId, number>();
 	for (const [i, weapons] of recentRolls.entries()) {
@@ -199,10 +205,11 @@ export function roll(
 		}
 	}
 
-	const drawWeights = ROLLABLE_WEAPON_IDS.map(
-		(weaponId) =>
-			usageOf(weaponId) ** options.popularityExponent *
-			(repeatFactors.get(weaponIdToBaseWeaponId(weaponId)) ?? 1),
+	const drawWeights = ROLLABLE_WEAPON_IDS.map((weaponId) =>
+		noScreen && specialOf(weaponId) === SPLATTERCOLOR_SCREEN_ID
+			? 0
+			: usageOf(weaponId) ** options.popularityExponent *
+				(repeatFactors.get(weaponIdToBaseWeaponId(weaponId)) ?? 1),
 	);
 
 	let best: WeaponRollResult | null = null;
@@ -218,16 +225,23 @@ export function roll(
 	return best!;
 }
 
-/** Rolls the weapons each side of a set gets with the lobby's randomizer, `recentRolls` being its previous sets' newest first. */
+/**
+ * Rolls the weapons each side of a set gets with the lobby's randomizer, `recentRolls` being its previous sets'
+ * newest first. `noScreen` when a player of the set avoids Splattercolor Screen.
+ */
 export function rollForSet(
 	randomizer: Exclude<LobbyWeaponRandomizer, "OFF">,
-	recentRolls: LobbyRolledWeapons[] = [],
+	{
+		recentRolls = [],
+		noScreen = false,
+	}: { recentRolls?: LobbyRolledWeapons[]; noScreen?: boolean } = {},
 ): LobbyRolledWeapons {
 	const rolled = roll(RANDOMIZER_OPTIONS[randomizer], {
 		recentRolls: recentRolls.map((weapons) => [
 			...weapons.ALPHA,
 			...weapons.BRAVO,
 		]),
+		noScreen,
 	});
 
 	return { ALPHA: rolled.alpha, BRAVO: rolled.bravo };

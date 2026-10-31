@@ -1482,6 +1482,8 @@ export interface LobbySet {
 	bravoChatRoomId: number | null;
 	/** Weapons the lobby's weapon randomizer rolled for each side's players to pick from when the set started, `null` when it was off */
 	rolledWeapons: JSONColumnTypeNullable<LobbyRolledWeapons>;
+	/** A player of the set avoids Splattercolor Screen, decided as the set started */
+	noScreen: Generated<DBBoolean>;
 	createdAt: Generated<number>;
 }
 

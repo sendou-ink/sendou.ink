@@ -7,6 +7,7 @@ import * as R from "remeda";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
@@ -353,18 +354,26 @@ async function startSet({ lobby, sets }: LoadedState) {
 		),
 	});
 
+	const noScreen = await UserRepository.anyUserPrefersNoScreen([
+		...result.alpha,
+		...result.bravo,
+	]);
+
 	await LobbyMatchRepository.insertSet({
 		lobbyId: lobby.id,
 		bestOf: lobby.bestOf,
 		maps,
 		...result,
+		noScreen,
 		rolledWeapons:
 			lobby.weaponRandomizer === "OFF"
 				? null
-				: WeaponRoll.rollForSet(
-						lobby.weaponRandomizer,
-						sets.toReversed().flatMap((set) => set.rolledWeapons ?? []),
-					),
+				: WeaponRoll.rollForSet(lobby.weaponRandomizer, {
+						recentRolls: sets
+							.toReversed()
+							.flatMap((set) => set.rolledWeapons ?? []),
+						noScreen,
+					}),
 	});
 
 	if (previousSet) {

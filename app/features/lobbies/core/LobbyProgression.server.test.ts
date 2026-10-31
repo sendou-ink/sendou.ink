@@ -117,6 +117,20 @@ describe("LobbyProgression.advance", () => {
 		},
 	);
 
+	test.each([
+		{ why: "a player avoids it", noScreen: 1 as const, expected: 1 },
+		{ why: "nobody avoids it", noScreen: 0 as const, expected: 0 },
+	])(
+		"a set bans Splattercolor Screen as it starts when $why",
+		async ({ noScreen, expected }) => {
+			await UserFactory.grant(users.id(5), { matchProfile: { noScreen } });
+
+			const lobbyId = await startedLobby({ checkedInCount: 8 });
+
+			expect((await latestSet(lobbyId)).noScreen).toBe(expected);
+		},
+	);
+
 	test("without a weapon randomizer a set has no weapons", async () => {
 		const lobbyId = await startedLobby({ checkedInCount: 8 });
 
