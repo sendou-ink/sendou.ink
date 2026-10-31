@@ -527,5 +527,9 @@
 	"labels.lobbySpectators": "Spectators",
 	"bottomTexts.lobbySpectators": "Players in the room on top of the 8 playing. Spectators rotate in every set, so a different player sits out each time. Everyone else joins the waitlist",
 	"errors.dateAfterLobbyStart": "Date can not be after the lobby's start",
-	"errors.canNotSetIfStartingNow": "Can not be set if starting now"
+	"errors.canNotSetIfStartingNow": "Can not be set if starting now",
+	"labels.broadcastCss": "Custom CSS",
+	"bottomTexts.broadcastCss": "Applied to every scene after the default styles. Override the variables on :root or target parts like [data-scene=\"game\"] [data-part=\"team-name\"].",
+	"labels.broadcastPlayers": "Players",
+	"labels.broadcastWeapons": "Weapons"
 }

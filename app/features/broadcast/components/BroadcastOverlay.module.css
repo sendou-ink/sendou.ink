@@ -1,0 +1,47 @@
+:root {
+	--bc-accent: #8c6cf8;
+	--bc-bg: #0f0d1c;
+	--bc-surface: rgb(20 18 38 / 92%);
+	--bc-text: #fff;
+	--bc-text-muted: #b9b4d6;
+	--bc-team-a: #f0a01f;
+	--bc-team-b: #3f8cf5;
+	--bc-font-display: lexend, sans-serif;
+	--bc-font-body: lexend, sans-serif;
+	--bc-radius: 12px;
+	--bc-transition-duration: 400ms;
+}
+
+.canvas {
+	position: relative;
+	width: 1920px;
+	height: 1080px;
+	overflow: hidden;
+	color: var(--bc-text);
+	font-family: var(--bc-font-body);
+}
+
+.scene {
+	position: absolute;
+	inset: 0;
+
+	&[data-transition="in"] {
+		animation: fade-in var(--bc-transition-duration) ease both;
+	}
+
+	&[data-transition="out"] {
+		animation: fade-out var(--bc-transition-duration) ease both;
+	}
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes fade-out {
+	to {
+		opacity: 0;
+	}
+}
