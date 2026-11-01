@@ -57,6 +57,7 @@ describe("BroadcastRepository.updateNext", () => {
 			transition: "stinger",
 			bracketIdx: null,
 			bracketFocus: "remaining",
+			clipId: null,
 		});
 	});
 });

@@ -39,13 +39,14 @@ import {
 	BROADCAST_HOLD_SCENES,
 	BROADCAST_INK_COLORS,
 	BROADCAST_KEYFRAMES,
+	BROADCAST_PROTOTYPE_CLIPS,
 	BROADCAST_REHEARSE_MESSAGE,
 	BROADCAST_SCENE_PARTS,
 	BROADCAST_SCENES,
 	BROADCAST_THEME_TOKENS,
 	BROADCAST_TRANSITIONS,
 } from "../broadcast-constants";
-import { useBroadcastStream } from "../broadcast-hooks";
+import { useBroadcastStream, useClipSender } from "../broadcast-hooks";
 import {
 	broadcastActionSchema,
 	broadcastInfoFormSchema,
@@ -57,7 +58,11 @@ import type {
 	BroadcastState,
 	BroadcastView,
 } from "../broadcast-types";
-import { broadcastOverlayPage, broadcastStreamUrl } from "../broadcast-urls";
+import {
+	broadcastOverlayPage,
+	broadcastSignalUrl,
+	broadcastStreamUrl,
+} from "../broadcast-urls";
 import {
 	gameInk,
 	inkColorVars,
@@ -66,6 +71,7 @@ import {
 } from "../broadcast-utils";
 import { BroadcastPreview } from "../components/BroadcastPreview";
 import * as BracketFocus from "../core/BracketFocus";
+import type * as ClipTransfer from "../core/ClipTransfer";
 import { loader } from "../loaders/to.$id.broadcast.$channel.server";
 import styles from "./to.$id.broadcast.$channel.module.css";
 
@@ -95,9 +101,14 @@ export default function BroadcastDashboardPage() {
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
 	const pageArgs = { tournamentId: tournament.ctx.id, slug: data.channel.slug };
+	const clipSender = useClipSender({
+		signalUrl: broadcastSignalUrl(pageArgs),
+		clips: BROADCAST_PROTOTYPE_CLIPS,
+	});
 	const { state, isConnected } = useBroadcastStream({
 		url: broadcastStreamUrl({ ...pageArgs, role: "dashboard" }),
 		initialState: data.state,
+		onMessage: clipSender.onMessage,
 	});
 	const nextPreviewRef = React.useRef<HTMLIFrameElement>(null);
 	useRevalidateOnFeaturedMatchChange(state.match?.id ?? null);
@@ -169,6 +180,8 @@ export default function BroadcastDashboardPage() {
 			</div>
 
 			<SceneTiles state={state} />
+
+			<ReplayClips state={state} statuses={clipSender.statuses} />
 
 			<BracketControls state={state} />
 
@@ -396,6 +409,85 @@ function SceneTiles({ state }: { state: BroadcastState }) {
 				);
 			})}
 		</div>
+	);
+}
+
+function ReplayClips({
+	state,
+	statuses,
+}: {
+	state: BroadcastState;
+	statuses: ClipTransfer.ClipPeerStatus[];
+}) {
+	const { t } = useTranslation(["broadcast"]);
+	const { submit } = useActionSubmit(broadcastActionSchema);
+
+	return (
+		<SendouSection title={t("broadcast:dashboard.clips.header")}>
+			<div className="stack md">
+				<div className="text-xs text-lighter">
+					{t("broadcast:dashboard.clips.explanation")}
+				</div>
+				<SendouChipRadioGroup
+					aria-label={t("broadcast:dashboard.clips.header")}
+					wrap
+				>
+					<SendouChipRadio
+						name="broadcast-clip"
+						value="none"
+						checked={state.next.clipId === null}
+						onChange={() => submit("SET_NEXT_CLIP", {})}
+					>
+						{t("broadcast:dashboard.clips.none")}
+					</SendouChipRadio>
+					{BROADCAST_PROTOTYPE_CLIPS.map((clip) => (
+						<SendouChipRadio
+							key={clip.id}
+							name="broadcast-clip"
+							value={clip.id}
+							checked={state.next.clipId === clip.id}
+							onChange={() => submit("SET_NEXT_CLIP", { clipId: clip.id })}
+						>
+							{clip.name}
+						</SendouChipRadio>
+					))}
+				</SendouChipRadioGroup>
+				<div className="stack xs text-sm">
+					<span className="font-semi-bold">
+						{t("broadcast:dashboard.clips.overlays")}
+					</span>
+					{statuses.length === 0 ? (
+						<span className="text-lighter">
+							{t("broadcast:dashboard.clips.noOverlays")}
+						</span>
+					) : (
+						statuses.map((status) => (
+							<span key={status.peer.id}>
+								{t(`broadcast:dashboard.clips.role.${status.peer.role}`)} ·{" "}
+								<span className="text-lighter">{status.connectionState}</span>
+								{status.missingCount !== null ? (
+									<>
+										{" "}
+										·{" "}
+										{status.missingCount === 0
+											? t("broadcast:dashboard.clips.upToDate")
+											: status.transferMs !== null
+												? t("broadcast:dashboard.clips.transferred", {
+														count: status.missingCount,
+														seconds: (status.transferMs / 1000).toFixed(1),
+													})
+												: t("broadcast:dashboard.clips.progress", {
+														received: status.receivedCount,
+														total: status.missingCount,
+													})}
+									</>
+								) : null}
+							</span>
+						))
+					)}
+				</div>
+			</div>
+		</SendouSection>
 	);
 }
 

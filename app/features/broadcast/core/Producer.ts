@@ -24,6 +24,7 @@ const DEFAULT_PRODUCER_STATE: ProducerState = {
 	transition: "stinger",
 	bracketIdx: null,
 	bracketFocus: "remaining",
+	clipId: null,
 };
 
 /** State of a broadcast nothing has been written to yet: rosters on air, game staged, both with a stinger. */

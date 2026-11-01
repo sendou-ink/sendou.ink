@@ -5,10 +5,11 @@ import { fixedLanguageMiddleware } from "~/modules/i18n/i18next.server";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { BroadcastClipsContext } from "../broadcast-clips-context";
 import { BROADCAST_REHEARSE_MESSAGE } from "../broadcast-constants";
-import { useBroadcastStream } from "../broadcast-hooks";
+import { useBroadcastStream, useClipReceiver } from "../broadcast-hooks";
 import { broadcastOverlaySearchParams } from "../broadcast-search-params";
-import { broadcastStreamUrl } from "../broadcast-urls";
+import { broadcastSignalUrl, broadcastStreamUrl } from "../broadcast-urls";
 import { BroadcastOverlay } from "../components/BroadcastOverlay";
 import { loader } from "../loaders/to.$id.broadcast.$channel.program.server";
 import type { Route } from "./+types/to.$id.broadcast.$channel.program";
@@ -38,17 +39,25 @@ export default function BroadcastOverlayPage() {
 	const [{ view, preview }] = useSearchParamsTyped(
 		broadcastOverlaySearchParams,
 	);
+	const pageArgs = { tournamentId: data.tournamentId, slug: data.slug };
+	const clips = useClipReceiver({ signalUrl: broadcastSignalUrl(pageArgs) });
 	const { state } = useBroadcastStream({
 		url: broadcastStreamUrl({
-			tournamentId: data.tournamentId,
-			slug: data.slug,
+			...pageArgs,
 			role: preview ? "preview" : "source",
 		}),
 		initialState: data.state,
+		onMessage: clips.onMessage,
 	});
 	const rehearsals = useRehearsals({ isEnabled: preview });
 
-	return <BroadcastOverlay state={state} view={view} rehearsals={rehearsals} />;
+	return (
+		<BroadcastClipsContext.Provider
+			value={{ urls: clips.urls, isMuted: preview }}
+		>
+			<BroadcastOverlay state={state} view={view} rehearsals={rehearsals} />
+		</BroadcastClipsContext.Provider>
+	);
 }
 
 /** How many times the dashboard embedding this preview asked it to play the staged transition. */

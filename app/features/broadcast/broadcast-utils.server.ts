@@ -22,8 +22,18 @@ export function isBroadcastEnabled(tournament: {
 	return ServerConfig.broadcastOrgIds.includes(organizationId);
 }
 
+/** Producer pages are for the tournament's organizers and streamers. */
+export function isBroadcastProducer(
+	tournament: Tournament,
+	user: { id: number } | undefined,
+) {
+	return (
+		isBroadcastEnabled(tournament) && tournament.isOrganizerOrStreamer(user)
+	);
+}
+
 /**
- * Producer pages are for the tournament's organizers and streamers.
+ * See {@link isBroadcastProducer}.
  *
  * @throws {Response} 404 if the user is not one or the tournament can't use broadcasts
  */
@@ -31,12 +41,7 @@ export function requireBroadcastProducer(
 	tournament: Tournament,
 	user: { id: number } | undefined,
 ) {
-	if (
-		!isBroadcastEnabled(tournament) ||
-		!tournament.isOrganizerOrStreamer(user)
-	) {
-		notFound();
-	}
+	if (!isBroadcastProducer(tournament, user)) notFound();
 }
 
 /** Creates the chat room the tournament's organizers and streamers produce the channel's broadcast in, if the tournament can use broadcasts and the room is missing. */

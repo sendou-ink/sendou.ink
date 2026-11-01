@@ -15,6 +15,7 @@ import {
 	BROADCAST_INK_COLORS,
 	BROADCAST_MAX_CASTERS,
 	BROADCAST_SCENES,
+	BROADCAST_SDP_MAX_LENGTH,
 	BROADCAST_TRANSITIONS,
 	BROADCAST_WEAPON_IMAGES,
 } from "./broadcast-constants";
@@ -23,6 +24,7 @@ const nonNegativeInteger = v.pipe(coerceNumber(), v.integer(), v.minValue(0));
 const channelSlug = v.pipe(v.string(), v.minLength(1), v.maxLength(100));
 const scene = v.picklist(BROADCAST_SCENES);
 const transition = v.picklist(BROADCAST_TRANSITIONS);
+const clipId = v.pipe(v.string(), v.minLength(1), v.maxLength(100));
 const booleanString = v.pipe(
 	v.picklist(["true", "false"]),
 	v.transform((value) => value === "true"),
@@ -88,6 +90,11 @@ export const broadcastActionSchema = v.union([
 		focus: v.picklist(BROADCAST_BRACKET_FOCUSES),
 	}),
 	v.object({
+		_action: _action("SET_NEXT_CLIP"),
+		/** `undefined` leaves the replays footage to OBS. */
+		clipId: v.optional(clipId),
+	}),
+	v.object({
 		_action: _action("TAKE"),
 		takeId: nonNegativeInteger,
 		/** The featured match and how many of its results next showed, `undefined` without a match. */
@@ -102,3 +109,13 @@ export const broadcastActionSchema = v.union([
 	broadcastThemeFormSchema,
 	broadcastInfoFormSchema,
 ]);
+
+export const broadcastSignalSchema = v.object({
+	/** The posting peer's own token, see `BroadcastOwnPeer`. */
+	token: v.pipe(v.string(), v.uuid()),
+	to: v.pipe(v.string(), v.uuid()),
+	description: v.object({
+		type: v.picklist(["offer", "answer"]),
+		sdp: v.pipe(v.string(), v.maxLength(BROADCAST_SDP_MAX_LENGTH)),
+	}),
+});

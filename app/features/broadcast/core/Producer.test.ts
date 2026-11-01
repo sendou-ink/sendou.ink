@@ -19,6 +19,7 @@ describe("Producer.take", () => {
 					transition: "cut",
 					bracketIdx: null,
 					bracketFocus: "remaining",
+					clipId: null,
 				},
 				next: {
 					scene: "game",
@@ -26,6 +27,7 @@ describe("Producer.take", () => {
 					transition: "stinger",
 					bracketIdx: 1,
 					bracketFocus: "losers",
+					clipId: null,
 				},
 				liveResults: { matchId: 1, count: 1 },
 				ink,
@@ -41,6 +43,7 @@ describe("Producer.take", () => {
 				transition: "stinger",
 				bracketIdx: 1,
 				bracketFocus: "losers",
+				clipId: null,
 			},
 			next: {
 				scene: "rosters",
@@ -48,6 +51,7 @@ describe("Producer.take", () => {
 				transition: "stinger",
 				bracketIdx: 1,
 				bracketFocus: "losers",
+				clipId: null,
 			},
 			liveResults: { matchId: 1, count: 2 },
 			ink,
