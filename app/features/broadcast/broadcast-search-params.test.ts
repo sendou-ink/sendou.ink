@@ -4,6 +4,7 @@ import {
 	assertRoundTrips,
 } from "~/modules/search-params/search-params-test-utils";
 import {
+	broadcastDashboardSearchParams,
 	broadcastOverlaySearchParams,
 	broadcastStreamSearchParams,
 } from "./broadcast-search-params";
@@ -30,5 +31,19 @@ describe("broadcastStreamSearchParams", () => {
 
 	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(broadcastStreamSearchParams, "role", [["garbage"]]);
+	});
+});
+
+describe("broadcastDashboardSearchParams", () => {
+	test("round-trips", () => {
+		assertRoundTrips(broadcastDashboardSearchParams, {
+			tab: ["scene", "setup", "theme"],
+		});
+	});
+
+	test("malformed values decode to defaults", () => {
+		assertDecodesToDefault(broadcastDashboardSearchParams, "tab", [
+			["garbage"],
+		]);
 	});
 });

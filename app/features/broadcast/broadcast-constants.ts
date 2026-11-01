@@ -4,7 +4,7 @@ import type {
 	BroadcastTransition,
 } from "./broadcast-types";
 
-/** Scenes the overlay can show, in the order of the dashboard's scene buttons. */
+/** Scenes the overlay can show. */
 export const BROADCAST_SCENES = [
 	"starting",
 	"casters",
@@ -86,6 +86,9 @@ export const BROADCAST_WEAPON_IMAGES = ["default", "outlined"] as const;
 
 /** Which producer state an overlay page renders: what is on air or what is staged for the next Take. */
 export const BROADCAST_VIEWS = ["live", "next"] as const;
+
+/** Tabs of the dashboard under the switcher: the selected item's scene, the OBS and show setup, the theme. */
+export const BROADCAST_DASHBOARD_TABS = ["scene", "setup", "theme"] as const;
 
 /** Kind of client connected to a broadcast's stream, counted separately for the dashboard's OBS health. */
 export const BROADCAST_STREAM_ROLES = [
@@ -171,6 +174,16 @@ export const BROADCAST_HOLD_SCENES = [
 	"technical",
 	"ending",
 ] as const satisfies ReadonlyArray<(typeof BROADCAST_SCENES)[number]>;
+
+/** The dashboard's scene buttons, grouped and in the order the number keys 1–9 and 0 pick them. Every scene is in one group. */
+export const BROADCAST_SCENE_GROUPS = [
+	{ key: "match", scenes: ["rosters", "maps", "game", "replays"] },
+	{ key: "show", scenes: ["casters", "bracket"] },
+	{ key: "hold", scenes: BROADCAST_HOLD_SCENES },
+] as const satisfies ReadonlyArray<{
+	key: string;
+	scenes: ReadonlyArray<(typeof BROADCAST_SCENES)[number]>;
+}>;
 
 /**
  * Stable `data-part` hooks of each design for custom CSS, e.g. `[data-scene="game"] [data-part="team-name"]`.

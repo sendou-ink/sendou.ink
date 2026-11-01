@@ -1,9 +1,12 @@
 import clsx from "clsx";
 import {
 	ArrowLeftRight,
+	Cable,
 	ChevronDown,
 	ChevronsLeft,
 	ChevronUp,
+	CircleCheck,
+	CircleDashed,
 	Clapperboard,
 	Clock,
 	Coffee,
@@ -14,6 +17,7 @@ import {
 	type LucideIcon,
 	Map as MapIcon,
 	Mic,
+	Palette,
 	Pause,
 	Play,
 	Plus,
@@ -33,7 +37,12 @@ import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
-import { SendouSection } from "~/components/elements/Section";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { InviteLinkInput } from "~/components/InviteLinkInput";
 import { Config } from "~/config";
 import { useTournament } from "~/features/tournament/tournament-context";
@@ -41,10 +50,13 @@ import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useLatestRef } from "~/hooks/useLatestRef";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
 import {
 	BROADCAST_BRACKET_FOCUSES,
+	BROADCAST_DASHBOARD_TABS,
 	BROADCAST_DURATIONS_MS,
 	BROADCAST_HOLD_SCENES,
 	BROADCAST_INK_COLORS,
@@ -52,17 +64,19 @@ import {
 	BROADCAST_PROTOTYPE_CLIPS,
 	BROADCAST_REHEARSE_MESSAGE,
 	BROADCAST_SCENE_DEFAULT_DURATIONS_MS,
+	BROADCAST_SCENE_GROUPS,
 	BROADCAST_SCENE_PARTS,
-	BROADCAST_SCENES,
 	BROADCAST_THEME_TOKENS,
 	BROADCAST_TRANSITIONS,
 } from "../broadcast-constants";
 import { useBroadcastStream, useClipSender } from "../broadcast-hooks";
 import {
 	broadcastActionSchema,
-	broadcastInfoFormSchema,
+	broadcastCastersFormSchema,
+	broadcastHeadlineFormSchema,
 	broadcastThemeFormSchema,
 } from "../broadcast-schemas";
+import { broadcastDashboardSearchParams } from "../broadcast-search-params";
 import type {
 	BroadcastMatch,
 	BroadcastScene,
@@ -111,7 +125,23 @@ const SCENE_ICONS: Record<BroadcastScene, LucideIcon> = {
 	ending: Flag,
 };
 
-/** Control panel of one broadcast: the live and the staged ("next") overlay side by side, Take puts next on air. */
+/** Number keys 1–9 and 0 pick these, in this order. */
+const SCENES_BY_HOTKEY: BroadcastScene[] = BROADCAST_SCENE_GROUPS.flatMap(
+	(group) => group.scenes,
+);
+
+type DashboardTab = (typeof BROADCAST_DASHBOARD_TABS)[number];
+
+const TAB_ICONS: Record<DashboardTab, LucideIcon> = {
+	scene: Clapperboard,
+	setup: Cable,
+	theme: Palette,
+};
+
+/**
+ * Control panel of one broadcast: the live and the staged ("next") overlay side by side, Take puts next on air.
+ * Under them the tabs edit the selected staged item's scene, set up OBS and the show, and theme the overlays.
+ */
 export default function BroadcastDashboardPage() {
 	const { t } = useTranslation(["broadcast"]);
 	const tournament = useTournament();
@@ -129,6 +159,7 @@ export default function BroadcastDashboardPage() {
 	const nextPreviewRef = React.useRef<HTMLIFrameElement>(null);
 	useRevalidateOnFeaturedMatchChange(state.match?.id ?? null);
 	const now = useServerNow(clockOffsetMs);
+	const [tab, setTab] = useSearchParam(broadcastDashboardSearchParams, "tab");
 	const [selectedItemId, setSelectedItemId] = React.useState<number | null>(
 		null,
 	);
@@ -155,12 +186,19 @@ export default function BroadcastDashboardPage() {
 		autoTakeAt !== null &&
 		now !== null &&
 		autoTakeAt - now <= AUTO_TAKE_IMMINENT_MS;
+	const areClipsOnSources = everySourceHasClips(clipSender.statuses);
+	useSceneHotkeys(selected);
 
 	const rehearse = () =>
 		nextPreviewRef.current?.contentWindow?.postMessage(
 			BROADCAST_REHEARSE_MESSAGE,
 			window.location.origin,
 		);
+
+	const selectItem = (itemId: number) => {
+		setSelectedItemId(itemId);
+		setTab("scene");
+	};
 
 	return (
 		<div className={clsx("stack lg", styles.dashboard)}>
@@ -169,10 +207,13 @@ export default function BroadcastDashboardPage() {
 					<h1 className="text-lg">
 						{t("broadcast:title")} · {data.channel.name}
 					</h1>
-					<Health state={state} isConnected={isConnected} />
+					<Health
+						state={state}
+						isConnected={isConnected}
+						onClick={() => setTab("setup")}
+					/>
 				</div>
 				<FeaturedMatch state={state} />
-				<ResultsNotOnAir state={state} />
 			</header>
 
 			<div className={styles.switcher}>
@@ -186,7 +227,10 @@ export default function BroadcastDashboardPage() {
 						})}
 						title={t("broadcast:dashboard.live")}
 					/>
-					<LiveTimer state={state} now={now} />
+					<div className="stack md">
+						<LiveTimer state={state} now={now} />
+						<OnAirControls state={state} />
+					</div>
 				</section>
 
 				<div className={styles.takeColumn}>
@@ -237,76 +281,54 @@ export default function BroadcastDashboardPage() {
 					<Queue
 						state={state}
 						selected={selected}
-						onSelect={setSelectedItemId}
-						areClipsOnSources={everySourceHasClips(clipSender.statuses)}
+						onSelect={selectItem}
+						areClipsOnSources={areClipsOnSources}
 					/>
 				</section>
 			</div>
 
-			<SceneTiles
-				state={state}
-				selected={selected}
-				selectedLabel={selectedLabel}
-			/>
+			<SendouTabs
+				selectedKey={tab}
+				onSelectionChange={(key) => setTab(key as DashboardTab)}
+			>
+				<SendouTabList>
+					{BROADCAST_DASHBOARD_TABS.map((dashboardTab) => {
+						const Icon = TAB_ICONS[dashboardTab];
 
-			<ReplayClips
-				selected={selected}
-				selectedLabel={selectedLabel}
-				statuses={clipSender.statuses}
-			/>
-
-			<BracketControls selected={selected} selectedLabel={selectedLabel} />
-
-			<Teams state={state} selected={selected} selectedLabel={selectedLabel} />
-
-			<SendouSection title={t("broadcast:dashboard.setup.header")}>
-				<div className="stack md">
-					<p className="text-sm text-lighter">
-						{t("broadcast:dashboard.setup.program")}
-					</p>
-					<InviteLinkInput
-						label={t("broadcast:dashboard.setup.programLabel")}
-						link={`${Config.siteDomain}${broadcastOverlayPage(pageArgs)}`}
+						return (
+							<SendouTab
+								key={dashboardTab}
+								id={dashboardTab}
+								icon={<Icon />}
+								alert={
+									dashboardTab === "setup" &&
+									(!isConnected || state.health.sources === 0)
+								}
+							>
+								{t(`broadcast:dashboard.tab.${dashboardTab}`)}
+							</SendouTab>
+						);
+					})}
+				</SendouTabList>
+				<SendouTabPanel id="scene">
+					<SceneInspector
+						state={state}
+						selected={selected}
+						selectedLabel={selectedLabel}
 					/>
-				</div>
-			</SendouSection>
-
-			<SendouSection title={t("broadcast:dashboard.info.header")}>
-				<SendouForm
-					schema={broadcastInfoFormSchema}
-					defaultValues={{
-						headline: state.settings.headline || null,
-						casterIds: state.settings.casterIds,
-					}}
-				>
-					{({ FormField }) => (
-						<>
-							<FormField name="headline" />
-							<FormField name="casterIds" />
-						</>
-					)}
-				</SendouForm>
-			</SendouSection>
-
-			<SendouSection title={t("broadcast:dashboard.theme.header")}>
-				<div className="stack md">
-					<SendouForm
-						schema={broadcastThemeFormSchema}
-						defaultValues={{
-							weaponImages: state.settings.weaponImages,
-							css: state.settings.css || null,
-						}}
-					>
-						{({ FormField }) => (
-							<>
-								<FormField name="weaponImages" />
-								<FormField name="css" />
-							</>
-						)}
-					</SendouForm>
-					<ThemeReference />
-				</div>
-			</SendouSection>
+				</SendouTabPanel>
+				<SendouTabPanel id="setup">
+					<Setup
+						state={state}
+						programUrl={`${Config.siteDomain}${broadcastOverlayPage(pageArgs)}`}
+						statuses={clipSender.statuses}
+						areClipsOnSources={areClipsOnSources}
+					/>
+				</SendouTabPanel>
+				<SendouTabPanel id="theme">
+					<Theme state={state} />
+				</SendouTabPanel>
+			</SendouTabs>
 		</div>
 	);
 }
@@ -322,33 +344,96 @@ function useRevalidateOnFeaturedMatchChange(featuredMatchId: number | null) {
 	}, [isStale, revalidate]);
 }
 
+/** The number keys pick the selected item's scene. */
+function useSceneHotkeys(selected: ProducerState) {
+	const { submit } = useActionSubmit(broadcastActionSchema);
+	const latest = useLatestRef({ selected, submit });
+
+	React.useEffect(() => {
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (!isShortcut(event) || !/^\d$/.test(event.key)) return;
+			const current = latest.current;
+
+			// 1 is the first scene, 0 the tenth
+			const scene = SCENES_BY_HOTKEY[(Number(event.key) + 9) % 10];
+			if (!scene || scene === current.selected.scene) return;
+
+			current.submit("SET_SCENE", { itemId: current.selected.id, scene });
+		};
+
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [latest]);
+}
+
+/** A key press without modifiers that isn't typing into a field or meant for an open popover or dialog. */
+function isShortcut(event: KeyboardEvent) {
+	if (
+		event.repeat ||
+		event.ctrlKey ||
+		event.metaKey ||
+		event.altKey ||
+		event.shiftKey
+	) {
+		return false;
+	}
+
+	const target = event.target;
+	if (!(target instanceof HTMLElement)) return true;
+
+	const isTyping =
+		target.isContentEditable ||
+		target instanceof HTMLTextAreaElement ||
+		target instanceof HTMLSelectElement ||
+		(target instanceof HTMLInputElement &&
+			!["radio", "checkbox", "button", "submit"].includes(target.type));
+
+	return !isTyping && !target.closest("[popover], dialog");
+}
+
+function Keycap({ children }: { children: React.ReactNode }) {
+	return (
+		<kbd className={styles.keycap} aria-hidden>
+			{children}
+		</kbd>
+	);
+}
+
 function Health({
 	state,
 	isConnected,
+	onClick,
 }: {
 	state: BroadcastState;
 	isConnected: boolean;
+	onClick: () => void;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 
-	if (!isConnected) {
-		return (
-			<Alert variation="WARNING" tiny alertClassName={styles.health}>
-				{t("broadcast:dashboard.health.disconnected")}
-			</Alert>
-		);
-	}
+	const status = !isConnected
+		? "warning"
+		: state.health.sources > 0
+			? "success"
+			: "info";
 
 	return (
-		<Alert
-			variation={state.health.sources > 0 ? "SUCCESS" : "INFO"}
-			tiny
-			alertClassName={styles.health}
+		<button
+			type="button"
+			className={styles.health}
+			data-status={status}
+			onClick={onClick}
 		>
-			{t("broadcast:dashboard.health.sources", {
-				count: state.health.sources,
-			})}
-		</Alert>
+			{status === "success" ? (
+				<CircleCheck size={16} />
+			) : (
+				<TriangleAlert size={16} />
+			)}
+			{isConnected
+				? t("broadcast:dashboard.health.sources", {
+						count: state.health.sources,
+					})
+				: t("broadcast:dashboard.health.disconnected")}
+		</button>
 	);
 }
 
@@ -359,7 +444,7 @@ function FeaturedMatch({ state }: { state: BroadcastState }) {
 
 	if (!state.match) {
 		return (
-			<Alert variation="WARNING" alertClassName={styles.health}>
+			<Alert variation="WARNING" alertClassName={styles.alert}>
 				{t("broadcast:dashboard.noFeaturedMatch")}
 			</Alert>
 		);
@@ -456,273 +541,15 @@ function TransitionBus({
 	);
 }
 
-function SceneTiles({
-	state,
-	selected,
-	selectedLabel,
-}: {
-	state: BroadcastState;
-	selected: ProducerState;
-	selectedLabel: string;
-}) {
-	const { t } = useTranslation(["broadcast"]);
-	const { submit } = useActionSubmit(broadcastActionSchema);
-	const defaultDurationMs =
-		BROADCAST_SCENE_DEFAULT_DURATIONS_MS[selected.scene];
-
-	return (
-		<div className="stack sm">
-			<h2 className={styles.sectionLabel}>
-				{t("broadcast:dashboard.scene", { item: selectedLabel })}
-			</h2>
-			<div className={styles.scenes}>
-				{BROADCAST_SCENES.map((scene) => {
-					const Icon = SCENE_ICONS[scene];
-
-					return (
-						<ActionButton
-							key={scene}
-							schema={broadcastActionSchema}
-							action="SET_SCENE"
-							fields={{ itemId: selected.id, scene }}
-							className={clsx(styles.sceneTile, {
-								[styles.sceneTileNext]: selected.scene === scene,
-							})}
-							formClassName={styles.sceneForm}
-							testId={`broadcast-scene-${scene}`}
-						>
-							{state.live.scene === scene ? (
-								<span className={styles.liveBadge}>
-									{t("broadcast:dashboard.live")}
-								</span>
-							) : null}
-							<Icon className={styles.sceneIcon} />
-							{t(`broadcast:scene.${scene}`)}
-						</ActionButton>
-					);
-				})}
-			</div>
-			{defaultDurationMs !== undefined ? (
-				<div className="stack horizontal sm items-center flex-wrap">
-					<span className="text-sm font-semi-bold">
-						{t("broadcast:dashboard.duration.label")}
-					</span>
-					<SendouChipRadioGroup
-						aria-label={t("broadcast:dashboard.duration.label")}
-						wrap
-					>
-						<SendouChipRadio
-							name="broadcast-duration"
-							value="untilTake"
-							checked={selected.durationMs === null}
-							onChange={() => submit("SET_DURATION", { itemId: selected.id })}
-						>
-							{t("broadcast:dashboard.duration.untilTake")}
-						</SendouChipRadio>
-						{BROADCAST_DURATIONS_MS.map((durationMs) => (
-							<SendouChipRadio
-								key={durationMs}
-								name="broadcast-duration"
-								value={String(durationMs)}
-								checked={selected.durationMs === durationMs}
-								onChange={() =>
-									submit("SET_DURATION", { itemId: selected.id, durationMs })
-								}
-							>
-								{formatClock(durationMs)}
-							</SendouChipRadio>
-						))}
-					</SendouChipRadioGroup>
-				</div>
-			) : null}
-		</div>
-	);
-}
-
-function ReplayClips({
-	selected,
-	selectedLabel,
-	statuses,
-}: {
-	selected: ProducerState;
-	selectedLabel: string;
-	statuses: ClipTransfer.ClipPeerStatus[];
-}) {
-	const { t } = useTranslation(["broadcast"]);
-	const { submit } = useActionSubmit(broadcastActionSchema);
-	const header = t("broadcast:dashboard.clips.header", { item: selectedLabel });
-
-	return (
-		<SendouSection title={header}>
-			<div className="stack md">
-				<div className="text-xs text-lighter">
-					{t("broadcast:dashboard.clips.explanation")}
-				</div>
-				<SendouChipRadioGroup aria-label={header} wrap>
-					<SendouChipRadio
-						name="broadcast-clip"
-						value="none"
-						checked={selected.clipId === null}
-						onChange={() => submit("SET_CLIP", { itemId: selected.id })}
-					>
-						{t("broadcast:dashboard.clips.none")}
-					</SendouChipRadio>
-					{BROADCAST_PROTOTYPE_CLIPS.map((clip) => (
-						<SendouChipRadio
-							key={clip.id}
-							name="broadcast-clip"
-							value={clip.id}
-							checked={selected.clipId === clip.id}
-							onChange={() =>
-								submit("SET_CLIP", { itemId: selected.id, clipId: clip.id })
-							}
-						>
-							{clip.name} · {formatClock(clip.durationMs)}
-						</SendouChipRadio>
-					))}
-				</SendouChipRadioGroup>
-				<div className="stack xs text-sm">
-					<span className="font-semi-bold">
-						{t("broadcast:dashboard.clips.overlays")}
-					</span>
-					{statuses.length === 0 ? (
-						<span className="text-lighter">
-							{t("broadcast:dashboard.clips.noOverlays")}
-						</span>
-					) : (
-						statuses.map((status) => (
-							<span key={status.peer.id}>
-								{t(`broadcast:dashboard.clips.role.${status.peer.role}`)} ·{" "}
-								<span className="text-lighter">{status.connectionState}</span>
-								{status.missingCount !== null ? (
-									<>
-										{" "}
-										·{" "}
-										{status.missingCount === 0
-											? t("broadcast:dashboard.clips.upToDate")
-											: status.transferMs !== null
-												? t("broadcast:dashboard.clips.transferred", {
-														count: status.missingCount,
-														seconds: (status.transferMs / 1000).toFixed(1),
-													})
-												: t("broadcast:dashboard.clips.progress", {
-														received: status.receivedCount,
-														total: status.missingCount,
-													})}
-									</>
-								) : null}
-							</span>
-						))
-					)}
-				</div>
-			</div>
-		</SendouSection>
-	);
-}
-
-function BracketControls({
-	selected,
-	selectedLabel,
-}: {
-	selected: ProducerState;
-	selectedLabel: string;
-}) {
-	const { t } = useTranslation(["broadcast"]);
-	const tournament = useTournament();
-	const { submit } = useActionSubmit(broadcastActionSchema);
-	const showableIdxs = BracketFocus.showableBracketIdxs(tournament);
-
-	if (showableIdxs.length === 0) return null;
-
-	return (
-		<SendouSection
-			title={t("broadcast:dashboard.bracket.header", { item: selectedLabel })}
-		>
-			<div className="stack md">
-				<div className="text-xs text-lighter">
-					{t("broadcast:dashboard.bracket.explanation")}
-				</div>
-				<SendouChipRadioGroup
-					aria-label={t("broadcast:dashboard.bracket.focus")}
-					wrap
-				>
-					{BROADCAST_BRACKET_FOCUSES.map((focus) => (
-						<SendouChipRadio
-							key={focus}
-							name="broadcast-bracket-focus"
-							value={focus}
-							checked={selected.bracketFocus === focus}
-							onChange={() =>
-								submit("SET_BRACKET_FOCUS", { itemId: selected.id, focus })
-							}
-						>
-							{t(`broadcast:bracketFocus.${focus}`)}
-						</SendouChipRadio>
-					))}
-				</SendouChipRadioGroup>
-				{showableIdxs.length > 1 ? (
-					<SendouChipRadioGroup
-						aria-label={t("broadcast:dashboard.bracket.bracket")}
-						wrap
-					>
-						<SendouChipRadio
-							name="broadcast-bracket"
-							value="featured"
-							checked={selected.bracketIdx === null}
-							onChange={() => submit("SET_BRACKET", { itemId: selected.id })}
-						>
-							{t("broadcast:dashboard.bracket.followFeatured")}
-						</SendouChipRadio>
-						{showableIdxs.map((bracketIdx) => (
-							<SendouChipRadio
-								key={bracketIdx}
-								name="broadcast-bracket"
-								value={String(bracketIdx)}
-								checked={selected.bracketIdx === bracketIdx}
-								onChange={() =>
-									submit("SET_BRACKET", { itemId: selected.id, bracketIdx })
-								}
-							>
-								{tournament.bracketsMeta[bracketIdx].name}
-							</SendouChipRadio>
-						))}
-					</SendouChipRadioGroup>
-				) : null}
-			</div>
-		</SendouSection>
-	);
-}
-
-function Teams({
-	state,
-	selected,
-	selectedLabel,
-}: {
-	state: BroadcastState;
-	selected: ProducerState;
-	selectedLabel: string;
-}) {
-	const { t } = useTranslation(["broadcast"]);
-
+/** Changes to what is on air that apply right away, without a Take. */
+function OnAirControls({ state }: { state: BroadcastState }) {
 	if (!state.match) return null;
 
 	return (
-		<SendouSection title={t("broadcast:dashboard.teams.header")}>
-			<div className="stack md">
-				<ActionButton
-					schema={broadcastActionSchema}
-					action="SET_SWAP_SIDES"
-					fields={{ itemId: selected.id, swapSides: !selected.swapSides }}
-					variant={selected.swapSides ? "primary" : "outlined"}
-					size="small"
-					icon={<ArrowLeftRight />}
-					formClassName="self-start"
-				>
-					{t("broadcast:dashboard.swapSides", { item: selectedLabel })}
-				</ActionButton>
-				<InkColors state={state} match={state.match} />
-			</div>
-		</SendouSection>
+		<div className={styles.onAir}>
+			<InkColors state={state} match={state.match} />
+			<ResultsNotOnAir match={state.match} />
+		</div>
 	);
 }
 
@@ -735,6 +562,7 @@ function InkColors({
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const ink = gameInk(state, "live");
+	const isFlipped = ink?.isFlipped ?? false;
 	const colors = inkColorVars({ ink, swapSides: state.live.swapSides });
 	const sides = matchSides(match, "live", state.live);
 	const gameOnAir = {
@@ -744,102 +572,105 @@ function InkColors({
 
 	return (
 		<div className="stack sm">
-			<div className="stack horizontal sm items-center justify-between flex-wrap">
-				<span className="text-sm font-semi-bold">
-					{t("broadcast:dashboard.ink.header")}
-				</span>
-				<div className="stack horizontal sm">
-					<ActionButton
-						schema={broadcastActionSchema}
-						action="SET_INK"
-						fields={{ isFlipped: false, ...gameOnAir }}
-						variant={ink ? "minimal" : "primary"}
-						size="small"
+			<div className={styles.inkTeams}>
+				{sides.map((side) => (
+					<span
+						key={side.side}
+						className={styles.inkTeam}
+						data-side={side.side}
 					>
-						{t("broadcast:dashboard.ink.theme")}
-					</ActionButton>
-					{ink ? (
-						<ActionButton
-							schema={broadcastActionSchema}
-							action="SET_INK"
-							fields={{ key: ink.key, isFlipped: !ink.isFlipped, ...gameOnAir }}
-							variant="outlined"
-							size="small"
-							icon={<ArrowLeftRight />}
-							testId="broadcast-ink-flip"
-						>
-							{t("broadcast:dashboard.ink.flip")}
-						</ActionButton>
-					) : null}
-				</div>
-			</div>
-			<div className="text-xs text-lighter">
-				{t("broadcast:dashboard.ink.explanation")}
-			</div>
-			<div className={styles.inkSwatches}>
-				{BROADCAST_INK_COLORS.map((color) => (
-					<ActionButton
-						key={color.key}
-						schema={broadcastActionSchema}
-						action="SET_INK"
-						fields={{
-							key: color.key,
-							isFlipped: ink?.isFlipped ?? false,
-							...gameOnAir,
-						}}
-						variant="minimal"
-						className={clsx(styles.inkSwatch, {
-							[styles.inkSwatchSelected]: ink?.key === color.key,
-						})}
-						formClassName={styles.inkSwatchForm}
-						title={t(`broadcast:ink.${color.key}`)}
-						aria-label={t(`broadcast:ink.${color.key}`)}
-						testId={`broadcast-ink-${color.key}`}
-					>
-						<span style={{ background: color.a }} />
-						<span style={{ background: color.b }} />
-					</ActionButton>
-				))}
-			</div>
-			{ink ? (
-				<div className="stack horizontal md text-sm flex-wrap">
-					{sides.map((side) => (
-						<span key={side.side} className={styles.inkTeam}>
-							<span
-								className={styles.inkDot}
-								style={{ background: colors[`--bc-team-${side.side}`] }}
-							/>
+						<span
+							className={styles.inkDot}
+							style={{ background: colors[`--bc-team-${side.side}`] }}
+						/>
+						<span className="truncate">
 							{side.team?.name ?? t("broadcast:overlay.tbd")}
 						</span>
-					))}
-				</div>
-			) : null}
+					</span>
+				))}
+				{/* rendered without ink colors too, only hidden, so picking them doesn't shift the layout */}
+				<ActionButton
+					schema={broadcastActionSchema}
+					action="SET_INK"
+					fields={{ key: ink?.key, isFlipped: !isFlipped, ...gameOnAir }}
+					variant="minimal"
+					size="miniscule"
+					shape="square"
+					icon={<ArrowLeftRight />}
+					className={clsx({ [styles.invisible]: !ink })}
+					formClassName={styles.inkFlip}
+					title={t("broadcast:dashboard.ink.flip")}
+					aria-label={t("broadcast:dashboard.ink.flip")}
+					testId="broadcast-ink-flip"
+				/>
+			</div>
+			<div className={styles.inkSwatches}>
+				{BROADCAST_INK_COLORS.map((color) => {
+					// each swatch is split the way the teams are on air, left team's color on the left
+					const swatch = inkColorVars({
+						ink: { key: color.key, isFlipped },
+						swapSides: state.live.swapSides,
+					});
+
+					return (
+						<ActionButton
+							key={color.key}
+							schema={broadcastActionSchema}
+							action="SET_INK"
+							fields={{ key: color.key, isFlipped, ...gameOnAir }}
+							variant="minimal"
+							className={clsx(styles.inkSwatch, {
+								[styles.inkSwatchSelected]: ink?.key === color.key,
+							})}
+							formClassName={styles.inkSwatchForm}
+							title={t(`broadcast:ink.${color.key}`)}
+							aria-label={t(`broadcast:ink.${color.key}`)}
+							testId={`broadcast-ink-${color.key}`}
+						>
+							<span style={{ background: swatch["--bc-team-a"] }} />
+							<span style={{ background: swatch["--bc-team-b"] }} />
+						</ActionButton>
+					);
+				})}
+				<ActionButton
+					schema={broadcastActionSchema}
+					action="SET_INK"
+					fields={{ isFlipped: false, ...gameOnAir }}
+					variant="minimal"
+					icon={<X />}
+					className={clsx(styles.inkSwatch, styles.inkClear, {
+						[styles.invisible]: !ink,
+					})}
+					formClassName={styles.inkSwatchForm}
+					title={t("broadcast:dashboard.ink.clear")}
+					aria-label={t("broadcast:dashboard.ink.clear")}
+					testId="broadcast-ink-clear"
+				/>
+			</div>
 		</div>
 	);
 }
 
-function ResultsNotOnAir({ state }: { state: BroadcastState }) {
+function ResultsNotOnAir({ match }: { match: BroadcastMatch }) {
 	const { t } = useTranslation(["broadcast"]);
 
-	if (!state.match) return null;
-
-	const { live, next } = state.match.progress;
+	const { live, next } = match.progress;
 	const notOnAirCount = next.resultCount - live.resultCount;
 	if (notOnAirCount <= 0) return null;
 
 	return (
-		<div className="stack horizontal sm items-center flex-wrap">
-			<Alert variation="INFO" tiny alertClassName={styles.health}>
+		<div className="stack horizontal sm items-center justify-between flex-wrap">
+			<span className="text-xs text-warning">
 				{t("broadcast:dashboard.resultsNotOnAir", {
 					count: notOnAirCount,
 					live: live.scores.join("–"),
 					next: next.scores.join("–"),
 				})}
-			</Alert>
+			</span>
 			<ActionButton
 				schema={broadcastActionSchema}
 				action="SHOW_RESULTS"
-				fields={{ matchId: state.match.id, resultCount: next.resultCount }}
+				fields={{ matchId: match.id, resultCount: next.resultCount }}
 				size="small"
 				variant="outlined"
 				testId="broadcast-show-results-button"
@@ -942,7 +773,7 @@ function AutoTake({
 	);
 }
 
-/** The staged items in the order they go on air, the one picked being edited by the controls. */
+/** The staged items in the order they go on air, the one picked being edited by the scene tab. */
 function Queue({
 	state,
 	selected,
@@ -1106,6 +937,473 @@ function QueueGap({
 				? t("broadcast:dashboard.queue.auto")
 				: t("broadcast:dashboard.queue.onTake")}
 		</ActionButton>
+	);
+}
+
+/** The selected staged item: its scene and only the settings that scene uses. */
+function SceneInspector({
+	state,
+	selected,
+	selectedLabel,
+}: {
+	state: BroadcastState;
+	selected: ProducerState;
+	selectedLabel: string;
+}) {
+	const { t } = useTranslation(["broadcast"]);
+	const isHoldScene = (BROADCAST_HOLD_SCENES as readonly string[]).includes(
+		selected.scene,
+	);
+
+	return (
+		<div className="stack lg">
+			<h2 className={styles.inspectorHeader}>
+				{t("broadcast:dashboard.editing", {
+					item: selectedLabel,
+					scene: t(`broadcast:scene.${selected.scene}`),
+				})}
+			</h2>
+			<ScenePicker state={state} selected={selected} />
+			<div className={styles.properties}>
+				{state.match ? (
+					<SwapSides match={state.match} selected={selected} />
+				) : null}
+				{selected.scene === "bracket" ? (
+					<BracketProperties selected={selected} />
+				) : null}
+				{selected.scene === "replays" ? (
+					<ClipProperty selected={selected} />
+				) : null}
+				<DurationProperty selected={selected} />
+			</div>
+			{isHoldScene ? <HeadlineForm headline={state.settings.headline} /> : null}
+			{selected.scene === "casters" ? (
+				<CastersForm casterIds={state.settings.casterIds} />
+			) : null}
+		</div>
+	);
+}
+
+function ScenePicker({
+	state,
+	selected,
+}: {
+	state: BroadcastState;
+	selected: ProducerState;
+}) {
+	const { t } = useTranslation(["broadcast"]);
+
+	return (
+		<div className={styles.sceneGroups}>
+			{BROADCAST_SCENE_GROUPS.map((group) => (
+				<fieldset key={group.key} className={styles.sceneGroup}>
+					<legend className={styles.sceneGroupLabel}>
+						{t(`broadcast:dashboard.sceneGroup.${group.key}`)}
+					</legend>
+					<div className={styles.scenes}>
+						{group.scenes.map((scene) => {
+							const Icon = SCENE_ICONS[scene];
+							const hotkey = (SCENES_BY_HOTKEY.indexOf(scene) + 1) % 10;
+
+							return (
+								<ActionButton
+									key={scene}
+									schema={broadcastActionSchema}
+									action="SET_SCENE"
+									fields={{ itemId: selected.id, scene }}
+									className={clsx(styles.sceneTile, {
+										[styles.sceneTileSelected]: selected.scene === scene,
+									})}
+									formClassName={styles.sceneForm}
+									testId={`broadcast-scene-${scene}`}
+								>
+									{state.live.scene === scene ? (
+										<span className={styles.liveBadge}>
+											{t("broadcast:dashboard.live")}
+										</span>
+									) : null}
+									<Keycap>{hotkey}</Keycap>
+									<Icon className={styles.sceneIcon} />
+									{t(`broadcast:scene.${scene}`)}
+								</ActionButton>
+							);
+						})}
+					</div>
+				</fieldset>
+			))}
+		</div>
+	);
+}
+
+function Property({
+	label,
+	children,
+}: {
+	label: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<div className={styles.property}>
+			<span className={styles.propertyLabel}>{label}</span>
+			<div className="stack sm">{children}</div>
+		</div>
+	);
+}
+
+function SwapSides({
+	match,
+	selected,
+}: {
+	match: BroadcastMatch;
+	selected: ProducerState;
+}) {
+	const { t } = useTranslation(["broadcast"]);
+	const [left, right] = matchSides(match, "next", selected);
+
+	return (
+		<Property label={t("broadcast:dashboard.sides.label")}>
+			<div className="stack horizontal sm items-center flex-wrap">
+				<span className="text-sm font-semi-bold">
+					{left.team?.name ?? t("broadcast:overlay.tbd")}
+				</span>
+				<ActionButton
+					schema={broadcastActionSchema}
+					action="SET_SWAP_SIDES"
+					fields={{ itemId: selected.id, swapSides: !selected.swapSides }}
+					variant="outlined"
+					size="miniscule"
+					icon={<ArrowLeftRight />}
+					testId="broadcast-swap-sides"
+				>
+					{t("broadcast:dashboard.sides.swap")}
+				</ActionButton>
+				<span className="text-sm font-semi-bold">
+					{right.team?.name ?? t("broadcast:overlay.tbd")}
+				</span>
+			</div>
+		</Property>
+	);
+}
+
+function BracketProperties({ selected }: { selected: ProducerState }) {
+	const { t } = useTranslation(["broadcast"]);
+	const tournament = useTournament();
+	const { submit } = useActionSubmit(broadcastActionSchema);
+	const showableIdxs = BracketFocus.showableBracketIdxs(tournament);
+
+	if (showableIdxs.length === 0) {
+		return (
+			<Property label={t("broadcast:dashboard.bracket.focus")}>
+				<span className="text-sm text-lighter">
+					{t("broadcast:dashboard.bracket.none")}
+				</span>
+			</Property>
+		);
+	}
+
+	return (
+		<>
+			<Property label={t("broadcast:dashboard.bracket.focus")}>
+				<SendouChipRadioGroup
+					aria-label={t("broadcast:dashboard.bracket.focus")}
+					wrap
+				>
+					{BROADCAST_BRACKET_FOCUSES.map((focus) => (
+						<SendouChipRadio
+							key={focus}
+							name="broadcast-bracket-focus"
+							value={focus}
+							checked={selected.bracketFocus === focus}
+							onChange={() =>
+								submit("SET_BRACKET_FOCUS", { itemId: selected.id, focus })
+							}
+						>
+							{t(`broadcast:bracketFocus.${focus}`)}
+						</SendouChipRadio>
+					))}
+				</SendouChipRadioGroup>
+				<span className="text-xs text-lighter">
+					{t("broadcast:dashboard.bracket.explanation")}
+				</span>
+			</Property>
+			{showableIdxs.length > 1 ? (
+				<Property label={t("broadcast:dashboard.bracket.bracket")}>
+					<SendouChipRadioGroup
+						aria-label={t("broadcast:dashboard.bracket.bracket")}
+						wrap
+					>
+						<SendouChipRadio
+							name="broadcast-bracket"
+							value="featured"
+							checked={selected.bracketIdx === null}
+							onChange={() => submit("SET_BRACKET", { itemId: selected.id })}
+						>
+							{t("broadcast:dashboard.bracket.followFeatured")}
+						</SendouChipRadio>
+						{showableIdxs.map((bracketIdx) => (
+							<SendouChipRadio
+								key={bracketIdx}
+								name="broadcast-bracket"
+								value={String(bracketIdx)}
+								checked={selected.bracketIdx === bracketIdx}
+								onChange={() =>
+									submit("SET_BRACKET", { itemId: selected.id, bracketIdx })
+								}
+							>
+								{tournament.bracketsMeta[bracketIdx].name}
+							</SendouChipRadio>
+						))}
+					</SendouChipRadioGroup>
+				</Property>
+			) : null}
+		</>
+	);
+}
+
+function ClipProperty({ selected }: { selected: ProducerState }) {
+	const { t } = useTranslation(["broadcast"]);
+	const { submit } = useActionSubmit(broadcastActionSchema);
+
+	return (
+		<Property label={t("broadcast:dashboard.clips.label")}>
+			<SendouChipRadioGroup
+				aria-label={t("broadcast:dashboard.clips.label")}
+				wrap
+			>
+				<SendouChipRadio
+					name="broadcast-clip"
+					value="none"
+					checked={selected.clipId === null}
+					onChange={() => submit("SET_CLIP", { itemId: selected.id })}
+				>
+					{t("broadcast:dashboard.clips.none")}
+				</SendouChipRadio>
+				{BROADCAST_PROTOTYPE_CLIPS.map((clip) => (
+					<SendouChipRadio
+						key={clip.id}
+						name="broadcast-clip"
+						value={clip.id}
+						checked={selected.clipId === clip.id}
+						onChange={() =>
+							submit("SET_CLIP", { itemId: selected.id, clipId: clip.id })
+						}
+					>
+						{clip.name} · {formatClock(clip.durationMs)}
+					</SendouChipRadio>
+				))}
+			</SendouChipRadioGroup>
+			<span className="text-xs text-lighter">
+				{t("broadcast:dashboard.clips.explanation")}
+			</span>
+		</Property>
+	);
+}
+
+function DurationProperty({ selected }: { selected: ProducerState }) {
+	const { t } = useTranslation(["broadcast"]);
+	const { submit } = useActionSubmit(broadcastActionSchema);
+
+	if (BROADCAST_SCENE_DEFAULT_DURATIONS_MS[selected.scene] === undefined) {
+		return null;
+	}
+
+	return (
+		<Property label={t("broadcast:dashboard.duration.label")}>
+			<SendouChipRadioGroup
+				aria-label={t("broadcast:dashboard.duration.label")}
+				wrap
+			>
+				<SendouChipRadio
+					name="broadcast-duration"
+					value="untilTake"
+					checked={selected.durationMs === null}
+					onChange={() => submit("SET_DURATION", { itemId: selected.id })}
+				>
+					{t("broadcast:dashboard.duration.untilTake")}
+				</SendouChipRadio>
+				{BROADCAST_DURATIONS_MS.map((durationMs) => (
+					<SendouChipRadio
+						key={durationMs}
+						name="broadcast-duration"
+						value={String(durationMs)}
+						checked={selected.durationMs === durationMs}
+						onChange={() =>
+							submit("SET_DURATION", { itemId: selected.id, durationMs })
+						}
+					>
+						{formatClock(durationMs)}
+					</SendouChipRadio>
+				))}
+			</SendouChipRadioGroup>
+		</Property>
+	);
+}
+
+function HeadlineForm({ headline }: { headline: string }) {
+	return (
+		<SendouForm
+			schema={broadcastHeadlineFormSchema}
+			defaultValues={{ headline: headline || null }}
+			submitButtonSize="small"
+			fullWidth
+		>
+			{({ FormField }) => <FormField name="headline" />}
+		</SendouForm>
+	);
+}
+
+function CastersForm({ casterIds }: { casterIds: number[] }) {
+	return (
+		<SendouForm
+			schema={broadcastCastersFormSchema}
+			defaultValues={{ casterIds }}
+			submitButtonSize="small"
+			fullWidth
+		>
+			{({ FormField }) => <FormField name="casterIds" />}
+		</SendouForm>
+	);
+}
+
+function Setup({
+	state,
+	programUrl,
+	statuses,
+	areClipsOnSources,
+}: {
+	state: BroadcastState;
+	programUrl: string;
+	statuses: ClipTransfer.ClipPeerStatus[];
+	areClipsOnSources: boolean;
+}) {
+	const { t } = useTranslation(["broadcast"]);
+	const sourceCount = state.health.sources;
+
+	return (
+		<div className="stack xl">
+			<section className="stack md">
+				<h2 className={styles.panelHeader}>
+					{t("broadcast:dashboard.setup.header")}
+				</h2>
+				<p className="text-sm text-lighter">
+					{t("broadcast:dashboard.setup.program")}
+				</p>
+				<InviteLinkInput
+					label={t("broadcast:dashboard.setup.programLabel")}
+					link={programUrl}
+				/>
+				<ul className={styles.checklist}>
+					<SetupCheck isDone={sourceCount > 0}>
+						{t("broadcast:dashboard.health.sources", { count: sourceCount })}
+					</SetupCheck>
+					<SetupCheck isDone={sourceCount > 0 && areClipsOnSources}>
+						{t("broadcast:dashboard.setup.clipsSynced")}
+					</SetupCheck>
+				</ul>
+				<ClipOverlays statuses={statuses} />
+			</section>
+
+			<section className="stack md">
+				<h2 className={styles.panelHeader}>
+					{t("broadcast:dashboard.info.header")}
+				</h2>
+				<HeadlineForm headline={state.settings.headline} />
+				<CastersForm casterIds={state.settings.casterIds} />
+			</section>
+		</div>
+	);
+}
+
+function SetupCheck({
+	isDone,
+	children,
+}: {
+	isDone: boolean;
+	children: React.ReactNode;
+}) {
+	return (
+		<li className={styles.check} data-done={isDone || undefined}>
+			{isDone ? <CircleCheck size={18} /> : <CircleDashed size={18} />}
+			{children}
+		</li>
+	);
+}
+
+function ClipOverlays({
+	statuses,
+}: {
+	statuses: ClipTransfer.ClipPeerStatus[];
+}) {
+	const { t } = useTranslation(["broadcast"]);
+
+	return (
+		<div className="stack xs text-sm">
+			<span className="font-semi-bold">
+				{t("broadcast:dashboard.clips.overlays")}
+			</span>
+			<span className="text-xs text-lighter">
+				{t("broadcast:dashboard.clips.transfer")}
+			</span>
+			{statuses.length === 0 ? (
+				<span className="text-lighter">
+					{t("broadcast:dashboard.clips.noOverlays")}
+				</span>
+			) : (
+				statuses.map((status) => (
+					<span key={status.peer.id}>
+						{t(`broadcast:dashboard.clips.role.${status.peer.role}`)} ·{" "}
+						<span className="text-lighter">{status.connectionState}</span>
+						{status.missingCount !== null ? (
+							<>
+								{" "}
+								·{" "}
+								{status.missingCount === 0
+									? t("broadcast:dashboard.clips.upToDate")
+									: status.transferMs !== null
+										? t("broadcast:dashboard.clips.transferred", {
+												count: status.missingCount,
+												seconds: (status.transferMs / 1000).toFixed(1),
+											})
+										: t("broadcast:dashboard.clips.progress", {
+												received: status.receivedCount,
+												total: status.missingCount,
+											})}
+							</>
+						) : null}
+					</span>
+				))
+			)}
+		</div>
+	);
+}
+
+function Theme({ state }: { state: BroadcastState }) {
+	const { t } = useTranslation(["broadcast"]);
+
+	return (
+		<div className="stack lg">
+			<SendouForm
+				schema={broadcastThemeFormSchema}
+				defaultValues={{
+					weaponImages: state.settings.weaponImages,
+					css: state.settings.css || null,
+				}}
+				fullWidth
+			>
+				{({ FormField }) => (
+					<>
+						<FormField name="weaponImages" />
+						<FormField name="css" />
+					</>
+				)}
+			</SendouForm>
+			<details className={styles.reference}>
+				<summary className="text-sm font-semi-bold">
+					{t("broadcast:dashboard.theme.reference")}
+				</summary>
+				<ThemeReference />
+			</details>
+		</div>
 	);
 }
 

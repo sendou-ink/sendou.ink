@@ -140,10 +140,17 @@ export const action = defineAction(
 				});
 				break;
 			}
-			case "UPDATE_INFO": {
+			case "UPDATE_HEADLINE": {
 				await BroadcastRepository.updateSettings({
 					...key,
-					patch: { headline: body.headline ?? "", casterIds: body.casterIds },
+					patch: { headline: body.headline ?? "" },
+				});
+				break;
+			}
+			case "UPDATE_CASTERS": {
+				await BroadcastRepository.updateSettings({
+					...key,
+					patch: { casterIds: body.casterIds },
 				});
 				break;
 			}
