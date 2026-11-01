@@ -979,7 +979,7 @@ function SceneInspector({
 				<DurationProperty selected={selected} />
 			</div>
 			{isHoldScene ? <HeadlineForm headline={state.settings.headline} /> : null}
-			{selected.scene === "casters" ? (
+			{selected.scene === "casters" || selected.scene === "game" ? (
 				<CastersForm casterIds={state.settings.casterIds} />
 			) : null}
 		</div>
@@ -1307,13 +1307,6 @@ function Setup({
 					</SetupCheck>
 				</ul>
 				<ClipOverlays statuses={statuses} />
-			</section>
-
-			<section className="stack md">
-				<h2 className={styles.panelHeader}>
-					{t("broadcast:dashboard.info.header")}
-				</h2>
-				<CastersForm casterIds={state.settings.casterIds} />
 			</section>
 		</div>
 	);

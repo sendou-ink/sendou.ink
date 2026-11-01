@@ -70,7 +70,6 @@
 	"dashboard.setup.header": "OBS setup",
 	"dashboard.setup.program": "In OBS create a new scene collection (Scene Collection → New) so your own setup stays untouched. Add your capture card and on top of it a Browser source with the URL below, sized 1920×1080 (Settings → Video canvas too). It switches scenes by itself when you Take.",
 	"dashboard.setup.programLabel": "Browser source",
-	"dashboard.info.header": "Show info",
 	"dashboard.ink.clear": "Clear, back to the theme's colors",
 	"dashboard.ink.flip": "Swap colors",
 	"dashboard.theme.reference": "Theme reference",
