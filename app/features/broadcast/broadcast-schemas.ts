@@ -11,6 +11,7 @@ import { _action, coerceNumber, id } from "~/utils/schema";
 import {
 	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_CSS_MAX_LENGTH,
+	BROADCAST_DURATIONS_MS,
 	BROADCAST_HEADLINE_MAX_LENGTH,
 	BROADCAST_INK_COLORS,
 	BROADCAST_MAX_CASTERS,
@@ -65,8 +66,8 @@ export const broadcastInfoFormSchema = v.object({
 });
 
 export const broadcastActionSchema = v.union([
-	v.object({ _action: _action("SET_NEXT_SCENE"), scene }),
-	v.object({ _action: _action("SET_NEXT_TRANSITION"), transition }),
+	v.object({ _action: _action("SET_SCENE"), itemId: id, scene }),
+	v.object({ _action: _action("SET_TRANSITION"), itemId: id, transition }),
 	v.object({
 		_action: _action("SET_INK"),
 		/** `undefined` goes back to the theme's team colors. */
@@ -77,22 +78,46 @@ export const broadcastActionSchema = v.union([
 		resultCount: nonNegativeInteger,
 	}),
 	v.object({
-		_action: _action("SET_NEXT_SWAP_SIDES"),
+		_action: _action("SET_SWAP_SIDES"),
+		itemId: id,
 		swapSides: booleanString,
 	}),
 	v.object({
-		_action: _action("SET_NEXT_BRACKET"),
+		_action: _action("SET_BRACKET"),
+		itemId: id,
 		/** `undefined` follows the featured match's bracket. */
 		bracketIdx: v.optional(nonNegativeInteger),
 	}),
 	v.object({
-		_action: _action("SET_NEXT_BRACKET_FOCUS"),
+		_action: _action("SET_BRACKET_FOCUS"),
+		itemId: id,
 		focus: v.picklist(BROADCAST_BRACKET_FOCUSES),
 	}),
 	v.object({
-		_action: _action("SET_NEXT_CLIP"),
+		_action: _action("SET_CLIP"),
+		itemId: id,
 		/** `undefined` leaves the replays footage to OBS. */
 		clipId: v.optional(clipId),
+	}),
+	v.object({
+		_action: _action("SET_DURATION"),
+		itemId: id,
+		/** `undefined` stays on air until a Take. */
+		durationMs: v.optional(
+			v.pipe(coerceNumber(), v.picklist(BROADCAST_DURATIONS_MS)),
+		),
+	}),
+	v.object({
+		_action: _action("SET_AUTO"),
+		itemId: id,
+		isAuto: booleanString,
+	}),
+	v.object({ _action: _action("ADD_TO_QUEUE") }),
+	v.object({ _action: _action("REMOVE_FROM_QUEUE"), itemId: id }),
+	v.object({
+		_action: _action("MOVE_IN_QUEUE"),
+		itemId: id,
+		direction: v.picklist(["earlier", "later"]),
 	}),
 	v.object({
 		_action: _action("TAKE"),

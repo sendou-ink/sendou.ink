@@ -17,48 +17,60 @@ const createBroadcastKey = async () => {
 	return { tournamentId, channel };
 };
 
-describe("BroadcastRepository.updateNext", () => {
+describe("BroadcastRepository.updateProducer", () => {
 	beforeEach(async () => {
 		await users.create(1);
 	});
 
-	test("creates the broadcast with only the patched field changed", async () => {
+	test("creates the broadcast with the changed state", async () => {
 		const key = await createBroadcastKey();
+		const initial = Producer.initialState();
 
-		await BroadcastRepository.updateNext({
+		const isUpdated = await BroadcastRepository.updateProducer({
 			...key,
-			patch: { swapSides: true },
+			change: (state) =>
+				Producer.editItem(state, state.next.id, { swapSides: true }),
 		});
 
-		const broadcast = await BroadcastRepository.findByChannel(key);
-		const initial = Producer.initialState();
-		expect(broadcast?.state).toEqual({
+		expect(isUpdated).toBe(true);
+		expect((await BroadcastRepository.findByChannel(key))?.state).toEqual({
 			...initial,
 			next: { ...initial.next, swapSides: true },
 		});
 	});
 
-	test("keeps the fields set by earlier writes", async () => {
+	test("changes the state as earlier writes left it", async () => {
 		const key = await createBroadcastKey();
-
-		await BroadcastRepository.updateNext({
+		await BroadcastRepository.updateProducer({
 			...key,
-			patch: { swapSides: true },
+			change: Producer.enqueue,
 		});
-		await BroadcastRepository.updateNext({
+
+		await BroadcastRepository.updateProducer({
 			...key,
-			patch: { scene: "rosters" },
+			change: Producer.enqueue,
 		});
 
 		const broadcast = await BroadcastRepository.findByChannel(key);
-		expect(broadcast?.state.next).toEqual({
-			scene: "rosters",
-			swapSides: true,
-			transition: "stinger",
-			bracketIdx: null,
-			bracketFocus: "remaining",
-			clipId: null,
+		expect(broadcast?.state.queue.map((item) => item.id)).toEqual([3, 4]);
+	});
+
+	test("leaves the state as it is when nothing changes", async () => {
+		const key = await createBroadcastKey();
+		await BroadcastRepository.updateProducer({
+			...key,
+			change: Producer.enqueue,
 		});
+
+		const isUpdated = await BroadcastRepository.updateProducer({
+			...key,
+			change: () => null,
+		});
+
+		expect(isUpdated).toBe(false);
+		expect(
+			(await BroadcastRepository.findByChannel(key))?.state.queue,
+		).toHaveLength(1);
 	});
 });
 
@@ -89,49 +101,6 @@ describe("BroadcastRepository.updateSettings", () => {
 	});
 });
 
-describe("BroadcastRepository.replaceState", () => {
-	beforeEach(async () => {
-		await users.create(1);
-	});
-
-	test("replaces the state based on the current take", async () => {
-		const key = await createBroadcastKey();
-		const taken = Producer.take(Producer.initialState(), null);
-
-		const replaced = await BroadcastRepository.replaceState({
-			...key,
-			state: taken,
-			expectedTakeId: 0,
-		});
-
-		expect(replaced).toBe(true);
-		expect((await BroadcastRepository.findByChannel(key))?.state).toEqual(
-			taken,
-		);
-	});
-
-	test("rejects a state based on a stale take", async () => {
-		const key = await createBroadcastKey();
-		const firstTake = Producer.take(Producer.initialState(), null);
-		await BroadcastRepository.replaceState({
-			...key,
-			state: firstTake,
-			expectedTakeId: 0,
-		});
-
-		const replaced = await BroadcastRepository.replaceState({
-			...key,
-			state: Producer.take(Producer.initialState(), null),
-			expectedTakeId: 0,
-		});
-
-		expect(replaced).toBe(false);
-		expect((await BroadcastRepository.findByChannel(key))?.state).toEqual(
-			firstTake,
-		);
-	});
-});
-
 describe("BroadcastRepository.updateState", () => {
 	beforeEach(async () => {
 		await users.create(1);
@@ -145,10 +114,7 @@ describe("BroadcastRepository.updateState", () => {
 			matchId: 5,
 			resultCount: 2,
 		} as const;
-		await BroadcastRepository.updateNext({
-			...key,
-			patch: { swapSides: true },
-		});
+		await swapSidesOfNext(key);
 		await BroadcastRepository.updateState({ ...key, patch: { ink } });
 
 		await BroadcastRepository.updateState({
@@ -188,10 +154,7 @@ describe("BroadcastRepository.insertChatRoomIfMissing", () => {
 
 	test("gives a room to a broadcast created by earlier writes, keeping its state", async () => {
 		const key = await createBroadcastKey();
-		await BroadcastRepository.updateNext({
-			...key,
-			patch: { swapSides: true },
-		});
+		await swapSidesOfNext(key);
 
 		const { chatRoomId, isCreated } =
 			await BroadcastRepository.insertChatRoomIfMissing({ ...key, expiresAt });
@@ -206,3 +169,11 @@ describe("BroadcastRepository.insertChatRoomIfMissing", () => {
 		).toBe(true);
 	});
 });
+
+function swapSidesOfNext(key: Awaited<ReturnType<typeof createBroadcastKey>>) {
+	return BroadcastRepository.updateProducer({
+		...key,
+		change: (state) =>
+			Producer.editItem(state, state.next.id, { swapSides: true }),
+	});
+}
