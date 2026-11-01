@@ -245,6 +245,14 @@ export const FEED_ITEM_TYPES = {
 		baseScore: 0.2,
 		halfLifeHours: 12,
 	},
+	TO_LUTI_REGISTRATION: {
+		name: "LUTI registration open",
+		category: "TOURNAMENTS",
+		audience: ["EVERYONE"],
+		baseScore: 0.9,
+		halfLifeHours: 168,
+		isPinned: true,
+	},
 	TO_STAFF: {
 		name: "Friend is organizing",
 		category: "TOURNAMENTS",
@@ -561,12 +569,15 @@ export const FEED_MOCK_ANNOUNCEMENT: Omit<
 	FeedAnnouncement,
 	"startsAt" | "endsAt"
 > = {
-	title: "Registration is open for LUTI Season 17",
-	text: "Leagues Under The Ink is back. Sign your team up before the deadline.",
-	href: "/luti",
-	linkLabel: "Register",
-	navIcon: "luti",
+	title: "Ver. 11.0.0 balance changes are in",
+	text: "Weapon stats of the new patch are now in the build analyzer.",
+	href: "/analyzer",
+	linkLabel: "Open the analyzer",
+	navIcon: "analyzer",
 };
+
+/** Shown on the test page when LUTI registration isn't open */
+export const FEED_MOCK_LUTI_SEASON = "17";
 
 export interface FeedSpotlight {
 	title: string;

@@ -229,6 +229,14 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 				},
 			},
 			{
+				item: "TO_LUTI_REGISTRATION",
+				when: "Registration for the next LUTI season is open. Replaces the LUTI banner of the old front page.",
+				example: {
+					actor: "LUTI",
+					text: "**Registration is open for LUTI Season 17**",
+				},
+			},
+			{
 				item: "ON_THIS_DAY",
 				when: "The biggest tournament played on this day in an earlier year and who won it.",
 				example: {
@@ -960,10 +968,10 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 		sources: [
 			{
 				item: "ANNOUNCEMENT",
-				when: "An announcement set by the admins is active, e.g. LUTI registration being open. Replaces the LUTI banner of the old front page.",
+				when: "An announcement set by the admins is active, e.g. new balance changes being in the analyzer.",
 				example: {
-					actor: "LUTI",
-					text: "**Registration is open for LUTI Season 17**",
+					actor: "Analyzer",
+					text: "**Ver. 11.0.0 balance changes are in**",
 				},
 			},
 			{

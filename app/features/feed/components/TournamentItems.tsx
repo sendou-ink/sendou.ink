@@ -3,6 +3,7 @@ import { Play } from "lucide-react";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Badge } from "~/components/Badge";
+import { LinkButton } from "~/components/elements/Button";
 import { Placement } from "~/components/Placement";
 import { TierPill } from "~/components/TierPill";
 import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
@@ -460,6 +461,24 @@ export function tournamentItemContent(
 					</div>
 				),
 				reactionCount: 14,
+			};
+		}
+		case "TO_LUTI_REGISTRATION": {
+			const { data } = item;
+			return {
+				avatar: <NavIconAvatar navIcon="luti" />,
+				line: <b>Registration is open for LUTI Season {data.season}</b>,
+				body: (
+					<div className={clsx(styles.hero, styles.heroAccent)}>
+						<div className="text-sm">
+							Leagues Under The Ink is back. Sign your team up before the
+							deadline.
+						</div>
+						<LinkButton to={data.href} size="small">
+							Register
+						</LinkButton>
+					</div>
+				),
 			};
 		}
 		case "TO_SHOWCASE": {

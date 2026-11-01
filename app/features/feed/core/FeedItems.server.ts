@@ -41,6 +41,7 @@ import {
 	FEED_FEATURED_RESULT_MIN_TEAMS,
 	FEED_LEADERBOARD_TOP_COUNT,
 	FEED_MOCK_ANNOUNCEMENT,
+	FEED_MOCK_LUTI_SEASON,
 	FEED_ROTATION_LOOKBACK_WEEKS,
 	FEED_SEASON_COUNTDOWN_DAYS,
 	FEED_SITE_MILESTONE_MIN,
@@ -92,6 +93,7 @@ const SHARED_ITEM_TYPES = new Set<FeedItemType>([
 	"ART_COMMISSIONS",
 	"VOD_NEW",
 	"ANNOUNCEMENT",
+	"TO_LUTI_REGISTRATION",
 	"SITE_MILESTONE",
 	"FEATURE_SPOTLIGHT",
 	"INSTALL_APP",
@@ -148,6 +150,7 @@ const BUILDERS = {
 	TO_SHOWCASE: buildTournamentShowcase,
 	TO_RESULT_FEATURED: buildFeaturedResult,
 	TO_BRACKET_PREVIEW: buildBracketPreview,
+	TO_LUTI_REGISTRATION: buildLutiRegistration,
 	ON_THIS_DAY: buildOnThisDay,
 	TO_STAFF: buildTournamentStaff,
 	TEAM_JOIN: buildTeamJoin,
@@ -2162,22 +2165,21 @@ async function buildAnnouncement(ctx: SharedFeedContext) {
 		};
 	}
 
-	if (Config.showBannerForSeason) {
-		return {
-			at: ctx.now - HOUR,
-			actorKey: "ANNOUNCEMENT",
-			data: {
-				...FEED_MOCK_ANNOUNCEMENT,
-				title: `Registration is open for LUTI Season ${Config.showBannerForSeason}`,
-				href: LUTI_PAGE,
-			},
-		};
-	}
-
 	return {
 		at: ctx.now - 3 * HOUR,
 		actorKey: "ANNOUNCEMENT",
 		data: FEED_MOCK_ANNOUNCEMENT,
+	};
+}
+
+async function buildLutiRegistration(ctx: SharedFeedContext) {
+	return {
+		at: ctx.now - (Config.showBannerForSeason ? HOUR : 3 * HOUR),
+		actorKey: "LUTI",
+		data: {
+			season: Config.showBannerForSeason ?? FEED_MOCK_LUTI_SEASON,
+			href: LUTI_PAGE,
+		},
 	};
 }
 
