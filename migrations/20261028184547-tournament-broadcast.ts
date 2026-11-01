@@ -1,6 +1,6 @@
 import { type Kysely, sql } from "kysely";
 
-/** Broadcast overlays: one row per cast account of a tournament holding its producer state, theme, edited team values and chat room. */
+/** Broadcast overlays: one row per cast account of a tournament holding its producer state, theme and chat room. */
 export async function up(db: Kysely<any>): Promise<void> {
 	await db.transaction().execute(async (trx) => {
 		await trx.schema
@@ -13,7 +13,6 @@ export async function up(db: Kysely<any>): Promise<void> {
 			.addColumn("account", "text", (col) => col.notNull())
 			.addColumn("state", "text", (col) => col.notNull())
 			.addColumn("settings", "text", (col) => col.notNull())
-			.addColumn("overrides", "text", (col) => col.notNull())
 			.addColumn("chatRoomId", "integer", (col) =>
 				col.references("ChatRoom.id").onDelete("set null"),
 			)

@@ -530,8 +530,6 @@
 	"errors.canNotSetIfStartingNow": "Can not be set if starting now",
 	"labels.broadcastCss": "Custom CSS",
 	"bottomTexts.broadcastCss": "Applied after the default styles. Override the variables on [data-broadcast], redefine the bc-* @keyframes or target parts like [data-scene=\"game\"] [data-part=\"team-name\"].",
-	"labels.broadcastPlayers": "Players",
-	"labels.broadcastWeapons": "Weapons",
 	"labels.broadcastStinger": "Stinger",
 	"bottomTexts.broadcastStinger": "Full screen animation with the upcoming match's info, covering the scene change on Takes that use the stinger transition.",
 	"options.broadcastStinger.versus": "Versus: the teams clash from both sides",
@@ -541,5 +539,5 @@
 	"labels.broadcastHeadline": "Headline",
 	"bottomTexts.broadcastHeadline": "Shown on the full screen scenes, e.g. Starting soon and Break.",
 	"labels.broadcastCasters": "Casters",
-	"bottomTexts.broadcastCasters": "Shown as written, e.g. \"Sendou - he/him\". The Game scene lists them next to the round, the Casters scene has a camera frame for each (put your camera sources under the browser source in OBS)."
+	"bottomTexts.broadcastCasters": "Shown with the pronouns of their profile. The Game scene lists them next to the round, the Casters scene has a camera frame for each (put your camera sources under the browser source in OBS)."
 }

@@ -6,14 +6,11 @@ import * as TournamentMatchRepository from "~/features/tournament-match/Tourname
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import { avatarUrl } from "~/utils/urls";
 import * as BroadcastRepository from "../BroadcastRepository.server";
-import {
-	DEFAULT_BROADCAST_OVERRIDES,
-	DEFAULT_BROADCAST_SETTINGS,
-} from "../broadcast-constants";
+import { DEFAULT_BROADCAST_SETTINGS } from "../broadcast-constants";
 import type {
+	BroadcastCaster,
 	BroadcastChannel,
 	BroadcastMatch,
-	BroadcastOverrides,
 	BroadcastPlayer,
 	BroadcastState,
 	BroadcastTeam,
@@ -22,7 +19,6 @@ import type {
 import * as CastChannel from "./CastChannel";
 import * as Producer from "./Producer";
 import * as SetProgress from "./SetProgress";
-import * as TeamOverrides from "./TeamOverrides";
 
 type PlayerRow = Awaited<
 	ReturnType<typeof BroadcastRepository.findAllPlayersByTournamentTeamIds>
@@ -50,6 +46,8 @@ export async function build({
 		tournamentId,
 		channel,
 	});
+	// settings added later are missing from broadcasts written before
+	const settings = { ...DEFAULT_BROADCAST_SETTINGS, ...stored?.settings };
 	const featuredMatchId = CastChannel.featuredMatchId({
 		castedMatchesInfo: tournament.ctx.castedMatchesInfo,
 		channel,
@@ -60,8 +58,8 @@ export async function build({
 		snapshot: {
 			v: 1,
 			...(stored?.state ?? Producer.initialState()),
-			// settings added later are missing from broadcasts written before
-			settings: { ...DEFAULT_BROADCAST_SETTINGS, ...stored?.settings },
+			settings,
+			casters: await casters(settings.casterIds),
 			tournament: {
 				name: tournament.ctx.name,
 				logoUrl: tournament.ctx.logoUrl,
@@ -70,7 +68,6 @@ export async function build({
 				? await featuredMatch({
 						tournament,
 						matchId: featuredMatchId,
-						overrides: stored?.overrides ?? DEFAULT_BROADCAST_OVERRIDES,
 						liveResults: stored?.state.liveResults ?? null,
 					})
 				: null,
@@ -78,41 +75,22 @@ export async function build({
 	};
 }
 
-/** The team's editable values as the tournament has them, without the producer's edits. `null` for a team not in the tournament. */
-export async function findTeamValues({
-	tournament,
-	teamId,
-}: {
-	tournament: Tournament;
-	teamId: number;
-}): Promise<TeamOverrides.TeamValues | null> {
-	const tournamentTeam = tournament.teamById(teamId);
-	if (!tournamentTeam) return null;
+async function casters(userIds: number[]): Promise<BroadcastCaster[]> {
+	const users = await BroadcastRepository.findAllCastersByUserIds(userIds);
 
-	const players = await BroadcastRepository.findAllPlayersByTournamentTeamIds([
-		teamId,
-	]);
-
-	return {
-		name: tournamentTeam.name,
-		players: rosterPlayers({ players, tournament, tournamentTeam }).map(
-			(player) => {
-				const { userId, name, weapons } = toBroadcastPlayer(player);
-				return { userId, name, weapons };
-			},
-		),
-	};
+	return userIds.flatMap((userId) => {
+		const user = users.find((candidate) => candidate.userId === userId);
+		return user ? [user] : [];
+	});
 }
 
 async function featuredMatch({
 	tournament,
 	matchId,
-	overrides,
 	liveResults,
 }: {
 	tournament: Tournament;
 	matchId: number;
-	overrides: BroadcastOverrides;
 	liveResults: LiveResults | null;
 }): Promise<BroadcastMatch | null> {
 	const match = await TournamentMatchRepository.findMatchById(matchId);
@@ -153,23 +131,19 @@ async function featuredMatch({
 			: null;
 		if (!opponent?.id || !tournamentTeam) return null;
 
-		return TeamOverrides.apply(
-			{
-				id: tournamentTeam.id,
-				name: tournamentTeam.name,
-				logoUrl: tournamentTeam.logoUrl,
-				seed: tournamentTeam.seed,
-				players: rosterPlayers({
-					players: players.filter(
-						(player) => player.tournamentTeamId === tournamentTeam.id,
-					),
-					tournament,
-					tournamentTeam,
-				}).map(toBroadcastPlayer),
-				isEdited: false,
-			},
-			overrides,
-		);
+		return {
+			id: tournamentTeam.id,
+			name: tournamentTeam.name,
+			logoUrl: tournamentTeam.logoUrl,
+			seed: tournamentTeam.seed,
+			players: rosterPlayers({
+				players: players.filter(
+					(player) => player.tournamentTeamId === tournamentTeam.id,
+				),
+				tournament,
+				tournamentTeam,
+			}).map(toBroadcastPlayer),
+		};
 	};
 
 	const names = tournament.matchContextNamesById(matchId);

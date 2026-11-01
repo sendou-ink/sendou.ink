@@ -1,3 +1,4 @@
+import type { Pronouns } from "~/db/tables-json";
 import {
 	BROADCAST_INK_COLORS,
 	type BROADCAST_SCENE_PARTS,
@@ -72,6 +73,11 @@ export function inkColorVars(
 		"--bc-team-b": right,
 		"--bc-team-b-text": readableTextOn(right),
 	};
+}
+
+/** Pronouns as shown next to a name, e.g. "he/him". */
+export function pronounsLabel(pronouns: Pronouns) {
+	return `${pronouns.subject}/${pronouns.object}`;
 }
 
 /** Bracket and round, e.g. "Main bracket · Winners round 2". */

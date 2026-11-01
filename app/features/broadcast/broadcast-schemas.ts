@@ -1,29 +1,21 @@
 import * as v from "valibot";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
 	array,
-	fieldset,
-	idConstant,
 	select,
 	stringConstant,
 	textAreaOptional,
-	textField,
 	textFieldOptional,
-	weaponPool,
+	userSearch,
 } from "~/form/fields";
 import { _action, coerceNumber, id } from "~/utils/schema";
 import {
-	BROADCAST_CASTER_NAME_MAX_LENGTH,
 	BROADCAST_CSS_MAX_LENGTH,
 	BROADCAST_HEADLINE_MAX_LENGTH,
 	BROADCAST_INK_COLORS,
 	BROADCAST_MAX_CASTERS,
-	BROADCAST_MAX_PLAYERS_PER_TEAM,
-	BROADCAST_PLAYER_NAME_MAX_LENGTH,
 	BROADCAST_SCENES,
 	BROADCAST_STINGERS,
 	BROADCAST_TRANSITIONS,
-	BROADCAST_WEAPONS_PER_PLAYER,
 } from "./broadcast-constants";
 
 const nonNegativeInteger = v.pipe(coerceNumber(), v.integer(), v.minValue(0));
@@ -61,39 +53,11 @@ export const broadcastInfoFormSchema = v.object({
 		bottomText: "bottomTexts.broadcastHeadline",
 		maxLength: BROADCAST_HEADLINE_MAX_LENGTH,
 	}),
-	casters: array({
+	casterIds: array({
 		label: "labels.broadcastCasters",
 		bottomText: "bottomTexts.broadcastCasters",
 		max: BROADCAST_MAX_CASTERS,
-		field: textField({ maxLength: BROADCAST_CASTER_NAME_MAX_LENGTH }),
-	}),
-});
-
-export const broadcastTeamFormSchema = v.object({
-	_action: stringConstant("UPDATE_TEAM"),
-	teamId: idConstant(),
-	name: textField({
-		label: "labels.teamName",
-		maxLength: TOURNAMENT.TEAM_NAME_MAX_LENGTH,
-	}),
-	players: array({
-		label: "labels.broadcastPlayers",
-		max: BROADCAST_MAX_PLAYERS_PER_TEAM,
-		addable: false,
-		field: fieldset({
-			fields: v.object({
-				userId: idConstant(),
-				name: textField({
-					label: "labels.name",
-					maxLength: BROADCAST_PLAYER_NAME_MAX_LENGTH,
-				}),
-				weapons: weaponPool({
-					label: "labels.broadcastWeapons",
-					maxCount: BROADCAST_WEAPONS_PER_PLAYER,
-					disableFavorites: true,
-				}),
-			}),
-		}),
+		field: userSearch({ label: "labels.user" }),
 	}),
 });
 
@@ -122,8 +86,6 @@ export const broadcastActionSchema = v.union([
 		matchId: id,
 		resultCount: nonNegativeInteger,
 	}),
-	v.object({ _action: _action("RESET_TEAM"), teamId: id }),
 	broadcastThemeFormSchema,
 	broadcastInfoFormSchema,
-	broadcastTeamFormSchema,
 ]);

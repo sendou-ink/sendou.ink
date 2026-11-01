@@ -10,10 +10,8 @@ import {
 } from "../broadcast-schemas";
 import { requireBroadcastProducer } from "../broadcast-utils.server";
 import * as BroadcastHub from "../core/BroadcastHub.server";
-import * as BroadcastSnapshot from "../core/BroadcastSnapshot.server";
 import * as CastChannel from "../core/CastChannel";
 import * as Producer from "../core/Producer";
-import * as TeamOverrides from "../core/TeamOverrides";
 
 const STALE_TAKE_MESSAGE =
 	"Someone else took in the meantime, check what is live now";
@@ -87,46 +85,6 @@ export const action = defineAction(
 				});
 				break;
 			}
-			case "UPDATE_TEAM": {
-				const defaults = notFoundIfNullish(
-					await BroadcastSnapshot.findTeamValues({
-						tournament,
-						teamId: body.teamId,
-					}),
-				);
-
-				await BroadcastRepository.updateTeamOverrides({
-					...key,
-					teamId: body.teamId,
-					...TeamOverrides.fromSubmitted({
-						defaults,
-						submitted: {
-							name: body.name,
-							players: body.players.map((player) => ({
-								userId: player.userId,
-								name: player.name,
-								weapons: player.weapons.map((weapon) => weapon.id),
-							})),
-						},
-					}),
-				});
-				break;
-			}
-			case "RESET_TEAM": {
-				const defaults = notFoundIfNullish(
-					await BroadcastSnapshot.findTeamValues({
-						tournament,
-						teamId: body.teamId,
-					}),
-				);
-
-				await BroadcastRepository.updateTeamOverrides({
-					...key,
-					teamId: body.teamId,
-					...TeamOverrides.fromSubmitted({ defaults, submitted: defaults }),
-				});
-				break;
-			}
 			case "UPDATE_THEME": {
 				await BroadcastRepository.updateSettings({
 					...key,
@@ -137,7 +95,7 @@ export const action = defineAction(
 			case "UPDATE_INFO": {
 				await BroadcastRepository.updateSettings({
 					...key,
-					patch: { headline: body.headline ?? "", casters: body.casters },
+					patch: { headline: body.headline ?? "", casterIds: body.casterIds },
 				});
 				break;
 			}

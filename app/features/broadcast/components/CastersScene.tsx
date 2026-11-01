@@ -2,7 +2,7 @@ import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { BROADCAST_CANVAS } from "../broadcast-constants";
 import type { BroadcastState, BroadcastView } from "../broadcast-types";
-import { scenePart } from "../broadcast-utils";
+import { pronounsLabel, scenePart } from "../broadcast-utils";
 import styles from "./CastersScene.module.css";
 import { Matchup } from "./Matchup";
 import { SceneBackdrop } from "./SceneBackdrop";
@@ -41,7 +41,7 @@ export function CastersScene({
 	view: BroadcastView;
 }) {
 	const { t } = useTranslation(["broadcast"]);
-	const casters = state.settings.casters;
+	const casters = state.casters;
 	const frames =
 		FRAME_LAYOUTS[casters.length] ?? FRAME_LAYOUTS[DEFAULT_FRAME_COUNT];
 
@@ -75,7 +75,12 @@ export function CastersScene({
 				>
 					{casters[i] ? (
 						<div className={styles.name} {...part("caster-name")}>
-							{casters[i]}
+							{casters[i].name}
+							{casters[i].pronouns ? (
+								<span className={styles.pronouns} {...part("caster-pronouns")}>
+									{pronounsLabel(casters[i].pronouns)}
+								</span>
+							) : null}
 						</div>
 					) : null}
 				</div>

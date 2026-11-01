@@ -118,12 +118,6 @@
 	text-transform: uppercase;
 }
 
-.teams {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
-	gap: var(--s-8);
-}
-
 .viewHeader {
 	font-size: var(--font-md);
 	text-transform: uppercase;

@@ -74,7 +74,7 @@ describe("BroadcastRepository.updateSettings", () => {
 		});
 		await BroadcastRepository.updateSettings({
 			...key,
-			patch: { headline: "Finals at 18:00", casters: ["Sendou", "Kalle"] },
+			patch: { headline: "Finals at 18:00", casterIds: [1, 2] },
 		});
 
 		const broadcast = await BroadcastRepository.findByChannel(key);
@@ -82,7 +82,7 @@ describe("BroadcastRepository.updateSettings", () => {
 			css: "body { color: red; }",
 			stinger: "burst",
 			headline: "Finals at 18:00",
-			casters: ["Sendou", "Kalle"],
+			casterIds: [1, 2],
 		});
 	});
 });
@@ -127,64 +127,6 @@ describe("BroadcastRepository.replaceState", () => {
 		expect((await BroadcastRepository.findByChannel(key))?.state).toEqual(
 			firstTake,
 		);
-	});
-});
-
-describe("BroadcastRepository.updateTeamOverrides", () => {
-	beforeEach(async () => {
-		await users.create(1);
-	});
-
-	test("keeps the overrides of other teams", async () => {
-		const key = await createBroadcastKey();
-
-		await BroadcastRepository.updateTeamOverrides({
-			...key,
-			teamId: 1,
-			team: { name: "Team One" },
-			players: [{ userId: 10, override: { weapons: [0, 10] } }],
-		});
-		await BroadcastRepository.updateTeamOverrides({
-			...key,
-			teamId: 2,
-			team: { name: "Team Two" },
-			players: [{ userId: 20, override: { name: "Twenty" } }],
-		});
-
-		const broadcast = await BroadcastRepository.findByChannel(key);
-		expect(broadcast?.overrides).toEqual({
-			teams: { 1: { name: "Team One" }, 2: { name: "Team Two" } },
-			players: { 10: { weapons: [0, 10] }, 20: { name: "Twenty" } },
-		});
-	});
-
-	test("removes the entries set to null", async () => {
-		const key = await createBroadcastKey();
-		await BroadcastRepository.updateTeamOverrides({
-			...key,
-			teamId: 1,
-			team: { name: "Team One" },
-			players: [
-				{ userId: 10, override: { name: "Ten" } },
-				{ userId: 11, override: { name: "Eleven" } },
-			],
-		});
-
-		await BroadcastRepository.updateTeamOverrides({
-			...key,
-			teamId: 1,
-			team: null,
-			players: [
-				{ userId: 10, override: null },
-				{ userId: 11, override: { name: "Eleven" } },
-			],
-		});
-
-		const broadcast = await BroadcastRepository.findByChannel(key);
-		expect(broadcast?.overrides).toEqual({
-			teams: {},
-			players: { 11: { name: "Eleven" } },
-		});
 	});
 });
 

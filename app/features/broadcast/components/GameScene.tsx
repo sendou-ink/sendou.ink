@@ -7,7 +7,12 @@ import type {
 	BroadcastState,
 	BroadcastView,
 } from "../broadcast-types";
-import { type MatchSide, matchSides, scenePart } from "../broadcast-utils";
+import {
+	type MatchSide,
+	matchSides,
+	pronounsLabel,
+	scenePart,
+} from "../broadcast-utils";
 import styles from "./GameScene.module.css";
 import { SetLength } from "./SetLength";
 
@@ -89,7 +94,13 @@ function TeamRow({
 
 function InfoBar({ state }: { state: BroadcastState }) {
 	const match = state.match;
-	const casters = state.settings.casters.join(" // ");
+	const casters = state.casters
+		.map((caster) =>
+			caster.pronouns
+				? `${caster.name} (${pronounsLabel(caster.pronouns)})`
+				: caster.name,
+		)
+		.join(" // ");
 
 	return (
 		<div className={styles.infoBar} {...part("info-bar")}>
