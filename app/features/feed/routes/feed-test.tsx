@@ -68,6 +68,7 @@ export default function FeedTestPage() {
 										[styles.tabSelected]: filter === tab.id,
 									})}
 									aria-pressed={filter === tab.id}
+									data-label={tab.label}
 									onClick={() => setFilter(tab.id)}
 								>
 									{tab.label}
@@ -89,6 +90,17 @@ export default function FeedTestPage() {
 								</button>
 							))}
 						</nav>
+						{filter === "ALL"
+							? data.pinned.map((item) => (
+									<FeedItemCard
+										key={item.type}
+										item={item}
+										now={data.now}
+										commentCount={data.commentCounts[item.type] ?? 0}
+										href={feedItemPage(item.type)}
+									/>
+								))
+							: null}
 						{/* xxx: going to a post and back should restore the scroll position in the feed */}
 						{activity.map((item) => (
 							<FeedItemCard

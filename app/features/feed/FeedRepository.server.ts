@@ -1,8 +1,10 @@
-import { sql } from "kysely";
+import { type ExpressionBuilder, sql } from "kysely";
 import { db } from "~/db/sql";
+import type { Tables } from "~/db/tables";
 import type { ChatMessageAuthor } from "~/features/chat/chat-types";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
+	calendarEventNameMatchesSeries,
 	calendarEventStartTime,
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
@@ -513,6 +515,86 @@ export async function findLatestEndedLobbyOfUsers(userIds: number[]) {
 		.executeTakeFirst();
 }
 
+/**
+ * The users' SendouQ sets and tournaments in the range, oldest first, each with when the user last
+ * played anything before it and when they last played the same kind (SendouQ or tournament) before it.
+ */
+export function findPlaysOfUsersBetween({
+	userIds,
+	from,
+	to,
+}: {
+	userIds: number[];
+	from: number;
+	to: number;
+}) {
+	if (userIds.length === 0) return Promise.resolve([]);
+
+	const plays = db
+		.selectFrom("GroupMatch")
+		.innerJoin("GroupMember", (join) =>
+			join.on((eb) =>
+				eb.or([
+					eb("GroupMember.groupId", "=", eb.ref("GroupMatch.alphaGroupId")),
+					eb("GroupMember.groupId", "=", eb.ref("GroupMatch.bravoGroupId")),
+				]),
+			),
+		)
+		.select([
+			"GroupMember.userId",
+			"GroupMatch.createdAt as at",
+			sql<"SQ" | "TOURNAMENT">`'SQ'`.as("source"),
+			sql<number | null>`null`.as("tournamentId"),
+		])
+		.where("GroupMember.userId", "in", userIds)
+		.unionAll((eb) =>
+			eb
+				.selectFrom("TournamentResult")
+				.innerJoin(
+					"CalendarEvent",
+					"CalendarEvent.tournamentId",
+					"TournamentResult.tournamentId",
+				)
+				.select((resultEb) => [
+					"TournamentResult.userId",
+					calendarEventStartTime(resultEb).$asScalar().$notNull().as("at"),
+					sql<"SQ" | "TOURNAMENT">`'TOURNAMENT'`.as("source"),
+					sql<number | null>`"TournamentResult"."tournamentId"`.as(
+						"tournamentId",
+					),
+				])
+				.where("TournamentResult.userId", "in", userIds),
+		);
+
+	return db
+		.selectFrom(
+			db
+				.selectFrom(plays.as("Play"))
+				.select([
+					"Play.userId",
+					"Play.at",
+					"Play.source",
+					"Play.tournamentId",
+					sql<
+						number | null
+					>`lag("Play"."at") over (partition by "Play"."userId" order by "Play"."at")`.as(
+						"previousAt",
+					),
+					sql<
+						number | null
+					>`lag("Play"."at") over (partition by "Play"."userId", "Play"."source" order by "Play"."at")`.as(
+						"previousOfSourceAt",
+					),
+				])
+				.as("WithPrevious"),
+		)
+		.selectAll("WithPrevious")
+		.where("WithPrevious.at", ">=", from)
+		.where("WithPrevious.at", "<=", to)
+		.orderBy("WithPrevious.at", "asc")
+		.execute();
+}
+
 // ---------- Tournaments ----------
 
 export function findTournamentResultsByUserIds({
@@ -924,6 +1006,163 @@ export function findUpcomingStaffOfUsers({
 		.executeTakeFirst();
 }
 
+/** Finalized public tournaments that started in the range (optionally on a day of the year, `MM-DD` in UTC), best tier and most teams first. */
+export function findBiggestFinalizedTournaments({
+	from,
+	to,
+	monthDay,
+	limit,
+}: {
+	from: number;
+	to: number;
+	monthDay?: string;
+	limit: number;
+}) {
+	let query = publicTournaments()
+		.select((eb) => [
+			"Tournament.id as tournamentId",
+			"Tournament.tier",
+			tournamentTeamCount(eb).as("teamCount"),
+			calendarEventStartTime(eb).$asScalar().$notNull().as("startsAt"),
+		])
+		.where("Tournament.isFinalized", "=", 1)
+		.where((eb) =>
+			eb.between(calendarEventStartTime(eb).$asScalar(), from, to),
+		);
+
+	if (monthDay) {
+		query = query.where(
+			(eb) =>
+				sql<string>`strftime('%m-%d', ${calendarEventStartTime(eb).$asScalar()}, 'unixepoch')`,
+			"=",
+			monthDay,
+		);
+	}
+
+	return query
+		.orderBy(sql`"Tournament"."tier" is null`)
+		.orderBy("Tournament.tier", "asc")
+		.orderBy("teamCount", "desc")
+		.limit(limit)
+		.execute();
+}
+
+/** The best placed team of each of the top three placements of a tournament. */
+export function findPodiumTeamIdsByTournamentId(tournamentId: number) {
+	return db
+		.selectFrom("TournamentResult")
+		.select(["TournamentResult.placement", "TournamentResult.tournamentTeamId"])
+		.where("TournamentResult.tournamentId", "=", tournamentId)
+		.where("TournamentResult.placement", "<=", 3)
+		.groupBy([
+			"TournamentResult.placement",
+			"TournamentResult.tournamentTeamId",
+		])
+		.orderBy("TournamentResult.placement", "asc")
+		.execute();
+}
+
+/** Public tournaments whose registration closed in the range, before they started. */
+export function findTournamentsWithRegistrationClosedBetween({
+	from,
+	to,
+}: {
+	from: number;
+	to: number;
+}) {
+	const regClosesAt = sql<number>`cast("Tournament"."settings" ->> 'regClosesAt' as integer)`;
+
+	return publicTournaments()
+		.select((eb) => [
+			"Tournament.id as tournamentId",
+			regClosesAt.as("regClosesAt"),
+			calendarEventStartTime(eb).$asScalar().$notNull().as("startsAt"),
+			tournamentTeamCount(eb).as("teamCount"),
+		])
+		.where(regClosesAt, ">=", from)
+		.where(regClosesAt, "<=", to)
+		.orderBy("regClosesAt", "desc")
+		.limit(MAX_ROWS)
+		.execute();
+}
+
+/** Registered teams of a tournament with their members, placeholder and dropped out teams left out. */
+export async function findRegisteredTeamsByTournamentId(tournamentId: number) {
+	const rows = await db
+		.selectFrom("TournamentTeam")
+		.select("TournamentTeam.id")
+		.where("TournamentTeam.tournamentId", "=", tournamentId)
+		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.where("TournamentTeam.droppedOut", "=", 0)
+		.execute();
+
+	return findTournamentTeamsByIds(rows.map((row) => row.id));
+}
+
+export function findSeriesByOrganizationId(organizationId: number) {
+	return db
+		.selectFrom("TournamentOrganizationSeries")
+		.select([
+			"TournamentOrganizationSeries.name",
+			"TournamentOrganizationSeries.substringMatches",
+		])
+		.where("TournamentOrganizationSeries.organizationId", "=", organizationId)
+		.execute();
+}
+
+/** How many of an organization's events matching any of the name substrings the user has won, up to `before`. */
+export async function countSeriesWinsOfUser({
+	userId,
+	organizationId,
+	substringMatches,
+	before,
+}: {
+	userId: number;
+	organizationId: number;
+	substringMatches: string[];
+	before: number;
+}) {
+	const row = await db
+		.selectFrom("TournamentResult")
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.tournamentId",
+			"TournamentResult.tournamentId",
+		)
+		.select((eb) =>
+			eb.fn
+				.count<number>("TournamentResult.tournamentId")
+				.distinct()
+				.as("count"),
+		)
+		.where("TournamentResult.userId", "=", userId)
+		.where("TournamentResult.placement", "=", 1)
+		.where("CalendarEvent.organizationId", "=", organizationId)
+		.where(calendarEventNameMatchesSeries(substringMatches))
+		.where((eb) => eb(calendarEventStartTime(eb).$asScalar(), "<=", before))
+		.executeTakeFirstOrThrow();
+
+	return row.count;
+}
+
+function publicTournaments() {
+	return db
+		.selectFrom("CalendarEvent")
+		.innerJoin("Tournament", "Tournament.id", "CalendarEvent.tournamentId")
+		.where("CalendarEvent.hidden", "=", 0)
+		.where(sql<boolean>`coalesce("Tournament"."settings" ->> 'isTest', 0) = 0`);
+}
+
+function tournamentTeamCount(eb: ExpressionBuilder<Tables, "Tournament">) {
+	return eb
+		.selectFrom("TournamentTeam")
+		.select((countEb) => countEb.fn.countAll<number>().as("c"))
+		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.$asScalar()
+		.$notNull();
+}
+
 // ---------- Teams & scrims ----------
 
 export function findLatestTeamJoinOfUsers({
@@ -1156,6 +1395,36 @@ export function findWeaponPoolByUserId(userId: number) {
 		.where("UserWeaponPool.userId", "=", userId)
 		.orderBy("UserWeaponPool.sortOrder", "asc")
 		.execute();
+}
+
+/** The teams the users are currently members of, with when each team was created. */
+export function findTeamMembershipsOfUsers(userIds: number[]) {
+	if (userIds.length === 0) return Promise.resolve([]);
+
+	return db
+		.selectFrom("AllTeamMember")
+		.innerJoin("AllTeam", "AllTeam.id", "AllTeamMember.teamId")
+		.select([
+			"AllTeamMember.userId",
+			"AllTeam.id as teamId",
+			"AllTeam.createdAt",
+		])
+		.where("AllTeamMember.userId", "in", userIds)
+		.where("AllTeamMember.leftAt", "is", null)
+		.where("AllTeam.deletedAt", "is", null)
+		.execute();
+}
+
+export async function countTournamentsByTeamId(teamId: number) {
+	const row = await db
+		.selectFrom("TournamentTeam")
+		.select((eb) =>
+			eb.fn.count<number>("TournamentTeam.tournamentId").distinct().as("count"),
+		)
+		.where("TournamentTeam.teamId", "=", teamId)
+		.executeTakeFirstOrThrow();
+
+	return row.count;
 }
 
 // ---------- Creators ----------
@@ -1579,4 +1848,57 @@ export function findLatestAddedUpcomingCalendarEvent(after: number) {
 		.orderBy("CalendarEvent.id", "desc")
 		.limit(1)
 		.executeTakeFirst();
+}
+
+const SITE_TOTAL_TIMES = {
+	USERS: sql<{
+		at: number;
+	}>`(select coalesce("createdAt", 0) as "at" from "User")`,
+	SQ_SETS: sql<{ at: number }>`(select "createdAt" as "at" from "GroupMatch")`,
+	TOURNAMENTS: sql<{ at: number }>`(
+		select min("CalendarEventDate"."startsAt") as "at"
+		from "CalendarEvent"
+		inner join "CalendarEventDate" on "CalendarEventDate"."eventId" = "CalendarEvent"."id"
+		where "CalendarEvent"."tournamentId" is not null
+		group by "CalendarEvent"."id"
+	)`,
+	ART: sql<{ at: number }>`(select "createdAt" as "at" from "Art")`,
+};
+
+export type SiteTotal = keyof typeof SITE_TOTAL_TIMES;
+
+/** Users, SendouQ sets, tournaments or art pieces there were at `before`. */
+export async function countSiteTotal({
+	total,
+	before,
+}: {
+	total: SiteTotal;
+	before: number;
+}) {
+	const row = await db
+		.selectFrom(SITE_TOTAL_TIMES[total].as("Total"))
+		.select((eb) => eb.fn.countAll<number>().as("count"))
+		.where("Total.at", "<=", before)
+		.executeTakeFirstOrThrow();
+
+	return row.count;
+}
+
+/** When the nth user, SendouQ set, tournament or art piece was created, 0 if unknown. */
+export async function findNthOfSiteTotal({
+	total,
+	nth,
+}: {
+	total: SiteTotal;
+	nth: number;
+}) {
+	const row = await db
+		.selectFrom(SITE_TOTAL_TIMES[total].as("Total"))
+		.select("Total.at")
+		.orderBy("Total.at", "asc")
+		.limit(1)
+		.offset(nth - 1)
+		.executeTakeFirst();
+
+	return row?.at ?? null;
 }

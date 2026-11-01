@@ -21,8 +21,11 @@ export const loader = async () => {
 	return {
 		now: ctx.now,
 		friendCount: ctx.friendIds.length,
+		pinned: items.filter((item) => definitionOf(item).isPinned),
 		activity: FeedRanking.rank(
-			items.filter((item) => !definitionOf(item).isLive),
+			items.filter(
+				(item) => !definitionOf(item).isLive && !definitionOf(item).isPinned,
+			),
 			ctx.now,
 		),
 		rotations: await SplatoonRotationRepository.findAll(),

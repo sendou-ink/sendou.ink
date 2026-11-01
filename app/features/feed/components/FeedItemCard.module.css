@@ -14,7 +14,7 @@
 .postLinked {
 	cursor: pointer;
 
-	&:hover:not(:has(a:hover, button:hover)) {
+	&:hover:not(:has(a:not(.action):hover, button:not(.action):hover)) {
 		background-color: color-mix(
 			in oklch,
 			var(--color-bg-high) 50%,
@@ -156,7 +156,6 @@
 
 	&:hover {
 		color: var(--color-text);
-		background-color: var(--color-bg-high);
 	}
 }
 
@@ -165,7 +164,6 @@
 
 	&:hover {
 		color: var(--color-text-high);
-		background: none;
 	}
 }
 

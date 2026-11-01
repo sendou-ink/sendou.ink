@@ -1,7 +1,12 @@
+import cachified from "@epic-web/cachified";
+import { subDays } from "date-fns";
 import * as R from "remeda";
+import { Config } from "~/config";
 import { allEntries as allChangelogEntries } from "~/features/changelog/core/entries.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
+import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
+import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
@@ -19,18 +24,35 @@ import type {
 	MainWeaponId,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
+import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import {
+	databaseTimestampNow,
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
+import { LUTI_PAGE } from "~/utils/urls";
 import * as FeedRepository from "../FeedRepository.server";
 import {
+	FEED_ANNOUNCEMENTS,
+	FEED_BRACKET_PREVIEW_TOP_TEAMS,
+	FEED_COMEBACK_MIN_BREAK_DAYS,
+	FEED_FEATURED_RESULT_MAX_TIER,
+	FEED_FEATURED_RESULT_MIN_TEAMS,
+	FEED_LEADERBOARD_TOP_COUNT,
+	FEED_MOCK_ANNOUNCEMENT,
 	FEED_ROTATION_LOOKBACK_WEEKS,
+	FEED_SEASON_COUNTDOWN_DAYS,
+	FEED_SITE_MILESTONE_MIN,
+	FEED_SPOTLIGHTS,
 	FEED_SQ_UPSET_MIN_TIER_STEPS,
 	FEED_TOURNAMENT_UPSET_MIN_SEED_GAP,
 	type FeedItemType,
 	SQ_SET_MILESTONES,
 } from "../feed-constants";
 import * as FeedRotations from "./FeedRotations";
+import * as FeedSchedule from "./FeedSchedule";
 
 const HOUR = 3600;
 const DAY = 24 * HOUR;
@@ -60,6 +82,8 @@ const BUILDERS = {
 	SQ_MILESTONE: buildSqMilestone,
 	SQ_SEASON_RECAP: buildSqSeasonRecap,
 	SQ_RIVALRY: buildSqRivalry,
+	SQ_SEASON_START: buildSqSeasonStart,
+	LEADERBOARD_TOP: buildLeaderboardTop,
 	SQ_META: buildSqMeta,
 	LOBBY_RECAP: buildLobbyRecap,
 	STREAM_LIVE: buildStreamLive,
@@ -74,9 +98,14 @@ const BUILDERS = {
 	TO_VOD: buildTournamentVod,
 	TO_BADGE: buildTournamentBadge,
 	TO_TROPHY: buildTrophy,
+	TO_SHOWCASE: buildTournamentShowcase,
+	TO_RESULT_FEATURED: buildFeaturedResult,
+	TO_BRACKET_PREVIEW: buildBracketPreview,
+	ON_THIS_DAY: buildOnThisDay,
 	TO_STAFF: buildTournamentStaff,
 	TEAM_JOIN: buildTeamJoin,
 	TEAM_NEW: buildTeamNew,
+	TEAM_ANNIVERSARY: buildTeamAnniversary,
 	TEAM_AVAILABILITY: buildTeamAvailability,
 	SCRIM_POST: buildScrimPost,
 	SCRIM_RESULT: buildScrimResult,
@@ -92,7 +121,13 @@ const BUILDERS = {
 	SCANNER_SCORECARD: buildScannerScorecard,
 	FRIEND_NEW: buildFriendNew,
 	FRIEND_SUGGEST: buildFriendSuggest,
+	COMEBACK: buildComeback,
+	FIRST_TIME: buildFirstTime,
 	PLUS_RESULTS: buildPlusResults,
+	ANNOUNCEMENT: buildAnnouncement,
+	SITE_MILESTONE: buildSiteMilestone,
+	FEATURE_SPOTLIGHT: buildFeatureSpotlight,
+	INSTALL_APP: buildInstallApp,
 	SITE_UPDATE: buildSiteUpdate,
 	ROTATION: buildRotation,
 	VOICE_ROOM: buildVoiceRoom,
@@ -531,6 +566,107 @@ async function buildSqRivalry(ctx: FeedContext) {
 	};
 }
 
+async function buildSqSeasonStart(ctx: FeedContext) {
+	const nowDate = databaseTimestampToDate(ctx.now);
+	const upcoming = Seasons.next(nowDate);
+	const countdownStartsAt = upcoming
+		? subDays(upcoming.starts, FEED_SEASON_COUNTDOWN_DAYS)
+		: null;
+	const isCountdown =
+		countdownStartsAt !== null && countdownStartsAt <= nowDate;
+	const season = isCountdown ? upcoming : Seasons.currentOrPrevious(nowDate);
+	if (!season) return null;
+
+	return {
+		at: dateToDatabaseTimestamp(
+			isCountdown ? countdownStartsAt : season.starts,
+		),
+		actorKey: "SQ_SEASON_START",
+		data: {
+			nth: season.nth,
+			isCountdown,
+			startsAt: dateToDatabaseTimestamp(season.starts),
+			endsAt: dateToDatabaseTimestamp(season.ends),
+		},
+	};
+}
+
+async function buildLeaderboardTop(ctx: FeedContext) {
+	if (ctx.season === null) return null;
+
+	const publishedAt = dateToDatabaseTimestamp(
+		FeedSchedule.latestWeekly(databaseTimestampToDate(ctx.now), {
+			weekday: FeedSchedule.WEEKDAY.SUNDAY,
+		}),
+	);
+	const snapshot = await leaderboardSnapshot({
+		season: ctx.season,
+		at: publishedAt,
+	});
+	if (snapshot.players.length === 0) return null;
+
+	return {
+		at: publishedAt,
+		actorKey: "LEADERBOARD_TOP",
+		data: snapshot,
+	};
+}
+
+/** Top of the season's leaderboards as they were at `at`, with each player's change since a week earlier */
+function leaderboardSnapshot({ season, at }: { season: number; at: number }) {
+	return cachified({
+		key: `feed-leaderboard-snapshot-${season}-${at}`,
+		cache,
+		ttl: ttl(IN_MILLISECONDS.TWO_DAYS),
+		async getFreshValue() {
+			const players = await LeaderboardRepository.findUserSPLeaderboard(
+				season,
+				{ before: at },
+			);
+			const weekBefore = new Map(
+				(
+					await LeaderboardRepository.findUserSPLeaderboard(season, {
+						before: at - 7 * DAY,
+					})
+				).map((entry) => [entry.id, entry]),
+			);
+			const teams = await LeaderboardRepository.findTeamLeaderboardBySeason({
+				season,
+				onlyOneEntryPerUser: true,
+				before: at,
+			});
+
+			return {
+				season,
+				players: players.slice(0, FEED_LEADERBOARD_TOP_COUNT).map((player) => {
+					const previous = weekBefore.get(player.id);
+
+					return {
+						user: R.pick(player, ["id", "username", "customUrl", "avatar"]),
+						placement: player.placementRank,
+						previousPlacement: previous?.placementRank ?? null,
+						sp: player.power,
+						weeklyChange: previous
+							? Math.round((player.power - previous.power) * 10) / 10
+							: null,
+					};
+				}),
+				teams: teams
+					.filter((entry) => entry.placementRank !== null)
+					.slice(0, FEED_LEADERBOARD_TOP_COUNT)
+					.map((entry) => ({
+						placement: entry.placementRank,
+						sp: entry.power,
+						team: entry.team
+							? R.pick(entry.team, ["name", "customUrl", "avatarUrl"])
+							: null,
+						members: entry.members,
+					})),
+			};
+		},
+	});
+}
+
 async function buildSqMeta(ctx: FeedContext) {
 	const thisWeek = await FeedRepository.findWeaponUsageCounts({
 		from: ctx.now - 7 * DAY,
@@ -662,6 +798,7 @@ async function buildTournamentWin(ctx: FeedContext) {
 	if (!result) return null;
 
 	const card = await resultCard(ctx, result);
+	const seriesWin = await seriesWinOf(result);
 	const matches = await FeedRepository.findTournamentMatchesByTeamId({
 		tournamentId: result.tournamentId,
 		tournamentTeamId: result.tournamentTeamId,
@@ -682,6 +819,7 @@ async function buildTournamentWin(ctx: FeedContext) {
 		actorKey: String(result.userId),
 		data: {
 			...card,
+			seriesWin,
 			path: lastMatches.map((match) => {
 				const own =
 					match.opponentOne?.id === result.tournamentTeamId
@@ -1079,6 +1217,191 @@ async function buildTrophy() {
 	};
 }
 
+async function buildTournamentShowcase(ctx: FeedContext) {
+	const window = FeedSchedule.showcaseWindow(databaseTimestampToDate(ctx.now));
+	const tournaments = await ShowcaseTournaments.showcaseTournamentsBetween({
+		from: dateToDatabaseTimestamp(window.publishedAt),
+		to: dateToDatabaseTimestamp(window.endsAt),
+	});
+	if (tournaments.length === 0) return null;
+
+	return {
+		at: dateToDatabaseTimestamp(window.publishedAt),
+		actorKey: "TO_SHOWCASE",
+		data: {
+			kind: window.kind,
+			tournaments: tournaments.map((tournament) =>
+				R.pick(tournament, [
+					"id",
+					"name",
+					"logoUrl",
+					"startsAt",
+					"teamsCount",
+					"tier",
+					"tentativeTier",
+					"organization",
+				]),
+			),
+		},
+	};
+}
+
+async function buildFeaturedResult(ctx: FeedContext) {
+	const candidates = await FeedRepository.findBiggestFinalizedTournaments({
+		from: ctx.now - 7 * DAY,
+		to: ctx.now,
+		limit: 10,
+	});
+	const featured = candidates.find(
+		(candidate) =>
+			(candidate.tier !== null &&
+				candidate.tier <= FEED_FEATURED_RESULT_MAX_TIER) ||
+			candidate.teamCount >= FEED_FEATURED_RESULT_MIN_TEAMS,
+	);
+	if (!featured) return null;
+
+	return {
+		at: featured.startsAt + 6 * HOUR,
+		actorKey: `tournament-${featured.tournamentId}`,
+		data: await tournamentPodium(featured),
+	};
+}
+
+async function buildBracketPreview(ctx: FeedContext) {
+	const closed = (
+		await FeedRepository.findTournamentsWithRegistrationClosedBetween({
+			from: ctx.now - 2 * DAY,
+			to: ctx.now,
+		})
+	).filter((row) => row.startsAt > ctx.now && row.teamCount >= 2);
+	if (closed.length === 0) return null;
+
+	const viewerAndFriendIds = [ctx.viewerId, ...ctx.friendIds];
+	const registeredTournamentIds = new Set(
+		(
+			await FeedRepository.findUpcomingRegistrationsByUserIds({
+				userIds: viewerAndFriendIds,
+				after: ctx.now,
+			})
+		).map((registration) => registration.tournamentId),
+	);
+	const chosen =
+		closed.find((row) => registeredTournamentIds.has(row.tournamentId)) ??
+		R.firstBy(closed, [(row) => row.teamCount, "desc"])!;
+
+	const [tournament] = await FeedRepository.findTournamentsByIds([
+		chosen.tournamentId,
+	]);
+	const teams = await FeedRepository.findRegisteredTeamsByTournamentId(
+		chosen.tournamentId,
+	);
+	const skills =
+		ctx.season !== null ? (await userSkills(ctx.season)).userSkills : {};
+	const projected = R.sortBy(
+		teams.map((team) => ({
+			team,
+			sp: projectedTeamSp(
+				team.members.map((member) => member.id),
+				skills,
+			),
+		})),
+		[(entry) => entry.sp ?? 0, "desc"],
+	);
+
+	return {
+		at: chosen.regClosesAt,
+		actorKey: `tournament-${chosen.tournamentId}`,
+		data: {
+			tournament,
+			teamCount: chosen.teamCount,
+			teams: projected.flatMap((entry, index) => {
+				const friends = entry.team.members.filter((member) =>
+					ctx.friendIds.includes(member.id),
+				);
+				const isOwn = entry.team.members.some(
+					(member) => member.id === ctx.viewerId,
+				);
+				if (
+					index >= FEED_BRACKET_PREVIEW_TOP_TEAMS &&
+					!isOwn &&
+					friends.length === 0
+				) {
+					return [];
+				}
+
+				return {
+					projectedSeed: index + 1,
+					team: entry.team,
+					sp: entry.sp,
+					isOwn,
+					friends,
+				};
+			}),
+		},
+	};
+}
+
+async function buildOnThisDay(ctx: FeedContext) {
+	const nowDate = databaseTimestampToDate(ctx.now);
+	const [row] = await FeedRepository.findBiggestFinalizedTournaments({
+		from: 0,
+		to: ctx.now - 300 * DAY,
+		monthDay: `${String(nowDate.getUTCMonth() + 1).padStart(2, "0")}-${String(nowDate.getUTCDate()).padStart(2, "0")}`,
+		limit: 1,
+	});
+	if (!row) return null;
+
+	return {
+		at: dateToDatabaseTimestamp(
+			new Date(
+				Date.UTC(
+					nowDate.getUTCFullYear(),
+					nowDate.getUTCMonth(),
+					nowDate.getUTCDate(),
+				),
+			),
+		),
+		actorKey: `tournament-${row.tournamentId}`,
+		data: {
+			...(await tournamentPodium(row)),
+			yearsAgo:
+				nowDate.getUTCFullYear() -
+				databaseTimestampToDate(row.startsAt).getUTCFullYear(),
+		},
+	};
+}
+
+async function tournamentPodium({
+	tournamentId,
+	tier,
+	teamCount,
+}: {
+	tournamentId: number;
+	tier: number | null;
+	teamCount: number;
+}) {
+	const [tournament] = await FeedRepository.findTournamentsByIds([
+		tournamentId,
+	]);
+	const podium = R.uniqueBy(
+		await FeedRepository.findPodiumTeamIdsByTournamentId(tournamentId),
+		(row) => row.placement,
+	);
+	const teams = await FeedRepository.findTournamentTeamsByIds(
+		podium.map((row) => row.tournamentTeamId),
+	);
+
+	return {
+		tournament,
+		tier,
+		teamCount,
+		podium: podium.map((row) => ({
+			placement: row.placement,
+			team: teams.find((team) => team.id === row.tournamentTeamId)!,
+		})),
+	};
+}
+
 async function buildTournamentStaff(ctx: FeedContext) {
 	const staff = await FeedRepository.findUpcomingStaffOfUsers({
 		userIds: ctx.friendIds,
@@ -1128,6 +1451,42 @@ async function buildTeamNew(ctx: FeedContext) {
 		at: created.createdAt,
 		actorKey: String(created.ownerUserId),
 		data: { actor: users.get(created.ownerUserId)!, team },
+	};
+}
+
+async function buildTeamAnniversary(ctx: FeedContext) {
+	const nowDate = databaseTimestampToDate(ctx.now);
+	const memberships = await FeedRepository.findTeamMembershipsOfUsers([
+		ctx.viewerId,
+		...ctx.friendIds,
+	]);
+	const anniversaries = memberships.flatMap((membership) => {
+		const anniversary = FeedSchedule.latestAnniversary(
+			databaseTimestampToDate(membership.createdAt),
+			nowDate,
+		);
+		return anniversary ? [{ ...membership, ...anniversary }] : [];
+	});
+	const best = R.firstBy(
+		anniversaries,
+		[(anniversary) => anniversary.at.getTime(), "desc"],
+		[(anniversary) => anniversary.userId === ctx.viewerId, "desc"],
+	);
+	if (!best) return null;
+
+	const [team] = await FeedRepository.findTeamsByIds([best.teamId]);
+
+	return {
+		at: dateToDatabaseTimestamp(best.at),
+		actorKey: `team-${best.teamId}`,
+		data: {
+			team,
+			years: best.years,
+			isOwnTeam: team.members.some((member) => member.id === ctx.viewerId),
+			tournamentCount: await FeedRepository.countTournamentsByTeamId(
+				best.teamId,
+			),
+		},
 	};
 }
 
@@ -1552,6 +1911,81 @@ async function buildFriendSuggest(ctx: FeedContext) {
 	};
 }
 
+async function buildComeback(ctx: FeedContext) {
+	const plays = await friendPlays(ctx);
+	const comeback = plays
+		.filter(
+			(play) =>
+				play.previousAt !== null &&
+				play.at - play.previousAt >= FEED_COMEBACK_MIN_BREAK_DAYS * DAY,
+		)
+		.at(-1);
+	if (!comeback) return null;
+
+	const playsSince = plays.filter(
+		(play) => play.userId === comeback.userId && play.at >= comeback.at,
+	);
+	const users = await usersById([comeback.userId]);
+	const [tournament] = comeback.tournamentId
+		? await FeedRepository.findTournamentsByIds([comeback.tournamentId])
+		: [];
+
+	return {
+		at: comeback.at,
+		actorKey: String(comeback.userId),
+		data: {
+			actor: users.get(comeback.userId)!,
+			breakDays: Math.round((comeback.at - comeback.previousAt!) / DAY),
+			source: comeback.source,
+			tournament: tournament ?? null,
+			setCount: playsSince.filter((play) => play.source === "SQ").length,
+			tournamentCount: playsSince.filter((play) => play.source === "TOURNAMENT")
+				.length,
+		},
+	};
+}
+
+async function buildFirstTime(ctx: FeedContext) {
+	const plays = await friendPlays(ctx);
+	const first = plays.filter((play) => play.previousOfSourceAt === null).at(-1);
+	if (!first) return null;
+
+	const users = await usersById([first.userId]);
+	const tournamentResult =
+		first.source === "TOURNAMENT"
+			? await FeedRepository.findFirstTournamentResultByUserId(first.userId)
+			: null;
+	const [tournament] = tournamentResult
+		? await FeedRepository.findTournamentsByIds([tournamentResult.tournamentId])
+		: [];
+
+	return {
+		at: first.at,
+		actorKey: String(first.userId),
+		data: {
+			actor: users.get(first.userId)!,
+			source: first.source,
+			tournament: tournament ?? null,
+			placement: tournamentResult?.placement ?? null,
+			participantCount: tournamentResult?.participantCount ?? null,
+			setCount: plays.filter(
+				(play) =>
+					play.userId === first.userId &&
+					play.source === "SQ" &&
+					play.at >= first.at,
+			).length,
+		},
+	};
+}
+
+function friendPlays(ctx: FeedContext) {
+	return FeedRepository.findPlaysOfUsersBetween({
+		userIds: ctx.friendIds,
+		from: ctx.now - 30 * DAY,
+		to: ctx.now,
+	});
+}
+
 async function buildPlusResults(ctx: FeedContext) {
 	if (ctx.friendIds.length === 0) return null;
 
@@ -1572,6 +2006,102 @@ async function buildPlusResults(ctx: FeedContext) {
 		at: ctx.now - 2 * DAY,
 		actorKey: "PLUS_RESULTS",
 		data: { rows: promotions.slice(0, 5) },
+	};
+}
+
+async function buildAnnouncement(ctx: FeedContext) {
+	const nowDate = databaseTimestampToDate(ctx.now);
+	const active = FEED_ANNOUNCEMENTS.find(
+		(announcement) =>
+			new Date(announcement.startsAt) <= nowDate &&
+			nowDate < new Date(announcement.endsAt),
+	);
+	if (active) {
+		return {
+			at: dateToDatabaseTimestamp(new Date(active.startsAt)),
+			actorKey: "ANNOUNCEMENT",
+			data: R.omit(active, ["startsAt", "endsAt"]),
+		};
+	}
+
+	if (Config.showBannerForSeason) {
+		return {
+			at: ctx.now - HOUR,
+			actorKey: "ANNOUNCEMENT",
+			data: {
+				...FEED_MOCK_ANNOUNCEMENT,
+				title: `Registration is open for LUTI Season ${Config.showBannerForSeason}`,
+				href: LUTI_PAGE,
+			},
+		};
+	}
+
+	return {
+		at: ctx.now - 3 * HOUR,
+		actorKey: "ANNOUNCEMENT",
+		data: FEED_MOCK_ANNOUNCEMENT,
+	};
+}
+
+async function buildSiteMilestone(ctx: FeedContext) {
+	let best: {
+		total: FeedRepository.SiteTotal;
+		milestone: number;
+		at: number;
+	} | null = null;
+	for (const total of SITE_TOTALS) {
+		const count = await FeedRepository.countSiteTotal({
+			total,
+			before: ctx.now,
+		});
+		const milestone = FeedSchedule.reachedMilestone(
+			count,
+			FEED_SITE_MILESTONE_MIN,
+		);
+		if (milestone === null) continue;
+
+		const at = await FeedRepository.findNthOfSiteTotal({
+			total,
+			nth: milestone,
+		});
+		if (!at || (best && best.at > at)) continue;
+
+		best = { total, milestone, at };
+	}
+	if (!best) return null;
+
+	return {
+		at: best.at,
+		actorKey: "SITE_MILESTONE",
+		data: { total: best.total, milestone: best.milestone },
+	};
+}
+
+async function buildFeatureSpotlight(ctx: FeedContext) {
+	const publishedAt = FeedSchedule.latestWeekly(
+		databaseTimestampToDate(ctx.now),
+		{ weekday: FeedSchedule.WEEKDAY.WEDNESDAY },
+	);
+	const weekNumber = Math.floor(
+		dateToDatabaseTimestamp(publishedAt) / (7 * DAY),
+	);
+
+	return {
+		at: dateToDatabaseTimestamp(publishedAt),
+		actorKey: "FEATURE_SPOTLIGHT",
+		data: FEED_SPOTLIGHTS[weekNumber % FEED_SPOTLIGHTS.length],
+	};
+}
+
+async function buildInstallApp(ctx: FeedContext) {
+	const nowDate = databaseTimestampToDate(ctx.now);
+
+	return {
+		at: dateToDatabaseTimestamp(
+			new Date(Date.UTC(nowDate.getUTCFullYear(), nowDate.getUTCMonth(), 1)),
+		),
+		actorKey: "INSTALL_APP",
+		data: {},
 	};
 }
 
@@ -1701,6 +2231,58 @@ async function buildCalendarEventNew(ctx: FeedContext) {
 }
 
 // ---------- helpers ----------
+
+const SITE_TOTALS: FeedRepository.SiteTotal[] = [
+	"USERS",
+	"SQ_SETS",
+	"TOURNAMENTS",
+	"ART",
+];
+
+/** Which series of the organization the tournament belongs to and how many times the user has won it, counting this one */
+async function seriesWinOf(result: {
+	userId: number;
+	organizationId: number | null;
+	name: string;
+	startsAt: number;
+}) {
+	if (result.organizationId === null) return null;
+
+	const series = (
+		await FeedRepository.findSeriesByOrganizationId(result.organizationId)
+	).find((s) =>
+		s.substringMatches.some((sub) =>
+			result.name.toLowerCase().includes(sub.toLowerCase()),
+		),
+	);
+	if (!series) return null;
+
+	return {
+		name: series.name,
+		count: await FeedRepository.countSeriesWinsOfUser({
+			userId: result.userId,
+			organizationId: result.organizationId,
+			substringMatches: series.substringMatches,
+			before: result.startsAt,
+		}),
+	};
+}
+
+/** Average SP of the team's four highest rated members, `null` with fewer than two rated */
+function projectedTeamSp(
+	memberIds: number[],
+	skills: Record<string, { ordinal: number }>,
+) {
+	const sps = R.sortBy(
+		memberIds.flatMap((id) =>
+			skills[id] ? [ordinalToSp(skills[id].ordinal)] : [],
+		),
+		[(sp) => sp, "desc"],
+	).slice(0, 4);
+	if (sps.length < 2) return null;
+
+	return Math.round(R.sum(sps) / sps.length);
+}
 
 const SERIES_POINTS: Record<number, number> = { 1: 10, 2: 7, 3: 5, 4: 4 };
 

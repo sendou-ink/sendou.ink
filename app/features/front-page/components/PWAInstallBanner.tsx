@@ -78,7 +78,7 @@ export function PWAInstallBanner() {
 	);
 }
 
-function InstallAction({
+export function InstallAction({
 	installState,
 }: {
 	installState: Exclude<InstallState, "hidden">;
@@ -121,13 +121,27 @@ function InstallAction({
 
 function useInstallState(): InstallState {
 	const [bannerDismissed] = usePersistedState(bannerDismissedPersisted);
-	const promptInstallState = React.useSyncExternalStore(
+	const promptInstallState = usePromptInstallState();
+
+	return bannerDismissed ? "hidden" : promptInstallState;
+}
+
+/** How the site can be installed on this device, "hidden" when it can't be or already is. */
+export function usePromptInstallState() {
+	return React.useSyncExternalStore(
 		subscribeToInstallState,
 		getInstallStateSnapshot,
 		getServerInstallStateSnapshot,
 	);
+}
 
-	return bannerDismissed ? "hidden" : promptInstallState;
+/** Whether the site is open as an installed app. */
+export function useIsStandalone() {
+	return React.useSyncExternalStore(
+		subscribeToInstallState,
+		isStandalone,
+		() => false,
+	);
 }
 
 function subscribeToInstallState(callback: () => void) {

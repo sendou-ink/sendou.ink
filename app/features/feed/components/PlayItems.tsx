@@ -2,23 +2,39 @@ import clsx from "clsx";
 import { Play } from "lucide-react";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
+import { LinkButton } from "~/components/elements/Button";
 import {
+	Image,
 	ModeImage,
 	StageImage,
 	TierImage,
 	WeaponImage,
 } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
+import { leaderboardsPage } from "~/features/leaderboards/leaderboards-urls";
+import { settingsSearchParams } from "~/features/settings/settings-search-params";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { lobbyPage, sendouQMatchPage, userPage } from "~/utils/urls";
+import {
+	lobbyPage,
+	SENDOUQ_PAGE,
+	SETTINGS_PAGE,
+	sendouQMatchPage,
+	sqHeaderGuyImageUrl,
+	teamPage,
+	userPage,
+} from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
 import type { FeedItemContent } from "./FeedItemCard";
 import {
+	DayTime,
 	LogoAvatar,
 	MapTiles,
+	NavIconAvatar,
 	StageName,
 	tierLabel,
 	UserName,
+	UserStack,
 	WeaponName,
 	WeaponSlot,
 	WinLoss,
@@ -367,6 +383,142 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 				),
 			};
 		}
+		case "SQ_SEASON_START": {
+			const { data } = item;
+			return {
+				avatar: <NavIconAvatar navIcon="sendouq" />,
+				line: data.isCountdown ? (
+					<>
+						<b>SendouQ Season {data.nth}</b> starts{" "}
+						<DayTime at={data.startsAt} />
+					</>
+				) : (
+					<>
+						<b>SendouQ Season {data.nth}</b> has started
+					</>
+				),
+				body: (
+					<div className={clsx(styles.hero, styles.heroAccent)}>
+						<div className={styles.rowNoWrap}>
+							<div className={styles.grow}>
+								<div className={styles.bigScore}>Season {data.nth}</div>
+								<div className="text-xs text-lighter">
+									<LocaleTimeRange
+										from={data.startsAt}
+										to={data.endsAt}
+										options={{ month: "short", day: "numeric" }}
+										inline
+									/>
+								</div>
+							</div>
+							<Image
+								path={sqHeaderGuyImageUrl(data.nth)}
+								alt=""
+								width={96}
+								containerClassName={styles.noShrink}
+							/>
+						</div>
+						{data.isCountdown ? (
+							<LinkButton
+								to={settingsSearchParams.href(SETTINGS_PAGE, {
+									tab: "match-profile",
+								})}
+								size="small"
+							>
+								Set up your match profile
+							</LinkButton>
+						) : (
+							<LinkButton to={SENDOUQ_PAGE} size="small">
+								Join the queue
+							</LinkButton>
+						)}
+					</div>
+				),
+				reactionCount: 40,
+			};
+		}
+		case "LEADERBOARD_TOP": {
+			const { data } = item;
+			return {
+				avatar: <NavIconAvatar navIcon="leaderboards" />,
+				line: (
+					<>
+						<b>Top of the SendouQ leaderboard</b> this week
+					</>
+				),
+				body: (
+					<>
+						<div className={styles.columns}>
+							<div className={styles.column}>
+								<span className={styles.label}>Players</span>
+								{data.players.map((player) => (
+									<div key={player.user.id} className={styles.player}>
+										<Avatar user={player.user} size="xxs" />
+										<span className={styles.ellipsis}>
+											<Link to={userPage(player.user)}>
+												{player.user.username}
+											</Link>
+											<PlacementMovement
+												placement={player.placement}
+												previousPlacement={player.previousPlacement}
+											/>
+										</span>
+										<span className={styles.alignEnd}>
+											{player.sp.toFixed(1)}
+											{player.weeklyChange ? (
+												<span
+													className={clsx(
+														"text-xs",
+														player.weeklyChange > 0
+															? styles.plusDelta
+															: styles.minusDelta,
+													)}
+												>
+													{" "}
+													{player.weeklyChange > 0 ? "+" : ""}
+													{player.weeklyChange}
+												</span>
+											) : null}
+										</span>
+									</div>
+								))}
+							</div>
+							<div className={styles.column}>
+								<span className={styles.label}>Teams</span>
+								{data.teams.map((entry) => (
+									<div key={entry.placement} className={styles.player}>
+										<UserStack users={entry.members} max={2} />
+										{entry.team ? (
+											<Link
+												to={teamPage(entry.team.customUrl)}
+												className={styles.ellipsis}
+											>
+												{entry.team.name}
+											</Link>
+										) : (
+											<span className={styles.ellipsis}>
+												{entry.members
+													.map((member) => member.username)
+													.join(", ")}
+											</span>
+										)}
+										<span className={styles.alignEnd}>
+											{entry.sp.toFixed(1)}
+										</span>
+									</div>
+								))}
+							</div>
+						</div>
+						<Link
+							to={leaderboardsPage({ season: data.season })}
+							className="text-xs font-semi-bold"
+						>
+							Full leaderboard
+						</Link>
+					</>
+				),
+			};
+		}
 		case "SQ_META": {
 			const { data } = item;
 			return {
@@ -534,5 +686,30 @@ function MapStat({
 				)}
 			</span>
 		</div>
+	);
+}
+
+function PlacementMovement({
+	placement,
+	previousPlacement,
+}: {
+	placement: number;
+	previousPlacement: number | null;
+}) {
+	if (previousPlacement === null) {
+		return <span className={clsx(styles.plusDelta, "text-xs")}> new</span>;
+	}
+	if (previousPlacement === placement) return null;
+
+	const isUp = previousPlacement > placement;
+
+	return (
+		<span
+			className={clsx(isUp ? styles.plusDelta : styles.minusDelta, "text-xs")}
+		>
+			{" "}
+			{isUp ? "▲" : "▼"}
+			{Math.abs(previousPlacement - placement)}
+		</span>
 	);
 }

@@ -52,6 +52,8 @@ export interface FeedItemTypeDefinition {
 	feature?: { label: string; navIcon: NavIcon };
 	/** Live state isn't stored, so on this test page the rows are the latest ones shifted to "now" */
 	isRetimed?: boolean;
+	/** Not shown when the site is opened as an installed app */
+	isHiddenInPwa?: boolean;
 }
 
 export const FEED_ITEM_TYPES = {
@@ -96,6 +98,21 @@ export const FEED_ITEM_TYPES = {
 		category: "SENDOUQ",
 		audience: ["FRIENDS", "SELF"],
 		baseScore: 0.35,
+		halfLifeHours: 48,
+	},
+	SQ_SEASON_START: {
+		name: "Season starting",
+		category: "SENDOUQ",
+		audience: ["EVERYONE"],
+		baseScore: 0.7,
+		halfLifeHours: 48,
+	},
+	LEADERBOARD_TOP: {
+		name: "Weekly leaderboard",
+		category: "SENDOUQ",
+		feature: { label: "Leaderboards", navIcon: "leaderboards" },
+		audience: ["EVERYONE"],
+		baseScore: 0.45,
 		halfLifeHours: 48,
 	},
 	SQ_META: {
@@ -198,6 +215,34 @@ export const FEED_ITEM_TYPES = {
 		baseScore: 0.6,
 		halfLifeHours: 48,
 	},
+	TO_SHOWCASE: {
+		name: "Upcoming tournaments",
+		category: "TOURNAMENTS",
+		audience: ["EVERYONE"],
+		baseScore: 0.6,
+		halfLifeHours: 48,
+	},
+	TO_RESULT_FEATURED: {
+		name: "Big tournament result",
+		category: "TOURNAMENTS",
+		audience: ["EVERYONE"],
+		baseScore: 0.55,
+		halfLifeHours: 36,
+	},
+	TO_BRACKET_PREVIEW: {
+		name: "Registration closed",
+		category: "TOURNAMENTS",
+		audience: ["SELF", "FRIENDS", "EVERYONE"],
+		baseScore: 0.55,
+		halfLifeHours: 12,
+	},
+	ON_THIS_DAY: {
+		name: "On this day",
+		category: "TOURNAMENTS",
+		audience: ["EVERYONE"],
+		baseScore: 0.2,
+		halfLifeHours: 12,
+	},
 	TO_STAFF: {
 		name: "Friend is organizing",
 		category: "TOURNAMENTS",
@@ -218,6 +263,13 @@ export const FEED_ITEM_TYPES = {
 		audience: ["FOLLOWING", "FRIENDS"],
 		baseScore: 0.35,
 		halfLifeHours: 72,
+	},
+	TEAM_ANNIVERSARY: {
+		name: "Team anniversary",
+		category: "TEAMS",
+		audience: ["TEAM", "FRIENDS"],
+		baseScore: 0.4,
+		halfLifeHours: 24,
 	},
 	TEAM_AVAILABILITY: {
 		name: "Best time to play",
@@ -327,6 +379,20 @@ export const FEED_ITEM_TYPES = {
 		halfLifeHours: 168,
 	},
 
+	COMEBACK: {
+		name: "Back after a break",
+		category: "COMMUNITY",
+		audience: ["FRIENDS"],
+		baseScore: 0.5,
+		halfLifeHours: 48,
+	},
+	FIRST_TIME: {
+		name: "First time",
+		category: "COMMUNITY",
+		audience: ["FRIENDS"],
+		baseScore: 0.45,
+		halfLifeHours: 48,
+	},
 	PLUS_RESULTS: {
 		name: "New Plus Server tier",
 		category: "COMMUNITY",
@@ -336,6 +402,37 @@ export const FEED_ITEM_TYPES = {
 		halfLifeHours: 72,
 		isRetimed: true,
 	},
+	ANNOUNCEMENT: {
+		name: "Announcement",
+		category: "COMMUNITY",
+		audience: ["EVERYONE"],
+		baseScore: 0.9,
+		halfLifeHours: 168,
+		isPinned: true,
+	},
+	SITE_MILESTONE: {
+		name: "sendou.ink milestone",
+		category: "COMMUNITY",
+		audience: ["EVERYONE"],
+		baseScore: 0.4,
+		halfLifeHours: 48,
+	},
+	FEATURE_SPOTLIGHT: {
+		name: "Feature spotlight",
+		category: "COMMUNITY",
+		audience: ["EVERYONE"],
+		baseScore: 0.25,
+		halfLifeHours: 72,
+	},
+	INSTALL_APP: {
+		name: "Install the app",
+		category: "COMMUNITY",
+		audience: ["SELF"],
+		baseScore: 0.2,
+		halfLifeHours: 72,
+		isHiddenInPwa: true,
+	},
+	// xxx: ONBOARDING, a pinned checklist for new users (set weapon pool, add 3 friends, play a first set or tournament) that also fills an empty feed
 	SITE_UPDATE: {
 		name: "sendou.ink update",
 		category: "COMMUNITY",
@@ -400,6 +497,139 @@ export const FEED_RIVALRY_MIN_SETS = 4;
 export const FEED_TOURNAMENT_UPSET_MIN_SEED_GAP = 5;
 
 export const SQ_SET_MILESTONES = [100, 250, 500, 1000, 1500, 2000];
+
+/** Days before a SendouQ season starts that its countdown post goes up */
+export const FEED_SEASON_COUNTDOWN_DAYS = 3;
+
+/** UTC hour the scheduled posts (showcase, leaderboard, spotlight) go up */
+export const FEED_SCHEDULED_POST_HOUR_UTC = 8;
+
+/** Players & teams listed in the weekly leaderboard post */
+export const FEED_LEADERBOARD_TOP_COUNT = 5;
+
+/** A finished tournament is big enough to show to everyone at this tier (S) or better... */
+export const FEED_FEATURED_RESULT_MAX_TIER = 3;
+/** ...or with this many teams */
+export const FEED_FEATURED_RESULT_MIN_TEAMS = 48;
+
+/** Strongest teams listed when a tournament's registration closes, besides the viewer's and friends' */
+export const FEED_BRACKET_PREVIEW_TOP_TEAMS = 4;
+
+/** Days without SendouQ sets or tournaments before playing again counts as a comeback */
+export const FEED_COMEBACK_MIN_BREAK_DAYS = 90;
+
+/** Smallest site total that counts as a milestone, after it every 1, 2 and 5 times a power of ten does */
+export const FEED_SITE_MILESTONE_MIN = 1000;
+
+export interface FeedAnnouncement {
+	title: string;
+	text: string;
+	href: string;
+	linkLabel: string;
+	navIcon: NavIcon;
+	/** ISO date */
+	startsAt: string;
+	/** ISO date */
+	endsAt: string;
+}
+
+// xxx: let the site admin set the announcement on the site (e.g. the admin page) instead of editing this list
+/** Announcements pinned to the top of everyone's feed while they're active */
+export const FEED_ANNOUNCEMENTS: FeedAnnouncement[] = [];
+
+/** Shown on the test page when no announcement is active */
+export const FEED_MOCK_ANNOUNCEMENT: Omit<
+	FeedAnnouncement,
+	"startsAt" | "endsAt"
+> = {
+	title: "Registration is open for LUTI Season 17",
+	text: "Leagues Under The Ink is back. Sign your team up before the deadline.",
+	href: "/luti",
+	linkLabel: "Register",
+	navIcon: "luti",
+};
+
+export interface FeedSpotlight {
+	title: string;
+	text: string;
+	href: string;
+	linkLabel: string;
+	navIcon: NavIcon;
+}
+
+/** Features and lesser known parts of them, one shown each week */
+export const FEED_SPOTLIGHTS: FeedSpotlight[] = [
+	{
+		title: "Timestamps for your VoD's YouTube description",
+		text: "Every VoD page has a button that copies its matches as timestamps with weapons, modes and stages. Paste them into the YouTube description and they become chapters.",
+		href: "/vods",
+		linkLabel: "Browse VoDs",
+		navIcon: "vods",
+	},
+	{
+		title: "Tournaments in your own calendar",
+		text: "The iCal link on the calendar page adds sendou.ink events to Google Calendar, Apple Calendar or Outlook, with the filters you've picked.",
+		href: "/calendar",
+		linkLabel: "Open calendar",
+		navIcon: "calendar",
+	},
+	{
+		title: "What everyone runs on your weapon",
+		text: "Every weapon's builds page has popular builds and ability stats, worked out from all the builds people have shared.",
+		href: "/builds",
+		linkLabel: "Open builds",
+		navIcon: "builds",
+	},
+	{
+		title: "Plan your team's strategies",
+		text: "Draw plans on top of any stage and mode with weapon and object icons.",
+		href: "/plans",
+		linkLabel: "Open map planner",
+		navIcon: "plans",
+	},
+	{
+		title: "How many shots does it take?",
+		text: "The object damage calculator shows how many hits each weapon needs to destroy objects like Sprinklers and Splash Walls.",
+		href: "/object-damage-calculator",
+		linkLabel: "Open calculator",
+		navIcon: "object-damage-calculator",
+	},
+	{
+		title: "Build analyzer",
+		text: "See what each ability in your build does to ink usage, speeds, special charge and more, and compare two builds side by side.",
+		href: "/analyzer",
+		linkLabel: "Open analyzer",
+		navIcon: "analyzer",
+	},
+	{
+		title: "Check your team comp",
+		text: "Pick four weapons and see their ranges, damage combos and specials side by side.",
+		href: "/comp-analyzer",
+		linkLabel: "Open comp analyzer",
+		navIcon: "comp-analyzer",
+	},
+	{
+		title: "Scan your matches",
+		text: "Point the scanner at your capture card or a VoD file and it reads the weapons, stages, modes and results of your matches.",
+		href: "/scanner",
+		linkLabel: "Open scanner",
+		navIcon: "scanner",
+	},
+	{
+		title: "Tier lists",
+		text: "Make a tier list of weapons, stages, specials and more, and download it as an image.",
+		href: "/tier-list-maker",
+		linkLabel: "Open tier list maker",
+		navIcon: "tier-list-maker",
+	},
+	{
+		title: "Scrim with your circle",
+		text: "Associations let a group of teams share scrim requests only with each other.",
+		href: "/associations",
+		linkLabel: "Open associations",
+		navIcon: "associations",
+	},
+];
 
 /** Comments some posts start with, written by the viewer's friends */
 export const FEED_MOCK_COMMENTS: Partial<Record<FeedItemType, string[]>> = {

@@ -1,16 +1,26 @@
 import clsx from "clsx";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
+import { LinkButton } from "~/components/elements/Button";
 import { Image, ModeImage, StageImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
+import {
+	InstallAction,
+	usePromptInstallState,
+} from "~/features/front-page/components/PWAInstallBanner";
 import { navIconUrl } from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
-import { FEED_ROTATION_MAX_LISTED } from "../feed-constants";
+import {
+	FEED_ROTATION_MAX_LISTED,
+	type FeedSpotlight,
+} from "../feed-constants";
 import type { FeedItemContent } from "./FeedItemCard";
 import {
 	DateBlock,
 	DayTime,
+	groupedNumber,
 	LogoAvatar,
+	NavIconAvatar,
 	ordinalPlacement,
 	TournamentRow,
 	UserName,
@@ -298,6 +308,147 @@ export function communityItemContent(
 				),
 			};
 		}
+		case "COMEBACK": {
+			const { data } = item;
+			return {
+				avatar: <Avatar user={data.actor} size="xs" />,
+				line: (
+					<>
+						<UserName user={data.actor} /> is back after{" "}
+						<b>{breakText(data.breakDays)}</b> away
+					</>
+				),
+				body: (
+					<div className={styles.inset}>
+						{data.tournament ? (
+							<TournamentRow tournament={data.tournament} />
+						) : null}
+						<div className="text-xs text-lighter">
+							{[
+								data.setCount > 0
+									? `${data.setCount} SendouQ ${data.setCount === 1 ? "set" : "sets"}`
+									: null,
+								data.tournamentCount > 0
+									? `${data.tournamentCount} ${data.tournamentCount === 1 ? "tournament" : "tournaments"}`
+									: null,
+							]
+								.filter(Boolean)
+								.join(" and ")}{" "}
+							since coming back
+						</div>
+					</div>
+				),
+				reactionCount: 14,
+			};
+		}
+		case "FIRST_TIME": {
+			const { data } = item;
+			return {
+				avatar: <Avatar user={data.actor} size="xs" />,
+				// xxx: use the pronoun from the user's profile instead of "their"
+				line:
+					data.source === "TOURNAMENT" ? (
+						<>
+							<UserName user={data.actor} /> played their{" "}
+							<b>first tournament</b>
+						</>
+					) : (
+						<>
+							<UserName user={data.actor} /> played their{" "}
+							<b>first SendouQ set</b>
+						</>
+					),
+				body:
+					data.source === "TOURNAMENT" ? (
+						<div className={clsx(styles.inset, styles.rowNoWrap)}>
+							<TournamentRow tournament={data.tournament ?? undefined} />
+							{data.placement !== null ? (
+								<span className={styles.placing}>
+									{ordinalPlacement(data.placement)}
+									<span className="text-xs text-lighter">
+										/{data.participantCount}
+									</span>
+								</span>
+							) : null}
+						</div>
+					) : (
+						<div className={clsx(styles.inset, styles.rowNoWrap)}>
+							<span className={styles.bigScore}>{data.setCount}</span>
+							<span className="text-xs text-lighter">
+								{data.setCount === 1 ? "set" : "sets"} played so far
+							</span>
+						</div>
+					),
+				reactionCount: 11,
+			};
+		}
+		case "ANNOUNCEMENT": {
+			const { data } = item;
+			return {
+				avatar: <NavIconAvatar navIcon={data.navIcon} />,
+				line: <b>{data.title}</b>,
+				body: (
+					<div className={clsx(styles.hero, styles.heroAccent)}>
+						<div className="text-sm">{data.text}</div>
+						<LinkButton to={data.href} size="small">
+							{data.linkLabel}
+						</LinkButton>
+					</div>
+				),
+			};
+		}
+		case "SITE_MILESTONE": {
+			const { data } = item;
+			const milestone = <b>{groupedNumber(data.milestone)}</b>;
+			return {
+				avatar: <LogoAvatar url={null} name="sendou.ink" />,
+				line:
+					data.total === "USERS" ? (
+						<>sendou.ink now has {milestone} users</>
+					) : data.total === "SQ_SETS" ? (
+						<>{milestone} SendouQ sets have been played</>
+					) : data.total === "TOURNAMENTS" ? (
+						<>{milestone} tournaments have been hosted on sendou.ink</>
+					) : (
+						<>{milestone} art pieces have been shared on sendou.ink</>
+					),
+				body: (
+					<div className={clsx(styles.hero, styles.heroAccent)}>
+						<div className={styles.rowNoWrap}>
+							<Image
+								path={navIconUrl(SITE_MILESTONE_ICONS[data.total])}
+								alt=""
+								size={40}
+							/>
+							<span className={styles.bigScore}>
+								{groupedNumber(data.milestone)}
+							</span>
+						</div>
+						<div className="text-xs text-lighter">Thanks for being here!</div>
+					</div>
+				),
+				reactionCount: 52,
+			};
+		}
+		case "FEATURE_SPOTLIGHT": {
+			const { data } = item;
+			return {
+				avatar: <NavIconAvatar navIcon={data.navIcon} />,
+				line: (
+					<>
+						<b>Did you know?</b> {data.title}
+					</>
+				),
+				body: <SpotlightBody spotlight={data} />,
+			};
+		}
+		case "INSTALL_APP": {
+			return {
+				avatar: <LogoAvatar url={null} name="sendou.ink" />,
+				line: <b>Get the sendou.ink app</b>,
+				body: <InstallAppBody />,
+			};
+		}
 		default:
 			return null;
 	}
@@ -307,4 +458,47 @@ function rotationTypeLabel(type: "X" | "SERIES" | "OPEN") {
 	if (type === "X") return "X Battle";
 
 	return `Anarchy ${type === "SERIES" ? "Series" : "Open"}`;
+}
+
+const SITE_MILESTONE_ICONS = {
+	USERS: "u",
+	SQ_SETS: "sendouq",
+	TOURNAMENTS: "medal",
+	ART: "art",
+} as const;
+
+function breakText(days: number) {
+	if (days < 60) return `${days} days`;
+
+	const months = Math.round(days / 30);
+	if (months < 18) return `${months} months`;
+
+	return `${Math.round(days / 365)} years`;
+}
+
+function SpotlightBody({ spotlight }: { spotlight: FeedSpotlight }) {
+	return (
+		<div className={styles.inset}>
+			<div className="text-sm">{spotlight.text}</div>
+			<LinkButton to={spotlight.href} size="small" variant="outlined">
+				{spotlight.linkLabel}
+			</LinkButton>
+		</div>
+	);
+}
+
+function InstallAppBody() {
+	const installState = usePromptInstallState();
+
+	return (
+		<div className={styles.inset}>
+			<div className="text-sm">
+				Add sendou.ink to your home screen for quick access
+				{installState === "hidden" ? " from your browser's menu." : "."}
+			</div>
+			{installState !== "hidden" ? (
+				<InstallAction installState={installState} />
+			) : null}
+		</div>
+	);
 }

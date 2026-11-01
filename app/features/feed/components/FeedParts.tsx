@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { ModeImage, StageImage, WeaponImage } from "~/components/Image";
+import { Image, ModeImage, StageImage, WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import type {
 	MainWeaponId,
@@ -10,7 +10,12 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
-import { tournamentPage, userPage } from "~/utils/urls";
+import {
+	type NavIcon,
+	navIconUrl,
+	tournamentPage,
+	userPage,
+} from "~/utils/urls";
 import styles from "./FeedParts.module.css";
 
 export function UserName({
@@ -69,6 +74,11 @@ export function LogoAvatar({
 			className={styles.logo}
 		/>
 	);
+}
+
+/** Post avatar of a site feature, for posts not about any one user */
+export function NavIconAvatar({ navIcon }: { navIcon: NavIcon }) {
+	return <Image path={navIconUrl(navIcon)} alt="" size={36} />;
 }
 
 export function WinLoss({ isWin }: { isWin: boolean }) {
@@ -240,6 +250,11 @@ export function ordinalPlacement(placement: number) {
 	const lastTwo = placement % 100;
 
 	return `${placement}${suffixes[(lastTwo - 20) % 10] ?? suffixes[lastTwo] ?? suffixes[0]}`;
+}
+
+/** English number with thousands separators, e.g. "100,000". */
+export function groupedNumber(value: number) {
+	return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 export function tierLabel(tier: { name: string; isPlus: boolean }) {

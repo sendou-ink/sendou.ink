@@ -96,6 +96,22 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 				},
 			},
 			{
+				item: "SQ_SEASON_START",
+				when: "3 days before a season starts, a countdown. When it starts, another post saying it's on. Replaces the season banner of the old front page.",
+				example: {
+					actor: "SendouQ",
+					text: "**SendouQ Season 14** starts Mon, Dec 7, 19:00",
+				},
+			},
+			{
+				item: "LEADERBOARD_TOP",
+				when: "Sunday morning, the top 5 players and teams of the season with how much each player's SP moved during the week. Replaces the leaderboards of the old front page.",
+				example: {
+					actor: "Leaderboards",
+					text: "**Top of the SendouQ leaderboard** this week",
+				},
+			},
+			{
 				item: {
 					key: "SQ_SEASON_ENDING",
 					name: "Season ending soon",
@@ -158,10 +174,10 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 		sources: [
 			{
 				item: "TO_WIN",
-				when: "Results are finalized and a friend's team placed 1st.",
+				when: "Results are finalized and a friend's team placed 1st. If the event is part of a series they've won before, the post says how many times.",
 				example: {
 					actor: "Shiver",
-					text: "**Shiver** won **Stellaris Phantasm #34** with Squid Sisters",
+					text: "**Shiver** won **Paddling Pool 393**, their **9th Paddling Pool** win",
 				},
 			},
 			{
@@ -186,6 +202,38 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 				example: {
 					actor: "Callie",
 					text: "**Callie**'s team, seeded 10, knocked out seed 1 at **In The Zone 55**",
+				},
+			},
+			{
+				item: "TO_RESULT_FEATURED",
+				when: "The biggest finalized tournament of the last week, for everyone: tier S or better, or 48+ teams. Replaces the results of the old front page.",
+				example: {
+					actor: "In The Zone 55",
+					text: "**Moonlight** won **In The Zone 55**",
+				},
+			},
+			{
+				item: "TO_SHOWCASE",
+				when: "Monday morning the biggest tournaments of the weekdays, Friday morning the ones of the weekend. Replaces the tournament showcase of the old front page.",
+				example: {
+					actor: "Calendar",
+					text: "**Tournaments this weekend**",
+				},
+			},
+			{
+				item: "TO_BRACKET_PREVIEW",
+				when: "A tournament's registration closes. The one you or a friend is in, otherwise the biggest. Lists the strongest teams by their members' SendouQ power, plus yours and your friends'. Seeding can still change until the start.",
+				example: {
+					actor: "CCA Circuit",
+					text: "Registration closed for **CCA Circuit Qualifier #4** with **143 teams**",
+				},
+			},
+			{
+				item: "ON_THIS_DAY",
+				when: "The biggest tournament played on this day in an earlier year and who won it.",
+				example: {
+					actor: "On this day",
+					text: "**1 year ago today** **Bagguette** won **Coral Clash: High Tide #28**",
 				},
 			},
 			{
@@ -405,6 +453,14 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 				item: "TEAM_NEW",
 				when: "A friend creates a team.",
 				example: { actor: "Murch", text: "**Murch** created **Moray Towers**" },
+			},
+			{
+				item: "TEAM_ANNIVERSARY",
+				when: "Your team or a friend's team was created this day some years ago.",
+				example: {
+					actor: "Healbook",
+					text: "**Healbook** turned **2**",
+				},
 			},
 			{
 				item: {
@@ -770,6 +826,22 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 					text: "You've played **199 sets** with **Agent 8**",
 				},
 			},
+			{
+				item: "COMEBACK",
+				when: "A friend plays SendouQ or a tournament after 90+ days without either.",
+				example: {
+					actor: "Marie",
+					text: "**Marie** is back after **7 months** away",
+				},
+			},
+			{
+				item: "FIRST_TIME",
+				when: "A friend plays their first tournament or their first SendouQ set.",
+				example: {
+					actor: "Frye",
+					text: "**Frye** played their **first tournament**",
+				},
+			},
 		],
 	},
 	{
@@ -878,6 +950,44 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 				example: {
 					actor: "Articles",
 					text: "New article: **Waving goodbye: the start of Splatoon's great retirement**",
+				},
+			},
+		],
+	},
+	{
+		name: "sendou.ink itself",
+		note: "Posts from the site. Together with the items above marked as replacing a part of the old front page, these cover everything the old front page showed.",
+		sources: [
+			{
+				item: "ANNOUNCEMENT",
+				when: "An announcement set by the admins is active, e.g. LUTI registration being open. Replaces the LUTI banner of the old front page.",
+				example: {
+					actor: "LUTI",
+					text: "**Registration is open for LUTI Season 17**",
+				},
+			},
+			{
+				item: "SITE_MILESTONE",
+				when: "The site reaches a round number of users, SendouQ sets, tournaments or art pieces (1, 2 or 5 times a power of ten, from 1,000 up).",
+				example: {
+					actor: "sendou.ink",
+					text: "**100,000** SendouQ sets have been played",
+				},
+			},
+			{
+				item: "FEATURE_SPOTLIGHT",
+				when: "Wednesday morning, one feature or lesser known part of one from a fixed list, a different one every week. Replaces the feature grid of the old front page.",
+				example: {
+					actor: "VoDs",
+					text: "**Did you know?** Timestamps for your VoD's YouTube description",
+				},
+			},
+			{
+				item: "INSTALL_APP",
+				when: "Once a month, unless the site is already open as an installed app. Replaces the install banner of the old front page.",
+				example: {
+					actor: "sendou.ink",
+					text: "**Get the sendou.ink app**",
 				},
 			},
 		],

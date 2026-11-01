@@ -70,6 +70,18 @@
 	&:hover {
 		color: var(--color-text);
 	}
+
+	&[data-label] {
+		display: inline-grid;
+	}
+
+	&[data-label]::before {
+		content: attr(data-label);
+		height: 0;
+		font-weight: var(--weight-bold);
+		visibility: hidden;
+		overflow: hidden;
+	}
 }
 
 .tabIcon {

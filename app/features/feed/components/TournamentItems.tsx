@@ -4,8 +4,14 @@ import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Badge } from "~/components/Badge";
 import { Placement } from "~/components/Placement";
+import { TierPill } from "~/components/TierPill";
 import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
-import { tournamentPage, trophyPage, userPage } from "~/utils/urls";
+import {
+	CALENDAR_PAGE,
+	tournamentPage,
+	trophyPage,
+	userPage,
+} from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
 import type { FeedItemContent } from "./FeedItemCard";
 import {
@@ -13,6 +19,7 @@ import {
 	DayTime,
 	durationText,
 	LogoAvatar,
+	NavIconAvatar,
 	ordinalPlacement,
 	TournamentRow,
 	UserName,
@@ -34,6 +41,15 @@ export function tournamentItemContent(
 					<>
 						<UserName user={data.actor} /> won{" "}
 						<TournamentLink tournament={data.tournament} />
+						{data.seriesWin && data.seriesWin.count > 1 ? (
+							<>
+								, their{" "}
+								<b>
+									{ordinalPlacement(data.seriesWin.count)} {data.seriesWin.name}
+								</b>{" "}
+								win
+							</>
+						) : null}
 					</>
 				),
 				body: (
@@ -446,6 +462,185 @@ export function tournamentItemContent(
 				reactionCount: 14,
 			};
 		}
+		case "TO_SHOWCASE": {
+			const { data } = item;
+			return {
+				avatar: <NavIconAvatar navIcon="calendar" />,
+				line: (
+					<>
+						<b>
+							{data.kind === "WEEKEND"
+								? "Tournaments this weekend"
+								: "Tournaments this week"}
+						</b>
+					</>
+				),
+				body: (
+					<>
+						<div className={styles.list}>
+							{data.tournaments.map((tournament) => (
+								<div key={tournament.id} className={styles.digestRow}>
+									<LogoAvatar
+										url={tournament.logoUrl}
+										name={tournament.name}
+										size="xs"
+									/>
+									<div className={styles.ellipsis}>
+										<div className={styles.ellipsis}>
+											<Link
+												to={tournamentPage(tournament.id)}
+												className="font-bold"
+											>
+												{tournament.name}
+											</Link>
+										</div>
+										<div className="text-xs text-lighter">
+											<DayTime at={tournament.startsAt} />
+											{tournament.organization
+												? ` · ${tournament.organization.name}`
+												: ""}
+										</div>
+									</div>
+									<div className={styles.rowNoWrap}>
+										{tournament.tier !== null ||
+										tournament.tentativeTier !== null ? (
+											<TierPill
+												tier={(tournament.tier ?? tournament.tentativeTier)!}
+												isTentative={tournament.tier === null}
+												withoutAnimation
+											/>
+										) : null}
+										<span className="text-xs text-lighter">
+											{tournament.teamsCount} teams
+										</span>
+									</div>
+								</div>
+							))}
+						</div>
+						<Link to={CALENDAR_PAGE} className="text-xs font-semi-bold">
+							All tournaments in the calendar
+						</Link>
+					</>
+				),
+			};
+		}
+		case "TO_RESULT_FEATURED": {
+			const { data } = item;
+			const winner = data.podium[0]?.team;
+			return {
+				avatar: (
+					<LogoAvatar
+						url={data.tournament?.logoUrl ?? null}
+						name={data.tournament?.name ?? ""}
+					/>
+				),
+				line: (
+					<>
+						{winner ? <b>{winner.name}</b> : "A team"} won{" "}
+						<TournamentLink tournament={data.tournament} />
+					</>
+				),
+				body: <PodiumBody data={data} />,
+				reactionCount: 31,
+			};
+		}
+		case "ON_THIS_DAY": {
+			const { data } = item;
+			const winner = data.podium[0]?.team;
+			return {
+				avatar: <LogoAvatar url={null} name="On this day" />,
+				line: (
+					<>
+						<b>
+							{data.yearsAgo} {data.yearsAgo === 1 ? "year" : "years"} ago today
+						</b>{" "}
+						{winner ? <b>{winner.name}</b> : "a team"} won{" "}
+						<TournamentLink tournament={data.tournament} />
+					</>
+				),
+				body: <PodiumBody data={data} />,
+			};
+		}
+		case "TO_BRACKET_PREVIEW": {
+			const { data } = item;
+			return {
+				avatar: (
+					<LogoAvatar
+						url={data.tournament?.logoUrl ?? null}
+						name={data.tournament?.name ?? ""}
+					/>
+				),
+				line: (
+					<>
+						Registration closed for{" "}
+						<TournamentLink tournament={data.tournament} /> with{" "}
+						<b>{data.teamCount} teams</b>
+					</>
+				),
+				body: (
+					<>
+						<table className={styles.table}>
+							<tbody>
+								{data.teams.flatMap((row, index) => {
+									const previous = data.teams[index - 1];
+									const isGap =
+										previous && row.projectedSeed > previous.projectedSeed + 1;
+
+									return [
+										isGap ? (
+											<tr key={`gap-${row.projectedSeed}`}>
+												<td colSpan={3} className="text-lighter">
+													…
+												</td>
+											</tr>
+										) : null,
+										<tr
+											key={row.team.id}
+											className={clsx({
+												[styles.highlightRow]:
+													row.isOwn || row.friends.length > 0,
+											})}
+										>
+											<td>#{row.projectedSeed}</td>
+											<td>
+												<div className={styles.rowNoWrap}>
+													<UserStack users={row.team.members} max={4} />
+													<span className={styles.ellipsis}>
+														{row.team.name}
+													</span>
+													{row.isOwn ? (
+														<span className={styles.pill}>You</span>
+													) : row.friends.length > 0 ? (
+														<span className={styles.pill}>
+															{row.friends
+																.map((friend) => friend.username)
+																.join(", ")}
+														</span>
+													) : null}
+												</div>
+											</td>
+											<td className={styles.numeric}>
+												{row.sp ? `${row.sp} SP` : "–"}
+											</td>
+										</tr>,
+									];
+								})}
+							</tbody>
+						</table>
+						<div className="text-xs text-lighter">
+							Projected from the members' SendouQ power, seeding can change
+							until the start
+							{data.tournament?.startsAt ? (
+								<>
+									{" "}
+									· starts <DayTime at={data.tournament.startsAt} />
+								</>
+							) : null}
+						</div>
+					</>
+				),
+			};
+		}
 		case "TO_STAFF": {
 			const { data } = item;
 			return {
@@ -467,6 +662,40 @@ export function tournamentItemContent(
 		default:
 			return null;
 	}
+}
+
+function PodiumBody({
+	data,
+}: {
+	data: Extract<FeedItem, { type: "TO_RESULT_FEATURED" }>["data"];
+}) {
+	return (
+		<div className={styles.hero}>
+			<div className={clsx(styles.rowNoWrap, styles.between)}>
+				<TournamentRow tournament={data.tournament} />
+				{data.tier !== null ? (
+					<TierPill tier={data.tier} withoutAnimation />
+				) : null}
+			</div>
+			<div className={styles.list}>
+				{data.podium.map(({ placement, team }) => (
+					<div key={team.id} className={styles.digestRow}>
+						<Placement placement={placement} size={28} />
+						<div className={styles.ellipsis}>
+							<div className={clsx(styles.ellipsis, "font-semi-bold")}>
+								{team.name}
+							</div>
+							<div className={clsx(styles.ellipsis, "text-xs text-lighter")}>
+								{team.members.map((member) => member.username).join(", ")}
+							</div>
+						</div>
+						<UserStack users={team.members} max={4} />
+					</div>
+				))}
+			</div>
+			<div className="text-xs text-lighter">{data.teamCount} teams</div>
+		</div>
+	);
 }
 
 function TournamentLink({

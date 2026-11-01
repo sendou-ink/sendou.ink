@@ -8,6 +8,7 @@ import {
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import * as SeriesTeamCount from "~/features/tournament-organization/core/SeriesTeamCount.server";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import { cache, ttl } from "~/utils/cache.server";
 import {
@@ -51,16 +52,33 @@ export async function categorizedTournamentsByUserId(
 			(tournament) =>
 				!tournament.hidden && participation.participants.has(tournament.id),
 		),
-		showcase: resolveShowcaseTournaments(
+		showcase: await resolveShowcaseTournaments(
 			tournaments.upcoming.filter(
 				(tournament) =>
 					!tournament.hidden &&
 					!participation.organizers.has(tournament.id) &&
 					!participation.participants.has(tournament.id),
 			),
+			{
+				from: databaseTimestampSixHoursAgo(),
+				to: databaseTimestampWeekFromNow(),
+			},
 		),
 		results: tournaments.results,
 	};
+}
+
+/** The tournaments starting in the range the front page would showcase, soonest first. */
+export async function showcaseTournamentsBetween(range: {
+	from: number;
+	to: number;
+}): Promise<ShowcaseCalendarEvent[]> {
+	const tournaments = await cachedTournaments();
+
+	return resolveShowcaseTournaments(
+		tournaments.upcoming.filter((tournament) => !tournament.hidden),
+		range,
+	);
 }
 
 let participationInfoMap: Map<CommonUser["id"], ParticipationInfo> | null =
@@ -212,16 +230,24 @@ function deleteExtraResults(tournaments: ShowcaseCalendarEvent[]) {
 	};
 }
 
-function resolveShowcaseTournaments(
+async function resolveShowcaseTournaments(
 	tournaments: ShowcaseCalendarEvent[],
-): ShowcaseCalendarEvent[] {
-	const happeningDuringNextWeek = tournaments.filter(
-		(tournament) =>
-			tournament.startsAt > databaseTimestampSixHoursAgo() &&
-			tournament.startsAt < databaseTimestampWeekFromNow(),
-	);
-	const sorted = happeningDuringNextWeek.sort(
-		(a, b) => b.teamsCount - a.teamsCount,
+	{ from, to }: { from: number; to: number },
+): Promise<ShowcaseCalendarEvent[]> {
+	const expectedTeamCount = await SeriesTeamCount.lookup();
+	const sorted = R.sortBy(
+		tournaments.filter(
+			(tournament) => tournament.startsAt > from && tournament.startsAt < to,
+		),
+		[
+			(tournament) =>
+				expectedTeamCount({
+					organizationId: tournament.organizationId,
+					name: tournament.name,
+					teamCount: tournament.teamsCount,
+				}),
+			"desc",
+		],
 	);
 
 	const ranked = sorted.filter((tournament) => tournament.isRanked).slice(0, 3);

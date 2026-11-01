@@ -355,9 +355,12 @@ export function tournamentMembersCount(
 export function latestSkillPerSeason<By extends "userId" | "identifier">({
 	season,
 	by,
+	before,
 }: {
 	season: number;
 	by: By;
+	/** Only rows created at or before this database timestamp, for the standings at a past moment */
+	before?: number;
 }) {
 	// Relies on SQLite's bare column rule: with `max()` the other columns come from the max row.
 	// A self-join against a `max(id)` subquery took ~12s when the planner misjudged a fresh
@@ -373,6 +376,9 @@ export function latestSkillPerSeason<By extends "userId" | "identifier">({
 		])
 		.where("Skill.season", "=", season)
 		.where(`Skill.${by}`, "is not", null)
+		.$if(before !== undefined, (qb) =>
+			qb.where("Skill.createdAt", "<=", before!),
+		)
 		.groupBy(`Skill.${by}`);
 }
 

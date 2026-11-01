@@ -79,6 +79,33 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 				),
 			};
 		}
+		case "TEAM_ANNIVERSARY": {
+			const { data } = item;
+			return {
+				avatar: <LogoAvatar url={data.team.avatarUrl} name={data.team.name} />,
+				line: (
+					<>
+						{data.isOwnTeam ? "Your team " : null}
+						<TeamLink team={data.team} /> turned <b>{data.years}</b>
+					</>
+				),
+				body: (
+					<div className={clsx(styles.inset, styles.rowNoWrap)}>
+						<span className={styles.bigScore}>{data.years}</span>
+						<div className={styles.grow}>
+							<div className="font-semi-bold">
+								{data.years === 1 ? "year" : "years"} together
+							</div>
+							<div className="text-xs text-lighter">
+								{data.tournamentCount} tournaments played as a team
+							</div>
+						</div>
+						<UserStack users={data.team.members} />
+					</div>
+				),
+				reactionCount: 9,
+			};
+		}
 		case "TEAM_AVAILABILITY": {
 			const { data } = item;
 			const bestDayIndex = Math.floor(

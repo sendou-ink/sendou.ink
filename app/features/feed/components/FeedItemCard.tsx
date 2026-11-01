@@ -14,6 +14,7 @@ import { Link, useNavigate } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { Image } from "~/components/Image";
+import { useIsStandalone } from "~/features/front-page/components/PWAInstallBanner";
 import { navIconUrl } from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
 import type { ScoreBreakdown } from "../core/FeedRanking";
@@ -98,6 +99,9 @@ export function FeedItemCard({
 		FEED_CATEGORIES.find((c) => c.id === definition.category)!;
 	const content = itemContent(item, now);
 	const [feedback, setFeedback] = React.useState<FeedFeedback | null>(null);
+	const isStandalone = useIsStandalone();
+
+	if (definition.isHiddenInPwa && isStandalone) return null;
 
 	if (feedback) {
 		return (
