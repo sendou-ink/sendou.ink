@@ -1,5 +1,6 @@
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { resolveMatchMapList } from "~/features/tournament-match/core/mapList.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
@@ -94,10 +95,12 @@ export async function findTeamValues({
 
 	return {
 		name: tournamentTeam.name,
-		players: players.map((player) => {
-			const { userId, name, weapons } = toBroadcastPlayer(player, null);
-			return { userId, name, weapons };
-		}),
+		players: rosterPlayers({ players, tournament, tournamentTeam }).map(
+			(player) => {
+				const { userId, name, weapons } = toBroadcastPlayer(player);
+				return { userId, name, weapons };
+			},
+		),
 	};
 }
 
@@ -156,11 +159,13 @@ async function featuredMatch({
 				name: tournamentTeam.name,
 				logoUrl: tournamentTeam.logoUrl,
 				seed: tournamentTeam.seed,
-				players: players
-					.filter((player) => player.tournamentTeamId === tournamentTeam.id)
-					.map((player) =>
-						toBroadcastPlayer(player, tournamentTeam.activeRosterUserIds),
+				players: rosterPlayers({
+					players: players.filter(
+						(player) => player.tournamentTeamId === tournamentTeam.id,
 					),
+					tournament,
+					tournamentTeam,
+				}).map(toBroadcastPlayer),
 				isEdited: false,
 			},
 			overrides,
@@ -189,20 +194,34 @@ async function featuredMatch({
 	};
 }
 
-function toBroadcastPlayer(
-	player: PlayerRow,
-	activeRosterUserIds: number[] | null,
-): BroadcastPlayer {
+/** The team's active roster, or its first members when it has not picked one. */
+function rosterPlayers({
+	players,
+	tournament,
+	tournamentTeam,
+}: {
+	players: PlayerRow[];
+	tournament: Tournament;
+	tournamentTeam: Tournament["ctx"]["teams"][number];
+}) {
+	const activeRosterUserIds = tournamentTeamToActiveRosterUserIds(
+		tournamentTeam,
+		tournament.minMembersPerTeam,
+	);
+	if (!activeRosterUserIds) {
+		return players.slice(0, tournament.minMembersPerTeam);
+	}
+
+	return players.filter((player) => activeRosterUserIds.includes(player.id));
+}
+
+function toBroadcastPlayer(player: PlayerRow): BroadcastPlayer {
 	return {
 		userId: player.id,
 		name: player.inGameName
 			? inGameNameWithoutDiscriminator(player.inGameName)
 			: player.username,
 		avatarUrl: player.avatar ? avatarUrl(player.avatar, "lg") : null,
-		isSub: Boolean(player.isSub),
-		isActive: activeRosterUserIds
-			? activeRosterUserIds.includes(player.id)
-			: null,
 		weapons: player.weapons.map((weapon) => weapon.weaponSplId),
 	};
 }

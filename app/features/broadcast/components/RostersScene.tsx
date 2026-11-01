@@ -19,10 +19,7 @@ import { TeamLogo } from "./TeamLogo";
 
 const part = scenePart("rosters");
 
-/** More players than this are listed tighter so that all of them fit. */
-const ROSTER_SPACIOUS_MAX_PLAYERS = 6;
-
-/** Full screen before the set: both teams facing each other with their rosters, the active roster highlighted once picked. */
+/** Full screen before the set: both teams facing each other with their rosters, with their active rosters. */
 export function RostersScene({
 	state,
 	view,
@@ -94,10 +91,7 @@ function RosterTeam({ side }: { side: MatchSide }) {
 					) : null}
 				</div>
 			</div>
-			<ul
-				className={styles.players}
-				data-dense={players.length > ROSTER_SPACIOUS_MAX_PLAYERS || undefined}
-			>
+			<ul className={styles.players}>
 				{players.map((player, i) => (
 					<Player
 						key={player.userId}
@@ -117,15 +111,8 @@ function Player({
 	player: BroadcastPlayer;
 	style: React.CSSProperties;
 }) {
-	const { t } = useTranslation(["broadcast"]);
-
 	return (
-		<li
-			className={styles.player}
-			data-active={player.isActive === false ? "false" : undefined}
-			style={style}
-			{...part("player")}
-		>
+		<li className={styles.player} style={style} {...part("player")}>
 			{player.avatarUrl ? (
 				<img
 					className={styles.avatar}
@@ -140,11 +127,6 @@ function Player({
 			<span className={styles.playerName} {...part("player-name")}>
 				{player.name}
 			</span>
-			{player.isSub ? (
-				<span className={styles.sub} {...part("player-sub")}>
-					{t("broadcast:overlay.sub")}
-				</span>
-			) : null}
 			<span className={styles.weapons} {...part("player-weapons")}>
 				{player.weapons.map((weaponSplId) => (
 					<WeaponImage

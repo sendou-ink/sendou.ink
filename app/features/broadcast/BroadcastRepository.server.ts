@@ -87,7 +87,6 @@ export function findAllPlayersByTournamentTeamIds(tournamentTeamIds: number[]) {
 		.select((eb) => [
 			...commonUserSelect(eb, { inTournament: true }),
 			"TournamentTeamMember.tournamentTeamId",
-			"TournamentTeamMember.isSub",
 			sql<
 				string | null
 			>`coalesce("TournamentTeamMember"."inGameName", "User"."inGameName")`.as(

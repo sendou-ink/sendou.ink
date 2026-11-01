@@ -144,7 +144,6 @@ export const BROADCAST_SCENE_PARTS = {
 		"player",
 		"player-avatar",
 		"player-name",
-		"player-sub",
 		"player-weapons",
 	],
 	maps: [
