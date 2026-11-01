@@ -48,7 +48,10 @@ const DEFAULT_SETTINGS: ScannerSettings = {
 	webgpu: true,
 };
 
-/** An unreadable setting falls back to its default on its own */
+/**
+ * An unreadable setting falls back to its default on its own
+ * @internal
+ */
 export const scannerSettingsPersisted = PersistedState.define({
 	key: "scanner:settings",
 	storage: "local",

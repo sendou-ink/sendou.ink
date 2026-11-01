@@ -3,6 +3,7 @@ import { useUser } from "~/features/auth/core/user";
 import { usePersistedState } from "~/modules/persisted-state/hooks";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
 
+/** @internal */
 export const revealedTournamentsPersisted = PersistedState.define({
 	key: "spoilerFreeRevealed",
 	storage: "session",

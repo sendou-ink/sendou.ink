@@ -41,7 +41,10 @@ interface DamageOption {
 
 const weaponDamagesCache = new Map<string, WeaponDamageSource["damages"]>();
 
-/** Every damage each weapon of the comp deals, against a target with `targetSubDefenseAp` of Sub Defense Up. */
+/**
+ * Every damage each weapon of the comp deals, against a target with `targetSubDefenseAp` of Sub Defense Up.
+ * @internal
+ */
 export function damageSources(
 	weaponIds: MainWeaponId[],
 	targetSubDefenseAp = 0,

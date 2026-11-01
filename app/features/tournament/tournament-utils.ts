@@ -150,6 +150,7 @@ export type TeamForOrdering = {
 /**
  * Pairwise team comparison. Not a strict weak order when only one team has a seed (skill is
  * compared instead), so never a raw `sort` comparator over a mixed field — see {@link sortTeamsBySeeding}.
+ * @internal
  */
 export function compareTeamsForOrdering(
 	a: TeamForOrdering,
@@ -283,23 +284,6 @@ export function seedsByStartingBracket(
 	);
 }
 
-export function findTeamInsertPosition<T extends TeamForOrdering>(
-	existingOrder: number[],
-	newTeam: T,
-	teamMap: Map<number, T>,
-	minMembersPerTeam: number,
-): number {
-	for (let i = 0; i < existingOrder.length; i++) {
-		const existingTeam = teamMap.get(existingOrder[i]);
-		if (!existingTeam) continue;
-
-		if (compareTeamsForOrdering(newTeam, existingTeam, minMembersPerTeam) < 0) {
-			return i;
-		}
-	}
-	return existingOrder.length;
-}
-
 /**
  * Division label of a starting bracket: the shared leading characters of the bracket names reachable
  * from it, or the deepest one's name when they share none. When several starting brackets end up with
@@ -377,6 +361,7 @@ const LEADING_SEPARATOR_REGEX = /^[\s_-]+/;
  * // series: [{ name: "In The Zone" }]
  * splitTournamentName("In The Zone 54", series) // { name: "In The Zone", subtext: "54" }
  * splitTournamentName("Picnic Weekly", series)  // { name: "Picnic Weekly" }
+ * @internal
  */
 export function splitTournamentName(
 	tournamentName: string,

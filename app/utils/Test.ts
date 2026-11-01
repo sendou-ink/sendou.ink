@@ -21,12 +21,6 @@ import { logger } from "./logger";
 /** User a wrapped action/loader runs as: a pinned seed user or any user id (e.g. one the test created). */
 export type TestUser = "admin" | "regular" | number;
 
-export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
-	return (
-		arr1.length === arr2.length && arr1.every((item) => arr2.includes(item))
-	);
-}
-
 /** Runs `fn` with the user as the actor (`actorId()` / `actorIdOrNull()`), for repository tests outside a request. */
 export function withUserId<T>(id: number, fn: () => T): T {
 	return actAs(id, fn);

@@ -59,7 +59,10 @@ const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
 	LOBBY_READY_CHECK: "high",
 };
 
-/** How long a push is held back; anything marking the notification seen meanwhile (addressing it, opening the list, `defaultSeenUserIds`) cancels it for that user. */
+/**
+ * How long a push is held back; anything marking the notification seen meanwhile (addressing it, opening the list, `defaultSeenUserIds`) cancels it for that user.
+ * @internal
+ */
 export const PUSH_NOTIFICATION_GRACE_PERIOD_MS = 15 * 1000;
 
 const PUSH_NOTIFICATION_TIMEOUT_MS = 10 * 1000;
@@ -165,6 +168,10 @@ const SENT_NOTIFICATION_TTL_MS = 1000 * 60 * 60;
 
 const sentNotifications = new Map<string, number>();
 
+/**
+ *
+ * @internal
+ */
 export function clearSentNotificationsForTesting() {
 	sentNotifications.clear();
 }

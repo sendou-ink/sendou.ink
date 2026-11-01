@@ -505,6 +505,7 @@ const validPatternParts = new Set(["*", ...modesShort] as const);
  * @example
  * unwrapOr(parsePattern("SZ*TC"), null); // { pattern: ["SZ", "ANY", "TC"] }
  * unwrapOr(parsePattern("[RM!]*SZ"), null); // { pattern: ["ANY", "SZ"], mustInclude: [{ mode: "RM", isGuaranteed: true }] }
+ * @internal
  */
 export function parsePattern(pattern: string) {
 	if (pattern.length > 50) {

@@ -112,6 +112,7 @@ const divsBaseSchema = v.pipe(
 	}, "forms:errors.divBothOrNeither"),
 );
 
+/** @internal */
 export const divsSchema = v.pipe(divsBaseSchema, v.transform(normalizeDivs));
 
 function normalizeDivs<T extends { min: string | null; max: string | null }>(

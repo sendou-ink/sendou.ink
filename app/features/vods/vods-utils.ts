@@ -95,6 +95,7 @@ export function hoursMinutesSecondsStringToSeconds(
 	return hours * 3600 + minutes * 60 + seconds;
 }
 
+/** @internal */
 export function youtubeIdToYoutubeUrl(youtubeId: string) {
 	return `https://www.youtube.com/watch?v=${youtubeId}`;
 }

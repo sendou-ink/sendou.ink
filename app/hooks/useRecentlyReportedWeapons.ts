@@ -7,6 +7,7 @@ import { numericEnum } from "~/utils/schema";
 
 const MAX_REPORTED_WEAPONS = 7;
 
+/** @internal */
 export const recentlyReportedWeaponsPersisted = PersistedState.define({
 	key: "sq__recently-reported-weapons",
 	storage: "local",

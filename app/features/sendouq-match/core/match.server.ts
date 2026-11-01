@@ -13,7 +13,6 @@ import type {
 	SQMatch,
 	SQUncensoredGroup,
 } from "~/features/sendouq/core/SendouQ.server";
-import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, ModeWithStage } from "~/modules/in-game-lists/types";
 import type {
 	TournamentMapListMap,
@@ -68,7 +67,10 @@ async function calculateMapWeights(
 	};
 }
 
-/** Combines two teams' map weights, first normalizing team one's to team two's total so differing preference counts weigh fairly. */
+/**
+ * Combines two teams' map weights, first normalizing team one's to team two's total so differing preference counts weigh fairly.
+ * @internal
+ */
 export function normalizeAndCombineWeights(
 	teamOneWeights: Map<string, number>,
 	teamTwoWeights: Map<string, number>,
@@ -279,75 +281,6 @@ function alternatingTeamFilters({
 
 		return [votedBy(picker)];
 	};
-}
-
-export function mapModePreferencesToModeList(
-	groupOnePreferences: UserMapModePreferences["modes"][],
-	groupTwoPreferences: UserMapModePreferences["modes"][],
-): ModeShort[] {
-	const groupOneScores = new Map<ModeShort, number>();
-	const groupTwoScores = new Map<ModeShort, number>();
-
-	for (const [i, groupPrefences] of [
-		groupOnePreferences,
-		groupTwoPreferences,
-	].entries()) {
-		for (const mode of modesShort) {
-			const preferences = groupPrefences
-				.flat()
-				.filter((preference) => preference.mode === mode)
-				.map(({ preference }) => (preference === "AVOID" ? -1 : 1));
-
-			const average = R.mean(preferences) ?? 0;
-			const roundedAverage = Math.round(average);
-			const scoresMap = i === 0 ? groupOneScores : groupTwoScores;
-
-			scoresMap.set(mode, roundedAverage);
-		}
-	}
-
-	const combinedMap = new Map<ModeShort, number>();
-	for (const mode of modesShort) {
-		const groupOneScore = groupOneScores.get(mode) ?? 0;
-		const groupTwoScore = groupTwoScores.get(mode) ?? 0;
-		const combinedScore = groupOneScore + groupTwoScore;
-		combinedMap.set(mode, combinedScore);
-	}
-
-	const result = R.shuffle(modesShort).filter((mode) => {
-		const score = combinedMap.get(mode)!;
-
-		// if opinion is split, don't include
-		return score > 0;
-	});
-
-	result.sort((a, b) => {
-		const aScore = combinedMap.get(a)!;
-		const bScore = combinedMap.get(b)!;
-
-		if (aScore === bScore) return 0;
-		return aScore > bScore ? -1 : 1;
-	});
-
-	if (result.length === 0) {
-		const bestScore = Math.max(...combinedMap.values());
-
-		const leastWorstModesResult = R.shuffle(modesShort).filter((mode) => {
-			// turf war never included if not positive
-			if (mode === "TW") return false;
-
-			const score = combinedMap.get(mode)!;
-
-			return score === bestScore;
-		});
-
-		// ok nevermind they are haters but really like turf war for some reason
-		if (leastWorstModesResult.length === 0) return ["TW"];
-
-		return leastWorstModesResult;
-	}
-
-	return result;
 }
 
 export function compareMatchToReportedScores({

@@ -17,14 +17,32 @@ const config = {
 			"docs/site/src/styles/theme.css",
 		],
 	},
+	// a `!` suffix marks the pattern as production, see https://knip.dev/features/production-mode
 	entry: [
-		"app/features/*/routes/**/*.{ts,tsx}",
-		"migrations/**/*.ts",
-		"scripts/**/*.{js,cjs,mjs,jsx,ts,cts,mts,tsx}",
+		"app/features/*/routes/**/*.{ts,tsx}!",
+		"migrations/**/*.ts!",
+		"scripts/**/*.{js,cjs,mjs,jsx,ts,cts,mts,tsx}!",
+		// runs the e2e suite (also excluded from the production project below)
+		"!scripts/living-docs/capture.ts!",
 		".claude/skills/*/scripts/*.mjs",
-		"public/sw-2.js",
+		"public/sw-2.js!",
 		// swapped in by vite.config.ts for production builds
-		"app/features/dev-tools/dev-tools-server-hooks.stub.ts",
+		"app/features/dev-tools/dev-tools-server-hooks.stub.ts!",
+	],
+	project: [
+		"**/*.{js,mjs,cjs,jsx,ts,tsx,mts,cts,css,astro,mdx}!",
+		// test code, test & dev data and build tooling
+		"!e2e/**!",
+		"!.claude/**!",
+		"!**/tests/**!",
+		"!**/*test-utils.ts!",
+		"!app/{test-setup,browser-test-setup}.ts!",
+		"!app/utils/Test.ts!",
+		"!app/db/seed/**!",
+		"!app/db/reset.ts!",
+		"!scripts/living-docs/capture.ts!",
+		"!vite-css-plugins.ts!",
+		"!docs/site/src/plugins/**!",
 	],
 	compilers: {
 		css: (text: string, path: string) => {

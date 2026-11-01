@@ -292,6 +292,7 @@ export function fromShareCode(code: string): ThemeInput | null {
 
 /**
  * Every color of a built theme as vars.css resolves them, for verifying the accessibility and gamut guarantees.
+ * @internal
  */
 export function resolveColors(theme: CustomTheme) {
 	const base = (lightness: number, chromaIndex: number): Oklch => ({
@@ -362,6 +363,7 @@ export function resolveColors(theme: CustomTheme) {
 
 /**
  * Text/background color pairs of a built theme as vars.css resolves them, for verifying the accessibility guarantee.
+ * @internal
  */
 export function textContrastPairs(theme: CustomTheme) {
 	const { dark, light } = resolveColors(theme);

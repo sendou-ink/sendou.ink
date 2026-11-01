@@ -244,7 +244,10 @@ export function maxChroma(lightness: number, hueDegrees: number): number {
 	return chroma;
 }
 
-/** Whether the color can be displayed in sRGB without clipping. */
+/**
+ * Whether the color can be displayed in sRGB without clipping.
+ * @internal
+ */
 export function isInSrgbGamut(color: Oklch): boolean {
 	const { r, g, b } = oklchToLinearSrgb(color);
 

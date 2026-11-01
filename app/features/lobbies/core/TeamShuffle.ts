@@ -26,22 +26,40 @@ import { PLAYERS_PER_SET, PLAYERS_PER_TEAM } from "../lobbies-constants";
 import * as LobbyRating from "./LobbyRating";
 import type { PlayerRole } from "./PlayerRoles";
 
-/** Weight of {@link balanceCost}. Highest priority: a 10 percentage point imbalance costs 10. */
+/**
+ * Weight of {@link balanceCost}. Highest priority: a 10 percentage point imbalance costs 10.
+ * @internal
+ */
 export const BALANCE_WEIGHT = 100;
 
-/** Weight of {@link backlineCoverageCost}, per team without a backline. Beats a repeated teammate pair. */
+/**
+ * Weight of {@link backlineCoverageCost}, per team without a backline. Beats a repeated teammate pair.
+ * @internal
+ */
 export const BACKLINE_COVERAGE_WEIGHT = 5;
 
-/** Weight of {@link roleStackCost} of `BACKLINE`. Two on one team cost as much as a team without a backline. */
+/**
+ * Weight of {@link roleStackCost} of `BACKLINE`. Two on one team cost as much as a team without a backline.
+ * @internal
+ */
 export const BACKLINE_STACK_WEIGHT = 2.5;
 
-/** Weight of {@link teammateRepeatCost}, per set two teammates have already played together. */
+/**
+ * Weight of {@link teammateRepeatCost}, per set two teammates have already played together.
+ * @internal
+ */
 export const TEAMMATE_REPEAT_WEIGHT = 1;
 
-/** Extra weight on top of {@link TEAMMATE_REPEAT_WEIGHT} for teammates who were teammates in the previous set. */
+/**
+ * Extra weight on top of {@link TEAMMATE_REPEAT_WEIGHT} for teammates who were teammates in the previous set.
+ * @internal
+ */
 export const PREVIOUS_SET_TEAMMATE_WEIGHT = 2;
 
-/** Weight of {@link roleStackCost} of `TACTICOOLER`. */
+/**
+ * Weight of {@link roleStackCost} of `TACTICOOLER`.
+ * @internal
+ */
 export const TACTICOOLER_STACK_WEIGHT = 0.5;
 
 /** Costs closer than this count as a tie, picked between randomly. */
@@ -113,6 +131,7 @@ export function shuffle({
 /**
  * Who sits out when there are more than 8 players: those who have sat out the fewest times, ties broken by
  * not making anyone sit out twice in a row, then randomly.
+ * @internal
  */
 export function pickSitOuts(
 	players: ShufflePlayer[],
@@ -136,7 +155,10 @@ export function pickSitOuts(
 		.map(({ player }) => player.userId);
 }
 
-/** Total weighted cost of a split, lower is better. */
+/**
+ * Total weighted cost of a split, lower is better.
+ * @internal
+ */
 export function splitCost(split: Split, history: TeammateHistory) {
 	return (
 		BALANCE_WEIGHT * balanceCost(split) +
@@ -147,7 +169,10 @@ export function splitCost(split: Split, history: TeammateHistory) {
 	);
 }
 
-/** Distance (0-0.5) of alpha's predicted win probability from an even 50%. */
+/**
+ * Distance (0-0.5) of alpha's predicted win probability from an even 50%.
+ * @internal
+ */
 export function balanceCost(split: Split) {
 	return Math.abs(
 		LobbyRating.winProbability(
@@ -160,6 +185,7 @@ export function balanceCost(split: Split) {
 /**
  * Teams (0-2) without a player who has a backline weapon in their pool. When the room doesn't have one for both
  * teams every split costs the same, so this only steers splits where both teams can have one.
+ * @internal
  */
 export function backlineCoverageCost(split: Split) {
 	return [split.alpha, split.bravo].filter(
@@ -170,6 +196,7 @@ export function backlineCoverageCost(split: Split) {
 /**
  * Teammate pairs of the split that have played together before: {@link TEAMMATE_REPEAT_WEIGHT} per earlier set
  * together plus {@link PREVIOUS_SET_TEAMMATE_WEIGHT} if they were teammates in the previous set.
+ * @internal
  */
 export function teammateRepeatCost(split: Split, history: TeammateHistory) {
 	let cost = 0;
@@ -190,7 +217,10 @@ export function teammateRepeatCost(split: Split, history: TeammateHistory) {
 	return cost;
 }
 
-/** How many players of the role one team has more than an even spread (an odd count can't be even, so is free). */
+/**
+ * How many players of the role one team has more than an even spread (an odd count can't be even, so is free).
+ * @internal
+ */
 export function roleStackCost(split: Split, role: PlayerRole) {
 	const countOf = (team: ShufflePlayer[]) =>
 		team.filter((player) => player.roles.includes(role)).length;
@@ -201,7 +231,10 @@ export function roleStackCost(split: Split, role: PlayerRole) {
 	return Math.abs(alpha - bravo) - ((alpha + bravo) % 2);
 }
 
-/** Order independent key of two users, for {@link TeammateHistory}. */
+/**
+ * Order independent key of two users, for {@link TeammateHistory}.
+ * @internal
+ */
 export function pairKey(userIdA: number, userIdB: number) {
 	return userIdA < userIdB ? `${userIdA}-${userIdB}` : `${userIdB}-${userIdA}`;
 }

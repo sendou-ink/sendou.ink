@@ -769,7 +769,10 @@ export function findScheduledBetween({
 		.execute();
 }
 
-/** Puts the candidate times on the set's board; ones the team already has there are skipped. */
+/**
+ * Puts the candidate times on the set's board; ones the team already has there are skipped.
+ * @internal
+ */
 export function insertScheduleProposals({
 	matchId,
 	tournamentTeamId,

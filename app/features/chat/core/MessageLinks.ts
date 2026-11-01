@@ -2,6 +2,7 @@ const SPLATNET_ROOM_HOST = "s.nintendo.com";
 const SPLATNET_ROOM_PATH_PATTERN = /^\/[A-Za-z0-9/_-]+$/;
 const SPLATNET_ROOM_CANDIDATE_PATTERN = /https:\/\/s\.nintendo\.com\/\S+/g;
 
+/** @internal */
 export function isSplatnetRoomUrl(url: string): boolean {
 	if (!URL.canParse(url)) return false;
 	const parsed = new URL(url);

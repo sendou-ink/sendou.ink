@@ -57,6 +57,7 @@ async function syncTournamentVods() {
 	}
 }
 
+/** @internal */
 export async function processOneTournament(tournamentId: number) {
 	const matches =
 		await TournamentMatchVodRepository.findMatchesWithStartedAt(tournamentId);

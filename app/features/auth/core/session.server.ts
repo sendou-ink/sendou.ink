@@ -21,6 +21,7 @@ export const legacySessionMigrationCookies =
  *
  * Sessions issued before the switch live in a `Domain=sendou.ink` cookie. They are still read when no host-only cookie is present,
  * and `legacySessionMigrationCookies` returns the `Set-Cookie` values that re-issue such a session host-only and expire the old cookie.
+ * @internal
  */
 export function createAuthSession({
 	isSecureContext,

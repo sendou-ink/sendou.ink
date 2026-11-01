@@ -19,7 +19,10 @@ interface ThrottleEntry {
 	} | null;
 }
 
-/** Above this many channels tracked, idle ones are forgotten (see `prune`). */
+/**
+ * Above this many channels tracked, idle ones are forgotten (see `prune`).
+ * @internal
+ */
 export const MAX_ENTRIES = 5_000;
 
 /**

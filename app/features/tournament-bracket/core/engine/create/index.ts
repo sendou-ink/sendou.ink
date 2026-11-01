@@ -36,7 +36,10 @@ export function create(input: CreateBracketInput): BracketData {
 	return data;
 }
 
-/** `create` with resolved internal settings, letting tests control seed ordering and byes balancing. */
+/**
+ * `create` with resolved internal settings, letting tests control seed ordering and byes balancing.
+ * @internal
+ */
 export function createResolved(input: ResolvedCreateBracketInput): BracketData {
 	if (input.type === "swiss") return createSwiss(input);
 

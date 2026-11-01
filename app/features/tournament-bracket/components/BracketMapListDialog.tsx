@@ -1292,6 +1292,7 @@ function MapListRow({
 /**
  * Map search filter with an optional mode prefix: "sz" matches every Splat Zones map, "sz crab" those
  * whose stage name contains "crab", no prefix matches the stage name. `textValue` is `"${modeShort} ${stageName}"`.
+ * @internal
  */
 export function mapSearchFilter(
 	textValue: string,

@@ -15,6 +15,7 @@ export const searchTypePersisted = PersistedState.define({
 	default: "weapons",
 });
 
+/** @internal */
 export const recentWeaponsPersisted = PersistedState.define({
 	key: "command-palette-recent-weapons",
 	storage: "local",

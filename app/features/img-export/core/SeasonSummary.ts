@@ -154,7 +154,10 @@ export interface TournamentRun {
 	topEightAvgSp: number | null;
 }
 
-/** Ranks a season's tournament runs: tier dominates, then placement relative to field size and field strength. */
+/**
+ * Ranks a season's tournament runs: tier dominates, then placement relative to field size and field strength.
+ * @internal
+ */
 export function tournamentRunScore(run: TournamentRun): number {
 	const tier = run.tier ?? UNTIERED_TOURNAMENT_TIER;
 
@@ -193,7 +196,10 @@ export function isSeasonFinished(season: number, date = new Date()) {
 	return Seasons.allFinished(date).some((nth) => nth === season);
 }
 
-/** Exportable without the supporter perk: only the latest finished season, and only while no season is in progress. */
+/**
+ * Exportable without the supporter perk: only the latest finished season, and only while no season is in progress.
+ * @internal
+ */
 export function isSeasonExportableByAll(season: number, date = new Date()) {
 	return (
 		Seasons.current(date) === null && Seasons.allFinished(date)[0] === season

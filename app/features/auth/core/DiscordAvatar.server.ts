@@ -95,7 +95,10 @@ async function store({
 	return fileName;
 }
 
-/** File name a Discord avatar is stored under, its small copy is next to it. */
+/**
+ * File name a Discord avatar is stored under, its small copy is next to it.
+ * @internal
+ */
 export function fileNameOf({ userId, hash }: { userId: number; hash: string }) {
 	return `avatar-${userId}-${hash}.webp`;
 }

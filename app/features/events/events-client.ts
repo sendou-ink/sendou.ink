@@ -46,6 +46,7 @@ export interface EventsClient {
 	subscribeTopic: (topic: string) => () => void;
 }
 
+/** @internal */
 export function createEventsClient(deps: EventsClientDeps): EventsClient {
 	const topicSubscriberCounts = new Map<string, number>();
 	const readyStateListeners = new Set<() => void>();

@@ -283,6 +283,7 @@ export function postGameCycleIndex({
 	return Math.floor((eventIndex - preSetLength) / postGameLength);
 }
 
+/** @internal */
 export function resolveTeamFromSide({
 	side,
 	teams,
@@ -332,6 +333,7 @@ export function resolveTeamFromSide({
 /**
  * Team index (0 or 1) the "RANDOM" side maps to via a deterministic per-map coin flip. All pre-set
  * steps share one flip, each post-game cycle has its own. "RANDOM_OTHER" is the complement.
+ * @internal
  */
 export function randomWhoTeamIndex({
 	matchId,

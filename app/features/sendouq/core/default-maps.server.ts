@@ -15,6 +15,7 @@ const ONE_WEEK_IN_DAYS = 7;
 const DEFAULT_MAP_WEIGHT = -SENDOUQ_BEST_OF;
 const TOP_MAPS_PER_MODE = 7;
 
+/** @internal */
 export function clearCacheForTesting() {
 	cachedDefaults = null;
 }

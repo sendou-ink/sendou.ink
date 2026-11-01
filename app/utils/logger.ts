@@ -33,7 +33,10 @@ export const logger = {
 	},
 };
 
-/** Runs `fn` without its `logger.info` output, warnings and errors still logging. */
+/**
+ * Runs `fn` without its `logger.info` output, warnings and errors still logging.
+ * @internal
+ */
 export async function withoutInfoLogs<T>(fn: () => Promise<T>): Promise<T> {
 	infoLogsSilenced = true;
 	try {

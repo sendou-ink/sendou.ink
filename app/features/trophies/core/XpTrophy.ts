@@ -206,6 +206,7 @@ export function categoryKey(category: Category) {
 	return category.toUpperCase() as Uppercase<Category>;
 }
 
+/** @internal */
 export function milestoneFor(power: number) {
 	return (
 		MILESTONES.findLast((milestone) => power >= milestone.value)?.value ?? null

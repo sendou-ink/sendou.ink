@@ -6,7 +6,6 @@ import { testTournament } from "../tournament-bracket/core/tests/test-utils";
 import {
 	bracketProgressionLabel,
 	compareTeamsForOrdering,
-	findTeamInsertPosition,
 	getBracketProgressionLabel,
 	seedsByStartingBracket,
 	sortTeamsBySeeding,
@@ -282,101 +281,6 @@ describe("seedsByStartingBracket", () => {
 			[2, 2],
 			[3, 1],
 		]);
-	});
-});
-
-describe("findTeamInsertPosition", () => {
-	test("inserts at beginning when new team should be first", () => {
-		const team1 = teamForOrdering(1, { avgSeedingSkillOrdinal: 100 });
-		const team2 = teamForOrdering(2, { avgSeedingSkillOrdinal: 200 });
-		const teamMap = new Map([
-			[1, team1],
-			[2, team2],
-		]);
-		const existingOrder = [2, 1];
-		const newTeam = teamForOrdering(3, { avgSeedingSkillOrdinal: 300 });
-
-		const position = findTeamInsertPosition(
-			existingOrder,
-			newTeam,
-			teamMap,
-			MIN_MEMBERS,
-		);
-
-		expect(position).toBe(0);
-	});
-
-	test("inserts at end when new team should be last", () => {
-		const team1 = teamForOrdering(1, { avgSeedingSkillOrdinal: 100 });
-		const team2 = teamForOrdering(2, { avgSeedingSkillOrdinal: 200 });
-		const teamMap = new Map([
-			[1, team1],
-			[2, team2],
-		]);
-		const existingOrder = [2, 1];
-		const newTeam = teamForOrdering(3, { avgSeedingSkillOrdinal: 50 });
-
-		const position = findTeamInsertPosition(
-			existingOrder,
-			newTeam,
-			teamMap,
-			MIN_MEMBERS,
-		);
-
-		expect(position).toBe(2);
-	});
-
-	test("inserts in middle based on comparison", () => {
-		const team1 = teamForOrdering(1, { avgSeedingSkillOrdinal: 100 });
-		const team2 = teamForOrdering(2, { avgSeedingSkillOrdinal: 300 });
-		const team3 = teamForOrdering(3, { avgSeedingSkillOrdinal: 200 });
-		const teamMap = new Map([
-			[1, team1],
-			[2, team2],
-			[3, team3],
-		]);
-		const existingOrder = [2, 3, 1];
-		const newTeam = teamForOrdering(4, { avgSeedingSkillOrdinal: 150 });
-
-		const position = findTeamInsertPosition(
-			existingOrder,
-			newTeam,
-			teamMap,
-			MIN_MEMBERS,
-		);
-
-		expect(position).toBe(2);
-	});
-
-	test("handles empty existing order", () => {
-		const teamMap = new Map<number, TeamForOrdering>();
-		const existingOrder: number[] = [];
-		const newTeam = teamForOrdering(1, { avgSeedingSkillOrdinal: 100 });
-
-		const position = findTeamInsertPosition(
-			existingOrder,
-			newTeam,
-			teamMap,
-			MIN_MEMBERS,
-		);
-
-		expect(position).toBe(0);
-	});
-
-	test("skips missing teams in map", () => {
-		const team1 = teamForOrdering(1, { avgSeedingSkillOrdinal: 100 });
-		const teamMap = new Map([[1, team1]]);
-		const existingOrder = [2, 1];
-		const newTeam = teamForOrdering(3, { avgSeedingSkillOrdinal: 150 });
-
-		const position = findTeamInsertPosition(
-			existingOrder,
-			newTeam,
-			teamMap,
-			MIN_MEMBERS,
-		);
-
-		expect(position).toBe(1);
 	});
 });
 

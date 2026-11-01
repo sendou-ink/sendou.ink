@@ -1,7 +1,10 @@
 import { sql } from "kysely";
 import { db } from "~/db/sql";
 
-/** Deletes every row of every table, leaving the schema and migration bookkeeping in place. */
+/**
+ * Deletes every row of every table, leaving the schema and migration bookkeeping in place.
+ * @internal
+ */
 export async function deleteAllRows() {
 	// virtual tables and their shadow tables (e.g. UserSearch_data) can't be deleted from; the User triggers keep the fts index in sync
 	const { rows: tables } = await sql<{ name: string }>`

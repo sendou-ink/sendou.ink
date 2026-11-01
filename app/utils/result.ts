@@ -31,7 +31,10 @@ export function unwrap<T>(result: Result<T, unknown>): T {
 	return result.value;
 }
 
-/** Returns the error value. Throws if the result is an `Ok`. */
+/**
+ * Returns the error value. Throws if the result is an `Ok`.
+ * @internal
+ */
 export function unwrapErr<E>(result: Result<unknown, E>): E {
 	if (result.ok) {
 		throw new Error("Expected Err, got Ok");

@@ -47,7 +47,10 @@ export function sourceRect(crop: Crop, bounds: CropBounds) {
 	};
 }
 
-/** Limits zoom to `1..MAX_ZOOM` and moves the center so the frame never shows anything outside the image. */
+/**
+ * Limits zoom to `1..MAX_ZOOM` and moves the center so the frame never shows anything outside the image.
+ * @internal
+ */
 export function clamp(crop: Crop, bounds: CropBounds): Crop {
 	const zoom = R.clamp(crop.zoom, { min: 1, max: MAX_ZOOM });
 	const image = orientedSize(bounds.imageSize, crop.rotation);

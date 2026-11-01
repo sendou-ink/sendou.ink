@@ -1169,6 +1169,7 @@ async function validateCreatedMatch(
 	}
 }
 
+/** @internal */
 export async function lockMatchWithoutSkillChange(
 	match: { id: number; chatRoomId: number | null },
 	trx?: Transaction<DB>,

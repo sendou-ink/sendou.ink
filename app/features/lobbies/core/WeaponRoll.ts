@@ -250,6 +250,7 @@ export function rollForSet(
 /**
  * Multiplier of the draw weight of a weapon rolled `setsAgo` sets ago: {@link WeaponRollOptions.repeatWeight} for
  * the previous set, fading linearly back to 1 over {@link WeaponRollOptions.repeatFadeSets} sets.
+ * @internal
  */
 export function repeatFactor(
 	{
@@ -295,7 +296,10 @@ export function evaluate(
 	};
 }
 
-/** Alpha's win probability predicted from the weapons' strengths alone. */
+/**
+ * Alpha's win probability predicted from the weapons' strengths alone.
+ * @internal
+ */
 export function winProbability(
 	alpha: MainWeaponId[],
 	bravo: MainWeaponId[],

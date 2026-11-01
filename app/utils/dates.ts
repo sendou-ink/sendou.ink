@@ -98,6 +98,7 @@ export function dayMonthYearToDatabaseTimestamp(args: DayMonthYear) {
 }
 
 // https://stackoverflow.com/a/71336659
+/** @internal */
 export function weekNumberToDate({
 	week,
 	year,

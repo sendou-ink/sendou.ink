@@ -419,7 +419,10 @@ type OrderableFriend = {
 	activityType: FriendActivityType | null;
 };
 
-/** Pinned friends with activity, the rest with activity, pinned idle friends, the rest, truncated to what fits. Each section keeps its own order of activity type quotas, friends before team members. */
+/**
+ * Pinned friends with activity, the rest with activity, pinned idle friends, the rest, truncated to what fits. Each section keeps its own order of activity type quotas, friends before team members.
+ * @internal
+ */
 export function orderSidebarFriends<T extends OrderableFriend>(entries: T[]) {
 	const friends = entries.filter(({ isFriend }) => isFriend);
 	const teamMembers = entries.filter(({ isFriend }) => !isFriend);

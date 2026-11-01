@@ -9,10 +9,7 @@ import type {
 	AbilityWithUnknown,
 	MainWeaponId,
 } from "~/modules/in-game-lists/types";
-import { DEATH_EVENT_TYPE, type DeathData } from "./detectors/death/index";
-import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
-import type { ScoreboardData } from "./detectors/scoreboard/index";
-import type { DetectedEvent } from "./detectors/types";
+import type { DeathData } from "./detectors/death/index";
 
 /** player row index (0-7) → [head, clothes, shoes] ability-id rows */
 export type PlayerAbilityMap = Map<number, AbilityWithUnknown[][]>;
@@ -120,27 +117,4 @@ function betterRead(
 		return incoming;
 	}
 	return known ?? incoming ?? null;
-}
-
-/**
- * Per scoreboard/replay event, the abilities harvested from the deaths since the
- * previous scoreboard; keyed by event identity, absent when none attributed.
- */
-export function connectAbilities(
-	events: readonly DetectedEvent[],
-): Map<DetectedEvent, PlayerAbilityMap> {
-	const sorted = events.toSorted((a, b) => a.t - b.t);
-	const result = new Map<DetectedEvent, PlayerAbilityMap>();
-	let pendingDeaths: DeathData[] = [];
-	for (const event of sorted) {
-		if (event.type === DEATH_EVENT_TYPE) {
-			pendingDeaths.push(event.data as DeathData);
-		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
-			const players = (event.data as ScoreboardData).players;
-			const abilities = harvestAbilities(players, pendingDeaths);
-			if (abilities.size > 0) result.set(event, abilities);
-			pendingDeaths = [];
-		}
-	}
-	return result;
 }

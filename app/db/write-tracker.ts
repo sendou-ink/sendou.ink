@@ -26,11 +26,18 @@ export class WriteTrackerPlugin implements KyselyPlugin {
 	}
 }
 
-/** Whether the database has been written to since the last {@link markDatabaseClean}. */
+/**
+ * Whether the database has been written to since the last {@link markDatabaseClean}.
+ * @internal
+ */
 export function isDatabaseDirty() {
 	return dirty;
 }
 
+/**
+ *
+ * @internal
+ */
 export function markDatabaseClean() {
 	dirty = false;
 }

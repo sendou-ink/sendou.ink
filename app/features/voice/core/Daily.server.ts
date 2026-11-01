@@ -23,6 +23,7 @@ export function isConfigured() {
 	return Boolean(ServerConfig.daily.apiKey && ServerConfig.daily.domain);
 }
 
+/** @internal */
 export function roomName(chatRoomId: number) {
 	return `${ROOM_NAME_PREFIX}-${chatRoomId}`;
 }

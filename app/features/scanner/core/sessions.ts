@@ -17,12 +17,14 @@ import type { ScannerMatch } from "./scanner-match";
 import { xBattleCards } from "./x-battle";
 
 export const SESSION_GAP_MS = 2 * 60 * 60 * 1000;
+/** @internal */
 export const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 export const MAX_SESSIONS = 20;
 /**
  * Stored events across sessions. A Splat Zones game keeps ~350 (the counter
  * and status reads behind its timeline), so this holds ~140 games; past it the
  * oldest whole sessions go.
+ * @internal
  */
 export const MAX_STORED_EVENTS = 50_000;
 /**

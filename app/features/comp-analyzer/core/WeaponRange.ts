@@ -231,6 +231,7 @@ export interface LethalRange {
 /**
  * Lethal range of damage falling off linearly between `distanceDamage` points (rollers, brushes),
  * `null` when the weapon splats in the same number of hits at every distance.
+ * @internal
  */
 export function lethalRange(
 	distanceDamage: DistanceDamage[],

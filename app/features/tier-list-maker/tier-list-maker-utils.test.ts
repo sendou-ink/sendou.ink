@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-import { TIER_LIST_SEARCH_PARAM_NAMES } from "./tier-list-maker-constants";
 import type { TierListItem, TierListState } from "./tier-list-maker-schemas";
 import { tierListMakerSearchParams } from "./tier-list-maker-search-params";
 import {
@@ -114,11 +113,9 @@ describe("tierListMakerPathWithState", () => {
 			showTierHeaders: true,
 		});
 
-		expect(
-			new URLSearchParams(path.split("?")[1]).get(
-				TIER_LIST_SEARCH_PARAM_NAMES.TITLE,
-			),
-		).toBe("Weapons ranked & sorted");
+		expect(new URLSearchParams(path.split("?")[1]).get("title")).toBe(
+			"Weapons ranked & sorted",
+		);
 	});
 
 	test("only includes tier headers param when they are hidden", () => {
@@ -133,13 +130,9 @@ describe("tierListMakerPathWithState", () => {
 			showTierHeaders: false,
 		});
 
-		expect(withHeaders).not.toContain(
-			TIER_LIST_SEARCH_PARAM_NAMES.SHOW_TIER_HEADERS,
-		);
+		expect(withHeaders).not.toContain("showTierHeaders");
 		expect(
-			new URLSearchParams(withoutHeaders.split("?")[1]).get(
-				TIER_LIST_SEARCH_PARAM_NAMES.SHOW_TIER_HEADERS,
-			),
+			new URLSearchParams(withoutHeaders.split("?")[1]).get("showTierHeaders"),
 		).toBe("false");
 	});
 });
@@ -177,11 +170,8 @@ describe("tierListSearchParamsHaveItems", () => {
 		const params = new URLSearchParams(
 			searchParamsFor(makeState({ "tier-a": [splattershot] })),
 		);
-		const state = params.get(TIER_LIST_SEARCH_PARAM_NAMES.STATE)!;
-		params.set(
-			TIER_LIST_SEARCH_PARAM_NAMES.STATE,
-			state.slice(0, Math.floor(state.length / 2)),
-		);
+		const state = params.get("state")!;
+		params.set("state", state.slice(0, Math.floor(state.length / 2)));
 
 		expect(tierListSearchParamsHaveItems(params.toString())).toBe(false);
 	});

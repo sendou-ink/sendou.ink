@@ -5,6 +5,7 @@ import * as PersistedState from "~/modules/persisted-state/persisted-state";
 
 const MAX_STORED_IDS = 200;
 
+/** @internal */
 export const seenFriendRequestsPersisted = PersistedState.define({
 	key: "seen-friend-requests",
 	storage: "local",

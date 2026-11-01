@@ -2,13 +2,6 @@ import type { TierListMakerTier } from "./tier-list-maker-schemas";
 
 export const TIER_NAME_MAX_LENGTH = 50;
 
-/** Params holding the tier list itself, shared by the maker page and links back to it */
-export const TIER_LIST_SEARCH_PARAM_NAMES = {
-	STATE: "state",
-	TITLE: "title",
-	SHOW_TIER_HEADERS: "showTierHeaders",
-} as const;
-
 export const TIER_NAME_FONT_SIZE_BREAKPOINTS = [
 	{ maxLength: 3, fontSize: "var(--font-xl)" },
 	{ maxLength: 8, fontSize: "var(--font-lg)" },

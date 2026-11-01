@@ -133,7 +133,10 @@ function flattenScalarParams(
 	return result;
 }
 
-/** Raw per-version params of one weapon → {@link ParsedWeaponParams} (current value + history, by category). */
+/**
+ * Raw per-version params of one weapon → {@link ParsedWeaponParams} (current value + history, by category).
+ * @internal
+ */
 export function parse(
 	weaponId: number,
 	rawParams: Record<string, Record<string, unknown>>,

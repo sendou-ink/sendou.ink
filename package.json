@@ -68,7 +68,7 @@
 		"notification:test": "cross-env DB_PATH=db.sqlite3 vite-node ./scripts/send-test-notification.ts",
 		"i18n:usage": "node scripts/generate-translation-usage.ts",
 		"i18n:sync": "node scripts/collapse-single-plural-keys.ts && node scripts/sync-translation-jsons.ts && pnpm run biome:fix",
-		"knip": "knip"
+		"knip": "knip && knip --production"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "3.1155.0",

@@ -27,6 +27,7 @@ export const DEFAULT_MONTAGE_CRITERIA: MontageCriteria = {
 	minKills: 3,
 	maxSecondsByKills: { 2: 20, 3: 30, 4: 45, 5: 60 },
 };
+/** @internal */
 export const FAST_FORWARD_SPEED = 4;
 export const INTRO_CARD_SECONDS = 6;
 export const TEAM_CARD_SECONDS = 5;

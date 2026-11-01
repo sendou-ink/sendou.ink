@@ -131,6 +131,7 @@ export function options(
 /**
  * Whether the game ended in a knockout: a team reported 100 on the results
  * screen, else the objective counter ran out. Null when neither was read.
+ * @internal
  */
 export function knockoutOf(match: ScannerMatch): boolean | null {
 	if (match.matchScores?.some((score) => score === KO_SCORE)) return true;

@@ -43,6 +43,7 @@ interface MatchCensorLevelArgs {
 	matchType?: "winners" | "losers" | "grands" | "groups";
 }
 
+/** @internal */
 export function matchCensorLevel(args: MatchCensorLevelArgs): SpoilerCensor {
 	if (!args.censored) return undefined;
 

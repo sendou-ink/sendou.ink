@@ -160,7 +160,10 @@ function everyMatchOver(matches: MatchData[]) {
 	return true;
 }
 
-/** Times each team played a team with a different score at the time, i.e. was paired up or down */
+/**
+ * Times each team played a team with a different score at the time, i.e. was paired up or down
+ * @internal
+ */
 export function countFloats(matches: MatchData[]) {
 	const scores = new Map<number, number>();
 	const floats = new Map<number, number>();
@@ -211,6 +214,7 @@ interface SwissPairingTeam {
 /**
  * Maximum weighted matching avoiding rematches if possible and preferring equal scores. A team left
  * over gets a bye. Adapted from https://github.com/slashinfty/tournament-pairings
+ * @internal
  */
 export function pairUp(players: SwissPairingTeam[]) {
 	if (players.length === 0) {

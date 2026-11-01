@@ -27,7 +27,10 @@ export function calculateTeamStatus({
 	return "active";
 }
 
-/** Teams need a chance to both advance and be eliminated. */
+/**
+ * Teams need a chance to both advance and be eliminated.
+ * @internal
+ */
 export function maxAdvanceThreshold({ roundCount }: { roundCount: number }) {
 	return Math.ceil(roundCount / 2) + 1;
 }

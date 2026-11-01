@@ -292,6 +292,7 @@ function hasActiveCheckIn(
 	);
 }
 
+/** @internal */
 export function scopedAndSortedTeams({
 	teams,
 	status,

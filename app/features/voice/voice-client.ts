@@ -150,6 +150,7 @@ export interface VoiceClient {
 	dismissFeedback: () => void;
 }
 
+/** @internal */
 export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 	let snapshot: VoiceSnapshot = {
 		roomsById: new Map(),

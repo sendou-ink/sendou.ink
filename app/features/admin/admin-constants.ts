@@ -1,5 +1,6 @@
 export const BAN_REASON_MAX_LENGTH = 200;
 
+/** @internal */
 export const ADMIN_DISCORD_ID = "79237403620945920";
 export const ADMIN_ID = process.env.NODE_ENV === "test" ? 1 : 274;
 

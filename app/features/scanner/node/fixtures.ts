@@ -197,7 +197,10 @@ const SCOREBOARD_SHAPED: readonly [
 	["quick-scoreboard-battle-log", "QuickScoreboardBattleLog"],
 ];
 
-/** Positive fixtures of every scoreboard-shaped screen but `ownDir`'s, for cross-negative gate sweeps. */
+/**
+ * Positive fixtures of every scoreboard-shaped screen but `ownDir`'s, for cross-negative gate sweeps.
+ * @internal
+ */
 export function loadScoreboardLookalikes(ownDir: string): Fixture[] {
 	return SCOREBOARD_SHAPED.filter(([dir]) => dir !== ownDir).flatMap(
 		([dir, event]) =>
@@ -205,7 +208,10 @@ export function loadScoreboardLookalikes(ownDir: string): Fixture[] {
 	);
 }
 
-/** Subtest options for a fixture field: skipped when unlabeled or in `skipFields`, an expected failure when in `misreadFields`. */
+/**
+ * Subtest options for a fixture field: skipped when unlabeled or in `skipFields`, an expected failure when in `misreadFields`.
+ * @internal
+ */
 export function fieldTestOptions(
 	fixture: Fixture,
 	field: string,

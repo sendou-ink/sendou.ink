@@ -447,6 +447,10 @@ const EMOJI_SEQUENCE_OR_EMPTY_CHARACTER_REGEX = new RegExp(
 );
 
 const zalgoRe = /%CC%/;
+/**
+ *
+ * @internal
+ */
 export const hasZalgo = (txt: string) => zalgoRe.test(encodeURIComponent(txt));
 
 /** Non-empty string that has the given length (max and optionally min). Prevents z͎͗ͣḁ̵̑l̉̃ͦg̐̓̒o͓̔ͥ text as well as filters out characters that have no width. */
@@ -481,7 +485,10 @@ export const safeNullableStringSchema = ({
 		),
 	);
 
-/** Non-empty string with invisible characters cleaned out, or null. */
+/**
+ * Non-empty string with invisible characters cleaned out, or null.
+ * @internal
+ */
 export function actuallyNonEmptyStringOrNull(value: unknown) {
 	if (typeof value !== "string") return value;
 

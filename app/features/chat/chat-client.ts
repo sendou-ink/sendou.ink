@@ -99,6 +99,7 @@ export interface ChatClient {
 	setHiddenRoomIds: (roomIds: number[]) => void;
 }
 
+/** @internal */
 export function createChatClient(deps: ChatClientDeps): ChatClient {
 	const readDebounceMs = deps.readDebounceMs ?? READ_DEBOUNCE_MS;
 	const listeners = new Set<() => void>();

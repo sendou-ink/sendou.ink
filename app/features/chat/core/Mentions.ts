@@ -15,6 +15,7 @@ export interface PickedMention {
 	start: number;
 }
 
+/** @internal */
 export function token(userId: number) {
 	return `<mention-${userId}>`;
 }

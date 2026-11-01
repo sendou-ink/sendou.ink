@@ -1,7 +1,7 @@
 /**
- * connectAbilities: deaths are attributed to the next scoreboard event and
- * matched to a row by name/weapon, ambiguous matches left unattributed.
- * harvestCardMains puts minimap cards through the same matching.
+ * harvestAbilities: deaths are matched to a scoreboard row by name/weapon,
+ * ambiguous matches left unattributed. harvestCardMains puts minimap cards
+ * through the same matching.
  */
 
 import assert from "node:assert/strict";
@@ -10,16 +10,11 @@ import type {
 	MainWeaponId,
 } from "~/modules/in-game-lists/types";
 import {
-	connectAbilities,
 	type GearMains,
+	harvestAbilities,
 	harvestCardMains,
 } from "../core/ability-harvest";
-import {
-	DEATH_EVENT_TYPE,
-	type DeathData,
-} from "../core/detectors/death/index";
-import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
-import type { DetectedEvent } from "../core/detectors/types";
+import type { DeathData } from "../core/detectors/death/index";
 import { test } from "./node-test-compat";
 
 const GRID_A: AbilityWithUnknown[][] = [
@@ -38,39 +33,15 @@ function player(name: string, weaponId: MainWeaponId) {
 }
 
 function death(
-	t: number,
 	name: string | null,
 	weaponId: MainWeaponId | null,
 	abilities: AbilityWithUnknown[][] = GRID_A,
-): DetectedEvent<DeathData> {
+): DeathData {
 	return {
-		type: DEATH_EVENT_TYPE,
-		t,
-		confidence: 0.9,
-		data: {
-			weaponId,
-			weaponType: weaponId !== null ? "MAIN" : null,
-			abilities,
-			name,
-		},
-	};
-}
-
-function scoreboard(
-	t: number,
-	players: ReturnType<typeof player>[],
-): DetectedEvent {
-	return {
-		type: SCOREBOARD_EVENT_TYPE,
-		t,
-		confidence: 0.9,
-		data: {
-			lobby: null,
-			mode: null,
-			stage: null,
-			scores: [null, null],
-			players,
-		},
+		weaponId,
+		weaponType: weaponId !== null ? "MAIN" : null,
+		abilities,
+		name,
 	};
 }
 
@@ -86,15 +57,11 @@ const PLAYERS = [
 ];
 
 test("matches by name+weapon, unique name, and unique weapon", () => {
-	const board = scoreboard(100, PLAYERS);
-	const map = connectAbilities([
-		death(10, "Bravo", 50), // name+weapon → index 1, not the other 50 at index 3
-		death(20, "charlie ", null, GRID_B), // unique name alone (case/space-insensitive) → 2
-		death(30, "garbled", 70), // unique weapon despite misread name → 4
-		board,
+	const abilities = harvestAbilities(PLAYERS, [
+		death("Bravo", 50), // name+weapon → index 1, not the other 50 at index 3
+		death("charlie ", null, GRID_B), // unique name alone (case/space-insensitive) → 2
+		death("garbled", 70), // unique weapon despite misread name → 4
 	]);
-	const abilities = map.get(board);
-	assert.ok(abilities);
 	assert.deepEqual(abilities.get(1), GRID_A);
 	assert.deepEqual(abilities.get(2), GRID_B);
 	assert.deepEqual(abilities.get(4), GRID_A);
@@ -102,37 +69,8 @@ test("matches by name+weapon, unique name, and unique weapon", () => {
 });
 
 test("ambiguous weapon with unknown name stays unattributed", () => {
-	const board = scoreboard(100, PLAYERS);
-	const map = connectAbilities([death(10, "garbled", 50), board]);
-	assert.equal(map.get(board), undefined);
-});
-
-test("deaths only attach to the next scoreboard", () => {
-	const board1 = scoreboard(100, PLAYERS);
-	const board2 = scoreboard(400, PLAYERS);
-	const map = connectAbilities([
-		death(10, "Alpha", 40),
-		board1,
-		death(200, "Echo", 70, GRID_B),
-		board2,
-	]);
-	assert.deepEqual(map.get(board1)?.get(0), GRID_A);
-	assert.equal(map.get(board1)?.get(4), undefined);
-	assert.deepEqual(map.get(board2)?.get(4), GRID_B);
-	assert.equal(map.get(board2)?.get(0), undefined);
-});
-
-test("unsorted input is handled and trailing deaths are dropped", () => {
-	const board = scoreboard(100, PLAYERS);
-	const map = connectAbilities([
-		death(150, "Alpha", 40), // after the scoreboard — belongs to a match never finished
-		board,
-		death(10, "Hotel", 100, GRID_B),
-	]);
-	const abilities = map.get(board);
-	assert.ok(abilities);
-	assert.deepEqual(abilities.get(7), GRID_B);
-	assert.equal(abilities.size, 1);
+	const abilities = harvestAbilities(PLAYERS, [death("garbled", 50)]);
+	assert.equal(abilities.size, 0);
 });
 
 function card(

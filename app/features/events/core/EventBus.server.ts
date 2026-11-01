@@ -87,7 +87,10 @@ export function subscribe(
 	return { [Symbol.asyncIterator]: () => iterator };
 }
 
-/** Number of live subscribers on a channel. */
+/**
+ * Number of live subscribers on a channel.
+ * @internal
+ */
 export function subscriberCount(channel: string): number {
 	return subscribersByChannel.get(channel)?.size ?? 0;
 }

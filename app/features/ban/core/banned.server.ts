@@ -3,6 +3,7 @@ import { databaseTimestampToDate } from "~/utils/dates";
 
 let bannedUsers = await AdminRepository.findAllBannedUsers();
 
+/** @internal */
 export function checkBanStatus(
 	banned: number | null | undefined,
 	now: Date = new Date(),

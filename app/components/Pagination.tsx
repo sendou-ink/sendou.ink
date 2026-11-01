@@ -187,6 +187,7 @@ type PageItem = {
 	mobileOnly?: boolean;
 };
 
+/** @internal */
 export function getPageNumbers(
 	currentPage: number,
 	pagesCount: number,

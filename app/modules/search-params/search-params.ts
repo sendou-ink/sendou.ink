@@ -659,7 +659,10 @@ function urlEncodedLength(value: string) {
 	return new URLSearchParams([["", value]]).toString().length;
 }
 
-/** Compressed transport form of a plain value. Any param can arrive like this; used by round-trip tests and share links. */
+/**
+ * Compressed transport form of a plain value. Any param can arrive like this; used by round-trip tests and share links.
+ * @internal
+ */
 export function compressTransportValue(plain: string) {
 	return `${COMPRESSED_PREFIX}${compressToBase64(plain, { urlSafe: true })}`;
 }

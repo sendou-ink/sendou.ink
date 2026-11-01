@@ -26,19 +26,6 @@ export function resolveHostingTeam(
 	return teams[0];
 }
 
-export function mapCountPlayedInSetWithCertainty({
-	bestOf,
-	scores,
-}: {
-	bestOf: number;
-	scores: [number, number];
-}) {
-	const maxScore = Math.max(...scores);
-	const scoreSum = R.sum(scores);
-
-	return scoreSum + (Math.ceil(bestOf / 2) - maxScore);
-}
-
 export function matchIsLocked({
 	tournament,
 	matchId,

@@ -382,7 +382,10 @@ function nonParticipantLabels(
 	);
 }
 
-/** Who may view, post to and observe a room, given the participants and observers its owner resolved to. */
+/**
+ * Who may view, post to and observe a room, given the participants and observers its owner resolved to.
+ * @internal
+ */
 export function permissionsOf(args: {
 	room: Pick<ChatRoomRow, "type" | "expiresAt" | "closedAt">;
 	participantUserIds: number[];

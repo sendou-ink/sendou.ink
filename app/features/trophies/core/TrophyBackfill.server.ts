@@ -50,6 +50,7 @@ export async function backfillableTournaments({
 	});
 }
 
+/** @internal */
 export function eligibleWinners<
 	T extends { div: string | null; setResults: ReadonlyArray<unknown> },
 >({

@@ -154,7 +154,10 @@ export function dateInTimezone(timestamp: number, timezone: string) {
 	return format(inTimezone(timestamp, timezone), "yyyy-MM-dd");
 }
 
-/** `HH:mm` of the timestamp in `timezone`. */
+/**
+ * `HH:mm` of the timestamp in `timezone`.
+ * @internal
+ */
 export function timeInTimezone(timestamp: number, timezone: string) {
 	return format(inTimezone(timestamp, timezone), "HH:mm");
 }
@@ -350,7 +353,10 @@ export function playableWindows({
 	];
 }
 
-/** Rounds minutes counted from the start of a day track to the nearest step. */
+/**
+ * Rounds minutes counted from the start of a day track to the nearest step.
+ * @internal
+ */
 export function snapMinutes(
 	minutes: number,
 	step: number = AVAILABILITY.SLOT_STEP_MINUTES,
@@ -438,7 +444,10 @@ function inTimezone(timestamp: number, timezone: string) {
 	);
 }
 
-/** Minutes from midnight of a `HH:mm` time string. */
+/**
+ * Minutes from midnight of a `HH:mm` time string.
+ * @internal
+ */
 export function timeToMinutes(time: string) {
 	const [hours, minutes] = time.split(":").map(Number);
 

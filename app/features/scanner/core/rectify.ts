@@ -56,6 +56,7 @@ export function invertHomography(m: Homography): Homography {
 	return adjugate.map((v) => v / scale) as unknown as Homography;
 }
 
+/** @internal */
 export function projectPoint(h: Homography, [x, y]: Point): Point {
 	const w = h[6] * x + h[7] * y + h[8];
 	return [(h[0] * x + h[1] * y + h[2]) / w, (h[3] * x + h[4] * y + h[5]) / w];

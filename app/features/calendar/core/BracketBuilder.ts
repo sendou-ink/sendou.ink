@@ -341,7 +341,10 @@ export function fitPlacementsToSources(values: BuilderValues): BuilderValues {
 	return result;
 }
 
-/** Placements of `fromIdx` a new line takes by default: the top ones, or the next ones after what other lines already take. */
+/**
+ * Placements of `fromIdx` a new line takes by default: the top ones, or the next ones after what other lines already take.
+ * @internal
+ */
 export function defaultPlacements(
 	values: BuilderValues,
 	fromIdx: number,
