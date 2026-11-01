@@ -35,10 +35,13 @@ export function MapsScene({
 
 	const progress = match.progress[view];
 	const sides = matchSides(match, view, state[view]);
+	const currentMap = progress.isOver
+		? null
+		: progress.games[progress.gameNumber - 1]?.map;
 
 	return (
 		<div className={styles.maps}>
-			<SceneBackdrop />
+			<SceneBackdrop stageId={currentMap?.stageId} />
 			<header className={styles.header} {...part("header")}>
 				<div className={styles.eyebrow} {...part("round")}>
 					{roundLabel(match) || state.tournament.name} ·{" "}

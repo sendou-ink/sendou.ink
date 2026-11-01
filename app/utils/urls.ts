@@ -473,6 +473,9 @@ export const modeImageUrl = (mode: ModeShortWithSpecial) =>
 	`${STATIC_ASSETS_URL}/img/modes/${mode}`;
 export const stageImageUrl = (stageId: StageId) =>
 	`${STATIC_ASSETS_URL}/img/stages/${stageId}`;
+// xxx: served from public/ until pushed to the assets repo, then switch back to STATIC_ASSETS_URL
+export const stageVideoUrl = (stageId: StageId) =>
+	`/videos/stages/${stageId}.mp4`;
 export const stageBannerImageUrl = (stageId: StageId) =>
 	`${STATIC_ASSETS_URL}/img/stage-banners/${stageId}.avif`;
 export const tierImageUrl = (tier: TierName | "CALCULATING") =>
