@@ -150,7 +150,10 @@ async function featuredMatch({
 
 	return {
 		id: match.id,
-		bracketName: names.bracketName,
+		bracketName:
+			tournament.ctx.settings.bracketProgression.length > 1
+				? names.bracketName
+				: null,
 		roundName: names.roundNameWithoutMatchIdentifier ?? null,
 		countType: match.roundMaps.type,
 		count: match.roundMaps.count,

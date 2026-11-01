@@ -107,6 +107,7 @@ export interface BroadcastHealth {
 
 export interface BroadcastMatch {
 	id: number;
+	/** `null` when the tournament has only one bracket. */
 	bracketName: string | null;
 	roundName: string | null;
 	countType: "BEST_OF" | "PLAY_ALL";
