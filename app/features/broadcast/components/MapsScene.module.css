@@ -160,7 +160,7 @@
 	min-width: 46px;
 	height: 46px;
 	border-bottom-right-radius: var(--bc-radius-small);
-	background: var(--bc-bg);
+	background: var(--bc-surface);
 	font-size: 24px;
 	font-weight: 700;
 }
