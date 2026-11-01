@@ -40,3 +40,7 @@ export const broadcastStreamUrl = ({
 	broadcastStreamSearchParams.href(`${broadcastDashboardPage(args)}/stream`, {
 		role,
 	});
+
+/** Where the dashboard and overlays post their WebRTC session descriptions to each other. */
+export const broadcastSignalUrl = (args: BroadcastPageArgs) =>
+	`${broadcastDashboardPage(args)}/signal`;

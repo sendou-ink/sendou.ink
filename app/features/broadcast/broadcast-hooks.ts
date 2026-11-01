@@ -1,6 +1,7 @@
 import * as React from "react";
 import { HEARTBEAT_INTERVAL_MS } from "~/features/events/events-types";
 import type { BroadcastState, BroadcastStreamMessage } from "./broadcast-types";
+import * as ClipTransfer from "./core/ClipTransfer";
 
 // a connection dropped while the machine was suspended raises no error of its own
 const SILENT_CONNECTION_TIMEOUT_MS = HEARTBEAT_INTERVAL_MS * 2 + 15_000;
@@ -15,12 +16,19 @@ const REOPEN_MAX_DELAY_MS = 30_000;
 export function useBroadcastStream({
 	url,
 	initialState,
+	onMessage,
 }: {
 	url: string;
 	initialState: BroadcastState;
+	/** Gets the messages other than the state and heartbeats, e.g. clip signaling. */
+	onMessage?: (message: BroadcastStreamMessage) => void;
 }) {
 	const [state, setState] = React.useState(initialState);
 	const [isConnected, setIsConnected] = React.useState(false);
+	const onMessageRef = React.useRef(onMessage);
+	React.useLayoutEffect(() => {
+		onMessageRef.current = onMessage;
+	});
 
 	React.useEffect(() => {
 		let source: EventSource | null = null;
@@ -38,6 +46,7 @@ export function useBroadcastStream({
 
 				const message = JSON.parse(event.data) as BroadcastStreamMessage;
 				if (message.kind === "state") setState(message.state);
+				else if (message.kind !== "heartbeat") onMessageRef.current?.(message);
 			};
 			source.onerror = () => {
 				setIsConnected(false);
@@ -82,6 +91,67 @@ export function useBroadcastStream({
 	}, [url]);
 
 	return { state, isConnected };
+}
+
+/** Sends the clips to the broadcast's overlays, see `ClipTransfer.createSender`. Pass `onMessage` to `useBroadcastStream`. */
+export function useClipSender({
+	signalUrl,
+	clips,
+}: {
+	signalUrl: string;
+	/** Kept the same between renders, a new array starts over. */
+	clips: ReadonlyArray<ClipTransfer.ClipSource>;
+}) {
+	const [statuses, setStatuses] = React.useState<ClipTransfer.ClipPeerStatus[]>(
+		[],
+	);
+	const senderRef = React.useRef<ClipTransfer.ClipSender | null>(null);
+
+	React.useEffect(() => {
+		const sender = ClipTransfer.createSender({
+			signalUrl,
+			clips,
+			onChange: setStatuses,
+		});
+		senderRef.current = sender;
+
+		return () => {
+			sender.close();
+			senderRef.current = null;
+		};
+	}, [signalUrl, clips]);
+
+	const onMessage = (message: BroadcastStreamMessage) =>
+		senderRef.current?.handleMessage(message);
+
+	return { statuses, onMessage };
+}
+
+/** Object URLs of the clips received from the dashboard by clip id, see `ClipTransfer.createReceiver`. Pass `onMessage` to `useBroadcastStream`. */
+export function useClipReceiver({ signalUrl }: { signalUrl: string }) {
+	const [urls, setUrls] = React.useState<ReadonlyMap<string, string>>(
+		() => new Map(),
+	);
+	const receiverRef = React.useRef<ClipTransfer.ClipReceiver | null>(null);
+
+	React.useEffect(() => {
+		const receiver = ClipTransfer.createReceiver({
+			signalUrl,
+			onChange: setUrls,
+		});
+		receiverRef.current = receiver;
+
+		return () => {
+			receiver.close();
+			receiverRef.current = null;
+			setUrls(new Map());
+		};
+	}, [signalUrl]);
+
+	const onMessage = (message: BroadcastStreamMessage) =>
+		receiverRef.current?.handleMessage(message);
+
+	return { urls, onMessage };
 }
 
 const FIT_TEXT_STEP_PX = 2;

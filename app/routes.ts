@@ -281,6 +281,10 @@ export default [
 		"/to/:id/broadcast/:channel/program",
 		"features/broadcast/routes/to.$id.broadcast.$channel.program.tsx",
 	),
+	route(
+		"/to/:id/broadcast/:channel/signal",
+		"features/broadcast/routes/to.$id.broadcast.$channel.signal.ts",
+	),
 
 	route("/org/new", "features/tournament-organization/routes/org.new.tsx"),
 	...prefix("/org/:slug", [

@@ -61,6 +61,29 @@ export const BROADCAST_STREAM_ROLES = [
 	"dashboard",
 ] as const;
 
+/** Session descriptions are a few kilobytes, more so with many ICE candidates. */
+export const BROADCAST_SDP_MAX_LENGTH = 50_000;
+
+// xxx: prototype, these come from the scanner eventually
+/** Replay clips the dashboard sends to the overlays over WebRTC. */
+export const BROADCAST_PROTOTYPE_CLIPS = [
+	{
+		id: "498017-56-11",
+		name: "4 splats · Oct 24",
+		url: "/broadcast-clips/2026-10-24-498017-56-11-4-splats.mp4",
+	},
+	{
+		id: "498089-57-00",
+		name: "4 splats · Oct 27",
+		url: "/broadcast-clips/2026-10-27-498089-57-00-4-splats.mp4",
+	},
+	{
+		id: "498090-40-26",
+		name: "4 splats · Oct 27 (2)",
+		url: "/broadcast-clips/2026-10-27-498090-40-26-4-splats.mp4",
+	},
+] as const;
+
 /** Overlay URLs are public, so connections per broadcast are capped. */
 export const BROADCAST_MAX_CONNECTIONS = 40;
 
@@ -189,7 +212,14 @@ export const BROADCAST_SCENE_PARTS = {
 		"team-name",
 		"team-score",
 	],
-	replays: ["corner", "replay-bug", "replay-dot", "replay-label", "game"],
+	replays: [
+		"clip",
+		"corner",
+		"replay-bug",
+		"replay-dot",
+		"replay-label",
+		"game",
+	],
 	hold: [
 		"tournament-logo",
 		"tournament-name",

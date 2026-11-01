@@ -1,10 +1,12 @@
 import type { LoaderFunctionArgs } from "react-router";
+import { getUser } from "~/features/auth/core/user.server";
 import { HEARTBEAT_INTERVAL_MS } from "~/features/events/events-types";
 import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { broadcastParamsSchema } from "../broadcast-schemas";
 import { broadcastStreamSearchParams } from "../broadcast-search-params";
 import type { BroadcastStreamMessage } from "../broadcast-types";
+import { isBroadcastProducer } from "../broadcast-utils.server";
 import * as BroadcastHub from "../core/BroadcastHub.server";
 import * as CastChannel from "../core/CastChannel";
 
@@ -23,6 +25,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	});
 	notFoundIfNullish(CastChannel.findBySlug(tournament.ctx.castAccounts, slug));
 	const { role } = broadcastStreamSearchParams.parse(request);
+	const isClipSender =
+		role === "dashboard" && isBroadcastProducer(tournament, getUser());
 
 	if (BroadcastHub.isAtCapacity({ tournamentId, slug })) {
 		return new Response(null, { status: 429 });
@@ -71,6 +75,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				tournamentId,
 				slug,
 				role,
+				isClipSender,
 				send: write,
 				signal: disconnect.signal,
 			});

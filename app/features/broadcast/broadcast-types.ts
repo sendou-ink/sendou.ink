@@ -52,6 +52,8 @@ export interface ProducerState {
 	/** Double elimination bracket of the bracket scene, `null` follows the featured match's. */
 	bracketIdx: number | null;
 	bracketFocus: BroadcastBracketFocus;
+	/** Clip the replays scene plays, `null` leaves the footage under it to OBS. */
+	clipId: string | null;
 }
 
 export interface BroadcastStoredState {
@@ -114,7 +116,29 @@ export interface BroadcastState extends BroadcastStoredState {
 
 export type BroadcastStreamMessage =
 	| { kind: "state"; state: BroadcastState }
-	| { kind: "heartbeat" };
+	| { kind: "heartbeat" }
+	/** First message of every connection: who it is when signaling the clip peer connections. */
+	| { kind: "hello"; peer: BroadcastOwnPeer }
+	/** To clip senders only, whenever a client connects or disconnects. */
+	| { kind: "peers"; peers: BroadcastPeer[] }
+	| { kind: "signal"; from: string; description: BroadcastSessionDescription };
+
+export interface BroadcastPeer {
+	id: string;
+	role: BroadcastStreamRole;
+}
+
+export interface BroadcastOwnPeer {
+	id: string;
+	/** Proves the signals it posts are its own, the peer ids being known to others. */
+	token: string;
+}
+
+/** Offer or answer of a clip peer connection, ICE candidates included (no trickle). */
+export interface BroadcastSessionDescription {
+	type: "offer" | "answer";
+	sdp: string;
+}
 
 export interface BroadcastHealth {
 	/** OBS browser sources showing the overlay. */

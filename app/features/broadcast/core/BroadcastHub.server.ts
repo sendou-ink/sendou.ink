@@ -5,6 +5,8 @@ import { logger } from "~/utils/logger";
 import { BROADCAST_MAX_CONNECTIONS } from "../broadcast-constants";
 import type {
 	BroadcastHealth,
+	BroadcastPeer,
+	BroadcastSessionDescription,
 	BroadcastState,
 	BroadcastStreamMessage,
 	BroadcastStreamRole,
@@ -23,6 +25,10 @@ interface Client {
 	role: BroadcastStreamRole;
 	/** Gets a serialized {@link BroadcastStreamMessage}. */
 	send: (message: string) => void;
+	peerId: string;
+	token: string;
+	/** A producer's dashboard, which sends the overlays replay clips over WebRTC. Peers signal only to the other kind. */
+	isClipSender: boolean;
 }
 
 interface Hub extends HubKey {
@@ -54,11 +60,13 @@ export function connect({
 	role,
 	send,
 	signal,
+	isClipSender,
 	...key
 }: HubKey & {
 	role: BroadcastStreamRole;
 	send: Client["send"];
 	signal: AbortSignal;
+	isClipSender: boolean;
 }) {
 	if (signal.aborted) return;
 
@@ -70,15 +78,63 @@ export function connect({
 		void rebuild(hub);
 	}
 
-	const client: Client = { role, send };
+	const client: Client = {
+		role,
+		send,
+		peerId: crypto.randomUUID(),
+		token: crypto.randomUUID(),
+		isClipSender,
+	};
+	send(
+		JSON.stringify({
+			kind: "hello",
+			peer: { id: client.peerId, token: client.token },
+		} satisfies BroadcastStreamMessage),
+	);
 	hub.clients.add(client);
 	signal.addEventListener("abort", () => disconnect(hub, client), {
 		once: true,
 	});
+	publishPeers(hub);
 
 	if (hub.snapshot && !publish(hub)) {
 		send(serialize(withHealth(hub, hub.snapshot)));
 	}
+}
+
+/**
+ * Passes a WebRTC session description from the client the token belongs to on to the peer, when one of them is a
+ * clip sender and the other is not. Returns whether it was passed on.
+ */
+export function relaySignal({
+	token,
+	to,
+	description,
+	...key
+}: HubKey & {
+	token: string;
+	to: string;
+	description: BroadcastSessionDescription;
+}) {
+	const hub = hubs.get(hubId(key));
+	if (!hub) return false;
+
+	const clients = Array.from(hub.clients);
+	const from = clients.find((client) => client.token === token);
+	const target = clients.find((client) => client.peerId === to);
+	if (!from || !target || from.isClipSender === target.isClipSender) {
+		return false;
+	}
+
+	target.send(
+		JSON.stringify({
+			kind: "signal",
+			from: from.peerId,
+			description,
+		} satisfies BroadcastStreamMessage),
+	);
+
+	return true;
 }
 
 /** Whether the broadcast has as many clients as it takes, its URLs being public. */
@@ -135,6 +191,7 @@ function disconnect(hub: Hub, client: Client) {
 
 	if (hub.clients.size > 0) {
 		publish(hub);
+		publishPeers(hub);
 		return;
 	}
 
@@ -208,6 +265,23 @@ function publish(hub: Hub) {
 	}
 
 	return true;
+}
+
+/** Tells the clip senders who they can send clips to. */
+function publishPeers(hub: Hub) {
+	const peers: BroadcastPeer[] = [];
+	for (const client of hub.clients) {
+		if (!client.isClipSender)
+			peers.push({ id: client.peerId, role: client.role });
+	}
+
+	const message = JSON.stringify({
+		kind: "peers",
+		peers,
+	} satisfies BroadcastStreamMessage);
+	for (const client of hub.clients) {
+		if (client.isClipSender) client.send(message);
+	}
 }
 
 function serialize(state: BroadcastState) {

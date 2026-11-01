@@ -80,6 +80,13 @@ export const action = defineAction(
 				});
 				break;
 			}
+			case "SET_NEXT_CLIP": {
+				await BroadcastRepository.updateNext({
+					...key,
+					patch: { clipId: body.clipId ?? null },
+				});
+				break;
+			}
 			case "TAKE": {
 				const state =
 					(await BroadcastRepository.findByChannel(key))?.state ??
