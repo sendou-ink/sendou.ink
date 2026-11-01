@@ -47,22 +47,15 @@
 }
 
 .transitions {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-1);
 	width: 100%;
+
+	& > label {
+		flex: 1;
+	}
 
 	@container (width < 760px) {
 		flex-direction: row;
 	}
-}
-
-.transitionForm {
-	display: contents;
-}
-
-.transition {
-	width: 100%;
 }
 
 .scenes {
