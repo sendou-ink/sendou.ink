@@ -1313,7 +1313,6 @@ function Setup({
 				<h2 className={styles.panelHeader}>
 					{t("broadcast:dashboard.info.header")}
 				</h2>
-				<HeadlineForm headline={state.settings.headline} />
 				<CastersForm casterIds={state.settings.casterIds} />
 			</section>
 		</div>
@@ -1449,7 +1448,7 @@ function ThemeReference() {
 }
 
 function designSelector(design: keyof typeof BROADCAST_SCENE_PARTS) {
-	if (design === "stinger" || design === "matchup") {
+	if (design === "stinger" || design === "matchup" || design === "ticker") {
 		return `[data-part="${design}"]`;
 	}
 	if (design === "hold") {

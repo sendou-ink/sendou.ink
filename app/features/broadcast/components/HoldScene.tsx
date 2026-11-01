@@ -12,10 +12,11 @@ import * as Producer from "../core/Producer";
 import styles from "./HoldScene.module.css";
 import { Matchup } from "./Matchup";
 import { SceneBackdrop } from "./SceneBackdrop";
+import { Ticker } from "./Ticker";
 
 const part = scenePart("hold");
 
-/** Full screen of the scenes without gameplay (starting soon, break, technical difficulties, ending): a big title, the headline and the featured match. Starting soon given a duration counts it down. Also the scenes' fallback when they have nothing to show. */
+/** Full screen of the scenes without gameplay (starting soon, break, technical difficulties, ending): a big title, the headline, the featured match and the other matches' ticker. Starting soon given a duration counts it down. Also the scenes' fallback when they have nothing to show. */
 export function HoldScene({
 	scene,
 	state,
@@ -68,6 +69,7 @@ export function HoldScene({
 					<Matchup match={match} view={view} producer={state[view]} />
 				</div>
 			) : null}
+			<Ticker matches={state.otherMatches} className={styles.ticker} />
 		</div>
 	);
 }

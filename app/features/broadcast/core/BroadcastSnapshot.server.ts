@@ -19,6 +19,7 @@ import type {
 	BroadcastCaster,
 	BroadcastChannel,
 	BroadcastMatch,
+	BroadcastOtherMatch,
 	BroadcastPlayer,
 	BroadcastState,
 	BroadcastTeam,
@@ -107,6 +108,7 @@ export async function build({
 			},
 			match,
 			bracket: { live: bracketOf("live"), next: bracketOf("next") },
+			otherMatches: otherMatches({ tournament, featuredMatchId: match?.id }),
 		},
 		eventChannels: R.unique([
 			tournamentChannel(tournamentId),
@@ -172,6 +174,73 @@ function bracketTeam(
 		logoUrl: team.logoUrl,
 		seed: team.seed,
 	};
+}
+
+// xxx: mocked with matches of Paddling Pool 393, make live: the matches of every bracket being played (and maybe
+// just finished) with their event channels in `eventChannels` as their scores are only sent to their bracket's channel
+function otherMatches({
+	tournament,
+	featuredMatchId,
+}: {
+	tournament: Tournament;
+	featuredMatchId: number | undefined;
+}): BroadcastOtherMatch[] {
+	if (tournament.ctx.id !== 4733) return [];
+
+	const matches: BroadcastOtherMatch[] = [
+		{
+			id: 160993,
+			roundName: "WB Semis",
+			teams: [
+				{ name: "flower man", seed: 1 },
+				{ name: "piscine paddling poutine pool", seed: 13 },
+			],
+			scores: [1, 0],
+			winner: null,
+		},
+		{
+			id: 161016,
+			roundName: "LB Round 4",
+			teams: [
+				{ name: "zuun forgot to wake up", seed: 7 },
+				{ name: "Scream", seed: 6 },
+			],
+			scores: [1, 1],
+			winner: null,
+		},
+		{
+			id: 161017,
+			roundName: "LB Round 4",
+			teams: [
+				{ name: "Socks & Sandals", seed: 11 },
+				{ name: "labiteamomooo", seed: 10 },
+			],
+			scores: [0, 2],
+			winner: 1,
+		},
+		{
+			id: 161018,
+			roundName: "LB Round 4",
+			teams: [
+				{ name: "PEZ", seed: 8 },
+				{ name: "Monëy so big", seed: 4 },
+			],
+			scores: [1, 1],
+			winner: null,
+		},
+		{
+			id: 161019,
+			roundName: "LB Round 4",
+			teams: [
+				{ name: "Poker", seed: 5 },
+				{ name: "jsp jsp jsp", seed: 9 },
+			],
+			scores: [1, 0],
+			winner: null,
+		},
+	];
+
+	return matches.filter((match) => match.id !== featuredMatchId);
 }
 
 async function casters(userIds: number[]): Promise<BroadcastCaster[]> {

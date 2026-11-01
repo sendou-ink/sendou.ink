@@ -64,11 +64,25 @@
 	animation: var(--bc-anim-count) var(--bc-enter-duration) var(--bc-ease) both;
 }
 
-.infoBar {
+.bottom {
 	position: absolute;
 	right: 36px;
 	bottom: 36px;
+	left: 36px;
 	display: flex;
+	align-items: flex-end;
+	gap: 24px;
+}
+
+.ticker {
+	flex: 1;
+	min-width: 0;
+}
+
+.infoBar {
+	display: flex;
+	flex-shrink: 0;
+	margin-left: auto;
 	flex-direction: column;
 	align-items: stretch;
 	gap: 6px;
