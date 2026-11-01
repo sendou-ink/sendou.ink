@@ -6,6 +6,15 @@
 	animation: var(--bc-anim-fade-in) var(--bc-enter-duration) var(--bc-ease) both;
 }
 
+.video {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	opacity: 0.35;
+}
+
 .alertStripes {
 	position: absolute;
 	right: -200px;
