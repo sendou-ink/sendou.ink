@@ -198,10 +198,12 @@ export const action = defineAction(
 					userId: user.id,
 					isDroppingAfterSet: !viewer.isDroppingAfterSet,
 				});
-				if (!viewer.isDroppingAfterSet && lobby.chatRoomId) {
+				if (lobby.chatRoomId) {
 					void ChatSystemMessage.sendPersisted({
 						roomId: lobby.chatRoomId,
-						type: "LEAVING_AFTER_SET",
+						type: viewer.isDroppingAfterSet
+							? "STAYING_AFTER_SET"
+							: "LEAVING_AFTER_SET",
 						authorUserId: user.id,
 					});
 				}

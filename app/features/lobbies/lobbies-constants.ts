@@ -39,6 +39,10 @@ export const AUTO_CLOSE_MINUTES = 120;
 /** How long the lobby chat rooms stay open after the lobby's start time */
 export const CHAT_ROOM_LIFESPAN_HOURS = 24;
 
+/** How long after choosing to stay before "Leave after this set" can be picked again, so the chat messages can't be spammed */
+export const DROP_AFTER_SET_COOLDOWN_MS = 30_000;
+export const DROP_AFTER_SET_COOLDOWN_KEY = "lobby-drop-after-set";
+
 export const LOBBY_SIDES = ["ALPHA", "BRAVO"] as const;
 export type LobbySide = (typeof LOBBY_SIDES)[number];
 

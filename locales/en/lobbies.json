@@ -1,6 +1,7 @@
 {
 	"actions.checkIn": "Check in",
 	"actions.dropAfterSet": "Leave after this set",
+	"actions.dropAfterSetCooldown": "Leave after this set ({{seconds}}s)",
 	"actions.leave": "Leave",
 	"actions.leaveNowCallOff": "Leave now & call off the set",
 	"actions.leaveNowForfeit": "Leave now & forfeit the set",

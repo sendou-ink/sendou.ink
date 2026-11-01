@@ -1027,7 +1027,8 @@ test.describe("Lobbies", () => {
 	 * Rankings, the room left short of players. Leaving before any map is reported calls the
 	 * set off, nobody losing it. A player can instead ask to leave once the set is confirmed, leaving the lobby
 	 * then. Asking to is told in the lobby's chat and marked on the Rosters tab, the mark
-	 * explaining itself when clicked.
+	 * explaining itself when clicked. Changing their mind is told in the chat too, after which they
+	 * can't ask to leave again for a while.
 	 */
 	test.describe("Leaving", () => {
 		test("leaving mid-set forfeits it and the room waits for players", async ({
@@ -1155,6 +1156,37 @@ test.describe("Lobbies", () => {
 
 				await expect(lobbyPage.locators.signUpButton).toBeVisible();
 			});
+		});
+
+		test("a player changing their mind about leaving tells the chat and can't ask again right away", async ({
+			page,
+			factories,
+		}) => {
+			const { lobby, alphaPlayer } = await startedLobby(page, factories);
+			const lobbyPage = new LobbyPage(page);
+			const chat = new ChatSidebar(page);
+
+			await impersonate(page, alphaPlayer.id);
+			await lobbyPage.goto(lobby.id, "action");
+			await lobbyPage.dropAfterSet();
+			await expect(lobbyPage.locators.dropAfterSetButton).toHaveText(
+				"Stay after this set",
+			);
+			await lobbyPage.dropAfterSet();
+
+			await expect(lobbyPage.locators.dropAfterSetButton).toBeDisabled();
+			await expect(lobbyPage.locators.dropAfterSetButton).toContainText(
+				/Leave after this set \(\d+s\)/,
+			);
+
+			await chat.selectRoomTab("Lobby");
+			await expect(
+				chat
+					.chat()
+					.message(
+						`${alphaPlayer.name} changed their mind and will stay after this set`,
+					),
+			).toBeVisible();
 		});
 	});
 

@@ -80,6 +80,9 @@ export function MessageLog({
 			case "LEAVING_AFTER_SET": {
 				return t("common:chat.systemMsg.leavingAfterSet", { name });
 			}
+			case "STAYING_AFTER_SET": {
+				return t("common:chat.systemMsg.stayingAfterSet", { name });
+			}
 			case "HOST_CHANGED": {
 				return t("common:chat.systemMsg.hostChanged", { name });
 			}

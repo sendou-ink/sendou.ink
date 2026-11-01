@@ -11,10 +11,19 @@ import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { MatchTimeline } from "~/components/match-page/MatchTimeline";
 import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponReport";
 import { WeaponReporter } from "~/components/match-page/WeaponReporter";
+import { cooldownsPersisted } from "~/features/chat/chat-persisted";
+import * as Cooldowns from "~/features/chat/core/Cooldowns";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
+import { useCooldown } from "~/hooks/useCooldown";
 import { useHasPermission } from "~/modules/permissions/hooks";
+import { usePersistedState } from "~/modules/persisted-state/hooks";
 import * as LobbySet from "../core/LobbySet";
-import { LOBBY_SIDE_TEAM_ID, type LobbySide } from "../lobbies-constants";
+import {
+	DROP_AFTER_SET_COOLDOWN_KEY,
+	DROP_AFTER_SET_COOLDOWN_MS,
+	LOBBY_SIDE_TEAM_ID,
+	type LobbySide,
+} from "../lobbies-constants";
 import { type LobbySetData, useLobbyView } from "../lobbies-hooks";
 import { lobbyActionSchema } from "../lobbies-schemas";
 import styles from "./LobbyActionTab.module.css";
@@ -276,6 +285,11 @@ function LeaveActions({ set }: { set: LobbySetData }) {
 	const { t } = useTranslation(["lobbies"]);
 	const { data } = useLobbyView();
 	const isDroppingAfterSet = data.viewer!.isDroppingAfterSet;
+	const [cooldowns] = usePersistedState(cooldownsPersisted);
+	const cooldownSecondsLeft = useCooldown(
+		cooldowns[DROP_AFTER_SET_COOLDOWN_KEY] ?? null,
+	);
+	const isOnCooldown = !isDroppingAfterSet && cooldownSecondsLeft > 0;
 
 	return (
 		<>
@@ -286,10 +300,22 @@ function LeaveActions({ set }: { set: LobbySetData }) {
 				variant="minimal"
 				icon={isDroppingAfterSet ? <Undo2 size={16} /> : <DoorOpen size={16} />}
 				testId="lobby-drop-after-set-button"
+				isDisabled={isOnCooldown}
+				onClick={() => {
+					if (!isDroppingAfterSet) return;
+					Cooldowns.start(
+						[DROP_AFTER_SET_COOLDOWN_KEY],
+						DROP_AFTER_SET_COOLDOWN_MS,
+					);
+				}}
 			>
 				{isDroppingAfterSet
 					? t("lobbies:actions.stayAfterSet")
-					: t("lobbies:actions.dropAfterSet")}
+					: isOnCooldown
+						? t("lobbies:actions.dropAfterSetCooldown", {
+								seconds: cooldownSecondsLeft,
+							})
+						: t("lobbies:actions.dropAfterSet")}
 			</ActionButton>
 			<LeaveNowMenu isForfeiting={LobbySet.reportedCount(set) > 0} />
 		</>
