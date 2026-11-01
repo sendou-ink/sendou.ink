@@ -64,25 +64,6 @@
 	animation: var(--bc-anim-count) var(--bc-enter-duration) var(--bc-ease) both;
 }
 
-.matchPoint {
-	position: absolute;
-	top: 50%;
-	left: calc(100% + 10px);
-	margin-top: -14px;
-	padding: 4px 10px;
-	border-radius: var(--bc-radius-small);
-	background: var(--team-color);
-	color: var(--team-color-text);
-	font-size: 14px;
-	font-weight: 700;
-	line-height: 20px;
-	text-transform: uppercase;
-	white-space: nowrap;
-	animation:
-		var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease) both,
-		var(--bc-anim-pulse) 1.8s ease-in-out var(--bc-enter-duration) infinite;
-}
-
 .infoBar {
 	position: absolute;
 	right: 36px;

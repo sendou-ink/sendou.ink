@@ -83,11 +83,6 @@ function TeamRow({
 					{side.score}
 				</span>
 			</div>
-			{side.isOnMatchPoint ? (
-				<span className={styles.matchPoint} {...part("match-point")}>
-					{t("broadcast:overlay.matchPoint")}
-				</span>
-			) : null}
 		</div>
 	);
 }

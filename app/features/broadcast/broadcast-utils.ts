@@ -25,7 +25,6 @@ export interface MatchSide {
 	index: 0 | 1;
 	team: BroadcastTeam | null;
 	score: number;
-	isOnMatchPoint: boolean;
 	isWinner: boolean;
 	isLoser: boolean;
 }
@@ -37,7 +36,6 @@ export function matchSides(
 	producer: Pick<ProducerState, "swapSides">,
 ): [MatchSide, MatchSide] {
 	const progress = match.progress[view];
-	const matchPoint = SetProgress.isOnMatchPoint(match, progress);
 	const winner = SetProgress.winner(progress);
 
 	const side = (index: 0 | 1): MatchSide => ({
@@ -45,7 +43,6 @@ export function matchSides(
 		index,
 		team: match.teams[index],
 		score: progress.scores[index],
-		isOnMatchPoint: matchPoint[index],
 		isWinner: winner === index,
 		isLoser: winner !== null && winner !== index,
 	});
