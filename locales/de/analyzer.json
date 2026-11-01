@@ -40,7 +40,6 @@
 	"stat.enemyInkDamageLimit": "Max. Schaden durch gegnerische Tinte",
 	"stat.markedTime": "{{weapon}} Markierungsdauer",
 	"stat.movementReduction": "{{weapon}} Reduzierung der Mobilität",
-	"stat.damage": "{{weapon}} Schaden",
 	"stat.consumption.NORMAL": "Schüsse",
 	"stat.consumption.SWING": "Swings",
 	"stat.consumption.SLOSH": "Sloshes",

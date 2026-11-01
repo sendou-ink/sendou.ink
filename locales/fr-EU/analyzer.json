@@ -67,7 +67,6 @@
 	"stat.enemyInkDamageLimit": "Dégâts max dans l'encre ennemie",
 	"stat.markedTime": "Temps de marquage {{weapon}}",
 	"stat.movementReduction": "Réduction de mouvement de {{weapon}}",
-	"stat.damage": "Dégâts {{weapon}}",
 	"stat.consumption.NORMAL": "Tirs",
 	"stat.consumption.SWING": "Coups",
 	"stat.consumption.SLOSH": "Seaucées",

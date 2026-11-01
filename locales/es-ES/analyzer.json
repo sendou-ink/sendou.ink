@@ -70,7 +70,6 @@
 	"stat.enemyInkDamageLimit": "Daño máximo de tinta rival",
 	"stat.markedTime": "Tiempo de rastreo de {{weapon}}",
 	"stat.movementReduction": "Movilidad reducida por {{weapon}}",
-	"stat.damage": "Daño de {{weapon}}",
 	"stat.consumption.NORMAL": "Disparos",
 	"stat.consumption.SWING": "Barridos",
 	"stat.consumption.SLOSH": "Lanzamientos de tinta",

@@ -13,8 +13,6 @@
 	"count.teams_other": "{{count}} équipes",
 	"count.players_one": "{{count}} joueur",
 	"count.players_other": "{{count}} joueurs",
-	"forms.tags": "Tags",
-	"forms.tags.placeholder": "Choisir un tag",
 	"forms.trophy": "Récompense du trophée",
 	"forms.trophy.placeholder": "Choisissez une récompense pour ce trophée",
 	"forms.mapPool": "Stages disponibles",

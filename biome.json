@@ -8,6 +8,7 @@
 			"!docs/site/dist/**/*",
 			"!docs/site/.astro/**/*",
 			"!docs/site/visits.json",
+			"!translation-usage.json",
 			"!app/db/seed/data/placements.json",
 			"!build/**/*",
 			"!app/features/scanner/tests/fixtures",

@@ -48,7 +48,6 @@
 	"stat.enemyInkDamageLimit": "スリップダメージの上限",
 	"stat.markedTime": "{{weapon}} マーキング時間",
 	"stat.movementReduction": "{{weapon}} 減速",
-	"stat.damage": "{{weapon}} ダメージ",
 	"stat.consumption.NORMAL": "残弾数",
 	"stat.consumption.SWING": "振り回数",
 	"stat.consumption.SLOSH": "残弾数",

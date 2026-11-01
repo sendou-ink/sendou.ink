@@ -20,7 +20,6 @@
 	"actions.sub.prompt_other": "Aún puedes agregar {{count}} subs a tu equipo",
 	"actions.sub.prompt_zero": "Tu equipo está lleno y no puedes agregar más subs",
 	"streams.none": "No hay streams en vivo de este torneo en este momento",
-	"match.pass": "Contraseña",
 	"matches.empty.unscheduled": "No hay sets por programar en este momento",
 	"matches.live": "En vivo",
 	"match.schedule.boardClosed": "El organizador fijó el horario de este set. Contáctalo si hay que cambiarlo.",

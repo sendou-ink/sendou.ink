@@ -49,7 +49,6 @@
 	"stat.enemyInkDamageLimit": "敌方墨汁最大伤害",
 	"stat.markedTime": "{{weapon}} 标记时间",
 	"stat.movementReduction": "{{weapon}} 减速",
-	"stat.damage": "{{weapon}} 伤害",
 	"stat.consumption.NORMAL": "攻击次数",
 	"stat.consumption.SWING": "攻击次数",
 	"stat.consumption.SLOSH": "攻击次数",

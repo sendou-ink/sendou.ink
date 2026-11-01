@@ -1,5 +1,4 @@
 {
-	"ign": "游戏内昵称",
 	"ign.short": "IGN",
 	"widget.bio": "个人简介",
 	"widget.bio-md": "个人简介",
@@ -131,7 +130,6 @@
 	"results.highlights": "高光结果",
 	"results.highlights.choose": "选择高光结果",
 	"results.highlights.explanation": "选择您想要作为高光展示的结果",
-	"search.noResults": "未能找到匹配 “{{query}}” 的用户",
 	"seasons": "赛季",
 	"seasons.noQ": "该用户本赛季未参与 SendouQ",
 	"seasons.noSeasons": "该用户未参加过任何赛季",
@@ -144,8 +142,6 @@
 	"seasons.season.short": "S",
 	"seasons.win.short": "胜",
 	"seasons.loss.short": "负",
-	"seasons.tentative": "暂定",
-	"seasons.tentative.explanation": "排行榜的数据条目较少。一旦有足够多的玩家完成 SP 计算，段位将重新计算。对于大多数玩家来说，这意味着他们的段位可能会下降。但 SP 将始终保持不变。",
 	"seasons.peak": "最高",
 	"seasons.noReportedWeapons": "暂无汇报的武器",
 	"seasons.loading": "加载中...",
@@ -156,6 +152,5 @@
 	"builds.sorting.MODE": "模式",
 	"commissions.open": "开放中",
 	"commissions.closed": "暂停",
-	"mutualFriends": "共同好友",
 	"mutualFriends.count": "个共同好友"
 }

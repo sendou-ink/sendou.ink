@@ -4,7 +4,6 @@
 	"mapPreferences.header": "Preferencias de mapas de SendouQ",
 	"mapPreferences.explanation": "Si se configuran, estas preferencias de mapas se usan en las votaciones de mapas de todo el equipo cuando hacéis cola juntos en SendouQ, en lugar de las preferencias personales de cada miembro.",
 	"mapPreferences.remove.header": "¿Quitar las preferencias de mapas de {{teamName}}? En su lugar se usarán las preferencias personales de los miembros.",
-	"teamSearch.placeholder": "Buscar un equipo o jugador...",
 	"actionButtons.leaveTeam": "Abandonar equipo",
 	"actionButtons.makeMainTeam": "Hacer equipo principal",
 	"actionButtons.mainTeam": "Equipo principal",

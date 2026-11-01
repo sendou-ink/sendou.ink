@@ -44,6 +44,8 @@ jobs:
         run: pnpm run check-plural-collapse
       - name: Check translations are in sync
         run: pnpm run check-translation-sync
+      - name: Check unused translations
+        run: pnpm run check-unused-translations
       - name: Check articles
         run: pnpm run check-articles
       - name: Check CSS custom properties

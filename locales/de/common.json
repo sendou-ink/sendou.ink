@@ -29,7 +29,6 @@
 	"actions.remove": "Entfernen",
 	"actions.delete": "Löschen",
 	"actions.reset": "Zurücksetzen",
-	"actions.loadMore": "Mehr laden",
 	"actions.copyToClipboard": "In die Zwischenablage kopieren",
 	"actions.copyTimestampForDiscord": "Discord-Zeitstempel kopieren",
 	"actions.close": "Schließen",

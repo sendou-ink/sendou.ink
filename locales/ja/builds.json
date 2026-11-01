@@ -3,7 +3,6 @@
 	"forms.title.edit": "ギア構成を編集",
 	"reachBuildMaxCount": "作成可能なギア構成の上限に到達しました。",
 	"noBuilds": "ギア構成はまだ作成されていません。最初のギア構成を作成しましょう!",
-	"forms.title": "題名",
 	"forms.gear.HEAD": "ギア (アタマ)",
 	"forms.gear.CLOTHES": "ギア (フク)",
 	"forms.gear.SHOES": "ギア (クツ)",

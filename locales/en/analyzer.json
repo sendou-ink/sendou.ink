@@ -69,7 +69,6 @@
 	"stat.enemyInkDamageLimit": "Max damage from enemy ink",
 	"stat.markedTime": "{{weapon}} tracking time",
 	"stat.movementReduction": "{{weapon}} movement reduction",
-	"stat.damage": "{{weapon}} damage",
 	"stat.consumption.NORMAL": "Shots",
 	"stat.consumption.SWING": "Swings",
 	"stat.consumption.SLOSH": "Sloshes",

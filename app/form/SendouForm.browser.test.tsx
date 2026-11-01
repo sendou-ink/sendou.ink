@@ -41,7 +41,7 @@ const SINGLE_TEXT_FIELD = singleTextField();
 
 const NESTED_FIELDSET = v.object({
 	member: fieldset({
-		label: "labels.member",
+		label: "labels.teamEditor",
 		fields: singleTextField(),
 	}),
 });
@@ -955,13 +955,13 @@ describe("SendouForm", () => {
 		test("renders fieldset with legend", async () => {
 			const screen = await renderForm(NESTED_FIELDSET);
 
-			await expect.element(screen.getByText("Member")).toBeVisible();
+			await expect.element(screen.getByText("Editor")).toBeVisible();
 		});
 
 		test("renders nested fields inside fieldset", async () => {
 			const schema = v.object({
 				member: fieldset({
-					label: "labels.member",
+					label: "labels.teamEditor",
 					fields: v.object({
 						name: textField({ label: "labels.name", maxLength: 100 }),
 						bio: textAreaOptional({ label: "labels.bio", maxLength: 500 }),

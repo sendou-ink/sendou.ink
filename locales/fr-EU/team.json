@@ -1,7 +1,6 @@
 {
 	"newTeam.header": "Création d'une nouvelle équipe",
 	"editTeam.header": "Edition de {{teamName}}",
-	"teamSearch.placeholder": "Rechercher une équipe ou un joueur...",
 	"actionButtons.leaveTeam": "Quitter l'équipe",
 	"actionButtons.makeMainTeam": "Créer l'équipe principale",
 	"leaveTeam.header": "Êtes vous sur de vouloir quitté {{teamName}}?",
