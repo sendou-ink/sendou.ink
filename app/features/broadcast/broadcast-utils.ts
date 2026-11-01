@@ -108,6 +108,13 @@ export function roundLabel(
 	return [match.bracketName, match.roundName].filter(Boolean).join(" · ");
 }
 
+/** E.g. 0:15 for 15 seconds, rounded up to the second. */
+export function formatClock(ms: number) {
+	const seconds = Math.max(0, Math.ceil(ms / 1000));
+
+	return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
 function sideOf(
 	index: 0 | 1,
 	producer: Pick<ProducerState, "swapSides">,

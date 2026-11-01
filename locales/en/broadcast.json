@@ -24,6 +24,7 @@
 	"dashboard.sides.swap": "Swap",
 	"dashboard.duration.label": "On air for",
 	"dashboard.duration.untilTake": "Until Take",
+	"dashboard.duration.countdown": "Counted down on the scene. Without one, no countdown is shown.",
 	"dashboard.queue.header": "Queue",
 	"dashboard.queue.add": "Queue a scene",
 	"dashboard.queue.auto": "Auto",

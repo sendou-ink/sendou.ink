@@ -1,7 +1,7 @@
 import * as R from "remeda";
 import {
 	BROADCAST_PROTOTYPE_CLIPS,
-	BROADCAST_SCENE_DEFAULT_DURATIONS_MS,
+	BROADCAST_SCENE_DURATIONS_MS,
 	BROADCAST_TRANSITION_TIMING,
 } from "../broadcast-constants";
 import type {
@@ -237,5 +237,5 @@ function followingItem(item: ProducerState, id: number): ProducerState {
 }
 
 function defaultDurationMs(scene: BroadcastScene) {
-	return BROADCAST_SCENE_DEFAULT_DURATIONS_MS[scene] ?? null;
+	return BROADCAST_SCENE_DURATIONS_MS[scene]?.defaultMs ?? null;
 }

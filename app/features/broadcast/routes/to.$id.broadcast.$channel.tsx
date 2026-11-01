@@ -48,8 +48,6 @@ import { Config } from "~/config";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import { useAutoRerender } from "~/hooks/useAutoRerender";
-import { useHydrated } from "~/hooks/useHydrated";
 import { useLatestRef } from "~/hooks/useLatestRef";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -57,19 +55,22 @@ import { tournamentMatchPage } from "~/utils/urls";
 import {
 	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_DASHBOARD_TABS,
-	BROADCAST_DURATIONS_MS,
 	BROADCAST_HOLD_SCENES,
 	BROADCAST_INK_COLORS,
 	BROADCAST_KEYFRAMES,
 	BROADCAST_PROTOTYPE_CLIPS,
 	BROADCAST_REHEARSE_MESSAGE,
-	BROADCAST_SCENE_DEFAULT_DURATIONS_MS,
+	BROADCAST_SCENE_DURATIONS_MS,
 	BROADCAST_SCENE_GROUPS,
 	BROADCAST_SCENE_PARTS,
 	BROADCAST_THEME_TOKENS,
 	BROADCAST_TRANSITIONS,
 } from "../broadcast-constants";
-import { useBroadcastStream, useClipSender } from "../broadcast-hooks";
+import {
+	useBroadcastStream,
+	useClipSender,
+	useServerNow,
+} from "../broadcast-hooks";
 import {
 	broadcastActionSchema,
 	broadcastCastersFormSchema,
@@ -90,6 +91,7 @@ import {
 	broadcastStreamUrl,
 } from "../broadcast-urls";
 import {
+	formatClock,
 	gameInk,
 	inkColorVars,
 	matchSides,
@@ -1202,10 +1204,9 @@ function ClipProperty({ selected }: { selected: ProducerState }) {
 function DurationProperty({ selected }: { selected: ProducerState }) {
 	const { t } = useTranslation(["broadcast"]);
 	const { submit } = useActionSubmit(broadcastActionSchema);
+	const durations = BROADCAST_SCENE_DURATIONS_MS[selected.scene];
 
-	if (BROADCAST_SCENE_DEFAULT_DURATIONS_MS[selected.scene] === undefined) {
-		return null;
-	}
+	if (!durations) return null;
 
 	return (
 		<Property label={t("broadcast:dashboard.duration.label")}>
@@ -1221,7 +1222,7 @@ function DurationProperty({ selected }: { selected: ProducerState }) {
 				>
 					{t("broadcast:dashboard.duration.untilTake")}
 				</SendouChipRadio>
-				{BROADCAST_DURATIONS_MS.map((durationMs) => (
+				{durations.optionsMs.map((durationMs) => (
 					<SendouChipRadio
 						key={durationMs}
 						name="broadcast-duration"
@@ -1235,6 +1236,11 @@ function DurationProperty({ selected }: { selected: ProducerState }) {
 					</SendouChipRadio>
 				))}
 			</SendouChipRadioGroup>
+			{selected.scene === "starting" ? (
+				<span className="text-xs text-lighter">
+					{t("broadcast:dashboard.duration.countdown")}
+				</span>
+			) : null}
 		</Property>
 	);
 }
@@ -1455,14 +1461,6 @@ function designSelector(design: keyof typeof BROADCAST_SCENE_PARTS) {
 	return `[data-scene="${design}"]`;
 }
 
-/** The server's clock (epoch ms) ticking every second, `null` until hydrated as the server rendered another time. */
-function useServerNow(clockOffsetMs: number) {
-	const tick = useAutoRerender("second");
-	const isHydrated = useHydrated();
-
-	return isHydrated ? tick.getTime() + clockOffsetMs : null;
-}
-
 /** Whether every OBS source has every clip, one going on air without it shows the OBS footage instead. */
 function everySourceHasClips(statuses: ClipTransfer.ClipPeerStatus[]) {
 	return statuses
@@ -1481,11 +1479,4 @@ function itemDetail(item: ProducerState) {
 	return [clip?.name, length !== null ? formatClock(length) : null]
 		.filter(Boolean)
 		.join(" · ");
-}
-
-/** E.g. 0:15 for 15 seconds, rounded up to the second. */
-function formatClock(ms: number) {
-	const seconds = Math.max(0, Math.ceil(ms / 1000));
-
-	return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }

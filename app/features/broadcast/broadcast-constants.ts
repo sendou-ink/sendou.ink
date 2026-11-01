@@ -37,19 +37,27 @@ export const BROADCAST_TRANSITION_TIMING = {
 >;
 
 /**
- * Scenes without footage of their own to last as long as, which can be given a duration instead, with the one they
- * get when picked. The others stay on air until a Take.
+ * Scenes without footage of their own to last as long as, which can be given a duration instead: the one they get
+ * when picked (`null` until a Take) and the ones the dashboard offers. Starting soon counts its duration down on air.
+ * The others stay on air until a Take.
  */
-export const BROADCAST_SCENE_DEFAULT_DURATIONS_MS: Partial<
-	Record<BroadcastScene, number>
+export const BROADCAST_SCENE_DURATIONS_MS: Partial<
+	Record<
+		BroadcastScene,
+		{ defaultMs: number | null; optionsMs: readonly number[] }
+	>
 > = {
-	bracket: 15_000,
+	starting: {
+		defaultMs: null,
+		optionsMs: [
+			60_000, 120_000, 180_000, 300_000, 600_000, 900_000, 1_200_000, 1_800_000,
+		],
+	},
+	bracket: {
+		defaultMs: 15_000,
+		optionsMs: [10_000, 15_000, 20_000, 30_000, 45_000, 60_000],
+	},
 };
-
-/** Durations the dashboard offers for the scenes of {@link BROADCAST_SCENE_DEFAULT_DURATIONS_MS}. */
-export const BROADCAST_DURATIONS_MS = [
-	10_000, 15_000, 20_000, 30_000, 45_000, 60_000,
-] as const;
 
 /**
  * Splatoon 3's ink color pairs, the first team's color first. Picking one colors the game scoreboard's teams as
@@ -273,6 +281,7 @@ export const BROADCAST_SCENE_PARTS = {
 		"tournament-logo",
 		"tournament-name",
 		"title",
+		"countdown",
 		"headline",
 		"matchup-label",
 	],

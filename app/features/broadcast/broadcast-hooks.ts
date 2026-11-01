@@ -1,5 +1,7 @@
 import * as React from "react";
 import { HEARTBEAT_INTERVAL_MS } from "~/features/events/events-types";
+import { useAutoRerender } from "~/hooks/useAutoRerender";
+import { useHydrated } from "~/hooks/useHydrated";
 import type { BroadcastState, BroadcastStreamMessage } from "./broadcast-types";
 import * as ClipTransfer from "./core/ClipTransfer";
 
@@ -100,6 +102,14 @@ export function useBroadcastStream({
 	}, [url]);
 
 	return { state, isConnected, clockOffsetMs };
+}
+
+/** The server's clock (epoch ms) ticking every second, `null` until hydrated as the server rendered another time. */
+export function useServerNow(clockOffsetMs: number) {
+	const tick = useAutoRerender("second");
+	const isHydrated = useHydrated();
+
+	return isHydrated ? tick.getTime() + clockOffsetMs : null;
 }
 
 /** Sends the clips to the broadcast's overlays, see `ClipTransfer.createSender`. Pass `onMessage` to `useBroadcastStream`. */
