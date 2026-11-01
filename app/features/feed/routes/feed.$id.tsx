@@ -12,7 +12,7 @@ import { action } from "../actions/feed.$id.server";
 import { FeedItemCard } from "../components/FeedItemCard";
 import { feedItemActionSchema } from "../feed-schemas";
 import { feedSearchParams } from "../feed-search-params";
-import { FEED_TEST_PAGE, type FeedItemPageState } from "../feed-urls";
+import type { FeedItemPageState } from "../feed-urls";
 import { loader } from "../loaders/feed.$id.server";
 import styles from "./feed.$id.module.css";
 
@@ -43,10 +43,10 @@ export default function FeedItemPage() {
 		...sent.filter((comment) => !savedPublicIds.has(comment.publicId)),
 	];
 
-	const backTo =
-		data.mode === "TEST"
-			? feedSearchParams.href(FEED_TEST_PAGE, { viewAs: data.viewAs })
-			: feedSearchParams.href("/", { viewAs: data.viewAs });
+	const backTo = feedSearchParams.href("/", {
+		viewAs: data.viewAs,
+		test: data.mode === "TEST",
+	});
 
 	const sendComment = (comment: { publicId: string; contents: string }) => {
 		if (!user) return;

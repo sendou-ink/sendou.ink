@@ -8,6 +8,7 @@ import {
 	FEED_ITEM_TYPES,
 	type FeedItemTypeDefinition,
 } from "../feed-constants";
+import { feedSearchParams } from "../feed-search-params";
 import {
 	FEED_SOURCE_FEATURES,
 	FEED_SOURCE_NONE,
@@ -63,9 +64,10 @@ export default function FeedSourcesPage() {
 					appears, who sees it and what the post would say.{" "}
 					<b>{allSources.length} item types</b> from{" "}
 					<b>{FEED_SOURCE_FEATURES.length} features</b>. {prototypeCount} are
-					already on <Link to="/feed-test">/feed-test</Link>, the other{" "}
-					{allSources.length - prototypeCount} are new ideas. Example names are
-					fictional.
+					already on the{" "}
+					<Link to={feedSearchParams.href("/", { test: true })}>test feed</Link>
+					, the other {allSources.length - prototypeCount} are new ideas.
+					Example names are fictional.
 				</p>
 			</header>
 			<div className={styles.legend}>

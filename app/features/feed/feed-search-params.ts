@@ -15,6 +15,8 @@ export const feedSearchParams = SearchParams.define({
 	tab: SP.param(v.nullable(v.picklist(FEED_TABS)), { loader: false }),
 	/** Dev only: whose feed is shown */
 	viewAs: SP.param(v.nullable(userId), { loader: true }),
+	/** Dev only: shows every item type with mock data instead of the real feed */
+	test: SP.param(v.boolean(), { default: false, loader: true }),
 	/** Share link: whose feed the post is from, valid only with `token` */
 	sharedBy: SP.param(v.nullable(userId), { loader: true }),
 	token: SP.param(v.nullable(v.pipe(v.string(), v.maxLength(64))), {

@@ -31,7 +31,6 @@ const devOnlyRoutes =
 					"/match-page-test",
 					"features/match-page-test/routes/match-page-test.tsx",
 				),
-				route("/feed-test", "features/feed/routes/feed-test.tsx"),
 				route("/feed-sources", "features/feed/routes/feed-sources.tsx"),
 				route("/feed/:id", "features/feed/routes/feed.$id.tsx"),
 				route(

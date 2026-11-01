@@ -2,8 +2,6 @@
 
 import { feedSearchParams } from "./feed-search-params";
 
-export const FEED_TEST_PAGE = "/feed-test";
-
 /** Navigation state of a post page opened from the feed, its back link then goes back in history to keep the feed's scroll position */
 export interface FeedItemPageState {
 	fromFeed: true;

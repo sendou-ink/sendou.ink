@@ -10,6 +10,7 @@ describe("feedSearchParams", () => {
 		assertRoundTrips(feedSearchParams, {
 			tab: [null, "FRIENDS", "SENDOUQ"],
 			viewAs: [null, 1, 274],
+			test: [false, true],
 			sharedBy: [null, 274],
 			token: [null, "abc-_123"],
 		});

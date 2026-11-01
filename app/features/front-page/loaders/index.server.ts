@@ -27,13 +27,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = getUser();
 
 	if (isFeedTester(user) && user?.preferences?.newHomePage) {
-		const { viewAs } = feedSearchParams.parse(request);
+		const { viewAs, test } = feedSearchParams.parse(request);
 
 		return {
 			feed: await FeedPage.load({
 				viewerId: viewAs ?? user.id,
 				userId: user.id,
-				mode: "REAL",
+				mode: test ? "TEST" : "REAL",
 			}),
 		};
 	}
