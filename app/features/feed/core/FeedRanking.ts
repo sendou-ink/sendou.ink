@@ -1,6 +1,7 @@
 import {
 	FEED_AUDIENCE_AFFINITY,
 	FEED_ITEM_TYPES,
+	FEED_MAX_AGE_HALF_LIVES,
 	FEED_SAME_ACTOR_PENALTY,
 	FEED_SAME_CATEGORY_PENALTY,
 	type FeedItemType,
@@ -48,6 +49,16 @@ export function score(
 		ageHours,
 		total: definition.baseScore * affinity * recency,
 	};
+}
+
+/** Whether the item is too old to show, `FEED_MAX_AGE_HALF_LIVES` half-lives of its type. Live and pinned items never are. */
+export function isStale(item: Pick<RankableItem, "type" | "at">, now: number) {
+	const definition: FeedItemTypeDefinition = FEED_ITEM_TYPES[item.type];
+	if (definition.isLive || definition.isPinned) return false;
+
+	return (
+		(now - item.at) / 3600 > FEED_MAX_AGE_HALF_LIVES * definition.halfLifeHours
+	);
 }
 
 /**

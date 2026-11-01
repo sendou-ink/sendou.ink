@@ -3,7 +3,8 @@ import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
-import { teamPage } from "~/utils/urls";
+import { lfgSearchParams } from "~/features/lfg/lfg-search-params";
+import { LFG_PAGE, scrimsPage, teamPage } from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
 import type { FeedItemContent } from "./FeedItemCard";
 import {
@@ -43,7 +44,6 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 						<UserStack users={data.team.members} />
 					</div>
 				),
-				reactionCount: 4,
 			};
 		}
 		case "TEAM_NEW": {
@@ -103,7 +103,6 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 						<UserStack users={data.team.members} />
 					</div>
 				),
-				reactionCount: 9,
 			};
 		}
 		case "TEAM_AVAILABILITY": {
@@ -196,6 +195,7 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 						) : null}
 					</>
 				),
+				href: scrimsPage(),
 			};
 		}
 		case "SCRIM_RESULT": {
@@ -242,6 +242,7 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 						</div>
 					</>
 				),
+				href: lfgSearchParams.href(LFG_PAGE, { post: data.postId }),
 			};
 		}
 		case "LFG_TEAM": {
@@ -261,6 +262,7 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 						</span>
 					</>
 				),
+				href: lfgSearchParams.href(LFG_PAGE, { post: data.postId }),
 			};
 		}
 		default:

@@ -11,7 +11,10 @@ import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRe
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import { userSkills } from "~/features/mmr/tiered.server";
-import { lastCompletedVoting } from "~/features/plus-voting/core/voting-time";
+import {
+	rangeToMonthYear,
+	seasonToVotingRange,
+} from "~/features/plus-voting/core/voting-time";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
@@ -57,6 +60,7 @@ import type {
 } from "../feed-types";
 import * as FeedCache from "./FeedCache.server";
 import * as FeedEvents from "./FeedEvents";
+import * as FeedItemIds from "./FeedItemIds";
 import * as FeedRotations from "./FeedRotations";
 import * as FeedSchedule from "./FeedSchedule";
 
@@ -76,21 +80,10 @@ const SHARED_ITEM_TYPES = new Set<FeedItemType>([
 	"SQ_META",
 	"STREAM_LIVE",
 	"TO_LFG",
-	"TO_ORG_NEW",
-	"TO_VOD",
-	"TO_TROPHY",
 	"TO_SHOWCASE",
 	"TO_RESULT_FEATURED",
 	"ON_THIS_DAY",
-	"TEAM_NEW",
-	"TEAM_AVAILABILITY",
 	"SCRIM_POST",
-	"SCRIM_RESULT",
-	"LFG_PLAYER",
-	"LFG_TEAM",
-	"ART_NEW",
-	"ART_TAGGED",
-	"ART_COMMISSIONS",
 	"VOD_NEW",
 	"ANNOUNCEMENT",
 	"TO_LUTI_REGISTRATION",
@@ -102,7 +95,11 @@ const SHARED_ITEM_TYPES = new Set<FeedItemType>([
 	"CALENDAR_EVENT_NEW",
 ]);
 
+/** `REAL` is the feed as it is now, `TEST` the dev test page: "now" follows the latest SendouQ match and items fall back to placeholders and rows of anyone */
+export type FeedMode = "REAL" | "TEST";
+
 export interface FeedContext {
+	mode: FeedMode;
 	viewerId: number;
 	friendIds: number[];
 	friendIdSet: Set<number>;
@@ -115,7 +112,10 @@ export interface FeedContext {
 }
 
 /** What the items that look the same to every viewer are built from */
-type SharedFeedContext = Pick<FeedContext, "now" | "season" | "previousSeason">;
+type SharedFeedContext = Pick<
+	FeedContext,
+	"mode" | "now" | "season" | "previousSeason"
+>;
 
 interface BuiltItem<D> {
 	at: number;
@@ -194,6 +194,8 @@ export type FeedItemData<T extends FeedItemType> = NonNullable<
 
 export type FeedItem = {
 	[T in FeedItemType]: {
+		/** See `FeedItemIds` */
+		id: string;
 		type: T;
 		at: number;
 		actorKey: string;
@@ -201,19 +203,20 @@ export type FeedItem = {
 	};
 }[FeedItemType];
 
-/** The feed context of the viewer, with "now" shortly after the latest SendouQ match. */
-export async function contextFor(viewerId: number): Promise<FeedContext> {
+/** The feed context of the viewer. In `TEST` mode "now" is shortly after the latest SendouQ match. */
+export async function contextFor({
+	viewerId,
+	mode,
+}: {
+	viewerId: number;
+	mode: FeedMode;
+}): Promise<FeedContext> {
 	const friendIds = await FriendRepository.findFriendIds(viewerId);
-	const latestMatchAt = await FeedRepository.findLatestGroupMatchCreatedAt();
-	const now = Math.min(
-		databaseTimestampNow(),
-		latestMatchAt
-			? latestMatchAt + NOW_AFTER_LATEST_MATCH_SECONDS
-			: databaseTimestampNow(),
-	);
+	const now = mode === "TEST" ? await testNow() : databaseTimestampNow();
 	const nowDate = databaseTimestampToDate(now);
 
 	return {
+		mode,
 		viewerId,
 		friendIds,
 		friendIdSet: new Set(friendIds),
@@ -225,20 +228,47 @@ export async function contextFor(viewerId: number): Promise<FeedContext> {
 }
 
 /** Builds the item of the given type as seen by the viewer of the context, `null` if there is none. */
-export async function buildOne(
+async function buildOne(
 	type: FeedItemType,
 	ctx: FeedContext,
 ): Promise<FeedItem | null> {
 	const built = SHARED_ITEM_TYPES.has(type)
 		? await FeedCache.cached({
-				key: `shared-item-${type}`,
+				key: `${ctx.mode}-shared-item-${type}`,
 				ttlMs: MINUTE_MS,
 				getFreshValue: () => BUILDERS[type](ctx),
 			})
 		: await BUILDERS[type](ctx);
 	if (!built) return null;
 
-	return { type, ...built } as FeedItem;
+	const at = Math.min(built.at, ctx.now);
+
+	return {
+		id: FeedItemIds.make({ type, at, actorKey: built.actorKey }),
+		type,
+		...built,
+		at,
+	} as FeedItem;
+}
+
+/** The post with the id as the viewer sees it now, `null` once their feed no longer has it. */
+export async function findById({
+	id,
+	viewerId,
+}: {
+	id: string;
+	viewerId: number;
+}): Promise<{ item: FeedItem; ctx: FeedContext } | null> {
+	const type = FeedItemIds.typeOf(id);
+	if (!type) return null;
+
+	for (const mode of ["REAL", "TEST"] as const) {
+		const ctx = await contextFor({ viewerId, mode });
+		const item = await buildOne(type, ctx);
+		if (item?.id === id) return { item, ctx };
+	}
+
+	return null;
 }
 
 /**
@@ -412,9 +442,17 @@ async function buildSqLeaderboard(ctx: FeedContext) {
 	if (index === -1) return null;
 
 	const entry = leaderboard[index];
+	const season = ctx.season;
+	const latestSetAt = await FeedCache.cached({
+		key: `latest-set-at-${entry.id}-${season}`,
+		ttlMs: MINUTE_MS,
+		getFreshValue: () =>
+			FeedRepository.findLatestSkillCreatedAt({ userId: entry.id, season }),
+	});
+	if (!latestSetAt) return null;
 
 	return {
-		at: ctx.now - 5 * HOUR,
+		at: latestSetAt,
 		actorKey: String(entry.id),
 		data: {
 			actor: R.pick(entry, ["id", "username", "customUrl", "avatar"]),
@@ -488,8 +526,13 @@ async function buildSqSeasonRecap(ctx: FeedContext) {
 	const bestMap = R.firstBy(playedEnough, [winRate, "desc"]);
 	const worstMap = R.firstBy(playedEnough, [winRate, "asc"]);
 
+	const previousSeasonEndsAt = Seasons.previous(
+		databaseTimestampToDate(ctx.now),
+	)?.ends;
+	if (!previousSeasonEndsAt) return null;
+
 	return {
-		at: ctx.now - 40 * HOUR,
+		at: dateToDatabaseTimestamp(previousSeasonEndsAt),
 		actorKey: String(entry.id),
 		data: {
 			actor: R.pick(entry, ["id", "username", "customUrl", "avatar"]),
@@ -519,7 +562,7 @@ async function buildSqRivalry(ctx: FeedContext) {
 	const users = await usersById([rivalry.userId, rivalry.data.otherUserId]);
 
 	return {
-		at: ctx.now - 20 * HOUR,
+		at: rivalry.at,
 		actorKey: String(rivalry.userId),
 		data: {
 			actor: users.get(rivalry.userId)!,
@@ -632,13 +675,18 @@ function leaderboardSnapshot({ season, at }: { season: number; at: number }) {
 }
 
 async function buildSqMeta(ctx: SharedFeedContext) {
+	const publishedAt = dateToDatabaseTimestamp(
+		FeedSchedule.latestWeekly(databaseTimestampToDate(ctx.now), {
+			weekday: FeedSchedule.WEEKDAY.MONDAY,
+		}),
+	);
 	const thisWeek = await FeedRepository.findWeaponUsageCounts({
-		from: ctx.now - 7 * DAY,
-		to: ctx.now,
+		from: publishedAt - 7 * DAY,
+		to: publishedAt,
 	});
 	const lastWeek = await FeedRepository.findWeaponUsageCounts({
-		from: ctx.now - 14 * DAY,
-		to: ctx.now - 7 * DAY,
+		from: publishedAt - 14 * DAY,
+		to: publishedAt - 7 * DAY,
 	});
 	const totalThisWeek = R.sumBy(thisWeek, (row) => row.count);
 	const totalLastWeek = R.sumBy(lastWeek, (row) => row.count);
@@ -667,7 +715,7 @@ async function buildSqMeta(ctx: SharedFeedContext) {
 	if (changes.length < 5) return null;
 
 	return {
-		at: ctx.now - 9 * HOUR,
+		at: publishedAt,
 		actorKey: "SQ_META",
 		data: {
 			rising: changes.slice(0, 3),
@@ -680,7 +728,7 @@ async function buildSqMeta(ctx: SharedFeedContext) {
 async function buildLobbyRecap(ctx: FeedContext) {
 	const lobby = (
 		await FeedCache.cached({
-			key: "recent-lobbies",
+			key: `${ctx.mode}-recent-lobbies`,
 			ttlMs: MINUTE_MS,
 			getFreshValue: () =>
 				FeedRepository.findAllLobbiesEndedAfter(
@@ -852,7 +900,7 @@ async function buildTournamentDigest(ctx: FeedContext) {
 	);
 
 	return {
-		at: ctx.now - HOUR,
+		at: Math.max(...results.map((result) => result.startsAt)) + 6 * HOUR,
 		actorKey: "TO_DIGEST",
 		data: {
 			tournamentCount: new Set(results.map((result) => result.tournamentId))
@@ -889,7 +937,9 @@ async function buildTournamentRegistered(ctx: FeedContext) {
 	);
 
 	return {
-		at: ctx.now - 14 * HOUR,
+		at: Math.max(
+			...sameTournament.map((registration) => registration.registeredAt),
+		),
 		actorKey: String(first.userId),
 		data: {
 			actor: users.get(first.userId)!,
@@ -906,7 +956,7 @@ async function buildTournamentRegistered(ctx: FeedContext) {
 /** Everyone registered to an upcoming tournament, soonest first */
 async function upcomingRegistrations(ctx: FeedContext) {
 	const registrations = await FeedCache.cached({
-		key: "upcoming-registrations",
+		key: `${ctx.mode}-upcoming-registrations`,
 		ttlMs: MINUTE_MS,
 		getFreshValue: () => FeedRepository.findAllUpcomingRegistrations(ctx.now),
 	});
@@ -1041,7 +1091,7 @@ async function buildTournamentLfg(ctx: SharedFeedContext) {
 	]);
 
 	return {
-		at: ctx.now - 3 * HOUR,
+		at: looking.createdAt,
 		actorKey: `tournament-team-${looking.id}`,
 		data: {
 			team,
@@ -1052,20 +1102,69 @@ async function buildTournamentLfg(ctx: SharedFeedContext) {
 	};
 }
 
-async function buildOrganizationTournament(ctx: SharedFeedContext) {
-	const row =
+async function buildOrganizationTournament(ctx: FeedContext) {
+	const playedOrganizationIds = new Set(
+		await FeedCache.cached({
+			key: `played-organizations-${ctx.viewerId}`,
+			ttlMs: HOUR_MS,
+			getFreshValue: () =>
+				FeedRepository.findOrganizationIdsPlayedByUserId({
+					userId: ctx.viewerId,
+					after: ctx.now - 365 * DAY,
+				}),
+		}),
+	);
+	const announced = await FeedCache.cached({
+		key: `${ctx.mode}-announced-organization-tournaments`,
+		ttlMs: MINUTE_MS,
+		getFreshValue: () =>
+			FeedRepository.findAllOrganizationTournamentsAddedAfter(
+				ctx.now - FEED_EVENT_MAX_RETENTION_DAYS * DAY,
+			),
+	});
+	const chosen = announced.find(
+		(row) =>
+			row.createdAt <= ctx.now &&
+			row.startsAt > ctx.now &&
+			playedOrganizationIds.has(row.organizationId),
+	);
+	if (chosen) {
+		return organizationTournamentItem({
+			row: chosen,
+			at: chosen.createdAt,
+			ctx,
+		});
+	}
+	if (ctx.mode !== "TEST") return null;
+
+	const latest =
 		await FeedRepository.findLatestOrganizationTournamentStartingBetween({
 			from: ctx.now + 7 * DAY,
 			to: ctx.now + 60 * DAY,
 		});
-	if (!row) return null;
+	if (!latest) return null;
 
-	const [tournament] = await FeedRepository.findTournamentsByIds([
-		row.tournamentId,
-	]);
+	return organizationTournamentItem({
+		row: latest,
+		at: ctx.now - 26 * HOUR,
+		ctx,
+	});
+}
+
+async function organizationTournamentItem({
+	row,
+	at,
+	ctx,
+}: {
+	row: FeedRepository.OrganizationTournament;
+	at: number;
+	ctx: FeedContext;
+}) {
+	const tournament = await tournamentById(row.tournamentId);
+	const registrationClosesAt = row.settings.regClosesAt ?? row.startsAt;
 
 	return {
-		at: ctx.now - 26 * HOUR,
+		at,
 		actorKey: `organization-${row.organizationSlug}`,
 		data: {
 			organization: {
@@ -1075,6 +1174,11 @@ async function buildOrganizationTournament(ctx: SharedFeedContext) {
 			},
 			tournament,
 			teamCount: row.teamCount ?? 0,
+			registration: row.settings.isInvitational
+				? ("INVITATIONAL" as const)
+				: registrationClosesAt > ctx.now
+					? ("OPEN" as const)
+					: ("CLOSED" as const),
 			bracketNames: row.settings.bracketProgression.map(
 				(bracket) => bracket.name,
 			),
@@ -1099,7 +1203,7 @@ async function buildSeriesStandings(ctx: FeedContext) {
 	);
 	if (!chosen?.friendCount) return null;
 
-	const { standings, friendIndex } = chosen;
+	const { standings, friendIndex, latestStartsAt } = chosen;
 	const shown = standings.slice(0, 3);
 	if (friendIndex > 2) shown.push(standings[friendIndex]);
 
@@ -1112,7 +1216,7 @@ async function buildSeriesStandings(ctx: FeedContext) {
 	});
 
 	return {
-		at: ctx.now - 15 * HOUR,
+		at: latestStartsAt + 6 * HOUR,
 		actorKey: `series-${chosen.series.name}`,
 		data: {
 			seriesName: chosen.series.name,
@@ -1131,20 +1235,27 @@ async function buildSeriesStandings(ctx: FeedContext) {
 /** Points standings of the last 90 days of every series that shows a leaderboard */
 function seriesStandings(ctx: FeedContext) {
 	return FeedCache.cached({
-		key: "series-standings",
+		key: `${ctx.mode}-series-standings`,
 		ttlMs: 10 * MINUTE_MS,
 		async getFreshValue() {
 			const allSeries = await FeedRepository.findSeriesWithLeaderboard();
 			const result: Array<{
 				series: (typeof allSeries)[number];
-				standings: Awaited<ReturnType<typeof standingsOfSeries>>;
+				standings: Awaited<ReturnType<typeof standingsOfSeries>>["standings"];
+				latestStartsAt: number;
 				indexByUserId: Map<number, number>;
 			}> = [];
 			for (const series of allSeries) {
-				const standings = await standingsOfSeries({ series, now: ctx.now });
+				const { standings, latestStartsAt } = await standingsOfSeries({
+					series,
+					now: ctx.now,
+				});
+				if (latestStartsAt === null) continue;
+
 				result.push({
 					series,
 					standings,
+					latestStartsAt,
 					indexByUserId: new Map(
 						standings.map((standing, index) => [standing.userId, index]),
 					),
@@ -1170,20 +1281,41 @@ async function standingsOfSeries({
 		to: now,
 	});
 
-	return R.sortBy(
-		Object.entries(R.groupBy(placements, (p) => p.userId)).map(
-			([userId, rows]) => ({
-				userId: Number(userId),
-				points: R.sumBy(rows, (row) => SERIES_POINTS[row.placement] ?? 1),
-				eventCount: rows.length,
-			}),
+	return {
+		standings: R.sortBy(
+			Object.entries(R.groupBy(placements, (p) => p.userId)).map(
+				([userId, rows]) => ({
+					userId: Number(userId),
+					points: R.sumBy(rows, (row) => SERIES_POINTS[row.placement] ?? 1),
+					eventCount: rows.length,
+				}),
+			),
+			[(standing) => standing.points, "desc"],
 		),
-		[(standing) => standing.points, "desc"],
-	);
+		latestStartsAt:
+			placements.length > 0
+				? Math.max(...placements.map((placement) => placement.startsAt))
+				: null,
+	};
 }
 
-async function buildTournamentVod() {
-	const vod = await FeedRepository.findLatestTournamentMatchVod();
+async function buildTournamentVod(ctx: FeedContext) {
+	const vod = forViewer(
+		ctx,
+		(
+			await FeedCache.cached({
+				key: "latest-tournament-match-vods",
+				ttlMs: MINUTE_MS,
+				getFreshValue: FeedRepository.findLatestTournamentMatchVods,
+			})
+		).filter(
+			(candidate) =>
+				candidate.opponentOne?.id &&
+				candidate.opponentTwo?.id &&
+				candidate.userId !== null,
+		),
+		(candidate) => isViewerOrFriend(ctx, candidate.userId!),
+	);
 	if (!vod?.opponentOne?.id || !vod.opponentTwo?.id || vod.userId === null) {
 		return null;
 	}
@@ -1217,7 +1349,7 @@ async function buildTournamentVod() {
 
 async function buildTournamentBadge(ctx: FeedContext) {
 	const owners = await FeedCache.cached({
-		key: "recent-badge-owners",
+		key: `${ctx.mode}-recent-badge-owners`,
 		ttlMs: 10 * MINUTE_MS,
 		getFreshValue: () =>
 			FeedRepository.findAllTournamentBadgeOwnersStartedAfter(
@@ -1248,8 +1380,16 @@ async function buildTournamentBadge(ctx: FeedContext) {
 	};
 }
 
-async function buildTrophy() {
-	const owner = await FeedRepository.findLatestTrophyOwner();
+async function buildTrophy(ctx: FeedContext) {
+	const owner = forViewer(
+		ctx,
+		await FeedCache.cached({
+			key: "latest-trophy-owners",
+			ttlMs: 10 * MINUTE_MS,
+			getFreshValue: FeedRepository.findLatestTrophyOwners,
+		}),
+		(candidate) => ctx.friendIdSet.has(candidate.userId),
+	);
 	if (!owner) return null;
 
 	const [tournament] = await FeedRepository.findTournamentsByIds([
@@ -1262,8 +1402,10 @@ async function buildTrophy() {
 		actorKey: String(owner.userId),
 		data: {
 			actor: users.get(owner.userId)!,
-			trophyId: owner.trophyId,
-			trophyName: owner.name,
+			trophy: {
+				id: owner.trophyId,
+				...R.pick(owner, ["name", "model", "code"]),
+			},
 			tier: owner.tier,
 			tournament,
 		},
@@ -1323,7 +1465,7 @@ async function buildFeaturedResult(ctx: SharedFeedContext) {
 async function buildBracketPreview(ctx: FeedContext) {
 	const closed = (
 		await FeedCache.cached({
-			key: "registration-closed-tournaments",
+			key: `${ctx.mode}-registration-closed-tournaments`,
 			ttlMs: MINUTE_MS,
 			getFreshValue: () =>
 				FeedRepository.findTournamentsWithRegistrationClosedBetween({
@@ -1488,18 +1630,23 @@ async function buildTournamentStaff(ctx: FeedContext) {
 	const after = ctx.now - 2 * DAY;
 	const staff = (
 		await FeedCache.cached({
-			key: "upcoming-staff",
+			key: `${ctx.mode}-upcoming-staff`,
 			ttlMs: MINUTE_MS,
 			getFreshValue: () => FeedRepository.findAllUpcomingStaff(after),
 		})
-	).find((row) => row.startsAt > after && ctx.friendIdSet.has(row.userId));
+	).find(
+		(row) =>
+			row.startsAt > after &&
+			ctx.friendIdSet.has(row.userId) &&
+			(ctx.mode === "TEST" || row.createdAt !== null),
+	);
 	if (!staff) return null;
 
 	const tournament = await tournamentById(staff.tournamentId);
 	const users = await usersById([staff.userId]);
 
 	return {
-		at: ctx.now - 50 * HOUR,
+		at: staff.createdAt ?? ctx.now - 50 * HOUR,
 		actorKey: String(staff.userId),
 		data: { actor: users.get(staff.userId)!, tournament, role: staff.role },
 	};
@@ -1510,7 +1657,7 @@ async function buildTournamentStaff(ctx: FeedContext) {
 async function buildTeamJoin(ctx: FeedContext) {
 	const join = (
 		await FeedCache.cached({
-			key: "recent-team-joins",
+			key: `${ctx.mode}-recent-team-joins`,
 			ttlMs: 5 * MINUTE_MS,
 			getFreshValue: () =>
 				FeedRepository.findAllTeamJoinsAfter(
@@ -1533,8 +1680,21 @@ async function buildTeamJoin(ctx: FeedContext) {
 	};
 }
 
-async function buildTeamNew(ctx: SharedFeedContext) {
-	const created = await FeedRepository.findLatestCreatedTeam(ctx.now);
+async function buildTeamNew(ctx: FeedContext) {
+	const created = forViewer(
+		ctx,
+		(
+			await FeedCache.cached({
+				key: `${ctx.mode}-recent-teams`,
+				ttlMs: 5 * MINUTE_MS,
+				getFreshValue: () =>
+					FeedRepository.findAllCreatedTeamsAfter(
+						ctx.now - RECENT_ACTIVITY_DAYS * DAY,
+					),
+			})
+		).filter((candidate) => candidate.createdAt < ctx.now),
+		(candidate) => ctx.friendIdSet.has(candidate.ownerUserId),
+	);
 	if (!created) return null;
 
 	const [team] = await FeedRepository.findTeamsByIds([created.id]);
@@ -1549,15 +1709,7 @@ async function buildTeamNew(ctx: SharedFeedContext) {
 
 async function buildTeamAnniversary(ctx: FeedContext) {
 	const nowDate = databaseTimestampToDate(ctx.now);
-	const membershipsByUserId = await FeedCache.cached({
-		key: "team-memberships",
-		ttlMs: HOUR_MS,
-		getFreshValue: async () =>
-			R.groupBy(
-				await FeedRepository.findAllTeamMemberships(),
-				(membership) => membership.userId,
-			),
-	});
+	const membershipsByUserId = await teamMembershipsByUserId();
 	const memberships = [ctx.viewerId, ...ctx.friendIds].flatMap(
 		(userId) => membershipsByUserId[userId] ?? [],
 	);
@@ -1594,11 +1746,20 @@ async function buildTeamAnniversary(ctx: FeedContext) {
 	};
 }
 
-async function buildTeamAvailability(ctx: SharedFeedContext) {
-	const week = await FeedRepository.findLatestTeamAvailabilityWeek({
-		before: ctx.now,
-		minMembers: 4,
-	});
+async function buildTeamAvailability(ctx: FeedContext) {
+	const viewerTeamIds = await teamIdsOf(ctx, ctx.viewerId);
+	const week =
+		(await FeedRepository.findLatestTeamAvailabilityWeek({
+			before: ctx.now,
+			minMembers: 4,
+			teamIds: viewerTeamIds,
+		})) ??
+		(ctx.mode === "TEST"
+			? await FeedRepository.findLatestTeamAvailabilityWeek({
+					before: ctx.now,
+					minMembers: 4,
+				})
+			: undefined);
 	if (!week) return null;
 
 	const slots = await FeedRepository.findAvailabilitySlotsOfTeamWeek({
@@ -1639,7 +1800,7 @@ async function buildTeamAvailability(ctx: SharedFeedContext) {
 	});
 
 	return {
-		at: ctx.now - 6 * HOUR,
+		at: week.updatedAt,
 		actorKey: `team-${week.teamId}`,
 		data: {
 			team,
@@ -1653,6 +1814,8 @@ async function buildTeamAvailability(ctx: SharedFeedContext) {
 }
 
 async function buildScrimPost(ctx: SharedFeedContext) {
+	if (ctx.mode !== "TEST") return null;
+
 	const post = await FeedRepository.findLatestUpcomingScrimPost({
 		from: ctx.now,
 		to: ctx.now + 2 * DAY,
@@ -1662,7 +1825,7 @@ async function buildScrimPost(ctx: SharedFeedContext) {
 	const [team] = await FeedRepository.findTeamsByIds([post.teamId]);
 
 	return {
-		at: ctx.now - 70 * 60,
+		at: post.createdAt,
 		actorKey: `team-${post.teamId}`,
 		data: {
 			team,
@@ -1675,11 +1838,19 @@ async function buildScrimPost(ctx: SharedFeedContext) {
 	};
 }
 
-async function buildScrimResult(ctx: SharedFeedContext) {
-	const scrim = await FeedRepository.findLatestReportedScrim({
-		before: ctx.now,
-		minMaps: 5,
-	});
+async function buildScrimResult(ctx: FeedContext) {
+	const scrim =
+		(await FeedRepository.findLatestReportedScrim({
+			before: ctx.now,
+			minMaps: 5,
+			teamIds: await teamIdsOf(ctx, ctx.viewerId),
+		})) ??
+		(ctx.mode === "TEST"
+			? await FeedRepository.findLatestReportedScrim({
+					before: ctx.now,
+					minMaps: 5,
+				})
+			: undefined);
 	if (!scrim) return null;
 
 	const teams = await FeedRepository.findTeamsByIds(
@@ -1701,12 +1872,14 @@ async function buildScrimResult(ctx: SharedFeedContext) {
 	};
 }
 
-async function buildLfgPlayer(ctx: SharedFeedContext) {
+async function buildLfgPlayer(ctx: FeedContext) {
+	if (!(await hasLfgPostOfType(ctx, "TEAM_FOR_PLAYER"))) return null;
+
 	const post = await FeedRepository.findLatestLFGPost({
 		type: "PLAYER_FOR_TEAM",
 		before: ctx.now,
 	});
-	if (!post) return null;
+	if (!post || post.authorId === ctx.viewerId) return null;
 
 	const users = await usersById([post.authorId]);
 	const weapons = await FeedRepository.findWeaponPoolByUserId(post.authorId);
@@ -1715,6 +1888,7 @@ async function buildLfgPlayer(ctx: SharedFeedContext) {
 		at: post.updatedAt,
 		actorKey: String(post.authorId),
 		data: {
+			postId: post.id,
 			actor: users.get(post.authorId)!,
 			text: post.text,
 			timezone: post.timezone,
@@ -1723,12 +1897,14 @@ async function buildLfgPlayer(ctx: SharedFeedContext) {
 	};
 }
 
-async function buildLfgTeam(ctx: SharedFeedContext) {
+async function buildLfgTeam(ctx: FeedContext) {
+	if (!(await hasLfgPostOfType(ctx, "PLAYER_FOR_TEAM"))) return null;
+
 	const post = await FeedRepository.findLatestLFGPost({
 		type: "TEAM_FOR_PLAYER",
 		before: ctx.now,
 	});
-	if (!post?.teamId) return null;
+	if (!post?.teamId || post.authorId === ctx.viewerId) return null;
 
 	const users = await usersById([post.authorId]);
 	const [team] = await FeedRepository.findTeamsByIds([post.teamId]);
@@ -1737,6 +1913,7 @@ async function buildLfgTeam(ctx: SharedFeedContext) {
 		at: post.updatedAt,
 		actorKey: `team-${post.teamId}`,
 		data: {
+			postId: post.id,
 			actor: users.get(post.authorId)!,
 			team,
 			text: post.text,
@@ -1747,13 +1924,25 @@ async function buildLfgTeam(ctx: SharedFeedContext) {
 
 // ---------- Creators ----------
 
-async function buildArtNew(ctx: SharedFeedContext) {
-	const artist = await FeedRepository.findMostActiveArtist({
-		from: ctx.now - 7 * DAY,
-		to: ctx.now,
-	});
+async function buildArtNew(ctx: FeedContext) {
+	const from = ctx.now - 7 * DAY;
+	const artist = forViewer(
+		ctx,
+		await FeedCache.cached({
+			key: `${ctx.mode}-active-artists`,
+			ttlMs: 5 * MINUTE_MS,
+			getFreshValue: () =>
+				FeedRepository.findAllArtistsActiveBetween({ from, to: ctx.now }),
+		}),
+		(candidate) => ctx.friendIdSet.has(candidate.authorId),
+	);
 	if (!artist?.latestAt) return null;
 
+	const pieces = await FeedRepository.findArtPiecesOfAuthorBetween({
+		authorId: artist.authorId,
+		from,
+		to: ctx.now,
+	});
 	const users = await usersById([artist.authorId]);
 
 	return {
@@ -1763,14 +1952,27 @@ async function buildArtNew(ctx: SharedFeedContext) {
 			actor: users.get(artist.authorId)!,
 			count: artist.count,
 			description:
-				artist.pieces.find((piece) => piece.description)?.description ?? null,
-			pieces: artist.pieces.map(artPiece),
+				pieces.find((piece) => piece.description)?.description ?? null,
+			pieces: pieces.map(artPiece),
 		},
 	};
 }
 
-async function buildArtTagged(ctx: SharedFeedContext) {
-	const art = await FeedRepository.findLatestTaggedArt(ctx.now);
+async function buildArtTagged(ctx: FeedContext) {
+	const art = forViewer(
+		ctx,
+		(
+			await FeedCache.cached({
+				key: `${ctx.mode}-recent-tagged-art`,
+				ttlMs: 5 * MINUTE_MS,
+				getFreshValue: () =>
+					FeedRepository.findAllTaggedArtAfter(
+						ctx.now - RECENT_ACTIVITY_DAYS * DAY,
+					),
+			})
+		).filter((candidate) => candidate.createdAt < ctx.now),
+		(candidate) => isViewerOrFriend(ctx, candidate.taggedUserId),
+	);
 	if (!art) return null;
 
 	const users = await usersById([art.authorId, art.taggedUserId]);
@@ -1787,8 +1989,21 @@ async function buildArtTagged(ctx: SharedFeedContext) {
 	};
 }
 
-async function buildArtCommissions(ctx: SharedFeedContext) {
-	const artist = await FeedRepository.findLatestOpenedCommissions(ctx.now);
+async function buildArtCommissions(ctx: FeedContext) {
+	const artist = forViewer(
+		ctx,
+		(
+			await FeedCache.cached({
+				key: `${ctx.mode}-recent-commissions`,
+				ttlMs: 5 * MINUTE_MS,
+				getFreshValue: () =>
+					FeedRepository.findAllOpenedCommissionsAfter(
+						ctx.now - RECENT_ACTIVITY_DAYS * DAY,
+					),
+			})
+		).filter((candidate) => candidate.commissionsOpenedAt < ctx.now),
+		(candidate) => ctx.friendIdSet.has(candidate.id),
+	);
 	if (!artist) return null;
 
 	const users = await usersById([artist.id]);
@@ -1865,7 +2080,7 @@ async function buildCard(
 async function buildBuildNew(ctx: FeedContext) {
 	const latest = (
 		await FeedCache.cached({
-			key: "recent-builds",
+			key: `${ctx.mode}-recent-builds`,
 			ttlMs: 5 * MINUTE_MS,
 			getFreshValue: () =>
 				FeedRepository.findAllPublicBuildIdsUpdatedAfter(
@@ -1955,15 +2170,18 @@ async function buildXRankTop500(ctx: FeedContext) {
 		ttlMs: HOUR_MS,
 		getFreshValue: FeedRepository.findAllUserPlacementsOfLatestMonth,
 	});
-	const placement =
-		placements.find((candidate) => ctx.friendIdSet.has(candidate.userId)) ??
-		placements.at(0);
+	const placement = forViewer(ctx, placements, (candidate) =>
+		ctx.friendIdSet.has(candidate.userId),
+	);
 	if (!placement) return null;
 
 	const users = await usersById([placement.userId]);
 
 	return {
-		at: ctx.now - 3 * DAY,
+		// results come out once the month is over
+		at: dateToDatabaseTimestamp(
+			new Date(Date.UTC(placement.year, placement.month, 1)),
+		),
 		actorKey: String(placement.userId),
 		data: {
 			actor: users.get(placement.userId)!,
@@ -1975,16 +2193,17 @@ async function buildXRankTop500(ctx: FeedContext) {
 
 async function buildScannerScorecard(ctx: FeedContext) {
 	const scannedMatches = await FeedCache.cached({
-		key: "scanned-matches-with-replay-code",
+		key: `${ctx.mode}-scanned-matches-with-replay-code`,
 		ttlMs: MINUTE_MS,
 		getFreshValue: () =>
 			FeedRepository.findAllScannedMatchIdsWithReplayCode(ctx.now),
 	});
-	const latest =
-		scannedMatches.find(
-			(scanned) =>
-				scanned.povUserId !== null && ctx.friendIdSet.has(scanned.povUserId),
-		) ?? scannedMatches.at(0);
+	const latest = forViewer(
+		ctx,
+		scannedMatches,
+		(scanned) =>
+			scanned.povUserId !== null && ctx.friendIdSet.has(scanned.povUserId),
+	);
 	if (!latest) return null;
 
 	const match = await FeedCache.cached({
@@ -2024,7 +2243,7 @@ async function buildScannerScorecard(ctx: FeedContext) {
 async function buildFriendNew(ctx: FeedContext) {
 	const friendship = (
 		await FeedCache.cached({
-			key: "recent-friendships",
+			key: `${ctx.mode}-recent-friendships`,
 			ttlMs: MINUTE_MS,
 			getFreshValue: () =>
 				FeedRepository.findAllFriendshipsCreatedAfter(
@@ -2058,6 +2277,11 @@ async function buildFriendNew(ctx: FeedContext) {
 }
 
 async function buildFriendSuggest(ctx: FeedContext) {
+	const requestedIds = new Set(
+		(await FriendRepository.findPendingSentRequests(ctx.viewerId)).map(
+			(request) => request.receiverId,
+		),
+	);
 	const teammate = (
 		await FeedCache.cached({
 			key: `top-teammates-${ctx.viewerId}`,
@@ -2065,13 +2289,21 @@ async function buildFriendSuggest(ctx: FeedContext) {
 			getFreshValue: () =>
 				FeedRepository.findTopTeammatesByUserId(ctx.viewerId),
 		})
-	).find((candidate) => !ctx.friendIdSet.has(candidate.otherUserId));
+	).find(
+		(candidate) =>
+			!ctx.friendIdSet.has(candidate.otherUserId) &&
+			!requestedIds.has(candidate.otherUserId),
+	);
 	if (!teammate) return null;
 
 	const users = await usersById([teammate.otherUserId]);
 
 	return {
-		at: ctx.now - 22 * HOUR,
+		at: dateToDatabaseTimestamp(
+			FeedSchedule.latestWeekly(databaseTimestampToDate(ctx.now), {
+				weekday: FeedSchedule.WEEKDAY.MONDAY,
+			}),
+		),
 		actorKey: String(teammate.otherUserId),
 		data: {
 			actor: users.get(teammate.otherUserId)!,
@@ -2126,7 +2358,13 @@ async function buildFirstTime(ctx: FeedContext) {
 async function buildPlusResults(ctx: FeedContext) {
 	if (ctx.friendIds.length === 0) return null;
 
-	const voting = lastCompletedVoting(databaseTimestampToDate(ctx.now));
+	const nowDate = databaseTimestampToDate(ctx.now);
+	const votingRange = Seasons.list
+		.map(seasonToVotingRange)
+		.findLast((range) => range.endDate < nowDate);
+	if (!votingRange) return null;
+
+	const voting = rangeToMonthYear(votingRange);
 	const results = await FeedCache.cached({
 		key: `plus-results-${voting.year}-${voting.month}`,
 		ttlMs: HOUR_MS,
@@ -2144,7 +2382,7 @@ async function buildPlusResults(ctx: FeedContext) {
 	if (promotions.length === 0) return null;
 
 	return {
-		at: ctx.now - 2 * DAY,
+		at: dateToDatabaseTimestamp(votingRange.endDate),
 		actorKey: "PLUS_RESULTS",
 		data: { rows: promotions.slice(0, 5) },
 	};
@@ -2164,6 +2402,7 @@ async function buildAnnouncement(ctx: SharedFeedContext) {
 			data: R.omit(active, ["startsAt", "endsAt"]),
 		};
 	}
+	if (ctx.mode !== "TEST") return null;
 
 	return {
 		at: ctx.now - 3 * HOUR,
@@ -2173,8 +2412,17 @@ async function buildAnnouncement(ctx: SharedFeedContext) {
 }
 
 async function buildLutiRegistration(ctx: SharedFeedContext) {
+	if (!Config.showBannerForSeason && ctx.mode !== "TEST") return null;
+
 	return {
-		at: ctx.now - (Config.showBannerForSeason ? HOUR : 3 * HOUR),
+		at:
+			ctx.mode === "TEST"
+				? ctx.now - (Config.showBannerForSeason ? HOUR : 3 * HOUR)
+				: dateToDatabaseTimestamp(
+						FeedSchedule.latestWeekly(databaseTimestampToDate(ctx.now), {
+							weekday: FeedSchedule.WEEKDAY.MONDAY,
+						}),
+					),
 		actorKey: "LUTI",
 		data: {
 			season: Config.showBannerForSeason ?? FEED_MOCK_LUTI_SEASON,
@@ -2245,7 +2493,7 @@ async function buildInstallApp(ctx: SharedFeedContext) {
 	};
 }
 
-async function buildSiteUpdate(ctx: SharedFeedContext) {
+async function buildSiteUpdate() {
 	const entries = allChangelogEntries()
 		.filter((entry) => entry.type === "feature")
 		.slice(-3)
@@ -2253,15 +2501,15 @@ async function buildSiteUpdate(ctx: SharedFeedContext) {
 	if (entries.length === 0) return null;
 
 	return {
-		at: ctx.now - 20 * HOUR,
+		at: dateToDatabaseTimestamp(new Date(entries[0].addedOn)),
 		actorKey: "SITE_UPDATE",
-		data: { entries },
+		data: { entries: entries.map((entry) => R.omit(entry, ["addedOn"])) },
 	};
 }
 
 async function buildRotation(ctx: FeedContext) {
 	const usualHours = await FeedCache.cached({
-		key: `usual-play-hours-${ctx.viewerId}`,
+		key: `${ctx.mode}-usual-play-hours-${ctx.viewerId}`,
 		ttlMs: HOUR_MS,
 		getFreshValue: async () =>
 			FeedRotations.usualPlayHours(
@@ -2274,7 +2522,8 @@ async function buildRotation(ctx: FeedContext) {
 	const preferences =
 		await MatchProfileRepository.findMapModePreferencesByUserId(ctx.viewerId);
 
-	const rotations = (await allRotations()).flatMap((rotation) => {
+	const all = await allRotations();
+	const rotations = all.flatMap((rotation) => {
 		if (rotation.startsAt <= ctx.now) return [];
 		if (!FeedRotations.isDuringUsualHours(rotation, usualHours)) return [];
 
@@ -2300,7 +2549,13 @@ async function buildRotation(ctx: FeedContext) {
 	if (rotations.length === 0) return null;
 
 	return {
-		at: ctx.now - 30 * 60,
+		// refreshes with every rotation
+		at: Math.max(
+			...all
+				.filter((rotation) => rotation.startsAt <= ctx.now)
+				.map((rotation) => rotation.startsAt),
+			ctx.now - 2 * HOUR,
+		),
 		actorKey: "ROTATION",
 		data: { rotations: R.sortBy(rotations, (rotation) => rotation.startsAt) },
 	};
@@ -2343,19 +2598,21 @@ async function buildMemory(ctx: FeedContext) {
 	if (!memory) return null;
 
 	const { result, tournament, team } = memory;
+	const anniversary = FeedSchedule.latestAnniversary(
+		databaseTimestampToDate(result.startsAt),
+		databaseTimestampToDate(ctx.now),
+	);
+	if (!anniversary) return null;
 
 	return {
-		at: ctx.now - 8 * HOUR,
+		at: dateToDatabaseTimestamp(anniversary.at),
 		actorKey: "MEMORY",
 		data: {
 			tournament,
 			team,
 			placement: result.placement,
 			participantCount: result.participantCount,
-			yearsAgo: Math.max(
-				1,
-				Math.round((ctx.now - result.startsAt) / (365 * DAY)),
-			),
+			yearsAgo: anniversary.years,
 		},
 	};
 }
@@ -2364,12 +2621,12 @@ async function buildCalendarEventNew(ctx: SharedFeedContext) {
 	const event = await FeedRepository.findLatestAddedUpcomingCalendarEvent(
 		ctx.now,
 	);
-	if (!event) return null;
+	if (!event || (event.createdAt === null && ctx.mode !== "TEST")) return null;
 
 	const users = await usersById([event.authorId]);
 
 	return {
-		at: ctx.now - 2 * DAY,
+		at: event.createdAt ?? ctx.now - 2 * DAY,
 		actorKey: String(event.authorId),
 		data: {
 			actor: users.get(event.authorId)!,
@@ -2382,6 +2639,68 @@ async function buildCalendarEventNew(ctx: SharedFeedContext) {
 }
 
 // ---------- helpers ----------
+
+/** "now" of the test page, shortly after the latest SendouQ match so old database snapshots look alive */
+async function testNow() {
+	const latestMatchAt = await FeedRepository.findLatestGroupMatchCreatedAt();
+
+	return Math.min(
+		databaseTimestampNow(),
+		latestMatchAt
+			? latestMatchAt + NOW_AFTER_LATEST_MATCH_SECONDS
+			: databaseTimestampNow(),
+	);
+}
+
+/** The first candidate meant for the viewer, on the test page the first of anyone's when none is */
+function forViewer<T>(
+	ctx: SharedFeedContext,
+	candidates: T[],
+	isForViewer: (candidate: T) => boolean,
+) {
+	return (
+		candidates.find(isForViewer) ??
+		(ctx.mode === "TEST" ? candidates.at(0) : undefined)
+	);
+}
+
+function isViewerOrFriend(ctx: FeedContext, userId: number) {
+	return userId === ctx.viewerId || ctx.friendIdSet.has(userId);
+}
+
+function teamMembershipsByUserId() {
+	return FeedCache.cached({
+		key: "team-memberships",
+		ttlMs: HOUR_MS,
+		getFreshValue: async () =>
+			R.groupBy(
+				await FeedRepository.findAllTeamMemberships(),
+				(membership) => membership.userId,
+			),
+	});
+}
+
+async function teamIdsOf(ctx: FeedContext, userId: number) {
+	return memoized(ctx, `team-ids-${userId}`, async () =>
+		((await teamMembershipsByUserId())[userId] ?? []).map(
+			(membership) => membership.teamId,
+		),
+	);
+}
+
+/** Whether the viewer has an LFG post of the type up, always on the test page */
+async function hasLfgPostOfType(
+	ctx: FeedContext,
+	type: "PLAYER_FOR_TEAM" | "TEAM_FOR_PLAYER",
+) {
+	if (ctx.mode === "TEST") return true;
+
+	const types = await memoized(ctx, "own-lfg-post-types", () =>
+		FeedRepository.findLFGPostTypesByAuthorId(ctx.viewerId),
+	);
+
+	return types.includes(type);
+}
 
 const SITE_TOTALS: FeedRepository.SiteTotal[] = [
 	"USERS",

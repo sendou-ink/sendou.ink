@@ -35,7 +35,6 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 						) : null}
 					</>
 				),
-				reactionCount: 31,
 			};
 		}
 		case "ART_TAGGED": {
@@ -56,7 +55,6 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 						) : null}
 					</>
 				),
-				reactionCount: 17,
 			};
 		}
 		case "ART_COMMISSIONS": {
@@ -102,7 +100,6 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 						/>
 					</div>
 				),
-				reactionCount: 2,
 			};
 		}
 		case "VOD_NEW": {
@@ -190,7 +187,6 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 						<ModeImage mode={data.mode} size={24} />
 					</div>
 				),
-				reactionCount: 19,
 			};
 		}
 		case "SCANNER_SCORECARD": {

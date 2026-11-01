@@ -1,43 +1,16 @@
+import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import { databaseTimestampNow } from "~/utils/dates";
-import * as FeedComments from "../core/FeedComments.server";
-import * as FeedItems from "../core/FeedItems.server";
-import * as FeedRanking from "../core/FeedRanking";
-import {
-	FEED_ITEM_TYPES,
-	type FeedItemTypeDefinition,
-} from "../feed-constants";
+import * as FeedPage from "../core/FeedPage.server";
+import { feedSearchParams } from "../feed-search-params";
+import { isFeedTester } from "../feed-utils";
 
-export const loader = async () => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = requireUser();
+	const { viewAs } = feedSearchParams.parse(request);
 
-	const ctx = await FeedItems.contextFor(user.id);
-	const items = await FeedItems.buildAll(ctx);
-
-	const definitionOf = (item: FeedItems.FeedItem): FeedItemTypeDefinition =>
-		FEED_ITEM_TYPES[item.type];
-
-	return {
-		now: ctx.now,
-		friendCount: ctx.friendIds.length,
-		pinned: items.filter((item) => definitionOf(item).isPinned),
-		activity: FeedRanking.rank(
-			items.filter(
-				(item) => !definitionOf(item).isLive && !definitionOf(item).isPinned,
-			),
-			ctx.now,
-		),
-		rotations: await FeedItems.allRotations(),
-		rotationsNow: databaseTimestampNow(),
-		commentCounts: Object.fromEntries(
-			items.map((item) => [
-				item.type,
-				FeedComments.count({
-					type: item.type,
-					viewerId: user.id,
-					hasFriends: ctx.friendIds.length > 0,
-				}),
-			]),
-		) as Record<string, number>,
-	};
+	return FeedPage.load({
+		viewerId: viewAs && isFeedTester(user) ? viewAs : user.id,
+		userId: user.id,
+		mode: "TEST",
+	});
 };

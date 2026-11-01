@@ -17,7 +17,7 @@
 
 .log {
 	height: auto;
-	padding: var(--s-3) var(--s-2) var(--s-2);
+	padding: var(--s-3) var(--s-2) var(--s-4);
 	max-height: min(60dvh, 520px);
 }
 

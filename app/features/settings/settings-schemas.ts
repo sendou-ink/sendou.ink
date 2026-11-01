@@ -52,6 +52,14 @@ export const voicePushToTalkSchema = v.object({
 	}),
 });
 
+export const newHomePageSchema = v.object({
+	_action: stringConstant("UPDATE_NEW_HOME_PAGE"),
+	newValue: toggle({
+		label: "labels.newHomePage",
+		bottomText: "bottomTexts.newHomePage",
+	}),
+});
+
 export const weaponReportDefaultOpenSchema = v.object({
 	_action: stringConstant("UPDATE_WEAPON_REPORT_DEFAULT_OPEN"),
 	newValue: v.boolean(),
@@ -63,6 +71,7 @@ export const settingsEditSchema = v.union([
 	disallowScrimPickupsFromUntrustedSchema,
 	spoilerFreeModeSchema,
 	voicePushToTalkSchema,
+	newHomePageSchema,
 	clockFormatSchema,
 	weaponReportDefaultOpenSchema,
 ]);

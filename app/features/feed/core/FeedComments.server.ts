@@ -2,32 +2,33 @@ import type {
 	ChatMessageAuthor,
 	ChatMessageWithAuthor,
 } from "~/features/chat/chat-types";
-import { FEED_MOCK_COMMENTS, type FeedItemType } from "../feed-constants";
-import type { FeedItem } from "./FeedItems.server";
+import * as FeedCommentRepository from "../FeedCommentRepository.server";
+import { FEED_MOCK_COMMENTS } from "../feed-constants";
+import type { FeedItem, FeedMode } from "./FeedItems.server";
 
 const MOCK_COMMENT_INTERVAL_SECONDS = 17 * 60;
 
-const addedCommentsByKey = new Map<string, ChatMessageWithAuthor[]>();
-
-/** The comments of the viewer's post: mocked ones written by their friends followed by ones added since the server started. */
-export function forItem({
+/** The comments of the post, on the test page preceded by mocked ones written by the viewer's friends. */
+export async function forItem({
 	item,
-	viewerId,
+	mode,
 	friends,
 	now,
 }: {
 	item: FeedItem;
-	viewerId: number;
+	mode: FeedMode;
 	friends: ChatMessageAuthor[];
 	now: number;
-}): ChatMessageWithAuthor[] {
-	const texts = friends.length > 0 ? (FEED_MOCK_COMMENTS[item.type] ?? []) : [];
+}): Promise<ChatMessageWithAuthor[]> {
+	const persisted = await FeedCommentRepository.findByItemId(item.id);
+	if (mode !== "TEST") return persisted;
 
+	const texts = friends.length > 0 ? (FEED_MOCK_COMMENTS[item.type] ?? []) : [];
 	const mocked = texts.map((contents, i): ChatMessageWithAuthor => {
 		const author = friends[(item.at + i) % friends.length];
 
 		return {
-			id: i + 1,
+			id: -(i + 1),
 			roomId: 0,
 			authorUserId: author.id,
 			type: null,
@@ -41,60 +42,30 @@ export function forItem({
 		};
 	});
 
-	return [
-		...mocked,
-		...(addedCommentsByKey.get(key(item.type, viewerId)) ?? []),
-	];
+	return [...mocked, ...persisted];
 }
 
-/** How many comments `forItem` returns for the post. */
-export function count({
-	type,
-	viewerId,
+/** How many comments each post has, by post id, as `forItem` returns them. */
+export async function countByItem({
+	items,
+	mode,
 	hasFriends,
 }: {
-	type: FeedItemType;
-	viewerId: number;
+	items: FeedItem[];
+	mode: FeedMode;
 	hasFriends: boolean;
 }) {
-	return (
-		(hasFriends ? (FEED_MOCK_COMMENTS[type]?.length ?? 0) : 0) +
-		(addedCommentsByKey.get(key(type, viewerId))?.length ?? 0)
+	const persisted = await FeedCommentRepository.countByItemIds(
+		items.map((item) => item.id),
 	);
-}
 
-/** Adds a comment to the viewer's post, kept in memory until the server restarts. */
-export function add({
-	type,
-	viewerId,
-	author,
-	publicId,
-	contents,
-	now,
-}: {
-	type: FeedItemType;
-	viewerId: number;
-	author: ChatMessageAuthor;
-	publicId: string;
-	contents: string;
-	now: number;
-}) {
-	const added = addedCommentsByKey.get(key(type, viewerId)) ?? [];
-	if (added.some((comment) => comment.publicId === publicId)) return;
-
-	added.push({
-		id: (FEED_MOCK_COMMENTS[type]?.length ?? 0) + added.length + 1,
-		roomId: 0,
-		authorUserId: author.id,
-		type: null,
-		contents,
-		publicId,
-		createdAt: now,
-		author,
-	});
-	addedCommentsByKey.set(key(type, viewerId), added);
-}
-
-function key(type: FeedItemType, viewerId: number) {
-	return `${viewerId}-${type}`;
+	return Object.fromEntries(
+		items.map((item) => [
+			item.id,
+			(persisted[item.id] ?? 0) +
+				(mode === "TEST" && hasFriends
+					? (FEED_MOCK_COMMENTS[item.type]?.length ?? 0)
+					: 0),
+		]),
+	) as Record<string, number>;
 }

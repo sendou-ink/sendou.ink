@@ -6,6 +6,7 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { useUser } from "~/features/auth/core/user";
+import { isFeedTester } from "~/features/feed/feed-utils";
 import {
 	findPushSubscription,
 	isPushSupported,
@@ -17,6 +18,7 @@ import { logger } from "~/utils/logger";
 import {
 	disableBuildAbilitySortingSchema,
 	disallowScrimPickupsFromUntrustedSchema,
+	newHomePageSchema,
 	spoilerFreeModeSchema,
 	voicePushToTalkSchema,
 } from "../settings-schemas";
@@ -75,6 +77,19 @@ export function PreferencesTab() {
 				>
 					{({ FormField }) => <FormField name="newValue" />}
 				</SendouForm>
+				{isFeedTester(user) ? (
+					<SendouForm
+						schema={newHomePageSchema}
+						defaultValues={{
+							newValue: user.preferences.newHomePage ?? false,
+						}}
+						mode="autoSubmit"
+						revalidateRoot
+						fullWidth
+					>
+						{({ FormField }) => <FormField name="newValue" />}
+					</SendouForm>
+				) : null}
 			</div>
 		</div>
 	);

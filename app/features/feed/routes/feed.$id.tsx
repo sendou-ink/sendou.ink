@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useLoaderData } from "react-router";
+import { useLoaderData, useLocation, useNavigate } from "react-router";
 import { BackLink } from "~/components/BackLink";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
@@ -11,20 +11,28 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { action } from "../actions/feed.$id.server";
 import { FeedItemCard } from "../components/FeedItemCard";
 import { feedItemActionSchema } from "../feed-schemas";
-import { FEED_TEST_PAGE } from "../feed-urls";
+import { feedSearchParams } from "../feed-search-params";
+import { FEED_TEST_PAGE, type FeedItemPageState } from "../feed-urls";
 import { loader } from "../loaders/feed.$id.server";
 import styles from "./feed.$id.module.css";
 
 export { action, loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["art", "builds", "gear"],
+	i18n: ["art", "builds", "gear", "trophies"],
 };
+
+export const shouldRevalidate = feedSearchParams.shouldRevalidate;
 
 export default function FeedItemPage() {
 	const data = useLoaderData<typeof loader>();
 	const user = useUser();
+	const location = useLocation();
+	const navigate = useNavigate();
 	const { submit } = useActionSubmit(feedItemActionSchema);
+	const isFromFeed = Boolean(
+		(location.state as FeedItemPageState | null)?.fromFeed,
+	);
 	const [sent, setSent] = React.useState<ClientChatMessage[]>([]);
 
 	const savedPublicIds = new Set(
@@ -34,6 +42,11 @@ export default function FeedItemPage() {
 		...data.comments,
 		...sent.filter((comment) => !savedPublicIds.has(comment.publicId)),
 	];
+
+	const backTo =
+		data.mode === "TEST"
+			? feedSearchParams.href(FEED_TEST_PAGE, { viewAs: data.viewAs })
+			: feedSearchParams.href("/", { viewAs: data.viewAs });
 
 	const sendComment = (comment: { publicId: string; contents: string }) => {
 		if (!user) return;
@@ -67,9 +80,25 @@ export default function FeedItemPage() {
 				<FeedItemCard
 					item={data.item}
 					now={data.now}
-					commentCount={comments.length}
+					interactions={{
+						commentCount: comments.length,
+						reactionCount: data.reactionCount,
+						isReacted: data.isReacted,
+						shareToken: data.shareToken,
+					}}
+					sharerId={data.sharedBy ?? data.viewAs ?? user?.id ?? 0}
 					headerAction={
-						<BackLink to={FEED_TEST_PAGE} className={styles.back} />
+						<BackLink
+							to={backTo}
+							className={styles.back}
+							onClick={(event) => {
+								if (!isFromFeed) return;
+
+								// a history back restores the feed's scroll position
+								event.preventDefault();
+								navigate(-1);
+							}}
+						/>
 					}
 				/>
 				<section aria-label="Comments">
@@ -79,6 +108,7 @@ export default function FeedItemPage() {
 					<Chat
 						messages={comments}
 						onSend={sendComment}
+						readOnly={!user}
 						messagesContainerClassName={
 							comments.length === 0 ? styles.logEmpty : styles.log
 						}

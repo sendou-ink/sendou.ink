@@ -112,3 +112,23 @@
 		background-color: var(--color-fill-accent);
 	}
 }
+
+.viewAs {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	gap: var(--s-2);
+}
+
+.caughtUp {
+	display: grid;
+	justify-items: center;
+	gap: var(--s-2);
+	padding-block: var(--s-8);
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
+}
+
+.caughtUpIcon {
+	color: var(--color-fg-accent);
+}

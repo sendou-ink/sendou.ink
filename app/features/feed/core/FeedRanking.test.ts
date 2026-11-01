@@ -4,6 +4,25 @@ import * as FeedRanking from "./FeedRanking";
 const NOW = 1_800_000_000;
 const HOUR = 3600;
 
+describe("FeedRanking.isStale", () => {
+	test.each([
+		{ why: "fresh", type: "SQ_SET", ageHours: 1, expected: false },
+		{
+			why: "just within the max age",
+			type: "SQ_SET",
+			ageHours: 90,
+			expected: false,
+		},
+		{ why: "past the max age", type: "SQ_SET", ageHours: 91, expected: true },
+		{ why: "live", type: "VOICE_ROOM", ageHours: 1000, expected: false },
+		{ why: "pinned", type: "ANNOUNCEMENT", ageHours: 10_000, expected: false },
+	] as const)("$why", ({ type, ageHours, expected }) => {
+		expect(FeedRanking.isStale({ type, at: NOW - ageHours * HOUR }, NOW)).toBe(
+			expected,
+		);
+	});
+});
+
 describe("FeedRanking.score", () => {
 	test("halves the score after one half-life", () => {
 		const fresh = FeedRanking.score({ type: "SQ_SET", at: NOW }, NOW);

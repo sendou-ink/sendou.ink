@@ -1,15 +1,16 @@
 import clsx from "clsx";
 import { Play } from "lucide-react";
+import * as React from "react";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Badge } from "~/components/Badge";
-import { LinkButton } from "~/components/elements/Button";
 import { Placement } from "~/components/Placement";
 import { TierPill } from "~/components/TierPill";
 import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
 import {
 	CALENDAR_PAGE,
 	tournamentPage,
+	tournamentSubsPage,
 	trophyPage,
 	userPage,
 } from "~/utils/urls";
@@ -28,6 +29,17 @@ import {
 	WinLoss,
 } from "./FeedParts";
 import styles from "./FeedParts.module.css";
+
+// lazy so the WebGL renderer only loads once a trophy post shows up
+const FeedTrophy = React.lazy(() =>
+	import("./FeedTrophy").then((module) => ({ default: module.FeedTrophy })),
+);
+
+const REGISTRATION_TEXTS = {
+	OPEN: "Registration open",
+	CLOSED: "Registration closed",
+	INVITATIONAL: "Invite only",
+} as const;
 
 export function tournamentItemContent(
 	item: FeedItem,
@@ -98,7 +110,6 @@ export function tournamentItemContent(
 						) : null}
 					</div>
 				),
-				reactionCount: 23,
 			};
 		}
 		case "TO_PODIUM": {
@@ -128,7 +139,6 @@ export function tournamentItemContent(
 						<UserStack users={data.team.members} max={4} />
 					</div>
 				),
-				reactionCount: 12,
 			};
 		}
 		case "TO_DIGEST": {
@@ -274,6 +284,7 @@ export function tournamentItemContent(
 						</div>
 					</div>
 				),
+				href: tournamentSubsPage(data.team.tournamentId),
 			};
 		}
 		case "TO_ORG_NEW": {
@@ -303,10 +314,9 @@ export function tournamentItemContent(
 						<DateBlock at={data.tournament.startsAt} />
 						<div className={clsx("stack xs", styles.grow)}>
 							<span className="text-xs text-lighter">
-								<DayTime at={data.tournament.startsAt} /> ·{" "}
-								{data.teamCount > 0
-									? `${data.teamCount} teams`
-									: "Registration open"}
+								<DayTime at={data.tournament.startsAt} />
+								{data.teamCount > 0 ? ` · ${data.teamCount} teams` : null}
+								{` · ${REGISTRATION_TEXTS[data.registration]}`}
 							</span>
 							<div className={styles.chain}>
 								{data.bracketNames.map((name, i) => (
@@ -432,7 +442,6 @@ export function tournamentItemContent(
 						</div>
 					</div>
 				),
-				reactionCount: 8,
 			};
 		}
 		case "TO_TROPHY": {
@@ -442,25 +451,25 @@ export function tournamentItemContent(
 				line: (
 					<>
 						<UserName user={data.actor} /> won a{" "}
-						<Link to={trophyPage(data.trophyId)} className="font-bold">
-							{data.trophyName}
+						<Link to={trophyPage(data.trophy.id)} className="font-bold">
+							{data.trophy.name}
 						</Link>{" "}
 						trophy
 					</>
 				),
 				body: (
 					<div className={clsx(styles.hero, styles.heroRow)}>
+						<React.Suspense fallback={<div className={styles.trophySlot} />}>
+							<FeedTrophy trophy={data.trophy} tier={data.tier} />
+						</React.Suspense>
 						<div>
-							<div className="font-bold">
-								{data.trophyName} · tier {data.tier}
-							</div>
+							<div className="font-bold">{data.trophy.name}</div>
 							<div className="text-xs text-lighter">
 								{data.tournament?.name}
 							</div>
 						</div>
 					</div>
 				),
-				reactionCount: 14,
 			};
 		}
 		case "TO_LUTI_REGISTRATION": {
@@ -469,16 +478,12 @@ export function tournamentItemContent(
 				avatar: <NavIconAvatar navIcon="luti" />,
 				line: <b>Registration is open for LUTI Season {data.season}</b>,
 				body: (
-					<div className={clsx(styles.hero, styles.heroAccent)}>
-						<div className="text-sm">
-							Leagues Under The Ink is back. Sign your team up before the
-							deadline.
-						</div>
-						<LinkButton to={data.href} size="small">
-							Register
-						</LinkButton>
+					<div className="text-sm">
+						Leagues Under The Ink is back. Sign your team up before the
+						deadline.
 					</div>
 				),
+				href: data.href,
 			};
 		}
 		case "TO_SHOWCASE": {
@@ -536,11 +541,9 @@ export function tournamentItemContent(
 								</div>
 							))}
 						</div>
-						<Link to={CALENDAR_PAGE} className="text-xs font-semi-bold">
-							All tournaments in the calendar
-						</Link>
 					</>
 				),
+				href: CALENDAR_PAGE,
 			};
 		}
 		case "TO_RESULT_FEATURED": {
@@ -560,7 +563,6 @@ export function tournamentItemContent(
 					</>
 				),
 				body: <PodiumBody data={data} />,
-				reactionCount: 31,
 			};
 		}
 		case "ON_THIS_DAY": {

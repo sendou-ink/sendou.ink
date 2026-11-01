@@ -19,9 +19,12 @@ import { WeaponPoolBanner } from "~/components/WeaponPoolBanner";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
+import { Feed } from "~/features/feed/components/Feed";
+import { feedSearchParams } from "~/features/feed/feed-search-params";
 import { PWAInstallBanner } from "~/features/front-page/components/PWAInstallBanner";
 import { SplatoonRotations } from "~/features/front-page/components/SplatoonRotations";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
+import { useFrontPageData } from "~/features/front-page/front-page-hooks";
 import { leaderboardsPage } from "~/features/leaderboards/leaderboards-urls";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import styles from "~/styles/front.module.css";
@@ -40,10 +43,22 @@ import { type LeaderboardEntry, loader } from "../loaders/index.server";
 export { loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["front", "game-misc"],
+	i18n: ["front", "game-misc", "art", "builds", "gear", "trophies"],
 };
 
+export const shouldRevalidate = feedSearchParams.shouldRevalidate;
+
 export default function FrontPage() {
+	const data = useLoaderData<typeof loader>();
+
+	if (data.feed) {
+		return (
+			<Main bigger>
+				<Feed data={data.feed} canViewAs />
+			</Main>
+		);
+	}
+
 	return (
 		<Main className={styles.frontPageContainer}>
 			<LeagueBanner />
@@ -181,7 +196,7 @@ function LeagueBanner() {
 
 function TournamentShowcase() {
 	const { t } = useTranslation(["front"]);
-	const data = useLoaderData<typeof loader>();
+	const data = useFrontPageData();
 
 	if (data.tournaments.showcase.length === 0) return null;
 
@@ -205,7 +220,7 @@ function TournamentShowcase() {
 }
 
 function ResultHighlights() {
-	const data = useLoaderData<typeof loader>();
+	const data = useFrontPageData();
 
 	const hasLeaderboards =
 		data.leaderboards.user.length > 0 && data.leaderboards.team.length > 0;
@@ -229,7 +244,7 @@ function ResultHighlights() {
 
 function Leaderboards() {
 	const { t } = useTranslation(["front"]);
-	const data = useLoaderData<typeof loader>();
+	const data = useFrontPageData();
 
 	const season = Seasons.currentOrPrevious()!;
 
@@ -265,7 +280,7 @@ function Leaderboards() {
 
 function TournamentResults() {
 	const { t } = useTranslation(["front"]);
-	const data = useLoaderData<typeof loader>();
+	const data = useFrontPageData();
 
 	return (
 		<div className={styles.resultHighlights}>
@@ -335,7 +350,7 @@ const DISCOVER_EXCLUDED_ITEMS = new Set(["settings", "luti"]);
 
 function DiscoverFeatures() {
 	const { t } = useTranslation(["front", "common"]);
-	const data = useLoaderData<typeof loader>();
+	const data = useFrontPageData();
 
 	const filteredNavItems = navItems.filter(
 		(item) => !DISCOVER_EXCLUDED_ITEMS.has(item.name),
@@ -388,7 +403,7 @@ function DiscoverFeatures() {
 
 function ChangelogList() {
 	const { t } = useTranslation(["front"]);
-	const data = useLoaderData<typeof loader>();
+	const data = useFrontPageData();
 
 	if (data.changelog.length === 0) return null;
 

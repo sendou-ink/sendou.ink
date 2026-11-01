@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { LinkButton } from "~/components/elements/Button";
 import { Image, ModeImage, StageImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import {
@@ -10,10 +9,7 @@ import {
 } from "~/features/front-page/components/PWAInstallBanner";
 import { navIconUrl } from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
-import {
-	FEED_ROTATION_MAX_LISTED,
-	type FeedSpotlight,
-} from "../feed-constants";
+import { FEED_ROTATION_MAX_LISTED } from "../feed-constants";
 import type { FeedItemContent } from "./FeedItemCard";
 import {
 	DateBlock,
@@ -70,7 +66,7 @@ export function communityItemContent(
 						</div>
 					</div>
 				),
-				action: { label: "Add friend", doneLabel: "Friend request sent" },
+				action: { type: "SEND_FRIEND_REQUEST", userId: data.actor.id },
 			};
 		}
 		case "PLUS_RESULTS": {
@@ -113,7 +109,6 @@ export function communityItemContent(
 						))}
 					</div>
 				),
-				reactionCount: 10,
 			};
 		}
 		case "SITE_UPDATE": {
@@ -338,7 +333,6 @@ export function communityItemContent(
 						</div>
 					</div>
 				),
-				reactionCount: 14,
 			};
 		}
 		case "FIRST_TIME": {
@@ -379,7 +373,6 @@ export function communityItemContent(
 							</span>
 						</div>
 					),
-				reactionCount: 11,
 			};
 		}
 		case "ANNOUNCEMENT": {
@@ -387,14 +380,8 @@ export function communityItemContent(
 			return {
 				avatar: <NavIconAvatar navIcon={data.navIcon} />,
 				line: <b>{data.title}</b>,
-				body: (
-					<div className={clsx(styles.hero, styles.heroAccent)}>
-						<div className="text-sm">{data.text}</div>
-						<LinkButton to={data.href} size="small">
-							{data.linkLabel}
-						</LinkButton>
-					</div>
-				),
+				body: <div className="text-sm">{data.text}</div>,
+				href: data.href,
 			};
 		}
 		case "SITE_MILESTONE": {
@@ -427,7 +414,6 @@ export function communityItemContent(
 						<div className="text-xs text-lighter">Thanks for being here!</div>
 					</div>
 				),
-				reactionCount: 52,
 			};
 		}
 		case "FEATURE_SPOTLIGHT": {
@@ -439,7 +425,8 @@ export function communityItemContent(
 						<b>Did you know?</b> {data.title}
 					</>
 				),
-				body: <SpotlightBody spotlight={data} />,
+				body: <div className="text-sm">{data.text}</div>,
+				href: data.href,
 			};
 		}
 		case "INSTALL_APP": {
@@ -474,17 +461,6 @@ function breakText(days: number) {
 	if (months < 18) return `${months} months`;
 
 	return `${Math.round(days / 365)} years`;
-}
-
-function SpotlightBody({ spotlight }: { spotlight: FeedSpotlight }) {
-	return (
-		<div className={styles.inset}>
-			<div className="text-sm">{spotlight.text}</div>
-			<LinkButton to={spotlight.href} size="small" variant="outlined">
-				{spotlight.linkLabel}
-			</LinkButton>
-		</div>
-	);
 }
 
 function InstallAppBody() {

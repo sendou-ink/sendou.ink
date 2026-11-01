@@ -1,5 +1,6 @@
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { isFeedTester } from "~/features/feed/feed-utils";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import { cancelActiveGroupLikes } from "~/features/sendouq/core/likes.server";
 import {
@@ -14,7 +15,7 @@ import * as ThemePalette from "~/features/theme/core/ThemePalette";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { isSupporter } from "~/modules/permissions/utils";
-import { errorToast } from "~/utils/remix.server";
+import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { settingsActionSchema } from "../settings-schemas.server";
@@ -58,6 +59,14 @@ export const action = defineAction(
 			case "UPDATE_VOICE_PUSH_TO_TALK": {
 				await UserRepository.updateOwnPreferences({
 					voicePushToTalk: body.newValue,
+				});
+				break;
+			}
+			case "UPDATE_NEW_HOME_PAGE": {
+				errorToastIfFalsy(isFeedTester(user), "Not available");
+
+				await UserRepository.updateOwnPreferences({
+					newHomePage: body.newValue,
 				});
 				break;
 			}

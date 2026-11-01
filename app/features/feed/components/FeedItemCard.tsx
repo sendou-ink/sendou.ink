@@ -13,11 +13,15 @@ import * as React from "react";
 import { Link, useNavigate } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import { toastQueue } from "~/components/elements/Toast";
 import { Image } from "~/components/Image";
+import { useUser } from "~/features/auth/core/user";
+import { sendFriendRequestBaseSchema } from "~/features/friends/friends-schemas";
 import { useIsStandalone } from "~/features/front-page/components/PWAInstallBanner";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import { navIconUrl } from "~/utils/urls";
+import { FRIENDS_PAGE, navIconUrl } from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
+import type { FeedItemInteractions } from "../core/FeedPage.server";
 import type { ScoreBreakdown } from "../core/FeedRanking";
 import {
 	FEED_CATEGORIES,
@@ -28,7 +32,7 @@ import {
 	type FeedItemTypeDefinition,
 } from "../feed-constants";
 import { feedItemActionSchema } from "../feed-schemas";
-import { feedItemPage } from "../feed-urls";
+import { type FeedItemPageState, feedItemPage } from "../feed-urls";
 import { communityItemContent } from "./CommunityItems";
 import { creatorItemContent } from "./CreatorItems";
 import styles from "./FeedItemCard.module.css";
@@ -41,11 +45,23 @@ export interface FeedItemContent {
 	avatar: React.ReactNode;
 	line: React.ReactNode;
 	body: React.ReactNode;
-	/** How many reactions the post starts with */
-	reactionCount?: number;
+	/** What a notice post opens when clicked, see `isNotice` */
+	href?: string;
 	/** Something the viewer can do right from the post */
-	action?: { label: string; doneLabel: string };
+	action?: FeedPostAction;
 }
+
+type FeedPostAction = { type: "SEND_FRIEND_REQUEST"; userId: number };
+
+const POST_ACTION_LABELS: Record<
+	FeedPostAction["type"],
+	{ label: string; doneLabel: string }
+> = {
+	SEND_FRIEND_REQUEST: {
+		label: "Add friend",
+		doneLabel: "Friend request sent",
+	},
+};
 
 const FEED_FEEDBACK_OPTIONS: Record<
 	FeedFeedbackKind,
@@ -73,19 +89,24 @@ const FEED_FEEDBACK_OPTIONS: Record<
 	},
 };
 
+const FROM_FEED_STATE: FeedItemPageState = { fromFeed: true };
+
 const INTERACTIVE_SELECTOR = "a, button, input, label, [role='menuitem']";
 
 export function FeedItemCard({
 	item,
 	now,
-	commentCount,
+	interactions,
+	sharerId,
 	href,
 	headerAction,
 	score,
 }: {
 	item: FeedItem;
 	now: number;
-	commentCount: number;
+	interactions: FeedItemInteractions;
+	/** Whose feed the post is from, the share link shows it as they see it */
+	sharerId: number;
 	/** Post page the card opens when clicked, none when already on it */
 	href?: string;
 	/** Shown at the end of the header line, e.g. a back link on the post page */
@@ -102,8 +123,11 @@ export function FeedItemCard({
 	const [isDismissed, setIsDismissed] = React.useState(false);
 	const isStandalone = useIsStandalone();
 	const { submit } = useActionSubmit(feedItemActionSchema, {
-		action: feedItemPage(item.type),
+		action: feedItemPage(item.id),
 	});
+
+	const openHref = definition.isNotice ? content.href : href;
+	const openState = definition.isNotice ? undefined : FROM_FEED_STATE;
 
 	if (definition.isHiddenInPwa && isStandalone) return null;
 	if (isDismissed) return null;
@@ -128,7 +152,7 @@ export function FeedItemCard({
 	}
 
 	const openPost = (event: React.MouseEvent<HTMLElement>) => {
-		if (!href) return;
+		if (!openHref) return;
 
 		const target = event.target as HTMLElement;
 		const isOwnClick =
@@ -137,12 +161,15 @@ export function FeedItemCard({
 		const isSelectingText = Boolean(window.getSelection()?.toString());
 		if (!isOwnClick || isSelectingText) return;
 
-		navigate(href);
+		navigate(openHref, { state: openState });
 	};
 
 	return (
 		<article
-			className={clsx(styles.post, { [styles.postLinked]: Boolean(href) })}
+			className={clsx(styles.post, {
+				[styles.postLinked]: Boolean(openHref),
+				[styles.postNotice]: definition.isNotice,
+			})}
 			onClick={openPost}
 		>
 			<div className={styles.avatar}>{content.avatar}</div>
@@ -156,8 +183,8 @@ export function FeedItemCard({
 					/>
 					<span className={styles.community}>{source.label}</span>
 					<span aria-hidden>·</span>
-					{href ? (
-						<Link to={href} className={styles.time}>
+					{openHref ? (
+						<Link to={openHref} state={openState} className={styles.time}>
 							{relativeTime(item.at, now)}
 						</Link>
 					) : (
@@ -180,53 +207,106 @@ export function FeedItemCard({
 					<div className={styles.body}>{content.body}</div>
 				) : null}
 				{content.action ? <PostAction action={content.action} /> : null}
-				<PostActions
-					reactionCount={content.reactionCount ?? 0}
-					commentCount={commentCount}
-					href={href}
-				/>
+				{definition.isNotice ? null : (
+					<PostActions
+						itemId={item.id}
+						interactions={interactions}
+						sharerId={sharerId}
+						href={href}
+					/>
+				)}
 				{score ? <RankingMath score={score} definition={definition} /> : null}
 			</div>
 		</article>
 	);
 }
 
-function PostAction({
-	action,
-}: {
-	action: NonNullable<FeedItemContent["action"]>;
-}) {
-	const [isDone, setIsDone] = React.useState(false);
+function PostAction({ action }: { action: FeedPostAction }) {
+	const user = useUser();
+	const { submit, state } = useActionSubmit(sendFriendRequestBaseSchema, {
+		action: FRIENDS_PAGE,
+	});
+	const [isSent, setIsSent] = React.useState(false);
+	const isDone = isSent && state === "idle";
+	const labels = POST_ACTION_LABELS[action.type];
+
+	if (!user) return null;
 
 	return (
 		<SendouButton
 			size="small"
 			variant={isDone ? "outlined" : undefined}
-			isDisabled={isDone}
-			onClick={() => setIsDone(true)}
+			isDisabled={isSent}
+			onClick={() => {
+				setIsSent(true);
+				submit("SEND_REQUEST", { userId: action.userId });
+			}}
 			className={styles.postAction}
 		>
-			{isDone ? action.doneLabel : action.label}
+			{isDone ? labels.doneLabel : labels.label}
 		</SendouButton>
 	);
 }
 
 function PostActions({
-	reactionCount,
-	commentCount,
+	itemId,
+	interactions,
+	sharerId,
 	href,
 }: {
-	reactionCount: number;
-	commentCount: number;
+	itemId: string;
+	interactions: FeedItemInteractions;
+	sharerId: number;
 	href?: string;
 }) {
-	const [isReacted, setIsReacted] = React.useState(false);
-	const count = reactionCount + (isReacted ? 1 : 0);
+	const user = useUser();
+	const { submit, fetcher } = useActionSubmit(feedItemActionSchema, {
+		action: feedItemPage(itemId),
+	});
+	const pendingAction = fetcher.formData?.get("_action");
+	const isReacted = pendingAction
+		? pendingAction === "REACT"
+		: interactions.isReacted;
+	const count =
+		interactions.reactionCount -
+		(interactions.isReacted ? 1 : 0) +
+		(isReacted ? 1 : 0);
+	const { commentCount } = interactions;
+
+	const share = async () => {
+		const url = new URL(
+			feedItemPage(itemId, {
+				sharedBy: sharerId,
+				token: interactions.shareToken,
+			}),
+			window.location.origin,
+		).toString();
+
+		if (navigator.share) {
+			try {
+				await navigator.share({ url });
+			} catch {}
+			return;
+		}
+
+		try {
+			await navigator.clipboard.writeText(url);
+			toastQueue.add(
+				{ message: "Link copied", variant: "success" },
+				{ timeout: 3000 },
+			);
+		} catch {}
+	};
 
 	return (
 		<footer className={styles.actions}>
 			{href ? (
-				<Link to={href} className={styles.action} aria-label="Comments">
+				<Link
+					to={href}
+					state={FROM_FEED_STATE}
+					className={styles.action}
+					aria-label="Comments"
+				>
 					<MessageCircle size={17} />
 					{commentCount > 0 ? commentCount : null}
 				</Link>
@@ -243,12 +323,18 @@ function PostActions({
 				})}
 				aria-label="Booyah"
 				aria-pressed={isReacted}
-				onClick={() => setIsReacted(!isReacted)}
+				disabled={!user}
+				onClick={() => submit(isReacted ? "UNREACT" : "REACT")}
 			>
 				<Heart size={17} fill={isReacted ? "currentColor" : "none"} />
 				{count > 0 ? count : null}
 			</button>
-			<button type="button" className={styles.action} aria-label="Share">
+			<button
+				type="button"
+				className={styles.action}
+				aria-label="Share"
+				onClick={share}
+			>
 				<Share size={17} />
 			</button>
 		</footer>

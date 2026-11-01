@@ -163,7 +163,6 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 						</div>
 					</>
 				),
-				reactionCount: data.isWin ? 4 : undefined,
 			};
 		}
 		case "SQ_STREAK": {
@@ -200,7 +199,6 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 						) : null}
 					</div>
 				),
-				reactionCount: 9,
 			};
 		}
 		case "SQ_LEADERBOARD": {
@@ -245,7 +243,6 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 						</div>
 					</>
 				),
-				reactionCount: 6,
 			};
 		}
 		case "SQ_MILESTONE": {
@@ -272,7 +269,6 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 						</span>
 					</div>
 				),
-				reactionCount: 5,
 			};
 		}
 		case "SQ_SEASON_RECAP": {
@@ -347,7 +343,6 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 						</div>
 					</>
 				),
-				reactionCount: 3,
 			};
 		}
 		case "SQ_RIVALRY": {
@@ -434,7 +429,6 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 						)}
 					</div>
 				),
-				reactionCount: 40,
 			};
 		}
 		case "LEADERBOARD_TOP": {

@@ -1288,6 +1288,16 @@ export function setStaff({
 	}>;
 }) {
 	return db.transaction().execute(async (trx) => {
+		const createdAtByUserId = new Map(
+			(
+				await trx
+					.selectFrom("TournamentStaff")
+					.select(["userId", "createdAt"])
+					.where("tournamentId", "=", tournamentId)
+					.execute()
+			).map((row) => [row.userId, row.createdAt]),
+		);
+
 		await trx
 			.deleteFrom("TournamentStaff")
 			.where("tournamentId", "=", tournamentId)
@@ -1300,6 +1310,9 @@ export function setStaff({
 					tournamentId,
 					userId: staffer.userId,
 					role: staffer.role,
+					createdAt: createdAtByUserId.has(staffer.userId)
+						? (createdAtByUserId.get(staffer.userId) ?? null)
+						: databaseTimestampNow(),
 				})),
 			)
 			.execute();

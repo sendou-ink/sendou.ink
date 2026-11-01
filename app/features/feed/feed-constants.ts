@@ -56,6 +56,8 @@ export interface FeedItemTypeDefinition {
 	isRetimed?: boolean;
 	/** Not shown when the site is opened as an installed app */
 	isHiddenInPwa?: boolean;
+	/** Nothing to talk about (a notice or a listing): no comments, reactions or sharing, the post opens what it's about instead */
+	isNotice?: boolean;
 }
 
 export const FEED_ITEM_TYPES = {
@@ -181,6 +183,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["EVERYONE"],
 		baseScore: 0.4,
 		halfLifeHours: 12,
+		isNotice: true,
 	},
 	TO_ORG_NEW: {
 		name: "New event from an org",
@@ -223,6 +226,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["EVERYONE"],
 		baseScore: 0.6,
 		halfLifeHours: 48,
+		isNotice: true,
 	},
 	TO_RESULT_FEATURED: {
 		name: "Big tournament result",
@@ -252,6 +256,7 @@ export const FEED_ITEM_TYPES = {
 		baseScore: 0.9,
 		halfLifeHours: 168,
 		isPinned: true,
+		isNotice: true,
 	},
 	TO_STAFF: {
 		name: "Friend is organizing",
@@ -294,6 +299,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["TEAM"],
 		baseScore: 0.45,
 		halfLifeHours: 6,
+		isNotice: true,
 	},
 	SCRIM_RESULT: {
 		name: "Scrim result",
@@ -308,6 +314,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["LFG"],
 		baseScore: 0.35,
 		halfLifeHours: 24,
+		isNotice: true,
 	},
 	LFG_TEAM: {
 		name: "Team recruiting",
@@ -315,6 +322,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["LFG"],
 		baseScore: 0.35,
 		halfLifeHours: 24,
+		isNotice: true,
 	},
 	ART_NEW: {
 		name: "New art",
@@ -410,7 +418,6 @@ export const FEED_ITEM_TYPES = {
 		audience: ["FRIENDS"],
 		baseScore: 0.5,
 		halfLifeHours: 72,
-		isRetimed: true,
 	},
 	ANNOUNCEMENT: {
 		name: "Announcement",
@@ -419,6 +426,7 @@ export const FEED_ITEM_TYPES = {
 		baseScore: 0.9,
 		halfLifeHours: 168,
 		isPinned: true,
+		isNotice: true,
 	},
 	SITE_MILESTONE: {
 		name: "sendou.ink milestone",
@@ -433,6 +441,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["EVERYONE"],
 		baseScore: 0.25,
 		halfLifeHours: 72,
+		isNotice: true,
 	},
 	INSTALL_APP: {
 		name: "Install the app",
@@ -441,6 +450,7 @@ export const FEED_ITEM_TYPES = {
 		baseScore: 0.2,
 		halfLifeHours: 72,
 		isHiddenInPwa: true,
+		isNotice: true,
 	},
 	// xxx: ONBOARDING, a pinned checklist for new users (set weapon pool, add 3 friends, play a first set or tournament) that also fills an empty feed
 	SITE_UPDATE: {
@@ -456,6 +466,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["SELF"],
 		baseScore: 0.3,
 		halfLifeHours: 6,
+		isNotice: true,
 	},
 	VOICE_ROOM: {
 		name: "Friends in voice",
@@ -494,6 +505,9 @@ export const FEED_FEEDBACK_KINDS = [
 export type FeedFeedbackKind = (typeof FEED_FEEDBACK_KINDS)[number];
 
 export const FEED_FEEDBACK_COMMENT_MAX_LENGTH = 1000;
+
+/** An item stops showing once it's this many half-lives of its type old */
+export const FEED_MAX_AGE_HALF_LIVES = 5;
 
 /** Diversity pass: penalty when one of the previous two items shares the category */
 export const FEED_SAME_CATEGORY_PENALTY = 0.8;
@@ -563,7 +577,6 @@ export interface FeedAnnouncement {
 	title: string;
 	text: string;
 	href: string;
-	linkLabel: string;
 	navIcon: NavIcon;
 	/** ISO date */
 	startsAt: string;
@@ -583,7 +596,6 @@ export const FEED_MOCK_ANNOUNCEMENT: Omit<
 	title: "Ver. 11.0.0 balance changes are in",
 	text: "Weapon stats of the new patch are now in the build analyzer.",
 	href: "/analyzer",
-	linkLabel: "Open the analyzer",
 	navIcon: "analyzer",
 };
 
@@ -594,7 +606,6 @@ export interface FeedSpotlight {
 	title: string;
 	text: string;
 	href: string;
-	linkLabel: string;
 	navIcon: NavIcon;
 }
 
@@ -604,70 +615,60 @@ export const FEED_SPOTLIGHTS: FeedSpotlight[] = [
 		title: "Timestamps for your VoD's YouTube description",
 		text: "Every VoD page has a button that copies its matches as timestamps with weapons, modes and stages. Paste them into the YouTube description and they become chapters.",
 		href: "/vods",
-		linkLabel: "Browse VoDs",
 		navIcon: "vods",
 	},
 	{
 		title: "Tournaments in your own calendar",
 		text: "The iCal link on the calendar page adds sendou.ink events to Google Calendar, Apple Calendar or Outlook, with the filters you've picked.",
 		href: "/calendar",
-		linkLabel: "Open calendar",
 		navIcon: "calendar",
 	},
 	{
 		title: "What everyone runs on your weapon",
 		text: "Every weapon's builds page has popular builds and ability stats, worked out from all the builds people have shared.",
 		href: "/builds",
-		linkLabel: "Open builds",
 		navIcon: "builds",
 	},
 	{
 		title: "Plan your team's strategies",
 		text: "Draw plans on top of any stage and mode with weapon and object icons.",
 		href: "/plans",
-		linkLabel: "Open map planner",
 		navIcon: "plans",
 	},
 	{
 		title: "How many shots does it take?",
 		text: "The object damage calculator shows how many hits each weapon needs to destroy objects like Sprinklers and Splash Walls.",
 		href: "/object-damage-calculator",
-		linkLabel: "Open calculator",
 		navIcon: "object-damage-calculator",
 	},
 	{
 		title: "Build analyzer",
 		text: "See what each ability in your build does to ink usage, speeds, special charge and more, and compare two builds side by side.",
 		href: "/analyzer",
-		linkLabel: "Open analyzer",
 		navIcon: "analyzer",
 	},
 	{
 		title: "Check your team comp",
 		text: "Pick four weapons and see their ranges, damage combos and specials side by side.",
 		href: "/comp-analyzer",
-		linkLabel: "Open comp analyzer",
 		navIcon: "comp-analyzer",
 	},
 	{
 		title: "Scan your matches",
 		text: "Point the scanner at your capture card or a VoD file and it reads the weapons, stages, modes and results of your matches.",
 		href: "/scanner",
-		linkLabel: "Open scanner",
 		navIcon: "scanner",
 	},
 	{
 		title: "Tier lists",
 		text: "Make a tier list of weapons, stages, specials and more, and download it as an image.",
 		href: "/tier-list-maker",
-		linkLabel: "Open tier list maker",
 		navIcon: "tier-list-maker",
 	},
 	{
 		title: "Scrim with your circle",
 		text: "Associations let a group of teams share scrim requests only with each other.",
 		href: "/associations",
-		linkLabel: "Open associations",
 		navIcon: "associations",
 	},
 ];

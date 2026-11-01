@@ -28,7 +28,6 @@
 
 .stackAvatar {
 	margin-left: calc(var(--s-2) * -1);
-	border: 2px solid var(--feed-surface, var(--color-bg));
 	border-radius: var(--radius-avatar);
 
 	&:first-child {
@@ -46,7 +45,6 @@
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	background-color: var(--color-bg-higher);
-	border: 2px solid var(--feed-surface, var(--color-bg));
 }
 
 .logo img {
@@ -162,7 +160,6 @@
 }
 
 .inset {
-	--feed-surface: var(--color-bg-high);
 	display: grid;
 	gap: var(--s-2-5);
 	min-width: 0;
@@ -209,7 +206,6 @@
 
 .hero {
 	--hero-tint: var(--color-accent);
-	--feed-surface: var(--color-bg-high);
 	display: grid;
 	gap: var(--s-3);
 	padding: var(--s-4);
@@ -234,6 +230,12 @@
 .heroRow {
 	display: flex;
 	align-items: center;
+}
+
+.trophySlot {
+	flex: none;
+	width: 100px;
+	aspect-ratio: 1 / 1;
 }
 
 .heroResult {
@@ -513,7 +515,6 @@
 }
 
 .stat {
-	--feed-surface: var(--color-bg-high);
 	display: grid;
 	gap: 2px;
 	align-content: start;
@@ -578,7 +579,6 @@
 }
 
 .list {
-	--feed-surface: var(--color-bg-high);
 	min-width: 0;
 	background-color: var(--color-bg-high);
 	border: 1px solid var(--color-border);

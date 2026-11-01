@@ -43,8 +43,10 @@ export function entriesSince(since: string): ChangelogGraphicEntry[] {
 	return fileNames.map(parseEntryFile);
 }
 
-/** Every changelog entry ever committed, oldest first. */
-export function allEntries(): ChangelogGraphicEntry[] {
+/** Every changelog entry ever committed with the day it was added (`YYYY-MM-DD`), oldest first. */
+export function allEntries(): Array<
+	ChangelogGraphicEntry & { addedOn: string }
+> {
 	return fs
 		.globSync("*.md", { cwd: RESOLVED_CHANGELOG_DIR })
 		.sort()
@@ -58,7 +60,9 @@ export function headSha(): string {
 	}).trim();
 }
 
-function parseEntryFile(fileName: string): ChangelogGraphicEntry {
+function parseEntryFile(
+	fileName: string,
+): ChangelogGraphicEntry & { addedOn: string } {
 	const rawMarkdown = fs.readFileSync(
 		path.join(RESOLVED_CHANGELOG_DIR, fileName),
 		"utf8",
@@ -80,6 +84,7 @@ function parseEntryFile(fileName: string): ChangelogGraphicEntry {
 	const { headline, bullets } = parseBody(content, fileName);
 
 	return {
+		addedOn: fileName.slice(0, "YYYY-MM-DD".length),
 		navItems: navItemsOf(frontmatter.navItem),
 		type: frontmatter.type,
 		headline,

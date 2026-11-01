@@ -2,7 +2,6 @@ import clsx from "clsx";
 import { differenceInMinutes, differenceInSeconds } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useLoaderData } from "react-router";
 import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
@@ -18,7 +17,8 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import { SPLATOON_3_INK } from "~/utils/urls";
-import type { FrontPageLoaderData, loader } from "../loaders/index.server";
+import { useFrontPageData } from "../front-page-hooks";
+import type { FrontPageLoaderData } from "../loaders/index.server";
 import styles from "./SplatoonRotations.module.css";
 
 const ROTATION_MODE_FILTERS = ["ALL", "SZ", "TC", "RM", "CB"] as const;
@@ -38,7 +38,7 @@ const RELATIVE_TIME_CUTOFF_MINUTES = 120;
 
 export function SplatoonRotations() {
 	const { t } = useTranslation(["front"]);
-	const data = useLoaderData<typeof loader>();
+	const data = useFrontPageData();
 	const [activeFilter, setActiveFilter] =
 		React.useState<RotationModeFilter>("ALL");
 

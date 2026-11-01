@@ -11,6 +11,10 @@
 	}
 }
 
+.postNotice {
+	padding-bottom: var(--s-4);
+}
+
 .postLinked {
 	cursor: pointer;
 

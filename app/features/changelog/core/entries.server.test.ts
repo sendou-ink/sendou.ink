@@ -12,6 +12,12 @@ describe("Entries.allEntries", () => {
 		}
 	});
 
+	test("gives every entry the day it was added", () => {
+		for (const entry of Entries.allEntries()) {
+			expect(entry.addedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+		}
+	});
+
 	test("reads entries that list many nav items", () => {
 		const entries = Entries.allEntries();
 
