@@ -172,7 +172,7 @@ export class LobbyPage {
 		await modalClickConfirmButton(this.page);
 	}
 
-	/** Leaves in the middle of a set through the viewer menu and its confirmation dialog. */
+	/** Leaves in the middle of a set through the Action tab's menu and its confirmation dialog. */
 	async leaveMidSet() {
 		await this.page.getByTestId("lobby-viewer-menu-button").click();
 		await this.page.getByTestId("lobby-leave-now-menu-item").click();

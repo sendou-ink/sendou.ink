@@ -1,8 +1,11 @@
-import { Undo2 } from "lucide-react";
+import { DoorOpen, Flag, MoreHorizontal, Undo2 } from "lucide-react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { ActionButton } from "~/components/ActionButton";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { SendouTabPanel } from "~/components/elements/Tabs";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { MatchTimeline } from "~/components/match-page/MatchTimeline";
@@ -18,7 +21,7 @@ import styles from "./LobbyActionTab.module.css";
 import { usersOf } from "./LobbyMatchBanner";
 import { LobbyRolledWeapons } from "./LobbyRolledWeapons";
 
-/** Reporting the maps of the viewer's set, then confirming (or undoing) its result. */
+/** Reporting the maps of the viewer's set, then confirming (or undoing) its result, and leaving the lobby after or during it. */
 export function LobbyActionTab() {
 	const { currentSet, viewerSide } = useLobbyView();
 
@@ -119,21 +122,24 @@ function ReportingTab({
 			}
 			secondaryAction={<WeaponReporter {...weaponReport} />}
 			actionButtons={
-				<SendouButton
-					variant="minimal-destructive"
-					size="miniscule"
-					icon={<Undo2 size={16} />}
-					isPending={undoReport.state !== "idle"}
-					isDisabled={reportedCount === 0}
-					onClick={() =>
-						undoReport.submit("UNDO_MAP_REPORT", {
-							setId: set.id,
-							reportedCount,
-						})
-					}
-				>
-					{t("q:match.undoReport")}
-				</SendouButton>
+				<>
+					<SendouButton
+						variant="minimal-destructive"
+						size="miniscule"
+						icon={<Undo2 size={16} />}
+						isPending={undoReport.state !== "idle"}
+						isDisabled={reportedCount === 0}
+						onClick={() =>
+							undoReport.submit("UNDO_MAP_REPORT", {
+								setId: set.id,
+								reportedCount,
+							})
+						}
+					>
+						{t("q:match.undoReport")}
+					</SendouButton>
+					<LeaveActions set={set} />
+				</>
 			}
 		/>
 	);
@@ -258,8 +264,87 @@ function ConfirmationTab({
 					</div>
 				) : null}
 				<WeaponReporter {...weaponReport} />
+				<div className="stack horizontal sm justify-center items-center">
+					<LeaveActions set={set} />
+				</div>
 			</div>
 		</SendouTabPanel>
+	);
+}
+
+function LeaveActions({ set }: { set: LobbySetData }) {
+	const { t } = useTranslation(["lobbies"]);
+	const { data } = useLobbyView();
+	const isDroppingAfterSet = data.viewer!.isDroppingAfterSet;
+
+	return (
+		<>
+			<ActionButton
+				schema={lobbyActionSchema}
+				action="TOGGLE_DROP_AFTER_SET"
+				size="miniscule"
+				variant="minimal"
+				icon={isDroppingAfterSet ? <Undo2 size={16} /> : <DoorOpen size={16} />}
+				testId="lobby-drop-after-set-button"
+			>
+				{isDroppingAfterSet
+					? t("lobbies:actions.stayAfterSet")
+					: t("lobbies:actions.dropAfterSet")}
+			</ActionButton>
+			<LeaveNowMenu isForfeiting={LobbySet.reportedCount(set) > 0} />
+		</>
+	);
+}
+
+/** Menu with the viewer's option to leave mid-set, kept out of sight so it isn't pressed by accident. */
+function LeaveNowMenu({ isForfeiting }: { isForfeiting: boolean }) {
+	const { t } = useTranslation(["lobbies"]);
+	const [isConfirming, setIsConfirming] = React.useState(false);
+	const { submit } = useActionSubmit(lobbyActionSchema);
+
+	const leaveNowText = isForfeiting
+		? t("lobbies:actions.leaveNowForfeit")
+		: t("lobbies:actions.leaveNowCallOff");
+
+	return (
+		<>
+			<SendouMenu
+				trigger={
+					<SendouButton
+						size="miniscule"
+						variant="minimal"
+						icon={<MoreHorizontal size={16} />}
+						aria-label="More actions"
+						testId="lobby-viewer-menu-button"
+					/>
+				}
+			>
+				<SendouMenuItem
+					icon={<Flag />}
+					isDestructive
+					onAction={() => setIsConfirming(true)}
+					data-testid="lobby-leave-now-menu-item"
+				>
+					{leaveNowText}
+				</SendouMenuItem>
+			</SendouMenu>
+			<FormWithConfirm
+				isOpen={isConfirming}
+				onOpenChange={setIsConfirming}
+				dialogHeading={
+					isForfeiting
+						? t("lobbies:leave.forfeitHeading")
+						: t("lobbies:leave.heading")
+				}
+				description={
+					isForfeiting
+						? t("lobbies:leave.forfeitWarning")
+						: t("lobbies:leave.callOffWarning")
+				}
+				submitButtonText={leaveNowText}
+				onConfirm={() => submit("LEAVE")}
+			/>
+		</>
 	);
 }
 

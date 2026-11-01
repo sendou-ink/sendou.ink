@@ -83,7 +83,6 @@
 	"status.UPCOMING": "Upcoming",
 	"viewer.checkInNow": "Check-in is open, check in to play",
 	"viewer.checkedIn": "You're checked in, the lobby starts soon",
-	"viewer.droppingAfterSet": "You'll leave once this set is confirmed",
 	"viewer.friendCodeNeeded": "Set your friend code to sign up",
 	"viewer.inRoom": "You're playing",
 	"viewer.kicked": "The host kicked you from the lobby",

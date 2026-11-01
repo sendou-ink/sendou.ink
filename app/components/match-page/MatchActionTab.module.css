@@ -50,7 +50,10 @@
 .actionButtons {
 	grid-area: actions;
 	display: flex;
-	gap: var(--s-6);
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	gap: var(--s-2) var(--s-6);
 	margin-block-start: calc(-1 * var(--s-4));
 }
 

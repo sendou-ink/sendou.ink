@@ -254,9 +254,7 @@ test.describe("Lobbies", () => {
 				await lobbyPage.goto(lobby.id);
 				await lobbyPage.checkIn();
 
-				await expect(lobbyPage.locators.viewerStatus).toContainText(
-					"You're playing",
-				);
+				await expect(lobbyPage.tab("action")).toBeVisible();
 			});
 
 			await test.step("The waitlisted player is first on the waitlist", async () => {
@@ -285,9 +283,7 @@ test.describe("Lobbies", () => {
 				await lobbyPage.goto(lobby.id);
 				await lobbyPage.checkIn();
 
-				await expect(lobbyPage.locators.viewerStatus).toContainText(
-					"You're playing",
-				);
+				await expect(lobbyPage.tab("action")).toBeVisible();
 			});
 
 			await test.step("The one who didn't check in is no longer in the lobby", async () => {
@@ -862,9 +858,7 @@ test.describe("Lobbies", () => {
 				await impersonate(page, spectator.id);
 				await lobbyPage.goto(lobby.id);
 
-				await expect(lobbyPage.locators.viewerStatus).toContainText(
-					"You're playing",
-				);
+				await expect(lobbyPage.tab("action")).toBeVisible();
 			});
 		});
 
@@ -903,9 +897,7 @@ test.describe("Lobbies", () => {
 				await expect(lobbyPage.locators.readyCheck).toBeVisible();
 				await lobbyPage.confirmReady();
 
-				await expect(lobbyPage.locators.viewerStatus).toContainText(
-					"You're playing",
-				);
+				await expect(lobbyPage.tab("action")).toBeVisible();
 			});
 		});
 
@@ -928,9 +920,7 @@ test.describe("Lobbies", () => {
 				await expect(lobbyPage.locators.readyCheck).toContainText(
 					"Confirmed, waiting for the others",
 				);
-				await expect(lobbyPage.locators.viewerStatus).not.toContainText(
-					"You're playing",
-				);
+				await isNotVisible(lobbyPage.tab("action"));
 			});
 
 			await test.step("The first on the waitlist confirms and gets the spot", async () => {
@@ -938,18 +928,14 @@ test.describe("Lobbies", () => {
 				await lobbyPage.goto(lobby.id);
 				await lobbyPage.confirmReady();
 
-				await expect(lobbyPage.locators.viewerStatus).toContainText(
-					"You're playing",
-				);
+				await expect(lobbyPage.tab("action")).toBeVisible();
 			});
 
 			await test.step("The third stays out of the room", async () => {
 				await impersonate(page, third.id);
 				await lobbyPage.goto(lobby.id);
 
-				await expect(lobbyPage.locators.viewerStatus).not.toContainText(
-					"You're playing",
-				);
+				await isNotVisible(lobbyPage.tab("action"));
 			});
 		});
 
@@ -1003,9 +989,7 @@ test.describe("Lobbies", () => {
 			await lobbyPage.goto(lobby.id);
 			await lobbyPage.signUp();
 
-			await expect(lobbyPage.locators.viewerStatus).toContainText(
-				"You're playing",
-			);
+			await expect(lobbyPage.tab("action")).toBeVisible();
 		});
 
 		test("once the first's priority runs out the spot goes to whoever confirms first", async ({
@@ -1022,9 +1006,7 @@ test.describe("Lobbies", () => {
 				await lobbyPage.goto(lobby.id);
 				await lobbyPage.confirmReady();
 
-				await expect(lobbyPage.locators.viewerStatus).toContainText(
-					"You're playing",
-				);
+				await expect(lobbyPage.tab("action")).toBeVisible();
 			});
 
 			await test.step("The second is too late, the spot taken", async () => {
@@ -1136,8 +1118,8 @@ test.describe("Lobbies", () => {
 				await lobbyPage.goto(lobby.id, "action");
 				await lobbyPage.dropAfterSet();
 
-				await expect(lobbyPage.locators.viewerStatus).toContainText(
-					"You'll leave once this set is confirmed",
+				await expect(lobbyPage.locators.dropAfterSetButton).toHaveText(
+					"Stay after this set",
 				);
 
 				await lobbyPage.reportOwnTeamSweep(MAPS_TO_WIN);
