@@ -239,6 +239,7 @@ describe("useFloatingLayer", () => {
 			viewport.height - KEYBOARD_HEIGHT,
 		);
 
+		await screen.getByPlaceholder("Search seasons...").click();
 		openKeyboard();
 
 		await vi.waitFor(() => {
