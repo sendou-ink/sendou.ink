@@ -690,6 +690,7 @@ function SideNavUserPanel() {
 									className={styles.sideNavFooterTeamAvatar}
 									width={22}
 									height={22}
+									loading="lazy"
 								/>
 							) : (
 								<Image path={navIconUrl("t")} alt="" width={22} height={22} />

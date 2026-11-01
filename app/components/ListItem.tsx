@@ -100,7 +100,9 @@ export function ListItemButton({
 }
 
 export function ListItemImage({ src }: { src: string }) {
-	return <img src={src} alt="" className={styles.listLinkImage} />;
+	return (
+		<img src={src} alt="" className={styles.listLinkImage} loading="lazy" />
+	);
 }
 
 export function ListItemTexts({ children }: { children: React.ReactNode }) {
@@ -159,12 +161,18 @@ function ListItemContent({
 				<Avatar user={user} size="xxsm" />
 			) : imageUrl ? (
 				<div className={styles.listLinkImageContainer}>
-					<img src={imageUrl} alt="" className={styles.listLinkImage} />
+					<img
+						src={imageUrl}
+						alt=""
+						className={styles.listLinkImage}
+						loading="lazy"
+					/>
 					{overlayIconUrl ? (
 						<img
 							src={overlayIconUrl}
 							alt=""
 							className={styles.listLinkOverlayIcon}
+							loading="lazy"
 						/>
 					) : null}
 				</div>

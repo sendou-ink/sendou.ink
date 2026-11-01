@@ -12,6 +12,7 @@ import {
 	Scripts,
 	ScrollRestoration,
 	type ShouldRevalidateFunction,
+	UNSAFE_FrameworkContext,
 	useFetchers,
 	useLoaderData,
 	useLocation,
@@ -253,6 +254,7 @@ function Document({
 				<meta name="mobile-web-app-capable" content="yes" />
 				<meta name="theme-color" content="#010115" />
 				<Meta />
+				<StylesheetPreloads />
 				<Links />
 				{rootData?.i18nPreloadUrls?.map((url) => (
 					<link
@@ -558,6 +560,27 @@ function DevFavicon({ colors }: { colors: DevFaviconColors }) {
 			href={`data:image/svg+xml,${encodeURIComponent(svg)}`}
 		/>
 	);
+}
+
+/**
+ * React's SSR hoists every `<link>` but a plain stylesheet above the stylesheets, so without these
+ * the CSS is requested after the ~200 modulepreloads of `<Scripts />` and first paint waits for the JS.
+ */
+function StylesheetPreloads() {
+	const frameworkContext = React.useContext(UNSAFE_FrameworkContext);
+	const matches = useMatches();
+
+	if (!frameworkContext) return null;
+
+	const hrefs = new Set(
+		matches.flatMap(
+			(match) => frameworkContext.manifest.routes[match.id]?.css ?? [],
+		),
+	);
+
+	return [...hrefs].map((href) => (
+		<link key={href} rel="preload" as="style" href={href} />
+	));
 }
 
 function Fonts() {

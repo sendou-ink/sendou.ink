@@ -597,6 +597,7 @@ function YouPanel({
 								className={styles.youPanelTeamAvatar}
 								width={22}
 								height={22}
+								loading="lazy"
 							/>
 						) : (
 							<Image path={navIconUrl("t")} alt="" width={22} height={22} />
