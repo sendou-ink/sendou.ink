@@ -66,6 +66,22 @@
 	&:not([data-team]) {
 		display: none;
 	}
+
+	.stinger:not([data-has-match]) & {
+		--team-color: var(--bc-bg);
+	}
+
+	.stinger:not([data-has-match]) &[data-index="1"] {
+		--team-color: var(--bc-surface);
+	}
+
+	/* an accent stripe on the seam */
+	.stinger:not([data-has-match]) &[data-index="2"] {
+		--team-color: var(--bc-accent);
+
+		display: block;
+		clip-path: polygon(56.4% 0, 58% 0, 44% 100%, 42.4% 100%);
+	}
 }
 
 /* A panel sliding in from --from, e.g. -100% for the left. --panel-shape transforms it on the way (skew...). */
@@ -103,7 +119,7 @@
 	}
 }
 
-/* card: the teams on their own halves, the tournament's logo under the vs between them or on the header */
+/* card: the teams on their own halves, the tournament on the header */
 
 .card {
 	position: absolute;
@@ -142,6 +158,10 @@
 
 .teamLogo {
 	width: 260px;
+	/* a monogram on its own team's color would only be the letter */
+	background: color-mix(in oklch, var(--team-color) 70%, black);
+	box-shadow: 0 0 0 10px
+		color-mix(in oklch, var(--team-color-text) 22%, transparent);
 }
 
 .teamName {
@@ -182,33 +202,46 @@
 		var(--content-out-at) forwards;
 }
 
-.tournamentLogo {
-	--bc-enter-y: calc(var(--bc-enter-distance) * 2);
-	--bc-exit-y: var(--bc-enter-distance);
+/* without a match, the tournament on the theme's own colors instead of the teams' */
+.titleCard {
+	--bc-enter-y: calc(var(--bc-enter-distance) * 3);
+	--bc-exit-y: calc(var(--bc-enter-distance) * -1);
 
-	position: absolute;
-	top: calc(50% + 130px);
-	left: 50%;
-	width: 120px;
-	height: 120px;
-	margin-left: -60px;
-	border-radius: var(--bc-radius);
-	object-fit: cover;
+	grid-column: 1 / -1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 48px;
+	min-width: 0;
 	animation:
-		var(--bc-anim-enter) var(--content-in) var(--bc-ease)
-		calc(var(--content-at) + var(--d) * 0.05) both,
+		var(--bc-anim-enter) var(--content-in) var(--bc-ease) var(--content-at) both,
 		var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
 		var(--content-out-at) forwards;
-
-	.card:not([data-has-teams]) & {
-		top: 50%;
-		width: 200px;
-		height: 200px;
-		margin: -100px 0 0 -100px;
-	}
 }
 
-/* going into the game, at the bottom */
+.titleCardLogo {
+	width: 360px;
+	height: 360px;
+	border-radius: var(--bc-radius);
+	object-fit: cover;
+	box-shadow:
+		0 0 0 var(--bc-border-width) var(--bc-border),
+		0 32px 96px rgb(0 0 0 / 0.5);
+}
+
+.titleCardName {
+	max-width: 100%;
+	overflow: hidden;
+	color: var(--bc-text);
+	font-size: 76px;
+	font-weight: 700;
+	line-height: 1.1;
+	text-overflow: ellipsis;
+	text-shadow: 0 4px 24px rgb(0 0 0 / 0.6);
+	white-space: nowrap;
+}
+
+/* the tournament at the bottom, going into the game with the round */
 .header {
 	--bc-enter-y: calc(var(--bc-enter-distance) * 2);
 	--bc-exit-y: var(--bc-enter-distance);
