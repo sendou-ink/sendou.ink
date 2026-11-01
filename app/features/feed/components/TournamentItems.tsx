@@ -1,0 +1,484 @@
+import clsx from "clsx";
+import { Play } from "lucide-react";
+import { Link } from "react-router";
+import { Avatar } from "~/components/Avatar";
+import { Badge } from "~/components/Badge";
+import { Placement } from "~/components/Placement";
+import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
+import { tournamentPage, trophyPage, userPage } from "~/utils/urls";
+import type { FeedItem } from "../core/FeedItems.server";
+import type { FeedItemContent } from "./FeedItemCard";
+import {
+	DateBlock,
+	DayTime,
+	durationText,
+	LogoAvatar,
+	ordinalPlacement,
+	TournamentRow,
+	UserName,
+	UserStack,
+	WinLoss,
+} from "./FeedParts";
+import styles from "./FeedParts.module.css";
+
+export function tournamentItemContent(
+	item: FeedItem,
+	now: number,
+): FeedItemContent | null {
+	switch (item.type) {
+		case "TO_WIN": {
+			const { data } = item;
+			return {
+				avatar: <Avatar user={data.actor} size="xs" />,
+				line: (
+					<>
+						<UserName user={data.actor} /> won{" "}
+						<TournamentLink tournament={data.tournament} />
+					</>
+				),
+				body: (
+					<div className={styles.hero}>
+						<div className={clsx(styles.rowNoWrap, styles.between)}>
+							<div className={styles.rowNoWrap}>
+								<Placement placement={1} size={44} textOnly={false} />
+								<div className="text-xs text-lighter">
+									of {data.participantCount} teams
+								</div>
+							</div>
+							<LogoAvatar
+								url={data.tournament?.logoUrl ?? null}
+								name={data.tournament?.name ?? ""}
+								size="sm"
+							/>
+						</div>
+						<div className={clsx(styles.row, styles.between)}>
+							<div>
+								<div className="font-bold">{data.team.name}</div>
+								<div className="text-xs text-lighter">
+									{data.tournament?.organizationName
+										? `${data.tournament.organizationName} · `
+										: ""}
+									seed {data.team.seed ?? "–"} · {data.setWins}–{data.setLosses}{" "}
+									in sets
+								</div>
+							</div>
+							<UserStack users={data.team.members} max={6} />
+						</div>
+						{data.path.length > 0 ? (
+							<div className="stack xs">
+								{data.path.map((match, i) => (
+									<div key={i} className={clsx(styles.player, "text-xs")}>
+										<WinLoss isWin={match.isWin} />
+										<span className={styles.ellipsis}>
+											vs {match.opponentName}
+										</span>
+										<span className="text-lighter">
+											{match.score[0]}–{match.score[1]}
+										</span>
+									</div>
+								))}
+							</div>
+						) : null}
+					</div>
+				),
+				reactionCount: 23,
+			};
+		}
+		case "TO_PODIUM": {
+			const { data } = item;
+			return {
+				avatar: <Avatar user={data.actor} size="xs" />,
+				line: (
+					<>
+						<UserName user={data.actor} /> placed{" "}
+						<b>{ordinalPlacement(data.placement)}</b> at{" "}
+						<TournamentLink tournament={data.tournament} />
+					</>
+				),
+				body: (
+					<div className={clsx(styles.inset, styles.rowNoWrap)}>
+						<Placement placement={data.placement} size={36} />
+						<div className={styles.grow}>
+							<div className="font-bold">{data.team.name}</div>
+							<div className="text-xs text-lighter">
+								{ordinalPlacement(data.placement)} of {data.participantCount} ·{" "}
+								{data.setWins}–{data.setLosses} in sets
+								{data.friendsOnTeam.length > 0
+									? ` · with ${data.friendsOnTeam.map((f) => f.username).join(", ")}`
+									: ""}
+							</div>
+						</div>
+						<UserStack users={data.team.members} max={4} />
+					</div>
+				),
+				reactionCount: 12,
+			};
+		}
+		case "TO_DIGEST": {
+			const { data } = item;
+			return {
+				avatar: <LogoAvatar url={null} name="Weekend" />,
+				line: (
+					<>
+						<b>{data.rows.length} friends</b> played {data.tournamentCount}{" "}
+						tournaments in the last few days
+					</>
+				),
+				body: (
+					<div className={styles.list}>
+						{data.rows.map((row) => (
+							<div key={row.user.id} className={styles.digestRow}>
+								<Avatar user={row.user} size="xxsm" />
+								<div className={styles.ellipsis}>
+									<div className={clsx(styles.ellipsis, "text-xs")}>
+										<UserName user={row.user} /> · {row.teamName}
+									</div>
+									<Link
+										to={tournamentPage(row.tournamentId)}
+										className="text-xs text-lighter"
+									>
+										{row.tournamentName}
+									</Link>
+								</div>
+								<span
+									className={clsx(styles.placing, {
+										[styles.placingTop]: row.placement <= 3,
+									})}
+								>
+									{ordinalPlacement(row.placement)}
+									<span className="text-xs text-lighter">
+										/{row.participantCount}
+									</span>
+								</span>
+							</div>
+						))}
+					</div>
+				),
+			};
+		}
+		case "TO_REGISTERED": {
+			const { data } = item;
+			return {
+				avatar: <Avatar user={data.actor} size="xs" />,
+				line: (
+					<>
+						<UserName user={data.actor} /> registered for{" "}
+						<TournamentLink tournament={data.tournament} />
+					</>
+				),
+				body: (
+					<>
+						<div className={styles.inset}>
+							<TournamentRow tournament={data.tournament} />
+						</div>
+						<div className={clsx(styles.row, styles.between)}>
+							<div className={styles.rowNoWrap}>
+								<UserStack users={data.team.members} />
+								<b className="text-xs">{data.team.name}</b>
+							</div>
+							<span className="text-xs text-lighter">
+								{data.teamCount} teams registered
+								{data.tournament?.startsAt
+									? ` · in ${durationText(data.tournament.startsAt - now)}`
+									: ""}
+							</span>
+						</div>
+					</>
+				),
+			};
+		}
+		case "TO_UPSET": {
+			const { data } = item;
+			return {
+				avatar: <Avatar user={data.friend} size="xs" />,
+				line: data.isFriendWinner ? (
+					<>
+						<UserName user={data.friend} />
+						's team, seeded {data.winnerSeed}, knocked out seed {data.loserSeed}{" "}
+						at <TournamentLink tournament={data.tournament} />
+					</>
+				) : (
+					<>
+						<UserName user={data.friend} />
+						's team, seeded {data.loserSeed}, was knocked out by seed{" "}
+						{data.winnerSeed} at <TournamentLink tournament={data.tournament} />
+					</>
+				),
+				body: (
+					<div className={clsx(styles.inset, styles.vs)}>
+						<div className={styles.vsSide}>
+							<LogoAvatar
+								url={data.winner.avatarUrl}
+								name={data.winner.name}
+								size="sm"
+							/>
+							<span className={styles.ellipsis}>{data.winner.name}</span>
+							<span className={styles.pill}>Seed {data.winnerSeed}</span>
+						</div>
+						<div className={styles.bigScore}>
+							{data.score[0]}–{data.score[1]}
+						</div>
+						<div className={clsx(styles.vsSide, "text-lighter")}>
+							<LogoAvatar
+								url={data.loser.avatarUrl}
+								name={data.loser.name}
+								size="sm"
+							/>
+							<span className={styles.ellipsis}>{data.loser.name}</span>
+							<span className={styles.pill}>Seed {data.loserSeed}</span>
+						</div>
+					</div>
+				),
+			};
+		}
+		case "TO_LFG": {
+			const { data } = item;
+			return {
+				avatar: <LogoAvatar url={data.team.avatarUrl} name={data.team.name} />,
+				line: (
+					<>
+						<b>{data.team.name}</b> needs a player for{" "}
+						<TournamentLink tournament={data.tournament} />
+					</>
+				),
+				body: (
+					<div className={styles.inset}>
+						{data.note ? <div className={styles.quote}>{data.note}</div> : null}
+						<div className={styles.rowNoWrap}>
+							<UserStack users={data.team.members} />
+							{Array.from({ length: data.openSpots }, (_, i) => (
+								<span key={i} className={styles.emptySlot} />
+							))}
+							{data.tournament?.startsAt ? (
+								<span className="text-xs text-lighter">
+									<DayTime at={data.tournament.startsAt} />
+								</span>
+							) : null}
+						</div>
+					</div>
+				),
+			};
+		}
+		case "TO_ORG_NEW": {
+			const { data } = item;
+			return {
+				avatar: (
+					<LogoAvatar
+						url={data.organization.avatarUrl}
+						name={data.organization.name}
+					/>
+				),
+				line: (
+					<>
+						<Link
+							to={tournamentOrganizationPage({
+								organizationSlug: data.organization.slug,
+							})}
+							className="font-bold"
+						>
+							{data.organization.name}
+						</Link>{" "}
+						announced <TournamentLink tournament={data.tournament} />
+					</>
+				),
+				body: data.tournament?.startsAt ? (
+					<div className={styles.rowNoWrap}>
+						<DateBlock at={data.tournament.startsAt} />
+						<div className={clsx("stack xs", styles.grow)}>
+							<span className="text-xs text-lighter">
+								<DayTime at={data.tournament.startsAt} /> ·{" "}
+								{data.teamCount > 0
+									? `${data.teamCount} teams`
+									: "Registration open"}
+							</span>
+							<div className={styles.chain}>
+								{data.bracketNames.map((name, i) => (
+									<span key={i}>{name}</span>
+								))}
+							</div>
+						</div>
+					</div>
+				) : null,
+			};
+		}
+		case "TO_SERIES": {
+			const { data } = item;
+			return {
+				avatar: (
+					<LogoAvatar
+						url={data.organization?.avatarUrl ?? null}
+						name={data.organization?.name ?? data.seriesName}
+					/>
+				),
+				line: (
+					<>
+						<b>{data.seriesName}</b> standings, last 90 days
+					</>
+				),
+				body: (
+					<>
+						<table className={styles.table}>
+							<thead>
+								<tr>
+									<th>#</th>
+									<th>Player</th>
+									<th className={styles.numeric}>Events</th>
+									<th className={styles.numeric}>Points</th>
+								</tr>
+							</thead>
+							<tbody>
+								{data.rows.map((row) => (
+									<tr
+										key={row.user.id}
+										className={clsx({ [styles.highlightRow]: row.isFriend })}
+									>
+										<td>{row.placement}</td>
+										<td>
+											<div className={styles.rowNoWrap}>
+												<Avatar user={row.user} size="xxxsm" />
+												<Link to={userPage(row.user)}>{row.user.username}</Link>
+											</div>
+										</td>
+										<td className={styles.numeric}>{row.eventCount}</td>
+										<td className={styles.numeric}>
+											<b>{row.points}</b>
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+						<div className="text-xs text-lighter">
+							Mock scoring: 1st 10 · 2nd 7 · 3rd 5 · 4th 4 · played 1
+						</div>
+					</>
+				),
+			};
+		}
+		case "TO_VOD": {
+			const { data } = item;
+			return {
+				avatar: <Avatar user={data.actor} size="xs" />,
+				line: (
+					<>
+						<UserName user={data.actor} /> added a VoD from{" "}
+						<TournamentLink tournament={data.tournament} />
+					</>
+				),
+				body: (
+					<>
+						<div className={styles.thumb}>
+							{data.platform === "YOUTUBE" ? (
+								<img
+									src={`https://i.ytimg.com/vi/${data.platformVideoId}/mqdefault.jpg`}
+									alt=""
+									loading="lazy"
+								/>
+							) : null}
+							<span className={styles.thumbPlay}>
+								<Play size={22} fill="currentColor" />
+							</span>
+							<span className={clsx(styles.thumbTag, styles.pill)}>
+								{data.platform === "TWITCH" ? "Twitch" : "YouTube"}
+								{data.viewCount ? ` · ${data.viewCount} views` : ""}
+							</span>
+						</div>
+						<div className={clsx(styles.rowNoWrap, styles.between, "text-xs")}>
+							<span className={styles.ellipsis}>
+								<b>{data.teams[0].name}</b> vs <b>{data.teams[1].name}</b>
+							</span>
+							<span className="text-lighter whitespace-nowrap">
+								{data.score[0]}–{data.score[1]}
+							</span>
+						</div>
+					</>
+				),
+			};
+		}
+		case "TO_BADGE": {
+			const { data } = item;
+			return {
+				avatar: <Avatar user={data.actor} size="xs" />,
+				line: (
+					<>
+						<UserName user={data.actor} /> earned the{" "}
+						<b>{data.badge.displayName}</b> badge
+					</>
+				),
+				body: (
+					<div className={clsx(styles.inset, styles.rowNoWrap)}>
+						<Badge badge={data.badge} size={56} isAnimated={false} />
+						<div>
+							<div className="font-semi-bold">{data.badge.displayName}</div>
+							<div className="text-xs text-lighter">
+								From {data.tournament?.name} · {data.ownerCount} players own it
+							</div>
+						</div>
+					</div>
+				),
+				reactionCount: 8,
+			};
+		}
+		case "TO_TROPHY": {
+			const { data } = item;
+			return {
+				avatar: <Avatar user={data.actor} size="xs" />,
+				line: (
+					<>
+						<UserName user={data.actor} /> won a{" "}
+						<Link to={trophyPage(data.trophyId)} className="font-bold">
+							{data.trophyName}
+						</Link>{" "}
+						trophy
+					</>
+				),
+				body: (
+					<div className={clsx(styles.hero, styles.heroRow)}>
+						<div>
+							<div className="font-bold">
+								{data.trophyName} · tier {data.tier}
+							</div>
+							<div className="text-xs text-lighter">
+								{data.tournament?.name}
+							</div>
+						</div>
+					</div>
+				),
+				reactionCount: 14,
+			};
+		}
+		case "TO_STAFF": {
+			const { data } = item;
+			return {
+				avatar: <Avatar user={data.actor} size="xs" />,
+				line: (
+					<>
+						<UserName user={data.actor} /> is{" "}
+						{data.role === "ORGANIZER" ? "organizing" : "streaming"}{" "}
+						<TournamentLink tournament={data.tournament} />
+					</>
+				),
+				body: (
+					<div className={styles.inset}>
+						<TournamentRow tournament={data.tournament} />
+					</div>
+				),
+			};
+		}
+		default:
+			return null;
+	}
+}
+
+function TournamentLink({
+	tournament,
+}: {
+	tournament?: { tournamentId: number | null; name: string };
+}) {
+	if (!tournament?.tournamentId) return null;
+
+	return (
+		<Link to={tournamentPage(tournament.tournamentId)} className="font-bold">
+			{tournament.name}
+		</Link>
+	);
+}

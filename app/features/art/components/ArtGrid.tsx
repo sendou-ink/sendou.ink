@@ -1,5 +1,12 @@
 import clsx from "clsx";
-import { ImageOff, SquarePen, Trash, Unlink } from "lucide-react";
+import {
+	ChevronLeft,
+	ChevronRight,
+	ImageOff,
+	SquarePen,
+	Trash,
+	Unlink,
+} from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -12,6 +19,7 @@ import { artPage, newArtPage, userArtPage } from "~/features/art/art-urls";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useLatestRef } from "~/hooks/useLatestRef";
 import { usePagination } from "~/hooks/usePagination";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { useSearchParam } from "~/modules/search-params/hooks";
@@ -24,6 +32,8 @@ import type { ListedArt } from "../art-types";
 import styles from "./ArtGrid.module.css";
 
 const preloadedImageUrls = new Set<string>();
+
+const SWIPE_MIN_DISTANCE_PX = 50;
 
 export function ArtGrid({
 	arts,
@@ -85,30 +95,89 @@ export function ArtGrid({
 	);
 }
 
-function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
+export function BigImageDialog({
+	close,
+	art,
+	navigation,
+}: {
+	close: () => void;
+	art: Pick<
+		ListedArt,
+		"url" | "createdAt" | "description" | "tags" | "linkedUsers"
+	>;
+	/** Moving between the images of a set, with the arrow keys, buttons or by swiping */
+	navigation?: {
+		index: number;
+		count: number;
+		onChange: (index: number) => void;
+	};
+}) {
 	const dialogRef = React.useRef<HTMLDialogElement>(null);
+	const swipeStartRef = React.useRef<{ x: number; y: number } | null>(null);
+	const wasSwipeRef = React.useRef(false);
 	const [infoVisible, setInfoVisible] = React.useState(true);
-	const [imageSettled, imageRef] = useImageSettled();
-	const [aspectRatio, placeholderRef] = useImageAspectRatio();
-	const { t } = useTranslation(["art"]);
 	const { formatter } = useDateTimeFormat({
 		year: "numeric",
 		month: "numeric",
 		day: "numeric",
 	});
 
-	const imageFailed = aspectRatio === "FAILED";
-
 	const dateText = formatter.format(databaseTimestampToDate(art.createdAt));
 
+	const goTo = (offset: -1 | 1) => {
+		if (!navigation) return;
+
+		const index = navigation.index + offset;
+		if (index < 0 || index >= navigation.count) return;
+
+		navigation.onChange(index);
+	};
+	const latestGoTo = useLatestRef(goTo);
+	const hasNavigation = Boolean(navigation);
+
+	React.useEffect(() => {
+		if (!hasNavigation) return;
+
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "ArrowLeft") latestGoTo.current(-1);
+			if (event.key === "ArrowRight") latestGoTo.current(1);
+		};
+		window.addEventListener("keydown", onKeyDown);
+
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [hasNavigation, latestGoTo]);
+
 	const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+		if (wasSwipeRef.current) {
+			wasSwipeRef.current = false;
+			return;
+		}
+
 		const target = event.target as HTMLElement;
-		if (target.closest("a")) return;
+		if (target.closest("a, button")) return;
 		if (target.closest("figure") && !deviceCanHover()) {
 			setInfoVisible((visible) => !visible);
 			return;
 		}
 		dialogRef.current?.close();
+	};
+
+	const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+		const start = swipeStartRef.current;
+		swipeStartRef.current = null;
+		if (!start) return;
+
+		const deltaX = event.clientX - start.x;
+		const deltaY = event.clientY - start.y;
+		if (
+			Math.abs(deltaX) < SWIPE_MIN_DISTANCE_PX ||
+			Math.abs(deltaX) < Math.abs(deltaY)
+		) {
+			return;
+		}
+
+		wasSwipeRef.current = true;
+		goTo(deltaX < 0 ? 1 : -1);
 	};
 
 	return (
@@ -120,76 +189,141 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 			aria-label={art.description || dateText}
 		>
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: click-anywhere to close, Escape is handled by the dialog */}
-			<div className={styles.lightboxBody} onClick={handleClick}>
-				<figure
-					className={clsx(styles.lightboxFigure, {
-						[styles.lightboxFigureSized]: typeof aspectRatio === "number",
-						[styles.lightboxFigureFailed]: imageFailed,
-					})}
-					style={
-						typeof aspectRatio === "number"
-							? ({ "--aspect-ratio": aspectRatio } as React.CSSProperties)
-							: undefined
-					}
-				>
-					<img
-						alt=""
-						src={smallImageFileName(art.url)}
-						className={styles.lightboxPlaceholder}
-						ref={placeholderRef}
-					/>
-					{imageFailed ? (
-						<div className={styles.lightboxFailed}>
-							<ImageOff />
-							{t("art:imageFailed")}
-						</div>
-					) : (
-						<img
-							alt=""
-							src={art.url}
-							className={clsx(styles.lightboxImg, {
-								[styles.lightboxImgSettled]: imageSettled,
-							})}
-							ref={imageRef}
-						/>
-					)}
-					<figcaption
-						className={clsx(styles.lightboxInfo, {
-							[styles.lightboxInfoHidden]: !infoVisible,
-						})}
-					>
-						<time className={styles.lightboxDate}>{dateText}</time>
-						{art.description ? (
-							<div className={styles.lightboxDescription}>
-								{art.description}
-							</div>
+			<div
+				className={clsx(styles.lightboxBody, {
+					[styles.lightboxBodySwipeable]: navigation,
+				})}
+				onClick={handleClick}
+				onPointerDown={
+					navigation
+						? (event) => {
+								swipeStartRef.current = { x: event.clientX, y: event.clientY };
+							}
+						: undefined
+				}
+				onPointerUp={navigation ? handlePointerUp : undefined}
+			>
+				<LightboxFigure
+					key={art.url}
+					art={art}
+					dateText={dateText}
+					infoVisible={infoVisible}
+				/>
+				{navigation && navigation.count > 1 ? (
+					<>
+						<span className={styles.lightboxCounter}>
+							{navigation.index + 1} / {navigation.count}
+						</span>
+						{navigation.index > 0 ? (
+							<button
+								type="button"
+								className={clsx(styles.lightboxNav, styles.lightboxNavPrevious)}
+								onClick={() => goTo(-1)}
+								aria-label="Previous image"
+							>
+								<ChevronLeft />
+							</button>
 						) : null}
-						{art.tags || art.linkedUsers ? (
-							<div className={styles.tagsContainer}>
-								{art.linkedUsers?.map((user) => (
-									<Link
-										to={userPage(user)}
-										key={user.id}
-										className={clsx(styles.dialogTag, styles.dialogTagUser)}
-									>
-										{user.username}
-									</Link>
-								))}
-								{art.tags?.map((tag) => (
-									<Link
-										to={artPage(tag.name)}
-										key={tag.id}
-										className={styles.dialogTag}
-									>
-										#{tag.name}
-									</Link>
-								))}
-							</div>
+						{navigation.index < navigation.count - 1 ? (
+							<button
+								type="button"
+								className={clsx(styles.lightboxNav, styles.lightboxNavNext)}
+								onClick={() => goTo(1)}
+								aria-label="Next image"
+							>
+								<ChevronRight />
+							</button>
 						) : null}
-					</figcaption>
-				</figure>
+					</>
+				) : null}
 			</div>
 		</SendouModal>
+	);
+}
+
+function LightboxFigure({
+	art,
+	dateText,
+	infoVisible,
+}: {
+	art: Pick<ListedArt, "url" | "description" | "tags" | "linkedUsers">;
+	dateText: string;
+	infoVisible: boolean;
+}) {
+	const [imageSettled, imageRef] = useImageSettled();
+	const [aspectRatio, placeholderRef] = useImageAspectRatio();
+	const { t } = useTranslation(["art"]);
+
+	const imageFailed = aspectRatio === "FAILED";
+
+	return (
+		<figure
+			className={clsx(styles.lightboxFigure, {
+				[styles.lightboxFigureSized]: typeof aspectRatio === "number",
+				[styles.lightboxFigureFailed]: imageFailed,
+			})}
+			style={
+				typeof aspectRatio === "number"
+					? ({ "--aspect-ratio": aspectRatio } as React.CSSProperties)
+					: undefined
+			}
+		>
+			<img
+				alt=""
+				src={smallImageFileName(art.url)}
+				className={styles.lightboxPlaceholder}
+				ref={placeholderRef}
+				draggable={false}
+			/>
+			{imageFailed ? (
+				<div className={styles.lightboxFailed}>
+					<ImageOff />
+					{t("art:imageFailed")}
+				</div>
+			) : (
+				<img
+					alt=""
+					src={art.url}
+					className={clsx(styles.lightboxImg, {
+						[styles.lightboxImgSettled]: imageSettled,
+					})}
+					ref={imageRef}
+					draggable={false}
+				/>
+			)}
+			<figcaption
+				className={clsx(styles.lightboxInfo, {
+					[styles.lightboxInfoHidden]: !infoVisible,
+				})}
+			>
+				<time className={styles.lightboxDate}>{dateText}</time>
+				{art.description ? (
+					<div className={styles.lightboxDescription}>{art.description}</div>
+				) : null}
+				{art.tags || art.linkedUsers ? (
+					<div className={styles.tagsContainer}>
+						{art.linkedUsers?.map((user) => (
+							<Link
+								to={userPage(user)}
+								key={user.id}
+								className={clsx(styles.dialogTag, styles.dialogTagUser)}
+							>
+								{user.username}
+							</Link>
+						))}
+						{art.tags?.map((tag) => (
+							<Link
+								to={artPage(tag.name)}
+								key={tag.id}
+								className={styles.dialogTag}
+							>
+								#{tag.name}
+							</Link>
+						))}
+					</div>
+				) : null}
+			</figcaption>
+		</figure>
 	);
 }
 
