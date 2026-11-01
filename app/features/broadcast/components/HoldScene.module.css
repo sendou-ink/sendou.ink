@@ -38,7 +38,7 @@
 	width: 128px;
 	height: 128px;
 	margin-bottom: 12px;
-	border-radius: var(--bc-radius);
+	border-radius: 50%;
 	object-fit: cover;
 }
 

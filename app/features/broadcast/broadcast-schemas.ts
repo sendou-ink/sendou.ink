@@ -65,10 +65,13 @@ export const broadcastActionSchema = v.union([
 	v.object({ _action: _action("SET_NEXT_SCENE"), scene }),
 	v.object({ _action: _action("SET_NEXT_TRANSITION"), transition }),
 	v.object({
-		_action: _action("SET_NEXT_INK"),
+		_action: _action("SET_INK"),
 		/** `undefined` goes back to the theme's team colors. */
 		key: v.optional(v.picklist(BROADCAST_INK_COLORS.map((color) => color.key))),
 		isFlipped: booleanString,
+		/** The featured match and how many of its results are on air, identifying the game on air. */
+		matchId: id,
+		resultCount: nonNegativeInteger,
 	}),
 	v.object({
 		_action: _action("SET_NEXT_SWAP_SIDES"),

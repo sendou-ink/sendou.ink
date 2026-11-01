@@ -51,12 +51,18 @@ import {
 	broadcastThemeFormSchema,
 } from "../broadcast-schemas";
 import type {
+	BroadcastMatch,
 	BroadcastScene,
 	BroadcastState,
 	BroadcastView,
 } from "../broadcast-types";
 import { broadcastOverlayPage, broadcastStreamUrl } from "../broadcast-urls";
-import { inkColorVars, matchSides, roundLabel } from "../broadcast-utils";
+import {
+	gameInk,
+	inkColorVars,
+	matchSides,
+	roundLabel,
+} from "../broadcast-utils";
 import { BroadcastPreview } from "../components/BroadcastPreview";
 import { loader } from "../loaders/to.$id.broadcast.$channel.server";
 import styles from "./to.$id.broadcast.$channel.module.css";
@@ -408,19 +414,27 @@ function Teams({ state }: { state: BroadcastState }) {
 				>
 					{t("broadcast:dashboard.swapSides")}
 				</ActionButton>
-				<InkColors state={state} />
+				<InkColors state={state} match={state.match} />
 			</div>
 		</SendouSection>
 	);
 }
 
-function InkColors({ state }: { state: BroadcastState }) {
+function InkColors({
+	state,
+	match,
+}: {
+	state: BroadcastState;
+	match: BroadcastMatch;
+}) {
 	const { t } = useTranslation(["broadcast"]);
-	const ink = state.next.ink;
-	const colors = inkColorVars(state.next);
-	const sides = state.match
-		? matchSides(state.match, "next", state.next)
-		: null;
+	const ink = gameInk(state, "live");
+	const colors = inkColorVars({ ink, swapSides: state.live.swapSides });
+	const sides = matchSides(match, "live", state.live);
+	const gameOnAir = {
+		matchId: match.id,
+		resultCount: match.progress.live.resultCount,
+	};
 
 	return (
 		<div className="stack sm">
@@ -431,8 +445,8 @@ function InkColors({ state }: { state: BroadcastState }) {
 				<div className="stack horizontal sm">
 					<ActionButton
 						schema={broadcastActionSchema}
-						action="SET_NEXT_INK"
-						fields={{ isFlipped: false }}
+						action="SET_INK"
+						fields={{ isFlipped: false, ...gameOnAir }}
 						variant={ink ? "minimal" : "primary"}
 						size="small"
 					>
@@ -441,8 +455,8 @@ function InkColors({ state }: { state: BroadcastState }) {
 					{ink ? (
 						<ActionButton
 							schema={broadcastActionSchema}
-							action="SET_NEXT_INK"
-							fields={{ key: ink.key, isFlipped: !ink.isFlipped }}
+							action="SET_INK"
+							fields={{ key: ink.key, isFlipped: !ink.isFlipped, ...gameOnAir }}
 							variant="outlined"
 							size="small"
 							icon={<ArrowLeftRight />}
@@ -453,13 +467,20 @@ function InkColors({ state }: { state: BroadcastState }) {
 					) : null}
 				</div>
 			</div>
+			<div className="text-xs text-lighter">
+				{t("broadcast:dashboard.ink.explanation")}
+			</div>
 			<div className={styles.inkSwatches}>
 				{BROADCAST_INK_COLORS.map((color) => (
 					<ActionButton
 						key={color.key}
 						schema={broadcastActionSchema}
-						action="SET_NEXT_INK"
-						fields={{ key: color.key, isFlipped: ink?.isFlipped ?? false }}
+						action="SET_INK"
+						fields={{
+							key: color.key,
+							isFlipped: ink?.isFlipped ?? false,
+							...gameOnAir,
+						}}
 						variant="minimal"
 						className={clsx(styles.inkSwatch, {
 							[styles.inkSwatchSelected]: ink?.key === color.key,
@@ -474,7 +495,7 @@ function InkColors({ state }: { state: BroadcastState }) {
 					</ActionButton>
 				))}
 			</div>
-			{ink && sides ? (
+			{ink ? (
 				<div className="stack horizontal md text-sm flex-wrap">
 					{sides.map((side) => (
 						<span key={side.side} className={styles.inkTeam}>

@@ -83,3 +83,67 @@ export function useBroadcastStream({
 
 	return { state, isConnected };
 }
+
+const FIT_TEXT_STEP_PX = 2;
+// client sizes are rounded, which alone can make the scroll size a pixel larger
+const OVERFLOW_TOLERANCE_PX = 1;
+
+/**
+ * Shrinks the element's font size from its styled size, down to `minScale` of it, until the text fits the
+ * element: within its `-webkit-line-clamp` lines (one without) and not overflowing it sideways.
+ */
+export function useFitText<T extends HTMLElement>({
+	text,
+	minScale = 0.6,
+}: {
+	text: string;
+	minScale?: number;
+}) {
+	const ref = React.useRef<T>(null);
+
+	React.useLayoutEffect(() => {
+		const element = ref.current;
+		if (!element) return;
+
+		let isCancelled = false;
+		const fit = () => {
+			if (isCancelled) return;
+
+			element.style.fontSize = "";
+			const styledSize = Number.parseFloat(getComputedStyle(element).fontSize);
+			for (
+				let size = styledSize - FIT_TEXT_STEP_PX;
+				size >= styledSize * minScale && !fits(element);
+				size -= FIT_TEXT_STEP_PX
+			) {
+				element.style.fontSize = `${size}px`;
+			}
+		};
+
+		fit();
+		// the text is measured again with the real font once it has loaded
+		document.fonts.ready.then(fit);
+
+		return () => {
+			isCancelled = true;
+		};
+	}, [text, minScale]);
+
+	return ref;
+}
+
+function fits(element: HTMLElement) {
+	const style = getComputedStyle(element);
+	const maxLines =
+		Number.parseInt(style.getPropertyValue("-webkit-line-clamp"), 10) || 1;
+	const lineHeight = Number.parseFloat(style.lineHeight);
+
+	element.style.setProperty("-webkit-line-clamp", "none");
+	const lines = element.offsetHeight / lineHeight;
+	element.style.removeProperty("-webkit-line-clamp");
+
+	return (
+		!(Math.round(lines) > maxLines) &&
+		element.scrollWidth - element.clientWidth <= OVERFLOW_TOLERANCE_PX
+	);
+}

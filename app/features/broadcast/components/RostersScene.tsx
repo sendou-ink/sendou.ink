@@ -48,7 +48,8 @@ export function RostersScene({
 					{match ? (
 						<div className={styles.round} {...part("round")}>
 							{roundLabel(match)}
-							<span className={styles.setLength} {...part("set-length")}>
+							{roundLabel(match) ? " · " : null}
+							<span {...part("set-length")}>
 								<SetLength match={match} />
 							</span>
 						</div>

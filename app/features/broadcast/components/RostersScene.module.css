@@ -22,7 +22,7 @@
 .tournamentLogo {
 	width: 104px;
 	height: 104px;
-	border-radius: var(--bc-radius);
+	border-radius: 50%;
 	object-fit: cover;
 }
 
@@ -35,7 +35,9 @@
 }
 
 .tournamentName {
-	overflow: hidden;
+	/* descenders past the tight line height */
+	overflow: clip;
+	overflow-clip-margin: 0.25em;
 	font-size: 52px;
 	font-weight: 700;
 	line-height: 1.05;
@@ -44,20 +46,9 @@
 }
 
 .round {
-	display: flex;
-	align-items: center;
-	gap: 16px;
 	color: var(--bc-text-muted);
 	font-size: 28px;
 	font-weight: 600;
-}
-
-.setLength {
-	padding: 2px 12px;
-	border-radius: var(--bc-radius-small);
-	background: var(--bc-accent);
-	color: var(--bc-accent-text);
-	font-size: 22px;
 }
 
 .teams {
@@ -150,7 +141,9 @@
 .teamName {
 	max-width: 100%;
 	margin: 0;
-	overflow: hidden;
+	/* descenders past the tight line height */
+	overflow: clip;
+	overflow-clip-margin: 0.25em;
 	font-size: 58px;
 	font-weight: 700;
 	line-height: 1.05;

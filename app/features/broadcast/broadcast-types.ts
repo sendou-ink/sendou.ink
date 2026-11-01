@@ -29,6 +29,12 @@ export interface BroadcastInk {
 	isFlipped: boolean;
 }
 
+/** Ink colors of one game: the featured match's game played after its first `resultCount` results. */
+export interface BroadcastGameInk extends BroadcastInk {
+	matchId: number;
+	resultCount: number;
+}
+
 export type BroadcastView = (typeof BROADCAST_VIEWS)[number];
 
 export type BroadcastStreamRole = (typeof BROADCAST_STREAM_ROLES)[number];
@@ -40,8 +46,6 @@ export interface ProducerState {
 	swapSides: boolean;
 	/** How a Take puts this state on air, kept on `live` so the overlay knows how the last Take played. */
 	transition: BroadcastTransition;
-	/** `null` uses the theme's team colors. */
-	ink: BroadcastInk | null;
 }
 
 export interface BroadcastStoredState {
@@ -54,6 +58,11 @@ export interface BroadcastStoredState {
 	 * showed the game doesn't spoil it. Set by a Take or "show now". `null` (or another match) shows all of them.
 	 */
 	liveResults: LiveResults | null;
+	/**
+	 * Colors the in-game scoreboard, set while the game is on air as the colors are only known once it starts.
+	 * Other games, and every other scene, use the theme's team colors.
+	 */
+	ink: BroadcastGameInk | null;
 }
 
 export interface LiveResults {

@@ -4,7 +4,9 @@ import {
 	type BROADCAST_SCENE_PARTS,
 } from "./broadcast-constants";
 import type {
+	BroadcastInk,
 	BroadcastMatch,
+	BroadcastState,
 	BroadcastTeam,
 	BroadcastView,
 	ProducerState,
@@ -52,20 +54,39 @@ export function matchSides(
 }
 
 /**
- * The producer's ink colors as the overlay's team color variables, the left team's as `a`. Text on each color
- * is black or white, whichever reads better. Empty without ink colors, keeping the theme's.
+ * Ink colors of the game the view shows, `null` when none were picked for it: picked for an earlier game (its
+ * result is on air), another match or not at all.
  */
-export function inkColorVars(
-	producer: Pick<ProducerState, "ink" | "swapSides">,
-): Record<string, string> {
-	const ink = producer.ink;
+export function gameInk(
+	state: Pick<BroadcastState, "ink" | "match">,
+	view: BroadcastView,
+): BroadcastInk | null {
+	const ink = state.ink;
+	if (!ink || ink.matchId !== state.match?.id) return null;
+
+	return ink.resultCount === state.match.progress[view].resultCount
+		? ink
+		: null;
+}
+
+/**
+ * Ink colors as the team color variables, the left team's as `a`. Text on each color is black or white,
+ * whichever reads better. Empty without ink colors, keeping the theme's.
+ */
+export function inkColorVars({
+	ink,
+	swapSides,
+}: {
+	ink: BroadcastInk | null;
+	swapSides: boolean;
+}): Record<string, string> {
 	const pair = BROADCAST_INK_COLORS.find((color) => color.key === ink?.key);
 	if (!ink || !pair) return {};
 
 	const colorOf = (index: 0 | 1) =>
 		(index === 0) !== ink.isFlipped ? pair.a : pair.b;
-	const left = colorOf(producer.swapSides ? 1 : 0);
-	const right = colorOf(producer.swapSides ? 0 : 1);
+	const left = colorOf(swapSides ? 1 : 0);
+	const right = colorOf(swapSides ? 0 : 1);
 
 	return {
 		"--bc-team-a": left,

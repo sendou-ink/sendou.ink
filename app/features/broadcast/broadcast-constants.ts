@@ -19,8 +19,8 @@ export const BROADCAST_SCENES = [
 export const BROADCAST_TRANSITIONS = ["stinger", "fade", "cut"] as const;
 
 /**
- * Splatoon 3's ink color pairs, the first team's color first. Picking one colors the teams as they are in game,
- * otherwise the theme's team colors are used. Values from IPL's ipl-overlay-controls (MIT).
+ * Splatoon 3's ink color pairs, the first team's color first. Picking one colors the game scoreboard's teams as
+ * they are in game, otherwise the theme's team colors are used. Values from IPL's ipl-overlay-controls (MIT).
  */
 export const BROADCAST_INK_COLORS = [
 	{ key: "lockYellowPurple", a: "#F0EB24", b: "#6236DF" },
