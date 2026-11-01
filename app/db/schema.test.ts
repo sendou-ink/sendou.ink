@@ -23,6 +23,20 @@ const NOT_FOREIGN_KEYS: Record<string, string> = {
 		"mirror of Build.ownerId, deleted along with its build",
 };
 
+/** Tables the app (practically) never deletes from, so a foreign key to them needs no index for the delete's lookup. */
+const RARELY_DELETED_TABLES: Record<string, string> = {
+	User: "only deleted by the admin account migration and the delete-user script",
+	Badge: "only deleted by scripts",
+	GroupMatch: "never deleted",
+	Trophy: "never deleted",
+};
+
+/** Foreign keys whose column no index leads with, but whose parent's delete is still served by an index. */
+const UNINDEXED_FOREIGN_KEYS: Record<string, string> = {
+	"BuildWeaponAbility.buildId":
+		"skip-scan of the unique index, its leading canonicalWeaponSplId has only ~150 values",
+};
+
 describe("database schema", () => {
 	test("every generated integer primary key uses AUTOINCREMENT so ids of deleted rows are never reused", async () => {
 		const offenders: string[] = [];
@@ -77,6 +91,50 @@ describe("database schema", () => {
 				(fk) => fk.from === columnName,
 			);
 			if (!exists || hasForeignKey) stale.push(key);
+		}
+
+		expect(stale).toEqual([]);
+	});
+
+	test("every foreign key column leads an index so deleting its parent row doesn't scan the table", async () => {
+		const offenders: string[] = [];
+		for (const table of await tables()) {
+			for (const fk of table.foreignKeys) {
+				const key = `${table.name}.${fk.from}`;
+				if (RARELY_DELETED_TABLES[fk.table] || UNINDEXED_FOREIGN_KEYS[key]) {
+					continue;
+				}
+
+				const isRowidAlias = table.columns.some(
+					(column) =>
+						column.name === fk.from &&
+						column.pk === 1 &&
+						column.type === "INTEGER" &&
+						table.columns.filter((candidate) => candidate.pk > 0).length === 1,
+				);
+				if (!isRowidAlias && !table.indexLeadingColumns.includes(fk.from)) {
+					offenders.push(key);
+				}
+			}
+		}
+
+		expect(offenders).toEqual([]);
+	});
+
+	test("every UNINDEXED_FOREIGN_KEYS entry is still a foreign key no index leads with", async () => {
+		const stale: string[] = [];
+		const byName = new Map(
+			(await tables()).map((table) => [table.name, table]),
+		);
+		for (const key of Object.keys(UNINDEXED_FOREIGN_KEYS)) {
+			const [tableName, columnName] = key.split(".");
+			const table = byName.get(tableName);
+			const hasForeignKey = table?.foreignKeys.some(
+				(fk) => fk.from === columnName,
+			);
+			if (!hasForeignKey || table?.indexLeadingColumns.includes(columnName)) {
+				stale.push(key);
+			}
 		}
 
 		expect(stale).toEqual([]);
@@ -160,6 +218,17 @@ async function tables() {
 				select "sql" from "sqlite_master"
 				where "type" = 'trigger' and "tbl_name" = ${table.name}
 			`.execute(db);
+			// a partial index serves a lookup by its leading column only if it leaves out just the NULLs
+			const { rows: indexLeadingColumns } = await sql<{
+				name: string;
+				partial: number;
+				sql: string | null;
+			}>`
+				select "info"."name", "list"."partial", "index"."sql" from pragma_index_list(${table.name}) as "list"
+				join pragma_index_info("list"."name") as "info"
+				left join "sqlite_master" as "index" on "index"."name" = "list"."name"
+				where "info"."seqno" = 0
+			`.execute(db);
 
 			return {
 				...table,
@@ -167,6 +236,16 @@ async function tables() {
 				foreignKeys,
 				uniqueColumns: uniqueColumns.map((column) => column.name),
 				triggers: triggers.map((trigger) => trigger.sql),
+				indexLeadingColumns: indexLeadingColumns
+					.filter(
+						(index) =>
+							!index.partial ||
+							new RegExp(
+								`\\bwhere\\s+"?${index.name}"?\\s+is\\s+not\\s+null\\s*$`,
+								"i",
+							).test(index.sql ?? ""),
+					)
+					.map((index) => index.name),
 			};
 		}),
 	);

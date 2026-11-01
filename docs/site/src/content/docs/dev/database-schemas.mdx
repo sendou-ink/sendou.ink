@@ -55,6 +55,8 @@ In migrations, a generated primary key is `"id" integer primary key autoincremen
 
 A delete is complete at the database level: deleting a row removes everything that belongs to it, so repository code never cleans up related rows by hand. Foreign key `on delete cascade` does it where it can. Where a row owns its target through a `set null` foreign key with a unique index (e.g. `TournamentTeam.chatRoomId`), add an `after delete` trigger that deletes the target; `schema.test.ts` enforces this. Triggers also fire for rows removed by a cascade, so deleting a tournament's `CalendarEvent` removes the tournament (a trigger), its teams and matches (cascades) and their chat rooms (triggers) in one statement.
 
+Every delete of a parent row looks up its children by the foreign key column (also for `set null`, `restrict` and `no action`), so that column needs an index leading with it or each delete scans the whole child table. A composite primary key or unique index only counts when the column comes first. For a nullable column that is mostly NULL, make the index partial (`where "column" is not null`): a full one puts every NULL into one group in the stats and the planner then judges the index useless, for lookups and joins too. `schema.test.ts` enforces this; parents the app never deletes go in its `RARELY_DELETED_TABLES`, and a column served some other way in `UNINDEXED_FOREIGN_KEYS`, each with the reason.
+
 ## JSON columns
 
 Stored as text, typed with `JSONColumnType<T>` (not null, from `kysely`) or `JSONColumnTypeNullable<T>` (nullable, from `~/utils/kysely.server`). Both serialize to `string` on insert, so pass `JSON.stringify(...)`.

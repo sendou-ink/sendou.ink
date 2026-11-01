@@ -364,13 +364,15 @@ export const action = defineAction(
 
 		await LobbyProgression.advance(id, {
 			hasChanged: true,
-			// joining or leaving the lobby changes their chat rooms
+			// joining or leaving the lobby changes their chat rooms, ending it makes everyone's inactive
 			affectedUserIds:
 				body._action === "KICK"
 					? [body.userId]
 					: body._action === "SIGN_UP" || body._action === "LEAVE"
 						? [user.id]
-						: [],
+						: body._action === "END_LOBBY"
+							? lobby.participants.map((participant) => participant.id)
+							: [],
 		});
 
 		return null;
