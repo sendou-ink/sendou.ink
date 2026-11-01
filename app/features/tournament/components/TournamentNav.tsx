@@ -319,7 +319,7 @@ function NavItemLink({
 	);
 }
 
-// space for the absolutely positioned overflow hamburger: its icon box (var(--button-icon-big) = 28px) plus breathing room
+// space for the absolutely positioned overflow hamburger: its 28px icon box plus breathing room
 const HAMBURGER_WIDTH = 36;
 
 function useNavOverflow(totalItems: number) {

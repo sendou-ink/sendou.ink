@@ -46,10 +46,6 @@
 	color: var(--color-error);
 }
 
-.iconPending {
-	color: var(--color-text-lighter);
-}
-
 .buttons {
 	display: flex;
 	gap: var(--s-3);

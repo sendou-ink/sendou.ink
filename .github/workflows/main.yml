@@ -44,5 +44,7 @@ jobs:
         run: pnpm run check-plural-collapse
       - name: Check articles
         run: pnpm run check-articles
+      - name: Check CSS custom properties
+        run: pnpm run check-css-vars
       - name: Build docs site
         run: pnpm run docs:build

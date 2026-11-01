@@ -122,7 +122,5 @@ function StatusIcon({ status }: { status: boolean | null }) {
 	if (status === false) {
 		return <X size={18} className={styles.iconNo} aria-label="voted no" />;
 	}
-	return (
-		<Clock size={18} className={styles.iconPending} aria-label="pending" />
-	);
+	return <Clock size={18} aria-label="pending" />;
 }

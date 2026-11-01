@@ -36,7 +36,7 @@
 .gearLink {
 	display: inline-flex;
 	align-items: center;
-	border-radius: var(--radius-rounded);
+	border-radius: 0;
 
 	&:hover {
 		filter: brightness(1.2);

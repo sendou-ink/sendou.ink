@@ -239,7 +239,6 @@
 .seasonCardDates {
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
-	color: var(--color-text-lighter);
 }
 
 .seasonCardImg {

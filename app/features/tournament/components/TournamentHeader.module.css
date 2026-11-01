@@ -103,7 +103,6 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
-	font-weight: var(--weight-normal);
 }
 
 .actions {

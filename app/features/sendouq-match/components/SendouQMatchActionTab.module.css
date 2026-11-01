@@ -3,7 +3,6 @@
 	align-items: center;
 	justify-content: center;
 	min-height: 120px;
-	color: var(--color-text-low);
 	font-weight: var(--weight-semi);
 	text-align: center;
 }

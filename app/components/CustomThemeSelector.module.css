@@ -5,7 +5,6 @@
 	padding: var(--s-4);
 	border: var(--border-style);
 	border-radius: var(--radius-field);
-	background-color: var(--color-bg-medium);
 	position: relative;
 	overflow: hidden;
 }

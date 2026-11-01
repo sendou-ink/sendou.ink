@@ -42,7 +42,6 @@
 
 .modelTextarea {
 	min-height: 160px;
-	font-family: var(--font-mono);
 	font-size: var(--font-xs);
 }
 

@@ -920,9 +920,7 @@ function FieldsetSection() {
 		<Section>
 			<div className="stack md">
 				<ComponentRow label="Basic Fieldset">
-					<fieldset
-						style={{ padding: "1rem", border: "1px solid var(--gray)" }}
-					>
+					<fieldset style={{ padding: "1rem" }}>
 						<legend>Personal Information</legend>
 						<div className="stack sm">
 							<div>
@@ -942,9 +940,7 @@ function FieldsetSection() {
 				</ComponentRow>
 
 				<ComponentRow label="Radio Group in Fieldset">
-					<fieldset
-						style={{ padding: "1rem", border: "1px solid var(--gray)" }}
-					>
+					<fieldset style={{ padding: "1rem" }}>
 						<legend>Favorite Color</legend>
 						<div className="stack sm">
 							<label className="stack horizontal sm items-center">
@@ -982,9 +978,7 @@ function FieldsetSection() {
 				</ComponentRow>
 
 				<ComponentRow label="Checkbox Group in Fieldset">
-					<fieldset
-						style={{ padding: "1rem", border: "1px solid var(--gray)" }}
-					>
+					<fieldset style={{ padding: "1rem" }}>
 						<legend>Notification Preferences</legend>
 						<div className="stack sm">
 							<label className="stack horizontal sm items-center">
@@ -1031,10 +1025,7 @@ function FieldsetSection() {
 				</ComponentRow>
 
 				<ComponentRow label="Disabled Fieldset">
-					<fieldset
-						disabled
-						style={{ padding: "1rem", border: "1px solid var(--gray)" }}
-					>
+					<fieldset disabled style={{ padding: "1rem" }}>
 						<legend>Disabled Form</legend>
 						<div className="stack sm">
 							<div>
@@ -3639,9 +3630,7 @@ function MiscSection() {
 				</ComponentRow>
 
 				<ComponentRow label="Blockquote">
-					<blockquote
-						style={{ borderLeft: "4px solid var(--gray)", paddingLeft: "1rem" }}
-					>
+					<blockquote style={{ paddingLeft: "1rem" }}>
 						<p>
 							This is a blockquote. It's used to represent content quoted from
 							another source.
@@ -3653,7 +3642,6 @@ function MiscSection() {
 				<ComponentRow label="Preformatted Text">
 					<pre
 						style={{
-							background: "var(--gray-bg)",
 							padding: "1rem",
 							overflow: "auto",
 						}}

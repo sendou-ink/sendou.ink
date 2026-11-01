@@ -84,6 +84,5 @@
 
 .noResults {
 	text-align: center;
-	color: var(--color-text-lighter);
 	padding-block: var(--s-6);
 }

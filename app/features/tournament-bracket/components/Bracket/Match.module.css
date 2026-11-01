@@ -75,7 +75,7 @@
 
 .matchTimerError {
 	background-color: var(--color-error);
-	color: var(--color-text-on-status);
+	color: inherit;
 }
 
 .match {

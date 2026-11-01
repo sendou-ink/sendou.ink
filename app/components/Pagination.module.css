@@ -93,7 +93,7 @@
 	max-height: 1.75rem;
 	padding: 0 var(--s-1);
 	border: 2px solid var(--color-fg-accent);
-	border-radius: var(--radius-sm);
+	border-radius: 0;
 	background-color: var(--color-bg);
 	color: var(--color-text);
 	font-size: var(--font-sm);
