@@ -86,6 +86,7 @@ type WithTypedTranslationKeys<T> = Omit<
 type TypedItemLabel<V extends string> = {
 	label: FormsTranslationKey | (() => string);
 	value: V;
+	group?: FormsTranslationKey;
 };
 
 type WithTypedItemLabels<T, V extends string> = Omit<T, "items"> & {
@@ -126,6 +127,7 @@ function prefixItems<V extends string, T extends TypedItemLabel<V>>(
 	return items.map((item) => ({
 		...item,
 		label: typeof item.label === "string" ? `forms:${item.label}` : item.label,
+		group: prefixKey(item.group),
 	}));
 }
 

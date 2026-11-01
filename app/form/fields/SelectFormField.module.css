@@ -16,3 +16,20 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
+
+.groupLabel {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-3) var(--s-1-5) var(--s-1);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+
+	&::after {
+		content: "";
+		flex: 1;
+		height: 1px;
+		background-color: var(--color-border);
+	}
+}

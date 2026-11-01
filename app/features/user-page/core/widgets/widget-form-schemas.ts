@@ -124,14 +124,15 @@ export const customKitsSchema = v.object({
 	}),
 });
 
-const CONTROLLERS = [
-	"s1-pro-con",
-	"s2-pro-con",
-	"grip",
-	"s2-grip",
-	"s1-split-joycon",
-	"s2-split-joycon",
-	"handheld",
+const CONTROLLER_GROUPS = [
+	{
+		group: "s1",
+		controllers: ["s1-pro-con", "grip", "s1-split-joycon", "handheld"],
+	},
+	{
+		group: "s2",
+		controllers: ["s2-pro-con", "s2-grip", "s2-split-joycon", "s2-handheld"],
+	},
 ] as const;
 
 const sensValueSchema = v.nullable(v.picklist(SENS_OPTIONS));
@@ -139,10 +140,13 @@ const sensValueSchema = v.nullable(v.picklist(SENS_OPTIONS));
 export const sensSchema = v.object({
 	controller: select({
 		label: "labels.controller",
-		items: CONTROLLERS.map((controller) => ({
-			value: controller,
-			label: `options.controller.${controller}` as const,
-		})),
+		items: CONTROLLER_GROUPS.flatMap(({ group, controllers }) =>
+			controllers.map((controller) => ({
+				value: controller,
+				label: `options.controller.${controller}` as const,
+				group: `options.controllerGroup.${group}` as const,
+			})),
+		),
 	}),
 	motionSens: customField({ initialValue: null }, sensValueSchema),
 	stickSens: customField({ initialValue: null }, sensValueSchema),

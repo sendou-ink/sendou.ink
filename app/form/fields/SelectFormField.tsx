@@ -42,23 +42,21 @@ export function SelectFormField<V extends string>({
 	const { t, i18n } = useTranslation(["common"]);
 	const id = React.useId();
 
-	const itemsWithResolvedLabels = items.map((item) => {
-		const itemLabel = item.label;
-		const resolvedLabel =
-			typeof itemLabel === "function"
-				? itemLabel(i18n.language)
-				: typeof itemLabel === "string" &&
-						itemLabel.includes(":") &&
-						i18n.exists(itemLabel)
-					? t(itemLabel as never)
-					: String(itemLabel);
+	const resolveLabel = (itemLabel: FormFieldItems<V>[number]["label"]) =>
+		typeof itemLabel === "function"
+			? itemLabel(i18n.language)
+			: typeof itemLabel === "string" &&
+					itemLabel.includes(":") &&
+					i18n.exists(itemLabel)
+				? t(itemLabel as never)
+				: String(itemLabel);
 
-		return {
-			value: item.value,
-			resolvedLabel,
-			description: item.description,
-		};
-	});
+	const itemsWithResolvedLabels = items.map((item) => ({
+		value: item.value,
+		resolvedLabel: resolveLabel(item.label),
+		description: item.description,
+		group: item.group ? resolveLabel(item.group) : undefined,
+	}));
 
 	const hasDescriptions = itemsWithResolvedLabels.some(
 		(item) => item.description,
@@ -108,11 +106,24 @@ export function SelectFormField<V extends string>({
 				{...ariaAttributes({ name, error, bottomText })}
 			>
 				{clearable ? <option value="">—</option> : null}
-				{itemsWithResolvedLabels.map((item) => (
-					<option key={item.value} value={item.value}>
-						{item.resolvedLabel}
-					</option>
-				))}
+				{groupConsecutive(itemsWithResolvedLabels).map((groupOfItems) => {
+					const options = groupOfItems.items.map((item) => (
+						<option key={item.value} value={item.value}>
+							{item.resolvedLabel}
+						</option>
+					));
+
+					return groupOfItems.group ? (
+						<optgroup key={groupOfItems.group} label={groupOfItems.group}>
+							<legend className={styles.groupLabel}>
+								{groupOfItems.group}
+							</legend>
+							{options}
+						</optgroup>
+					) : (
+						options
+					);
+				})}
 			</select>
 		</FormFieldWrapper>
 	);
@@ -204,4 +215,19 @@ function CustomSelect<V extends string>({
 			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 		</div>
 	);
+}
+
+function groupConsecutive<T extends { group?: string }>(items: T[]) {
+	const result: Array<{ group?: string; items: T[] }> = [];
+
+	for (const item of items) {
+		const last = result.at(-1);
+		if (last && last.group === item.group) {
+			last.items.push(item);
+		} else {
+			result.push({ group: item.group, items: [item] });
+		}
+	}
+
+	return result;
 }

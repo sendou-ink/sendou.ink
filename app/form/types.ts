@@ -63,6 +63,8 @@ interface FormFieldItem<V extends string> {
 	value: V;
 	/** Second line rendered under the label in the dropdown. Any item having one switches the field to the custom select. */
 	description?: React.ReactNode;
+	/** Label of the `<optgroup>` the item is rendered in. Consecutive items with the same group share one. Native select only. */
+	group?: string;
 }
 
 interface FormFieldItemWithImage<V extends string> extends FormFieldItem<V> {
