@@ -41,7 +41,7 @@ export default function BroadcastOverlayPage() {
 	);
 	const pageArgs = { tournamentId: data.tournamentId, slug: data.slug };
 	const clips = useClipReceiver({ signalUrl: broadcastSignalUrl(pageArgs) });
-	const { state } = useBroadcastStream({
+	const { state, clockOffsetMs } = useBroadcastStream({
 		url: broadcastStreamUrl({
 			...pageArgs,
 			role: preview ? "preview" : "source",
@@ -53,7 +53,7 @@ export default function BroadcastOverlayPage() {
 
 	return (
 		<BroadcastClipsContext.Provider
-			value={{ urls: clips.urls, isMuted: preview }}
+			value={{ urls: clips.urls, isMuted: preview, clockOffsetMs }}
 		>
 			<BroadcastOverlay state={state} view={view} rehearsals={rehearsals} />
 		</BroadcastClipsContext.Provider>

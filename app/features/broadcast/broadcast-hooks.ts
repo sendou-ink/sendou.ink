@@ -12,6 +12,7 @@ const REOPEN_MAX_DELAY_MS = 30_000;
 /**
  * Latest state of the broadcast pushed over its stream, starting from the loader's. The last state is
  * kept while disconnected and the stream is reopened with backoff, the server sends a fresh state on reconnect.
+ * Also how far ahead the server's clock is of this one's (`clockOffsetMs`), to time the scenes by.
  */
 export function useBroadcastStream({
 	url,
@@ -25,6 +26,7 @@ export function useBroadcastStream({
 }) {
 	const [state, setState] = React.useState(initialState);
 	const [isConnected, setIsConnected] = React.useState(false);
+	const [clockOffsetMs, setClockOffsetMs] = React.useState(0);
 	const onMessageRef = React.useRef(onMessage);
 	React.useLayoutEffect(() => {
 		onMessageRef.current = onMessage;
@@ -45,8 +47,15 @@ export function useBroadcastStream({
 				setIsConnected(true);
 
 				const message = JSON.parse(event.data) as BroadcastStreamMessage;
+				if (message.kind === "reconnect") {
+					reopen();
+					return;
+				}
 				if (message.kind === "state") setState(message.state);
 				else if (message.kind !== "heartbeat") onMessageRef.current?.(message);
+				if (message.kind === "hello") {
+					setClockOffsetMs(message.now - Date.now());
+				}
 			};
 			source.onerror = () => {
 				setIsConnected(false);
@@ -90,7 +99,7 @@ export function useBroadcastStream({
 		};
 	}, [url]);
 
-	return { state, isConnected };
+	return { state, isConnected, clockOffsetMs };
 }
 
 /** Sends the clips to the broadcast's overlays, see `ClipTransfer.createSender`. Pass `onMessage` to `useBroadcastStream`. */

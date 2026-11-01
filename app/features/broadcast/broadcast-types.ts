@@ -42,8 +42,10 @@ export type BroadcastView = (typeof BROADCAST_VIEWS)[number];
 
 export type BroadcastStreamRole = (typeof BROADCAST_STREAM_ROLES)[number];
 
-/** What the producer controls, staged in `next` and put on air as `live` by a Take. */
+/** What the producer controls of one scene: staged as `next` (or queued after it) and put on air as `live` by a Take. */
 export interface ProducerState {
+	/** Identifies the item as it moves from the queue to air, never reused (see `BroadcastStoredState.lastItemId`). */
+	id: number;
 	scene: BroadcastScene;
 	/** Shows the featured match's second team on the left. */
 	swapSides: boolean;
@@ -54,13 +56,26 @@ export interface ProducerState {
 	bracketFocus: BroadcastBracketFocus;
 	/** Clip the replays scene plays, `null` leaves the footage under it to OBS. */
 	clipId: string | null;
+	/**
+	 * How long the scene stays on air before the item after it can go on air by itself, `null` until a Take.
+	 * The replays scene playing a clip lasts as long as the clip instead.
+	 */
+	durationMs: number | null;
+	/** Goes on air by itself once the scene before it has run its length, otherwise waits for a Take. */
+	isAuto: boolean;
 }
 
 export interface BroadcastStoredState {
 	/** Incremented by every Take, a Take based on an older one is rejected. */
 	takeId: number;
+	/** When the last Take was made (epoch ms), what the live scene's length runs from. `null` before the first. */
+	takenAt: number | null;
 	live: ProducerState;
 	next: ProducerState;
+	/** Staged to go on air after `next`, in order. */
+	queue: ProducerState[];
+	/** Id of the last item created, the next one created gets the one after it. */
+	lastItemId: number;
 	/**
 	 * How many of the featured match's reported results are on air, so a result reported before the stream
 	 * showed the game doesn't spoil it. Set by a Take or "show now". `null` (or another match) shows all of them.
@@ -117,8 +132,13 @@ export interface BroadcastState extends BroadcastStoredState {
 export type BroadcastStreamMessage =
 	| { kind: "state"; state: BroadcastState }
 	| { kind: "heartbeat" }
-	/** First message of every connection: who it is when signaling the clip peer connections. */
-	| { kind: "hello"; peer: BroadcastOwnPeer }
+	/** The server's code changed under the connection (dev server only), the client opens a new one. */
+	| { kind: "reconnect" }
+	/**
+	 * First message of every connection: who it is when signaling the clip peer connections, and the server's clock
+	 * (epoch ms) to time the scenes by.
+	 */
+	| { kind: "hello"; peer: BroadcastOwnPeer; now: number }
 	/** To clip senders only, whenever a client connects or disconnects. */
 	| { kind: "peers"; peers: BroadcastPeer[] }
 	| { kind: "signal"; from: string; description: BroadcastSessionDescription };

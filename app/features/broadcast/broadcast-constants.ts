@@ -1,4 +1,8 @@
-import type { BroadcastSettings } from "./broadcast-types";
+import type {
+	BroadcastScene,
+	BroadcastSettings,
+	BroadcastTransition,
+} from "./broadcast-types";
 
 /** Scenes the overlay can show, in the order of the dashboard's scene buttons. */
 export const BROADCAST_SCENES = [
@@ -17,6 +21,35 @@ export const BROADCAST_SCENES = [
 // xxx: do we want all of these?
 /** How a Take puts the staged state on air, in the order of the dashboard's transition buttons. */
 export const BROADCAST_TRANSITIONS = ["stinger", "fade", "cut"] as const;
+
+/**
+ * When a Take changes the scene with each transition in the default theme's timing: `inMs` from the Take to the new
+ * scene starting (once the stinger covers the screen), `outMs` from the Take to the old scene being hidden. Automatic
+ * Takes are timed with these so a scene's end is hidden, a theme retiming its transitions moves them off by the difference.
+ */
+export const BROADCAST_TRANSITION_TIMING = {
+	stinger: { inMs: 704, outMs: 704 },
+	fade: { inMs: 0, outMs: 400 },
+	cut: { inMs: 0, outMs: 0 },
+} as const satisfies Record<
+	BroadcastTransition,
+	{ inMs: number; outMs: number }
+>;
+
+/**
+ * Scenes without footage of their own to last as long as, which can be given a duration instead, with the one they
+ * get when picked. The others stay on air until a Take.
+ */
+export const BROADCAST_SCENE_DEFAULT_DURATIONS_MS: Partial<
+	Record<BroadcastScene, number>
+> = {
+	bracket: 15_000,
+};
+
+/** Durations the dashboard offers for the scenes of {@link BROADCAST_SCENE_DEFAULT_DURATIONS_MS}. */
+export const BROADCAST_DURATIONS_MS = [
+	10_000, 15_000, 20_000, 30_000, 45_000, 60_000,
+] as const;
 
 /**
  * Splatoon 3's ink color pairs, the first team's color first. Picking one colors the game scoreboard's teams as
@@ -71,16 +104,19 @@ export const BROADCAST_PROTOTYPE_CLIPS = [
 		id: "498017-56-11",
 		name: "4 splats · Oct 24",
 		url: "/broadcast-clips/2026-10-24-498017-56-11-4-splats.mp4",
+		durationMs: 25_180,
 	},
 	{
 		id: "498089-57-00",
 		name: "4 splats · Oct 27",
 		url: "/broadcast-clips/2026-10-27-498089-57-00-4-splats.mp4",
+		durationMs: 25_260,
 	},
 	{
 		id: "498090-40-26",
 		name: "4 splats · Oct 27 (2)",
 		url: "/broadcast-clips/2026-10-27-498090-40-26-4-splats.mp4",
+		durationMs: 19_593,
 	},
 ] as const;
 

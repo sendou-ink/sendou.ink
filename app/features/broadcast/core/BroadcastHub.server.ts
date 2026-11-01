@@ -2,6 +2,7 @@ import * as R from "remeda";
 import * as EventBus from "~/features/events/core/EventBus.server";
 import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { logger } from "~/utils/logger";
+import * as BroadcastRepository from "../BroadcastRepository.server";
 import { BROADCAST_MAX_CONNECTIONS } from "../broadcast-constants";
 import type {
 	BroadcastHealth,
@@ -12,9 +13,12 @@ import type {
 	BroadcastStreamRole,
 } from "../broadcast-types";
 import * as BroadcastSnapshot from "./BroadcastSnapshot.server";
+import * as Producer from "./Producer";
 
 // one event often comes with others (a report also ends the set and advances the bracket)
 const REBUILD_DEBOUNCE_MS = 250;
+// timers can fire a little early
+const AUTO_TAKE_TOLERANCE_MS = 50;
 
 interface HubKey {
 	tournamentId: number;
@@ -39,6 +43,8 @@ interface Hub extends HubKey {
 	stop: AbortController;
 	resubscribe: AbortController;
 	rebuildTimer: ReturnType<typeof setTimeout> | null;
+	/** Puts the staged item on air once the live scene has run its length, see `Producer.autoTakeAt`. */
+	autoTakeTimer: ReturnType<typeof setTimeout> | null;
 	isBuilding: boolean;
 	isDirty: boolean;
 }
@@ -47,9 +53,20 @@ declare global {
 	var __broadcastHubs: Map<string, Hub> | undefined;
 }
 
-// on globalThis so open streams survive the dev server re-evaluating this module
+// on globalThis so the hubs of the code the dev server evaluated before this are found and retired: they keep
+// running that code, its clients reconnect to hubs running this
 globalThis.__broadcastHubs ??= new Map();
 const hubs = globalThis.__broadcastHubs;
+const RECONNECT_MESSAGE = JSON.stringify({
+	kind: "reconnect",
+} satisfies BroadcastStreamMessage);
+for (const hub of hubs.values()) {
+	hub.stop.abort();
+	for (const client of hub.clients) {
+		client.send(RECONNECT_MESSAGE);
+	}
+}
+hubs.clear();
 
 /**
  * Connects a client to the broadcast: it gets the current state right away (once built) and every change after,
@@ -89,6 +106,7 @@ export function connect({
 		JSON.stringify({
 			kind: "hello",
 			peer: { id: client.peerId, token: client.token },
+			now: Date.now(),
 		} satisfies BroadcastStreamMessage),
 	);
 	hub.clients.add(client);
@@ -181,6 +199,7 @@ function createHub(key: HubKey): Hub {
 		stop: new AbortController(),
 		resubscribe: new AbortController(),
 		rebuildTimer: null,
+		autoTakeTimer: null,
 		isBuilding: false,
 		isDirty: false,
 	};
@@ -197,6 +216,7 @@ function disconnect(hub: Hub, client: Client) {
 
 	hub.stop.abort();
 	if (hub.rebuildTimer) clearTimeout(hub.rebuildTimer);
+	if (hub.autoTakeTimer) clearTimeout(hub.autoTakeTimer);
 	if (hubs.get(hubId(hub)) === hub) hubs.delete(hubId(hub));
 }
 
@@ -238,6 +258,7 @@ async function rebuild(hub: Hub) {
 			if (!built || hub.stop.signal.aborted) continue;
 
 			hub.snapshot = built.snapshot;
+			scheduleAutoTake(hub);
 			if (!R.isDeepEqual(built.eventChannels, hub.eventChannels)) {
 				hub.eventChannels = built.eventChannels;
 				hub.resubscribe.abort();
@@ -250,6 +271,62 @@ async function rebuild(hub: Hub) {
 	} finally {
 		hub.isBuilding = false;
 	}
+}
+
+/**
+ * Times the automatic Take of the staged item, replacing the one timed before. One overdue, e.g. as the server
+ * restarted while a clip played, is taken right away.
+ */
+function scheduleAutoTake(hub: Hub) {
+	if (hub.autoTakeTimer) clearTimeout(hub.autoTakeTimer);
+	hub.autoTakeTimer = null;
+
+	const snapshot = hub.snapshot;
+	const takeAt = snapshot ? Producer.autoTakeAt(snapshot) : null;
+	if (!snapshot || takeAt === null || hub.stop.signal.aborted) return;
+
+	hub.autoTakeTimer = setTimeout(
+		() => {
+			hub.autoTakeTimer = null;
+			autoTake(hub, snapshot.takeId).catch((error) =>
+				logger.error("Automatic Take failed", error),
+			);
+		},
+		Math.max(0, takeAt - Date.now()),
+	);
+}
+
+/**
+ * Takes like the producer would, unless a Take or a change to the staged item since the take it was timed after
+ * made it not due anymore. The results reported by then go on air with it.
+ */
+async function autoTake(hub: Hub, takeId: number) {
+	const built = await BroadcastSnapshot.build(hub);
+	if (!built || hub.stop.signal.aborted) return;
+
+	const { match } = built.snapshot;
+	const liveResults = match
+		? { matchId: match.id, count: match.progress.next.resultCount }
+		: null;
+	const isTaken = await BroadcastRepository.updateProducer({
+		tournamentId: hub.tournamentId,
+		channel: built.channel,
+		change: (state) => {
+			const takeAt = Producer.autoTakeAt(state);
+			const now = Date.now();
+			if (
+				state.takeId !== takeId ||
+				takeAt === null ||
+				takeAt > now + AUTO_TAKE_TOLERANCE_MS
+			) {
+				return null;
+			}
+
+			return Producer.take(state, { liveResults, now });
+		},
+	});
+
+	if (isTaken) await rebuild(hub);
 }
 
 /** Sends the current state to every client unless it is what they already have. Returns whether it was sent. */
