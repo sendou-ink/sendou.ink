@@ -34,6 +34,10 @@ import type {
 	ChatRoomType,
 	PersistedSystemMessageType,
 } from "~/features/chat/chat-types";
+import type {
+	FeedFeedbackKind,
+	FeedItemType,
+} from "~/features/feed/feed-constants";
 import type { FeedEventData, FeedEventType } from "~/features/feed/feed-types";
 import type { LFGType } from "~/features/lfg/lfg-constants";
 import type { StreamPlatform } from "~/features/live-streams/live-streams-constants";
@@ -1014,6 +1018,18 @@ export interface FeedEvent {
 	data: JSONColumnType<FeedEventData>;
 }
 
+/** What a user thought of a feed post, one row per post they gave feedback on. */
+export interface FeedFeedback {
+	id: GeneratedAlways<number>;
+	userId: number;
+	itemType: FeedItemType;
+	/** `at` of the post, tells apart the posts of the same type */
+	itemAt: number;
+	kind: FeedFeedbackKind;
+	comment: string | null;
+	createdAt: Generated<number>;
+}
+
 /** How far the feed indexer has gotten in a source, a timestamp or a row id depending on the source. */
 export interface FeedIndexerCursor {
 	source: string;
@@ -1773,6 +1789,7 @@ export interface DB {
 	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
 	FeedEvent: FeedEvent;
+	FeedFeedback: FeedFeedback;
 	FeedIndexerCursor: FeedIndexerCursor;
 	FriendRequest: FriendRequest;
 	/** Table backing the `UserSubmittedImage` view. Includes images awaiting validation. */

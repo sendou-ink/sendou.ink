@@ -15,14 +15,20 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { Image } from "~/components/Image";
 import { useIsStandalone } from "~/features/front-page/components/PWAInstallBanner";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { navIconUrl } from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
 import type { ScoreBreakdown } from "../core/FeedRanking";
 import {
 	FEED_CATEGORIES,
+	FEED_FEEDBACK_COMMENT_MAX_LENGTH,
+	FEED_FEEDBACK_KINDS,
 	FEED_ITEM_TYPES,
+	type FeedFeedbackKind,
 	type FeedItemTypeDefinition,
 } from "../feed-constants";
+import { feedItemActionSchema } from "../feed-schemas";
+import { feedItemPage } from "../feed-urls";
 import { communityItemContent } from "./CommunityItems";
 import { creatorItemContent } from "./CreatorItems";
 import styles from "./FeedItemCard.module.css";
@@ -41,14 +47,8 @@ export interface FeedItemContent {
 	action?: { label: string; doneLabel: string };
 }
 
-type FeedFeedback =
-	| "NOT_INTERESTING"
-	| "TOO_OFTEN"
-	| "MORE_LIKE_THIS"
-	| "WRONG";
-
 const FEED_FEEDBACK_OPTIONS: Record<
-	FeedFeedback,
+	FeedFeedbackKind,
 	{ label: string; icon: React.ReactNode; thanks: (typeName: string) => string }
 > = {
 	NOT_INTERESTING: {
@@ -98,27 +98,32 @@ export function FeedItemCard({
 		definition.feature ??
 		FEED_CATEGORIES.find((c) => c.id === definition.category)!;
 	const content = itemContent(item, now);
-	const [feedback, setFeedback] = React.useState<FeedFeedback | null>(null);
+	const [feedback, setFeedback] = React.useState<FeedFeedbackKind | null>(null);
+	const [isDismissed, setIsDismissed] = React.useState(false);
 	const isStandalone = useIsStandalone();
+	const { submit } = useActionSubmit(feedItemActionSchema, {
+		action: feedItemPage(item.type),
+	});
 
 	if (definition.isHiddenInPwa && isStandalone) return null;
+	if (isDismissed) return null;
+
+	const sendFeedback = (kind: FeedFeedbackKind, comment: string | null) => {
+		setFeedback(kind);
+		submit("FEEDBACK", { itemAt: item.at, kind, comment });
+	};
 
 	if (feedback) {
 		return (
-			<article className={clsx(styles.post, styles.postFeedback)}>
-				<MessageSquareHeart size={20} className={styles.feedbackIcon} />
-				<div className={styles.feedbackText}>
-					<b>Thanks for the feedback.</b>{" "}
-					{FEED_FEEDBACK_OPTIONS[feedback].thanks(definition.name)}
-				</div>
-				<button
-					type="button"
-					className={styles.undo}
-					onClick={() => setFeedback(null)}
-				>
-					Undo
-				</button>
-			</article>
+			<FeedbackPanel
+				thanks={FEED_FEEDBACK_OPTIONS[feedback].thanks(definition.name)}
+				onSendComment={(comment) => sendFeedback(feedback, comment)}
+				onUndo={() => {
+					setFeedback(null);
+					submit("DELETE_FEEDBACK", { itemAt: item.at });
+				}}
+				onDismiss={() => setIsDismissed(true)}
+			/>
 		);
 	}
 
@@ -158,14 +163,17 @@ export function FeedItemCard({
 					) : (
 						<span>{relativeTime(item.at, now)}</span>
 					)}
-					{definition.isRetimed ? (
-						<span className={styles.retimed} title="Real rows shifted to now">
-							re-timed
-						</span>
-					) : null}
-					{headerAction ? (
-						<div className={styles.headerAction}>{headerAction}</div>
-					) : null}
+					<div className={styles.metaEnd}>
+						{definition.isRetimed ? (
+							<span className={styles.retimed} title="Real rows shifted to now">
+								re-timed
+							</span>
+						) : null}
+						<FeedbackMenu onFeedback={(kind) => sendFeedback(kind, null)} />
+						{headerAction ? (
+							<div className={styles.headerAction}>{headerAction}</div>
+						) : null}
+					</div>
 				</div>
 				<p className={styles.text}>{content.line}</p>
 				{content.body ? (
@@ -176,7 +184,6 @@ export function FeedItemCard({
 					reactionCount={content.reactionCount ?? 0}
 					commentCount={commentCount}
 					href={href}
-					onFeedback={setFeedback}
 				/>
 				{score ? <RankingMath score={score} definition={definition} /> : null}
 			</div>
@@ -208,12 +215,10 @@ function PostActions({
 	reactionCount,
 	commentCount,
 	href,
-	onFeedback,
 }: {
 	reactionCount: number;
 	commentCount: number;
 	href?: string;
-	onFeedback: (feedback: FeedFeedback) => void;
 }) {
 	const [isReacted, setIsReacted] = React.useState(false);
 	const count = reactionCount + (isReacted ? 1 : 0);
@@ -246,28 +251,95 @@ function PostActions({
 			<button type="button" className={styles.action} aria-label="Share">
 				<Share size={17} />
 			</button>
-			<SendouMenu
-				placement="bottom end"
-				trigger={
-					<button type="button" className={clsx(styles.action, styles.more)}>
-						<MessageSquareHeart size={17} />
-						Feedback
-					</button>
-				}
-			>
-				{(Object.keys(FEED_FEEDBACK_OPTIONS) as FeedFeedback[]).map(
-					(feedback) => (
-						<SendouMenuItem
-							key={feedback}
-							icon={FEED_FEEDBACK_OPTIONS[feedback].icon}
-							onAction={() => onFeedback(feedback)}
-						>
-							{FEED_FEEDBACK_OPTIONS[feedback].label}
-						</SendouMenuItem>
-					),
-				)}
-			</SendouMenu>
 		</footer>
+	);
+}
+
+function FeedbackMenu({
+	onFeedback,
+}: {
+	onFeedback: (kind: FeedFeedbackKind) => void;
+}) {
+	return (
+		<SendouMenu
+			placement="bottom end"
+			trigger={
+				<button type="button" className={styles.feedbackTrigger}>
+					<MessageSquareHeart size={14} />
+					Feedback
+				</button>
+			}
+		>
+			{FEED_FEEDBACK_KINDS.map((kind) => (
+				<SendouMenuItem
+					key={kind}
+					icon={FEED_FEEDBACK_OPTIONS[kind].icon}
+					onAction={() => onFeedback(kind)}
+				>
+					{FEED_FEEDBACK_OPTIONS[kind].label}
+				</SendouMenuItem>
+			))}
+		</SendouMenu>
+	);
+}
+
+function FeedbackPanel({
+	thanks,
+	onSendComment,
+	onUndo,
+	onDismiss,
+}: {
+	thanks: string;
+	onSendComment: (comment: string) => void;
+	onUndo: () => void;
+	onDismiss: () => void;
+}) {
+	const [comment, setComment] = React.useState("");
+	const [isSent, setIsSent] = React.useState(false);
+
+	return (
+		<article className={clsx(styles.post, styles.postFeedback)}>
+			<MessageSquareHeart size={20} className={styles.feedbackIcon} />
+			<div className={styles.feedbackText}>
+				<b>Thanks for the feedback.</b> {thanks}
+			</div>
+			<SendouButton size="small" variant="outlined" onClick={onUndo}>
+				Undo
+			</SendouButton>
+			<div className={styles.feedbackComment}>
+				{isSent ? (
+					<p className={styles.feedbackSent}>
+						Comment sent. It helps us make the feed better!
+					</p>
+				) : (
+					<textarea
+						className={styles.feedbackCommentInput}
+						value={comment}
+						maxLength={FEED_FEEDBACK_COMMENT_MAX_LENGTH}
+						placeholder="Anything else? Tell us what you think about this post or the feed in general (optional)"
+						aria-label="Feedback comment"
+						onChange={(event) => setComment(event.target.value)}
+					/>
+				)}
+				<div className={styles.feedbackActions}>
+					{isSent ? null : (
+						<SendouButton
+							size="small"
+							isDisabled={!comment.trim()}
+							onClick={() => {
+								onSendComment(comment.trim());
+								setIsSent(true);
+							}}
+						>
+							Send
+						</SendouButton>
+					)}
+					<SendouButton size="small" variant="outlined" onClick={onDismiss}>
+						Dismiss
+					</SendouButton>
+				</div>
+			</div>
+		</article>
 	);
 }
 

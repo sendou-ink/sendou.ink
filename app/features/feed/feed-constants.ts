@@ -484,6 +484,17 @@ export const FEED_ITEM_TYPES = {
 
 export type FeedItemType = keyof typeof FEED_ITEM_TYPES;
 
+export const FEED_FEEDBACK_KINDS = [
+	"NOT_INTERESTING",
+	"TOO_OFTEN",
+	"MORE_LIKE_THIS",
+	"WRONG",
+] as const;
+
+export type FeedFeedbackKind = (typeof FEED_FEEDBACK_KINDS)[number];
+
+export const FEED_FEEDBACK_COMMENT_MAX_LENGTH = 1000;
+
 /** Diversity pass: penalty when one of the previous two items shares the category */
 export const FEED_SAME_CATEGORY_PENALTY = 0.8;
 /** Diversity pass: penalty when the same actor appeared in the previous four items */
