@@ -147,7 +147,7 @@ function Player({
 						key={weaponSplId}
 						weaponSplId={weaponSplId}
 						variant={weaponImages === "outlined" ? "badge" : "build"}
-						size={52}
+						size={72}
 						loading="eager"
 					/>
 				))}
