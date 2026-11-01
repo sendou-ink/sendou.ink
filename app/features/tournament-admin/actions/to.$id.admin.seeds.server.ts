@@ -24,11 +24,10 @@ export const action = defineAction(
 			case "UPDATE_SEEDS": {
 				requireTournamentOrganizer(tournament, user);
 				errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
-				validateTeamsOfTournament(tournament, body.seeds);
 
 				await TournamentRepository.updateTeamSeeds({
 					tournamentId,
-					teamIds: body.seeds,
+					teamIds: onlyTeamsOfTournament(tournament, body.seeds, (id) => id),
 				});
 
 				message = "Seeds saved successfully";
@@ -49,13 +48,13 @@ export const action = defineAction(
 					),
 					"Invalid starting bracket idx",
 				);
-				validateTeamsOfTournament(
-					tournament,
-					body.startingBrackets.map((t) => t.tournamentTeamId),
-				);
 
 				await TournamentTeamRepository.updateStartingBrackets(
-					body.startingBrackets,
+					onlyTeamsOfTournament(
+						tournament,
+						body.startingBrackets,
+						(t) => t.tournamentTeamId,
+					),
 				);
 
 				message = "Starting brackets updated";
@@ -72,12 +71,13 @@ export const action = defineAction(
 					"No starting bracket has A/B divisions enabled",
 				);
 
-				validateTeamsOfTournament(
-					tournament,
-					body.abDivisions.map((t) => t.tournamentTeamId),
+				await TournamentTeamRepository.updateAbDivisions(
+					onlyTeamsOfTournament(
+						tournament,
+						body.abDivisions,
+						(t) => t.tournamentTeamId,
+					),
 				);
-
-				await TournamentTeamRepository.updateAbDivisions(body.abDivisions);
 
 				message = "A/B divisions updated";
 				break;
@@ -93,14 +93,13 @@ export const action = defineAction(
 	},
 );
 
-function validateTeamsOfTournament(
+/** Skips teams that unregistered after the organizer loaded the page (and ids of other tournaments' teams). */
+function onlyTeamsOfTournament<T>(
 	tournament: Tournament,
-	tournamentTeamIds: number[],
+	items: T[],
+	tournamentTeamId: (item: T) => number,
 ) {
 	const validTeamIds = new Set(tournament.ctx.teams.map((t) => t.id));
 
-	errorToastIfFalsy(
-		tournamentTeamIds.every((id) => validTeamIds.has(id)),
-		"Invalid tournament team id",
-	);
+	return items.filter((item) => validTeamIds.has(tournamentTeamId(item)));
 }

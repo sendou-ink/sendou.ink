@@ -479,6 +479,7 @@ type TournamentBracketData = BracketData;
 
 /** @lintignore */
 export interface TournamentSeedsBody {
+	/** Ids of teams not registered to the tournament are ignored. */
 	tournamentTeamIds: number[];
 }
 
@@ -486,6 +487,7 @@ export interface TournamentSeedsBody {
 
 /** @lintignore */
 export interface TournamentStartingBracketsBody {
+	/** Entries of teams not registered to the tournament are ignored. */
 	startingBrackets: Array<{
 		tournamentTeamId: number;
 		startingBracketIdx: number;

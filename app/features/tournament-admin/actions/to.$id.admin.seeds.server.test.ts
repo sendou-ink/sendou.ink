@@ -81,4 +81,33 @@ describe("tournament seeds admin action", () => {
 			"another tournament's team got moved to a starting bracket",
 		).toBeNull();
 	});
+
+	test("skips teams that unregistered after the page was loaded", async () => {
+		await UserFactory.createAdmin();
+		const organizer = await UserFactory.createRegular();
+		const [player] = await UserFactory.createMany(1);
+
+		const tournament = await TournamentFactory.create({
+			authorId: organizer.id,
+		});
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [player.id],
+		});
+		const unregisteredTeamId = team.id + 1;
+
+		await seedsAction(
+			{
+				_action: "UPDATE_STARTING_BRACKETS",
+				startingBrackets: JSON.stringify([
+					{ tournamentTeamId: team.id, startingBracketIdx: 0 },
+					{ tournamentTeamId: unregisteredTeamId, startingBracketIdx: 0 },
+				]) as any,
+			},
+			{ user: "regular", params: { id: String(tournament.id) } },
+		);
+
+		const after = await teamRow(team.id);
+		expect(after.startingBracketIdx).toBe(0);
+	});
 });
