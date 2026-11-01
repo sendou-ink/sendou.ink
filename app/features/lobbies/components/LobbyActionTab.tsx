@@ -1,4 +1,10 @@
-import { DoorOpen, Flag, MoreHorizontal, Undo2 } from "lucide-react";
+import {
+	DoorClosed,
+	DoorOpen,
+	Flag,
+	MoreHorizontal,
+	Undo2,
+} from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { ActionButton } from "~/components/ActionButton";
@@ -298,7 +304,9 @@ function LeaveActions({ set }: { set: LobbySetData }) {
 				action="TOGGLE_DROP_AFTER_SET"
 				size="miniscule"
 				variant="minimal"
-				icon={isDroppingAfterSet ? <Undo2 size={16} /> : <DoorOpen size={16} />}
+				icon={
+					isDroppingAfterSet ? <DoorClosed size={16} /> : <DoorOpen size={16} />
+				}
 				testId="lobby-drop-after-set-button"
 				isDisabled={isOnCooldown}
 				onClick={() => {
