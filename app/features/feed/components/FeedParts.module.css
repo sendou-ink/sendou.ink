@@ -291,7 +291,7 @@
 .columns {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	gap: var(--s-2-5);
+	gap: var(--s-6);
 }
 
 .column {

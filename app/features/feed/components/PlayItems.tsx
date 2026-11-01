@@ -481,7 +481,7 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 								<span className={styles.label}>Teams</span>
 								{data.teams.map((entry) => (
 									<div key={entry.placement} className={styles.player}>
-										<UserStack users={entry.members} max={2} />
+										<UserStack users={entry.members} />
 										{entry.team ? (
 											<Link
 												to={teamPage(entry.team.customUrl)}
