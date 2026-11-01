@@ -64,6 +64,7 @@ export function Stinger({
 		<div
 			className={styles.stinger}
 			style={inkColorVars(state[view])}
+			data-has-match={state.match ? true : undefined}
 			{...part("stinger")}
 			onAnimationEnd={(event) => {
 				if (event.target === event.currentTarget) onDone();
@@ -97,8 +98,8 @@ function Panels() {
 }
 
 /**
- * The teams facing each other with the tournament's logo under them, only the logo without a match.
- * Going into the game the logo is on a header at the bottom, with the tournament and the round.
+ * The teams facing each other over a header with the tournament, which going into the game also has the round.
+ * Without a match, a title card of the tournament.
  */
 function Card({ state, view }: { state: BroadcastState; view: BroadcastView }) {
 	const { t } = useTranslation(["broadcast"]);
@@ -106,31 +107,41 @@ function Card({ state, view }: { state: BroadcastState; view: BroadcastView }) {
 	const sides = match ? matchSides(match, view, state[view]) : null;
 	const showScores = (match?.progress[view].resultCount ?? 0) > 0;
 
-	return (
-		<div
-			className={styles.card}
-			data-has-teams={sides ? true : undefined}
-			{...part("stinger-card")}
-		>
-			{sides ? (
-				<div className={styles.teams} {...part("stinger-teams")}>
-					<StingerTeam side={sides[0]} showScore={showScores} />
-					<span className={styles.versus} {...part("stinger-vs")}>
-						{t("broadcast:overlay.vs")}
-					</span>
-					<StingerTeam side={sides[1]} showScore={showScores} />
+	if (!match || !sides) {
+		return (
+			<div className={styles.card} {...part("stinger-card")}>
+				<div className={styles.titleCard} {...part("stinger-title-card")}>
+					<img
+						className={styles.titleCardLogo}
+						src={state.tournament.logoUrl}
+						alt=""
+						{...part("stinger-tournament-logo")}
+					/>
+					<div
+						className={styles.titleCardName}
+						{...part("stinger-tournament-name")}
+					>
+						{state.tournament.name}
+					</div>
 				</div>
-			) : null}
-			{match && state[view].scene === "game" ? (
-				<StingerHeader state={state} match={match} />
-			) : (
-				<img
-					className={styles.tournamentLogo}
-					src={state.tournament.logoUrl}
-					alt=""
-					{...part("stinger-tournament-logo")}
-				/>
-			)}
+			</div>
+		);
+	}
+
+	return (
+		<div className={styles.card} {...part("stinger-card")}>
+			<div className={styles.teams} {...part("stinger-teams")}>
+				<StingerTeam side={sides[0]} showScore={showScores} />
+				<span className={styles.versus} {...part("stinger-vs")}>
+					{t("broadcast:overlay.vs")}
+				</span>
+				<StingerTeam side={sides[1]} showScore={showScores} />
+			</div>
+			<StingerHeader
+				state={state}
+				match={match}
+				showRound={state[view].scene === "game"}
+			/>
 		</div>
 	);
 }
@@ -138,9 +149,11 @@ function Card({ state, view }: { state: BroadcastState; view: BroadcastView }) {
 function StingerHeader({
 	state,
 	match,
+	showRound,
 }: {
 	state: BroadcastState;
 	match: BroadcastMatch;
+	showRound: boolean;
 }) {
 	return (
 		<div className={styles.header} {...part("stinger-header")}>
@@ -157,12 +170,14 @@ function StingerHeader({
 				>
 					{state.tournament.name}
 				</div>
-				<div className={styles.round} {...part("stinger-round")}>
-					{roundLabel(match)}
-					<span className={styles.setLength} {...part("stinger-set-length")}>
-						<SetLength match={match} />
-					</span>
-				</div>
+				{showRound ? (
+					<div className={styles.round} {...part("stinger-round")}>
+						{roundLabel(match)}
+						<span className={styles.setLength} {...part("stinger-set-length")}>
+							<SetLength match={match} />
+						</span>
+					</div>
+				) : null}
 			</div>
 		</div>
 	);

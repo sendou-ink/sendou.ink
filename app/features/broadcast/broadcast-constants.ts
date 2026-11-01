@@ -182,6 +182,7 @@ export const BROADCAST_SCENE_PARTS = {
 		"stinger-team-name",
 		"stinger-team-score",
 		"stinger-vs",
+		"stinger-title-card",
 		"stinger-tournament-logo",
 		"stinger-header",
 		"stinger-tournament-name",
