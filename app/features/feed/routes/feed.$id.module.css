@@ -13,10 +13,6 @@
 
 .thread {
 	min-width: 0;
-	overflow: hidden;
-	background-color: var(--color-bg-high);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-box);
 }
 
 .log {

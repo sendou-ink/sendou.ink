@@ -146,6 +146,7 @@
 
 .streams {
 	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	padding: var(--s-2) var(--s-1);
 
 	& a:hover {
