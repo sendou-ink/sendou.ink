@@ -160,7 +160,14 @@ export const BROADCAST_SCENE_PARTS = {
 		"stage",
 		"winner",
 	],
-	casters: ["header", "tournament-name", "title", "camera", "caster-name"],
+	casters: [
+		"header",
+		"tournament-name",
+		"title",
+		"camera",
+		"caster-name",
+		"caster-pronouns",
+	],
 	replays: ["corner", "replay-bug", "replay-dot", "replay-label", "game"],
 	hold: [
 		"tournament-logo",
@@ -218,7 +225,7 @@ export const DEFAULT_BROADCAST_SETTINGS = {
 	css: "",
 	stinger: "versus",
 	headline: "",
-	casters: [],
+	casterIds: [],
 } as const satisfies BroadcastSettings;
 
 export const BROADCAST_HEADLINE_MAX_LENGTH = 100;
@@ -226,16 +233,7 @@ export const BROADCAST_HEADLINE_MAX_LENGTH = 100;
 // xxx: or 2?
 export const BROADCAST_MAX_CASTERS = 3;
 
-export const BROADCAST_CASTER_NAME_MAX_LENGTH = 40;
-
-export const DEFAULT_BROADCAST_OVERRIDES = { teams: {}, players: {} } as const;
-
 export const BROADCAST_WEAPONS_PER_PLAYER = 3;
-
-export const BROADCAST_PLAYER_NAME_MAX_LENGTH = 32;
-
-/** Upper bound of the edit form's roster, rosters are capped well below by the tournament. */
-export const BROADCAST_MAX_PLAYERS_PER_TEAM = 20;
 
 /** Days the producers' chat lives from the tournament's start, or from when the channel was set if that's later. */
 export const BROADCAST_CHAT_ROOM_LIFESPAN_DAYS = 7;

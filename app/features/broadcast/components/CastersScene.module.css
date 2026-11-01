@@ -68,6 +68,13 @@
 	white-space: nowrap;
 }
 
+.pronouns {
+	margin-inline-start: 14px;
+	color: var(--bc-text-muted);
+	font-size: 26px;
+	font-weight: 600;
+}
+
 .matchup {
 	--bc-enter-y: var(--bc-enter-distance);
 

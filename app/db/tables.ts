@@ -30,7 +30,6 @@ import type {
 } from "~/db/tables-json";
 import type { ApiTokenType } from "~/features/api/api-types";
 import type {
-	BroadcastOverrides,
 	BroadcastSettings,
 	BroadcastStoredState,
 } from "~/features/broadcast/broadcast-types";
@@ -1188,7 +1187,6 @@ export interface TournamentBroadcast {
 	/** Theme, not staged */
 	settings: JSONColumnType<BroadcastSettings>;
 	/** Team and player values the producer edited over the tournament's, not staged */
-	overrides: JSONColumnType<BroadcastOverrides>;
 	/** Chat of the tournament's organizers and streamers producing the broadcast, created once the cast account is set */
 	chatRoomId: number | null;
 	createdAt: Generated<number>;

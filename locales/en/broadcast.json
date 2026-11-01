@@ -18,8 +18,6 @@
 	"dashboard.showResults": "Show now",
 	"dashboard.gameplay": "Gameplay footage",
 	"dashboard.teams.header": "Teams",
-	"dashboard.teams.description": "Edits show on both live and next right away. Values you leave as they are keep following the tournament.",
-	"dashboard.teams.reset": "Reset to tournament values",
 	"dashboard.health.sources_one": "OBS: {{count}} source connected",
 	"dashboard.health.sources_other": "OBS: {{count}} sources connected",
 	"dashboard.health.disconnected": "Disconnected from sendou.ink, reconnecting...",

@@ -10,15 +10,12 @@ import {
 } from "~/utils/kysely.server";
 import {
 	BROADCAST_WEAPONS_PER_PLAYER,
-	DEFAULT_BROADCAST_OVERRIDES,
 	DEFAULT_BROADCAST_SETTINGS,
 } from "./broadcast-constants";
 import type {
 	BroadcastChannel,
-	BroadcastPlayerOverride,
 	BroadcastSettings,
 	BroadcastStoredState,
-	BroadcastTeamOverride,
 	LiveResults,
 	ProducerState,
 } from "./broadcast-types";
@@ -29,14 +26,13 @@ interface BroadcastKey {
 	channel: Pick<BroadcastChannel, "platform" | "account">;
 }
 
-/** Producer state, settings, edited values and chat room of the channel's broadcast, `undefined` before anything was written to it. */
+/** Producer state, settings and chat room of the channel's broadcast, `undefined` before anything was written to it. */
 export function findByChannel({ tournamentId, channel }: BroadcastKey) {
 	return db
 		.selectFrom("TournamentBroadcast")
 		.select([
 			"TournamentBroadcast.state",
 			"TournamentBroadcast.settings",
-			"TournamentBroadcast.overrides",
 			"TournamentBroadcast.chatRoomId",
 		])
 		.where("TournamentBroadcast.tournamentId", "=", tournamentId)
@@ -73,6 +69,17 @@ export async function findAllByChatRoomIds(chatRoomIds: number[]) {
 		])
 		.where("TournamentBroadcast.chatRoomId", "in", chatRoomIds)
 		.$narrowType<{ chatRoomId: NotNull }>()
+		.execute();
+}
+
+/** Casters by their user ids, in no particular order. */
+export function findAllCastersByUserIds(userIds: number[]) {
+	if (userIds.length === 0) return Promise.resolve([]);
+
+	return db
+		.selectFrom("User")
+		.select(["User.id as userId", "User.username as name", "User.pronouns"])
+		.where("User.id", "in", userIds)
 		.execute();
 }
 
@@ -196,55 +203,6 @@ export async function updateSettings({
 }
 
 /**
- * Sets the edited values of one team and its players key by key, so edits of other teams made meanwhile stay.
- * `null` removes the entry, going back to the tournament's values.
- */
-export async function updateTeamOverrides({
-	teamId,
-	team,
-	players,
-	...key
-}: BroadcastKey & {
-	teamId: number;
-	team: BroadcastTeamOverride | null;
-	players: Array<{ userId: number; override: BroadcastPlayerOverride | null }>;
-}) {
-	await insertIfMissing(key);
-
-	const entries = [
-		{ path: `$.teams."${teamId}"`, value: team },
-		...players.map((player) => ({
-			path: `$.players."${player.userId}"`,
-			value: player.override,
-		})),
-	];
-	const removed = entries.filter((entry) => entry.value === null);
-	const set = entries.filter((entry) => entry.value !== null);
-
-	let overrides = sql<string>`"TournamentBroadcast"."overrides"`;
-	if (removed.length > 0) {
-		overrides = sql<string>`json_remove(${overrides}, ${sql.join(
-			removed.map((entry) => sql`${entry.path}`),
-		)})`;
-	}
-	if (set.length > 0) {
-		overrides = sql<string>`json_set(${overrides}, ${sql.join(
-			set.map(
-				(entry) => sql`${entry.path}, json(${JSON.stringify(entry.value)})`,
-			),
-		)})`;
-	}
-
-	await db
-		.updateTable("TournamentBroadcast")
-		.set({ overrides })
-		.where("TournamentBroadcast.tournamentId", "=", key.tournamentId)
-		.where("TournamentBroadcast.platform", "=", key.channel.platform)
-		.where("TournamentBroadcast.account", "=", key.channel.account)
-		.execute();
-}
-
-/**
  * Gives the channel's broadcast its chat room, creating the broadcast too when nothing was written to it yet.
  * Returns the room's id and whether it was created now.
  */
@@ -295,7 +253,6 @@ function insertIfMissing(
 			state: JSON.stringify(Producer.initialState()),
 			// xxx: autofill settings (theme) from the same channel's broadcast in the last tournament of this series
 			settings: JSON.stringify(DEFAULT_BROADCAST_SETTINGS),
-			overrides: JSON.stringify(DEFAULT_BROADCAST_OVERRIDES),
 		})
 		.onConflict((oc) =>
 			oc.columns(["tournamentId", "platform", "account"]).doNothing(),

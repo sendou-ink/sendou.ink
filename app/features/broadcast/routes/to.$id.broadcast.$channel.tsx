@@ -11,7 +11,6 @@ import {
 	Map as MapIcon,
 	Mic,
 	Play,
-	RotateCcw,
 	TriangleAlert,
 	Trophy,
 	Users,
@@ -43,13 +42,11 @@ import { useBroadcastStream } from "../broadcast-hooks";
 import {
 	broadcastActionSchema,
 	broadcastInfoFormSchema,
-	broadcastTeamFormSchema,
 	broadcastThemeFormSchema,
 } from "../broadcast-schemas";
 import type {
 	BroadcastScene,
 	BroadcastState,
-	BroadcastTeam,
 	BroadcastView,
 } from "../broadcast-types";
 import { broadcastOverlayPage, broadcastStreamUrl } from "../broadcast-urls";
@@ -175,13 +172,13 @@ export default function BroadcastDashboardPage() {
 					schema={broadcastInfoFormSchema}
 					defaultValues={{
 						headline: state.settings.headline || null,
-						casters: state.settings.casters,
+						casterIds: state.settings.casterIds,
 					}}
 				>
 					{({ FormField }) => (
 						<>
 							<FormField name="headline" />
-							<FormField name="casters" />
+							<FormField name="casterIds" />
 						</>
 					)}
 				</SendouForm>
@@ -367,27 +364,18 @@ function Teams({ state }: { state: BroadcastState }) {
 	return (
 		<SendouSection title={t("broadcast:dashboard.teams.header")}>
 			<div className="stack md">
-				<div className="stack horizontal md items-center justify-between flex-wrap">
-					<p className="text-sm text-lighter">
-						{t("broadcast:dashboard.teams.description")}
-					</p>
-					<ActionButton
-						schema={broadcastActionSchema}
-						action="SET_NEXT_SWAP_SIDES"
-						fields={{ swapSides: !state.next.swapSides }}
-						variant={state.next.swapSides ? "primary" : "outlined"}
-						size="small"
-						icon={<ArrowLeftRight />}
-					>
-						{t("broadcast:dashboard.swapSides")}
-					</ActionButton>
-				</div>
+				<ActionButton
+					schema={broadcastActionSchema}
+					action="SET_NEXT_SWAP_SIDES"
+					fields={{ swapSides: !state.next.swapSides }}
+					variant={state.next.swapSides ? "primary" : "outlined"}
+					size="small"
+					icon={<ArrowLeftRight />}
+					formClassName="self-start"
+				>
+					{t("broadcast:dashboard.swapSides")}
+				</ActionButton>
 				<InkColors state={state} />
-				<div className={styles.teams}>
-					{state.match.teams.map((team, i) =>
-						team ? <TeamEditor key={team.id} team={team} /> : <div key={i} />,
-					)}
-				</div>
 			</div>
 		</SendouSection>
 	);
@@ -466,50 +454,6 @@ function InkColors({ state }: { state: BroadcastState }) {
 					))}
 				</div>
 			) : null}
-		</div>
-	);
-}
-
-function TeamEditor({ team }: { team: BroadcastTeam }) {
-	const { t } = useTranslation(["broadcast"]);
-	const defaultValues = {
-		teamId: team.id,
-		name: team.name,
-		players: team.players.map((player) => ({
-			userId: player.userId,
-			name: player.name,
-			weapons: player.weapons.map((id) => ({ id, isFavorite: false })),
-		})),
-	};
-
-	return (
-		<div className="stack md">
-			{team.isEdited ? (
-				<ActionButton
-					schema={broadcastActionSchema}
-					action="RESET_TEAM"
-					fields={{ teamId: team.id }}
-					variant="minimal"
-					size="small"
-					icon={<RotateCcw />}
-					formClassName="self-start"
-				>
-					{t("broadcast:dashboard.teams.reset")}
-				</ActionButton>
-			) : null}
-			<SendouForm
-				// remounts with the saved values, e.g. after another producer's edit
-				key={JSON.stringify(defaultValues)}
-				schema={broadcastTeamFormSchema}
-				defaultValues={defaultValues}
-			>
-				{({ FormField }) => (
-					<>
-						<FormField name="name" />
-						<FormField name="players" canRemoveItem={() => false} />
-					</>
-				)}
-			</SendouForm>
 		</div>
 	);
 }

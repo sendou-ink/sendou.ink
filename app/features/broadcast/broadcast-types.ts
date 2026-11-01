@@ -1,3 +1,4 @@
+import type { Pronouns } from "~/db/tables-json";
 import type { StreamPlatform } from "~/features/live-streams/live-streams-constants";
 import type {
 	MainWeaponId,
@@ -67,25 +68,8 @@ export interface BroadcastSettings {
 	stinger: BroadcastStinger;
 	/** Message of the full screen scenes, e.g. "Top 8 starts at 18:00 CEST". */
 	headline: string;
-	/** Names under the camera frames of the casters scene, one frame per caster. */
-	casters: string[];
-}
-
-/** Team and player values the producer edited, shown instead of the tournament's in both live and next. */
-export interface BroadcastOverrides {
-	/** By tournament team id. */
-	teams: Record<number, BroadcastTeamOverride>;
-	/** By user id. */
-	players: Record<number, BroadcastPlayerOverride>;
-}
-
-export interface BroadcastTeamOverride {
-	name?: string;
-}
-
-export interface BroadcastPlayerOverride {
-	name?: string;
-	weapons?: MainWeaponId[];
+	/** Users under the camera frames of the casters scene, one frame per caster. */
+	casterIds: number[];
 }
 
 /** The cast account a broadcast is for. */
@@ -101,6 +85,8 @@ export interface BroadcastChannel {
 export interface BroadcastState extends BroadcastStoredState {
 	v: 1;
 	settings: BroadcastSettings;
+	/** Users of `settings.casterIds` in order, ones that no longer exist left out. */
+	casters: BroadcastCaster[];
 	tournament: {
 		name: string;
 		logoUrl: string;
@@ -163,8 +149,12 @@ export interface BroadcastTeam {
 	logoUrl: string | null;
 	seed: number | null;
 	players: BroadcastPlayer[];
-	/** The producer edited the team's or its players' values. */
-	isEdited: boolean;
+}
+
+export interface BroadcastCaster {
+	userId: number;
+	name: string;
+	pronouns: Pronouns | null;
 }
 
 export interface BroadcastPlayer {
