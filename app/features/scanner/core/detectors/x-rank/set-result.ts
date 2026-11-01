@@ -48,7 +48,7 @@ import {
 
 export const X_SET_RESULT_EVENT_TYPE = "XSetResult";
 
-export type XSetGameResult = "WIN" | "LOSE";
+type XSetGameResult = "WIN" | "LOSE";
 
 export interface XSetResultData {
 	mode: RankedModeShort | null;

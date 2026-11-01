@@ -80,7 +80,7 @@ const UNIX_FILE_TYPE_MASK = 0o170000;
 const UNIX_REGULAR_FILE = 0o100000;
 
 /** One analyzed frame of the game, as unpacked. */
-export interface GameDataFrame {
+interface GameDataFrame {
 	/** folder relative to the output directory, e.g. `frames/012-Death-1m42s` */
 	folder: string;
 	eventType: (typeof EVENT_TYPES)[number];

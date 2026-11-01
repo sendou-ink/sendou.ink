@@ -60,7 +60,7 @@ import { describeError } from "./errors";
 import { scannedTeamComps } from "./montage-comps";
 import { cancelVodScan, startVodScan } from "./vod-scan";
 
-export interface MontageFolder {
+interface MontageFolder {
 	manifest: MontageManifest;
 	/** the manifest's VoDs found in the folder */
 	vods: MontageManifestVod[];
@@ -69,7 +69,7 @@ export interface MontageFolder {
 	directory: FileSystemDirectoryHandle | null;
 }
 
-export type MontageScan =
+type MontageScan =
 	| { state: "scanning"; file: string; index: number; total: number }
 	| { state: "done"; failed: string[] };
 
@@ -93,7 +93,7 @@ type GraphicCapture = (graphic: MontageGraphic) => Promise<{
 	revealRects: CardRevealRect[];
 }>;
 
-export type MontageRender =
+type MontageRender =
 	| ({ state: "rendering" } & MontageRenderProgress)
 	| { state: "done"; error: string | null };
 

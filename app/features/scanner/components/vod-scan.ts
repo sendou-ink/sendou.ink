@@ -73,13 +73,13 @@ const UI_UPDATE_INTERVAL_MS = 250;
  */
 const EVENTS_PUBLISH_INTERVAL_MS = 1000;
 
-export type VodScanStatus = "idle" | "scanning" | "done" | "error";
+type VodScanStatus = "idle" | "scanning" | "done" | "error";
 
-export type ClipsWork =
+type ClipsWork =
 	| { state: "cutting"; done: number; total: number }
 	| { state: "done"; saved: number; error: string | null };
 
-export type VodScanMode = "active" | "skim";
+type VodScanMode = "active" | "skim";
 
 /** One worker's slice of the file. */
 export interface VodScanLane {
@@ -93,7 +93,7 @@ export interface VodScanLane {
 	failed: boolean;
 }
 
-export interface VodScanProgress {
+interface VodScanProgress {
 	t: number;
 	duration: number;
 	/** scan speed as a multiple of realtime */

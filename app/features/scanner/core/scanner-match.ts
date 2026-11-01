@@ -76,6 +76,7 @@ export interface ScannerMatchObjective {
 	samples: ScannerMatchObjectiveSample[];
 }
 
+/** @internal */
 export type ScannerMatchPlayerFlags = [boolean, boolean, boolean, boolean];
 
 export interface ScannerMatchPlayerStatusSample {

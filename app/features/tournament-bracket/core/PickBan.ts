@@ -516,6 +516,7 @@ export function isStageLegal({
 	return pool.some((m) => m.stageId === stageId && m.isLegal);
 }
 
+/** @internal */
 export interface PickBanEvent {
 	type: string;
 	stageId: StageId | null;
@@ -769,6 +770,7 @@ const MAP_PICK_ACTIONS: ReadonlySet<ActionType> = new Set([
 	"PICK_NO_MODE_REPEAT",
 ]);
 
+/** @internal */
 export const CUSTOM_FLOW_VALIDATION_ERRORS = {
 	STEP_MISSING_ACTION: "STEP_MISSING_ACTION",
 	STEP_MISSING_WHO: "STEP_MISSING_WHO",

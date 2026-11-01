@@ -29,7 +29,7 @@ import {
 
 export const STRIP_WEAPONS_EVENT_TYPE = "StripWeapons";
 
-export interface StripWeaponCandidate {
+interface StripWeaponCandidate {
 	weaponId: MainWeaponId;
 	score: number;
 }

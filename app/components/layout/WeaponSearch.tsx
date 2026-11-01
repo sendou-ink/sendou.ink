@@ -50,7 +50,7 @@ const WEAPON_DESTINATIONS = [
 	"art",
 	"lfg",
 ] as const;
-export type WeaponDestination = (typeof WEAPON_DESTINATIONS)[number];
+type WeaponDestination = (typeof WEAPON_DESTINATIONS)[number];
 
 export interface SelectedWeapon {
 	id: MainWeaponId;

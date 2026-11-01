@@ -6,7 +6,7 @@ import type { ServerEvent } from "~/features/events/events-types";
 
 const MAX_ENTRIES = 300;
 
-export type RecordedEvent =
+type RecordedEvent =
 	| { id: number; at: number; type: "event"; event: ServerEvent }
 	| { id: number; at: number; type: "connection"; state: EventsReadyState };
 

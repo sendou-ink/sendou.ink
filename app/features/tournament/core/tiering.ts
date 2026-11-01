@@ -22,6 +22,7 @@ const SIZE_BONUS = {
 	MAX_BONUS_PER_10_TEAMS: 1.5,
 } as const;
 
+/** @internal */
 export const TIER_TO_NUMBER = {
 	X: 1,
 	"S+": 2,

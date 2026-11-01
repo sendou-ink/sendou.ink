@@ -37,7 +37,7 @@ import {
 
 export const X_RANK_POSITION_EVENT_TYPE = "XRankPosition";
 
-export type XRankPositionDirection = "UP" | "DOWN" | "SAME";
+type XRankPositionDirection = "UP" | "DOWN" | "SAME";
 
 export interface XRankPositionData {
 	mode: RankedModeShort | null;

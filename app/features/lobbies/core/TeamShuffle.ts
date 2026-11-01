@@ -84,7 +84,7 @@ export interface TeammateHistory {
 }
 
 /** A candidate split of the players into two teams, scored by {@link splitCost}. */
-export interface Split {
+interface Split {
 	alpha: ShufflePlayer[];
 	bravo: ShufflePlayer[];
 }

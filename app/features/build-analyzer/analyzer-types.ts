@@ -125,7 +125,7 @@ export interface BaseWeaponStats extends RangeParams {
 /** A way of shooting a main weapon with its own flight, e.g. a roller's vertical or horizontal swing */
 export type RangeVariantKey = (typeof RANGE_VARIANT_KEYS)[number];
 
-export interface RangeVariantParams extends RangeParams {
+interface RangeVariantParams extends RangeParams {
 	Range_VariantKey: RangeVariantKey;
 }
 

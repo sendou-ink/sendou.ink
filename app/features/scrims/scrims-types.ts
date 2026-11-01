@@ -68,7 +68,7 @@ interface ScrimPostTeam {
 	avatarUrl: string | null;
 }
 
-export interface TimeRange {
+interface TimeRange {
 	start: string;
 	end: string;
 }

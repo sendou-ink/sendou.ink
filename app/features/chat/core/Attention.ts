@@ -26,6 +26,7 @@ interface AttentionEnvironment {
 export type Tracker = ReturnType<typeof createTracker>;
 
 // Whether the user is paying attention to this tab. It has to be visible, window focused, and be interacted with in the last 3 minutes
+/** @internal */
 export function createTracker(
 	getEnvironment: () => AttentionEnvironment,
 	{ idleAfterMs = IDLE_AFTER_MS }: { idleAfterMs?: number } = {},

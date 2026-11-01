@@ -57,7 +57,7 @@ export type MontageManifestTopTeam = MontageManifestTeam & {
 	placement: number;
 };
 
-export interface MontageManifestTeam {
+interface MontageManifestTeam {
 	id: number;
 	name: string;
 	logo: string | null;

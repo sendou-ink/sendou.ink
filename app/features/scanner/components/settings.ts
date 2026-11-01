@@ -26,7 +26,7 @@ export interface ScannerSettings {
 }
 
 export const CLIP_MIN_KILLS_OPTIONS = [3, 4, 5] as const;
-export type ClipMinKills = (typeof CLIP_MIN_KILLS_OPTIONS)[number];
+type ClipMinKills = (typeof CLIP_MIN_KILLS_OPTIONS)[number];
 
 /**
  * `source`: the video input's own audio side; `desktop`: the system's sound

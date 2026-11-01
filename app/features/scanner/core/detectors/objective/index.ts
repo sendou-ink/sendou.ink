@@ -70,7 +70,7 @@ import { readTrackSteps, trackComb } from "./track";
 export type ObjectiveData = ZonesObjectiveData | TrackObjectiveData;
 
 /** Splat Zones / Clam Blitz plates. */
-export interface ZonesObjectiveData {
+interface ZonesObjectiveData {
 	/** names the plates overlay: CB draws it too, so the match's mode tells the two apart */
 	mode: "SZ";
 	/** match timer seconds ("3:35" = 215); null = unreadable. Overtime display unattested so far. */
@@ -92,7 +92,10 @@ export interface ZonesObjectiveData {
 	teamColor: [InkRgb | null, InkRgb | null];
 }
 
-/** Tower Control / Rainmaker: one overlay, told apart only by its checkpoint markers. */
+/**
+ * Tower Control / Rainmaker: one overlay, told apart only by its checkpoint markers.
+ * @internal
+ */
 export interface TrackObjectiveData {
 	/** off the checkpoint markers; null when none read (the match's mode decides) */
 	mode: "TC" | "RM" | null;

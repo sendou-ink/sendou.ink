@@ -10,7 +10,7 @@ import { test as vitestTest } from "vitest";
 
 type SubtestBody = () => void | Promise<void>;
 
-export interface SubtestOptions {
+interface SubtestOptions {
 	skip?: boolean | string;
 	expectFailure?: string;
 }

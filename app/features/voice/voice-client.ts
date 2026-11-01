@@ -81,14 +81,14 @@ export interface VoiceSnapshot {
 	inputMode: VoiceInputMode;
 }
 
-export interface VoiceCallHandle {
+interface VoiceCallHandle {
 	setLocalAudio: (enabled: boolean) => void;
 	ensureMic: (options: { mayAsk: boolean }) => Promise<boolean>;
 	leave: () => Promise<void>;
 	resumeAudio: () => void;
 }
 
-export interface VoiceTelemetrySummary {
+interface VoiceTelemetrySummary {
 	lowQualitySeconds: number;
 	talkSeconds: number;
 }

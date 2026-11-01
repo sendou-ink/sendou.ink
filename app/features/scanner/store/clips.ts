@@ -23,9 +23,9 @@ const STORAGE_RESERVE_BYTES = 250_000_000;
 /** clips saved before their size was kept were all encoded at 16 Mbps */
 const LEGACY_BYTES_PER_SECOND = 2_000_000;
 
-export type ClipBucket = "session" | "history" | "vod";
+type ClipBucket = "session" | "history" | "vod";
 
-export type ClipSource =
+type ClipSource =
 	| { kind: "live"; sessionKey: number }
 	/** `visit`: the page load that cut it (see visit.ts) */
 	| { kind: "vod"; name: string; visit: string };

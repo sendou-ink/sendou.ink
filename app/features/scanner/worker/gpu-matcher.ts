@@ -326,7 +326,7 @@ function resolveJob(job: Job, score: number) {
 	job.cache?.set(job.cacheKey, score);
 }
 
-export interface GpuMatcherStats {
+interface GpuMatcherStats {
 	steps: number;
 	dispatches: number;
 	jobs: number;

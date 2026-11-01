@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import styles from "./SortableTableHeader.module.css";
 
-export type SortDirection = "asc" | "desc";
+type SortDirection = "asc" | "desc";
 
 export type SortState<Key extends string = string> = {
 	key: Key;

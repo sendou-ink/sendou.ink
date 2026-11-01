@@ -38,7 +38,7 @@ const TOOLTIP_FLIP_RATIO = 0.55;
 const SIDES = [0, 1] as const;
 
 /** One objective-counter read, values in `[alpha, bravo]` order. */
-export interface ObjectiveTimelineSample {
+interface ObjectiveTimelineSample {
 	/** seconds shown on the match timer at the read ("3:35" = 215); null = unreadable */
 	time: number | null;
 	/** displayed count per team; null = unreadable */

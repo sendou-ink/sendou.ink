@@ -103,11 +103,11 @@ const NO_SOURCE_ERROR =
 const MISSING_ATLASES_ERROR =
 	"Some of the scanner's game data could not be downloaded — check the connection and start the capture again";
 
-export type LiveStatus = "idle" | "starting" | "running" | "error";
+type LiveStatus = "idle" | "starting" | "running" | "error";
 /** `unsupported`: no WebCodecs/track processor; `failed`: the encoder refused this stream */
-export type ClipsState = "on" | "off" | "unsupported" | "failed";
+type ClipsState = "on" | "off" | "unsupported" | "failed";
 /** `muted`: the browser gets nothing from the device; `silent`: it gets samples, all of them silence; `ended`: the track stopped (a share ended, say); `failed`: the encoder gave up */
-export type AudioSignal = "ok" | "silent" | "muted" | "ended" | "failed";
+type AudioSignal = "ok" | "silent" | "muted" | "ended" | "failed";
 
 export interface LiveSnapshot {
 	status: LiveStatus;

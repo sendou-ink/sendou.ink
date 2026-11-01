@@ -8,7 +8,7 @@ export type CapturedSource =
 	| "uncaught error"
 	| "unhandled rejection";
 
-export interface CapturedEntry {
+interface CapturedEntry {
 	id: number;
 	level: CapturedLevel;
 	source: CapturedSource;

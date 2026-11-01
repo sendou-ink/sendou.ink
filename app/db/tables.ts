@@ -103,7 +103,7 @@ type Generated<T> =
 export type DBBoolean = 0 | 1;
 
 /** Shape shared by the `AllTeam` table and the `Team` view. See {@link DB} for which to select from. */
-export interface Team {
+interface Team {
 	avatarImgId: number | null;
 	bannerImgId: number | null;
 	bio: string | null;
@@ -125,7 +125,7 @@ export interface Team {
  * Shape shared by the `AllTeamMember` table and the `TeamMember` &
  * `TeamMemberWithSecondary` views. See {@link DB} for which to select from.
  */
-export interface TeamMember {
+interface TeamMember {
 	createdAt: Generated<number>;
 	isOwner: Generated<DBBoolean>;
 	isManager: Generated<DBBoolean>;
@@ -142,7 +142,7 @@ export interface TeamMember {
 	isMainTeam: Generated<DBBoolean>;
 }
 
-export interface Art {
+interface Art {
 	authorId: number;
 	createdAt: Generated<number>;
 	description: string | null;
@@ -151,24 +151,24 @@ export interface Art {
 	isShowcase: Generated<DBBoolean>;
 }
 
-export interface ArtTag {
+interface ArtTag {
 	authorId: number;
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	name: string;
 }
 
-export interface ArtUserMetadata {
+interface ArtUserMetadata {
 	artId: number;
 	userId: number;
 }
 
-export interface TaggedArt {
+interface TaggedArt {
 	artId: number;
 	tagId: number;
 }
 
-export interface Badge {
+interface Badge {
 	id: GeneratedAlways<number>;
 	code: string;
 	displayName: string;
@@ -177,19 +177,19 @@ export interface Badge {
 	authorId: number | null;
 }
 
-export interface BadgeManager {
+interface BadgeManager {
 	badgeId: number;
 	userId: number;
 }
 
 /** Read-only. See {@link DB} for how this view is composed. */
-export interface BadgeOwner {
+interface BadgeOwner {
 	badgeId: number;
 	userId: number;
 	count: number;
 }
 
-export interface Trophy {
+interface Trophy {
 	id: GeneratedAlways<number>;
 	name: string;
 	model: string;
@@ -200,20 +200,20 @@ export interface Trophy {
 	managerId: number | null;
 }
 
-export interface TrophyOwner {
+interface TrophyOwner {
 	trophyId: number;
 	userId: number;
 	tournamentId: number;
 	tier: number | null;
 }
 
-export interface SpecialTrophyOwner {
+interface SpecialTrophyOwner {
 	trophyId: number;
 	userId: number;
 	createdAt: number;
 }
 
-export interface PendingTrophy {
+interface PendingTrophy {
 	id: GeneratedAlways<number>;
 	name: string;
 	model: string;
@@ -230,14 +230,14 @@ export interface PendingTrophy {
 	creatorId: number | null;
 }
 
-export interface PendingTrophyApproval {
+interface PendingTrophyApproval {
 	pendingTrophyId: number;
 	userId: number;
 	createdAt: number;
 }
 
 /** Abilities are stored as JSON in `abilities`, `BuildAbilitySum` & `BuildWeaponAbility` denormalize them for computing ability point averages. */
-export interface Build {
+interface Build {
 	clothesGearSplId: number | null;
 	description: string | null;
 	headGearSplId: number | null;
@@ -268,21 +268,21 @@ export interface BuildWeapon {
 }
 
 /** Per-build ability point sums across all gear slots. Used to compute global `findAllAbilityPointAverages`. */
-export interface BuildAbilitySum {
+interface BuildAbilitySum {
 	buildId: number;
 	ability: Ability;
 	abilityPoints: number;
 }
 
 /** Per-weapon, per-build ability point sums. Used to compute per-weapon `findAllAbilityPointAverages`. One row per canonical weapon × build × ability with non-zero AP. */
-export interface BuildWeaponAbility {
+interface BuildWeaponAbility {
 	canonicalWeaponSplId: MainWeaponId;
 	buildId: number;
 	ability: Ability;
 	abilityPoints: number;
 }
 
-export interface CalendarEvent {
+interface CalendarEvent {
 	authorId: number;
 	bracketUrl: string;
 	description: string | null;
@@ -299,33 +299,33 @@ export interface CalendarEvent {
 	trophyId: number | null;
 }
 
-export interface CalendarEventBadge {
+interface CalendarEventBadge {
 	badgeId: number;
 	eventId: number;
 }
 
 /** A regular calendar event can have many dates, a tournament only one. */
-export interface CalendarEventDate {
+interface CalendarEventDate {
 	eventId: number;
 	id: GeneratedAlways<number>;
 	startsAt: number;
 }
 
-export interface CalendarEventResultPlayer {
+interface CalendarEventResultPlayer {
 	name: string | null;
 	teamId: number;
 	userId: number | null;
 }
 
 /** Results of events not hosted on sendou.ink. */
-export interface CalendarEventResultTeam {
+interface CalendarEventResultTeam {
 	eventId: number;
 	id: GeneratedAlways<number>;
 	name: string;
 	placement: number;
 }
 
-export interface ChatRoom {
+interface ChatRoom {
 	/** Set by a routine ~a month after `expiresAt`; messages are kept but access narrows to staff and tournament organizers. */
 	closedAt: number | null;
 	createdAt: Generated<number>;
@@ -336,7 +336,7 @@ export interface ChatRoom {
 	type: ChatRoomType;
 }
 
-export interface ChatMessage {
+interface ChatMessage {
 	/** The sender, or for a system message the actor it describes. `null` only when that account has since been deleted. */
 	authorUserId: number | null;
 	/** `null` for system messages, whose text is rendered client-side from {@link ChatMessage.type}. */
@@ -350,7 +350,7 @@ export interface ChatMessage {
 	type: PersistedSystemMessageType | null;
 }
 
-export interface ChatMessageReadIndicator {
+interface ChatMessageReadIndicator {
 	/** Id of the newest message the user has seen in the room; upserts keep the MAX. */
 	lastSeenMessageId: number;
 	roomId: number;
@@ -358,7 +358,7 @@ export interface ChatMessageReadIndicator {
 }
 
 /** SendouQ group. A new group is created every time even if the same players rejoin the queue after their match. */
-export interface Group {
+interface Group {
 	chatRoomId: number | null;
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
@@ -379,7 +379,7 @@ export interface Group {
 	tierIsPlus: Generated<DBBoolean>;
 }
 
-export interface GroupLike {
+interface GroupLike {
 	createdAt: Generated<number>;
 	likerGroupId: number;
 	targetGroupId: number;
@@ -389,7 +389,7 @@ export interface GroupLike {
 	createdByUserId: number | null;
 }
 
-export interface GroupMatch {
+interface GroupMatch {
 	alphaGroupId: number;
 	bravoGroupId: number;
 	chatRoomId: number | null;
@@ -403,7 +403,7 @@ export interface GroupMatch {
 }
 
 /** One team's account of why a SendouQ match was canceled. Staff-only information. */
-export interface GroupMatchCancelReport {
+interface GroupMatchCancelReport {
 	id: GeneratedAlways<number>;
 	groupMatchId: number;
 	groupId: number;
@@ -413,12 +413,12 @@ export interface GroupMatchCancelReport {
 }
 
 /** Player nominated as a cause of the cancellation in a {@link GroupMatchCancelReport}. */
-export interface GroupMatchCancelReportPlayer {
+interface GroupMatchCancelReportPlayer {
 	cancelReportId: number;
 	userId: number;
 }
 
-export interface GroupMatchContinueVote {
+interface GroupMatchContinueVote {
 	id: GeneratedAlways<number>;
 	groupId: number;
 	userId: number;
@@ -426,7 +426,7 @@ export interface GroupMatchContinueVote {
 	votedAt: Generated<number>;
 }
 
-export interface GroupMatchMap {
+interface GroupMatchMap {
 	id: GeneratedAlways<number>;
 	index: number;
 	matchId: number;
@@ -438,7 +438,7 @@ export interface GroupMatchMap {
 	winnerGroupId: number | null;
 }
 
-export interface GroupMember {
+interface GroupMember {
 	/** Member who quick added this one as their friend, `null` if they joined on their own. */
 	addedByUserId: number | null;
 	createdAt: Generated<number>;
@@ -458,7 +458,7 @@ export interface GroupMember {
 }
 
 /** Both groups' members confirming they are ready to play, before their match is created */
-export interface GroupReadyCheck {
+interface GroupReadyCheck {
 	alphaGroupId: number;
 	bravoGroupId: number;
 	createdAt: Generated<number>;
@@ -466,14 +466,14 @@ export interface GroupReadyCheck {
 }
 
 /** One member confirming they are ready to play in a {@link GroupReadyCheck} */
-export interface GroupReadyCheckConfirmation {
+interface GroupReadyCheckConfirmation {
 	createdAt: Generated<number>;
 	readyCheckId: number;
 	userId: number;
 }
 
 /** A group member pointing their own group at another group, without inviting it */
-export interface GroupSuggestion {
+interface GroupSuggestion {
 	createdAt: Generated<number>;
 	/** Group whose members see the suggestion */
 	suggesterGroupId: number;
@@ -481,7 +481,7 @@ export interface GroupSuggestion {
 	createdByUserId: number;
 }
 
-export interface PrivateUserNote {
+interface PrivateUserNote {
 	authorId: number;
 	targetId: number;
 	text: string | null;
@@ -490,7 +490,7 @@ export interface PrivateUserNote {
 }
 
 /** History of user written public texts, kept for moderators to review */
-export interface ModAuditLog {
+interface ModAuditLog {
 	id: GeneratedAlways<number>;
 	type: "SENDOUQ_PUBLIC_NOTE";
 	/** Author of the text */
@@ -500,13 +500,13 @@ export interface ModAuditLog {
 }
 
 /** Log-in links generated via the Lohi Discord bot commands. */
-export interface LogInLink {
+interface LogInLink {
 	code: string;
 	expiresAt: number;
 	userId: number;
 }
 
-export interface LFGPost {
+interface LFGPost {
 	id: GeneratedAlways<number>;
 	type: LFGType;
 	text: string;
@@ -526,7 +526,7 @@ export interface LFGPost {
  * - a tournament's map pool, organizer picked or the custom pool of a team picked tournament (`calendarEventId`)
  * - a tournament team's map picks in a team picked tournament (`tournamentTeamId`), the modes and counts live in `Tournament.settings.teamPick`
  */
-export interface MapPoolMap {
+interface MapPoolMap {
 	calendarEventId: number | null;
 	mode: ModeShort;
 	stageId: StageId;
@@ -534,7 +534,7 @@ export interface MapPoolMap {
 }
 
 /** Denormalized win/loss counts per user, map and season so they are efficient to fetch. */
-export interface MapResult {
+interface MapResult {
 	losses: number;
 	mode: ModeShort;
 	season: number;
@@ -544,7 +544,7 @@ export interface MapResult {
 }
 
 /** Denormalized head-to-head results between two users per season so they are efficient to fetch. */
-export interface PlayerResult {
+interface PlayerResult {
 	mapLosses: number;
 	mapWins: number;
 	otherUserId: number;
@@ -557,7 +557,7 @@ export interface PlayerResult {
 }
 
 /** Comments to a suggestion are also stored as suggestions, same as the suggestion itself. */
-export interface PlusSuggestion {
+interface PlusSuggestion {
 	authorId: number;
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
@@ -570,12 +570,12 @@ export interface PlusSuggestion {
 }
 
 /** Result of the latest voting (`PlusVoting.computeFreshPlusTiers`) with players from the leaderboard added, materialized for performance. */
-export interface PlusTier {
+interface PlusTier {
 	tier: number;
 	userId: number;
 }
 
-export interface PlusVote {
+interface PlusVote {
 	authorId: number;
 	month: number;
 	score: number;
@@ -587,7 +587,7 @@ export interface PlusVote {
 }
 
 /** Read-only. See {@link DB} for how this view is composed. */
-export interface PlusVotingResult {
+interface PlusVotingResult {
 	votedId: number;
 	tier: number;
 	score: number;
@@ -597,7 +597,7 @@ export interface PlusVotingResult {
 }
 
 /** Exactly one of `groupMatchId`, `tournamentMatchId` and `lobbySetId` is set. */
-export interface ReportedWeapon {
+interface ReportedWeapon {
 	groupMatchId: number | null;
 	tournamentMatchId: number | null;
 	lobbySetId: number | null;
@@ -609,7 +609,7 @@ export interface ReportedWeapon {
 	ingestedMatchId: number | null;
 }
 
-export interface IngestedMatch {
+interface IngestedMatch {
 	id: GeneratedAlways<number>;
 	povUserId: number | null;
 	submitterUserId: number | null;
@@ -627,7 +627,7 @@ export interface IngestedMatch {
 }
 
 /** Links an ingested match to the game result it describes (exactly one target). */
-export interface IngestedMatchLink {
+interface IngestedMatchLink {
 	id: GeneratedAlways<number>;
 	ingestedMatchId: number;
 	tournamentMatchGameResultId: number | null;
@@ -636,7 +636,7 @@ export interface IngestedMatchLink {
 	createdAt: Generated<number>;
 }
 
-export interface Skill {
+interface Skill {
 	groupMatchId: number | null;
 	id: GeneratedAlways<number>;
 	/** Set for team ratings, `null` for the solo ratings identified by `userId` instead. */
@@ -652,13 +652,13 @@ export interface Skill {
 	createdAt: number | null;
 }
 
-export interface SkillTeamUser {
+interface SkillTeamUser {
 	skillId: number;
 	userId: number;
 }
 
 /** A team that is shown on the team leaderboard but doesn't count for its placements, e.g. because its players want to qualify with another roster. */
-export interface LeaderboardTeamSkip {
+interface LeaderboardTeamSkip {
 	id: GeneratedAlways<number>;
 	season: number;
 	/** The team's roster, same as `Skill.identifier`. */
@@ -668,7 +668,7 @@ export interface LeaderboardTeamSkip {
 }
 
 /** Used for tournament auto-seeding. Calculates off tournament matches same as SP but does not have seasonal resets. */
-export interface SeedingSkill {
+interface SeedingSkill {
 	mu: number;
 	ordinal: number;
 	sigma: number;
@@ -676,7 +676,7 @@ export interface SeedingSkill {
 	type: "RANKED" | "UNRANKED";
 }
 
-export interface SplatoonPlayer {
+interface SplatoonPlayer {
 	id: GeneratedAlways<number>;
 	splId: string;
 	userId: number | null;
@@ -685,7 +685,7 @@ export interface SplatoonPlayer {
 }
 
 /** The bracket tables (`TournamentStage`, `TournamentGroup`, `TournamentRound`, `TournamentMatch`) mimic the [brackets-manager.js schema](https://github.com/Drarig29/brackets-manager.js/issues/111#issuecomment-997417423). */
-export interface Tournament {
+interface Tournament {
 	settings: JSONColumnType<TournamentSettings>;
 	id: GeneratedAlways<number>;
 	mapPickingStyle: TournamentMapPickingStyle;
@@ -705,7 +705,7 @@ export interface Tournament {
 	vodsSyncCount: Generated<number>;
 }
 
-export interface SavedCalendarEvent {
+interface SavedCalendarEvent {
 	id: GeneratedAlways<number>;
 	userId: number;
 	calendarEventId: number;
@@ -717,7 +717,7 @@ export interface SavedCalendarEvent {
  * checked in to it. Tournaments where every team plays the same bracket have one row (bracket idx 0)
  * matching `Tournament.tier`, tournaments with many starting brackets one row per division.
  */
-export interface TournamentDivisionTier {
+interface TournamentDivisionTier {
 	tournamentId: number;
 	/** Idx of the starting bracket in `Tournament.settings.bracketProgression`. */
 	bracketIdx: number;
@@ -725,7 +725,7 @@ export interface TournamentDivisionTier {
 	tier: TournamentTierNumber;
 }
 
-export interface TournamentBadgeOwner {
+interface TournamentBadgeOwner {
 	badgeId: number;
 	userId: number;
 	/** Which tournament the badge is from, if null was added manually by a badge manager as opposed to once a tournament was finalized. */
@@ -739,13 +739,13 @@ export interface TournamentBadgeOwner {
  * or an elimination bracket whose rounds {@link TournamentRound.section} splits into winners, losers
  * and finals. Every elimination stage has one group for now.
  */
-export interface TournamentGroup {
+interface TournamentGroup {
 	id: GeneratedAlways<number>;
 	number: number;
 	stageId: number;
 }
 
-export interface TournamentMatch {
+interface TournamentMatch {
 	chatRoomId: number | null;
 	groupId: number;
 	id: GeneratedAlways<number>;
@@ -765,7 +765,7 @@ export interface TournamentMatch {
 }
 
 /** Leagues: a candidate time one team put on the set's scheduling board. Only exists while open, accepting or rejecting deletes the match's proposals. */
-export interface TournamentMatchScheduleProposal {
+interface TournamentMatchScheduleProposal {
 	id: GeneratedAlways<number>;
 	matchId: number;
 	tournamentTeamId: number;
@@ -776,7 +776,7 @@ export interface TournamentMatchScheduleProposal {
 }
 
 /** Represents one decision, pick or ban, during tournaments pick/ban (counterpick, ban 2) phase. */
-export interface TournamentMatchPickBanEvent {
+interface TournamentMatchPickBanEvent {
 	type: "PICK" | "BAN" | "ROLL" | "MODE_PICK" | "MODE_BAN";
 	stageId: StageId | null;
 	mode: ModeShort | null;
@@ -786,7 +786,7 @@ export interface TournamentMatchPickBanEvent {
 	createdAt: Generated<number>;
 }
 
-export interface TournamentMatchGameResult {
+interface TournamentMatchGameResult {
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	/** Whether the game ended in a knockout. `null` if not collected for this bracket. */
@@ -800,13 +800,13 @@ export interface TournamentMatchGameResult {
 	winnerTeamId: number;
 }
 
-export interface TournamentMatchGameResultParticipant {
+interface TournamentMatchGameResultParticipant {
 	matchGameResultId: number;
 	userId: number;
 	tournamentTeamId: number;
 }
 
-export interface TournamentResult {
+interface TournamentResult {
 	isHighlight: Generated<DBBoolean>;
 	participantCount: number;
 	placement: number;
@@ -820,7 +820,7 @@ export interface TournamentResult {
 }
 
 /** Groups matches played at the same time (round-robin, swiss) or one round of a bracket (elimination). */
-export interface TournamentRound {
+interface TournamentRound {
 	groupId: number;
 	id: GeneratedAlways<number>;
 	/** Restarts from 1 per group, and in an elimination group per {@link TournamentRound.section}. */
@@ -834,7 +834,7 @@ export interface TournamentRound {
 }
 
 /** A stage is an intermediate phase in a tournament. In essence a bracket. */
-export interface TournamentStage {
+interface TournamentStage {
 	id: GeneratedAlways<number>;
 	name: string;
 	number: number;
@@ -844,19 +844,19 @@ export interface TournamentStage {
 	createdAt: Generated<number>;
 }
 
-export interface TournamentLFGLike {
+interface TournamentLFGLike {
 	likerTeamId: number;
 	targetTeamId: number;
 	createdAt: Generated<number>;
 }
 
-export interface TournamentStaff {
+interface TournamentStaff {
 	tournamentId: number;
 	userId: number;
 	role: TournamentStaffRole;
 }
 
-export interface TournamentTeam {
+interface TournamentTeam {
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	inviteCode: string;
@@ -890,7 +890,7 @@ export interface TournamentTeam {
 	tournamentTeamHistoryId: number | null;
 }
 
-export interface TournamentTeamCheckIn {
+interface TournamentTeamCheckIn {
 	checkedInAt: number;
 	/** Which bracket checked in for. If missing is check in for the whole event. */
 	bracketIdx: number | null;
@@ -899,7 +899,7 @@ export interface TournamentTeamCheckIn {
 	isCheckOut: Generated<DBBoolean>;
 }
 
-export interface TournamentTeamMember {
+interface TournamentTeamMember {
 	createdAt: Generated<number>;
 	inGameName: string | null;
 	tournamentTeamId: number;
@@ -915,7 +915,7 @@ export interface TournamentTeamMember {
 }
 
 /** Stable shadow of a tournament team's identity that survives the team's hard-deletion, so the audit log can still resolve its name. */
-export interface TournamentTeamHistory {
+interface TournamentTeamHistory {
 	/** Surrogate key. Audit log rows reference this so a reused `TournamentTeam.id` can never collide with an older team's history. */
 	id: GeneratedAlways<number>;
 	/** Mirrors the original `TournamentTeam.id` at creation time. Informational only; not a live or unique foreign key, so it is not cascade-deleted with the team and may repeat across teams that reused an id. */
@@ -924,7 +924,7 @@ export interface TournamentTeamHistory {
 	name: string;
 }
 
-export interface TournamentAuditLog {
+interface TournamentAuditLog {
 	id: GeneratedAlways<number>;
 	tournamentId: number;
 	type: TournamentAuditLogType;
@@ -937,7 +937,7 @@ export interface TournamentAuditLog {
 	createdAt: Generated<number>;
 }
 
-export interface TournamentOrganization {
+interface TournamentOrganization {
 	id: GeneratedAlways<number>;
 	name: string;
 	slug: string;
@@ -947,19 +947,19 @@ export interface TournamentOrganization {
 	isEstablished: Generated<DBBoolean>;
 }
 
-export interface TournamentOrganizationMember {
+interface TournamentOrganizationMember {
 	organizationId: number;
 	userId: number;
 	role: TournamentOrganizationRole;
 	roleDisplayName: string | null;
 }
 
-export interface TournamentOrganizationBadge {
+interface TournamentOrganizationBadge {
 	organizationId: number;
 	badgeId: number;
 }
 
-export interface TournamentOrganizationSeries {
+interface TournamentOrganizationSeries {
 	id: GeneratedAlways<number>;
 	organizationId: number;
 	name: string;
@@ -969,14 +969,14 @@ export interface TournamentOrganizationSeries {
 	tierHistory: JSONColumnTypeNullable<TournamentTierNumber[]>;
 }
 
-export interface TournamentBracketProgressionOverride {
+interface TournamentBracketProgressionOverride {
 	sourceBracketIdx: number;
 	destinationBracketIdx: number;
 	tournamentTeamId: number;
 	tournamentId: number;
 }
 
-export interface TournamentOrganizationBannedUser {
+interface TournamentOrganizationBannedUser {
 	organizationId: number;
 	userId: number;
 	privateNote: string | null;
@@ -985,14 +985,14 @@ export interface TournamentOrganizationBannedUser {
 }
 
 /** Indicates a user trusts another. Allows direct adding to groups/teams without invite links. */
-export interface TrustRelationship {
+interface TrustRelationship {
 	trustGiverUserId: number;
 	trustReceiverUserId: number;
 	lastUsedAt: number;
 }
 
 /** Mutual friendship between two users. Invariant: userOneId < userTwoId. */
-export interface Friendship {
+interface Friendship {
 	id: GeneratedAlways<number>;
 	userOneId: number;
 	userTwoId: number;
@@ -1004,14 +1004,14 @@ export interface Friendship {
 }
 
 /** Pending friend request from one user to another. */
-export interface FriendRequest {
+interface FriendRequest {
 	id: GeneratedAlways<number>;
 	senderId: number;
 	receiverId: number;
 	createdAt: Generated<number>;
 }
 
-export interface UnvalidatedUserSubmittedImage {
+interface UnvalidatedUserSubmittedImage {
 	id: GeneratedAlways<number>;
 	submitterUserId: number;
 	url: string;
@@ -1019,7 +1019,7 @@ export interface UnvalidatedUserSubmittedImage {
 	validatedAt: number | null;
 }
 
-export interface UnvalidatedVideo {
+interface UnvalidatedVideo {
 	eventId: number | null;
 	id: GeneratedAlways<number>;
 	submitterUserId: number;
@@ -1031,7 +1031,7 @@ export interface UnvalidatedVideo {
 	youtubeId: string;
 }
 
-export interface User {
+interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
 	banned: Generated<number | null>;
 	bannedReason: string | null;
@@ -1100,13 +1100,13 @@ export interface User {
 	xpDivision: XRankPlacementRegion | null;
 }
 
-export interface UserResultHighlight {
+interface UserResultHighlight {
 	teamId: number;
 	userId: number;
 }
 
 /** Read-only. See {@link DB} for how this view relates to `UnvalidatedUserSubmittedImage`. */
-export interface UserSubmittedImage {
+interface UserSubmittedImage {
 	id: GeneratedAlways<number>;
 	submitterUserId: number | null;
 	url: string;
@@ -1117,7 +1117,7 @@ export interface UserSubmittedImage {
 /** FTS5 trigram index over User's searchable columns (external content table,
  * kept in sync with triggers). Only meant for reading: filter with
  * `match` and join `rowid` to `User.id`. */
-export interface UserSearch {
+interface UserSearch {
 	rowid: GeneratedAlways<number>;
 	username: GeneratedAlways<string | null>;
 	inGameName: GeneratedAlways<string | null>;
@@ -1125,31 +1125,31 @@ export interface UserSearch {
 	customUrl: GeneratedAlways<string | null>;
 }
 
-export interface UserWeaponPool {
+interface UserWeaponPool {
 	userId: number;
 	sortOrder: number;
 	weaponSplId: MainWeaponId;
 	isFavorite: Generated<DBBoolean>;
 }
 
-export interface TenStarWeapon {
+interface TenStarWeapon {
 	userId: number;
 	weaponSplId: MainWeaponId;
 }
 
-export interface UserFriendCode {
+interface UserFriendCode {
 	friendCode: string;
 	userId: number;
 	submitterUserId: number;
 	createdAt: Generated<number>;
 }
 
-export interface UserWidget {
+interface UserWidget {
 	userId: number;
 	index: number;
 	widget: JSONColumnType<StoredWidget>;
 }
-export interface ApiToken {
+interface ApiToken {
 	id: GeneratedAlways<number>;
 	userId: number;
 	token: string;
@@ -1158,7 +1158,7 @@ export interface ApiToken {
 }
 
 /** Splatoon 3 stream live right now, replaced wholesale on every sync. */
-export interface LiveStream {
+interface LiveStream {
 	id: GeneratedAlways<number>;
 	platform: StreamPlatform;
 	/** Twitch login or YouTube channel id */
@@ -1172,7 +1172,7 @@ export interface LiveStream {
 }
 
 /** Account seen streaming the tournament while it was running, used to find match VoDs afterwards. */
-export interface TournamentStreamer {
+interface TournamentStreamer {
 	id: GeneratedAlways<number>;
 	/** Null for cast accounts not linked to a sendou.ink user. */
 	userId: number | null;
@@ -1181,7 +1181,7 @@ export interface TournamentStreamer {
 	account: string;
 }
 
-export interface ExternalStream {
+interface ExternalStream {
 	id: GeneratedAlways<number>;
 	name: string;
 	url: string;
@@ -1191,7 +1191,7 @@ export interface ExternalStream {
 }
 
 /** Past broadcast VoD of a tournament match with the offset to jump to the match. */
-export interface TournamentMatchVod {
+interface TournamentMatchVod {
 	id: GeneratedAlways<number>;
 	matchId: number;
 	userId: number | null;
@@ -1202,7 +1202,7 @@ export interface TournamentMatchVod {
 	viewCount: number;
 }
 
-export interface BanLog {
+interface BanLog {
 	id: GeneratedAlways<number>;
 	userId: number;
 	banned: number | null;
@@ -1211,7 +1211,7 @@ export interface BanLog {
 	createdAt: Generated<number>;
 }
 
-export interface ModNote {
+interface ModNote {
 	id: GeneratedAlways<number>;
 	userId: number;
 	authorId: number;
@@ -1220,7 +1220,7 @@ export interface ModNote {
 	isDeleted: Generated<DBBoolean>;
 }
 
-export interface UserReport {
+interface UserReport {
 	id: GeneratedAlways<number>;
 	reportedUserId: number;
 	reporterUserId: number;
@@ -1231,7 +1231,7 @@ export interface UserReport {
 }
 
 /** Read-only. See {@link DB} for how this view relates to `UnvalidatedVideo`. */
-export interface Video {
+interface Video {
 	eventId: number | null;
 	id: GeneratedAlways<number>;
 	submitterUserId: number;
@@ -1244,7 +1244,7 @@ export interface Video {
 	youtubeId: string;
 }
 
-export interface VideoMatch {
+interface VideoMatch {
 	id: GeneratedAlways<number>;
 	mode: ModeShort;
 	stageId: StageId;
@@ -1252,7 +1252,7 @@ export interface VideoMatch {
 	videoId: number;
 }
 
-export interface VideoMatchPlayer {
+interface VideoMatchPlayer {
 	player: number;
 	playerName: string | null;
 	playerUserId: number | null;
@@ -1262,7 +1262,7 @@ export interface VideoMatchPlayer {
 
 export type UserVoiceChat = "YES" | "NO" | "LISTEN_ONLY";
 
-export interface VoiceSession {
+interface VoiceSession {
 	id: GeneratedAlways<number>;
 	/** `null` once the chat room has been deleted. The session stays for the statistics. */
 	roomId: number | null;
@@ -1287,7 +1287,7 @@ export interface VoiceSession {
 	inputMode: VoiceInputMode | null;
 }
 
-export interface VoiceClientError {
+interface VoiceClientError {
 	id: GeneratedAlways<number>;
 	voiceSessionId: number | null;
 	userId: number;
@@ -1297,7 +1297,7 @@ export interface VoiceClientError {
 	createdAt: Generated<number>;
 }
 
-export interface VoiceFeedback {
+interface VoiceFeedback {
 	id: GeneratedAlways<number>;
 	voiceSessionId: number;
 	userId: number;
@@ -1307,7 +1307,7 @@ export interface VoiceFeedback {
 	createdAt: Generated<number>;
 }
 
-export interface VoiceSettings {
+interface VoiceSettings {
 	id: GeneratedAlways<number>;
 	/** Manual kill switch. */
 	isDisabled: Generated<DBBoolean>;
@@ -1319,7 +1319,7 @@ export interface VoiceSettings {
 	updatedByUserId: number | null;
 }
 
-export interface XRankPlacement {
+interface XRankPlacement {
 	badges: string;
 	bannerSplId: number;
 	id: GeneratedAlways<number>;
@@ -1336,7 +1336,7 @@ export interface XRankPlacement {
 	year: number;
 }
 
-export interface ScrimPost {
+interface ScrimPost {
 	id: GeneratedAlways<number>;
 	startsAt: number;
 	/** Optional end of time range indicating team accepts scrims starting between startsAt and rangeEndsAt */
@@ -1363,7 +1363,7 @@ export interface ScrimPost {
 	updatedAt: Generated<number>;
 }
 
-export interface ScrimMapList {
+interface ScrimMapList {
 	id: GeneratedAlways<number>;
 	scrimPostId: number;
 	side: "ALPHA" | "BRAVO";
@@ -1373,7 +1373,7 @@ export interface ScrimMapList {
 	updatedAt: number;
 }
 
-export interface ScrimMap {
+interface ScrimMap {
 	id: GeneratedAlways<number>;
 	scrimPostId: number;
 	index: number;
@@ -1384,26 +1384,26 @@ export interface ScrimMap {
 	reportedByUserId: number | null;
 }
 
-export interface ScrimPostUser {
+interface ScrimPostUser {
 	scrimPostId: number;
 	userId: number;
 	isOwner: DBBoolean;
 }
 
-export interface ScrimPickupRoster {
+interface ScrimPickupRoster {
 	id: GeneratedAlways<number>;
 	userId: number;
 	/** When the roster was last used to make a scrim post */
 	usedAt: Generated<number>;
 }
 
-export interface ScrimPickupRosterUser {
+interface ScrimPickupRosterUser {
 	scrimPickupRosterId: number;
 	/** Member of the pick-up roster, excluding the roster's owner */
 	userId: number;
 }
 
-export interface ScrimPostRequest {
+interface ScrimPostRequest {
 	id: GeneratedAlways<number>;
 	scrimPostId: number;
 	teamId: number | null;
@@ -1414,13 +1414,13 @@ export interface ScrimPostRequest {
 	createdAt: Generated<number>;
 }
 
-export interface ScrimPostRequestUser {
+interface ScrimPostRequestUser {
 	scrimPostRequestId: number;
 	userId: number;
 	isOwner: DBBoolean;
 }
 
-export interface Lobby {
+interface Lobby {
 	id: GeneratedAlways<number>;
 	/** Plays like everyone else and is the lobby's sole admin. Passed on to the longest-tenured participant when they leave. */
 	hostUserId: number;
@@ -1446,7 +1446,7 @@ export interface Lobby {
 	createdAt: Generated<number>;
 }
 
-export interface LobbyParticipant {
+interface LobbyParticipant {
 	id: GeneratedAlways<number>;
 	lobbyId: number;
 	userId: number;
@@ -1460,14 +1460,14 @@ export interface LobbyParticipant {
 }
 
 /** Kicked out of the lobby by the host, can't sign up for it again. */
-export interface LobbyKickedUser {
+interface LobbyKickedUser {
 	lobbyId: number;
 	userId: number;
 	createdAt: Generated<number>;
 }
 
 /** One best-of, teams shuffled from the participants in the room. */
-export interface LobbySet {
+interface LobbySet {
 	id: GeneratedAlways<number>;
 	lobbyId: number;
 	bestOf: LobbyBestOf;
@@ -1487,7 +1487,7 @@ export interface LobbySet {
 	createdAt: Generated<number>;
 }
 
-export interface LobbySetParticipant {
+interface LobbySetParticipant {
 	setId: number;
 	userId: number;
 	/** `null` = sat the set out */
@@ -1495,7 +1495,7 @@ export interface LobbySetParticipant {
 }
 
 /** A map of a set, generated with the set and reported as it is played */
-export interface LobbyGame {
+interface LobbyGame {
 	id: GeneratedAlways<number>;
 	setId: number;
 	index: number;
@@ -1507,7 +1507,7 @@ export interface LobbyGame {
 }
 
 /** Asking the waitlist to confirm they are present, to fill vacant slots of the room. */
-export interface LobbyReadyCheck {
+interface LobbyReadyCheck {
 	id: GeneratedAlways<number>;
 	lobbyId: number;
 	/** End of the waitlist's priority, after it slots are first come, first served */
@@ -1515,14 +1515,14 @@ export interface LobbyReadyCheck {
 	createdAt: Generated<number>;
 }
 
-export interface LobbyReadyCheckUser {
+interface LobbyReadyCheckUser {
 	readyCheckId: number;
 	userId: number;
 	confirmedAt: number | null;
 }
 
 /** A player's place on the lobby's leaderboard, saved when the lobby ends. Only those who played a finished set. */
-export interface LobbyResult {
+interface LobbyResult {
 	lobbyId: number;
 	userId: number;
 	/** Players with the same record share the placement */
@@ -1533,7 +1533,7 @@ export interface LobbyResult {
  * One audience step of a scrim post's or a lobby's visibility schedule (exactly one of the entity columns is set).
  * The entity is visible to a viewer when a row with `visibleFrom` in the past matches them.
  */
-export interface ContentVisibility {
+interface ContentVisibility {
 	id: GeneratedAlways<number>;
 	scrimPostId: number | null;
 	lobbyId: number | null;
@@ -1547,21 +1547,21 @@ export interface ContentVisibility {
 	isPublic: Generated<DBBoolean>;
 }
 
-export interface Association {
+interface Association {
 	id: GeneratedAlways<number>;
 	name: string;
 	inviteCode: string;
 	createdAt: Generated<number>;
 }
 
-export interface AssociationMember {
+interface AssociationMember {
 	userId: number;
 	associationId: number;
 	/** MANAGER can also share the invite link, ADMIN (one per association) can also manage the members */
 	role: "MEMBER" | "MANAGER" | "ADMIN";
 }
 
-export interface Notification {
+interface Notification {
 	id: GeneratedAlways<number>;
 	type: NotificationValue["type"];
 	meta: JSONColumnTypeNullable<Record<string, number | string>>;
@@ -1569,20 +1569,20 @@ export interface Notification {
 	createdAt: Generated<number>;
 }
 
-export interface NotificationUser {
+interface NotificationUser {
 	notificationId: number;
 	userId: number;
 	seen: Generated<DBBoolean>;
 }
 
 /** A subscription of user's browser indicating where push notifications can be sent to. */
-export interface NotificationUserSubscription {
+interface NotificationUserSubscription {
 	id: GeneratedAlways<number>;
 	userId: number;
 	subscription: JSONColumnType<NotificationSubscription>;
 }
 
-export interface SplatoonRotation {
+interface SplatoonRotation {
 	id: GeneratedAlways<number>;
 	type: SplatoonRotationType;
 	mode: RankedModeShort;
@@ -1593,7 +1593,7 @@ export interface SplatoonRotation {
 }
 
 /** One week of availability a user reported. The row existing means the week was submitted, which is what tells "unavailable all week" (submitted, no slots) apart from "unknown" (no row). */
-export interface AvailabilityWeek {
+interface AvailabilityWeek {
 	id: GeneratedAlways<number>;
 	userId: number;
 	/** Monday 00:00 of the week, in `timezone` */
@@ -1605,14 +1605,14 @@ export interface AvailabilityWeek {
 }
 
 /** A range the user is available for. Absolute, so a range crossing midnight is one row like any other. */
-export interface AvailabilitySlot {
+interface AvailabilitySlot {
 	id: GeneratedAlways<number>;
 	availabilityWeekId: number;
 	startsAt: number;
 	endsAt: number;
 }
 
-export interface AvailabilityDayNote {
+interface AvailabilityDayNote {
 	availabilityWeekId: number;
 	/** YYYY-MM-DD, in the week's `timezone` */
 	date: string;
@@ -1620,7 +1620,7 @@ export interface AvailabilityDayNote {
 }
 
 /** Something the team does together that is not a tournament or a scrim, e.g. a VoD review. Blocks the members' availability. */
-export interface TeamEvent {
+interface TeamEvent {
 	id: GeneratedAlways<number>;
 	teamId: number;
 	/** User who created the event. Null if their account has since been deleted. */
@@ -1632,7 +1632,7 @@ export interface TeamEvent {
 }
 
 /** Participant of a team event limited to selected members. No rows for an event = the whole team takes part. */
-export interface TeamEventMember {
+interface TeamEventMember {
 	teamEventId: number;
 	userId: number;
 }

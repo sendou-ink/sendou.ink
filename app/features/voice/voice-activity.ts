@@ -20,7 +20,7 @@ import {
 import type { VoiceClientErrorKind, VoiceInputMode } from "./voice-constants";
 import { useVoiceRooms, useVoiceSnapshot } from "./voice-hooks";
 
-export type VoiceActivityStatus = "AVAILABLE" | VoiceCallStatus;
+type VoiceActivityStatus = "AVAILABLE" | VoiceCallStatus;
 
 export interface VoiceActivityParticipant {
 	key: string;
@@ -49,7 +49,7 @@ export interface VoiceActivityState {
 	latencyMs: number | null;
 }
 
-export interface VoiceActivityActions {
+interface VoiceActivityActions {
 	join: () => void;
 	leave: () => void;
 	setMicEnabled: (enabled: boolean) => void;

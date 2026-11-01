@@ -7,7 +7,7 @@ import { Flipper } from "../Flipper";
 import { SendouButton } from "./Button";
 import styles from "./Toast.module.css";
 
-export interface SendouToast {
+interface SendouToast {
 	message: string;
 	variant: "error" | "success" | "info";
 }

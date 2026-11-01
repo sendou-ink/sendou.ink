@@ -13,7 +13,7 @@ const INTERVAL_EPSILON_S = 1e-6;
 /** Stepped samples remembered, so a plan made behind the decoder can be replayed up to it. */
 const HISTORY_LIMIT = 512;
 
-export interface DetectorCheckPlan {
+interface DetectorCheckPlan {
 	lastCheckT: number;
 	/** intervals the detector's next check may come after */
 	next: readonly number[];

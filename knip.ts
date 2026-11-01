@@ -1,8 +1,4 @@
 const config = {
-	ignoreExportsUsedInFile: {
-		interface: true,
-		type: true,
-	},
 	tags: ["-lintignore"],
 	ignoreBinaries: ["ffmpeg", "ffprobe", "yt-dlp"],
 	astro: {

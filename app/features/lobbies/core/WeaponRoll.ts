@@ -162,7 +162,7 @@ export const ROLLABLE_WEAPON_IDS = mainWeaponIds.filter(
 	(weaponId) => weaponIdToType(weaponId) !== "ALT_SKIN",
 );
 
-export interface WeaponRollCost {
+interface WeaponRollCost {
 	strength: number;
 	shape: number;
 	shapeMismatch: number;

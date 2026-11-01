@@ -17,7 +17,7 @@ export interface Vod {
 	submitterUserId: Tables["Video"]["submitterUserId"];
 }
 
-export type VodMatch = Pick<
+type VodMatch = Pick<
 	Tables["VideoMatch"],
 	"id" | "mode" | "stageId" | "startsAt"
 > & {

@@ -4,11 +4,9 @@ import { SEARCH_DEBOUNCE_MS } from "~/features/search/search-constants";
 import { useDebounce } from "~/hooks/useDebounce";
 
 /** Sentinel items rendered in place of real results while loading or when empty. */
-export type EntitySearchPlaceholder =
-	| { id: "PLACEHOLDER" }
-	| { id: "NO_RESULTS" };
+type EntitySearchPlaceholder = { id: "PLACEHOLDER" } | { id: "NO_RESULTS" };
 
-export type EntitySearchItem<TItem> = TItem | EntitySearchPlaceholder;
+type EntitySearchItem<TItem> = TItem | EntitySearchPlaceholder;
 
 interface UseEntitySearchArgs<TItem extends { id: number }> {
 	/** Builds the loader URL queried (debounced) as the user types. */

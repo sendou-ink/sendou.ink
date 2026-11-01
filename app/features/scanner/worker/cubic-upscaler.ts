@@ -56,7 +56,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(num_workgroups) 
 `;
 
 /** The part of a source picture to upscale: `box` of an RGBA buffer `stride` pixels wide. */
-export interface UpscaleSource {
+interface UpscaleSource {
 	buffer: GPUBuffer;
 	stride: number;
 	box: { x: number; y: number; w: number; h: number };

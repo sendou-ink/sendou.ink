@@ -52,12 +52,12 @@ const ABILITY_NAMES: ReadonlySet<string> = new Set(
 
 type MatchSide = "ALPHA" | "BRAVO";
 
-export interface TimelineTeam {
+interface TimelineTeam {
 	name: string;
 	avatar?: string;
 }
 
-export interface TimelineScoreboardPlayer {
+interface TimelineScoreboardPlayer {
 	name: string;
 	weaponSplId: MainWeaponId | null;
 	ka: number | null;

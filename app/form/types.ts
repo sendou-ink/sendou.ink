@@ -300,7 +300,7 @@ type FormFieldChildrenProps = {
 	disabled?: boolean;
 };
 
-export type TypedFormFieldProps<
+type TypedFormFieldProps<
 	TSchema extends v.ObjectEntries,
 	TName extends keyof TSchema & string,
 > = {
@@ -324,7 +324,7 @@ export type TypedFormFieldProps<
 type NestedPath = `${string}.${string}` | `${string}[${string}`;
 
 /** FormField props with a free-form name, for nested paths like `${itemName}.field` */
-export type FlexibleFormFieldProps = {
+type FlexibleFormFieldProps = {
 	name: NestedPath;
 	label?: string;
 	disabled?: boolean;

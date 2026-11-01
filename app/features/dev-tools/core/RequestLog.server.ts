@@ -10,7 +10,7 @@ const UNTRACKED_PATH_PREFIXES = ["/dev/", "/sse"];
 
 export type RequestKind = "document" | "data" | "action" | "resource";
 
-export interface LoggedQuery {
+interface LoggedQuery {
 	sql: string;
 	parameters: unknown[];
 	durationMs: number;

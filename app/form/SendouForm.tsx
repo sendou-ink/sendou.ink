@@ -104,7 +104,7 @@ export interface FormRenderProps<T extends v.ObjectEntries> {
 	FormField: TypedFormFieldComponent<T>;
 }
 
-export type FormMode = "submit" | "autoSubmit" | "client";
+type FormMode = "submit" | "autoSubmit" | "client";
 
 type BaseFormProps<T extends v.ObjectEntries> = {
 	children: React.ReactNode | ((props: FormRenderProps<T>) => React.ReactNode);
@@ -159,7 +159,7 @@ type FormModeProps<T extends v.ObjectEntries> =
 			saveAttempted?: boolean;
 	  };
 
-export type FormDefaultValues<T extends v.ObjectEntries> = Partial<
+type FormDefaultValues<T extends v.ObjectEntries> = Partial<
 	v.InferInput<v.ObjectSchema<T, undefined>>
 >;
 

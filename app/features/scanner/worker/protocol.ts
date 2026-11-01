@@ -43,7 +43,7 @@ export interface ScanChunkRequest {
 	tEnd: number;
 }
 
-export interface AbortChunkRequest {
+interface AbortChunkRequest {
 	kind: "abortChunk";
 }
 

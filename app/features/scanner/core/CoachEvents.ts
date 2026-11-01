@@ -483,7 +483,7 @@ export interface CoachLife {
 	summary: CoachLifeSummary | null;
 }
 
-export interface CoachLifeSummary {
+interface CoachLifeSummary {
 	/** seconds alive, the first life counted from the game clock's start when read */
 	duration: number;
 	/** the POV player's splats in the life (a trade on the death's second included); null without a kill feed read */

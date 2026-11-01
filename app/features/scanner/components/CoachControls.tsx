@@ -27,7 +27,7 @@ import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import * as CoachPlayback from "../core/CoachPlayback";
 import styles from "./CoachControls.module.css";
 
-export type CoachStep = "GAME" | "LIFE" | "EVENT" | "SECONDS";
+type CoachStep = "GAME" | "LIFE" | "EVENT" | "SECONDS";
 
 interface StepControl {
 	label: string;

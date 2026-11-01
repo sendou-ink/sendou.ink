@@ -1,3 +1,4 @@
+/** @internal */
 export const CHAT_STICKERS = [
 	{ id: "booyah", name: "Booyah" },
 	{ id: "despair", name: "Despair" },

@@ -72,7 +72,7 @@ export type SidebarEvent = {
 	scrimStatus?: "booked" | "looking" | "requestPending";
 };
 
-export type SidebarFriend = {
+type SidebarFriend = {
 	id: number;
 	name: string;
 	avatar: CommonUser["avatar"];

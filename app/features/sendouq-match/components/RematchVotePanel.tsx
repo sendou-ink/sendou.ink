@@ -11,7 +11,7 @@ import * as RejoinVote from "../core/RejoinVote";
 import { matchSchema } from "../q-match-schemas";
 import styles from "./RematchVotePanel.module.css";
 
-export type RematchVoteMember = {
+type RematchVoteMember = {
 	id: number;
 	username: string;
 	avatar: string | null;

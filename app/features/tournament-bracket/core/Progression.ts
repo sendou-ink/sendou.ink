@@ -17,7 +17,7 @@ export interface DBSource {
 	rest?: boolean;
 }
 
-export interface EditableSource {
+interface EditableSource {
 	/** Frontend-only id while editing, replaced by an index once set. See DBSource.bracketIdx. */
 	bracketId: string;
 	/** User editable, "1-3" and "1,2,3" mean the same. See DBSource.placements for the validated version. */

@@ -23,7 +23,7 @@ export interface DoneInfo {
 	telemetry: ScanTelemetry | null;
 }
 export type DoneHandler = (t: number, info: DoneInfo) => void;
-export type ChunkProgress = Extract<WorkerResponse, { kind: "chunkProgress" }>;
+type ChunkProgress = Extract<WorkerResponse, { kind: "chunkProgress" }>;
 export type ChunkProgressHandler = (progress: ChunkProgress) => void;
 
 /** Each chunk worker decodes and analyzes on its own; leave a core for the main thread and one for the media stack. */
