@@ -134,6 +134,7 @@ function Player({
 					{...part("player-avatar")}
 				/>
 			) : (
+				// xxx: some avatar fallback for users with no avatar set
 				<div className={styles.avatar} {...part("player-avatar")} />
 			)}
 			<span className={styles.playerName} {...part("player-name")}>
