@@ -1,5 +1,6 @@
 .preview {
 	position: relative;
+	container-type: inline-size;
 	aspect-ratio: 16 / 9;
 	overflow: hidden;
 	border: 1px solid var(--color-border);
@@ -33,7 +34,8 @@
 	border: 0;
 	/* same as the overlay page's so the iframe stays transparent, "normal" would follow the site's theme */
 	color-scheme: light;
-	transform: scale(var(--preview-scale, 0.25));
+	/* container width ÷ canvas width as a unitless number, tan(atan2()) because calc() can't divide lengths in every browser yet */
+	transform: scale(tan(atan2(100cqw, 1920px)));
 	transform-origin: 0 0;
 	pointer-events: none;
 }
