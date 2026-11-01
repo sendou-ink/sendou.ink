@@ -83,9 +83,7 @@
 	align-items: stretch;
 	height: var(--info-row-height);
 	overflow: hidden;
-	/* the end with the round icon is round too */
-	border-radius: var(--bc-radius-small) calc(var(--info-row-height) / 2)
-		calc(var(--info-row-height) / 2) var(--bc-radius-small);
+	border-radius: var(--bc-radius-small);
 	background: var(--bc-surface);
 	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
 		calc(var(--scene-enter-delay) + 3 * var(--bc-stagger)) both;
@@ -114,7 +112,6 @@
 	place-items: center;
 	width: var(--info-row-height);
 	height: var(--info-row-height);
-	border-radius: 50%;
 	background: var(--bc-accent);
 	color: var(--bc-accent-text);
 	object-fit: cover;

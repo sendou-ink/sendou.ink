@@ -50,13 +50,17 @@ export const broadcastThemeFormSchema = v.object({
 	}),
 });
 
-export const broadcastInfoFormSchema = v.object({
-	_action: stringConstant("UPDATE_INFO"),
+export const broadcastHeadlineFormSchema = v.object({
+	_action: stringConstant("UPDATE_HEADLINE"),
 	headline: textFieldOptional({
 		label: "labels.broadcastHeadline",
 		bottomText: "bottomTexts.broadcastHeadline",
 		maxLength: BROADCAST_HEADLINE_MAX_LENGTH,
 	}),
+});
+
+export const broadcastCastersFormSchema = v.object({
+	_action: stringConstant("UPDATE_CASTERS"),
 	casterIds: array({
 		label: "labels.broadcastCasters",
 		bottomText: "bottomTexts.broadcastCasters",
@@ -132,7 +136,8 @@ export const broadcastActionSchema = v.union([
 		resultCount: nonNegativeInteger,
 	}),
 	broadcastThemeFormSchema,
-	broadcastInfoFormSchema,
+	broadcastHeadlineFormSchema,
+	broadcastCastersFormSchema,
 ]);
 
 export const broadcastSignalSchema = v.object({
