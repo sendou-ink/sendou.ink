@@ -1,6 +1,5 @@
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
-import { BROADCAST_CANVAS } from "../broadcast-constants";
 import styles from "./BroadcastPreview.module.css";
 
 /** An overlay page scaled down to the container's width, exactly as it airs, over a stand-in for the gameplay footage. */
@@ -17,7 +16,7 @@ export function BroadcastPreview({
 	const { t } = useTranslation(["broadcast"]);
 
 	return (
-		<div className={styles.preview} ref={scaleToWidth}>
+		<div className={styles.preview}>
 			<span className={styles.gameplay}>
 				{t("broadcast:dashboard.gameplay")}
 			</span>
@@ -32,18 +31,4 @@ export function BroadcastPreview({
 			/>
 		</div>
 	);
-}
-
-function scaleToWidth(element: HTMLDivElement | null) {
-	if (!element) return;
-
-	const observer = new ResizeObserver(([entry]) => {
-		element.style.setProperty(
-			"--preview-scale",
-			String(entry.contentRect.width / BROADCAST_CANVAS.width),
-		);
-	});
-	observer.observe(element);
-
-	return () => observer.disconnect();
 }
