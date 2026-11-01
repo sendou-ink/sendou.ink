@@ -5,6 +5,7 @@ import type {
 	BroadcastTransition,
 	BroadcastView,
 } from "../broadcast-types";
+import { BracketScene } from "./BracketScene";
 import styles from "./BroadcastOverlay.module.css";
 import { CastersScene } from "./CastersScene";
 import { GameScene } from "./GameScene";
@@ -244,6 +245,8 @@ function Scene({
 			return <CastersScene state={state} view={view} />;
 		case "replays":
 			return <ReplaysScene state={state} view={view} />;
+		case "bracket":
+			return <BracketScene state={state} view={view} />;
 		default:
 			return <HoldScene scene={scene} state={state} view={view} />;
 	}

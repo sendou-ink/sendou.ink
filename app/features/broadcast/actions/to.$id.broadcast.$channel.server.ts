@@ -66,6 +66,20 @@ export const action = defineAction(
 				});
 				break;
 			}
+			case "SET_NEXT_BRACKET": {
+				await BroadcastRepository.updateNext({
+					...key,
+					patch: { bracketIdx: body.bracketIdx ?? null },
+				});
+				break;
+			}
+			case "SET_NEXT_BRACKET_FOCUS": {
+				await BroadcastRepository.updateNext({
+					...key,
+					patch: { bracketFocus: body.focus },
+				});
+				break;
+			}
 			case "TAKE": {
 				const state =
 					(await BroadcastRepository.findByChannel(key))?.state ??

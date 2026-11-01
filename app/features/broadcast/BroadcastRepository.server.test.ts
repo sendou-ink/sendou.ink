@@ -55,6 +55,8 @@ describe("BroadcastRepository.updateNext", () => {
 			scene: "rosters",
 			swapSides: true,
 			transition: "stinger",
+			bracketIdx: null,
+			bracketFocus: "remaining",
 		});
 	});
 });

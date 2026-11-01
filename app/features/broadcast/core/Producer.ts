@@ -18,18 +18,33 @@ const SCENE_AFTER: Record<BroadcastScene, BroadcastScene> = {
 	ending: "starting",
 };
 
+const DEFAULT_PRODUCER_STATE: ProducerState = {
+	scene: "rosters",
+	swapSides: false,
+	transition: "stinger",
+	bracketIdx: null,
+	bracketFocus: "remaining",
+};
+
 /** State of a broadcast nothing has been written to yet: rosters on air, game staged, both with a stinger. */
 export function initialState(): BroadcastStoredState {
 	return {
 		takeId: 0,
-		live: {
-			scene: "rosters",
-			swapSides: false,
-			transition: "stinger",
-		},
-		next: { scene: "game", swapSides: false, transition: "stinger" },
+		live: DEFAULT_PRODUCER_STATE,
+		next: { ...DEFAULT_PRODUCER_STATE, scene: "game" },
 		liveResults: null,
 		ink: null,
+	};
+}
+
+/** Stored state with the producer fields added after it was written filled in with their defaults. */
+export function withDefaults(
+	state: BroadcastStoredState,
+): BroadcastStoredState {
+	return {
+		...state,
+		live: { ...DEFAULT_PRODUCER_STATE, ...state.live },
+		next: { ...DEFAULT_PRODUCER_STATE, ...state.next },
 	};
 }
 

@@ -40,9 +40,13 @@
 	--bc-stagger: 70ms;
 	--bc-transition-duration: 400ms;
 	--bc-stinger-duration: 2200ms;
-	/* fractions of the stinger's duration: the scene changes once it covers the screen, enters as it reveals it */
+	/*
+	 * fractions of the stinger's duration: the scene changes once it covers the screen, the stinger starts revealing
+	 * it and the scene's entrance starts once the reveal has cleared most of the screen
+	 */
 	--bc-stinger-covered-at: 0.32;
 	--bc-stinger-reveal-at: 0.66;
+	--bc-stinger-entrance-at: 0.8;
 
 	/* the keyframes each kind of animation uses, see the bc-* keyframes */
 	--bc-anim-enter: bc-enter;
@@ -58,6 +62,8 @@
 	--bc-anim-panel-slide-out: bc-panel-slide-out;
 	--bc-anim-panel-iris-in: bc-panel-iris-in;
 	--bc-anim-panel-iris-out: bc-panel-iris-out;
+	--bc-anim-camera: bc-camera;
+	--bc-anim-dim: bc-dim;
 
 	position: relative;
 	width: 1920px;
@@ -85,11 +91,11 @@
 	/* the scenes' entrance animations add this to their delays */
 	--scene-enter-delay: 0ms;
 
-	/* waits for the stinger to start revealing the scene, see Stinger.module.css for the phases */
+	/* waits for the stinger to reveal the scene, see Stinger.module.css for the phases */
 	&[data-entrance="stinger"] {
 		--scene-enter-delay: calc(
 			var(--bc-stinger-duration) *
-			(var(--bc-stinger-reveal-at) - var(--bc-stinger-covered-at))
+			(var(--bc-stinger-entrance-at) - var(--bc-stinger-covered-at))
 		);
 	}
 

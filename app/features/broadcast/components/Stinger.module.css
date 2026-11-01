@@ -1,7 +1,8 @@
 /*
  * The panels, then the card. Phases, as fractions of --bc-stinger-duration: 0–0.30 the panels cover the screen,
  * --bc-stinger-covered-at (0.32) the scene changes underneath, the card shows from --content-at to 0.67,
- * --bc-stinger-reveal-at (0.66) to 1 the panels reveal the new scene, whose entrance starts then.
+ * --bc-stinger-reveal-at (0.66) to 1 the panels reveal the new scene, whose entrance starts at
+ * --bc-stinger-entrance-at (0.8) once they have cleared most of the screen.
  * The default design: the teams clash from both sides on two of the panels.
  */
 .stinger {

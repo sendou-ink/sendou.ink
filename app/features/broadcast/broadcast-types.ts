@@ -6,6 +6,7 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import type {
+	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_INK_COLORS,
 	BROADCAST_SCENES,
 	BROADCAST_STREAM_ROLES,
@@ -17,6 +18,8 @@ import type {
 export type BroadcastScene = (typeof BROADCAST_SCENES)[number];
 
 export type BroadcastTransition = (typeof BROADCAST_TRANSITIONS)[number];
+
+export type BroadcastBracketFocus = (typeof BROADCAST_BRACKET_FOCUSES)[number];
 
 export type BroadcastWeaponImages = (typeof BROADCAST_WEAPON_IMAGES)[number];
 
@@ -46,6 +49,9 @@ export interface ProducerState {
 	swapSides: boolean;
 	/** How a Take puts this state on air, kept on `live` so the overlay knows how the last Take played. */
 	transition: BroadcastTransition;
+	/** Double elimination bracket of the bracket scene, `null` follows the featured match's. */
+	bracketIdx: number | null;
+	bracketFocus: BroadcastBracketFocus;
 }
 
 export interface BroadcastStoredState {
@@ -101,6 +107,8 @@ export interface BroadcastState extends BroadcastStoredState {
 	};
 	/** The match cast on the channel, or the next one locked for it. */
 	match: BroadcastMatch | null;
+	/** What the bracket scene shows in each view, `null` without a double elimination bracket to show. */
+	bracket: Record<BroadcastView, BroadcastBracket | null>;
 	health: BroadcastHealth;
 }
 
@@ -172,3 +180,46 @@ export interface BroadcastPlayer {
 	avatarUrl: string | null;
 	weapons: MainWeaponId[];
 }
+
+/** A double elimination bracket (one group of it) laid out as the producer's focus shows it. */
+export interface BroadcastBracket {
+	idx: number;
+	name: string;
+	/** Winners (ending with the grand finals) first, then losers. Only the sides in focus. */
+	sides: BroadcastBracketSide[];
+}
+
+export interface BroadcastBracketSide {
+	type: "winners" | "losers";
+	/** Matches of the side's tallest round, every round's matches spread over this many slots. */
+	slotCount: number;
+	rounds: BroadcastBracketRound[];
+}
+
+export interface BroadcastBracketRound {
+	id: number;
+	/** E.g. "WB Semis" or "Grand Finals". */
+	name: string;
+	/** How its matches lead to the next round's: two into one or one to one, `null` for the side's last round. */
+	connector: "pairs" | "straight" | null;
+	/** `null` is a bye, kept in so the matches line up with the rounds next to them. */
+	matches: Array<BroadcastBracketMatch | null>;
+}
+
+export interface BroadcastBracketMatch {
+	id: number;
+	/** In bracket order, `null` when not decided yet. */
+	teams: [BroadcastBracketTeam | null, BroadcastBracketTeam | null];
+	/** In bracket order, `null` before the set started. */
+	scores: [number, number] | null;
+	/** Index of the winning team in bracket order. */
+	winner: 0 | 1 | null;
+	isFeatured: boolean;
+	/** Connected to a match of the previous round shown, which a team advances from. */
+	isFed: boolean;
+}
+
+export type BroadcastBracketTeam = Pick<
+	BroadcastTeam,
+	"id" | "name" | "logoUrl" | "seed"
+>;

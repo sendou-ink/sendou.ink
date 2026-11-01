@@ -37,6 +37,17 @@ export const BROADCAST_INK_COLORS = [
 	{ key: "pinkGreen", a: "#F753A1", b: "#35CC2D" },
 ] as const;
 
+/**
+ * Part of the bracket the bracket scene shows: the rounds still being played of both sides (`remaining`), of one
+ * side, or every round of both.
+ */
+export const BROADCAST_BRACKET_FOCUSES = [
+	"remaining",
+	"winners",
+	"losers",
+	"whole",
+] as const;
+
 /** Weapon images of the overlays: the plain ones or the ones with a white outline as on badges. */
 export const BROADCAST_WEAPON_IMAGES = ["default", "outlined"] as const;
 
@@ -91,13 +102,13 @@ export const BROADCAST_THEME_TOKENS = [
 	"--bc-stinger-duration",
 	"--bc-stinger-covered-at",
 	"--bc-stinger-reveal-at",
+	"--bc-stinger-entrance-at",
 ] as const;
 
 /** Scenes without gameplay, all drawn by the same full screen design. */
 export const BROADCAST_HOLD_SCENES = [
 	"starting",
 	"break",
-	"bracket",
 	"technical",
 	"ending",
 ] as const satisfies ReadonlyArray<(typeof BROADCAST_SCENES)[number]>;
@@ -163,6 +174,21 @@ export const BROADCAST_SCENE_PARTS = {
 		"caster-name",
 		"caster-pronouns",
 	],
+	bracket: [
+		"header",
+		"tournament-logo",
+		"tournament-name",
+		"bracket-name",
+		"side",
+		"round",
+		"round-name",
+		"match",
+		"team",
+		"team-logo",
+		"team-seed",
+		"team-name",
+		"team-score",
+	],
 	replays: ["corner", "replay-bug", "replay-dot", "replay-label", "game"],
 	hold: [
 		"tournament-logo",
@@ -211,6 +237,8 @@ export const BROADCAST_KEYFRAMES = [
 	"bc-panel-slide-out",
 	"bc-panel-iris-in",
 	"bc-panel-iris-out",
+	"bc-camera",
+	"bc-dim",
 ] as const;
 
 export const DEFAULT_BROADCAST_SETTINGS = {

@@ -340,10 +340,18 @@ const SCENARIOS: Scenario[] = [
 		id: "tournament-broadcast",
 		title: "Broadcasting a tournament",
 		description:
-			"The bracket just started and its first match is cast on a Twitch channel. You organize and land on the channel's broadcast dashboard.",
+			"The bracket started, optionally with some rounds played, and its first match left to play is cast on a Twitch channel. You organize and land on the channel's broadcast dashboard.",
 		category: "Tournaments",
-		params: { teams: teamsParam, format: formatParam },
-		run: async ({ teams, format }) => {
+		params: {
+			teams: teamsParam,
+			format: formatParam,
+			roundsPlayed: numberParam("Rounds played", {
+				min: 0,
+				max: 10,
+				default: 0,
+			}),
+		},
+		run: async ({ teams, format, roundsPlayed }) => {
 			const [organizerId] = await freshUserIds(1);
 			const tournament = await TournamentFactory.create({
 				authorId: organizerId,
@@ -352,6 +360,9 @@ const SCENARIOS: Scenario[] = [
 			});
 			await registerTeams(tournament.id, teams, { isCheckedIn: true });
 			await TournamentFactory.startBracket(tournament.id);
+			for (let round = 0; round < roundsPlayed; round++) {
+				await TournamentFactory.playMatches(tournament.id);
+			}
 
 			const match = await firstPlayableMatch(tournament.id);
 			await TournamentFactory.castMatch({
@@ -1212,7 +1223,8 @@ async function firstPlayableMatch(tournamentId: number) {
 		?.data.match.find(
 			(candidate) =>
 				typeof candidate.opponent1?.id === "number" &&
-				typeof candidate.opponent2?.id === "number",
+				typeof candidate.opponent2?.id === "number" &&
+				!candidate.winnerSide,
 		);
 	invariant(
 		typeof match?.opponent1?.id === "number",

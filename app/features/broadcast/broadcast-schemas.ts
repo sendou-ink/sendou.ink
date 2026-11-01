@@ -9,6 +9,7 @@ import {
 } from "~/form/fields";
 import { _action, coerceNumber, id } from "~/utils/schema";
 import {
+	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_CSS_MAX_LENGTH,
 	BROADCAST_HEADLINE_MAX_LENGTH,
 	BROADCAST_INK_COLORS,
@@ -76,6 +77,15 @@ export const broadcastActionSchema = v.union([
 	v.object({
 		_action: _action("SET_NEXT_SWAP_SIDES"),
 		swapSides: booleanString,
+	}),
+	v.object({
+		_action: _action("SET_NEXT_BRACKET"),
+		/** `undefined` follows the featured match's bracket. */
+		bracketIdx: v.optional(nonNegativeInteger),
+	}),
+	v.object({
+		_action: _action("SET_NEXT_BRACKET_FOCUS"),
+		focus: v.picklist(BROADCAST_BRACKET_FOCUSES),
 	}),
 	v.object({
 		_action: _action("TAKE"),
