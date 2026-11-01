@@ -18,15 +18,6 @@ export const BROADCAST_SCENES = [
 /** How a Take puts the staged state on air, in the order of the dashboard's transition buttons. */
 export const BROADCAST_TRANSITIONS = ["stinger", "fade", "cut"] as const;
 
-// xxx: do we want all of these? or we could simplify this to decide for them when stringer shows and when not
-/** Designs of the stinger transition, a full screen animation with the upcoming match's info that covers the scene change. */
-export const BROADCAST_STINGERS = [
-	"versus",
-	"sweep",
-	"shutter",
-	"burst",
-] as const;
-
 /**
  * Splatoon 3's ink color pairs, the first team's color first. Picking one colors the teams as they are in game,
  * otherwise the theme's team colors are used. Values from IPL's ipl-overlay-controls (MIT).
@@ -45,6 +36,9 @@ export const BROADCAST_INK_COLORS = [
 	{ key: "greenPink", a: "#B3DE45", b: "#D43BCA" },
 	{ key: "pinkGreen", a: "#F753A1", b: "#35CC2D" },
 ] as const;
+
+/** Weapon images of the overlays: the plain ones or the ones with a white outline as on badges. */
+export const BROADCAST_WEAPON_IMAGES = ["default", "outlined"] as const;
 
 /** Which producer state an overlay page renders: what is on air or what is staged for the next Take. */
 export const BROADCAST_VIEWS = ["live", "next"] as const;
@@ -68,7 +62,6 @@ export const BROADCAST_REHEARSE_MESSAGE = "broadcast:rehearse";
 export const BROADCAST_CANVAS = { width: 1920, height: 1080 } as const;
 
 // xxx: maybe some sort of grid system in the theming so people can also move elements around
-// xxx: theming option for changing which weapon images are used
 /** CSS custom properties the overlays are themed with, overridable from the custom CSS on `[data-broadcast]`. */
 export const BROADCAST_THEME_TOKENS = [
 	"--bc-bg",
@@ -96,6 +89,8 @@ export const BROADCAST_THEME_TOKENS = [
 	"--bc-stagger",
 	"--bc-transition-duration",
 	"--bc-stinger-duration",
+	"--bc-stinger-covered-at",
+	"--bc-stinger-reveal-at",
 ] as const;
 
 /** Scenes without gameplay, all drawn by the same full screen design. */
@@ -181,21 +176,17 @@ export const BROADCAST_SCENE_PARTS = {
 		"stinger",
 		"stinger-panel",
 		"stinger-card",
-		"stinger-tournament-logo",
-		"stinger-info",
-		"stinger-eyebrow",
-		"stinger-headline",
-		"stinger-tag",
-		"stinger-map",
-		"stinger-mode",
-		"stinger-stage",
-		"stinger-detail",
 		"stinger-teams",
 		"stinger-team",
 		"stinger-team-logo",
 		"stinger-team-name",
 		"stinger-team-score",
 		"stinger-vs",
+		"stinger-tournament-logo",
+		"stinger-header",
+		"stinger-tournament-name",
+		"stinger-round",
+		"stinger-set-length",
 	],
 } as const;
 
@@ -223,7 +214,7 @@ export const BROADCAST_KEYFRAMES = [
 
 export const DEFAULT_BROADCAST_SETTINGS = {
 	css: "",
-	stinger: "versus",
+	weaponImages: "default",
 	headline: "",
 	casterIds: [],
 } as const satisfies BroadcastSettings;

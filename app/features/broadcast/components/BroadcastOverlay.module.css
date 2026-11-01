@@ -40,6 +40,9 @@
 	--bc-stagger: 70ms;
 	--bc-transition-duration: 400ms;
 	--bc-stinger-duration: 2200ms;
+	/* fractions of the stinger's duration: the scene changes once it covers the screen, enters as it reveals it */
+	--bc-stinger-covered-at: 0.32;
+	--bc-stinger-reveal-at: 0.66;
 
 	/* the keyframes each kind of animation uses, see the bc-* keyframes */
 	--bc-anim-enter: bc-enter;
@@ -84,7 +87,10 @@
 
 	/* waits for the stinger to start revealing the scene, see Stinger.module.css for the phases */
 	&[data-entrance="stinger"] {
-		--scene-enter-delay: calc(var(--bc-stinger-duration) * 0.34);
+		--scene-enter-delay: calc(
+			var(--bc-stinger-duration) *
+			(var(--bc-stinger-reveal-at) - var(--bc-stinger-covered-at))
+		);
 	}
 
 	&[data-transition="in"] {

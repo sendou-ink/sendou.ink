@@ -1,16 +1,15 @@
 /*
- * Every design is the same markup (panels, then the card), laid out and animated differently.
- * Phases, as fractions of --bc-stinger-duration: 0–0.30 the panels cover the screen, 0.32 the scene changes
- * underneath, the card shows from --content-at to 0.67, 0.66–1 the panels reveal the new scene.
- * The overlay starts the new scene's entrance to match the reveal.
+ * The panels, then the card. Phases, as fractions of --bc-stinger-duration: 0–0.30 the panels cover the screen,
+ * --bc-stinger-covered-at (0.32) the scene changes underneath, the card shows from --content-at to 0.67,
+ * --bc-stinger-reveal-at (0.66) to 1 the panels reveal the new scene, whose entrance starts then.
+ * The default design: the teams clash from both sides on two of the panels.
  */
 .stinger {
 	--d: var(--bc-stinger-duration);
 	--cover: calc(var(--d) * 0.24);
-	--stagger: calc(var(--d) * 0.03);
-	--reveal-at: calc(var(--d) * 0.66);
+	--reveal-at: calc(var(--d) * var(--bc-stinger-reveal-at));
 	--reveal: calc(var(--d) * 0.28);
-	--content-at: calc(var(--d) * 0.22);
+	--content-at: calc(var(--d) * 0.16);
 	--content-in: calc(var(--d) * 0.14);
 	--content-out-at: calc(var(--d) * 0.6);
 	--content-out: calc(var(--d) * 0.07);
@@ -24,16 +23,13 @@
 	pointer-events: none;
 	font-family: var(--bc-font-display);
 	animation: var(--stinger-clock) calc(var(--d) * 1.02) linear both;
-
-	&[data-stinger="versus"] {
-		--content-at: calc(var(--d) * 0.16);
-	}
 }
 
 /* ends when the panels cover the screen, the scene changes then */
 .coverClock {
 	position: absolute;
-	animation: var(--stinger-clock) calc(var(--d) * 0.32) linear both;
+	animation: var(--stinger-clock) calc(var(--d) * var(--bc-stinger-covered-at))
+		linear both;
 }
 
 @keyframes :global(bc-stinger-clock) {
@@ -46,20 +42,30 @@
 	}
 }
 
-/* panels */
+/* panels, the two team colored ones meeting at a slanted seam */
 
 .panel {
 	--from: -101%;
 
 	position: absolute;
 	inset: 0;
+	clip-path: polygon(0 0, 57% 0, 43% 100%, 0 100%);
 	background: var(--team-color, var(--bc-bg));
 	will-change: transform;
 	animation:
-		var(--bc-anim-panel-slide-in) var(--cover) var(--bc-stinger-ease)
-		calc(var(--stagger) * var(--i)) both,
+		var(--bc-anim-panel-slide-in) var(--cover) var(--bc-stinger-ease) both,
 		var(--bc-anim-panel-slide-out) var(--reveal) var(--bc-stinger-ease)
-		calc(var(--reveal-at) + var(--stagger) * var(--j)) forwards;
+		var(--reveal-at) forwards;
+
+	&[data-index="1"] {
+		--from: 101%;
+
+		clip-path: polygon(57% 0, 100% 0, 100% 100%, 43% 100%);
+	}
+
+	&:not([data-team]) {
+		display: none;
+	}
 }
 
 /* A panel sliding in from --from, e.g. -100% for the left. --panel-shape transforms it on the way (skew...). */
@@ -97,426 +103,175 @@
 	}
 }
 
-[data-stinger="versus"] .panel {
-	clip-path: polygon(0 0, 57% 0, 43% 100%, 0 100%);
-	animation-delay: 0ms, var(--reveal-at);
-
-	&[data-index="1"] {
-		--from: 101%;
-
-		clip-path: polygon(57% 0, 100% 0, 100% 100%, 43% 100%);
-	}
-}
-
-[data-stinger="sweep"] .panel {
-	--from: -160%;
-	--to: 160%;
-	--panel-shape: skewX(-16deg);
-
-	inset: 0 -45%;
-}
-
-[data-stinger="shutter"] .panel {
-	top: calc(var(--i) * 100% / 8);
-	bottom: auto;
-	height: calc(100% / 8 + 1px);
-	border-inline-end: 14px solid var(--bc-team-a);
-	animation-duration: calc(var(--d) * 0.2), calc(var(--d) * 0.24);
-	animation-delay:
-		calc(var(--d) * 0.012 * var(--i)),
-		calc(var(--reveal-at) + var(--d) * 0.012 * var(--j));
-
-	&[data-index="1"],
-	&[data-index="3"],
-	&[data-index="5"],
-	&[data-index="7"] {
-		--from: 101%;
-
-		border-inline: 14px solid var(--bc-team-b);
-		border-inline-end: 0;
-		background: var(--bc-surface);
-	}
-}
-
-[data-stinger="burst"] .panel {
-	animation-name: var(--bc-anim-panel-iris-in), var(--bc-anim-panel-iris-out);
-}
-
-/* card, laid out as a centered column by default */
+/* card: the teams on their own halves, the tournament's logo under the vs between them or on the header */
 
 .card {
 	position: absolute;
 	inset: 0;
 	z-index: 1;
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 	align-items: center;
-	justify-content: center;
-	gap: 18px;
+	padding-inline: 100px;
 	text-align: center;
-
-	& .tournamentLogo,
-	& .eyebrow,
-	& .headline,
-	& .tag,
-	& .teams,
-	& .map,
-	& .detail {
-		--bc-enter-y: calc(var(--bc-enter-distance) * 2);
-		--bc-exit-y: calc(var(--bc-enter-distance) * -1);
-
-		animation:
-			var(--bc-anim-enter) var(--content-in) var(--bc-ease)
-			calc(var(--content-at) + var(--k, 0) * var(--d) * 0.025) both,
-			var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
-			var(--content-out-at) forwards;
-	}
-}
-
-.info {
-	display: contents;
-}
-
-.tournamentLogo {
-	--k: 0;
-
-	width: 104px;
-	height: 104px;
-	margin-bottom: 8px;
-	border-radius: var(--bc-radius);
-	object-fit: cover;
-}
-
-.eyebrow {
-	--k: 1;
-
-	order: 1;
-	max-width: 1500px;
-	overflow: hidden;
-	color: var(--bc-text-muted);
-	font-size: 30px;
-	font-weight: 600;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.headline {
-	--k: 2;
-
-	order: 2;
-	max-width: 1700px;
-	overflow: hidden;
-	font-size: 160px;
-	font-weight: 700;
-	line-height: 0.95;
-	text-overflow: ellipsis;
-	text-transform: uppercase;
-	white-space: nowrap;
-
-	.card & {
-		animation:
-			var(--bc-anim-reveal) var(--content-in) var(--bc-ease) var(--content-at)
-			both,
-			var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
-			var(--content-out-at) forwards;
-	}
-}
-
-.tag {
-	--k: 3;
-
-	order: 3;
-	padding: 6px 20px;
-	border-radius: var(--bc-radius-small);
-	background: var(--bc-accent);
-	color: var(--bc-accent-text);
-	font-size: 28px;
-	font-weight: 700;
-	text-transform: uppercase;
-	white-space: nowrap;
 }
 
 .teams {
-	--k: 4;
-
-	order: 4;
-	display: flex;
-	align-items: center;
-	gap: 40px;
-	margin-top: 18px;
-}
-
-.versus {
-	color: var(--bc-text-muted);
-	font-size: 32px;
-	font-weight: 700;
+	display: contents;
 }
 
 .team {
+	--bc-enter-x: calc(var(--bc-enter-distance) * -5);
+	--bc-exit-y: calc(var(--bc-enter-distance) * -1);
+
 	display: flex;
+	flex-direction: column;
 	align-items: center;
-	gap: 20px;
+	gap: 22px;
+	min-width: 0;
+	color: var(--team-color-text);
+	animation:
+		var(--bc-anim-enter) var(--content-in) var(--bc-ease) var(--content-at) both,
+		var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
+		var(--content-out-at) forwards;
 
 	&[data-team="b"] {
-		flex-direction: row-reverse;
+		--bc-enter-x: calc(var(--bc-enter-distance) * 5);
 	}
 }
 
 .teamLogo {
-	width: 88px;
+	width: 260px;
 }
 
 .teamName {
-	max-width: 560px;
+	max-width: 100%;
 	overflow: hidden;
-	font-size: 46px;
+	font-size: 68px;
 	font-weight: 700;
 	text-overflow: ellipsis;
+	text-transform: uppercase;
 	white-space: nowrap;
 }
 
 .teamScore {
 	min-width: 76px;
-	padding: 2px 18px;
-	border-radius: var(--bc-radius-small);
-	background: var(--team-color);
-	color: var(--team-color-text);
-	font-size: 56px;
+	font-size: 150px;
 	font-weight: 700;
+	line-height: 0.9;
 }
 
-.map {
-	--k: 5;
+/* on the seam of the panels, which crosses the middle of the screen */
+.versus {
+	--bc-enter-y: calc(var(--bc-enter-distance) * 2);
+	--bc-exit-y: calc(var(--bc-enter-distance) * -1);
 
-	order: 5;
+	display: grid;
+	place-items: center;
+	width: 180px;
+	height: 180px;
+	border-radius: 50%;
+	background: var(--bc-bg);
+	color: var(--bc-text);
+	font-size: 72px;
+	font-weight: 700;
+	animation:
+		var(--bc-anim-enter) var(--content-in) var(--bc-ease) calc(var(--d) * 0.2)
+		both,
+		var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
+		var(--content-out-at) forwards;
+}
+
+.tournamentLogo {
+	--bc-enter-y: calc(var(--bc-enter-distance) * 2);
+	--bc-exit-y: var(--bc-enter-distance);
+
+	position: absolute;
+	top: calc(50% + 130px);
+	left: 50%;
+	width: 120px;
+	height: 120px;
+	margin-left: -60px;
+	border-radius: var(--bc-radius);
+	object-fit: cover;
+	animation:
+		var(--bc-anim-enter) var(--content-in) var(--bc-ease)
+		calc(var(--content-at) + var(--d) * 0.05) both,
+		var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
+		var(--content-out-at) forwards;
+
+	.card:not([data-has-teams]) & {
+		top: 50%;
+		width: 200px;
+		height: 200px;
+		margin: -100px 0 0 -100px;
+	}
+}
+
+/* going into the game, at the bottom */
+.header {
+	--bc-enter-y: calc(var(--bc-enter-distance) * 2);
+	--bc-exit-y: var(--bc-enter-distance);
+
+	position: absolute;
+	right: 0;
+	bottom: 72px;
+	left: 0;
 	display: flex;
 	align-items: center;
-	gap: 24px;
-	margin-top: 14px;
-	padding: 12px 36px 12px 12px;
+	gap: 28px;
+	width: fit-content;
+	max-width: 1500px;
+	margin-inline: auto;
+	padding: 18px 40px 18px 18px;
 	border: var(--bc-border-width) solid var(--bc-border);
 	border-radius: var(--bc-radius);
-	background: var(--bc-surface);
+	background: var(--bc-bg);
+	color: var(--bc-text);
+	text-align: left;
+	animation:
+		var(--bc-anim-enter) var(--content-in) var(--bc-ease)
+		calc(var(--content-at) + var(--d) * 0.05) both,
+		var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
+		var(--content-out-at) forwards;
 }
 
-.mapThumb {
-	position: relative;
-	flex-shrink: 0;
-	width: 240px;
-	aspect-ratio: 16 / 9;
-	overflow: hidden;
-	border-radius: var(--bc-radius-small);
-}
-
-.mapThumbImage {
-	display: block;
-	width: 100%;
-	height: 100%;
+.headerLogo {
+	width: 104px;
+	height: 104px;
+	border-radius: var(--bc-radius);
 	object-fit: cover;
 }
 
-.mapThumbMode {
-	position: absolute;
-	bottom: 6px;
-	left: 6px;
-}
-
-.mapLabel {
+.headerText {
 	display: flex;
 	flex-direction: column;
-	align-items: flex-start;
-	line-height: 1.15;
-	text-align: left;
+	gap: 6px;
+	min-width: 0;
 }
 
-.mapMode {
-	color: var(--bc-text-muted);
-	font-size: 24px;
-	font-weight: 600;
-}
-
-.mapStage {
-	font-size: 40px;
+.tournamentName {
+	overflow: hidden;
+	font-size: 52px;
 	font-weight: 700;
+	line-height: 1.05;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
-.detail {
-	--k: 5;
-
-	order: 5;
+.round {
+	display: flex;
+	align-items: center;
+	gap: 16px;
 	color: var(--bc-text-muted);
-	font-size: 30px;
+	font-size: 28px;
 	font-weight: 600;
 }
 
-/* versus: the teams on their own halves, the rest on a plate at the bottom */
-
-[data-stinger="versus"] {
-	& .card {
-		display: block;
-	}
-
-	& .tournamentLogo {
-		display: none;
-	}
-
-	& .card:not([data-has-teams]) .tournamentLogo {
-		position: absolute;
-		top: 280px;
-		left: 50%;
-		display: block;
-		width: 200px;
-		height: 200px;
-		margin-left: -100px;
-	}
-
-	& .teams {
-		display: contents;
-	}
-
-	& .team {
-		--bc-enter-x: calc(var(--bc-enter-distance) * -5);
-		--bc-enter-y: 0;
-
-		position: absolute;
-		top: 150px;
-		left: 100px;
-		flex-direction: column;
-		gap: 22px;
-		width: 760px;
-		color: var(--team-color-text);
-		animation:
-			var(--bc-anim-enter) var(--content-in) var(--bc-ease) var(--content-at)
-			both,
-			var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
-			var(--content-out-at) forwards;
-
-		&[data-team="b"] {
-			--bc-enter-x: calc(var(--bc-enter-distance) * 5);
-
-			right: 100px;
-			left: auto;
-		}
-	}
-
-	& .teamLogo {
-		width: 260px;
-	}
-
-	& .teamName {
-		max-width: 100%;
-		font-size: 68px;
-		text-transform: uppercase;
-	}
-
-	& .teamScore {
-		padding: 0;
-		background: none;
-		color: inherit;
-		font-size: 150px;
-		line-height: 0.9;
-	}
-
-	& .versus {
-		position: absolute;
-		top: 330px;
-		/* on the seam of the panels at that height */
-		left: calc(50% + 50px);
-		display: grid;
-		place-items: center;
-		width: 180px;
-		height: 180px;
-		margin-left: -90px;
-		border-radius: 50%;
-		background: var(--bc-bg);
-		color: var(--bc-text);
-		font-size: 72px;
-		animation:
-			var(--bc-anim-enter) var(--content-in) var(--bc-ease) calc(var(--d) * 0.2)
-			both,
-			var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
-			var(--content-out-at) forwards;
-	}
-
-	& .info {
-		--bc-enter-y: calc(var(--bc-enter-distance) * 2);
-		--bc-exit-y: var(--bc-enter-distance);
-
-		position: absolute;
-		right: 0;
-		bottom: 96px;
-		left: 0;
-		display: grid;
-		grid-template-areas: "eyebrow" "headline" "detail";
-		align-items: center;
-		column-gap: 28px;
-		width: fit-content;
-		max-width: 1500px;
-		margin-inline: auto;
-		padding: 18px 44px;
-		border: var(--bc-border-width) solid var(--bc-border);
-		border-radius: var(--bc-radius);
-		background: var(--bc-bg);
-		text-align: left;
-		animation:
-			var(--bc-anim-enter) var(--content-in) var(--bc-ease)
-			calc(var(--content-at) + var(--d) * 0.05) both,
-			var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
-			var(--content-out-at) forwards;
-
-		&[data-has-map] {
-			grid-template-areas:
-				"thumb eyebrow"
-				"thumb headline"
-				"thumb label";
-			padding-left: 16px;
-		}
-
-		& > * {
-			animation: none;
-		}
-	}
-
-	& .eyebrow {
-		grid-area: eyebrow;
-		font-size: 26px;
-	}
-
-	& .headline {
-		grid-area: headline;
-		font-size: 64px;
-		line-height: 1.05;
-	}
-
-	& .tag {
-		position: absolute;
-		top: -22px;
-		right: 24px;
-		font-size: 22px;
-	}
-
-	& .detail {
-		grid-area: detail;
-		font-size: 26px;
-	}
-
-	& .map {
-		display: contents;
-	}
-
-	& .mapThumb {
-		grid-area: thumb;
-	}
-
-	& .mapLabel {
-		grid-area: label;
-	}
-
-	& .mapMode {
-		font-size: 20px;
-	}
-
-	& .mapStage {
-		font-size: 32px;
-	}
+.setLength {
+	padding: 2px 12px;
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+	font-size: 22px;
 }

@@ -8,17 +8,17 @@ import type {
 import type {
 	BROADCAST_INK_COLORS,
 	BROADCAST_SCENES,
-	BROADCAST_STINGERS,
 	BROADCAST_STREAM_ROLES,
 	BROADCAST_TRANSITIONS,
 	BROADCAST_VIEWS,
+	BROADCAST_WEAPON_IMAGES,
 } from "./broadcast-constants";
 
 export type BroadcastScene = (typeof BROADCAST_SCENES)[number];
 
 export type BroadcastTransition = (typeof BROADCAST_TRANSITIONS)[number];
 
-export type BroadcastStinger = (typeof BROADCAST_STINGERS)[number];
+export type BroadcastWeaponImages = (typeof BROADCAST_WEAPON_IMAGES)[number];
 
 export type BroadcastInkColorKey = (typeof BROADCAST_INK_COLORS)[number]["key"];
 
@@ -64,8 +64,7 @@ export interface LiveResults {
 export interface BroadcastSettings {
 	/** Injected unlayered after the overlays' own styles. */
 	css: string;
-	/** Design of the stinger transition. */
-	stinger: BroadcastStinger;
+	weaponImages: BroadcastWeaponImages;
 	/** Message of the full screen scenes, e.g. "Top 8 starts at 18:00 CEST". */
 	headline: string;
 	/** Users under the camera frames of the casters scene, one frame per caster. */

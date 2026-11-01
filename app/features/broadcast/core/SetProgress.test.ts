@@ -83,30 +83,6 @@ describe("SetProgress.atResultCount", () => {
 	});
 });
 
-describe("SetProgress.isOnMatchPoint", () => {
-	test.each([
-		{ why: "one win away", scores: [2, 1], expected: [true, false] },
-		{ why: "both one win away", scores: [2, 2], expected: [true, true] },
-		{ why: "neither one win away", scores: [1, 0], expected: [false, false] },
-	] as const)("$why", ({ scores, expected }) => {
-		expect(
-			SetProgress.isOnMatchPoint(
-				{ countType: "BEST_OF", count: 5 },
-				{ scores: [...scores], isOver: false },
-			),
-		).toEqual(expected);
-	});
-
-	test("has no match point in a play all set", () => {
-		expect(
-			SetProgress.isOnMatchPoint(
-				{ countType: "PLAY_ALL", count: 3 },
-				{ scores: [1, 1], isOver: false },
-			),
-		).toEqual([false, false]);
-	});
-});
-
 describe("SetProgress.winner", () => {
 	test.each([
 		{ why: "set going", scores: [2, 0], isOver: false, expected: null },

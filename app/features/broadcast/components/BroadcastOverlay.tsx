@@ -110,7 +110,6 @@ export function BroadcastOverlay({
 				{stingerId !== null ? (
 					<Stinger
 						key={`stinger-${stingerId}`}
-						design={state.settings.stinger}
 						state={state}
 						view={view}
 						onCovered={() =>

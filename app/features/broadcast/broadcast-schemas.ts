@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import {
 	array,
-	select,
+	radioGroup,
 	stringConstant,
 	textAreaOptional,
 	textFieldOptional,
@@ -14,8 +14,8 @@ import {
 	BROADCAST_INK_COLORS,
 	BROADCAST_MAX_CASTERS,
 	BROADCAST_SCENES,
-	BROADCAST_STINGERS,
 	BROADCAST_TRANSITIONS,
+	BROADCAST_WEAPON_IMAGES,
 } from "./broadcast-constants";
 
 const nonNegativeInteger = v.pipe(coerceNumber(), v.integer(), v.minValue(0));
@@ -31,12 +31,12 @@ export const broadcastParamsSchema = v.object({ id, channel: channelSlug });
 
 export const broadcastThemeFormSchema = v.object({
 	_action: stringConstant("UPDATE_THEME"),
-	stinger: select({
-		label: "labels.broadcastStinger",
-		bottomText: "bottomTexts.broadcastStinger",
-		items: BROADCAST_STINGERS.map((stinger) => ({
-			value: stinger,
-			label: `options.broadcastStinger.${stinger}` as const,
+	weaponImages: radioGroup({
+		label: "labels.broadcastWeaponImages",
+		variant: "chip",
+		items: BROADCAST_WEAPON_IMAGES.map((weaponImages) => ({
+			value: weaponImages,
+			label: `options.broadcastWeaponImages.${weaponImages}` as const,
 		})),
 	}),
 	css: textAreaOptional({
