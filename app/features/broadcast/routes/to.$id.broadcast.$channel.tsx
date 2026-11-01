@@ -15,9 +15,9 @@ import {
 	Trophy,
 	Users,
 } from "lucide-react";
-import { useRef } from "react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useLoaderData } from "react-router";
+import { Link, useLoaderData, useRevalidator } from "react-router";
 import * as R from "remeda";
 import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
@@ -28,6 +28,7 @@ import { Config } from "~/config";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { tournamentMatchPage } from "~/utils/urls";
 import {
 	BROADCAST_HOLD_SCENES,
 	BROADCAST_INK_COLORS,
@@ -50,7 +51,7 @@ import type {
 	BroadcastView,
 } from "../broadcast-types";
 import { broadcastOverlayPage, broadcastStreamUrl } from "../broadcast-urls";
-import { inkColorVars, matchSides } from "../broadcast-utils";
+import { inkColorVars, matchSides, roundLabel } from "../broadcast-utils";
 import { BroadcastPreview } from "../components/BroadcastPreview";
 import { loader } from "../loaders/to.$id.broadcast.$channel.server";
 import styles from "./to.$id.broadcast.$channel.module.css";
@@ -85,7 +86,8 @@ export default function BroadcastDashboardPage() {
 		url: broadcastStreamUrl({ ...pageArgs, role: "dashboard" }),
 		initialState: data.state,
 	});
-	const nextPreviewRef = useRef<HTMLIFrameElement>(null);
+	const nextPreviewRef = React.useRef<HTMLIFrameElement>(null);
+	useRevalidateOnFeaturedMatchChange(state.match?.id ?? null);
 
 	const rehearse = () =>
 		nextPreviewRef.current?.contentWindow?.postMessage(
@@ -96,10 +98,12 @@ export default function BroadcastDashboardPage() {
 	return (
 		<div className={clsx("stack lg", styles.dashboard)}>
 			<header className="stack sm">
-				<h1 className="text-lg">
-					{t("broadcast:title")} · {data.channel.name}
-				</h1>
-				<Health state={state} isConnected={isConnected} />
+				<div className="stack horizontal sm items-center justify-between flex-wrap">
+					<h1 className="text-lg">
+						{t("broadcast:title")} · {data.channel.name}
+					</h1>
+					<Health state={state} isConnected={isConnected} />
+				</div>
 				<FeaturedMatch state={state} />
 				<ResultsNotOnAir state={state} />
 			</header>
@@ -207,6 +211,17 @@ export default function BroadcastDashboardPage() {
 	);
 }
 
+/** The chat of the featured match comes from the loader, so it reloads as another match gets featured. */
+function useRevalidateOnFeaturedMatchChange(featuredMatchId: number | null) {
+	const data = useLoaderData<typeof loader>();
+	const { revalidate } = useRevalidator();
+	const isStale = featuredMatchId !== data.featuredMatchId;
+
+	React.useEffect(() => {
+		if (isStale) revalidate();
+	}, [isStale, revalidate]);
+}
+
 function Health({
 	state,
 	isConnected,
@@ -238,7 +253,9 @@ function Health({
 }
 
 function FeaturedMatch({ state }: { state: BroadcastState }) {
-	const { t } = useTranslation(["broadcast"]);
+	const { t } = useTranslation(["broadcast", "tournament"]);
+	const tournament = useTournament();
+	const data = useLoaderData<typeof loader>();
 
 	if (!state.match) {
 		return (
@@ -250,25 +267,37 @@ function FeaturedMatch({ state }: { state: BroadcastState }) {
 
 	const [teamOne, teamTwo] = state.match.teams;
 	const progress = state.match.progress.next;
+	const joinInfo =
+		data.featuredMatchId === state.match.id ? data.joinInfo : null;
 
 	return (
 		<div className="text-sm">
 			<span className="text-lighter">
 				{t("broadcast:dashboard.featuredMatch")}:
 			</span>{" "}
-			<span className="font-semi-bold">
+			<Link
+				to={tournamentMatchPage({
+					tournamentId: tournament.ctx.id,
+					matchId: state.match.id,
+				})}
+				className="font-semi-bold"
+			>
 				{teamOne?.name ?? t("broadcast:overlay.tbd")} {progress.scores[0]}–
 				{progress.scores[1]} {teamTwo?.name ?? t("broadcast:overlay.tbd")}
-			</span>{" "}
-			<span className="text-lighter">
-				{[state.match.bracketName, state.match.roundName]
-					.filter(Boolean)
-					.join(" · ")}
-			</span>
+			</Link>{" "}
+			<span className="text-lighter">{roundLabel(state.match)}</span>
 			{progress.isOver ? (
 				<span className="text-warning">
 					{" "}
 					· {t("broadcast:dashboard.setFinished")}
+				</span>
+			) : joinInfo ? (
+				<span>
+					{" "}
+					<span className="text-lighter">· {t("tournament:match.pool")}</span>{" "}
+					<span className="font-semi-bold">{joinInfo.pool}</span>{" "}
+					<span className="text-lighter">{t("tournament:match.pass")}</span>{" "}
+					<span className="font-semi-bold">{joinInfo.pass}</span>
 				</span>
 			) : null}
 		</div>
