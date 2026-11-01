@@ -35,6 +35,7 @@ import { useActionSubmit } from "~/hooks/useActionSubmit";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
 import {
+	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_HOLD_SCENES,
 	BROADCAST_INK_COLORS,
 	BROADCAST_KEYFRAMES,
@@ -64,6 +65,7 @@ import {
 	roundLabel,
 } from "../broadcast-utils";
 import { BroadcastPreview } from "../components/BroadcastPreview";
+import * as BracketFocus from "../core/BracketFocus";
 import { loader } from "../loaders/to.$id.broadcast.$channel.server";
 import styles from "./to.$id.broadcast.$channel.module.css";
 
@@ -167,6 +169,8 @@ export default function BroadcastDashboardPage() {
 			</div>
 
 			<SceneTiles state={state} />
+
+			<BracketControls state={state} />
 
 			<Teams state={state} />
 
@@ -392,6 +396,67 @@ function SceneTiles({ state }: { state: BroadcastState }) {
 				);
 			})}
 		</div>
+	);
+}
+
+function BracketControls({ state }: { state: BroadcastState }) {
+	const { t } = useTranslation(["broadcast"]);
+	const tournament = useTournament();
+	const { submit } = useActionSubmit(broadcastActionSchema);
+	const showableIdxs = BracketFocus.showableBracketIdxs(tournament);
+
+	if (showableIdxs.length === 0) return null;
+
+	return (
+		<SendouSection title={t("broadcast:dashboard.bracket.header")}>
+			<div className="stack md">
+				<div className="text-xs text-lighter">
+					{t("broadcast:dashboard.bracket.explanation")}
+				</div>
+				<SendouChipRadioGroup
+					aria-label={t("broadcast:dashboard.bracket.focus")}
+					wrap
+				>
+					{BROADCAST_BRACKET_FOCUSES.map((focus) => (
+						<SendouChipRadio
+							key={focus}
+							name="broadcast-bracket-focus"
+							value={focus}
+							checked={state.next.bracketFocus === focus}
+							onChange={() => submit("SET_NEXT_BRACKET_FOCUS", { focus })}
+						>
+							{t(`broadcast:bracketFocus.${focus}`)}
+						</SendouChipRadio>
+					))}
+				</SendouChipRadioGroup>
+				{showableIdxs.length > 1 ? (
+					<SendouChipRadioGroup
+						aria-label={t("broadcast:dashboard.bracket.bracket")}
+						wrap
+					>
+						<SendouChipRadio
+							name="broadcast-bracket"
+							value="featured"
+							checked={state.next.bracketIdx === null}
+							onChange={() => submit("SET_NEXT_BRACKET", {})}
+						>
+							{t("broadcast:dashboard.bracket.followFeatured")}
+						</SendouChipRadio>
+						{showableIdxs.map((bracketIdx) => (
+							<SendouChipRadio
+								key={bracketIdx}
+								name="broadcast-bracket"
+								value={String(bracketIdx)}
+								checked={state.next.bracketIdx === bracketIdx}
+								onChange={() => submit("SET_NEXT_BRACKET", { bracketIdx })}
+							>
+								{tournament.bracketsMeta[bracketIdx].name}
+							</SendouChipRadio>
+						))}
+					</SendouChipRadioGroup>
+				) : null}
+			</div>
+		</SendouSection>
 	);
 }
 

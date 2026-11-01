@@ -1,21 +1,32 @@
+import * as R from "remeda";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
-import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
+import {
+	showsOneGroupAtATime,
+	tournamentBracketChannel,
+	tournamentChannel,
+	tournamentTeamToActiveRosterUserIds,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
 import { resolveMatchMapList } from "~/features/tournament-match/core/mapList.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
+import { tournamentMatchChannel } from "~/features/tournament-match/tournament-match-utils";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import { avatarUrl } from "~/utils/urls";
 import * as BroadcastRepository from "../BroadcastRepository.server";
 import { DEFAULT_BROADCAST_SETTINGS } from "../broadcast-constants";
 import type {
+	BroadcastBracketTeam,
 	BroadcastCaster,
 	BroadcastChannel,
 	BroadcastMatch,
 	BroadcastPlayer,
 	BroadcastState,
 	BroadcastTeam,
+	BroadcastView,
 	LiveResults,
+	ProducerState,
 } from "../broadcast-types";
+import * as BracketFocus from "./BracketFocus";
 import * as CastChannel from "./CastChannel";
 import * as Producer from "./Producer";
 import * as SetProgress from "./SetProgress";
@@ -28,8 +39,8 @@ type PlayerRow = Awaited<
 export type Snapshot = Omit<BroadcastState, "health">;
 
 /**
- * Builds the state the channel's overlays render from fresh (uncached) data.
- * `null` when the tournament has no cast channel by the slug.
+ * Builds the state the channel's overlays render from fresh (uncached) data, along with the event channels
+ * whose events change it. `null` when the tournament has no cast channel by the slug.
  */
 export async function build({
 	tournamentId,
@@ -37,7 +48,11 @@ export async function build({
 }: {
 	tournamentId: number;
 	slug: string;
-}): Promise<{ snapshot: Snapshot; channel: BroadcastChannel } | null> {
+}): Promise<{
+	snapshot: Snapshot;
+	channel: BroadcastChannel;
+	eventChannels: string[];
+} | null> {
 	const tournament = await tournamentFromDB(tournamentId);
 	const channel = CastChannel.findBySlug(tournament.ctx.castAccounts, slug);
 	if (!channel) return null;
@@ -46,32 +61,116 @@ export async function build({
 		tournamentId,
 		channel,
 	});
-	// settings added later are missing from broadcasts written before
+	// settings and producer fields added later are missing from broadcasts written before
 	const settings = { ...DEFAULT_BROADCAST_SETTINGS, ...stored?.settings };
+	const state = stored
+		? Producer.withDefaults(stored.state)
+		: Producer.initialState();
 	const featuredMatchId = CastChannel.featuredMatchId({
 		castedMatchesInfo: tournament.ctx.castedMatchesInfo,
 		channel,
 	});
+	const match = featuredMatchId
+		? await featuredMatch({
+				tournament,
+				matchId: featuredMatchId,
+				liveResults: state.liveResults,
+			})
+		: null;
+
+	const shownBrackets = {
+		live: shownBracket({ tournament, producer: state.live, match }),
+		next: shownBracket({ tournament, producer: state.next, match }),
+	};
+	const bracketOf = (view: BroadcastView) => {
+		const shown = shownBrackets[view];
+		if (!shown) return null;
+
+		return BracketFocus.layout({
+			...shown,
+			focus: state[view].bracketFocus,
+			featured: match ? { id: match.id, progress: match.progress[view] } : null,
+			teamById: (id) => bracketTeam(tournament, id),
+		});
+	};
 
 	return {
 		channel,
 		snapshot: {
 			v: 1,
-			...(stored?.state ?? Producer.initialState()),
+			...state,
 			settings,
 			casters: await casters(settings.casterIds),
 			tournament: {
 				name: tournament.ctx.name,
 				logoUrl: tournament.ctx.logoUrl,
 			},
-			match: featuredMatchId
-				? await featuredMatch({
-						tournament,
-						matchId: featuredMatchId,
-						liveResults: stored?.state.liveResults ?? null,
-					})
-				: null,
+			match,
+			bracket: { live: bracketOf("live"), next: bracketOf("next") },
 		},
+		eventChannels: R.unique([
+			tournamentChannel(tournamentId),
+			...(match ? [tournamentMatchChannel(match.id)] : []),
+			// scores of sets still going are only sent to their bracket's channel
+			...[shownBrackets.live, shownBrackets.next].flatMap((shown) =>
+				shown ? [shown.eventChannel] : [],
+			),
+		]),
+	};
+}
+
+/** The bracket the producer state's bracket scene shows and its group: the featured match's or the first. */
+function shownBracket({
+	tournament,
+	producer,
+	match,
+}: {
+	tournament: Tournament;
+	producer: ProducerState;
+	match: BroadcastMatch | null;
+}) {
+	const idx = BracketFocus.resolveBracketIdx({
+		pickedIdx: producer.bracketIdx,
+		featuredMatchBracketIdx: match
+			? tournament.matchIdToBracketIdx(match.id)
+			: null,
+		showableIdxs: BracketFocus.showableBracketIdxs(tournament),
+	});
+	const bracket = idx === null ? null : tournament.bracketByIdx(idx);
+	if (idx === null || !bracket) return null;
+
+	const groupId =
+		bracket.data.match.find((candidate) => candidate.id === match?.id)
+			?.groupId ?? bracket.data.group[0]?.id;
+
+	return {
+		idx,
+		name: bracket.name,
+		data: bracket.data,
+		groupId,
+		eventChannel: tournamentBracketChannel({
+			tournamentId: tournament.ctx.id,
+			bracketIdx: idx,
+			groupId:
+				showsOneGroupAtATime(bracket) && typeof groupId === "number"
+					? groupId
+					: null,
+		}),
+	};
+}
+
+function bracketTeam(
+	tournament: Tournament,
+	id: number,
+): BroadcastBracketTeam | null {
+	const team = tournament.teamById(id);
+	if (!team) return null;
+
+	return {
+		id: team.id,
+		name: team.name,
+		logoUrl: team.logoUrl,
+		seed: team.seed,
 	};
 }
 

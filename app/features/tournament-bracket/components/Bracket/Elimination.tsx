@@ -1,7 +1,7 @@
-import * as R from "remeda";
 import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import type { MatchExitGroupsById } from "../../core/Bracket/Bracket";
+import * as EliminationLayout from "../../core/EliminationLayout";
 import { getRounds } from "../../core/rounds";
 import {
 	BracketColumn,
@@ -38,24 +38,21 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 		(match) => match.roundId === rounds[0]?.id,
 	);
 
-	const hiddenRoundIds = new Set(
-		rounds
-			.filter((round, roundIdx) => {
-				if (censored && round.name === TOURNAMENT.ROUND_NAMES.BRACKET_RESET) {
-					return true;
-				}
-				if (props.isExpanded) return false;
-				if (roundIdx >= rounds.length - 2) return false;
-
-				const roundMatches = props.bracket.data.match.filter(
-					(match) => match.roundId === round.id,
-				);
-				return !roundMatches.some(
-					(match) => match.opponent1 && match.opponent2 && !match.winnerSide,
-				);
-			})
+	const layout = EliminationLayout.resolve({
+		rounds,
+		bracketData: props.bracket.data,
+		isCompactified: !props.isExpanded,
+	});
+	const hiddenRoundIds = new Set([
+		...layout.hiddenRoundIds,
+		...rounds
+			.filter(
+				(round) =>
+					censored && round.name === TOURNAMENT.ROUND_NAMES.BRACKET_RESET,
+			)
 			.map((round) => round.id),
-	);
+	]);
+	const { compactedFirstRoundId } = layout;
 
 	const firstVisibleRound = rounds.find(
 		(round) => !hiddenRoundIds.has(round.id),
@@ -64,11 +61,6 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 		(match) => match.roundId === firstVisibleRound?.id,
 	).length;
 
-	const compactedFirstRoundId = resolveCompactedFirstRoundId({
-		rounds,
-		firstVisibleRoundId: firstVisibleRound?.id,
-		bracketData: props.bracket.data,
-	});
 	const baseRoundMatchCount =
 		compactedFirstRoundId !== null
 			? firstVisibleRoundMatchCount / 2
@@ -79,17 +71,11 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 			{rounds.flatMap((round, roundIdx) => {
 				const bestOf = round.maps?.count;
 
-				const allRoundMatches = props.bracket.data.match.filter(
-					(match) => match.roundId === round.id,
-				);
-				const matches =
-					round.id === compactedFirstRoundId
-						? R.chunk(allRoundMatches, 2).map(
-								(pair) =>
-									pair.find((match) => match.opponent1 && match.opponent2) ??
-									pair[0],
-							)
-						: allRoundMatches;
+				const matches = EliminationLayout.matchesOfRound({
+					roundId: round.id,
+					bracketData: props.bracket.data,
+					compactedFirstRoundId,
+				});
 
 				const isLastRound = roundIdx === rounds.length - 1;
 				const nextRound = rounds[roundIdx + 1];
@@ -207,40 +193,4 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 			})}
 		</BracketColumns>
 	);
-}
-
-/**
- * Compacted = one first round slot per second round match instead of two, halving the height. Possible
- * when fewer than half of the potential first round matches are played, as then each second round match
- * has at most one feeder that can sit right next to it with a straight connector.
- */
-function resolveCompactedFirstRoundId(args: {
-	rounds: ReturnType<typeof getRounds>;
-	firstVisibleRoundId?: number;
-	bracketData: BracketType["data"];
-}): number | null {
-	const [firstRound, secondRound] = args.rounds;
-	if (!firstRound || !secondRound) return null;
-	if (firstRound.id !== args.firstVisibleRoundId) return null;
-
-	const firstRoundMatches = args.bracketData.match.filter(
-		(match) => match.roundId === firstRound.id,
-	);
-	const secondRoundMatchCount = args.bracketData.match.filter(
-		(match) => match.roundId === secondRound.id,
-	).length;
-	if (firstRoundMatches.length !== secondRoundMatchCount * 2) return null;
-
-	const playedMatchCount = firstRoundMatches.filter(
-		(match) => match.opponent1 && match.opponent2,
-	).length;
-	if (playedMatchCount > firstRoundMatches.length / 2) return null;
-
-	const everyPairHasAtMostOnePlayedMatch = R.chunk(firstRoundMatches, 2).every(
-		(pair) =>
-			pair.filter((match) => match.opponent1 && match.opponent2).length <= 1,
-	);
-	if (!everyPairHasAtMostOnePlayedMatch) return null;
-
-	return firstRound.id;
 }

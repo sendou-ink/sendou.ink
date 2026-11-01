@@ -18,6 +18,11 @@
 	"dashboard.showResults": "Show now",
 	"dashboard.gameplay": "Gameplay footage",
 	"dashboard.teams.header": "Teams",
+	"dashboard.bracket.header": "Bracket (next)",
+	"dashboard.bracket.explanation": "What the bracket scene shows. Remaining shows only the rounds still being played.",
+	"dashboard.bracket.focus": "Part of the bracket",
+	"dashboard.bracket.bracket": "Bracket",
+	"dashboard.bracket.followFeatured": "Featured match's",
 	"dashboard.health.sources_one": "OBS: {{count}} source connected",
 	"dashboard.health.sources_other": "OBS: {{count}} sources connected",
 	"dashboard.health.disconnected": "Disconnected from sendou.ink, reconnecting...",
@@ -79,5 +84,9 @@
 	"ink.pinkGreen": "Pink vs green",
 	"transition.stinger": "Stinger",
 	"transition.fade": "Fade",
-	"transition.cut": "Cut"
+	"transition.cut": "Cut",
+	"bracketFocus.remaining": "Remaining",
+	"bracketFocus.winners": "Winners",
+	"bracketFocus.losers": "Losers",
+	"bracketFocus.whole": "Whole bracket"
 }

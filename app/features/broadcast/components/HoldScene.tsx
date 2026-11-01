@@ -11,7 +11,7 @@ import { SceneBackdrop } from "./SceneBackdrop";
 
 const part = scenePart("hold");
 
-/** Full screen of the scenes without gameplay (starting soon, break, bracket, technical difficulties, ending): a big title, the headline and the featured match. */
+/** Full screen of the scenes without gameplay (starting soon, break, technical difficulties, ending): a big title, the headline and the featured match. Also the scenes' fallback when they have nothing to show. */
 export function HoldScene({
 	scene,
 	state,

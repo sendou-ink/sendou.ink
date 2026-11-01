@@ -1,6 +1,6 @@
+import * as R from "remeda";
 import * as EventBus from "~/features/events/core/EventBus.server";
 import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
-import { tournamentMatchChannel } from "~/features/tournament-match/tournament-match-utils";
 import { logger } from "~/utils/logger";
 import { BROADCAST_MAX_CONNECTIONS } from "../broadcast-constants";
 import type {
@@ -29,7 +29,7 @@ interface Hub extends HubKey {
 	clients: Set<Client>;
 	snapshot: BroadcastSnapshot.Snapshot | null;
 	lastSentMessage: string | null;
-	featuredMatchId: number | null;
+	eventChannels: string[];
 	stop: AbortController;
 	resubscribe: AbortController;
 	rebuildTimer: ReturnType<typeof setTimeout> | null;
@@ -121,7 +121,7 @@ function createHub(key: HubKey): Hub {
 		clients: new Set(),
 		snapshot: null,
 		lastSentMessage: null,
-		featuredMatchId: null,
+		eventChannels: [tournamentChannel(key.tournamentId)],
 		stop: new AbortController(),
 		resubscribe: new AbortController(),
 		rebuildTimer: null,
@@ -143,19 +143,13 @@ function disconnect(hub: Hub, client: Client) {
 	if (hubs.get(hubId(hub)) === hub) hubs.delete(hubId(hub));
 }
 
-/** Resubscribes whenever the featured match changes, its events go to the match's own channel. */
+/** Resubscribes whenever the state depends on other channels, e.g. another match got featured. */
 async function subscribeToTournamentEvents(hub: Hub) {
 	while (!hub.stop.signal.aborted) {
 		hub.resubscribe = new AbortController();
-		const channels = [
-			tournamentChannel(hub.tournamentId),
-			...(hub.featuredMatchId
-				? [tournamentMatchChannel(hub.featuredMatchId)]
-				: []),
-		];
 
 		for await (const _event of EventBus.subscribe(
-			channels,
+			hub.eventChannels,
 			AbortSignal.any([hub.stop.signal, hub.resubscribe.signal]),
 		)) {
 			scheduleRebuild(hub);
@@ -187,9 +181,8 @@ async function rebuild(hub: Hub) {
 			if (!built || hub.stop.signal.aborted) continue;
 
 			hub.snapshot = built.snapshot;
-			const featuredMatchId = built.snapshot.match?.id ?? null;
-			if (featuredMatchId !== hub.featuredMatchId) {
-				hub.featuredMatchId = featuredMatchId;
+			if (!R.isDeepEqual(built.eventChannels, hub.eventChannels)) {
+				hub.eventChannels = built.eventChannels;
 				hub.resubscribe.abort();
 			}
 

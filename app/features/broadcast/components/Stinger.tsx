@@ -36,7 +36,7 @@ const PANELS: Array<"a" | "b" | null> = [
 /**
  * Full screen transition with the upcoming match's teams, replacing a pre-rendered stinger video. Calls `onCovered`
  * once nothing of the scene underneath shows, the moment to change it, and `onDone` once the new scene is revealed.
- * Its timing is all CSS, scaled by `--bc-stinger-duration` and placed by `--bc-stinger-covered-at`/`--bc-stinger-reveal-at`.
+ * Its timing is all CSS, scaled by `--bc-stinger-duration` and placed by `--bc-stinger-covered-at`/`--bc-stinger-reveal-at`/`--bc-stinger-entrance-at`.
  */
 export function Stinger({
 	state,
