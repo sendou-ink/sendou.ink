@@ -43,11 +43,18 @@ export const action = defineAction(
 				});
 				break;
 			}
-			case "SET_NEXT_INK": {
-				await BroadcastRepository.updateNext({
+			case "SET_INK": {
+				await BroadcastRepository.updateState({
 					...key,
 					patch: {
-						ink: body.key ? { key: body.key, isFlipped: body.isFlipped } : null,
+						ink: body.key
+							? {
+									key: body.key,
+									isFlipped: body.isFlipped,
+									matchId: body.matchId,
+									resultCount: body.resultCount,
+								}
+							: null,
 					},
 				});
 				break;
@@ -79,9 +86,11 @@ export const action = defineAction(
 				break;
 			}
 			case "SHOW_RESULTS": {
-				await BroadcastRepository.updateLiveResults({
+				await BroadcastRepository.updateState({
 					...key,
-					liveResults: { matchId: body.matchId, count: body.resultCount },
+					patch: {
+						liveResults: { matchId: body.matchId, count: body.resultCount },
+					},
 				});
 				break;
 			}

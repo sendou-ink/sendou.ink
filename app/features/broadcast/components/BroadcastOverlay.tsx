@@ -5,7 +5,6 @@ import type {
 	BroadcastTransition,
 	BroadcastView,
 } from "../broadcast-types";
-import { inkColorVars } from "../broadcast-utils";
 import styles from "./BroadcastOverlay.module.css";
 import { CastersScene } from "./CastersScene";
 import { GameScene } from "./GameScene";
@@ -213,7 +212,6 @@ function SceneLayer({
 	return (
 		<div
 			className={styles.scene}
-			style={inkColorVars(state[view])}
 			data-scene={scene}
 			data-transition={transition}
 			data-entrance={entrance ?? undefined}

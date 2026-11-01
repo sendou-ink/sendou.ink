@@ -1,6 +1,7 @@
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { ModeImage, StageImage } from "~/components/Image";
+import { useFitText } from "../broadcast-hooks";
 import type {
 	BroadcastGame,
 	BroadcastState,
@@ -79,6 +80,8 @@ export function MapsScene({
 
 function HeaderTeam({ side }: { side: MatchSide }) {
 	const { t } = useTranslation(["broadcast"]);
+	const name = side.team?.name ?? t("broadcast:overlay.tbd");
+	const nameRef = useFitText<HTMLSpanElement>({ text: name });
 
 	return (
 		<div className={styles.headerTeam} data-team={side.side} {...part("team")}>
@@ -87,8 +90,8 @@ function HeaderTeam({ side }: { side: MatchSide }) {
 				className={styles.headerLogo}
 				{...part("team-logo")}
 			/>
-			<span className={styles.headerName} {...part("team-name")}>
-				{side.team?.name ?? t("broadcast:overlay.tbd")}
+			<span ref={nameRef} className={styles.headerName} {...part("team-name")}>
+				{name}
 			</span>
 		</div>
 	);

@@ -8,6 +8,8 @@ import type {
 	BroadcastView,
 } from "../broadcast-types";
 import {
+	gameInk,
+	inkColorVars,
 	type MatchSide,
 	matchSides,
 	pronounsLabel,
@@ -19,7 +21,7 @@ import { SetLength } from "./SetLength";
 const part = scenePart("game");
 
 /**
- * Over the game feed, clear of the game's own HUD: the teams and set score in their ink colors in the top left
+ * Over the game feed, clear of the game's own HUD: the teams and set score in the game's ink colors in the top left
  * corner, the casters and round in the bottom right one. Each new game shows its map under the score for a while.
  */
 export function GameScene({
@@ -35,7 +37,14 @@ export function GameScene({
 	return (
 		<>
 			{match && progress ? (
-				<div className={styles.scoreboard} {...part("scoreboard")}>
+				<div
+					className={styles.scoreboard}
+					style={inkColorVars({
+						ink: gameInk(state, view),
+						swapSides: state[view].swapSides,
+					})}
+					{...part("scoreboard")}
+				>
 					{matchSides(match, view, state[view]).map((side, i) => (
 						<TeamRow
 							key={side.side}

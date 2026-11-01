@@ -7,7 +7,6 @@ import type {
 	BroadcastView,
 } from "../broadcast-types";
 import {
-	inkColorVars,
 	type MatchSide,
 	matchSides,
 	roundLabel,
@@ -63,7 +62,6 @@ export function Stinger({
 	return (
 		<div
 			className={styles.stinger}
-			style={inkColorVars(state[view])}
 			data-has-match={state.match ? true : undefined}
 			{...part("stinger")}
 			onAnimationEnd={(event) => {

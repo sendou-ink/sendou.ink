@@ -73,6 +73,7 @@
 	align-items: stretch;
 	gap: 6px;
 	font-family: var(--bc-font-body);
+	--info-row-height: 50px;
 }
 
 .infoRow {
@@ -80,9 +81,12 @@
 
 	display: flex;
 	align-items: stretch;
-	height: 50px;
+	height: var(--info-row-height);
 	overflow: hidden;
-	border-radius: var(--bc-radius-small);
+	/* the end with the round icon is round too */
+	border-radius: var(--bc-radius-small) calc(var(--info-row-height) / 2)
+		calc(var(--info-row-height) / 2) var(--bc-radius-small);
+	background: var(--bc-surface);
 	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
 		calc(var(--scene-enter-delay) + 3 * var(--bc-stagger)) both;
 
@@ -98,7 +102,6 @@
 	max-width: 900px;
 	padding: 0 22px;
 	overflow: hidden;
-	background: var(--bc-surface);
 	font-size: 22px;
 	font-weight: 600;
 	text-overflow: ellipsis;
@@ -109,8 +112,9 @@
 	display: grid;
 	flex-shrink: 0;
 	place-items: center;
-	width: 50px;
-	height: 50px;
+	width: var(--info-row-height);
+	height: var(--info-row-height);
+	border-radius: 50%;
 	background: var(--bc-accent);
 	color: var(--bc-accent-text);
 	object-fit: cover;

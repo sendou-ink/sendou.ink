@@ -222,7 +222,7 @@
 .titleCardLogo {
 	width: 360px;
 	height: 360px;
-	border-radius: var(--bc-radius);
+	border-radius: 50%;
 	object-fit: cover;
 	box-shadow:
 		0 0 0 var(--bc-border-width) var(--bc-border),
@@ -231,7 +231,9 @@
 
 .titleCardName {
 	max-width: 100%;
-	overflow: hidden;
+	/* descenders past the tight line height */
+	overflow: clip;
+	overflow-clip-margin: 0.25em;
 	color: var(--bc-text);
 	font-size: 76px;
 	font-weight: 700;
@@ -245,6 +247,9 @@
 .header {
 	--bc-enter-y: calc(var(--bc-enter-distance) * 2);
 	--bc-exit-y: var(--bc-enter-distance);
+	--logo-size: 104px;
+	--logo-inset: 18px;
+	--logo-edge: calc(var(--logo-inset) + var(--bc-border-width));
 
 	position: absolute;
 	right: 0;
@@ -256,9 +261,10 @@
 	width: fit-content;
 	max-width: 1500px;
 	margin-inline: auto;
-	padding: 18px 40px 18px 18px;
+	padding: var(--logo-inset) 40px var(--logo-inset) var(--logo-inset);
 	border: var(--bc-border-width) solid var(--bc-border);
-	border-radius: var(--bc-radius);
+	/* concentric with the round logo */
+	border-radius: calc(var(--logo-size) / 2 + var(--logo-edge));
 	background: var(--bc-bg);
 	color: var(--bc-text);
 	text-align: left;
@@ -270,9 +276,9 @@
 }
 
 .headerLogo {
-	width: 104px;
-	height: 104px;
-	border-radius: var(--bc-radius);
+	width: var(--logo-size);
+	height: var(--logo-size);
+	border-radius: 50%;
 	object-fit: cover;
 }
 
@@ -284,7 +290,9 @@
 }
 
 .tournamentName {
-	overflow: hidden;
+	/* descenders past the tight line height */
+	overflow: clip;
+	overflow-clip-margin: 0.25em;
 	font-size: 52px;
 	font-weight: 700;
 	line-height: 1.05;

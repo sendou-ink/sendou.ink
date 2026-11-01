@@ -16,7 +16,6 @@ import type {
 	BroadcastChannel,
 	BroadcastSettings,
 	BroadcastStoredState,
-	LiveResults,
 	ProducerState,
 } from "./broadcast-types";
 import * as Producer from "./core/Producer";
@@ -136,17 +135,22 @@ export async function updateNext({
 		.execute();
 }
 
-/** Sets which of the match's results are on air, leaving the rest of the producer state as it is. */
-export async function updateLiveResults({
-	liveResults,
+/** Sets the producer state's fields that apply as soon as set, leaving the rest of it as it is. */
+export async function updateState({
+	patch,
 	...key
-}: BroadcastKey & { liveResults: LiveResults }) {
+}: BroadcastKey & {
+	patch: Partial<Pick<BroadcastStoredState, "liveResults" | "ink">>;
+}) {
+	const entries = Object.entries(patch);
+	if (entries.length === 0) return;
+
 	await insertIfMissing(key);
 
 	await db
 		.updateTable("TournamentBroadcast")
 		.set({
-			state: sql<string>`json_set("TournamentBroadcast"."state", '$.liveResults', json(${JSON.stringify(liveResults)}))`,
+			state: sql<string>`json_set("TournamentBroadcast"."state", ${jsonSetPairs(entries)})`,
 		})
 		.where("TournamentBroadcast.tournamentId", "=", key.tournamentId)
 		.where("TournamentBroadcast.platform", "=", key.channel.platform)

@@ -26,10 +26,10 @@ export function initialState(): BroadcastStoredState {
 			scene: "rosters",
 			swapSides: false,
 			transition: "stinger",
-			ink: null,
 		},
-		next: { scene: "game", swapSides: false, transition: "stinger", ink: null },
+		next: { scene: "game", swapSides: false, transition: "stinger" },
 		liveResults: null,
+		ink: null,
 	};
 }
 
@@ -46,6 +46,7 @@ export function take(
 		live: state.next,
 		next: followingState(state.next),
 		liveResults,
+		ink: state.ink,
 	};
 }
 

@@ -55,7 +55,6 @@ describe("BroadcastRepository.updateNext", () => {
 			scene: "rosters",
 			swapSides: true,
 			transition: "stinger",
-			ink: null,
 		});
 	});
 });
@@ -130,25 +129,33 @@ describe("BroadcastRepository.replaceState", () => {
 	});
 });
 
-describe("BroadcastRepository.updateLiveResults", () => {
+describe("BroadcastRepository.updateState", () => {
 	beforeEach(async () => {
 		await users.create(1);
 	});
 
-	test("sets only the live results", async () => {
+	test("sets only the given fields", async () => {
 		const key = await createBroadcastKey();
+		const ink = {
+			key: "lockYellowPurple",
+			isFlipped: true,
+			matchId: 5,
+			resultCount: 2,
+		} as const;
 		await BroadcastRepository.updateNext({
 			...key,
 			patch: { swapSides: true },
 		});
+		await BroadcastRepository.updateState({ ...key, patch: { ink } });
 
-		await BroadcastRepository.updateLiveResults({
+		await BroadcastRepository.updateState({
 			...key,
-			liveResults: { matchId: 5, count: 2 },
+			patch: { liveResults: { matchId: 5, count: 2 } },
 		});
 
 		const broadcast = await BroadcastRepository.findByChannel(key);
 		expect(broadcast?.state.liveResults).toEqual({ matchId: 5, count: 2 });
+		expect(broadcast?.state.ink).toEqual(ink);
 		expect(broadcast?.state.next.swapSides).toBe(true);
 	});
 });

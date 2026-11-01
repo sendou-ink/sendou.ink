@@ -50,14 +50,23 @@
 	width: var(--bubble-size);
 }
 
+/* a long name wraps to a second line next to the logo, then shrinks to fit (useFitText) */
 .headerName {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
 	min-width: 0;
 	overflow: hidden;
 	font-size: 54px;
 	font-weight: 700;
-	text-overflow: ellipsis;
+	line-height: 1.1;
+	overflow-wrap: anywhere;
 	text-transform: uppercase;
-	white-space: nowrap;
+
+	[data-team="a"] > & {
+		text-align: right;
+	}
 }
 
 .scores {
@@ -183,7 +192,9 @@
 }
 
 .stageName {
-	overflow: hidden;
+	/* descenders past the tight line height */
+	overflow: clip;
+	overflow-clip-margin: 0.25em;
 	font-size: 26px;
 	font-weight: 700;
 	line-height: 1.15;
