@@ -29,7 +29,7 @@
 		--k: 2;
 	}
 
-	& > :nth-child(4) {
+	& > :nth-child(n + 4) {
 		--k: 4;
 	}
 }
@@ -79,6 +79,15 @@
 		background: var(--bc-accent);
 		content: "";
 	}
+}
+
+.countdown {
+	min-height: 1em;
+	color: var(--bc-accent);
+	font-size: 120px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
 }
 
 .headline {

@@ -11,10 +11,10 @@ import { _action, coerceNumber, id } from "~/utils/schema";
 import {
 	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_CSS_MAX_LENGTH,
-	BROADCAST_DURATIONS_MS,
 	BROADCAST_HEADLINE_MAX_LENGTH,
 	BROADCAST_INK_COLORS,
 	BROADCAST_MAX_CASTERS,
+	BROADCAST_SCENE_DURATIONS_MS,
 	BROADCAST_SCENES,
 	BROADCAST_SDP_MAX_LENGTH,
 	BROADCAST_TRANSITIONS,
@@ -26,6 +26,14 @@ const channelSlug = v.pipe(v.string(), v.minLength(1), v.maxLength(100));
 const scene = v.picklist(BROADCAST_SCENES);
 const transition = v.picklist(BROADCAST_TRANSITIONS);
 const clipId = v.pipe(v.string(), v.minLength(1), v.maxLength(100));
+const durationMs = v.pipe(
+	coerceNumber(),
+	v.picklist(
+		Object.values(BROADCAST_SCENE_DURATIONS_MS).flatMap(
+			(durations) => durations.optionsMs,
+		),
+	),
+);
 const booleanString = v.pipe(
 	v.picklist(["true", "false"]),
 	v.transform((value) => value === "true"),
@@ -107,9 +115,7 @@ export const broadcastActionSchema = v.union([
 		_action: _action("SET_DURATION"),
 		itemId: id,
 		/** `undefined` stays on air until a Take. */
-		durationMs: v.optional(
-			v.pipe(coerceNumber(), v.picklist(BROADCAST_DURATIONS_MS)),
-		),
+		durationMs: v.optional(durationMs),
 	}),
 	v.object({
 		_action: _action("SET_AUTO"),
