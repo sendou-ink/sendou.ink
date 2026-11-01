@@ -26,6 +26,8 @@
 }
 
 .scoreline {
+	--bubble-size: 136px;
+
 	display: grid;
 	grid-template-columns: 1fr auto 1fr;
 	align-items: center;
@@ -45,7 +47,7 @@
 }
 
 .headerLogo {
-	width: 96px;
+	width: var(--bubble-size);
 }
 
 .headerName {
@@ -62,16 +64,17 @@
 	display: flex;
 	align-items: center;
 	gap: 20px;
-	font-size: 100px;
+	font-size: 84px;
 	font-weight: 700;
 	line-height: 1;
 
 	& [data-team] {
 		display: grid;
 		place-items: center;
-		min-width: 136px;
-		padding: 6px 0 12px;
-		border-radius: var(--bc-radius);
+		width: var(--bubble-size);
+		height: var(--bubble-size);
+		padding-bottom: 6px;
+		border-radius: 50%;
 		background: var(--team-color);
 		color: var(--team-color-text);
 	}
@@ -110,11 +113,6 @@
 	background: var(--bc-surface);
 	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
 		calc(var(--scene-enter-delay) + (var(--i) + 2) * var(--bc-stagger)) both;
-
-	&[data-status="current"] {
-		border-color: var(--bc-accent);
-		outline: 4px solid var(--bc-accent);
-	}
 
 	&[data-status="skipped"] {
 		opacity: 0.4;
@@ -167,20 +165,6 @@
 	font-weight: 700;
 }
 
-.nextBadge {
-	position: absolute;
-	top: 10px;
-	right: 10px;
-	z-index: 1;
-	padding: 4px 12px;
-	border-radius: var(--bc-radius-small);
-	background: var(--bc-accent);
-	color: var(--bc-accent-text);
-	font-size: 16px;
-	font-weight: 700;
-	text-transform: uppercase;
-}
-
 .body {
 	display: flex;
 	flex-direction: column;
@@ -220,6 +204,16 @@
 	color: var(--team-color-text);
 	font-size: 20px;
 	font-weight: 700;
+}
+
+.upNext {
+	padding: 10px 18px;
+	background: var(--bc-surface-high);
+	color: var(--bc-text);
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 30px;
+	text-transform: uppercase;
 }
 
 .winnerLogo {

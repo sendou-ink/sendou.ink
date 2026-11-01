@@ -73,6 +73,7 @@ export const BROADCAST_CANVAS = { width: 1920, height: 1080 } as const;
 export const BROADCAST_THEME_TOKENS = [
 	"--bc-bg",
 	"--bc-surface",
+	"--bc-surface-high",
 	"--bc-border",
 	"--bc-text",
 	"--bc-text-muted",
