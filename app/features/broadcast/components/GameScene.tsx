@@ -17,12 +17,14 @@ import {
 } from "../broadcast-utils";
 import styles from "./GameScene.module.css";
 import { SetLength } from "./SetLength";
+import { Ticker } from "./Ticker";
 
 const part = scenePart("game");
 
 /**
  * Over the game feed, clear of the game's own HUD: the teams and set score in the game's ink colors in the top left
- * corner, the casters and round in the bottom right one. Each new game shows its map under the score for a while.
+ * corner, the casters and round in the bottom right one with the other matches' ticker next to them. Each new game
+ * shows its map under the score for a while.
  */
 export function GameScene({
 	state,
@@ -62,7 +64,10 @@ export function GameScene({
 					) : null}
 				</div>
 			) : null}
-			<InfoBar state={state} />
+			<div className={styles.bottom}>
+				<Ticker matches={state.otherMatches} className={styles.ticker} />
+				<InfoBar state={state} />
+			</div>
 		</>
 	);
 }

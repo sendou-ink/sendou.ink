@@ -195,8 +195,8 @@ export const BROADCAST_SCENE_GROUPS = [
 
 /**
  * Stable `data-part` hooks of each design for custom CSS, e.g. `[data-scene="game"] [data-part="team-name"]`.
- * `hold` is the design of {@link BROADCAST_HOLD_SCENES}, `matchup` the featured match line some scenes show and
- * `stinger` the transition over every scene. Every scene has a `backdrop` except game and replays, maps' with a `backdrop-video` of the next map.
+ * `hold` is the design of {@link BROADCAST_HOLD_SCENES}, `matchup` the featured match line some scenes show,
+ * `ticker` the other matches' scores along the bottom of the game and hold scenes and `stinger` the transition over every scene. Every scene has a `backdrop` except game and replays, maps' with a `backdrop-video` of the next map.
  * Renaming one breaks users' themes.
  */
 export const BROADCAST_SCENE_PARTS = {
@@ -286,6 +286,16 @@ export const BROADCAST_SCENE_PARTS = {
 		"matchup-label",
 	],
 	matchup: ["matchup", "team", "team-logo", "team-name", "team-score", "round"],
+	ticker: [
+		"ticker",
+		"ticker-label",
+		"ticker-match",
+		"ticker-round",
+		"ticker-team",
+		"ticker-team-seed",
+		"ticker-team-name",
+		"ticker-team-score",
+	],
 	stinger: [
 		"stinger",
 		"stinger-panel",
@@ -321,6 +331,7 @@ export const BROADCAST_KEYFRAMES = [
 	"bc-fade-in",
 	"bc-fade-out",
 	"bc-alert-slide",
+	"bc-ticker",
 	"bc-panel-slide-in",
 	"bc-panel-slide-out",
 	"bc-panel-iris-in",

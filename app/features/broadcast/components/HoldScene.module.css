@@ -127,3 +127,14 @@
 	font-weight: 700;
 	text-transform: uppercase;
 }
+
+.ticker {
+	position: absolute;
+	right: 140px;
+	bottom: 48px;
+	left: 140px;
+
+	[data-variant="alert"] ~ & {
+		bottom: 60px;
+	}
+}

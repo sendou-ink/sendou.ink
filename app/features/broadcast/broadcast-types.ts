@@ -126,6 +126,8 @@ export interface BroadcastState extends BroadcastStoredState {
 	match: BroadcastMatch | null;
 	/** What the bracket scene shows in each view, `null` without a double elimination bracket to show. */
 	bracket: Record<BroadcastView, BroadcastBracket | null>;
+	/** The tournament's other matches being played, what the "elsewhere" ticker shows. */
+	otherMatches: BroadcastOtherMatch[];
 	health: BroadcastHealth;
 }
 
@@ -262,6 +264,20 @@ export interface BroadcastBracketMatch {
 	/** Connected to a match of the previous round shown, which a team advances from. */
 	isFed: boolean;
 }
+
+export interface BroadcastOtherMatch {
+	id: number;
+	/** E.g. "WB Semis". */
+	roundName: string | null;
+	/** In bracket order, `null` when not decided yet. */
+	teams: [BroadcastOtherMatchTeam | null, BroadcastOtherMatchTeam | null];
+	/** In bracket order. */
+	scores: [number, number];
+	/** Index of the winning team in bracket order, `null` while the set is being played. */
+	winner: 0 | 1 | null;
+}
+
+export type BroadcastOtherMatchTeam = Pick<BroadcastTeam, "name" | "seed">;
 
 export type BroadcastBracketTeam = Pick<
 	BroadcastTeam,

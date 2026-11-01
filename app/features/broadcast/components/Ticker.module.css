@@ -1,0 +1,125 @@
+.ticker {
+	--bc-enter-y: var(--bc-enter-distance);
+	--ticker-gap: 56px;
+
+	display: flex;
+	align-items: stretch;
+	height: 50px;
+	overflow: hidden;
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-surface);
+	font-family: var(--bc-font-body);
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + 6 * var(--bc-stagger)) both;
+}
+
+.label {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	padding: 0 20px;
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+	font-size: 18px;
+	font-weight: 700;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.viewport {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	mask-image: linear-gradient(
+		to right,
+		transparent,
+		#000 32px,
+		#000 calc(100% - 32px),
+		transparent
+	);
+}
+
+.track {
+	display: flex;
+	width: max-content;
+	height: 100%;
+	animation: var(--bc-anim-ticker) calc(var(--ticker-matches) * 7s) linear
+		infinite;
+}
+
+.matches {
+	display: flex;
+	align-items: center;
+	gap: var(--ticker-gap);
+	/* the same space before the next copy as between the matches */
+	padding: 0 calc(var(--ticker-gap) / 2);
+}
+
+.match {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	font-size: 20px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.round {
+	color: var(--bc-text-muted);
+	font-size: 15px;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.team {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+
+	&:last-child {
+		flex-direction: row-reverse;
+	}
+
+	&[data-loser] .name {
+		color: var(--bc-text-muted);
+	}
+}
+
+.seed {
+	color: var(--bc-text-muted);
+	font-size: 15px;
+}
+
+.name {
+	max-width: 360px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.scores {
+	display: flex;
+	gap: 4px;
+}
+
+.score {
+	display: grid;
+	place-items: center;
+	min-width: 30px;
+	height: 30px;
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-surface-high);
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+
+	&[data-winner] {
+		background: var(--bc-accent);
+		color: var(--bc-accent-text);
+	}
+}
+
+/* the matches moving along, one copy of them per loop */
+@keyframes :global(bc-ticker) {
+	to {
+		transform: translateX(-50%);
+	}
+}

@@ -98,6 +98,7 @@
 	"overlay.toBeDecided": "To be decided",
 	"overlay.notPlayed": "Not played",
 	"overlay.seed": "Seed {{seed}}",
+	"overlay.elsewhere": "Elsewhere",
 	"overlay.standBy": "Please stand by, we'll be right back",
 	"overlay.title.starting": "Starting soon",
 	"overlay.title.casters": "Your casters",
