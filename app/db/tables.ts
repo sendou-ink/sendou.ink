@@ -34,6 +34,7 @@ import type {
 	ChatRoomType,
 	PersistedSystemMessageType,
 } from "~/features/chat/chat-types";
+import type { FeedEventData, FeedEventType } from "~/features/feed/feed-types";
 import type { LFGType } from "~/features/lfg/lfg-constants";
 import type { StreamPlatform } from "~/features/live-streams/live-streams-constants";
 import type {
@@ -1004,6 +1005,21 @@ interface Friendship {
 	isPinnedByUserTwo: Generated<DBBoolean>;
 }
 
+/** Something a user did that their friends' feeds show, derived from their play history by the feed indexer routine. */
+export interface FeedEvent {
+	id: GeneratedAlways<number>;
+	userId: number;
+	type: FeedEventType;
+	at: number;
+	data: JSONColumnType<FeedEventData>;
+}
+
+/** How far the feed indexer has gotten in a source, a timestamp or a row id depending on the source. */
+export interface FeedIndexerCursor {
+	source: string;
+	position: number;
+}
+
 /** Pending friend request from one user to another. */
 interface FriendRequest {
 	id: GeneratedAlways<number>;
@@ -1756,6 +1772,8 @@ export interface DB {
 	PendingTrophyApproval: PendingTrophyApproval;
 	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
+	FeedEvent: FeedEvent;
+	FeedIndexerCursor: FeedIndexerCursor;
 	FriendRequest: FriendRequest;
 	/** Table backing the `UserSubmittedImage` view. Includes images awaiting validation. */
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;

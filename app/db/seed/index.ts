@@ -1,4 +1,5 @@
 import { deleteAllRows } from "~/db/wipe";
+import * as FeedIndexer from "~/features/feed/core/FeedIndexer.server";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { withoutInfoLogs } from "~/utils/logger";
 import { resetFactories } from "./core/defineFactory";
@@ -51,6 +52,7 @@ export async function seed() {
 	await runModule(() =>
 		seedAvailability({ users, teams, tournaments, scrims, misc }),
 	);
+	await runModule(() => FeedIndexer.run());
 
 	clearAllTournamentDataCache();
 }

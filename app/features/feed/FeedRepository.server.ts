@@ -2,7 +2,6 @@ import { type ExpressionBuilder, sql } from "kysely";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import type { ChatMessageAuthor } from "~/features/chat/chat-types";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	calendarEventNameMatchesSeries,
 	calendarEventStartTime,
@@ -15,6 +14,7 @@ import {
 import { FEED_RIVALRY_MIN_SETS } from "./feed-constants";
 
 const MAX_ROWS = 200;
+const TOP_TEAMMATES_COUNT = 10;
 
 export function findUsersByIds(userIds: number[]) {
 	if (userIds.length === 0) return Promise.resolve([]);
@@ -45,6 +45,7 @@ export function findTournamentsByIds(tournamentIds: number[]) {
 			calendarEventStartTime(eb).as("startsAt"),
 		])
 		.where("CalendarEvent.tournamentId", "in", tournamentIds)
+		.$narrowType<{ tournamentId: number }>()
 		.execute();
 }
 
@@ -143,148 +144,6 @@ export async function findLatestGroupMatchCreatedAt() {
 }
 
 // ---------- SendouQ ----------
-
-/** The latest finished SendouQ match of the users with weapons reported for at least half the players. */
-export function findLatestReportedGroupMatchOfUsers({
-	userIds,
-	from,
-	to,
-}: {
-	userIds: number[];
-	from: number;
-	to: number;
-}) {
-	return db
-		.selectFrom("GroupMatch")
-		.innerJoin("GroupMember", (join) =>
-			join.on((eb) =>
-				eb.or([
-					eb("GroupMember.groupId", "=", eb.ref("GroupMatch.alphaGroupId")),
-					eb("GroupMember.groupId", "=", eb.ref("GroupMatch.bravoGroupId")),
-				]),
-			),
-		)
-		.select(["GroupMatch.id as matchId", "GroupMember.userId"])
-		.where("GroupMember.userId", "in", userIds)
-		.where("GroupMatch.createdAt", ">", from)
-		.where("GroupMatch.createdAt", "<", to)
-		.where((eb) =>
-			eb(
-				eb
-					.selectFrom("ReportedWeapon")
-					.select((rwEb) =>
-						rwEb.fn.count<number>("ReportedWeapon.userId").distinct().as("c"),
-					)
-					.whereRef("ReportedWeapon.groupMatchId", "=", "GroupMatch.id"),
-				">=",
-				4,
-			),
-		)
-		.where((eb) =>
-			eb.exists(
-				eb
-					.selectFrom("Skill")
-					.select("Skill.id")
-					.whereRef("Skill.groupMatchId", "=", "GroupMatch.id")
-					.whereRef("Skill.userId", "=", "GroupMember.userId"),
-			),
-		)
-		.orderBy("GroupMatch.createdAt", "desc")
-		.limit(1)
-		.executeTakeFirst();
-}
-
-/** Every rated SendouQ set of the users in the season, oldest first. */
-export function findSeasonGroupMatchSkillsByUserIds({
-	userIds,
-	season,
-}: {
-	userIds: number[];
-	season: number;
-}) {
-	if (userIds.length === 0) return Promise.resolve([]);
-
-	return db
-		.selectFrom("Skill")
-		.select([
-			"Skill.userId",
-			"Skill.ordinal",
-			"Skill.createdAt",
-			"Skill.groupMatchId",
-		])
-		.where("Skill.userId", "in", userIds)
-		.where("Skill.season", "=", season)
-		.where("Skill.groupMatchId", "is not", null)
-		.orderBy("Skill.id", "asc")
-		.$narrowType<{ userId: number }>()
-		.execute();
-}
-
-/** The users' SendouQ sets played in the range with whether their group won, newest first. */
-export function findGroupMatchResultsByUserIds({
-	userIds,
-	from,
-	to,
-}: {
-	userIds: number[];
-	from: number;
-	to: number;
-}) {
-	if (userIds.length === 0) return Promise.resolve([]);
-
-	return db
-		.selectFrom("GroupMatch")
-		.innerJoin("GroupMember", (join) =>
-			join.on((eb) =>
-				eb.or([
-					eb("GroupMember.groupId", "=", eb.ref("GroupMatch.alphaGroupId")),
-					eb("GroupMember.groupId", "=", eb.ref("GroupMatch.bravoGroupId")),
-				]),
-			),
-		)
-		.select((eb) => [
-			"GroupMatch.id",
-			"GroupMatch.createdAt",
-			"GroupMember.userId",
-			eb
-				.selectFrom("GroupMatchMap")
-				.select((mapEb) => mapEb.fn.countAll<number>().as("c"))
-				.whereRef("GroupMatchMap.matchId", "=", "GroupMatch.id")
-				.whereRef("GroupMatchMap.winnerGroupId", "=", "GroupMember.groupId")
-				.as("mapWins"),
-			eb
-				.selectFrom("GroupMatchMap")
-				.select((mapEb) => mapEb.fn.countAll<number>().as("c"))
-				.whereRef("GroupMatchMap.matchId", "=", "GroupMatch.id")
-				.where("GroupMatchMap.winnerGroupId", "is not", null)
-				.as("mapsPlayed"),
-		])
-		.where("GroupMember.userId", "in", userIds)
-		.where("GroupMatch.createdAt", ">", from)
-		.where("GroupMatch.createdAt", "<", to)
-		.orderBy("GroupMatch.createdAt", "desc")
-		.execute();
-}
-
-/** Every SendouQ set of the users, oldest first, for lifetime milestones. */
-export function findGroupMatchTimesByUserIds(userIds: number[]) {
-	if (userIds.length === 0) return Promise.resolve([]);
-
-	return db
-		.selectFrom("GroupMatch")
-		.innerJoin("GroupMember", (join) =>
-			join.on((eb) =>
-				eb.or([
-					eb("GroupMember.groupId", "=", eb.ref("GroupMatch.alphaGroupId")),
-					eb("GroupMember.groupId", "=", eb.ref("GroupMatch.bravoGroupId")),
-				]),
-			),
-		)
-		.select(["GroupMember.userId", "GroupMatch.createdAt"])
-		.where("GroupMember.userId", "in", userIds)
-		.orderBy("GroupMatch.createdAt", "asc")
-		.execute();
-}
 
 /** Start times of the user's SendouQ matches and tournament games since `after` */
 export async function findMatchTimesByUserId({
@@ -387,13 +246,8 @@ export function findTopCloseRivalryOfUsers({
 }
 
 /** The SendouQ teammates of the user who aren't in `excludedUserIds`, by sets played together. */
-export function findTopTeammateByUserId({
-	userId,
-	excludedUserIds,
-}: {
-	userId: number;
-	excludedUserIds: number[];
-}) {
+/** The SendouQ teammates of the user by sets played together, most first. */
+export function findTopTeammatesByUserId(userId: number) {
 	return db
 		.selectFrom("PlayerResult")
 		.select(({ fn }) => [
@@ -403,7 +257,7 @@ export function findTopTeammateByUserId({
 		])
 		.where("PlayerResult.ownerUserId", "=", userId)
 		.where("PlayerResult.type", "=", "MATE")
-		.where("PlayerResult.otherUserId", "not in", [userId, ...excludedUserIds])
+		.where("PlayerResult.otherUserId", "!=", userId)
 		.groupBy("PlayerResult.otherUserId")
 		.orderBy(
 			(eb) =>
@@ -414,8 +268,8 @@ export function findTopTeammateByUserId({
 				),
 			"desc",
 		)
-		.limit(1)
-		.executeTakeFirst();
+		.limit(TOP_TEAMMATES_COUNT)
+		.execute();
 }
 
 export function findWeaponUsageCounts({
@@ -441,34 +295,20 @@ export function findWeaponUsageCounts({
 export function findLiveStreams() {
 	return db
 		.selectFrom("LiveStream")
-		.leftJoin("User", (join) =>
-			join.on((eb) =>
-				eb.and([
-					eb("LiveStream.platform", "=", "TWITCH"),
-					eb(
-						eb.fn("lower", ["User.twitch"]),
-						"=",
-						eb.fn("lower", ["LiveStream.account"]),
-					),
-				]),
-			),
-		)
 		.select([
 			"LiveStream.account",
 			"LiveStream.platform",
 			"LiveStream.viewerCount",
-			"User.id as userId",
+			"LiveStream.userId",
 		])
-		.orderBy((eb) => eb("User.id", "is not", null), "desc")
+		.orderBy((eb) => eb("LiveStream.userId", "is not", null), "desc")
 		.orderBy("LiveStream.viewerCount", "desc")
 		.limit(3)
 		.execute();
 }
 
-/** The latest ended lobby a user played in, with its top three. */
-export async function findLatestEndedLobbyOfUsers(userIds: number[]) {
-	if (userIds.length === 0) return;
-
+/** Lobbies that ended after `after` with who played in them and their top three, latest first. */
+export function findAllLobbiesEndedAfter(after: number) {
 	return db
 		.selectFrom("Lobby")
 		.select((eb) => [
@@ -490,6 +330,12 @@ export async function findLatestEndedLobbyOfUsers(userIds: number[]) {
 			jsonArrayFrom(
 				eb
 					.selectFrom("LobbyResult")
+					.select("LobbyResult.userId")
+					.whereRef("LobbyResult.lobbyId", "=", "Lobby.id"),
+			).as("players"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("LobbyResult")
 					.innerJoin("User", "User.id", "LobbyResult.userId")
 					.select((resultEb) => [
 						...commonUserSelect(resultEb),
@@ -500,138 +346,13 @@ export async function findLatestEndedLobbyOfUsers(userIds: number[]) {
 					.limit(3),
 			).as("top"),
 		])
-		.where("Lobby.endedAt", "is not", null)
-		.where((eb) =>
-			eb.exists(
-				eb
-					.selectFrom("LobbyResult")
-					.select("LobbyResult.userId")
-					.whereRef("LobbyResult.lobbyId", "=", "Lobby.id")
-					.where("LobbyResult.userId", "in", userIds),
-			),
-		)
+		.where("Lobby.endedAt", ">", after)
 		.orderBy("Lobby.endedAt", "desc")
-		.limit(1)
-		.executeTakeFirst();
-}
-
-/**
- * The users' SendouQ sets and tournaments in the range, oldest first, each with when the user last
- * played anything before it and when they last played the same kind (SendouQ or tournament) before it.
- */
-export function findPlaysOfUsersBetween({
-	userIds,
-	from,
-	to,
-}: {
-	userIds: number[];
-	from: number;
-	to: number;
-}) {
-	if (userIds.length === 0) return Promise.resolve([]);
-
-	const plays = db
-		.selectFrom("GroupMatch")
-		.innerJoin("GroupMember", (join) =>
-			join.on((eb) =>
-				eb.or([
-					eb("GroupMember.groupId", "=", eb.ref("GroupMatch.alphaGroupId")),
-					eb("GroupMember.groupId", "=", eb.ref("GroupMatch.bravoGroupId")),
-				]),
-			),
-		)
-		.select([
-			"GroupMember.userId",
-			"GroupMatch.createdAt as at",
-			sql<"SQ" | "TOURNAMENT">`'SQ'`.as("source"),
-			sql<number | null>`null`.as("tournamentId"),
-		])
-		.where("GroupMember.userId", "in", userIds)
-		.unionAll((eb) =>
-			eb
-				.selectFrom("TournamentResult")
-				.innerJoin(
-					"CalendarEvent",
-					"CalendarEvent.tournamentId",
-					"TournamentResult.tournamentId",
-				)
-				.select((resultEb) => [
-					"TournamentResult.userId",
-					calendarEventStartTime(resultEb).$asScalar().$notNull().as("at"),
-					sql<"SQ" | "TOURNAMENT">`'TOURNAMENT'`.as("source"),
-					sql<number | null>`"TournamentResult"."tournamentId"`.as(
-						"tournamentId",
-					),
-				])
-				.where("TournamentResult.userId", "in", userIds),
-		);
-
-	return db
-		.selectFrom(
-			db
-				.selectFrom(plays.as("Play"))
-				.select([
-					"Play.userId",
-					"Play.at",
-					"Play.source",
-					"Play.tournamentId",
-					sql<
-						number | null
-					>`lag("Play"."at") over (partition by "Play"."userId" order by "Play"."at")`.as(
-						"previousAt",
-					),
-					sql<
-						number | null
-					>`lag("Play"."at") over (partition by "Play"."userId", "Play"."source" order by "Play"."at")`.as(
-						"previousOfSourceAt",
-					),
-				])
-				.as("WithPrevious"),
-		)
-		.selectAll("WithPrevious")
-		.where("WithPrevious.at", ">=", from)
-		.where("WithPrevious.at", "<=", to)
-		.orderBy("WithPrevious.at", "asc")
+		.$narrowType<{ endedAt: number }>()
 		.execute();
 }
 
 // ---------- Tournaments ----------
-
-export function findTournamentResultsByUserIds({
-	userIds,
-	from,
-	to,
-}: {
-	userIds: number[];
-	from: number;
-	to: number;
-}) {
-	if (userIds.length === 0) return Promise.resolve([]);
-
-	return db
-		.selectFrom("TournamentResult")
-		.innerJoin(
-			"CalendarEvent",
-			"CalendarEvent.tournamentId",
-			"TournamentResult.tournamentId",
-		)
-		.select((eb) => [
-			"TournamentResult.userId",
-			"TournamentResult.tournamentId",
-			"TournamentResult.placement",
-			"TournamentResult.participantCount",
-			"TournamentResult.tournamentTeamId",
-			"TournamentResult.setResults",
-			"CalendarEvent.name",
-			"CalendarEvent.organizationId",
-			calendarEventStartTime(eb).$asScalar().$notNull().as("startsAt"),
-		])
-		.where("TournamentResult.userId", "in", userIds)
-		.where((eb) => eb.between(calendarEventStartTime(eb).$asScalar(), from, to))
-		.orderBy("startsAt", "desc")
-		.limit(MAX_ROWS)
-		.execute();
-}
 
 /** Bracket matches of a tournament team, in bracket order. */
 export function findTournamentMatchesByTeamId({
@@ -719,16 +440,8 @@ export function findSeedsByTournamentTeamIds(tournamentTeamIds: number[]) {
 		.execute();
 }
 
-/** Upcoming tournaments the users are registered to, soonest first. */
-export function findUpcomingRegistrationsByUserIds({
-	userIds,
-	after,
-}: {
-	userIds: number[];
-	after: number;
-}) {
-	if (userIds.length === 0) return Promise.resolve([]);
-
+/** Everyone registered to a tournament starting after `after`, soonest first. */
+export function findAllUpcomingRegistrations(after: number) {
 	return db
 		.selectFrom("TournamentTeamMember")
 		.innerJoin(
@@ -752,10 +465,9 @@ export function findUpcomingRegistrationsByUserIds({
 				.whereRef("Registered.tournamentId", "=", "TournamentTeam.tournamentId")
 				.as("teamCount"),
 		])
-		.where("TournamentTeamMember.userId", "in", userIds)
+		.where("CalendarEvent.id", "in", upcomingCalendarEventIds(after))
 		.where((eb) => eb(calendarEventStartTime(eb).$asScalar(), ">", after))
 		.orderBy("startsAt", "asc")
-		.limit(MAX_ROWS)
 		.execute();
 }
 
@@ -929,17 +641,17 @@ export function findLatestTournamentMatchVod() {
 		.executeTakeFirst();
 }
 
-export function findLatestTournamentBadgeOfUsers(userIds: number[]) {
-	if (userIds.length === 0) return Promise.resolve(undefined);
-
+/** Owners of the badges of tournaments that started after `after`, latest tournament first. */
+export function findAllTournamentBadgeOwnersStartedAfter(after: number) {
 	return db
-		.selectFrom("TournamentBadgeOwner")
-		.innerJoin("Badge", "Badge.id", "TournamentBadgeOwner.badgeId")
+		.selectFrom("CalendarEventDate")
+		.innerJoin("CalendarEvent", "CalendarEvent.id", "CalendarEventDate.eventId")
 		.innerJoin(
-			"CalendarEvent",
-			"CalendarEvent.tournamentId",
+			"TournamentBadgeOwner",
 			"TournamentBadgeOwner.tournamentId",
+			"CalendarEvent.tournamentId",
 		)
+		.innerJoin("Badge", "Badge.id", "TournamentBadgeOwner.badgeId")
 		.select((eb) => [
 			"TournamentBadgeOwner.userId",
 			"TournamentBadgeOwner.tournamentId",
@@ -955,10 +667,9 @@ export function findLatestTournamentBadgeOfUsers(userIds: number[]) {
 				.whereRef("Owner.badgeId", "=", "Badge.id")
 				.as("ownerCount"),
 		])
-		.where("TournamentBadgeOwner.userId", "in", userIds)
-		.orderBy("startsAt", "desc")
-		.limit(1)
-		.executeTakeFirst();
+		.where("CalendarEventDate.startsAt", ">", after)
+		.orderBy("CalendarEventDate.startsAt", "desc")
+		.execute();
 }
 
 export function findLatestTrophyOwner() {
@@ -977,15 +688,8 @@ export function findLatestTrophyOwner() {
 		.executeTakeFirst();
 }
 
-export function findUpcomingStaffOfUsers({
-	userIds,
-	after,
-}: {
-	userIds: number[];
-	after: number;
-}) {
-	if (userIds.length === 0) return Promise.resolve(undefined);
-
+/** Staff of the tournaments starting after `after`, soonest first. */
+export function findAllUpcomingStaff(after: number) {
 	return db
 		.selectFrom("TournamentStaff")
 		.innerJoin(
@@ -999,11 +703,10 @@ export function findUpcomingStaffOfUsers({
 			"TournamentStaff.role",
 			calendarEventStartTime(eb).$asScalar().$notNull().as("startsAt"),
 		])
-		.where("TournamentStaff.userId", "in", userIds)
+		.where("CalendarEvent.id", "in", upcomingCalendarEventIds(after))
 		.where((eb) => eb(calendarEventStartTime(eb).$asScalar(), ">", after))
 		.orderBy("startsAt", "asc")
-		.limit(1)
-		.executeTakeFirst();
+		.execute();
 }
 
 /** Finalized public tournaments that started in the range (optionally on a day of the year, `MM-DD` in UTC), best tier and most teams first. */
@@ -1145,6 +848,48 @@ export async function countSeriesWinsOfUser({
 	return row.count;
 }
 
+function publicBuilds() {
+	return db
+		.selectFrom("Build")
+		.select((eb) => [
+			"Build.id",
+			"Build.ownerId",
+			"Build.title",
+			"Build.description",
+			"Build.modes",
+			"Build.headGearSplId",
+			"Build.clothesGearSplId",
+			"Build.shoesGearSplId",
+			"Build.abilities",
+			"Build.updatedAt",
+			jsonArrayFrom(
+				eb
+					.selectFrom("BuildWeapon")
+					.select("BuildWeapon.weaponSplId")
+					.whereRef("BuildWeapon.buildId", "=", "Build.id")
+					.orderBy("BuildWeapon.weaponSplId", "asc"),
+			).as("weapons"),
+			eb
+				.selectFrom("SplatoonPlayer")
+				.select(
+					sql<number | null>`"SplatoonPlayer"."peakXp" ->> '$.overall'`.as(
+						"xp",
+					),
+				)
+				.whereRef("SplatoonPlayer.userId", "=", "Build.ownerId")
+				.limit(1)
+				.as("peakXp"),
+		])
+		.where("Build.isPrivate", "=", 0);
+}
+
+function upcomingCalendarEventIds(after: number) {
+	return db
+		.selectFrom("CalendarEventDate")
+		.select("CalendarEventDate.eventId")
+		.where("CalendarEventDate.startsAt", ">", after);
+}
+
 function publicTournaments() {
 	return db
 		.selectFrom("CalendarEvent")
@@ -1165,15 +910,8 @@ function tournamentTeamCount(eb: ExpressionBuilder<Tables, "Tournament">) {
 
 // ---------- Teams & scrims ----------
 
-export function findLatestTeamJoinOfUsers({
-	userIds,
-	before,
-}: {
-	userIds: number[];
-	before: number;
-}) {
-	if (userIds.length === 0) return Promise.resolve(undefined);
-
+/** Joins to teams that still have the member, after `after`, latest first. */
+export function findAllTeamJoinsAfter(after: number) {
 	return db
 		.selectFrom("AllTeamMember")
 		.innerJoin("AllTeam", "AllTeam.id", "AllTeamMember.teamId")
@@ -1183,13 +921,11 @@ export function findLatestTeamJoinOfUsers({
 			"AllTeamMember.createdAt",
 			"AllTeamMember.role",
 		])
-		.where("AllTeamMember.userId", "in", userIds)
 		.where("AllTeamMember.leftAt", "is", null)
 		.where("AllTeam.deletedAt", "is", null)
-		.where("AllTeamMember.createdAt", "<", before)
+		.where("AllTeamMember.createdAt", ">", after)
 		.orderBy("AllTeamMember.createdAt", "desc")
-		.limit(1)
-		.executeTakeFirst();
+		.execute();
 }
 
 export function findLatestCreatedTeam(before: number) {
@@ -1398,9 +1134,8 @@ export function findWeaponPoolByUserId(userId: number) {
 }
 
 /** The teams the users are currently members of, with when each team was created. */
-export function findTeamMembershipsOfUsers(userIds: number[]) {
-	if (userIds.length === 0) return Promise.resolve([]);
-
+/** Every current team membership with when the team was created. */
+export function findAllTeamMemberships() {
 	return db
 		.selectFrom("AllTeamMember")
 		.innerJoin("AllTeam", "AllTeam.id", "AllTeamMember.teamId")
@@ -1409,7 +1144,6 @@ export function findTeamMembershipsOfUsers(userIds: number[]) {
 			"AllTeam.id as teamId",
 			"AllTeam.createdAt",
 		])
-		.where("AllTeamMember.userId", "in", userIds)
 		.where("AllTeamMember.leftAt", "is", null)
 		.where("AllTeam.deletedAt", "is", null)
 		.execute();
@@ -1548,84 +1282,45 @@ export function findLatestOpenedCommissions(before: number) {
 }
 
 /** The latest public build of the users, or for the weapon by a player with high peak XP. */
-export function findLatestBuild({
-	ownerIds,
-	weaponSplId,
-	minPeakXp,
-	before,
-}: {
-	ownerIds?: number[];
-	weaponSplId?: MainWeaponId;
-	minPeakXp?: number;
-	before: number;
-}) {
-	let query = db
+/** Public builds updated after `after`, latest first. */
+export function findAllPublicBuildIdsUpdatedAfter(after: number) {
+	return db
 		.selectFrom("Build")
-		.select((eb) => [
-			"Build.id",
-			"Build.ownerId",
-			"Build.title",
-			"Build.description",
-			"Build.modes",
-			"Build.headGearSplId",
-			"Build.clothesGearSplId",
-			"Build.shoesGearSplId",
-			"Build.abilities",
-			"Build.updatedAt",
-			jsonArrayFrom(
-				eb
-					.selectFrom("BuildWeapon")
-					.select("BuildWeapon.weaponSplId")
-					.whereRef("BuildWeapon.buildId", "=", "Build.id")
-					.orderBy("BuildWeapon.weaponSplId", "asc"),
-			).as("weapons"),
-			eb
-				.selectFrom("SplatoonPlayer")
-				.select(
-					sql<number | null>`"SplatoonPlayer"."peakXp" ->> '$.overall'`.as(
-						"xp",
-					),
-				)
-				.whereRef("SplatoonPlayer.userId", "=", "Build.ownerId")
-				.limit(1)
-				.as("peakXp"),
-		])
+		.select(["Build.id", "Build.ownerId", "Build.updatedAt"])
 		.where("Build.isPrivate", "=", 0)
-		.where("Build.updatedAt", "<", before);
+		.where("Build.updatedAt", ">", after)
+		.orderBy("Build.updatedAt", "desc")
+		.execute();
+}
 
-	if (ownerIds) {
-		if (ownerIds.length === 0) return Promise.resolve(undefined);
-		query = query.where("Build.ownerId", "in", ownerIds);
-	}
-	if (weaponSplId !== undefined) {
-		query = query.where((eb) =>
-			eb.exists(
-				eb
-					.selectFrom("BuildWeapon")
-					.select("BuildWeapon.buildId")
-					.whereRef("BuildWeapon.buildId", "=", "Build.id")
-					.where("BuildWeapon.weaponSplId", "=", weaponSplId),
-			),
-		);
-	}
-	if (minPeakXp !== undefined) {
-		query = query.where((eb) =>
-			eb.exists(
+export function findBuildById(buildId: number) {
+	return publicBuilds().where("Build.id", "=", buildId).executeTakeFirst();
+}
+
+/** For every weapon, the public build of it updated last by someone whose peak X Power is above `minPeakXp`. */
+export function findLatestBuildIdsOfHighXpOwners(minPeakXp: number) {
+	return (
+		db
+			.selectFrom("BuildWeapon")
+			// with max() SQLite takes the bare buildId from the row holding the maximum
+			.select((eb) => [
+				"BuildWeapon.weaponSplId",
+				"BuildWeapon.buildId",
+				eb.fn.max("BuildWeapon.updatedAt").as("updatedAt"),
+			])
+			.where("BuildWeapon.sortValue", "is not", null)
+			.where("BuildWeapon.ownerId", "in", (eb) =>
 				eb
 					.selectFrom("SplatoonPlayer")
-					.select("SplatoonPlayer.id")
-					.whereRef("SplatoonPlayer.userId", "=", "Build.ownerId")
+					.select("SplatoonPlayer.userId")
+					.where("SplatoonPlayer.userId", "is not", null)
 					// peak XP is denormalized as JSON
-					.where(
-						sql`"SplatoonPlayer"."peakXp" ->> '$.overall'`,
-						">",
-						minPeakXp,
-					),
-			),
-		);
-	}
-
-	return query.orderBy("Build.updatedAt", "desc").limit(1).executeTakeFirst();
+					.where(sql`"SplatoonPlayer"."peakXp" ->> '$.overall'`, ">", minPeakXp)
+					.$narrowType<{ userId: number }>(),
+			)
+			.groupBy("BuildWeapon.weaponSplId")
+			.execute()
+	);
 }
 
 export async function findLatestValidatedVideo(before: number) {
@@ -1670,7 +1365,8 @@ export async function findLatestValidatedVideo(before: number) {
 }
 
 /** The best X Rank placement of the latest month, of the users when one of them placed. */
-export async function findBestLatestXRankPlacement(userIds: number[]) {
+/** The X Rank placements of sendou.ink users from the latest month there are any, best first. */
+export async function findAllUserPlacementsOfLatestMonth() {
 	const latest = await db
 		.selectFrom("XRankPlacement")
 		.select(["XRankPlacement.year", "XRankPlacement.month"])
@@ -1678,9 +1374,9 @@ export async function findBestLatestXRankPlacement(userIds: number[]) {
 		.orderBy("XRankPlacement.month", "desc")
 		.limit(1)
 		.executeTakeFirst();
-	if (!latest) return;
+	if (!latest) return [];
 
-	const query = db
+	return db
 		.selectFrom("XRankPlacement")
 		.innerJoin("SplatoonPlayer", "SplatoonPlayer.id", "XRankPlacement.playerId")
 		.select([
@@ -1695,66 +1391,38 @@ export async function findBestLatestXRankPlacement(userIds: number[]) {
 		])
 		.where("XRankPlacement.year", "=", latest.year)
 		.where("XRankPlacement.month", "=", latest.month)
+		.where("SplatoonPlayer.userId", "is not", null)
 		.orderBy("XRankPlacement.rank", "asc")
-		.limit(1)
-		.$narrowType<{ userId: number }>();
+		.$narrowType<{ userId: number }>()
+		.execute();
+}
 
-	const ofUsers =
-		userIds.length > 0
-			? await query
-					.where("SplatoonPlayer.userId", "in", userIds)
-					.executeTakeFirst()
-			: undefined;
-
+/** Scanned matches with a replay code created before `before`, latest first. */
+export function findAllScannedMatchIdsWithReplayCode(before: number) {
 	return (
-		ofUsers ??
-		(await query
-			.where("SplatoonPlayer.userId", "is not", null)
-			.executeTakeFirst())
+		db
+			.selectFrom("IngestedMatch")
+			.select(["IngestedMatch.id", "IngestedMatch.povUserId"])
+			// the replay code lives inside the JSON column
+			.where(sql`"IngestedMatch"."data" ->> '$.replayCode'`, "is not", null)
+			.where("IngestedMatch.createdAt", "<", before)
+			.orderBy("IngestedMatch.createdAt", "desc")
+			.execute()
 	);
 }
 
-/** The latest scanned match with a replay code, of the users when any of them has one. */
-export async function findLatestScannedMatchWithReplayCode({
-	userIds,
-	before,
-}: {
-	userIds: number[];
-	before: number;
-}) {
-	const query = db
+export function findScannedMatchById(id: number) {
+	return db
 		.selectFrom("IngestedMatch")
 		.select(["IngestedMatch.povUserId", "IngestedMatch.data"])
-		// the replay code lives inside the JSON column
-		.where(sql`"IngestedMatch"."data" ->> '$.replayCode'`, "is not", null)
-		.where("IngestedMatch.createdAt", "<", before)
-		.orderBy("IngestedMatch.createdAt", "desc")
-		.limit(1);
-
-	const ofUsers =
-		userIds.length > 0
-			? await query
-					.where("IngestedMatch.povUserId", "in", userIds)
-					.executeTakeFirst()
-			: undefined;
-
-	return ofUsers ?? (await query.executeTakeFirst());
+		.where("IngestedMatch.id", "=", id)
+		.executeTakeFirst();
 }
 
 // ---------- Community ----------
 
-/** The latest friendship formed by one of the users with someone other than `excludedUserId`. */
-export function findLatestFriendshipOfUsers({
-	userIds,
-	excludedUserId,
-	before,
-}: {
-	userIds: number[];
-	excludedUserId: number;
-	before: number;
-}) {
-	if (userIds.length === 0) return Promise.resolve(undefined);
-
+/** Friendships formed after `after`, latest first. */
+export function findAllFriendshipsCreatedAfter(after: number) {
 	return db
 		.selectFrom("Friendship")
 		.select([
@@ -1762,18 +1430,9 @@ export function findLatestFriendshipOfUsers({
 			"Friendship.userTwoId",
 			"Friendship.createdAt",
 		])
-		.where((eb) =>
-			eb.or([
-				eb("Friendship.userOneId", "in", userIds),
-				eb("Friendship.userTwoId", "in", userIds),
-			]),
-		)
-		.where("Friendship.userOneId", "!=", excludedUserId)
-		.where("Friendship.userTwoId", "!=", excludedUserId)
-		.where("Friendship.createdAt", "<", before)
+		.where("Friendship.createdAt", ">", after)
 		.orderBy("Friendship.createdAt", "desc")
-		.limit(1)
-		.executeTakeFirst();
+		.execute();
 }
 
 /** Users in the same voice room as each other most recently, at least `minUsers` of them. */

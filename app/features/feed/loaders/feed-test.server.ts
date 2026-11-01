@@ -1,5 +1,4 @@
 import { requireUser } from "~/features/auth/core/user.server";
-import * as SplatoonRotationRepository from "~/features/splatoon-rotations/SplatoonRotationRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import * as FeedComments from "../core/FeedComments.server";
 import * as FeedItems from "../core/FeedItems.server";
@@ -28,7 +27,7 @@ export const loader = async () => {
 			),
 			ctx.now,
 		),
-		rotations: await SplatoonRotationRepository.findAll(),
+		rotations: await FeedItems.allRotations(),
 		rotationsNow: databaseTimestampNow(),
 		commentCounts: Object.fromEntries(
 			items.map((item) => [

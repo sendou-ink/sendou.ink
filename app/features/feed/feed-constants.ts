@@ -1,4 +1,5 @@
 import type { NavIcon } from "~/utils/urls";
+import type { FeedEventType } from "./feed-types";
 
 export const FEED_CATEGORIES = [
 	{ id: "SENDOUQ", label: "SendouQ", navIcon: "sendouq" },
@@ -517,6 +518,23 @@ export const FEED_BRACKET_PREVIEW_TOP_TEAMS = 4;
 
 /** Days without SendouQ sets or tournaments before playing again counts as a comeback */
 export const FEED_COMEBACK_MIN_BREAK_DAYS = 90;
+
+/** Days a feed event of the type is kept, the window its feed item looks back */
+export const FEED_EVENT_RETENTION_DAYS = {
+	COMEBACK: 30,
+	FIRST_TIME: 30,
+	SQ_MILESTONE: 60,
+	SQ_STREAK: 30,
+	SQ_PROMOTION: 60,
+	SQ_UPSET: 10,
+	SQ_RIVALRY: 60,
+	TO_RESULT: 14,
+} satisfies Record<FeedEventType, number>;
+
+/** Days of the feed event type kept the longest */
+export const FEED_EVENT_MAX_RETENTION_DAYS = Math.max(
+	...Object.values(FEED_EVENT_RETENTION_DAYS),
+);
 
 /** Smallest site total that counts as a milestone, after it every 1, 2 and 5 times a power of ten does */
 export const FEED_SITE_MILESTONE_MIN = 1000;
