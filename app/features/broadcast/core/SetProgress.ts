@@ -2,7 +2,6 @@ import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type {
 	BroadcastGame,
 	BroadcastMap,
-	BroadcastMatch,
 	LiveResults,
 	MatchProgress,
 } from "../broadcast-types";
@@ -96,17 +95,6 @@ export function liveResultCount({
 	return Math.min(liveResults.count, resultCount);
 }
 
-/** Whether each team (in bracket order) takes the set by winning the game being played. */
-export function isOnMatchPoint(
-	match: Pick<BroadcastMatch, "countType" | "count">,
-	progress: Pick<MatchProgress, "scores" | "isOver">,
-): [boolean, boolean] {
-	const needed = winsNeeded(match);
-	if (needed === null || progress.isOver) return [false, false];
-
-	return [progress.scores[0] === needed - 1, progress.scores[1] === needed - 1];
-}
-
 /** Index of the team (in bracket order) that won the set, `null` while it is going. */
 export function winner(progress: Pick<MatchProgress, "scores" | "isOver">) {
 	if (!progress.isOver || progress.scores[0] === progress.scores[1]) {
@@ -120,11 +108,4 @@ function score(results: Result[], teamId: number | null) {
 	if (teamId === null) return 0;
 
 	return results.filter((result) => result.winnerTeamId === teamId).length;
-}
-
-/** Game wins that take the set, e.g. 3 in a Bo5. `null` for a play all set, which has no such number. */
-function winsNeeded(match: Pick<BroadcastMatch, "countType" | "count">) {
-	if (match.countType !== "BEST_OF") return null;
-
-	return Math.ceil(match.count / 2);
 }

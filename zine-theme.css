@@ -641,7 +641,7 @@
 	color: var(--bc-text);
 }
 
-/* ---------- STINGER: the same design for all four built-in ones ---------- */
+/* ---------- STINGER ---------- */
 [data-part="stinger-panel"] {
 	--tilt: -2deg;
 
@@ -675,18 +675,9 @@
 	gap: 26px;
 }
 
-[data-part="stinger-info"] {
-	display: contents;
-}
-
 [data-part="stinger-card"]
 	:is(
 		[data-part="stinger-tournament-logo"],
-		[data-part="stinger-eyebrow"],
-		[data-part="stinger-headline"],
-		[data-part="stinger-tag"],
-		[data-part="stinger-map"],
-		[data-part="stinger-detail"],
 		[data-part="stinger-team"],
 		[data-part="stinger-vs"]
 	) {
@@ -711,41 +702,6 @@
 	border: 6px solid var(--bc-border);
 	box-shadow: var(--zine-shadow);
 	rotate: -5deg;
-}
-
-[data-part="stinger-eyebrow"] {
-	padding: 6px 20px;
-	background: var(--bc-border);
-	color: var(--bc-bg);
-	font-family: var(--bc-font-body);
-	font-size: 30px;
-	font-weight: 700;
-	text-transform: uppercase;
-	rotate: 1.5deg;
-}
-
-[data-part="stinger-headline"] {
-	padding: 22px 52px 10px;
-	border: 8px solid var(--bc-border);
-	background: var(--bc-surface);
-	color: var(--bc-text);
-	box-shadow: 18px 18px 0 var(--bc-border);
-	font-size: 140px;
-	font-weight: 400;
-	line-height: 1;
-	rotate: -2.5deg;
-}
-
-[data-part="stinger-tag"] {
-	--k: 3;
-
-	position: static;
-	margin-top: -50px;
-	padding: 8px 22px;
-	border: 4px solid var(--bc-border);
-	font-size: 30px;
-	font-weight: 400;
-	rotate: 5deg;
 }
 
 [data-part="stinger-teams"] {
@@ -813,40 +769,4 @@
 	color: var(--bc-bg);
 	font-size: 38px;
 	font-weight: 400;
-}
-
-[data-part="stinger-map"] {
-	display: flex;
-	gap: 22px;
-	margin-top: 10px;
-	padding: 12px 34px 12px 12px;
-	border: 6px solid var(--bc-border);
-	background: var(--bc-surface);
-	box-shadow: var(--zine-shadow);
-	rotate: 1.5deg;
-}
-
-[data-part="stinger-map"] > :first-child {
-	grid-area: auto;
-	border: 4px solid var(--bc-border);
-}
-[data-part="stinger-mode"] {
-	font-family: var(--bc-font-body);
-	font-weight: 700;
-	font-size: 24px;
-}
-[data-part="stinger-stage"] {
-	font-size: 40px;
-	font-weight: 400;
-}
-
-[data-part="stinger-detail"] {
-	padding: 8px 22px;
-	border: 4px solid var(--bc-border);
-	background: var(--bc-surface);
-	color: var(--bc-text);
-	box-shadow: var(--zine-shadow-small);
-	font-family: var(--bc-font-body);
-	font-size: 30px;
-	font-weight: 700;
 }

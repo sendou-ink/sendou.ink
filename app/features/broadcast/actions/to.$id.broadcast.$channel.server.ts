@@ -88,7 +88,7 @@ export const action = defineAction(
 			case "UPDATE_THEME": {
 				await BroadcastRepository.updateSettings({
 					...key,
-					patch: { css: body.css ?? "", stinger: body.stinger },
+					patch: { css: body.css ?? "", weaponImages: body.weaponImages },
 				});
 				break;
 			}

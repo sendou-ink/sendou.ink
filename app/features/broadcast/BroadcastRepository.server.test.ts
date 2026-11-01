@@ -70,7 +70,7 @@ describe("BroadcastRepository.updateSettings", () => {
 
 		await BroadcastRepository.updateSettings({
 			...key,
-			patch: { css: "body { color: red; }", stinger: "burst" },
+			patch: { css: "body { color: red; }", weaponImages: "outlined" },
 		});
 		await BroadcastRepository.updateSettings({
 			...key,
@@ -80,7 +80,7 @@ describe("BroadcastRepository.updateSettings", () => {
 		const broadcast = await BroadcastRepository.findByChannel(key);
 		expect(broadcast?.settings).toEqual({
 			css: "body { color: red; }",
-			stinger: "burst",
+			weaponImages: "outlined",
 			headline: "Finals at 18:00",
 			casterIds: [1, 2],
 		});

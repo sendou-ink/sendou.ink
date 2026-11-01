@@ -198,13 +198,13 @@ export default function BroadcastDashboardPage() {
 					<SendouForm
 						schema={broadcastThemeFormSchema}
 						defaultValues={{
-							stinger: state.settings.stinger,
+							weaponImages: state.settings.weaponImages,
 							css: state.settings.css || null,
 						}}
 					>
 						{({ FormField }) => (
 							<>
-								<FormField name="stinger" />
+								<FormField name="weaponImages" />
 								<FormField name="css" />
 							</>
 						)}

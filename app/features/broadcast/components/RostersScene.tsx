@@ -5,6 +5,7 @@ import type {
 	BroadcastPlayer,
 	BroadcastState,
 	BroadcastView,
+	BroadcastWeaponImages,
 } from "../broadcast-types";
 import {
 	type MatchSide,
@@ -57,7 +58,11 @@ export function RostersScene({
 			{match ? (
 				<div className={styles.teams}>
 					{matchSides(match, view, state[view]).map((side) => (
-						<RosterTeam key={side.side} side={side} />
+						<RosterTeam
+							key={side.side}
+							side={side}
+							weaponImages={state.settings.weaponImages}
+						/>
 					))}
 					<div className={styles.versus} {...part("versus")}>
 						<span>{t("broadcast:overlay.vs")}</span>
@@ -68,7 +73,13 @@ export function RostersScene({
 	);
 }
 
-function RosterTeam({ side }: { side: MatchSide }) {
+function RosterTeam({
+	side,
+	weaponImages,
+}: {
+	side: MatchSide;
+	weaponImages: BroadcastWeaponImages;
+}) {
 	const { t } = useTranslation(["broadcast"]);
 	const players = side.team?.players ?? [];
 
@@ -96,6 +107,7 @@ function RosterTeam({ side }: { side: MatchSide }) {
 					<Player
 						key={player.userId}
 						player={player}
+						weaponImages={weaponImages}
 						style={{ "--i": i } as React.CSSProperties}
 					/>
 				))}
@@ -106,9 +118,11 @@ function RosterTeam({ side }: { side: MatchSide }) {
 
 function Player({
 	player,
+	weaponImages,
 	style,
 }: {
 	player: BroadcastPlayer;
+	weaponImages: BroadcastWeaponImages;
 	style: React.CSSProperties;
 }) {
 	return (
@@ -132,7 +146,7 @@ function Player({
 					<WeaponImage
 						key={weaponSplId}
 						weaponSplId={weaponSplId}
-						variant="build"
+						variant={weaponImages === "outlined" ? "badge" : "build"}
 						size={52}
 						loading="eager"
 					/>
