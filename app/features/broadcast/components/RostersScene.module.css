@@ -164,12 +164,6 @@
 	margin: 0;
 	padding: 0;
 	list-style: none;
-
-	&[data-dense] {
-		--player-height: 60px;
-
-		gap: 8px;
-	}
 }
 
 .player {
@@ -186,10 +180,6 @@
 
 	[data-team="b"] & {
 		flex-direction: row-reverse;
-	}
-
-	&[data-active="false"] {
-		opacity: 0.4;
 	}
 }
 
@@ -214,16 +204,6 @@
 	[data-team="b"] & {
 		text-align: right;
 	}
-}
-
-.sub {
-	padding: 2px 10px;
-	border-radius: var(--bc-radius-small);
-	background: var(--bc-bg);
-	color: var(--bc-text-muted);
-	font-size: 16px;
-	font-weight: 700;
-	text-transform: uppercase;
 }
 
 .weapons {

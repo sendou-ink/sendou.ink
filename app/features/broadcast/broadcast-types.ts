@@ -171,8 +171,5 @@ export interface BroadcastPlayer {
 	userId: number;
 	name: string;
 	avatarUrl: string | null;
-	isSub: boolean;
-	/** Part of the set's active roster. `null` when the team has not picked one. */
-	isActive: boolean | null;
 	weapons: MainWeaponId[];
 }
