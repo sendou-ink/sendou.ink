@@ -61,6 +61,11 @@
 }
 
 .teams {
+	--team-logo-size: 132px;
+	--team-header-padding: 20px;
+	--team-header-border: 6px;
+	--versus-size: 112px;
+
 	position: absolute;
 	top: 236px;
 	right: 96px;
@@ -73,13 +78,20 @@
 
 .versus {
 	position: absolute;
-	top: 46px;
+	top: calc(
+		var(--team-logo-size) +
+		var(--team-header-padding) +
+		var(--team-header-border) /
+		2 -
+		var(--versus-size) /
+		2
+	);
 	left: 50%;
 	display: grid;
 	place-items: center;
-	width: 112px;
-	height: 112px;
-	margin-left: -56px;
+	width: var(--versus-size);
+	height: var(--versus-size);
+	margin-left: calc(var(--versus-size) / -2);
 	border-radius: 50%;
 	background: var(--bc-accent);
 	color: var(--bc-accent-text);
@@ -106,19 +118,21 @@
 	display: flex;
 	align-items: center;
 	gap: 28px;
-	padding-bottom: 20px;
-	border-bottom: 6px solid var(--team-color);
+	padding-bottom: var(--team-header-padding);
+	border-bottom: var(--team-header-border) solid var(--team-color);
+	border-image: linear-gradient(to right, transparent, var(--team-color)) 1;
 	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
 		calc(var(--scene-enter-delay) + var(--bc-stagger)) both;
 
 	[data-team="b"] > & {
 		flex-direction: row-reverse;
 		text-align: right;
+		border-image: linear-gradient(to left, transparent, var(--team-color)) 1;
 	}
 }
 
 .teamLogo {
-	width: 132px;
+	width: var(--team-logo-size);
 }
 
 .teamTitle {

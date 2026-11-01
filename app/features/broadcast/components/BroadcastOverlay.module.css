@@ -9,9 +9,10 @@
 	/* colors */
 	--bc-bg: var(--color-bg);
 	--bc-surface: var(--color-bg-high);
+	--bc-surface-high: var(--color-bg-higher);
 	--bc-border: var(--color-border);
 	--bc-text: var(--color-text);
-	--bc-text-muted: var(--color-text-high);
+	--bc-text-muted: color-mix(in oklch, var(--color-text) 45%, var(--color-text-high));
 	--bc-accent: var(--color-fill-accent);
 	--bc-accent-text: var(--color-fg-on-accent);
 	--bc-team-a: var(--color-chart-alpha);

@@ -141,11 +141,6 @@ function GameCard({
 				<span className={styles.gameNumber} {...part("game-number")}>
 					{number}
 				</span>
-				{isCurrent ? (
-					<span className={styles.nextBadge} {...part("up-next")}>
-						{t("broadcast:overlay.upNext")}
-					</span>
-				) : null}
 			</div>
 			<div className={styles.body}>
 				{game.map ? (
@@ -172,6 +167,10 @@ function GameCard({
 					<span className={styles.winnerName}>
 						{winner.team?.name ?? t("broadcast:overlay.tbd")}
 					</span>
+				</div>
+			) : isCurrent ? (
+				<div className={styles.upNext} {...part("up-next")}>
+					{t("broadcast:overlay.upNext")}
 				</div>
 			) : null}
 		</li>
