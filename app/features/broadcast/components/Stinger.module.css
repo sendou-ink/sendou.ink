@@ -264,7 +264,6 @@
 
 .teamLogo {
 	width: 88px;
-	border: 4px solid var(--team-color);
 }
 
 .teamName {
@@ -402,7 +401,6 @@
 
 	& .teamLogo {
 		width: 260px;
-		border: 8px solid var(--team-color-text);
 	}
 
 	& .teamName {

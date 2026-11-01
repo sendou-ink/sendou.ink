@@ -118,7 +118,6 @@ export const BROADCAST_SCENE_PARTS = {
 		"team",
 		"team-name",
 		"team-score",
-		"match-point",
 		"map-intro",
 		"game-number",
 		"mode",
