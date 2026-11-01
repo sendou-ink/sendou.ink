@@ -22,11 +22,16 @@ import * as R from "remeda";
 import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
 import { SendouSection } from "~/components/elements/Section";
 import { InviteLinkInput } from "~/components/InviteLinkInput";
 import { Config } from "~/config";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
 import {
@@ -312,31 +317,30 @@ function TransitionBus({
 	onRehearse: () => void;
 }) {
 	const { t } = useTranslation(["broadcast"]);
+	const { submit } = useActionSubmit(broadcastActionSchema);
 
 	return (
 		<div className={styles.transitionBus}>
 			<div className={styles.busLabel}>
 				{t("broadcast:dashboard.transition")}
 			</div>
-			<div className={styles.transitions}>
+			<SendouChipRadioGroup
+				orientation="vertical"
+				className={styles.transitions}
+				aria-label={t("broadcast:dashboard.transition")}
+			>
 				{BROADCAST_TRANSITIONS.map((transition) => (
-					<ActionButton
+					<SendouChipRadio
 						key={transition}
-						schema={broadcastActionSchema}
-						action="SET_NEXT_TRANSITION"
-						fields={{ transition }}
-						size="small"
-						variant={
-							state.next.transition === transition ? "primary" : "outlined"
-						}
-						className={styles.transition}
-						formClassName={styles.transitionForm}
-						testId={`broadcast-transition-${transition}`}
+						name="broadcast-transition"
+						value={transition}
+						checked={state.next.transition === transition}
+						onChange={() => submit("SET_NEXT_TRANSITION", { transition })}
 					>
 						{t(`broadcast:transition.${transition}`)}
-					</ActionButton>
+					</SendouChipRadio>
 				))}
-			</div>
+			</SendouChipRadioGroup>
 			<SendouButton
 				size="small"
 				variant="minimal"
