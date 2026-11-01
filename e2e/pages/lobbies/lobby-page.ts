@@ -48,6 +48,8 @@ export class LobbyPage {
 				.last(),
 			settingsButton: page.getByTestId("lobby-settings-button"),
 			copyShareLinkButton: page.getByTestId("lobby-copy-share-link-button"),
+			// shown in place of a link-only lobby opened without its link
+			inviteOnlyHeading: page.getByRole("heading", { name: "Invite only" }),
 			disputedText: page.getByText("The result was disputed"),
 			leaderboardRows: page.getByTestId("lobby-leaderboard-row"),
 			endLobbyButton: page.getByTestId("lobby-end-button"),

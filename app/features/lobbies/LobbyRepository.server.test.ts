@@ -123,6 +123,22 @@ describe("LobbyRepository visibility", () => {
 		expect(asParticipant?.shareKey).toBeNull();
 	});
 
+	test.each([
+		{ why: "a link-only lobby is", visibility: "LINK_ONLY", expected: true },
+		{ why: "a public lobby isn't", visibility: null, expected: false },
+	] as const)("isLinkOnlyById: $why", async ({ visibility, expected }) => {
+		const lobby = await LobbyFactory.create({
+			hostUserId: hostId(),
+			visibility,
+		});
+
+		expect(await LobbyRepository.isLinkOnlyById(lobby.id)).toBe(expected);
+	});
+
+	test("isLinkOnlyById: a missing lobby isn't", async () => {
+		expect(await LobbyRepository.isLinkOnlyById(999_999)).toBe(false);
+	});
+
 	test("link-only: a lobby with visibility has no share key", async () => {
 		const lobby = await LobbyFactory.create({ hostUserId: hostId() });
 

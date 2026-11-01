@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "react-router";
+import { data, type LoaderFunctionArgs, redirect } from "react-router";
 import * as R from "remeda";
 import { getUser } from "~/features/auth/core/user.server";
 import * as RouteChatRooms from "~/features/chat/RouteChatRooms.server";
@@ -7,15 +7,17 @@ import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerInges
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import * as SearchParams from "~/modules/search-params/search-params";
 import { databaseTimestampNow } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import { notFound, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
 import * as Leaderboard from "../core/Leaderboard";
 import * as LobbySet from "../core/LobbySet";
 import * as LobbyState from "../core/LobbyState";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
+import { LOBBY_LINK_ONLY_ERROR } from "../lobbies-constants";
 import { lobbySearchParams } from "../lobbies-search-params";
 
 export type LobbyLoaderData = SerializeFrom<typeof loader>;
@@ -28,15 +30,24 @@ const RESOLVED_NOTIFICATION_TYPES = [
 	"LOBBY_READY_CHECK",
 ] as const;
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 	const user = getUser();
 	const { id } = parseParams({ params, schema: idObject });
 
-	const lobby = notFoundIfNullish(
-		await LobbyRepository.findById(id, {
-			shareKey: lobbySearchParams.parse(request).key,
-		}),
-	);
+	const { key } = lobbySearchParams.parse(request);
+
+	const lobby = await LobbyRepository.findById(id, { shareKey: key });
+	if (!lobby) {
+		if (await LobbyRepository.isLinkOnlyById(id)) {
+			throw data(LOBBY_LINK_ONLY_ERROR, { status: 403 });
+		}
+		notFound();
+	}
+
+	// keeps the address bar a working invite link
+	if (lobby.shareKey !== null && key !== lobby.shareKey) {
+		throw redirect(withShareKey(url, lobby.shareKey));
+	}
 
 	const sets = await LobbyMatchRepository.findAllSetsByLobbyId(id);
 	const reportedWeapons = await ReportedWeaponRepository.findAllByLobbyId(id);
@@ -142,6 +153,16 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		),
 	};
 };
+
+function withShareKey(url: URL, shareKey: string) {
+	const { next } = SearchParams.applyToSearchParams(
+		lobbySearchParams,
+		url.searchParams,
+		{ key: shareKey },
+	);
+
+	return `${url.pathname}?${next}`;
+}
 
 /** One weapon per player per reported map: reported by hand or by the scanner, else read from a linked scoreboard. */
 function playedWeapons({

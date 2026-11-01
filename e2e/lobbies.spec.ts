@@ -419,7 +419,8 @@ test.describe("Lobbies", () => {
 	 * A lobby limited to an association is listed only to its members, its card marked as
 	 * such, and its page is not found for others. A link-only lobby is listed to no one but
 	 * its participants: others find it only through the link its host shares, and once
-	 * signed up they find it without the link too. Only the host gets the link to share.
+	 * signed up they find it without the link too. Only the host gets the link to share, and
+	 * their address bar always shows it. Without the link others are told the lobby is invite only.
 	 */
 	test.describe("Visibility", () => {
 		test("a lobby limited to an association is hidden from outsiders", async ({
@@ -468,7 +469,6 @@ test.describe("Lobbies", () => {
 			await factories.UserFactory.setFriendCode(ADMIN_ID);
 			const lobbyPage = new LobbyPage(page);
 			const lobbies = new LobbiesPage(page);
-			const errorPage = new ErrorPage(page);
 
 			await impersonate(page, ADMIN_ID);
 			const newLobby = new NewLobbyPage(page);
@@ -481,7 +481,15 @@ test.describe("Lobbies", () => {
 			const lobbyId = Number(new URL(page.url()).pathname.split("/").at(-1));
 			const shareLink = await lobbyPage.copyShareLink();
 
-			await test.step("Without the link an outsider neither sees it listed nor finds its page", async () => {
+			await test.step("The host's address bar shows the link", async () => {
+				expect(new URL(page.url()).search).toBe(new URL(shareLink).search);
+
+				await lobbyPage.goto(lobbyId);
+				await expect(lobbyPage.heading(LOBBY_NAME)).toBeVisible();
+				expect(new URL(page.url()).search).toBe(new URL(shareLink).search);
+			});
+
+			await test.step("Without the link an outsider neither sees it listed nor its page", async () => {
 				await impersonate(page, outsider.id);
 				await lobbies.goto();
 				await lobbies.openTab("running");
@@ -489,7 +497,8 @@ test.describe("Lobbies", () => {
 				await expect(lobbies.card(LOBBY_NAME)).toHaveCount(0);
 
 				await lobbyPage.goto(lobbyId);
-				await expect(errorPage.locators.notFoundHeading).toBeVisible();
+				await expect(lobbyPage.locators.inviteOnlyHeading).toBeVisible();
+				await isNotVisible(lobbyPage.heading(LOBBY_NAME));
 			});
 
 			await test.step("Through the link a visitor opens it and signs up", async () => {

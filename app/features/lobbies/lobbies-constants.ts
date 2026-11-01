@@ -66,3 +66,6 @@ export type LobbyParticipantStatus =
 	| "WAITLISTED"
 	| "CHECKED_IN"
 	| "IN_ROOM";
+
+/** Error data of a link-only lobby opened without its share key */
+export const LOBBY_LINK_ONLY_ERROR = "LINK_ONLY";

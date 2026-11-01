@@ -127,6 +127,18 @@ export async function findById(
 	};
 }
 
+/** Whether the lobby exists and is link-only, seen only through its share link by those not participating. No visibility scoping. */
+export async function isLinkOnlyById(id: number) {
+	const row = await db
+		.selectFrom("Lobby")
+		.select("Lobby.id")
+		.where("Lobby.id", "=", id)
+		.where("Lobby.shareKey", "is not", null)
+		.executeTakeFirst();
+
+	return Boolean(row);
+}
+
 /** Which of the lobbies the user may see, by visibility or as a participant, and whether a spot in them is free. */
 export async function findAllVisible({
 	userId,
