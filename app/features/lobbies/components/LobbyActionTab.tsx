@@ -272,10 +272,10 @@ function ConfirmationTab({
 						</SendouButton>
 					</div>
 				) : null}
-				<WeaponReporter {...weaponReport} />
 				<div className="stack horizontal sm justify-center items-center">
 					<LeaveActions set={set} />
 				</div>
+				<WeaponReporter {...weaponReport} />
 			</div>
 		</SendouTabPanel>
 	);
