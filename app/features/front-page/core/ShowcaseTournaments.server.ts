@@ -10,6 +10,7 @@ import {
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as SeriesTeamCount from "~/features/tournament-organization/core/SeriesTeamCount.server";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
+import { truncateWithOverflow } from "~/utils/arrays";
 import { cache, ttl } from "~/utils/cache.server";
 import {
 	databaseTimestampToDate,
@@ -406,25 +407,24 @@ function buildFirstPlacerEntry(
 	{ withMembers }: { withMembers: boolean },
 ): ShowcaseCalendarEvent["firstPlacers"][number] {
 	const first = rows[0];
-	const members = withMembers
-		? rows.slice(0, MEMBERS_TO_SHOW).map((row) => ({
-				customUrl: row.customUrl,
-				avatar: row.avatar,
-				id: row.id,
-				username: row.username,
-				country: row.country,
-			}))
-		: [];
+	const { shown, hiddenCount } = truncateWithOverflow(
+		withMembers ? rows : [],
+		MEMBERS_TO_SHOW,
+	);
+	const members = shown.map((row) => ({
+		customUrl: row.customUrl,
+		avatar: row.avatar,
+		id: row.id,
+		username: row.username,
+		country: row.country,
+	}));
 
 	return {
 		teamName: first.teamName,
 		logoUrl: first.teamLogoUrl ?? first.pickupAvatarUrl,
 		div: first.div,
 		members,
-		notShownMembersCount:
-			withMembers && rows.length > MEMBERS_TO_SHOW
-				? rows.length - MEMBERS_TO_SHOW
-				: 0,
+		notShownMembersCount: hiddenCount,
 	};
 }
 

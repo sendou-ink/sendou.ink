@@ -9,6 +9,7 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
+import { truncateWithOverflow } from "~/utils/arrays";
 import type { CommonUser } from "~/utils/kysely.server";
 import {
 	type NavIcon,
@@ -37,8 +38,7 @@ export function UserStack({
 	users: Array<Pick<CommonUser, "id" | "avatar">>;
 	max?: number;
 }) {
-	const shown = users.slice(0, max);
-	const hiddenCount = users.length - shown.length;
+	const { shown, hiddenCount } = truncateWithOverflow(users, max);
 
 	return (
 		<span className={styles.stack}>
