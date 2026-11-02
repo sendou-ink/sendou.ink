@@ -6,10 +6,10 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { SendouForm } from "~/form/SendouForm";
 import { metaTags } from "~/utils/remix";
+import { smallImageUrl } from "~/utils/urls";
 import { action } from "../actions/admin.streams.server";
 import { createExternalStreamSchema } from "../admin-schemas";
 import { loader } from "../loaders/admin.streams.server";
-
 import styles from "./admin.streams.module.css";
 
 export { action, loader };
@@ -57,7 +57,7 @@ function ExternalStreamList() {
 					<li key={stream.id} className={styles.streamRow}>
 						{stream.avatarUrl ? (
 							<img
-								src={stream.avatarUrl}
+								src={smallImageUrl(stream.avatarUrl)}
 								alt=""
 								className={styles.streamAvatar}
 							/>

@@ -55,6 +55,7 @@ import {
 	BLANK_IMAGE_URL,
 	calendarEventPage,
 	navIconUrl,
+	smallImageUrl,
 	tournamentPage,
 	trophyTournamentsPage,
 } from "~/utils/urls";
@@ -587,7 +588,12 @@ function EventInfo({
 				className={styles.eventInfo}
 			>
 				{event.logoUrl ? (
-					<img src={event.logoUrl} alt={event.name} width={38} height={38} />
+					<img
+						src={smallImageUrl(event.logoUrl)}
+						alt={event.name}
+						width={38}
+						height={38}
+					/>
 				) : null}
 				<div>
 					<div>{event.name}</div>
@@ -634,7 +640,7 @@ function EventWinners({
 						<Placement placement={1} size={24} />
 						{winner.avatarUrl ? (
 							<img
-								src={winner.avatarUrl}
+								src={smallImageUrl(winner.avatarUrl)}
 								alt=""
 								width={24}
 								height={24}

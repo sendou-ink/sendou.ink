@@ -2,7 +2,12 @@
 
 import { PassThrough } from "node:stream";
 import type { PutObjectCommandInput } from "@aws-sdk/client-s3";
-import { S3 } from "@aws-sdk/client-s3";
+import {
+	NoSuchKey,
+	NotFound,
+	S3,
+	S3ServiceException,
+} from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { writeAsyncIterableToWritable } from "@react-router/node";
 import { ServerConfig } from "~/config.server";
@@ -49,6 +54,45 @@ export async function uploadImmutableToS3({
 		ContentType: contentType,
 		CacheControl: IMMUTABLE_CACHE_CONTROL,
 	});
+}
+
+/** The object's bytes, `null` when there is no object under `key`. */
+export async function downloadFromS3(key: string) {
+	try {
+		const object = await s3Client().getObject({
+			Bucket: ServerConfig.storage.bucket,
+			Key: key,
+		});
+		return object.Body ? await object.Body.transformToByteArray() : null;
+	} catch (error) {
+		if (
+			error instanceof NoSuchKey ||
+			(error instanceof S3ServiceException &&
+				error.$metadata.httpStatusCode === 404)
+		) {
+			return null;
+		}
+		throw error;
+	}
+}
+
+export async function existsInS3(key: string) {
+	try {
+		await s3Client().headObject({
+			Bucket: ServerConfig.storage.bucket,
+			Key: key,
+		});
+		return true;
+	} catch (error) {
+		if (
+			error instanceof NotFound ||
+			(error instanceof S3ServiceException &&
+				error.$metadata.httpStatusCode === 404)
+		) {
+			return false;
+		}
+		throw error;
+	}
 }
 
 export async function deleteFromS3(keys: string[]) {

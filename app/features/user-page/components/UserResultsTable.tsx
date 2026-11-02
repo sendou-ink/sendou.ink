@@ -9,7 +9,11 @@ import { Table } from "~/components/Table";
 import { TierPill } from "~/components/TierPill";
 import { UserLink } from "~/components/UserLink";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
-import { calendarEventPage, tournamentTeamPage } from "~/utils/urls";
+import {
+	calendarEventPage,
+	smallImageUrl,
+	tournamentTeamPage,
+} from "~/utils/urls";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
 import {
 	HIGHLIGHT_CHECKBOX_NAME,
@@ -93,7 +97,7 @@ export function UserResultsTable({
 										<>
 											{result.logoUrl ? (
 												<img
-													src={result.logoUrl}
+													src={smallImageUrl(result.logoUrl)}
 													alt=""
 													width={24}
 													height={24}

@@ -22,6 +22,7 @@ import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import {
 	navIconUrl,
+	smallImageUrl,
 	teamPage,
 	userPage,
 	weaponCategoryUrl,
@@ -510,7 +511,7 @@ function ResultItem({ result }: { result: SearchResult }) {
 				<SearchResultsItemRow>
 					{result.logoUrl ? (
 						<img
-							src={result.logoUrl}
+							src={smallImageUrl(result.logoUrl)}
 							alt=""
 							width={24}
 							height={24}

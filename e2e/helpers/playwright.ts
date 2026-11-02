@@ -755,6 +755,27 @@ export function loaderDataJson(page: Page): Promise<string> {
 	);
 }
 
+const SMALL_IMAGE_COPY_WIDTH_PX = 80;
+
+/** Asserts the `<img>` shows the downscaled (`-small`) or the full copy of an uploaded image, and that it really loaded. */
+export async function expectUploadedImage(
+	locator: Locator,
+	copy: "small" | "full",
+) {
+	const naturalWidth = () =>
+		locator.evaluate((img: HTMLImageElement) =>
+			img.complete ? img.naturalWidth : 0,
+		);
+
+	if (copy === "small") {
+		await expect(locator).toHaveAttribute("src", /-small\.\w+$/);
+		await expect.poll(naturalWidth).toBe(SMALL_IMAGE_COPY_WIDTH_PX);
+	} else {
+		await expect(locator).not.toHaveAttribute("src", /-small\.\w+$/);
+		await expect.poll(naturalWidth).toBeGreaterThan(SMALL_IMAGE_COPY_WIDTH_PX);
+	}
+}
+
 export function isNotVisible(locator: Locator) {
 	return expect(locator).toHaveCount(0);
 }

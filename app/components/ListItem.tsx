@@ -2,6 +2,7 @@ import clsx from "clsx";
 import type * as React from "react";
 import { Link } from "react-router";
 import type { CommonUser } from "~/utils/kysely.server";
+import { smallImageUrl } from "~/utils/urls";
 import { Avatar } from "./Avatar";
 import styles from "./ListItem.module.css";
 
@@ -101,7 +102,12 @@ export function ListItemButton({
 
 export function ListItemImage({ src }: { src: string }) {
 	return (
-		<img src={src} alt="" className={styles.listLinkImage} loading="lazy" />
+		<img
+			src={smallImageUrl(src)}
+			alt=""
+			className={styles.listLinkImage}
+			loading="lazy"
+		/>
 	);
 }
 
@@ -162,7 +168,7 @@ function ListItemContent({
 			) : imageUrl ? (
 				<div className={styles.listLinkImageContainer}>
 					<img
-						src={imageUrl}
+						src={smallImageUrl(imageUrl)}
 						alt=""
 						className={styles.listLinkImage}
 						loading="lazy"

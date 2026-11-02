@@ -14,7 +14,7 @@ import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSpoilerFree } from "~/hooks/useSpoilerFree";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { navIconUrl } from "~/utils/urls";
+import { navIconUrl, smallImageUrl } from "~/utils/urls";
 import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
 import { Tags } from "./Tags";
 import styles from "./TournamentCard.module.css";
@@ -69,7 +69,7 @@ export function TournamentCard({
 					{tournament.logoUrl ? (
 						<div className={styles.imgContainer}>
 							<img
-								src={tournament.logoUrl}
+								src={smallImageUrl(tournament.logoUrl)}
 								width={32}
 								height={32}
 								className={styles.avatarImg}
@@ -219,7 +219,7 @@ function TournamentFirstPlacerWithMembers({
 			<div className="stack xs horizontal items-center text-xs">
 				{!censored && placer.logoUrl ? (
 					<img
-						src={placer.logoUrl}
+						src={smallImageUrl(placer.logoUrl)}
 						alt=""
 						width={24}
 						className="rounded-full"

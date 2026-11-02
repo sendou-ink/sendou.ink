@@ -32,6 +32,7 @@ import {
 	SENDOU_INK_BASE_URL,
 	SETTINGS_PAGE,
 	SUPPORT_PAGE,
+	smallImageUrl,
 	teamPage,
 	userPage,
 } from "~/utils/urls";
@@ -588,7 +589,7 @@ function YouPanel({
 					>
 						{user.team.avatarUrl ? (
 							<img
-								src={user.team.avatarUrl}
+								src={smallImageUrl(user.team.avatarUrl)}
 								alt=""
 								className={styles.youPanelTeamAvatar}
 								width={22}

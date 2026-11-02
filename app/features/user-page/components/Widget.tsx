@@ -67,6 +67,7 @@ import {
 	modeImageUrl,
 	navIconUrl,
 	smallImageFileName,
+	smallImageUrl,
 	teamPage,
 	userBuildsPage,
 	userResultsPage,
@@ -448,7 +449,7 @@ function Memberships({
 					{membership.logoUrl ? (
 						<img
 							alt=""
-							src={membership.logoUrl}
+							src={smallImageUrl(membership.logoUrl)}
 							width={42}
 							height={42}
 							className="rounded-full"
@@ -494,7 +495,7 @@ function HighlightedResults({
 								<div className={styles.tournamentName}>
 									{result.logoUrl ? (
 										<img
-											src={result.logoUrl}
+											src={smallImageUrl(result.logoUrl)}
 											alt=""
 											width={18}
 											height={18}

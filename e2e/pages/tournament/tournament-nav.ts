@@ -14,6 +14,10 @@ export class TournamentNav {
 		this.locators = {
 			teamsTab: page.locator('[data-testid="teams-tab"]:visible'),
 			registerTab: page.locator('[data-testid="register-tab"]:visible'),
+			logo: page
+				.getByRole("navigation", { name: "Tournament navigation" })
+				.locator("img")
+				.first(),
 		};
 	}
 

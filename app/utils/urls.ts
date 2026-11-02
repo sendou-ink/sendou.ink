@@ -45,6 +45,20 @@ export function smallImageFileName(fileName: string) {
 	return `${withoutExtension}-small.${extension}`;
 }
 
+/**
+ * URL of the downscaled copy of a user submitted logo or avatar, for displays of 44px or smaller.
+ * Any other URL (static assets, already small copies) is returned unchanged.
+ */
+export function smallImageUrl(url: string) {
+	const root = `${USER_SUBMITTED_IMAGE_ROOT}/`;
+	if (!url.startsWith(root)) return url;
+
+	const fileName = url.slice(root.length);
+	if (!fileName.includes(".") || /-small\.\w+$/.test(fileName)) return url;
+
+	return userSubmittedImageUrl(smallImageFileName(fileName));
+}
+
 /** URL of a user's avatar by its file name (`CommonUser["avatar"]`). */
 export const avatarUrl = (avatar: string, size: "lg" | "sm") =>
 	userSubmittedImageUrl(size === "sm" ? smallImageFileName(avatar) : avatar);

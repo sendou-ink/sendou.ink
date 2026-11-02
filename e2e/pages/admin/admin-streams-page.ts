@@ -30,6 +30,13 @@ export class AdminStreamsPage {
 		return this.page.getByRole("link", { name });
 	}
 
+	streamLogo(name: string) {
+		return this.page
+			.getByRole("listitem")
+			.filter({ hasText: name })
+			.locator("img");
+	}
+
 	async createStream({
 		name,
 		url,

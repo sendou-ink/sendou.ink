@@ -136,14 +136,15 @@ export function image(args: {
 	bottomText?: FormsTranslationKey;
 	dimensions?: "logo" | "thick-banner" | { width: number; height: number };
 	autoValidate?: boolean;
-	withSmallCopy?: boolean;
 }) {
+	const dimensions = args.dimensions ?? "logo";
+
 	return register(imageValue, {
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
-		dimensions: args.dimensions ?? "logo",
+		dimensions,
 		autoValidate: args.autoValidate ?? false,
-		withSmallCopy: args.withSmallCopy ?? false,
+		withSmallCopy: dimensions === "logo",
 		type: "image",
 		initialValue: null,
 	});

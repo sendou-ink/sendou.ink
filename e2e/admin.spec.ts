@@ -6,6 +6,7 @@ import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { SPLATOON_3_XP_BADGE_VALUES } from "~/features/badges/badges-constants";
 import {
 	expect,
+	expectUploadedImage,
 	impersonate,
 	isNotVisible,
 	navigate,
@@ -189,6 +190,7 @@ test.describe("Admin panel", () => {
 		});
 
 		await expect(streams.streamLink("E2E Stream")).toBeVisible();
+		await expectUploadedImage(streams.streamLogo("E2E Stream"), "small");
 		await isNotVisible(streams.locators.noStreams);
 
 		await streams.deleteStream("E2E Stream");

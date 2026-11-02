@@ -12,7 +12,7 @@ import {
 } from "~/components/layout/ActivityPanel";
 import type { BracketsPageState } from "~/features/tournament-bracket/routes/to.$id.brackets";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
-import { navIconUrl } from "~/utils/urls";
+import { navIconUrl, smallImageUrl } from "~/utils/urls";
 import { useGlobalStatus } from "../GlobalStatusProvider";
 import type { GlobalStatus, GlobalStatusState } from "../global-status-types";
 import styles from "./StatusActivity.module.css";
@@ -177,7 +177,7 @@ function StatusSubtitle({ status }: { status: GlobalStatus }) {
 function StatusIcon({ status, size }: { status: GlobalStatus; size: number }) {
 	const icon = status.logoUrl ? (
 		<img
-			src={status.logoUrl}
+			src={smallImageUrl(status.logoUrl)}
 			width={size}
 			height={size}
 			alt=""

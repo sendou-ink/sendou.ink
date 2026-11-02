@@ -1,3 +1,4 @@
+import path from "node:path";
 import { addDays, addHours, startOfHour, subDays, subHours } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
@@ -6,6 +7,7 @@ import { calendarEventPage } from "~/utils/urls";
 import {
 	datetimeLocalValue,
 	expect,
+	expectUploadedImage,
 	impersonate,
 	isNotVisible,
 	test,
@@ -21,6 +23,10 @@ import { TournamentRulesPage } from "./pages/tournament/tournament-rules-page";
 
 const SENDOU_INK_TOURNAMENTS_COUNT = 3;
 const EXTERNAL_EVENTS_COUNT = 2;
+const TEST_IMAGE_PATH = path.join(
+	import.meta.dirname,
+	"fixtures/test-image.png",
+);
 
 test.describe("Calendar", () => {
 	test("applies filters and operates hidden events toggle", async ({
@@ -230,6 +236,7 @@ test.describe("Calendar", () => {
 			"An automated test tournament",
 		);
 		await newTournament.setFirstDate(startTime);
+		await newTournament.form.setImage("avatarImgId", TEST_IMAGE_PATH);
 		await newTournament.form.fill("discordInviteCode", "test-invite");
 
 		// flip a tournament setting away from its default
@@ -255,6 +262,10 @@ test.describe("Calendar", () => {
 		const tournamentInfo = new TournamentInfoPage(page);
 		await tournamentInfo.goto(tournamentId);
 		await expect(tournamentInfo.startTime(startTime).first()).toBeVisible();
+
+		// the uploaded logo is stored with a downscaled copy for small spots
+		await expectUploadedImage(tournamentInfo.locators.headerLogo, "full");
+		await expectUploadedImage(tournamentInfo.nav.locators.logo, "small");
 
 		const brackets = new TournamentBracketsPage(page);
 		await brackets.goto(tournamentId);

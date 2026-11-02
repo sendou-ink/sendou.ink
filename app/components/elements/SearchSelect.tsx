@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { smallImageUrl } from "~/utils/urls";
 import styles from "./SearchSelect.module.css";
 import { SendouSelect, SendouSelectItem } from "./Select";
 import type { EntitySearch } from "./useEntitySearch";
@@ -148,7 +149,7 @@ export function SearchSelectItem({
 }
 
 export function SearchSelectItemLogo({ src }: { src: string }) {
-	return <img src={src} alt="" className={styles.logo} />;
+	return <img src={smallImageUrl(src)} alt="" className={styles.logo} />;
 }
 
 export function SearchSelectItemAdditionalText({

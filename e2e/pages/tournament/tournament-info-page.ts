@@ -7,10 +7,18 @@ import { TournamentNav } from "./tournament-nav";
 export class TournamentInfoPage {
 	private readonly page: Page;
 	readonly nav;
+	readonly locators;
 
 	constructor(page: Page) {
 		this.page = page;
 		this.nav = new TournamentNav(page);
+		this.locators = {
+			headerLogo: page
+				.locator("header")
+				.filter({ has: page.getByRole("heading", { level: 1 }) })
+				.locator("img")
+				.first(),
+		};
 	}
 
 	async goto(tournamentId: number) {

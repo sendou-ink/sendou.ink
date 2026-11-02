@@ -5,6 +5,7 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { useHydrated } from "~/hooks/useHydrated";
 import { databaseTimestampToDate, nullPaddedDatesOfMonth } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
+import { smallImageUrl } from "~/utils/urls";
 import type { loader } from "../loaders/org.$slug.server";
 import { tournamentOrganizationPage } from "../tournament-organization-urls";
 import styles from "./EventCalendar.module.css";
@@ -99,7 +100,7 @@ function EventCalendarCell({
 			{events.length === 1 ? (
 				<img
 					className={styles.calendarDayLogo}
-					src={events[0].logoUrl ?? fallbackLogoUrl}
+					src={smallImageUrl(events[0].logoUrl ?? fallbackLogoUrl)}
 					alt={events[0].name}
 				/>
 			) : null}

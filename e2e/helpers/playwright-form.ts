@@ -249,6 +249,8 @@ export function createFormHelpers<T extends v.ObjectEntries>(
 				.getByRole("dialog", { name: "Edit image" })
 				.getByRole("button", { name: "Apply" })
 				.click();
+			// the crop is applied asynchronously, the file input goes away once the field holds the image
+			await page.getByLabel(label).waitFor({ state: "detached" });
 		},
 
 		async submit() {

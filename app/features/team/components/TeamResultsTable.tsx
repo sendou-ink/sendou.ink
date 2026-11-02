@@ -9,7 +9,7 @@ import { Table } from "~/components/Table";
 import { TierPill } from "~/components/TierPill";
 import { UserLink } from "~/components/UserLink";
 import type { TeamResultsLoaderData } from "~/features/team/loaders/t.$customUrl.results.server";
-import { tournamentTeamPage } from "~/utils/urls";
+import { smallImageUrl, tournamentTeamPage } from "~/utils/urls";
 
 import styles from "./TeamResultsTable.module.css";
 
@@ -56,7 +56,7 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 								<div className="stack horizontal xs items-center">
 									{result.logoUrl ? (
 										<img
-											src={result.logoUrl}
+											src={smallImageUrl(result.logoUrl)}
 											alt=""
 											width={18}
 											height={18}

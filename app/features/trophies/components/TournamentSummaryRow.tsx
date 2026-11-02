@@ -7,7 +7,7 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { tournamentPage } from "~/utils/urls";
+import { smallImageUrl, tournamentPage } from "~/utils/urls";
 import styles from "./TournamentSummaryRow.module.css";
 
 export function TournamentSummaryRow({
@@ -45,7 +45,7 @@ export function TournamentSummaryRow({
 			className={clsx(styles.row, className)}
 		>
 			<img
-				src={tournament.logoUrl}
+				src={smallImageUrl(tournament.logoUrl)}
 				alt=""
 				width={32}
 				height={32}

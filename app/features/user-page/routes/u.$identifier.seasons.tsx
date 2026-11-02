@@ -45,6 +45,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	avatarUrl,
 	sendouQMatchPage,
+	smallImageUrl,
 	tierImageUrl,
 	userPage,
 } from "~/utils/urls";
@@ -321,7 +322,7 @@ function TeamRank({
 						<span className={styles.teamRankTeam}>
 							{teamEntry.team.avatarUrl ? (
 								<img
-									src={teamEntry.team.avatarUrl}
+									src={smallImageUrl(teamEntry.team.avatarUrl)}
 									width={16}
 									height={16}
 									alt=""

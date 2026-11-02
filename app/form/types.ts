@@ -137,7 +137,7 @@ interface FormFieldImage<T extends string> extends FormFieldBase<T> {
 	dimensions?: ImageFieldDimensions;
 	/** Validate uploaded images immediately, bypassing the moderator queue (e.g. trusted org logos). */
 	autoValidate?: boolean;
-	/** Also store a downscaled copy for small displays, e.g. avatars. */
+	/** Also store a downscaled copy for small displays, set for every `logo` sized image (avatars, team and tournament logos). */
 	withSmallCopy?: boolean;
 }
 

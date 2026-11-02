@@ -22,7 +22,12 @@ import type {
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { navIconUrl, sendouQMatchPage, tournamentTeamPage } from "~/utils/urls";
+import {
+	navIconUrl,
+	sendouQMatchPage,
+	smallImageUrl,
+	tournamentTeamPage,
+} from "~/utils/urls";
 import {
 	loader,
 	type UserSeasonResultsLoaderData,
@@ -331,7 +336,7 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 					)}
 				>
 					<img
-						src={result.logoUrl}
+						src={smallImageUrl(result.logoUrl)}
 						width={24}
 						height={24}
 						alt=""

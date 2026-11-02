@@ -2,7 +2,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { generateIdenticon } from "~/utils/identicon";
 import type { CommonUser } from "~/utils/kysely.server";
-import { avatarUrl } from "~/utils/urls";
+import { avatarUrl, smallImageUrl } from "~/utils/urls";
 import styles from "./Avatar.module.css";
 
 const dimensions = {
@@ -47,11 +47,13 @@ export function Avatar({
 	const identiconSource =
 		identiconInput ?? (user ? String(user.id) : "unknown");
 
+	const isLarge = size === "lg" || size === "xmd";
+
 	const userAvatarUrl = user?.avatar
-		? avatarUrl(user.avatar, size === "lg" || size === "xmd" ? "lg" : "sm")
+		? avatarUrl(user.avatar, isLarge ? "lg" : "sm")
 		: undefined;
 
-	const imageUrl = url ?? userAvatarUrl;
+	const imageUrl = url ? (isLarge ? url : smallImageUrl(url)) : userAvatarUrl;
 
 	const src =
 		imageUrl && !isErrored ? imageUrl : generateIdenticon(identiconSource);

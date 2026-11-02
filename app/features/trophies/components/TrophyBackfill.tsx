@@ -12,7 +12,7 @@ import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { LocaleTime } from "~/components/LocaleTime";
 import { ParticipationPill } from "~/features/user-page/components/ParticipationPill";
-import { trophyBackfillPage } from "~/utils/urls";
+import { smallImageUrl, trophyBackfillPage } from "~/utils/urls";
 import type { NewTrophyLoaderData } from "../loaders/trophies.new.server";
 import type { TrophyBackfillLoaderData } from "../routes/trophies.$id.backfill.$seriesId";
 import { trophyActionSchema } from "../trophies-schemas";
@@ -222,7 +222,7 @@ function BackfillTournamentList({
 									aria-label={tournament.name}
 								/>
 								<img
-									src={tournament.logoUrl}
+									src={smallImageUrl(tournament.logoUrl)}
 									alt=""
 									width={32}
 									height={32}

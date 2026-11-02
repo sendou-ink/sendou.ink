@@ -36,6 +36,7 @@ import {
 	FRIENDS_PAGE,
 	navIconUrl,
 	SETTINGS_PAGE,
+	smallImageUrl,
 	teamPage,
 	userPage,
 } from "~/utils/urls";
@@ -637,7 +638,7 @@ function PageIcon({ crumb }: { crumb: Breadcrumb }) {
 			{isExternal ? (
 				<img
 					ref={checkAlreadyErrored}
-					src={identiconSrc ?? crumb.imgPath}
+					src={identiconSrc ?? smallImageUrl(crumb.imgPath)}
 					alt=""
 					className={clsx(styles.pageIcon, "rounded")}
 					width={28}
@@ -685,7 +686,7 @@ function SideNavUserPanel() {
 						>
 							{user.team.avatarUrl ? (
 								<img
-									src={user.team.avatarUrl}
+									src={smallImageUrl(user.team.avatarUrl)}
 									alt=""
 									className={styles.sideNavFooterTeamAvatar}
 									width={22}
