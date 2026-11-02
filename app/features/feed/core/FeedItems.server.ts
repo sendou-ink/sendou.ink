@@ -7,6 +7,8 @@ import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
+import * as Leaderboard from "~/features/lobbies/core/Leaderboard";
+import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
@@ -742,6 +744,16 @@ async function buildLobbyRecap(ctx: FeedContext) {
 	);
 	if (!lobby) return null;
 
+	const leaderboard = await FeedCache.cached({
+		key: `lobby-leaderboard-${lobby.id}`,
+		ttlMs: HOUR_MS,
+		getFreshValue: async () =>
+			Leaderboard.rows({
+				sets: await LobbyMatchRepository.findAllSetsByLobbyId(lobby.id),
+				weapons: [],
+			}),
+	});
+
 	return {
 		at: lobby.endedAt,
 		actorKey: String(lobby.hostUserId),
@@ -750,7 +762,15 @@ async function buildLobbyRecap(ctx: FeedContext) {
 			name: lobby.name,
 			setCount: lobby.setCount ?? 0,
 			playerCount: lobby.playerCount ?? 0,
-			top: lobby.top,
+			top: lobby.top.map((player) => {
+				const record = leaderboard.find((row) => row.userId === player.id);
+
+				return {
+					...player,
+					setWins: record?.setWins ?? 0,
+					setLosses: record?.setLosses ?? 0,
+				};
+			}),
 		},
 	};
 }

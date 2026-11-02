@@ -222,7 +222,7 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 											[styles.highlightRow]: neighbor.user.id === data.actor.id,
 										})}
 									>
-										<td>#{neighbor.placement}</td>
+										<td className={styles.rankCell}>#{neighbor.placement}</td>
 										<td>
 											<div className={styles.rowNoWrap}>
 												<Avatar user={neighbor.user} size="xxxsm" />
@@ -580,12 +580,15 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 						<tbody>
 							{data.top.map((player) => (
 								<tr key={player.id}>
-									<td>#{player.placement}</td>
+									<td className={styles.rankCell}>#{player.placement}</td>
 									<td>
 										<div className={styles.rowNoWrap}>
 											<Avatar user={player} size="xxxsm" />
 											<UserName user={player} />
 										</div>
+									</td>
+									<td className={styles.numeric}>
+										{player.setWins}–{player.setLosses}
 									</td>
 								</tr>
 							))}

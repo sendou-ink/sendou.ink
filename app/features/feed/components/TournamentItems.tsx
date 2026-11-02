@@ -347,7 +347,7 @@ export function tournamentItemContent(
 						<table className={styles.table}>
 							<thead>
 								<tr>
-									<th>#</th>
+									<th className={styles.rankCell}>#</th>
 									<th>Player</th>
 									<th className={styles.numeric}>Events</th>
 									<th className={styles.numeric}>Points</th>
@@ -359,7 +359,7 @@ export function tournamentItemContent(
 										key={row.user.id}
 										className={clsx({ [styles.highlightRow]: row.isFriend })}
 									>
-										<td>{row.placement}</td>
+										<td className={styles.rankCell}>{row.placement}</td>
 										<td>
 											<div className={styles.rowNoWrap}>
 												<Avatar user={row.user} size="xxxsm" />
@@ -622,7 +622,7 @@ export function tournamentItemContent(
 													row.isOwn || row.friends.length > 0,
 											})}
 										>
-											<td>#{row.projectedSeed}</td>
+											<td className={styles.rankCell}>#{row.projectedSeed}</td>
 											<td>
 												<div className={styles.rowNoWrap}>
 													<UserStack users={row.team.members} max={4} />
