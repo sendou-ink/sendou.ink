@@ -32,7 +32,6 @@ const devOnlyRoutes =
 					"features/match-page-test/routes/match-page-test.tsx",
 				),
 				route("/feed-sources", "features/feed/routes/feed-sources.tsx"),
-				route("/feed/:id", "features/feed/routes/feed.$id.tsx"),
 				route(
 					"/lobbies/weapon-roll-test",
 					"features/lobbies/routes/lobbies.weapon-roll-test.tsx",
@@ -72,6 +71,7 @@ const devOnlyRoutes =
 export default [
 	index("features/front-page/routes/index.tsx"),
 	route("/patrons-list", "features/front-page/routes/patrons-list.ts"),
+	route("/feed/:id", "features/feed/routes/feed.$id.tsx"),
 
 	route("/health", "features/health/routes/health.ts"),
 

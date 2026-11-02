@@ -6,7 +6,6 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { useUser } from "~/features/auth/core/user";
-import { isFeedTester } from "~/features/feed/feed-utils";
 import {
 	findPushSubscription,
 	isPushSupported,
@@ -14,6 +13,7 @@ import {
 } from "~/features/notifications/core/pushSubscription";
 import { SendouForm } from "~/form/SendouForm";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { logger } from "~/utils/logger";
 import {
 	disableBuildAbilitySortingSchema,
@@ -25,6 +25,7 @@ import {
 
 export function PreferencesTab() {
 	const user = useUser();
+	const isFeedTester = useHasRole("FEED_TESTER");
 	if (!user) return null;
 
 	return (
@@ -77,7 +78,7 @@ export function PreferencesTab() {
 				>
 					{({ FormField }) => <FormField name="newValue" />}
 				</SendouForm>
-				{isFeedTester(user) ? (
+				{isFeedTester ? (
 					<SendouForm
 						schema={newHomePageSchema}
 						defaultValues={{

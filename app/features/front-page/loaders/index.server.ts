@@ -5,7 +5,6 @@ import type { Tables } from "~/db/tables";
 import { getUser } from "~/features/auth/core/user.server";
 import * as FeedPage from "~/features/feed/core/FeedPage.server";
 import { feedSearchParams } from "~/features/feed/feed-search-params";
-import { isFeedTester } from "~/features/feed/feed-utils";
 import * as Changelog from "~/features/front-page/core/Changelog.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
@@ -26,7 +25,7 @@ export type FrontPageLoaderData = Extract<
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = getUser();
 
-	if (isFeedTester(user) && user?.preferences?.newHomePage) {
+	if (user?.roles.includes("FEED_TESTER") && user.preferences?.newHomePage) {
 		const { viewAs, test } = feedSearchParams.parse(request);
 
 		return {

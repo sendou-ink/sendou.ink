@@ -1,6 +1,5 @@
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import { isFeedTester } from "~/features/feed/feed-utils";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import { cancelActiveGroupLikes } from "~/features/sendouq/core/likes.server";
 import {
@@ -63,7 +62,7 @@ export const action = defineAction(
 				break;
 			}
 			case "UPDATE_NEW_HOME_PAGE": {
-				errorToastIfFalsy(isFeedTester(user), "Not available");
+				errorToastIfFalsy(user.roles.includes("FEED_TESTER"), "Not available");
 
 				await UserRepository.updateOwnPreferences({
 					newHomePage: body.newValue,

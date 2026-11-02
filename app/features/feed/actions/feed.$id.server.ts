@@ -1,5 +1,5 @@
-import { requireUser } from "~/features/auth/core/user.server";
 import { defineAction } from "~/form/define-action.server";
+import { requireRole } from "~/modules/permissions/guards.server";
 import { assertUnreachable } from "~/utils/types";
 import * as FeedItemIds from "../core/FeedItemIds";
 import * as FeedCommentRepository from "../FeedCommentRepository.server";
@@ -10,7 +10,8 @@ import { feedItemActionSchema, feedItemParamsSchema } from "../feed-schemas";
 export const action = defineAction(
 	{ params: feedItemParamsSchema, body: feedItemActionSchema },
 	async ({ params, body }) => {
-		requireUser();
+		requireRole("FEED_TESTER");
+
 		const itemType = FeedItemIds.typeOf(params.id)!;
 
 		switch (body._action) {
