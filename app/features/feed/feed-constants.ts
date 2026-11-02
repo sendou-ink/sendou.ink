@@ -70,6 +70,8 @@ export interface FeedItemTypeDefinition {
 	isHiddenInPwa?: boolean;
 	/** Nothing to talk about (a notice or a listing): no comments, reactions or sharing, the post opens what it's about instead */
 	isNotice?: boolean;
+	/** Most posts of the type in the feed at once, 1 by default */
+	maxCount?: number;
 }
 
 export const FEED_ITEM_TYPES = {
@@ -79,6 +81,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["FRIENDS", "TEAM", "FOLLOWING"],
 		baseScore: 0.6,
 		halfLifeHours: 18,
+		maxCount: 4,
 	},
 
 	SQ_STREAK: {
@@ -87,6 +90,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.5,
 		halfLifeHours: 8,
+		maxCount: 2,
 	},
 	SQ_LEADERBOARD: {
 		name: "Leaderboard placement",
@@ -101,6 +105,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.3,
 		halfLifeHours: 24,
+		maxCount: 2,
 	},
 	SQ_SEASON_RECAP: {
 		name: "Season recap",
@@ -160,6 +165,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["FRIENDS", "FOLLOWING", "TEAM"],
 		baseScore: 0.95,
 		halfLifeHours: 36,
+		maxCount: 3,
 	},
 	TO_PODIUM: {
 		name: "Top finish",
@@ -167,6 +173,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["FRIENDS", "FOLLOWING", "TEAM"],
 		baseScore: 0.7,
 		halfLifeHours: 36,
+		maxCount: 4,
 	},
 	TO_DIGEST: {
 		name: "Weekend results digest",
@@ -181,6 +188,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.5,
 		halfLifeHours: 48,
+		maxCount: 3,
 	},
 	TO_UPSET: {
 		name: "Upset alert",
@@ -283,6 +291,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.5,
 		halfLifeHours: 48,
+		maxCount: 2,
 	},
 	TEAM_NEW: {
 		name: "New team",
@@ -363,6 +372,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["FRIENDS", "TEAM", "FOLLOWING"],
 		baseScore: 0.3,
 		halfLifeHours: 48,
+		maxCount: 2,
 	},
 	BUILD_FOR_YOU: {
 		name: "Top build for your weapon",
@@ -415,6 +425,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.5,
 		halfLifeHours: 48,
+		maxCount: 2,
 	},
 	FIRST_TIME: {
 		name: "First time",
@@ -422,6 +433,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.45,
 		halfLifeHours: 48,
+		maxCount: 2,
 	},
 	PLUS_RESULTS: {
 		name: "New Plus Server tier",
@@ -525,6 +537,8 @@ export const FEED_MAX_AGE_HALF_LIVES = 5;
 export const FEED_SAME_CATEGORY_PENALTY = 0.8;
 /** Diversity pass: penalty when the same actor appeared in the previous four items */
 export const FEED_SAME_ACTOR_PENALTY = 0.6;
+/** Diversity pass: penalty for each item of the same type already picked */
+export const FEED_SAME_TYPE_REPEAT_PENALTY = 0.75;
 
 /** Weeks of match history used to find the hours a user usually plays */
 export const FEED_ROTATION_LOOKBACK_WEEKS = 8;

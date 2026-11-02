@@ -5,6 +5,7 @@ import {
 	FEED_RELATION_AUDIENCE,
 	FEED_SAME_ACTOR_PENALTY,
 	FEED_SAME_CATEGORY_PENALTY,
+	FEED_SAME_TYPE_REPEAT_PENALTY,
 	type FeedItemType,
 	type FeedItemTypeDefinition,
 	type FeedRelation,
@@ -72,7 +73,8 @@ export function isStale(item: Pick<RankableItem, "type" | "at">, now: number) {
 
 /**
  * Orders items by score with a greedy diversity pass: each pick is penalized if its category
- * appeared in the previous two picks or its actor in the previous four.
+ * appeared in the previous two picks or its actor in the previous four, and once more for each
+ * earlier pick of its type.
  */
 export function rank<T extends RankableItem>(
 	items: T[],
@@ -80,6 +82,7 @@ export function rank<T extends RankableItem>(
 ): Array<T & { score: ScoreBreakdown }> {
 	const pool = items.map((item) => ({ item, ...score(item, now) }));
 	const result: Array<T & { score: ScoreBreakdown }> = [];
+	const pickedCountByType = new Map<FeedItemType, number>();
 
 	while (pool.length > 0) {
 		const recentCategories = result
@@ -99,7 +102,9 @@ export function rank<T extends RankableItem>(
 					: 1) *
 				(recentActors.includes(candidate.item.actorKey)
 					? FEED_SAME_ACTOR_PENALTY
-					: 1);
+					: 1) *
+				FEED_SAME_TYPE_REPEAT_PENALTY **
+					(pickedCountByType.get(candidate.item.type) ?? 0);
 			const final = candidate.total * diversity;
 			if (final > bestFinal) {
 				bestIndex = index;
@@ -109,6 +114,10 @@ export function rank<T extends RankableItem>(
 		}
 
 		const [best] = pool.splice(bestIndex, 1);
+		pickedCountByType.set(
+			best.item.type,
+			(pickedCountByType.get(best.item.type) ?? 0) + 1,
+		);
 		result.push({
 			...best.item,
 			score: {

@@ -103,4 +103,23 @@ describe("FeedRanking.rank", () => {
 			"SQ_SET",
 		]);
 	});
+
+	test("pushes back repeats of a type", () => {
+		const ranked = FeedRanking.rank(
+			[
+				{ type: "SQ_SET", at: NOW, actorKey: "a", relation: null },
+				{ type: "SQ_SET", at: NOW, actorKey: "b", relation: null },
+				{ type: "SQ_SET", at: NOW, actorKey: "c", relation: null },
+				{ type: "BUILD_NEW", at: NOW, actorKey: "d", relation: null },
+			],
+			NOW,
+		);
+
+		expect(ranked.map((item) => item.type)).toEqual([
+			"SQ_SET",
+			"SQ_SET",
+			"BUILD_NEW",
+			"SQ_SET",
+		]);
+	});
 });

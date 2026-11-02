@@ -44,6 +44,7 @@ import {
 	FEED_EVENT_RETENTION_DAYS,
 	FEED_FEATURED_RESULT_MAX_TIER,
 	FEED_FEATURED_RESULT_MIN_TEAMS,
+	FEED_ITEM_TYPES,
 	FEED_LEADERBOARD_TOP_COUNT,
 	FEED_MOCK_ANNOUNCEMENT,
 	FEED_MOCK_LUTI_SEASON,
@@ -55,6 +56,7 @@ import {
 	FEED_SQ_UPSET_MIN_TIER_STEPS,
 	FEED_TOURNAMENT_UPSET_MIN_SEED_GAP,
 	type FeedItemType,
+	type FeedItemTypeDefinition,
 	type FeedRelation,
 } from "../feed-constants";
 import type {
@@ -192,14 +194,20 @@ const BUILDERS = {
 	VOICE_ROOM: buildVoiceRoom,
 	MEMORY: buildMemory,
 	CALENDAR_EVENT_NEW: buildCalendarEventNew,
-} satisfies Record<
-	FeedItemType,
-	(ctx: FeedContext) => Promise<BuiltItem<unknown> | null>
->;
+} satisfies Record<FeedItemType, (ctx: FeedContext) => Promise<BuiltItems>>;
 
-export type FeedItemData<T extends FeedItemType> = NonNullable<
+type BuiltItems = BuiltItem<unknown> | BuiltItem<unknown>[] | null;
+
+type DataOf<R> =
+	R extends Array<infer I>
+		? DataOf<I>
+		: R extends { data: infer D }
+			? D
+			: never;
+
+export type FeedItemData<T extends FeedItemType> = DataOf<
 	Awaited<ReturnType<(typeof BUILDERS)[T]>>
->["data"];
+>;
 
 export type FeedItem = {
 	[T in FeedItemType]: {
@@ -241,29 +249,34 @@ export async function contextFor({
 	};
 }
 
-/** Builds the item of the given type as seen by the viewer of the context, `null` if there is none. */
-async function buildOne(
+/** Builds the items of the given type as seen by the viewer of the context, at most `maxCount` of the type. */
+async function buildItemsOfType(
 	type: FeedItemType,
 	ctx: FeedContext,
-): Promise<FeedItem | null> {
-	const built: BuiltItem<unknown> | null = SHARED_ITEM_TYPES.has(type)
+): Promise<FeedItem[]> {
+	const build = (): Promise<BuiltItems> => BUILDERS[type](ctx);
+	const built = SHARED_ITEM_TYPES.has(type)
 		? await FeedCache.cached({
 				key: `${ctx.mode}-shared-item-${type}`,
 				ttlMs: MINUTE_MS,
-				getFreshValue: () => BUILDERS[type](ctx),
+				getFreshValue: build,
 			})
-		: await BUILDERS[type](ctx);
-	if (!built) return null;
+		: await build();
+	if (!built) return [];
 
-	const at = Math.min(built.at, ctx.now);
+	return firstOfType(type, Array.isArray(built) ? built : [built]).map(
+		(item) => {
+			const at = Math.min(item.at, ctx.now);
 
-	return {
-		id: FeedItemIds.make({ type, at, actorKey: built.actorKey }),
-		type,
-		...built,
-		at,
-		relation: built.relation ?? null,
-	} as FeedItem;
+			return {
+				id: FeedItemIds.make({ type, at, actorKey: item.actorKey }),
+				type,
+				...item,
+				at,
+				relation: item.relation ?? null,
+			} as FeedItem;
+		},
+	);
 }
 
 /** The post with the id as the viewer sees it now, `null` once their feed no longer has it. */
@@ -279,15 +292,17 @@ export async function findById({
 
 	for (const mode of ["REAL", "TEST"] as const) {
 		const ctx = await contextFor({ viewerId, mode });
-		const item = await buildOne(type, ctx);
-		if (item?.id === id) return { item, ctx };
+		const item = (await buildItemsOfType(type, ctx)).find(
+			(candidate) => candidate.id === id,
+		);
+		if (item) return { item, ctx };
 	}
 
 	return null;
 }
 
 /**
- * Builds one item of every type that has matching rows, as seen by the viewer of the context.
+ * Builds the items of every type that has matching rows, as seen by the viewer of the context.
  * A builder that throws is logged and skipped so one broken query doesn't take the page down.
  */
 export async function buildAll(ctx: FeedContext): Promise<FeedItem[]> {
@@ -295,8 +310,7 @@ export async function buildAll(ctx: FeedContext): Promise<FeedItem[]> {
 
 	for (const type of R.keys(BUILDERS)) {
 		try {
-			const item = await buildOne(type, ctx);
-			if (item) items.push(item);
+			items.push(...(await buildItemsOfType(type, ctx)));
 		} catch (error) {
 			logger.error(`Feed item ${type} failed to build`, error);
 		}
@@ -308,30 +322,38 @@ export async function buildAll(ctx: FeedContext): Promise<FeedItem[]> {
 // ---------- SendouQ ----------
 
 async function buildSqSet(ctx: FeedContext) {
-	const promotion = (await friendOrTeammateEvents(ctx, "SQ_PROMOTION")).find(
-		(event) => event.data.season === ctx.season,
+	const promotions = (await friendOrTeammateEvents(ctx, "SQ_PROMOTION"))
+		.filter((event) => event.data.season === ctx.season)
+		.map((event) => ({
+			at: event.at,
+			matchId: event.data.matchId,
+			userId: event.userId,
+			promotion: R.pick(event.data, ["from", "to"]),
+		}));
+	const upsets = (await friendOrTeammateEvents(ctx, "SQ_UPSET")).map(
+		(event) => ({
+			at: event.at,
+			matchId: event.data.matchId,
+			userId: event.userId,
+			promotion: null,
+		}),
 	);
-	const upset = (await friendOrTeammateEvents(ctx, "SQ_UPSET")).at(0);
+	const latestSetPerUser = R.uniqueBy(
+		R.sortBy([...promotions, ...upsets], [(set) => set.at, "desc"]),
+		(set) => set.userId,
+	);
+	const sets = firstOfType(
+		"SQ_SET",
+		R.uniqueBy(latestSetPerUser, (set) => set.matchId),
+	);
 
-	if (promotion && (!upset || promotion.at >= upset.at)) {
-		const item = await sqSetItem({
-			matchId: promotion.data.matchId,
-			userId: promotion.userId,
-			promotion: R.pick(promotion.data, ["from", "to"]),
-		});
+	const items = await mapInOrder(sets, async (set) => {
+		const item = await sqSetItem(R.omit(set, ["at"]));
 
-		return item
-			? { ...item, relation: relationOf(ctx, promotion.userId) }
-			: null;
-	}
-	if (!upset) return null;
-
-	const item = await sqSetItem({
-		matchId: upset.data.matchId,
-		userId: upset.userId,
+		return item ? { ...item, relation: relationOf(ctx, set.userId) } : null;
 	});
 
-	return item ? { ...item, relation: relationOf(ctx, upset.userId) } : null;
+	return items.filter((item) => item !== null);
 }
 
 function sqSetItem(args: Parameters<typeof freshSqSetItem>[0]) {
@@ -406,7 +428,6 @@ async function freshSqSetItem({
 				opponentTier !== null &&
 				FeedEvents.tierRank(opponentTier) - FeedEvents.tierRank(ownTier) >=
 					FEED_SQ_UPSET_MIN_TIER_STEPS,
-			FEED_TOURNAMENT_UPSET_MIN_SEED_GAP,
 			opponentTier,
 			promotion,
 			score: [mapWins, playedMaps.length - mapWins] as const,
@@ -431,29 +452,37 @@ async function freshSqSetItem({
 }
 
 async function buildSqStreak(ctx: FeedContext) {
-	const best = R.firstBy(await friendOrTeammateEvents(ctx, "SQ_STREAK"), [
-		(event) => event.data.streak,
-		"desc",
-	]);
-	if (!best) return null;
+	const streaks = firstOfType(
+		"SQ_STREAK",
+		R.uniqueBy(
+			R.sortBy(await friendOrTeammateEvents(ctx, "SQ_STREAK"), [
+				(event) => event.data.streak,
+				"desc",
+			]),
+			(event) => event.userId,
+		),
+	);
+	if (streaks.length === 0) return null;
 
-	const users = await usersById([best.userId]);
-	const skill =
-		ctx.season !== null
-			? (await userSkills(ctx.season)).userSkills[best.userId]
-			: undefined;
+	const users = await usersById(streaks.map((streak) => streak.userId));
+	const skills =
+		ctx.season !== null ? (await userSkills(ctx.season)).userSkills : {};
 
-	return {
-		at: best.at,
-		actorKey: String(best.userId),
-		relation: relationOf(ctx, best.userId),
-		data: {
-			actor: users.get(best.userId)!,
-			streak: best.data.streak,
-			sp: skill ? ordinalToSp(skill.ordinal) : null,
-			tier: skill?.tier ?? null,
-		},
-	};
+	return streaks.map((streak) => {
+		const skill = skills[streak.userId];
+
+		return {
+			at: streak.at,
+			actorKey: String(streak.userId),
+			relation: relationOf(ctx, streak.userId),
+			data: {
+				actor: users.get(streak.userId)!,
+				streak: streak.data.streak,
+				sp: skill ? ordinalToSp(skill.ordinal) : null,
+				tier: skill?.tier ?? null,
+			},
+		};
+	});
 }
 
 async function buildSqLeaderboard(ctx: FeedContext) {
@@ -496,21 +525,22 @@ async function buildSqLeaderboard(ctx: FeedContext) {
 }
 
 async function buildSqMilestone(ctx: FeedContext) {
-	const latest = (await friendOrTeammateEvents(ctx, "SQ_MILESTONE")).at(0);
-	if (!latest) return null;
+	const milestones = latestPerUser(
+		"SQ_MILESTONE",
+		await friendOrTeammateEvents(ctx, "SQ_MILESTONE"),
+	);
+	const users = await usersById(milestones.map((event) => event.userId));
 
-	const users = await usersById([latest.userId]);
-
-	return {
-		at: latest.at,
-		actorKey: String(latest.userId),
-		relation: relationOf(ctx, latest.userId),
+	return milestones.map((milestone) => ({
+		at: milestone.at,
+		actorKey: String(milestone.userId),
+		relation: relationOf(ctx, milestone.userId),
 		data: {
-			actor: users.get(latest.userId)!,
-			milestone: latest.data.milestone,
-			since: latest.data.since,
+			actor: users.get(milestone.userId)!,
+			milestone: milestone.data.milestone,
+			since: milestone.data.since,
 		},
-	};
+	}));
 }
 
 async function buildSqSeasonRecap(ctx: FeedContext) {
@@ -883,24 +913,23 @@ async function resultCard(
 }
 
 async function buildTournamentWin(ctx: FeedContext) {
-	const result = (await friendOrTeammateResults(ctx, 14)).find(
-		(r) => r.placement === 1 && r.participantCount >= 12,
-	);
-	if (!result) return null;
+	const { wins } = await featuredResults(ctx);
 
-	const card = await resultCard(ctx, result);
-	const { seriesWin, path } = await FeedCache.cached({
-		key: `tournament-win-${result.tournamentTeamId}-${result.userId}`,
-		ttlMs: HOUR_MS,
-		getFreshValue: () => tournamentWinPath(result),
+	return mapInOrder(wins, async (result) => {
+		const card = await resultCard(ctx, result);
+		const { seriesWin, path } = await FeedCache.cached({
+			key: `tournament-win-${result.tournamentTeamId}-${result.userId}`,
+			ttlMs: HOUR_MS,
+			getFreshValue: () => tournamentWinPath(result),
+		});
+
+		return {
+			at: result.startsAt + 6 * HOUR,
+			actorKey: String(result.userId),
+			relation: relationOf(ctx, result.userId),
+			data: { ...card, seriesWin, path },
+		};
 	});
-
-	return {
-		at: result.startsAt + 6 * HOUR,
-		actorKey: String(result.userId),
-		relation: relationOf(ctx, result.userId),
-		data: { ...card, seriesWin, path },
-	};
 }
 
 async function tournamentWinPath(
@@ -945,25 +974,52 @@ async function tournamentWinPath(
 }
 
 async function buildTournamentPodium(ctx: FeedContext) {
-	const results = await friendOrTeammateResults(ctx, 14);
-	const result =
-		results.find(
-			(r) => r.placement >= 2 && r.placement <= 3 && r.participantCount >= 60,
-		) ?? results.find((r) => r.placement >= 2 && r.placement <= 3);
-	if (!result) return null;
+	const { podiums } = await featuredResults(ctx);
 
-	return {
+	return mapInOrder(podiums, async (result) => ({
 		at: result.startsAt + 6 * HOUR,
 		actorKey: String(result.userId),
 		relation: relationOf(ctx, result.userId),
 		data: await resultCard(ctx, result),
-	};
+	}));
+}
+
+/** The tournament results that get a win or podium post of their own, one per team */
+function featuredResults(ctx: FeedContext) {
+	return memoized(ctx, "featured-results", async () => {
+		const results = R.uniqueBy(
+			await friendOrTeammateResults(ctx, 14),
+			(result) => result.tournamentTeamId,
+		);
+		const podiums = results.filter(
+			(result) => result.placement >= 2 && result.placement <= 3,
+		);
+
+		return {
+			wins: firstOfType(
+				"TO_WIN",
+				results.filter(
+					(result) => result.placement === 1 && result.participantCount >= 12,
+				),
+			),
+			podiums: firstOfType(
+				"TO_PODIUM",
+				R.sortBy(podiums, [(result) => result.participantCount >= 60, "desc"]),
+			),
+		};
+	});
 }
 
 async function buildTournamentDigest(ctx: FeedContext) {
+	const { wins, podiums } = await featuredResults(ctx);
+	const featuredTeamIds = new Set(
+		[...wins, ...podiums].map((result) => result.tournamentTeamId),
+	);
 	const results = R.uniqueBy(
-		(await friendOrTeammateResults(ctx, 3)).filter((result) =>
-			ctx.friendIdSet.has(result.userId),
+		(await friendOrTeammateResults(ctx, 3)).filter(
+			(result) =>
+				ctx.friendIdSet.has(result.userId) &&
+				!featuredTeamIds.has(result.tournamentTeamId),
 		),
 		(result) => result.userId,
 	);
@@ -1008,34 +1064,39 @@ async function buildTournamentRegistered(ctx: FeedContext) {
 			isFriendOrTeammate(ctx, registration.userId) &&
 			!ownTournamentTeamIds.has(registration.tournamentTeamId),
 	);
-	const first = registrations.at(0);
-	if (!first) return null;
-
-	const sameTournament = registrations.filter(
-		(registration) => registration.tournamentId === first.tournamentId,
-	);
-	const tournament = await tournamentById(first.tournamentId);
-	const team = await tournamentTeamById(first.tournamentTeamId);
-	const users = await usersById(
-		sameTournament.map((registration) => registration.userId),
+	const tournamentIds = firstOfType(
+		"TO_REGISTERED",
+		R.unique(registrations.map((registration) => registration.tournamentId)),
 	);
 
-	return {
-		at: Math.max(
-			...sameTournament.map((registration) => registration.registeredAt),
-		),
-		actorKey: String(first.userId),
-		relation: relationOf(ctx, first.userId),
-		data: {
-			actor: users.get(first.userId)!,
-			known: sameTournament.map(
-				(registration) => users.get(registration.userId)!,
+	return mapInOrder(tournamentIds, async (tournamentId) => {
+		const sameTournament = registrations.filter(
+			(registration) => registration.tournamentId === tournamentId,
+		);
+		const first = sameTournament[0];
+		const tournament = await tournamentById(tournamentId);
+		const team = await tournamentTeamById(first.tournamentTeamId);
+		const users = await usersById(
+			sameTournament.map((registration) => registration.userId),
+		);
+
+		return {
+			at: Math.max(
+				...sameTournament.map((registration) => registration.registeredAt),
 			),
-			tournament,
-			team,
-			teamCount: first.teamCount ?? 0,
-		},
-	};
+			actorKey: String(first.userId),
+			relation: relationOf(ctx, first.userId),
+			data: {
+				actor: users.get(first.userId)!,
+				known: sameTournament.map(
+					(registration) => users.get(registration.userId)!,
+				),
+				tournament,
+				team,
+				teamCount: first.teamCount ?? 0,
+			},
+		};
+	});
 }
 
 /** Everyone registered to an upcoming tournament, soonest first */
@@ -1762,31 +1823,38 @@ async function buildTournamentStaff(ctx: FeedContext) {
 // ---------- Teams & scrims ----------
 
 async function buildTeamJoin(ctx: FeedContext) {
-	const join = (
-		await FeedCache.cached({
-			key: `${ctx.mode}-recent-team-joins`,
-			ttlMs: 5 * MINUTE_MS,
-			getFreshValue: () =>
-				FeedRepository.findAllTeamJoinsAfter(
-					ctx.now - RECENT_ACTIVITY_DAYS * DAY,
-				),
-		})
-	).find(
-		(candidate) =>
-			candidate.createdAt < ctx.now &&
-			isFriendOrTeammate(ctx, candidate.userId),
+	const joins = firstOfType(
+		"TEAM_JOIN",
+		R.uniqueBy(
+			(
+				await FeedCache.cached({
+					key: `${ctx.mode}-recent-team-joins`,
+					ttlMs: 5 * MINUTE_MS,
+					getFreshValue: () =>
+						FeedRepository.findAllTeamJoinsAfter(
+							ctx.now - RECENT_ACTIVITY_DAYS * DAY,
+						),
+				})
+			).filter(
+				(candidate) =>
+					candidate.createdAt < ctx.now &&
+					isFriendOrTeammate(ctx, candidate.userId),
+			),
+			(candidate) => candidate.teamId,
+		),
 	);
-	if (!join) return null;
+	const users = await usersById(joins.map((join) => join.userId));
 
-	const team = await teamById(join.teamId);
-	const users = await usersById([join.userId]);
-
-	return {
+	return mapInOrder(joins, async (join) => ({
 		at: join.createdAt,
 		actorKey: String(join.userId),
 		relation: relationOf(ctx, join.userId),
-		data: { actor: users.get(join.userId)!, team, role: join.role },
-	};
+		data: {
+			actor: users.get(join.userId)!,
+			team: await teamById(join.teamId),
+			role: join.role,
+		},
+	}));
 }
 
 async function buildTeamNew(ctx: FeedContext) {
@@ -2191,30 +2259,39 @@ async function buildCard(
 }
 
 async function buildBuildNew(ctx: FeedContext) {
-	const latest = (
-		await FeedCache.cached({
-			key: `${ctx.mode}-recent-builds`,
-			ttlMs: 5 * MINUTE_MS,
-			getFreshValue: () =>
-				FeedRepository.findAllPublicBuildIdsUpdatedAfter(
-					ctx.now - RECENT_ACTIVITY_DAYS * DAY,
-				),
-		})
-	).find(
-		(build) =>
-			build.updatedAt < ctx.now && isFriendOrTeammate(ctx, build.ownerId),
+	const latestPerOwner = firstOfType(
+		"BUILD_NEW",
+		R.uniqueBy(
+			(
+				await FeedCache.cached({
+					key: `${ctx.mode}-recent-builds`,
+					ttlMs: 5 * MINUTE_MS,
+					getFreshValue: () =>
+						FeedRepository.findAllPublicBuildIdsUpdatedAfter(
+							ctx.now - RECENT_ACTIVITY_DAYS * DAY,
+						),
+				})
+			).filter(
+				(build) =>
+					build.updatedAt < ctx.now && isFriendOrTeammate(ctx, build.ownerId),
+			),
+			(build) => build.ownerId,
+		),
 	);
-	if (!latest) return null;
 
-	const card = await buildCardById(latest.id);
-	if (!card) return null;
+	const items = await mapInOrder(latestPerOwner, async (build) => {
+		const card = await buildCardById(build.id);
+		if (!card) return null;
 
-	return {
-		at: card.at,
-		actorKey: String(card.ownerId),
-		relation: relationOf(ctx, card.ownerId),
-		data: card.card,
-	};
+		return {
+			at: card.at,
+			actorKey: String(card.ownerId),
+			relation: relationOf(ctx, card.ownerId),
+			data: card.card,
+		};
+	});
+
+	return items.filter((item) => item !== null);
 }
 
 async function buildBuildForYou(ctx: FeedContext) {
@@ -2431,47 +2508,55 @@ async function buildFriendSuggest(ctx: FeedContext) {
 }
 
 async function buildComeback(ctx: FeedContext) {
-	const comeback = (await friendOrTeammateEvents(ctx, "COMEBACK")).at(0);
-	if (!comeback) return null;
+	const comebacks = latestPerUser(
+		"COMEBACK",
+		await friendOrTeammateEvents(ctx, "COMEBACK"),
+	);
+	const users = await usersById(comebacks.map((event) => event.userId));
 
-	const users = await usersById([comeback.userId]);
-	const { tournamentId } = comeback.data;
+	return mapInOrder(comebacks, async (comeback) => {
+		const { tournamentId } = comeback.data;
 
-	return {
-		at: comeback.at,
-		actorKey: String(comeback.userId),
-		relation: relationOf(ctx, comeback.userId),
-		data: {
-			actor: users.get(comeback.userId)!,
-			breakDays: Math.round((comeback.at - comeback.data.previousAt) / DAY),
-			source: comeback.data.source,
-			tournament: tournamentId ? await tournamentById(tournamentId) : null,
-			setCount: comeback.data.setCount,
-			tournamentCount: comeback.data.tournamentCount,
-		},
-	};
+		return {
+			at: comeback.at,
+			actorKey: String(comeback.userId),
+			relation: relationOf(ctx, comeback.userId),
+			data: {
+				actor: users.get(comeback.userId)!,
+				breakDays: Math.round((comeback.at - comeback.data.previousAt) / DAY),
+				source: comeback.data.source,
+				tournament: tournamentId ? await tournamentById(tournamentId) : null,
+				setCount: comeback.data.setCount,
+				tournamentCount: comeback.data.tournamentCount,
+			},
+		};
+	});
 }
 
 async function buildFirstTime(ctx: FeedContext) {
-	const first = (await friendOrTeammateEvents(ctx, "FIRST_TIME")).at(0);
-	if (!first) return null;
+	const firsts = latestPerUser(
+		"FIRST_TIME",
+		await friendOrTeammateEvents(ctx, "FIRST_TIME"),
+	);
+	const users = await usersById(firsts.map((event) => event.userId));
 
-	const users = await usersById([first.userId]);
-	const { tournamentId } = first.data;
+	return mapInOrder(firsts, async (first) => {
+		const { tournamentId } = first.data;
 
-	return {
-		at: first.at,
-		actorKey: String(first.userId),
-		relation: relationOf(ctx, first.userId),
-		data: {
-			actor: users.get(first.userId)!,
-			source: first.data.source,
-			tournament: tournamentId ? await tournamentById(tournamentId) : null,
-			placement: first.data.placement,
-			participantCount: first.data.participantCount,
-			setCount: first.data.setCount,
-		},
-	};
+		return {
+			at: first.at,
+			actorKey: String(first.userId),
+			relation: relationOf(ctx, first.userId),
+			data: {
+				actor: users.get(first.userId)!,
+				source: first.data.source,
+				tournament: tournamentId ? await tournamentById(tournamentId) : null,
+				placement: first.data.placement,
+				participantCount: first.data.participantCount,
+				setCount: first.data.setCount,
+			},
+		};
+	});
 }
 
 async function buildPlusResults(ctx: FeedContext) {
@@ -2787,6 +2872,31 @@ function forViewer<T>(
 		candidates.find(isForViewer) ??
 		(ctx.mode === "TEST" ? candidates.at(0) : undefined)
 	);
+}
+
+/** The first candidates, as many as the type shows at once */
+function firstOfType<T>(type: FeedItemType, candidates: T[]) {
+	const definition: FeedItemTypeDefinition = FEED_ITEM_TYPES[type];
+
+	return candidates.slice(0, definition.maxCount ?? 1);
+}
+
+/** The newest event of each user, as many users as the type shows at once */
+function latestPerUser<T extends { userId: number }>(
+	type: FeedItemType,
+	eventsNewestFirst: T[],
+) {
+	return firstOfType(
+		type,
+		R.uniqueBy(eventsNewestFirst, (event) => event.userId),
+	);
+}
+
+async function mapInOrder<T, U>(values: T[], fn: (value: T) => Promise<U>) {
+	const result: U[] = [];
+	for (const value of values) result.push(await fn(value));
+
+	return result;
 }
 
 /** How the viewer knows the user, `null` when they don't */
