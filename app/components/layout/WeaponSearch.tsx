@@ -272,7 +272,6 @@ export function WeaponResultsList({
 	return (
 		<SearchResultsListBox
 			ref={listBoxRef}
-			className="scrollbar"
 			aria-label={t("common:search")}
 			selectionMode="single"
 			onAction={onSelect}

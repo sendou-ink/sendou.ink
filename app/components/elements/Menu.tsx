@@ -115,7 +115,7 @@ export function SendouMenu({
 				id={popoverId}
 				popover="auto"
 				tabIndex={-1}
-				className={clsx(styles.popover, "scrollbar", popoverClassName, {
+				className={clsx(styles.popover, popoverClassName, {
 					[styles.scrolling]: scrolling,
 				})}
 				onBeforeToggle={onBeforeToggle}

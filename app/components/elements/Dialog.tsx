@@ -357,7 +357,7 @@ function dialogElementProps(
 	onClose: () => void,
 ) {
 	return {
-		className: clsx(className, styles.modal, "scrollbar", {
+		className: clsx(className, styles.modal, {
 			[styles.fullScreenModal]: isFullScreen,
 		}),
 		blurredBackdrop: true,

@@ -1,5 +1,6 @@
 /* the app's layers rank above Starlight's, their order is declared in the head (`CASCADE_LAYERS` of astro.config.ts) */
 @import "../../../../app/styles/vars.css";
+@import "../../../../app/styles/scrollbar.css";
 
 /* Starlight's tokens mapped onto the app's default theme, both follow Starlight's [data-theme] on <html> */
 :root {

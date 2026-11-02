@@ -63,7 +63,7 @@ const dataAccess =
 			</ul>
 		) : null
 	}
-	<pre class="code scrollbar" set:html={highlight(exported.signature)} />
+	<pre class="code" set:html={highlight(exported.signature)} />
 	{
 		dataAccess ? (
 			<div class="usages">

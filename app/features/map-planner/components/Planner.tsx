@@ -533,7 +533,6 @@ export function Planner() {
 				<div
 					className={clsx(
 						styles.weaponsSection,
-						"scrollbar",
 						isWide && styles.weaponsSectionWide,
 					)}
 				>
@@ -837,7 +836,7 @@ function StageBackgroundSelector({
 	};
 
 	return (
-		<div className={clsx(styles.topSection, "scrollbar planner")}>
+		<div className={clsx(styles.topSection, "planner")}>
 			<select
 				className="w-max"
 				value={stageId}

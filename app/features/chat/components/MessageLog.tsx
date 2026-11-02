@@ -155,7 +155,7 @@ export function MessageLog({
 				ref={messagesContainerRef}
 				role="log"
 				aria-label="Chat messages"
-				className={clsx(styles.messages, "scrollbar", className)}
+				className={clsx(styles.messages, className)}
 			>
 				<div
 					className={styles.messagesSizer}
@@ -233,7 +233,7 @@ export function MessageLogFallback({ className }: { className?: string }) {
 		<div
 			role="log"
 			aria-label="Chat messages"
-			className={clsx(styles.messages, "scrollbar", className)}
+			className={clsx(styles.messages, className)}
 		/>
 	);
 }

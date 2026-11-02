@@ -34,7 +34,7 @@ export function SideNav({
 			>
 				{top}
 			</div>
-			<div className={clsx(styles.sideNavInner, "scrollbar")}>{children}</div>
+			<div className={styles.sideNavInner}>{children}</div>
 			{footer}
 		</nav>
 	);

@@ -14,7 +14,6 @@ import {
 	useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import clsx from "clsx";
 import { Search as SearchIcon, Trash } from "lucide-react";
 import { useState } from "react";
 import { flushSync } from "react-dom";
@@ -219,7 +218,7 @@ export default function EditWidgetsPage() {
 
 			<div className={styles.content}>
 				<div className={styles.grid}>
-					<section className={clsx(styles.selected, "scrollbar")}>
+					<section className={styles.selected}>
 						<DndContext
 							sensors={sensors}
 							onDragStart={handleDragStart}

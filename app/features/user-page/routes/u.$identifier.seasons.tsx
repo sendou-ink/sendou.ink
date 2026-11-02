@@ -131,7 +131,7 @@ export default function UserSeasonsPage() {
 								activeDays={data.activeDays}
 								today={new Date()}
 								monthNames="short"
-								className={clsx(styles.activityCalendar, "scrollbar")}
+								className={styles.activityCalendar}
 							/>
 						</SendouSection>
 						<StatsPeek
@@ -192,10 +192,7 @@ function SeasonPicker({
 	const { t } = useTranslation(["user"]);
 
 	return (
-		<nav
-			className={clsx(styles.seasonPicker, "scrollbar")}
-			aria-label={t("user:seasons.season")}
-		>
+		<nav className={styles.seasonPicker} aria-label={t("user:seasons.season")}>
 			{seasonPickerItems(seasonOverviews).map((item) => {
 				if (item.type === "CUTOFF") {
 					return <SeasonCutoff key={item.key} />;

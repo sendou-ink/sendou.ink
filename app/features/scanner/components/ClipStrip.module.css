@@ -37,7 +37,6 @@
 	overflow-x: auto;
 	padding: var(--outline-room) var(--outline-room) var(--s-1);
 	margin: calc(-1 * var(--outline-room)) calc(-1 * var(--outline-room)) 0;
-	scrollbar-width: thin;
 }
 
 .tile {

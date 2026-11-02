@@ -385,11 +385,7 @@ function MenuPanel({
 			popover="auto"
 			role="dialog"
 			aria-labelledby={titleId}
-			className={clsx(
-				styles.menuOverlay,
-				"scrollbar",
-				skipAnimation && styles.noAnimation,
-			)}
+			className={clsx(styles.menuOverlay, skipAnimation && styles.noAnimation)}
 			onToggle={onToggle}
 		>
 			<div className={styles.panelDialog}>

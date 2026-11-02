@@ -102,7 +102,7 @@ export function DevToolbar() {
 							aria-label="Close (Esc)"
 						/>
 					</header>
-					<div className={clsx(styles.windowBody, "scrollbar")}>
+					<div className={styles.windowBody}>
 						<openApp.Component />
 					</div>
 				</section>

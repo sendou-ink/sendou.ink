@@ -387,7 +387,6 @@ function GlobalSearchContent({
 			) : (
 				<SearchResultsListBox
 					ref={listBoxRef}
-					className="scrollbar"
 					aria-label={t("common:search")}
 					onAction={handleSelect}
 					renderEmptyState={() => {

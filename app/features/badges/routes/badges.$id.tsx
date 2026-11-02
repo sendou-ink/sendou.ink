@@ -93,7 +93,7 @@ export default function BadgeDetailsPage() {
 					Edit
 				</LinkButton>
 			) : null}
-			<div className={clsx(styles.ownersContainer, "scrollbar")}>
+			<div className={styles.ownersContainer}>
 				<ul className={styles.owners} data-testid="badge-owners">
 					{data.badge.owners.map((owner) => (
 						<li key={owner.id}>

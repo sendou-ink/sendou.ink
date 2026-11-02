@@ -24,9 +24,7 @@ export function TrophyShowcase({
 		<div className={styles.wrapper}>
 			<div className={clsx(styles.content, className)}>
 				<Trophy model={model} code={code} />
-				<div className={clsx(styles.details, detailsClassName, "scrollbar")}>
-					{children}
-				</div>
+				<div className={clsx(styles.details, detailsClassName)}>{children}</div>
 			</div>
 		</div>
 	);

@@ -304,10 +304,7 @@ export function SendouTabList({
 	}, [tabs.selectedKey, tabs.orientation]);
 
 	const tabList = (
-		<div
-			ref={containerRef}
-			className={clsx(styles.tabListContainer, "scrollbar")}
-		>
+		<div ref={containerRef} className={styles.tabListContainer}>
 			<div
 				className={clsx(styles.tabList, {
 					[styles.sticky]: sticky,

@@ -93,7 +93,7 @@ export function SplatoonRotations() {
 
 	return (
 		<div className={styles.rotationsContainer}>
-			<div className={clsx(styles.rotationsScroll, "scrollbar")}>
+			<div className={styles.rotationsScroll}>
 				{sortedEntries.map(([type, { current, next, nextAfter }]) =>
 					current || next ? (
 						<RotationCard

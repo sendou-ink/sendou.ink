@@ -40,16 +40,6 @@ const CASCADE_LAYERS = [
 	"utilities",
 ];
 
-const STARLIGHT_SCROLL_CONTAINERS = [
-	"html",
-	".sidebar-pane",
-	".right-sidebar",
-	"mobile-starlight-toc .dropdown",
-	"site-search .dialog-frame",
-	".sl-markdown-content table",
-	".expressive-code pre",
-];
-
 // the components showcase imports the app's client config (`app/config.ts`), which requires these in a build
 process.env.VITE_SITE_DOMAIN ??= "https://sendou.ink";
 process.env.VITE_TOURNAMENT_DEFAULT_LOGO ??= "tournament-logo-default.avif";
@@ -135,11 +125,7 @@ export default defineConfig({
 			postcss: {
 				plugins: [
 					hoverOnlyOnHoverDevices(),
-					scopeAppStyles({
-						files: SCOPED_APP_STYLES,
-						scope: ".app-root",
-						globals: { ".scrollbar": STARLIGHT_SCROLL_CONTAINERS },
-					}),
+					scopeAppStyles({ files: SCOPED_APP_STYLES, scope: ".app-root" }),
 				],
 			},
 		},

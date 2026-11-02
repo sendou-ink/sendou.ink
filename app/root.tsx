@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import generalI18next from "i18next";
 import NProgress from "nprogress";
 import * as React from "react";
@@ -84,6 +83,7 @@ import "~/styles/fonts.css";
 import "~/styles/vars.css";
 import "~/styles/normalize.css";
 import "~/styles/common.css";
+import "~/styles/scrollbar.css";
 import "~/styles/utils.css";
 import "~/styles/flags.css";
 import "nprogress/nprogress.css";
@@ -222,7 +222,7 @@ function Document({
 			lang={locale}
 			data-game-language={gameLanguage}
 			dir={i18n.dir()}
-			className={clsx(htmlThemeClass, "scrollbar")}
+			className={htmlThemeClass}
 			style={htmlStyle}
 			data-fuse={
 				Config.fuseEnabled && !rootData?.user?.roles.includes("MINOR_SUPPORT")

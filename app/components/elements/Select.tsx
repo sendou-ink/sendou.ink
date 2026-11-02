@@ -732,7 +732,7 @@ function Listbox({
 		<div
 			ref={listboxRef}
 			id={id}
-			className={clsx(styles.listBox, "scrollbar")}
+			className={styles.listBox}
 			role="listbox"
 			tabIndex={-1}
 			aria-labelledby={open ? labelId : undefined}

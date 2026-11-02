@@ -24,7 +24,7 @@ const { refs } = Astro.props;
 			) : (
 				<div class="tooltip-doc muted">No JSDoc</div>
 			)}
-			{ref.code ? <pre class="code scrollbar" set:html={highlight(ref.code)} /> : null}
+			{ref.code ? <pre class="code" set:html={highlight(ref.code)} /> : null}
 		</template>
 	))
 }

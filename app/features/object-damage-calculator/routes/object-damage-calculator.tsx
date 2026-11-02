@@ -415,7 +415,7 @@ function DamageReceiversGrid({
 	return (
 		<div>
 			<div
-				className={`${styles.grid} scrollbar`}
+				className={styles.grid}
 				style={{
 					gridTemplateColumns: gridTemplateColumnsValue(
 						damagesToReceivers[0]?.damages.length ?? 0,

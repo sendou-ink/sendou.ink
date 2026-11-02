@@ -187,7 +187,7 @@ function TournamentShowcase() {
 
 	return (
 		<div className={styles.tournamentCards}>
-			<div className={clsx(styles.tournamentCardsSpacer, "scrollbar")}>
+			<div className={styles.tournamentCardsSpacer}>
 				{data.tournaments.showcase.map((tournament) => (
 					<TournamentCard
 						key={tournament.id}
@@ -216,7 +216,7 @@ function ResultHighlights() {
 				className={clsx(
 					styles.resultHighlights,
 					styles.resultHighlightsTop,
-					"overflow-x-auto scrollbar",
+					"overflow-x-auto",
 				)}
 			>
 				<SeasonCard />
@@ -268,7 +268,7 @@ function TournamentResults() {
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<div className={clsx(styles.resultHighlights, "scrollbar")}>
+		<div className={styles.resultHighlights}>
 			<div className="stack sm text-center">
 				<h2
 					className={clsx(
@@ -278,7 +278,7 @@ function TournamentResults() {
 				>
 					{t("front:showcase.results")}
 				</h2>
-				<div className={clsx(styles.tournamentCardsSpacer, "scrollbar")}>
+				<div className={styles.tournamentCardsSpacer}>
 					{data.tournaments.results.map((tournament) => (
 						<TournamentCard key={tournament.id} tournament={tournament} />
 					))}

@@ -69,7 +69,7 @@ function usageLabel(usage: StateUsage) {
 								<Badge text={param.helper} size="small" />
 							) : null}{" "}
 							{param.schemaHtml ? (param.schemaHtml.includes("\n") ? (
-								<pre class="code scrollbar" set:html={param.schemaHtml} />
+								<pre class="code" set:html={param.schemaHtml} />
 							) : (
 								<code class="state-code" set:html={param.schemaHtml} />
 							)) : null}
@@ -116,7 +116,7 @@ function usageLabel(usage: StateUsage) {
 					<td>
 						{definition.schemaHtml ? (
 							definition.schemaHtml.includes("\n") ? (
-								<pre class="code scrollbar" set:html={definition.schemaHtml} />
+								<pre class="code" set:html={definition.schemaHtml} />
 							) : (
 								<code class="state-code" set:html={definition.schemaHtml} />
 							)

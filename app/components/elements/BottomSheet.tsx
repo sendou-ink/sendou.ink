@@ -62,9 +62,7 @@ export function SendouBottomSheet({
 					<div className={styles.headerActions}>{headerActions}</div>
 					<SendouBottomSheetCloseButton sheetId={id} />
 				</header>
-				<div className={clsx(styles.content, "scrollbar")}>
-					{hasOpened ? children : null}
-				</div>
+				<div className={styles.content}>{hasOpened ? children : null}</div>
 				{footer ? <div className={styles.footer}>{footer}</div> : null}
 			</div>
 		</div>

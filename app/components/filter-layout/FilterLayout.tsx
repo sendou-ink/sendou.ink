@@ -71,9 +71,7 @@ export function FilterLayout({
 						showResultsText={showResultsText}
 					/>
 				</div>
-				<aside
-					className={clsx(styles.sidebar, styles.desktopOnly, "scrollbar")}
-				>
+				<aside className={clsx(styles.sidebar, styles.desktopOnly)}>
 					<PanelHeader
 						activeCount={activeCount}
 						onClearAll={activeCount > 0 ? onClearAll : undefined}

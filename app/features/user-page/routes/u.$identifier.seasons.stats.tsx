@@ -465,7 +465,7 @@ function StageModeHeatmap({
 
 	return (
 		<div className="stack md">
-			<div className={clsx(styles.heatmap, "scrollbar")}>
+			<div className={styles.heatmap}>
 				<div />
 				{modesShort.map((mode) => (
 					<div key={mode} className={styles.heatmapModeHeader}>

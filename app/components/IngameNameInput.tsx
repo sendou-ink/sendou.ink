@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { Languages } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -143,7 +142,7 @@ export function IngameNameInput({
 					</SendouTabList>
 					{IN_GAME_NAME_CHARACTER_CATEGORIES.map((category) => (
 						<SendouTabPanel key={category.id} id={category.id}>
-							<div className={clsx(styles.grid, "scrollbar")}>
+							<div className={styles.grid}>
 								{category.characters.map((character) => (
 									<button
 										key={character}

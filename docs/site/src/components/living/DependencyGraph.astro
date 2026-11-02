@@ -11,7 +11,7 @@ const graph = dependencyGraph(Astro.props.feature);
 
 <figure class="graph-card">
 	<figcaption>Who imports who <span class="muted">· hover a node</span></figcaption>
-	<div class="graph-scroll scrollbar">
+	<div class="graph-scroll">
 		<svg
 			class="graph"
 			viewBox={`0 0 ${graph.width} ${graph.height}`}

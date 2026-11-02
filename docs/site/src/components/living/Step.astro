@@ -16,7 +16,7 @@ const { step } = Astro.props;
 		<span class="phase-icon"></span>
 		<span class="step-text" set:html={step.html} />
 	</div>
-	<pre class="code step-code scrollbar" data-pagefind-ignore set:html={highlight(step.code)} />
+	<pre class="code step-code" data-pagefind-ignore set:html={highlight(step.code)} />
 	{
 		step.children.length > 0 ? (
 			<ol class="steps nested">
