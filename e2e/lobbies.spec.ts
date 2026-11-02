@@ -6,6 +6,8 @@ import {
 	type LobbyRoomSize,
 	type LobbyWeaponRandomizer,
 } from "~/features/lobbies/lobbies-constants";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { openSecondUser } from "./helpers/chat";
 import type { Factories } from "./helpers/factories";
@@ -601,7 +603,8 @@ test.describe("Lobbies", () => {
 
 	/**
 	 * The lobby starts once 8 have checked in after its start time, splitting the room into
-	 * two teams for a set and notifying its players. One side reports the maps, can undo a
+	 * two teams for a set and notifying its players. The banner shows who voted for the map
+	 * being played with their match profile map pool. One side reports the maps, can undo a
 	 * report while the set is being played, and the other confirms the result, after which
 	 * the set shows on the Result tab and counts on the Rankings tab together with the
 	 * weapons reported. The confirming side can instead dispute the result, the reporting
@@ -622,6 +625,20 @@ test.describe("Lobbies", () => {
 					`${LOBBY_NAME} started and you're in a room`,
 				),
 			).toBeVisible();
+		});
+
+		test("the banner shows who voted for the map being played", async ({
+			page,
+			factories,
+		}) => {
+			await startedLobby(page, factories, { isPoolingEveryMap: true });
+			const lobbyPage = new LobbyPage(page);
+
+			await expect(lobbyPage.locators.mapVotersBadge).toHaveText(
+				String(ROOM_SIZE),
+			);
+			await lobbyPage.locators.mapVotersBadge.click();
+			await expect(lobbyPage.locators.mapVotersHeader).toBeVisible();
 		});
 
 		test("a set reported by one side and confirmed by the other counts", async ({
@@ -1978,25 +1995,42 @@ async function startedLobby(
 	options: {
 		roomSize?: LobbyRoomSize;
 		weaponRandomizer?: LobbyWeaponRandomizer;
+		isPoolingEveryMap?: boolean;
 	} = {},
 ) {
 	return startLobby(page, await lobbyAwaitingLastCheckIn(factories, options));
 }
 
-/** A lobby that started a minute ago, its full room checked in but the last player. The first player is the host. */
+/**
+ * A lobby that started a minute ago, its full room checked in but the last player. The first player is the host.
+ * With `isPoolingEveryMap` every player has every map in their match profile pool.
+ */
 async function lobbyAwaitingLastCheckIn(
 	factories: Factories,
 	{
 		roomSize = ROOM_SIZE,
 		weaponRandomizer = "OFF",
+		isPoolingEveryMap = false,
 	}: {
 		roomSize?: LobbyRoomSize;
 		weaponRandomizer?: LobbyWeaponRandomizer;
+		isPoolingEveryMap?: boolean;
 	} = {},
 ) {
-	const users = await factories.UserFactory.createMany(roomSize, (i) => ({
-		discordName: `${PLAYER_NAME_PREFIX}${i}`,
-	}));
+	const users = await factories.UserFactory.createMany(
+		roomSize,
+		(i) => ({ discordName: `${PLAYER_NAME_PREFIX}${i}` }),
+		isPoolingEveryMap
+			? {
+					matchProfile: {
+						mapModePreferences: {
+							modes: [],
+							pool: modesShort.map((mode) => ({ mode, stages: [...stageIds] })),
+						},
+					},
+				}
+			: undefined,
+	);
 	const players = users.map((user, i) => ({
 		id: user.id,
 		name: `${PLAYER_NAME_PREFIX}${i}`,

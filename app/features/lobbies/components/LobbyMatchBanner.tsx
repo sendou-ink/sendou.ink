@@ -5,6 +5,7 @@ import {
 	IconBanner,
 	MatchBanner,
 	MatchBannerContainer,
+	MatchBannerVotersBadge,
 	MultiMatchBanner,
 	preloadStageBanners,
 } from "~/components/match-page/MatchBanner";
@@ -110,7 +111,13 @@ export function LobbyMatchBanner() {
 				screenLegal={!currentSet.noScreen}
 				joinPool={joinInfo?.pool}
 				joinPass={joinInfo?.pass}
-			/>
+			>
+				<MatchBannerVotersBadge
+					voters={currentSet.participants.filter((participant) =>
+						data.currentMapVoterIds.includes(participant.userId),
+					)}
+				/>
+			</MatchBanner>
 			{bottomRow}
 		</MatchBannerContainer>
 	);

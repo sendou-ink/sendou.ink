@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Check, X } from "lucide-react";
+import { Check, Vote, X } from "lucide-react";
 import * as React from "react";
 import { preload } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,7 @@ import {
 import { SendouPopover } from "~/components/elements/Popover";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
+import type { CommonUser } from "~/utils/kysely.server";
 import { stageBannerImageUrl } from "~/utils/urls";
 import { ModeImage, SpecialWeaponImage } from "../Image";
 import styles from "./MatchBanner.module.css";
@@ -271,5 +272,38 @@ export function MatchBannerInfoBadge({
 		<SendouButton variant="minimal" className={styles.infoBadge} {...rest}>
 			{children}
 		</SendouButton>
+	);
+}
+
+/** How many players voted for the map being played, listing them in a popover. Nothing when no one did. */
+export function MatchBannerVotersBadge({
+	voters,
+}: {
+	voters: Array<Pick<CommonUser, "id" | "username" | "avatar">>;
+}) {
+	const { t } = useTranslation(["q"]);
+
+	if (voters.length === 0) return null;
+
+	return (
+		<SendouPopover
+			trigger={
+				<MatchBannerInfoBadge testId="map-voters-badge">
+					{voters.length} <Vote />
+				</MatchBannerInfoBadge>
+			}
+		>
+			<div className="stack sm">
+				<div className="text-sm text-lighter font-semi-bold">
+					{t("q:match.mapVoters.header")}
+				</div>
+				{voters.map((voter) => (
+					<div key={voter.id} className="stack sm horizontal items-center xs">
+						<Avatar user={voter} size="xxs" />
+						{voter.username}
+					</div>
+				))}
+			</div>
+		</SendouPopover>
 	);
 }

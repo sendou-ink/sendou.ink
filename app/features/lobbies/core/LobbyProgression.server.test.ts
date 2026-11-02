@@ -2,6 +2,8 @@ import { subMinutes } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { withUserId } from "~/utils/Test";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
@@ -97,6 +99,25 @@ describe("LobbyProgression.advance", () => {
 		expect(LobbySet.playersOf(set, "ALPHA")).toHaveLength(4);
 		expect(LobbySet.playersOf(set, "BRAVO")).toHaveLength(4);
 		expect(set.games).toHaveLength(3);
+	});
+
+	test("stores whose pools each map was picked from", async () => {
+		for (const userId of users.ids(8)) {
+			await UserFactory.grant(userId, {
+				matchProfile: {
+					mapModePreferences: {
+						modes: [],
+						pool: modesShort.map((mode) => ({ mode, stages: [...stageIds] })),
+					},
+				},
+			});
+		}
+
+		const lobbyId = await startedLobby({ checkedInCount: 8 });
+
+		expect((await latestSet(lobbyId)).games.map((game) => game.source)).toEqual(
+			["BOTH", "BOTH", "BOTH"],
+		);
 	});
 
 	test.each(["CHAOTIC", "BALANCED"] as const)(

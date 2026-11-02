@@ -2,6 +2,7 @@ import { data, type LoaderFunctionArgs, redirect } from "react-router";
 import * as R from "remeda";
 import { getUser } from "~/features/auth/core/user.server";
 import * as RouteChatRooms from "~/features/chat/RouteChatRooms.server";
+import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
@@ -13,6 +14,7 @@ import type { SerializeFrom } from "~/utils/remix";
 import { notFound, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
 import * as Leaderboard from "../core/Leaderboard";
+import * as LobbyMapList from "../core/LobbyMapList.server";
 import * as LobbySet from "../core/LobbySet";
 import * as LobbyState from "../core/LobbyState";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
@@ -117,6 +119,8 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 		lobby,
 		status,
 		sets,
+		/** Players of the current set who voted for the map being played */
+		currentMapVoterIds: await currentMapVoterIds(latestSet),
 		reportedWeapons,
 		ingestedScoreboards,
 		leaderboard,
@@ -162,6 +166,26 @@ function withShareKey(url: URL, shareKey: string) {
 	);
 
 	return `${url.pathname}?${next}`;
+}
+
+async function currentMapVoterIds(
+	set: LobbyMatchRepository.LobbySetWithGames | null,
+) {
+	const index = set ? LobbySet.currentGameIndex(set) : null;
+	if (!set || index === null) return [];
+
+	const map = set.games[index];
+	if (map.source === null || map.source === "DEFAULT") return [];
+
+	return LobbyMapList.voters({
+		map,
+		participants: set.participants,
+		profiles: await MatchProfileRepository.findAllMapModePreferencesByUserIds(
+			set.participants
+				.filter((participant) => participant.side !== null)
+				.map((participant) => participant.userId),
+		),
+	});
 }
 
 /** One weapon per player per reported map: reported by hand or by the scanner, else read from a linked scoreboard. */

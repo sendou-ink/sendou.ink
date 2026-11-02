@@ -39,6 +39,7 @@ import type { StreamPlatform } from "~/features/live-streams/live-streams-consta
 import type {
 	LobbyBestOf,
 	LobbyLabel,
+	LobbyMapSource,
 	LobbyParticipantStatus,
 	LobbyRolledWeapons,
 	LobbyRoomSize,
@@ -1501,6 +1502,8 @@ interface LobbyGame {
 	index: number;
 	mode: ModeShort;
 	stageId: StageId;
+	/** Whose map pools the map was picked from, `null` for sets started before it was stored */
+	source: LobbyMapSource | null;
 	winnerSide: LobbySide | null;
 	reportedAt: number | null;
 	reportedByUserId: number | null;

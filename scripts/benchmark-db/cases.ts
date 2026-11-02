@@ -697,6 +697,14 @@ export function buildCases(fx: Fixtures): {
 	add("MatchProfileRepository.findAllByUserIds", fx.manyUserIds, (userIds) =>
 		MatchProfileRepository.findAllByUserIds(userIds.slice(0, 10)),
 	);
+	add(
+		"MatchProfileRepository.findAllMapModePreferencesByUserIds",
+		fx.manyUserIds,
+		(userIds) =>
+			MatchProfileRepository.findAllMapModePreferencesByUserIds(
+				userIds.slice(0, 10),
+			),
+	);
 
 	add("SkillRepository.findCurrentUserSkills", fx.skillBatch, (skillBatch) =>
 		SkillRepository.findCurrentUserSkills({

@@ -11,7 +11,11 @@ import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 import type { Unwrapped } from "~/utils/types";
 import * as LobbySet from "./core/LobbySet";
-import type { LobbyRolledWeapons, LobbySide } from "./lobbies-constants";
+import type {
+	LobbyMapSource,
+	LobbyRolledWeapons,
+	LobbySide,
+} from "./lobbies-constants";
 import { lobbyChatRoomExpiresAt } from "./lobbies-utils";
 
 /** A set of the lobby with its games and participants, see {@link findAllSetsByLobbyId}. */
@@ -40,6 +44,7 @@ export function findAllSetsByLobbyId(lobbyId: number, trx?: Transaction<DB>) {
 						"LobbyGame.index",
 						"LobbyGame.mode",
 						"LobbyGame.stageId",
+						"LobbyGame.source",
 						"LobbyGame.winnerSide",
 						"LobbyGame.reportedAt",
 						"LobbyGame.reportedByUserId",
@@ -153,7 +158,7 @@ export function insertSet({
 }: {
 	lobbyId: number;
 	bestOf: Tables["LobbySet"]["bestOf"];
-	maps: ModeWithStage[];
+	maps: Array<ModeWithStage & { source: LobbyMapSource }>;
 	alpha: number[];
 	bravo: number[];
 	sittingOut: number[];
@@ -196,6 +201,7 @@ export function insertSet({
 					index,
 					mode: map.mode,
 					stageId: map.stageId,
+					source: map.source,
 				})),
 			)
 			.execute();

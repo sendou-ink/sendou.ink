@@ -46,6 +46,9 @@ export const DROP_AFTER_SET_COOLDOWN_KEY = "lobby-drop-after-set";
 export const LOBBY_SIDES = ["ALPHA", "BRAVO"] as const;
 export type LobbySide = (typeof LOBBY_SIDES)[number];
 
+/** Which side's players had a map in their pool, `DEFAULT` when neither did. */
+export type LobbyMapSource = LobbySide | "BOTH" | "DEFAULT";
+
 /** The 4 weapons each side of a set got from the weapon randomizer, its players deciding who plays which. */
 export type LobbyRolledWeapons = Record<LobbySide, MainWeaponId[]>;
 

@@ -57,6 +57,8 @@ export class LobbyPage {
 			forfeitNote: page.getByTestId("lobby-forfeit-note"),
 			waitingBanner: page.getByTestId("lobby-waiting-banner"),
 			startBanner: page.getByTestId("lobby-start-banner"),
+			mapVotersBadge: page.getByTestId("map-voters-badge"),
+			mapVotersHeader: page.getByText("Voted for this map"),
 			// the in-game private battle to join, shown to those with a place in the room
 			roomPool: page.getByRole("main").getByText("Pool", { exact: true }),
 			roomPass: page.getByTestId("room-pass"),

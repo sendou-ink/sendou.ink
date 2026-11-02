@@ -4,6 +4,7 @@ import * as R from "remeda";
 import type { DBBoolean } from "~/db/tables";
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as MapVotes from "~/features/match-profile/core/MapVotes";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
 import { type TieredSkill, userSkills } from "~/features/mmr/tiered.server";
@@ -229,7 +230,7 @@ class SendouQClass {
 						currentMap: currentMapRaw,
 						groupAlpha: alphaCensored,
 						groupBravo: bravoCensored,
-						pools: matchMapPools(match),
+						preferences: matchMapPreferences(match),
 					}),
 				}
 			: undefined;
@@ -480,7 +481,7 @@ class SendouQClass {
 		currentMap,
 		groupAlpha,
 		groupBravo,
-		pools,
+		preferences,
 	}: {
 		currentMap: DBMatch["mapList"][number];
 		groupAlpha: {
@@ -499,7 +500,7 @@ class SendouQClass {
 				avatar: string | null;
 			}>;
 		};
-		pools: ReturnType<typeof matchMapPools>;
+		preferences: ReturnType<typeof matchMapPreferences>;
 	}) {
 		const pickerGroups = [groupAlpha, groupBravo].filter(
 			(g) => currentMap.source === "BOTH" || String(g.id) === currentMap.source,
@@ -507,11 +508,10 @@ class SendouQClass {
 		if (pickerGroups.length === 0) return [];
 
 		return pickerGroups.flatMap((pickerGroup) =>
-			pools.flatMap(({ userId, pool }) => {
-				const member = pickerGroup.members.find((m) => m.id === userId);
+			preferences.flatMap((player) => {
+				const member = pickerGroup.members.find((m) => m.id === player.userId);
 				if (!member) return [];
-				const modePool = pool.find((p) => p.mode === currentMap.mode);
-				if (!modePool?.stages.includes(currentMap.stageId)) return [];
+				if (!MapVotes.votesFor(player.preferences, currentMap)) return [];
 				return [
 					{
 						id: member.id,
@@ -569,26 +569,16 @@ class SendouQClass {
 }
 
 /**
- * Map pools of everyone in a match, which its current map's vote count is read from.
- * A group queuing as a team plays on the team's pool rather than on its members' own,
- * and modes a pool's owner avoids are no vote of theirs.
+ * Map preferences of everyone in a match, which its current map's voters are read from.
+ * A group queuing as a team plays on the team's preferences rather than on its members' own.
  */
-function matchMapPools(match: DBMatch) {
+function matchMapPreferences(match: DBMatch) {
 	return [match.groupAlpha, match.groupBravo].flatMap((group) =>
 		group.members.flatMap((member) => {
 			const preferences =
 				group.team?.mapModePreferences ?? member.mapModePreferences;
-			if (!preferences) return [];
 
-			const avoidedModes = preferences.modes
-				.filter((mode) => mode.preference === "AVOID")
-				.map((mode) => mode.mode);
-			const pool = preferences.pool.filter(
-				(candidate) => !avoidedModes.includes(candidate.mode),
-			);
-			if (pool.length === 0) return [];
-
-			return [{ userId: member.id, pool }];
+			return preferences ? [{ userId: member.id, preferences }] : [];
 		}),
 	);
 }

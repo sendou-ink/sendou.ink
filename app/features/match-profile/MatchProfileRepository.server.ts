@@ -32,6 +32,17 @@ export function findMapModePreferencesByUserId(userId: number) {
 		.then((row) => row.mapModePreferences);
 }
 
+/** Map/mode preferences of the users, for the users that exist. */
+export async function findAllMapModePreferencesByUserIds(userIds: number[]) {
+	if (userIds.length === 0) return [];
+
+	return db
+		.selectFrom("User")
+		.select(["User.id as userId", "User.mapModePreferences"])
+		.where("User.id", "in", userIds)
+		.execute();
+}
+
 /** Match profile weapon pool of one user, with ten-star status. */
 export function findWeaponPoolByUserId(userId: number) {
 	return db

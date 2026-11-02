@@ -1,13 +1,11 @@
 import { differenceInMinutes } from "date-fns";
-import { Ban, Vote } from "lucide-react";
+import { Ban } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Avatar } from "~/components/Avatar";
-import { SendouPopover } from "~/components/elements/Popover";
 import {
 	IconBanner,
 	MatchBanner,
 	MatchBannerContainer,
-	MatchBannerInfoBadge,
+	MatchBannerVotersBadge,
 	MultiMatchBanner,
 	preloadStageBanners,
 } from "~/components/match-page/MatchBanner";
@@ -119,7 +117,7 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 					joinPool={joinPool}
 					joinPass={joinPass}
 				>
-					<CurrentMapVotesBadge voters={currentMap.voters} />
+					<MatchBannerVotersBadge voters={currentMap.voters} />
 				</MatchBanner>
 			)}
 			{bottomRow}
@@ -177,37 +175,5 @@ function SendouQMatchBannerTopRow({
 				/>
 			)}
 		</MatchBannerTopRow>
-	);
-}
-
-function CurrentMapVotesBadge({
-	voters,
-}: {
-	voters: NonNullable<SendouQMatchLoaderData["match"]["currentMap"]>["voters"];
-}) {
-	const { t } = useTranslation(["q"]);
-
-	if (voters.length === 0) return null;
-
-	return (
-		<SendouPopover
-			trigger={
-				<MatchBannerInfoBadge>
-					{voters.length} <Vote />
-				</MatchBannerInfoBadge>
-			}
-		>
-			<div className="stack sm">
-				<div className="text-sm text-lighter font-semi-bold">
-					{t("q:match.mapVoters.header")}
-				</div>
-				{voters.map((voter) => (
-					<div key={voter.id} className="stack sm horizontal items-center xs">
-						<Avatar user={voter} size="xxs" />
-						{voter.username}
-					</div>
-				))}
-			</div>
-		</SendouPopover>
 	);
 }
