@@ -25,7 +25,7 @@ export const broadcastStreamSearchParams = SearchParams.define({
 
 export const broadcastDashboardSearchParams = SearchParams.define({
 	tab: SP.param(v.picklist(BROADCAST_DASHBOARD_TABS), {
-		default: "scene",
+		default: "setup",
 		loader: false,
 	}),
 });

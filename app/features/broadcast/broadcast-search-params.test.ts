@@ -37,7 +37,7 @@ describe("broadcastStreamSearchParams", () => {
 describe("broadcastDashboardSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(broadcastDashboardSearchParams, {
-			tab: ["scene", "setup", "theme"],
+			tab: ["setup", "theme"],
 		});
 	});
 
