@@ -15,6 +15,16 @@
 	opacity: 0.35;
 }
 
+.vignette {
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(
+		ellipse at center,
+		transparent 40%,
+		var(--bc-bg) 100%
+	);
+}
+
 .alertStripes {
 	position: absolute;
 	right: -200px;

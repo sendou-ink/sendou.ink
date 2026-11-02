@@ -290,7 +290,7 @@ export const BROADCAST_SCENE_GROUPS = [
 /**
  * Stable `data-part` hooks of each design for custom CSS, e.g. `[data-scene="game"] [data-part="team-name"]`.
  * `hold` is the design of {@link BROADCAST_HOLD_SCENES}, `matchup` the featured match line some scenes show,
- * `ticker` the other matches' scores along the bottom of the game and hold scenes and `stinger` the transition over every scene. Every scene has a `backdrop` except game and replays, maps' with a `backdrop-video` of the next map.
+ * `ticker` the other matches' scores along the bottom of the game and hold scenes and `stinger` the transition over every scene. Every scene has a `backdrop` except game and replays, maps' with a `backdrop-video` of the next map under a `backdrop-vignette` darkening its edges.
  * Renaming one breaks users' themes.
  */
 export const BROADCAST_SCENE_PARTS = {
