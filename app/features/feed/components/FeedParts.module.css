@@ -51,6 +51,13 @@
 	border-radius: var(--radius-field);
 }
 
+.siteLogo {
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	font-size: 18px;
+}
+
 .winLoss {
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);

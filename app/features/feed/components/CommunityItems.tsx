@@ -18,6 +18,7 @@ import {
 	LogoAvatar,
 	NavIconAvatar,
 	ordinalPlacement,
+	SiteLogoAvatar,
 	TournamentRow,
 	UserName,
 	UserStack,
@@ -114,7 +115,7 @@ export function communityItemContent(
 		case "SITE_UPDATE": {
 			const { data } = item;
 			return {
-				avatar: <LogoAvatar url={null} name="sendou.ink" />,
+				avatar: <SiteLogoAvatar />,
 				line: (
 					<>
 						<b>sendou.ink</b> update
@@ -388,7 +389,7 @@ export function communityItemContent(
 			const { data } = item;
 			const milestone = <b>{groupedNumber(data.milestone)}</b>;
 			return {
-				avatar: <LogoAvatar url={null} name="sendou.ink" />,
+				avatar: <SiteLogoAvatar />,
 				line:
 					data.total === "USERS" ? (
 						<>sendou.ink now has {milestone} users</>
@@ -431,7 +432,7 @@ export function communityItemContent(
 		}
 		case "INSTALL_APP": {
 			return {
-				avatar: <LogoAvatar url={null} name="sendou.ink" />,
+				avatar: <SiteLogoAvatar />,
 				line: <b>Get the sendou.ink app</b>,
 				body: <InstallAppBody />,
 			};

@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Image, ModeImage, StageImage, WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
+import { SiteLogoMark } from "~/components/SiteLogoMark";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -74,6 +75,11 @@ export function LogoAvatar({
 			className={styles.logo}
 		/>
 	);
+}
+
+/** Post avatar of sendou.ink itself */
+export function SiteLogoAvatar() {
+	return <SiteLogoMark className={styles.siteLogo} />;
 }
 
 /** Post avatar of a site feature, for posts not about any one user */

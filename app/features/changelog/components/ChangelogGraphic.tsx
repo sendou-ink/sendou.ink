@@ -1,6 +1,5 @@
-import clsx from "clsx";
-import type * as React from "react";
 import { Image } from "~/components/Image";
+import { SiteLogoMark } from "~/components/SiteLogoMark";
 import {
 	GraphicContainer,
 	GraphicDateSubtitle,
@@ -132,21 +131,6 @@ function EntryIcons({
 					loading="eager"
 				/>
 			))}
-		</div>
-	);
-}
-
-function SiteLogoMark({
-	className,
-	style,
-}: {
-	className?: string;
-	style?: React.CSSProperties;
-}) {
-	return (
-		<div className={clsx(styles.logo, className)} style={style}>
-			<span className={styles.logoS}>S</span>
-			<span className={styles.logoInk}>ink</span>
 		</div>
 	);
 }
