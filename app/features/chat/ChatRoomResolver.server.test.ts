@@ -1,5 +1,6 @@
 import { addHours, subHours } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
+import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
@@ -7,6 +8,7 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -312,6 +314,100 @@ describe("ChatRoomResolver.findAllByUserId", () => {
 
 		expect(await ChatRoomResolver.findAllByUserId(requestUserIds[0])).toEqual(
 			[],
+		);
+	});
+});
+
+describe("ChatRoomResolver LOBBY rooms", () => {
+	const hostId = () => users.id(2);
+	const memberId = () => users.id(3);
+
+	const setupLobby = async () => {
+		const lobby = await LobbyFactory.create(
+			{ hostUserId: hostId() },
+			{ signedUpUserIds: [memberId()] },
+		);
+		const { chatRoomId } = await db
+			.selectFrom("Lobby")
+			.select("Lobby.chatRoomId")
+			.where("Lobby.id", "=", lobby.id)
+			.executeTakeFirstOrThrow();
+		invariant(chatRoomId, "Lobby has no chat room");
+
+		return { lobbyId: lobby.id, chatRoomId };
+	};
+
+	const leave = (lobbyId: number) =>
+		LobbyRepository.removeParticipant({
+			lobbyId,
+			userId: memberId(),
+			unfinishedSetId: null,
+		});
+	const rejoin = (lobbyId: number) =>
+		LobbyRepository.insertParticipant({
+			lobbyId,
+			userId: memberId(),
+			status: "REGISTERED",
+		});
+	const kick = (lobbyId: number) =>
+		LobbyRepository.kickParticipant({
+			lobbyId,
+			userId: memberId(),
+			unfinishedSetId: null,
+		});
+
+	test.each([
+		{ why: "a participant who left keeps it", steps: [leave], expected: true },
+		{
+			why: "a participant removed by the lobby keeps it",
+			steps: [
+				(lobbyId: number) =>
+					LobbyRepository.deleteParticipants({
+						lobbyId,
+						userIds: [memberId()],
+					}),
+			],
+			expected: true,
+		},
+		{
+			why: "a participant who left, rejoined and left again keeps it",
+			steps: [leave, rejoin, leave],
+			expected: true,
+		},
+		{ why: "a kicked participant loses it", steps: [kick], expected: false },
+		{
+			why: "a participant who left and was then kicked loses it",
+			steps: [leave, kick],
+			expected: false,
+		},
+		{
+			why: "a participant who left, rejoined and was kicked loses it",
+			steps: [leave, rejoin, kick],
+			expected: false,
+		},
+	])("$why", async ({ steps, expected }) => {
+		const { lobbyId, chatRoomId } = await setupLobby();
+		for (const step of steps) await step(lobbyId);
+
+		const room = await resolveOrThrow(chatRoomId);
+		const listed = await ChatRoomResolver.findAllByUserId(memberId());
+
+		expect(hasPermission(room, "VIEW", { id: memberId() })).toBe(expected);
+		expect(hasPermission(room, "POST", { id: memberId() })).toBe(expected);
+		expect(listed.map((listedRoom) => listedRoom.roomId)).toEqual(
+			expected ? [chatRoomId] : [],
+		);
+	});
+
+	test("lists a participant who left and rejoined once", async () => {
+		const { lobbyId, chatRoomId } = await setupLobby();
+		await leave(lobbyId);
+		await rejoin(lobbyId);
+
+		const room = await resolveOrThrow(chatRoomId);
+
+		expect(room.participantUserIds.sort(byId)).toEqual(
+			[hostId(), memberId()].sort(byId),
 		);
 	});
 });

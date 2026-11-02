@@ -5,7 +5,7 @@ import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { wrappedAction } from "~/utils/Test";
+import { withUserId, wrappedAction } from "~/utils/Test";
 import * as LobbyActivity from "../core/LobbyActivity.server";
 import * as LobbySet from "../core/LobbySet";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
@@ -172,6 +172,28 @@ describe("lobby action", () => {
 		expect(
 			(await participantsOf(lobby.id)).some((p) => p.userId === visitorId()),
 		).toBe(false);
+	});
+
+	test("the host kicks a player who left, taking away the lobby's chat", async () => {
+		const lobby = await LobbyFactory.create(
+			{ hostUserId: hostId() },
+			{ signedUpUserIds: [visitorId()] },
+		);
+		await lobbyAction(
+			{ _action: "LEAVE" },
+			{ user: visitorId(), params: { id: String(lobby.id) } },
+		);
+
+		await lobbyAction(
+			{ _action: "KICK", userId: visitorId() },
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		const found = await withUserId(visitorId(), () =>
+			LobbyRepository.findById(lobby.id),
+		);
+		expect(found?.isViewerKicked).toBe(true);
+		expect(found?.hasViewerLeft).toBe(false);
 	});
 
 	test("only the host confirms a disputed set", async () => {

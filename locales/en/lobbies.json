@@ -11,7 +11,7 @@
 	"admin.end": "End lobby",
 	"admin.end.heading": "End the lobby for everyone?",
 	"admin.kick": "Kick",
-	"admin.kick.explanation": "They can't sign up for this lobby again. If they're playing a set with a map reported, their team forfeits it.",
+	"admin.kick.explanation": "They lose access to the lobby's chat and can't sign up for it again. If they're playing a set with a map reported, their team forfeits it.",
 	"admin.kick.heading": "Kick {{user}} from the lobby?",
 	"admin.makeHost": "Make host",
 	"admin.makeHost.explanation": "You won't be able to manage the lobby anymore.",

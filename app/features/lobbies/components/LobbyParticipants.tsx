@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { WeaponPool } from "~/components/match-page/WeaponPool";
+import { useHasPermission } from "~/modules/permissions/hooks";
 import type { LobbyParticipantStatus } from "../lobbies-constants";
 import { useLobbyView } from "../lobbies-hooks";
 import styles from "./LobbyParticipants.module.css";
@@ -44,7 +45,26 @@ export function LobbyParticipants() {
 				participants={withStatus("WAITLISTED")}
 				isNumbered
 			/>
+			<LobbyLeftUserTable />
 		</div>
+	);
+}
+
+/** For the host, those who left the lobby and so still have its chat, to kick them out of it. */
+export function LobbyLeftUserTable() {
+	const { t } = useTranslation(["lobbies"]);
+	const { data } = useLobbyView();
+	const isHost = useHasPermission(data.lobby, "MANAGE");
+
+	if (!isHost || data.lobby.endedAt !== null) return null;
+
+	return (
+		<LobbyPlayerTable
+			title={t("lobbies:leaderboard.left")}
+			rows={data.lobby.leftUsers.map((user) => ({ user }))}
+			rowTestId="lobby-left-user"
+			columns={[]}
+		/>
 	);
 }
 

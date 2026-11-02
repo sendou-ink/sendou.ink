@@ -149,7 +149,7 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 		chatRooms: await RouteChatRooms.resolve(
 			user,
 			// a player of the set gets the lobby's chat and their team's side by side
-			viewer
+			viewer || lobby.hasViewerLeft
 				? [lobby.chatRoomId, viewerTeamChatRoomId]
 						.filter((roomId) => typeof roomId === "number")
 						.map((roomId) => ({ roomId, autoOpen: true }))

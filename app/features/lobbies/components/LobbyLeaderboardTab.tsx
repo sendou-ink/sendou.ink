@@ -4,7 +4,7 @@ import { WeaponImage } from "~/components/Image";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { useLobbyView } from "../lobbies-hooks";
 import styles from "./LobbyLeaderboardTab.module.css";
-import { LobbyParticipantTable } from "./LobbyParticipants";
+import { LobbyLeftUserTable, LobbyParticipantTable } from "./LobbyParticipants";
 import { LobbyPlayerTable } from "./LobbyPlayerTable";
 
 const WEAPONS_SHOWN = 4;
@@ -77,6 +77,7 @@ export function LobbyLeaderboardTab() {
 					participants={waitlist}
 					isNumbered
 				/>
+				<LobbyLeftUserTable />
 			</div>
 		</SendouTabPanel>
 	);

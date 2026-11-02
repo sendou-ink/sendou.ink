@@ -106,6 +106,33 @@ describe("LobbyRepository visibility", () => {
 		expect(listed.upcoming).toEqual([]);
 	});
 
+	test.each([
+		{ why: "one who left still sees it", isKicked: false, expected: true },
+		{ why: "one who was kicked doesn't", isKicked: true, expected: false },
+	])("link-only: $why", async ({ isKicked, expected }) => {
+		const lobby = await LobbyFactory.create(
+			{ hostUserId: hostId(), visibility: "LINK_ONLY" },
+			{ signedUpUserIds: [memberId()] },
+		);
+		const removal = {
+			lobbyId: lobby.id,
+			userId: memberId(),
+			unfinishedSetId: null,
+		};
+		if (isKicked) {
+			await LobbyRepository.kickParticipant(removal);
+		} else {
+			await LobbyRepository.removeParticipant(removal);
+		}
+
+		const found = await withUserId(memberId(), () =>
+			LobbyRepository.findById(lobby.id),
+		);
+
+		expect(Boolean(found)).toBe(expected);
+		expect(Boolean(found?.hasViewerLeft)).toBe(expected);
+	});
+
 	test("link-only: a participant other than the host gets the share key", async () => {
 		const lobby = await LobbyFactory.create(
 			{ hostUserId: hostId(), visibility: "LINK_ONLY" },

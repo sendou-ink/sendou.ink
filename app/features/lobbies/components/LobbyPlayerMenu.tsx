@@ -9,7 +9,7 @@ import { useHasPermission } from "~/modules/permissions/hooks";
 import { useLobbyView } from "../lobbies-hooks";
 import { lobbyActionSchema } from "../lobbies-schemas";
 
-/** The host's actions for a participant: sitting them out of the next set, making them the host and kicking them. */
+/** The host's actions for a participant: sitting them out of the next set, making them the host and kicking them. One who left can only be kicked. */
 export function LobbyPlayerMenu({ userId }: { userId: number }) {
 	const { t } = useTranslation(["lobbies"]);
 	const { data } = useLobbyView();
@@ -21,10 +21,13 @@ export function LobbyPlayerMenu({ userId }: { userId: number }) {
 	const participant = data.lobby.participants.find(
 		(candidate) => candidate.id === userId,
 	);
-	if (!isHost || !participant || data.lobby.endedAt !== null) return null;
+	const user =
+		participant ??
+		data.lobby.leftUsers.find((leftUser) => leftUser.id === userId);
+	if (!isHost || !user || data.lobby.endedAt !== null) return null;
 
-	const canSitOut = participant.status === "IN_ROOM";
-	const isOtherThanHost = participant.id !== data.lobby.hostUserId;
+	const canSitOut = participant?.status === "IN_ROOM";
+	const isOtherThanHost = user.id !== data.lobby.hostUserId;
 
 	if (!canSitOut && !isOtherThanHost) return null;
 
@@ -37,23 +40,21 @@ export function LobbyPlayerMenu({ userId }: { userId: number }) {
 						variant="minimal"
 						icon={<MoreHorizontal />}
 						aria-label="Actions"
-						testId={`lobby-player-menu-${participant.id}`}
+						testId={`lobby-player-menu-${user.id}`}
 					/>
 				}
 			>
 				{canSitOut ? (
 					<SendouMenuItem
-						icon={participant.isSittingOut ? <Play /> : <Pause />}
-						onAction={() =>
-							submit("TOGGLE_SIT_OUT", { userId: participant.id })
-						}
+						icon={participant?.isSittingOut ? <Play /> : <Pause />}
+						onAction={() => submit("TOGGLE_SIT_OUT", { userId: user.id })}
 					>
-						{participant.isSittingOut
+						{participant?.isSittingOut
 							? t("lobbies:admin.undoSitOut")
 							: t("lobbies:admin.sitOut")}
 					</SendouMenuItem>
 				) : null}
-				{isOtherThanHost ? (
+				{isOtherThanHost && participant ? (
 					<SendouMenuItem
 						icon={<Crown />}
 						onAction={() => setIsConfirmingMakeHost(true)}
@@ -75,21 +76,21 @@ export function LobbyPlayerMenu({ userId }: { userId: number }) {
 				isOpen={isConfirmingMakeHost}
 				onOpenChange={setIsConfirmingMakeHost}
 				dialogHeading={t("lobbies:admin.makeHost.heading", {
-					user: participant.username,
+					user: user.username,
 				})}
 				description={t("lobbies:admin.makeHost.explanation")}
 				submitButtonText={t("lobbies:admin.makeHost")}
-				onConfirm={() => submit("MAKE_HOST", { userId: participant.id })}
+				onConfirm={() => submit("MAKE_HOST", { userId: user.id })}
 			/>
 			<FormWithConfirm
 				isOpen={isConfirmingKick}
 				onOpenChange={setIsConfirmingKick}
 				dialogHeading={t("lobbies:admin.kick.heading", {
-					user: participant.username,
+					user: user.username,
 				})}
 				description={t("lobbies:admin.kick.explanation")}
 				submitButtonText={t("lobbies:admin.kick")}
-				onConfirm={() => submit("KICK", { userId: participant.id })}
+				onConfirm={() => submit("KICK", { userId: user.id })}
 			/>
 		</>
 	);

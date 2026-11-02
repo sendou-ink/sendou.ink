@@ -9,7 +9,7 @@ import {
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { openSecondUser } from "./helpers/chat";
+import { chatHistoryStatus, openSecondUser } from "./helpers/chat";
 import type { Factories } from "./helpers/factories";
 import {
 	expect,
@@ -1496,7 +1496,67 @@ test.describe("Lobbies", () => {
 		});
 	});
 
+	/**
+	 * The lobby's chat is shared by everyone in it and stays with those who leave, only a kick takes it
+	 * away. While a set is played its two teams also get a chat of their own, fresh for every set.
+	 */
 	test.describe("Chat", () => {
+		test("leaving keeps the lobby's chat, being kicked takes it away", async ({
+			page,
+			factories,
+		}) => {
+			const host = await factories.UserFactory.create();
+			const leaver = await factories.UserFactory.create();
+			const lobby = await factories.LobbyFactory.create(
+				{ hostUserId: host.id },
+				{ signedUpUserIds: [leaver.id] },
+			);
+			const lobbyPage = new LobbyPage(page);
+			const chat = new ChatSidebar(page);
+
+			await test.step("A participant leaves and still writes to the lobby", async () => {
+				await impersonate(page, leaver.id);
+				await lobbyPage.goto(lobby.id);
+				await expect(chat.locators.openChats).toHaveCount(1);
+
+				await lobbyPage.leave();
+				await expect(lobbyPage.locators.signUpButton).toBeVisible();
+
+				await chat.chat().send("left but still here");
+				await expect(chat.chat().message("left but still here")).toBeVisible();
+				await expect(chat.chat().locators.pendingMessages).toHaveCount(0);
+			});
+
+			await test.step("Coming back the chat opens with the lobby", async () => {
+				await lobbyPage.goto(lobby.id);
+
+				await expect(chat.chat().message("left but still here")).toBeVisible();
+			});
+
+			const { lobbyRoomId } = await lobbyChatRoomIds(page);
+
+			await test.step("The host kicks the one who left", async () => {
+				await impersonate(page, host.id);
+				await lobbyPage.goto(lobby.id);
+				await expect(chat.chat().message("left but still here")).toBeVisible();
+				await expect(lobbyPage.locators.leftUsers).toHaveCount(1);
+
+				await lobbyPage.kick(leaver.id);
+				await expect(lobbyPage.locators.leftUsers).toHaveCount(0);
+			});
+
+			await test.step("The kicked one has no chat anymore", async () => {
+				await impersonate(page, leaver.id);
+				await lobbyPage.goto(lobby.id);
+				await expect(lobbyPage.locators.viewerStatus).toContainText(
+					"The host kicked you from the lobby",
+				);
+
+				await isNotVisible(chat.locators.openChats);
+				expect(await chatHistoryStatus(page, lobbyRoomId)).toBe(403);
+			});
+		});
+
 		test("a team's chat reaches only its players", async ({
 			page,
 			factories,

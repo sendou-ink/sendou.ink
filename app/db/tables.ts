@@ -1467,6 +1467,13 @@ interface LobbyKickedUser {
 	createdAt: Generated<number>;
 }
 
+/** Left the lobby (or was removed by it) without being kicked, keeps access to its chat. */
+interface LobbyLeftUser {
+	lobbyId: number;
+	userId: number;
+	createdAt: Generated<number>;
+}
+
 /** One best-of, teams shuffled from the participants in the room. */
 interface LobbySet {
 	id: GeneratedAlways<number>;
@@ -1787,6 +1794,7 @@ export interface DB {
 	Lobby: Lobby;
 	LobbyGame: LobbyGame;
 	LobbyKickedUser: LobbyKickedUser;
+	LobbyLeftUser: LobbyLeftUser;
 	LobbyParticipant: LobbyParticipant;
 	LobbyReadyCheck: LobbyReadyCheck;
 	LobbyReadyCheckUser: LobbyReadyCheckUser;

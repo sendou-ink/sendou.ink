@@ -288,11 +288,21 @@ export const action = defineAction(
 			}
 			case "KICK": {
 				requirePermission(lobby, "MANAGE");
-				const target = notFoundIfNullish(
-					lobby.participants.find(
-						(participant) => participant.id === body.userId,
-					),
+				const target = lobby.participants.find(
+					(participant) => participant.id === body.userId,
 				);
+				if (!target) {
+					const leftUser = notFoundIfNullish(
+						lobby.leftUsers.find((candidate) => candidate.id === body.userId),
+					);
+
+					await LobbyRepository.kickParticipant({
+						lobbyId: id,
+						userId: leftUser.id,
+						unfinishedSetId: null,
+					});
+					break;
+				}
 
 				const setEnding = await LobbyRepository.kickParticipant({
 					lobbyId: id,
@@ -373,7 +383,9 @@ export const action = defineAction(
 					: body._action === "SIGN_UP" || body._action === "LEAVE"
 						? [user.id]
 						: body._action === "END_LOBBY"
-							? lobby.participants.map((participant) => participant.id)
+							? [...lobby.participants, ...lobby.leftUsers].map(
+									(participant) => participant.id,
+								)
 							: [],
 		});
 

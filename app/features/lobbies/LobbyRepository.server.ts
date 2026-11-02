@@ -38,7 +38,9 @@ export type LobbyById = NonNullable<Unwrapped<typeof findById>>;
 
 /**
  * The lobby with its participants, if the actor may see it: by its visibility, its share key, or as a participant
- * or player of one of its sets. `isViewerKicked` is whether the host kicked the actor out of it.
+ * or player of one of its sets or one who left it. `leftUsers` are those who left it and haven't signed up again,
+ * they keep its chat until kicked. `isViewerKicked` is whether the host kicked the actor out of it,
+ * `hasViewerLeft` whether the actor left it at some point and so keeps its chat.
  * `permissions.MANAGE` is the host. `shareKey` goes to every viewer, they already reached the lobby.
  */
 export async function findById(
@@ -86,6 +88,29 @@ export async function findById(
 					.orderBy("LobbyParticipant.joinedAt", "asc")
 					.orderBy("LobbyParticipant.id", "asc"),
 			).as("participants"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("LobbyLeftUser")
+					.innerJoin("User", "User.id", "LobbyLeftUser.userId")
+					.select((innerEb) => commonUserSelect(innerEb))
+					.whereRef("LobbyLeftUser.lobbyId", "=", "Lobby.id")
+					.where((innerEb) =>
+						innerEb.not(
+							innerEb.exists(
+								innerEb
+									.selectFrom("LobbyParticipant")
+									.select("LobbyParticipant.userId")
+									.whereRef("LobbyParticipant.lobbyId", "=", "Lobby.id")
+									.whereRef(
+										"LobbyParticipant.userId",
+										"=",
+										"LobbyLeftUser.userId",
+									),
+							),
+						),
+					)
+					.orderBy("LobbyLeftUser.createdAt", "asc"),
+			).as("leftUsers"),
 			viewerId === null
 				? sql<number>`0`.as("isViewerKicked")
 				: eb
@@ -97,13 +122,24 @@ export async function findById(
 								.where("LobbyKickedUser.userId", "=", viewerId),
 						)
 						.as("isViewerKicked"),
+			viewerId === null
+				? sql<number>`0`.as("hasViewerLeft")
+				: eb
+						.exists(
+							eb
+								.selectFrom("LobbyLeftUser")
+								.select("LobbyLeftUser.userId")
+								.whereRef("LobbyLeftUser.lobbyId", "=", "Lobby.id")
+								.where("LobbyLeftUser.userId", "=", viewerId),
+						)
+						.as("hasViewerLeft"),
 		])
 		.where("Lobby.id", "=", id)
 		.where((eb) =>
 			eb.or([
 				visibleTo({ entity: "Lobby", viewerId, now }),
 				...(shareKey === null ? [] : [eb("Lobby.shareKey", "=", shareKey)]),
-				...(viewerId === null ? [] : [playedIn(eb, viewerId)]),
+				...(viewerId === null ? [] : [participatedIn(eb, viewerId)]),
 			]),
 		)
 		.executeTakeFirst();
@@ -114,6 +150,7 @@ export async function findById(
 		...row,
 		isPrivate: Boolean(row.isPrivate),
 		isViewerKicked: Boolean(row.isViewerKicked),
+		hasViewerLeft: Boolean(row.hasViewerLeft),
 		participants: row.participants.map((participant) => ({
 			...participant,
 			isDroppingAfterSet: Boolean(participant.isDroppingAfterSet),
@@ -246,7 +283,7 @@ export async function findProgressionStateById(id: number) {
 		.executeTakeFirst();
 }
 
-/** The lobbies owning the common chat rooms, for resolving who is in them. */
+/** The lobbies owning the common chat rooms, for resolving who is in them: the participants and those who left without being kicked. */
 export async function findAllByChatRoomIds(chatRoomIds: number[]) {
 	if (chatRoomIds.length === 0) return [];
 
@@ -263,6 +300,12 @@ export async function findAllByChatRoomIds(chatRoomIds: number[]) {
 					.select("LobbyParticipant.userId")
 					.whereRef("LobbyParticipant.lobbyId", "=", "Lobby.id"),
 			).as("participants"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("LobbyLeftUser")
+					.select("LobbyLeftUser.userId")
+					.whereRef("LobbyLeftUser.lobbyId", "=", "Lobby.id"),
+			).as("leftUsers"),
 		])
 		.where("Lobby.chatRoomId", "in", chatRoomIds)
 		.$narrowType<{ chatRoomId: NotNull }>()
@@ -749,7 +792,7 @@ export async function updateParticipantsStatus({
 		.execute();
 }
 
-/** Removes the users from the lobby and from the lobby's ready checks. */
+/** Removes the users from the lobby and from the lobby's ready checks. They keep the lobby's chat as having left it. */
 export async function deleteParticipants(
 	{ lobbyId, userIds }: { lobbyId: number; userIds: number[] },
 	trx?: Transaction<DB>,
@@ -773,6 +816,11 @@ export async function deleteParticipants(
 				.where("LobbyReadyCheck.lobbyId", "=", lobbyId),
 		)
 		.execute();
+	await executor
+		.insertInto("LobbyLeftUser")
+		.values(userIds.map((userId) => ({ lobbyId, userId })))
+		.onConflict((oc) => oc.columns(["lobbyId", "userId"]).doNothing())
+		.execute();
 }
 
 /**
@@ -786,7 +834,10 @@ export function removeParticipant(args: ParticipantRemoval) {
 		.execute((trx) => deleteParticipantEndingSet(args, trx));
 }
 
-/** Removes the user from the lobby like {@link removeParticipant} and keeps them from signing up for it again. */
+/**
+ * Removes the user from the lobby like {@link removeParticipant}, but without keeping its chat, and keeps them from
+ * signing up for it again. For one who already left it only takes the chat away.
+ */
 export function kickParticipant(args: ParticipantRemoval) {
 	return db.transaction().execute(async (trx) => {
 		const setEnding = await deleteParticipantEndingSet(args, trx);
@@ -794,6 +845,11 @@ export function kickParticipant(args: ParticipantRemoval) {
 			.insertInto("LobbyKickedUser")
 			.values({ lobbyId: args.lobbyId, userId: args.userId })
 			.onConflict((oc) => oc.columns(["lobbyId", "userId"]).doNothing())
+			.execute();
+		await trx
+			.deleteFrom("LobbyLeftUser")
+			.where("LobbyLeftUser.lobbyId", "=", args.lobbyId)
+			.where("LobbyLeftUser.userId", "=", args.userId)
 			.execute();
 
 		return setEnding;
@@ -923,7 +979,7 @@ export function findResultPlacementsByUserId(userId: number) {
 		.execute();
 }
 
-function playedIn(eb: ExpressionBuilder<DB, "Lobby">, userId: number) {
+function participatedIn(eb: ExpressionBuilder<DB, "Lobby">, userId: number) {
 	return eb.or([
 		eb.exists(
 			eb
@@ -939,6 +995,13 @@ function playedIn(eb: ExpressionBuilder<DB, "Lobby">, userId: number) {
 				.select("LobbySetParticipant.setId")
 				.whereRef("LobbySet.lobbyId", "=", "Lobby.id")
 				.where("LobbySetParticipant.userId", "=", userId),
+		),
+		eb.exists(
+			eb
+				.selectFrom("LobbyLeftUser")
+				.select("LobbyLeftUser.userId")
+				.whereRef("LobbyLeftUser.lobbyId", "=", "Lobby.id")
+				.where("LobbyLeftUser.userId", "=", userId),
 		),
 	]);
 }

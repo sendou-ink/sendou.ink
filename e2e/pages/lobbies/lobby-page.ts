@@ -34,6 +34,7 @@ export class LobbyPage {
 			readyCheck: page.getByTestId("lobby-ready-check"),
 			confirmReadyButton: page.getByTestId("lobby-confirm-ready-button"),
 			participants: page.getByTestId("lobby-participant"),
+			leftUsers: page.getByTestId("lobby-left-user"),
 			winnerRadios: page.locator('[data-testid^="winner-radio-"]'),
 			reportScoreButton: page.getByTestId("report-score-button"),
 			confirmSetEndButton: page.getByTestId("confirm-set-end-button"),
@@ -273,7 +274,7 @@ export class LobbyPage {
 		);
 	}
 
-	/** As the host, kicks the participant out of the lobby for good through their player menu. */
+	/** As the host, kicks the participant, or one who left, out of the lobby for good through their player menu. */
 	async kick(userId: number) {
 		await this.openPlayerMenu(userId);
 		await this.page.getByRole("menuitem", { name: "Kick" }).click();

@@ -135,6 +135,13 @@ export async function findAllOpenRoomIdsByUserId(
 			.where("LobbyParticipant.userId", "=", userId)
 			.where(openRoom("Lobby.chatRoomId"))
 			.execute(),
+		db
+			.selectFrom("LobbyLeftUser")
+			.innerJoin("Lobby", "Lobby.id", "LobbyLeftUser.lobbyId")
+			.select("Lobby.chatRoomId as id")
+			.where("LobbyLeftUser.userId", "=", userId)
+			.where(openRoom("Lobby.chatRoomId"))
+			.execute(),
 		// the team chat of the side the user plays in the latest set of the lobby they're in the room of
 		db
 			.selectFrom("LobbyParticipant")
