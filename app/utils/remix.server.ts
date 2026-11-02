@@ -240,4 +240,13 @@ export type SendouRouteHandle = {
 	 * For pages embedded elsewhere, e.g. broadcast overlays in OBS.
 	 */
 	bare?: boolean;
+
+	/** The header offers the scanner's capture on this route even if this browser never captured before. */
+	showScanner?: boolean;
+
+	/**
+	 * The tournament broadcast this route produces: the header offers the scanner's capture here and links it to the
+	 * broadcast, see `broadcastLinkPersisted`.
+	 */
+	scannerBroadcast?: (match: UIMatch) => { tournamentId: number; slug: string };
 };

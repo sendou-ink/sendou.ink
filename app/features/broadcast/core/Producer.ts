@@ -5,18 +5,21 @@ import {
 	BROADCAST_TRANSITION_TIMING,
 } from "../broadcast-constants";
 import type {
+	BroadcastAdvance,
+	BroadcastGameSignal,
 	BroadcastScene,
 	BroadcastStoredState,
 	LiveResults,
 	ProducerState,
 } from "../broadcast-types";
+import * as InkColor from "./InkColor";
 
 const SCENE_AFTER: Record<BroadcastScene, BroadcastScene> = {
 	starting: "casters",
 	casters: "rosters",
 	rosters: "game",
 	maps: "game",
-	game: "rosters",
+	game: "maps",
 	break: "game",
 	replays: "game",
 	bracket: "rosters",
@@ -32,19 +35,19 @@ const DEFAULT_PRODUCER_STATE: Omit<ProducerState, "id"> = {
 	bracketFocus: "remaining",
 	clipId: null,
 	durationMs: null,
-	isAuto: true,
+	advance: "timer",
 };
 
 /** Fields of a staged item the producer edits, see {@link editItem}. */
 export type ItemPatch = Partial<Omit<ProducerState, "id">>;
 
-/** State of a broadcast nothing has been written to yet: rosters on air, game staged, both with a stinger. */
+/** State of a broadcast nothing has been written to yet: rosters on air, game staged for when it starts, both with a stinger. */
 export function initialState(): BroadcastStoredState {
 	return {
 		takeId: 0,
 		takenAt: null,
 		live: { ...DEFAULT_PRODUCER_STATE, id: 1 },
-		next: { ...DEFAULT_PRODUCER_STATE, id: 2, scene: "game" },
+		next: { ...DEFAULT_PRODUCER_STATE, id: 2, scene: "game", advance: "game" },
 		queue: [],
 		lastItemId: 2,
 		liveResults: null,
@@ -61,8 +64,8 @@ export function withDefaults(
 	return {
 		...initial,
 		...state,
-		live: { ...initial.live, ...DEFAULT_PRODUCER_STATE, ...state.live },
-		next: { ...initial.next, ...DEFAULT_PRODUCER_STATE, ...state.next },
+		live: { ...initial.live, ...state.live },
+		next: { ...initial.next, ...state.next },
 	};
 }
 
@@ -128,7 +131,11 @@ export function liveEndsAt(state: BroadcastStoredState) {
  */
 export function autoTakeAt(state: BroadcastStoredState) {
 	const endsAt = liveEndsAt(state);
-	if (endsAt === null || !state.next.isAuto || state.takenAt === null) {
+	if (
+		endsAt === null ||
+		effectiveAdvance(state.live, state.next) !== "timer" ||
+		state.takenAt === null
+	) {
 		return null;
 	}
 
@@ -138,6 +145,80 @@ export function autoTakeAt(state: BroadcastStoredState) {
 	);
 }
 
+/**
+ * Which game event the scanner reporting puts the item on air, given the item before it: a game scene goes on air as
+ * the game starts, the scene after it as the game ends. `null` between two scenes without a game.
+ */
+export function gameCue(
+	before: Pick<ProducerState, "scene">,
+	item: Pick<ProducerState, "scene">,
+): "start" | "end" | null {
+	if (item.scene === "game" && before.scene !== "game") return "start";
+	if (before.scene === "game" && item.scene !== "game") return "end";
+
+	return null;
+}
+
+/**
+ * What puts the item on air besides a Take, given the item before it. An advance that can't happen there waits for a
+ * Take: a timer after a scene running until a Take, a game event between scenes without a game.
+ */
+export function effectiveAdvance(
+	before: ProducerState,
+	item: ProducerState,
+): BroadcastAdvance {
+	if (item.advance === "timer" && lengthMs(before) === null) return "take";
+	if (item.advance === "game" && gameCue(before, item) === null) return "take";
+
+	return item.advance;
+}
+
+/**
+ * What the scanner seeing a game start or end changes. A start colors the game with the ink read, the teams keeping
+ * the sides they had earlier in the set (the pair's first color always goes to the same lobby team). Either puts the
+ * staged item on air when it waits for that event. `null` when nothing changes.
+ */
+export function applyGameSignal(
+	state: BroadcastStoredState,
+	{
+		signal,
+		liveResults,
+		now,
+	}: {
+		signal: BroadcastGameSignal;
+		/** The featured match and how many of its results are reported, `null` without one. */
+		liveResults: LiveResults | null;
+		now: number;
+	},
+): BroadcastStoredState | null {
+	const inkKey =
+		signal.type === "start" && signal.hues
+			? InkColor.closestPair(signal.hues)
+			: null;
+	const colored: BroadcastStoredState =
+		inkKey && liveResults
+			? {
+					...state,
+					ink: {
+						key: inkKey,
+						isFlipped:
+							state.ink?.matchId === liveResults.matchId
+								? state.ink.isFlipped
+								: false,
+						matchId: liveResults.matchId,
+						resultCount: liveResults.count,
+					},
+				}
+			: state;
+
+	const isWaitedFor =
+		effectiveAdvance(state.live, state.next) === "game" &&
+		gameCue(state.live, state.next) === signal.type;
+	if (isWaitedFor) return take(colored, { liveResults, now });
+
+	return colored === state ? null : colored;
+}
+
 /** The staged items in the order they go on air: `next` then the queue. */
 export function stagedItems(state: BroadcastStoredState) {
 	return [state.next, ...state.queue];
@@ -145,7 +226,7 @@ export function stagedItems(state: BroadcastStoredState) {
 
 /**
  * Changes a staged item, `null` when it is not staged anymore (e.g. a Take put it on air). Picking another scene
- * gives the item that scene's default duration.
+ * gives the item that scene's default duration and advance.
  */
 export function editItem(
 	state: BroadcastStoredState,
@@ -157,16 +238,20 @@ export function editItem(
 
 	return withStaged(
 		state,
-		staged.map((item) => {
+		staged.map((item, idx) => {
 			if (item.id !== itemId) return item;
 
 			const isSceneChanged =
 				patch.scene !== undefined && patch.scene !== item.scene;
+			const before = idx === 0 ? state.live : staged[idx - 1]!;
 
 			return {
 				...item,
 				...(isSceneChanged && patch.scene
-					? { durationMs: defaultDurationMs(patch.scene) }
+					? {
+							durationMs: defaultDurationMs(patch.scene),
+							advance: defaultAdvance(before, { scene: patch.scene }),
+						}
 					: {}),
 				...patch,
 			};
@@ -232,8 +317,15 @@ function followingItem(item: ProducerState, id: number): ProducerState {
 		scene,
 		clipId: null,
 		durationMs: defaultDurationMs(scene),
-		isAuto: true,
+		advance: defaultAdvance(item, { scene }),
 	};
+}
+
+function defaultAdvance(
+	before: Pick<ProducerState, "scene">,
+	item: Pick<ProducerState, "scene">,
+): BroadcastAdvance {
+	return gameCue(before, item) ? "game" : "timer";
 }
 
 function defaultDurationMs(scene: BroadcastScene) {

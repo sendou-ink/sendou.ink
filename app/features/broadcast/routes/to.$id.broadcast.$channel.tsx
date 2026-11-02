@@ -21,8 +21,10 @@ import {
 	Pause,
 	Play,
 	Plus,
+	ScanEye,
 	TriangleAlert,
 	Trophy,
+	Unlink,
 	Users,
 	X,
 } from "lucide-react";
@@ -37,6 +39,7 @@ import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
+import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import {
 	SendouTab,
 	SendouTabList,
@@ -45,6 +48,10 @@ import {
 } from "~/components/elements/Tabs";
 import { InviteLinkInput } from "~/components/InviteLinkInput";
 import { Config } from "~/config";
+import {
+	linkBroadcast,
+	useLinkedBroadcast,
+} from "~/features/scanner/scanner-activity";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
@@ -53,6 +60,7 @@ import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
 import {
+	BROADCAST_ADVANCES,
 	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_DASHBOARD_TABS,
 	BROADCAST_HOLD_SCENES,
@@ -79,6 +87,7 @@ import {
 } from "../broadcast-schemas";
 import { broadcastDashboardSearchParams } from "../broadcast-search-params";
 import type {
+	BroadcastAdvance,
 	BroadcastMatch,
 	BroadcastScene,
 	BroadcastState,
@@ -108,7 +117,11 @@ export { action } from "../actions/to.$id.broadcast.$channel.server";
 export { loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["broadcast"],
+	i18n: ["broadcast", "q"],
+	scannerBroadcast: (match) => ({
+		tournamentId: Number(match.params.id),
+		slug: match.params.channel!,
+	}),
 };
 
 // the staged item is highlighted for this long before it goes on air by itself
@@ -209,11 +222,16 @@ export default function BroadcastDashboardPage() {
 					<h1 className="text-lg">
 						{t("broadcast:title")} · {data.channel.name}
 					</h1>
-					<Health
-						state={state}
-						isConnected={isConnected}
-						onClick={() => setTab("setup")}
-					/>
+					<div className="stack horizontal sm items-center flex-wrap">
+						<Health
+							state={state}
+							isConnected={isConnected}
+							onClick={() => setTab("setup")}
+						/>
+						{isConnected ? (
+							<ScannerHealth state={state} onClick={() => setTab("setup")} />
+						) : null}
+					</div>
 				</div>
 				<FeaturedMatch state={state} />
 			</header>
@@ -323,6 +341,7 @@ export default function BroadcastDashboardPage() {
 					<Setup
 						state={state}
 						programUrl={`${Config.siteDomain}${broadcastOverlayPage(pageArgs)}`}
+						scannerLink={pageArgs}
 						statuses={clipSender.statuses}
 						areClipsOnSources={areClipsOnSources}
 					/>
@@ -439,8 +458,41 @@ function Health({
 	);
 }
 
+/** Whether a scanner is connected, a warning while a staged item waits for a game none is there to see. */
+function ScannerHealth({
+	state,
+	onClick,
+}: {
+	state: BroadcastState;
+	onClick: () => void;
+}) {
+	const { t } = useTranslation(["broadcast"]);
+	const isConnected = state.health.scanners > 0;
+	const isWaitedFor =
+		Producer.effectiveAdvance(state.live, state.next) === "game";
+
+	return (
+		<button
+			type="button"
+			className={styles.health}
+			data-status={isConnected ? "success" : isWaitedFor ? "warning" : "info"}
+			title={
+				!isConnected && isWaitedFor
+					? t("broadcast:dashboard.noScannerHint")
+					: undefined
+			}
+			onClick={onClick}
+		>
+			{isConnected ? <CircleCheck size={16} /> : <ScanEye size={16} />}
+			{isConnected
+				? t("broadcast:dashboard.health.scannerConnected")
+				: t("broadcast:dashboard.health.noScanner")}
+		</button>
+	);
+}
+
 function FeaturedMatch({ state }: { state: BroadcastState }) {
-	const { t } = useTranslation(["broadcast", "tournament"]);
+	const { t } = useTranslation(["broadcast", "q"]);
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
 
@@ -481,9 +533,9 @@ function FeaturedMatch({ state }: { state: BroadcastState }) {
 			) : joinInfo ? (
 				<span>
 					{" "}
-					<span className="text-lighter">· {t("tournament:match.pool")}</span>{" "}
+					<span className="text-lighter">· {t("q:match.pool")}</span>{" "}
 					<span className="font-semi-bold">{joinInfo.pool}</span>{" "}
-					<span className="text-lighter">{t("tournament:match.pass")}</span>{" "}
+					<span className="text-lighter">{t("q:match.password.short")}</span>{" "}
 					<span className="font-semi-bold">{joinInfo.pass}</span>
 				</span>
 			) : null}
@@ -747,22 +799,37 @@ function AutoTake({
 	remainingMs,
 }: {
 	state: BroadcastState;
-	/** `null` when next waits for a Take. */
+	/** `null` when next isn't timed. */
 	remainingMs: number | null;
 }) {
 	const { t } = useTranslation(["broadcast"]);
+	const gameCue =
+		Producer.effectiveAdvance(state.live, state.next) === "game"
+			? Producer.gameCue(state.live, state.next)
+			: null;
 
-	if (remainingMs === null) return <div className={styles.autoTake} />;
+	if (remainingMs === null && gameCue === null) {
+		return <div className={styles.autoTake} />;
+	}
 
 	return (
 		<div className={styles.autoTake}>
-			<span className={styles.autoTakeCountdown}>
-				{t("broadcast:dashboard.autoIn", { time: formatClock(remainingMs) })}
-			</span>
+			{remainingMs !== null ? (
+				<span className={styles.autoTakeCountdown}>
+					{t("broadcast:dashboard.autoIn", { time: formatClock(remainingMs) })}
+				</span>
+			) : (
+				<span className={styles.autoTakeCue}>
+					<ScanEye size={14} />
+					{gameCue === "start"
+						? t("broadcast:dashboard.onGameStart")
+						: t("broadcast:dashboard.onGameEnd")}
+				</span>
+			)}
 			<ActionButton
 				schema={broadcastActionSchema}
-				action="SET_AUTO"
-				fields={{ itemId: state.next.id, isAuto: false }}
+				action="SET_ADVANCE"
+				fields={{ itemId: state.next.id, advance: "take" }}
 				size="small"
 				variant="outlined-destructive"
 				icon={<Pause />}
@@ -898,7 +965,13 @@ function Queue({
 	);
 }
 
-/** Whether the item goes on air by itself once the one before it ends, toggled when that one has a length. */
+const ADVANCE_ICONS: Record<BroadcastAdvance, LucideIcon> = {
+	take: Hand,
+	timer: Link2,
+	game: ScanEye,
+};
+
+/** What puts the item on air besides a Take, picked from what can happen after the item before it. */
 function QueueGap({
 	before,
 	item,
@@ -907,38 +980,78 @@ function QueueGap({
 	item: ProducerState;
 }) {
 	const { t } = useTranslation(["broadcast"]);
+	const { submit } = useActionSubmit(broadcastActionSchema);
+	const gameCue = Producer.gameCue(before, item);
+	const options = BROADCAST_ADVANCES.filter(
+		(advance) =>
+			advance === "take" ||
+			(advance === "timer" && Producer.lengthMs(before) !== null) ||
+			(advance === "game" && gameCue !== null),
+	);
+	const current = Producer.effectiveAdvance(before, item);
 
-	if (Producer.lengthMs(before) === null) {
+	const label = (advance: BroadcastAdvance) => {
+		if (advance === "take") return t("broadcast:dashboard.queue.onTake");
+		if (advance === "timer") return t("broadcast:dashboard.queue.auto");
+
+		return gameCue === "start"
+			? t("broadcast:dashboard.queue.onGameStart")
+			: t("broadcast:dashboard.queue.onGameEnd");
+	};
+	const hint = (advance: BroadcastAdvance) => {
+		if (advance === "take") return t("broadcast:dashboard.queue.onTakeHint");
+		if (advance === "timer") return t("broadcast:dashboard.queue.autoHint");
+
+		return gameCue === "start"
+			? t("broadcast:dashboard.queue.onGameStartHint")
+			: t("broadcast:dashboard.queue.onGameEndHint");
+	};
+	const CurrentIcon = ADVANCE_ICONS[current];
+
+	if (options.length === 1) {
 		return (
 			<span className={styles.queueGap}>
 				<Hand size={14} />
-				{t("broadcast:dashboard.queue.onTake")}
+				{label("take")}
 			</span>
 		);
 	}
 
 	return (
-		<ActionButton
-			schema={broadcastActionSchema}
-			action="SET_AUTO"
-			fields={{ itemId: item.id, isAuto: !item.isAuto }}
-			variant="minimal"
-			size="miniscule"
-			icon={item.isAuto ? <Link2 /> : <Hand />}
-			className={clsx(styles.queueGapToggle, {
-				[styles.queueGapAuto]: item.isAuto,
-			})}
-			formClassName={styles.queueGap}
-			title={t(
-				item.isAuto
-					? "broadcast:dashboard.queue.autoHint"
-					: "broadcast:dashboard.queue.onTakeHint",
-			)}
-		>
-			{item.isAuto
-				? t("broadcast:dashboard.queue.auto")
-				: t("broadcast:dashboard.queue.onTake")}
-		</ActionButton>
+		<span className={styles.queueGap}>
+			<SendouMenu
+				trigger={
+					<SendouButton
+						variant="minimal"
+						size="miniscule"
+						icon={<CurrentIcon />}
+						className={clsx(styles.queueGapToggle, {
+							[styles.queueGapAuto]: current !== "take",
+						})}
+						title={hint(current)}
+					>
+						{label(current)}
+					</SendouButton>
+				}
+			>
+				{options.map((advance) => {
+					const Icon = ADVANCE_ICONS[advance];
+
+					return (
+						<SendouMenuItem
+							key={advance}
+							icon={<Icon size={16} />}
+							isActive={advance === current}
+							onAction={() =>
+								submit("SET_ADVANCE", { itemId: item.id, advance })
+							}
+						>
+							{hint(advance)}
+						</SendouMenuItem>
+					);
+				})}
+			</SendouMenu>
+		</span>
 	);
 }
 
@@ -1274,16 +1387,22 @@ function CastersForm({ casterIds }: { casterIds: number[] }) {
 function Setup({
 	state,
 	programUrl,
+	scannerLink,
 	statuses,
 	areClipsOnSources,
 }: {
 	state: BroadcastState;
 	programUrl: string;
+	scannerLink: { tournamentId: number; slug: string };
 	statuses: ClipTransfer.ClipPeerStatus[];
 	areClipsOnSources: boolean;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const sourceCount = state.health.sources;
+	const linkedBroadcast = useLinkedBroadcast();
+	const isScannerLinked =
+		linkedBroadcast?.tournamentId === scannerLink.tournamentId &&
+		linkedBroadcast.slug === scannerLink.slug;
 
 	return (
 		<div className="stack xl">
@@ -1307,6 +1426,37 @@ function Setup({
 					</SetupCheck>
 				</ul>
 				<ClipOverlays statuses={statuses} />
+			</section>
+			<section className="stack md">
+				<h2 className={styles.panelHeader}>
+					{t("broadcast:dashboard.setup.scannerHeader")}
+				</h2>
+				<p className="text-sm text-lighter">
+					{t("broadcast:dashboard.setup.scanner")}
+				</p>
+				<ul className={styles.checklist}>
+					<SetupCheck isDone={state.health.scanners > 0}>
+						{state.health.scanners > 0
+							? t("broadcast:dashboard.health.scannerConnected")
+							: t("broadcast:dashboard.health.noScanner")}
+					</SetupCheck>
+				</ul>
+				{linkedBroadcast && !isScannerLinked ? (
+					<p className="text-xs text-warning">
+						{t("broadcast:dashboard.setup.scannerLinkedElsewhere")}
+					</p>
+				) : null}
+				<SendouButton
+					size="small"
+					variant="outlined"
+					icon={isScannerLinked ? <Unlink /> : <ScanEye />}
+					onClick={() => linkBroadcast(isScannerLinked ? null : scannerLink)}
+					className="self-start"
+				>
+					{isScannerLinked
+						? t("broadcast:dashboard.setup.unlinkScanner")
+						: t("broadcast:dashboard.setup.linkScanner")}
+				</SendouButton>
 			</section>
 		</div>
 	);

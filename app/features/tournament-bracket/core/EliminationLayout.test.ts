@@ -1,5 +1,5 @@
+import * as R from "remeda";
 import { describe, expect, test } from "vitest";
-import { nullFilledArray } from "~/utils/arrays";
 import * as EliminationLayout from "./EliminationLayout";
 import * as Engine from "./engine";
 import type { BracketData } from "./engine/types";
@@ -93,7 +93,7 @@ describe("EliminationLayout.matchesOfRound", () => {
 function singleElimination(teamCount: number) {
 	return Engine.create({
 		type: "single_elimination",
-		seeding: nullFilledArray(teamCount).map((_, i) => i + 1),
+		seeding: R.range(1, teamCount + 1),
 		settings: { skippedRounds: ["THIRD_PLACE_MATCH"] },
 	});
 }

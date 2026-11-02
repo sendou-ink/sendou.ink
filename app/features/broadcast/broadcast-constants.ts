@@ -98,12 +98,19 @@ export const BROADCAST_VIEWS = ["live", "next"] as const;
 /** Tabs of the dashboard under the switcher: the selected item's scene, the OBS setup, the theme. */
 export const BROADCAST_DASHBOARD_TABS = ["scene", "setup", "theme"] as const;
 
-/** Kind of client connected to a broadcast's stream, counted separately for the dashboard's OBS health. */
+/** Kind of client connected to a broadcast's stream, counted separately for the dashboard's health. */
 export const BROADCAST_STREAM_ROLES = [
 	"source",
 	"preview",
 	"dashboard",
+	"scanner",
 ] as const;
+
+/**
+ * What puts a staged item on air besides a Take: the scene before it running its length (`timer`), or the scanner
+ * seeing the game start or end (`game`, see `Producer.gameCue`).
+ */
+export const BROADCAST_ADVANCES = ["take", "timer", "game"] as const;
 
 /** Session descriptions are a few kilobytes, more so with many ICE candidates. */
 export const BROADCAST_SDP_MAX_LENGTH = 50_000;

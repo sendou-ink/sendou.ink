@@ -90,8 +90,8 @@ export const action = defineAction(
 				await editItem(body.itemId, { durationMs: body.durationMs ?? null });
 				break;
 			}
-			case "SET_AUTO": {
-				await editItem(body.itemId, { isAuto: body.isAuto });
+			case "SET_ADVANCE": {
+				await editItem(body.itemId, { advance: body.advance });
 				break;
 			}
 			case "ADD_TO_QUEUE": {

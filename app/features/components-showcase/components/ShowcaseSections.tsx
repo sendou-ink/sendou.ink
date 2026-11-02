@@ -3419,6 +3419,15 @@ function mockScannerActivity(id: ScannerExampleId): ScannerActivityState {
 		stats: isRunning
 			? { games: 5, uploaded: id === "uploading" ? 4 : 5, clips: 12 }
 			: null,
+		broadcast:
+			id === "inGame"
+				? {
+						tournamentId: 1,
+						slug: "sendouink",
+						isConnected: true,
+						error: null,
+					}
+				: null,
 	};
 }
 

@@ -4,7 +4,14 @@
  * tick cost nothing the rest of the time.
  */
 import clsx from "clsx";
-import { Play, RotateCcw, Square } from "lucide-react";
+import {
+	Link2,
+	Play,
+	RadioTower,
+	RotateCcw,
+	Square,
+	Unlink,
+} from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -18,6 +25,7 @@ import {
 } from "~/components/layout/ActivityPanel";
 import { navIconUrl, SCANNER_PAGE } from "~/utils/urls";
 import type {
+	BroadcastTarget,
 	ScannerActivityActions,
 	ScannerActivityState,
 } from "../scanner-activity";
@@ -27,12 +35,19 @@ import styles from "./ScannerActivityPanel.module.css";
 export function ScannerActivityPanel({
 	activity,
 	actions,
+	pageBroadcast,
 }: {
 	activity: ScannerActivityState;
 	actions: ScannerActivityActions;
+	/** the broadcast the page produces, offered for linking when the capture isn't linked to it */
+	pageBroadcast: BroadcastTarget | null;
 }) {
 	const isCapturing =
 		activity.status === "running" || activity.status === "starting";
+	const isPageBroadcastLinked =
+		pageBroadcast !== null &&
+		activity.broadcast?.tournamentId === pageBroadcast.tournamentId &&
+		activity.broadcast.slug === pageBroadcast.slug;
 
 	return (
 		<ActivityPanel>
@@ -69,6 +84,20 @@ export function ScannerActivityPanel({
 				<Preview stream={activity.stream} />
 			) : null}
 			<StatusBlock activity={activity} />
+			{pageBroadcast && !isPageBroadcastLinked ? (
+				<BroadcastLinkOffer
+					pageBroadcast={pageBroadcast}
+					linkedSlug={activity.broadcast?.slug ?? null}
+					isCapturing={isCapturing}
+					onLink={() => actions.linkBroadcast(pageBroadcast)}
+				/>
+			) : activity.broadcast ? (
+				<BroadcastLink
+					broadcast={activity.broadcast}
+					isCapturing={isCapturing}
+					onUnlink={() => actions.linkBroadcast(null)}
+				/>
+			) : null}
 			{activity.stats ? (
 				<dl className={styles.stats}>
 					<div>
@@ -176,6 +205,90 @@ function StatusBlock({ activity }: { activity: ScannerActivityState }) {
 	return (
 		<div className={clsx(styles.block, "text-lighter")}>
 			Waiting for a game to start…
+		</div>
+	);
+}
+
+function BroadcastLink({
+	broadcast,
+	isCapturing,
+	onUnlink,
+}: {
+	broadcast: NonNullable<ScannerActivityState["broadcast"]>;
+	isCapturing: boolean;
+	onUnlink: () => void;
+}) {
+	return (
+		<div className={styles.broadcast}>
+			<RadioTower size={16} className={styles.broadcastIcon} />
+			<div className={styles.gameText}>
+				<span className="text-xs font-semi-bold">
+					Broadcast {broadcast.slug}
+				</span>
+				<span
+					className={clsx(
+						"text-xxs",
+						broadcast.error ? "text-error" : "text-lighter",
+					)}
+				>
+					{!isCapturing
+						? "Connects once capturing"
+						: broadcast.error
+							? broadcast.error
+							: broadcast.isConnected
+								? "Connected: games starting and ending switch its scenes"
+								: "Connecting…"}
+				</span>
+			</div>
+			<SendouButton
+				size="miniscule"
+				variant="minimal"
+				icon={<Unlink />}
+				onClick={onUnlink}
+				className={styles.unlink}
+			>
+				Unlink
+			</SendouButton>
+		</div>
+	);
+}
+
+function BroadcastLinkOffer({
+	pageBroadcast,
+	linkedSlug,
+	isCapturing,
+	onLink,
+}: {
+	pageBroadcast: BroadcastTarget;
+	/** the other broadcast the capture is linked to */
+	linkedSlug: string | null;
+	isCapturing: boolean;
+	onLink: () => void;
+}) {
+	return (
+		<div className={styles.broadcast}>
+			<RadioTower size={16} className={styles.broadcastIcon} />
+			<div className={styles.gameText}>
+				<span className="text-xs font-semi-bold">
+					Broadcast {pageBroadcast.slug}
+				</span>
+				<span className="text-xxs text-warning">
+					{linkedSlug
+						? `Not linked, games switch the scenes of ${linkedSlug}`
+						: isCapturing
+							? "Not linked, games don't switch its scenes"
+							: "Starting the capture here links it"}
+				</span>
+			</div>
+			<SendouButton
+				size="miniscule"
+				variant="minimal"
+				icon={<Link2 />}
+				onClick={onLink}
+				className={styles.unlink}
+			>
+				Link
+			</SendouButton>
 		</div>
 	);
 }
