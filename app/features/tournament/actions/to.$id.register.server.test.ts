@@ -1,10 +1,12 @@
-import { addDays } from "date-fns";
+import { addDays, addMinutes, subMinutes } from "date-fns";
 import { describe, expect, test, vi } from "vitest";
 import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";
+import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import * as LobbyActivity from "~/features/lobbies/core/LobbyActivity.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import type { registerSchema } from "../tournament-schemas.server";
@@ -109,5 +111,40 @@ describe("Tournament registration ADD_PLAYER", () => {
 		assertResponseErrored(await addFriend(), "no in-game name");
 
 		expect(await memberCountOfOnlyTeam(tournamentId)).toBe(1);
+	});
+});
+
+describe("Tournament registration CHECK_IN", () => {
+	test("checks in while active in a lobby", async () => {
+		const captain = await UserFactory.createRegular();
+		const teammates = await UserFactory.createMany(3);
+		const tournament = await TournamentFactory.create({
+			authorId: captain.id,
+			startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+		});
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [captain.id, ...teammates.map((user) => user.id)],
+		});
+		await LobbyFactory.create(
+			{
+				hostUserId: captain.id,
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+			},
+			{ checkedInUserIds: [captain.id] },
+		);
+		await LobbyActivity.refresh();
+
+		await register(
+			{ _action: "CHECK_IN" },
+			{ user: "regular", params: { id: String(tournament.id) } },
+		);
+
+		const checkIn = await db
+			.selectFrom("TournamentTeamCheckIn")
+			.select("checkedInAt")
+			.where("tournamentTeamId", "=", team.id)
+			.executeTakeFirst();
+		expect(checkIn).toBeDefined();
 	});
 });
