@@ -44,3 +44,7 @@ export const broadcastStreamUrl = ({
 /** Where the dashboard and overlays post their WebRTC session descriptions to each other. */
 export const broadcastSignalUrl = (args: BroadcastPageArgs) =>
 	`${broadcastDashboardPage(args)}/signal`;
+
+/** Where the scanner watching the game feed posts the games it sees starting and ending. */
+export const broadcastGameUrl = (args: BroadcastPageArgs) =>
+	`${broadcastDashboardPage(args)}/game`;

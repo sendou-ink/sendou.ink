@@ -50,6 +50,8 @@ import {
 	STATUS_READY_MIN_PALE,
 	STATUS_REFERENCE_PITCH,
 	STATUS_STICKY_SCORE_RATIO,
+	STATUS_TEAM_HUE_MIN_SAMPLES,
+	STATUS_TEAM_HUE_REFINE_DIST,
 	STATUS_TEAM_HUE_ROIS,
 	STATUS_TEAM_MAX_HUE_DIST,
 	STATUS_TEAM_WEIGHT,
@@ -169,6 +171,8 @@ export interface PlayerStatusData {
 	dead: [PlayerStatusFlags, PlayerStatusFlags];
 	/** true when camera badges proved a cast; never false since badge absence proves nothing */
 	cast: true | null;
+	/** each team's ink hue (degrees) off its icons, `null` with too few in ink (e.g. all splatted) */
+	teamHue: [number | null, number | null];
 }
 
 /** One side's fitted strip: slot centers left-to-right at `pitch` from the inner icon. */
@@ -234,6 +238,7 @@ export function parsePlayerStatus(
 					side.map((read) => read.state === "dead"),
 				) as PlayerStatusData["dead"],
 				cast: cast ? true : null,
+				teamHue: [band.teamHues[0].hue, band.teamHues[1].hue],
 			},
 			debug: {
 				pitches: fit.map((sideFit) => sideFit.pitch),
@@ -256,6 +261,14 @@ interface Band {
 	pixels: Uint8Array;
 	channels: number;
 	prefix: Int32Array;
+	teamHues: [TeamInkHue, TeamInkHue];
+}
+
+interface TeamInkHue {
+	/** modal 10° bin's center, what the fit tests team ink against */
+	bin: number;
+	/** mean hue of the ink around the modal bin */
+	hue: number | null;
 }
 
 /**
@@ -283,8 +296,8 @@ function readBand(frame: Mat): Band {
 	crop.delete();
 	const width = STATUS_BAND.w;
 	const teamHues = [0, 1].map((side) =>
-		modalInkHue(pixels, channels, side as 0 | 1),
-	);
+		teamInkHue(pixels, channels, side as 0 | 1),
+	) as [TeamInkHue, TeamInkHue];
 	const stride = (width + 1) * PREFIX_FIELDS;
 	const prefix = new Int32Array(stride * FIT_ROWS);
 	const midline = CANONICAL_WIDTH / 2 - STATUS_BAND.x;
@@ -310,19 +323,28 @@ function readBand(frame: Mat): Band {
 				(ink &&
 				hueDistance(
 					HUE_TABLE[((red >> 3) << 10) | ((green >> 3) << 5) | (blue >> 3)]!,
-					teamHues[x < midline ? 0 : 1]!,
+					teamHues[x < midline ? 0 : 1].bin,
 				) <= STATUS_TEAM_MAX_HUE_DIST
 					? 1
 					: 0);
 		}
 	}
-	return { width, pixels, channels, prefix };
+	return { width, pixels, channels, prefix, teamHues };
 }
 
-/** Modal 10° hue bin of the side's ink pixels: the team's, as icons fill most of the strip. */
-function modalInkHue(pixels: Uint8Array, channels: number, side: 0 | 1) {
+/**
+ * The side's team ink off its ink pixels' hues, as icons fill most of the
+ * strip: the modal 10° bin, refined to the mean offset of the hues within
+ * STATUS_TEAM_HUE_REFINE_DIST of it.
+ */
+function teamInkHue(
+	pixels: Uint8Array,
+	channels: number,
+	side: 0 | 1,
+): TeamInkHue {
 	const { x: bandX, y: bandY, w: width } = STATUS_BAND;
 	const sample = STATUS_TEAM_HUE_ROIS[side];
+	const hues: number[] = [];
 	const histogram = new Array<number>(36).fill(0);
 	for (let y = sample.y; y < sample.y + sample.h; y += 2) {
 		for (let x = sample.x; x < sample.x + sample.w; x += 2) {
@@ -331,7 +353,9 @@ function modalInkHue(pixels: Uint8Array, channels: number, side: 0 | 1) {
 			const green = pixels[i + 1]!;
 			const blue = pixels[i + 2]!;
 			if (isInk(red, green, blue)) {
-				histogram[Math.min(35, Math.floor(hueOf(red, green, blue) / 10))]! += 1;
+				const hue = hueOf(red, green, blue);
+				hues.push(hue);
+				histogram[Math.min(35, Math.floor(hue / 10))]! += 1;
 			}
 		}
 	}
@@ -339,7 +363,24 @@ function modalInkHue(pixels: Uint8Array, channels: number, side: 0 | 1) {
 	for (let bin = 1; bin < 36; bin++) {
 		if (histogram[bin]! > histogram[best]!) best = bin;
 	}
-	return best * 10 + 5;
+	const bin = best * 10 + 5;
+
+	let offsetSum = 0;
+	let count = 0;
+	for (const hue of hues) {
+		const offset = ((hue - bin + 540) % 360) - 180;
+		if (Math.abs(offset) > STATUS_TEAM_HUE_REFINE_DIST) continue;
+		offsetSum += offset;
+		count++;
+	}
+
+	return {
+		bin,
+		hue:
+			count >= STATUS_TEAM_HUE_MIN_SAMPLES
+				? (bin + offsetSum / count + 360) % 360
+				: null,
+	};
 }
 
 /**

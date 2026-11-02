@@ -5,6 +5,7 @@ import { logger } from "~/utils/logger";
 import * as BroadcastRepository from "../BroadcastRepository.server";
 import { BROADCAST_MAX_CONNECTIONS } from "../broadcast-constants";
 import type {
+	BroadcastGameSignal,
 	BroadcastHealth,
 	BroadcastPeer,
 	BroadcastSessionDescription,
@@ -168,6 +169,28 @@ export function refresh(key: HubKey) {
 	void rebuild(hub);
 }
 
+/** Applies what the scanner saw to the broadcast, see `Producer.applyGameSignal`. */
+export async function applyGameSignal({
+	signal,
+	...key
+}: HubKey & { signal: BroadcastGameSignal }) {
+	const built = await BroadcastSnapshot.build(key);
+	if (!built) return;
+
+	const isChanged = await BroadcastRepository.updateProducer({
+		tournamentId: key.tournamentId,
+		channel: built.channel,
+		change: (state) =>
+			Producer.applyGameSignal(state, {
+				signal,
+				liveResults: reportedResults(built.snapshot),
+				now: Date.now(),
+			}),
+	});
+
+	if (isChanged) refresh(key);
+}
+
 /** Freshly built state of the broadcast with its current connection counts, `null` when the tournament has no cast channel by the slug. */
 export async function buildState(key: HubKey) {
 	const built = await BroadcastSnapshot.build(key);
@@ -180,7 +203,7 @@ export async function buildState(key: HubKey) {
 
 function health(key: HubKey): BroadcastHealth {
 	const hub = hubs.get(hubId(key));
-	if (!hub) return { sources: 0 };
+	if (!hub) return { sources: 0, scanners: 0 };
 
 	return healthOf(hub);
 }
@@ -304,10 +327,7 @@ async function autoTake(hub: Hub, takeId: number) {
 	const built = await BroadcastSnapshot.build(hub);
 	if (!built || hub.stop.signal.aborted) return;
 
-	const { match } = built.snapshot;
-	const liveResults = match
-		? { matchId: match.id, count: match.progress.next.resultCount }
-		: null;
+	const liveResults = reportedResults(built.snapshot);
 	const isTaken = await BroadcastRepository.updateProducer({
 		tournamentId: hub.tournamentId,
 		channel: built.channel,
@@ -348,8 +368,9 @@ function publish(hub: Hub) {
 function publishPeers(hub: Hub) {
 	const peers: BroadcastPeer[] = [];
 	for (const client of hub.clients) {
-		if (!client.isClipSender)
+		if (!client.isClipSender && client.role !== "scanner") {
 			peers.push({ id: client.peerId, role: client.role });
+		}
 	}
 
 	const message = JSON.stringify({
@@ -376,9 +397,20 @@ function withHealth(
 
 function healthOf(hub: Hub): BroadcastHealth {
 	let sources = 0;
+	let scanners = 0;
 	for (const client of hub.clients) {
 		if (client.role === "source") sources++;
+		if (client.role === "scanner") scanners++;
 	}
 
-	return { sources };
+	return { sources, scanners };
+}
+
+/** The featured match's results reported by now, what a Take made now puts on air. */
+function reportedResults(snapshot: BroadcastSnapshot.Snapshot) {
+	const { match } = snapshot;
+
+	return match
+		? { matchId: match.id, count: match.progress.next.resultCount }
+		: null;
 }

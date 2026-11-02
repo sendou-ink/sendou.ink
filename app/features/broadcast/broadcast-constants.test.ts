@@ -11,7 +11,9 @@ describe("BROADCAST_SCENE_GROUPS", () => {
 			(group) => group.scenes,
 		);
 
-		expect([...groupedScenes].sort()).toEqual([...BROADCAST_SCENES].sort());
+		expect(groupedScenes.toSorted(byName)).toEqual(
+			BROADCAST_SCENES.toSorted(byName),
+		);
 	});
 });
 
@@ -25,3 +27,7 @@ describe("BROADCAST_SCENE_DURATIONS_MS", () => {
 		},
 	);
 });
+
+function byName(a: string, b: string) {
+	return a.localeCompare(b);
+}

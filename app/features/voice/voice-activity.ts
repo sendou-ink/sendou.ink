@@ -247,6 +247,10 @@ function voiceRoomTitle(room: ChatRoomListItem, t: TFunction<["common"]>) {
 			return t("common:chat.room.match", { id: room.titleParams.matchId });
 		case "TOURNAMENT_TEAM":
 			return room.titleParams.teamName;
+		case "TOURNAMENT_BROADCAST":
+			return t("common:chat.room.broadcast", {
+				channel: room.titleParams.channelName,
+			});
 		case "SCRIM":
 			return t("common:chat.room.scrim");
 		case "LOBBY":

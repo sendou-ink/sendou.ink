@@ -9,6 +9,7 @@ import {
 } from "~/form/fields";
 import { _action, coerceNumber, id } from "~/utils/schema";
 import {
+	BROADCAST_ADVANCES,
 	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_CSS_MAX_LENGTH,
 	BROADCAST_HEADLINE_MAX_LENGTH,
@@ -118,9 +119,9 @@ export const broadcastActionSchema = v.union([
 		durationMs: v.optional(durationMs),
 	}),
 	v.object({
-		_action: _action("SET_AUTO"),
+		_action: _action("SET_ADVANCE"),
 		itemId: id,
-		isAuto: booleanString,
+		advance: v.picklist(BROADCAST_ADVANCES),
 	}),
 	v.object({ _action: _action("ADD_TO_QUEUE") }),
 	v.object({ _action: _action("REMOVE_FROM_QUEUE"), itemId: id }),
@@ -155,3 +156,13 @@ export const broadcastSignalSchema = v.object({
 		sdp: v.pipe(v.string(), v.maxLength(BROADCAST_SDP_MAX_LENGTH)),
 	}),
 });
+
+const hue = v.pipe(v.number(), v.minValue(0), v.maxValue(360));
+
+export const broadcastGameSignalSchema = v.variant("type", [
+	v.object({
+		type: v.literal("start"),
+		hues: v.nullable(v.tuple([hue, hue])),
+	}),
+	v.object({ type: v.literal("end") }),
+]);

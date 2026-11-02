@@ -27,7 +27,7 @@ const item = (
 	bracketFocus: "remaining",
 	clipId: null,
 	durationMs: null,
-	isAuto: true,
+	advance: "timer",
 	...overrides,
 });
 
@@ -79,10 +79,11 @@ describe("Producer.take", () => {
 				bracketFocus: "losers",
 			}),
 			next: item(3, {
-				scene: "rosters",
+				scene: "maps",
 				swapSides: true,
 				bracketIdx: 1,
 				bracketFocus: "losers",
+				advance: "game",
 			}),
 			queue: [],
 			lastItemId: 3,
@@ -179,7 +180,7 @@ describe("Producer.autoTakeAt", () => {
 			why: "next waits for a Take",
 			state: stateWith({
 				live: item(1, { scene: "bracket", durationMs: 15_000 }),
-				next: item(2, { isAuto: false }),
+				next: item(2, { advance: "take" }),
 			}),
 		},
 		{
@@ -191,6 +192,130 @@ describe("Producer.autoTakeAt", () => {
 		},
 	])("is null when $why", ({ state }) => {
 		expect(Producer.autoTakeAt(state)).toBeNull();
+	});
+});
+
+describe("Producer.gameCue", () => {
+	test.each([
+		{ why: "into a game", before: "rosters", scene: "game", expected: "start" },
+		{ why: "out of a game", before: "game", scene: "maps", expected: "end" },
+		{ why: "game to game", before: "game", scene: "game", expected: null },
+		{ why: "without a game", before: "maps", scene: "bracket", expected: null },
+	] as const)("$why", ({ before, scene, expected }) => {
+		expect(Producer.gameCue({ scene: before }, { scene })).toBe(expected);
+	});
+});
+
+describe("Producer.effectiveAdvance", () => {
+	test.each([
+		{
+			why: "a timer after a scene with a length",
+			before: item(1, { scene: "bracket", durationMs: 15_000 }),
+			item: item(2, { advance: "timer" }),
+			expected: "timer",
+		},
+		{
+			why: "a timer after a scene running until a Take",
+			before: item(1, { scene: "rosters" }),
+			item: item(2, { advance: "timer" }),
+			expected: "take",
+		},
+		{
+			why: "a game event into a game",
+			before: item(1, { scene: "rosters" }),
+			item: item(2, { advance: "game" }),
+			expected: "game",
+		},
+		{
+			why: "a game event between scenes without a game",
+			before: item(1, { scene: "rosters" }),
+			item: item(2, { scene: "bracket", advance: "game" }),
+			expected: "take",
+		},
+	])("$why", ({ before, item: staged, expected }) => {
+		expect(Producer.effectiveAdvance(before, staged)).toBe(expected);
+	});
+});
+
+describe("Producer.applyGameSignal", () => {
+	const liveResults = { matchId: 1, count: 2 };
+	const greenPink: [number, number] = [76, 304];
+
+	test("colors the game and puts it on air as it starts", () => {
+		const applied = Producer.applyGameSignal(
+			stateWith({ next: item(2, { advance: "game" }) }),
+			{ signal: { type: "start", hues: greenPink }, liveResults, now: 5 },
+		);
+
+		expect(applied?.live.id).toBe(2);
+		expect(applied?.liveResults).toEqual(liveResults);
+		expect(applied?.ink).toEqual({
+			key: "greenPink",
+			isFlipped: false,
+			matchId: 1,
+			resultCount: 2,
+		});
+	});
+
+	test("keeps the sides the teams had earlier in the set", () => {
+		const state = {
+			...stateWith({ next: item(2, { advance: "game" }) }),
+			ink: { ...ink, isFlipped: true },
+		};
+
+		const applied = Producer.applyGameSignal(state, {
+			signal: { type: "start", hues: greenPink },
+			liveResults,
+			now: 5,
+		});
+
+		expect(applied?.ink?.isFlipped).toBe(true);
+	});
+
+	test("only colors the game when it waits for a Take", () => {
+		const state = stateWith({ next: item(2, { advance: "take" }) });
+
+		const applied = Producer.applyGameSignal(state, {
+			signal: { type: "start", hues: greenPink },
+			liveResults,
+			now: 5,
+		});
+
+		expect(applied?.live.id).toBe(1);
+		expect(applied?.ink?.key).toBe("greenPink");
+	});
+
+	test("puts the scene after the game on air as it ends", () => {
+		const applied = Producer.applyGameSignal(
+			stateWith({
+				live: item(1, { scene: "game" }),
+				next: item(2, { scene: "maps", advance: "game" }),
+			}),
+			{ signal: { type: "end" }, liveResults, now: 5 },
+		);
+
+		expect(applied?.live).toMatchObject({ id: 2, scene: "maps" });
+		expect(applied?.next).toMatchObject({ scene: "game", advance: "game" });
+	});
+
+	test.each([
+		{
+			why: "the game ending while a game is staged",
+			state: stateWith({ next: item(2, { advance: "game" }) }),
+			signal: { type: "end" } as const,
+		},
+		{
+			why: "the game starting without ink read while a game is on air",
+			state: stateWith({
+				live: item(1, { scene: "game" }),
+				next: item(2, { scene: "maps", advance: "game" }),
+			}),
+			signal: { type: "start", hues: null } as const,
+		},
+	])("is null for $why", ({ state, signal }) => {
+		expect(
+			Producer.applyGameSignal(state, { signal, liveResults, now: 5 }),
+		).toBeNull();
 	});
 });
 
@@ -280,8 +405,8 @@ describe("Producer.withDefaults", () => {
 		const { queue, lastItemId, takenAt, ...current } = Producer.initialState();
 		const stored = {
 			...current,
-			live: R.omit(current.live, ["id", "durationMs", "isAuto"]),
-			next: R.omit(current.next, ["id", "durationMs", "isAuto"]),
+			live: R.omit(current.live, ["id", "durationMs", "advance"]),
+			next: R.omit(current.next, ["id", "durationMs", "advance"]),
 		} as unknown as BroadcastStoredState;
 
 		expect(Producer.withDefaults(stored)).toEqual(Producer.initialState());

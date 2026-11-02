@@ -12,6 +12,7 @@ export { loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["broadcast"],
+	showScanner: true,
 };
 
 export default function TournamentBroadcastsPage() {

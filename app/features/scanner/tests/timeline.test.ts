@@ -254,6 +254,7 @@ function status(t: number, confidence = 0.8, dead = false): DetectedEvent {
 			[false, false, false, false],
 		],
 		cast: null,
+		teamHue: [null, null],
 	};
 	return { type: "PlayerStatus", t, confidence, data };
 }

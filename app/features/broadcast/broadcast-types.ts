@@ -6,6 +6,7 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import type {
+	BROADCAST_ADVANCES,
 	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_INK_COLORS,
 	BROADCAST_SCENES,
@@ -18,6 +19,8 @@ import type {
 export type BroadcastScene = (typeof BROADCAST_SCENES)[number];
 
 export type BroadcastTransition = (typeof BROADCAST_TRANSITIONS)[number];
+
+export type BroadcastAdvance = (typeof BROADCAST_ADVANCES)[number];
 
 export type BroadcastBracketFocus = (typeof BROADCAST_BRACKET_FOCUSES)[number];
 
@@ -33,7 +36,7 @@ export interface BroadcastInk {
 }
 
 /** Ink colors of one game: the featured match's game played after its first `resultCount` results. */
-export interface BroadcastGameInk extends BroadcastInk {
+interface BroadcastGameInk extends BroadcastInk {
 	matchId: number;
 	resultCount: number;
 }
@@ -61,8 +64,8 @@ export interface ProducerState {
 	 * The replays scene playing a clip lasts as long as the clip instead.
 	 */
 	durationMs: number | null;
-	/** Goes on air by itself once the scene before it has run its length, otherwise waits for a Take. */
-	isAuto: boolean;
+	/** What puts it on air besides a Take, see `Producer.effectiveAdvance`. */
+	advance: BroadcastAdvance;
 }
 
 export interface BroadcastStoredState {
@@ -147,7 +150,8 @@ export type BroadcastStreamMessage =
 
 export interface BroadcastPeer {
 	id: string;
-	role: BroadcastStreamRole;
+	/** Scanners show no overlay, so get no clips. */
+	role: Exclude<BroadcastStreamRole, "scanner">;
 }
 
 export interface BroadcastOwnPeer {
@@ -165,7 +169,18 @@ export interface BroadcastSessionDescription {
 export interface BroadcastHealth {
 	/** OBS browser sources showing the overlay. */
 	sources: number;
+	/** Scanners watching the game feed, which put items waiting for a game to start or end on air. */
+	scanners: number;
 }
+
+/** What the scanner watching the game feed saw, see `Producer.applyGameSignal`. */
+export type BroadcastGameSignal =
+	| {
+			type: "start";
+			/** The teams' ink hues (degrees) as read off the game's HUD, in no particular order. `null` when not read. */
+			hues: [number, number] | null;
+	  }
+	| { type: "end" };
 
 export interface BroadcastMatch {
 	id: number;

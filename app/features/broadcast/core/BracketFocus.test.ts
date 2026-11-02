@@ -1,7 +1,7 @@
+import * as R from "remeda";
 import { describe, expect, test } from "vitest";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
-import { nullFilledArray } from "~/utils/arrays";
 import type {
 	BroadcastBracket,
 	BroadcastBracketFocus,
@@ -158,7 +158,7 @@ describe("BracketFocus.resolveBracketIdx", () => {
 function doubleElimination(teamCount: number) {
 	return Engine.create({
 		type: "double_elimination",
-		seeding: nullFilledArray(teamCount).map((_, i) => i + 1),
+		seeding: R.range(1, teamCount + 1),
 		settings: {},
 	});
 }

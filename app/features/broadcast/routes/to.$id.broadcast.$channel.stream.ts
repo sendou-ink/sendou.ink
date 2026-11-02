@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import { HEARTBEAT_INTERVAL_MS } from "~/features/events/events-types";
 import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
-import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import { notFound, notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { broadcastParamsSchema } from "../broadcast-schemas";
 import { broadcastStreamSearchParams } from "../broadcast-search-params";
 import type { BroadcastStreamMessage } from "../broadcast-types";
@@ -25,8 +25,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	});
 	notFoundIfNullish(CastChannel.findBySlug(tournament.ctx.castAccounts, slug));
 	const { role } = broadcastStreamSearchParams.parse(request);
-	const isClipSender =
-		role === "dashboard" && isBroadcastProducer(tournament, getUser());
+	const isProducer = isBroadcastProducer(tournament, getUser());
+	const isClipSender = role === "dashboard" && isProducer;
+	// a scanner is counted as putting scenes on air, which only a producer's can
+	if (role === "scanner" && !isProducer) notFound();
 
 	if (BroadcastHub.isAtCapacity({ tournamentId, slug })) {
 		return new Response(null, { status: 429 });

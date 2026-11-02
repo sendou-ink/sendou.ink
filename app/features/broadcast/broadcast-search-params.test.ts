@@ -25,7 +25,7 @@ describe("broadcastOverlaySearchParams", () => {
 describe("broadcastStreamSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(broadcastStreamSearchParams, {
-			role: ["source", "preview", "dashboard"],
+			role: ["source", "preview", "dashboard", "scanner"],
 		});
 	});
 
