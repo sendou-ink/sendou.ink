@@ -9,7 +9,7 @@ import {
 } from "~/features/front-page/components/PWAInstallBanner";
 import { navIconUrl } from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
-import { FEED_ROTATION_MAX_LISTED } from "../feed-constants";
+import { FEED_ROTATION_MAX_LISTED, type FeedRelation } from "../feed-constants";
 import type { FeedItemContent } from "./FeedItemCard";
 import {
 	DateBlock,
@@ -83,8 +83,10 @@ export function communityItemContent(
 							</>
 						) : (
 							<>
-								<b>{data.rows.length} friends</b> made it to a new Plus Server
-								tier
+								<b>
+									{data.rows.length} {plusResultsPeopleText(data.rows)}
+								</b>{" "}
+								made it to a new Plus Server tier
 							</>
 						)}
 					</>
@@ -454,6 +456,14 @@ const SITE_MILESTONE_ICONS = {
 	TOURNAMENTS: "medal",
 	ART: "art",
 } as const;
+
+function plusResultsPeopleText(rows: Array<{ relation: FeedRelation }>) {
+	const hasFriends = rows.some((row) => row.relation === "FRIEND");
+	const hasTeammates = rows.some((row) => row.relation === "TEAMMATE");
+	if (hasFriends && hasTeammates) return "friends and teammates";
+
+	return hasTeammates ? "teammates" : "friends";
+}
 
 function breakText(days: number) {
 	if (days < 60) return `${days} days`;

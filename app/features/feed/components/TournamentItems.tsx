@@ -131,8 +131,8 @@ export function tournamentItemContent(
 							<div className="text-xs text-lighter">
 								{ordinalPlacement(data.placement)} of {data.participantCount} ·{" "}
 								{data.setWins}–{data.setLosses} in sets
-								{data.friendsOnTeam.length > 0
-									? ` · with ${data.friendsOnTeam.map((f) => f.username).join(", ")}`
+								{data.knownOnTeam.length > 0
+									? ` · with ${data.knownOnTeam.map((member) => member.username).join(", ")}`
 									: ""}
 							</div>
 						</div>
@@ -217,16 +217,16 @@ export function tournamentItemContent(
 		case "TO_UPSET": {
 			const { data } = item;
 			return {
-				avatar: <Avatar user={data.friend} size="xs" />,
-				line: data.isFriendWinner ? (
+				avatar: <Avatar user={data.actor} size="xs" />,
+				line: data.isActorWinner ? (
 					<>
-						<UserName user={data.friend} />
+						<UserName user={data.actor} />
 						's team, seeded {data.winnerSeed}, knocked out seed {data.loserSeed}{" "}
 						at <TournamentLink tournament={data.tournament} />
 					</>
 				) : (
 					<>
-						<UserName user={data.friend} />
+						<UserName user={data.actor} />
 						's team, seeded {data.loserSeed}, was knocked out by seed{" "}
 						{data.winnerSeed} at <TournamentLink tournament={data.tournament} />
 					</>
@@ -357,7 +357,7 @@ export function tournamentItemContent(
 								{data.rows.map((row) => (
 									<tr
 										key={row.user.id}
-										className={clsx({ [styles.highlightRow]: row.isFriend })}
+										className={clsx({ [styles.highlightRow]: row.isKnown })}
 									>
 										<td className={styles.rankCell}>{row.placement}</td>
 										<td>
@@ -619,7 +619,7 @@ export function tournamentItemContent(
 											key={row.team.id}
 											className={clsx({
 												[styles.highlightRow]:
-													row.isOwn || row.friends.length > 0,
+													row.isOwn || row.known.length > 0,
 											})}
 										>
 											<td className={styles.rankCell}>#{row.projectedSeed}</td>
@@ -631,10 +631,10 @@ export function tournamentItemContent(
 													</span>
 													{row.isOwn ? (
 														<span className={styles.pill}>You</span>
-													) : row.friends.length > 0 ? (
+													) : row.known.length > 0 ? (
 														<span className={styles.pill}>
-															{row.friends
-																.map((friend) => friend.username)
+															{row.known
+																.map((member) => member.username)
 																.join(", ")}
 														</span>
 													) : null}

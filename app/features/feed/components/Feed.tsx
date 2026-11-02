@@ -49,8 +49,7 @@ export function Feed({
 	const activity = data.activity.filter((item) => {
 		const definition = FEED_ITEM_TYPES[item.type];
 		if (filter === "ALL") return true;
-		if (filter === "FRIENDS")
-			return definition.audience.some((a) => a === "FRIENDS");
+		if (filter === "FRIENDS") return item.relation === "FRIEND";
 
 		return definition.category === filter;
 	});

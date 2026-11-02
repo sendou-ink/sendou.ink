@@ -47,6 +47,7 @@ import {
 	FEED_LEADERBOARD_TOP_COUNT,
 	FEED_MOCK_ANNOUNCEMENT,
 	FEED_MOCK_LUTI_SEASON,
+	FEED_RELATIONS,
 	FEED_ROTATION_LOOKBACK_WEEKS,
 	FEED_SEASON_COUNTDOWN_DAYS,
 	FEED_SITE_MILESTONE_MIN,
@@ -54,6 +55,7 @@ import {
 	FEED_SQ_UPSET_MIN_TIER_STEPS,
 	FEED_TOURNAMENT_UPSET_MIN_SEED_GAP,
 	type FeedItemType,
+	type FeedRelation,
 } from "../feed-constants";
 import type {
 	FeedEventDataByType,
@@ -105,6 +107,9 @@ export interface FeedContext {
 	viewerId: number;
 	friendIds: number[];
 	friendIdSet: Set<number>;
+	/** Users sharing a current team with the viewer who aren't their friends */
+	teammateIds: number[];
+	teammateIdSet: Set<number>;
 	/** Database timestamp everything is relative to */
 	now: number;
 	season: number | null;
@@ -123,6 +128,8 @@ interface BuiltItem<D> {
 	at: number;
 	/** Who the item is about, for the ranking's diversity pass */
 	actorKey: string;
+	/** How the viewer knows who the item is about, left out when it isn't about someone */
+	relation?: FeedRelation | null;
 	data: D;
 }
 
@@ -201,6 +208,7 @@ export type FeedItem = {
 		type: T;
 		at: number;
 		actorKey: string;
+		relation: FeedRelation | null;
 		data: FeedItemData<T>;
 	};
 }[FeedItemType];
@@ -214,6 +222,8 @@ export async function contextFor({
 	mode: FeedMode;
 }): Promise<FeedContext> {
 	const friendIds = await FriendRepository.findFriendIds(viewerId);
+	const friendIdSet = new Set(friendIds);
+	const teammateIds = await teammateIdsOf({ viewerId, friendIdSet });
 	const now = mode === "TEST" ? await testNow() : databaseTimestampNow();
 	const nowDate = databaseTimestampToDate(now);
 
@@ -221,7 +231,9 @@ export async function contextFor({
 		mode,
 		viewerId,
 		friendIds,
-		friendIdSet: new Set(friendIds),
+		friendIdSet,
+		teammateIds,
+		teammateIdSet: new Set(teammateIds),
 		now,
 		season: Seasons.currentOrPrevious(nowDate)?.nth ?? null,
 		previousSeason: Seasons.previous(nowDate)?.nth ?? null,
@@ -234,7 +246,7 @@ async function buildOne(
 	type: FeedItemType,
 	ctx: FeedContext,
 ): Promise<FeedItem | null> {
-	const built = SHARED_ITEM_TYPES.has(type)
+	const built: BuiltItem<unknown> | null = SHARED_ITEM_TYPES.has(type)
 		? await FeedCache.cached({
 				key: `${ctx.mode}-shared-item-${type}`,
 				ttlMs: MINUTE_MS,
@@ -250,6 +262,7 @@ async function buildOne(
 		type,
 		...built,
 		at,
+		relation: built.relation ?? null,
 	} as FeedItem;
 }
 
@@ -295,22 +308,30 @@ export async function buildAll(ctx: FeedContext): Promise<FeedItem[]> {
 // ---------- SendouQ ----------
 
 async function buildSqSet(ctx: FeedContext) {
-	const promotion = (await friendEvents(ctx, "SQ_PROMOTION")).find(
+	const promotion = (await friendOrTeammateEvents(ctx, "SQ_PROMOTION")).find(
 		(event) => event.data.season === ctx.season,
 	);
-	const upset = (await friendEvents(ctx, "SQ_UPSET")).at(0);
+	const upset = (await friendOrTeammateEvents(ctx, "SQ_UPSET")).at(0);
 
 	if (promotion && (!upset || promotion.at >= upset.at)) {
-		return sqSetItem({
+		const item = await sqSetItem({
 			matchId: promotion.data.matchId,
 			userId: promotion.userId,
 			promotion: R.pick(promotion.data, ["from", "to"]),
 		});
-	}
 
-	return upset
-		? sqSetItem({ matchId: upset.data.matchId, userId: upset.userId })
-		: null;
+		return item
+			? { ...item, relation: relationOf(ctx, promotion.userId) }
+			: null;
+	}
+	if (!upset) return null;
+
+	const item = await sqSetItem({
+		matchId: upset.data.matchId,
+		userId: upset.userId,
+	});
+
+	return item ? { ...item, relation: relationOf(ctx, upset.userId) } : null;
 }
 
 function sqSetItem(args: Parameters<typeof freshSqSetItem>[0]) {
@@ -410,7 +431,7 @@ async function freshSqSetItem({
 }
 
 async function buildSqStreak(ctx: FeedContext) {
-	const best = R.firstBy(await friendEvents(ctx, "SQ_STREAK"), [
+	const best = R.firstBy(await friendOrTeammateEvents(ctx, "SQ_STREAK"), [
 		(event) => event.data.streak,
 		"desc",
 	]);
@@ -425,6 +446,7 @@ async function buildSqStreak(ctx: FeedContext) {
 	return {
 		at: best.at,
 		actorKey: String(best.userId),
+		relation: relationOf(ctx, best.userId),
 		data: {
 			actor: users.get(best.userId)!,
 			streak: best.data.streak,
@@ -439,7 +461,7 @@ async function buildSqLeaderboard(ctx: FeedContext) {
 
 	const leaderboard = await cachedFullUserLeaderboard(ctx.season);
 	const index = leaderboard.findIndex((candidate) =>
-		ctx.friendIdSet.has(candidate.id),
+		isFriendOrTeammate(ctx, candidate.id),
 	);
 	if (index === -1) return null;
 
@@ -456,6 +478,7 @@ async function buildSqLeaderboard(ctx: FeedContext) {
 	return {
 		at: latestSetAt,
 		actorKey: String(entry.id),
+		relation: relationOf(ctx, entry.id),
 		data: {
 			actor: R.pick(entry, ["id", "username", "customUrl", "avatar"]),
 			placement: entry.placementRank,
@@ -473,7 +496,7 @@ async function buildSqLeaderboard(ctx: FeedContext) {
 }
 
 async function buildSqMilestone(ctx: FeedContext) {
-	const latest = (await friendEvents(ctx, "SQ_MILESTONE")).at(0);
+	const latest = (await friendOrTeammateEvents(ctx, "SQ_MILESTONE")).at(0);
 	if (!latest) return null;
 
 	const users = await usersById([latest.userId]);
@@ -481,6 +504,7 @@ async function buildSqMilestone(ctx: FeedContext) {
 	return {
 		at: latest.at,
 		actorKey: String(latest.userId),
+		relation: relationOf(ctx, latest.userId),
 		data: {
 			actor: users.get(latest.userId)!,
 			milestone: latest.data.milestone,
@@ -509,7 +533,7 @@ async function buildSqSeasonRecap(ctx: FeedContext) {
 			);
 		});
 	const entry = leaderboard.find(
-		(e) => ctx.friendIdSet.has(e.id) && isNewPeak(e),
+		(e) => isFriendOrTeammate(ctx, e.id) && isNewPeak(e),
 	);
 	if (!entry) return null;
 
@@ -536,6 +560,7 @@ async function buildSqSeasonRecap(ctx: FeedContext) {
 	return {
 		at: dateToDatabaseTimestamp(previousSeasonEndsAt),
 		actorKey: String(entry.id),
+		relation: relationOf(ctx, entry.id),
 		data: {
 			actor: R.pick(entry, ["id", "username", "customUrl", "avatar"]),
 			season: ctx.previousSeason,
@@ -554,7 +579,7 @@ async function buildSqSeasonRecap(ctx: FeedContext) {
 
 async function buildSqRivalry(ctx: FeedContext) {
 	const rivalry = R.firstBy(
-		(await friendEvents(ctx, "SQ_RIVALRY")).filter(
+		(await friendOrTeammateEvents(ctx, "SQ_RIVALRY")).filter(
 			(event) => event.data.season === ctx.season,
 		),
 		[(event) => event.data.setWins + event.data.setLosses, "desc"],
@@ -566,6 +591,7 @@ async function buildSqRivalry(ctx: FeedContext) {
 	return {
 		at: rivalry.at,
 		actorKey: String(rivalry.userId),
+		relation: relationOf(ctx, rivalry.userId),
 		data: {
 			actor: users.get(rivalry.userId)!,
 			other: users.get(rivalry.data.otherUserId)!,
@@ -740,7 +766,9 @@ async function buildLobbyRecap(ctx: FeedContext) {
 	).find(
 		(candidate) =>
 			candidate.endedAt <= ctx.now &&
-			candidate.players.some((player) => ctx.friendIdSet.has(player.userId)),
+			candidate.players.some((player) =>
+				isFriendOrTeammate(ctx, player.userId),
+			),
 	);
 	if (!lobby) return null;
 
@@ -757,6 +785,12 @@ async function buildLobbyRecap(ctx: FeedContext) {
 	return {
 		at: lobby.endedAt,
 		actorKey: String(lobby.hostUserId),
+		relation: closestRelationOf(
+			ctx,
+			lobby.players.flatMap((player) =>
+				player.userId === ctx.viewerId ? [] : [player.userId],
+			),
+		),
 		data: {
 			lobbyId: lobby.id,
 			name: lobby.name,
@@ -801,17 +835,33 @@ async function buildStreamLive(ctx: SharedFeedContext) {
 
 // ---------- Tournaments ----------
 
-async function friendResults(ctx: FeedContext, sinceDays: number) {
-	return (await friendEvents(ctx, "TO_RESULT", sinceDays)).map((event) => ({
-		...event.data,
-		userId: event.userId,
-		startsAt: event.at,
-	}));
+/** Tournament results of the friends and teammates in the last `sinceDays`, leaving out the teams the viewer played on */
+async function friendOrTeammateResults(ctx: FeedContext, sinceDays: number) {
+	const events = await eventsOfType(ctx, "TO_RESULT");
+	const ownTournamentTeamIds = new Set(
+		events
+			.filter((event) => event.userId === ctx.viewerId)
+			.map((event) => event.data.tournamentTeamId),
+	);
+	const from = ctx.now - sinceDays * DAY;
+
+	return events
+		.filter(
+			(event) =>
+				event.userId !== ctx.viewerId &&
+				event.at >= from &&
+				!ownTournamentTeamIds.has(event.data.tournamentTeamId),
+		)
+		.map((event) => ({
+			...event.data,
+			userId: event.userId,
+			startsAt: event.at,
+		}));
 }
 
 async function resultCard(
 	ctx: FeedContext,
-	result: Awaited<ReturnType<typeof friendResults>>[number],
+	result: Awaited<ReturnType<typeof friendOrTeammateResults>>[number],
 ) {
 	const tournament = await tournamentById(result.tournamentId);
 	const team = await tournamentTeamById(result.tournamentTeamId);
@@ -825,14 +875,15 @@ async function resultCard(
 		participantCount: result.participantCount,
 		setWins: result.setWins,
 		setLosses: result.setLosses,
-		friendsOnTeam: team.members.filter(
-			(member) => ctx.friendIdSet.has(member.id) && member.id !== result.userId,
+		knownOnTeam: team.members.filter(
+			(member) =>
+				isFriendOrTeammate(ctx, member.id) && member.id !== result.userId,
 		),
 	};
 }
 
 async function buildTournamentWin(ctx: FeedContext) {
-	const result = (await friendResults(ctx, 14)).find(
+	const result = (await friendOrTeammateResults(ctx, 14)).find(
 		(r) => r.placement === 1 && r.participantCount >= 12,
 	);
 	if (!result) return null;
@@ -847,12 +898,13 @@ async function buildTournamentWin(ctx: FeedContext) {
 	return {
 		at: result.startsAt + 6 * HOUR,
 		actorKey: String(result.userId),
+		relation: relationOf(ctx, result.userId),
 		data: { ...card, seriesWin, path },
 	};
 }
 
 async function tournamentWinPath(
-	result: Awaited<ReturnType<typeof friendResults>>[number],
+	result: Awaited<ReturnType<typeof friendOrTeammateResults>>[number],
 ) {
 	const seriesWin = await seriesWinOf(result);
 	const matches = await FeedRepository.findTournamentMatchesByTeamId({
@@ -893,7 +945,7 @@ async function tournamentWinPath(
 }
 
 async function buildTournamentPodium(ctx: FeedContext) {
-	const results = await friendResults(ctx, 14);
+	const results = await friendOrTeammateResults(ctx, 14);
 	const result =
 		results.find(
 			(r) => r.placement >= 2 && r.placement <= 3 && r.participantCount >= 60,
@@ -903,13 +955,16 @@ async function buildTournamentPodium(ctx: FeedContext) {
 	return {
 		at: result.startsAt + 6 * HOUR,
 		actorKey: String(result.userId),
+		relation: relationOf(ctx, result.userId),
 		data: await resultCard(ctx, result),
 	};
 }
 
 async function buildTournamentDigest(ctx: FeedContext) {
 	const results = R.uniqueBy(
-		await friendResults(ctx, 3),
+		(await friendOrTeammateResults(ctx, 3)).filter((result) =>
+			ctx.friendIdSet.has(result.userId),
+		),
 		(result) => result.userId,
 	);
 	if (results.length < 2) return null;
@@ -922,6 +977,7 @@ async function buildTournamentDigest(ctx: FeedContext) {
 	return {
 		at: Math.max(...results.map((result) => result.startsAt)) + 6 * HOUR,
 		actorKey: "TO_DIGEST",
+		relation: "FRIEND" as const,
 		data: {
 			tournamentCount: new Set(results.map((result) => result.tournamentId))
 				.size,
@@ -941,8 +997,16 @@ async function buildTournamentDigest(ctx: FeedContext) {
 }
 
 async function buildTournamentRegistered(ctx: FeedContext) {
-	const registrations = (await upcomingRegistrations(ctx)).filter(
-		(registration) => ctx.friendIdSet.has(registration.userId),
+	const upcoming = await upcomingRegistrations(ctx);
+	const ownTournamentTeamIds = new Set(
+		upcoming
+			.filter((registration) => registration.userId === ctx.viewerId)
+			.map((registration) => registration.tournamentTeamId),
+	);
+	const registrations = upcoming.filter(
+		(registration) =>
+			isFriendOrTeammate(ctx, registration.userId) &&
+			!ownTournamentTeamIds.has(registration.tournamentTeamId),
 	);
 	const first = registrations.at(0);
 	if (!first) return null;
@@ -961,9 +1025,10 @@ async function buildTournamentRegistered(ctx: FeedContext) {
 			...sameTournament.map((registration) => registration.registeredAt),
 		),
 		actorKey: String(first.userId),
+		relation: relationOf(ctx, first.userId),
 		data: {
 			actor: users.get(first.userId)!,
-			friends: sameTournament.map(
+			known: sameTournament.map(
 				(registration) => users.get(registration.userId)!,
 			),
 			tournament,
@@ -987,25 +1052,25 @@ async function upcomingRegistrations(ctx: FeedContext) {
 }
 
 async function buildTournamentUpset(ctx: FeedContext) {
-	const results = await friendResults(ctx, 10);
-	const friendIdByTeamId = new Map(
+	const results = await friendOrTeammateResults(ctx, 10);
+	const userIdByTeamId = new Map(
 		results.map((result) => [result.tournamentTeamId, result.userId]),
 	);
 
 	let best:
 		| (TournamentUpset & {
 				tournamentId: number;
-				friendId: number;
-				isFriendWinner: boolean;
+				userId: number;
+				isUserWinner: boolean;
 		  })
 		| null = null;
 	for (const tournamentId of R.unique(
 		results.map((result) => result.tournamentId),
 	)) {
 		for (const upset of await tournamentUpsets(tournamentId)) {
-			const winnerFriendId = friendIdByTeamId.get(upset.winnerId);
-			const friendId = winnerFriendId ?? friendIdByTeamId.get(upset.loserId);
-			if (friendId === undefined) continue;
+			const winnerUserId = userIdByTeamId.get(upset.winnerId);
+			const userId = winnerUserId ?? userIdByTeamId.get(upset.loserId);
+			if (userId === undefined) continue;
 			if (
 				best &&
 				upset.winnerSeed - upset.loserSeed <= best.winnerSeed - best.loserSeed
@@ -1016,8 +1081,8 @@ async function buildTournamentUpset(ctx: FeedContext) {
 			best = {
 				...upset,
 				tournamentId,
-				friendId,
-				isFriendWinner: winnerFriendId !== undefined,
+				userId,
+				isUserWinner: winnerUserId !== undefined,
 			};
 		}
 	}
@@ -1025,15 +1090,16 @@ async function buildTournamentUpset(ctx: FeedContext) {
 
 	const tournament = await tournamentById(best.tournamentId);
 	const teams = await tournamentTeamsById([best.winnerId, best.loserId]);
-	const users = await usersById([best.friendId]);
+	const users = await usersById([best.userId]);
 
 	return {
 		at: (tournament.startsAt ?? ctx.now) + 4 * HOUR,
-		actorKey: String(best.friendId),
+		actorKey: String(best.userId),
+		relation: relationOf(ctx, best.userId),
 		data: {
 			tournament,
-			friend: users.get(best.friendId)!,
-			isFriendWinner: best.isFriendWinner,
+			actor: users.get(best.userId)!,
+			isActorWinner: best.isUserWinner,
 			winner: teams.get(best.winnerId)!,
 			loser: teams.get(best.loserId)!,
 			winnerSeed: best.winnerSeed,
@@ -1209,23 +1275,23 @@ async function organizationTournamentItem({
 async function buildSeriesStandings(ctx: FeedContext) {
 	const chosen = R.firstBy(
 		(await seriesStandings(ctx)).map((entry) => {
-			const friendIndexes = ctx.friendIds.flatMap(
-				(friendId) => entry.indexByUserId.get(friendId) ?? [],
+			const knownIndexes = [...ctx.friendIds, ...ctx.teammateIds].flatMap(
+				(userId) => entry.indexByUserId.get(userId) ?? [],
 			);
 
 			return {
 				...entry,
-				friendCount: friendIndexes.length,
-				friendIndex: Math.min(...friendIndexes),
+				knownCount: knownIndexes.length,
+				knownIndex: Math.min(...knownIndexes),
 			};
 		}),
-		[(entry) => entry.friendCount, "desc"],
+		[(entry) => entry.knownCount, "desc"],
 	);
-	if (!chosen?.friendCount) return null;
+	if (!chosen?.knownCount) return null;
 
-	const { standings, friendIndex, latestStartsAt } = chosen;
+	const { standings, knownIndex, latestStartsAt } = chosen;
 	const shown = standings.slice(0, 3);
-	if (friendIndex > 2) shown.push(standings[friendIndex]);
+	if (knownIndex > 2) shown.push(standings[knownIndex]);
 
 	const users = await usersById(shown.map((s) => s.userId));
 	const organization = await FeedCache.cached({
@@ -1238,6 +1304,12 @@ async function buildSeriesStandings(ctx: FeedContext) {
 	return {
 		at: latestStartsAt + 6 * HOUR,
 		actorKey: `series-${chosen.series.name}`,
+		relation: closestRelationOf(
+			ctx,
+			standings
+				.map((standing) => standing.userId)
+				.filter((userId) => userId !== ctx.viewerId),
+		),
 		data: {
 			seriesName: chosen.series.name,
 			organization,
@@ -1246,7 +1318,7 @@ async function buildSeriesStandings(ctx: FeedContext) {
 				user: users.get(standing.userId)!,
 				points: standing.points,
 				eventCount: standing.eventCount,
-				isFriend: ctx.friendIdSet.has(standing.userId),
+				isKnown: isFriendOrTeammate(ctx, standing.userId),
 			})),
 		},
 	};
@@ -1334,7 +1406,7 @@ async function buildTournamentVod(ctx: FeedContext) {
 				candidate.opponentTwo?.id &&
 				candidate.userId !== null,
 		),
-		(candidate) => isViewerOrFriend(ctx, candidate.userId!),
+		(candidate) => relationOf(ctx, candidate.userId!) !== null,
 	);
 	if (!vod?.opponentOne?.id || !vod.opponentTwo?.id || vod.userId === null) {
 		return null;
@@ -1352,6 +1424,7 @@ async function buildTournamentVod(ctx: FeedContext) {
 	return {
 		at: (tournament.startsAt ?? 0) + 5 * HOUR,
 		actorKey: String(vod.userId),
+		relation: relationOf(ctx, vod.userId),
 		data: {
 			actor: users.get(vod.userId)!,
 			tournament,
@@ -1376,8 +1449,12 @@ async function buildTournamentBadge(ctx: FeedContext) {
 				ctx.now - FEED_EVENT_MAX_RETENTION_DAYS * DAY,
 			),
 	});
+	const ownTournamentIds = tournamentIdsOfViewer(ctx, owners);
 	const badge = owners.find(
-		(owner) => ctx.friendIdSet.has(owner.userId) && owner.startsAt <= ctx.now,
+		(owner) =>
+			isFriendOrTeammate(ctx, owner.userId) &&
+			owner.startsAt <= ctx.now &&
+			!ownTournamentIds.has(owner.tournamentId),
 	);
 	if (!badge?.tournamentId) return null;
 
@@ -1387,6 +1464,7 @@ async function buildTournamentBadge(ctx: FeedContext) {
 	return {
 		at: badge.startsAt + 6 * HOUR,
 		actorKey: String(badge.userId),
+		relation: relationOf(ctx, badge.userId),
 		data: {
 			actor: users.get(badge.userId)!,
 			badge: {
@@ -1401,14 +1479,18 @@ async function buildTournamentBadge(ctx: FeedContext) {
 }
 
 async function buildTrophy(ctx: FeedContext) {
+	const owners = await FeedCache.cached({
+		key: "latest-trophy-owners",
+		ttlMs: 10 * MINUTE_MS,
+		getFreshValue: FeedRepository.findLatestTrophyOwners,
+	});
+	const ownTournamentIds = tournamentIdsOfViewer(ctx, owners);
 	const owner = forViewer(
 		ctx,
-		await FeedCache.cached({
-			key: "latest-trophy-owners",
-			ttlMs: 10 * MINUTE_MS,
-			getFreshValue: FeedRepository.findLatestTrophyOwners,
-		}),
-		(candidate) => ctx.friendIdSet.has(candidate.userId),
+		owners,
+		(candidate) =>
+			isFriendOrTeammate(ctx, candidate.userId) &&
+			!ownTournamentIds.has(candidate.tournamentId),
 	);
 	if (!owner) return null;
 
@@ -1420,6 +1502,7 @@ async function buildTrophy(ctx: FeedContext) {
 	return {
 		at: (tournament?.startsAt ?? 0) + 5 * HOUR,
 		actorKey: String(owner.userId),
+		relation: relationOf(ctx, owner.userId),
 		data: {
 			actor: users.get(owner.userId)!,
 			trophy: {
@@ -1502,17 +1585,14 @@ async function buildBracketPreview(ctx: FeedContext) {
 	);
 	if (closed.length === 0) return null;
 
-	const registeredTournamentIds = new Set(
-		(await upcomingRegistrations(ctx))
-			.filter(
-				(registration) =>
-					registration.userId === ctx.viewerId ||
-					ctx.friendIdSet.has(registration.userId),
-			)
-			.map((registration) => registration.tournamentId),
+	const knownRegistrationsByTournamentId = R.groupBy(
+		(await upcomingRegistrations(ctx)).filter(
+			(registration) => relationOf(ctx, registration.userId) !== null,
+		),
+		(registration) => registration.tournamentId,
 	);
 	const chosen =
-		closed.find((row) => registeredTournamentIds.has(row.tournamentId)) ??
+		closed.find((row) => knownRegistrationsByTournamentId[row.tournamentId]) ??
 		R.firstBy(closed, [(row) => row.teamCount, "desc"])!;
 
 	const tournament = await tournamentById(chosen.tournamentId);
@@ -1524,12 +1604,18 @@ async function buildBracketPreview(ctx: FeedContext) {
 	return {
 		at: chosen.regClosesAt,
 		actorKey: `tournament-${chosen.tournamentId}`,
+		relation: closestRelationOf(
+			ctx,
+			(knownRegistrationsByTournamentId[chosen.tournamentId] ?? []).map(
+				(registration) => registration.userId,
+			),
+		),
 		data: {
 			tournament,
 			teamCount: chosen.teamCount,
 			teams: projected.flatMap((entry, index) => {
-				const friends = entry.team.members.filter((member) =>
-					ctx.friendIdSet.has(member.id),
+				const known = entry.team.members.filter((member) =>
+					isFriendOrTeammate(ctx, member.id),
 				);
 				const isOwn = entry.team.members.some(
 					(member) => member.id === ctx.viewerId,
@@ -1537,7 +1623,7 @@ async function buildBracketPreview(ctx: FeedContext) {
 				if (
 					index >= FEED_BRACKET_PREVIEW_TOP_TEAMS &&
 					!isOwn &&
-					friends.length === 0
+					known.length === 0
 				) {
 					return [];
 				}
@@ -1547,7 +1633,7 @@ async function buildBracketPreview(ctx: FeedContext) {
 					team: entry.team,
 					sp: entry.sp,
 					isOwn,
-					friends,
+					known,
 				};
 			}),
 		},
@@ -1657,7 +1743,7 @@ async function buildTournamentStaff(ctx: FeedContext) {
 	).find(
 		(row) =>
 			row.startsAt > after &&
-			ctx.friendIdSet.has(row.userId) &&
+			isFriendOrTeammate(ctx, row.userId) &&
 			(ctx.mode === "TEST" || row.createdAt !== null),
 	);
 	if (!staff) return null;
@@ -1668,6 +1754,7 @@ async function buildTournamentStaff(ctx: FeedContext) {
 	return {
 		at: staff.createdAt ?? ctx.now - 50 * HOUR,
 		actorKey: String(staff.userId),
+		relation: relationOf(ctx, staff.userId),
 		data: { actor: users.get(staff.userId)!, tournament, role: staff.role },
 	};
 }
@@ -1686,7 +1773,8 @@ async function buildTeamJoin(ctx: FeedContext) {
 		})
 	).find(
 		(candidate) =>
-			candidate.createdAt < ctx.now && ctx.friendIdSet.has(candidate.userId),
+			candidate.createdAt < ctx.now &&
+			isFriendOrTeammate(ctx, candidate.userId),
 	);
 	if (!join) return null;
 
@@ -1696,6 +1784,7 @@ async function buildTeamJoin(ctx: FeedContext) {
 	return {
 		at: join.createdAt,
 		actorKey: String(join.userId),
+		relation: relationOf(ctx, join.userId),
 		data: { actor: users.get(join.userId)!, team, role: join.role },
 	};
 }
@@ -1713,7 +1802,7 @@ async function buildTeamNew(ctx: FeedContext) {
 					),
 			})
 		).filter((candidate) => candidate.createdAt < ctx.now),
-		(candidate) => ctx.friendIdSet.has(candidate.ownerUserId),
+		(candidate) => isFriendOrTeammate(ctx, candidate.ownerUserId),
 	);
 	if (!created) return null;
 
@@ -1723,15 +1812,16 @@ async function buildTeamNew(ctx: FeedContext) {
 	return {
 		at: created.createdAt,
 		actorKey: String(created.ownerUserId),
+		relation: relationOf(ctx, created.ownerUserId),
 		data: { actor: users.get(created.ownerUserId)!, team },
 	};
 }
 
 async function buildTeamAnniversary(ctx: FeedContext) {
 	const nowDate = databaseTimestampToDate(ctx.now);
-	const membershipsByUserId = await teamMembershipsByUserId();
+	const { byUserId } = await teamMemberships();
 	const memberships = [ctx.viewerId, ...ctx.friendIds].flatMap(
-		(userId) => membershipsByUserId[userId] ?? [],
+		(userId) => byUserId[userId] ?? [],
 	);
 	const anniversaries = memberships.flatMap((membership) => {
 		const anniversary = FeedSchedule.latestAnniversary(
@@ -1954,7 +2044,7 @@ async function buildArtNew(ctx: FeedContext) {
 			getFreshValue: () =>
 				FeedRepository.findAllArtistsActiveBetween({ from, to: ctx.now }),
 		}),
-		(candidate) => ctx.friendIdSet.has(candidate.authorId),
+		(candidate) => isFriendOrTeammate(ctx, candidate.authorId),
 	);
 	if (!artist?.latestAt) return null;
 
@@ -1968,6 +2058,7 @@ async function buildArtNew(ctx: FeedContext) {
 	return {
 		at: artist.latestAt,
 		actorKey: String(artist.authorId),
+		relation: relationOf(ctx, artist.authorId),
 		data: {
 			actor: users.get(artist.authorId)!,
 			count: artist.count,
@@ -1991,7 +2082,7 @@ async function buildArtTagged(ctx: FeedContext) {
 					),
 			})
 		).filter((candidate) => candidate.createdAt < ctx.now),
-		(candidate) => isViewerOrFriend(ctx, candidate.taggedUserId),
+		(candidate) => relationOf(ctx, candidate.taggedUserId) !== null,
 	);
 	if (!art) return null;
 
@@ -2000,6 +2091,7 @@ async function buildArtTagged(ctx: FeedContext) {
 	return {
 		at: art.createdAt,
 		actorKey: String(art.authorId),
+		relation: relationOf(ctx, art.taggedUserId),
 		data: {
 			actor: users.get(art.authorId)!,
 			tagged: users.get(art.taggedUserId)!,
@@ -2022,7 +2114,7 @@ async function buildArtCommissions(ctx: FeedContext) {
 					),
 			})
 		).filter((candidate) => candidate.commissionsOpenedAt < ctx.now),
-		(candidate) => ctx.friendIdSet.has(candidate.id),
+		(candidate) => isFriendOrTeammate(ctx, candidate.id),
 	);
 	if (!artist) return null;
 
@@ -2031,6 +2123,7 @@ async function buildArtCommissions(ctx: FeedContext) {
 	return {
 		at: artist.commissionsOpenedAt,
 		actorKey: String(artist.id),
+		relation: relationOf(ctx, artist.id),
 		data: {
 			actor: users.get(artist.id)!,
 			text: artist.commissionText,
@@ -2108,7 +2201,8 @@ async function buildBuildNew(ctx: FeedContext) {
 				),
 		})
 	).find(
-		(build) => build.updatedAt < ctx.now && ctx.friendIdSet.has(build.ownerId),
+		(build) =>
+			build.updatedAt < ctx.now && isFriendOrTeammate(ctx, build.ownerId),
 	);
 	if (!latest) return null;
 
@@ -2118,6 +2212,7 @@ async function buildBuildNew(ctx: FeedContext) {
 	return {
 		at: card.at,
 		actorKey: String(card.ownerId),
+		relation: relationOf(ctx, card.ownerId),
 		data: card.card,
 	};
 }
@@ -2191,7 +2286,7 @@ async function buildXRankTop500(ctx: FeedContext) {
 		getFreshValue: FeedRepository.findAllUserPlacementsOfLatestMonth,
 	});
 	const placement = forViewer(ctx, placements, (candidate) =>
-		ctx.friendIdSet.has(candidate.userId),
+		isFriendOrTeammate(ctx, candidate.userId),
 	);
 	if (!placement) return null;
 
@@ -2203,10 +2298,10 @@ async function buildXRankTop500(ctx: FeedContext) {
 			new Date(Date.UTC(placement.year, placement.month, 1)),
 		),
 		actorKey: String(placement.userId),
+		relation: relationOf(ctx, placement.userId),
 		data: {
 			actor: users.get(placement.userId)!,
 			...R.omit(placement, ["userId"]),
-			isFriend: ctx.friendIdSet.has(placement.userId),
 		},
 	};
 }
@@ -2222,7 +2317,7 @@ async function buildScannerScorecard(ctx: FeedContext) {
 		ctx,
 		scannedMatches,
 		(scanned) =>
-			scanned.povUserId !== null && ctx.friendIdSet.has(scanned.povUserId),
+			scanned.povUserId !== null && isFriendOrTeammate(ctx, scanned.povUserId),
 	);
 	if (!latest) return null;
 
@@ -2241,6 +2336,7 @@ async function buildScannerScorecard(ctx: FeedContext) {
 	return {
 		at: match.data.startsAt ?? ctx.now - 2 * HOUR,
 		actorKey: String(match.povUserId),
+		relation: relationOf(ctx, match.povUserId),
 		data: {
 			actor: users.get(match.povUserId)!,
 			replayCode: match.data.replayCode,
@@ -2292,6 +2388,7 @@ async function buildFriendNew(ctx: FeedContext) {
 	return {
 		at: friendship.createdAt,
 		actorKey: String(friendId),
+		relation: "FRIEND" as const,
 		data: { actor: users.get(friendId)!, other: users.get(otherId)! },
 	};
 }
@@ -2334,7 +2431,7 @@ async function buildFriendSuggest(ctx: FeedContext) {
 }
 
 async function buildComeback(ctx: FeedContext) {
-	const comeback = (await friendEvents(ctx, "COMEBACK")).at(0);
+	const comeback = (await friendOrTeammateEvents(ctx, "COMEBACK")).at(0);
 	if (!comeback) return null;
 
 	const users = await usersById([comeback.userId]);
@@ -2343,6 +2440,7 @@ async function buildComeback(ctx: FeedContext) {
 	return {
 		at: comeback.at,
 		actorKey: String(comeback.userId),
+		relation: relationOf(ctx, comeback.userId),
 		data: {
 			actor: users.get(comeback.userId)!,
 			breakDays: Math.round((comeback.at - comeback.data.previousAt) / DAY),
@@ -2355,7 +2453,7 @@ async function buildComeback(ctx: FeedContext) {
 }
 
 async function buildFirstTime(ctx: FeedContext) {
-	const first = (await friendEvents(ctx, "FIRST_TIME")).at(0);
+	const first = (await friendOrTeammateEvents(ctx, "FIRST_TIME")).at(0);
 	if (!first) return null;
 
 	const users = await usersById([first.userId]);
@@ -2364,6 +2462,7 @@ async function buildFirstTime(ctx: FeedContext) {
 	return {
 		at: first.at,
 		actorKey: String(first.userId),
+		relation: relationOf(ctx, first.userId),
 		data: {
 			actor: users.get(first.userId)!,
 			source: first.data.source,
@@ -2376,7 +2475,7 @@ async function buildFirstTime(ctx: FeedContext) {
 }
 
 async function buildPlusResults(ctx: FeedContext) {
-	if (ctx.friendIds.length === 0) return null;
+	if (ctx.friendIds.length === 0 && ctx.teammateIds.length === 0) return null;
 
 	const nowDate = databaseTimestampToDate(ctx.now);
 	const votingRange = Seasons.list
@@ -2393,18 +2492,24 @@ async function buildPlusResults(ctx: FeedContext) {
 	// suggested players were voted on for a tier they weren't in yet
 	const promotions = results.flatMap(({ tier, passed }) =>
 		passed
-			.filter((row) => row.wasSuggested && ctx.friendIdSet.has(row.votedId))
+			.filter((row) => row.wasSuggested && isFriendOrTeammate(ctx, row.votedId))
 			.map((row) => ({
 				user: R.pick(row, ["id", "username", "customUrl", "avatar"]),
 				tier,
+				relation: relationOf(ctx, row.votedId)!,
 			})),
 	);
 	if (promotions.length === 0) return null;
 
+	const rows = R.sortBy(promotions, (promotion) =>
+		FEED_RELATIONS.indexOf(promotion.relation),
+	).slice(0, 5);
+
 	return {
 		at: dateToDatabaseTimestamp(votingRange.endDate),
 		actorKey: "PLUS_RESULTS",
-		data: { rows: promotions.slice(0, 5) },
+		relation: rows[0].relation,
+		data: { rows },
 	};
 }
 
@@ -2684,25 +2789,71 @@ function forViewer<T>(
 	);
 }
 
-function isViewerOrFriend(ctx: FeedContext, userId: number) {
-	return userId === ctx.viewerId || ctx.friendIdSet.has(userId);
+/** How the viewer knows the user, `null` when they don't */
+function relationOf(ctx: FeedContext, userId: number): FeedRelation | null {
+	if (userId === ctx.viewerId) return "SELF";
+	if (ctx.friendIdSet.has(userId)) return "FRIEND";
+	if (ctx.teammateIdSet.has(userId)) return "TEAMMATE";
+
+	return null;
 }
 
-function teamMembershipsByUserId() {
+function closestRelationOf(ctx: FeedContext, userIds: number[]) {
+	const relations = new Set(userIds.map((userId) => relationOf(ctx, userId)));
+
+	return FEED_RELATIONS.find((relation) => relations.has(relation)) ?? null;
+}
+
+function isFriendOrTeammate(ctx: FeedContext, userId: number) {
+	return ctx.friendIdSet.has(userId) || ctx.teammateIdSet.has(userId);
+}
+
+/** Tournaments of the viewer's own rows */
+function tournamentIdsOfViewer<
+	T extends { userId: number; tournamentId: number | null },
+>(ctx: FeedContext, rows: T[]) {
+	return new Set(
+		rows
+			.filter((row) => row.userId === ctx.viewerId)
+			.map((row) => row.tournamentId),
+	);
+}
+
+/** Current memberships of non-deleted teams, grouped both ways */
+function teamMemberships() {
 	return FeedCache.cached({
 		key: "team-memberships",
 		ttlMs: HOUR_MS,
-		getFreshValue: async () =>
-			R.groupBy(
-				await FeedRepository.findAllTeamMemberships(),
-				(membership) => membership.userId,
-			),
+		getFreshValue: async () => {
+			const memberships = await FeedRepository.findAllTeamMemberships();
+
+			return {
+				byUserId: R.groupBy(memberships, (membership) => membership.userId),
+				byTeamId: R.groupBy(memberships, (membership) => membership.teamId),
+			};
+		},
 	});
+}
+
+async function teammateIdsOf({
+	viewerId,
+	friendIdSet,
+}: {
+	viewerId: number;
+	friendIdSet: Set<number>;
+}) {
+	const { byUserId, byTeamId } = await teamMemberships();
+
+	return R.unique(
+		(byUserId[viewerId] ?? []).flatMap((own) =>
+			(byTeamId[own.teamId] ?? []).map((membership) => membership.userId),
+		),
+	).filter((userId) => userId !== viewerId && !friendIdSet.has(userId));
 }
 
 async function teamIdsOf(ctx: FeedContext, userId: number) {
 	return memoized(ctx, `team-ids-${userId}`, async () =>
-		((await teamMembershipsByUserId())[userId] ?? []).map(
+		((await teamMemberships()).byUserId[userId] ?? []).map(
 			(membership) => membership.teamId,
 		),
 	);
@@ -2833,16 +2984,27 @@ export function allRotations() {
 	});
 }
 
-/** The friends' feed events of the type in the last `sinceDays`, newest first */
-async function friendEvents<T extends FeedEventType>(
+/** The feed events of the friends and teammates of the type in the last `sinceDays`, newest first */
+async function friendOrTeammateEvents<T extends FeedEventType>(
+	ctx: FeedContext,
+	type: T,
+	sinceDays?: number,
+) {
+	return (await eventsOfType(ctx, type, sinceDays)).filter(
+		(event) => event.userId !== ctx.viewerId,
+	);
+}
+
+/** The feed events of the viewer, their friends and teammates of the type in the last `sinceDays`, newest first */
+async function eventsOfType<T extends FeedEventType>(
 	ctx: FeedContext,
 	type: T,
 	sinceDays: number = FEED_EVENT_RETENTION_DAYS[type],
 ) {
-	const events = await memoized(ctx, "friend-events", async () =>
+	const events = await memoized(ctx, "feed-events", async () =>
 		R.sortBy(
 			await FeedEventRepository.findAllByUserIds({
-				userIds: ctx.friendIds,
+				userIds: [ctx.viewerId, ...ctx.friendIds, ...ctx.teammateIds],
 				from: ctx.now - FEED_EVENT_MAX_RETENTION_DAYS * DAY,
 				to: ctx.now,
 			}),

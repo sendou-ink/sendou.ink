@@ -2,10 +2,12 @@ import {
 	FEED_AUDIENCE_AFFINITY,
 	FEED_ITEM_TYPES,
 	FEED_MAX_AGE_HALF_LIVES,
+	FEED_RELATION_AUDIENCE,
 	FEED_SAME_ACTOR_PENALTY,
 	FEED_SAME_CATEGORY_PENALTY,
 	type FeedItemType,
 	type FeedItemTypeDefinition,
+	type FeedRelation,
 } from "../feed-constants";
 
 export interface RankableItem {
@@ -14,6 +16,8 @@ export interface RankableItem {
 	at: number;
 	/** Who the item is about, used to stop one person taking over the feed */
 	actorKey: string;
+	/** How the viewer knows who the item is about, `null` when it isn't about someone they know */
+	relation: FeedRelation | null;
 }
 
 export interface ScoreBreakdown {
@@ -26,17 +30,22 @@ export interface ScoreBreakdown {
 }
 
 /**
- * Score of an item before the diversity pass: base score of its type × the closest audience
- * affinity × exponential recency decay by the type's half-life. Live items don't decay.
+ * Score of an item before the diversity pass: base score of its type × affinity × exponential
+ * recency decay by the type's half-life. Affinity is that of the item's relation, or without one
+ * the closest audience of its type. Live items don't decay.
  */
 export function score(
-	item: Pick<RankableItem, "type" | "at">,
+	item: Pick<RankableItem, "type" | "at" | "relation">,
 	now: number,
 ): Omit<ScoreBreakdown, "diversity"> {
 	const definition: FeedItemTypeDefinition = FEED_ITEM_TYPES[item.type];
-	const affinity = Math.max(
-		...definition.audience.map((audience) => FEED_AUDIENCE_AFFINITY[audience]),
-	);
+	const affinity = item.relation
+		? FEED_AUDIENCE_AFFINITY[FEED_RELATION_AUDIENCE[item.relation]]
+		: Math.max(
+				...definition.audience.map(
+					(audience) => FEED_AUDIENCE_AFFINITY[audience],
+				),
+			);
 	const ageHours = Math.max(0, (now - item.at) / 3600);
 	const recency = definition.isLive
 		? 1

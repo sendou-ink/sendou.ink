@@ -38,6 +38,18 @@ export const FEED_AUDIENCE_AFFINITY: Record<FeedAudience, number> = {
 	LFG: 1,
 };
 
+/** Why a post about a person is in the viewer's feed, closest first */
+export const FEED_RELATIONS = ["SELF", "FRIEND", "TEAMMATE"] as const;
+
+export type FeedRelation = (typeof FEED_RELATIONS)[number];
+
+/** The audience whose affinity a post with the relation gets */
+export const FEED_RELATION_AUDIENCE: Record<FeedRelation, FeedAudience> = {
+	SELF: "SELF",
+	FRIEND: "FRIENDS",
+	TEAMMATE: "TEAM",
+};
+
 export interface FeedItemTypeDefinition {
 	name: string;
 	category: FeedCategory;
@@ -64,7 +76,7 @@ export const FEED_ITEM_TYPES = {
 	SQ_SET: {
 		name: "SendouQ set result",
 		category: "SENDOUQ",
-		audience: ["FRIENDS", "FOLLOWING"],
+		audience: ["FRIENDS", "TEAM", "FOLLOWING"],
 		baseScore: 0.6,
 		halfLifeHours: 18,
 	},
@@ -72,35 +84,35 @@ export const FEED_ITEM_TYPES = {
 	SQ_STREAK: {
 		name: "Win streak",
 		category: "SENDOUQ",
-		audience: ["FRIENDS"],
+		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.5,
 		halfLifeHours: 8,
 	},
 	SQ_LEADERBOARD: {
 		name: "Leaderboard placement",
 		category: "SENDOUQ",
-		audience: ["FRIENDS", "FOLLOWING"],
+		audience: ["FRIENDS", "TEAM", "FOLLOWING"],
 		baseScore: 0.65,
 		halfLifeHours: 24,
 	},
 	SQ_MILESTONE: {
 		name: "Sets played milestone",
 		category: "SENDOUQ",
-		audience: ["FRIENDS"],
+		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.3,
 		halfLifeHours: 24,
 	},
 	SQ_SEASON_RECAP: {
 		name: "Season recap",
 		category: "SENDOUQ",
-		audience: ["FRIENDS", "SELF"],
+		audience: ["FRIENDS", "TEAM", "SELF"],
 		baseScore: 0.6,
 		halfLifeHours: 72,
 	},
 	SQ_RIVALRY: {
 		name: "Rivalry",
 		category: "SENDOUQ",
-		audience: ["FRIENDS", "SELF"],
+		audience: ["FRIENDS", "TEAM", "SELF"],
 		baseScore: 0.35,
 		halfLifeHours: 48,
 	},
@@ -129,7 +141,7 @@ export const FEED_ITEM_TYPES = {
 	LOBBY_RECAP: {
 		name: "Lobby recap",
 		category: "LOBBIES",
-		audience: ["FRIENDS"],
+		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.45,
 		halfLifeHours: 18,
 	},
@@ -164,16 +176,16 @@ export const FEED_ITEM_TYPES = {
 		halfLifeHours: 48,
 	},
 	TO_REGISTERED: {
-		name: "Friends registered",
+		name: "Registered for a tournament",
 		category: "TOURNAMENTS",
-		audience: ["FRIENDS"],
+		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.5,
 		halfLifeHours: 48,
 	},
 	TO_UPSET: {
 		name: "Upset alert",
 		category: "TOURNAMENTS",
-		audience: ["FRIENDS"],
+		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.5,
 		halfLifeHours: 12,
 	},
@@ -195,28 +207,28 @@ export const FEED_ITEM_TYPES = {
 	TO_SERIES: {
 		name: "Series standings",
 		category: "TOURNAMENTS",
-		audience: ["FRIENDS", "FOLLOWING"],
+		audience: ["FRIENDS", "TEAM", "FOLLOWING"],
 		baseScore: 0.35,
 		halfLifeHours: 96,
 	},
 	TO_VOD: {
 		name: "Tournament VoD",
 		category: "TOURNAMENTS",
-		audience: ["FRIENDS", "FOLLOWING"],
+		audience: ["SELF", "FRIENDS", "TEAM", "FOLLOWING"],
 		baseScore: 0.4,
 		halfLifeHours: 48,
 	},
 	TO_BADGE: {
 		name: "Badge earned",
 		category: "TOURNAMENTS",
-		audience: ["FRIENDS"],
+		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.45,
 		halfLifeHours: 48,
 	},
 	TO_TROPHY: {
 		name: "Trophy earned",
 		category: "TOURNAMENTS",
-		audience: ["FRIENDS", "FOLLOWING"],
+		audience: ["FRIENDS", "TEAM", "FOLLOWING"],
 		baseScore: 0.6,
 		halfLifeHours: 48,
 	},
@@ -238,7 +250,7 @@ export const FEED_ITEM_TYPES = {
 	TO_BRACKET_PREVIEW: {
 		name: "Registration closed",
 		category: "TOURNAMENTS",
-		audience: ["SELF", "FRIENDS", "EVERYONE"],
+		audience: ["SELF", "FRIENDS", "TEAM", "EVERYONE"],
 		baseScore: 0.55,
 		halfLifeHours: 12,
 	},
@@ -259,9 +271,9 @@ export const FEED_ITEM_TYPES = {
 		isNotice: true,
 	},
 	TO_STAFF: {
-		name: "Friend is organizing",
+		name: "Organizing a tournament",
 		category: "TOURNAMENTS",
-		audience: ["FRIENDS"],
+		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.3,
 		halfLifeHours: 72,
 	},
@@ -275,7 +287,7 @@ export const FEED_ITEM_TYPES = {
 	TEAM_NEW: {
 		name: "New team",
 		category: "TEAMS",
-		audience: ["FOLLOWING", "FRIENDS"],
+		audience: ["FOLLOWING", "FRIENDS", "TEAM"],
 		baseScore: 0.35,
 		halfLifeHours: 72,
 	},
@@ -327,28 +339,28 @@ export const FEED_ITEM_TYPES = {
 	ART_NEW: {
 		name: "New art",
 		category: "ART",
-		audience: ["FOLLOWING"],
+		audience: ["FRIENDS", "TEAM", "FOLLOWING"],
 		baseScore: 0.6,
 		halfLifeHours: 48,
 	},
 	ART_TAGGED: {
 		name: "Tagged in art",
 		category: "ART",
-		audience: ["FRIENDS"],
+		audience: ["SELF", "FRIENDS", "TEAM"],
 		baseScore: 0.55,
 		halfLifeHours: 48,
 	},
 	ART_COMMISSIONS: {
 		name: "Commissions open",
 		category: "ART",
-		audience: ["FOLLOWING"],
+		audience: ["FRIENDS", "TEAM", "FOLLOWING"],
 		baseScore: 0.5,
 		halfLifeHours: 72,
 	},
 	BUILD_NEW: {
 		name: "New build",
 		category: "BUILDS",
-		audience: ["FRIENDS", "FOLLOWING"],
+		audience: ["FRIENDS", "TEAM", "FOLLOWING"],
 		baseScore: 0.3,
 		halfLifeHours: 48,
 	},
@@ -370,7 +382,7 @@ export const FEED_ITEM_TYPES = {
 		name: "X Rank Top 500",
 		category: "COMMUNITY",
 		feature: { label: "X Rank", navIcon: "xsearch" },
-		audience: ["FRIENDS", "FOLLOWING"],
+		audience: ["FRIENDS", "TEAM", "FOLLOWING"],
 		baseScore: 0.65,
 		halfLifeHours: 72,
 	},
@@ -378,7 +390,7 @@ export const FEED_ITEM_TYPES = {
 		name: "Scanned match scorecard",
 		category: "VODS",
 		feature: { label: "Scanner", navIcon: "scanner" },
-		audience: ["FRIENDS"],
+		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.4,
 		halfLifeHours: 24,
 	},
@@ -400,14 +412,14 @@ export const FEED_ITEM_TYPES = {
 	COMEBACK: {
 		name: "Back after a break",
 		category: "COMMUNITY",
-		audience: ["FRIENDS"],
+		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.5,
 		halfLifeHours: 48,
 	},
 	FIRST_TIME: {
 		name: "First time",
 		category: "COMMUNITY",
-		audience: ["FRIENDS"],
+		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.45,
 		halfLifeHours: 48,
 	},
@@ -415,7 +427,7 @@ export const FEED_ITEM_TYPES = {
 		name: "New Plus Server tier",
 		category: "COMMUNITY",
 		feature: { label: "Plus Server", navIcon: "plus" },
-		audience: ["FRIENDS"],
+		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.5,
 		halfLifeHours: 72,
 	},

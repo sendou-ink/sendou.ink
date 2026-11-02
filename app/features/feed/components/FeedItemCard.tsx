@@ -30,6 +30,7 @@ import {
 	FEED_ITEM_TYPES,
 	type FeedFeedbackKind,
 	type FeedItemTypeDefinition,
+	type FeedRelation,
 } from "../feed-constants";
 import { feedItemActionSchema } from "../feed-schemas";
 import { type FeedItemPageState, feedItemPage } from "../feed-urls";
@@ -215,7 +216,13 @@ export function FeedItemCard({
 						href={href}
 					/>
 				)}
-				{score ? <RankingMath score={score} definition={definition} /> : null}
+				{score ? (
+					<RankingMath
+						score={score}
+						definition={definition}
+						relation={item.relation}
+					/>
+				) : null}
 			</div>
 		</article>
 	);
@@ -432,16 +439,19 @@ function FeedbackPanel({
 function RankingMath({
 	score,
 	definition,
+	relation,
 }: {
 	score: ScoreBreakdown;
 	definition: FeedItemTypeDefinition;
+	relation: FeedRelation | null;
 }) {
 	return (
 		<div className={styles.math}>
 			<b>{definition.name}</b>: base <b>{score.base}</b> × affinity{" "}
-			<b>{score.affinity}</b> × recency <b>{score.recency.toFixed(2)}</b> (
-			{durationText(score.ageHours * 3600)} old, half-life{" "}
-			{definition.halfLifeHours}h) × diversity{" "}
+			<b>{score.affinity}</b>
+			{relation ? ` (${relation.toLowerCase()})` : null} × recency{" "}
+			<b>{score.recency.toFixed(2)}</b> ({durationText(score.ageHours * 3600)}{" "}
+			old, half-life {definition.halfLifeHours}h) × diversity{" "}
 			<b>{score.diversity.toFixed(2)}</b> = <b>{score.total.toFixed(3)}</b>
 		</div>
 	);
