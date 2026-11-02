@@ -1855,6 +1855,7 @@ function playerStatus(
 		dead,
 		cast,
 		teamHue: [null, null],
+		teamInk: [null, null],
 	};
 	return { type: "PlayerStatus", t, confidence: 0.9, data };
 }

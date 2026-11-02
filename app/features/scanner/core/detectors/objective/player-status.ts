@@ -24,6 +24,7 @@
 import { CANONICAL_WIDTH } from "../../canonical";
 import type { Mat } from "../../cv";
 import { copyRoi, type Roi } from "../../image";
+import type { InkRgb } from "../../ink-color";
 import type { DetectedEvent } from "../types";
 import {
 	STATUS_ALIVE_MIN_INK,
@@ -173,6 +174,8 @@ export interface PlayerStatusData {
 	cast: true | null;
 	/** each team's ink hue (degrees) off its icons, `null` with too few in ink (e.g. all splatted) */
 	teamHue: [number | null, number | null];
+	/** each team's ink color off the same pixels as its hue (per-channel median), `null` along with it */
+	teamInk: [InkRgb | null, InkRgb | null];
 }
 
 /** One side's fitted strip: slot centers left-to-right at `pitch` from the inner icon. */
@@ -239,6 +242,7 @@ export function parsePlayerStatus(
 				) as PlayerStatusData["dead"],
 				cast: cast ? true : null,
 				teamHue: [band.teamHues[0].hue, band.teamHues[1].hue],
+				teamInk: [band.teamHues[0].ink, band.teamHues[1].ink],
 			},
 			debug: {
 				pitches: fit.map((sideFit) => sideFit.pitch),
@@ -269,6 +273,8 @@ interface TeamInkHue {
 	bin: number;
 	/** mean hue of the ink around the modal bin */
 	hue: number | null;
+	/** per-channel median of the ink around the modal bin, which tells pairs of about the same hue apart */
+	ink: InkRgb | null;
 }
 
 /**
@@ -345,6 +351,7 @@ function teamInkHue(
 	const { x: bandX, y: bandY, w: width } = STATUS_BAND;
 	const sample = STATUS_TEAM_HUE_ROIS[side];
 	const hues: number[] = [];
+	const inkPixels: number[] = [];
 	const histogram = new Array<number>(36).fill(0);
 	for (let y = sample.y; y < sample.y + sample.h; y += 2) {
 		for (let x = sample.x; x < sample.x + sample.w; x += 2) {
@@ -355,6 +362,7 @@ function teamInkHue(
 			if (isInk(red, green, blue)) {
 				const hue = hueOf(red, green, blue);
 				hues.push(hue);
+				inkPixels.push(i);
 				histogram[Math.min(35, Math.floor(hue / 10))]! += 1;
 			}
 		}
@@ -367,19 +375,24 @@ function teamInkHue(
 
 	let offsetSum = 0;
 	let count = 0;
-	for (const hue of hues) {
-		const offset = ((hue - bin + 540) % 360) - 180;
+	const channelCounts = [0, 1, 2].map(() => new Uint32Array(256));
+	for (let index = 0; index < hues.length; index++) {
+		const offset = ((hues[index]! - bin + 540) % 360) - 180;
 		if (Math.abs(offset) > STATUS_TEAM_HUE_REFINE_DIST) continue;
 		offsetSum += offset;
 		count++;
+		for (let channel = 0; channel < 3; channel++) {
+			channelCounts[channel]![pixels[inkPixels[index]! + channel]!]! += 1;
+		}
 	}
 
+	if (count < STATUS_TEAM_HUE_MIN_SAMPLES) return { bin, hue: null, ink: null };
+
+	const [r, g, b] = channelCounts.map((counts) => countsMedian(counts, count));
 	return {
 		bin,
-		hue:
-			count >= STATUS_TEAM_HUE_MIN_SAMPLES
-				? (bin + offsetSum / count + 360) % 360
-				: null,
+		hue: (bin + offsetSum / count + 360) % 360,
+		ink: { r: r!, g: g!, b: b! },
 	};
 }
 
@@ -738,6 +751,15 @@ function hueOf(red: number, green: number, blue: number): number {
 function hueDistance(a: number, b: number): number {
 	const d = a > b ? a - b : b - a;
 	return d > 180 ? 360 - d : d;
+}
+
+function countsMedian(counts: Uint32Array, total: number): number {
+	let seen = 0;
+	for (let value = 0; value < counts.length; value++) {
+		seen += counts[value]!;
+		if (seen > total / 2) return value;
+	}
+	return counts.length - 1;
 }
 
 /** All four badge probes reading white = that casted spectator arrangement. */

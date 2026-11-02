@@ -174,8 +174,9 @@ export function effectiveAdvance(
 }
 
 /**
- * What the scanner seeing a game start or end changes. A start colors the game with the ink read, the teams keeping
- * the sides they had earlier in the set (the pair's first color always goes to the same lobby team). Either puts the
+ * What the scanner seeing a game start or end changes. A start colors the game with the ink read (Color Lock carrying
+ * over from the broadcast's previous game, see `InkColor.closestPair`), the teams keeping the sides they had earlier
+ * in the set (the pair's first color always goes to the same lobby team). Either puts the
  * staged item on air when it waits for that event. `null` when nothing changes.
  */
 export function applyGameSignal(
@@ -192,8 +193,8 @@ export function applyGameSignal(
 	},
 ): BroadcastStoredState | null {
 	const inkKey =
-		signal.type === "start" && signal.hues
-			? InkColor.closestPair(signal.hues)
+		signal.type === "start" && signal.inks
+			? InkColor.closestPair(signal.inks, state.ink?.key ?? null)
 			: null;
 	const colored: BroadcastStoredState =
 		inkKey && liveResults
