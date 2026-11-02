@@ -2,9 +2,9 @@ import clsx from "clsx";
 import {
 	ArrowLeftRight,
 	Cable,
-	ChevronDown,
+	ChevronLeft,
+	ChevronRight,
 	ChevronsLeft,
-	ChevronUp,
 	CircleCheck,
 	CircleDashed,
 	Clapperboard,
@@ -148,14 +148,14 @@ const SCENES_BY_HOTKEY: BroadcastScene[] = BROADCAST_SCENE_GROUPS.flatMap(
 type DashboardTab = (typeof BROADCAST_DASHBOARD_TABS)[number];
 
 const TAB_ICONS: Record<DashboardTab, LucideIcon> = {
-	scene: Clapperboard,
 	setup: Cable,
 	theme: Palette,
 };
 
 /**
  * Control panel of one broadcast: the live and the staged ("next") overlay side by side, Take puts next on air.
- * Under them the tabs edit the selected staged item's scene, set up OBS and the show, and theme the overlays.
+ * Left of Take is what is on air, right of it what goes on air next: the queue and the selected item's scene.
+ * Under them the show settings set up OBS and the scanner, and theme the overlays.
  */
 export default function BroadcastDashboardPage() {
 	const { t } = useTranslation(["broadcast"]);
@@ -172,6 +172,7 @@ export default function BroadcastDashboardPage() {
 		onMessage: clipSender.onMessage,
 	});
 	const nextPreviewRef = React.useRef<HTMLIFrameElement>(null);
+	const settingsRef = React.useRef<HTMLDivElement>(null);
 	useRevalidateOnFeaturedMatchChange(state.match?.id ?? null);
 	const now = useServerNow(clockOffsetMs);
 	const [tab, setTab] = useSearchParam(broadcastDashboardSearchParams, "tab");
@@ -182,20 +183,6 @@ export default function BroadcastDashboardPage() {
 	// an item gone on air leaves the staged one selected
 	const selected =
 		staged.find((item) => item.id === selectedItemId) ?? state.next;
-	const selectedPosition = staged.indexOf(selected);
-	const selectedLabel =
-		selectedPosition === 0
-			? t("broadcast:dashboard.item.next")
-			: t("broadcast:dashboard.item.queued", {
-					position: selectedPosition + 1,
-				});
-	// the take column is narrow
-	const selectedShortLabel =
-		selectedPosition === 0
-			? t("broadcast:dashboard.item.next")
-			: t("broadcast:dashboard.item.queuedShort", {
-					position: selectedPosition + 1,
-				});
 	const autoTakeAt = Producer.autoTakeAt(state);
 	const isAutoTakeImminent =
 		autoTakeAt !== null &&
@@ -210,9 +197,9 @@ export default function BroadcastDashboardPage() {
 			window.location.origin,
 		);
 
-	const selectItem = (itemId: number) => {
-		setSelectedItemId(itemId);
-		setTab("scene");
+	const showSetup = () => {
+		setTab("setup");
+		settingsRef.current?.scrollIntoView({ behavior: "smooth" });
 	};
 
 	return (
@@ -226,10 +213,10 @@ export default function BroadcastDashboardPage() {
 						<Health
 							state={state}
 							isConnected={isConnected}
-							onClick={() => setTab("setup")}
+							onClick={showSetup}
 						/>
 						{isConnected ? (
-							<ScannerHealth state={state} onClick={() => setTab("setup")} />
+							<ScannerHealth state={state} onClick={showSetup} />
 						) : null}
 					</div>
 				</div>
@@ -250,6 +237,7 @@ export default function BroadcastDashboardPage() {
 					<div className="stack md">
 						<LiveTimer state={state} now={now} />
 						<OnAirControls state={state} />
+						<ShowInfo state={state} />
 					</div>
 				</section>
 
@@ -276,11 +264,16 @@ export default function BroadcastDashboardPage() {
 							autoTakeAt !== null && now !== null ? autoTakeAt - now : null
 						}
 					/>
-					<TransitionBus
-						selected={selected}
-						selectedLabel={selectedShortLabel}
-						onRehearse={rehearse}
-					/>
+					<SendouButton
+						size="small"
+						variant="minimal"
+						icon={<Play />}
+						onClick={rehearse}
+						title={t("broadcast:dashboard.rehearseHint")}
+						testId="broadcast-rehearse-button"
+					>
+						{t("broadcast:dashboard.rehearse")}
+					</SendouButton>
 				</div>
 
 				<section className={clsx(styles.switcherView, styles.nextView)}>
@@ -298,58 +291,56 @@ export default function BroadcastDashboardPage() {
 						})}
 						title={t("broadcast:dashboard.next")}
 					/>
-					<Queue
-						state={state}
-						selected={selected}
-						onSelect={selectItem}
-						areClipsOnSources={areClipsOnSources}
-					/>
+					<div className={styles.staging}>
+						<Queue
+							state={state}
+							selected={selected}
+							onSelect={setSelectedItemId}
+							areClipsOnSources={areClipsOnSources}
+						/>
+						<SceneEditor state={state} selected={selected} />
+					</div>
 				</section>
 			</div>
 
-			<SendouTabs
-				selectedKey={tab}
-				onSelectionChange={(key) => setTab(key as DashboardTab)}
-			>
-				<SendouTabList>
-					{BROADCAST_DASHBOARD_TABS.map((dashboardTab) => {
-						const Icon = TAB_ICONS[dashboardTab];
+			<div ref={settingsRef} className={styles.settings}>
+				<SendouTabs
+					selectedKey={tab}
+					onSelectionChange={(key) => setTab(key as DashboardTab)}
+				>
+					<SendouTabList>
+						{BROADCAST_DASHBOARD_TABS.map((dashboardTab) => {
+							const Icon = TAB_ICONS[dashboardTab];
 
-						return (
-							<SendouTab
-								key={dashboardTab}
-								id={dashboardTab}
-								icon={<Icon />}
-								alert={
-									dashboardTab === "setup" &&
-									(!isConnected || state.health.sources === 0)
-								}
-							>
-								{t(`broadcast:dashboard.tab.${dashboardTab}`)}
-							</SendouTab>
-						);
-					})}
-				</SendouTabList>
-				<SendouTabPanel id="scene">
-					<SceneInspector
-						state={state}
-						selected={selected}
-						selectedLabel={selectedLabel}
-					/>
-				</SendouTabPanel>
-				<SendouTabPanel id="setup">
-					<Setup
-						state={state}
-						programUrl={`${Config.siteDomain}${broadcastOverlayPage(pageArgs)}`}
-						scannerLink={pageArgs}
-						statuses={clipSender.statuses}
-						areClipsOnSources={areClipsOnSources}
-					/>
-				</SendouTabPanel>
-				<SendouTabPanel id="theme">
-					<Theme state={state} />
-				</SendouTabPanel>
-			</SendouTabs>
+							return (
+								<SendouTab
+									key={dashboardTab}
+									id={dashboardTab}
+									icon={<Icon />}
+									alert={
+										dashboardTab === "setup" &&
+										(!isConnected || state.health.sources === 0)
+									}
+								>
+									{t(`broadcast:dashboard.tab.${dashboardTab}`)}
+								</SendouTab>
+							);
+						})}
+					</SendouTabList>
+					<SendouTabPanel id="setup">
+						<Setup
+							state={state}
+							programUrl={`${Config.siteDomain}${broadcastOverlayPage(pageArgs)}`}
+							scannerLink={pageArgs}
+							statuses={clipSender.statuses}
+							areClipsOnSources={areClipsOnSources}
+						/>
+					</SendouTabPanel>
+					<SendouTabPanel id="theme">
+						<Theme state={state} />
+					</SendouTabPanel>
+				</SendouTabs>
+			</div>
 		</div>
 	);
 }
@@ -545,58 +536,6 @@ function FeaturedMatch({ state }: { state: BroadcastState }) {
 	);
 }
 
-function TransitionBus({
-	selected,
-	selectedLabel,
-	onRehearse,
-}: {
-	selected: ProducerState;
-	selectedLabel: string;
-	onRehearse: () => void;
-}) {
-	const { t } = useTranslation(["broadcast"]);
-	const { submit } = useActionSubmit(broadcastActionSchema);
-
-	return (
-		<div className={styles.transitionBus}>
-			<div className={styles.busLabel}>
-				{t("broadcast:dashboard.transition", { item: selectedLabel })}
-			</div>
-			<SendouChipRadioGroup
-				orientation="vertical"
-				className={styles.transitions}
-				aria-label={t("broadcast:dashboard.transition", {
-					item: selectedLabel,
-				})}
-			>
-				{BROADCAST_TRANSITIONS.map((transition) => (
-					<SendouChipRadio
-						key={transition}
-						name="broadcast-transition"
-						value={transition}
-						checked={selected.transition === transition}
-						onChange={() =>
-							submit("SET_TRANSITION", { itemId: selected.id, transition })
-						}
-					>
-						{t(`broadcast:transition.${transition}`)}
-					</SendouChipRadio>
-				))}
-			</SendouChipRadioGroup>
-			<SendouButton
-				size="small"
-				variant="minimal"
-				icon={<Play />}
-				onClick={onRehearse}
-				title={t("broadcast:dashboard.rehearseHint")}
-				testId="broadcast-rehearse-button"
-			>
-				{t("broadcast:dashboard.rehearse")}
-			</SendouButton>
-		</div>
-	);
-}
-
 /** Changes to what is on air that apply right away, without a Take. */
 function OnAirControls({ state }: { state: BroadcastState }) {
 	if (!state.match) return null;
@@ -605,6 +544,16 @@ function OnAirControls({ state }: { state: BroadcastState }) {
 		<div className={styles.onAir}>
 			<InkColors state={state} match={state.match} />
 			<ResultsNotOnAir match={state.match} />
+		</div>
+	);
+}
+
+/** What every scene shares, on air as soon as it's saved. */
+function ShowInfo({ state }: { state: BroadcastState }) {
+	return (
+		<div className={styles.onAir}>
+			<CastersForm casterIds={state.settings.casterIds} />
+			<HeadlineForm headline={state.settings.headline} />
 		</div>
 	);
 }
@@ -844,7 +793,7 @@ function AutoTake({
 	);
 }
 
-/** The staged items in the order they go on air, the one picked being edited by the scene tab. */
+/** The staged items in the order they go on air, as tabs of the scene editor under them editing the one picked. */
 function Queue({
 	state,
 	selected,
@@ -861,109 +810,114 @@ function Queue({
 	const staged = Producer.stagedItems(state);
 
 	return (
-		<div className="stack sm">
-			<ol
-				className={styles.queue}
-				aria-label={t("broadcast:dashboard.queue.header")}
-			>
-				{staged.map((item, idx) => {
-					const Icon = SCENE_ICONS[item.scene];
-					const isSelected = item.id === selected.id;
-					const isClipMissing =
-						item.scene === "replays" &&
-						item.clipId !== null &&
-						!areClipsOnSources;
+		<ol
+			className={styles.queue}
+			aria-label={t("broadcast:dashboard.queue.header")}
+		>
+			{staged.map((item, idx) => {
+				const Icon = SCENE_ICONS[item.scene];
+				const isSelected = item.id === selected.id;
+				const isClipMissing =
+					item.scene === "replays" &&
+					item.clipId !== null &&
+					!areClipsOnSources;
+				const detail = itemDetail(item);
 
-					return (
-						<li key={item.id} className="stack xs">
-							<QueueGap
-								before={idx === 0 ? state.live : staged[idx - 1]}
-								item={item}
-							/>
-							<div
-								className={styles.queueItem}
-								data-selected={isSelected || undefined}
+				return (
+					<li key={item.id} className={styles.queueEntry}>
+						<QueueGap
+							before={idx === 0 ? state.live : staged[idx - 1]}
+							item={item}
+						/>
+						<div
+							className={styles.queueItem}
+							data-selected={isSelected || undefined}
+						>
+							<button
+								type="button"
+								className={styles.queueSelect}
+								aria-pressed={isSelected}
+								onClick={() => onSelect(item.id)}
+								data-testid={`broadcast-queue-item-${idx}`}
 							>
-								<button
-									type="button"
-									className={styles.queueSelect}
-									aria-pressed={isSelected}
-									onClick={() => onSelect(item.id)}
-									data-testid={`broadcast-queue-item-${idx}`}
-								>
-									<span className={styles.queuePosition}>
-										{idx === 0 ? t("broadcast:dashboard.next") : idx + 1}
+								<span className={styles.queuePosition}>
+									{idx === 0 ? t("broadcast:dashboard.next") : idx + 1}
+								</span>
+								<Icon size={16} className={styles.queueIcon} />
+								<span>{t(`broadcast:scene.${item.scene}`)}</span>
+								{detail ? (
+									<span className="text-xs text-lighter">{detail}</span>
+								) : null}
+								{isClipMissing ? (
+									<span
+										role="img"
+										className={styles.queueWarning}
+										title={t("broadcast:dashboard.queue.clipMissing")}
+										aria-label={t("broadcast:dashboard.queue.clipMissing")}
+									>
+										<TriangleAlert size={14} />
 									</span>
-									<Icon size={16} className={styles.queueIcon} />
-									<span>{t(`broadcast:scene.${item.scene}`)}</span>
-									<span className="text-xs text-lighter">
-										{itemDetail(item)}
-									</span>
-									{isClipMissing ? (
-										<span
-											role="img"
-											className={styles.queueWarning}
-											title={t("broadcast:dashboard.queue.clipMissing")}
-											aria-label={t("broadcast:dashboard.queue.clipMissing")}
-										>
-											<TriangleAlert size={14} />
-										</span>
-									) : null}
-								</button>
-								<ActionButton
-									schema={broadcastActionSchema}
-									action="MOVE_IN_QUEUE"
-									fields={{ itemId: item.id, direction: "earlier" }}
-									variant="minimal"
-									size="miniscule"
-									shape="square"
-									icon={<ChevronUp />}
-									isDisabled={idx === 0}
-									aria-label={t("broadcast:dashboard.queue.moveEarlier")}
-								/>
-								<ActionButton
-									schema={broadcastActionSchema}
-									action="MOVE_IN_QUEUE"
-									fields={{ itemId: item.id, direction: "later" }}
-									variant="minimal"
-									size="miniscule"
-									shape="square"
-									icon={<ChevronDown />}
-									isDisabled={idx === staged.length - 1}
-									aria-label={t("broadcast:dashboard.queue.moveLater")}
-								/>
-								<ActionButton
-									schema={broadcastActionSchema}
-									action="REMOVE_FROM_QUEUE"
-									fields={{ itemId: item.id }}
-									variant="minimal-destructive"
-									size="miniscule"
-									shape="square"
-									icon={<X />}
-									isDisabled={staged.length === 1}
-									aria-label={t("broadcast:dashboard.queue.remove")}
-									testId={`broadcast-queue-remove-${idx}`}
-								/>
-							</div>
-						</li>
-					);
-				})}
-			</ol>
-			<SendouButton
-				size="small"
-				variant="outlined"
-				icon={<Plus />}
-				className="self-start"
-				onClick={() => {
-					submit("ADD_TO_QUEUE");
-					// the item queued gets the id after the last one given
-					onSelect(state.lastItemId + 1);
-				}}
-				testId="broadcast-queue-add"
-			>
-				{t("broadcast:dashboard.queue.add")}
-			</SendouButton>
-		</div>
+								) : null}
+							</button>
+							{isSelected && staged.length > 1 ? (
+								<>
+									<ActionButton
+										schema={broadcastActionSchema}
+										action="MOVE_IN_QUEUE"
+										fields={{ itemId: item.id, direction: "earlier" }}
+										variant="minimal"
+										size="miniscule"
+										shape="square"
+										icon={<ChevronLeft />}
+										isDisabled={idx === 0}
+										aria-label={t("broadcast:dashboard.queue.moveEarlier")}
+									/>
+									<ActionButton
+										schema={broadcastActionSchema}
+										action="MOVE_IN_QUEUE"
+										fields={{ itemId: item.id, direction: "later" }}
+										variant="minimal"
+										size="miniscule"
+										shape="square"
+										icon={<ChevronRight />}
+										isDisabled={idx === staged.length - 1}
+										aria-label={t("broadcast:dashboard.queue.moveLater")}
+									/>
+									<ActionButton
+										schema={broadcastActionSchema}
+										action="REMOVE_FROM_QUEUE"
+										fields={{ itemId: item.id }}
+										variant="minimal-destructive"
+										size="miniscule"
+										shape="square"
+										icon={<X />}
+										aria-label={t("broadcast:dashboard.queue.remove")}
+										testId={`broadcast-queue-remove-${idx}`}
+									/>
+								</>
+							) : null}
+						</div>
+					</li>
+				);
+			})}
+			<li className={styles.queueEntry}>
+				<SendouButton
+					variant="minimal"
+					size="small"
+					shape="square"
+					icon={<Plus />}
+					className={styles.queueAdd}
+					onClick={() => {
+						submit("ADD_TO_QUEUE");
+						// the item queued gets the id after the last one given
+						onSelect(state.lastItemId + 1);
+					}}
+					title={t("broadcast:dashboard.queue.add")}
+					aria-label={t("broadcast:dashboard.queue.add")}
+					testId="broadcast-queue-add"
+				/>
+			</li>
+		</ol>
 	);
 }
 
@@ -1012,9 +966,13 @@ function QueueGap({
 
 	if (options.length === 1) {
 		return (
-			<span className={styles.queueGap}>
+			<span
+				role="img"
+				className={styles.queueGap}
+				title={hint("take")}
+				aria-label={label("take")}
+			>
 				<Hand size={14} />
-				{label("take")}
 			</span>
 		);
 	}
@@ -1026,14 +984,14 @@ function QueueGap({
 					<SendouButton
 						variant="minimal"
 						size="miniscule"
+						shape="square"
 						icon={<CurrentIcon />}
 						className={clsx(styles.queueGapToggle, {
 							[styles.queueGapAuto]: current !== "take",
 						})}
 						title={hint(current)}
-					>
-						{label(current)}
-					</SendouButton>
+						aria-label={label(current)}
+					/>
 				}
 			>
 				{options.map((advance) => {
@@ -1058,30 +1016,18 @@ function QueueGap({
 }
 
 /** The selected staged item: its scene and only the settings that scene uses. */
-function SceneInspector({
+function SceneEditor({
 	state,
 	selected,
-	selectedLabel,
 }: {
 	state: BroadcastState;
 	selected: ProducerState;
-	selectedLabel: string;
 }) {
-	const { t } = useTranslation(["broadcast"]);
-	const isHoldScene = (BROADCAST_HOLD_SCENES as readonly string[]).includes(
-		selected.scene,
-	);
-
 	return (
-		<div className="stack lg">
-			<h2 className={styles.inspectorHeader}>
-				{t("broadcast:dashboard.editing", {
-					item: selectedLabel,
-					scene: t(`broadcast:scene.${selected.scene}`),
-				})}
-			</h2>
+		<div className={styles.editor}>
 			<ScenePicker state={state} selected={selected} />
 			<div className={styles.properties}>
+				<TransitionProperty selected={selected} />
 				{state.match ? (
 					<SwapSides match={state.match} selected={selected} />
 				) : null}
@@ -1093,10 +1039,6 @@ function SceneInspector({
 				) : null}
 				<DurationProperty selected={selected} />
 			</div>
-			{isHoldScene ? <HeadlineForm headline={state.settings.headline} /> : null}
-			{selected.scene === "casters" || selected.scene === "game" ? (
-				<CastersForm casterIds={state.settings.casterIds} />
-			) : null}
 		</div>
 	);
 }
@@ -1117,35 +1059,33 @@ function ScenePicker({
 					<legend className={styles.sceneGroupLabel}>
 						{t(`broadcast:dashboard.sceneGroup.${group.key}`)}
 					</legend>
-					<div className={styles.scenes}>
-						{group.scenes.map((scene) => {
-							const Icon = SCENE_ICONS[scene];
-							const hotkey = (SCENES_BY_HOTKEY.indexOf(scene) + 1) % 10;
+					{group.scenes.map((scene) => {
+						const Icon = SCENE_ICONS[scene];
+						const hotkey = (SCENES_BY_HOTKEY.indexOf(scene) + 1) % 10;
 
-							return (
-								<ActionButton
-									key={scene}
-									schema={broadcastActionSchema}
-									action="SET_SCENE"
-									fields={{ itemId: selected.id, scene }}
-									className={clsx(styles.sceneTile, {
-										[styles.sceneTileSelected]: selected.scene === scene,
-									})}
-									formClassName={styles.sceneForm}
-									testId={`broadcast-scene-${scene}`}
-								>
-									{state.live.scene === scene ? (
-										<span className={styles.liveBadge}>
-											{t("broadcast:dashboard.live")}
-										</span>
-									) : null}
-									<Keycap>{hotkey}</Keycap>
-									<Icon className={styles.sceneIcon} />
-									{t(`broadcast:scene.${scene}`)}
-								</ActionButton>
-							);
-						})}
-					</div>
+						return (
+							<ActionButton
+								key={scene}
+								schema={broadcastActionSchema}
+								action="SET_SCENE"
+								fields={{ itemId: selected.id, scene }}
+								className={clsx(styles.sceneTile, {
+									[styles.sceneTileSelected]: selected.scene === scene,
+								})}
+								formClassName={styles.sceneForm}
+								testId={`broadcast-scene-${scene}`}
+							>
+								{state.live.scene === scene ? (
+									<span className={styles.liveBadge}>
+										{t("broadcast:dashboard.live")}
+									</span>
+								) : null}
+								<Keycap>{hotkey}</Keycap>
+								<Icon className={styles.sceneIcon} />
+								{t(`broadcast:scene.${scene}`)}
+							</ActionButton>
+						);
+					})}
 				</fieldset>
 			))}
 		</div>
@@ -1164,6 +1104,31 @@ function Property({
 			<span className={styles.propertyLabel}>{label}</span>
 			<div className="stack sm">{children}</div>
 		</div>
+	);
+}
+
+function TransitionProperty({ selected }: { selected: ProducerState }) {
+	const { t } = useTranslation(["broadcast"]);
+	const { submit } = useActionSubmit(broadcastActionSchema);
+
+	return (
+		<Property label={t("broadcast:dashboard.transition")}>
+			<SendouChipRadioGroup aria-label={t("broadcast:dashboard.transition")}>
+				{BROADCAST_TRANSITIONS.map((transition) => (
+					<SendouChipRadio
+						key={transition}
+						name="broadcast-transition"
+						value={transition}
+						checked={selected.transition === transition}
+						onChange={() =>
+							submit("SET_TRANSITION", { itemId: selected.id, transition })
+						}
+					>
+						{t(`broadcast:transition.${transition}`)}
+					</SendouChipRadio>
+				))}
+			</SendouChipRadioGroup>
+		</Property>
 	);
 }
 
@@ -1378,7 +1343,7 @@ function CastersForm({ casterIds }: { casterIds: number[] }) {
 		<SendouForm
 			schema={broadcastCastersFormSchema}
 			defaultValues={{ casterIds }}
-			submitButtonSize="small"
+			mode="autoSubmit"
 			fullWidth
 		>
 			{({ FormField }) => <FormField name="casterIds" />}

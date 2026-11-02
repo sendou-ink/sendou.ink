@@ -95,8 +95,8 @@ export const BROADCAST_WEAPON_IMAGES = ["default", "outlined"] as const;
 /** Which producer state an overlay page renders: what is on air or what is staged for the next Take. */
 export const BROADCAST_VIEWS = ["live", "next"] as const;
 
-/** Tabs of the dashboard under the switcher: the selected item's scene, the OBS setup, the theme. */
-export const BROADCAST_DASHBOARD_TABS = ["scene", "setup", "theme"] as const;
+/** Tabs of the dashboard's show settings under the switcher: the OBS setup and the theme. */
+export const BROADCAST_DASHBOARD_TABS = ["setup", "theme"] as const;
 
 /** Kind of client connected to a broadcast's stream, counted separately for the dashboard's health. */
 export const BROADCAST_STREAM_ROLES = [

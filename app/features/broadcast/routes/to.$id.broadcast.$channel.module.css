@@ -82,67 +82,36 @@
 	opacity: 0.8;
 }
 
-.transitionBus {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: var(--s-1-5);
-}
-
-.busLabel {
-	color: var(--color-text-high);
-	text-align: center;
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-bold);
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-}
-
-.transitions {
-	width: 100%;
-
-	& > label {
-		flex: 1;
-	}
-
-	@container (width < 760px) {
-		flex-direction: row;
-	}
-}
-
-.inspectorHeader {
-	color: var(--color-fg-accent);
-	font-size: var(--font-md);
-}
-
 .sceneGroups {
 	display: flex;
-	flex-wrap: wrap;
-	gap: var(--s-4) var(--s-6);
+	flex-direction: column;
+	gap: var(--s-2);
 }
 
+/* every group a row of the same columns, the legend in the space left of them */
 .sceneGroup {
+	position: relative;
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: var(--s-1-5);
 	min-width: 0;
-	padding: 0;
+	padding: 0 0 0 3.25rem;
 	margin: 0;
 	border: none;
 	background: none;
 }
 
 .sceneGroupLabel {
+	position: absolute;
+	top: 50%;
+	left: 0;
 	padding: 0;
-	margin-block-end: var(--s-1-5);
 	color: var(--color-text-high);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
-}
-
-.scenes {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--s-2);
+	transform: translateY(-50%);
 }
 
 .sceneForm {
@@ -152,24 +121,25 @@
 .sceneTile {
 	position: relative;
 	flex-direction: column;
-	gap: var(--s-1-5);
-	width: 5.75rem;
-	height: 4.5rem;
-	padding: var(--s-2) var(--s-1);
+	gap: var(--s-0-5);
+	width: 100%;
+	height: 100%;
+	min-height: 3.25rem;
+	padding: var(--s-1);
 	border: 2px solid var(--color-border);
-	border-radius: var(--radius-box);
-	background-color: var(--color-bg-high);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
 	color: var(--color-text);
 	font-size: var(--font-xs);
-	line-height: 1.2;
+	line-height: 1.1;
 	text-align: center;
 	white-space: normal;
 	--button-hover-bg: var(--color-bg-higher);
 
 	& .keycap {
 		position: absolute;
-		top: var(--s-1);
-		right: var(--s-1);
+		top: 2px;
+		right: 2px;
 		padding: 0 3px;
 		line-height: 1.2;
 	}
@@ -183,8 +153,9 @@
 }
 
 .sceneIcon {
-	width: 22px;
-	height: 22px;
+	flex-shrink: 0;
+	width: 18px;
+	height: 18px;
 }
 
 .liveBadge {
@@ -223,15 +194,11 @@
 /* fixed label column, one sized to the labels shown would move the controls when the scene changes */
 .properties {
 	display: grid;
-	grid-template-columns: 10rem 1fr;
-	gap: var(--s-4) var(--s-6);
+	grid-template-columns: 6.5rem 1fr;
+	gap: var(--s-3) var(--s-3);
 	align-items: baseline;
 
-	&:empty {
-		display: none;
-	}
-
-	@container (width < 560px) {
+	@container (width < 360px) {
 		grid-template-columns: 1fr;
 		row-gap: var(--s-3);
 	}
@@ -243,7 +210,7 @@
 	grid-template-columns: subgrid;
 	align-items: baseline;
 
-	@container (width < 560px) {
+	@container (width < 360px) {
 		gap: var(--s-1-5);
 	}
 }
@@ -308,47 +275,68 @@
 	}
 }
 
-.queue {
+/* the queue's items are the tabs of the scene editor under them */
+.staging {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-1);
+}
+
+.queue {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: var(--s-1) var(--s-0-5);
 	padding: 0;
 	margin: 0;
 	list-style: none;
 }
 
+.queueEntry {
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
 .queueItem {
+	position: relative;
 	display: flex;
 	align-items: center;
 	gap: var(--s-0-5);
 	padding-inline-end: var(--s-1);
 	border: 2px solid var(--color-border);
-	border-radius: var(--radius-field);
-	background-color: var(--color-bg-high);
+	border-bottom: none;
+	border-radius: var(--radius-field) var(--radius-field) 0 0;
+	background-color: var(--color-bg);
 
+	/* covers the editor's top border, joining the two */
 	&[data-selected] {
-		border-color: var(--color-fg-accent);
-		background-color: var(--color-bg-accent);
+		z-index: 1;
+		margin-block-end: -2px;
+		padding-block-end: 2px;
+		background-color: var(--color-bg-high);
+
+		& .queueSelect {
+			color: var(--color-fg-accent);
+		}
 	}
 }
 
 .queueSelect {
 	display: flex;
-	flex: 1;
 	align-items: center;
-	gap: var(--s-2);
+	gap: var(--s-1-5);
 	min-width: 0;
 	padding: var(--s-1-5) var(--s-2);
 	border: none;
 	background: none;
 	color: var(--color-text);
 	font-size: var(--font-sm);
-	text-align: start;
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
 	cursor: pointer;
 }
 
 .queuePosition {
-	min-width: 3ch;
 	color: var(--color-text-high);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
@@ -367,20 +355,11 @@
 .queueGap {
 	display: inline-flex;
 	align-items: center;
-	align-self: flex-start;
-	gap: var(--s-1);
-	margin-inline-start: var(--s-3);
+	padding-inline: var(--s-1);
 	color: var(--color-text-high);
-	font-size: var(--font-2xs);
 }
 
-/* as tall as the plain label it turns into, so the queue doesn't move when it does */
 .queueGapToggle {
-	height: auto;
-	padding: 0;
-	color: var(--color-text-high);
-	font-size: var(--font-2xs);
-
 	& svg {
 		width: 14px;
 		height: 14px;
@@ -389,6 +368,26 @@
 
 .queueGapAuto {
 	color: var(--color-success);
+}
+
+.queueAdd {
+	margin-inline-start: var(--s-1);
+}
+
+.editor {
+	container-type: inline-size;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding: var(--s-3);
+	border: 2px solid var(--color-border);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.settings {
+	margin-block-start: var(--s-6);
+	scroll-margin-block-start: var(--s-4);
 }
 
 .alert {
@@ -400,6 +399,7 @@
 	flex-direction: column;
 	gap: var(--s-3);
 	padding: var(--s-3);
+	border: 2px solid var(--color-border);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 }
