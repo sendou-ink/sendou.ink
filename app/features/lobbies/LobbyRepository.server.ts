@@ -39,7 +39,7 @@ export type LobbyById = NonNullable<Unwrapped<typeof findById>>;
 /**
  * The lobby with its participants, if the actor may see it: by its visibility, its share key, or as a participant
  * or player of one of its sets. `isViewerKicked` is whether the host kicked the actor out of it.
- * `permissions.MANAGE` is the host, the only one getting the `shareKey`.
+ * `permissions.MANAGE` is the host. `shareKey` goes to every viewer, they already reached the lobby.
  */
 export async function findById(
 	id: number,
@@ -112,7 +112,6 @@ export async function findById(
 
 	return {
 		...row,
-		shareKey: row.hostUserId === viewerId ? row.shareKey : null,
 		isPrivate: Boolean(row.isPrivate),
 		isViewerKicked: Boolean(row.isViewerKicked),
 		participants: row.participants.map((participant) => ({

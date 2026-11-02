@@ -421,8 +421,9 @@ test.describe("Lobbies", () => {
 	 * A lobby limited to an association is listed only to its members, its card marked as
 	 * such, and its page is not found for others. A link-only lobby is listed to no one but
 	 * its participants: others find it only through the link its host shares, and once
-	 * signed up they find it without the link too. Only the host gets the link to share, and
-	 * their address bar always shows it. Without the link others are told the lobby is invite only.
+	 * signed up they find it without the link too. Everyone who can open it gets the link to
+	 * share, and their address bar always shows it. Without the link others are told the lobby
+	 * is invite only.
 	 */
 	test.describe("Visibility", () => {
 		test("a lobby limited to an association is hidden from outsiders", async ({
@@ -519,13 +520,11 @@ test.describe("Lobbies", () => {
 
 				await lobbyPage.goto(lobbyId);
 				await expect(lobbyPage.heading(LOBBY_NAME)).toBeVisible();
+				expect(new URL(page.url()).search).toBe(new URL(shareLink).search);
 			});
 
-			await test.step("Not being the host, the visitor gets no link to share", async () => {
-				const shareKey = new URL(shareLink).searchParams.get("key")!;
-
-				await isNotVisible(lobbyPage.locators.copyShareLinkButton);
-				expect(await loaderDataJson(page)).not.toContain(shareKey);
+			await test.step("Not being the host, the visitor can share the link too", async () => {
+				expect(await lobbyPage.copyShareLink()).toBe(shareLink);
 			});
 		});
 	});

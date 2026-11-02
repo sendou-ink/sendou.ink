@@ -106,7 +106,7 @@ describe("LobbyRepository visibility", () => {
 		expect(listed.upcoming).toEqual([]);
 	});
 
-	test("link-only: a participant other than the host gets no share key", async () => {
+	test("link-only: a participant other than the host gets the share key", async () => {
 		const lobby = await LobbyFactory.create(
 			{ hostUserId: hostId(), visibility: "LINK_ONLY" },
 			{ signedUpUserIds: [memberId()] },
@@ -120,7 +120,7 @@ describe("LobbyRepository visibility", () => {
 		);
 
 		expect(asHost?.shareKey).toEqual(expect.any(String));
-		expect(asParticipant?.shareKey).toBeNull();
+		expect(asParticipant?.shareKey).toBe(asHost?.shareKey);
 	});
 
 	test.each([
