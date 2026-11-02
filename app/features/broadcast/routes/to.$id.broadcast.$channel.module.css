@@ -395,28 +395,6 @@
 	margin-inline: 0;
 }
 
-.health {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--s-1-5);
-	padding: var(--s-1) var(--s-3);
-	border: 1px solid currentColor;
-	border-radius: var(--radius-full);
-	background: none;
-	color: var(--color-text-high);
-	font-size: var(--font-xs);
-	font-weight: var(--weight-semi);
-	cursor: pointer;
-
-	&[data-status="success"] {
-		color: var(--color-success);
-	}
-
-	&[data-status="warning"] {
-		color: var(--color-warning);
-	}
-}
-
 .onAir {
 	display: flex;
 	flex-direction: column;
