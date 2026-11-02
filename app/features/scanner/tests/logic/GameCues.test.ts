@@ -12,9 +12,11 @@ import {
 import type { DetectedEvent } from "../../core/detectors/types";
 import * as GameCues from "../../core/GameCues";
 
-const LIME = 76;
-const PINK = 304;
-const ORANGE = 18;
+const LIME = { hue: 76, ink: { r: 163, g: 198, b: 67 } };
+const PINK = { hue: 304, ink: { r: 170, g: 54, b: 161 } };
+const ORANGE = { hue: 18, ink: { r: 191, g: 86, b: 40 } };
+
+type Team = typeof LIME;
 
 const NO_FLAGS = [false, false, false, false] as const;
 
@@ -33,10 +35,11 @@ const hud = (
 	{
 		time = 200,
 		score = [100, 100],
-		teamHue = [LIME, PINK],
+		teams = [LIME, PINK],
 	}: Partial<
-		Pick<ZonesObjectiveData, "time" | "score"> &
-			Pick<PlayerStatusData, "teamHue">
+		Pick<ZonesObjectiveData, "time" | "score"> & {
+			teams: [Team | null, Team | null];
+		}
 	> = {},
 ): DetectedEvent[] => [
 	{
@@ -61,7 +64,8 @@ const hud = (
 			special: [[...NO_FLAGS], [...NO_FLAGS]],
 			dead: [[...NO_FLAGS], [...NO_FLAGS]],
 			cast: null,
-			teamHue,
+			teamHue: [teams[0]?.hue ?? null, teams[1]?.hue ?? null],
+			teamInk: [teams[0]?.ink ?? null, teams[1]?.ink ?? null],
 		} satisfies PlayerStatusData,
 	},
 ];
@@ -102,38 +106,36 @@ function run(
 describe("GameCues.step", () => {
 	test("starts the game with its ink once the HUD shows it twice", () => {
 		expect(run([mapStart(0), hud(10), hud(11), hud(12)])).toEqual([
-			{ type: "start", hues: [LIME, PINK], at: 11 },
+			{ type: "start", inks: [LIME.ink, PINK.ink], at: 11 },
 		]);
 	});
 
 	test("counts the ink read with the sides flipped as the same", () => {
 		expect(
-			run([hud(10), hud(11, { teamHue: [PINK, LIME] })]).map((cue) => cue.type),
+			run([hud(10), hud(11, { teams: [PINK, LIME] })]).map((cue) => cue.type),
 		).toEqual(["start"]);
 	});
 
 	test("waits for two reads of the same ink", () => {
-		expect(
-			run([hud(10, { teamHue: [ORANGE, PINK] }), hud(11), hud(12)]),
-		).toEqual([{ type: "start", hues: [LIME, PINK], at: 12 }]);
+		expect(run([hud(10, { teams: [ORANGE, PINK] }), hud(11), hud(12)])).toEqual(
+			[{ type: "start", inks: [LIME.ink, PINK.ink], at: 12 }],
+		);
 	});
 
 	test("starts off the icons alone, as in Turf War", () => {
 		const statusOnly = (t: number) => hud(t).slice(1);
 
 		expect(run([statusOnly(10), statusOnly(11)])).toEqual([
-			{ type: "start", hues: [LIME, PINK], at: 11 },
+			{ type: "start", inks: [LIME.ink, PINK.ink], at: 11 },
 		]);
 	});
 
 	test("starts without ink once the HUD has been up a while with none read", () => {
 		const cues = run(
-			Array.from({ length: 6 }, (_, i) =>
-				hud(10 + i, { teamHue: [null, PINK] }),
-			),
+			Array.from({ length: 6 }, (_, i) => hud(10 + i, { teams: [null, PINK] })),
 		);
 
-		expect(cues).toEqual([{ type: "start", hues: null, at: 15 }]);
+		expect(cues).toEqual([{ type: "start", inks: null, at: 15 }]);
 	});
 
 	test("ends the game shortly after the HUD is gone once the timer ran out", () => {

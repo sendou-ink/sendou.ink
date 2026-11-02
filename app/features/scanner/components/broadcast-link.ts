@@ -180,7 +180,7 @@ function advance(input: GameCues.GameCuesInput): void {
 	for (const cue of stepped.cues) {
 		void postSignal(
 			cue.type === "start"
-				? { type: "start", hues: cue.hues }
+				? { type: "start", inks: cue.inks }
 				: { type: "end" },
 		);
 		if (cue.type === "end" && uploadEnabled()) {

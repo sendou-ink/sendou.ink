@@ -157,12 +157,18 @@ export const broadcastSignalSchema = v.object({
 	}),
 });
 
-const hue = v.pipe(v.number(), v.minValue(0), v.maxValue(360));
+const inkChannel = v.pipe(
+	v.number(),
+	v.integer(),
+	v.minValue(0),
+	v.maxValue(255),
+);
+const inkRgb = v.object({ r: inkChannel, g: inkChannel, b: inkChannel });
 
 export const broadcastGameSignalSchema = v.variant("type", [
 	v.object({
 		type: v.literal("start"),
-		hues: v.nullable(v.tuple([hue, hue])),
+		inks: v.nullable(v.tuple([inkRgb, inkRgb])),
 	}),
 	v.object({ type: v.literal("end") }),
 ]);

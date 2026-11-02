@@ -3,7 +3,8 @@
  * as they come in (before the timeline merges them, which would delay them).
  * A game starts once the HUD's player icons show both teams' ink hues twice
  * in a row, in every mode, so the overlay knows the colors before cutting to
- * it; the intro splash comes earlier but carries no ink. A game ends once
+ * it (their RGB, which tells pairs of about the same hue apart); the intro
+ * splash comes earlier but carries no ink. A game ends once
  * its HUD is gone: shortly after the timer ran out, or a while longer
  * without, as a knockout's 0 is gone before it's read (and a blurred 100
  * reads as 0, so the counter can't tell). An observer opening the map hides
@@ -20,7 +21,7 @@ import {
 	type PlayerStatusData,
 } from "./detectors/objective/player-status";
 import type { DetectedEvent } from "./detectors/types";
-import { hueDistance } from "./ink-color";
+import { hueDistance, type InkRgb } from "./ink-color";
 
 // xxx: define exactly when to switch on game start (HUD "Ready?" vs intro) and on game end ("GAME!" vs results) after hearing from Ely
 /** HUD reads with both teams' ink agreeing it takes for the game to start, the HUD fading in reads off at first. */
@@ -44,8 +45,8 @@ const TIME_UP_PREVIOUS_MAX_SECONDS = 10;
 export type GameCue =
 	| {
 			type: "start";
-			/** Both teams' ink hues (degrees), left side first as last read. `null` when they couldn't be read. */
-			hues: [number, number] | null;
+			/** Both teams' ink colors, left side first as last read. `null` when they couldn't be read. */
+			inks: [InkRgb, InkRgb] | null;
 	  }
 	| {
 			type: "end";
@@ -55,8 +56,8 @@ export type GameCue =
 
 export interface GameCuesState {
 	isLive: boolean;
-	/** Agreeing reads of both teams' ink hues while the game hasn't started, newest last. */
-	inkReads: Array<[number, number]>;
+	/** Agreeing reads of both teams' ink while the game hasn't started, newest last. */
+	inkReads: InkRead[];
 	/** Reads of the game's HUD while it hasn't started. */
 	hudReads: number;
 	/** When the HUD (or the map an observer opened over it) was last seen, `null` before the game's first read. */
@@ -65,6 +66,11 @@ export interface GameCuesState {
 	lastTime: { t: number; time: number; before: number | null } | null;
 	/** The timer ran out: the HUD going away soon after ends the game. */
 	isTimeUp: boolean;
+}
+
+interface InkRead {
+	hues: [number, number];
+	inks: [InkRgb, InkRgb];
 }
 
 export type GameCuesInput =
@@ -128,23 +134,22 @@ function readHud(
 	state: GameCuesState,
 	event: DetectedEvent<PlayerStatusData>,
 ): { state: GameCuesState; cues: GameCue[] } {
-	const { time, teamHue } = event.data;
+	const { time, teamHue, teamInk } = event.data;
 	const read = readTime(state, event.t, time);
 	if (state.isLive) return { state: read, cues: [] };
 
-	const [left, right] = teamHue;
+	const inkRead = toInkRead(teamHue, teamInk);
 	const previous = state.inkReads.at(-1);
-	const inkReads: Array<[number, number]> =
-		left === null || right === null
-			? []
-			: [
-					...(previous && isSameInk(previous, [left, right])
-						? state.inkReads
-						: []),
-					[left, right],
-				];
-	if (inkReads.length >= INK_READS_NEEDED) {
-		return start(read, [left!, right!]);
+	const inkReads: InkRead[] = inkRead
+		? [
+				...(previous && isSameInk(previous.hues, inkRead.hues)
+					? state.inkReads
+					: []),
+				inkRead,
+			]
+		: [];
+	if (inkRead && inkReads.length >= INK_READS_NEEDED) {
+		return start(read, inkRead.inks);
 	}
 
 	const hudReads = state.hudReads + 1;
@@ -155,11 +160,11 @@ function readHud(
 
 function start(
 	state: GameCuesState,
-	hues: [number, number] | null,
+	inks: [InkRgb, InkRgb] | null,
 ): { state: GameCuesState; cues: GameCue[] } {
 	return {
 		state: { ...state, isLive: true, inkReads: [], hudReads: 0 },
-		cues: [{ type: "start", hues }],
+		cues: [{ type: "start", inks }],
 	};
 }
 
@@ -207,6 +212,22 @@ function endIfHudGone(
 		state: initialState(),
 		cues: [{ type: "end", t: state.lastHudAt }],
 	};
+}
+
+function toInkRead(
+	[leftHue, rightHue]: PlayerStatusData["teamHue"],
+	[leftInk, rightInk]: PlayerStatusData["teamInk"],
+): InkRead | null {
+	if (
+		leftHue === null ||
+		rightHue === null ||
+		leftInk === null ||
+		rightInk === null
+	) {
+		return null;
+	}
+
+	return { hues: [leftHue, rightHue], inks: [leftInk, rightInk] };
 }
 
 function isSameInk(a: [number, number], b: [number, number]) {

@@ -287,6 +287,7 @@ function parsePlayerStatusCell(cell: string): PlayerStatusData {
 		// the CSV carries no camera-badge evidence or ink
 		cast: null,
 		teamHue: [null, null],
+		teamInk: [null, null],
 	};
 }
 

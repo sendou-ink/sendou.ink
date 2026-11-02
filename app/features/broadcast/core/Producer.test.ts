@@ -1,7 +1,11 @@
 import * as R from "remeda";
 import { describe, expect, test } from "vitest";
 import { BROADCAST_PROTOTYPE_CLIPS } from "../broadcast-constants";
-import type { BroadcastStoredState, ProducerState } from "../broadcast-types";
+import type {
+	BroadcastInkRgb,
+	BroadcastStoredState,
+	ProducerState,
+} from "../broadcast-types";
 import * as Producer from "./Producer";
 
 const ink = {
@@ -239,12 +243,15 @@ describe("Producer.effectiveAdvance", () => {
 
 describe("Producer.applyGameSignal", () => {
 	const liveResults = { matchId: 1, count: 2 };
-	const greenPink: [number, number] = [76, 304];
+	const greenPink: [BroadcastInkRgb, BroadcastInkRgb] = [
+		{ r: 163, g: 198, b: 67 },
+		{ r: 170, g: 54, b: 161 },
+	];
 
 	test("colors the game and puts it on air as it starts", () => {
 		const applied = Producer.applyGameSignal(
 			stateWith({ next: item(2, { advance: "game" }) }),
-			{ signal: { type: "start", hues: greenPink }, liveResults, now: 5 },
+			{ signal: { type: "start", inks: greenPink }, liveResults, now: 5 },
 		);
 
 		expect(applied?.live.id).toBe(2);
@@ -264,7 +271,7 @@ describe("Producer.applyGameSignal", () => {
 		};
 
 		const applied = Producer.applyGameSignal(state, {
-			signal: { type: "start", hues: greenPink },
+			signal: { type: "start", inks: greenPink },
 			liveResults,
 			now: 5,
 		});
@@ -276,7 +283,7 @@ describe("Producer.applyGameSignal", () => {
 		const state = stateWith({ next: item(2, { advance: "take" }) });
 
 		const applied = Producer.applyGameSignal(state, {
-			signal: { type: "start", hues: greenPink },
+			signal: { type: "start", inks: greenPink },
 			liveResults,
 			now: 5,
 		});
@@ -310,7 +317,7 @@ describe("Producer.applyGameSignal", () => {
 				live: item(1, { scene: "game" }),
 				next: item(2, { scene: "maps", advance: "game" }),
 			}),
-			signal: { type: "start", hues: null } as const,
+			signal: { type: "start", inks: null } as const,
 		},
 	])("is null for $why", ({ state, signal }) => {
 		expect(

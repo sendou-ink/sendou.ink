@@ -177,10 +177,17 @@ export interface BroadcastHealth {
 export type BroadcastGameSignal =
 	| {
 			type: "start";
-			/** The teams' ink hues (degrees) as read off the game's HUD, in no particular order. `null` when not read. */
-			hues: [number, number] | null;
+			/** The teams' ink colors as read off the game's HUD, in no particular order. `null` when not read. */
+			inks: [BroadcastInkRgb, BroadcastInkRgb] | null;
 	  }
 	| { type: "end" };
+
+/** A team's ink color as read off the game's HUD, channels 0-255. */
+export interface BroadcastInkRgb {
+	r: number;
+	g: number;
+	b: number;
+}
 
 export interface BroadcastMatch {
 	id: number;

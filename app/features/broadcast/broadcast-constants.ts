@@ -61,21 +61,108 @@ export const BROADCAST_SCENE_DURATIONS_MS: Partial<
 
 /**
  * Splatoon 3's ink color pairs, the first team's color first. Picking one colors the game scoreboard's teams as
- * they are in game, otherwise the theme's team colors are used. Values from IPL's ipl-overlay-controls (MIT).
+ * they are in game, otherwise the theme's team colors are used. `a`/`b` from IPL's ipl-overlay-controls (MIT).
+ * `referenceA`/`referenceB` are how the scanner reads them off the HUD's player icons (per-channel median, the
+ * median over games of cast and POV VoDs): darker than `a`/`b`, and a few CIEDE2000 off IPL's clean-feed samples.
+ * Color Lock is the viewing console's setting, so it holds for every game of a broadcast.
  */
 export const BROADCAST_INK_COLORS = [
-	{ key: "lockYellowPurple", a: "#F0EB24", b: "#6236DF" },
-	{ key: "lockOrangeBlue", a: "#FDB605", b: "#2D63D7" },
-	{ key: "orangePurple", a: "#F56522", b: "#821CD6" },
-	{ key: "yellowDarkBlue", a: "#EDD921", b: "#461EE6" },
-	{ key: "turquoiseOrange", a: "#2ADBC6", b: "#FA5A41" },
-	{ key: "orangeDarkBlue", a: "#FC7735", b: "#4048DB" },
-	{ key: "turquoisePink", a: "#2ADBC3", b: "#E34984" },
-	{ key: "darkBlueOrange", a: "#2C2CDB", b: "#F29C33" },
-	{ key: "yellowPurple", a: "#EEFC58", b: "#7635F0" },
-	{ key: "goldPurple", a: "#EBCC31", b: "#A032DB" },
-	{ key: "greenPink", a: "#B3DE45", b: "#D43BCA" },
-	{ key: "pinkGreen", a: "#F753A1", b: "#35CC2D" },
+	{
+		key: "lockYellowPurple",
+		a: "#F0EB24",
+		b: "#6236DF",
+		referenceA: "#C3BB31",
+		referenceB: "#4E35AC",
+		isColorLock: true,
+	},
+	{
+		key: "lockOrangeBlue",
+		a: "#FDB605",
+		b: "#2D63D7",
+		referenceA: "#C68F28",
+		referenceB: "#2657B2",
+		isColorLock: true,
+	},
+	{
+		key: "orangePurple",
+		a: "#F56522",
+		b: "#821CD6",
+		referenceA: "#BF5624",
+		referenceB: "#661FA4",
+		isColorLock: false,
+	},
+	{
+		key: "yellowDarkBlue",
+		a: "#EDD921",
+		b: "#461EE6",
+		referenceA: "#C8BD25",
+		referenceB: "#3C22B8",
+		isColorLock: false,
+	},
+	{
+		key: "turquoiseOrange",
+		a: "#2ADBC6",
+		b: "#FA5A41",
+		referenceA: "#28C1AD",
+		referenceB: "#CA543B",
+		isColorLock: false,
+	},
+	{
+		key: "orangeDarkBlue",
+		a: "#FC7735",
+		b: "#4048DB",
+		referenceA: "#CE6B36",
+		referenceB: "#3B41B4",
+		isColorLock: false,
+	},
+	{
+		key: "turquoisePink",
+		a: "#2ADBC3",
+		b: "#E34984",
+		referenceA: "#33BBA7",
+		referenceB: "#C23D6F",
+		isColorLock: false,
+	},
+	{
+		key: "darkBlueOrange",
+		a: "#2C2CDB",
+		b: "#F29C33",
+		referenceA: "#2624A2",
+		referenceB: "#D19038",
+		isColorLock: false,
+	},
+	{
+		key: "yellowPurple",
+		a: "#EEFC58",
+		b: "#7635F0",
+		referenceA: "#C0CB48",
+		referenceB: "#5F31BA",
+		isColorLock: false,
+	},
+	{
+		key: "goldPurple",
+		a: "#EBCC31",
+		b: "#A032DB",
+		referenceA: "#CAB32E",
+		referenceB: "#9136B7",
+		isColorLock: false,
+	},
+	{
+		key: "greenPink",
+		a: "#B3DE45",
+		b: "#D43BCA",
+		referenceA: "#A4C744",
+		referenceB: "#AC37A4",
+		isColorLock: false,
+	},
+	{
+		key: "pinkGreen",
+		a: "#F753A1",
+		b: "#35CC2D",
+		referenceA: "#C13375",
+		referenceB: "#45B729",
+		isColorLock: false,
+	},
 ] as const;
 
 /**
