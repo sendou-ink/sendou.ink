@@ -431,30 +431,27 @@ function Health({
 }) {
 	const { t } = useTranslation(["broadcast"]);
 
-	const status = !isConnected
-		? "warning"
+	const variant = !isConnected
+		? "outlined-warning"
 		: state.health.sources > 0
-			? "success"
-			: "info";
+			? "outlined-success"
+			: "outlined";
 
 	return (
-		<button
-			type="button"
-			className={styles.health}
-			data-status={status}
+		<SendouButton
+			size="small"
+			variant={variant}
+			icon={
+				variant === "outlined-success" ? <CircleCheck /> : <TriangleAlert />
+			}
 			onClick={onClick}
 		>
-			{status === "success" ? (
-				<CircleCheck size={16} />
-			) : (
-				<TriangleAlert size={16} />
-			)}
 			{isConnected
 				? t("broadcast:dashboard.health.sources", {
 						count: state.health.sources,
 					})
 				: t("broadcast:dashboard.health.disconnected")}
-		</button>
+		</SendouButton>
 	);
 }
 
@@ -472,10 +469,16 @@ function ScannerHealth({
 		Producer.effectiveAdvance(state.live, state.next) === "game";
 
 	return (
-		<button
-			type="button"
-			className={styles.health}
-			data-status={isConnected ? "success" : isWaitedFor ? "warning" : "info"}
+		<SendouButton
+			size="small"
+			variant={
+				isConnected
+					? "outlined-success"
+					: isWaitedFor
+						? "outlined-warning"
+						: "outlined"
+			}
+			icon={isConnected ? <CircleCheck /> : <ScanEye />}
 			title={
 				!isConnected && isWaitedFor
 					? t("broadcast:dashboard.noScannerHint")
@@ -483,11 +486,10 @@ function ScannerHealth({
 			}
 			onClick={onClick}
 		>
-			{isConnected ? <CircleCheck size={16} /> : <ScanEye size={16} />}
 			{isConnected
 				? t("broadcast:dashboard.health.scannerConnected")
 				: t("broadcast:dashboard.health.noScanner")}
-		</button>
+		</SendouButton>
 	);
 }
 

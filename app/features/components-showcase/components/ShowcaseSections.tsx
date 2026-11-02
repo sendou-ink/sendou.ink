@@ -239,6 +239,12 @@ function ButtonsSection() {
 					</SendouButton>
 				</ComponentRow>
 
+				<ComponentRow label="Outlined Warning">
+					<SendouButton variant="outlined-warning">
+						Outlined Warning
+					</SendouButton>
+				</ComponentRow>
+
 				<ComponentRow label="Minimal">
 					<SendouButton variant="minimal">Minimal Button</SendouButton>
 				</ComponentRow>
