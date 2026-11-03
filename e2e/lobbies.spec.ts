@@ -606,7 +606,8 @@ test.describe("Lobbies", () => {
 	 * being played with their match profile map pool. One side reports the maps, can undo a
 	 * report while the set is being played, and the other confirms the result, after which
 	 * the set shows on the Result tab and counts on the Rankings tab together with the
-	 * weapons reported. The confirming side can instead dispute the result, the reporting
+	 * weapons reported, the Rankings then also offering a head-to-head view of the players
+	 * who have played. The confirming side can instead dispute the result, the reporting
 	 * side then undoing their report or the host settling it by confirming the result or
 	 * undoing the report, whichever side they're on.
 	 */
@@ -650,8 +651,14 @@ test.describe("Lobbies", () => {
 			);
 			const lobbyPage = new LobbyPage(page);
 
-			await test.step("An Alpha player reports a sweep", async () => {
+			await test.step("The Rankings have no head-to-head view before a set is played", async () => {
 				await impersonate(page, alphaPlayer.id);
+				await lobbyPage.goto(lobby.id, "leaderboard");
+				await expect(lobbyPage.locators.leaderboardRows).toHaveCount(ROOM_SIZE);
+				await expect(lobbyPage.locators.headToHeadViewChip).toHaveCount(0);
+			});
+
+			await test.step("An Alpha player reports a sweep", async () => {
 				await lobbyPage.goto(lobby.id, "action");
 				await lobbyPage.reportOwnTeamSweep(MAPS_TO_WIN);
 			});
@@ -665,6 +672,9 @@ test.describe("Lobbies", () => {
 			await test.step("The set shows on the Rankings and Result tabs", async () => {
 				await lobbyPage.goto(lobby.id, "leaderboard");
 				await expect(lobbyPage.locators.leaderboardRows).toHaveCount(ROOM_SIZE);
+
+				await lobbyPage.locators.headToHeadViewChip.click();
+				await expect(lobbyPage.locators.headToHeadRows).toHaveCount(ROOM_SIZE);
 
 				await lobbyPage.openTab("result");
 				await expect(lobbyPage.locators.tabPanel).toContainText("2-0");

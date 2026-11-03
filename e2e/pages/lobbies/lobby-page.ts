@@ -53,6 +53,10 @@ export class LobbyPage {
 			inviteOnlyHeading: page.getByRole("heading", { name: "Invite only" }),
 			disputedText: page.getByText("The result was disputed"),
 			leaderboardRows: page.getByTestId("lobby-leaderboard-row"),
+			headToHeadRows: page.getByTestId("lobby-head-to-head-row"),
+			headToHeadViewChip: page
+				.getByRole("radiogroup", { name: "Rankings view" })
+				.getByText("Head-to-head", { exact: true }),
 			endLobbyButton: page.getByTestId("lobby-end-button"),
 			endedStatus: page.getByText("· Ended"),
 			forfeitNote: page.getByTestId("lobby-forfeit-note"),

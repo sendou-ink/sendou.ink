@@ -1,0 +1,50 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.opponent {
+	text-align: center;
+
+	& > div {
+		display: inline-block;
+	}
+}
+
+.cell {
+	min-width: 3.5rem;
+	text-align: center;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-text-high);
+
+	&[data-outcome="self"] {
+		background-color: var(--color-bg-high);
+	}
+
+	&[data-outcome="W"] {
+		background-color: var(--color-success-low);
+		color: var(--color-success);
+	}
+
+	&[data-outcome="L"] {
+		background-color: var(--color-error-low);
+		color: var(--color-error);
+	}
+
+	&[data-outcome="even"] {
+		color: var(--color-text);
+	}
+}
+
+.sets {
+	display: block;
+	font-weight: var(--weight-bold);
+}
+
+.maps {
+	display: block;
+	font-size: var(--font-2xs);
+	opacity: 0.75;
+}

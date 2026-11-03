@@ -1,6 +1,6 @@
 /**
  * Rankings tab of a lobby: each player's set and map record over the lobby's finished sets and the
- * weapons they played.
+ * weapons they played, and how every player fared against every other.
  */
 import * as R from "remeda";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -110,6 +110,59 @@ export function rows({
 	}
 
 	return withPlacements;
+}
+
+/** A player's record against one opponent over the finished sets they played on opposite sides. */
+export interface HeadToHeadRecord {
+	setWins: number;
+	setLosses: number;
+	mapWins: number;
+	mapLosses: number;
+}
+
+/**
+ * Head-to-head records of the lobby's finished (confirmed or forfeited) sets, looked up as
+ * `records[userId]?.[opponentId]`. A pair that never played on opposite sides has no record.
+ */
+export function headToHead(
+	sets: LobbySet.SetLike[],
+): Record<number, Record<number, HeadToHeadRecord>> {
+	const records: Record<number, Record<number, HeadToHeadRecord>> = {};
+
+	for (const set of sets) {
+		if (!LobbySet.isFinished(set)) continue;
+
+		const setWinner = LobbySet.winnerSide(set);
+
+		for (const player of set.participants) {
+			if (!player.side) continue;
+
+			for (const opponent of set.participants) {
+				if (!opponent.side || opponent.side === player.side) continue;
+
+				records[player.userId] ??= {};
+				records[player.userId][opponent.userId] ??= {
+					setWins: 0,
+					setLosses: 0,
+					mapWins: 0,
+					mapLosses: 0,
+				};
+				const record = records[player.userId][opponent.userId];
+
+				if (setWinner === player.side) record.setWins++;
+				else record.setLosses++;
+
+				for (const game of set.games) {
+					if (!game.winnerSide) continue;
+
+					if (game.winnerSide === player.side) record.mapWins++;
+					else record.mapLosses++;
+				}
+			}
+		}
+	}
+
+	return records;
 }
 
 function isTied(

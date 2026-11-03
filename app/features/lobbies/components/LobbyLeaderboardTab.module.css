@@ -4,6 +4,12 @@
 	gap: var(--s-6);
 }
 
+.rankings {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
 .weapons {
 	display: inline-flex;
 	gap: var(--s-1);

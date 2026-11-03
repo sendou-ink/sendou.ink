@@ -136,3 +136,73 @@ describe("Leaderboard.rows", () => {
 		expect(rows.some((row) => row.userId === 9)).toBe(false);
 	});
 });
+
+describe("Leaderboard.headToHead", () => {
+	test("sums the sets and maps of every pair on opposite sides", () => {
+		const records = Leaderboard.headToHead([
+			setOf({ winners: ["ALPHA", "BRAVO", "ALPHA"], confirmed: true }),
+			setOf({
+				winners: ["BRAVO", "BRAVO"],
+				confirmed: true,
+				alpha: [1, 2, 7, 8],
+				bravo: [3, 4, 5, 6],
+			}),
+		]);
+
+		expect(records[1][5]).toEqual({
+			setWins: 1,
+			setLosses: 1,
+			mapWins: 2,
+			mapLosses: 3,
+		});
+		expect(records[5][1]).toEqual({
+			setWins: 1,
+			setLosses: 1,
+			mapWins: 3,
+			mapLosses: 2,
+		});
+		expect(records[1][7]).toEqual({
+			setWins: 1,
+			setLosses: 0,
+			mapWins: 2,
+			mapLosses: 1,
+		});
+	});
+
+	test("a forfeit is a set win for the other side, the maps played counting as reported", () => {
+		const records = Leaderboard.headToHead([
+			setOf({ winners: ["ALPHA"], forfeitingSide: "ALPHA" }),
+		]);
+
+		expect(records[1][5]).toEqual({
+			setWins: 0,
+			setLosses: 1,
+			mapWins: 1,
+			mapLosses: 0,
+		});
+		expect(records[5][1]).toEqual({
+			setWins: 1,
+			setLosses: 0,
+			mapWins: 0,
+			mapLosses: 1,
+		});
+	});
+
+	test("teammates and players sitting out have no record against each other", () => {
+		const records = Leaderboard.headToHead([
+			setOf({ winners: ["ALPHA", "ALPHA"], confirmed: true, sittingOut: [9] }),
+		]);
+
+		expect(records[1][2]).toBeUndefined();
+		expect(records[1][9]).toBeUndefined();
+		expect(records[9]).toBeUndefined();
+	});
+
+	test("unfinished sets don't count", () => {
+		const records = Leaderboard.headToHead([
+			setOf({ winners: ["ALPHA", "ALPHA"] }),
+		]);
+
+		expect(records).toEqual({});
+	});
+});
