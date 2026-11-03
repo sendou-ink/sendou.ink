@@ -11,6 +11,10 @@ declare global {
 	}
 }
 
+/** Fuse appends the sticky footer ad as a direct child of `<body>`, its height depends on the served creative. */
+export const FUSE_STICKY_FOOTER_SELECTOR =
+	".publift-widget-sticky_footer-container";
+
 function callPageInit() {
 	window.fusetag = window.fusetag || { que: [] };
 	window.fusetag.que.push(() => {

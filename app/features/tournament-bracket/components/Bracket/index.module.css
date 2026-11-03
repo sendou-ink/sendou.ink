@@ -21,14 +21,20 @@
 
 	/* In a breakout wrapper (see `mainBreakout`): as wide as needed between the normal page width and
 	   the content area (then it scrolls), centered. Height fills down to the viewport bottom using the
-	   JS-published `--bracket-fill-top`, floored so it never collapses. */
+	   JS-published `--bracket-fill-top`, floored so it never collapses. The sticky footer ad
+	   (`--bracket-fill-bottom-ad`, also JS-published) is kept clear too. */
 	:global([data-main-breakout]) & {
 		width: fit-content;
 		min-width: min(72rem, 100%);
 		margin-inline: auto;
 		max-height: max(
 			300px,
-			calc(100dvh - var(--bracket-fill-top, 30dvh) - var(--s-6))
+			calc(
+				100svh -
+				var(--bracket-fill-top, 30svh) -
+				var(--bracket-fill-bottom-ad, 0px) -
+				var(--s-6)
+			)
 		);
 
 		/* The mobile bottom nav is fixed below 600px; keep clear of it. */
@@ -36,8 +42,9 @@
 			max-height: max(
 				300px,
 				calc(
-					100dvh -
-					var(--bracket-fill-top, 30dvh) -
+					100svh -
+					var(--bracket-fill-top, 30svh) -
+					var(--bracket-fill-bottom-ad, 0px) -
 					var(--layout-nav-height) -
 					env(safe-area-inset-bottom) -
 					var(--s-3)

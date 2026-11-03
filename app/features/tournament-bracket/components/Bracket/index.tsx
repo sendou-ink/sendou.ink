@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import * as React from "react";
 import { useLocation, useNavigationType } from "react-router";
+import { FUSE_STICKY_FOOTER_SELECTOR } from "~/components/fuse/Fuse";
 import { useBracketExpanded } from "~/features/tournament/routes/to.$id";
 import { useDragToScroll } from "~/hooks/useDragToScroll";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
@@ -134,7 +135,7 @@ function ScrollableBracketContainer({
 	scrollMemoryKey,
 }: BracketContainerProps) {
 	const ref = useDragToScroll<HTMLDivElement>();
-	usePublishBracketTopOffset(ref);
+	usePublishBracketFillOffsets(ref);
 	useBracketScrollMemory(ref, scrollMemoryKey);
 
 	return (
@@ -153,30 +154,57 @@ function ScrollableBracketContainer({
 }
 
 /**
- * Inside a breakout container (see `mainBreakout`) publishes the bracket's distance from the viewport top
- * as `--bracket-fill-top`, from which CSS derives `max-height` accounting for the mobile bottom nav and
- * safe area insets JS can't read. No-op elsewhere, so the static `max-height` applies.
+ * Inside a breakout container (see `mainBreakout`) publishes the bracket's distance from the document top
+ * as `--bracket-fill-top` and the height of the sticky footer ad as `--bracket-fill-bottom-ad`, from which
+ * CSS derives `max-height` accounting for the mobile bottom nav and safe area insets JS can't read.
+ * No-op elsewhere, so the static `max-height` applies.
+ *
+ * Measured from the document top, not the viewport, so a re-measure while the page is scrolled
+ * doesn't grow the bracket (which would grow the page and feed back into the next measure).
  */
-function usePublishBracketTopOffset(ref: React.RefObject<HTMLElement | null>) {
+function usePublishBracketFillOffsets(
+	ref: React.RefObject<HTMLElement | null>,
+) {
 	useIsomorphicLayoutEffect(() => {
 		const el = ref.current;
 		if (!el?.closest("[data-main-breakout]")) return;
 
+		let stickyFooterAd: Element | null = null;
+
 		const update = () => {
 			el.style.setProperty(
 				"--bracket-fill-top",
-				`${el.getBoundingClientRect().top}px`,
+				`${el.getBoundingClientRect().top + window.scrollY}px`,
+			);
+			el.style.setProperty(
+				"--bracket-fill-bottom-ad",
+				`${stickyFooterAd?.getBoundingClientRect().height ?? 0}px`,
 			);
 		};
 
+		const resizeObserver = new ResizeObserver(update);
+
+		const trackStickyFooterAd = () => {
+			const ad = document.querySelector(FUSE_STICKY_FOOTER_SELECTOR);
+			if (ad === stickyFooterAd) return;
+
+			if (stickyFooterAd) resizeObserver.unobserve(stickyFooterAd);
+			stickyFooterAd = ad;
+			if (ad) resizeObserver.observe(ad);
+			update();
+		};
+
+		trackStickyFooterAd();
 		update();
 
-		const observer = new ResizeObserver(update);
-		observer.observe(document.body);
+		resizeObserver.observe(document.body);
+		const bodyChildrenObserver = new MutationObserver(trackStickyFooterAd);
+		bodyChildrenObserver.observe(document.body, { childList: true });
 		window.addEventListener("resize", update);
 
 		return () => {
-			observer.disconnect();
+			resizeObserver.disconnect();
+			bodyChildrenObserver.disconnect();
 			window.removeEventListener("resize", update);
 		};
 	}, [ref]);
