@@ -1,0 +1,9 @@
+language js
+
+// `sql.raw` pastes its argument into the query unescaped. A string literal or an
+// UPPER_CASE constant is fine, anything built at runtime is an injection risk.
+`sql.raw($text)` as $raw where {
+	$text <: not JsStringLiteralExpression(),
+	$text <: not r"^[A-Z][A-Z0-9_]*$",
+	register_diagnostic(span=$raw, message="`sql.raw` is not escaped. Pass a string literal or an UPPER_CASE constant; for values use `sql` template parameters, for identifiers `sql.ref` / `sql.table`.", severity="error")
+}

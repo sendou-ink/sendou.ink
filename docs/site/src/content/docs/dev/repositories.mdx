@@ -62,6 +62,7 @@ export async function addInitialSkill(args: AddInitialSkillArgs, trx?: Transacti
 ```
 
 - Private helpers that only ever run inside a transaction take a required `trx: Transaction<DB>`.
+- Inside the callback, query through `trx` and await nothing but queries. Kysely holds the lock of our single connection for the whole transaction, so a query on `db` waits for the transaction it is part of (a deadlock) and any other await (a fetch, a push) stalls every other query of the server. Enforced by the `no-db-inside-transaction` and `no-await-without-trx-in-transaction` lint rules.
 
 ## Return values
 
@@ -117,6 +118,11 @@ Any user id the caller picks is an explicit parameter — `findAllByUserId(userI
 - Reuse the shared selects in `~/utils/kysely.server` (`commonUserSelect`, `commonUserJsonObject`, `commonUserObjectFields`) instead of re-listing user fields.
 - Prefer `jsonArrayFrom` / `jsonObjectFrom` / `jsonBuildObject` from `~/utils/kysely.server` (never from `kysely/helpers/sqlite`, enforced by the `no-kysely-sqlite-helpers` lint rule) over raw `json_group_array`. When raw `sql` is needed, a comment says why.
 - Never insert row-by-row in a loop — one `values([...])` call.
+- Await queries one after another, never in `Promise.all` (`no-promise-all-queries`): `node:sqlite` is synchronous, so they can't run in parallel.
+- Every `deleteFrom` / `updateTable` has a `.where` on its own chain (`kysely-enforce-where`), one inside `$if` or a subquery doesn't count. One that is meant to touch every row says so in its `biome-ignore` reason.
+- A query always ends in `.execute()`, `.executeTakeFirst()` or `.executeTakeFirstOrThrow()` (`no-floating-query-builder`): a builder is not a promise, so awaiting one runs nothing.
+- `sql.raw` only takes a string literal or an UPPER_CASE constant (`no-dynamic-sql-raw`), it isn't escaped. Values go in as `sql` template parameters.
+- Compare with `null` using `"is"` / `"is not"` (`no-where-eq-null`), `= null` never matches.
 - Optional filters are applied by reassigning the query:
 
 ```ts

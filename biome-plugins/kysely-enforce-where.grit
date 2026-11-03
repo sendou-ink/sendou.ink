@@ -1,0 +1,30 @@
+language js
+
+// The Kysely counterpart of Drizzle's `enforce-delete-with-where` /
+// `enforce-update-with-where`: a forgotten `.where` rewrites or wipes the whole
+// table. Only the query's own method chain counts, a `.where` inside an
+// argument (a subquery, a conditional `$if`) does not. A query built up in
+// steps (`let query = ...`) is not checked.
+pattern chain_has_where() {
+	or {
+		`$_.where($...)`,
+		`$_.whereRef($...)`,
+		`$receiver.$_($...)` where { $receiver <: chain_has_where() }
+	}
+}
+
+`$_.$verb($table)` as $query where {
+	$verb <: or {
+		`deleteFrom`,
+		`updateTable`
+	},
+	$query <: within `$chain.$execute()` where {
+		$execute <: or {
+			`execute`,
+			`executeTakeFirst`,
+			`executeTakeFirstOrThrow`
+		},
+		$chain <: not chain_has_where()
+	},
+	register_diagnostic(span=$query, message="`deleteFrom` / `updateTable` without a `.where` affects every row of the table. Add a `.where`, or if every row is meant, suppress with `// biome-ignore lint/plugin: <reason>`.", severity="error")
+}

@@ -551,58 +551,56 @@ export async function findAllSeriesWinsByUserId({
 			),
 		]);
 
-	const [tournamentWins, reportedWins] = await Promise.all([
-		db
-			.selectFrom("TournamentResult")
-			.innerJoin(
-				"CalendarEvent",
-				"CalendarEvent.tournamentId",
-				"TournamentResult.tournamentId",
-			)
-			.innerJoin(
-				"CalendarEventDate",
-				"CalendarEventDate.eventId",
-				"CalendarEvent.id",
-			)
-			.select(({ fn }) => [
-				"CalendarEvent.name",
-				fn.min("CalendarEventDate.startsAt").as("startsAt"),
-			])
-			.where("TournamentResult.userId", "=", userId)
-			.where("TournamentResult.placement", "=", 1)
-			.where("TournamentResult.tournamentId", "!=", excludeTournamentId)
-			.where(isEventOfTheSeries)
-			.groupBy("CalendarEvent.id")
-			.execute(),
-		db
-			.selectFrom("CalendarEventResultPlayer")
-			.innerJoin(
-				"CalendarEventResultTeam",
-				"CalendarEventResultTeam.id",
-				"CalendarEventResultPlayer.teamId",
-			)
-			.innerJoin(
-				"CalendarEvent",
-				"CalendarEvent.id",
-				"CalendarEventResultTeam.eventId",
-			)
-			.innerJoin(
-				"CalendarEventDate",
-				"CalendarEventDate.eventId",
-				"CalendarEvent.id",
-			)
-			.select(({ fn }) => [
-				"CalendarEvent.name",
-				fn.min("CalendarEventDate.startsAt").as("startsAt"),
-			])
-			.where("CalendarEventResultPlayer.userId", "=", userId)
-			.where("CalendarEventResultTeam.placement", "=", 1)
-			// a tournament of the site reports its own results, counted above
-			.where("CalendarEvent.tournamentId", "is", null)
-			.where(isEventOfTheSeries)
-			.groupBy("CalendarEvent.id")
-			.execute(),
-	]);
+	const tournamentWins = await db
+		.selectFrom("TournamentResult")
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.tournamentId",
+			"TournamentResult.tournamentId",
+		)
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select(({ fn }) => [
+			"CalendarEvent.name",
+			fn.min("CalendarEventDate.startsAt").as("startsAt"),
+		])
+		.where("TournamentResult.userId", "=", userId)
+		.where("TournamentResult.placement", "=", 1)
+		.where("TournamentResult.tournamentId", "!=", excludeTournamentId)
+		.where(isEventOfTheSeries)
+		.groupBy("CalendarEvent.id")
+		.execute();
+	const reportedWins = await db
+		.selectFrom("CalendarEventResultPlayer")
+		.innerJoin(
+			"CalendarEventResultTeam",
+			"CalendarEventResultTeam.id",
+			"CalendarEventResultPlayer.teamId",
+		)
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.id",
+			"CalendarEventResultTeam.eventId",
+		)
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select(({ fn }) => [
+			"CalendarEvent.name",
+			fn.min("CalendarEventDate.startsAt").as("startsAt"),
+		])
+		.where("CalendarEventResultPlayer.userId", "=", userId)
+		.where("CalendarEventResultTeam.placement", "=", 1)
+		// a tournament of the site reports its own results, counted above
+		.where("CalendarEvent.tournamentId", "is", null)
+		.where(isEventOfTheSeries)
+		.groupBy("CalendarEvent.id")
+		.execute();
 
 	return R.sortBy(
 		[...tournamentWins, ...reportedWins].map((win) => ({

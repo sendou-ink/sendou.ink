@@ -176,20 +176,18 @@ export async function findSeasonSetScoresByUserId(args: {
 	userId: number;
 	season: number;
 }): Promise<Array<{ ownScore: number; opponentScore: number }>> {
-	const [sqSets, tournamentSets] = await Promise.all([
-		sqSetScoresQuery(args)
-			.select("GroupMatch.createdAt as playedAt")
-			.groupBy("GroupMatch.id")
-			.execute(),
-		db
-			.selectFrom(tournamentSetsQuery(args).as("TournamentSet"))
-			.select((eb) => [
-				"TournamentSet.playedAt",
-				tournamentSetGamesWonCount(eb, "own").as("ownScore"),
-				tournamentSetGamesWonCount(eb, "opponent").as("opponentScore"),
-			])
-			.execute(),
-	]);
+	const sqSets = await sqSetScoresQuery(args)
+		.select("GroupMatch.createdAt as playedAt")
+		.groupBy("GroupMatch.id")
+		.execute();
+	const tournamentSets = await db
+		.selectFrom(tournamentSetsQuery(args).as("TournamentSet"))
+		.select((eb) => [
+			"TournamentSet.playedAt",
+			tournamentSetGamesWonCount(eb, "own").as("ownScore"),
+			tournamentSetGamesWonCount(eb, "opponent").as("opponentScore"),
+		])
+		.execute();
 
 	return [...sqSets, ...tournamentSets]
 		.sort((a, b) => a.playedAt - b.playedAt)
@@ -206,53 +204,51 @@ export async function findSeasonSetParticipantsByUserId(args: {
 }): Promise<
 	Array<{ otherUserId: number; type: "MATE" | "ENEMY"; playedAt: number }>
 > {
-	const [sqParticipants, tournamentParticipants] = await Promise.all([
-		sqSeasonMatchesQuery(args)
-			.innerJoin("GroupMember as OtherMember", (join) =>
-				join
-					.onRef("OtherMember.userId", "!=", "OwnMember.userId")
-					.on((eb) =>
-						eb("OtherMember.groupId", "in", [
-							eb.ref("GroupMatch.alphaGroupId"),
-							eb.ref("GroupMatch.bravoGroupId"),
-						]),
-					),
-			)
-			.select([
-				"OtherMember.userId as otherUserId",
-				sql<
-					"MATE" | "ENEMY"
-				>`iif("OtherMember"."groupId" = "OwnMember"."groupId", 'MATE', 'ENEMY')`.as(
-					"type",
+	const sqParticipants = await sqSeasonMatchesQuery(args)
+		.innerJoin("GroupMember as OtherMember", (join) =>
+			join
+				.onRef("OtherMember.userId", "!=", "OwnMember.userId")
+				.on((eb) =>
+					eb("OtherMember.groupId", "in", [
+						eb.ref("GroupMatch.alphaGroupId"),
+						eb.ref("GroupMatch.bravoGroupId"),
+					]),
 				),
-				"GroupMatch.createdAt as playedAt",
-			])
-			.execute(),
-		db
-			.selectFrom(tournamentSetsQuery(args).as("TournamentSet"))
-			.innerJoin(
-				"TournamentMatchGameResult as SetGame",
-				"SetGame.matchId",
-				"TournamentSet.tournamentMatchId",
-			)
-			.innerJoin(
-				"TournamentMatchGameResultParticipant as OtherParticipant",
-				"OtherParticipant.matchGameResultId",
-				"SetGame.id",
-			)
-			.select([
-				"OtherParticipant.userId as otherUserId",
-				sql<
-					"MATE" | "ENEMY"
-				>`iif("OtherParticipant"."tournamentTeamId" = "TournamentSet"."ownTeamId", 'MATE', 'ENEMY')`.as(
-					"type",
-				),
-				"TournamentSet.playedAt",
-			])
-			.where("OtherParticipant.userId", "!=", args.userId)
-			.groupBy(["TournamentSet.tournamentMatchId", "OtherParticipant.userId"])
-			.execute(),
-	]);
+		)
+		.select([
+			"OtherMember.userId as otherUserId",
+			sql<
+				"MATE" | "ENEMY"
+			>`iif("OtherMember"."groupId" = "OwnMember"."groupId", 'MATE', 'ENEMY')`.as(
+				"type",
+			),
+			"GroupMatch.createdAt as playedAt",
+		])
+		.execute();
+	const tournamentParticipants = await db
+		.selectFrom(tournamentSetsQuery(args).as("TournamentSet"))
+		.innerJoin(
+			"TournamentMatchGameResult as SetGame",
+			"SetGame.matchId",
+			"TournamentSet.tournamentMatchId",
+		)
+		.innerJoin(
+			"TournamentMatchGameResultParticipant as OtherParticipant",
+			"OtherParticipant.matchGameResultId",
+			"SetGame.id",
+		)
+		.select([
+			"OtherParticipant.userId as otherUserId",
+			sql<
+				"MATE" | "ENEMY"
+			>`iif("OtherParticipant"."tournamentTeamId" = "TournamentSet"."ownTeamId", 'MATE', 'ENEMY')`.as(
+				"type",
+			),
+			"TournamentSet.playedAt",
+		])
+		.where("OtherParticipant.userId", "!=", args.userId)
+		.groupBy(["TournamentSet.tournamentMatchId", "OtherParticipant.userId"])
+		.execute();
 
 	return [...sqParticipants, ...tournamentParticipants];
 }
@@ -271,122 +267,120 @@ export async function findSeasonBestSetsByUserId({
 	season: number;
 	limit: number;
 }) {
-	const [sqSets, tournamentSets] = await Promise.all([
-		db
-			.selectFrom(
-				sqSetScoresQuery({ userId, season })
-					.select([
-						"GroupMatch.id as groupMatchId",
-						// raw iif: the opposing group is whichever side of the match the user's group is not
-						sql<number>`iif("OwnMember"."groupId" = "GroupMatch"."alphaGroupId", "GroupMatch"."bravoGroupId", "GroupMatch"."alphaGroupId")`.as(
-							"opponentGroupId",
-						),
-					])
-					.groupBy("GroupMatch.id")
-					.as("SqSet"),
-			)
-			.select((eb) => [
-				"SqSet.ownScore",
-				"SqSet.opponentScore",
+	const sqSets = await db
+		.selectFrom(
+			sqSetScoresQuery({ userId, season })
+				.select([
+					"GroupMatch.id as groupMatchId",
+					// raw iif: the opposing group is whichever side of the match the user's group is not
+					sql<number>`iif("OwnMember"."groupId" = "GroupMatch"."alphaGroupId", "GroupMatch"."bravoGroupId", "GroupMatch"."alphaGroupId")`.as(
+						"opponentGroupId",
+					),
+				])
+				.groupBy("GroupMatch.id")
+				.as("SqSet"),
+		)
+		.select((eb) => [
+			"SqSet.ownScore",
+			"SqSet.opponentScore",
+			eb
+				.selectFrom("Skill as OpponentSkill")
+				.select(({ fn }) =>
+					fn.avg<number>("OpponentSkill.ordinal").as("average"),
+				)
+				.whereRef("OpponentSkill.groupMatchId", "=", "SqSet.groupMatchId")
+				.where((ieb) =>
+					ieb(
+						"OpponentSkill.userId",
+						"in",
+						ieb
+							.selectFrom("GroupMember")
+							.select("GroupMember.userId")
+							.whereRef("GroupMember.groupId", "=", "SqSet.opponentGroupId"),
+					),
+				)
+				.as("avgOpponentOrdinal"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("GroupMember")
+					.innerJoin("User", "User.id", "GroupMember.userId")
+					.select(["User.id", "User.username", "User.country"])
+					.whereRef("GroupMember.groupId", "=", "SqSet.opponentGroupId")
+					.orderBy("User.username", "asc"),
+			).as("opponentPlayers"),
+		])
+		.whereRef("SqSet.ownScore", ">", "SqSet.opponentScore")
+		.orderBy("avgOpponentOrdinal", "desc")
+		.limit(limit * BEST_SET_CANDIDATES_PER_RESULT)
+		.execute();
+	const tournamentSets = await db
+		.selectFrom(tournamentSetsQuery({ userId, season }).as("TournamentSet"))
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.tournamentId",
+			"TournamentSet.tournamentId",
+		)
+		.select((eb) => {
+			const opponentUserIds = eb
+				.selectFrom(
+					"TournamentMatchGameResultParticipant as OpponentParticipant",
+				)
+				.innerJoin(
+					"TournamentMatchGameResult as OpponentGameResult",
+					"OpponentGameResult.id",
+					"OpponentParticipant.matchGameResultId",
+				)
+				.select("OpponentParticipant.userId")
+				.distinct()
+				.whereRef(
+					"OpponentGameResult.matchId",
+					"=",
+					"TournamentSet.tournamentMatchId",
+				)
+				.whereRef(
+					"OpponentParticipant.tournamentTeamId",
+					"!=",
+					"TournamentSet.ownTeamId",
+				);
+
+			return [
+				tournamentSetGamesWonCount(eb, "own").as("ownScore"),
+				tournamentSetGamesWonCount(eb, "opponent").as("opponentScore"),
+				"CalendarEvent.name as tournamentName",
 				eb
 					.selectFrom("Skill as OpponentSkill")
 					.select(({ fn }) =>
 						fn.avg<number>("OpponentSkill.ordinal").as("average"),
 					)
-					.whereRef("OpponentSkill.groupMatchId", "=", "SqSet.groupMatchId")
-					.where((ieb) =>
-						ieb(
-							"OpponentSkill.userId",
-							"in",
-							ieb
-								.selectFrom("GroupMember")
-								.select("GroupMember.userId")
-								.whereRef("GroupMember.groupId", "=", "SqSet.opponentGroupId"),
-						),
+					.whereRef(
+						"OpponentSkill.tournamentId",
+						"=",
+						"TournamentSet.tournamentId",
 					)
+					.where("OpponentSkill.userId", "in", opponentUserIds)
 					.as("avgOpponentOrdinal"),
+				eb
+					.selectFrom("Skill as OpponentSkill")
+					.select(({ fn }) => fn.countAll<number>().as("count"))
+					.whereRef(
+						"OpponentSkill.tournamentId",
+						"=",
+						"TournamentSet.tournamentId",
+					)
+					.where("OpponentSkill.userId", "in", opponentUserIds)
+					.$asScalar()
+					.$notNull()
+					.as("opponentsWithSkillCount"),
 				jsonArrayFrom(
 					eb
-						.selectFrom("GroupMember")
-						.innerJoin("User", "User.id", "GroupMember.userId")
+						.selectFrom("User")
 						.select(["User.id", "User.username", "User.country"])
-						.whereRef("GroupMember.groupId", "=", "SqSet.opponentGroupId")
+						.where("User.id", "in", opponentUserIds)
 						.orderBy("User.username", "asc"),
 				).as("opponentPlayers"),
-			])
-			.whereRef("SqSet.ownScore", ">", "SqSet.opponentScore")
-			.orderBy("avgOpponentOrdinal", "desc")
-			.limit(limit * BEST_SET_CANDIDATES_PER_RESULT)
-			.execute(),
-		db
-			.selectFrom(tournamentSetsQuery({ userId, season }).as("TournamentSet"))
-			.innerJoin(
-				"CalendarEvent",
-				"CalendarEvent.tournamentId",
-				"TournamentSet.tournamentId",
-			)
-			.select((eb) => {
-				const opponentUserIds = eb
-					.selectFrom(
-						"TournamentMatchGameResultParticipant as OpponentParticipant",
-					)
-					.innerJoin(
-						"TournamentMatchGameResult as OpponentGameResult",
-						"OpponentGameResult.id",
-						"OpponentParticipant.matchGameResultId",
-					)
-					.select("OpponentParticipant.userId")
-					.distinct()
-					.whereRef(
-						"OpponentGameResult.matchId",
-						"=",
-						"TournamentSet.tournamentMatchId",
-					)
-					.whereRef(
-						"OpponentParticipant.tournamentTeamId",
-						"!=",
-						"TournamentSet.ownTeamId",
-					);
-
-				return [
-					tournamentSetGamesWonCount(eb, "own").as("ownScore"),
-					tournamentSetGamesWonCount(eb, "opponent").as("opponentScore"),
-					"CalendarEvent.name as tournamentName",
-					eb
-						.selectFrom("Skill as OpponentSkill")
-						.select(({ fn }) =>
-							fn.avg<number>("OpponentSkill.ordinal").as("average"),
-						)
-						.whereRef(
-							"OpponentSkill.tournamentId",
-							"=",
-							"TournamentSet.tournamentId",
-						)
-						.where("OpponentSkill.userId", "in", opponentUserIds)
-						.as("avgOpponentOrdinal"),
-					eb
-						.selectFrom("Skill as OpponentSkill")
-						.select(({ fn }) => fn.countAll<number>().as("count"))
-						.whereRef(
-							"OpponentSkill.tournamentId",
-							"=",
-							"TournamentSet.tournamentId",
-						)
-						.where("OpponentSkill.userId", "in", opponentUserIds)
-						.$asScalar()
-						.$notNull()
-						.as("opponentsWithSkillCount"),
-					jsonArrayFrom(
-						eb
-							.selectFrom("User")
-							.select(["User.id", "User.username", "User.country"])
-							.where("User.id", "in", opponentUserIds)
-							.orderBy("User.username", "asc"),
-					).as("opponentPlayers"),
-				];
-			})
-			.execute(),
-	]);
+			];
+		})
+		.execute();
 
 	const sets = [
 		...sqSets.flatMap((set) =>

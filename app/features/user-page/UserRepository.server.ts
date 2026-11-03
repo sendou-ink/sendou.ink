@@ -947,10 +947,9 @@ export async function countResultsByUserId(
 		filters,
 	).select(({ fn }) => [fn.countAll<number>().as("count")]);
 
-	const [calendarEventResults, tournamentResults] = await Promise.all([
-		calendarEventResultsQuery.executeTakeFirst(),
-		tournamentResultsQuery.executeTakeFirst(),
-	]);
+	const calendarEventResults =
+		await calendarEventResultsQuery.executeTakeFirst();
+	const tournamentResults = await tournamentResultsQuery.executeTakeFirst();
 
 	return (calendarEventResults?.count ?? 0) + (tournamentResults?.count ?? 0);
 }

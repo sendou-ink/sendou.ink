@@ -168,20 +168,18 @@ async function queryUserCards({
 	includeHiddenStats?: boolean;
 }): Promise<Map<number, UserCardData>> {
 	// a user's card surfaces the better of their last two finished seasons (see bestSeasonResult)
-	const [rows, seasonResults] = await Promise.all([
-		db
-			.selectFrom("User")
-			.select((eb) =>
-				userCardDataJsonObject(eb, { viewerId, include }).as("cardData"),
-			)
-			.where("User.id", "in", userIds)
-			.execute(),
-		Promise.all(
-			Seasons.allFinished()
-				.slice(0, 2)
-				.map((season) => seasonResult(season, userIds)),
-		),
-	]);
+	const rows = await db
+		.selectFrom("User")
+		.select((eb) =>
+			userCardDataJsonObject(eb, { viewerId, include }).as("cardData"),
+		)
+		.where("User.id", "in", userIds)
+		.execute();
+	const seasonResults = await Promise.all(
+		Seasons.allFinished()
+			.slice(0, 2)
+			.map((season) => seasonResult(season, userIds)),
+	);
 
 	const userCards = new Map<number, UserCardData>();
 	for (const { cardData } of rows) {

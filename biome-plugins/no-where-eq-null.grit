@@ -1,0 +1,11 @@
+language js
+
+// `x = null` is never true in SQL, so the filter silently matches nothing.
+`$_($_, $operator, null)` as $comparison where {
+	$operator <: or {
+		`"="`,
+		`"!="`,
+		`"<>"`
+	},
+	register_diagnostic(span=$comparison, message="Comparing with `null` using `=` / `!=` / `<>` never matches in SQL. Use `\"is\"` / `\"is not\"`.", severity="error")
+}

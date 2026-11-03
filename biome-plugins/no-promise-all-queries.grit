@@ -1,0 +1,16 @@
+language js
+
+// `node:sqlite` is synchronous: queries can't run in parallel, so `Promise.all`
+// only adds noise. Await them one after another.
+`Promise.$combinator($queries)` as $call where {
+	$combinator <: or {
+		`all`,
+		`allSettled`
+	},
+	$queries <: contains or {
+		`$_.execute()`,
+		`$_.executeTakeFirst()`,
+		`$_.executeTakeFirstOrThrow()`
+	},
+	register_diagnostic(span=$call, message="Don't wrap queries in `Promise.all`: `node:sqlite` is synchronous, so they can't run in parallel. Await them one after another.", severity="error")
+}

@@ -587,6 +587,7 @@ export async function updateSettings({
 	feature?: VoiceFeature;
 	isDisabled: boolean;
 }) {
+	// biome-ignore lint/plugin: the settings table has a single row
 	await db
 		.updateTable("VoiceSettings")
 		.set({

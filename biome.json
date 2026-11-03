@@ -344,6 +344,24 @@
 			"plugins": ["./biome-plugins/no-kysely-sqlite-helpers.grit"]
 		},
 		{
+			"includes": ["**"],
+			"plugins": [
+				"./biome-plugins/kysely-enforce-where.grit",
+				"./biome-plugins/no-floating-query-builder.grit",
+				"./biome-plugins/no-db-inside-transaction.grit",
+				"./biome-plugins/no-await-without-trx-in-transaction.grit",
+				"./biome-plugins/no-where-eq-null.grit"
+			]
+		},
+		{
+			"includes": ["**", "!migrations/**"],
+			"plugins": ["./biome-plugins/no-dynamic-sql-raw.grit"]
+		},
+		{
+			"includes": ["**", "!**/*.test.ts", "!**/*.test.tsx"],
+			"plugins": ["./biome-plugins/no-promise-all-queries.grit"]
+		},
+		{
 			"includes": ["app/**", "!app/features/components-showcase/**"],
 			"plugins": ["./biome-plugins/no-relative-links.grit"]
 		},

@@ -10,6 +10,7 @@ import * as StreamRanking from "../sidebar/core/StreamRanking";
 
 export function replaceAll(streams: Omit<Tables["LiveStream"], "id">[]) {
 	return db.transaction().execute(async (trx) => {
+		// biome-ignore lint/plugin: replaces every stream with the given ones
 		await trx.deleteFrom("LiveStream").execute();
 
 		if (streams.length === 0) return;

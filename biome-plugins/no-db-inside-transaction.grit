@@ -1,0 +1,10 @@
+language js
+
+// Kysely locks the single SQLite connection for the whole transaction, so a
+// query on `db` inside the callback waits for the transaction it is part of to
+// finish: a deadlock. Use `trx`.
+`db.$method($...)` as $query where {
+	$method <: not `transaction`,
+	$query <: within `$_.transaction().execute($_)`,
+	register_diagnostic(span=$query, message="Use the transaction's `trx` instead of `db` inside a transaction callback: a query on `db` waits for the transaction to finish and never runs.", severity="error")
+}

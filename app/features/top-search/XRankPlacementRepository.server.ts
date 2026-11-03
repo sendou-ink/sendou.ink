@@ -234,6 +234,7 @@ export type FindPlacement = InferResult<
 >[number];
 
 export async function refreshAllPeakXp() {
+	// biome-ignore lint/plugin: recomputes the peak of every player
 	await db
 		.updateTable("SplatoonPlayer")
 		.set({
@@ -259,6 +260,7 @@ const MIN_RANK_WEST = 100;
 
 export async function refreshTenStarWeapons(userId?: number) {
 	await db.transaction().execute(async (trx) => {
+		// biome-ignore lint/plugin: every row when no userId is given
 		await trx
 			.deleteFrom("TenStarWeapon")
 			.$if(userId !== undefined, (qb) => qb.where("userId", "=", userId!))

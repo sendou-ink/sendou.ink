@@ -1,0 +1,29 @@
+language js
+
+// Kysely query builders are not promises: `await db.deleteFrom(...).where(...)`
+// without `.execute()` type checks and silently runs nothing.
+JsExpressionStatement() as $statement where {
+	$statement <: contains `$executor.$verb($_)` where {
+		$executor <: or {
+			`db`,
+			`trx`,
+			`executor`
+		},
+		$verb <: or {
+			`selectFrom`,
+			`insertInto`,
+			`replaceInto`,
+			`updateTable`,
+			`deleteFrom`
+		}
+	},
+	$statement <: not contains or {
+		`execute`,
+		`executeTakeFirst`,
+		`executeTakeFirstOrThrow`,
+		`stream`,
+		`compile`
+	},
+	$statement <: not contains JsAssignmentExpression(),
+	register_diagnostic(span=$statement, message="This query is built but never run. Call `.execute()`, `.executeTakeFirst()` or `.executeTakeFirstOrThrow()` on it.", severity="error")
+}

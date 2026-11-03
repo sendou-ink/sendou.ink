@@ -662,22 +662,20 @@ export async function findAllAcceptedByUserIds({
 		.where(resolvedStartsAt, ">=", startsAt)
 		.where(resolvedStartsAt, "<=", endsAt);
 
-	const [postSideUsers, requestSideUsers] = await Promise.all([
-		acceptedInWindow
-			.innerJoin("ScrimPostUser", "ScrimPostUser.scrimPostId", "ScrimPost.id")
-			.select(["ScrimPostUser.userId", resolvedStartsAt.as("startsAt")])
-			.where("ScrimPostUser.userId", "in", userIds)
-			.execute(),
-		acceptedInWindow
-			.innerJoin(
-				"ScrimPostRequestUser",
-				"ScrimPostRequestUser.scrimPostRequestId",
-				"ScrimPostRequest.id",
-			)
-			.select(["ScrimPostRequestUser.userId", resolvedStartsAt.as("startsAt")])
-			.where("ScrimPostRequestUser.userId", "in", userIds)
-			.execute(),
-	]);
+	const postSideUsers = await acceptedInWindow
+		.innerJoin("ScrimPostUser", "ScrimPostUser.scrimPostId", "ScrimPost.id")
+		.select(["ScrimPostUser.userId", resolvedStartsAt.as("startsAt")])
+		.where("ScrimPostUser.userId", "in", userIds)
+		.execute();
+	const requestSideUsers = await acceptedInWindow
+		.innerJoin(
+			"ScrimPostRequestUser",
+			"ScrimPostRequestUser.scrimPostRequestId",
+			"ScrimPostRequest.id",
+		)
+		.select(["ScrimPostRequestUser.userId", resolvedStartsAt.as("startsAt")])
+		.where("ScrimPostRequestUser.userId", "in", userIds)
+		.execute();
 
 	return [...postSideUsers, ...requestSideUsers];
 }

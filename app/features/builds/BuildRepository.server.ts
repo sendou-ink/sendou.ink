@@ -597,6 +597,7 @@ export async function recalculateAllSortValues(
 
 async function recalculateSortValues(trx: Transaction<DB>, userId?: number) {
 	// Pass 1: tier*2 + 1 for public, NULL for private.
+	// biome-ignore lint/plugin: every row when no userId is given
 	await trx
 		.updateTable("BuildWeapon")
 		.set({

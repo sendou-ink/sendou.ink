@@ -391,6 +391,7 @@ export function replacePlusTiers(
 	invariant(plusTiers.length > 0, "plusTiers must not be empty");
 
 	return db.transaction().execute(async (trx) => {
+		// biome-ignore lint/plugin: replaces every tier with the given ones
 		await trx.deleteFrom("PlusTier").execute();
 		await trx
 			.insertInto("PlusTier")

@@ -733,13 +733,13 @@ async function resolveHeavyChatUsers() {
 			.where("ChatRoom.closedAt", "is", null)
 			.where("ChatRoom.expiresAt", ">", databaseTimestampNow());
 
-	const participations = await Promise.all([
-		openRooms()
+	const participations = [
+		await openRooms()
 			.innerJoin("Group", "Group.chatRoomId", "ChatRoom.id")
 			.innerJoin("GroupMember", "GroupMember.groupId", "Group.id")
 			.select("GroupMember.userId")
 			.execute(),
-		openRooms()
+		await openRooms()
 			.innerJoin("GroupMatch", "GroupMatch.chatRoomId", "ChatRoom.id")
 			.innerJoin("GroupMember", (join) =>
 				join.on((eb) =>
@@ -751,7 +751,7 @@ async function resolveHeavyChatUsers() {
 			)
 			.select("GroupMember.userId")
 			.execute(),
-		openRooms()
+		await openRooms()
 			.innerJoin("TournamentTeam", "TournamentTeam.chatRoomId", "ChatRoom.id")
 			.innerJoin(
 				"TournamentTeamMember",
@@ -760,12 +760,12 @@ async function resolveHeavyChatUsers() {
 			)
 			.select("TournamentTeamMember.userId")
 			.execute(),
-		openRooms()
+		await openRooms()
 			.innerJoin("ScrimPost", "ScrimPost.chatRoomId", "ChatRoom.id")
 			.innerJoin("ScrimPostUser", "ScrimPostUser.scrimPostId", "ScrimPost.id")
 			.select("ScrimPostUser.userId")
 			.execute(),
-	]);
+	];
 
 	const roomCountByUserId = new Map<number, number>();
 	for (const row of participations.flat()) {
@@ -797,14 +797,17 @@ async function resolveHeavyChatUsers() {
 
 /** The longest membership history the open-room lookup has to walk, open rooms or not. */
 async function resolveMostConnectedUserId() {
-	const memberships = await Promise.all([
-		db.selectFrom("GroupMember").select("GroupMember.userId").execute(),
-		db
+	const memberships = [
+		await db.selectFrom("GroupMember").select("GroupMember.userId").execute(),
+		await db
 			.selectFrom("TournamentTeamMember")
 			.select("TournamentTeamMember.userId")
 			.execute(),
-		db.selectFrom("ScrimPostUser").select("ScrimPostUser.userId").execute(),
-	]);
+		await db
+			.selectFrom("ScrimPostUser")
+			.select("ScrimPostUser.userId")
+			.execute(),
+	];
 
 	const countByUserId = new Map<number, number>();
 	for (const row of memberships.flat()) {

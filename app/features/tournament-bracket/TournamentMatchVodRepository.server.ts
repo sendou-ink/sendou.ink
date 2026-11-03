@@ -69,85 +69,81 @@ export function findVodsByTournamentId(tournamentId: number) {
  * won (`null` for casts).
  */
 export async function findAllForDownloadByTournamentId(tournamentId: number) {
-	const [vods, finishedMatches] = await Promise.all([
-		db
-			.selectFrom("TournamentMatchVod")
-			.innerJoin(
-				"TournamentMatch",
-				"TournamentMatch.id",
-				"TournamentMatchVod.matchId",
-			)
-			.innerJoin(
-				"TournamentStage",
-				"TournamentStage.id",
-				"TournamentMatch.stageId",
-			)
-			.innerJoin(
-				"TournamentRound",
-				"TournamentRound.id",
-				"TournamentMatch.roundId",
-			)
-			.innerJoin(
-				"TournamentGroup",
-				"TournamentGroup.id",
-				"TournamentMatch.groupId",
-			)
-			.select((eb) => [
-				"TournamentMatchVod.matchId",
-				"TournamentMatchVod.platform",
-				"TournamentMatchVod.account",
-				"TournamentMatchVod.userId",
-				"TournamentMatchVod.platformVideoId",
-				"TournamentMatchVod.timestampSeconds",
-				"TournamentMatch.startedAt",
-				"TournamentStage.type as stageType",
-				"TournamentRound.number as roundNumber",
-				"TournamentGroup.number as groupNumber",
-				eb
-					.selectFrom("TournamentMatchGameResult")
-					.select((innerEb) =>
-						innerEb.fn
-							.max("TournamentMatchGameResult.createdAt")
-							.as("createdAt"),
-					)
-					.whereRef(
-						"TournamentMatchGameResult.matchId",
-						"=",
-						"TournamentMatch.id",
-					)
-					.as("lastGameReportedAt"),
-				eb
-					.selectFrom("TournamentTeamMember")
-					.select("TournamentTeamMember.tournamentTeamId")
-					.whereRef(
-						"TournamentTeamMember.userId",
-						"=",
-						"TournamentMatchVod.userId",
-					)
-					.where(
-						sql<boolean>`"TournamentTeamMember"."tournamentTeamId" in (json_extract("TournamentMatch"."opponentOne", '$.id'), json_extract("TournamentMatch"."opponentTwo", '$.id'))`,
-					)
-					.as("povTeamId"),
-			])
-			.where("TournamentStage.tournamentId", "=", tournamentId)
-			.orderBy("TournamentMatchVod.matchId", "asc")
-			.execute(),
-		db
-			.selectFrom("TournamentMatch")
-			.innerJoin(
-				"TournamentStage",
-				"TournamentStage.id",
-				"TournamentMatch.stageId",
-			)
-			.select([
-				"TournamentMatch.opponentOne",
-				"TournamentMatch.opponentTwo",
-				"TournamentMatch.winnerSide",
-			])
-			.where("TournamentStage.tournamentId", "=", tournamentId)
-			.where("TournamentMatch.winnerSide", "is not", null)
-			.execute(),
-	]);
+	const vods = await db
+		.selectFrom("TournamentMatchVod")
+		.innerJoin(
+			"TournamentMatch",
+			"TournamentMatch.id",
+			"TournamentMatchVod.matchId",
+		)
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentMatch.stageId",
+		)
+		.innerJoin(
+			"TournamentRound",
+			"TournamentRound.id",
+			"TournamentMatch.roundId",
+		)
+		.innerJoin(
+			"TournamentGroup",
+			"TournamentGroup.id",
+			"TournamentMatch.groupId",
+		)
+		.select((eb) => [
+			"TournamentMatchVod.matchId",
+			"TournamentMatchVod.platform",
+			"TournamentMatchVod.account",
+			"TournamentMatchVod.userId",
+			"TournamentMatchVod.platformVideoId",
+			"TournamentMatchVod.timestampSeconds",
+			"TournamentMatch.startedAt",
+			"TournamentStage.type as stageType",
+			"TournamentRound.number as roundNumber",
+			"TournamentGroup.number as groupNumber",
+			eb
+				.selectFrom("TournamentMatchGameResult")
+				.select((innerEb) =>
+					innerEb.fn.max("TournamentMatchGameResult.createdAt").as("createdAt"),
+				)
+				.whereRef(
+					"TournamentMatchGameResult.matchId",
+					"=",
+					"TournamentMatch.id",
+				)
+				.as("lastGameReportedAt"),
+			eb
+				.selectFrom("TournamentTeamMember")
+				.select("TournamentTeamMember.tournamentTeamId")
+				.whereRef(
+					"TournamentTeamMember.userId",
+					"=",
+					"TournamentMatchVod.userId",
+				)
+				.where(
+					sql<boolean>`"TournamentTeamMember"."tournamentTeamId" in (json_extract("TournamentMatch"."opponentOne", '$.id'), json_extract("TournamentMatch"."opponentTwo", '$.id'))`,
+				)
+				.as("povTeamId"),
+		])
+		.where("TournamentStage.tournamentId", "=", tournamentId)
+		.orderBy("TournamentMatchVod.matchId", "asc")
+		.execute();
+	const finishedMatches = await db
+		.selectFrom("TournamentMatch")
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentMatch.stageId",
+		)
+		.select([
+			"TournamentMatch.opponentOne",
+			"TournamentMatch.opponentTwo",
+			"TournamentMatch.winnerSide",
+		])
+		.where("TournamentStage.tournamentId", "=", tournamentId)
+		.where("TournamentMatch.winnerSide", "is not", null)
+		.execute();
 
 	const setWinsByTeamId = new Map<number, number>();
 	for (const match of finishedMatches) {

@@ -1,0 +1,21 @@
+language js
+
+// Kysely locks the single SQLite connection for the whole transaction, so while
+// the callback awaits other work (fetch, push, file IO) every other query of the
+// server waits. Awaits inside the callback should be queries on `trx` (or
+// helpers taking it or declared inside the callback), nothing else.
+`await $awaited` as $await where {
+	$await <: within `$_.transaction().execute(async ($trx) => $callback)`,
+	$awaited <: not contains $trx,
+	$awaited <: not `$helper($...)` where {
+		$callback <: contains `const $helper = $_`
+	},
+	$awaited <: not `$_.$execute()` where {
+		$execute <: or {
+			`execute`,
+			`executeTakeFirst`,
+			`executeTakeFirstOrThrow`
+		}
+	},
+	register_diagnostic(span=$await, message="Only await queries on the transaction inside its callback: every other query of the server waits while a transaction is open. Do this work before or after the transaction.", severity="error")
+}

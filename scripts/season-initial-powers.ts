@@ -151,6 +151,7 @@ await db.transaction().execute(async (trx) => {
 	for (const skill of newSkills) {
 		await SkillRepository.addInitialSkill(skill, trx);
 	}
+	// biome-ignore lint/plugin: a new season starts with every group inactive
 	await trx.updateTable("Group").set({ status: "INACTIVE" }).execute();
 });
 

@@ -8,6 +8,7 @@ export async function replaceAll(
 	rotations: Omit<TablesInsertable["SplatoonRotation"], "id">[],
 ) {
 	await db.transaction().execute(async (trx) => {
+		// biome-ignore lint/plugin: replaces every rotation with the given ones
 		await trx.deleteFrom("SplatoonRotation").execute();
 
 		await trx.insertInto("SplatoonRotation").values(rotations).execute();

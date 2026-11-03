@@ -399,57 +399,55 @@ function latestTeamIdByDuplicatedUserId(
 
 /** Live streams of checked-in participants and of the tournament's cast accounts. */
 export async function findStreamsByTournamentId(tournamentId: number) {
-	const [participantStreams, castStreams] = await Promise.all([
-		db
-			.selectFrom("TournamentTeam")
-			.innerJoin(
-				"TournamentTeamMember",
-				"TournamentTeamMember.tournamentTeamId",
-				"TournamentTeam.id",
-			)
-			.innerJoin("User", "User.id", "TournamentTeamMember.userId")
-			.innerJoin("LiveStream", (join) => join.on(isLiveStreamOf()))
-			.select((eb) => [
-				"User.id as userId",
-				"LiveStream.platform",
-				"LiveStream.account",
-				"LiveStream.videoId",
-				"LiveStream.viewerCount",
-				"LiveStream.thumbnailUrl",
-				"TournamentTeam.id as teamId",
-				...commonUserSelect(eb, { inTournament: true }),
-			])
-			.where("TournamentTeam.tournamentId", "=", tournamentId)
-			.where("TournamentTeam.isPlaceholder", "=", 0)
-			.where(({ exists, selectFrom }) =>
-				exists(
-					selectFrom("TournamentTeamCheckIn")
-						.select("TournamentTeamCheckIn.tournamentTeamId")
-						.whereRef(
-							"TournamentTeamCheckIn.tournamentTeamId",
-							"=",
-							"TournamentTeam.id",
-						),
-				),
-			)
-			.groupBy("LiveStream.id")
-			.execute(),
-		db
-			.selectFrom("LiveStream")
-			.select([
-				"LiveStream.platform",
-				"LiveStream.account",
-				"LiveStream.videoId",
-				"LiveStream.viewerCount",
-				"LiveStream.thumbnailUrl",
-			])
-			.where(
-				isCastLiveStreamOf(
-					sql`(select "castAccounts" from "Tournament" where "Tournament"."id" = ${tournamentId})`,
-				),
-			)
-			.execute(),
-	]);
+	const participantStreams = await db
+		.selectFrom("TournamentTeam")
+		.innerJoin(
+			"TournamentTeamMember",
+			"TournamentTeamMember.tournamentTeamId",
+			"TournamentTeam.id",
+		)
+		.innerJoin("User", "User.id", "TournamentTeamMember.userId")
+		.innerJoin("LiveStream", (join) => join.on(isLiveStreamOf()))
+		.select((eb) => [
+			"User.id as userId",
+			"LiveStream.platform",
+			"LiveStream.account",
+			"LiveStream.videoId",
+			"LiveStream.viewerCount",
+			"LiveStream.thumbnailUrl",
+			"TournamentTeam.id as teamId",
+			...commonUserSelect(eb, { inTournament: true }),
+		])
+		.where("TournamentTeam.tournamentId", "=", tournamentId)
+		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.where(({ exists, selectFrom }) =>
+			exists(
+				selectFrom("TournamentTeamCheckIn")
+					.select("TournamentTeamCheckIn.tournamentTeamId")
+					.whereRef(
+						"TournamentTeamCheckIn.tournamentTeamId",
+						"=",
+						"TournamentTeam.id",
+					),
+			),
+		)
+		.groupBy("LiveStream.id")
+		.execute();
+	const castStreams = await db
+		.selectFrom("LiveStream")
+		.select([
+			"LiveStream.platform",
+			"LiveStream.account",
+			"LiveStream.videoId",
+			"LiveStream.viewerCount",
+			"LiveStream.thumbnailUrl",
+		])
+		.where(
+			isCastLiveStreamOf(
+				sql`(select "castAccounts" from "Tournament" where "Tournament"."id" = ${tournamentId})`,
+			),
+		)
+		.execute();
 
 	return { participantStreams, castStreams };
 }
@@ -1081,27 +1079,25 @@ export async function findOrganizerPermissionsByTournamentIds(
 	const result = new Map<number, ReturnType<typeof organizerPermissions>>();
 	if (tournamentIds.length === 0) return result;
 
-	const [events, staff] = await Promise.all([
-		db
-			.selectFrom("CalendarEvent")
-			.select([
-				"CalendarEvent.tournamentId",
-				"CalendarEvent.authorId",
-				"CalendarEvent.organizationId",
-			])
-			.where("CalendarEvent.tournamentId", "in", tournamentIds)
-			.$narrowType<{ tournamentId: NotNull }>()
-			.execute(),
-		db
-			.selectFrom("TournamentStaff")
-			.select([
-				"TournamentStaff.tournamentId",
-				"TournamentStaff.userId",
-				"TournamentStaff.role",
-			])
-			.where("TournamentStaff.tournamentId", "in", tournamentIds)
-			.execute(),
-	]);
+	const events = await db
+		.selectFrom("CalendarEvent")
+		.select([
+			"CalendarEvent.tournamentId",
+			"CalendarEvent.authorId",
+			"CalendarEvent.organizationId",
+		])
+		.where("CalendarEvent.tournamentId", "in", tournamentIds)
+		.$narrowType<{ tournamentId: NotNull }>()
+		.execute();
+	const staff = await db
+		.selectFrom("TournamentStaff")
+		.select([
+			"TournamentStaff.tournamentId",
+			"TournamentStaff.userId",
+			"TournamentStaff.role",
+		])
+		.where("TournamentStaff.tournamentId", "in", tournamentIds)
+		.execute();
 
 	const organizationIds = R.unique(
 		events.map((event) => event.organizationId).filter((id) => id !== null),

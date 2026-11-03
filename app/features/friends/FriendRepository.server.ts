@@ -9,56 +9,54 @@ import { toDBBoolean } from "~/utils/sql";
 import { FRIEND } from "./friends-constants";
 
 export async function findByUserIdWithActivity(userId: number) {
-	const [friendRows, teamMemberRows] = await Promise.all([
-		withLfgJoins(
-			db
-				.selectFrom("Friendship")
-				.innerJoin("User", (join) =>
-					join.on((eb) =>
-						eb.or([
-							eb.and([
-								eb("Friendship.userOneId", "=", userId),
-								eb("User.id", "=", eb.ref("Friendship.userTwoId")),
-							]),
-							eb.and([
-								eb("Friendship.userTwoId", "=", userId),
-								eb("User.id", "=", eb.ref("Friendship.userOneId")),
-							]),
-						]),
-					),
-				)
-				.where((eb) =>
+	const friendRows = await withLfgJoins(
+		db
+			.selectFrom("Friendship")
+			.innerJoin("User", (join) =>
+				join.on((eb) =>
 					eb.or([
-						eb("Friendship.userOneId", "=", userId),
-						eb("Friendship.userTwoId", "=", userId),
+						eb.and([
+							eb("Friendship.userOneId", "=", userId),
+							eb("User.id", "=", eb.ref("Friendship.userTwoId")),
+						]),
+						eb.and([
+							eb("Friendship.userTwoId", "=", userId),
+							eb("User.id", "=", eb.ref("Friendship.userOneId")),
+						]),
 					]),
 				),
-		)
-			.select((eb) => [
-				"Friendship.id as friendshipId",
-				"Friendship.createdAt as friendshipCreatedAt",
-				eb
-					.case()
-					.when("Friendship.userOneId", "=", userId)
-					.then(eb.ref("Friendship.isPinnedByUserOne"))
-					.else(eb.ref("Friendship.isPinnedByUserTwo"))
-					.end()
-					.as("isPinned"),
-			])
-			.orderBy("Friendship.createdAt", "desc")
-			.execute(),
-		withLfgJoins(
-			db
-				.selectFrom("TeamMemberWithSecondary as myMembership")
-				.innerJoin("TeamMemberWithSecondary as otherMembership", (join) =>
-					join
-						.onRef("otherMembership.teamId", "=", "myMembership.teamId")
-						.on("otherMembership.userId", "!=", userId),
-				)
-				.innerJoin("User", "User.id", "otherMembership.userId")
-				.where("myMembership.userId", "=", userId),
-		).execute(),
-	]);
+			)
+			.where((eb) =>
+				eb.or([
+					eb("Friendship.userOneId", "=", userId),
+					eb("Friendship.userTwoId", "=", userId),
+				]),
+			),
+	)
+		.select((eb) => [
+			"Friendship.id as friendshipId",
+			"Friendship.createdAt as friendshipCreatedAt",
+			eb
+				.case()
+				.when("Friendship.userOneId", "=", userId)
+				.then(eb.ref("Friendship.isPinnedByUserOne"))
+				.else(eb.ref("Friendship.isPinnedByUserTwo"))
+				.end()
+				.as("isPinned"),
+		])
+		.orderBy("Friendship.createdAt", "desc")
+		.execute();
+	const teamMemberRows = await withLfgJoins(
+		db
+			.selectFrom("TeamMemberWithSecondary as myMembership")
+			.innerJoin("TeamMemberWithSecondary as otherMembership", (join) =>
+				join
+					.onRef("otherMembership.teamId", "=", "myMembership.teamId")
+					.on("otherMembership.userId", "!=", userId),
+			)
+			.innerJoin("User", "User.id", "otherMembership.userId")
+			.where("myMembership.userId", "=", userId),
+	).execute();
 
 	return [
 		...friendRows,

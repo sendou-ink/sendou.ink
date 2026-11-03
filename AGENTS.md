@@ -81,7 +81,7 @@
 - down migrations are not needed, only up migrations
 - if we are working on a branch by default we should add to the migration this branch added instead of creating a brand new one
 - `/app/db/tables.ts` contains all tables and columns available, see [database-schemas.mdx](./docs/site/src/content/docs/dev/database-schemas.mdx) for how columns should be typed (booleans, timestamps, JSON, enums, SQLite migration quirks)
-- don't wrap queries in `Promise.all`: `node:sqlite` is synchronous, so they can't run in parallel and it only adds noise; await them one after another
+- don't wrap queries in `Promise.all`: `node:sqlite` is synchronous, so they can't run in parallel and it only adds noise; await them one after another (enforced by the `no-promise-all-queries` Biome plugin; the other Kysely rules are listed in [repositories.mdx](./docs/site/src/content/docs/dev/repositories.mdx))
 - `db.sqlite3` is development database
 - `db-test.sqlite3` is the unit test database (blank sans migrations; gitignored and created/migrated automatically when unit tests run)
 - `db-sandbox.sqlite3` is a local, disposable copy of production data. Read, write, migrate, run servers against it or delete it freely — it is not connected to production in any way. `pnpm run sandbox:reset` restores it

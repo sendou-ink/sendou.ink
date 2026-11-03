@@ -59,8 +59,18 @@ export async function findAllOpenRoomIdsByUserId(
 			.execute()
 	).map((row) => row.tournamentTeamId);
 
-	const rooms = await Promise.all([
-		db
+	const tournamentMatchRooms = async (column: "opponentOne" | "opponentTwo") =>
+		tournamentTeamIds.length === 0
+			? []
+			: db
+					.selectFrom("TournamentMatch")
+					.select("TournamentMatch.chatRoomId as id")
+					.where(opponentTeamId(column), "in", tournamentTeamIds)
+					.where(openRoom("TournamentMatch.chatRoomId"))
+					.execute();
+
+	const rooms = [
+		await db
 			.selectFrom("GroupMember")
 			.innerJoin("Group", "Group.id", "GroupMember.groupId")
 			.select("Group.chatRoomId as id")
@@ -69,7 +79,7 @@ export async function findAllOpenRoomIdsByUserId(
 			.where(openRoom("Group.chatRoomId"))
 			.execute(),
 		// a side per query so both group id indexes are used, which an `or` denies
-		db
+		await db
 			.selectFrom("GroupMember")
 			.innerJoin("GroupMatch", "GroupMatch.alphaGroupId", "GroupMember.groupId")
 			.select("GroupMatch.chatRoomId as id")
@@ -77,7 +87,7 @@ export async function findAllOpenRoomIdsByUserId(
 			.where("GroupMember.createdAt", ">", joinedSince)
 			.where(openRoom("GroupMatch.chatRoomId"))
 			.execute(),
-		db
+		await db
 			.selectFrom("GroupMember")
 			.innerJoin("GroupMatch", "GroupMatch.bravoGroupId", "GroupMember.groupId")
 			.select("GroupMatch.chatRoomId as id")
@@ -87,17 +97,9 @@ export async function findAllOpenRoomIdsByUserId(
 			.execute(),
 		// a column per query so each opponent's expression index is used directly,
 		// mirroring the alpha/bravo split above
-		...(["opponentOne", "opponentTwo"] as const).map((column) =>
-			tournamentTeamIds.length === 0
-				? []
-				: db
-						.selectFrom("TournamentMatch")
-						.select("TournamentMatch.chatRoomId as id")
-						.where(opponentTeamId(column), "in", tournamentTeamIds)
-						.where(openRoom("TournamentMatch.chatRoomId"))
-						.execute(),
-		),
-		db
+		await tournamentMatchRooms("opponentOne"),
+		await tournamentMatchRooms("opponentTwo"),
+		await db
 			.selectFrom("TournamentTeamMember")
 			.innerJoin(
 				"TournamentTeam",
@@ -108,14 +110,14 @@ export async function findAllOpenRoomIdsByUserId(
 			.where("TournamentTeamMember.userId", "=", userId)
 			.where(openRoom("TournamentTeam.chatRoomId"))
 			.execute(),
-		db
+		await db
 			.selectFrom("ScrimPostUser")
 			.innerJoin("ScrimPost", "ScrimPost.id", "ScrimPostUser.scrimPostId")
 			.select("ScrimPost.chatRoomId as id")
 			.where("ScrimPostUser.userId", "=", userId)
 			.where(openRoom("ScrimPost.chatRoomId"))
 			.execute(),
-		db
+		await db
 			.selectFrom("ScrimPostRequestUser")
 			.innerJoin(
 				"ScrimPostRequest",
@@ -128,14 +130,14 @@ export async function findAllOpenRoomIdsByUserId(
 			.where("ScrimPostRequest.isAccepted", "=", 1)
 			.where(openRoom("ScrimPost.chatRoomId"))
 			.execute(),
-		db
+		await db
 			.selectFrom("LobbyParticipant")
 			.innerJoin("Lobby", "Lobby.id", "LobbyParticipant.lobbyId")
 			.select("Lobby.chatRoomId as id")
 			.where("LobbyParticipant.userId", "=", userId)
 			.where(openRoom("Lobby.chatRoomId"))
 			.execute(),
-		db
+		await db
 			.selectFrom("LobbyLeftUser")
 			.innerJoin("Lobby", "Lobby.id", "LobbyLeftUser.lobbyId")
 			.select("Lobby.chatRoomId as id")
@@ -143,7 +145,7 @@ export async function findAllOpenRoomIdsByUserId(
 			.where(openRoom("Lobby.chatRoomId"))
 			.execute(),
 		// the team chat of the side the user plays in the latest set of the lobby they're in the room of
-		db
+		await db
 			.selectFrom("LobbyParticipant")
 			.innerJoin("Lobby", "Lobby.id", "LobbyParticipant.lobbyId")
 			.innerJoin("LobbySetParticipant", (join) =>
@@ -178,7 +180,7 @@ export async function findAllOpenRoomIdsByUserId(
 				),
 			)
 			.execute(),
-	]);
+	];
 
 	return R.unique(
 		rooms

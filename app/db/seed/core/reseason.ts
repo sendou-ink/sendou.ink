@@ -5,7 +5,9 @@ import { db } from "~/db/sql";
  * season, so backdated matches still leave their results in the ongoing one.
  */
 export async function reseason(season: number) {
+	// biome-ignore-start lint/plugin: moves every row by design
 	await db.updateTable("Skill").set({ season }).execute();
 	await db.updateTable("MapResult").set({ season }).execute();
 	await db.updateTable("PlayerResult").set({ season }).execute();
+	// biome-ignore-end lint/plugin: moves every row by design
 }
