@@ -2,14 +2,21 @@ import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
 import * as v from "valibot";
+import { IS_DEV_BUILD } from "~/utils/dev-build";
 import { ARTICLES_FOLDER_PATH } from "../articles-constants";
 import { articleDataSchema } from "../articles-schemas.server";
 
 const RESOLVED_ARTICLES_DIR = path.resolve(ARTICLES_FOLDER_PATH);
 
+let validFileNames: Set<string> | null = null;
+
 export function articleBySlug(slug: string) {
-	const validFiles = fs.globSync("*.md", { cwd: RESOLVED_ARTICLES_DIR });
-	if (!validFiles.includes(`${slug}.md`)) return null;
+	if (!validFileNames || IS_DEV_BUILD) {
+		validFileNames = new Set(
+			fs.globSync("*.md", { cwd: RESOLVED_ARTICLES_DIR }),
+		);
+	}
+	if (!validFileNames.has(`${slug}.md`)) return null;
 
 	try {
 		const rawMarkdown = fs.readFileSync(
