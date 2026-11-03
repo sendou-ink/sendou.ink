@@ -1,0 +1,87 @@
+{
+  "event": "Scoreboard",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 2,
+    "stageLabel": "Hagglefish Market",
+    "matchScores": [
+      100,
+      0
+    ],
+    "players": [
+      {
+        "name": "SOULFLY",
+        "weaponId": 211,
+        "paint": 560,
+        "ka": 12,
+        "d": 5,
+        "s": 2
+      },
+      {
+        "name": "crystl!!<3",
+        "weaponId": 3041,
+        "paint": 1664,
+        "ka": 3,
+        "d": 3,
+        "s": 5
+      },
+      {
+        "name": "camp",
+        "weaponId": 6001,
+        "paint": 1226,
+        "ka": 7,
+        "d": 2,
+        "s": 5
+      },
+      {
+        "name": "sleepy af",
+        "weaponId": 60,
+        "paint": 1276,
+        "ka": 7,
+        "d": 7,
+        "s": 5
+      },
+      {
+        "name": "mel0",
+        "weaponId": 2030,
+        "paint": 1114,
+        "ka": 8,
+        "d": 2,
+        "s": 6
+      },
+      {
+        "name": "wak",
+        "weaponId": 3011,
+        "paint": 1308,
+        "ka": 9,
+        "d": 8,
+        "s": 5
+      },
+      {
+        "name": "Riel >",
+        "weaponId": 4040,
+        "paint": 1228,
+        "ka": 8,
+        "d": 3,
+        "s": 5
+      },
+      {
+        "name": "Cαctus",
+        "weaponId": 50,
+        "paint": 1013,
+        "ka": 4,
+        "d": 5,
+        "s": 5
+      }
+    ],
+    "povIndex": 1
+  },
+  "options": {
+    "skipFields": [
+      "players.4.name",
+      "players.7.name"
+    ],
+    "notes": "1080p capture of a Private Battle results screen, user report (2026-11-03). Live misread: players.1.name crystl!!<3 read crystl¡!<3 (the first ! after the l as ¡); the same player in another game of the set reads crystl!!<3. players.4.name skipped: the last glyph (read 0) could be 0 or O at this size. players.7.name skipped: the second glyph (read α) could be α or ∝."
+  }
+}

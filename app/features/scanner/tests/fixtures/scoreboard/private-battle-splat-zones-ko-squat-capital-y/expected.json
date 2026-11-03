@@ -1,0 +1,86 @@
+{
+  "event": "Scoreboard",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 24,
+    "stageLabel": "Urchin Underpass",
+    "matchScores": [
+      100,
+      0
+    ],
+    "players": [
+      {
+        "name": "$5 Nameka",
+        "weaponId": 1020,
+        "paint": 758,
+        "ka": 9,
+        "d": 2,
+        "s": 3
+      },
+      {
+        "name": "FD×TM4ST3R",
+        "weaponId": 10,
+        "paint": 853,
+        "ka": 8,
+        "d": 3,
+        "s": 3
+      },
+      {
+        "name": "<・`·> Blop",
+        "weaponId": 7011,
+        "paint": 843,
+        "ka": 4,
+        "d": 0,
+        "s": 2
+      },
+      {
+        "name": "Megidolaon",
+        "weaponId": 210,
+        "paint": 455,
+        "ka": 8,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "name": "camp",
+        "weaponId": 6001,
+        "paint": 649,
+        "ka": 5,
+        "d": 4,
+        "s": 2
+      },
+      {
+        "name": "SOULFLY",
+        "weaponId": 211,
+        "paint": 327,
+        "ka": 4,
+        "d": 6,
+        "s": 1
+      },
+      {
+        "name": "crystl!!<3",
+        "weaponId": 3041,
+        "paint": 1039,
+        "ka": 3,
+        "d": 4,
+        "s": 4
+      },
+      {
+        "name": "sleepy af",
+        "weaponId": 80,
+        "paint": 616,
+        "ka": 1,
+        "d": 6,
+        "s": 3
+      }
+    ],
+    "povIndex": 6
+  },
+  "options": {
+    "skipFields": [
+      "players.2.name"
+    ],
+    "notes": "1080p capture of a Private Battle results screen, user report (2026-11-03). Live misread: players.5.name SOULFLY read SOULFLu (the capital Y, whose arms are drawn as a short wide cup, as u); the same player in another game of the set reads SOULFLY. players.2.name skipped: the small marks between < and > (read ・`·) are ambiguous dots at this size."
+  }
+}

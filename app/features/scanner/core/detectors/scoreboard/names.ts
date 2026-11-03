@@ -418,17 +418,29 @@ function cornerAsymmetry(
  * a T's sits centered where an r's hugs the left (ink centroid 0.44+ of the
  * width vs 0.42 and under across fixtures), and a Y ends in a lone stem where
  * a u's bowl spans the glyph (bottom ink width 0.40 and under vs 0.57+). Only
- * the lowercase read of a near-tie is re-decided.
+ * the lowercase read of a near-tie is re-decided. BlitzMain draws the Y's arms
+ * as a wide cup, which a 'u' template explains well enough to lead by more
+ * ("SOULFLY" read "SOULFLu" 0.065 ahead), so that tie runs wider.
  */
 const STEM_TWINS: {
 	read: string;
 	twin: string;
+	margin: number;
 	isTwin: (bottom: { centroid: number; width: number }) => boolean;
 }[] = [
-	{ read: "r", twin: "T", isTwin: (bottom) => bottom.centroid >= 0.43 },
-	{ read: "u", twin: "Y", isTwin: (bottom) => bottom.width < 0.5 },
+	{
+		read: "r",
+		twin: "T",
+		margin: 0.05,
+		isTwin: (bottom) => bottom.centroid >= 0.43,
+	},
+	{
+		read: "u",
+		twin: "Y",
+		margin: 0.1,
+		isTwin: (bottom) => bottom.width < 0.5,
+	},
 ];
-const STEM_SCORE_MARGIN = 0.05;
 const STEM_BOTTOM_FRACTION = 0.3;
 
 function resolveStemTwins(
@@ -439,7 +451,10 @@ function resolveStemTwins(
 	const contested = (c: RecognizedChar) => {
 		const rule = STEM_TWINS.find((r) => r.read === c.char);
 		const twin = c.candidates?.find(
-			(k) => k.char === rule?.twin && c.score - k.score <= STEM_SCORE_MARGIN,
+			(k) =>
+				rule !== undefined &&
+				k.char === rule.twin &&
+				c.score - k.score <= rule.margin,
 		);
 		return rule && twin ? { rule, twin } : undefined;
 	};
@@ -574,9 +589,11 @@ function maxLeftIndent(
  * under it. Measured on those rows the dip falls 40-66% under the stem and the
  * dot climbs 0.2+ of the stem level back out of it; a bar or an 'r' stays
  * level to the baseline. The stem must also start at the top of the line,
- * where an 'r' starts at the x-height.
+ * where an 'r' starts at the x-height. A soft gap can also lose the stem to
+ * the inverted '¡' ("crystl!!<3" read "crystl¡!<3"), but a real '¡' has its
+ * gap at the top and runs solid down to the baseline, so it shows no notch.
  */
-const EXCLAMATION_STEM_READS = new Set([...BAR_CHARS, "r", "ι", "ィ"]);
+const EXCLAMATION_STEM_READS = new Set([...BAR_CHARS, "r", "ι", "ィ", "¡"]);
 const EXCLAMATION_MIN_NOTCH_DEPTH = 0.3;
 const EXCLAMATION_MIN_DOT_RISE = 0.15;
 /** the dip sits below the stem's upper half */
