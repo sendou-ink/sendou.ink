@@ -1,5 +1,5 @@
 import cachified from "@epic-web/cachified";
-import { subDays } from "date-fns";
+import { hoursToMilliseconds, subDays } from "date-fns";
 import * as R from "remeda";
 import { Config } from "~/config";
 import { mostRecentArticles } from "~/features/articles/core/list.server";
@@ -34,7 +34,7 @@ import type {
 	MainWeaponId,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import { cache, ttl } from "~/utils/cache.server";
 import {
 	databaseTimestampNow,
 	databaseTimestampToDate,
@@ -243,7 +243,7 @@ type DataOf<R> =
 			? D
 			: never;
 
-export type FeedItemData<T extends FeedItemType> = DataOf<
+type FeedItemData<T extends FeedItemType> = DataOf<
 	Awaited<ReturnType<(typeof BUILDERS)[T]>>
 >;
 
@@ -803,7 +803,7 @@ function leaderboardSnapshot({ season, at }: { season: number; at: number }) {
 	return cachified({
 		key: `feed-leaderboard-snapshot-${season}-${at}`,
 		cache,
-		ttl: ttl(IN_MILLISECONDS.TWO_DAYS),
+		ttl: ttl(hoursToMilliseconds(48)),
 		async getFreshValue() {
 			const players = await LeaderboardRepository.findUserSPLeaderboard(
 				season,

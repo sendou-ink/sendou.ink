@@ -1,6 +1,6 @@
 import type { TierName } from "~/features/mmr/mmr-constants";
 
-export type FeedPlaySource = "SQ" | "TOURNAMENT";
+type FeedPlaySource = "SQ" | "TOURNAMENT";
 
 export interface FeedTier {
 	name: TierName;

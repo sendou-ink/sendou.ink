@@ -1014,7 +1014,7 @@ interface Friendship {
 }
 
 /** Something a user did that their friends' feeds show, derived from their play history by the feed indexer routine. */
-export interface FeedEvent {
+interface FeedEvent {
 	id: GeneratedAlways<number>;
 	userId: number;
 	type: FeedEventType;
@@ -1023,7 +1023,7 @@ export interface FeedEvent {
 }
 
 /** What a user thought of a feed post, one row per post they gave feedback on. */
-export interface FeedFeedback {
+interface FeedFeedback {
 	id: GeneratedAlways<number>;
 	userId: number;
 	itemType: FeedItemType;
@@ -1035,7 +1035,7 @@ export interface FeedFeedback {
 }
 
 /** A comment on a feed post, shared by everyone whose feed has the post. */
-export interface FeedComment {
+interface FeedComment {
 	id: GeneratedAlways<number>;
 	/** `id` of the post, see `FeedItemIds` */
 	itemId: string;
@@ -1047,7 +1047,7 @@ export interface FeedComment {
 }
 
 /** A "Booyah!" on a feed post. */
-export interface FeedReaction {
+interface FeedReaction {
 	/** `id` of the post, see `FeedItemIds` */
 	itemId: string;
 	userId: number;
@@ -1055,7 +1055,7 @@ export interface FeedReaction {
 }
 
 /** How far the feed indexer has gotten in a source, a timestamp or a row id depending on the source. */
-export interface FeedIndexerCursor {
+interface FeedIndexerCursor {
 	source: string;
 	position: number;
 }

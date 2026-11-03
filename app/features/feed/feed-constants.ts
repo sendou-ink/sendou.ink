@@ -14,7 +14,7 @@ export const FEED_CATEGORIES = [
 	{ id: "COMMUNITY", label: "Community", navIcon: "u" },
 ] as const;
 
-export type FeedCategory = (typeof FEED_CATEGORIES)[number]["id"];
+type FeedCategory = (typeof FEED_CATEGORIES)[number]["id"];
 
 export type FeedAudience =
 	| "SELF"
