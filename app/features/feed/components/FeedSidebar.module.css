@@ -1,0 +1,162 @@
+.sidebar {
+	display: grid;
+	align-content: start;
+	gap: var(--s-4);
+	min-width: 0;
+}
+
+.panel {
+	overflow: hidden;
+	background-color: var(--color-bg-high);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-box);
+
+	& > header {
+		margin: 0;
+		padding-inline: var(--s-1-5) var(--s-3);
+		border-top: 0;
+	}
+}
+
+.endsIn {
+	color: var(--color-text-high);
+	white-space: nowrap;
+}
+
+.progress {
+	height: 3px;
+	background-color: var(--color-bg-higher);
+}
+
+.progressBar {
+	height: 100%;
+	background: linear-gradient(
+		90deg,
+		color-mix(in oklch, var(--color-fill-accent) 40%, transparent),
+		var(--color-fill-accent)
+	);
+	border-radius: 0 var(--radius-full) var(--radius-full) 0;
+}
+
+.rotations {
+	display: grid;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.rotation {
+	display: grid;
+	gap: var(--s-2);
+	padding: var(--s-3);
+
+	& + & {
+		border-top: 1px solid var(--color-border);
+	}
+}
+
+.rotationHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	min-width: 0;
+	font-size: var(--font-xs);
+	white-space: nowrap;
+}
+
+.rotationType {
+	font-weight: var(--weight-bold);
+}
+
+.rotationMode {
+	margin-left: auto;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--color-text-high);
+}
+
+.stages {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--s-1-5);
+}
+
+.stage {
+	position: relative;
+	overflow: hidden;
+	aspect-ratio: 16 / 9;
+	border-radius: max(2px, calc(var(--radius-box) - var(--s-3)));
+	background-color: var(--color-bg-higher);
+}
+
+.stageImageContainer {
+	display: contents;
+}
+
+.stageImage {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.stageName {
+	position: absolute;
+	inset: auto 0 0;
+	padding: var(--s-3) var(--s-1-5) var(--s-1);
+	overflow: hidden;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: white;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	background: linear-gradient(transparent, rgb(0 0 0 / 0.75));
+}
+
+.next {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	min-width: 0;
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	white-space: nowrap;
+}
+
+.nextLabel {
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.nextStages {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.credit {
+	display: block;
+	padding: var(--s-2) var(--s-3);
+	font-size: var(--font-3xs);
+	color: var(--color-text-high);
+	text-align: right;
+	border-top: 1px solid var(--color-border);
+}
+
+.streams {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	padding: var(--s-2) var(--s-1);
+
+	& a:hover {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.empty {
+	padding: var(--s-1) var(--s-2);
+	font-size: var(--font-2xs);
+	font-style: italic;
+	color: var(--color-text-high);
+}

@@ -1,7 +1,10 @@
 import cachified from "@epic-web/cachified";
 import { hoursToMilliseconds } from "date-fns";
+import type { LoaderFunctionArgs } from "react-router";
 import type { Tables } from "~/db/tables";
 import { getUser } from "~/features/auth/core/user.server";
+import * as FeedPage from "~/features/feed/core/FeedPage.server";
+import { feedSearchParams } from "~/features/feed/feed-search-params";
 import * as Changelog from "~/features/front-page/core/Changelog.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
@@ -14,10 +17,25 @@ import type { SerializeFrom } from "~/utils/remix";
 import { avatarUrl, teamPage, userPage } from "~/utils/urls";
 import * as ShowcaseTournaments from "../core/ShowcaseTournaments.server";
 
-export type FrontPageLoaderData = SerializeFrom<typeof loader>;
+export type FrontPageLoaderData = Extract<
+	SerializeFrom<typeof loader>,
+	{ feed: null }
+>;
 
-export const loader = async () => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = getUser();
+
+	if (user?.roles.includes("FEED_TESTER") && user.preferences?.newHomePage) {
+		const { viewAs, test } = feedSearchParams.parse(request);
+
+		return {
+			feed: await FeedPage.load({
+				viewerId: viewAs ?? user.id,
+				userId: user.id,
+				mode: test ? "TEST" : "REAL",
+			}),
+		};
+	}
 
 	const [tournaments, changelog, leaderboards, rotations, weaponPool] =
 		await Promise.all([
@@ -41,6 +59,7 @@ export const loader = async () => {
 		]);
 
 	return {
+		feed: null,
 		tournaments,
 		changelog,
 		leaderboards,

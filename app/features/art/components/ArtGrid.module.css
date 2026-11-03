@@ -42,6 +42,62 @@
 	cursor: zoom-out;
 }
 
+.lightboxBodySwipeable {
+	touch-action: pan-y pinch-zoom;
+	user-select: none;
+}
+
+.lightboxCounter {
+	position: absolute;
+	inset-block-start: calc(var(--s-4) + env(safe-area-inset-top, 0px));
+	inset-inline-start: 50%;
+	translate: -50% 0;
+	padding: var(--s-1) var(--s-2-5);
+	border-radius: var(--radius-full);
+	background-color: rgba(0, 0, 0, 0.55);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	font-variant-numeric: tabular-nums;
+	pointer-events: none;
+}
+
+.lightboxNav {
+	position: absolute;
+	inset-block-start: 50%;
+	translate: 0 -50%;
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--radius-full);
+	background-color: rgba(0, 0, 0, 0.55);
+	color: #fff;
+	cursor: pointer;
+
+	&:hover {
+		background-color: rgba(0, 0, 0, 0.75);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
+
+	& svg {
+		width: 24px;
+		height: 24px;
+	}
+}
+
+.lightboxNavPrevious {
+	inset-inline-start: var(--s-4);
+}
+
+.lightboxNavNext {
+	inset-inline-end: var(--s-4);
+}
+
 .lightboxFigure {
 	--lightbox-max-width: calc(100vw - 2 * var(--s-4));
 	--lightbox-max-height: calc(100dvh - 2 * var(--s-4));

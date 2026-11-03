@@ -14,6 +14,7 @@ import { DeleteOldVoiceTelemetryRoutine } from "./deleteOldVoiceTelemetry";
 import { DeleteOrphanArtTagsRoutine } from "./deleteOrphanArtTags";
 import { EvictStaleRunningTournamentsRoutine } from "./evictStaleRunningTournaments";
 import { ExpireReadyChecksRoutine } from "./expireReadyChecks";
+import { IndexFeedEventsRoutine } from "./indexFeedEvents";
 import { LobbiesRoutine } from "./lobbies";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 import { NotifyLeagueMatchStartingSoonRoutine } from "./notifyLeagueMatchStartingSoon";
@@ -76,4 +77,5 @@ export const everyTwoMinutes = [
 	SyncLiveStreamsRoutine,
 	ExpireReadyChecksRoutine,
 	LobbiesRoutine,
+	IndexFeedEventsRoutine,
 ];

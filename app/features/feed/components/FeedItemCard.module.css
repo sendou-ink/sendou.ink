@@ -1,0 +1,221 @@
+.post {
+	display: grid;
+	grid-template-columns: 44px minmax(0, 1fr);
+	gap: var(--s-3);
+	padding: var(--s-3) var(--s-4) var(--s-1);
+	border-bottom: 1px solid var(--color-border);
+	transition: background-color 120ms;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.postNotice {
+	padding-bottom: var(--s-4);
+}
+
+.postLinked {
+	cursor: pointer;
+
+	&:hover:not(:has(a:not(.action):hover, button:not(.action):hover)) {
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-high) 50%,
+			transparent
+		);
+	}
+}
+
+.postFeedback {
+	align-items: center;
+	padding-block: var(--s-3);
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	background-color: var(--color-bg-accent);
+}
+
+.feedbackIcon {
+	color: var(--color-fg-accent);
+}
+
+.feedbackText {
+	font-size: var(--font-sm);
+}
+
+.feedbackActions {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.feedbackComment {
+	grid-column: 2 / -1;
+	display: grid;
+	gap: var(--s-2);
+	justify-items: start;
+}
+
+.feedbackCommentInput {
+	width: 100%;
+	min-height: 4rem;
+	font-size: var(--font-sm);
+}
+
+.feedbackSent {
+	margin: 0;
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.avatar {
+	& img {
+		width: 44px;
+		height: 44px;
+	}
+}
+
+.main {
+	display: grid;
+	gap: var(--s-1-5);
+	min-width: 0;
+}
+
+.meta {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	margin: 0;
+	min-width: 0;
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	white-space: nowrap;
+}
+
+.metaIcon {
+	flex-shrink: 0;
+}
+
+.community {
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.time {
+	color: inherit;
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+.metaEnd {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	margin-left: auto;
+}
+
+.headerAction {
+	margin-block: calc(var(--s-1) * -1);
+}
+
+.feedbackTrigger {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	margin-block: calc(var(--s-1) * -1);
+	padding: var(--s-1) var(--s-1-5);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	background: none;
+	border: 0;
+	border-radius: var(--radius-full);
+	cursor: pointer;
+
+	&:hover {
+		color: var(--color-text);
+	}
+}
+
+.text {
+	margin: 0;
+	font-size: 0.95rem;
+	line-height: 1.45;
+	overflow-wrap: anywhere;
+	text-wrap: pretty;
+
+	& b {
+		font-weight: var(--weight-semi);
+	}
+}
+
+.body {
+	display: grid;
+	gap: var(--s-2-5);
+	min-width: 0;
+	margin-top: var(--s-1);
+}
+
+.postAction {
+	justify-self: start;
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	gap: var(--s-8);
+	margin-left: calc(var(--s-2) * -1);
+}
+
+.action {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	min-height: 34px;
+	padding: 0 var(--s-2);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	text-decoration: none;
+	background: none;
+	border: 0;
+	border-radius: var(--radius-full);
+	cursor: pointer;
+
+	&:hover {
+		color: var(--color-text);
+	}
+}
+
+.actionStatic {
+	cursor: default;
+
+	&:hover {
+		color: var(--color-text-high);
+	}
+}
+
+.reacted {
+	color: var(--color-error);
+
+	&:hover {
+		color: var(--color-error);
+	}
+}
+
+.math {
+	margin-bottom: var(--s-2);
+	padding: var(--s-1-5) var(--s-2);
+	font-family: monospace;
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-field);
+
+	& b {
+		color: var(--color-fg-accent);
+	}
+}

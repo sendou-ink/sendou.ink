@@ -1,0 +1,44 @@
+.trophySlot {
+	flex: none;
+	width: 100px;
+	aspect-ratio: 1 / 1;
+}
+
+.medalCounts {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--s-2);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.medalCount {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.emptySlot {
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	border: 2px dashed var(--color-text-high);
+}
+
+.placingTop {
+	color: var(--color-fg-second);
+}
+
+.chain {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-xs);
+
+	& span {
+		padding: 2px var(--s-2);
+		border-radius: var(--radius-selector);
+		background-color: var(--color-bg-higher);
+	}
+}

@@ -355,9 +355,12 @@ export function tournamentMembersCount(
 export function latestSkillPerSeason<By extends "userId" | "identifier">({
 	season,
 	by,
+	before,
 }: {
 	season: number;
 	by: By;
+	/** Only rows created at or before this database timestamp, for the standings at a past moment */
+	before?: number;
 }) {
 	// Relies on SQLite's bare column rule: with `max()` the other columns come from the max row.
 	// A self-join against a `max(id)` subquery took ~12s when the planner misjudged a fresh
@@ -373,6 +376,9 @@ export function latestSkillPerSeason<By extends "userId" | "identifier">({
 		])
 		.where("Skill.season", "=", season)
 		.where(`Skill.${by}`, "is not", null)
+		.$if(before !== undefined, (qb) =>
+			qb.where("Skill.createdAt", "<=", before!),
+		)
 		.groupBy(`Skill.${by}`);
 }
 
@@ -453,6 +459,25 @@ export function visibleTo({
 				where "Friendship"."userOneId" = min("ContentVisibility"."friendsOfUserId", ${viewerId})
 					and "Friendship"."userTwoId" = max("ContentVisibility"."friendsOfUserId", ${viewerId})
 			)
+		)
+	)`;
+}
+
+/** Whether the entity's visibility schedule reaches the viewer at `now` through an association they are a member of. */
+export function visibleThroughAssociationTo({
+	entity,
+	viewerId,
+	now,
+}: {
+	entity: VisibilityEntity;
+	viewerId: number;
+	now: number;
+}) {
+	return sql<SqlBool>`exists (
+		select 1 from ${visibilityRowsOf(entity, now)}
+		and "ContentVisibility"."associationId" in (
+			select "AssociationMember"."associationId" from "AssociationMember"
+			where "AssociationMember"."userId" = ${viewerId}
 		)
 	)`;
 }

@@ -13,6 +13,7 @@ import {
 import * as ThemePalette from "~/features/theme/core/ThemePalette";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
+import { requireRole } from "~/modules/permissions/guards.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { errorToast } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
@@ -58,6 +59,14 @@ export const action = defineAction(
 			case "UPDATE_VOICE_PUSH_TO_TALK": {
 				await UserRepository.updateOwnPreferences({
 					voicePushToTalk: body.newValue,
+				});
+				break;
+			}
+			case "UPDATE_NEW_HOME_PAGE": {
+				requireRole("FEED_TESTER");
+
+				await UserRepository.updateOwnPreferences({
+					newHomePage: body.newValue,
 				});
 				break;
 			}

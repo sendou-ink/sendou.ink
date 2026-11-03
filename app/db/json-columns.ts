@@ -8,6 +8,7 @@ export const JSON_COLUMNS: ReadonlySet<string> = new Set([
 	"Build.abilities",
 	"Build.modes",
 	"CalendarEvent.tags",
+	"FeedEvent.data",
 	"IngestedMatch.data",
 	"LFGPost.languages",
 	"Lobby.modes",

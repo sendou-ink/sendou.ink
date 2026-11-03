@@ -13,6 +13,18 @@ import { RECENT_PATCHES } from "~/features/builds/builds-constants";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import * as ChatRoomResolver from "~/features/chat/ChatRoomResolver.server";
+import * as FeedCommentRepository from "~/features/feed/FeedCommentRepository.server";
+import * as FeedEventRepository from "~/features/feed/FeedEventRepository.server";
+import * as FeedReactionRepository from "~/features/feed/FeedReactionRepository.server";
+import * as FeedRepository from "~/features/feed/FeedRepository.server";
+import {
+	FEED_EVENT_MAX_RETENTION_DAYS,
+	FEED_ITEM_TYPES,
+	FEED_MAX_AGE_HALF_LIVES,
+	FEED_ROTATION_LOOKBACK_WEEKS,
+	FEED_SCRIM_HISTORY_DAYS,
+	FEED_SCRIM_LOOKING_NOW_HOURS,
+} from "~/features/feed/feed-constants";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
@@ -60,10 +72,26 @@ import {
 	weaponIdToCategory,
 } from "~/modules/in-game-lists/weapon-ids";
 import { LUTI_NAME_PREFIX } from "~/routines/computeLutiDivs";
-import { dateToDatabaseTimestamp, dateToYYYYMMDD } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+	dateToYYYYMMDD,
+} from "~/utils/dates";
 import type { Fixtures } from "./fixtures";
 
 const SEARCH_QUERY = { query: "s", limit: 25 };
+const HOUR = 60 * 60;
+const DAY = 24 * HOUR;
+/** Look-back windows of `FeedItems.server.ts` */
+const FEED_RECENT_ACTIVITY_DAYS = 30;
+const FEED_SERIES_STANDINGS_DAYS = 90;
+const FEED_HIGH_XP = 3000;
+const FEED_SITE_TOTALS: FeedRepository.SiteTotal[] = [
+	"USERS",
+	"SQ_SETS",
+	"TOURNAMENTS",
+	"ART",
+];
 const LFG_NO_FILTERS = {
 	type: null,
 	weapons: [],
@@ -478,6 +506,517 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("ChatRoomResolver.findAllByUserId", fx.heavyChatUsers, (chatUsers) =>
 		ChatRoomResolver.findAllByUserId(chatUsers.busiest.id),
+	);
+
+	// FeedRepository
+	add("FeedRepository.findUsersByIds", fx.manyUserIds, (userIds) =>
+		FeedRepository.findUsersByIds(userIds),
+	);
+	add("FeedRepository.findTournamentsByIds", fx.recentTournamentIds, (ids) =>
+		FeedRepository.findTournamentsByIds(ids),
+	);
+	add(
+		"FeedRepository.findTournamentTeamsByIds",
+		fx.manyTournamentTeamIds,
+		(ids) => FeedRepository.findTournamentTeamsByIds(ids),
+	);
+	add("FeedRepository.findTeamsByIds", fx.manyTeamIds, (teamIds) =>
+		FeedRepository.findTeamsByIds(teamIds),
+	);
+	add("FeedRepository.findCommentAuthorsByIds", fx.manyUserIds, (userIds) =>
+		FeedRepository.findCommentAuthorsByIds(userIds),
+	);
+	addStatic("FeedRepository.findLatestGroupMatchCreatedAt", () =>
+		FeedRepository.findLatestGroupMatchCreatedAt(),
+	);
+	add("FeedRepository.findLatestSkillCreatedAt", fx.feedSq, (sq) =>
+		FeedRepository.findLatestSkillCreatedAt(sq),
+	);
+	add(
+		"FeedRepository.findMatchTimesByUserId",
+		both(fx.feedSq, fx.feedNow),
+		([sq, now]) =>
+			FeedRepository.findMatchTimesByUserId({
+				userId: sq.userId,
+				after: now - FEED_ROTATION_LOOKBACK_WEEKS * 7 * DAY,
+			}),
+	);
+	add("FeedRepository.findMapResultsByUserId", fx.feedSq, (sq) =>
+		FeedRepository.findMapResultsByUserId(sq),
+	);
+	add("FeedRepository.findTopCloseRivalryOfUsers", fx.feedSq, (sq) =>
+		FeedRepository.findTopCloseRivalryOfUsers({
+			userIds: [sq.userId],
+			season: sq.season,
+		}),
+	);
+	add(
+		"FeedRepository.findTopTeammatesByUserId",
+		fx.topTeammatesUserId,
+		(userId) => FeedRepository.findTopTeammatesByUserId(userId),
+	);
+	add("FeedRepository.findWeaponUsageCounts", fx.feedNow, (now) =>
+		FeedRepository.findWeaponUsageCounts({ from: now - 7 * DAY, to: now }),
+	);
+	add("FeedRepository.findAllLobbiesEndedAfter", fx.feedNow, (now) =>
+		FeedRepository.findAllLobbiesEndedAfter(
+			now - FEED_RECENT_ACTIVITY_DAYS * DAY,
+		),
+	);
+	add(
+		"FeedRepository.findTournamentMatchesByTeamId",
+		both(fx.heavyTournamentId, fx.heavyTournamentTeamId),
+		([tournamentId, tournamentTeamId]) =>
+			FeedRepository.findTournamentMatchesByTeamId({
+				tournamentId,
+				tournamentTeamId,
+			}),
+	);
+	add(
+		"FeedRepository.findFinishedMatchesByTournamentIds",
+		fx.recentTournamentIds,
+		(ids) => FeedRepository.findFinishedMatchesByTournamentIds(ids),
+	);
+	add(
+		"FeedRepository.findSeedsByTournamentTeamIds",
+		fx.manyTournamentTeamIds,
+		(ids) => FeedRepository.findSeedsByTournamentTeamIds(ids),
+	);
+	add("FeedRepository.findAllUpcomingRegistrations", fx.feedNow, (now) =>
+		FeedRepository.findAllUpcomingRegistrations(now),
+	);
+	add("FeedRepository.findAllLookingTournamentTeams", fx.feedNow, (now) =>
+		FeedRepository.findAllLookingTournamentTeams(now),
+	);
+	add(
+		"FeedRepository.findLatestOrganizationTournamentStartingBetween",
+		fx.feedNow,
+		(now) =>
+			FeedRepository.findLatestOrganizationTournamentStartingBetween({
+				from: now + 7 * DAY,
+				to: now + 60 * DAY,
+			}),
+	);
+	add(
+		"FeedRepository.findAllOrganizationTournamentsAddedAfter",
+		fx.feedNow,
+		(now) =>
+			FeedRepository.findAllOrganizationTournamentsAddedAfter(
+				now - FEED_EVENT_MAX_RETENTION_DAYS * DAY,
+			),
+	);
+	add(
+		"FeedRepository.findOrganizationIdsPlayedByUserId",
+		both(fx.heavyUser, fx.feedNow),
+		([user, now]) =>
+			FeedRepository.findOrganizationIdsPlayedByUserId({
+				userId: user.id,
+				after: now - 365 * DAY,
+			}),
+	);
+	addStatic("FeedRepository.findSeriesWithLeaderboard", () =>
+		FeedRepository.findSeriesWithLeaderboard(),
+	);
+	add(
+		"FeedRepository.findSeriesEventsWithResults",
+		both(fx.heavySeries, fx.feedNow),
+		([series, now]) =>
+			FeedRepository.findSeriesEventsWithResults({
+				...series,
+				from: now - FEED_SERIES_STANDINGS_DAYS * DAY,
+				to: now,
+			}),
+	);
+	add(
+		"FeedRepository.findResultUserIds",
+		both(fx.recentTournamentIds, fx.resultsEventId),
+		([tournamentIds, eventId]) =>
+			FeedRepository.findResultUserIds({
+				tournamentIds,
+				calendarEventIds: [eventId],
+			}),
+	);
+	add("FeedRepository.findOrganizationById", fx.heavyOrg, (org) =>
+		FeedRepository.findOrganizationById(org.id),
+	);
+	addStatic("FeedRepository.findLatestTournamentMatchVods", () =>
+		FeedRepository.findLatestTournamentMatchVods(),
+	);
+	add(
+		"FeedRepository.findAllTournamentBadgeOwnersStartedAfter",
+		fx.feedNow,
+		(now) =>
+			FeedRepository.findAllTournamentBadgeOwnersStartedAfter(
+				now - FEED_EVENT_MAX_RETENTION_DAYS * DAY,
+			),
+	);
+	addStatic("FeedRepository.findLatestTrophyOwners", () =>
+		FeedRepository.findLatestTrophyOwners(),
+	);
+	add("FeedRepository.findAllNewTrophiesAcceptedAfter", fx.feedNow, (now) =>
+		FeedRepository.findAllNewTrophiesAcceptedAfter(
+			now - FEED_RECENT_ACTIVITY_DAYS * DAY,
+		),
+	);
+	add("FeedRepository.findAllUpcomingTournamentSaves.all", fx.feedNow, (now) =>
+		FeedRepository.findAllUpcomingTournamentSaves({ after: now }),
+	);
+	add(
+		"FeedRepository.findAllUpcomingTournamentSaves.ofUsers",
+		both(fx.manyUserIds, fx.feedNow),
+		([userIds, now]) =>
+			FeedRepository.findAllUpcomingTournamentSaves({ after: now, userIds }),
+	);
+	add("FeedRepository.findAllUpcomingStaff", fx.feedNow, (now) =>
+		FeedRepository.findAllUpcomingStaff(now - 2 * DAY),
+	);
+	add(
+		"FeedRepository.findBiggestFinalizedTournaments.lastWeek",
+		fx.feedNow,
+		(now) =>
+			FeedRepository.findBiggestFinalizedTournaments({
+				from: now - 7 * DAY,
+				to: now,
+				limit: 10,
+			}),
+	);
+	add(
+		"FeedRepository.findBiggestFinalizedTournaments.onThisDay",
+		fx.feedNow,
+		(now) =>
+			FeedRepository.findBiggestFinalizedTournaments({
+				from: 0,
+				to: now - 300 * DAY,
+				monthDay: databaseTimestampToDate(now).toISOString().slice(5, 10),
+				limit: 1,
+			}),
+	);
+	add(
+		"FeedRepository.findPodiumTeamIdsByTournamentId",
+		fx.heavyResultsTournamentId,
+		(tournamentId) =>
+			FeedRepository.findPodiumTeamIdsByTournamentId(tournamentId),
+	);
+	add(
+		"FeedRepository.findTournamentsWithRegistrationClosedBetween",
+		fx.feedNow,
+		(now) =>
+			FeedRepository.findTournamentsWithRegistrationClosedBetween({
+				from: now - 2 * DAY,
+				to: now,
+			}),
+	);
+	add(
+		"FeedRepository.findRegisteredTeamsByTournamentId",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			FeedRepository.findRegisteredTeamsByTournamentId(tournamentId),
+	);
+	add("FeedRepository.findSeriesByOrganizationId", fx.heavySeries, (series) =>
+		FeedRepository.findSeriesByOrganizationId(series.organizationId),
+	);
+	add(
+		"FeedRepository.countSeriesWinsOfUser",
+		both(fx.heavySeries, both(fx.heavyUser, fx.feedNow)),
+		([series, [user, now]]) =>
+			FeedRepository.countSeriesWinsOfUser({
+				...series,
+				userId: user.id,
+				before: now,
+			}),
+	);
+	add("FeedRepository.findAllTeamJoinsAfter", fx.feedNow, (now) =>
+		FeedRepository.findAllTeamJoinsAfter(now - FEED_RECENT_ACTIVITY_DAYS * DAY),
+	);
+	add("FeedRepository.findAllCreatedTeamsAfter", fx.feedNow, (now) =>
+		FeedRepository.findAllCreatedTeamsAfter(
+			now - FEED_RECENT_ACTIVITY_DAYS * DAY,
+		),
+	);
+	add(
+		"FeedRepository.findLatestTeamAvailabilityWeek.anyTeam",
+		fx.feedNow,
+		(now) =>
+			FeedRepository.findLatestTeamAvailabilityWeek({
+				before: now,
+				minMembers: 4,
+			}),
+	);
+	add(
+		"FeedRepository.findLatestTeamAvailabilityWeek.ofTeams",
+		both(fx.manyTeamIds, fx.feedNow),
+		([teamIds, now]) =>
+			FeedRepository.findLatestTeamAvailabilityWeek({
+				before: now,
+				minMembers: 4,
+				teamIds,
+			}),
+	);
+	add(
+		"FeedRepository.findLatestAddedUpcomingTeamEvent.anyTeam",
+		both(fx.heavyUser, fx.feedNow),
+		([user, now]) =>
+			FeedRepository.findLatestAddedUpcomingTeamEvent({
+				now,
+				excludeAuthorId: user.id,
+			}),
+	);
+	add(
+		"FeedRepository.findLatestAddedUpcomingTeamEvent.ofTeams",
+		both(fx.heavyUser, both(fx.manyTeamIds, fx.feedNow)),
+		([user, [teamIds, now]]) =>
+			FeedRepository.findLatestAddedUpcomingTeamEvent({
+				now,
+				excludeAuthorId: user.id,
+				teamIds,
+			}),
+	);
+	add(
+		"FeedRepository.findAvailabilitySlotsOfTeamWeek",
+		fx.heavyTeamAvailabilityWeek,
+		(week) => FeedRepository.findAvailabilitySlotsOfTeamWeek(week),
+	);
+	add(
+		"FeedRepository.findOpenScrimPostsForViewer",
+		both(fx.heavyTeam, fx.feedNow),
+		([team, now]) =>
+			FeedRepository.findOpenScrimPostsForViewer({
+				viewerId: team.memberUserId,
+				excludedTeamIds: [team.id],
+				now,
+				lookingNowFrom: now - FEED_SCRIM_LOOKING_NOW_HOURS * HOUR,
+				createdAfter:
+					now -
+					FEED_MAX_AGE_HALF_LIVES *
+						FEED_ITEM_TYPES.SCRIM_POST.halfLifeHours *
+						HOUR,
+			}),
+	);
+	add("FeedRepository.findLatestUpcomingScrimPost", fx.feedNow, (now) =>
+		FeedRepository.findLatestUpcomingScrimPost({
+			from: now,
+			to: now + 2 * DAY,
+		}),
+	);
+	add(
+		"FeedRepository.findAcceptedScrimsOfTeams",
+		both(fx.manyTeamIds, fx.feedNow),
+		([teamIds, now]) =>
+			FeedRepository.findAcceptedScrimsOfTeams({
+				teamIds,
+				from: now - FEED_SCRIM_HISTORY_DAYS * DAY,
+				to: now,
+			}),
+	);
+	add("FeedRepository.findMemberLutiDivsByTeamIds", fx.manyTeamIds, (teamIds) =>
+		FeedRepository.findMemberLutiDivsByTeamIds(teamIds),
+	);
+	add("FeedRepository.findLatestReportedScrim.anyTeam", fx.feedNow, (now) =>
+		FeedRepository.findLatestReportedScrim({ before: now, minMaps: 5 }),
+	);
+	add(
+		"FeedRepository.findLatestReportedScrim.ofTeams",
+		both(fx.manyTeamIds, fx.feedNow),
+		([teamIds, now]) =>
+			FeedRepository.findLatestReportedScrim({
+				before: now,
+				minMaps: 5,
+				teamIds,
+			}),
+	);
+	add(
+		"FeedRepository.findLFGPostsUpdatedBetween.playerForTeam",
+		both(fx.heavyUser, fx.feedNow),
+		([user, now]) =>
+			FeedRepository.findLFGPostsUpdatedBetween({
+				type: "PLAYER_FOR_TEAM",
+				viewerId: user.id,
+				from:
+					now -
+					FEED_MAX_AGE_HALF_LIVES *
+						FEED_ITEM_TYPES.LFG_PLAYER.halfLifeHours *
+						HOUR,
+				to: now,
+			}),
+	);
+	add(
+		"FeedRepository.findLFGPostsUpdatedBetween.teamForPlayer",
+		both(fx.heavyUser, fx.feedNow),
+		([user, now]) =>
+			FeedRepository.findLFGPostsUpdatedBetween({
+				type: "TEAM_FOR_PLAYER",
+				viewerId: user.id,
+				from:
+					now -
+					FEED_MAX_AGE_HALF_LIVES *
+						FEED_ITEM_TYPES.LFG_TEAM.halfLifeHours *
+						HOUR,
+				to: now,
+			}),
+	);
+	add("FeedRepository.findLFGPostsByAuthorId", fx.lfgAuthorId, (authorId) =>
+		FeedRepository.findLFGPostsByAuthorId({ authorId, after: 0 }),
+	);
+	add("FeedRepository.findWeaponPoolByUserId", fx.heavyUser, (user) =>
+		FeedRepository.findWeaponPoolByUserId(user.id),
+	);
+	addStatic("FeedRepository.findAllTeamMemberships", () =>
+		FeedRepository.findAllTeamMemberships(),
+	);
+	add("FeedRepository.countTournamentsByTeamId", fx.heavyTeam, (team) =>
+		FeedRepository.countTournamentsByTeamId(team.id),
+	);
+	add("FeedRepository.findAllArtistsActiveBetween", fx.feedNow, (now) =>
+		FeedRepository.findAllArtistsActiveBetween({
+			from: now - 7 * DAY,
+			to: now,
+		}),
+	);
+	add(
+		"FeedRepository.findArtPiecesOfAuthorBetween",
+		both(fx.heavyArtUserId, fx.feedNow),
+		([authorId, now]) =>
+			FeedRepository.findArtPiecesOfAuthorBetween({
+				authorId,
+				from: 0,
+				to: now,
+			}),
+	);
+	add("FeedRepository.findAllTaggedArtAfter", fx.feedNow, (now) =>
+		FeedRepository.findAllTaggedArtAfter(now - FEED_RECENT_ACTIVITY_DAYS * DAY),
+	);
+	add("FeedRepository.findAllOpenedCommissionsAfter", fx.feedNow, (now) =>
+		FeedRepository.findAllOpenedCommissionsAfter(
+			now - FEED_RECENT_ACTIVITY_DAYS * DAY,
+		),
+	);
+	add("FeedRepository.findAllPublicBuildIdsUpdatedAfter", fx.feedNow, (now) =>
+		FeedRepository.findAllPublicBuildIdsUpdatedAfter(
+			now - FEED_RECENT_ACTIVITY_DAYS * DAY,
+		),
+	);
+	add("FeedRepository.findBuildById", fx.buildId, (buildId) =>
+		FeedRepository.findBuildById(buildId),
+	);
+	addStatic("FeedRepository.findLatestBuildIdsOfHighXpOwners", () =>
+		FeedRepository.findLatestBuildIdsOfHighXpOwners(FEED_HIGH_XP),
+	);
+	add("FeedRepository.findLatestValidatedVideo", fx.feedNow, (now) =>
+		FeedRepository.findLatestValidatedVideo(now),
+	);
+	addStatic("FeedRepository.findAllUserPlacementsOfLatestMonth", () =>
+		FeedRepository.findAllUserPlacementsOfLatestMonth(),
+	);
+	add(
+		"FeedRepository.findAllScannedMatchIdsWithReplayCode",
+		fx.feedNow,
+		(now) => FeedRepository.findAllScannedMatchIdsWithReplayCode(now),
+	);
+	add("FeedRepository.findScannedMatchById", fx.scannedMatchId, (id) =>
+		FeedRepository.findScannedMatchById(id),
+	);
+	add("FeedRepository.findAllFriendshipsCreatedAfter", fx.feedNow, (now) =>
+		FeedRepository.findAllFriendshipsCreatedAfter(
+			now - FEED_RECENT_ACTIVITY_DAYS * DAY,
+		),
+	);
+	add("FeedRepository.findPlusTierByUserId", fx.plusTierOneUser, (user) =>
+		FeedRepository.findPlusTierByUserId(user.id),
+	);
+	add(
+		"FeedRepository.findAllFirstPlusSuggestionsOfMonth",
+		fx.plusSuggestionMonthYear,
+		(monthYear) => FeedRepository.findAllFirstPlusSuggestionsOfMonth(monthYear),
+	);
+	add(
+		"FeedRepository.findFirstTournamentResultByUserId",
+		fx.heavyUser,
+		(user) => FeedRepository.findFirstTournamentResultByUserId(user.id),
+	);
+	add(
+		"FeedRepository.findLatestAddedUpcomingCalendarEvent",
+		fx.feedNow,
+		(now) => FeedRepository.findLatestAddedUpcomingCalendarEvent(now),
+	);
+	for (const total of FEED_SITE_TOTALS) {
+		add(`FeedRepository.countSiteTotal.${total}`, fx.feedNow, (now) =>
+			FeedRepository.countSiteTotal({ total, before: now }),
+		);
+		add(
+			`FeedRepository.findNthOfSiteTotal.${total}`,
+			fx.siteTotalCounts,
+			(counts) =>
+				FeedRepository.findNthOfSiteTotal({ total, nth: counts[total] }),
+		);
+	}
+
+	// FeedEventRepository
+	add(
+		"FeedEventRepository.findAllByUserIds",
+		both(fx.feedEventUserIds, fx.feedNow),
+		([userIds, now]) =>
+			FeedEventRepository.findAllByUserIds({
+				userIds,
+				from: now - FEED_EVENT_MAX_RETENTION_DAYS * DAY,
+				to: now,
+			}),
+	);
+	addStatic("FeedEventRepository.findCursorBySource.sq", () =>
+		FeedEventRepository.findCursorBySource("SQ"),
+	);
+	addStatic("FeedEventRepository.findCursorBySource.tournament", () =>
+		FeedEventRepository.findCursorBySource("TOURNAMENT"),
+	);
+	add(
+		"FeedEventRepository.findUserIdsOfMatchesConfirmedSince",
+		fx.feedNow,
+		(now) =>
+			FeedEventRepository.findUserIdsOfMatchesConfirmedSince(
+				now - FEED_EVENT_MAX_RETENTION_DAYS * DAY,
+			),
+	);
+	add(
+		"FeedEventRepository.findUserIdsOfTournamentResultsAfterRowId",
+		fx.feedIndexerTournamentResultRowId,
+		(rowId) =>
+			FeedEventRepository.findUserIdsOfTournamentResultsAfterRowId(rowId),
+	);
+	add(
+		"FeedEventRepository.findUserIdsOfTournamentsStartedSince",
+		fx.feedNow,
+		(now) =>
+			FeedEventRepository.findUserIdsOfTournamentsStartedSince(
+				now - FEED_EVENT_MAX_RETENTION_DAYS * DAY,
+			),
+	);
+	addStatic("FeedEventRepository.findLatestTournamentResultRowId", () =>
+		FeedEventRepository.findLatestTournamentResultRowId(),
+	);
+	add("FeedEventRepository.findAllSqPlaysByUserId", fx.sq, (sq) =>
+		FeedEventRepository.findAllSqPlaysByUserId(sq.userId),
+	);
+	add(
+		"FeedEventRepository.findAllTournamentPlaysByUserId",
+		fx.heavyUser,
+		(user) => FeedEventRepository.findAllTournamentPlaysByUserId(user.id),
+	);
+
+	// FeedCommentRepository
+	add("FeedCommentRepository.findByItemId", fx.feedCommentItemIds, (itemIds) =>
+		FeedCommentRepository.findByItemId(itemIds[0]),
+	);
+	add(
+		"FeedCommentRepository.countByItemIds",
+		fx.feedCommentItemIds,
+		(itemIds) => FeedCommentRepository.countByItemIds(itemIds),
+	);
+
+	// FeedReactionRepository
+	add(
+		"FeedReactionRepository.findByItemIds",
+		both(fx.feedReactionItemIds, fx.heavyUser),
+		([itemIds, user]) =>
+			FeedReactionRepository.findByItemIds({ itemIds, userId: user.id }),
 	);
 
 	add("FriendRepository.findByUserIdWithActivity", fx.heavyFriendPair, (pair) =>

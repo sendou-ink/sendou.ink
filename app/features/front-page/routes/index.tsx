@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { Image } from "~/components/Image";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
@@ -19,11 +20,16 @@ import { WeaponPoolBanner } from "~/components/WeaponPoolBanner";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
+import { Feed } from "~/features/feed/components/Feed";
+import type { FeedPageData } from "~/features/feed/core/FeedPage.server";
+import { feedSearchParams } from "~/features/feed/feed-search-params";
 import { PWAInstallBanner } from "~/features/front-page/components/PWAInstallBanner";
 import { SplatoonRotations } from "~/features/front-page/components/SplatoonRotations";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
+import { useFrontPageData } from "~/features/front-page/front-page-hooks";
 import { leaderboardsPage } from "~/features/leaderboards/leaderboards-urls";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import styles from "~/styles/front.module.css";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -40,10 +46,18 @@ import { type LeaderboardEntry, loader } from "../loaders/index.server";
 export { loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["front", "game-misc"],
+	i18n: ["front", "game-misc", "art", "builds", "gear", "trophies"],
 };
 
+export const shouldRevalidate = feedSearchParams.shouldRevalidate;
+
 export default function FrontPage() {
+	const data = useLoaderData<typeof loader>();
+
+	if (data.feed) {
+		return <FeedFrontPage data={data.feed} />;
+	}
+
 	return (
 		<Main className={styles.frontPageContainer}>
 			<LeagueBanner />
@@ -53,6 +67,53 @@ export default function FrontPage() {
 			<ResultHighlights />
 			<DiscoverFeatures />
 			<ChangelogList />
+		</Main>
+	);
+}
+
+function FeedFrontPage({ data }: { data: FeedPageData }) {
+	const [test, setTest] = useSearchParam(feedSearchParams, "test");
+	const [showRankingMath, setShowRankingMath] = React.useState(false);
+
+	return (
+		<Main bigger>
+			<Feed
+				data={data}
+				canViewAs
+				scoreShown={showRankingMath}
+				headerEnd={
+					<div className="stack horizontal md">
+						<SendouSwitch
+							isSelected={test}
+							onChange={(isSelected) =>
+								setTest(isSelected, { preventScrollReset: true })
+							}
+							size="small"
+						>
+							Test items
+						</SendouSwitch>
+						<SendouSwitch
+							isSelected={showRankingMath}
+							onChange={setShowRankingMath}
+							size="small"
+						>
+							Show ranking math
+						</SendouSwitch>
+					</div>
+				}
+				footer={
+					test ? (
+						<p className="text-xs text-lighter">
+							Test items: every item type with matching rows in the database,
+							seen as {data.viewer.username} with {data.friendCount} friends,
+							falling back to anyone's rows when there are none for them. Times
+							are relative to shortly after the latest SendouQ match. For
+							production data run the dev server with DB_PATH=db-sandbox.sqlite3
+							and VITE_PROD_MODE=true.
+						</p>
+					) : null
+				}
+			/>
 		</Main>
 	);
 }
@@ -181,7 +242,7 @@ function LeagueBanner() {
 
 function TournamentShowcase() {
 	const { t } = useTranslation(["front"]);
-	const data = useLoaderData<typeof loader>();
+	const data = useFrontPageData();
 
 	if (data.tournaments.showcase.length === 0) return null;
 
@@ -205,7 +266,7 @@ function TournamentShowcase() {
 }
 
 function ResultHighlights() {
-	const data = useLoaderData<typeof loader>();
+	const data = useFrontPageData();
 
 	const hasLeaderboards =
 		data.leaderboards.user.length > 0 && data.leaderboards.team.length > 0;
@@ -229,7 +290,7 @@ function ResultHighlights() {
 
 function Leaderboards() {
 	const { t } = useTranslation(["front"]);
-	const data = useLoaderData<typeof loader>();
+	const data = useFrontPageData();
 
 	const season = Seasons.currentOrPrevious()!;
 
@@ -265,7 +326,7 @@ function Leaderboards() {
 
 function TournamentResults() {
 	const { t } = useTranslation(["front"]);
-	const data = useLoaderData<typeof loader>();
+	const data = useFrontPageData();
 
 	return (
 		<div className={styles.resultHighlights}>
@@ -335,7 +396,7 @@ const DISCOVER_EXCLUDED_ITEMS = new Set(["settings", "luti"]);
 
 function DiscoverFeatures() {
 	const { t } = useTranslation(["front", "common"]);
-	const data = useLoaderData<typeof loader>();
+	const data = useFrontPageData();
 
 	const filteredNavItems = navItems.filter(
 		(item) => !DISCOVER_EXCLUDED_ITEMS.has(item.name),
@@ -388,7 +449,7 @@ function DiscoverFeatures() {
 
 function ChangelogList() {
 	const { t } = useTranslation(["front"]);
-	const data = useLoaderData<typeof loader>();
+	const data = useFrontPageData();
 
 	if (data.changelog.length === 0) return null;
 

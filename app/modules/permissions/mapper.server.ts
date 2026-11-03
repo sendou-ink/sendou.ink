@@ -62,6 +62,10 @@ export function userRoles(
 		result.push("LOBBY_ADDER");
 	}
 
+	if (isAdmin(user) || isDev(user)) {
+		result.push("FEED_TESTER");
+	}
+
 	if (userDiscordIdIsAged(user) || isSupporter(user)) {
 		result.push("CALENDAR_EVENT_ADDER");
 	}

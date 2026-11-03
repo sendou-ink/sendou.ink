@@ -17,5 +17,6 @@ export type Role =
 	| "API_ACCESSER"
 	| "QA"
 	| "DEV"
+	| "FEED_TESTER" // the feed is in testing: can make it their front page and view anyone's feed
 	| "SUPPORTER" // patrons of "Supporter" tier or higher
 	| "MINOR_SUPPORT"; // patrons of "Support" tier or higher

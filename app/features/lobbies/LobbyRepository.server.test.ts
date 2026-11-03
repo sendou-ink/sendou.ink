@@ -7,6 +7,8 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { withNoUser, withUserId } from "~/utils/Test";
 import * as LobbySet from "./core/LobbySet";
+// preloaded: LobbyFactory imports it lazily, which would count against a test's timeout
+import "./core/LobbyProgression.server";
 import * as LobbyMatchRepository from "./LobbyMatchRepository.server";
 import * as LobbyRepository from "./LobbyRepository.server";
 

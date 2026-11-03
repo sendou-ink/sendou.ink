@@ -648,6 +648,7 @@ export async function insert(args: CreateArgs) {
 						role: staff.role,
 						userId: staff.userId,
 						tournamentId: tournamentId!,
+						createdAt: databaseTimestampNow(),
 					})),
 				)
 				.execute();
@@ -674,6 +675,7 @@ export async function insert(args: CreateArgs) {
 				hidden: toDBBoolean(Boolean(args.isTest || args.isDraft)),
 				tournamentId,
 				trophyId: args.trophyId ?? null,
+				createdAt: databaseTimestampNow(),
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();

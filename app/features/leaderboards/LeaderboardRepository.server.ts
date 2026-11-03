@@ -45,12 +45,14 @@ function addPlacementRank<T extends { isSkipped: boolean }>(entries: T[]) {
 	});
 }
 
-const teamLeaderboardBySeasonQuery = (season: number) =>
+const teamLeaderboardBySeasonQuery = (season: number, before?: number) =>
 	db
 		.selectFrom((eb) =>
 			eb
 				.selectFrom(
-					latestSkillPerSeason({ season, by: "identifier" }).as("LatestOfTeam"),
+					latestSkillPerSeason({ season, by: "identifier", before }).as(
+						"LatestOfTeam",
+					),
 				)
 				.select([
 					"LatestOfTeam.latestId as entryId",
@@ -117,19 +119,22 @@ type TeamLeaderboardEntry = TeamLeaderboardBySeasonQueryReturnType[number] & {
 export async function findTeamLeaderboardBySeason({
 	season,
 	onlyOneEntryPerUser,
+	before,
 }: {
 	season: number;
 	onlyOneEntryPerUser: boolean;
+	/** Standings as they were at this database timestamp */
+	before?: number;
 }) {
 	// skipping concerns season finale qualification, not the all rosters leaderboard
 	const entries = addSkipped({
-		entries: await teamLeaderboardBySeasonQuery(season).execute(),
+		entries: await teamLeaderboardBySeasonQuery(season, before).execute(),
 		skippedIdentifiers: onlyOneEntryPerUser
 			? await findAllTeamSkipIdentifiersBySeason(season)
 			: new Set<SkillTeamIdentifier>(),
 	});
 	const withNonSqPlayersHandled = onlyOneEntryPerUser
-		? await filterOutNonSqPlayers({ season, entries })
+		? await filterOutNonSqPlayers({ season, entries, before })
 		: entries;
 
 	const oneEntryPerUser = onlyOneEntryPerUser
@@ -154,9 +159,13 @@ function addSkipped(args: {
 async function filterOutNonSqPlayers(args: {
 	entries: TeamLeaderboardEntry[];
 	season: number;
+	before?: number;
 }) {
 	const validUserIds = new Set(
-		await userIdsWithEnoughSqMatchesForTeamLeaderboard(args.season),
+		await userIdsWithEnoughSqMatchesForTeamLeaderboard(
+			args.season,
+			args.before,
+		),
 	);
 
 	return args.entries.filter((entry) =>
@@ -164,7 +173,10 @@ async function filterOutNonSqPlayers(args: {
 	);
 }
 
-async function userIdsWithEnoughSqMatchesForTeamLeaderboard(seasonNth: number) {
+async function userIdsWithEnoughSqMatchesForTeamLeaderboard(
+	seasonNth: number,
+	before?: number,
+) {
 	// a Skill row with groupMatchId set exists exactly once per user per
 	// completed (not canceled) SendouQ match of the season
 	const rows = await db
@@ -173,6 +185,7 @@ async function userIdsWithEnoughSqMatchesForTeamLeaderboard(seasonNth: number) {
 		.where("season", "=", seasonNth)
 		.where("groupMatchId", "is not", null)
 		.where("userId", "is not", null)
+		.$if(before !== undefined, (qb) => qb.where("createdAt", "<=", before!))
 		.groupBy("userId")
 		.having(
 			(eb) => eb.fn.countAll(),
@@ -380,9 +393,14 @@ export type UserSPLeaderboardItem = Awaited<
 	ReturnType<typeof findUserSPLeaderboard>
 >[number];
 
-export async function findUserSPLeaderboard(season: number) {
+export async function findUserSPLeaderboard(
+	season: number,
+	{ before }: { before?: number } = {},
+) {
 	const rows = await db
-		.selectFrom(latestSkillPerSeason({ season, by: "userId" }).as("Latest"))
+		.selectFrom(
+			latestSkillPerSeason({ season, by: "userId", before }).as("Latest"),
+		)
 		.innerJoin("User", "User.id", "Latest.userId")
 		.select((eb) => [
 			...commonUserSelect(eb),
