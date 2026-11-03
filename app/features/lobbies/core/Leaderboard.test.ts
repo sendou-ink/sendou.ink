@@ -105,19 +105,29 @@ describe("Leaderboard.rows", () => {
 		]);
 	});
 
-	test("room members without a finished set are listed last", () => {
+	test("room members get a row before the first set is over", () => {
+		const rows = Leaderboard.rows({
+			sets: [setOf({ winners: ["ALPHA"] })],
+			weapons: [],
+			roomMemberIds: [1, 20],
+		});
+
+		expect(rows.map((row) => row.userId)).toEqual([1, 20]);
+		expect(rows[0]).toMatchObject({
+			setWins: 0,
+			setLosses: 0,
+			mapWinPercentage: null,
+		});
+	});
+
+	test("room members without a finished set are left out once a set is over", () => {
 		const rows = Leaderboard.rows({
 			sets: [setOf({ winners: ["ALPHA", "ALPHA"], confirmed: true })],
 			weapons: [],
 			roomMemberIds: [1, 20],
 		});
 
-		expect(rows.at(-1)).toMatchObject({
-			userId: 20,
-			setWins: 0,
-			setLosses: 0,
-			mapWinPercentage: null,
-		});
+		expect(rows.some((row) => row.userId === 20)).toBe(false);
 		expect(rows.filter((row) => row.userId === 1)).toHaveLength(1);
 	});
 

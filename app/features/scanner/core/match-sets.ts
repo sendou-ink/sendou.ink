@@ -6,7 +6,7 @@
  * match with no readable names is inconclusive and never opens a new set.
  */
 import type { ScannerMatch } from "./scanner-match";
-import { matchKey, rankBy } from "./text";
+import { matchKey, nameSimilarity, rankBy } from "./text";
 
 /** closestBy score two reads of a name must reach: 0.7 forgives one bad glyph on four letters. */
 const SAME_NAME_SCORE = 0.7;
@@ -50,8 +50,7 @@ function sameRoster(a: readonly string[], b: readonly string[]): boolean {
 	let matched = 0;
 	for (const name of a) {
 		const partner = rankBy(name, remaining, (entry) => entry).find(
-			({ entry, score }) =>
-				score >= SAME_NAME_SCORE || sharedPrefixRead(name, entry),
+			({ entry, score }) => isSameScoredNameRead(name, entry, score),
 		);
 		if (partner) {
 			matched++;
@@ -59,6 +58,18 @@ function sameRoster(a: readonly string[], b: readonly string[]): boolean {
 		}
 	}
 	return Math.min(a.length, b.length) - matched <= MAX_SUBS_PER_GAME;
+}
+
+/**
+ * Whether two OCR reads of a name read as the same name: close by edit
+ * distance, or sharing a prefix that leaves only tail damage.
+ */
+export function isSameNameRead(a: string, b: string): boolean {
+	return isSameScoredNameRead(a, b, nameSimilarity(a, b));
+}
+
+function isSameScoredNameRead(a: string, b: string, score: number): boolean {
+	return score >= SAME_NAME_SCORE || sharedPrefixRead(a, b);
 }
 
 /**

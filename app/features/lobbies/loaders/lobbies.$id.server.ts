@@ -17,9 +17,13 @@ import * as Leaderboard from "../core/Leaderboard";
 import * as LobbyMapList from "../core/LobbyMapList.server";
 import * as LobbySet from "../core/LobbySet";
 import * as LobbyState from "../core/LobbyState";
+import * as ScoreboardAttribution from "../core/ScoreboardAttribution";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
-import { LOBBY_LINK_ONLY_ERROR } from "../lobbies-constants";
+import {
+	LOBBY_LINK_ONLY_ERROR,
+	LOBBY_SIDE_TEAM_ID,
+} from "../lobbies-constants";
 import { lobbySearchParams } from "../lobbies-search-params";
 
 export type LobbyLoaderData = SerializeFrom<typeof loader>;
@@ -188,7 +192,10 @@ async function currentMapVoterIds(
 	});
 }
 
-/** One weapon per player per reported map: reported by hand or by the scanner, else read from a linked scoreboard. */
+/**
+ * One weapon per player per reported map: reported by hand or by the scanner, else read from a linked scoreboard's
+ * row, attributed to the player by their scan's POV seat or by the names the lobby's scoreboards show them under.
+ */
 function playedWeapons({
 	sets,
 	reportedWeapons,
@@ -202,28 +209,83 @@ function playedWeapons({
 		ReturnType<typeof ScannerIngestRepository.findScoreboardsByLobbyId>
 	>;
 }) {
-	return sets.flatMap((set) =>
-		set.games.flatMap((game) => {
-			if (!game.winnerSide) return [];
+	const reportedWeaponOf = (
+		set: (typeof sets)[number],
+		game: (typeof set.games)[number],
+		userId: number,
+	) =>
+		reportedWeapons.find(
+			(weapon) =>
+				weapon.lobbySetId === set.id &&
+				weapon.mapIndex === game.index &&
+				weapon.userId === userId,
+		)?.weaponSplId ?? null;
 
+	const scoreboardGames = sets.flatMap((set) =>
+		set.games.flatMap((game) => {
 			const scoreboard = ingestedScoreboards.find(
 				(candidate) =>
 					candidate.lobbySetId === set.id && candidate.mapIndex === game.index,
 			);
 
+			return game.winnerSide && scoreboard ? [{ set, game, scoreboard }] : [];
+		}),
+	);
+	const rowUserIds = ScoreboardAttribution.rowUserIds(
+		scoreboardGames.map(({ set, game, scoreboard }) => ({
+			rows: scoreboard.data.players.map((player) => ({
+				name: player.name,
+				side:
+					player.tournamentTeamId === LOBBY_SIDE_TEAM_ID.ALPHA
+						? "ALPHA"
+						: "BRAVO",
+				weaponSplId: player.weaponSplId,
+				userId: player.userId,
+			})),
+			players: set.participants.flatMap((participant) =>
+				participant.side
+					? [
+							{
+								userId: participant.userId,
+								side: participant.side,
+								inGameName: participant.inGameName,
+								reportedWeaponSplId: reportedWeaponOf(
+									set,
+									game,
+									participant.userId,
+								),
+							},
+						]
+					: [],
+			),
+		})),
+	);
+
+	return sets.flatMap((set) =>
+		set.games.flatMap((game) => {
+			if (!game.winnerSide) return [];
+
+			const scoreboardIdx = scoreboardGames.findIndex(
+				(candidate) => candidate.game === game,
+			);
+			const scoreboardWeaponOf = (userId: number) => {
+				if (scoreboardIdx === -1) return null;
+
+				const rowIdx = rowUserIds[scoreboardIdx]!.indexOf(userId);
+				if (rowIdx === -1) return null;
+
+				return (
+					scoreboardGames[scoreboardIdx]!.scoreboard.data.players[rowIdx]!
+						.weaponSplId ?? null
+				);
+			};
+
 			return set.participants.flatMap((participant) => {
 				if (!participant.side) return [];
 
 				const weaponSplId =
-					reportedWeapons.find(
-						(weapon) =>
-							weapon.lobbySetId === set.id &&
-							weapon.mapIndex === game.index &&
-							weapon.userId === participant.userId,
-					)?.weaponSplId ??
-					scoreboard?.data.players.find(
-						(player) => player.userId === participant.userId,
-					)?.weaponSplId;
+					reportedWeaponOf(set, game, participant.userId) ??
+					scoreboardWeaponOf(participant.userId);
 
 				return weaponSplId ? [{ userId: participant.userId, weaponSplId }] : [];
 			});

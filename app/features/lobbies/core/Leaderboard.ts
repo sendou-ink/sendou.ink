@@ -26,7 +26,7 @@ export interface LeaderboardRow {
  * the weapons played. Sorted by set wins, then map win percentage. Players tied on all of these share the placement.
  *
  * @param weapons one per player per map played, reported by hand or read by the scanner
- * @param roomMemberIds get a row even before their first finished set
+ * @param roomMemberIds get a row of zeros until the lobby's first set is over
  */
 export function rows({
 	sets,
@@ -71,7 +71,9 @@ export function rows({
 		}
 	}
 
-	for (const userId of roomMemberIds) rowOf(userId);
+	if (!sets.some(LobbySet.isFinished)) {
+		for (const userId of roomMemberIds) rowOf(userId);
+	}
 
 	const weaponsByUserId = R.groupBy(weapons, (weapon) => weapon.userId);
 
