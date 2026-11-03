@@ -1159,6 +1159,9 @@ export function buildCases(fx: Fixtures): {
 	add("LobbyRepository.isLinkOnlyById", fx.heavyLobby, (lobby) =>
 		LobbyRepository.isLinkOnlyById(lobby.id),
 	);
+	add("LobbyRepository.findVisibilityRowsById", fx.heavyLobby, (lobby) =>
+		LobbyRepository.findVisibilityRowsById(lobby.id),
+	);
 	add(
 		"LobbyRepository.findAllVisible",
 		both(fx.heavyUser, fx.heavyLobby),

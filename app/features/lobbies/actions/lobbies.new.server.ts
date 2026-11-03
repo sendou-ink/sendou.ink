@@ -1,5 +1,4 @@
 import { redirect } from "react-router";
-import * as Visibility from "~/features/associations/core/Visibility";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as UserActivity from "~/features/user-activity/core/UserActivity.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -17,6 +16,7 @@ import {
 	PLAYERS_PER_SET,
 } from "../lobbies-constants";
 import { newLobbySchema } from "../lobbies-schemas";
+import { visibilityFromForm } from "../lobbies-utils";
 
 export const action = defineAction(
 	{ body: newLobbySchema },
@@ -45,13 +45,7 @@ export const action = defineAction(
 			modes: body.modes,
 			weaponRandomizer: body.weaponRandomizer,
 			roomSize: (PLAYERS_PER_SET + Number(body.spectators)) as LobbyRoomSize,
-			visibility:
-				body.baseVisibility === "LINK_ONLY"
-					? "LINK_ONLY"
-					: Visibility.fromForm({
-							baseVisibility: body.baseVisibility,
-							notFoundVisibility: body.notFoundVisibility,
-						}),
+			visibility: visibilityFromForm(body),
 			hostStatus: isHostPresent ? "CHECKED_IN" : "REGISTERED",
 		});
 

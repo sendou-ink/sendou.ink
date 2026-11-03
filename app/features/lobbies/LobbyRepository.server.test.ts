@@ -168,16 +168,122 @@ describe("LobbyRepository visibility", () => {
 		expect(await LobbyRepository.isLinkOnlyById(999_999)).toBe(false);
 	});
 
-	test("link-only: a lobby with visibility has no share key", async () => {
-		const lobby = await LobbyFactory.create({ hostUserId: hostId() });
+	test.each([
+		{ why: "the host gets it", viewer: hostId, hasKey: true },
+		{ why: "a member doesn't", viewer: memberId, hasKey: false },
+	])(
+		"share key of a lobby with visibility: $why",
+		async ({ viewer, hasKey }) => {
+			const lobby = await associationLobby();
 
-		const found = await withUserId(hostId(), () =>
-			LobbyRepository.findById(lobby.id),
+			const found = await withUserId(viewer(), () =>
+				LobbyRepository.findById(lobby.id),
+			);
+
+			expect(typeof found?.shareKey === "string").toBe(hasKey);
+		},
+	);
+
+	test.each([
+		{ why: "an outsider with the key sees it", withKey: true, expected: true },
+		{
+			why: "an outsider without the key doesn't",
+			withKey: false,
+			expected: false,
+		},
+	])("limited to an association: $why", async ({ withKey, expected }) => {
+		const lobby = await associationLobby();
+		const shareKey = await hostShareKeyOf(lobby.id);
+
+		const found = await withUserId(outsiderId(), () =>
+			LobbyRepository.findById(lobby.id, {
+				shareKey: withKey ? shareKey : "wrongKey12",
+			}),
 		);
 
-		expect(found?.shareKey).toBeNull();
+		expect(Boolean(found)).toBe(expected);
+	});
+
+	test("updateVisibility: opening a lobby to everyone shows it to outsiders", async () => {
+		const lobby = await associationLobby();
+
+		await LobbyRepository.updateVisibility({
+			id: lobby.id,
+			visibility: null,
+			ownerId: hostId(),
+		});
+
+		const found = await withUserId(outsiderId(), () =>
+			LobbyRepository.findById(lobby.id),
+		);
+		expect(found?.isPrivate).toBe(false);
+	});
+
+	test("updateVisibility: making a lobby link-only keeps its share key", async () => {
+		const lobby = await LobbyFactory.create({ hostUserId: hostId() });
+		const shareKey = await hostShareKeyOf(lobby.id);
+
+		await LobbyRepository.updateVisibility({
+			id: lobby.id,
+			visibility: "LINK_ONLY",
+			ownerId: hostId(),
+		});
+
+		expect(await LobbyRepository.isLinkOnlyById(lobby.id)).toBe(true);
+		expect(await hostShareKeyOf(lobby.id)).toBe(shareKey);
+		expect(
+			await withUserId(outsiderId(), () => LobbyRepository.findById(lobby.id)),
+		).toBeUndefined();
+	});
+
+	test("resetShareKey: the old key stops working", async () => {
+		const lobby = await LobbyFactory.create({
+			hostUserId: hostId(),
+			visibility: "LINK_ONLY",
+		});
+		const oldShareKey = await hostShareKeyOf(lobby.id);
+
+		await LobbyRepository.resetShareKey(lobby.id);
+
+		const found = await withUserId(outsiderId(), () =>
+			LobbyRepository.findById(lobby.id, { shareKey: oldShareKey }),
+		);
+		expect(found).toBeUndefined();
+		expect(await hostShareKeyOf(lobby.id)).not.toBe(oldShareKey);
+	});
+
+	test("findVisibilityRowsById: lists the steps in order with association names", async () => {
+		const association = await AssociationFactory.create({
+			userId: hostId(),
+			name: "Night owls",
+		});
+		const widensAt = dateToDatabaseTimestamp(new Date()) + 600;
+		const lobby = await LobbyFactory.create({
+			hostUserId: hostId(),
+			visibility: {
+				forAssociation: association.id,
+				notFoundInstructions: [{ at: widensAt, forAssociation: null }],
+			},
+		});
+
+		const rows = await LobbyRepository.findVisibilityRowsById(lobby.id);
+
+		expect(
+			rows.map((row) => [row.associationName, row.isPublic, row.visibleFrom]),
+		).toEqual([
+			["Night owls", 0, expect.any(Number)],
+			[null, 1, widensAt],
+		]);
 	});
 });
+
+async function hostShareKeyOf(lobbyId: number) {
+	const lobby = await withUserId(hostId(), () =>
+		LobbyRepository.findById(lobbyId),
+	);
+
+	return lobby?.shareKey ?? null;
+}
 
 describe("LobbyRepository.findAllForIndex", () => {
 	beforeEach(async () => {

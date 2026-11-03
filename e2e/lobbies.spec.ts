@@ -419,11 +419,12 @@ test.describe("Lobbies", () => {
 
 	/**
 	 * A lobby limited to an association is listed only to its members, its card marked as
-	 * such, and its page is not found for others. A link-only lobby is listed to no one but
-	 * its participants: others find it only through the link its host shares, and once
-	 * signed up they find it without the link too. Everyone who can open it gets the link to
-	 * share, and their address bar always shows it. Without the link others are told the lobby
-	 * is invite only.
+	 * such, and its page is not found for others. Its host can still invite anyone with the
+	 * lobby's invite link, which only they get, and change who sees it later on. A link-only
+	 * lobby is listed to no one but its participants: others find it only through the link
+	 * its host shares, and once signed up they find it without the link too. Everyone who can
+	 * open it gets the link to share, and their address bar always shows it. Without the link
+	 * others are told the lobby is invite only.
 	 */
 	test.describe("Visibility", () => {
 		test("a lobby limited to an association is hidden from outsiders", async ({
@@ -461,6 +462,63 @@ test.describe("Lobbies", () => {
 				const errorPage = new ErrorPage(page);
 				await new LobbyPage(page).goto(lobby.id);
 				await expect(errorPage.locators.notFoundHeading).toBeVisible();
+			});
+		});
+
+		test("the host invites an outsider to a lobby limited to an association and opens it to everyone", async ({
+			page,
+			factories,
+		}) => {
+			const [host, member, invitee, outsider] =
+				await factories.UserFactory.createMany(4);
+			const association = await factories.AssociationFactory.create(
+				{ userId: host.id, name: ASSOCIATION_NAME },
+				{ memberUserIds: [member.id] },
+			);
+			const lobby = await factories.LobbyFactory.create({
+				hostUserId: host.id,
+				name: LOBBY_NAME,
+				visibility: { forAssociation: association.id },
+			});
+			const lobbyPage = new LobbyPage(page);
+			const lobbies = new LobbiesPage(page);
+
+			await impersonate(page, host.id);
+			await lobbyPage.goto(lobby.id);
+			const oldShareLink = await lobbyPage.copyShareLink();
+			await lobbyPage.resetShareLink();
+			const shareLink = await lobbyPage.copyShareLink();
+			expect(shareLink).not.toBe(oldShareLink);
+
+			await test.step("A member sees the lobby but gets no link to share", async () => {
+				await impersonate(page, member.id);
+				await lobbyPage.goto(lobby.id);
+
+				await expect(lobbyPage.heading(LOBBY_NAME)).toBeVisible();
+				await isNotVisible(lobbyPage.locators.copyShareLinkButton);
+			});
+
+			await test.step("Through the link an outsider opens it, the reset one doesn't work", async () => {
+				await impersonate(page, invitee.id);
+				await lobbyPage.gotoViaShareLink(shareLink);
+				await expect(lobbyPage.heading(LOBBY_NAME)).toBeVisible();
+
+				const errorPage = new ErrorPage(page);
+				await lobbyPage.gotoViaShareLink(oldShareLink);
+				await expect(errorPage.locators.notFoundHeading).toBeVisible();
+			});
+
+			await test.step("Opened to everyone, an outsider sees it listed", async () => {
+				await impersonate(page, host.id);
+				await lobbyPage.goto(lobby.id);
+				await lobbyPage.changeVisibility("Public");
+
+				await impersonate(page, outsider.id);
+				await lobbies.goto();
+				await lobbies.openTab("upcoming");
+
+				await expect(lobbies.card(LOBBY_NAME)).toBeVisible();
+				await isNotVisible(lobbies.limitedVisibilityIcon(LOBBY_NAME));
 			});
 		});
 

@@ -1,3 +1,4 @@
+import { visibilityIssues } from "~/features/associations/associations-schemas";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { linkStoredMatches } from "~/features/scanner-ingest/core/relink.server";
@@ -7,7 +8,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { hasPermission } from "~/modules/permissions/utils";
-import { databaseTimestampNow } from "~/utils/dates";
+import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import {
 	errorToast,
 	errorToastIfFalsy,
@@ -22,8 +23,12 @@ import * as LobbyVoice from "../core/LobbyVoice.server";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
 import type { LobbyBestOf } from "../lobbies-constants";
-import { lobbyActionSchema } from "../lobbies-schemas";
+import {
+	LOBBY_VISIBILITY_ISSUE_MESSAGES,
+	lobbyActionSchema,
+} from "../lobbies-schemas";
 import { lobbySearchParams } from "../lobbies-search-params";
+import { visibilityFromForm } from "../lobbies-utils";
 
 export const action = defineAction(
 	{ params: idObject, body: lobbyActionSchema },
@@ -284,6 +289,28 @@ export const action = defineAction(
 					modes: body.modes,
 					weaponRandomizer: body.weaponRandomizer,
 				});
+				break;
+			}
+			case "UPDATE_VISIBILITY": {
+				requirePermission(lobby, "MANAGE");
+				const [issue] = visibilityIssues(body, {
+					startsAt: databaseTimestampToDate(lobby.startsAt),
+					isEdit: true,
+					messages: LOBBY_VISIBILITY_ISSUE_MESSAGES,
+				});
+				if (issue) return { fieldErrors: { [issue.path[0]]: issue.message } };
+
+				await LobbyRepository.updateVisibility({
+					id,
+					visibility: visibilityFromForm(body),
+					ownerId: lobby.hostUserId,
+				});
+				break;
+			}
+			case "RESET_SHARE_KEY": {
+				requirePermission(lobby, "MANAGE");
+
+				await LobbyRepository.resetShareKey(id);
 				break;
 			}
 			case "KICK": {

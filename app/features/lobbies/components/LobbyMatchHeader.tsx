@@ -9,6 +9,7 @@ import { useLobbyView } from "../lobbies-hooks";
 import { lobbyActionSchema } from "../lobbies-schemas";
 import { lobbyShareLink } from "../lobbies-utils";
 import { LobbySettingsPopover } from "./LobbySettingsPopover";
+import { LobbyVisibilityDialog } from "./LobbyVisibilityDialog";
 
 export function LobbyMatchHeader() {
 	const { t } = useTranslation(["lobbies"]);
@@ -63,6 +64,7 @@ function HostControls() {
 
 	return (
 		<>
+			<LobbyVisibilityDialog />
 			<LobbySettingsPopover />
 			<ActionButton
 				schema={lobbyActionSchema}

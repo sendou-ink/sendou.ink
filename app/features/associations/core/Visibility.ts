@@ -4,7 +4,10 @@
  */
 import type { Tables } from "~/db/tables";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import type { AssociationIdentifier } from "../associations-constants";
+import type {
+	AssociationIdentifier,
+	AssociationVirtualIdentifier,
+} from "../associations-constants";
 import type { AssociationVisibility } from "../associations-types";
 
 /** A `ContentVisibility` row without the entity it is about. */
@@ -97,4 +100,66 @@ export function fromForm({
 				]
 			: undefined,
 	};
+}
+
+/**
+ * Maps stored `ContentVisibility` rows, in the order they come into effect, back to the values of the
+ * visibility form fields: the inverse of `toRows` after `fromForm`. The "not found" step's `at` is a database
+ * timestamp. Rows of content seen only through its share link (none) can't be told apart here.
+ */
+export function toForm(rows: VisibilityRow[]): {
+	baseVisibility: FormAssociationIdentifier;
+	notFoundVisibility: {
+		at: number | null;
+		forAssociation: FormAssociationIdentifier;
+	};
+} {
+	const [base, notFound] = rows;
+
+	return {
+		baseVisibility: base ? identifierOf(base) : "PUBLIC",
+		notFoundVisibility: notFound
+			? { at: notFound.visibleFrom, forAssociation: identifierOf(notFound) }
+			: { at: null, forAssociation: "PUBLIC" },
+	};
+}
+
+/**
+ * The associations the user can limit content to plus the ones its rows already limit it to, so a form editing
+ * them shows the current audience even if the user isn't (anymore) a member of it.
+ */
+export function withAudiencesOf(
+	associations: {
+		virtual: AssociationVirtualIdentifier[];
+		actual: Array<{ id: number; name: string }>;
+	},
+	rows: Array<VisibilityRow & { associationName: string | null }>,
+) {
+	const virtual = [...associations.virtual];
+	const actual = [...associations.actual];
+
+	for (const row of rows) {
+		const identifier = identifierOf(row);
+		if (identifier === "PUBLIC") continue;
+
+		if (typeof identifier === "number") {
+			if (!actual.some((association) => association.id === identifier)) {
+				actual.push({ id: identifier, name: row.associationName ?? "" });
+			}
+		} else if (!virtual.includes(identifier)) {
+			virtual.push(identifier);
+		}
+	}
+
+	return { virtual, actual };
+}
+
+function identifierOf(row: VisibilityRow): FormAssociationIdentifier {
+	if (row.associationId !== null) return row.associationId;
+	if (row.friendsOfUserId !== null) return "FRIENDS";
+	if (row.plusTier === 1) return "+1";
+	if (row.plusTier === 2) return "+2";
+	if (row.plusTier === 3) return "+3";
+
+	return "PUBLIC";
 }

@@ -49,6 +49,8 @@ export class LobbyPage {
 				.last(),
 			settingsButton: page.getByTestId("lobby-settings-button"),
 			copyShareLinkButton: page.getByTestId("lobby-copy-share-link-button"),
+			visibilityButton: page.getByTestId("lobby-visibility-button"),
+			resetShareLinkButton: page.getByTestId("lobby-reset-share-link-button"),
 			// shown in place of a link-only lobby opened without its link
 			inviteOnlyHeading: page.getByRole("heading", { name: "Invite only" }),
 			disputedText: page.getByText("The result was disputed"),
@@ -102,7 +104,28 @@ export class LobbyPage {
 		await navigate({ page: this.page, url: url.pathname + url.search });
 	}
 
-	/** Copies the link a link-only lobby is found with and reads it off the clipboard. */
+	/** Picks who sees the lobby, by the option's label, in the host's visibility dialog. */
+	async changeVisibility(label: string) {
+		await this.locators.visibilityButton.click();
+		await this.page
+			.getByRole("dialog")
+			.getByLabel("Visibility")
+			.selectOption({ label });
+		await waitForPOSTResponse(this.page, () =>
+			this.page.getByTestId("lobby-visibility-save-button").click(),
+		);
+	}
+
+	/** Replaces the lobby's invite link from the host's visibility dialog, the old one no longer working. */
+	async resetShareLink() {
+		await this.locators.visibilityButton.click();
+		await waitForPOSTResponse(this.page, () =>
+			this.locators.resetShareLinkButton.click(),
+		);
+		await this.page.keyboard.press("Escape");
+	}
+
+	/** Copies the lobby's invite link and reads it off the clipboard. */
 	async copyShareLink(): Promise<string> {
 		await this.locators.copyShareLinkButton.click();
 		return this.page.evaluate("navigator.clipboard.readText()");

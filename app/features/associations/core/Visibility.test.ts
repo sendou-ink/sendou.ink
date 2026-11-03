@@ -4,7 +4,9 @@ import * as Visibility from "./Visibility";
 const CREATED_AT = 100;
 const OWNER_ID = 7;
 
-const row = (overrides: Partial<Visibility.VisibilityRow>) => ({
+const row = (
+	overrides: Partial<Visibility.VisibilityRow>,
+): Visibility.VisibilityRow => ({
 	visibleFrom: CREATED_AT,
 	associationId: null,
 	plusTier: null,
@@ -96,5 +98,96 @@ describe("Visibility.fromForm", () => {
 		},
 	])("$why", ({ form, expected }) => {
 		expect(Visibility.fromForm(form)).toEqual(expected);
+	});
+});
+
+describe("Visibility.toForm", () => {
+	test.each([
+		{
+			why: "public",
+			rows: [row({ isPublic: 1 })],
+			expected: {
+				baseVisibility: "PUBLIC",
+				notFoundVisibility: { at: null, forAssociation: "PUBLIC" },
+			},
+		},
+		{
+			why: "friends of the owner",
+			rows: [row({ friendsOfUserId: OWNER_ID })],
+			expected: {
+				baseVisibility: "FRIENDS",
+				notFoundVisibility: { at: null, forAssociation: "PUBLIC" },
+			},
+		},
+		{
+			why: "association widening to a plus tier",
+			rows: [row({ associationId: 3 }), row({ visibleFrom: 500, plusTier: 2 })],
+			expected: {
+				baseVisibility: 3,
+				notFoundVisibility: { at: 500, forAssociation: "+2" },
+			},
+		},
+	])("$why", ({ rows, expected }) => {
+		expect(Visibility.toForm(rows)).toEqual(expected);
+	});
+
+	test("round-trips toRows", () => {
+		const visibility = {
+			forAssociation: "+1" as const,
+			notFoundInstructions: [{ at: 500, forAssociation: 4 }],
+		};
+
+		const form = Visibility.toForm(
+			Visibility.toRows(visibility, {
+				createdAt: CREATED_AT,
+				ownerId: OWNER_ID,
+			}),
+		);
+
+		expect(
+			Visibility.fromForm({
+				...form,
+				notFoundVisibility: {
+					...form.notFoundVisibility,
+					at: new Date(500_000),
+				},
+			}),
+		).toEqual(visibility);
+	});
+});
+
+describe("Visibility.withAudiencesOf", () => {
+	const named = (overrides: Partial<Visibility.VisibilityRow>) => ({
+		...row(overrides),
+		associationName: overrides.associationId ? "Night owls" : null,
+	});
+
+	test("adds the audiences the user can't pick themselves", () => {
+		expect(
+			Visibility.withAudiencesOf(
+				{ virtual: ["FRIENDS"], actual: [{ id: 1, name: "Early birds" }] },
+				[named({ associationId: 3 }), named({ visibleFrom: 500, plusTier: 1 })],
+			),
+		).toEqual({
+			virtual: ["FRIENDS", "+1"],
+			actual: [
+				{ id: 1, name: "Early birds" },
+				{ id: 3, name: "Night owls" },
+			],
+		});
+	});
+
+	test("doesn't repeat the audiences the user can pick", () => {
+		const associations = {
+			virtual: ["FRIENDS" as const],
+			actual: [{ id: 3, name: "Night owls" }],
+		};
+
+		expect(
+			Visibility.withAudiencesOf(associations, [
+				named({ associationId: 3 }),
+				named({ visibleFrom: 500, friendsOfUserId: OWNER_ID }),
+			]),
+		).toEqual(associations);
 	});
 });

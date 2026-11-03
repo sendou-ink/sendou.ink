@@ -105,17 +105,21 @@ type VisibilityFormValues = {
 /**
  * Issues of the visibility fields compared to each other and to when the content starts: the staged audience
  * has to differ from the base one, can't be set for public content and has to come into effect before the start.
+ * Content being made can't have one if it starts right away, content being edited (`isEdit`) can as its staged
+ * audience may already be in effect.
  */
 export function visibilityIssues(
 	values: VisibilityFormValues,
 	{
 		startsAt,
+		isEdit = false,
 		messages = {
 			afterStart: "forms:errors.dateAfterScrimDate",
 			startingNow: "forms:errors.canNotSetIfLookingNow",
 		},
 	}: {
 		startsAt: Date;
+		isEdit?: boolean;
 		messages?: { afterStart: string; startingNow: string };
 	},
 ): Array<{ path: ["notFoundVisibility"]; message: string }> {
@@ -143,7 +147,7 @@ export function visibilityIssues(
 		issues.push(issue(messages.afterStart));
 	}
 
-	if (at && startsAt < new Date()) {
+	if (at && !isEdit && startsAt < new Date()) {
 		issues.push(issue(messages.startingNow));
 	}
 

@@ -41,7 +41,8 @@ export type LobbyById = NonNullable<Unwrapped<typeof findById>>;
  * or player of one of its sets or one who left it. `leftUsers` are those who left it and haven't signed up again,
  * they keep its chat until kicked. `isViewerKicked` is whether the host kicked the actor out of it,
  * `hasViewerLeft` whether the actor left it at some point and so keeps its chat.
- * `permissions.MANAGE` is the host. `shareKey` goes to every viewer, they already reached the lobby.
+ * `permissions.MANAGE` is the host. `shareKey` goes to the host and, as everyone in a link-only lobby already
+ * reached it through the link, to every viewer of one.
  */
 export async function findById(
 	id: number,
@@ -71,6 +72,7 @@ export async function findById(
 			"Lobby.createdAt",
 			"Host.username as hostUsername",
 			eb.not(isPublicNow({ entity: "Lobby", now })).as("isPrivate"),
+			isLinkOnly(eb).as("isLinkOnly"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("LobbyParticipant")
@@ -146,9 +148,14 @@ export async function findById(
 
 	if (!row) return;
 
+	const isLinkOnlyLobby = Boolean(row.isLinkOnly);
+
 	return {
 		...row,
+		shareKey:
+			isLinkOnlyLobby || row.hostUserId === viewerId ? row.shareKey : null,
 		isPrivate: Boolean(row.isPrivate),
+		isLinkOnly: isLinkOnlyLobby,
 		isViewerKicked: Boolean(row.isViewerKicked),
 		hasViewerLeft: Boolean(row.hasViewerLeft),
 		participants: row.participants.map((participant) => ({
@@ -169,7 +176,7 @@ export async function isLinkOnlyById(id: number) {
 		.selectFrom("Lobby")
 		.select("Lobby.id")
 		.where("Lobby.id", "=", id)
-		.where("Lobby.shareKey", "is not", null)
+		.where(isLinkOnly)
 		.executeTakeFirst();
 
 	return Boolean(row);
@@ -695,7 +702,7 @@ export function insert({
 				...args,
 				modes: JSON.stringify(modes),
 				chatRoomId: chatRoom.id,
-				shareKey: visibility === "LINK_ONLY" ? shortNanoid() : null,
+				shareKey: shortNanoid(),
 			})
 			.returning(["id", "createdAt"])
 			.executeTakeFirstOrThrow();
@@ -874,6 +881,69 @@ export async function updateSettings({
 		.execute();
 }
 
+/** Replaces who sees the lobby, its new audience in effect right away. Its share key keeps working. */
+export function updateVisibility({
+	id,
+	visibility,
+	ownerId,
+}: {
+	id: number;
+	visibility: InsertArgs["visibility"];
+	/** The host, whose friends a friends only lobby is visible to */
+	ownerId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("ContentVisibility")
+			.where("ContentVisibility.lobbyId", "=", id)
+			.execute();
+
+		if (visibility === "LINK_ONLY") return;
+
+		await trx
+			.insertInto("ContentVisibility")
+			.values(
+				Visibility.toRows(visibility, {
+					createdAt: databaseTimestampNow(),
+					ownerId,
+				}).map((row) => ({ ...row, lobbyId: id })),
+			)
+			.execute();
+	});
+}
+
+/** Replaces the lobby's share key, its old invite link no longer working. */
+export async function resetShareKey(id: number) {
+	await db
+		.updateTable("Lobby")
+		.set({ shareKey: shortNanoid() })
+		.where("Lobby.id", "=", id)
+		.execute();
+}
+
+/** The `ContentVisibility` rows of the lobby in the order they come into effect, with the names of their associations. */
+export function findVisibilityRowsById(id: number) {
+	return db
+		.selectFrom("ContentVisibility")
+		.leftJoin(
+			"Association",
+			"Association.id",
+			"ContentVisibility.associationId",
+		)
+		.select([
+			"ContentVisibility.visibleFrom",
+			"ContentVisibility.associationId",
+			"Association.name as associationName",
+			"ContentVisibility.plusTier",
+			"ContentVisibility.friendsOfUserId",
+			"ContentVisibility.isPublic",
+		])
+		.where("ContentVisibility.lobbyId", "=", id)
+		.orderBy("ContentVisibility.visibleFrom", "asc")
+		.orderBy("ContentVisibility.id", "asc")
+		.execute();
+}
+
 /** Updates the lobby's own bookkeeping columns. */
 export async function update(
 	{
@@ -977,6 +1047,18 @@ export function findResultPlacementsByUserId(userId: number) {
 		.select("LobbyResult.placement")
 		.where("LobbyResult.userId", "=", userId)
 		.execute();
+}
+
+/** A link-only lobby has no `ContentVisibility` rows, its share link being the only way in for others. */
+function isLinkOnly(eb: ExpressionBuilder<DB, "Lobby">) {
+	return eb.not(
+		eb.exists(
+			eb
+				.selectFrom("ContentVisibility")
+				.select("ContentVisibility.id")
+				.whereRef("ContentVisibility.lobbyId", "=", "Lobby.id"),
+		),
+	);
 }
 
 function participatedIn(eb: ExpressionBuilder<DB, "Lobby">, userId: number) {

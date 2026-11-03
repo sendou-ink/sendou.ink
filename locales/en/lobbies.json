@@ -76,6 +76,8 @@
 	"rosters.leavingAfterSet.explanation": "{{name}} leaves the lobby once this set is confirmed",
 	"settings.appliesFromNextSet": "Applies from the next set onward",
 	"shareLink.copy": "Copy invite link",
+	"shareLink.explanation": "Anyone you share the invite link with can see the lobby and sign up, whatever its visibility. Resetting the link stops the old one from working.",
+	"shareLink.reset": "Reset invite link",
 	"side.ALPHA": "Alpha",
 	"side.BRAVO": "Bravo",
 	"sittingOut": "Sitting out until the host resumes them",
@@ -105,6 +107,7 @@
 	"viewerStatus.REGISTERED": "Signed up",
 	"viewerStatus.SPECTATING": "Spectating",
 	"viewerStatus.WAITLISTED": "Waitlisted",
+	"visibility.heading": "Who sees the lobby",
 	"weaponRandomizer.BALANCED": "Balanced random",
 	"weaponRandomizer.CHAOTIC": "Chaotic random"
 }

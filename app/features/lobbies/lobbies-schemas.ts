@@ -50,6 +50,12 @@ const weaponRandomizerField = radioGroup({
 	})),
 });
 
+/** Messages of `visibilityIssues` for a lobby */
+export const LOBBY_VISIBILITY_ISSUE_MESSAGES = {
+	afterStart: "forms:errors.dateAfterLobbyStart",
+	startingNow: "forms:errors.canNotSetIfStartingNow",
+};
+
 const modesField = checkboxGroup({
 	label: "labels.lobbyModes",
 	items: modesShort.map((mode) => ({
@@ -104,10 +110,7 @@ export const newLobbySchema = v.pipe(
 	superRefine((lobby, ctx) => {
 		for (const issue of visibilityIssues(lobby, {
 			startsAt: lobby.startsAt,
-			messages: {
-				afterStart: "forms:errors.dateAfterLobbyStart",
-				startingNow: "forms:errors.canNotSetIfStartingNow",
-			},
+			messages: LOBBY_VISIBILITY_ISSUE_MESSAGES,
 		})) {
 			ctx.addIssue(issue);
 		}
@@ -119,6 +122,13 @@ export const lobbySettingsSchema = v.object({
 	bestOf: bestOfField,
 	modes: modesField,
 	weaponRandomizer: weaponRandomizerField,
+});
+
+/** Checked against the lobby's start by the action, see `visibilityIssues`. */
+export const lobbyVisibilitySchema = v.object({
+	_action: stringConstant("UPDATE_VISIBILITY"),
+	baseVisibility: baseVisibilityWithLinkOnlyField,
+	notFoundVisibility: notFoundVisibilityField,
 });
 
 const lobbySide = v.picklist(LOBBY_SIDES);
@@ -147,6 +157,8 @@ export const lobbyActionSchema = v.union([
 	reportWeaponSchema,
 	undoWeaponReportSchema,
 	lobbySettingsSchema,
+	lobbyVisibilitySchema,
+	v.object({ _action: _action("RESET_SHARE_KEY") }),
 	v.object({ _action: _action("KICK"), userId: id }),
 	v.object({ _action: _action("TOGGLE_SIT_OUT"), userId: id }),
 	v.object({ _action: _action("MAKE_HOST"), userId: id }),

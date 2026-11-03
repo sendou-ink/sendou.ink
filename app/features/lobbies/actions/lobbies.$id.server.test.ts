@@ -1,5 +1,6 @@
-import { subMinutes } from "date-fns";
+import { addHours, subMinutes } from "date-fns";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import * as AssociationFactory from "~/db/seed/factories/AssociationFactory";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -11,6 +12,7 @@ import * as LobbySet from "../core/LobbySet";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
 import type { lobbyActionSchema } from "../lobbies-schemas";
+import { lobbySearchParams } from "../lobbies-search-params";
 import { action } from "./lobbies.$id.server";
 
 // the progression's fire-and-forget notifications are not under test
@@ -19,6 +21,10 @@ vi.mock("~/features/notifications/core/notify.server", () => ({
 }));
 
 const lobbyAction = wrappedAction<typeof lobbyActionSchema>({ action });
+const lobbyFormAction = wrappedAction<typeof lobbyActionSchema>({
+	action,
+	isJsonSubmission: true,
+});
 
 const users = UserFactory.pool();
 
@@ -332,5 +338,96 @@ describe("lobby action", () => {
 		expect(
 			(await LobbyRepository.findProgressionStateById(lobby.id))?.hostUserId,
 		).toBe(hostId());
+	});
+
+	test("an outsider signs up to a lobby limited to an association through its invite link", async () => {
+		const association = await AssociationFactory.create({ userId: hostId() });
+		const lobby = await LobbyFactory.create({
+			hostUserId: hostId(),
+			visibility: { forAssociation: association.id },
+		});
+		const shareKey = (
+			await withUserId(hostId(), () => LobbyRepository.findById(lobby.id))
+		)?.shareKey;
+
+		await lobbyAction(
+			{ _action: "SIGN_UP" },
+			{
+				user: visitorId(),
+				params: { id: String(lobby.id) },
+				url: lobbySearchParams.href("/path", { key: shareKey ?? null }),
+			},
+		);
+
+		expect(
+			(await participantsOf(lobby.id)).some((p) => p.userId === visitorId()),
+		).toBe(true);
+	});
+
+	test("the host opens a lobby limited to an association to everyone", async () => {
+		const association = await AssociationFactory.create({ userId: hostId() });
+		const lobby = await LobbyFactory.create({
+			hostUserId: hostId(),
+			visibility: { forAssociation: association.id },
+		});
+
+		await lobbyFormAction(
+			{
+				_action: "UPDATE_VISIBILITY",
+				baseVisibility: "PUBLIC",
+				notFoundVisibility: { at: null, forAssociation: "PUBLIC" },
+			},
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(
+			await withUserId(visitorId(), () => LobbyRepository.findById(lobby.id)),
+		).toBeDefined();
+	});
+
+	test("widening the visibility after the lobby's start is a field error", async () => {
+		const association = await AssociationFactory.create({ userId: hostId() });
+		const lobby = await LobbyFactory.create({ hostUserId: hostId() });
+
+		const result = await lobbyFormAction(
+			{
+				_action: "UPDATE_VISIBILITY",
+				baseVisibility: association.id,
+				notFoundVisibility: {
+					at: addHours(new Date(), 2),
+					forAssociation: "PUBLIC",
+				},
+			},
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(result).toEqual({
+			fieldErrors: { notFoundVisibility: "forms:errors.dateAfterLobbyStart" },
+		});
+	});
+
+	test("only the host can reset the invite link", async () => {
+		const lobby = await LobbyFactory.create(
+			{ hostUserId: hostId() },
+			{ signedUpUserIds: [visitorId()] },
+		);
+		const shareKeyOf = async () =>
+			(await withUserId(hostId(), () => LobbyRepository.findById(lobby.id)))
+				?.shareKey;
+		const oldShareKey = await shareKeyOf();
+
+		await expect(
+			lobbyAction(
+				{ _action: "RESET_SHARE_KEY" },
+				{ user: visitorId(), params: { id: String(lobby.id) } },
+			),
+		).rejects.toBeTruthy();
+		expect(await shareKeyOf()).toBe(oldShareKey);
+
+		await lobbyAction(
+			{ _action: "RESET_SHARE_KEY" },
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+		expect(await shareKeyOf()).not.toBe(oldShareKey);
 	});
 });
