@@ -140,6 +140,9 @@
 }
 
 .teamSetOpponentMember {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1-5);
 	font-size: var(--font-xs);
 }
 

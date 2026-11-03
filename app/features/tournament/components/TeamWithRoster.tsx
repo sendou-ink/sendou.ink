@@ -3,12 +3,16 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { ModeImage, StageImage } from "~/components/Image";
+import { NoteAvatar } from "~/components/NoteAvatar";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	UserCard,
+	useUserCardData,
+} from "~/features/user-card/components/UserCard";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import { userPage } from "~/utils/urls";
 import { useTournamentFriendCodes } from "../routes/to.$id";
 import styles from "./TeamWithRoster.module.css";
 
@@ -85,28 +89,13 @@ export function TeamWithRoster({
 										{t("tournament:roster.role.sub.short")}
 									</span>
 								) : null}
-								<div
-									className={clsx(styles.teamWithRosterMember, {
-										[styles.teamWithRosterMemberInactive]:
-											activePlayers && !activePlayers.includes(member.userId),
-									})}
-								>
-									<Avatar
-										user={{ ...member, id: member.userId }}
-										size="xxs"
-										className={clsx({
-											[styles.teamWithRosterMemberAvatarInactive]:
-												activePlayers && !activePlayers.includes(member.userId),
-										})}
-									/>
-									<Link
-										to={userPage({ ...member, id: member.userId })}
-										className={clsx(styles.teamMemberName, "truncate")}
-										data-testid="team-member-name"
-									>
-										{name()}
-									</Link>
-								</div>
+								<TeamMember
+									member={member}
+									name={name()}
+									isInactive={Boolean(
+										activePlayers && !activePlayers.includes(member.userId),
+									)}
+								/>
 								{friendCode ? (
 									<div className="text-xs text-lighter">
 										{tournament.isOrganizer(user) && member.isFreshAccount ? (
@@ -122,6 +111,44 @@ export function TeamWithRoster({
 			</div>
 			{mapPool && mapPool.length > 0 ? <TeamMapPool mapPool={mapPool} /> : null}
 		</div>
+	);
+}
+
+function TeamMember({
+	member,
+	name,
+	isInactive,
+}: {
+	member: TournamentTeamFull["members"][number];
+	name: string;
+	isInactive: boolean;
+}) {
+	const cardData = useUserCardData(member.userId);
+
+	return (
+		<UserCard userId={member.userId}>
+			<span
+				className={clsx(styles.teamWithRosterMember, {
+					[styles.teamWithRosterMemberInactive]: isInactive,
+				})}
+			>
+				<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="xs">
+					<Avatar
+						user={{ ...member, id: member.userId }}
+						size="xxs"
+						className={clsx({
+							[styles.teamWithRosterMemberAvatarInactive]: isInactive,
+						})}
+					/>
+				</NoteAvatar>
+				<span
+					className={clsx(styles.teamMemberName, "truncate")}
+					data-testid="team-member-name"
+				>
+					{name}
+				</span>
+			</span>
+		</UserCard>
 	);
 }
 

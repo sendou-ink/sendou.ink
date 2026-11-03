@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import * as R from "remeda";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	tournamentDataCached,
@@ -7,6 +8,7 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { invariant } from "~/utils/invariant";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFound, parseParams } from "~/utils/remix.server";
@@ -61,6 +63,14 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	)?.idx;
 
 	return {
+		...(await UserCardRepository.findAllByUserIdsCached({
+			userIds: R.unique([
+				...team.members.map((member) => member.userId),
+				...sets.flatMap((set) =>
+					set.opponent.roster.map((opponent) => opponent.id),
+				),
+			]),
+		})),
 		tournamentTeamId,
 		team,
 		// the invite link of the add sub popover, only the team's own captain gets it

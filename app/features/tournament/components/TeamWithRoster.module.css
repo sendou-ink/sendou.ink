@@ -82,6 +82,9 @@
 }
 
 .teamMemberRow {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
 	list-style: none;
 	position: relative;
 }

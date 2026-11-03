@@ -3,13 +3,14 @@ import { HardDriveDownload, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useFetcher, useLoaderData } from "react-router";
+import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { ModeImage, StageImage } from "~/components/Image";
 import { InviteLinkInput } from "~/components/InviteLinkInput";
+import { NoteAvatar } from "~/components/NoteAvatar";
 import { Placement } from "~/components/Placement";
-import { UserLink } from "~/components/UserLink";
 import { useUser } from "~/features/auth/core/user";
 import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
 import {
@@ -19,6 +20,10 @@ import {
 import { useTournament } from "~/features/tournament/tournament-context";
 import { tournamentJoinPage } from "~/features/tournament/tournament-urls";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	UserCard,
+	useUserCardData,
+} from "~/features/user-card/components/UserCard";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { metaTags } from "~/utils/remix";
 import {
@@ -452,18 +457,31 @@ function SetInfo({
 					{set.opponent.name}
 				</Link>
 				<div className={styles.teamSetOpponentMembers}>
-					{set.opponent.roster.map((user) => {
-						return (
-							<UserLink
-								key={user.id}
-								user={user}
-								className={styles.teamSetOpponentMember}
-							/>
-						);
-					})}
+					{set.opponent.roster.map((user) => (
+						<OpponentMember key={user.id} user={user} />
+					))}
 				</div>
 			</div>
 		</div>
+	);
+}
+
+function OpponentMember({
+	user,
+}: {
+	user: TournamentTeamLoaderData["sets"][number]["opponent"]["roster"][number];
+}) {
+	const cardData = useUserCardData(user.id);
+
+	return (
+		<UserCard userId={user.id}>
+			<span className={styles.teamSetOpponentMember}>
+				<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="xs">
+					<Avatar user={user} size="xxs" />
+				</NoteAvatar>
+				{user.username}
+			</span>
+		</UserCard>
 	);
 }
 

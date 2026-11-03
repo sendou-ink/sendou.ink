@@ -4,6 +4,7 @@ import {
 	tournamentFromParams,
 	tournamentTeamsFullInSeedOrder,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { paginate } from "~/utils/remix.server";
 import { tournamentTeamsSearchParams } from "../tournament-search-params";
@@ -33,13 +34,21 @@ export const loader = async ({ request, params, url }: LoaderFunctionArgs) => {
 		totalCount: teams.length,
 	});
 
+	const pageTeams = teams.slice(
+		(currentPage - 1) * TEAMS_PAGE_SIZE,
+		currentPage * TEAMS_PAGE_SIZE,
+	);
+
 	return {
-		teams: teams
-			.slice((currentPage - 1) * TEAMS_PAGE_SIZE, currentPage * TEAMS_PAGE_SIZE)
-			.map((team) => ({
-				...team,
-				seedInfo: seedInfoByTeamId.get(team.id),
-			})),
+		...(await UserCardRepository.findAllByUserIdsCached({
+			userIds: pageTeams.flatMap((team) =>
+				team.members.map((member) => member.userId),
+			),
+		})),
+		teams: pageTeams.map((team) => ({
+			...team,
+			seedInfo: seedInfoByTeamId.get(team.id),
+		})),
 		currentPage,
 		pagesCount,
 	};

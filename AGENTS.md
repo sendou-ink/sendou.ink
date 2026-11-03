@@ -39,6 +39,12 @@
 - instead of `&&` operator for conditional rendering, use the ternary operator; enforced by the `no-and-conditional-rendering` Biome plugin
 - for localized user-readable time strings use `<LocaleTime />`, `<LocaleTimeRange>` or `useFormatDistanceToNow`. If needed use `useDateTimeFormat` directly. NEVER use e.g. `toLocaleString` directly as it does not include users' language selection.
 
+## Showing a user
+
+- wrap a user in `<UserCard>` (`~/features/user-card/components/UserCard`, its loader spreads `UserCardRepository.findAllByUserIds(Cached)`) when the viewer is sizing them up: people they might play with or against (SendouQ, lobbies, scrims, LFG, match and tournament rosters), people they judge (plus voting/suggestions, seeding) and pages about people (team members, streams, profile). Pair it with `NoteAvatar` so private note sentiment shows
+- link straight to the user page (`<UserLink>` or `userPage()`) when the name is a credit (author, organizer, creator, reporter), part of a record (results tables, leaderboards, season history, audit logs), navigation (own account, sidebar, search) or on admin/dev pages
+- `withMutualFriends` only where the existing usages have it
+
 ## Forms
 
 - forms are built with the `SendouForm` schema-based system: a valibot schema using field builders from `~/form/fields` generates both the UI and server-side validation, see [forms.mdx](./docs/site/src/content/docs/dev/forms.mdx)

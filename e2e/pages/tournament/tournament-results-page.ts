@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { tournamentResultsPage } from "~/utils/urls";
 import { navigate } from "../../helpers/playwright";
-import { UserPage } from "../user/user-page";
+import { UserCard } from "../user/user-card";
 
 /** `/to/:id/results` */
 export class TournamentResultsPage {
@@ -31,8 +31,12 @@ export class TournamentResultsPage {
 		await this.locators.resultTeamNames.nth(nth).click();
 	}
 
+	/** Opens the user page of a member of the expanded team through their user card. */
 	async openMember(nth: number) {
-		await this.locators.teamMemberNames.nth(nth).click();
-		return new UserPage(this.page);
+		const card = await UserCard.open(
+			this.page,
+			this.locators.teamMemberNames.nth(nth),
+		);
+		return card.openUserPage();
 	}
 }

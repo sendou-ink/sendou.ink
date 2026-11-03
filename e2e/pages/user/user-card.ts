@@ -3,6 +3,7 @@ import { reportUserSchema } from "~/features/user-report/user-report-schemas";
 import { expect, submit, waitForPOSTResponse } from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 import { UserCardEditPage } from "./user-card-edit-page";
+import { UserPage } from "./user-page";
 
 /** The user card popover, opened by clicking a user's name wherever one is shown. */
 export class UserCard {
@@ -14,6 +15,7 @@ export class UserCard {
 		this.locators = {
 			banner: page.getByTestId("user-card-banner"),
 			editLink: page.getByRole("link", { name: "Edit" }),
+			viewUserPageLink: page.getByRole("link", { name: "View user page" }),
 			acceptFriendRequestButton: page.getByLabel("Accept friend request"),
 			pendingFriendRequestButton: page.getByLabel("Friend request pending"),
 			sendFriendRequestButton: page.getByLabel("Send friend request"),
@@ -36,6 +38,11 @@ export class UserCard {
 
 	xp(points: number) {
 		return this.page.getByText(`${points}XP`);
+	}
+
+	async openUserPage() {
+		await this.locators.viewUserPageLink.click();
+		return new UserPage(this.page);
 	}
 
 	async openEditPage() {
