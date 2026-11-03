@@ -97,6 +97,7 @@
 	"labels.buildPrivate": "Private",
 	"labels.buildWeapons": "Weapons",
 	"bottomTexts.buildPrivate": "Private builds are only visible to you",
+	"bottomTexts.buildWeapons": "The first weapon is the build's main weapon. Drag to reorder.",
 	"modes.TW": "Turf War",
 	"modes.SZ": "Splat Zones",
 	"modes.TC": "Tower Control",

@@ -260,9 +260,10 @@ export const newBuildBaseSchema = v.object({
 	buildToEditId: idConstantOptional(),
 	weapons: weaponPool({
 		label: "labels.buildWeapons",
+		bottomText: "bottomTexts.buildWeapons",
 		minCount: 1,
 		maxCount: 5,
-		disableSorting: true,
+		insertInGameOrder: true,
 		disableFavorites: true,
 		disableAltSkinDuplicates: true,
 	}),

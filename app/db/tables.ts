@@ -271,6 +271,8 @@ export interface BuildWeapon {
 	sortValue: number | null;
 	/** Mirror of `Build.ownerId`. Denormalized so the builds-by-weapon list pages by author off covering indexes. */
 	ownerId: number;
+	/** Order the build's weapons are shown in, `0` being its main weapon. */
+	index: Generated<number>;
 }
 
 /** Per-build ability point sums across all gear slots. Used to compute global `findAllAbilityPointAverages`. */
@@ -436,7 +438,7 @@ interface GroupMatchContinueVote {
 
 interface GroupMatchMap {
 	id: GeneratedAlways<number>;
-	index: number;
+	index: Generated<number>;
 	matchId: number;
 	mode: ModeShort;
 	reportedAt: number | null;
@@ -1203,7 +1205,7 @@ interface UserFriendCode {
 
 interface UserWidget {
 	userId: number;
-	index: number;
+	index: Generated<number>;
 	widget: JSONColumnType<StoredWidget>;
 }
 interface ApiToken {
@@ -1433,7 +1435,7 @@ interface ScrimMapList {
 interface ScrimMap {
 	id: GeneratedAlways<number>;
 	scrimPostId: number;
-	index: number;
+	index: Generated<number>;
 	mode: ModeShort;
 	stageId: StageId;
 	winnerSide: "ALPHA" | "BRAVO" | null;
@@ -1562,7 +1564,7 @@ interface LobbySetParticipant {
 interface LobbyGame {
 	id: GeneratedAlways<number>;
 	setId: number;
-	index: number;
+	index: Generated<number>;
 	mode: ModeShort;
 	stageId: StageId;
 	/** Whose map pools the map was picked from, `null` for sets started before it was stored */

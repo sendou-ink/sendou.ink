@@ -46,6 +46,7 @@ export function WeaponPoolFormField({
 	error,
 	maxCount,
 	disableSorting,
+	insertInGameOrder,
 	disableFavorites,
 	disableAltSkinDuplicates,
 	value,
@@ -74,7 +75,13 @@ export function WeaponPoolFormField({
 			isFavorite: false,
 		};
 
-		const newValue = [...value, newWeapon];
+		const inGameOrderIndex = insertInGameOrder
+			? value.findIndex((weapon) => weapon.id > weaponId)
+			: -1;
+		const newValue =
+			inGameOrderIndex === -1
+				? [...value, newWeapon]
+				: value.toSpliced(inGameOrderIndex, 0, newWeapon);
 
 		if (disableSorting) {
 			newValue.sort((a, b) => a.id - b.id);

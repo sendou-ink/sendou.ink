@@ -73,7 +73,7 @@ export async function findAllByUserId(
 				eb
 					.selectFrom("BuildWeapon")
 					.select(["BuildWeapon.weaponSplId", "BuildWeapon.sortValue"])
-					.orderBy("BuildWeapon.weaponSplId", "asc")
+					.orderBy("BuildWeapon.index", "asc")
 					.whereRef("BuildWeapon.buildId", "=", "Build.id"),
 			).as("weapons"),
 		])
@@ -99,6 +99,7 @@ interface CreateArgs {
 	headGearSplId: number | null;
 	clothesGearSplId: number | null;
 	shoesGearSplId: number | null;
+	/** In the order shown, the first being the build's main weapon. */
 	weaponSplIds: Array<BuildWeapon["weaponSplId"]>;
 	abilities: BuildAbilitiesTuple;
 	isPrivate: TablesInsertable["Build"]["isPrivate"];
@@ -721,7 +722,7 @@ function userBuildSortKeys(
 		case "WEAPON_IN_GAME_ORDER":
 			return [
 				[
-					sql`(select min("weaponSplId") from "BuildWeapon" where "buildId" = "Build"."id")`,
+					sql`(select "weaponSplId" from "BuildWeapon" where "buildId" = "Build"."id" and "index" = 0)`,
 					"asc",
 				],
 			];
@@ -861,7 +862,7 @@ function buildRowsByIds(ids: number[]) {
 				eb
 					.selectFrom("BuildWeapon")
 					.select(["BuildWeapon.weaponSplId", "BuildWeapon.sortValue"])
-					.orderBy("BuildWeapon.weaponSplId", "asc")
+					.orderBy("BuildWeapon.index", "asc")
 					.whereRef("BuildWeapon.buildId", "=", "Build.id"),
 			).as("weapons"),
 		])
@@ -1008,9 +1009,10 @@ async function insertBuildChildren(
 	await trx
 		.insertInto("BuildWeapon")
 		.values(
-			args.weaponSplIds.map((weaponSplId) => ({
+			args.weaponSplIds.map((weaponSplId, index) => ({
 				buildId,
 				weaponSplId,
+				index,
 				canonicalWeaponSplId: canonicalWeaponSplId(weaponSplId),
 				sortValue: computed.sortValueByWeaponSplId.get(weaponSplId) ?? null,
 				updatedAt,

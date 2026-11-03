@@ -126,6 +126,8 @@ interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 	maxCount: number;
 	/** Fixes the order to weapon id ASC instead of user-sortable */
 	disableSorting?: boolean;
+	/** Added weapons go to their in-game order spot, after which they can still be reordered */
+	insertInGameOrder?: boolean;
 	/** If set, all weapons have isFavorite: false */
 	disableFavorites?: boolean;
 	allowDuplicates?: boolean;

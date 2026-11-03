@@ -785,6 +785,23 @@ describe("BuildRepository.findPageByUserId", () => {
 		expect(idsOf(result)).toEqual([nouveauBuild.id]);
 	});
 
+	test("returns the weapons in the order given, main weapon first", async () => {
+		await createBuild({
+			ownerId: users.id(1),
+			weaponSplIds: [SPLATTERSHOT_NOUVEAU, 10, SPLATTERSHOT],
+		});
+
+		const {
+			builds: [build],
+		} = await userBuilds();
+
+		expect(build.weapons.map((weapon) => weapon.weaponSplId)).toEqual([
+			SPLATTERSHOT_NOUVEAU,
+			10,
+			SPLATTERSHOT,
+		]);
+	});
+
 	test("filters by visibility", async () => {
 		await createBuild({ ownerId: users.id(1) });
 		const privateBuild = await createBuild({
@@ -866,9 +883,9 @@ describe("BuildRepository.findPageByUserId", () => {
 			).toEqual(["First kit", "Second", "Not in pool"]);
 		});
 
-		test("sorts by WEAPON_IN_GAME_ORDER using the build's lowest weapon id", async () => {
-			await createTitled("Last", { weaponSplIds: [1000] });
-			await createTitled("First", { weaponSplIds: [2000, 0] });
+		test("sorts by WEAPON_IN_GAME_ORDER using the build's main weapon", async () => {
+			await createTitled("Last", { weaponSplIds: [1000, 0] });
+			await createTitled("First", { weaponSplIds: [0, 2000] });
 			await createTitled("Middle", { weaponSplIds: [10] });
 
 			expect(
