@@ -15,7 +15,6 @@ describe("FeedRanking.isStale", () => {
 			expected: false,
 		},
 		{ why: "past the max age", type: "SQ_SET", ageHours: 91, expected: true },
-		{ why: "live", type: "VOICE_ROOM", ageHours: 1000, expected: false },
 		{ why: "pinned", type: "ANNOUNCEMENT", ageHours: 10_000, expected: false },
 	] as const)("$why", ({ type, ageHours, expected }) => {
 		expect(FeedRanking.isStale({ type, at: NOW - ageHours * HOUR }, NOW)).toBe(
@@ -38,13 +37,17 @@ describe("FeedRanking.score", () => {
 		expect(old.total).toBeCloseTo(fresh.total / 2);
 	});
 
-	test("doesn't decay live items", () => {
-		const result = FeedRanking.score(
-			{ type: "VOICE_ROOM", at: NOW - 10 * HOUR, relation: null },
+	test("scales the score by the item's weight", () => {
+		const full = FeedRanking.score(
+			{ type: "SQ_SET", at: NOW, relation: null },
+			NOW,
+		);
+		const weighted = FeedRanking.score(
+			{ type: "SQ_SET", at: NOW, relation: null, weight: 0.25 },
 			NOW,
 		);
 
-		expect(result.recency).toBe(1);
+		expect(weighted.total).toBeCloseTo(full.total / 4);
 	});
 
 	test.each([

@@ -15,6 +15,15 @@ import type {
 
 const DAY = 24 * 60 * 60;
 const MIN_STREAK = 3;
+const TIER_ORDER = [
+	"IRON",
+	"BRONZE",
+	"SILVER",
+	"GOLD",
+	"PLATINUM",
+	"DIAMOND",
+	"LEVIATHAN",
+];
 
 export interface SqPlay {
 	source: "SQ";
@@ -214,16 +223,6 @@ function tierOf(intervals: SkillTierInterval[], ordinal: number): FeedTier {
 		? { name: interval.name, isPlus: interval.isPlus }
 		: { name: "IRON", isPlus: false };
 }
-
-const TIER_ORDER = [
-	"IRON",
-	"BRONZE",
-	"SILVER",
-	"GOLD",
-	"PLATINUM",
-	"DIAMOND",
-	"LEVIATHAN",
-];
 
 /** Position on the ladder where each plus tier is its own step, e.g. Diamond+ is one above Diamond. */
 export function tierRank(tier: { name: string; isPlus: boolean }) {

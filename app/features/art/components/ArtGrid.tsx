@@ -197,6 +197,7 @@ export function BigImageDialog({
 				onPointerDown={
 					navigation
 						? (event) => {
+								wasSwipeRef.current = false;
 								swipeStartRef.current = { x: event.clientX, y: event.clientY };
 							}
 						: undefined

@@ -4,17 +4,28 @@ import { Avatar } from "~/components/Avatar";
 import { WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { lfgSearchParams } from "~/features/lfg/lfg-search-params";
-import { LFG_PAGE, scrimsPage, teamPage } from "~/utils/urls";
+import { LFG_PAGE, scrimsPage, teamPage, teamSchedulePage } from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
+import type { ScrimPostReason } from "../core/FeedScrimMatch";
 import type { FeedItemContent } from "./FeedItemCard";
 import {
+	countText,
+	DateBlock,
 	DayTime,
 	LogoAvatar,
 	MapTiles,
 	UserName,
 	UserStack,
 } from "./FeedParts";
-import styles from "./FeedParts.module.css";
+import partsStyles from "./FeedParts.module.css";
+import styles from "./TeamItems.module.css";
+
+const SCRIM_POST_REASON_TEXTS: Record<ScrimPostReason, string | null> = {
+	REQUESTED: "You requested",
+	USUAL_OPPONENT: "You scrim them often",
+	ASSOCIATION: "Shared to your association",
+	FIT: null,
+};
 
 export function teamItemContent(item: FeedItem): FeedItemContent | null {
 	switch (item.type) {
@@ -28,16 +39,16 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 					</>
 				),
 				body: (
-					<div className={clsx(styles.inset, styles.rowNoWrap)}>
+					<div className={clsx(partsStyles.inset, partsStyles.rowNoWrap)}>
 						<LogoAvatar
 							url={data.team.avatarUrl}
 							name={data.team.name}
 							size="sm"
 						/>
-						<div className={styles.grow}>
+						<div className={partsStyles.grow}>
 							<div className="font-semi-bold">{data.team.name}</div>
 							<div className="text-xs text-lighter">
-								{data.team.members.length} members
+								{countText(data.team.members.length, "member")}
 								{data.role ? ` · joined as ${data.role.toLowerCase()}` : ""}
 							</div>
 						</div>
@@ -56,18 +67,17 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 					</>
 				),
 				body: (
-					<div className={styles.inset}>
-						<div className={styles.rowNoWrap}>
+					<div className={partsStyles.inset}>
+						<div className={partsStyles.rowNoWrap}>
 							<LogoAvatar
 								url={data.team.avatarUrl}
 								name={data.team.name}
 								size="sm"
 							/>
-							<div className={styles.grow}>
+							<div className={partsStyles.grow}>
 								<div className="font-bold">{data.team.name}</div>
 								<div className="text-xs text-lighter">
-									{data.team.members.length}{" "}
-									{data.team.members.length === 1 ? "member" : "members"}
+									{countText(data.team.members.length, "member")}
 								</div>
 							</div>
 							<UserStack users={data.team.members} />
@@ -90,14 +100,14 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 					</>
 				),
 				body: (
-					<div className={clsx(styles.inset, styles.rowNoWrap)}>
-						<span className={styles.bigScore}>{data.years}</span>
-						<div className={styles.grow}>
+					<div className={clsx(partsStyles.inset, partsStyles.rowNoWrap)}>
+						<span className={partsStyles.bigScore}>{data.years}</span>
+						<div className={partsStyles.grow}>
 							<div className="font-semi-bold">
 								{data.years === 1 ? "year" : "years"} together
 							</div>
 							<div className="text-xs text-lighter">
-								{data.tournamentCount} tournaments played as a team
+								{countText(data.tournamentCount, "tournament")} played as a team
 							</div>
 						</div>
 						<UserStack users={data.team.members} />
@@ -145,7 +155,7 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 								</div>
 							))}
 						</div>
-						<div className={styles.rowNoWrap}>
+						<div className={partsStyles.rowNoWrap}>
 							<span className="text-xs">
 								Best window{" "}
 								<b>
@@ -166,6 +176,43 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 				),
 			};
 		}
+		case "TEAM_EVENT_ADDED": {
+			const { data } = item;
+			return {
+				avatar: <Avatar user={data.actor} size="xs" />,
+				line: (
+					<>
+						<UserName user={data.actor} /> added{" "}
+						<Link
+							to={teamSchedulePage(data.team.customUrl)}
+							className="font-bold"
+						>
+							{data.name}
+						</Link>{" "}
+						to <TeamLink team={data.team} />
+					</>
+				),
+				body: (
+					<div className={clsx(partsStyles.inset, partsStyles.rowNoWrap)}>
+						<DateBlock at={data.startsAt} />
+						<div className={partsStyles.grow}>
+							<div className="font-semi-bold">{data.name}</div>
+							<div className="text-xs text-lighter">
+								<DayTime at={data.startsAt} /> –{" "}
+								<LocaleTime
+									inline
+									date={data.endsAt}
+									options={{ hour: "numeric", minute: "2-digit" }}
+								/>
+							</div>
+						</div>
+						{data.members.length > 0 ? (
+							<UserStack users={data.members} />
+						) : null}
+					</div>
+				),
+			};
+		}
 		case "SCRIM_POST": {
 			const { data } = item;
 			return {
@@ -177,19 +224,20 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 				),
 				body: (
 					<>
-						<div className={styles.inset}>
+						<div className={partsStyles.inset}>
 							<div className="font-semi-bold">
-								<DayTime at={data.startsAt} />
+								{data.isLookingNow ? "Now" : <DayTime at={data.startsAt} />}
 							</div>
 							<div className="text-xs text-lighter">
-								{data.maxDiv !== null && data.minDiv !== null
-									? `Div ${data.maxDiv}–${data.minDiv} · `
+								{data.reason && SCRIM_POST_REASON_TEXTS[data.reason]
+									? `${SCRIM_POST_REASON_TEXTS[data.reason]} · `
 									: ""}
+								{data.divs ? `Div ${data.divs.max}–${data.divs.min} · ` : ""}
 								{data.requestCount} requests so far
 							</div>
 						</div>
 						{data.text ? (
-							<div className={clsx(styles.quote, "text-xs text-lighter")}>
+							<div className={clsx(partsStyles.quote, "text-xs text-lighter")}>
 								{data.text}
 							</div>
 						) : null}
@@ -226,9 +274,9 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 				),
 				body: (
 					<>
-						<div className={styles.quote}>{data.text}</div>
-						<div className={clsx(styles.row, styles.between)}>
-							<div className={styles.row}>
+						<div className={partsStyles.quote}>{data.text}</div>
+						<div className={clsx(partsStyles.row, partsStyles.between)}>
+							<div className={partsStyles.row}>
 								{data.weaponSplIds.map((weaponSplId) => (
 									<WeaponImage
 										key={weaponSplId}
@@ -256,7 +304,7 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 				),
 				body: (
 					<>
-						<div className={styles.quote}>{data.text}</div>
+						<div className={partsStyles.quote}>{data.text}</div>
 						<span className="text-xs text-lighter">
 							Posted by <UserName user={data.actor} /> · {data.timezone}
 						</span>

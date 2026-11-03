@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import { Play } from "lucide-react";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton } from "~/components/elements/Button";
@@ -27,6 +26,7 @@ import {
 import type { FeedItem } from "../core/FeedItems.server";
 import type { FeedItemContent } from "./FeedItemCard";
 import {
+	countText,
 	DayTime,
 	LogoAvatar,
 	MapTiles,
@@ -39,7 +39,8 @@ import {
 	WeaponSlot,
 	WinLoss,
 } from "./FeedParts";
-import styles from "./FeedParts.module.css";
+import partsStyles from "./FeedParts.module.css";
+import styles from "./PlayItems.module.css";
 
 export function playItemContent(item: FeedItem): FeedItemContent | null {
 	switch (item.type) {
@@ -64,8 +65,8 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 				body: (
 					<>
 						{data.promotion ? (
-							<div className={clsx(styles.hero, styles.heroAccent)}>
-								<div className={styles.rowNoWrap}>
+							<div className={clsx(partsStyles.hero, partsStyles.heroAccent)}>
+								<div className={partsStyles.rowNoWrap}>
 									<TierImage tier={data.promotion.from} width={56} />
 									<span className="text-lighter">→</span>
 									<TierImage tier={data.promotion.to} width={56} />
@@ -103,7 +104,7 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 							</div>
 						) : (
 							<>
-								<span className={clsx(styles.pill, styles.upsetPill)}>
+								<span className={clsx(partsStyles.pill, partsStyles.upsetPill)}>
 									Upset
 								</span>
 								<div
@@ -115,7 +116,7 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 									<span className={styles.verdict}>
 										{data.isWin ? "Victory" : "Defeat"}
 									</span>
-									<span className={styles.bigScore}>
+									<span className={partsStyles.bigScore}>
 										{data.score[0]}–{data.score[1]}
 									</span>
 									<span className="ml-auto" />
@@ -150,9 +151,9 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 								<div key={side.label} className={styles.column}>
 									<span className={styles.label}>{side.label}</span>
 									{side.players.map((player) => (
-										<div key={player.user.id} className={styles.player}>
+										<div key={player.user.id} className={partsStyles.player}>
 											<Avatar user={player.user} size="xxs" />
-											<span className={styles.ellipsis}>
+											<span className={partsStyles.ellipsis}>
 												{player.user.username}
 											</span>
 											<WeaponSlot weaponSplId={player.weaponSplId} />
@@ -176,12 +177,12 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 					</>
 				),
 				body: (
-					<div className={styles.rowNoWrap}>
-						<span className={clsx(styles.bigScore, "text-success")}>
+					<div className={partsStyles.rowNoWrap}>
+						<span className={clsx(partsStyles.bigScore, "text-success")}>
 							{data.streak}
 						</span>
 						<div className="stack sm">
-							<div className={styles.row}>
+							<div className={partsStyles.row}>
 								{Array.from({ length: data.streak }, (_, i) => (
 									<WinLoss key={i} isWin />
 								))}
@@ -213,25 +214,28 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 				),
 				body: (
 					<>
-						<table className={styles.table}>
+						<table className={partsStyles.table}>
 							<tbody>
 								{data.neighbors.map((neighbor) => (
 									<tr
 										key={neighbor.user.id}
 										className={clsx({
-											[styles.highlightRow]: neighbor.user.id === data.actor.id,
+											[partsStyles.highlightRow]:
+												neighbor.user.id === data.actor.id,
 										})}
 									>
-										<td className={styles.rankCell}>#{neighbor.placement}</td>
+										<td className={partsStyles.rankCell}>
+											#{neighbor.placement}
+										</td>
 										<td>
-											<div className={styles.rowNoWrap}>
+											<div className={partsStyles.rowNoWrap}>
 												<Avatar user={neighbor.user} size="xxxsm" />
 												<Link to={userPage(neighbor.user)}>
 													{neighbor.user.username}
 												</Link>
 											</div>
 										</td>
-										<td className={styles.numeric}>{neighbor.sp} SP</td>
+										<td className={partsStyles.numeric}>{neighbor.sp} SP</td>
 									</tr>
 								))}
 							</tbody>
@@ -257,8 +261,8 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 					</>
 				),
 				body: (
-					<div className={styles.rowNoWrap}>
-						<span className={styles.bigScore}>{data.milestone}</span>
+					<div className={partsStyles.rowNoWrap}>
+						<span className={partsStyles.bigScore}>{data.milestone}</span>
 						<span className="text-xs text-lighter">
 							sets since{" "}
 							<LocaleTime
@@ -291,7 +295,7 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 							</div>
 							<div className={styles.stat}>
 								<span className={styles.label}>Tier</span>
-								<span className={clsx(styles.statValue, styles.rowNoWrap)}>
+								<span className={styles.statValue}>
 									{data.tier ? (
 										<>
 											<TierImage tier={data.tier} width={28} />
@@ -330,7 +334,9 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 										"–"
 									)}
 								</span>
-								<span className={clsx(styles.ellipsis, "text-xs text-lighter")}>
+								<span
+									className={clsx(partsStyles.ellipsis, "text-xs text-lighter")}
+								>
 									{data.weaponSplId !== null ? (
 										<WeaponName weaponSplId={data.weaponSplId} />
 									) : (
@@ -356,13 +362,15 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 					</>
 				),
 				body: (
-					<div className={clsx(styles.inset, styles.vs)}>
-						<div className={styles.vsSide}>
+					<div className={clsx(partsStyles.inset, partsStyles.vs)}>
+						<div className={partsStyles.vsSide}>
 							<Avatar user={data.actor} size="sm" />
-							<span className={styles.ellipsis}>{data.actor.username}</span>
+							<span className={partsStyles.ellipsis}>
+								{data.actor.username}
+							</span>
 						</div>
 						<div>
-							<div className={styles.bigScore}>
+							<div className={partsStyles.bigScore}>
 								{data.sets[0]}–{data.sets[1]}
 							</div>
 							<div className="text-xs text-lighter">sets this season</div>
@@ -370,9 +378,11 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 								{data.maps[0]}–{data.maps[1]} maps
 							</div>
 						</div>
-						<div className={styles.vsSide}>
+						<div className={partsStyles.vsSide}>
 							<Avatar user={data.other} size="sm" />
-							<span className={styles.ellipsis}>{data.other.username}</span>
+							<span className={partsStyles.ellipsis}>
+								{data.other.username}
+							</span>
 						</div>
 					</div>
 				),
@@ -393,10 +403,10 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 					</>
 				),
 				body: (
-					<div className={clsx(styles.hero, styles.heroAccent)}>
-						<div className={styles.rowNoWrap}>
-							<div className={styles.grow}>
-								<div className={styles.bigScore}>Season {data.nth}</div>
+					<div className={clsx(partsStyles.hero, partsStyles.heroAccent)}>
+						<div className={partsStyles.rowNoWrap}>
+							<div className={partsStyles.grow}>
+								<div className={partsStyles.bigScore}>Season {data.nth}</div>
 								<div className="text-xs text-lighter">
 									<LocaleTimeRange
 										from={data.startsAt}
@@ -410,7 +420,7 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 								path={sqHeaderGuyImageUrl(data.nth)}
 								alt=""
 								width={96}
-								containerClassName={styles.noShrink}
+								containerClassName={partsStyles.noShrink}
 							/>
 						</div>
 						{data.isCountdown ? (
@@ -431,6 +441,55 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 				),
 			};
 		}
+		case "SQ_SEASON_ENDING": {
+			const { data } = item;
+			const { goal, rank } = data;
+			return {
+				avatar: <NavIconAvatar navIcon="sendouq" />,
+				line: (
+					<>
+						<b>SendouQ Season {data.nth}</b> ends <DayTime at={data.endsAt} />
+					</>
+				),
+				body: (
+					<div className={clsx(partsStyles.inset, partsStyles.rowNoWrap)}>
+						{rank ? <TierImage tier={rank.tier} width={40} /> : null}
+						<div className={partsStyles.grow}>
+							<div className="font-semi-bold">
+								{rank
+									? `${tierLabel(rank.tier)} · ${rank.sp} SP`
+									: `${data.setCount} ${data.setCount === 1 ? "set" : "sets"} played`}
+							</div>
+							{rank ? (
+								<div className="text-xs text-lighter">
+									{rank.placement ? `#${rank.placement} · ` : null}
+									{countText(data.setCount, "set")} played
+								</div>
+							) : null}
+							{goal ? (
+								<div className="text-sm">
+									{goal.type === "GET_RANKED" ? (
+										<>
+											<b>
+												{goal.setsShort} more{" "}
+												{goal.setsShort === 1 ? "set" : "sets"}
+											</b>{" "}
+											to get ranked
+										</>
+									) : (
+										<>
+											<b>{goal.spShort} SP</b> away from{" "}
+											<b>{tierLabel(goal.tier)}</b>
+										</>
+									)}
+								</div>
+							) : null}
+						</div>
+					</div>
+				),
+				href: SENDOUQ_PAGE,
+			};
+		}
 		case "LEADERBOARD_TOP": {
 			const { data } = item;
 			return {
@@ -446,9 +505,9 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 							<div className={styles.column}>
 								<span className={styles.label}>Players</span>
 								{data.players.map((player) => (
-									<div key={player.user.id} className={styles.player}>
+									<div key={player.user.id} className={partsStyles.player}>
 										<Avatar user={player.user} size="xxs" />
-										<span className={styles.ellipsis}>
+										<span className={partsStyles.ellipsis}>
 											<Link to={userPage(player.user)}>
 												{player.user.username}
 											</Link>
@@ -480,17 +539,17 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 							<div className={styles.column}>
 								<span className={styles.label}>Teams</span>
 								{data.teams.map((entry) => (
-									<div key={entry.placement} className={styles.player}>
+									<div key={entry.placement} className={partsStyles.player}>
 										<UserStack users={entry.members} />
 										{entry.team ? (
 											<Link
 												to={teamPage(entry.team.customUrl)}
-												className={styles.ellipsis}
+												className={partsStyles.ellipsis}
 											>
 												{entry.team.name}
 											</Link>
 										) : (
-											<span className={styles.ellipsis}>
+											<span className={partsStyles.ellipsis}>
 												{entry.members
 													.map((member) => member.username)
 													.join(", ")}
@@ -532,7 +591,10 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 								<div key={column.label} className={styles.column}>
 									<span className={styles.label}>{column.label}</span>
 									{column.rows.map((row) => (
-										<div key={row.weaponSplId} className={styles.rowNoWrap}>
+										<div
+											key={row.weaponSplId}
+											className={partsStyles.rowNoWrap}
+										>
 											<WeaponImage
 												weaponSplId={row.weaponSplId}
 												variant="build"
@@ -572,70 +634,29 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 						<Link to={lobbyPage(data.lobbyId)} className="font-bold">
 							{data.name}
 						</Link>{" "}
-						wrapped up · {data.setCount} sets, {data.playerCount} players
+						wrapped up · {countText(data.setCount, "set")},{" "}
+						{countText(data.playerCount, "player")}
 					</>
 				),
 				body: (
-					<table className={styles.table}>
+					<table className={partsStyles.table}>
 						<tbody>
 							{data.top.map((player) => (
 								<tr key={player.id}>
-									<td className={styles.rankCell}>#{player.placement}</td>
+									<td className={partsStyles.rankCell}>#{player.placement}</td>
 									<td>
-										<div className={styles.rowNoWrap}>
+										<div className={partsStyles.rowNoWrap}>
 											<Avatar user={player} size="xxxsm" />
 											<UserName user={player} />
 										</div>
 									</td>
-									<td className={styles.numeric}>
+									<td className={partsStyles.numeric}>
 										{player.setWins}–{player.setLosses}
 									</td>
 								</tr>
 							))}
 						</tbody>
 					</table>
-				),
-			};
-		}
-		case "STREAM_LIVE": {
-			const { data } = item;
-			const name = data.stream.user?.username ?? data.stream.account;
-			return {
-				avatar: data.stream.user ? (
-					<Avatar user={data.stream.user} size="xs" />
-				) : (
-					<LogoAvatar url={null} name={name} />
-				),
-				line: (
-					<>
-						<b>{name}</b> is live on{" "}
-						{data.stream.platform === "TWITCH" ? "Twitch" : "YouTube"}
-					</>
-				),
-				body: (
-					<>
-						<div className={styles.thumb}>
-							<span className={styles.thumbPlay}>
-								<Play size={22} fill="currentColor" />
-							</span>
-							<span
-								className={clsx(styles.thumbTag, styles.pill, styles.pillLive)}
-							>
-								LIVE · {data.stream.viewerCount}
-							</span>
-						</div>
-						{data.others.length > 0 ? (
-							<div className="text-xs text-lighter">
-								Also live:{" "}
-								{data.others
-									.map(
-										(other) =>
-											`${other.user?.username ?? other.account} (${other.viewerCount})`,
-									)
-									.join(", ")}
-							</div>
-						) : null}
-					</>
 				),
 			};
 		}
@@ -670,11 +691,11 @@ function MapStat({
 			<span className={styles.statValue}>
 				{map ? `${map.wins}–${map.losses}` : "–"}
 			</span>
-			<span className={clsx(styles.rowNoWrap, "text-xs")}>
+			<span className={clsx(partsStyles.rowNoWrap, "text-xs")}>
 				{map ? (
 					<>
 						<ModeImage mode={map.mode} size={16} />
-						<span className={styles.ellipsis}>
+						<span className={partsStyles.ellipsis}>
 							<StageName stageId={map.stageId} />
 						</span>
 					</>

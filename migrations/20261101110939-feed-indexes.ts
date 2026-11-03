@@ -70,12 +70,6 @@ export async function up(db: Kysely<any>): Promise<void> {
 			.execute();
 
 		await trx.schema
-			.createIndex("feed_feedback_created_at")
-			.on("FeedFeedback")
-			.column("createdAt")
-			.execute();
-
-		await trx.schema
 			.createTable("FeedComment")
 			.addColumn("id", "integer", (col) => col.primaryKey().autoIncrement())
 			.addColumn("itemId", "text", (col) => col.notNull())

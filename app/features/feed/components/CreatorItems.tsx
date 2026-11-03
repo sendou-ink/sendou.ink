@@ -9,9 +9,10 @@ import { userArtPage } from "~/features/art/art-urls";
 import { BigImageDialog } from "~/features/art/components/ArtGrid";
 import { smallImageFileName, vodVideoPage } from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
+import styles from "./CreatorItems.module.css";
 import type { FeedItemContent } from "./FeedItemCard";
-import { LogoAvatar, UserName } from "./FeedParts";
-import styles from "./FeedParts.module.css";
+import { countText, LogoAvatar, UserName } from "./FeedParts";
+import partsStyles from "./FeedParts.module.css";
 
 export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 	switch (item.type) {
@@ -69,7 +70,9 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 				body: (
 					<>
 						<ArtGallery pieces={data.pieces} />
-						<div className={clsx(styles.quote, "text-xs")}>{data.text}</div>
+						<div className={clsx(partsStyles.quote, "text-xs")}>
+							{data.text}
+						</div>
 					</>
 				),
 			};
@@ -116,23 +119,23 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 				),
 				body: (
 					<>
-						<div className={styles.thumb}>
+						<div className={partsStyles.thumb}>
 							<img
 								src={`https://i.ytimg.com/vi/${data.youtubeId}/mqdefault.jpg`}
 								alt=""
 								loading="lazy"
 							/>
-							<span className={styles.thumbPlay}>
+							<span className={partsStyles.thumbPlay}>
 								<Play size={22} fill="currentColor" />
 							</span>
-							<span className={clsx(styles.thumbTag, styles.pill)}>
-								{data.matchCount} games
+							<span className={clsx(partsStyles.thumbTag, partsStyles.pill)}>
+								{countText(data.matchCount, "game")}
 							</span>
 						</div>
-						<div className={clsx(styles.row, styles.between)}>
-							<div className={styles.row}>
+						<div className={clsx(partsStyles.row, partsStyles.between)}>
+							<div className={partsStyles.row}>
 								{data.players.map((player, i) => (
-									<span key={i} className={styles.rowNoWrap}>
+									<span key={i} className={partsStyles.rowNoWrap}>
 										{player.user ? (
 											<Avatar user={player.user} size="xxxsm" />
 										) : null}
@@ -147,7 +150,7 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 									</span>
 								))}
 							</div>
-							<div className={styles.rowNoWrap}>
+							<div className={partsStyles.rowNoWrap}>
 								{data.modes.map((mode) => (
 									<ModeImage key={mode} mode={mode} size={18} />
 								))}
@@ -167,14 +170,20 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 					</>
 				),
 				body: (
-					<div className={clsx(styles.hero, styles.heroAccent, styles.heroRow)}>
+					<div
+						className={clsx(
+							partsStyles.hero,
+							partsStyles.heroAccent,
+							partsStyles.heroRow,
+						)}
+					>
 						<WeaponImage
 							weaponSplId={data.weaponSplId}
 							variant="build"
 							size={44}
 						/>
-						<div className={styles.grow}>
-							<div className={styles.bigScore}>#{data.rank}</div>
+						<div className={partsStyles.grow}>
+							<div className={partsStyles.bigScore}>#{data.rank}</div>
 							<div className="text-xs text-lighter">
 								{data.region === "WEST" ? "Takoroka" : "Tentatek"} ·{" "}
 								{data.month}/{data.year}
@@ -200,20 +209,20 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 				),
 				body: (
 					<>
-						<div className={clsx(styles.row, styles.between)}>
+						<div className={clsx(partsStyles.row, partsStyles.between)}>
 							<span className={styles.code}>{data.replayCode}</span>
-							<span className={styles.rowNoWrap}>
+							<span className={partsStyles.rowNoWrap}>
 								{data.mode ? <ModeImage mode={data.mode} size={20} /> : null}
 								{data.stageId !== null ? (
 									<StageImage
 										stageId={data.stageId}
 										width={64}
-										className={styles.logo}
+										className={partsStyles.logo}
 									/>
 								) : null}
 								<span
 									className={clsx(
-										styles.pill,
+										partsStyles.pill,
 										data.isWin ? "text-success" : "text-error",
 									)}
 								>
@@ -222,15 +231,15 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 							</span>
 						</div>
 						<div className={styles.tableWrap}>
-							<table className={styles.table}>
+							<table className={partsStyles.table}>
 								<thead>
 									<tr>
 										<th />
 										<th>Player</th>
-										<th className={styles.numeric}>K/A</th>
-										<th className={styles.numeric}>D</th>
-										<th className={styles.numeric}>Sp</th>
-										<th className={styles.numeric}>Paint</th>
+										<th className={partsStyles.numeric}>K/A</th>
+										<th className={partsStyles.numeric}>D</th>
+										<th className={partsStyles.numeric}>Sp</th>
+										<th className={partsStyles.numeric}>Paint</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -239,7 +248,7 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 											<tr
 												key={`${teamIndex}-${i}`}
 												className={clsx({
-													[styles.highlightRow]: player.isPov,
+													[partsStyles.highlightRow]: player.isPov,
 												})}
 											>
 												<td>
@@ -251,13 +260,19 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 														/>
 													) : null}
 												</td>
-												<td className={styles.ellipsis}>
+												<td className={partsStyles.ellipsis}>
 													{player.name ?? "?"}
 												</td>
-												<td className={styles.numeric}>{player.ka ?? "–"}</td>
-												<td className={styles.numeric}>{player.d ?? "–"}</td>
-												<td className={styles.numeric}>{player.s ?? "–"}</td>
-												<td className={styles.numeric}>
+												<td className={partsStyles.numeric}>
+													{player.ka ?? "–"}
+												</td>
+												<td className={partsStyles.numeric}>
+													{player.d ?? "–"}
+												</td>
+												<td className={partsStyles.numeric}>
+													{player.s ?? "–"}
+												</td>
+												<td className={partsStyles.numeric}>
 													{player.paint ?? "–"}
 												</td>
 											</tr>

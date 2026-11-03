@@ -1,0 +1,47 @@
+.bio {
+	margin: 0;
+	padding-left: var(--s-2-5);
+	font-size: var(--font-xs);
+	font-style: italic;
+	color: var(--color-text-high);
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+	border-left: 2px solid var(--color-border);
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.heat {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: var(--s-1);
+}
+
+.heatDay {
+	display: grid;
+	justify-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.heatBar {
+	position: relative;
+	width: 100%;
+	height: 34px;
+	overflow: hidden;
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg-higher);
+
+	& i {
+		position: absolute;
+		inset: auto 0 0 0;
+		background-color: var(--color-accent);
+	}
+}
+
+.heatBest i {
+	background-color: var(--color-success);
+}

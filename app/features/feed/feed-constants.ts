@@ -58,14 +58,10 @@ export interface FeedItemTypeDefinition {
 	baseScore: number;
 	/** Hours until the recency factor halves */
 	halfLifeHours: number;
-	/** Describes current state, recency doesn't decay it and it shows in the "Happening now" strip */
-	isLive?: boolean;
 	/** Viewer's own action item, shown above the feed */
 	isPinned?: boolean;
 	/** Shown in the post header instead of the category, for items that clearly belong to one feature */
 	feature?: { label: string; navIcon: NavIcon };
-	/** Live state isn't stored, so on this test page the rows are the latest ones shifted to "now" */
-	isRetimed?: boolean;
 	/** Not shown when the site is opened as an installed app */
 	isHiddenInPwa?: boolean;
 	/** Nothing to talk about (a notice or a listing): no comments, reactions or sharing, the post opens what it's about instead */
@@ -128,6 +124,15 @@ export const FEED_ITEM_TYPES = {
 		baseScore: 0.7,
 		halfLifeHours: 48,
 	},
+	SQ_SEASON_ENDING: {
+		name: "Season ending soon",
+		category: "SENDOUQ",
+		audience: ["SELF"],
+		baseScore: 0.8,
+		halfLifeHours: 72,
+		isPinned: true,
+		isNotice: true,
+	},
 	LEADERBOARD_TOP: {
 		name: "Weekly leaderboard",
 		category: "SENDOUQ",
@@ -149,15 +154,6 @@ export const FEED_ITEM_TYPES = {
 		audience: ["FRIENDS", "TEAM"],
 		baseScore: 0.45,
 		halfLifeHours: 18,
-	},
-	STREAM_LIVE: {
-		name: "Live now",
-		category: "SENDOUQ",
-		audience: ["FRIENDS", "FOLLOWING"],
-		baseScore: 0.75,
-		halfLifeHours: 1,
-		isLive: true,
-		isRetimed: true,
 	},
 	TO_WIN: {
 		name: "Tournament win",
@@ -215,7 +211,7 @@ export const FEED_ITEM_TYPES = {
 	TO_SERIES: {
 		name: "Series standings",
 		category: "TOURNAMENTS",
-		audience: ["FRIENDS", "TEAM", "FOLLOWING"],
+		audience: ["SELF"],
 		baseScore: 0.35,
 		halfLifeHours: 96,
 	},
@@ -238,6 +234,20 @@ export const FEED_ITEM_TYPES = {
 		category: "TOURNAMENTS",
 		audience: ["FRIENDS", "TEAM", "FOLLOWING"],
 		baseScore: 0.6,
+		halfLifeHours: 48,
+	},
+	TROPHY_NEW: {
+		name: "New trophy design",
+		category: "TOURNAMENTS",
+		audience: ["FRIENDS", "TEAM"],
+		baseScore: 0.45,
+		halfLifeHours: 72,
+	},
+	CALENDAR_FRIENDS_SAVED: {
+		name: "Friends are interested",
+		category: "TOURNAMENTS",
+		audience: ["FRIENDS"],
+		baseScore: 0.45,
 		halfLifeHours: 48,
 	},
 	TO_SHOWCASE: {
@@ -313,6 +323,13 @@ export const FEED_ITEM_TYPES = {
 		audience: ["TEAM"],
 		baseScore: 0.6,
 		halfLifeHours: 48,
+	},
+	TEAM_EVENT_ADDED: {
+		name: "Team event added",
+		category: "TEAMS",
+		audience: ["TEAM"],
+		baseScore: 0.55,
+		halfLifeHours: 24,
 	},
 	SCRIM_POST: {
 		name: "Scrim request match",
@@ -443,6 +460,22 @@ export const FEED_ITEM_TYPES = {
 		baseScore: 0.5,
 		halfLifeHours: 72,
 	},
+	PLUS_SUGGESTION: {
+		name: "New Plus Server suggestion",
+		category: "COMMUNITY",
+		feature: { label: "Plus Server", navIcon: "plus" },
+		audience: ["SELF"],
+		baseScore: 0.4,
+		halfLifeHours: 48,
+	},
+	ARTICLE_NEW: {
+		name: "New article",
+		category: "COMMUNITY",
+		feature: { label: "Articles", navIcon: "articles" },
+		audience: ["EVERYONE"],
+		baseScore: 0.4,
+		halfLifeHours: 96,
+	},
 	ANNOUNCEMENT: {
 		name: "Announcement",
 		category: "COMMUNITY",
@@ -491,15 +524,6 @@ export const FEED_ITEM_TYPES = {
 		baseScore: 0.3,
 		halfLifeHours: 6,
 		isNotice: true,
-	},
-	VOICE_ROOM: {
-		name: "Friends in voice",
-		category: "COMMUNITY",
-		audience: ["FRIENDS"],
-		baseScore: 0.7,
-		halfLifeHours: 0.5,
-		isLive: true,
-		isRetimed: true,
 	},
 	MEMORY: {
 		name: "Memories",
@@ -551,6 +575,26 @@ export const FEED_ROTATION_MAX_LISTED = 4;
 /** A won set is an upset when the opponents' tier was at least this many steps higher (plus tiers count as a step) */
 export const FEED_SQ_UPSET_MIN_TIER_STEPS = 2;
 
+/** Share of an LFG match that comes from the timezone, the rest comes from skill */
+export const FEED_LFG_TIMEZONE_WEIGHT = 0.75;
+/** Hours between two LFG posts' timezones that still count as the same */
+export const FEED_LFG_FULL_MATCH_HOURS = 1;
+/** Hours between two LFG posts' timezones at which the timezone no longer matches at all */
+export const FEED_LFG_NO_MATCH_HOURS = 7;
+/** Tier steps (plus tiers count as a step) between two LFG posts at which the skill no longer matches at all */
+export const FEED_LFG_NO_MATCH_TIER_STEPS = 6;
+/** Match an LFG post needs to be shown */
+export const FEED_LFG_MIN_MATCH = 0.5;
+
+/** Days of accepted scrims a team's usual opponents and scrim hours are taken from */
+export const FEED_SCRIM_HISTORY_DAYS = 90;
+/** Accepted scrims against a team within `FEED_SCRIM_HISTORY_DAYS` before it's a usual opponent */
+export const FEED_SCRIM_USUAL_OPPONENT_MIN_SCRIMS = 2;
+/** Divisions a team can be outside of a scrim post's range and still fit it */
+export const FEED_SCRIM_FIT_MAX_DIV_GAP = 1;
+/** Hours a "looking now" scrim post stays open after it's made, as on the scrims page */
+export const FEED_SCRIM_LOOKING_NOW_HOURS = 3;
+
 /** Sets against the same opponent this season before it can be a rivalry */
 export const FEED_RIVALRY_MIN_SETS = 4;
 
@@ -561,6 +605,17 @@ export const SQ_SET_MILESTONES = [100, 250, 500, 1000, 1500, 2000];
 
 /** Days before a SendouQ season starts that its countdown post goes up */
 export const FEED_SEASON_COUNTDOWN_DAYS = 3;
+
+/** Days before a SendouQ season ends that the viewer is reminded of a goal they're close to */
+export const FEED_SEASON_ENDING_DAYS = 3;
+/** Most SP the viewer can be short of the next tier for it to be shown as a goal */
+export const FEED_SEASON_ENDING_MAX_SP_SHORT = 30;
+
+/** Friends who saved the same upcoming tournament for its post to get full weight, fewer scale it down */
+export const FEED_FRIENDS_SAVED_FULL_WEIGHT = 3;
+
+/** Suggested players listed in one Plus Server suggestion post */
+export const FEED_PLUS_SUGGESTIONS_LISTED = 5;
 
 /** UTC hour the scheduled posts (showcase, leaderboard, spotlight) go up */
 export const FEED_SCHEDULED_POST_HOUR_UTC = 8;

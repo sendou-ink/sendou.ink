@@ -16,7 +16,7 @@ export const action = defineAction(
 
 		switch (body._action) {
 			case "COMMENT": {
-				await FeedCommentRepository.insertOwn({
+				await FeedCommentRepository.insert({
 					itemId: params.id,
 					publicId: body.publicId,
 					contents: body.contents,

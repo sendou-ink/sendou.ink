@@ -36,7 +36,7 @@ export async function findByItemIds({
 	return {
 		countByItemId: Object.fromEntries(
 			rows.map((row) => [row.itemId, row.count]),
-		) as Record<string, number>,
+		),
 		reactedItemIds: rows.filter((row) => row.isOwn).map((row) => row.itemId),
 	};
 }

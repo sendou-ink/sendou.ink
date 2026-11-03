@@ -258,6 +258,15 @@ export function ordinalPlacement(placement: number) {
 	return `${placement}${suffixes[(lastTwo - 20) % 10] ?? suffixes[lastTwo] ?? suffixes[0]}`;
 }
 
+/** English count with its noun pluralized, e.g. "1 team" or "3 teams". */
+export function countText(
+	count: number,
+	singular: string,
+	plural = `${singular}s`,
+) {
+	return `${count} ${count === 1 ? singular : plural}`;
+}
+
 /** English number with thousands separators, e.g. "100,000". */
 export function groupedNumber(value: number) {
 	return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",");

@@ -230,11 +230,6 @@
 	background-color: var(--color-bg-second);
 }
 
-.tagLive {
-	color: var(--color-error-high);
-	background-color: var(--color-error-low);
-}
-
 .tagPrototype {
 	color: var(--color-text-high);
 	border: 1px solid var(--color-border);

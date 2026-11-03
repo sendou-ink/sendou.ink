@@ -36,7 +36,6 @@ const AUDIENCE_LABELS: Record<FeedSourceAudience, string> = {
 const PLACEMENT_LABELS: Record<FeedSourcePlacement, string> = {
 	FEED: "Feed",
 	PINNED: "Pinned",
-	LIVE: "Live strip",
 };
 
 const LEGEND_AUDIENCES: FeedSourceAudience[] = [
@@ -280,7 +279,6 @@ function PlacementTag({ placement }: { placement: FeedSourcePlacement }) {
 			className={clsx(styles.tag, {
 				[styles.tagFeed]: placement === "FEED",
 				[styles.tagPinned]: placement === "PINNED",
-				[styles.tagLive]: placement === "LIVE",
 			})}
 		>
 			{PLACEMENT_LABELS[placement]}
@@ -301,11 +299,7 @@ function sourceDetails(source: FeedSource): ProposedFeedItem & {
 		key: source.item,
 		name: definition.name,
 		audience: definition.audience,
-		placement: definition.isPinned
-			? "PINNED"
-			: definition.isLive
-				? "LIVE"
-				: "FEED",
+		placement: definition.isPinned ? "PINNED" : "FEED",
 		isInPrototype: true,
 	};
 }

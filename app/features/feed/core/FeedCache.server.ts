@@ -33,6 +33,12 @@ export function cached<T>({
 	});
 }
 
+/** Empties every feed cache. */
+export function clear() {
+	feedCache.clear();
+	byIdCache.clear();
+}
+
 /** Rows by id, the ones not cached within `ttlMs` fetched with one call of `fetch`. */
 export async function cachedByIds<T>({
 	prefix,

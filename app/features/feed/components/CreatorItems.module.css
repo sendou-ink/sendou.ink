@@ -1,0 +1,50 @@
+.tableWrap {
+	overflow-x: auto;
+}
+
+.gallery {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: var(--s-1);
+	border-radius: var(--radius-box);
+	overflow: hidden;
+
+	& img {
+		display: block;
+		width: 100%;
+		aspect-ratio: 1;
+		object-fit: cover;
+	}
+}
+
+.galleryButton {
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: zoom-in;
+}
+
+.galleryOne {
+	grid-template-columns: 1fr;
+
+	& img {
+		aspect-ratio: auto;
+		max-height: 380px;
+	}
+}
+
+.code {
+	font-family: monospace;
+	font-weight: var(--weight-bold);
+	letter-spacing: 0.08em;
+	padding: var(--s-1-5) var(--s-2-5);
+	border-radius: var(--radius-field);
+	border: 1px dashed var(--color-border);
+	background-color: var(--color-bg-higher);
+}
+
+.buildCard {
+	display: grid;
+	grid-template-columns: minmax(0, 260px);
+	grid-template-rows: repeat(3, auto);
+}

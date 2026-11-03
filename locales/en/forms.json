@@ -44,7 +44,7 @@
 	"bottomTexts.noScreen": "Affects tournaments, scrims and SendouQ",
 	"bottomTexts.spoilerFreeMode": "Hides tournament results from the last week",
 	"bottomTexts.voicePushToTalk": "Your microphone only sends while you hold the talk button",
-	"bottomTexts.newHomePage": "Feed testers only: the front page shows your feed",
+	"bottomTexts.newHomePage": "Feed testers only: the home page shows your feed",
 	"options.clockFormat.auto": "Automatic",
 	"options.clockFormat.24h": "24-hour",
 	"options.clockFormat.12h": "12-hour",

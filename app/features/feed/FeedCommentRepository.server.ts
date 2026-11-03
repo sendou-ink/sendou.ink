@@ -63,8 +63,8 @@ export async function countByItemIds(
 	return Object.fromEntries(rows.map((row) => [row.itemId, row.count]));
 }
 
-/** Adds the logged in user's comment to the post, a resend with the same `publicId` is ignored. */
-export async function insertOwn(
+/** Adds a comment to the post, `authorId` filled from the logged in user. A resend with the same `publicId` is ignored. */
+export async function insert(
 	args: Pick<
 		TablesInsertable["FeedComment"],
 		"itemId" | "publicId" | "contents"

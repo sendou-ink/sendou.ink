@@ -19,10 +19,13 @@ export interface RankableItem {
 	actorKey: string;
 	/** How the viewer knows who the item is about, `null` when it isn't about someone they know */
 	relation: FeedRelation | null;
+	/** How strong the item is among those of its type, 0–1, 1 when left out */
+	weight?: number;
 }
 
 export interface ScoreBreakdown {
 	base: number;
+	weight: number;
 	affinity: number;
 	recency: number;
 	ageHours: number;
@@ -31,12 +34,12 @@ export interface ScoreBreakdown {
 }
 
 /**
- * Score of an item before the diversity pass: base score of its type × affinity × exponential
- * recency decay by the type's half-life. Affinity is that of the item's relation, or without one
- * the closest audience of its type. Live items don't decay.
+ * Score of an item before the diversity pass: base score of its type × the item's weight × affinity ×
+ * exponential recency decay by the type's half-life. Affinity is that of the item's relation, or without
+ * one the closest audience of its type.
  */
 export function score(
-	item: Pick<RankableItem, "type" | "at" | "relation">,
+	item: Pick<RankableItem, "type" | "at" | "relation" | "weight">,
 	now: number,
 ): Omit<ScoreBreakdown, "diversity"> {
 	const definition: FeedItemTypeDefinition = FEED_ITEM_TYPES[item.type];
@@ -48,23 +51,23 @@ export function score(
 				),
 			);
 	const ageHours = Math.max(0, (now - item.at) / 3600);
-	const recency = definition.isLive
-		? 1
-		: 0.5 ** (ageHours / definition.halfLifeHours);
+	const recency = 0.5 ** (ageHours / definition.halfLifeHours);
+	const weight = item.weight ?? 1;
 
 	return {
 		base: definition.baseScore,
+		weight,
 		affinity,
 		recency,
 		ageHours,
-		total: definition.baseScore * affinity * recency,
+		total: definition.baseScore * weight * affinity * recency,
 	};
 }
 
-/** Whether the item is too old to show, `FEED_MAX_AGE_HALF_LIVES` half-lives of its type. Live and pinned items never are. */
+/** Whether the item is too old to show, `FEED_MAX_AGE_HALF_LIVES` half-lives of its type. Pinned items never are. */
 export function isStale(item: Pick<RankableItem, "type" | "at">, now: number) {
 	const definition: FeedItemTypeDefinition = FEED_ITEM_TYPES[item.type];
-	if (definition.isLive || definition.isPinned) return false;
+	if (definition.isPinned) return false;
 
 	return (
 		(now - item.at) / 3600 > FEED_MAX_AGE_HALF_LIVES * definition.halfLifeHours
@@ -122,6 +125,7 @@ export function rank<T extends RankableItem>(
 			...best.item,
 			score: {
 				base: best.base,
+				weight: best.weight,
 				affinity: best.affinity,
 				recency: best.recency,
 				ageHours: best.ageHours,

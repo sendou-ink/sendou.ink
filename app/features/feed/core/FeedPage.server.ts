@@ -26,9 +26,7 @@ export async function load({
 }) {
 	const ctx = await FeedItems.contextFor({ viewerId, mode });
 	const items = (await FeedItems.buildAll(ctx)).filter(
-		(item) =>
-			!definitionOf(item).isLive &&
-			(mode === "TEST" || !FeedRanking.isStale(item, ctx.now)),
+		(item) => mode === "TEST" || !FeedRanking.isStale(item, ctx.now),
 	);
 	const viewer = notFoundIfNullish(
 		(await FeedRepository.findUsersByIds([viewerId])).at(0),

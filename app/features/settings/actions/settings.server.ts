@@ -13,8 +13,9 @@ import {
 import * as ThemePalette from "~/features/theme/core/ThemePalette";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
+import { requireRole } from "~/modules/permissions/guards.server";
 import { isSupporter } from "~/modules/permissions/utils";
-import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
+import { errorToast } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { settingsActionSchema } from "../settings-schemas.server";
@@ -62,7 +63,7 @@ export const action = defineAction(
 				break;
 			}
 			case "UPDATE_NEW_HOME_PAGE": {
-				errorToastIfFalsy(user.roles.includes("FEED_TESTER"), "Not available");
+				requireRole("FEED_TESTER");
 
 				await UserRepository.updateOwnPreferences({
 					newHomePage: body.newValue,

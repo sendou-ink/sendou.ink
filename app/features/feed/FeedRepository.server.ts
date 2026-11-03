@@ -10,11 +10,19 @@ import {
 	jsonArrayFrom,
 	tournamentLogoWithDefault,
 	userChatNameHue,
+	visibleThroughAssociationTo,
+	visibleTo,
 } from "~/utils/kysely.server";
+import type { Unwrapped } from "~/utils/types";
 import { FEED_RIVALRY_MIN_SETS } from "./feed-constants";
 
 const MAX_ROWS = 200;
+/** Longer than any scrim post's flexibility, bounds the open posts by `startsAt` so its index is used */
+const SCRIM_POST_MAX_RANGE_SECONDS = 24 * 60 * 60;
 const TOP_TEAMMATES_COUNT = 10;
+
+/** The LFG post types the feed matches against each other */
+export type FeedLFGPostType = "PLAYER_FOR_TEAM" | "TEAM_FOR_PLAYER";
 
 export function findUsersByIds(userIds: number[]) {
 	if (userIds.length === 0) return Promise.resolve([]);
@@ -311,21 +319,6 @@ export function findWeaponUsageCounts({
 		.execute();
 }
 
-export function findLiveStreams() {
-	return db
-		.selectFrom("LiveStream")
-		.select([
-			"LiveStream.account",
-			"LiveStream.platform",
-			"LiveStream.viewerCount",
-			"LiveStream.userId",
-		])
-		.orderBy((eb) => eb("LiveStream.userId", "is not", null), "desc")
-		.orderBy("LiveStream.viewerCount", "desc")
-		.limit(3)
-		.execute();
-}
-
 /** Lobbies that ended after `after` with who played in them and their top three, latest first. */
 export function findAllLobbiesEndedAfter(after: number) {
 	return db
@@ -486,12 +479,14 @@ export function findAllUpcomingRegistrations(after: number) {
 				.as("teamCount"),
 		])
 		.where("CalendarEvent.id", "in", upcomingCalendarEventIds(after))
+		.where("CalendarEvent.hidden", "=", 0)
 		.where((eb) => eb(calendarEventStartTime(eb).$asScalar(), ">", after))
 		.orderBy("startsAt", "asc")
 		.execute();
 }
 
-export function findLookingTournamentTeam(after: number) {
+/** Teams of two or more on the LFG of a tournament starting after `after`, with when their roster last changed. */
+export function findAllLookingTournamentTeams(after: number) {
 	return db
 		.selectFrom("TournamentTeam")
 		.innerJoin(
@@ -499,15 +494,41 @@ export function findLookingTournamentTeam(after: number) {
 			"CalendarEvent.tournamentId",
 			"TournamentTeam.tournamentId",
 		)
-		.select([
+		.select((eb) => [
 			"TournamentTeam.id",
 			"TournamentTeam.tournamentId",
 			"TournamentTeam.lfgNote",
-			"TournamentTeam.createdAt",
+			eb
+				.selectFrom("TournamentTeamMember")
+				.select((memberEb) =>
+					memberEb.fn
+						.max("TournamentTeamMember.createdAt")
+						.as("rosterChangedAt"),
+				)
+				.whereRef(
+					"TournamentTeamMember.tournamentTeamId",
+					"=",
+					"TournamentTeam.id",
+				)
+				.$asScalar()
+				.$notNull()
+				.as("rosterChangedAt"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentTeamMember")
+					.select("TournamentTeamMember.userId")
+					.whereRef(
+						"TournamentTeamMember.tournamentTeamId",
+						"=",
+						"TournamentTeam.id",
+					),
+			).as("members"),
 		])
 		.where("TournamentTeam.isLooking", "=", 1)
+		.where("CalendarEvent.id", "in", upcomingCalendarEventIds(after))
+		.where("CalendarEvent.hidden", "=", 0)
 		.where((eb) => eb(calendarEventStartTime(eb).$asScalar(), ">", after))
-		.orderBy(
+		.where(
 			(eb) =>
 				eb
 					.selectFrom("TournamentTeamMember")
@@ -517,10 +538,12 @@ export function findLookingTournamentTeam(after: number) {
 						"=",
 						"TournamentTeam.id",
 					),
-			"desc",
+			">=",
+			2,
 		)
-		.limit(1)
-		.executeTakeFirst();
+		.orderBy("rosterChangedAt", "desc")
+		.limit(MAX_ROWS)
+		.execute();
 }
 
 export type OrganizationTournament = NonNullable<
@@ -618,6 +641,7 @@ export function findSeriesWithLeaderboard() {
 	return db
 		.selectFrom("TournamentOrganizationSeries")
 		.select([
+			"TournamentOrganizationSeries.id",
 			"TournamentOrganizationSeries.name",
 			"TournamentOrganizationSeries.organizationId",
 			"TournamentOrganizationSeries.substringMatches",
@@ -626,8 +650,8 @@ export function findSeriesWithLeaderboard() {
 		.execute();
 }
 
-/** Placements of everyone in an organization's events matching any of the name substrings. */
-export function findSeriesPlacements({
+/** An organization's visible events with results matching any of the series name substrings, started between `from` and `to`. */
+export function findSeriesEventsWithResults({
 	organizationId,
 	substringMatches,
 	from,
@@ -639,27 +663,77 @@ export function findSeriesPlacements({
 	to: number;
 }) {
 	return db
-		.selectFrom("TournamentResult")
-		.innerJoin(
-			"CalendarEvent",
-			"CalendarEvent.tournamentId",
-			"TournamentResult.tournamentId",
-		)
+		.selectFrom("CalendarEvent")
 		.select((eb) => [
-			"TournamentResult.userId",
-			"TournamentResult.placement",
+			"CalendarEvent.id as eventId",
+			"CalendarEvent.tournamentId",
 			calendarEventStartTime(eb).$asScalar().$notNull().as("startsAt"),
 		])
 		.where("CalendarEvent.organizationId", "=", organizationId)
-		.where((eb) =>
-			eb.or(
-				substringMatches.map((match) =>
-					eb("CalendarEvent.name", "like", `%${match}%`),
-				),
-			),
-		)
+		.where("CalendarEvent.hidden", "=", 0)
+		.where(calendarEventNameMatchesSeries(substringMatches))
 		.where((eb) => eb.between(calendarEventStartTime(eb).$asScalar(), from, to))
+		.where((eb) =>
+			eb.or([
+				eb.exists(
+					eb
+						.selectFrom("TournamentResult")
+						.select("TournamentResult.tournamentId")
+						.whereRef(
+							"TournamentResult.tournamentId",
+							"=",
+							"CalendarEvent.tournamentId",
+						),
+				),
+				eb.exists(
+					eb
+						.selectFrom("CalendarEventResultTeam")
+						.select("CalendarEventResultTeam.id")
+						.whereRef(
+							"CalendarEventResultTeam.eventId",
+							"=",
+							"CalendarEvent.id",
+						),
+				),
+			]),
+		)
 		.execute();
+}
+
+/** Everyone with a result in any of the tournaments or in any of the hand-reported calendar events */
+export async function findResultUserIds({
+	tournamentIds,
+	calendarEventIds,
+}: {
+	tournamentIds: number[];
+	calendarEventIds: number[];
+}) {
+	const tournamentRows =
+		tournamentIds.length > 0
+			? await db
+					.selectFrom("TournamentResult")
+					.select("TournamentResult.userId")
+					.distinct()
+					.where("TournamentResult.tournamentId", "in", tournamentIds)
+					.execute()
+			: [];
+	const calendarEventRows =
+		calendarEventIds.length > 0
+			? await db
+					.selectFrom("CalendarEventResultTeam")
+					.innerJoin(
+						"CalendarEventResultPlayer",
+						"CalendarEventResultPlayer.teamId",
+						"CalendarEventResultTeam.id",
+					)
+					.select("CalendarEventResultPlayer.userId")
+					.distinct()
+					.where("CalendarEventResultTeam.eventId", "in", calendarEventIds)
+					.where("CalendarEventResultPlayer.userId", "is not", null)
+					.execute()
+			: [];
+
+	return [...tournamentRows, ...calendarEventRows].map((row) => row.userId!);
 }
 
 export function findOrganizationById(organizationId: number) {
@@ -763,6 +837,67 @@ export function findLatestTrophyOwners() {
 		.execute();
 }
 
+/** Trophies added (not edits of existing ones) after `after` with who made them, latest first. */
+export function findAllNewTrophiesAcceptedAfter(after: number) {
+	return db
+		.selectFrom("PendingTrophy")
+		.innerJoin("Trophy", "Trophy.model", "PendingTrophy.model")
+		.leftJoin(
+			"TournamentOrganization",
+			"TournamentOrganization.id",
+			"Trophy.organizationId",
+		)
+		.select([
+			"Trophy.id",
+			"Trophy.name",
+			"Trophy.model",
+			"Trophy.code",
+			"Trophy.creatorId",
+			"TournamentOrganization.name as organizationName",
+			"PendingTrophy.acceptedAt",
+		])
+		.where("PendingTrophy.targetTrophyId", "is", null)
+		.where("PendingTrophy.acceptedAt", ">", after)
+		.where("Trophy.creatorId", "is not", null)
+		.orderBy("PendingTrophy.acceptedAt", "desc")
+		.limit(MAX_ROWS)
+		.$narrowType<{ creatorId: number; acceptedAt: number }>()
+		.execute();
+}
+
+/** Who saved which upcoming tournaments and when, of `userIds` or of everyone when left out. */
+export function findAllUpcomingTournamentSaves({
+	after,
+	userIds,
+}: {
+	after: number;
+	userIds?: number[];
+}) {
+	let query = db
+		.selectFrom("SavedCalendarEvent")
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.id",
+			"SavedCalendarEvent.calendarEventId",
+		)
+		.select([
+			"SavedCalendarEvent.userId",
+			"SavedCalendarEvent.createdAt",
+			"CalendarEvent.tournamentId",
+		])
+		.where("CalendarEvent.id", "in", upcomingCalendarEventIds(after))
+		.where("CalendarEvent.hidden", "=", 0)
+		.where("CalendarEvent.tournamentId", "is not", null)
+		.$narrowType<{ tournamentId: number }>();
+
+	if (userIds) {
+		if (userIds.length === 0) return Promise.resolve([]);
+		query = query.where("SavedCalendarEvent.userId", "in", userIds);
+	}
+
+	return query.orderBy("SavedCalendarEvent.createdAt", "asc").execute();
+}
+
 /** Staff of the tournaments starting after `after`, soonest first. */
 export function findAllUpcomingStaff(after: number) {
 	return db
@@ -780,6 +915,7 @@ export function findAllUpcomingStaff(after: number) {
 			calendarEventStartTime(eb).$asScalar().$notNull().as("startsAt"),
 		])
 		.where("CalendarEvent.id", "in", upcomingCalendarEventIds(after))
+		.where("CalendarEvent.hidden", "=", 0)
 		.where((eb) => eb(calendarEventStartTime(eb).$asScalar(), ">", after))
 		.orderBy("startsAt", "asc")
 		.execute();
@@ -1066,6 +1202,52 @@ export function findLatestTeamAvailabilityWeek({
 		.executeTakeFirst();
 }
 
+/** The latest added team event that hasn't started by `now`, with who it's for, not authored by `excludeAuthorId`. */
+export function findLatestAddedUpcomingTeamEvent({
+	now,
+	excludeAuthorId,
+	teamIds,
+}: {
+	now: number;
+	excludeAuthorId: number;
+	/** Only these teams, any team when not given */
+	teamIds?: number[];
+}) {
+	let query = db
+		.selectFrom("TeamEvent")
+		.select((eb) => [
+			"TeamEvent.id",
+			"TeamEvent.teamId",
+			"TeamEvent.authorId",
+			"TeamEvent.name",
+			"TeamEvent.startsAt",
+			"TeamEvent.endsAt",
+			"TeamEvent.createdAt",
+			jsonArrayFrom(
+				eb
+					.selectFrom("TeamEventMember")
+					.innerJoin("User", "User.id", "TeamEventMember.userId")
+					.select((memberEb) => commonUserSelect(memberEb))
+					.whereRef("TeamEventMember.teamEventId", "=", "TeamEvent.id"),
+			).as("members"),
+		])
+		.where("TeamEvent.startsAt", ">", now)
+		.where("TeamEvent.createdAt", "<=", now)
+		.where("TeamEvent.authorId", "is not", null)
+		.where("TeamEvent.authorId", "!=", excludeAuthorId)
+		.$narrowType<{ authorId: number }>();
+
+	if (teamIds) {
+		if (teamIds.length === 0) return Promise.resolve(undefined);
+		query = query.where("TeamEvent.teamId", "in", teamIds);
+	}
+
+	return query
+		.orderBy("TeamEvent.createdAt", "desc")
+		.limit(1)
+		.executeTakeFirst();
+}
+
 export function findAvailabilitySlotsOfTeamWeek({
 	teamId,
 	weekStartsAt,
@@ -1096,6 +1278,92 @@ export function findAvailabilitySlotsOfTeamWeek({
 		.execute();
 }
 
+/**
+ * Team scrim posts still open for requests at `now` that the viewer can see or has requested: not
+ * canceled, nothing accepted, not started yet ("looking now" posts until `lookingNowFrom`). Posts the
+ * viewer is in or of `excludedTeamIds` are left out, as are ones created before `createdAfter`
+ * unless the viewer requested them after it.
+ */
+export function findOpenScrimPostsForViewer({
+	viewerId,
+	excludedTeamIds,
+	now,
+	lookingNowFrom,
+	createdAfter,
+}: {
+	viewerId: number;
+	excludedTeamIds: number[];
+	now: number;
+	lookingNowFrom: number;
+	createdAfter: number;
+}) {
+	let query = scrimPostFeedQuery()
+		.select((eb) => [
+			viewerRequestedAt(eb, viewerId).as("viewerRequestedAt"),
+			visibleThroughAssociationTo({ entity: "ScrimPost", viewerId, now }).as(
+				"isViaAssociation",
+			),
+		])
+		.where(
+			"ScrimPost.startsAt",
+			">=",
+			Math.min(lookingNowFrom, now - SCRIM_POST_MAX_RANGE_SECONDS),
+		)
+		.where((eb) =>
+			eb.or([
+				eb(
+					eb.fn.coalesce("ScrimPost.rangeEndsAt", "ScrimPost.startsAt"),
+					">",
+					now,
+				),
+				eb.and([
+					eb("ScrimPost.isScheduledForFuture", "=", 0),
+					eb("ScrimPost.startsAt", ">=", lookingNowFrom),
+				]),
+			]),
+		)
+		.where((eb) =>
+			eb.not(
+				eb.exists(
+					eb
+						.selectFrom("ScrimPostRequest")
+						.select("ScrimPostRequest.id")
+						.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+						.where("ScrimPostRequest.isAccepted", "=", 1),
+				),
+			),
+		)
+		.where((eb) =>
+			eb.not(
+				eb.exists(
+					eb
+						.selectFrom("ScrimPostUser")
+						.select("ScrimPostUser.scrimPostId")
+						.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id")
+						.where("ScrimPostUser.userId", "=", viewerId),
+				),
+			),
+		)
+		.where((eb) => {
+			const requestedAt = viewerRequestedAt(eb, viewerId);
+
+			return eb.or([
+				eb.and([
+					eb("ScrimPost.createdAt", ">=", createdAfter),
+					visibleTo({ entity: "ScrimPost", viewerId, now }),
+				]),
+				eb(requestedAt, ">=", createdAfter),
+			]);
+		});
+
+	if (excludedTeamIds.length > 0) {
+		query = query.where("ScrimPost.teamId", "not in", excludedTeamIds);
+	}
+
+	return query.orderBy("ScrimPost.createdAt", "desc").limit(MAX_ROWS).execute();
+}
+
+/** The latest team scrim post starting between `from` and `to` of anyone, for the feed test page. */
 export function findLatestUpcomingScrimPost({
 	from,
 	to,
@@ -1103,12 +1371,81 @@ export function findLatestUpcomingScrimPost({
 	from: number;
 	to: number;
 }) {
+	return scrimPostFeedQuery()
+		.where("ScrimPost.startsAt", ">", from)
+		.where("ScrimPost.startsAt", "<", to)
+		.orderBy("ScrimPost.createdAt", "desc")
+		.limit(1)
+		.executeTakeFirst();
+}
+
+/** Accepted, non-canceled scrims of the teams booked to start between `from` and `to`, with the team ids of both sides. */
+export function findAcceptedScrimsOfTeams({
+	teamIds,
+	from,
+	to,
+}: {
+	teamIds: number[];
+	from: number;
+	to: number;
+}) {
+	if (teamIds.length === 0) return Promise.resolve([]);
+
+	return db
+		.selectFrom("ScrimPost")
+		.innerJoin(
+			"ScrimPostRequest",
+			"ScrimPostRequest.scrimPostId",
+			"ScrimPost.id",
+		)
+		.select((eb) => [
+			"ScrimPost.teamId as postTeamId",
+			"ScrimPostRequest.teamId as requestTeamId",
+			eb.fn
+				.coalesce("ScrimPostRequest.startsAt", "ScrimPost.startsAt")
+				.as("startsAt"),
+		])
+		.where("ScrimPostRequest.isAccepted", "=", 1)
+		.where("ScrimPost.canceledAt", "is", null)
+		.where("ScrimPost.startsAt", ">=", from)
+		.where("ScrimPost.startsAt", "<", to)
+		.where((eb) =>
+			eb.or([
+				eb("ScrimPost.teamId", "in", teamIds),
+				eb("ScrimPostRequest.teamId", "in", teamIds),
+			]),
+		)
+		.execute();
+}
+
+/** The LUTI divs of the current members of the teams who have one. */
+export function findMemberLutiDivsByTeamIds(teamIds: number[]) {
+	if (teamIds.length === 0) return Promise.resolve([]);
+
+	return db
+		.selectFrom("AllTeamMember")
+		.innerJoin("User", "User.id", "AllTeamMember.userId")
+		.select(["AllTeamMember.teamId", "User.div"])
+		.where("AllTeamMember.teamId", "in", teamIds)
+		.where("AllTeamMember.leftAt", "is", null)
+		.where("User.div", "is not", null)
+		.$narrowType<{ div: string }>()
+		.execute();
+}
+
+export type FeedScrimPost = Unwrapped<
+	ReturnType<typeof scrimPostFeedQuery>["execute"]
+>;
+
+function scrimPostFeedQuery() {
 	return db
 		.selectFrom("ScrimPost")
 		.select((eb) => [
 			"ScrimPost.id",
 			"ScrimPost.teamId",
 			"ScrimPost.startsAt",
+			"ScrimPost.rangeEndsAt",
+			"ScrimPost.isScheduledForFuture",
 			"ScrimPost.createdAt",
 			"ScrimPost.text",
 			"ScrimPost.maxDiv",
@@ -1117,16 +1454,30 @@ export function findLatestUpcomingScrimPost({
 				.selectFrom("ScrimPostRequest")
 				.select((countEb) => countEb.fn.countAll<number>().as("c"))
 				.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+				.$asScalar()
+				.$notNull()
 				.as("requestCount"),
 		])
-		.where("ScrimPost.startsAt", ">", from)
-		.where("ScrimPost.startsAt", "<", to)
 		.where("ScrimPost.canceledAt", "is", null)
 		.where("ScrimPost.teamId", "is not", null)
-		.orderBy("ScrimPost.createdAt", "desc")
-		.limit(1)
-		.$narrowType<{ teamId: number }>()
-		.executeTakeFirst();
+		.$narrowType<{ teamId: number }>();
+}
+
+function viewerRequestedAt(
+	eb: ExpressionBuilder<Tables, "ScrimPost">,
+	viewerId: number,
+) {
+	return eb
+		.selectFrom("ScrimPostRequest")
+		.innerJoin(
+			"ScrimPostRequestUser",
+			"ScrimPostRequestUser.scrimPostRequestId",
+			"ScrimPostRequest.id",
+		)
+		.select("ScrimPostRequest.createdAt")
+		.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+		.where("ScrimPostRequestUser.userId", "=", viewerId)
+		.limit(1);
 }
 
 /** The latest scrim with at least `minMaps` reported maps, with its maps and both teams. */
@@ -1205,43 +1556,80 @@ export function findLatestReportedScrim({
 		.executeTakeFirst();
 }
 
-export function findLatestLFGPost({
+/**
+ * Posts of the type bumped in `[from, to)` that the viewer can see on the LFG page: not their own
+ * and not limited to a Plus tier above theirs. Newest first, with the ids of the post's team members.
+ */
+export function findLFGPostsUpdatedBetween({
 	type,
-	before,
+	viewerId,
+	from,
+	to,
 }: {
-	type: "PLAYER_FOR_TEAM" | "TEAM_FOR_PLAYER";
-	before: number;
+	type: FeedLFGPostType;
+	viewerId: number;
+	from: number;
+	to: number;
 }) {
-	let query = db
-		.selectFrom("LFGPost")
-		.select([
-			"LFGPost.id",
-			"LFGPost.authorId",
-			"LFGPost.teamId",
-			"LFGPost.text",
-			"LFGPost.timezone",
-			"LFGPost.updatedAt",
-		])
+	let query = lfgPostsQuery()
 		.where("LFGPost.type", "=", type)
-		.where("LFGPost.plusTierVisibility", "is", null)
-		.where("LFGPost.updatedAt", "<", before);
+		.where("LFGPost.authorId", "!=", viewerId)
+		.where("LFGPost.updatedAt", ">=", from)
+		.where("LFGPost.updatedAt", "<", to)
+		.where((eb) =>
+			eb.or([
+				eb("LFGPost.plusTierVisibility", "is", null),
+				eb(
+					"LFGPost.plusTierVisibility",
+					">=",
+					eb
+						.selectFrom("PlusTier")
+						.select("PlusTier.tier")
+						.where("PlusTier.userId", "=", viewerId),
+				),
+			]),
+		);
 
 	if (type === "TEAM_FOR_PLAYER") {
 		query = query.where("LFGPost.teamId", "is not", null);
 	}
 
-	return query.orderBy("LFGPost.updatedAt", "desc").limit(1).executeTakeFirst();
+	return query.orderBy("LFGPost.updatedAt", "desc").limit(MAX_ROWS).execute();
 }
 
-/** Types of the LFG posts the user has up. */
-export async function findLFGPostTypesByAuthorId(authorId: number) {
-	const rows = await db
-		.selectFrom("LFGPost")
-		.select("LFGPost.type")
+/** The user's LFG posts bumped at or after `after`, with the ids of each post's team members. */
+export function findLFGPostsByAuthorId({
+	authorId,
+	after,
+}: {
+	authorId: number;
+	after: number;
+}) {
+	return lfgPostsQuery()
 		.where("LFGPost.authorId", "=", authorId)
+		.where("LFGPost.updatedAt", ">=", after)
 		.execute();
+}
 
-	return rows.map((row) => row.type);
+function lfgPostsQuery() {
+	return db
+		.selectFrom("LFGPost")
+		.select((eb) => [
+			"LFGPost.id",
+			"LFGPost.type",
+			"LFGPost.authorId",
+			"LFGPost.teamId",
+			"LFGPost.text",
+			"LFGPost.timezone",
+			"LFGPost.languages",
+			"LFGPost.updatedAt",
+			jsonArrayFrom(
+				eb
+					.selectFrom("TeamMemberWithSecondary")
+					.select("TeamMemberWithSecondary.userId")
+					.whereRef("TeamMemberWithSecondary.teamId", "=", "LFGPost.teamId"),
+			).as("teamMembers"),
+		]);
 }
 
 export function findWeaponPoolByUserId(userId: number) {
@@ -1293,6 +1681,7 @@ export function findAllArtistsActiveBetween({
 }) {
 	return db
 		.selectFrom("Art")
+		.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
 		.select(({ fn }) => [
 			"Art.authorId",
 			fn.countAll<number>().as("count"),
@@ -1318,18 +1707,14 @@ export function findArtPiecesOfAuthorBetween({
 }) {
 	return db
 		.selectFrom("Art")
-		.innerJoin(
-			"UnvalidatedUserSubmittedImage",
-			"UnvalidatedUserSubmittedImage.id",
-			"Art.imgId",
-		)
+		.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
 		.select((eb) => [
 			"Art.id",
 			"Art.description",
 			"Art.createdAt",
-			concatUserSubmittedImagePrefix(
-				eb.ref("UnvalidatedUserSubmittedImage.url"),
-			).as("url"),
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"url",
+			),
 		])
 		.where("Art.authorId", "=", authorId)
 		.where("Art.createdAt", ">", from)
@@ -1344,19 +1729,15 @@ export function findAllTaggedArtAfter(after: number) {
 	return db
 		.selectFrom("ArtUserMetadata")
 		.innerJoin("Art", "Art.id", "ArtUserMetadata.artId")
-		.innerJoin(
-			"UnvalidatedUserSubmittedImage",
-			"UnvalidatedUserSubmittedImage.id",
-			"Art.imgId",
-		)
+		.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
 		.select((eb) => [
 			"Art.id",
 			"Art.authorId",
 			"Art.createdAt",
 			"Art.description",
-			concatUserSubmittedImagePrefix(
-				eb.ref("UnvalidatedUserSubmittedImage.url"),
-			).as("url"),
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"url",
+			),
 			"ArtUserMetadata.userId as taggedUserId",
 		])
 		.where("Art.createdAt", ">", after)
@@ -1376,16 +1757,12 @@ export function findAllOpenedCommissionsAfter(after: number) {
 			jsonArrayFrom(
 				eb
 					.selectFrom("Art")
-					.innerJoin(
-						"UnvalidatedUserSubmittedImage",
-						"UnvalidatedUserSubmittedImage.id",
-						"Art.imgId",
-					)
+					.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
 					.select((artEb) => [
 						"Art.description",
 						"Art.createdAt",
 						concatUserSubmittedImagePrefix(
-							artEb.ref("UnvalidatedUserSubmittedImage.url"),
+							artEb.ref("UserSubmittedImage.url"),
 						).as("url"),
 					])
 					.whereRef("Art.authorId", "=", "User.id")
@@ -1401,6 +1778,7 @@ export function findAllOpenedCommissionsAfter(after: number) {
 			eb.exists(
 				eb
 					.selectFrom("Art")
+					.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
 					.select("Art.id")
 					.whereRef("Art.authorId", "=", "User.id"),
 			),
@@ -1565,39 +1943,50 @@ export function findAllFriendshipsCreatedAfter(after: number) {
 		.execute();
 }
 
-/** Users in the same voice room as each other most recently, at least `minUsers` of them. */
-export async function findLatestBusyVoiceRoom(minUsers: number) {
-	const room = await db
-		.selectFrom("VoiceSession")
-		.select(({ fn }) => [
-			"VoiceSession.roomId",
-			"VoiceSession.roomType",
-			"VoiceSession.dailySessionId",
-			fn.count<number>("VoiceSession.userId").distinct().as("userCount"),
-			fn.min("VoiceSession.createdAt").as("startedAt"),
-		])
-		.groupBy(["VoiceSession.roomId", "VoiceSession.dailySessionId"])
-		.having(
-			({ fn }) => fn.count("VoiceSession.userId").distinct(),
-			">=",
-			minUsers,
-		)
-		.orderBy("startedAt", "desc")
-		.limit(1)
+/** The Plus Server tier the user is a member of, `null` when they aren't. */
+export async function findPlusTierByUserId(userId: number) {
+	const row = await db
+		.selectFrom("PlusTier")
+		.select("PlusTier.tier")
+		.where("PlusTier.userId", "=", userId)
 		.executeTakeFirst();
-	if (!room) return;
 
-	const users = await db
-		.selectFrom("VoiceSession")
-		.select("VoiceSession.userId")
-		.distinct()
-		.where("VoiceSession.roomId", "=", room.roomId)
-		// "is" so a null session id matches too
-		.where("VoiceSession.dailySessionId", "is", room.dailySessionId)
-		.limit(5)
+	return row?.tier ?? null;
+}
+
+/** First suggestion of each player suggested in the voting month, leaving out players already in the tier or above, latest first. */
+export function findAllFirstPlusSuggestionsOfMonth({
+	month,
+	year,
+}: {
+	month: number;
+	year: number;
+}) {
+	return db
+		.selectFrom("PlusSuggestion")
+		.leftJoin("PlusTier", "PlusTier.userId", "PlusSuggestion.suggestedId")
+		.select([
+			"PlusSuggestion.suggestedId",
+			"PlusSuggestion.tier",
+			"PlusSuggestion.text",
+			"PlusSuggestion.createdAt",
+		])
+		.where("PlusSuggestion.id", "in", (eb) =>
+			eb
+				.selectFrom("PlusSuggestion as First")
+				.select(({ fn }) => fn.min("First.id").as("id"))
+				.where("First.month", "=", month)
+				.where("First.year", "=", year)
+				.groupBy(["First.suggestedId", "First.tier"]),
+		)
+		.where((eb) =>
+			eb.or([
+				eb("PlusTier.tier", "is", null),
+				eb("PlusTier.tier", ">", eb.ref("PlusSuggestion.tier")),
+			]),
+		)
+		.orderBy("PlusSuggestion.createdAt", "desc")
 		.execute();
-
-	return { ...room, userIds: users.map((user) => user.userId) };
 }
 
 export function findFirstTournamentResultByUserId(userId: number) {

@@ -117,13 +117,6 @@
 	margin-left: auto;
 }
 
-.retimed {
-	padding: 0 var(--s-1-5);
-	font-size: var(--font-2xs);
-	border: 1px dashed var(--color-border-high);
-	border-radius: var(--radius-full);
-}
-
 .headerAction {
 	margin-block: calc(var(--s-1) * -1);
 }

@@ -13,10 +13,13 @@ const POINTS_TIE_EPSILON = 0.0001;
 
 const USER_KEYS = ["id", "username", "customUrl", "avatar"] as const;
 
-type EventLeaderboardEvent = Unpacked<
-	Awaited<
-		ReturnType<typeof TournamentOrganizationRepository.findAllEventsBySeries>
-	>
+type EventLeaderboardEvent = Pick<
+	Unpacked<
+		Awaited<
+			ReturnType<typeof TournamentOrganizationRepository.findAllEventsBySeries>
+		>
+	>,
+	"eventId" | "tournamentId"
 >;
 
 interface LeaderboardInfo {

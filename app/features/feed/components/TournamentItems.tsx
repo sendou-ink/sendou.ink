@@ -17,6 +17,7 @@ import {
 import type { FeedItem } from "../core/FeedItems.server";
 import type { FeedItemContent } from "./FeedItemCard";
 import {
+	countText,
 	DateBlock,
 	DayTime,
 	durationText,
@@ -28,7 +29,8 @@ import {
 	UserStack,
 	WinLoss,
 } from "./FeedParts";
-import styles from "./FeedParts.module.css";
+import partsStyles from "./FeedParts.module.css";
+import styles from "./TournamentItems.module.css";
 
 // lazy so the WebGL renderer only loads once a trophy post shows up
 const FeedTrophy = React.lazy(() =>
@@ -66,12 +68,12 @@ export function tournamentItemContent(
 					</>
 				),
 				body: (
-					<div className={styles.hero}>
-						<div className={clsx(styles.rowNoWrap, styles.between)}>
-							<div className={styles.rowNoWrap}>
+					<div className={partsStyles.hero}>
+						<div className={clsx(partsStyles.rowNoWrap, partsStyles.between)}>
+							<div className={partsStyles.rowNoWrap}>
 								<Placement placement={1} size={44} textOnly={false} />
 								<div className="text-xs text-lighter">
-									of {data.participantCount} teams
+									of {countText(data.participantCount, "team")}
 								</div>
 							</div>
 							<LogoAvatar
@@ -80,7 +82,7 @@ export function tournamentItemContent(
 								size="sm"
 							/>
 						</div>
-						<div className={clsx(styles.row, styles.between)}>
+						<div className={clsx(partsStyles.row, partsStyles.between)}>
 							<div>
 								<div className="font-bold">{data.team.name}</div>
 								<div className="text-xs text-lighter">
@@ -96,9 +98,9 @@ export function tournamentItemContent(
 						{data.path.length > 0 ? (
 							<div className="stack xs">
 								{data.path.map((match, i) => (
-									<div key={i} className={clsx(styles.player, "text-xs")}>
+									<div key={i} className={clsx(partsStyles.player, "text-xs")}>
 										<WinLoss isWin={match.isWin} />
-										<span className={styles.ellipsis}>
+										<span className={partsStyles.ellipsis}>
 											vs {match.opponentName}
 										</span>
 										<span className="text-lighter">
@@ -124,9 +126,9 @@ export function tournamentItemContent(
 					</>
 				),
 				body: (
-					<div className={clsx(styles.inset, styles.rowNoWrap)}>
+					<div className={clsx(partsStyles.inset, partsStyles.rowNoWrap)}>
 						<Placement placement={data.placement} size={36} />
-						<div className={styles.grow}>
+						<div className={partsStyles.grow}>
 							<div className="font-bold">{data.team.name}</div>
 							<div className="text-xs text-lighter">
 								{ordinalPlacement(data.placement)} of {data.participantCount} ·{" "}
@@ -152,12 +154,12 @@ export function tournamentItemContent(
 					</>
 				),
 				body: (
-					<div className={styles.list}>
+					<div className={partsStyles.list}>
 						{data.rows.map((row) => (
-							<div key={row.user.id} className={styles.digestRow}>
+							<div key={row.user.id} className={partsStyles.digestRow}>
 								<Avatar user={row.user} size="xxsm" />
-								<div className={styles.ellipsis}>
-									<div className={clsx(styles.ellipsis, "text-xs")}>
+								<div className={partsStyles.ellipsis}>
+									<div className={clsx(partsStyles.ellipsis, "text-xs")}>
 										<UserName user={row.user} /> · {row.teamName}
 									</div>
 									<Link
@@ -168,7 +170,7 @@ export function tournamentItemContent(
 									</Link>
 								</div>
 								<span
-									className={clsx(styles.placing, {
+									className={clsx(partsStyles.placing, {
 										[styles.placingTop]: row.placement <= 3,
 									})}
 								>
@@ -195,16 +197,16 @@ export function tournamentItemContent(
 				),
 				body: (
 					<>
-						<div className={styles.inset}>
+						<div className={partsStyles.inset}>
 							<TournamentRow tournament={data.tournament} />
 						</div>
-						<div className={clsx(styles.row, styles.between)}>
-							<div className={styles.rowNoWrap}>
+						<div className={clsx(partsStyles.row, partsStyles.between)}>
+							<div className={partsStyles.rowNoWrap}>
 								<UserStack users={data.team.members} />
 								<b className="text-xs">{data.team.name}</b>
 							</div>
 							<span className="text-xs text-lighter">
-								{data.teamCount} teams registered
+								{countText(data.teamCount, "team")} registered
 								{data.tournament?.startsAt
 									? ` · in ${durationText(data.tournament.startsAt - now)}`
 									: ""}
@@ -232,27 +234,27 @@ export function tournamentItemContent(
 					</>
 				),
 				body: (
-					<div className={clsx(styles.inset, styles.vs)}>
-						<div className={styles.vsSide}>
+					<div className={clsx(partsStyles.inset, partsStyles.vs)}>
+						<div className={partsStyles.vsSide}>
 							<LogoAvatar
 								url={data.winner.avatarUrl}
 								name={data.winner.name}
 								size="sm"
 							/>
-							<span className={styles.ellipsis}>{data.winner.name}</span>
-							<span className={styles.pill}>Seed {data.winnerSeed}</span>
+							<span className={partsStyles.ellipsis}>{data.winner.name}</span>
+							<span className={partsStyles.pill}>Seed {data.winnerSeed}</span>
 						</div>
-						<div className={styles.bigScore}>
+						<div className={partsStyles.bigScore}>
 							{data.score[0]}–{data.score[1]}
 						</div>
-						<div className={clsx(styles.vsSide, "text-lighter")}>
+						<div className={clsx(partsStyles.vsSide, "text-lighter")}>
 							<LogoAvatar
 								url={data.loser.avatarUrl}
 								name={data.loser.name}
 								size="sm"
 							/>
-							<span className={styles.ellipsis}>{data.loser.name}</span>
-							<span className={styles.pill}>Seed {data.loserSeed}</span>
+							<span className={partsStyles.ellipsis}>{data.loser.name}</span>
+							<span className={partsStyles.pill}>Seed {data.loserSeed}</span>
 						</div>
 					</div>
 				),
@@ -269,9 +271,11 @@ export function tournamentItemContent(
 					</>
 				),
 				body: (
-					<div className={styles.inset}>
-						{data.note ? <div className={styles.quote}>{data.note}</div> : null}
-						<div className={styles.rowNoWrap}>
+					<div className={partsStyles.inset}>
+						{data.note ? (
+							<div className={partsStyles.quote}>{data.note}</div>
+						) : null}
+						<div className={partsStyles.rowNoWrap}>
 							<UserStack users={data.team.members} />
 							{Array.from({ length: data.openSpots }, (_, i) => (
 								<span key={i} className={styles.emptySlot} />
@@ -310,12 +314,14 @@ export function tournamentItemContent(
 					</>
 				),
 				body: data.tournament?.startsAt ? (
-					<div className={styles.rowNoWrap}>
+					<div className={partsStyles.rowNoWrap}>
 						<DateBlock at={data.tournament.startsAt} />
-						<div className={clsx("stack xs", styles.grow)}>
+						<div className={clsx("stack xs", partsStyles.grow)}>
 							<span className="text-xs text-lighter">
 								<DayTime at={data.tournament.startsAt} />
-								{data.teamCount > 0 ? ` · ${data.teamCount} teams` : null}
+								{data.teamCount > 0
+									? ` · ${countText(data.teamCount, "team")}`
+									: null}
 								{` · ${REGISTRATION_TEXTS[data.registration]}`}
 							</span>
 							<div className={styles.chain}>
@@ -339,44 +345,58 @@ export function tournamentItemContent(
 				),
 				line: (
 					<>
-						<b>{data.seriesName}</b> standings, last 90 days
+						{data.organization ? (
+							<Link
+								to={tournamentOrganizationPage({
+									organizationSlug: data.organization.slug,
+									seriesId: data.seriesId,
+								})}
+								className="font-bold"
+							>
+								{data.seriesName}
+							</Link>
+						) : (
+							<b>{data.seriesName}</b>
+						)}{" "}
+						standings, last 90 days
 					</>
 				),
 				body: (
 					<>
-						<table className={styles.table}>
+						<table className={partsStyles.table}>
 							<thead>
 								<tr>
-									<th className={styles.rankCell}>#</th>
+									<th className={partsStyles.rankCell}>#</th>
 									<th>Player</th>
-									<th className={styles.numeric}>Events</th>
-									<th className={styles.numeric}>Points</th>
+									<th className={partsStyles.numeric}>Placements</th>
+									<th className={partsStyles.numeric}>Points</th>
 								</tr>
 							</thead>
 							<tbody>
 								{data.rows.map((row) => (
 									<tr
 										key={row.user.id}
-										className={clsx({ [styles.highlightRow]: row.isKnown })}
+										className={clsx({
+											[partsStyles.highlightRow]: row.isViewer,
+										})}
 									>
-										<td className={styles.rankCell}>{row.placement}</td>
+										<td className={partsStyles.rankCell}>{row.placement}</td>
 										<td>
-											<div className={styles.rowNoWrap}>
+											<div className={partsStyles.rowNoWrap}>
 												<Avatar user={row.user} size="xxxsm" />
 												<Link to={userPage(row.user)}>{row.user.username}</Link>
 											</div>
 										</td>
-										<td className={styles.numeric}>{row.eventCount}</td>
-										<td className={styles.numeric}>
+										<td>
+											<MedalCounts placements={row.placements} />
+										</td>
+										<td className={partsStyles.numeric}>
 											<b>{row.points}</b>
 										</td>
 									</tr>
 								))}
 							</tbody>
 						</table>
-						<div className="text-xs text-lighter">
-							Mock scoring: 1st 10 · 2nd 7 · 3rd 5 · 4th 4 · played 1
-						</div>
 					</>
 				),
 			};
@@ -393,7 +413,7 @@ export function tournamentItemContent(
 				),
 				body: (
 					<>
-						<div className={styles.thumb}>
+						<div className={partsStyles.thumb}>
 							{data.platform === "YOUTUBE" ? (
 								<img
 									src={`https://i.ytimg.com/vi/${data.platformVideoId}/mqdefault.jpg`}
@@ -401,16 +421,24 @@ export function tournamentItemContent(
 									loading="lazy"
 								/>
 							) : null}
-							<span className={styles.thumbPlay}>
+							<span className={partsStyles.thumbPlay}>
 								<Play size={22} fill="currentColor" />
 							</span>
-							<span className={clsx(styles.thumbTag, styles.pill)}>
+							<span className={clsx(partsStyles.thumbTag, partsStyles.pill)}>
 								{data.platform === "TWITCH" ? "Twitch" : "YouTube"}
-								{data.viewCount ? ` · ${data.viewCount} views` : ""}
+								{data.viewCount
+									? ` · ${countText(data.viewCount, "view")}`
+									: ""}
 							</span>
 						</div>
-						<div className={clsx(styles.rowNoWrap, styles.between, "text-xs")}>
-							<span className={styles.ellipsis}>
+						<div
+							className={clsx(
+								partsStyles.rowNoWrap,
+								partsStyles.between,
+								"text-xs",
+							)}
+						>
+							<span className={partsStyles.ellipsis}>
 								<b>{data.teams[0].name}</b> vs <b>{data.teams[1].name}</b>
 							</span>
 							<span className="text-lighter whitespace-nowrap">
@@ -432,12 +460,15 @@ export function tournamentItemContent(
 					</>
 				),
 				body: (
-					<div className={clsx(styles.inset, styles.rowNoWrap)}>
+					<div className={clsx(partsStyles.inset, partsStyles.rowNoWrap)}>
 						<Badge badge={data.badge} size={56} isAnimated={false} />
 						<div>
 							<div className="font-semi-bold">{data.badge.displayName}</div>
 							<div className="text-xs text-lighter">
-								From {data.tournament?.name} · {data.ownerCount} players own it
+								From {data.tournament?.name} ·{" "}
+								{data.ownerCount === 1
+									? "1 player owns it"
+									: `${data.ownerCount} players own it`}
 							</div>
 						</div>
 					</div>
@@ -458,7 +489,7 @@ export function tournamentItemContent(
 					</>
 				),
 				body: (
-					<div className={clsx(styles.hero, styles.heroRow)}>
+					<div className={clsx(partsStyles.hero, partsStyles.heroRow)}>
 						<React.Suspense fallback={<div className={styles.trophySlot} />}>
 							<FeedTrophy trophy={data.trophy} tier={data.tier} />
 						</React.Suspense>
@@ -469,6 +500,66 @@ export function tournamentItemContent(
 							</div>
 						</div>
 					</div>
+				),
+			};
+		}
+		case "TROPHY_NEW": {
+			const { data } = item;
+			return {
+				avatar: <Avatar user={data.actor} size="xs" />,
+				line: (
+					<>
+						<UserName user={data.actor} /> made the{" "}
+						<Link to={trophyPage(data.trophy.id)} className="font-bold">
+							{data.trophy.name}
+						</Link>{" "}
+						trophy
+					</>
+				),
+				body: (
+					<div className={clsx(partsStyles.hero, partsStyles.heroRow)}>
+						<React.Suspense fallback={<div className={styles.trophySlot} />}>
+							<FeedTrophy trophy={data.trophy} tier={null} />
+						</React.Suspense>
+						<div>
+							<div className="font-bold">{data.trophy.name}</div>
+							{data.organizationName ? (
+								<div className="text-xs text-lighter">
+									{data.organizationName}
+								</div>
+							) : null}
+						</div>
+					</div>
+				),
+			};
+		}
+		case "CALENDAR_FRIENDS_SAVED": {
+			const { data } = item;
+			return {
+				avatar: <UserStack users={data.users} max={3} />,
+				line: (
+					<>
+						<b>
+							{data.users.length}{" "}
+							{data.users.length === 1 ? "friend" : "friends"}
+						</b>{" "}
+						saved <TournamentLink tournament={data.tournament} />
+					</>
+				),
+				body: (
+					<>
+						<div className={partsStyles.inset}>
+							<TournamentRow tournament={data.tournament} />
+						</div>
+						<div className={partsStyles.row}>
+							{data.users.map((user) => (
+								<span key={user.id} className={partsStyles.rowNoWrap}>
+									<Avatar user={user} size="xxs" />
+									<UserName user={user} />
+								</span>
+							))}
+						</div>
+					</>
 				),
 			};
 		}
@@ -501,16 +592,16 @@ export function tournamentItemContent(
 				),
 				body: (
 					<>
-						<div className={styles.list}>
+						<div className={partsStyles.list}>
 							{data.tournaments.map((tournament) => (
-								<div key={tournament.id} className={styles.digestRow}>
+								<div key={tournament.id} className={partsStyles.digestRow}>
 									<LogoAvatar
 										url={tournament.logoUrl}
 										name={tournament.name}
 										size="xs"
 									/>
-									<div className={styles.ellipsis}>
-										<div className={styles.ellipsis}>
+									<div className={partsStyles.ellipsis}>
+										<div className={partsStyles.ellipsis}>
 											<Link
 												to={tournamentPage(tournament.id)}
 												className="font-bold"
@@ -525,7 +616,7 @@ export function tournamentItemContent(
 												: ""}
 										</div>
 									</div>
-									<div className={styles.rowNoWrap}>
+									<div className={partsStyles.rowNoWrap}>
 										{tournament.tier !== null ||
 										tournament.tentativeTier !== null ? (
 											<TierPill
@@ -535,7 +626,7 @@ export function tournamentItemContent(
 											/>
 										) : null}
 										<span className="text-xs text-lighter">
-											{tournament.teamsCount} teams
+											{countText(tournament.teamsCount, "team")}
 										</span>
 									</div>
 								</div>
@@ -595,12 +686,12 @@ export function tournamentItemContent(
 					<>
 						Registration closed for{" "}
 						<TournamentLink tournament={data.tournament} /> with{" "}
-						<b>{data.teamCount} teams</b>
+						<b>{countText(data.teamCount, "team")}</b>
 					</>
 				),
 				body: (
 					<>
-						<table className={styles.table}>
+						<table className={partsStyles.table}>
 							<tbody>
 								{data.teams.flatMap((row, index) => {
 									const previous = data.teams[index - 1];
@@ -618,21 +709,23 @@ export function tournamentItemContent(
 										<tr
 											key={row.team.id}
 											className={clsx({
-												[styles.highlightRow]:
+												[partsStyles.highlightRow]:
 													row.isOwn || row.known.length > 0,
 											})}
 										>
-											<td className={styles.rankCell}>#{row.projectedSeed}</td>
+											<td className={partsStyles.rankCell}>
+												#{row.projectedSeed}
+											</td>
 											<td>
-												<div className={styles.rowNoWrap}>
+												<div className={partsStyles.rowNoWrap}>
 													<UserStack users={row.team.members} max={4} />
-													<span className={styles.ellipsis}>
+													<span className={partsStyles.ellipsis}>
 														{row.team.name}
 													</span>
 													{row.isOwn ? (
-														<span className={styles.pill}>You</span>
+														<span className={partsStyles.pill}>You</span>
 													) : row.known.length > 0 ? (
-														<span className={styles.pill}>
+														<span className={partsStyles.pill}>
 															{row.known
 																.map((member) => member.username)
 																.join(", ")}
@@ -640,7 +733,7 @@ export function tournamentItemContent(
 													) : null}
 												</div>
 											</td>
-											<td className={styles.numeric}>
+											<td className={partsStyles.numeric}>
 												{row.sp ? `${row.sp} SP` : "–"}
 											</td>
 										</tr>,
@@ -674,7 +767,7 @@ export function tournamentItemContent(
 					</>
 				),
 				body: (
-					<div className={styles.inset}>
+					<div className={partsStyles.inset}>
 						<TournamentRow tournament={data.tournament} />
 					</div>
 				),
@@ -691,22 +784,24 @@ function PodiumBody({
 	data: Extract<FeedItem, { type: "TO_RESULT_FEATURED" }>["data"];
 }) {
 	return (
-		<div className={styles.hero}>
-			<div className={clsx(styles.rowNoWrap, styles.between)}>
+		<div className={partsStyles.hero}>
+			<div className={clsx(partsStyles.rowNoWrap, partsStyles.between)}>
 				<TournamentRow tournament={data.tournament} />
 				{data.tier !== null ? (
 					<TierPill tier={data.tier} withoutAnimation />
 				) : null}
 			</div>
-			<div className={styles.list}>
+			<div className={partsStyles.list}>
 				{data.podium.map(({ placement, team }) => (
-					<div key={team.id} className={styles.digestRow}>
+					<div key={team.id} className={partsStyles.digestRow}>
 						<Placement placement={placement} size={28} />
-						<div className={styles.ellipsis}>
-							<div className={clsx(styles.ellipsis, "font-semi-bold")}>
+						<div className={partsStyles.ellipsis}>
+							<div className={clsx(partsStyles.ellipsis, "font-semi-bold")}>
 								{team.name}
 							</div>
-							<div className={clsx(styles.ellipsis, "text-xs text-lighter")}>
+							<div
+								className={clsx(partsStyles.ellipsis, "text-xs text-lighter")}
+							>
 								{team.members.map((member) => member.username).join(", ")}
 							</div>
 						</div>
@@ -714,7 +809,27 @@ function PodiumBody({
 					</div>
 				))}
 			</div>
-			<div className="text-xs text-lighter">{data.teamCount} teams</div>
+			<div className="text-xs text-lighter">
+				{countText(data.teamCount, "team")}
+			</div>
+		</div>
+	);
+}
+
+function MedalCounts({
+	placements,
+}: {
+	placements: { first: number; second: number; third: number };
+}) {
+	return (
+		<div className={styles.medalCounts}>
+			{[placements.first, placements.second, placements.third].map(
+				(count, i) => (
+					<span key={i} className={styles.medalCount}>
+						<Placement placement={i + 1} size={16} />×{count}
+					</span>
+				),
+			)}
 		</div>
 	);
 }

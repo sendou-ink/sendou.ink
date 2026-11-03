@@ -5,6 +5,8 @@ import type { Tables } from "~/db/tables";
 import * as Availability from "~/features/availability/core/Availability";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import type { ChatRoomType } from "~/features/chat/chat-types";
+import type * as FeedRepository from "~/features/feed/FeedRepository.server";
+import { FEED_EVENT_MAX_RETENTION_DAYS } from "~/features/feed/feed-constants";
 import { LFG } from "~/features/lfg/lfg-constants";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type {
@@ -150,6 +152,28 @@ export interface Fixtures {
 		sinceTimestamp: number;
 	} | null;
 	castedTournamentId: number | null;
+	/** The feed test page's "now": shortly after the latest SendouQ match, so the feed's look-back windows have data. */
+	feedNow: number | null;
+	/** The latest season with SendouQ sets and its most active player, the feed's current season. */
+	feedSq: { userId: number; season: number } | null;
+	/** Most SendouQ teammate rows. */
+	topTeammatesUserId: number | null;
+	/** The users with the most feed events, as many as a viewer's friends and teammates. */
+	feedEventUserIds: number[] | null;
+	/** Row id the tournament feed indexer starts from when indexing the whole retention window. */
+	feedIndexerTournamentResultRowId: number | null;
+	/** Teams with the most current members. */
+	manyTeamIds: number[] | null;
+	/** Leaderboard series of the organization with the most events. */
+	heavySeries: { organizationId: number; substringMatches: string[] } | null;
+	/** Team week with the most availability slots filled. */
+	heavyTeamAvailabilityWeek: { teamId: number; weekStartsAt: number } | null;
+	scannedMatchId: number | null;
+	siteTotalCounts: Record<FeedRepository.SiteTotal, number> | null;
+	/** Posts with the most comments, the heaviest first. Null until users have commented. */
+	feedCommentItemIds: string[] | null;
+	/** Posts with the most reactions. Null until users have reacted. */
+	feedReactionItemIds: string[] | null;
 }
 
 /**
@@ -161,6 +185,7 @@ export async function resolveFixtures(): Promise<Fixtures> {
 	const heavyTournamentId = await resolveHeavyTournamentId();
 	const heavyGroupMatchId = await resolveHeavyGroupMatchId();
 	const heavyScrimPostId = await resolveHeavyScrimPostId();
+	const feedNow = await resolveFeedNow();
 
 	const fixtures: Fixtures = {
 		heavyUser,
@@ -235,6 +260,19 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		scannerIngest: await resolveScannerIngest(),
 		scannerIngestSendouq: await resolveScannerIngestSendouq(),
 		castedTournamentId: await resolveCastedTournamentId(),
+		feedNow,
+		feedSq: await resolveFeedSq(),
+		topTeammatesUserId: await resolveTopTeammatesUserId(),
+		feedEventUserIds: await resolveFeedEventUserIds(),
+		feedIndexerTournamentResultRowId:
+			await resolveFeedIndexerTournamentResultRowId(feedNow),
+		manyTeamIds: await resolveManyTeamIds(),
+		heavySeries: await resolveHeavySeries(),
+		heavyTeamAvailabilityWeek: await resolveHeavyTeamAvailabilityWeek(),
+		scannedMatchId: await resolveScannedMatchId(),
+		siteTotalCounts: await resolveSiteTotalCounts(),
+		feedCommentItemIds: await resolveFeedCommentItemIds(),
+		feedReactionItemIds: await resolveFeedReactionItemIds(),
 	};
 
 	const nullFixtures = Object.entries(fixtures)
@@ -1558,4 +1596,234 @@ async function resolveHeavyLobby() {
 		atMs: row.createdAt * 1000,
 		sinceTimestamp: row.createdAt - 7 * 24 * 60 * 60,
 	};
+}
+
+const FEED_TEST_NOW_AFTER_LATEST_MATCH_SECONDS = 30 * 60;
+const FEED_EVENT_USER_COUNT = 100;
+const MANY_TEAM_COUNT = 25;
+const FEED_ITEM_COUNT = 100;
+
+async function resolveFeedNow() {
+	const row = await db
+		.selectFrom("GroupMatch")
+		.select(({ fn }) => fn.max("createdAt").as("createdAt"))
+		.executeTakeFirst();
+	if (typeof row?.createdAt !== "number") return null;
+
+	return Math.min(
+		databaseTimestampNow(),
+		row.createdAt + FEED_TEST_NOW_AFTER_LATEST_MATCH_SECONDS,
+	);
+}
+
+async function resolveFeedSq() {
+	const seasonRow = await db
+		.selectFrom("Skill")
+		.select(({ fn }) => fn.max("season").as("season"))
+		.where("groupMatchId", "is not", null)
+		.executeTakeFirst();
+	if (typeof seasonRow?.season !== "number") return null;
+
+	const userRow = await db
+		.selectFrom("Skill")
+		.select(({ fn }) => ["userId", fn.countAll<number>().as("count")])
+		.where("season", "=", seasonRow.season)
+		.where("groupMatchId", "is not", null)
+		.where("userId", "is not", null)
+		.groupBy("userId")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (typeof userRow?.userId !== "number") return null;
+
+	return { userId: userRow.userId, season: seasonRow.season };
+}
+
+async function resolveTopTeammatesUserId() {
+	const row = await db
+		.selectFrom("PlayerResult")
+		.select(({ fn }) => ["ownerUserId", fn.countAll<number>().as("count")])
+		.where("type", "=", "MATE")
+		.groupBy("ownerUserId")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+
+	return row?.ownerUserId ?? null;
+}
+
+async function resolveFeedEventUserIds() {
+	const rows = await db
+		.selectFrom("FeedEvent")
+		.select(({ fn }) => ["userId", fn.countAll<number>().as("count")])
+		.groupBy("userId")
+		.orderBy("count", "desc")
+		.limit(FEED_EVENT_USER_COUNT)
+		.execute();
+
+	return rows.length > 0 ? rows.map((row) => row.userId) : null;
+}
+
+async function resolveFeedIndexerTournamentResultRowId(feedNow: number | null) {
+	if (feedNow === null) return null;
+
+	const row = await db
+		.selectFrom("TournamentResult")
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.tournamentId",
+			"TournamentResult.tournamentId",
+		)
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select(sql<number | null>`min("TournamentResult"."rowid")`.as("rowId"))
+		.where(
+			"CalendarEventDate.startsAt",
+			">=",
+			feedNow - FEED_EVENT_MAX_RETENTION_DAYS * 24 * 60 * 60,
+		)
+		.executeTakeFirst();
+
+	return typeof row?.rowId === "number" ? row.rowId - 1 : null;
+}
+
+async function resolveManyTeamIds() {
+	const rows = await db
+		.selectFrom("AllTeamMember")
+		.innerJoin("AllTeam", "AllTeam.id", "AllTeamMember.teamId")
+		.select(({ fn }) => [
+			"AllTeamMember.teamId",
+			fn.countAll<number>().as("count"),
+		])
+		.where("AllTeamMember.leftAt", "is", null)
+		.where("AllTeam.deletedAt", "is", null)
+		.groupBy("AllTeamMember.teamId")
+		.orderBy("count", "desc")
+		.limit(MANY_TEAM_COUNT)
+		.execute();
+
+	return rows.length > 0 ? rows.map((row) => row.teamId) : null;
+}
+
+async function resolveHeavySeries() {
+	const row = await db
+		.selectFrom("TournamentOrganizationSeries")
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.organizationId",
+			"TournamentOrganizationSeries.organizationId",
+		)
+		.select(({ fn }) => [
+			"TournamentOrganizationSeries.organizationId",
+			"TournamentOrganizationSeries.substringMatches",
+			fn.countAll<number>().as("count"),
+		])
+		.where("TournamentOrganizationSeries.showLeaderboard", "=", 1)
+		.groupBy("TournamentOrganizationSeries.id")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!row) return null;
+
+	return {
+		organizationId: row.organizationId,
+		substringMatches: row.substringMatches,
+	};
+}
+
+async function resolveHeavyTeamAvailabilityWeek() {
+	const row = await db
+		.selectFrom("AvailabilitySlot")
+		.innerJoin(
+			"AvailabilityWeek",
+			"AvailabilityWeek.id",
+			"AvailabilitySlot.availabilityWeekId",
+		)
+		.innerJoin(
+			"AllTeamMember",
+			"AllTeamMember.userId",
+			"AvailabilityWeek.userId",
+		)
+		.select(({ fn }) => [
+			"AllTeamMember.teamId",
+			"AvailabilityWeek.weekStartsAt",
+			fn.countAll<number>().as("count"),
+		])
+		.where("AllTeamMember.leftAt", "is", null)
+		.groupBy(["AllTeamMember.teamId", "AvailabilityWeek.weekStartsAt"])
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!row) return null;
+
+	return { teamId: row.teamId, weekStartsAt: row.weekStartsAt };
+}
+
+async function resolveScannedMatchId() {
+	const row = await db
+		.selectFrom("IngestedMatch")
+		.select("id")
+		.orderBy(sql`length("data")`, "desc")
+		.limit(1)
+		.executeTakeFirst();
+
+	return row?.id ?? null;
+}
+
+async function resolveSiteTotalCounts(): Promise<Record<
+	FeedRepository.SiteTotal,
+	number
+> | null> {
+	const users = await db
+		.selectFrom("User")
+		.select(({ fn }) => fn.countAll<number>().as("count"))
+		.executeTakeFirst();
+	const sqSets = await db
+		.selectFrom("GroupMatch")
+		.select(({ fn }) => fn.countAll<number>().as("count"))
+		.executeTakeFirst();
+	const tournaments = await db
+		.selectFrom("CalendarEvent")
+		.select(({ fn }) => fn.countAll<number>().as("count"))
+		.where("tournamentId", "is not", null)
+		.executeTakeFirst();
+	const art = await db
+		.selectFrom("Art")
+		.select(({ fn }) => fn.countAll<number>().as("count"))
+		.executeTakeFirst();
+	if (!users?.count) return null;
+
+	return {
+		USERS: users.count,
+		SQ_SETS: sqSets?.count ?? 0,
+		TOURNAMENTS: tournaments?.count ?? 0,
+		ART: art?.count ?? 0,
+	};
+}
+
+async function resolveFeedCommentItemIds() {
+	const rows = await db
+		.selectFrom("FeedComment")
+		.select(({ fn }) => ["itemId", fn.countAll<number>().as("count")])
+		.groupBy("itemId")
+		.orderBy("count", "desc")
+		.limit(FEED_ITEM_COUNT)
+		.execute();
+
+	return rows.length > 0 ? rows.map((row) => row.itemId) : null;
+}
+
+async function resolveFeedReactionItemIds() {
+	const rows = await db
+		.selectFrom("FeedReaction")
+		.select(({ fn }) => ["itemId", fn.countAll<number>().as("count")])
+		.groupBy("itemId")
+		.orderBy("count", "desc")
+		.limit(FEED_ITEM_COUNT)
+		.execute();
+
+	return rows.length > 0 ? rows.map((row) => row.itemId) : null;
 }

@@ -7,9 +7,11 @@ import {
 	InstallAction,
 	usePromptInstallState,
 } from "~/features/front-page/components/PWAInstallBanner";
-import { navIconUrl } from "~/utils/urls";
+import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
+import { articlePage, navIconUrl } from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
 import { FEED_ROTATION_MAX_LISTED, type FeedRelation } from "../feed-constants";
+import styles from "./CommunityItems.module.css";
 import type { FeedItemContent } from "./FeedItemCard";
 import {
 	DateBlock,
@@ -23,7 +25,7 @@ import {
 	UserName,
 	UserStack,
 } from "./FeedParts";
-import styles from "./FeedParts.module.css";
+import partsStyles from "./FeedParts.module.css";
 
 // xxx: i18n (other files too)
 
@@ -57,7 +59,7 @@ export function communityItemContent(
 					</>
 				),
 				body: (
-					<div className={clsx(styles.inset, styles.rowNoWrap)}>
+					<div className={clsx(partsStyles.inset, partsStyles.rowNoWrap)}>
 						<Avatar user={data.actor} size="sm" />
 						<div>
 							<div className="font-semi-bold">{data.actor.username}</div>
@@ -92,11 +94,11 @@ export function communityItemContent(
 					</>
 				),
 				body: (
-					<div className={styles.row}>
+					<div className={partsStyles.row}>
 						{data.rows.map((row) => (
 							<span
 								key={row.user.id}
-								className={clsx(styles.inset, styles.rowNoWrap)}
+								className={clsx(partsStyles.inset, partsStyles.rowNoWrap)}
 							>
 								<Avatar user={row.user} size="xxs" />
 								<UserName user={row.user} />
@@ -114,6 +116,75 @@ export function communityItemContent(
 				),
 			};
 		}
+		case "PLUS_SUGGESTION": {
+			const { data } = item;
+			const moreCount = data.count - data.rows.length;
+			return {
+				avatar: <NavIconAvatar navIcon="plus" />,
+				line: (
+					<>
+						{data.count === 1 ? (
+							<UserName user={data.rows[0].user} />
+						) : (
+							<b>{data.count} players</b>
+						)}{" "}
+						{data.count === 1 ? "was" : "were"} suggested to{" "}
+						<Link
+							to={plusSuggestionPage({ tier: data.tier })}
+							className="font-bold"
+						>
+							+{data.tier}
+						</Link>
+					</>
+				),
+				body: (
+					<>
+						<div className={partsStyles.list}>
+							{data.rows.map((row) => (
+								<div key={row.user.id} className={partsStyles.digestRow}>
+									<Avatar user={row.user} size="xxs" />
+									<div className={partsStyles.grow}>
+										<UserName user={row.user} />
+										<div
+											className={clsx(
+												partsStyles.ellipsis,
+												"text-xs text-lighter",
+											)}
+										>
+											{row.text}
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
+						{moreCount > 0 ? (
+							<div className="text-xs text-lighter">
+								+{moreCount} more suggested
+							</div>
+						) : null}
+					</>
+				),
+			};
+		}
+		case "ARTICLE_NEW": {
+			const { data } = item;
+			return {
+				avatar: <NavIconAvatar navIcon="articles" />,
+				line: (
+					<>
+						New article:{" "}
+						<Link to={articlePage(data.slug)} className="font-bold">
+							{data.title}
+						</Link>
+					</>
+				),
+				body: (
+					<div className="text-xs text-lighter">
+						by {data.authors.join(", ")}
+					</div>
+				),
+			};
+		}
 		case "SITE_UPDATE": {
 			const { data } = item;
 			return {
@@ -126,14 +197,14 @@ export function communityItemContent(
 				body: (
 					<div className="stack sm">
 						{data.entries.map((entry) => (
-							<div key={entry.headline} className={styles.inset}>
-								<div className={styles.rowNoWrap}>
+							<div key={entry.headline} className={partsStyles.inset}>
+								<div className={partsStyles.rowNoWrap}>
 									{entry.navItems?.[0] ? (
 										<Image
 											path={navIconUrl(entry.navItems[0])}
 											alt=""
 											size={22}
-											containerClassName={styles.noShrink}
+											containerClassName={partsStyles.noShrink}
 										/>
 									) : null}
 									<span className="font-semi-bold">
@@ -168,7 +239,7 @@ export function communityItemContent(
 				),
 				body: (
 					<>
-						<div className={styles.list}>
+						<div className={partsStyles.list}>
 							{data.rotations
 								.slice(0, FEED_ROTATION_MAX_LISTED)
 								.map((rotation) => (
@@ -190,7 +261,7 @@ export function communityItemContent(
 											</div>
 											<div
 												className={clsx(
-													styles.rowNoWrap,
+													partsStyles.rowNoWrap,
 													"text-xs text-lighter",
 												)}
 											>
@@ -223,28 +294,6 @@ export function communityItemContent(
 				),
 			};
 		}
-		case "VOICE_ROOM": {
-			const { data } = item;
-			return {
-				avatar: data.users[0] ? (
-					<Avatar user={data.users[0]} size="xs" />
-				) : null,
-				line: (
-					<>
-						{data.users[0] ? <UserName user={data.users[0]} /> : "Someone"} and{" "}
-						{data.userCount - 1} others are in voice
-					</>
-				),
-				body: (
-					<div className={clsx(styles.inset, styles.rowNoWrap)}>
-						<UserStack users={data.users} />
-						<span className="text-xs text-lighter">
-							{data.roomType.replaceAll("_", " ").toLowerCase()}
-						</span>
-					</div>
-				),
-			};
-		}
 		case "MEMORY": {
 			const { data } = item;
 			return {
@@ -257,16 +306,18 @@ export function communityItemContent(
 				),
 				body: (
 					<>
-						<div className={clsx(styles.inset, styles.rowNoWrap)}>
+						<div className={clsx(partsStyles.inset, partsStyles.rowNoWrap)}>
 							<TournamentRow tournament={data.tournament} />
-							<span className={styles.placing}>
+							<span className={partsStyles.placing}>
 								{ordinalPlacement(data.placement)}
 								<span className="text-xs text-lighter">
 									/{data.participantCount}
 								</span>
 							</span>
 						</div>
-						<div className={clsx(styles.rowNoWrap, "text-xs text-lighter")}>
+						<div
+							className={clsx(partsStyles.rowNoWrap, "text-xs text-lighter")}
+						>
 							<UserStack users={data.team.members} />
 							{data.team.name}
 						</div>
@@ -287,17 +338,17 @@ export function communityItemContent(
 					</>
 				),
 				body: (
-					<div className={clsx(styles.inset, styles.rowNoWrap)}>
+					<div className={clsx(partsStyles.inset, partsStyles.rowNoWrap)}>
 						<DateBlock at={data.startsAt} />
-						<div className={styles.grow}>
+						<div className={partsStyles.grow}>
 							<div className="font-semi-bold">{data.name}</div>
 							<div className="text-xs text-lighter">
 								<DayTime at={data.startsAt} /> · by {data.actor.username}
 							</div>
 						</div>
-						<div className={styles.row}>
+						<div className={partsStyles.row}>
 							{data.tags.map((tag) => (
-								<span key={tag} className={styles.pill}>
+								<span key={tag} className={partsStyles.pill}>
 									{tag}
 								</span>
 							))}
@@ -317,7 +368,7 @@ export function communityItemContent(
 					</>
 				),
 				body: (
-					<div className={styles.inset}>
+					<div className={partsStyles.inset}>
 						{data.tournament ? (
 							<TournamentRow tournament={data.tournament} />
 						) : null}
@@ -357,10 +408,10 @@ export function communityItemContent(
 					),
 				body:
 					data.source === "TOURNAMENT" ? (
-						<div className={clsx(styles.inset, styles.rowNoWrap)}>
+						<div className={clsx(partsStyles.inset, partsStyles.rowNoWrap)}>
 							<TournamentRow tournament={data.tournament ?? undefined} />
 							{data.placement !== null ? (
-								<span className={styles.placing}>
+								<span className={partsStyles.placing}>
 									{ordinalPlacement(data.placement)}
 									<span className="text-xs text-lighter">
 										/{data.participantCount}
@@ -369,8 +420,8 @@ export function communityItemContent(
 							) : null}
 						</div>
 					) : (
-						<div className={clsx(styles.inset, styles.rowNoWrap)}>
-							<span className={styles.bigScore}>{data.setCount}</span>
+						<div className={clsx(partsStyles.inset, partsStyles.rowNoWrap)}>
+							<span className={partsStyles.bigScore}>{data.setCount}</span>
 							<span className="text-xs text-lighter">
 								{data.setCount === 1 ? "set" : "sets"} played so far
 							</span>
@@ -403,14 +454,14 @@ export function communityItemContent(
 						<>{milestone} art pieces have been shared on sendou.ink</>
 					),
 				body: (
-					<div className={clsx(styles.hero, styles.heroAccent)}>
-						<div className={styles.rowNoWrap}>
+					<div className={clsx(partsStyles.hero, partsStyles.heroAccent)}>
+						<div className={partsStyles.rowNoWrap}>
 							<Image
 								path={navIconUrl(SITE_MILESTONE_ICONS[data.total])}
 								alt=""
 								size={40}
 							/>
-							<span className={styles.bigScore}>
+							<span className={partsStyles.bigScore}>
 								{groupedNumber(data.milestone)}
 							</span>
 						</div>
@@ -478,10 +529,11 @@ function InstallAppBody() {
 	const installState = usePromptInstallState();
 
 	return (
-		<div className={styles.inset}>
+		<div className={partsStyles.inset}>
 			<div className="text-sm">
-				Add sendou.ink to your home screen for quick access
-				{installState === "hidden" ? " from your browser's menu." : "."}
+				Add sendou.ink to your home screen
+				{installState === "hidden" ? " from your browser's menu" : ""} for quick
+				access.
 			</div>
 			{installState !== "hidden" ? (
 				<InstallAction installState={installState} />

@@ -3,7 +3,7 @@ import type { FeedAudience, FeedItemType } from "./feed-constants";
 
 export type FeedSourceAudience = FeedAudience | "ASSOCIATION" | "PLUS_TIER";
 
-export type FeedSourcePlacement = "FEED" | "PINNED" | "LIVE";
+export type FeedSourcePlacement = "FEED" | "PINNED";
 
 /** Item type that isn't in the prototype yet */
 export interface ProposedFeedItem {
@@ -112,13 +112,8 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 				},
 			},
 			{
-				item: {
-					key: "SQ_SEASON_ENDING",
-					name: "Season ending soon",
-					audience: ["SELF"],
-					placement: "PINNED",
-				},
-				when: "3 days before a season ends, if you're close to a goal: sets short of getting a rank, or SP from the next tier.",
+				item: "SQ_SEASON_ENDING",
+				when: "3 days before a season ends, to everyone who has played in it: your rank and SP, plus a goal you can still reach (the sets you're short of getting ranked, or the next tier when it's at most 30 SP away).",
 				example: {
 					actor: "SendouQ",
 					text: "Season 13 ends in **3 days** · 2 more sets to get ranked",
@@ -254,7 +249,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "TO_LFG",
-				when: "A team in the tournament LFG for an upcoming tournament is a player short, matched to your weapons and level. Shows the team's own message if they wrote one, since there's no way to know which role they need.",
+				when: "A team in the tournament LFG for an upcoming tournament you aren't in is a player short, matched to your level: the same skill signal as the LFG section, your SendouQ tier against the team's median member, shown at a match of at least 0.5 (3 tier steps). Of the teams, the best match × recency of their latest roster change is shown. Weapons aren't matched, for the same reason as LFG posts: shows the team's own message if they wrote one, since there's no way to know which role they need.",
 				action: "Show interest",
 				example: {
 					actor: "Fresh Season",
@@ -320,10 +315,10 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "TO_SERIES",
-				when: "After each event in a series with a leaderboard, if you or friends are on it.",
+				when: "After each event in a series with a leaderboard, if you played in it in the last 90 days.",
 				example: {
 					actor: "Triton",
-					text: "**Triton-Cup** standings, last 90 days · Marie is #39",
+					text: "**Triton-Cup** standings, last 90 days · you are #39",
 				},
 			},
 			{
@@ -382,13 +377,8 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 				},
 			},
 			{
-				item: {
-					key: "CALENDAR_FRIENDS_SAVED",
-					name: "Friends are interested",
-					audience: ["FRIENDS"],
-					placement: "FEED",
-				},
-				when: "3 or more friends saved the same upcoming event.",
+				item: "CALENDAR_FRIENDS_SAVED",
+				when: "Friends saved an upcoming tournament you haven't saved or registered for yourself. The one most of them saved is shown, and the more friends saved it the higher it ranks (full weight at 3).",
 				example: {
 					actor: "Calendar",
 					text: "**3 friends** saved **Milkcup #26**",
@@ -431,13 +421,8 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 				},
 			},
 			{
-				item: {
-					key: "TROPHY_NEW",
-					name: "New trophy design",
-					audience: ["FRIENDS", "FOLLOWING"],
-					placement: "FEED",
-				},
-				when: "A trophy made by a friend or an artist you follow is uploaded (the trophy's creator).",
+				item: "TROPHY_NEW",
+				when: "A new trophy made by a friend or teammate (the trophy's creator) is added. Artists you follow once there's a way to follow them.",
 				example: {
 					actor: "Moe",
 					text: "**Moe** made the **Triton-Cup Season 5** trophy",
@@ -498,12 +483,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 				},
 			},
 			{
-				item: {
-					key: "TEAM_EVENT_ADDED",
-					name: "Team event added",
-					audience: ["TEAM"],
-					placement: "FEED",
-				},
+				item: "TEAM_EVENT_ADDED",
 				when: "A teammate adds a team event, e.g. a VoD review or a scrim block. You also get a notification; the feed post is the team's shared record of it.",
 				example: {
 					actor: "Inkopolis Ink",
@@ -517,12 +497,12 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 		navIcon: "scrims",
 		note: "Associations don't create items of their own. They are used here as an audience: a scrim posted to an association is only shown to its members.",
 		algorithm: {
-			gate: "Only for members of a team. Open scrim posts only: a post leaves the feed as soon as a request on it is accepted, and when its start time passes.",
+			gate: "Only for members of a team, and only posts made by teams (pick-ups aren't shown). Open scrim posts only: a post leaves the feed as soon as a request on it is accepted, and when its start time passes (\"looking now\" posts stay for 3 hours, as on the scrims page). Posts follow the scrims page's visibility, so a post shared only to an association reaches its members only.",
 			signals: [
 				{
 					name: "Usual opponents",
 					measure:
-						"Teams yours has scrimmed at least twice in the last 3 months, from reported scrims.",
+						"Teams yours has scrimmed at least twice in the last 3 months, counting accepted scrims that weren't canceled.",
 					scoring: "A new post by one of them is always shown.",
 				},
 				{
@@ -533,13 +513,13 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 				{
 					name: "Fit",
 					measure:
-						"Posts by anyone else, against your team's division and the hours you usually scrim.",
+						"Posts by anyone else, against your team's division (the median LUTI div of its members) and the hours (UTC) your team's scrims of the last 3 months started at.",
 					scoring:
-						"Shown only within 1 division and in hours your team has scrimmed before.",
+						"Shown only within 1 division of the post's range and in an hour your team has scrimmed in before. A post without a division range fits any team; a team without LUTI divs only fits those.",
 				},
 			],
 			decision:
-				"Usual opponents first, then association posts, then other posts that fit. A post you've requested stays until it's accepted or declined.",
+				"Posts you've requested first, then usual opponents, then association posts, then other posts that fit; newest first within each. A post you've requested stays until it's accepted or declined, aging from when you requested it.",
 		},
 		sources: [
 			{
@@ -565,35 +545,29 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 		name: "LFG",
 		navIcon: "lfg",
 		algorithm: {
-			gate: "Only if you have an LFG post of your own that's under 30 days old, the same window the LFG page shows. You only see posts that answer yours: looking for a team gets teams recruiting, recruiting gets players looking, coaching posts get players or teams looking for a coach (and the other way around), scrim posts get other scrim posts. Posts limited to a Plus tier follow the LFG page's rule, and your own team's posts are skipped. If the posts both list languages, they need one in common.",
+			gate: "Only if you have an LFG post of your own that's under 30 days old, the same window the LFG page shows. You only see posts that answer yours: looking for a team gets teams recruiting, recruiting gets players looking (coaching posts are planned). Posts limited to a Plus tier follow the LFG page's rule, and your own team's posts are skipped. If the posts both list languages, they need one in common.",
 			signals: [
-				{
-					name: "Weapons",
-					measure:
-						"Your weapon pool against the post author's, both from the match profile. A team post uses the combined pool of its members.",
-					scoring:
-						"Shared weapons ÷ the smaller pool, from 0 to 1. Favorite and 10★ weapons count twice. If either pool is empty, 0.5.",
-				},
 				{
 					name: "Timezone",
 					measure:
 						"Hours between your post's timezone and theirs, with the LFG page's helper (follows daylight saving and wraps around the date line, so it's never more than 12).",
-					scoring: "0–2 h: 1 · 3–4 h: 0.6 · 5–6 h: 0.3 · 7 h or more: hidden.",
+					scoring: "0–1 h: 1, then down evenly to 0 at 7 h (e.g. 4 h: 0.5).",
 				},
 				{
 					name: "Skill",
 					measure:
-						"Steps between accurate SendouQ tiers from this or last season (the same tiers the LFG page's tier filter uses). Each plus tier is its own step, e.g. Diamond+ → Diamond → Platinum+. A team post uses its median member.",
+						"Steps between the best accurate SendouQ tiers of the last two finished seasons, the tier the user card on the post shows. Each plus tier is its own step, e.g. Diamond+ → Diamond → Platinum+. A team post uses its median member.",
 					scoring:
-						"0–1 steps: 1 · 2 steps: 0.6 · 3 steps: 0.3 · 4 or more: hidden. No accurate tier on either side: 0.5. Coach posts skip this signal.",
+						"0 steps: 1, then down evenly to 0 at 6 steps. No accurate tier on either side: 0.5.",
 				},
 			],
 			decision:
-				"Hidden if the timezone or skill gap hits its cutoff. Otherwise match = 0.4 × timezone + 0.35 × skill + 0.25 × weapons, and the post is shown when the match is at least 0.6. The match takes the place of audience affinity in the ranking score, so the best fits rise first. At most 2 LFG posts a day, and a post you've already seen comes back only after it's bumped.",
+				"Match = 0.75 × timezone + 0.25 × skill, and the post is shown when the match is at least 0.5, so posts 6 h or more apart never are. Of the posts bumped in the last 5 days, the one with the best match × recency is shown, so a fresh good fit beats an old perfect one. With several posts of your own, each post is matched against the one it fits best.",
 			workedExample:
-				"You're looking for a team: Europe/Helsinki, Diamond+, pool Splattershot, Splattershot Jr., Sploosh-o-matic. Deepsea is recruiting: Europe/London (2 h → 1), median member Platinum+ (2 steps → 0.6), combined pool shares Splattershot Jr. (1 of 3 → 0.33). Match = 0.4 + 0.21 + 0.08 = 0.69, so the post is shown.",
+				"You're looking for a team: Europe/Helsinki, Diamond+. Deepsea is recruiting: Europe/London (2 h → 0.83), median member Platinum+ (2 steps → 0.67). Match = 0.625 + 0.17 = 0.79, so the post is shown.",
 			openQuestions: [
-				"For players and teams, should weapons reward overlap or the role the team is missing? Team posts don't say which weapons they want, so overlap is used for now.",
+				"Weapons are left out for now. Should they reward overlap or the role the team is missing? Team posts don't say which weapons they want.",
+				"Should the match take the place of audience affinity in the ranking score, and should a post you've already seen come back only after it's bumped?",
 			],
 		},
 		sources: [
@@ -862,13 +836,8 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 				example: { actor: "Plus Server", text: "**Pearl** made it to **+2**" },
 			},
 			{
-				item: {
-					key: "PLUS_SUGGESTION",
-					name: "New suggestion",
-					audience: ["PLUS_TIER"],
-					placement: "FEED",
-				},
-				when: "Someone is suggested to your tier. Only shown to members of that tier.",
+				item: "PLUS_SUGGESTION",
+				when: "Players are suggested to your tier for the next voting, the latest first. Only shown to members of that tier.",
 				example: {
 					actor: "Plus Server",
 					text: "**Mr. Grizz** was suggested to +2",
@@ -917,44 +886,12 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 		],
 	},
 	{
-		name: "Live streams",
-		navIcon: "sendouq",
-		sources: [
-			{
-				item: "STREAM_LIVE",
-				when: "A friend or followed player goes live on Twitch or YouTube outside of a match. Streams of friends' SendouQ and tournament matches are in the sidebar's Friends section.",
-				example: {
-					actor: "Agent 3",
-					text: "**Agent 3** is live on Twitch · 11 watching",
-				},
-			},
-		],
-	},
-	{
-		name: "Voice",
-		sources: [
-			{
-				item: "VOICE_ROOM",
-				when: "2 or more friends are in a voice room you can join.",
-				example: {
-					actor: "Cap'n Cuttlefish",
-					text: "**Cap'n Cuttlefish** and 2 others are in voice",
-				},
-			},
-		],
-	},
-	{
 		name: "Articles",
 		navIcon: "articles",
 		sources: [
 			{
-				item: {
-					key: "ARTICLE_NEW",
-					name: "New article",
-					audience: ["EVERYONE"],
-					placement: "FEED",
-				},
-				when: "An article is published. Shown to friends of the author with extra weight.",
+				item: "ARTICLE_NEW",
+				when: "An article is published. Later: extra weight for friends of the author, once articles know their author's account.",
 				example: {
 					actor: "Articles",
 					text: "New article: **Waving goodbye: the start of Splatoon's great retirement**",

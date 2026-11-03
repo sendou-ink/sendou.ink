@@ -463,6 +463,25 @@ export function visibleTo({
 	)`;
 }
 
+/** Whether the entity's visibility schedule reaches the viewer at `now` through an association they are a member of. */
+export function visibleThroughAssociationTo({
+	entity,
+	viewerId,
+	now,
+}: {
+	entity: VisibilityEntity;
+	viewerId: number;
+	now: number;
+}) {
+	return sql<SqlBool>`exists (
+		select 1 from ${visibilityRowsOf(entity, now)}
+		and "ContentVisibility"."associationId" in (
+			select "AssociationMember"."associationId" from "AssociationMember"
+			where "AssociationMember"."userId" = ${viewerId}
+		)
+	)`;
+}
+
 /** Whether the entity is visible to everyone at `now`. Select it negated as `isPrivate` for cards. */
 export function isPublicNow({
 	entity,

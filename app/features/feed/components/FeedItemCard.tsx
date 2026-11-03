@@ -192,11 +192,6 @@ export function FeedItemCard({
 						<span>{relativeTime(item.at, now)}</span>
 					)}
 					<div className={styles.metaEnd}>
-						{definition.isRetimed ? (
-							<span className={styles.retimed} title="Real rows shifted to now">
-								re-timed
-							</span>
-						) : null}
 						<FeedbackMenu onFeedback={(kind) => sendFeedback(kind, null)} />
 						{headerAction ? (
 							<div className={styles.headerAction}>{headerAction}</div>
@@ -447,8 +442,14 @@ function RankingMath({
 }) {
 	return (
 		<div className={styles.math}>
-			<b>{definition.name}</b>: base <b>{score.base}</b> × affinity{" "}
-			<b>{score.affinity}</b>
+			<b>{definition.name}</b>: base <b>{score.base}</b>
+			{score.weight !== 1 ? (
+				<>
+					{" "}
+					× weight <b>{score.weight.toFixed(2)}</b>
+				</>
+			) : null}{" "}
+			× affinity <b>{score.affinity}</b>
 			{relation ? ` (${relation.toLowerCase()})` : null} × recency{" "}
 			<b>{score.recency.toFixed(2)}</b> ({durationText(score.ageHours * 3600)}{" "}
 			old, half-life {definition.halfLifeHours}h) × diversity{" "}
