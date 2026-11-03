@@ -340,6 +340,19 @@ export async function staffTournamentIdsAt({
 export async function findScoreboardsByTournamentMatchId(
 	tournamentMatchId: number,
 ) {
+	const scoreboards = await findScoreboardsByTournamentMatchIds([
+		tournamentMatchId,
+	]);
+
+	return scoreboards.map(({ mapIndex, data }) => ({ mapIndex, data }));
+}
+
+/** Ingested scoreboards of several tournament matches in one query, each tagged with its match id and 0-based map index. */
+export async function findScoreboardsByTournamentMatchIds(
+	tournamentMatchIds: number[],
+) {
+	if (tournamentMatchIds.length === 0) return [];
+
 	const rows = await db
 		.selectFrom("IngestedMatchLink")
 		.innerJoin(
@@ -359,6 +372,7 @@ export async function findScoreboardsByTournamentMatchId(
 		)
 		.select([
 			"TournamentMatchGameResult.id as matchGameResultId",
+			"TournamentMatchGameResult.matchId",
 			"TournamentMatchGameResult.number",
 			"TournamentMatchGameResult.winnerTeamId",
 			opponentOneId.as("opponentOneId"),
@@ -366,7 +380,8 @@ export async function findScoreboardsByTournamentMatchId(
 			"IngestedMatch.data",
 			"IngestedMatch.povUserId",
 		])
-		.where("TournamentMatchGameResult.matchId", "=", tournamentMatchId)
+		.where("TournamentMatchGameResult.matchId", "in", tournamentMatchIds)
+		.orderBy("TournamentMatchGameResult.matchId", "asc")
 		.orderBy("TournamentMatchGameResult.number", "asc")
 		.orderBy("IngestedMatchLink.createdAt", "asc")
 		.orderBy("IngestedMatchLink.id", "asc")
@@ -398,7 +413,9 @@ export async function findScoreboardsByTournamentMatchId(
 		});
 		if (!data) return [];
 
-		return [{ mapIndex: first.number - 1, data }];
+		return [
+			{ tournamentMatchId: first.matchId, mapIndex: first.number - 1, data },
+		];
 	});
 }
 

@@ -236,7 +236,18 @@ export async function deleteExtraByTournamentMatchId(
 }
 
 export async function findByTournamentMatchId(matchId: number) {
-	const rows = await db
+	const rows = await findByTournamentMatchIds([matchId]);
+
+	if (rows.length === 0) return null;
+
+	return rows;
+}
+
+/** Reported weapons of several tournament matches in one query, ordered by match, map index and user. */
+export async function findByTournamentMatchIds(matchIds: number[]) {
+	if (matchIds.length === 0) return [];
+
+	return db
 		.selectFrom("ReportedWeapon")
 		.select([
 			"ReportedWeapon.tournamentMatchId",
@@ -244,15 +255,12 @@ export async function findByTournamentMatchId(matchId: number) {
 			"ReportedWeapon.weaponSplId",
 			"ReportedWeapon.userId",
 		])
-		.where("ReportedWeapon.tournamentMatchId", "=", matchId)
+		.where("ReportedWeapon.tournamentMatchId", "in", matchIds)
+		.orderBy("ReportedWeapon.tournamentMatchId", "asc")
 		.orderBy("ReportedWeapon.mapIndex", "asc")
 		.orderBy("ReportedWeapon.userId", "asc")
 		.$narrowType<{ tournamentMatchId: NotNull; mapIndex: NotNull }>()
 		.execute();
-
-	if (rows.length === 0) return null;
-
-	return rows;
 }
 
 /** A user's reported weapons across SendouQ matches and finalized tournaments within the season's date range. */

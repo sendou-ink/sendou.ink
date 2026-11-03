@@ -1416,6 +1416,14 @@ export function buildCases(fx: Fixtures): {
 			),
 	);
 	add(
+		"ScannerIngestRepository.findScoreboardsByTournamentMatchIds",
+		fx.heavyTournamentTeamMatchIds,
+		(tournamentMatchIds) =>
+			ScannerIngestRepository.findScoreboardsByTournamentMatchIds(
+				tournamentMatchIds,
+			),
+	);
+	add(
 		"ScannerIngestRepository.findScoreboardsByGroupMatchId",
 		fx.heavyGroupMatchId,
 		(groupMatchId) =>
@@ -1565,6 +1573,11 @@ export function buildCases(fx: Fixtures): {
 		"ReportedWeaponRepository.findByTournamentMatchId",
 		fx.heavyTournamentMatchId,
 		(matchId) => ReportedWeaponRepository.findByTournamentMatchId(matchId),
+	);
+	add(
+		"ReportedWeaponRepository.findByTournamentMatchIds",
+		fx.heavyTournamentTeamMatchIds,
+		(matchIds) => ReportedWeaponRepository.findByTournamentMatchIds(matchIds),
 	);
 	add(
 		"ReportedWeaponRepository.findSeasonReportedWeaponsByUserId",

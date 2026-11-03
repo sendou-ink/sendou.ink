@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as SQReportedWeaponFactory from "~/db/seed/factories/SQReportedWeaponFactory";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentReportedWeaponFactory from "~/db/seed/factories/TournamentReportedWeaponFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import * as ReportedWeaponRepository from "./ReportedWeaponRepository.server";
 import * as SQMatchRepository from "./SQMatchRepository.server";
@@ -62,6 +65,93 @@ describe("ReportedWeaponRepository.findAllWeaponUsageStats", () => {
 		expect(await usageStatsOn(map)).toEqual([]);
 	});
 });
+
+describe("ReportedWeaponRepository.findByTournamentMatchIds", () => {
+	beforeEach(async () => {
+		await users.create(FULL_GROUP_SIZE * 2);
+	});
+
+	test("returns the given matches' weapons ordered by match, map index and user", async () => {
+		const [firstMatchId, secondMatchId, otherMatchId] =
+			await playedTournamentMatchIds();
+		await reportWeapons([
+			{ tournamentMatchId: secondMatchId, mapIndex: 0, userId: users.id(1) },
+			{ tournamentMatchId: firstMatchId, mapIndex: 1, userId: users.id(2) },
+			{ tournamentMatchId: otherMatchId, mapIndex: 0, userId: users.id(1) },
+			{ tournamentMatchId: firstMatchId, mapIndex: 1, userId: users.id(1) },
+			{ tournamentMatchId: firstMatchId, mapIndex: 0, userId: users.id(3) },
+		]);
+
+		const rows = await ReportedWeaponRepository.findByTournamentMatchIds([
+			firstMatchId,
+			secondMatchId,
+		]);
+
+		expect(
+			rows.map(({ tournamentMatchId, mapIndex, userId }) => ({
+				tournamentMatchId,
+				mapIndex,
+				userId,
+			})),
+		).toEqual([
+			{ tournamentMatchId: firstMatchId, mapIndex: 0, userId: users.id(3) },
+			{ tournamentMatchId: firstMatchId, mapIndex: 1, userId: users.id(1) },
+			{ tournamentMatchId: firstMatchId, mapIndex: 1, userId: users.id(2) },
+			{ tournamentMatchId: secondMatchId, mapIndex: 0, userId: users.id(1) },
+		]);
+	});
+
+	test("returns an empty array for no match ids", async () => {
+		expect(await ReportedWeaponRepository.findByTournamentMatchIds([])).toEqual(
+			[],
+		);
+	});
+});
+
+describe("ReportedWeaponRepository.findByTournamentMatchId", () => {
+	beforeEach(async () => {
+		await users.create(FULL_GROUP_SIZE * 2);
+	});
+
+	test("returns null when the match has no reported weapons", async () => {
+		const [matchId, otherMatchId] = await playedTournamentMatchIds();
+		await reportWeapons([
+			{ tournamentMatchId: otherMatchId, mapIndex: 0, userId: users.id(1) },
+		]);
+
+		expect(
+			await ReportedWeaponRepository.findByTournamentMatchId(matchId),
+		).toBeNull();
+	});
+});
+
+/** Ids of the matches of a played 4-team tournament, ascending. */
+async function playedTournamentMatchIds() {
+	const teamUserIds = users.ids().slice(0, 4);
+	const tournament = await TournamentFactory.createPlayed(
+		{ authorId: teamUserIds[0], minMembersPerTeam: 1 },
+		{ teamRosters: teamUserIds.map((userId) => [userId]), playedOut: 0 },
+	);
+
+	return tournament.matches.map((match) => match.id).sort((a, b) => a - b);
+}
+
+function reportWeapons(
+	reports: Array<{
+		tournamentMatchId: number;
+		mapIndex: number;
+		userId: number;
+	}>,
+) {
+	return TournamentReportedWeaponFactory.createMany(
+		reports.length,
+		(index) => ({
+			...reports[index],
+			weaponSplId: WEAPON_SPL_ID,
+			createdAt: dateToDatabaseTimestamp(new Date()),
+		}),
+	);
+}
 
 async function playFirstMapWithWeapon() {
 	const match = await SQMatchFactory.create({

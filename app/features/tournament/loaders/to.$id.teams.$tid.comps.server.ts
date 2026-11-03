@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as RunComps from "~/features/img-export/core/RunComps";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
@@ -44,6 +45,17 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const sets =
 		await TournamentMatchRepository.findByTournamentTeamId(tournamentTeamId);
+	const tournamentMatchIds = sets.map((set) => set.tournamentMatchId);
+	const reportedByMatchId = R.groupBy(
+		await ReportedWeaponRepository.findByTournamentMatchIds(tournamentMatchIds),
+		(row) => row.tournamentMatchId,
+	);
+	const scoreboardsByMatchId = R.groupBy(
+		await ScannerIngestRepository.findScoreboardsByTournamentMatchIds(
+			tournamentMatchIds,
+		),
+		(scoreboard) => scoreboard.tournamentMatchId,
+	);
 
 	const ownObservations: RunComps.CompObservation[] = [];
 	const opponentComps: Array<{
@@ -53,14 +65,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	let mapOrderOffset = 0;
 
 	for (const set of sets) {
-		const reported =
-			(await ReportedWeaponRepository.findByTournamentMatchId(
-				set.tournamentMatchId,
-			)) ?? [];
-		const scoreboards =
-			await ScannerIngestRepository.findScoreboardsByTournamentMatchId(
-				set.tournamentMatchId,
-			);
+		const reported = reportedByMatchId[set.tournamentMatchId] ?? [];
+		const scoreboards = scoreboardsByMatchId[set.tournamentMatchId] ?? [];
 
 		const opponentObservations: RunComps.CompObservation[] = [];
 

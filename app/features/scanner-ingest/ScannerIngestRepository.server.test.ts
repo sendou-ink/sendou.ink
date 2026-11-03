@@ -386,6 +386,87 @@ describe("findScoreboardsByGroupMatchId", () => {
 	});
 });
 
+describe("findScoreboardsByTournamentMatchIds", () => {
+	test("returns the given matches' scoreboards tagged with their match id", async () => {
+		const users = await UserFactory.createMany(TOURNAMENT_TEAM_COUNT);
+		const tournament = await TournamentFactory.createPlayed(
+			{ authorId: users[0]!.id, minMembersPerTeam: 1 },
+			{
+				teamRosters: users.map((user) => [user.id]),
+				playedOut: 0,
+			},
+		);
+		const [firstMatchId, secondMatchId, otherMatchId] = tournament.matches
+			.map((match) => match.id)
+			.sort((a, b) => a - b);
+		const games = await ScannerIngestRepository.gamesInTournamentMatches([
+			secondMatchId!,
+			firstMatchId!,
+			otherMatchId!,
+		]);
+		const firstGameOf = (matchId: number) =>
+			games.find(
+				(game) =>
+					game.target.type === "tournament" &&
+					game.target.tournamentMatchId === matchId,
+			)!;
+		const linkedGames = [
+			firstGameOf(secondMatchId!),
+			firstGameOf(firstMatchId!),
+			firstGameOf(otherMatchId!),
+		];
+
+		const { effectiveMatches } =
+			await ScannerIngestRepository.addOrMergeMatches({
+				povUserId: users[0]!.id,
+				submitterUserId: users[0]!.id,
+				matches: linkedGames.map((game, i) =>
+					testMatch({
+						playedAt: PLAYED_AT + i * 60 * 60 * 1000,
+						stage: game.stageId,
+					}),
+				),
+				context: null,
+			});
+		await ScannerIngestRepository.addLinks({
+			links: linkedGames.map((game, i) => ({
+				ingestedMatchId: effectiveMatches[i]!.id,
+				match: effectiveMatches[i]!.data,
+				game,
+			})),
+			povUserId: users[0]!.id,
+		});
+
+		const scoreboards =
+			await ScannerIngestRepository.findScoreboardsByTournamentMatchIds([
+				secondMatchId!,
+				firstMatchId!,
+			]);
+
+		expect(
+			scoreboards.map(({ tournamentMatchId, mapIndex }) => ({
+				tournamentMatchId,
+				mapIndex,
+			})),
+		).toEqual([
+			{
+				tournamentMatchId: firstMatchId,
+				mapIndex: firstGameOf(firstMatchId!).mapIndex,
+			},
+			{
+				tournamentMatchId: secondMatchId,
+				mapIndex: firstGameOf(secondMatchId!).mapIndex,
+			},
+		]);
+	});
+
+	test("returns an empty array for no match ids", async () => {
+		expect(
+			await ScannerIngestRepository.findScoreboardsByTournamentMatchIds([]),
+		).toEqual([]);
+	});
+});
+
 describe("gamesInTournamentMatches", () => {
 	test("returns the match's own games only, leaving the rest of the tournament out", async () => {
 		const users = await UserFactory.createMany(TOURNAMENT_TEAM_COUNT);

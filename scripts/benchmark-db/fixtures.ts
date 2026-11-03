@@ -9,6 +9,7 @@ import type * as FeedRepository from "~/features/feed/FeedRepository.server";
 import { FEED_EVENT_MAX_RETENTION_DAYS } from "~/features/feed/feed-constants";
 import { LFG } from "~/features/lfg/lfg-constants";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
+import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -48,6 +49,8 @@ export interface Fixtures {
 	/** Newest proposal of the match with the most schedule proposals. */
 	scheduleProposal: { id: number; matchId: number } | null;
 	heavyTournamentTeamId: number | null;
+	/** Ids of every match `heavyTournamentTeamId` played. */
+	heavyTournamentTeamMatchIds: number[] | null;
 	tournamentTeamPair: [number, number] | null;
 	tournamentTeamInviteCode: string | null;
 	recentTournamentIds: number[] | null;
@@ -186,6 +189,8 @@ export async function resolveFixtures(): Promise<Fixtures> {
 	const heavyGroupMatchId = await resolveHeavyGroupMatchId();
 	const heavyScrimPostId = await resolveHeavyScrimPostId();
 	const feedNow = await resolveFeedNow();
+	const heavyTournamentTeamId =
+		await resolveHeavyTournamentTeamId(heavyTournamentId);
 
 	const fixtures: Fixtures = {
 		heavyUser,
@@ -206,8 +211,10 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		heavyTournamentMatchId: await resolveHeavyTournamentMatchId(),
 		tournamentMatchGameResultId: await resolveTournamentMatchGameResultId(),
 		scheduleProposal: await resolveScheduleProposal(),
-		heavyTournamentTeamId:
-			await resolveHeavyTournamentTeamId(heavyTournamentId),
+		heavyTournamentTeamId,
+		heavyTournamentTeamMatchIds: await resolveHeavyTournamentTeamMatchIds(
+			heavyTournamentTeamId,
+		),
 		tournamentTeamPair: await resolveTournamentTeamPair(heavyTournamentId),
 		tournamentTeamInviteCode:
 			await resolveTournamentTeamInviteCode(heavyTournamentId),
@@ -598,6 +605,19 @@ async function resolveHeavyTournamentTeamId(heavyTournamentId: number | null) {
 		.executeTakeFirst();
 
 	return row?.tournamentTeamId ?? null;
+}
+
+async function resolveHeavyTournamentTeamMatchIds(
+	heavyTournamentTeamId: number | null,
+) {
+	if (heavyTournamentTeamId === null) return null;
+
+	const sets = await TournamentMatchRepository.findByTournamentTeamId(
+		heavyTournamentTeamId,
+	);
+	if (sets.length === 0) return null;
+
+	return sets.map((set) => set.tournamentMatchId);
 }
 
 async function resolveTournamentTeamPair(
