@@ -393,7 +393,6 @@ export function communityItemContent(
 			const { data } = item;
 			return {
 				avatar: <Avatar user={data.actor} size="xs" />,
-				// xxx: use the pronoun from the user's profile instead of "their"
 				line:
 					data.source === "TOURNAMENT" ? (
 						<>

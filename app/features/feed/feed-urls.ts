@@ -1,5 +1,3 @@
-// xxx: urls.ts?
-
 import { feedSearchParams } from "./feed-search-params";
 
 /** Navigation state of a post page opened from the feed, its back link then goes back in history to keep the feed's scroll position */
