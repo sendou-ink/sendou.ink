@@ -29,7 +29,7 @@ import { runWithoutWebPush } from "~/features/notifications/core/push-suppressio
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { toDBBoolean } from "~/utils/sql";
 import {
@@ -601,6 +601,7 @@ const SCENARIOS: Scenario[] = [
 							? addMinutes(new Date(), CHECK_IN_LEAD_MINUTES / 2)
 							: addHours(new Date(), 1),
 					),
+					checkInOpenedAt: isCheckInOpen ? databaseTimestampNow() : null,
 				},
 				{
 					signedUpUserIds,

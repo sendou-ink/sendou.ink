@@ -1495,8 +1495,8 @@ interface Lobby {
 	weaponRandomizer: Generated<LobbyWeaponRandomizer>;
 	/** Common chat used while pending and by spectators */
 	chatRoomId: number | null;
-	/** Marker for the check-in opened notification having been sent */
-	checkInNotifiedAt: number | null;
+	/** When check-in opened (enough signed up, the start near), its notification sent. Stays open from then on */
+	checkInOpenedAt: number | null;
 	/** Since when the started lobby has had no set being played, `null` while one is (or before the start) */
 	pendingSince: number | null;
 	endedAt: number | null;

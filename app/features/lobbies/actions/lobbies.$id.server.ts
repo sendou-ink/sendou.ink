@@ -95,7 +95,15 @@ export const action = defineAction(
 				const withSpotCount = lobby.participants.filter(
 					(participant) => participant.status !== "WAITLISTED",
 				).length;
-				const isPresentRightAway = hasStarted && activeCount < lobby.roomSize;
+				// after the start the sign-up opening check-in is present too
+				const isLate =
+					hasStarted &&
+					LobbyState.isCheckInOpen({
+						lobby,
+						participants: [...lobby.participants, { status: "REGISTERED" }],
+						now,
+					});
+				const isPresentRightAway = isLate && activeCount < lobby.roomSize;
 				if (isPresentRightAway) requireNoConflict();
 
 				await LobbyRepository.insertParticipant({
@@ -103,7 +111,7 @@ export const action = defineAction(
 					userId: user.id,
 					status: isPresentRightAway
 						? "CHECKED_IN"
-						: !hasStarted && withSpotCount < lobby.roomSize
+						: !isLate && withSpotCount < lobby.roomSize
 							? "REGISTERED"
 							: "WAITLISTED",
 				});
@@ -463,12 +471,20 @@ function viewerActions({
 	const latestSet = sets.at(-1);
 	const isPlaying = latestSet !== undefined && !LobbySet.isFinished(latestSet);
 
+	const { status, isCheckInOpen } = LobbyState.statusAndCheckIn({
+		lobby,
+		participants: lobby.participants,
+		isPlaying,
+		now,
+	});
+
 	return LobbyState.viewerActions({
-		status: LobbyState.status({ lobby, isPlaying, now }),
+		status,
 		viewer,
 		isPlayingUnfinishedSet: false,
 		hasFriendCode: true,
 		isKicked: lobby.isViewerKicked,
+		isCheckInOpen,
 		activeCount,
 		roomSize: lobby.roomSize,
 		now,

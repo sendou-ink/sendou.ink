@@ -7,23 +7,34 @@ const MINUTE = 60;
 describe("LobbyState.status", () => {
 	test.each([
 		{
-			why: "long before the start",
-			now: STARTS_AT - 11 * MINUTE,
+			why: "before the start, check-in not open",
+			now: STARTS_AT - 1,
 			isPlaying: false,
+			isCheckInOpen: false,
 			endedAt: null,
 			expected: "UPCOMING",
 		},
 		{
-			why: "10 minutes before",
-			now: STARTS_AT - 10 * MINUTE,
+			why: "before the start, check-in open",
+			now: STARTS_AT - 1,
 			isPlaying: false,
+			isCheckInOpen: true,
 			endedAt: null,
 			expected: "CHECK_IN",
+		},
+		{
+			why: "started, check-in not open",
+			now: STARTS_AT,
+			isPlaying: false,
+			isCheckInOpen: false,
+			endedAt: null,
+			expected: "PENDING",
 		},
 		{
 			why: "started, nobody playing",
 			now: STARTS_AT,
 			isPlaying: false,
+			isCheckInOpen: true,
 			endedAt: null,
 			expected: "PENDING",
 		},
@@ -31,6 +42,7 @@ describe("LobbyState.status", () => {
 			why: "started, a set being played",
 			now: STARTS_AT,
 			isPlaying: true,
+			isCheckInOpen: true,
 			endedAt: null,
 			expected: "ACTIVE",
 		},
@@ -38,18 +50,75 @@ describe("LobbyState.status", () => {
 			why: "ended",
 			now: STARTS_AT,
 			isPlaying: true,
+			isCheckInOpen: true,
 			endedAt: STARTS_AT,
 			expected: "ENDED",
 		},
-	])("$why → $expected", ({ now, isPlaying, endedAt, expected }) => {
-		expect(
-			LobbyState.status({
-				lobby: { startsAt: STARTS_AT, endedAt },
-				isPlaying,
-				now,
-			}),
-		).toBe(expected);
-	});
+	])(
+		"$why → $expected",
+		({ now, isPlaying, isCheckInOpen, endedAt, expected }) => {
+			expect(
+				LobbyState.status({
+					lobby: { startsAt: STARTS_AT, endedAt },
+					isPlaying,
+					isCheckInOpen,
+					now,
+				}),
+			).toBe(expected);
+		},
+	);
+});
+
+describe("LobbyState.isCheckInOpen", () => {
+	test.each([
+		{
+			why: "8 signed up, 10 minutes before the start",
+			now: STARTS_AT - 10 * MINUTE,
+			signedUp: 8,
+			checkInOpenedAt: null,
+			expected: true,
+		},
+		{
+			why: "8 signed up, 11 minutes before the start",
+			now: STARTS_AT - 11 * MINUTE,
+			signedUp: 8,
+			checkInOpenedAt: null,
+			expected: false,
+		},
+		{
+			why: "7 signed up, past the start",
+			now: STARTS_AT + 60 * MINUTE,
+			signedUp: 7,
+			checkInOpenedAt: null,
+			expected: false,
+		},
+		{
+			why: "7 signed up and 2 waitlisted",
+			now: STARTS_AT,
+			signedUp: 7,
+			waitlisted: 2,
+			checkInOpenedAt: null,
+			expected: false,
+		},
+		{
+			why: "opened already, people left since",
+			now: STARTS_AT,
+			signedUp: 3,
+			checkInOpenedAt: STARTS_AT - 10 * MINUTE,
+			expected: true,
+		},
+	])(
+		"$why → $expected",
+		({ now, signedUp, waitlisted = 0, checkInOpenedAt, expected }) => {
+			expect(
+				LobbyState.isCheckInOpen({
+					lobby: { startsAt: STARTS_AT, checkInOpenedAt },
+					participants: participantsOf({ signedUp, waitlisted }),
+					now,
+				}),
+			).toBe(expected);
+		},
+	);
 });
 
 describe("LobbyState.isAutoCloseDue", () => {
@@ -111,6 +180,7 @@ describe("LobbyState.viewerActions", () => {
 		isPlayingUnfinishedSet: false,
 		hasFriendCode: true,
 		isKicked: false,
+		isCheckInOpen: true,
 		activeCount: 8,
 		roomSize: 10,
 		startsAt: STARTS_AT,
@@ -148,6 +218,17 @@ describe("LobbyState.viewerActions", () => {
 			status: "UPCOMING",
 			viewer: { status: "REGISTERED" },
 			now: 0,
+			isCheckInOpen: false,
+			action: "CHECK_IN",
+			expected: false,
+		},
+		{
+			why: "no check-in after the start before it opens",
+			status: "PENDING",
+			viewer: { status: "REGISTERED" },
+			now: STARTS_AT,
+			activeCount: 0,
+			isCheckInOpen: false,
 			action: "CHECK_IN",
 			expected: false,
 		},
@@ -208,17 +289,50 @@ describe("LobbyState.checkInOpensAt", () => {
 describe("LobbyState.nextStatusChangeAt", () => {
 	test.each([
 		{
-			why: "upcoming → check-in opening",
+			why: "upcoming with 8 signed up → check-in opening",
 			status: "UPCOMING",
+			signedUp: 8,
 			expected: STARTS_AT - 10 * MINUTE,
 		},
-		{ why: "check-in → the start", status: "CHECK_IN", expected: STARTS_AT },
-		{ why: "pending", status: "PENDING", expected: null },
-		{ why: "active", status: "ACTIVE", expected: null },
-		{ why: "ended", status: "ENDED", expected: null },
-	] as const)("$why", ({ status, expected }) => {
-		expect(LobbyState.nextStatusChangeAt({ status, startsAt: STARTS_AT })).toBe(
-			expected,
-		);
+		{
+			why: "upcoming with 7 signed up → the start",
+			status: "UPCOMING",
+			signedUp: 7,
+			expected: STARTS_AT,
+		},
+		{
+			why: "check-in → the start",
+			status: "CHECK_IN",
+			signedUp: 8,
+			expected: STARTS_AT,
+		},
+		{ why: "pending", status: "PENDING", signedUp: 8, expected: null },
+		{ why: "active", status: "ACTIVE", signedUp: 8, expected: null },
+		{ why: "ended", status: "ENDED", signedUp: 8, expected: null },
+	] as const)("$why", ({ status, signedUp, expected }) => {
+		expect(
+			LobbyState.nextStatusChangeAt({
+				status,
+				startsAt: STARTS_AT,
+				participants: participantsOf({ signedUp }),
+			}),
+		).toBe(expected);
 	});
 });
+
+function participantsOf({
+	signedUp,
+	waitlisted = 0,
+}: {
+	signedUp: number;
+	waitlisted?: number;
+}) {
+	return [
+		...Array.from({ length: signedUp }, () => ({
+			status: "REGISTERED" as const,
+		})),
+		...Array.from({ length: waitlisted }, () => ({
+			status: "WAITLISTED" as const,
+		})),
+	];
+}

@@ -41,17 +41,18 @@ const LOBBY_DESCRIPTION = "Bring your main, no Tacticooler";
 
 test.describe("Lobbies", () => {
 	/**
-	 * Only a supporter can make a lobby, others sign up for it. Signing up before the start reserves
-	 * a spot, check-in opening 10 minutes before the start with a notification to the signed
-	 * up, the check-in button appearing on an open page as it does. Checking in shows the room's
-	 * pool and pass. Once the lobby has started signing up checks in right away. Past the room size
-	 * sign-ups go to the waitlist, the first on it taking a spot someone frees and being
-	 * notified of it. When the lobby starts the waitlisted stay on the waitlist, unless
-	 * someone with a spot didn't check in: then a waitlisted player checking in plays in
-	 * their place.
+	 * Only a supporter can make a lobby, others sign up for it. Signing up reserves a spot,
+	 * check-in opening once 8 have signed up and the start is at most 10 minutes away, with a
+	 * notification to the signed up and the check-in button appearing on an open page as it
+	 * does. A lobby made to start now opens check-in as the 8th signs up, who is checked in
+	 * right away like everyone signing up after them. Checking in shows the room's pool and
+	 * pass. Past the room size sign-ups go to the waitlist, the first on it taking a spot
+	 * someone frees and being notified of it. When the lobby starts the waitlisted stay on the
+	 * waitlist, unless someone with a spot didn't check in: then a waitlisted player checking
+	 * in plays in their place.
 	 */
 	test.describe("Signing up", () => {
-		test("a lobby made to start now checks in whoever signs up", async ({
+		test("a lobby made to start now waits for 8 sign-ups before check-in", async ({
 			page,
 			factories,
 		}) => {
@@ -76,7 +77,55 @@ test.describe("Lobbies", () => {
 			await lobby.signUp();
 
 			await expect(lobby.locators.participants).toHaveCount(2);
-			await expect(lobby.locators.viewerStatus).toContainText("checked in");
+			await expect(lobby.locators.viewerStatus).toContainText(
+				"notified when check-in opens",
+			);
+			await expect(lobby.locators.startBanner).toContainText("2/8 signed up");
+			await isNotVisible(lobby.locators.checkInButton);
+		});
+
+		test("the 8th to sign up to a started lobby opens check-in for everyone", async ({
+			page,
+			factories,
+		}) => {
+			const [host, ...others] = await factories.UserFactory.createMany(
+				ROOM_SIZE - 1,
+			);
+			const eighth = await factories.UserFactory.create();
+			const lobby = await factories.LobbyFactory.create(
+				{
+					hostUserId: host.id,
+					name: LOBBY_NAME,
+					roomSize: ROOM_SIZE,
+					startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+				},
+				{ signedUpUserIds: idsOf(others) },
+			);
+			const lobbyPage = new LobbyPage(page);
+
+			await test.step("The 8th signing up is checked in right away", async () => {
+				await impersonate(page, eighth.id);
+				await lobbyPage.goto(lobby.id);
+				await lobbyPage.signUp();
+
+				await expect(lobbyPage.locators.viewerStatus).toContainText(
+					"checked in",
+				);
+				await expect(lobbyPage.locators.startBanner).toContainText(
+					"1/8 checked in",
+				);
+			});
+
+			await test.step("The others are notified and can check in", async () => {
+				await impersonate(page, host.id);
+				const notifications = await openNotifications(page);
+				await expect(
+					notifications.notification(`Check in to ${LOBBY_NAME}`),
+				).toBeVisible();
+
+				await lobbyPage.goto(lobby.id);
+				await expect(lobbyPage.locators.checkInButton).toBeVisible();
+			});
 		});
 
 		test("signing up for a later lobby reserves a spot without check-in yet", async ({
@@ -95,10 +144,10 @@ test.describe("Lobbies", () => {
 			await lobbyPage.signUp();
 
 			await expect(lobbyPage.locators.viewerStatus).toContainText(
-				"check-in opens 10 minutes before the start",
+				"notified when check-in opens",
 			);
 			await expect(lobbyPage.locators.startBanner).toContainText(
-				"Check-in opens at",
+				"2/8 signed up",
 			);
 			await isNotVisible(lobbyPage.locators.checkInButton);
 		});
@@ -107,16 +156,9 @@ test.describe("Lobbies", () => {
 			page,
 			factories,
 		}) => {
-			const host = await factories.UserFactory.create();
-			const signedUp = await factories.UserFactory.create();
-			await factories.LobbyFactory.create(
-				{
-					hostUserId: host.id,
-					name: LOBBY_NAME,
-					startsAt: dateToDatabaseTimestamp(addMinutes(new Date(), 5)),
-				},
-				{ signedUpUserIds: [signedUp.id] },
-			);
+			const { signedUp } = await fullLobby(factories, {
+				startsAt: dateToDatabaseTimestamp(addMinutes(new Date(), 5)),
+			});
 
 			await impersonate(page, signedUp.id);
 			await runRoutine(page, "Lobbies");
@@ -131,15 +173,9 @@ test.describe("Lobbies", () => {
 			page,
 			factories,
 		}) => {
-			const host = await factories.UserFactory.create();
-			const signedUp = await factories.UserFactory.create();
-			const lobby = await factories.LobbyFactory.create(
-				{
-					hostUserId: host.id,
-					startsAt: dateToDatabaseTimestamp(addMinutes(new Date(), 5)),
-				},
-				{ signedUpUserIds: [signedUp.id] },
-			);
+			const { lobby, signedUp } = await fullLobby(factories, {
+				startsAt: dateToDatabaseTimestamp(addMinutes(new Date(), 5)),
+			});
 
 			await impersonate(page, signedUp.id);
 			const lobbyPage = new LobbyPage(page);
@@ -158,17 +194,11 @@ test.describe("Lobbies", () => {
 			page,
 			factories,
 		}) => {
-			const host = await factories.UserFactory.create();
-			const signedUp = await factories.UserFactory.create();
-			const lobby = await factories.LobbyFactory.create(
-				{
-					hostUserId: host.id,
-					startsAt: dateToDatabaseTimestamp(
-						addSeconds(addMinutes(new Date(), CHECK_IN_LEAD_MINUTES), 10),
-					),
-				},
-				{ signedUpUserIds: [signedUp.id] },
-			);
+			const { lobby, signedUp } = await fullLobby(factories, {
+				startsAt: dateToDatabaseTimestamp(
+					addSeconds(addMinutes(new Date(), CHECK_IN_LEAD_MINUTES), 10),
+				),
+			});
 			const lobbyPage = new LobbyPage(page);
 
 			await test.step("Before check-in opens there is no check-in button", async () => {
@@ -176,7 +206,10 @@ test.describe("Lobbies", () => {
 				await lobbyPage.goto(lobby.id);
 
 				await expect(lobbyPage.locators.viewerStatus).toContainText(
-					"check-in opens 10 minutes before the start",
+					"notified when check-in opens",
+				);
+				await expect(lobbyPage.locators.startBanner).toContainText(
+					"Check-in opens at",
 				);
 				await isNotVisible(lobbyPage.locators.checkInButton);
 			});
@@ -217,7 +250,9 @@ test.describe("Lobbies", () => {
 			factories,
 		}) => {
 			const waitlisted = await factories.UserFactory.create();
-			const { lobby, signedUp } = await fullLobby(factories, [waitlisted.id]);
+			const { lobby, signedUp } = await fullLobby(factories, {
+				waitlistedUserIds: [waitlisted.id],
+			});
 			const lobbyPage = new LobbyPage(page);
 
 			await test.step("A signed-up player leaves", async () => {
@@ -347,6 +382,7 @@ test.describe("Lobbies", () => {
 				{
 					hostUserId: host.id,
 					startsAt: dateToDatabaseTimestamp(addMinutes(new Date(), 5)),
+					checkInOpenedAt: dateToDatabaseTimestamp(new Date()),
 				},
 				{ signedUpUserIds: [inSendouQ.id] },
 			);
@@ -375,7 +411,11 @@ test.describe("Lobbies", () => {
 				{ signedUpUserIds: [player.id], checkedInUserIds: [player.id] },
 			);
 			const lobby = await factories.LobbyFactory.create(
-				{ hostUserId: host.id, startsAt: startsSoon },
+				{
+					hostUserId: host.id,
+					startsAt: startsSoon,
+					checkInOpenedAt: dateToDatabaseTimestamp(new Date()),
+				},
 				{ signedUpUserIds: [player.id] },
 			);
 
@@ -2067,15 +2107,23 @@ test.describe("Lobbies", () => {
 
 type Player = { id: number; name: string };
 
-/** A lobby starting in an hour with every spot of the room taken, then the waitlisted signed up. Returns one of the players with a spot. */
+/** A lobby starting in an hour (or at `startsAt`) with every spot of the room taken, then the waitlisted signed up. Returns one of the players with a spot. */
 async function fullLobby(
 	factories: Factories,
-	waitlistedUserIds: number[] = [],
+	{
+		waitlistedUserIds = [],
+		startsAt,
+	}: { waitlistedUserIds?: number[]; startsAt?: number } = {},
 ) {
 	const [host, signedUp, ...others] =
 		await factories.UserFactory.createMany(ROOM_SIZE);
 	const lobby = await factories.LobbyFactory.create(
-		{ hostUserId: host.id, name: LOBBY_NAME, roomSize: ROOM_SIZE },
+		{
+			hostUserId: host.id,
+			name: LOBBY_NAME,
+			roomSize: ROOM_SIZE,
+			...(startsAt ? { startsAt } : {}),
+		},
 		{
 			signedUpUserIds: [
 				signedUp.id,

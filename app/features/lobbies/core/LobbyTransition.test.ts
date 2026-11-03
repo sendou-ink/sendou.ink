@@ -38,6 +38,7 @@ function state(
 			roomSize: 10,
 			pendingSince: null,
 			endedAt: null,
+			checkInOpenedAt: STARTS_AT - 10 * MINUTE,
 			...overrides.lobby,
 		},
 		participants: overrides.participants ?? participants(8),
@@ -61,6 +62,54 @@ const inRoom = (count: number, firstId = 1) =>
 describe("LobbyTransition.next", () => {
 	test("nothing to do before the start when everyone has a spot", () => {
 		expect(LobbyTransition.next(state(), STARTS_AT - 1)).toBeNull();
+	});
+
+	test("opens check-in once 8 have signed up, 10 minutes before the start", () => {
+		const result = LobbyTransition.next(
+			state({
+				lobby: { checkInOpenedAt: null },
+				participants: participants(8, { status: "REGISTERED" }),
+			}),
+			STARTS_AT - 10 * MINUTE,
+		);
+
+		expect(result).toEqual({ type: "OPEN_CHECK_IN" });
+	});
+
+	test("opens check-in after the start once the 8th signs up", () => {
+		const result = LobbyTransition.next(
+			state({
+				lobby: { checkInOpenedAt: null },
+				participants: participants(8, { status: "REGISTERED" }),
+			}),
+			STARTS_AT + 30 * MINUTE,
+		);
+
+		expect(result).toEqual({ type: "OPEN_CHECK_IN" });
+	});
+
+	test("check-in stays closed with 8 signed up earlier than 10 minutes before the start", () => {
+		const result = LobbyTransition.next(
+			state({
+				lobby: { checkInOpenedAt: null },
+				participants: participants(8, { status: "REGISTERED" }),
+			}),
+			STARTS_AT - 11 * MINUTE,
+		);
+
+		expect(result).toBeNull();
+	});
+
+	test("check-in stays closed after the start with 7 signed up", () => {
+		const result = LobbyTransition.next(
+			state({
+				lobby: { checkInOpenedAt: null, pendingSince: STARTS_AT },
+				participants: participants(7, { status: "REGISTERED" }),
+			}),
+			STARTS_AT + 30 * MINUTE,
+		);
+
+		expect(result).toBeNull();
 	});
 
 	test("promotes the waitlisted when spots free up before the start", () => {

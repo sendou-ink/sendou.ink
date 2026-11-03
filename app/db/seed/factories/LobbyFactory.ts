@@ -3,7 +3,7 @@ import { db } from "~/db/sql";
 import * as LobbySet from "~/features/lobbies/core/LobbySet";
 import type * as LobbyMatchRepositoryModule from "~/features/lobbies/LobbyMatchRepository.server";
 import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { actAs } from "../core/actAs";
 import { defineFactory } from "../core/defineFactory";
 
@@ -12,7 +12,7 @@ type InsertArgs = Parameters<typeof LobbyRepository.insert>[0];
 type Options = {
 	/** Sign up after the host, in order, within the room size if there's room */
 	signedUpUserIds?: number[];
-	/** Of the signed up (host included), who has checked in */
+	/** Of the signed up (host included), who has checked in. Opens check-in, whoever has signed up. */
 	checkedInUserIds?: number[];
 	/** Sign up once the lobby has started, waiting for a spot in the room. Needs a start in the past. Not for e2e. */
 	lateWaitlistedUserIds?: number[];
@@ -61,6 +61,12 @@ export const { create } = defineFactory({
 			});
 		}
 
+		if (checkedInUserIds && checkedInUserIds.length > 0) {
+			await LobbyRepository.update({
+				id: lobby.id,
+				checkInOpenedAt: databaseTimestampNow(),
+			});
+		}
 		for (const userId of checkedInUserIds ?? []) {
 			await LobbyRepository.updateParticipant({
 				lobbyId: lobby.id,

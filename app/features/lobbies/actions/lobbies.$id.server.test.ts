@@ -120,11 +120,101 @@ describe("lobby action", () => {
 		).toBe("WAITLISTED");
 	});
 
+	test("signing up to a started lobby before check-in opens doesn't check in", async () => {
+		const lobby = await LobbyFactory.create(
+			{
+				hostUserId: hostId(),
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+			},
+			{ signedUpUserIds: users.ids(7).slice(2) },
+		);
+
+		await lobbyAction(
+			{ _action: "SIGN_UP" },
+			{ user: visitorId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(
+			(await participantsOf(lobby.id)).find((p) => p.userId === visitorId())
+				?.status,
+		).toBe("REGISTERED");
+	});
+
+	test("the 8th to sign up to a started lobby opens check-in, checked in right away", async () => {
+		const lobby = await LobbyFactory.create(
+			{
+				hostUserId: hostId(),
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+			},
+			{ signedUpUserIds: users.ids(8).slice(2) },
+		);
+
+		await lobbyAction(
+			{ _action: "SIGN_UP" },
+			{ user: visitorId(), params: { id: String(lobby.id) } },
+		);
+
+		const state = await LobbyRepository.findProgressionStateById(lobby.id);
+		expect(state?.checkInOpenedAt).not.toBeNull();
+		expect(
+			state?.participants.find((p) => p.userId === visitorId())?.status,
+		).toBe("CHECKED_IN");
+	});
+
+	test("signing up to a started lobby with check-in open and room to spare checks in right away", async () => {
+		const lobby = await LobbyFactory.create(
+			{
+				hostUserId: hostId(),
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+			},
+			{
+				signedUpUserIds: users.ids(5).slice(2),
+				checkedInUserIds: [hostId()],
+			},
+		);
+
+		await lobbyAction(
+			{ _action: "SIGN_UP" },
+			{ user: visitorId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(
+			(await participantsOf(lobby.id)).find((p) => p.userId === visitorId())
+				?.status,
+		).toBe("CHECKED_IN");
+	});
+
+	test("signing up to a started lobby with check-in open and a full room waitlists", async () => {
+		const lobby = await LobbyFactory.create(
+			{
+				hostUserId: hostId(),
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+			},
+			{
+				signedUpUserIds: users.ids(8).slice(1),
+				checkedInUserIds: users.ids(8),
+			},
+		);
+
+		await lobbyAction(
+			{ _action: "SIGN_UP" },
+			{ user: users.id(9), params: { id: String(lobby.id) } },
+		);
+
+		expect(
+			(await participantsOf(lobby.id)).find((p) => p.userId === users.id(9))
+				?.status,
+		).toBe("WAITLISTED");
+	});
+
 	test("signing up to a started lobby while in SendouQ is rejected", async () => {
-		const lobby = await LobbyFactory.create({
-			hostUserId: hostId(),
-			startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
-		});
+		const lobby = await LobbyFactory.create(
+			{
+				hostUserId: hostId(),
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+			},
+			{ checkedInUserIds: [hostId()] },
+		);
 		await SQGroupFactory.create({ memberUserIds: [visitorId()] });
 		await refreshSendouQInstance();
 
@@ -144,10 +234,10 @@ describe("lobby action", () => {
 			{ hostUserId: visitorId(), startsAt: startedAt },
 			{ checkedInUserIds: [visitorId()] },
 		);
-		const lobby = await LobbyFactory.create({
-			hostUserId: hostId(),
-			startsAt: startedAt,
-		});
+		const lobby = await LobbyFactory.create(
+			{ hostUserId: hostId(), startsAt: startedAt },
+			{ checkedInUserIds: [hostId()] },
+		);
 		await LobbyActivity.refresh();
 
 		await lobbyAction(

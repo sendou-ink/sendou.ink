@@ -1202,11 +1202,8 @@ export function buildCases(fx: Fixtures): {
 	add("LobbyRepository.findResultPlacementsByUserId", fx.heavyUser, (user) =>
 		LobbyRepository.findResultPlacementsByUserId(user.id),
 	);
-	addStatic("LobbyRepository.findAllWithCheckInOpenedUnnotified", () =>
-		LobbyRepository.findAllWithCheckInOpenedUnnotified(),
-	);
-	addStatic("LobbyRepository.findAllUnendedIdsCheckInOpened", () =>
-		LobbyRepository.findAllUnendedIdsCheckInOpened(),
+	addStatic("LobbyRepository.findAllUnendedIdsNearStart", () =>
+		LobbyRepository.findAllUnendedIdsNearStart(),
 	);
 
 	add("LobbyMatchRepository.findAllSetsByLobbyId", fx.heavyLobby, (lobby) =>

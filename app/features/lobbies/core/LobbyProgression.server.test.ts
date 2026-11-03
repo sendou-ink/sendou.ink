@@ -1,4 +1,4 @@
-import { subMinutes } from "date-fns";
+import { addMinutes, subMinutes } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -72,6 +72,27 @@ describe("LobbyProgression.advance", () => {
 	beforeEach(async () => {
 		await users.create(12);
 	});
+
+	test.each([
+		{ signedUpCount: 8, isOpen: true },
+		{ signedUpCount: 7, isOpen: false },
+	])(
+		"near the start check-in opens with 8 signed up: $signedUpCount signed up → $isOpen",
+		async ({ signedUpCount, isOpen }) => {
+			const lobby = await LobbyFactory.create(
+				{
+					hostUserId: hostId(),
+					startsAt: dateToDatabaseTimestamp(addMinutes(new Date(), 5)),
+				},
+				{ signedUpUserIds: users.ids(signedUpCount).slice(1) },
+			);
+
+			await LobbyProgression.advance(lobby.id);
+
+			const state = await LobbyRepository.findProgressionStateById(lobby.id);
+			expect(state?.checkInOpenedAt !== null).toBe(isOpen);
+		},
+	);
 
 	test("nothing starts before the start time", async () => {
 		const lobby = await LobbyFactory.create(

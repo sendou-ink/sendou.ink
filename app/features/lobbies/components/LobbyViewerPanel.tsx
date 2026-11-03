@@ -122,9 +122,9 @@ function ViewerStatusText() {
 
 	switch (viewer.status) {
 		case "REGISTERED":
-			return data.status === "UPCOMING"
-				? t("lobbies:viewer.registered")
-				: t("lobbies:viewer.checkInNow");
+			return data.isCheckInOpen
+				? t("lobbies:viewer.checkInNow")
+				: t("lobbies:viewer.registered");
 		case "WAITLISTED": {
 			const position = waitlist.findIndex((p) => p.id === viewer.id) + 1;
 

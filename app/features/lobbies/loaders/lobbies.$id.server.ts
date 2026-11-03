@@ -82,7 +82,12 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 	const now = databaseTimestampNow();
 	const latestSet = sets.at(-1) ?? null;
 	const isPlaying = latestSet !== null && !LobbySet.isFinished(latestSet);
-	const status = LobbyState.status({ lobby, isPlaying, now });
+	const { status, isCheckInOpen } = LobbyState.statusAndCheckIn({
+		lobby,
+		participants: lobby.participants,
+		isPlaying,
+		now,
+	});
 
 	const viewerSide =
 		latestSet && viewer?.status === "IN_ROOM"
@@ -125,6 +130,7 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 		})),
 		lobby,
 		status,
+		isCheckInOpen,
 		sets,
 		/** Players of the current set who voted for the map being played */
 		currentMapVoterIds: await currentMapVoterIds(latestSet),
@@ -145,6 +151,7 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 			isPlayingUnfinishedSet,
 			hasFriendCode,
 			isKicked: lobby.isViewerKicked,
+			isCheckInOpen,
 			activeCount,
 			roomSize: lobby.roomSize,
 			now,

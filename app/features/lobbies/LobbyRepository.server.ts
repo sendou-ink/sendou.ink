@@ -68,6 +68,7 @@ export async function findById(
 			"Lobby.hostUserId",
 			"Lobby.pendingSince",
 			"Lobby.endedAt",
+			"Lobby.checkInOpenedAt",
 			"Lobby.shareKey",
 			"Lobby.createdAt",
 			"Host.username as hostUsername",
@@ -248,6 +249,7 @@ export async function findProgressionStateById(id: number) {
 			"Lobby.chatRoomId",
 			"Lobby.pendingSince",
 			"Lobby.endedAt",
+			"Lobby.checkInOpenedAt",
 			jsonArrayFrom(
 				eb
 					.selectFrom("LobbyParticipant")
@@ -635,31 +637,8 @@ export function findAllUpcomingOfFriendsByUserId(viewerId: number) {
 		.execute();
 }
 
-/** Unended lobbies whose check-in has opened but whose participants haven't been told yet. */
-export function findAllWithCheckInOpenedUnnotified() {
-	const now = databaseTimestampNow();
-
-	return db
-		.selectFrom("Lobby")
-		.select((eb) => [
-			"Lobby.id",
-			"Lobby.name",
-			jsonArrayFrom(
-				eb
-					.selectFrom("LobbyParticipant")
-					.select("LobbyParticipant.userId")
-					.whereRef("LobbyParticipant.lobbyId", "=", "Lobby.id")
-					.where("LobbyParticipant.status", "=", "REGISTERED"),
-			).as("participants"),
-		])
-		.where("Lobby.endedAt", "is", null)
-		.where("Lobby.checkInNotifiedAt", "is", null)
-		.where("Lobby.startsAt", "<=", now + CHECK_IN_LEAD_MINUTES * 60)
-		.execute();
-}
-
-/** Ids of unended lobbies whose check-in has opened, i.e. that may have something due. */
-export async function findAllUnendedIdsCheckInOpened() {
+/** Ids of unended lobbies starting in at most the check-in lead time or started, i.e. that may have something due. */
+export async function findAllUnendedIdsNearStart() {
 	const now = databaseTimestampNow();
 
 	const rows = await db
@@ -679,17 +658,10 @@ type InsertArgs = Omit<
 	modes: Tables["Lobby"]["modes"];
 	/** `LINK_ONLY` = seen only through the share link, by those not participating */
 	visibility: AssociationVisibility | "LINK_ONLY" | null;
-	/** `CHECKED_IN` when the lobby is made with check-in already open, the host being present */
-	hostStatus?: Extract<LobbyParticipantStatus, "REGISTERED" | "CHECKED_IN">;
 };
 
 /** Inserts the lobby with its chat room and visibility, the host as its first participant. Returns the id. */
-export function insert({
-	visibility,
-	modes,
-	hostStatus = "REGISTERED",
-	...args
-}: InsertArgs) {
+export function insert({ visibility, modes, ...args }: InsertArgs) {
 	return db.transaction().execute(async (trx) => {
 		const chatRoom = await ChatRepository.insertRoom(
 			{ type: "LOBBY", expiresAt: lobbyChatRoomExpiresAt(args.startsAt) },
@@ -724,7 +696,7 @@ export function insert({
 			.values({
 				lobbyId: lobby.id,
 				userId: args.hostUserId,
-				status: hostStatus,
+				status: "REGISTERED",
 			})
 			.execute();
 
@@ -953,7 +925,7 @@ export async function update(
 		id: number;
 		hostUserId?: number;
 		pendingSince?: number | null;
-		checkInNotifiedAt?: number;
+		checkInOpenedAt?: number;
 	},
 	trx?: Transaction<DB>,
 ) {

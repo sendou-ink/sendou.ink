@@ -35,7 +35,7 @@ const queues = new Map<number, Promise<void>>();
 
 /**
  * The only place lobby transitions happen. Loads the lobby, asks `LobbyTransition` what is due next and applies
- * it, until nothing is: starting the lobby, shuffling after a confirmed set, filling the room, ready checks,
+ * it, until nothing is: opening check-in, starting the lobby, shuffling after a confirmed set, filling the room, ready checks,
  * applying drops, passing on the host and auto-closing. Then publishes the change to the lobby's page
  * and sends the notifications. Idempotent: called after every lobby action and by a routine, so a missed call
  * is fixed by the next one. Calls for the same lobby run one at a time.
@@ -140,6 +140,7 @@ async function loadState(lobbyId: number) {
 			roomSize: lobby.roomSize,
 			pendingSince: lobby.pendingSince,
 			endedAt: lobby.endedAt,
+			checkInOpenedAt: lobby.checkInOpenedAt,
 		},
 		participants: lobby.participants.map((participant) => ({
 			userId: participant.userId,
@@ -193,6 +194,19 @@ async function apply({
 			effects.notifications.push({
 				userIds: [transition.userId],
 				notification: { type: "LOBBY_HOST", meta: lobbyMeta },
+			});
+			break;
+		}
+		case "OPEN_CHECK_IN": {
+			await LobbyRepository.update({
+				id: lobby.id,
+				checkInOpenedAt: databaseTimestampNow(),
+			});
+			effects.notifications.push({
+				userIds: state.participants
+					.filter((p) => p.status === "REGISTERED")
+					.map((p) => p.userId),
+				notification: { type: "LOBBY_CHECK_IN_OPENED", meta: lobbyMeta },
 			});
 			break;
 		}

@@ -50,7 +50,7 @@ export function useLobbyView() {
 	};
 }
 
-/** Revalidates as the lobby's status changes by the clock alone (check-in opening, the start), which no live event announces. */
+/** Revalidates as the lobby's status changes by the clock alone (check-in opening with enough signed up, the start), which no live event announces. */
 export function useRevalidateOnStatusChange() {
 	const { data } = useLobbyView();
 	const { revalidate } = useRevalidator();
@@ -58,6 +58,7 @@ export function useRevalidateOnStatusChange() {
 	const changesAt = LobbyState.nextStatusChangeAt({
 		status: data.status,
 		startsAt: data.lobby.startsAt,
+		participants: data.lobby.participants,
 	});
 
 	React.useEffect(() => {

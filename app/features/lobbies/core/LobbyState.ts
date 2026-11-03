@@ -1,11 +1,12 @@
 /**
- * Lobby status over time (upcoming, check-in, pending, active, ended), when an idle lobby closes,
+ * Lobby status over time (upcoming, check-in, pending, active, ended), when check-in opens, when an idle lobby closes,
  * who takes over as host and what the viewer may do on the lobby page.
  */
 import {
 	AUTO_CLOSE_MINUTES,
 	CHECK_IN_LEAD_MINUTES,
 	type LobbyParticipantStatus,
+	PLAYERS_PER_SET,
 } from "../lobbies-constants";
 
 /**
@@ -24,39 +25,100 @@ export type LobbyStatus =
 
 const SECONDS_PER_MINUTE = 60;
 
-/** Current status of the lobby, see {@link LobbyStatus}. */
+/**
+ * Current status of the lobby, see {@link LobbyStatus}. Callers go through {@link statusAndCheckIn}.
+ * @internal
+ */
 export function status({
 	lobby,
 	isPlaying,
+	isCheckInOpen: checkInOpen,
 	now,
 }: {
 	lobby: { startsAt: number; endedAt: number | null };
 	/** The room's latest set is unfinished */
 	isPlaying: boolean;
+	/** See {@link isCheckInOpen} */
+	isCheckInOpen: boolean;
 	now: number;
 }): LobbyStatus {
 	if (lobby.endedAt !== null) return "ENDED";
-	if (now < checkInOpensAt(lobby.startsAt)) return "UPCOMING";
-	if (now < lobby.startsAt) return "CHECK_IN";
+	if (now < lobby.startsAt) return checkInOpen ? "CHECK_IN" : "UPCOMING";
 
 	return isPlaying ? "ACTIVE" : "PENDING";
 }
 
-/** When check-in opens: some minutes before the start, or right away for a lobby starting about now. */
+/**
+ * Whether check-in is open: once enough for a set have signed up and the start is at most some minutes away
+ * (or past). Stays open after it has opened, even if people leave.
+ */
+export function isCheckInOpen({
+	lobby,
+	participants,
+	now,
+}: {
+	lobby: { startsAt: number; checkInOpenedAt: number | null };
+	participants: Array<{ status: LobbyParticipantStatus }>;
+	now: number;
+}) {
+	if (lobby.checkInOpenedAt !== null) return true;
+
+	return (
+		now >= checkInOpensAt(lobby.startsAt) &&
+		signedUpCount(participants) >= PLAYERS_PER_SET
+	);
+}
+
+/** The lobby's {@link status} together with the {@link isCheckInOpen} it's derived from. */
+export function statusAndCheckIn({
+	lobby,
+	participants,
+	isPlaying,
+	now,
+}: {
+	lobby: {
+		startsAt: number;
+		endedAt: number | null;
+		checkInOpenedAt: number | null;
+	};
+	participants: Array<{ status: LobbyParticipantStatus }>;
+	/** The room's latest set is unfinished */
+	isPlaying: boolean;
+	now: number;
+}) {
+	const checkInOpen = isCheckInOpen({ lobby, participants, now });
+
+	return {
+		status: status({ lobby, isPlaying, isCheckInOpen: checkInOpen, now }),
+		isCheckInOpen: checkInOpen,
+	};
+}
+
+/** Earliest check-in can open: some minutes before the start, if enough have signed up by then. */
 export function checkInOpensAt(startsAt: number) {
 	return startsAt - CHECK_IN_LEAD_MINUTES * SECONDS_PER_MINUTE;
 }
 
-/** When the status next changes by the clock alone: check-in opening, then the start. `null` once started. */
+/**
+ * When the status next changes by the clock alone: check-in opening (if enough have signed up already), then the
+ * start. `null` once started.
+ */
 export function nextStatusChangeAt({
 	status: lobbyStatus,
 	startsAt,
+	participants,
 }: {
 	status: LobbyStatus;
 	startsAt: number;
+	participants: Array<{ status: LobbyParticipantStatus }>;
 }) {
-	if (lobbyStatus === "UPCOMING") return checkInOpensAt(startsAt);
-	if (lobbyStatus === "CHECK_IN") return startsAt;
+	if (
+		lobbyStatus === "UPCOMING" &&
+		signedUpCount(participants) >= PLAYERS_PER_SET
+	) {
+		return checkInOpensAt(startsAt);
+	}
+	if (lobbyStatus === "UPCOMING" || lobbyStatus === "CHECK_IN") return startsAt;
 
 	return null;
 }
@@ -114,6 +176,7 @@ export function viewerActions({
 	isPlayingUnfinishedSet,
 	hasFriendCode,
 	isKicked,
+	isCheckInOpen: checkInOpen,
 	activeCount,
 	roomSize,
 	now,
@@ -125,6 +188,8 @@ export function viewerActions({
 	hasFriendCode: boolean;
 	/** The host kicked the viewer out of the lobby */
 	isKicked: boolean;
+	/** See {@link isCheckInOpen} */
+	isCheckInOpen: boolean;
 	/** Participants present (checked in or in the room) */
 	activeCount: number;
 	roomSize: number;
@@ -151,7 +216,7 @@ export function viewerActions({
 
 	const hasStarted = now >= startsAt;
 	const canCheckIn =
-		lobbyStatus !== "UPCOMING" &&
+		checkInOpen &&
 		(hasStarted
 			? viewer.status !== "CHECKED_IN" &&
 				viewer.status !== "IN_ROOM" &&
@@ -164,4 +229,10 @@ export function viewerActions({
 		LEAVE: true,
 		DROP_AFTER_SET: isPlayingUnfinishedSet,
 	};
+}
+
+function signedUpCount(
+	participants: Array<{ status: LobbyParticipantStatus }>,
+) {
+	return participants.filter((p) => p.status !== "WAITLISTED").length;
 }

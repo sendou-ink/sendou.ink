@@ -16,7 +16,10 @@ import styles from "./LobbyStartBanner.module.css";
 
 const SECONDS_PER_DAY = 24 * 60 * 60;
 
-/** Before the room forms: time left until the start and when check-in opens or, once open, how many of those needed have checked in. */
+/**
+ * Before the room forms: time left until the start and how many of those needed have signed up, when check-in
+ * opens once they have or, once open, how many have checked in.
+ */
 export function LobbyStartBanner() {
 	const { t } = useTranslation(["lobbies"]);
 	const { data, joinInfo } = useLobbyView();
@@ -39,6 +42,9 @@ export function LobbyStartBanner() {
 	const checkedInCount = data.lobby.participants.filter(
 		(participant) => participant.status === "CHECKED_IN",
 	).length;
+	const signedUpCount = data.lobby.participants.filter(
+		(participant) => participant.status !== "WAITLISTED",
+	).length;
 
 	return (
 		<MatchBannerContainer>
@@ -51,28 +57,35 @@ export function LobbyStartBanner() {
 						// the clock has moved on since the server rendered
 						suppressHydrationWarning
 					>
-						{secondsLeft <= 0
-							? t("lobbies:start.waitingForCheckIns")
-							: t("lobbies:start.countdown", {
+						{secondsLeft > 0
+							? t("lobbies:start.countdown", {
 									time:
 										secondsLeft >= SECONDS_PER_DAY
 											? formatDistanceToNow(data.lobby.startsAt)
 											: clockTime(secondsLeft),
-								})}
+								})
+							: data.isCheckInOpen
+								? t("lobbies:start.waitingForCheckIns")
+								: t("lobbies:start.waitingForSignUps")}
 					</span>
 				}
 				subtitle={
-					data.status === "UPCOMING"
-						? t("lobbies:start.checkInOpens", {
-								time: (secondsLeft >= SECONDS_PER_DAY
-									? dayTimeFormatter
-									: timeFormatter
-								).format(LobbyState.checkInOpensAt(data.lobby.startsAt)),
-							})
-						: t("lobbies:start.checkedIn", {
+					data.isCheckInOpen
+						? t("lobbies:start.checkedIn", {
 								count: checkedInCount,
 								needed: PLAYERS_PER_SET,
 							})
+						: signedUpCount >= PLAYERS_PER_SET
+							? t("lobbies:start.checkInOpens", {
+									time: (secondsLeft >= SECONDS_PER_DAY
+										? dayTimeFormatter
+										: timeFormatter
+									).format(LobbyState.checkInOpensAt(data.lobby.startsAt)),
+								})
+							: t("lobbies:start.signedUp", {
+									count: signedUpCount,
+									needed: PLAYERS_PER_SET,
+								})
 				}
 				joinPool={joinInfo?.pool}
 				joinPass={joinInfo?.pass}

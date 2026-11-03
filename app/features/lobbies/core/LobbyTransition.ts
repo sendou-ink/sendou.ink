@@ -1,5 +1,5 @@
 /**
- * Decides the next change a lobby goes through (starting, promoting from the waitlist, filling the
+ * Decides the next change a lobby goes through (opening check-in, starting, promoting from the waitlist, filling the
  * room, ready checks, starting a set, passing on the host, ending) from its current state. Pure,
  * applied by `LobbyProgression`.
  */
@@ -19,6 +19,7 @@ export interface ProgressionState {
 		roomSize: number;
 		pendingSince: number | null;
 		endedAt: number | null;
+		checkInOpenedAt: number | null;
 	};
 	/** In sign-up order */
 	participants: Array<{
@@ -46,6 +47,8 @@ export interface ProgressionState {
 export type Transition =
 	| { type: "END" }
 	| { type: "TRANSFER_HOST"; userId: number }
+	/** Marks check-in open for good, notifying those with a spot */
+	| { type: "OPEN_CHECK_IN" }
 	/** Before the start: waitlisted get spots freed in the room */
 	| { type: "PROMOTE"; userIds: number[] }
 	/** Fills the room with the checked in, once those with a spot who didn't check in are removed */
@@ -78,7 +81,12 @@ export function next(state: ProgressionState, now: number): Transition | null {
 		if (userId !== null) return { type: "TRANSFER_HOST", userId };
 	}
 
-	const status = LobbyState.status({ lobby, isPlaying, now });
+	const { status, isCheckInOpen } = LobbyState.statusAndCheckIn({
+		lobby,
+		participants,
+		isPlaying,
+		now,
+	});
 	if (
 		LobbyState.isAutoCloseDue({
 			status,
@@ -88,6 +96,10 @@ export function next(state: ProgressionState, now: number): Transition | null {
 		})
 	) {
 		return { type: "END" };
+	}
+
+	if (isCheckInOpen && lobby.checkInOpenedAt === null) {
+		return { type: "OPEN_CHECK_IN" };
 	}
 
 	if (!hasStarted) return promotions(state);

@@ -8,7 +8,8 @@ A **lobby** (`Lobby`) has a host and **participants** (`LobbyParticipant`) who a
 
 <Mermaid code={`stateDiagram-v2
 	[*] --> Upcoming: made on /lobbies/new
-	Upcoming --> CheckIn: check-in opens
+	Upcoming --> CheckIn: 8 signed up, at most 10 minutes to the start
+	Upcoming --> Pending: start time, fewer than 8 signed up
 	CheckIn --> Pending: start time
 	Pending --> Active: 8 in the room, a set starts
 	Active --> Pending: set confirmed or forfeited, room short
@@ -21,7 +22,7 @@ A **lobby** (`Lobby`) has a host and **participants** (`LobbyParticipant`) who a
 	Active --> Ended: ended by the host
 	Ended --> [*]`} />
 
-The statuses are `LobbyState.status`. Nothing is stored about which one a lobby is in, it is derived from its start time, its latest set and whether it has ended.
+The statuses are `LobbyState.status`. Nothing is stored about which one a lobby is in, it is derived from its start time, whether check-in is open, its latest set and whether it has ended. Check-in opens once 8 have signed up and the start is at most 10 minutes away (`LobbyState.isCheckInOpen`), so for a lobby past its start time it opens as the 8th signs up, who is checked in right away. Opening it stamps `checkInOpenedAt` and notifies the signed up, after which it stays open even if people leave. The room forms once 8 have checked in after the start time.
 
 ## A set
 
