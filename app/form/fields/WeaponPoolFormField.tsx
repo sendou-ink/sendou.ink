@@ -266,6 +266,7 @@ function SortableWeaponItem({
 		attributes,
 		listeners,
 		setNodeRef,
+		setActivatorNodeRef,
 		transform,
 		transition,
 		isDragging,
@@ -281,12 +282,13 @@ function SortableWeaponItem({
 			ref={setNodeRef}
 			style={style}
 			className={clsx(styles.item, { [styles.isDragging]: isDragging })}
-			{...attributes}
 		>
 			<button
+				ref={setActivatorNodeRef}
 				type="button"
 				className={styles.dragHandle}
 				aria-label="Drag to reorder"
+				{...attributes}
 				{...listeners}
 			>
 				☰
