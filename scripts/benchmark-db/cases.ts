@@ -555,8 +555,8 @@ export function buildCases(fx: Fixtures): {
 		fx.topTeammatesUserId,
 		(userId) => FeedRepository.findTopTeammatesByUserId(userId),
 	);
-	add("FeedRepository.findWeaponUsageCounts", fx.feedNow, (now) =>
-		FeedRepository.findWeaponUsageCounts({ from: now - 7 * DAY, to: now }),
+	add("FeedRepository.findWeaponPicksByUser", fx.feedNow, (now) =>
+		FeedRepository.findWeaponPicksByUser({ from: now - 7 * DAY, to: now }),
 	);
 	add("FeedRepository.findAllLobbiesEndedAfter", fx.feedNow, (now) =>
 		FeedRepository.findAllLobbiesEndedAfter(
@@ -770,11 +770,6 @@ export function buildCases(fx: Fixtures): {
 				excludeAuthorId: user.id,
 				teamIds,
 			}),
-	);
-	add(
-		"FeedRepository.findAvailabilitySlotsOfTeamWeek",
-		fx.heavyTeamAvailabilityWeek,
-		(week) => FeedRepository.findAvailabilitySlotsOfTeamWeek(week),
 	);
 	add(
 		"FeedRepository.findOpenScrimPostsForViewer",

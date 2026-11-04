@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import {
+	Calculator,
 	EyeOff,
 	Heart,
 	MessageCircle,
@@ -13,6 +14,7 @@ import * as React from "react";
 import { Link, useNavigate } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import { SendouPopover } from "~/components/elements/Popover";
 import { toastQueue } from "~/components/elements/Toast";
 import { Image } from "~/components/Image";
 import { useUser } from "~/features/auth/core/user";
@@ -92,7 +94,8 @@ const FEED_FEEDBACK_OPTIONS: Record<
 
 const FROM_FEED_STATE: FeedItemPageState = { fromFeed: true };
 
-const INTERACTIVE_SELECTOR = "a, button, input, label, [role='menuitem']";
+const INTERACTIVE_SELECTOR =
+	"a, button, input, label, [role='menuitem'], [role='dialog']";
 
 export function FeedItemCard({
 	item,
@@ -112,7 +115,8 @@ export function FeedItemCard({
 	href?: string;
 	/** Shown at the end of the header line, e.g. a back link on the post page */
 	headerAction?: React.ReactNode;
-	score?: ScoreBreakdown;
+	/** Ranking score breakdown, shown in a popover */
+	score?: ScoreBreakdown | null;
 }) {
 	const navigate = useNavigate();
 	const definition: FeedItemTypeDefinition = FEED_ITEM_TYPES[item.type];
@@ -192,6 +196,13 @@ export function FeedItemCard({
 						<span>{relativeTime(item.at, now)}</span>
 					)}
 					<div className={styles.metaEnd}>
+						{score ? (
+							<ScorePopover
+								score={score}
+								definition={definition}
+								relation={item.relation}
+							/>
+						) : null}
 						<FeedbackMenu onFeedback={(kind) => sendFeedback(kind, null)} />
 						{headerAction ? (
 							<div className={styles.headerAction}>{headerAction}</div>
@@ -211,13 +222,6 @@ export function FeedItemCard({
 						href={href}
 					/>
 				)}
-				{score ? (
-					<RankingMath
-						score={score}
-						definition={definition}
-						relation={item.relation}
-					/>
-				) : null}
 			</div>
 		</article>
 	);
@@ -352,9 +356,13 @@ function FeedbackMenu({
 		<SendouMenu
 			placement="bottom end"
 			trigger={
-				<button type="button" className={styles.feedbackTrigger}>
+				<button
+					type="button"
+					className={styles.feedbackTrigger}
+					aria-label="Feedback"
+				>
 					<MessageSquareHeart size={14} />
-					Feedback
+					<span className={styles.feedbackLabel}>Feedback</span>
 				</button>
 			}
 		>
@@ -431,7 +439,7 @@ function FeedbackPanel({
 	);
 }
 
-function RankingMath({
+function ScorePopover({
 	score,
 	definition,
 	relation,
@@ -440,21 +448,59 @@ function RankingMath({
 	definition: FeedItemTypeDefinition;
 	relation: FeedRelation | null;
 }) {
+	const rows = [
+		{ label: "base", value: score.base, note: null },
+		{ label: "weight", value: score.weight.toFixed(2), note: null },
+		{
+			label: "affinity",
+			value: score.affinity,
+			note: relation ? relation.toLowerCase() : "no relation",
+		},
+		{ label: "weapon", value: score.weaponAffinity, note: null },
+		{
+			label: "recency",
+			value: score.recency.toFixed(2),
+			note: `${durationText(score.ageHours * 3600)} old, half-life ${definition.halfLifeHours}h`,
+		},
+		{ label: "diversity", value: score.diversity.toFixed(2), note: null },
+	];
+
 	return (
-		<div className={styles.math}>
-			<b>{definition.name}</b>: base <b>{score.base}</b>
-			{score.weight !== 1 ? (
-				<>
-					{" "}
-					× weight <b>{score.weight.toFixed(2)}</b>
-				</>
-			) : null}{" "}
-			× affinity <b>{score.affinity}</b>
-			{relation ? ` (${relation.toLowerCase()})` : null} × recency{" "}
-			<b>{score.recency.toFixed(2)}</b> ({durationText(score.ageHours * 3600)}{" "}
-			old, half-life {definition.halfLifeHours}h) × diversity{" "}
-			<b>{score.diversity.toFixed(2)}</b> = <b>{score.total.toFixed(3)}</b>
-		</div>
+		<SendouPopover
+			placement="bottom end"
+			trigger={
+				<button type="button" className={styles.feedbackTrigger}>
+					<Calculator size={14} />
+					{score.total.toFixed(3)}
+				</button>
+			}
+		>
+			<div className={styles.math}>
+				<b>{definition.name}</b>
+				<table className={styles.mathTable}>
+					<tbody>
+						{rows.map((row, i) => (
+							<tr key={row.label}>
+								<td>{i === 0 ? null : "×"}</td>
+								<td>{row.label}</td>
+								<td>
+									<b>{row.value}</b>
+								</td>
+								<td className="text-lighter">{row.note}</td>
+							</tr>
+						))}
+						<tr>
+							<td>=</td>
+							<td>total</td>
+							<td>
+								<b>{score.total.toFixed(3)}</b>
+							</td>
+							<td />
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</SendouPopover>
 	);
 }
 

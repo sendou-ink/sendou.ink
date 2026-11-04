@@ -129,7 +129,9 @@ export function tournamentItemContent(
 					<div className={clsx(partsStyles.inset, partsStyles.rowNoWrap)}>
 						<Placement placement={data.placement} size={36} />
 						<div className={partsStyles.grow}>
-							<div className="font-bold">{data.team.name}</div>
+							<div className={clsx(partsStyles.ellipsis, "font-bold")}>
+								{data.team.name}
+							</div>
 							<div className="text-xs text-lighter">
 								{ordinalPlacement(data.placement)} of {data.participantCount} ·{" "}
 								{data.setWins}–{data.setLosses} in sets
@@ -138,7 +140,9 @@ export function tournamentItemContent(
 									: ""}
 							</div>
 						</div>
-						<UserStack users={data.team.members} max={4} />
+						<span className={styles.podiumStack}>
+							<UserStack users={data.team.members} max={4} />
+						</span>
 					</div>
 				),
 			};
@@ -220,17 +224,11 @@ export function tournamentItemContent(
 			const { data } = item;
 			return {
 				avatar: <Avatar user={data.actor} size="xs" />,
-				line: data.isActorWinner ? (
+				line: (
 					<>
 						<UserName user={data.actor} />
-						's team, seeded {data.winnerSeed}, knocked out seed {data.loserSeed}{" "}
-						at <TournamentLink tournament={data.tournament} />
-					</>
-				) : (
-					<>
-						<UserName user={data.actor} />
-						's team, seeded {data.loserSeed}, was knocked out by seed{" "}
-						{data.winnerSeed} at <TournamentLink tournament={data.tournament} />
+						's team (seed {data.winnerSeed}) upset seed {data.loserSeed} at{" "}
+						<TournamentLink tournament={data.tournament} />
 					</>
 				),
 				body: (
@@ -275,13 +273,13 @@ export function tournamentItemContent(
 						{data.note ? (
 							<div className={partsStyles.quote}>{data.note}</div>
 						) : null}
-						<div className={partsStyles.rowNoWrap}>
+						<div className={partsStyles.row}>
 							<UserStack users={data.team.members} />
 							{Array.from({ length: data.openSpots }, (_, i) => (
 								<span key={i} className={styles.emptySlot} />
 							))}
 							{data.tournament?.startsAt ? (
-								<span className="text-xs text-lighter">
+								<span className="text-xs text-lighter whitespace-nowrap">
 									<DayTime at={data.tournament.startsAt} />
 								</span>
 							) : null}
@@ -368,7 +366,11 @@ export function tournamentItemContent(
 								<tr>
 									<th className={partsStyles.rankCell}>#</th>
 									<th>Player</th>
-									<th className={partsStyles.numeric}>Placements</th>
+									<th
+										className={clsx(partsStyles.numeric, styles.placementsCell)}
+									>
+										Placements
+									</th>
 									<th className={partsStyles.numeric}>Points</th>
 								</tr>
 							</thead>
@@ -381,13 +383,22 @@ export function tournamentItemContent(
 										})}
 									>
 										<td className={partsStyles.rankCell}>{row.placement}</td>
-										<td>
+										<td className={partsStyles.fillCell}>
 											<div className={partsStyles.rowNoWrap}>
-												<Avatar user={row.user} size="xxxsm" />
-												<Link to={userPage(row.user)}>{row.user.username}</Link>
+												<Avatar
+													user={row.user}
+													size="xxxsm"
+													className={styles.standingsAvatar}
+												/>
+												<Link
+													to={userPage(row.user)}
+													className={partsStyles.ellipsis}
+												>
+													{row.user.username}
+												</Link>
 											</div>
 										</td>
-										<td>
+										<td className={styles.placementsCell}>
 											<MedalCounts placements={row.placements} />
 										</td>
 										<td className={partsStyles.numeric}>
@@ -399,6 +410,12 @@ export function tournamentItemContent(
 						</table>
 					</>
 				),
+				href: data.organization
+					? tournamentOrganizationPage({
+							organizationSlug: data.organization.slug,
+							seriesId: data.seriesId,
+						})
+					: undefined,
 			};
 		}
 		case "TO_VOD": {
@@ -493,7 +510,7 @@ export function tournamentItemContent(
 						<React.Suspense fallback={<div className={styles.trophySlot} />}>
 							<FeedTrophy trophy={data.trophy} tier={data.tier} />
 						</React.Suspense>
-						<div>
+						<div className={partsStyles.grow}>
 							<div className="font-bold">{data.trophy.name}</div>
 							<div className="text-xs text-lighter">
 								{data.tournament?.name}
@@ -521,7 +538,7 @@ export function tournamentItemContent(
 						<React.Suspense fallback={<div className={styles.trophySlot} />}>
 							<FeedTrophy trophy={data.trophy} tier={null} />
 						</React.Suspense>
-						<div>
+						<div className={partsStyles.grow}>
 							<div className="font-bold">{data.trophy.name}</div>
 							{data.organizationName ? (
 								<div className="text-xs text-lighter">
@@ -592,9 +609,12 @@ export function tournamentItemContent(
 				),
 				body: (
 					<>
-						<div className={partsStyles.list}>
+						<div className={clsx(partsStyles.list, styles.showcaseList)}>
 							{data.tournaments.map((tournament) => (
-								<div key={tournament.id} className={partsStyles.digestRow}>
+								<div
+									key={tournament.id}
+									className={clsx(partsStyles.digestRow, styles.showcaseRow)}
+								>
 									<LogoAvatar
 										url={tournament.logoUrl}
 										name={tournament.name}
@@ -609,22 +629,29 @@ export function tournamentItemContent(
 												{tournament.name}
 											</Link>
 										</div>
-										<div className="text-xs text-lighter">
+										<div
+											className={clsx(
+												partsStyles.ellipsis,
+												"text-xs text-lighter",
+											)}
+										>
 											<DayTime at={tournament.startsAt} />
 											{tournament.organization
 												? ` · ${tournament.organization.name}`
 												: ""}
 										</div>
 									</div>
-									<div className={partsStyles.rowNoWrap}>
-										{tournament.tier !== null ||
-										tournament.tentativeTier !== null ? (
-											<TierPill
-												tier={(tournament.tier ?? tournament.tentativeTier)!}
-												isTentative={tournament.tier === null}
-												withoutAnimation
-											/>
-										) : null}
+									<div className={styles.showcaseEnd}>
+										<span className={styles.showcaseTier}>
+											{tournament.tier !== null ||
+											tournament.tentativeTier !== null ? (
+												<TierPill
+													tier={(tournament.tier ?? tournament.tentativeTier)!}
+													isTentative={tournament.tier === null}
+													withoutAnimation
+												/>
+											) : null}
+										</span>
 										<span className="text-xs text-lighter">
 											{countText(tournament.teamsCount, "team")}
 										</span>
@@ -716,7 +743,7 @@ export function tournamentItemContent(
 											<td className={partsStyles.rankCell}>
 												#{row.projectedSeed}
 											</td>
-											<td>
+											<td className={partsStyles.fillCell}>
 												<div className={partsStyles.rowNoWrap}>
 													<UserStack users={row.team.members} max={4} />
 													<span className={partsStyles.ellipsis}>
@@ -725,7 +752,12 @@ export function tournamentItemContent(
 													{row.isOwn ? (
 														<span className={partsStyles.pill}>You</span>
 													) : row.known.length > 0 ? (
-														<span className={partsStyles.pill}>
+														<span
+															className={clsx(
+																partsStyles.pill,
+																partsStyles.ellipsis,
+															)}
+														>
 															{row.known
 																.map((member) => member.username)
 																.join(", ")}
@@ -805,7 +837,9 @@ function PodiumBody({
 								{team.members.map((member) => member.username).join(", ")}
 							</div>
 						</div>
-						<UserStack users={team.members} max={4} />
+						<span className={styles.podiumStack}>
+							<UserStack users={team.members} max={4} />
+						</span>
 					</div>
 				))}
 			</div>
@@ -826,7 +860,9 @@ function MedalCounts({
 			{[placements.first, placements.second, placements.third].map(
 				(count, i) => (
 					<span key={i} className={styles.medalCount}>
-						<Placement placement={i + 1} size={16} />×{count}
+						<Placement placement={i + 1} size={16} />
+						<span className={styles.medalTimes}>×</span>
+						{count}
 					</span>
 				),
 			)}

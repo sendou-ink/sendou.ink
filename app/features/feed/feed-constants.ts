@@ -214,6 +214,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["SELF"],
 		baseScore: 0.35,
 		halfLifeHours: 96,
+		isNotice: true,
 	},
 	TO_VOD: {
 		name: "Tournament VoD",
@@ -323,6 +324,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["TEAM"],
 		baseScore: 0.6,
 		halfLifeHours: 48,
+		isNotice: true,
 	},
 	TEAM_EVENT_ADDED: {
 		name: "Team event added",
@@ -404,6 +406,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["FOLLOWING", "EVERYONE"],
 		baseScore: 0.35,
 		halfLifeHours: 72,
+		isNotice: true,
 	},
 	XRANK_TOP_500: {
 		name: "X Rank Top 500",
@@ -434,6 +437,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["SELF"],
 		baseScore: 0.4,
 		halfLifeHours: 168,
+		isNotice: true,
 	},
 
 	COMEBACK: {
@@ -467,6 +471,7 @@ export const FEED_ITEM_TYPES = {
 		audience: ["SELF"],
 		baseScore: 0.4,
 		halfLifeHours: 48,
+		isNotice: true,
 	},
 	ARTICLE_NEW: {
 		name: "New article",
@@ -563,6 +568,15 @@ export const FEED_SAME_CATEGORY_PENALTY = 0.8;
 export const FEED_SAME_ACTOR_PENALTY = 0.6;
 /** Diversity pass: penalty for each item of the same type already picked */
 export const FEED_SAME_TYPE_REPEAT_PENALTY = 0.75;
+
+/** Bonus for an item about a weapon the viewer plays, the `weaponAffinity` term of the ranking score */
+export const FEED_WEAPON_AFFINITY = {
+	/** Same base weapon as one in the viewer's weapon pool */
+	SAME_WEAPON: 2,
+	/** Same category as a weapon in the viewer's weapon pool */
+	SAME_CATEGORY: 1.3,
+	NONE: 1,
+} as const;
 
 /** Weeks of match history used to find the hours a user usually plays */
 export const FEED_ROTATION_LOOKBACK_WEEKS = 8;

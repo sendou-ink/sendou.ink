@@ -3,6 +3,8 @@ import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
+import type { PlayableWindowTier } from "~/features/availability/availability-types";
+import { TierDot } from "~/features/availability/components/PlayableWindowsSummary";
 import { lfgSearchParams } from "~/features/lfg/lfg-search-params";
 import { LFG_PAGE, scrimsPage, teamPage, teamSchedulePage } from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
@@ -25,6 +27,11 @@ const SCRIM_POST_REASON_TEXTS: Record<ScrimPostReason, string | null> = {
 	USUAL_OPPONENT: "You scrim them often",
 	ASSOCIATION: "Shared to your association",
 	FIT: null,
+};
+
+const HEAT_TIER_CLASSES: Record<PlayableWindowTier, string> = {
+	FULL: styles.heatFull,
+	ONE_SHORT: styles.heatOneShort,
 };
 
 export function teamItemContent(item: FeedItem): FeedItemContent | null {
@@ -117,9 +124,12 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 		}
 		case "TEAM_AVAILABILITY": {
 			const { data } = item;
-			const bestDayIndex = Math.floor(
-				(data.bestStartsAt - data.days[0].startsAt) / 86400,
-			);
+			const fullDayCount = data.days.filter(
+				(day) => day.tier === "FULL",
+			).length;
+			const oneShortDayCount = data.days.filter(
+				(day) => day.tier === "ONE_SHORT",
+			).length;
 			return {
 				avatar: <LogoAvatar url={data.team.avatarUrl} name={data.team.name} />,
 				line: (
@@ -133,12 +143,13 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 				body: (
 					<>
 						<div className={styles.heat}>
-							{data.days.map((day, i) => (
+							{data.days.map((day) => (
 								<div
 									key={day.startsAt}
-									className={clsx(styles.heatDay, {
-										[styles.heatBest]: i === bestDayIndex,
-									})}
+									className={clsx(
+										styles.heatDay,
+										day.tier ? HEAT_TIER_CLASSES[day.tier] : undefined,
+									)}
 								>
 									<div className={styles.heatBar}>
 										<i
@@ -156,17 +167,23 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 							))}
 						</div>
 						<div className={partsStyles.rowNoWrap}>
-							<span className="text-xs">
-								Best window{" "}
-								<b>
-									<DayTime at={data.bestStartsAt} />
-								</b>{" "}
-								–{" "}
-								<LocaleTime
-									inline
-									date={data.bestEndsAt}
-									options={{ hour: "numeric", minute: "2-digit" }}
-								/>
+							<span className={clsx("text-xs", styles.tierCounts)}>
+								<span className={styles.tierCount}>
+									<TierDot full />
+									<span>
+										<b>{countText(fullDayCount, "day")}</b> with{" "}
+										{data.minPlayers}+
+									</span>
+								</span>
+								{oneShortDayCount > 0 ? (
+									<span className={styles.tierCount}>
+										<TierDot full={false} />
+										<span>
+											<b>{countText(oneShortDayCount, "day")}</b> with{" "}
+											{data.minPlayers - 1}
+										</span>
+									</span>
+								) : null}
 							</span>
 							<span className="ml-auto">
 								<UserStack users={data.freeUsers} />
@@ -174,6 +191,7 @@ export function teamItemContent(item: FeedItem): FeedItemContent | null {
 						</div>
 					</>
 				),
+				href: teamSchedulePage(data.team.customUrl),
 			};
 		}
 		case "TEAM_EVENT_ADDED": {

@@ -73,33 +73,22 @@ export default function FrontPage() {
 
 function FeedFrontPage({ data }: { data: FeedPageData }) {
 	const [test, setTest] = useSearchParam(feedSearchParams, "test");
-	const [showRankingMath, setShowRankingMath] = React.useState(false);
 
 	return (
 		<Main bigger>
 			<Feed
 				data={data}
 				canViewAs
-				scoreShown={showRankingMath}
 				headerEnd={
-					<div className="stack horizontal md">
-						<SendouSwitch
-							isSelected={test}
-							onChange={(isSelected) =>
-								setTest(isSelected, { preventScrollReset: true })
-							}
-							size="small"
-						>
-							Test items
-						</SendouSwitch>
-						<SendouSwitch
-							isSelected={showRankingMath}
-							onChange={setShowRankingMath}
-							size="small"
-						>
-							Show ranking math
-						</SendouSwitch>
-					</div>
+					<SendouSwitch
+						isSelected={test}
+						onChange={(isSelected) =>
+							setTest(isSelected, { preventScrollReset: true })
+						}
+						size="small"
+					>
+						Test items
+					</SendouSwitch>
 				}
 				footer={
 					test ? (

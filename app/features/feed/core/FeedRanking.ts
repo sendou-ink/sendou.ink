@@ -1,3 +1,8 @@
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import {
+	weaponIdToBaseWeaponId,
+	weaponIdToCategory,
+} from "~/modules/in-game-lists/weapon-ids";
 import {
 	FEED_AUDIENCE_AFFINITY,
 	FEED_ITEM_TYPES,
@@ -6,6 +11,7 @@ import {
 	FEED_SAME_ACTOR_PENALTY,
 	FEED_SAME_CATEGORY_PENALTY,
 	FEED_SAME_TYPE_REPEAT_PENALTY,
+	FEED_WEAPON_AFFINITY,
 	type FeedItemType,
 	type FeedItemTypeDefinition,
 	type FeedRelation,
@@ -21,12 +27,15 @@ export interface RankableItem {
 	relation: FeedRelation | null;
 	/** How strong the item is among those of its type, 0–1, 1 when left out */
 	weight?: number;
+	/** Weapons the item is about, matched against the viewer's weapon pool */
+	weaponSplIds?: MainWeaponId[];
 }
 
 export interface ScoreBreakdown {
 	base: number;
 	weight: number;
 	affinity: number;
+	weaponAffinity: number;
 	recency: number;
 	ageHours: number;
 	diversity: number;
@@ -35,17 +44,21 @@ export interface ScoreBreakdown {
 
 /**
  * Score of an item before the diversity pass: base score of its type × the item's weight × affinity ×
- * exponential recency decay by the type's half-life. Affinity is that of the item's relation, or without
- * one the closest audience of its type.
+ * weapon affinity × exponential recency decay by the type's half-life. Affinity is that of the item's
+ * relation, or without one the widest audience of its type.
  */
 export function score(
-	item: Pick<RankableItem, "type" | "at" | "relation" | "weight">,
+	item: Pick<
+		RankableItem,
+		"type" | "at" | "relation" | "weight" | "weaponSplIds"
+	>,
 	now: number,
+	weaponPool: MainWeaponId[] = [],
 ): Omit<ScoreBreakdown, "diversity"> {
 	const definition: FeedItemTypeDefinition = FEED_ITEM_TYPES[item.type];
 	const affinity = item.relation
 		? FEED_AUDIENCE_AFFINITY[FEED_RELATION_AUDIENCE[item.relation]]
-		: Math.max(
+		: Math.min(
 				...definition.audience.map(
 					(audience) => FEED_AUDIENCE_AFFINITY[audience],
 				),
@@ -53,14 +66,16 @@ export function score(
 	const ageHours = Math.max(0, (now - item.at) / 3600);
 	const recency = 0.5 ** (ageHours / definition.halfLifeHours);
 	const weight = item.weight ?? 1;
+	const weaponAffinity = weaponAffinityOf(item.weaponSplIds ?? [], weaponPool);
 
 	return {
 		base: definition.baseScore,
 		weight,
 		affinity,
+		weaponAffinity,
 		recency,
 		ageHours,
-		total: definition.baseScore * weight * affinity * recency,
+		total: definition.baseScore * weight * affinity * weaponAffinity * recency,
 	};
 }
 
@@ -82,8 +97,12 @@ export function isStale(item: Pick<RankableItem, "type" | "at">, now: number) {
 export function rank<T extends RankableItem>(
 	items: T[],
 	now: number,
+	weaponPool: MainWeaponId[] = [],
 ): Array<T & { score: ScoreBreakdown }> {
-	const pool = items.map((item) => ({ item, ...score(item, now) }));
+	const pool = items.map((item) => ({
+		item,
+		...score(item, now, weaponPool),
+	}));
 	const result: Array<T & { score: ScoreBreakdown }> = [];
 	const pickedCountByType = new Map<FeedItemType, number>();
 
@@ -127,6 +146,7 @@ export function rank<T extends RankableItem>(
 				base: best.base,
 				weight: best.weight,
 				affinity: best.affinity,
+				weaponAffinity: best.weaponAffinity,
 				recency: best.recency,
 				ageHours: best.ageHours,
 				diversity: bestDiversity,
@@ -136,4 +156,21 @@ export function rank<T extends RankableItem>(
 	}
 
 	return result;
+}
+
+function weaponAffinityOf(
+	weaponSplIds: MainWeaponId[],
+	weaponPool: MainWeaponId[],
+) {
+	const poolBaseIds = new Set(weaponPool.map(weaponIdToBaseWeaponId));
+	if (weaponSplIds.some((id) => poolBaseIds.has(weaponIdToBaseWeaponId(id)))) {
+		return FEED_WEAPON_AFFINITY.SAME_WEAPON;
+	}
+
+	const poolCategories = new Set(weaponPool.map(weaponIdToCategory));
+	if (weaponSplIds.some((id) => poolCategories.has(weaponIdToCategory(id)))) {
+		return FEED_WEAPON_AFFINITY.SAME_CATEGORY;
+	}
+
+	return FEED_WEAPON_AFFINITY.NONE;
 }

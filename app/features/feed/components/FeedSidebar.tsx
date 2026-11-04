@@ -117,12 +117,12 @@ function RotationsPanel({
 				{rows.map(({ type, current, next }) => (
 					<li key={type} className={styles.rotation}>
 						<div className={styles.rotationHeader}>
-							<ModeImage mode={current.mode as ModeShort} width={18} />
-							<span className={styles.rotationType}>
-								{t(ROTATION_TYPE_LABELS[type])}
-							</span>
+							<ModeImage mode={current.mode as ModeShort} width={22} />
 							<span className={styles.rotationMode}>
 								{t(`game-misc:MODE_LONG_${current.mode as ModeShort}`)}
+							</span>
+							<span className={styles.rotationType}>
+								{t(ROTATION_TYPE_LABELS[type])}
 							</span>
 						</div>
 						<div className={styles.stages}>
@@ -135,7 +135,7 @@ function RotationsPanel({
 										containerClassName={styles.stageImageContainer}
 									/>
 									<span className={styles.stageName}>
-										{shortStageName(t(`game-misc:STAGE_${stageId as StageId}`))}
+										{t(`game-misc:STAGE_${stageId as StageId}`)}
 									</span>
 								</div>
 							))}
@@ -160,14 +160,11 @@ function RotationsPanel({
 					</li>
 				))}
 			</ul>
-			<a
-				href={SPLATOON_3_INK}
-				target="_blank"
-				rel="noopener noreferrer"
-				className={styles.credit}
-			>
-				{t("front:rotations.credit")}
-			</a>
+			<div className={styles.credit}>
+				<a href={SPLATOON_3_INK} target="_blank" rel="noopener noreferrer">
+					{t("front:rotations.credit")}
+				</a>
+			</div>
 		</section>
 	);
 }

@@ -2,7 +2,13 @@ import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { Image, ModeImage, StageImage, WeaponImage } from "~/components/Image";
+import {
+	Image,
+	ModeImage,
+	OutlinedImage,
+	StageImage,
+	WeaponImage,
+} from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { SiteLogoMark } from "~/components/SiteLogoMark";
 import type {
@@ -13,6 +19,7 @@ import type {
 import { truncateWithOverflow } from "~/utils/arrays";
 import type { CommonUser } from "~/utils/kysely.server";
 import {
+	abilityImageUrl,
 	type NavIcon,
 	navIconUrl,
 	tournamentPage,
@@ -147,9 +154,19 @@ export function WeaponSlot({
 			{weaponSplId !== null ? (
 				<WeaponImage weaponSplId={weaponSplId} variant="build" size={24} />
 			) : (
-				"?"
+				<UnknownWeaponImage size={24} />
 			)}
 		</span>
+	);
+}
+
+export function UnknownWeaponImage({ size }: { size: number }) {
+	return (
+		<OutlinedImage
+			path={abilityImageUrl("UNKNOWN")}
+			alt="Unknown weapon"
+			size={size}
+		/>
 	);
 }
 
@@ -189,15 +206,17 @@ export function TournamentRow({
 					{tournament.name}
 				</Link>
 				<div className="text-xs text-lighter">
-					{tournament.organizationName
-						? `${tournament.organizationName} · `
-						: null}
+					{tournament.organizationName && tournament.startsAt
+						? `${tournament.organizationName}\u00a0· `
+						: tournament.organizationName}
 					{tournament.startsAt ? (
-						<LocaleTime
-							inline
-							date={tournament.startsAt}
-							options={{ weekday: "short", month: "short", day: "numeric" }}
-						/>
+						<span className="whitespace-nowrap">
+							<LocaleTime
+								inline
+								date={tournament.startsAt}
+								options={{ weekday: "short", month: "short", day: "numeric" }}
+							/>
+						</span>
 					) : null}
 				</div>
 			</div>

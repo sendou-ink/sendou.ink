@@ -216,6 +216,10 @@
 		color-mix(in oklch, var(--hero-tint) 14%, var(--color-bg-high)),
 		var(--color-bg-high) 65%
 	);
+
+	@container (width < 400px) {
+		padding: var(--s-3);
+	}
 }
 
 .heroAccent {
@@ -272,11 +276,28 @@
 	& tr:last-child td {
 		border-bottom: 0;
 	}
+
+	@container (width < 400px) {
+		& td,
+		& th {
+			padding-inline: var(--s-1-5);
+		}
+
+		& .rowNoWrap {
+			gap: var(--s-1-5);
+		}
+	}
 }
 
 .numeric {
 	text-align: right;
 	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.fillCell {
+	width: 100%;
+	max-width: 0;
 }
 
 .rankCell {
@@ -364,6 +385,12 @@
 	align-items: center;
 	gap: var(--s-3);
 	text-align: center;
+
+	@container (width < 400px) {
+		grid-template-columns: minmax(0, 1fr) fit-content(5.5rem) minmax(0, 1fr);
+		gap: var(--s-1-5);
+		padding-inline: var(--s-2);
+	}
 }
 
 .vsSide {
@@ -373,6 +400,14 @@
 	min-width: 0;
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
+
+	& > .ellipsis {
+		max-width: 100%;
+	}
+
+	@container (width < 400px) {
+		font-size: var(--font-xs);
+	}
 }
 
 .list {

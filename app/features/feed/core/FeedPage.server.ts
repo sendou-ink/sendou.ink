@@ -18,11 +18,14 @@ export async function load({
 	viewerId,
 	userId,
 	mode,
+	isScoreShown,
 }: {
 	viewerId: number;
 	/** The logged in user, differs from `viewerId` when a dev views someone else's feed */
 	userId: number;
 	mode: FeedItems.FeedMode;
+	/** Whether each post's ranking score breakdown is included */
+	isScoreShown: boolean;
 }) {
 	const ctx = await FeedItems.contextFor({ viewerId, mode });
 	const items = (await FeedItems.buildAll(ctx)).filter(
@@ -50,7 +53,8 @@ export async function load({
 		activity: FeedRanking.rank(
 			items.filter((item) => !definitionOf(item).isPinned),
 			ctx.now,
-		),
+			ctx.weaponPool,
+		).map((item) => ({ ...item, score: isScoreShown ? item.score : null })),
 		rotations: await FeedItems.allRotations(),
 		rotationsNow: databaseTimestampNow(),
 		interactions: Object.fromEntries(

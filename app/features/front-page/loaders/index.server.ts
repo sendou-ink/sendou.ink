@@ -33,6 +33,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				viewerId: viewAs ?? user.id,
 				userId: user.id,
 				mode: test ? "TEST" : "REAL",
+				isScoreShown:
+					user.roles.includes("ADMIN") || user.roles.includes("DEV"),
 			}),
 		};
 	}

@@ -85,6 +85,7 @@ async function reindexUser({ userId, now }: { userId: number; now: number }) {
 		matchId: row.matchId,
 		season: row.season,
 		ordinal: row.ordinal,
+		previousOrdinal: row.previousOrdinal,
 		isWin: row.mapWins > row.mapsPlayed - row.mapWins,
 		ownTier: row.ownTierName
 			? { name: row.ownTierName, isPlus: Boolean(row.ownTierIsPlus) }

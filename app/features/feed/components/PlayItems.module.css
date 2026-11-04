@@ -64,6 +64,23 @@
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: var(--s-6);
+
+	@container (width < 400px) {
+		gap: var(--s-3);
+	}
+}
+
+.columnsStackNarrow {
+	@container (width < 400px) {
+		grid-template-columns: minmax(0, 1fr);
+		gap: var(--s-4);
+	}
+}
+
+.promotionFrom {
+	@container (width < 400px) {
+		display: none;
+	}
 }
 
 .column {

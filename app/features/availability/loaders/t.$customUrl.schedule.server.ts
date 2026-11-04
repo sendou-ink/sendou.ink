@@ -11,11 +11,7 @@ import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import { AVAILABILITY } from "../availability-constants";
-import type {
-	BusyBlock,
-	PlayableWindowTier,
-	TimeRange,
-} from "../availability-types";
+import type { BusyBlock, TimeRange } from "../availability-types";
 import * as Availability from "../core/Availability";
 import * as ScheduleWeek from "../core/ScheduleWeek";
 import * as VisibleSchedules from "../core/VisibleSchedules.server";
@@ -104,26 +100,12 @@ function weekView({
 	busyByUserId: Map<number, Array<BusyBlock>>;
 	teamEvents: Array<TeamEventRow>;
 }) {
-	const minPlayers = Math.min(
-		AVAILABILITY.DEFAULT_MIN_PLAYERS,
-		playerIds.length,
-	);
-
-	const windows = Availability.playableWindows({
-		members: playerIds.map((userId) => ({
-			userId,
-			ranges: Availability.subtract(
-				Availability.clip(
-					reportedWeeks
-						.filter((week) => week.userId === userId)
-						.flatMap((week) => week.slots),
-					range,
-				),
-				busyByUserId.get(userId) ?? [],
-			),
-		})),
-		minPlayers,
-	}).map((window) => R.omit(window, ["userIds"]));
+	const { minPlayers, windows } = ScheduleWeek.teamWindows({
+		range,
+		playerIds,
+		reportedWeeks,
+		busyByUserId,
+	});
 
 	const days = ScheduleWeek.days(range, timezone).map((day) => ({
 		...day,
@@ -133,7 +115,11 @@ function weekView({
 			time: "00:00",
 			timezone,
 		}),
-		windowTier: bestWindowTierOfDay({ date: day.date, windows, timezone }),
+		windowTier: ScheduleWeek.bestWindowTierOfDay({
+			date: day.date,
+			windows,
+			timezone,
+		}),
 	}));
 
 	const members = memberIds.map((userId) =>
@@ -154,33 +140,11 @@ function weekView({
 		timezone,
 		days,
 		members,
-		windows,
+		windows: windows.map((window) => R.omit(window, ["userIds"])),
 		minPlayers,
 		teamEvents: teamEvents.filter(
 			(event) =>
 				event.startsAt >= range.startsAt && event.startsAt < range.endsAt,
 		),
 	};
-}
-
-/** Tier of the best playable window starting on the viewer-local day (the day it renders its grid ranges on). */
-function bestWindowTierOfDay({
-	date,
-	windows,
-	timezone,
-}: {
-	date: string;
-	windows: Array<TimeRange & { tier: PlayableWindowTier }>;
-	timezone: string;
-}): PlayableWindowTier | null {
-	const tiers = windows
-		.filter(
-			(window) =>
-				Availability.dateInTimezone(window.startsAt, timezone) === date,
-		)
-		.map((window) => window.tier);
-
-	if (tiers.includes("FULL")) return "FULL";
-	if (tiers.includes("ONE_SHORT")) return "ONE_SHORT";
-	return null;
 }

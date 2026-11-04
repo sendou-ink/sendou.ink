@@ -133,6 +133,15 @@ export function findAllSqPlaysByUserId(userId: number) {
 			"GroupMatch.createdAt as at",
 			"Skill.season",
 			"Skill.ordinal",
+			eb
+				.selectFrom("Skill as PreviousSkill")
+				.select("PreviousSkill.ordinal")
+				.whereRef("PreviousSkill.userId", "=", "Skill.userId")
+				.whereRef("PreviousSkill.season", "=", "Skill.season")
+				.whereRef("PreviousSkill.id", "<", "Skill.id")
+				.orderBy("PreviousSkill.id", "desc")
+				.limit(1)
+				.as("previousOrdinal"),
 			"OwnGroup.tierName as ownTierName",
 			"OwnGroup.tierIsPlus as ownTierIsPlus",
 			"OpponentGroup.tierName as opponentTierName",

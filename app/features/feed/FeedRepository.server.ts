@@ -299,7 +299,8 @@ export function findTopTeammatesByUserId(userId: number) {
 		.execute();
 }
 
-export function findWeaponUsageCounts({
+/** How many maps each player played on each weapon in SendouQ matches created in `[from, to)` */
+export function findWeaponPicksByUser({
 	from,
 	to,
 }: {
@@ -310,12 +311,13 @@ export function findWeaponUsageCounts({
 		.selectFrom("ReportedWeapon")
 		.innerJoin("GroupMatch", "GroupMatch.id", "ReportedWeapon.groupMatchId")
 		.select(({ fn }) => [
+			"ReportedWeapon.userId",
 			"ReportedWeapon.weaponSplId",
 			fn.countAll<number>().as("count"),
 		])
-		.where("GroupMatch.createdAt", ">", from)
+		.where("GroupMatch.createdAt", ">=", from)
 		.where("GroupMatch.createdAt", "<", to)
-		.groupBy("ReportedWeapon.weaponSplId")
+		.groupBy(["ReportedWeapon.userId", "ReportedWeapon.weaponSplId"])
 		.execute();
 }
 
@@ -1246,36 +1248,6 @@ export function findLatestAddedUpcomingTeamEvent({
 		.orderBy("TeamEvent.createdAt", "desc")
 		.limit(1)
 		.executeTakeFirst();
-}
-
-export function findAvailabilitySlotsOfTeamWeek({
-	teamId,
-	weekStartsAt,
-}: {
-	teamId: number;
-	weekStartsAt: number;
-}) {
-	return db
-		.selectFrom("AvailabilitySlot")
-		.innerJoin(
-			"AvailabilityWeek",
-			"AvailabilityWeek.id",
-			"AvailabilitySlot.availabilityWeekId",
-		)
-		.innerJoin(
-			"AllTeamMember",
-			"AllTeamMember.userId",
-			"AvailabilityWeek.userId",
-		)
-		.select([
-			"AvailabilityWeek.userId",
-			"AvailabilitySlot.startsAt",
-			"AvailabilitySlot.endsAt",
-		])
-		.where("AllTeamMember.teamId", "=", teamId)
-		.where("AllTeamMember.leftAt", "is", null)
-		.where("AvailabilityWeek.weekStartsAt", "=", weekStartsAt)
-		.execute();
 }
 
 /**

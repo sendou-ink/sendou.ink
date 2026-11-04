@@ -169,8 +169,6 @@ export interface Fixtures {
 	manyTeamIds: number[] | null;
 	/** Leaderboard series of the organization with the most events. */
 	heavySeries: { organizationId: number; substringMatches: string[] } | null;
-	/** Team week with the most availability slots filled. */
-	heavyTeamAvailabilityWeek: { teamId: number; weekStartsAt: number } | null;
 	scannedMatchId: number | null;
 	siteTotalCounts: Record<FeedRepository.SiteTotal, number> | null;
 	/** Posts with the most comments, the heaviest first. Null until users have commented. */
@@ -275,7 +273,6 @@ export async function resolveFixtures(): Promise<Fixtures> {
 			await resolveFeedIndexerTournamentResultRowId(feedNow),
 		manyTeamIds: await resolveManyTeamIds(),
 		heavySeries: await resolveHeavySeries(),
-		heavyTeamAvailabilityWeek: await resolveHeavyTeamAvailabilityWeek(),
 		scannedMatchId: await resolveScannedMatchId(),
 		siteTotalCounts: await resolveSiteTotalCounts(),
 		feedCommentItemIds: await resolveFeedCommentItemIds(),
@@ -1755,34 +1752,6 @@ async function resolveHeavySeries() {
 		organizationId: row.organizationId,
 		substringMatches: row.substringMatches,
 	};
-}
-
-async function resolveHeavyTeamAvailabilityWeek() {
-	const row = await db
-		.selectFrom("AvailabilitySlot")
-		.innerJoin(
-			"AvailabilityWeek",
-			"AvailabilityWeek.id",
-			"AvailabilitySlot.availabilityWeekId",
-		)
-		.innerJoin(
-			"AllTeamMember",
-			"AllTeamMember.userId",
-			"AvailabilityWeek.userId",
-		)
-		.select(({ fn }) => [
-			"AllTeamMember.teamId",
-			"AvailabilityWeek.weekStartsAt",
-			fn.countAll<number>().as("count"),
-		])
-		.where("AllTeamMember.leftAt", "is", null)
-		.groupBy(["AllTeamMember.teamId", "AvailabilityWeek.weekStartsAt"])
-		.orderBy("count", "desc")
-		.limit(1)
-		.executeTakeFirst();
-	if (!row) return null;
-
-	return { teamId: row.teamId, weekStartsAt: row.weekStartsAt };
 }
 
 async function resolveScannedMatchId() {

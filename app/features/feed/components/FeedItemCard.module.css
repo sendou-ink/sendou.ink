@@ -78,6 +78,7 @@
 	display: grid;
 	gap: var(--s-1-5);
 	min-width: 0;
+	container-type: inline-size;
 }
 
 .meta {
@@ -140,6 +141,12 @@
 	}
 }
 
+@container (width < 400px) {
+	.feedbackLabel {
+		display: none;
+	}
+}
+
 .text {
 	margin: 0;
 	font-size: 0.95rem;
@@ -161,6 +168,7 @@
 
 .postAction {
 	justify-self: start;
+	margin-top: var(--s-1);
 }
 
 .actions {
@@ -207,15 +215,21 @@
 }
 
 .math {
-	margin-bottom: var(--s-2);
-	padding: var(--s-1-5) var(--s-2);
+	display: grid;
+	gap: var(--s-1-5);
 	font-family: monospace;
-	font-size: var(--font-2xs);
-	color: var(--color-text-high);
-	background-color: var(--color-bg-high);
-	border-radius: var(--radius-field);
+	font-size: var(--font-xs);
 
 	& b {
 		color: var(--color-fg-accent);
+	}
+}
+
+.mathTable {
+	border-collapse: collapse;
+
+	& td {
+		padding: var(--s-0-5) var(--s-1);
+		white-space: nowrap;
 	}
 }

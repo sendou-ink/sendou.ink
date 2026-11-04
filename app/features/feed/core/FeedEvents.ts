@@ -31,6 +31,8 @@ export interface SqPlay {
 	matchId: number;
 	season: number;
 	ordinal: number;
+	/** Before this set, also counting tournaments of the season. `null` when this set was the first. */
+	previousOrdinal: number | null;
 	isWin: boolean;
 	ownTier: FeedTier | null;
 	opponentTier: FeedTier | null;
@@ -146,11 +148,7 @@ export function derive({
 		}
 	}
 
-	let previousOfSeason: SqPlay | undefined;
 	for (const [index, play] of sqPlays.entries()) {
-		const previous =
-			previousOfSeason?.season === play.season ? previousOfSeason : undefined;
-		previousOfSeason = play;
 		if (play.at < since) continue;
 
 		const milestone = SQ_SET_MILESTONES.find((m) => m === index + 1);
@@ -163,8 +161,8 @@ export function derive({
 		}
 
 		const tiers = tiersOfSeason(play.season);
-		if (previous && tiers) {
-			const from = tierOf(tiers.intervals, previous.ordinal);
+		if (play.isWin && play.previousOrdinal !== null && tiers) {
+			const from = tierOf(tiers.intervals, play.previousOrdinal);
 			const to = tierOf(tiers.intervals, play.ordinal);
 			const isNotable =
 				!tiers.previousSeasonTier ||

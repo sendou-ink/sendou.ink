@@ -33,6 +33,7 @@ import {
 	NavIconAvatar,
 	StageName,
 	tierLabel,
+	UnknownWeaponImage,
 	UserName,
 	UserStack,
 	WeaponName,
@@ -72,12 +73,14 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 									<TierImage tier={data.promotion.to} width={56} />
 									<div className={clsx("ml-auto", styles.alignEnd)}>
 										<div className="font-bold">
-											{tierLabel(data.promotion.from)} →{" "}
+											<span className={styles.promotionFrom}>
+												{tierLabel(data.promotion.from)} →{" "}
+											</span>
 											{tierLabel(data.promotion.to)}
 										</div>
 										{data.newSp !== null ? (
 											<div className="text-xs text-lighter">
-												{data.newSp} SP
+												{`${data.newSp}\u00a0SP`}
 											</div>
 										) : null}
 									</div>
@@ -135,7 +138,7 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 											</span>
 											<br />
 											<span className="text-xs text-lighter">
-												{data.newSp} SP
+												{`${data.newSp}\u00a0SP`}
 											</span>
 										</span>
 									) : null}
@@ -189,7 +192,7 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 							</div>
 							{data.tier ? (
 								<span className="text-xs text-lighter">
-									{tierLabel(data.tier)} · {data.sp} SP
+									{tierLabel(data.tier)} · {`${data.sp}\u00a0SP`}
 								</span>
 							) : null}
 						</div>
@@ -227,10 +230,13 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 										<td className={partsStyles.rankCell}>
 											#{neighbor.placement}
 										</td>
-										<td>
+										<td className={partsStyles.fillCell}>
 											<div className={partsStyles.rowNoWrap}>
 												<Avatar user={neighbor.user} size="xxxsm" />
-												<Link to={userPage(neighbor.user)}>
+												<Link
+													to={userPage(neighbor.user)}
+													className={partsStyles.ellipsis}
+												>
 													{neighbor.user.username}
 												</Link>
 											</div>
@@ -304,7 +310,7 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 										"–"
 									)}
 								</span>
-								<span className="text-xs text-lighter">{data.sp} SP</span>
+								<span className="text-xs text-lighter">{`${data.sp}\u00a0SP`}</span>
 							</div>
 							<div className={styles.stat}>
 								<span className={styles.label}>Maps</span>
@@ -330,7 +336,7 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 											size={28}
 										/>
 									) : (
-										"–"
+										<UnknownWeaponImage size={28} />
 									)}
 								</span>
 								<span
@@ -456,7 +462,7 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 						<div className={partsStyles.grow}>
 							<div className="font-semi-bold">
 								{rank
-									? `${tierLabel(rank.tier)} · ${rank.sp} SP`
+									? `${tierLabel(rank.tier)} · ${rank.sp}\u00a0SP`
 									: `${data.setCount} ${data.setCount === 1 ? "set" : "sets"} played`}
 							</div>
 							{rank ? (
@@ -500,7 +506,7 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 				),
 				body: (
 					<>
-						<div className={styles.columns}>
+						<div className={clsx(styles.columns, styles.columnsStackNarrow)}>
 							<div className={styles.column}>
 								<span className={styles.label}>Players</span>
 								{data.players.map((player) => (
@@ -515,7 +521,9 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 												previousPlacement={player.previousPlacement}
 											/>
 										</span>
-										<span className={styles.alignEnd}>
+										<span
+											className={clsx(styles.alignEnd, "whitespace-nowrap")}
+										>
 											{player.sp.toFixed(1)}
 											{player.weeklyChange ? (
 												<span
@@ -574,7 +582,7 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 		case "SQ_META": {
 			const { data } = item;
 			return {
-				avatar: <LogoAvatar url={null} name="SendouQ" />,
+				avatar: <NavIconAvatar navIcon="sendouq" />,
 				line: (
 					<>
 						<b>Weapon trends</b> in SendouQ this week
@@ -603,13 +611,15 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 											<span
 												className={clsx(
 													"ml-auto text-xs",
-													row.changePercentage >= 0
+													row.changePercentage === null ||
+														row.changePercentage > 0
 														? styles.plusDelta
 														: styles.minusDelta,
 												)}
 											>
-												{row.changePercentage > 0 ? "+" : ""}
-												{row.changePercentage}%
+												{row.changePercentage === null
+													? "New"
+													: `${row.changePercentage > 0 ? "+" : ""}${row.changePercentage}%`}
 											</span>
 										</div>
 									))}
@@ -617,8 +627,8 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 							))}
 						</div>
 						<div className="text-xs text-lighter">
-							Change in share of picks vs last week · {data.reportCount} weapon
-							reports
+							Change in share of play vs last week, weighted towards higher
+							ranked players · {data.playerCount} players
 						</div>
 					</>
 				),
@@ -643,10 +653,12 @@ export function playItemContent(item: FeedItem): FeedItemContent | null {
 							{data.top.map((player) => (
 								<tr key={player.id}>
 									<td className={partsStyles.rankCell}>#{player.placement}</td>
-									<td>
+									<td className={partsStyles.fillCell}>
 										<div className={partsStyles.rowNoWrap}>
 											<Avatar user={player} size="xxxsm" />
-											<UserName user={player} />
+											<span className={partsStyles.ellipsis}>
+												<UserName user={player} />
+											</span>
 										</div>
 									</td>
 									<td className={partsStyles.numeric}>

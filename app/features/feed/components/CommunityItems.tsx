@@ -164,6 +164,7 @@ export function communityItemContent(
 						) : null}
 					</>
 				),
+				href: plusSuggestionPage({ tier: data.tier }),
 			};
 		}
 		case "ARTICLE_NEW": {
@@ -247,7 +248,7 @@ export function communityItemContent(
 										key={`${rotation.type}-${rotation.startsAt}`}
 										className={styles.rotationRow}
 									>
-										<div>
+										<div className="whitespace-nowrap">
 											<div className="text-sm font-semi-bold">
 												<LocaleTime
 													inline
@@ -265,7 +266,11 @@ export function communityItemContent(
 													"text-xs text-lighter",
 												)}
 											>
-												<ModeImage mode={rotation.mode} size={16} />
+												<ModeImage
+													mode={rotation.mode}
+													size={16}
+													containerClassName={partsStyles.noShrink}
+												/>
 												{rotationTypeLabel(rotation.type)}
 											</div>
 										</div>

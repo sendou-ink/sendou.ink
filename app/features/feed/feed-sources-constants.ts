@@ -193,10 +193,10 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "TO_UPSET",
-				when: "A friend's team is in an upset: it beats a team seeded at least 5 places higher, or a team seeded at least 5 places lower beats it. The post says which friend, so it's clear why it's in your feed.",
+				when: "A friend's team pulls off an upset: it beats a team seeded at least 5 places higher. Only wins, never a friend's team being upset. The post says which friend, so it's clear why it's in your feed.",
 				example: {
 					actor: "Callie",
-					text: "**Callie**'s team, seeded 10, knocked out seed 1 at **In The Zone 55**",
+					text: "**Callie**'s team (seed 10) upset seed 1 at **In The Zone 55**",
 				},
 			},
 			{
@@ -479,7 +479,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 				when: "Enough of your team has filled in availability for the week to find a shared window.",
 				example: {
 					actor: "Kraken",
-					text: "**4 of 5** on Kraken Kids are free together · Fri 21:00",
+					text: "**4 of 5** on Kraken Kids are free together · **3 days** with 4+",
 				},
 			},
 			{

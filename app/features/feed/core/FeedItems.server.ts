@@ -3,6 +3,9 @@ import { hoursToMilliseconds, subDays } from "date-fns";
 import * as R from "remeda";
 import { Config } from "~/config";
 import { mostRecentArticles } from "~/features/articles/core/list.server";
+import * as Availability from "~/features/availability/core/Availability";
+import * as ScheduleWeek from "~/features/availability/core/ScheduleWeek";
+import * as VisibleSchedules from "~/features/availability/core/VisibleSchedules.server";
 import { allEntries as allChangelogEntries } from "~/features/changelog/core/entries.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
@@ -28,6 +31,7 @@ import { parseLutiDiv, serializeLutiDiv } from "~/features/scrims/scrims-utils";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as SplatoonRotationRepository from "~/features/splatoon-rotations/SplatoonRotationRepository.server";
+import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
 import { eventLeaderboards } from "~/features/tournament-organization/core/leaderboards.server";
 import type {
 	BuildAbilitiesTuple,
@@ -87,6 +91,7 @@ import * as FeedRotations from "./FeedRotations";
 import * as FeedSchedule from "./FeedSchedule";
 import * as FeedScrimMatch from "./FeedScrimMatch";
 import * as FeedSeasonGoal from "./FeedSeasonGoal";
+import * as FeedWeaponTrends from "./FeedWeaponTrends";
 
 const HOUR = 3600;
 const DAY = 24 * HOUR;
@@ -144,6 +149,8 @@ export interface FeedContext {
 	/** Users sharing a current team with the viewer who aren't their friends */
 	teammateIds: number[];
 	teammateIdSet: Set<number>;
+	/** Weapons of the viewer's weapon pool, see `RankableItem.weaponSplIds` */
+	weaponPool: MainWeaponId[];
 	/** Database timestamp everything is relative to */
 	now: number;
 	season: number | null;
@@ -166,6 +173,8 @@ interface BuiltItem<D> {
 	relation?: FeedRelation | null;
 	/** See `RankableItem.weight` */
 	weight?: number;
+	/** See `RankableItem.weaponSplIds` */
+	weaponSplIds?: MainWeaponId[];
 	data: D;
 }
 
@@ -256,6 +265,7 @@ export type FeedItem = {
 		actorKey: string;
 		relation: FeedRelation | null;
 		weight: number;
+		weaponSplIds: MainWeaponId[];
 		data: FeedItemData<T>;
 	};
 }[FeedItemType];
@@ -271,6 +281,7 @@ export async function contextFor({
 	const friendIds = await FriendRepository.findFriendIds(viewerId);
 	const friendIdSet = new Set(friendIds);
 	const teammateIds = await teammateIdsOf({ viewerId, friendIdSet });
+	const weaponPool = await FeedRepository.findWeaponPoolByUserId(viewerId);
 	const now = mode === "TEST" ? await testNow() : databaseTimestampNow();
 	const nowDate = databaseTimestampToDate(now);
 
@@ -281,6 +292,7 @@ export async function contextFor({
 		friendIdSet,
 		teammateIds,
 		teammateIdSet: new Set(teammateIds),
+		weaponPool: weaponPool.map((weapon) => weapon.weaponSplId),
 		now,
 		season: Seasons.currentOrPrevious(nowDate)?.nth ?? null,
 		previousSeason: Seasons.previous(nowDate)?.nth ?? null,
@@ -316,6 +328,7 @@ async function buildItemsOfType(
 				at: Math.min(item.at, ctx.now),
 				relation: item.relation ?? null,
 				weight: item.weight ?? 1,
+				weaponSplIds: item.weaponSplIds ?? [],
 			} as FeedItem;
 		},
 	);
@@ -859,48 +872,36 @@ async function buildSqMeta(ctx: SharedFeedContext) {
 			weekday: FeedSchedule.WEEKDAY.MONDAY,
 		}),
 	);
-	const thisWeek = await FeedRepository.findWeaponUsageCounts({
+	const thisWeek = await FeedRepository.findWeaponPicksByUser({
 		from: publishedAt - 7 * DAY,
 		to: publishedAt,
 	});
-	const lastWeek = await FeedRepository.findWeaponUsageCounts({
+	const lastWeek = await FeedRepository.findWeaponPicksByUser({
 		from: publishedAt - 14 * DAY,
 		to: publishedAt - 7 * DAY,
 	});
-	const totalThisWeek = R.sumBy(thisWeek, (row) => row.count);
-	const totalLastWeek = R.sumBy(lastWeek, (row) => row.count);
-	if (totalThisWeek < 100 || totalLastWeek < 100) return null;
 
-	const changes = R.sortBy(
-		thisWeek
-			.filter((row) => row.count >= totalThisWeek / 50)
-			.map((row) => {
-				const share = row.count / totalThisWeek;
-				const previousCount =
-					lastWeek.find((previous) => previous.weaponSplId === row.weaponSplId)
-						?.count ?? 0;
-				const previousShare = previousCount / totalLastWeek;
+	const ordinals = new Map<number, number>();
+	for (const season of [ctx.previousSeason, ctx.season]) {
+		if (season === null) continue;
+		for (const [userId, skill] of Object.entries(
+			(await userSkills(season)).userSkills,
+		)) {
+			ordinals.set(Number(userId), skill.ordinal);
+		}
+	}
 
-				return {
-					weaponSplId: row.weaponSplId,
-					sharePercentage: Math.round(share * 1000) / 10,
-					changePercentage: previousShare
-						? Math.round((share / previousShare - 1) * 100)
-						: 100,
-				};
-			}),
-		[(change) => change.changePercentage, "desc"],
-	);
-	if (changes.length < 5) return null;
+	const trends = FeedWeaponTrends.risersAndFallers({
+		thisWeek,
+		lastWeek,
+		ordinals,
+	});
+	if (!trends) return null;
 
 	return {
 		at: publishedAt,
 		actorKey: "SQ_META",
-		data: {
-			rising: changes.slice(0, 3),
-			falling: changes.slice(-2).reverse(),
-			reportCount: totalThisWeek,
-		},
+		data: trends,
 	};
 }
 
@@ -1232,15 +1233,13 @@ async function buildTournamentUpset(ctx: FeedContext) {
 		| (TournamentUpset & {
 				tournamentId: number;
 				userId: number;
-				isUserWinner: boolean;
 		  })
 		| null = null;
 	for (const tournamentId of R.unique(
 		results.map((result) => result.tournamentId),
 	)) {
 		for (const upset of await tournamentUpsets(tournamentId)) {
-			const winnerUserId = userIdByTeamId.get(upset.winnerId);
-			const userId = winnerUserId ?? userIdByTeamId.get(upset.loserId);
+			const userId = userIdByTeamId.get(upset.winnerId);
 			if (userId === undefined) continue;
 			if (
 				best &&
@@ -1253,7 +1252,6 @@ async function buildTournamentUpset(ctx: FeedContext) {
 				...upset,
 				tournamentId,
 				userId,
-				isUserWinner: winnerUserId !== undefined,
 			};
 		}
 	}
@@ -1270,7 +1268,6 @@ async function buildTournamentUpset(ctx: FeedContext) {
 		data: {
 			tournament,
 			actor: users.get(best.userId)!,
-			isActorWinner: best.isUserWinner,
 			winner: teams.get(best.winnerId)!,
 			loser: teams.get(best.loserId)!,
 			winnerSeed: best.winnerSeed,
@@ -2150,39 +2147,56 @@ async function buildTeamAvailability(ctx: FeedContext) {
 			: undefined);
 	if (!week) return null;
 
-	const slots = await FeedRepository.findAvailabilitySlotsOfTeamWeek({
-		teamId: week.teamId,
-		weekStartsAt: week.weekStartsAt,
+	const [team] = await FeedRepository.findTeamsByIds([week.teamId]);
+	const timezone = getViewerTimezone() ?? "UTC";
+	// midweek so a week started in another timezone still lands on the same viewer week
+	const range = Availability.weekRange(
+		databaseTimestampToDate(week.weekStartsAt + 3.5 * DAY),
+		timezone,
+	);
+	const memberIds = team.members.map((member) => member.id);
+	const { reportedWeeks, busyByUserId } = await VisibleSchedules.findByUserIds({
+		userIds: memberIds,
+		viewerId: ctx.viewerId,
+		bypassVisibility: ctx.mode === "TEST",
+		...range,
 	});
-	const freeUsersByHour = new Map<number, Set<number>>();
-	for (const slot of slots) {
-		for (let hour = slot.startsAt; hour < slot.endsAt; hour += HOUR) {
-			const users = freeUsersByHour.get(hour) ?? new Set();
-			users.add(slot.userId);
-			freeUsersByHour.set(hour, users);
-		}
-	}
+	const { members, minPlayers, windows } = ScheduleWeek.teamWindows({
+		range,
+		playerIds: memberIds,
+		reportedWeeks,
+		busyByUserId,
+	});
 	const best = R.firstBy(
-		[...freeUsersByHour.entries()],
-		[([, users]) => users.size, "desc"],
-		[([hour]) => hour, "asc"],
+		windows,
+		[(window) => window.userIds.length, "desc"],
+		[(window) => window.startsAt, "asc"],
 	);
 	if (!best) return null;
 
-	let bestEndsAt = best[0] + HOUR;
-	while (freeUsersByHour.get(bestEndsAt)?.size === best[1].size)
-		bestEndsAt += HOUR;
+	const segments = Availability.availabilitySegments(members);
+	const weekDays = ScheduleWeek.days(range, timezone);
+	const dayStarts = weekDays.map((day) =>
+		Availability.localToTimestamp({ date: day.date, time: "00:00", timezone }),
+	);
+	const days = weekDays.map((day, dayIndex) => {
+		const startsAt = dayStarts[dayIndex];
+		const endsAt = dayStarts[dayIndex + 1] ?? range.endsAt;
 
-	const [team] = await FeedRepository.findTeamsByIds([week.teamId]);
-	const days = R.range(0, 7).map((dayIndex) => {
-		const dayStartsAt = week.weekStartsAt + dayIndex * DAY;
 		return {
-			startsAt: dayStartsAt,
+			startsAt,
+			tier: ScheduleWeek.bestWindowTierOfDay({
+				date: day.date,
+				windows,
+				timezone,
+			}),
 			maxFree: Math.max(
 				0,
-				...R.range(0, 24).map(
-					(hour) => freeUsersByHour.get(dayStartsAt + hour * HOUR)?.size ?? 0,
-				),
+				...segments
+					.filter(
+						(segment) => segment.startsAt < endsAt && segment.endsAt > startsAt,
+					)
+					.map((segment) => segment.userIds.length),
 			),
 		};
 	});
@@ -2192,10 +2206,11 @@ async function buildTeamAvailability(ctx: FeedContext) {
 		actorKey: `team-${week.teamId}`,
 		data: {
 			team,
-			freeCount: best[1].size,
-			bestStartsAt: best[0],
-			bestEndsAt,
-			freeUsers: team.members.filter((member) => best[1].has(member.id)),
+			freeCount: best.userIds.length,
+			freeUsers: team.members.filter((member) =>
+				best.userIds.includes(member.id),
+			),
+			minPlayers,
 			days,
 		},
 	};
@@ -2712,6 +2727,7 @@ async function buildBuildNew(ctx: FeedContext) {
 			at: card.at,
 			actorKey: String(card.ownerId),
 			relation: relationOf(ctx, card.ownerId),
+			weaponSplIds: card.card.build.weapons.map((weapon) => weapon.weaponSplId),
 			data: card.card,
 		};
 	});
@@ -2754,16 +2770,23 @@ async function buildVodNew(ctx: SharedFeedContext) {
 		video.matches.flatMap((match) => match.players),
 		(player) => player.playerUserId ?? player.playerName,
 	).slice(0, 4);
-	const users = await usersById(
-		players.flatMap((player) =>
+	const users = await usersById([
+		video.submitterUserId,
+		...players.flatMap((player) =>
 			player.playerUserId ? [player.playerUserId] : [],
 		),
-	);
+	]);
 
 	return {
 		at: video.youtubePublishedAt,
 		actorKey: `video-${video.id}`,
+		weaponSplIds: R.unique(
+			video.matches.flatMap((match) =>
+				match.players.map((player) => player.weaponSplId as MainWeaponId),
+			),
+		),
 		data: {
+			submitter: users.get(video.submitterUserId)!,
 			videoId: video.id,
 			title: video.title,
 			type: video.type,

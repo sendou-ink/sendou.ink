@@ -27,15 +27,12 @@ export function Feed({
 	canViewAs = false,
 	headerEnd,
 	footer,
-	scoreShown = false,
 }: {
 	data: FeedPageData;
 	/** Dev only: lets the feed of any user be picked */
 	canViewAs?: boolean;
 	headerEnd?: React.ReactNode;
 	footer?: React.ReactNode;
-	/** Shows how each post's ranking score was calculated */
-	scoreShown?: boolean;
 }) {
 	const [tabParam, setTabParam] = useSearchParam(feedSearchParams, "tab");
 	const [viewAs] = useSearchParam(feedSearchParams, "viewAs");
@@ -54,7 +51,7 @@ export function Feed({
 		return definition.category === filter;
 	});
 
-	const card = (item: FeedItem, score?: ScoreBreakdown) => (
+	const card = (item: FeedItem, score?: ScoreBreakdown | null) => (
 		<FeedItemCard
 			key={item.id}
 			item={item}
@@ -107,9 +104,7 @@ export function Feed({
 						))}
 					</nav>
 					{filter === "ALL" ? data.pinned.map((item) => card(item)) : null}
-					{activity.map((item) =>
-						card(item, scoreShown ? item.score : undefined),
-					)}
+					{activity.map((item) => card(item, item.score))}
 					<div className={styles.caughtUp}>
 						<CircleCheck size={32} className={styles.caughtUpIcon} />
 						All caught up!

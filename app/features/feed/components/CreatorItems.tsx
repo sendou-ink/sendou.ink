@@ -11,7 +11,7 @@ import { smallImageFileName, vodVideoPage } from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
 import styles from "./CreatorItems.module.css";
 import type { FeedItemContent } from "./FeedItemCard";
-import { countText, LogoAvatar, UserName } from "./FeedParts";
+import { countText, UnknownWeaponImage, UserName } from "./FeedParts";
 import partsStyles from "./FeedParts.module.css";
 
 export function creatorItemContent(item: FeedItem): FeedItemContent | null {
@@ -108,7 +108,7 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 		case "VOD_NEW": {
 			const { data } = item;
 			return {
-				avatar: <LogoAvatar url={null} name={data.title} />,
+				avatar: <Avatar user={data.submitter} size="xs" />,
 				line: (
 					<>
 						New {data.type.toLowerCase()} VoD:{" "}
@@ -158,6 +158,7 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 						</div>
 					</>
 				),
+				href: vodVideoPage(data.videoId),
 			};
 		}
 		case "XRANK_TOP_500": {
@@ -258,9 +259,16 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 															variant="build"
 															size={22}
 														/>
-													) : null}
+													) : (
+														<UnknownWeaponImage size={22} />
+													)}
 												</td>
-												<td className={partsStyles.ellipsis}>
+												<td
+													className={clsx(
+														partsStyles.ellipsis,
+														partsStyles.fillCell,
+													)}
+												>
 													{player.name ?? "?"}
 												</td>
 												<td className={partsStyles.numeric}>

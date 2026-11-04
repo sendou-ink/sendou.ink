@@ -32,6 +32,10 @@
 	aspect-ratio: 16 / 9;
 	object-fit: cover;
 	border-radius: max(2px, calc(var(--radius-box) - var(--s-2)));
+
+	@container (width < 400px) {
+		width: 72px;
+	}
 }
 
 .rotationStageOff {

@@ -1,5 +1,10 @@
 import * as R from "remeda";
-import type { BusyBlock, TimeRange } from "../availability-types";
+import { AVAILABILITY } from "../availability-constants";
+import type {
+	BusyBlock,
+	PlayableWindowTier,
+	TimeRange,
+} from "../availability-types";
 import * as Availability from "./Availability";
 
 const DAY_SECONDS = 24 * 60 * 60;
@@ -133,4 +138,65 @@ export function memberRow({
 			}),
 		),
 	};
+}
+
+/**
+ * The players' free time in the week with commitments cut out and the playable windows it leaves,
+ * needing `AVAILABILITY.DEFAULT_MIN_PLAYERS` or every player of a smaller roster.
+ */
+export function teamWindows({
+	range,
+	playerIds,
+	reportedWeeks,
+	busyByUserId,
+}: {
+	range: TimeRange;
+	playerIds: Array<number>;
+	reportedWeeks: Array<ReportedWeek>;
+	busyByUserId: Map<number, Array<BusyBlock>>;
+}) {
+	const minPlayers = Math.min(
+		AVAILABILITY.DEFAULT_MIN_PLAYERS,
+		playerIds.length,
+	);
+	const members = playerIds.map((userId) => ({
+		userId,
+		ranges: Availability.subtract(
+			Availability.clip(
+				reportedWeeks
+					.filter((week) => week.userId === userId)
+					.flatMap((week) => week.slots),
+				range,
+			),
+			busyByUserId.get(userId) ?? [],
+		),
+	}));
+
+	return {
+		members,
+		minPlayers,
+		windows: Availability.playableWindows({ members, minPlayers }),
+	};
+}
+
+/** Tier of the best playable window starting on the viewer-local day (the day it renders its grid ranges on). */
+export function bestWindowTierOfDay({
+	date,
+	windows,
+	timezone,
+}: {
+	date: string;
+	windows: Array<TimeRange & { tier: PlayableWindowTier }>;
+	timezone: string;
+}): PlayableWindowTier | null {
+	const tiers = windows
+		.filter(
+			(window) =>
+				Availability.dateInTimezone(window.startsAt, timezone) === date,
+		)
+		.map((window) => window.tier);
+
+	if (tiers.includes("FULL")) return "FULL";
+	if (tiers.includes("ONE_SHORT")) return "ONE_SHORT";
+	return null;
 }

@@ -16,9 +16,72 @@
 	display: inline-flex;
 	align-items: center;
 	gap: var(--s-0-5);
+
+	& img {
+		flex: none;
+	}
+}
+
+@container (width < 260px) {
+	.placementsCell {
+		display: none;
+	}
+}
+
+@container (width < 400px) {
+	.medalCounts {
+		gap: var(--s-1-5);
+	}
+
+	.medalTimes {
+		display: none;
+	}
+
+	.podiumStack,
+	.standingsAvatar {
+		display: none;
+	}
+}
+
+.showcaseList {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto auto;
+
+	@container (width < 400px) {
+		grid-template-columns: auto minmax(0, 1fr) auto;
+	}
+
+	& .showcaseRow {
+		grid-column: 1 / -1;
+		grid-template-columns: subgrid;
+	}
+}
+
+.showcaseEnd {
+	display: contents;
+
+	& > :last-child {
+		justify-self: end;
+	}
+
+	@container (width < 400px) {
+		display: grid;
+		justify-items: center;
+		gap: var(--s-1);
+
+		& > :last-child {
+			justify-self: center;
+		}
+	}
+}
+
+.showcaseTier {
+	display: flex;
+	justify-content: center;
 }
 
 .emptySlot {
+	flex: none;
 	width: 30px;
 	height: 30px;
 	border-radius: 50%;

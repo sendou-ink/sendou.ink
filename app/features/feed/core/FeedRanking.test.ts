@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { FEED_AUDIENCE_AFFINITY } from "../feed-constants";
+import {
+	FEED_AUDIENCE_AFFINITY,
+	FEED_WEAPON_AFFINITY,
+} from "../feed-constants";
 import * as FeedRanking from "./FeedRanking";
 
 const NOW = 1_800_000_000;
@@ -52,9 +55,9 @@ describe("FeedRanking.score", () => {
 
 	test.each([
 		{
-			why: "no relation: the closest audience of the type",
+			why: "no relation: the widest audience of the type",
 			relation: null,
-			expected: FEED_AUDIENCE_AFFINITY.FOLLOWING,
+			expected: FEED_AUDIENCE_AFFINITY.EVERYONE,
 		},
 		{ why: "self", relation: "SELF", expected: FEED_AUDIENCE_AFFINITY.SELF },
 		{
@@ -74,6 +77,101 @@ describe("FeedRanking.score", () => {
 		);
 
 		expect(result.affinity).toBe(expected);
+	});
+});
+
+describe("FeedRanking.score", () => {
+	const SPLATTERSHOT = 40;
+	const TENTATEK_SPLATTERSHOT = 41;
+	const HERO_SHOT_REPLICA = 45;
+	const SPLASH_O_MATIC = 20;
+	const SPLAT_CHARGER = 2010;
+
+	test.each([
+		{
+			why: "same weapon",
+			weaponSplIds: [SPLATTERSHOT],
+			expected: FEED_WEAPON_AFFINITY.SAME_WEAPON,
+		},
+		{
+			why: "kit of the same base weapon",
+			weaponSplIds: [TENTATEK_SPLATTERSHOT],
+			expected: FEED_WEAPON_AFFINITY.SAME_WEAPON,
+		},
+		{
+			why: "skin of the same base weapon",
+			weaponSplIds: [HERO_SHOT_REPLICA],
+			expected: FEED_WEAPON_AFFINITY.SAME_WEAPON,
+		},
+		{
+			why: "same weapon among others",
+			weaponSplIds: [SPLASH_O_MATIC, SPLAT_CHARGER, SPLATTERSHOT],
+			expected: FEED_WEAPON_AFFINITY.SAME_WEAPON,
+		},
+		{
+			why: "same category",
+			weaponSplIds: [SPLASH_O_MATIC],
+			expected: FEED_WEAPON_AFFINITY.SAME_CATEGORY,
+		},
+		{
+			why: "other category",
+			weaponSplIds: [SPLAT_CHARGER],
+			expected: FEED_WEAPON_AFFINITY.NONE,
+		},
+		{
+			why: "no weapons",
+			weaponSplIds: [],
+			expected: FEED_WEAPON_AFFINITY.NONE,
+		},
+	] as const)("$why", ({ weaponSplIds, expected }) => {
+		const result = FeedRanking.score(
+			{
+				type: "VOD_NEW",
+				at: NOW,
+				relation: null,
+				weaponSplIds: [...weaponSplIds],
+			},
+			NOW,
+			[TENTATEK_SPLATTERSHOT],
+		);
+
+		expect(result.weaponAffinity).toBe(expected);
+	});
+
+	test("is none without a weapon pool", () => {
+		const result = FeedRanking.score(
+			{
+				type: "VOD_NEW",
+				at: NOW,
+				relation: null,
+				weaponSplIds: [SPLATTERSHOT],
+			},
+			NOW,
+		);
+
+		expect(result.weaponAffinity).toBe(FEED_WEAPON_AFFINITY.NONE);
+	});
+
+	test("scales the score by the weapon affinity", () => {
+		const plain = FeedRanking.score(
+			{ type: "BUILD_NEW", at: NOW, relation: null },
+			NOW,
+			[SPLATTERSHOT],
+		);
+		const matching = FeedRanking.score(
+			{
+				type: "BUILD_NEW",
+				at: NOW,
+				relation: null,
+				weaponSplIds: [SPLATTERSHOT],
+			},
+			NOW,
+			[SPLATTERSHOT],
+		);
+
+		expect(matching.total).toBeCloseTo(
+			plain.total * FEED_WEAPON_AFFINITY.SAME_WEAPON,
+		);
 	});
 });
 

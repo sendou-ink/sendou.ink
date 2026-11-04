@@ -42,6 +42,24 @@
 	}
 }
 
-.heatBest i {
+.heatFull i {
 	background-color: var(--color-success);
+}
+
+.heatOneShort i {
+	border-radius: 0 0 var(--radius-selector) var(--radius-selector);
+	background-color: var(--color-success-low);
+	box-shadow: inset 0 0 0 1px var(--color-success);
+}
+
+.tierCounts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1) var(--s-3);
+}
+
+.tierCount {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1-5);
 }

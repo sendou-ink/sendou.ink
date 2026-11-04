@@ -113,8 +113,8 @@ describe("FeedEvents.derive", () => {
 		const events = derive(
 			[
 				sqPlay({ at: NOW - 2, ordinal: 15 }),
-				sqPlay({ at: NOW - 1, ordinal: 25, matchId: 2 }),
-				sqPlay({ at: NOW, ordinal: 35, matchId: 3 }),
+				sqPlay({ at: NOW - 1, previousOrdinal: 15, ordinal: 25, matchId: 2 }),
+				sqPlay({ at: NOW, previousOrdinal: 25, ordinal: 35, matchId: 3 }),
 			],
 			{ name: "DIAMOND", isPlus: false },
 		);
@@ -127,6 +127,23 @@ describe("FeedEvents.derive", () => {
 				to: { name: "DIAMOND", isPlus: false },
 			},
 		]);
+	});
+
+	test("emits no promotion for a tier crossed outside the set", () => {
+		const events = derive([
+			sqPlay({ at: NOW - 1, ordinal: 25 }),
+			sqPlay({ at: NOW, previousOrdinal: 31, ordinal: 35 }),
+		]);
+
+		expect(ofType(events, "SQ_PROMOTION")).toEqual([]);
+	});
+
+	test("emits no promotion for a lost set", () => {
+		const events = derive([
+			sqPlay({ at: NOW, previousOrdinal: 25, ordinal: 35, isWin: false }),
+		]);
+
+		expect(ofType(events, "SQ_PROMOTION")).toEqual([]);
 	});
 
 	test("emits an upset when beating a group enough tiers higher", () => {
@@ -183,6 +200,7 @@ function sqPlay(play: Partial<FeedEvents.SqPlay>): FeedEvents.SqPlay {
 		matchId: 1,
 		season: 1,
 		ordinal: 0,
+		previousOrdinal: null,
 		isWin: true,
 		ownTier: null,
 		opponentTier: null,
