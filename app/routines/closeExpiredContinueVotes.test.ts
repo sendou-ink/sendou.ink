@@ -7,12 +7,6 @@ import { db } from "~/db/sql";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { CloseExpiredContinueVotesRoutine } from "./closeExpiredContinueVotes";
 
-vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
-	send: vi.fn(),
-	notifyStatusChanged: vi.fn(),
-	notifyNotificationsChanged: vi.fn(),
-}));
-
 const users = UserFactory.pool();
 /** The two SendouQ groups: the first FULL_GROUP_SIZE users against the rest. */
 const alphaUserIds = () => users.ids().slice(0, FULL_GROUP_SIZE);

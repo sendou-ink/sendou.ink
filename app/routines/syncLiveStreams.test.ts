@@ -94,23 +94,27 @@ async function addRunningTournament({
 
 let timeOffset = 0;
 
+// every test moves the clock past the tournament stream sync throttle, whatever order they run in
+beforeEach(() => {
+	vi.useFakeTimers();
+	vi.setSystemTime(
+		add(new Date("2025-01-15T12:00:00Z"), { minutes: timeOffset }),
+	);
+	timeOffset += 31;
+});
+
+afterEach(() => {
+	vi.useRealTimers();
+});
+
 describe("syncLiveStreams tournament streamers", () => {
 	beforeEach(async () => {
-		vi.useFakeTimers();
-		vi.setSystemTime(
-			add(new Date("2025-01-15T12:00:00Z"), { minutes: timeOffset }),
-		);
-		timeOffset += 31;
 		RunningTournaments.clear();
 		mockGetStreams.mockReset();
 		mockGetStreams.mockResolvedValue([]);
 		mockGetYoutubeLiveStreams.mockReset();
 		mockGetYoutubeLiveStreams.mockResolvedValue([]);
 		await users.create(1);
-	});
-
-	afterEach(() => {
-		vi.useRealTimers();
 	});
 
 	test("populates LiveStream table with streams", async () => {

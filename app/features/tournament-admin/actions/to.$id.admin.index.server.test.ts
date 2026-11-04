@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -6,14 +6,6 @@ import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import type { adminTeamsActionSchema } from "../tournament-admin-schemas";
 import { action } from "./to.$id.admin.index.server";
-
-vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
-	send: vi.fn(),
-	notifyStatusChanged: vi.fn(),
-	notifyNotificationsChanged: vi.fn(),
-	notifyRoomsChanged: vi.fn(),
-	notifyRoomsChangedByRoomIds: vi.fn(),
-}));
 
 const adminTeamsAction = wrappedAction<typeof adminTeamsActionSchema>({
 	action,

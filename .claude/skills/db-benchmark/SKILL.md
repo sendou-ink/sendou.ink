@@ -73,7 +73,7 @@ async function resolveHeavyBuildUserId() {
 ## Verifying
 
 ```bash
-pnpm run typecheck:scripts
+pnpm run typecheck
 pnpm exec biome check --error-on-warnings --write scripts/benchmark-db.ts scripts/benchmark-db
 DB_PATH=db-prod.sqlite3 pnpm exec vite-node scripts/benchmark-db.ts -- --filter <caseName> --iterations 3
 ```

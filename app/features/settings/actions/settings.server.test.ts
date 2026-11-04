@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
@@ -10,12 +10,6 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { wrappedAction } from "~/utils/Test";
 import type { settingsActionSchema } from "../settings-schemas.server";
 import { action } from "./settings.server";
-
-vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
-	send: vi.fn(),
-	notifyStatusChanged: vi.fn(),
-	notifyNotificationsChanged: vi.fn(),
-}));
 
 const OLD_WEAPON_ID: MainWeaponId = 0;
 const NEW_WEAPON_ID: MainWeaponId = 40;

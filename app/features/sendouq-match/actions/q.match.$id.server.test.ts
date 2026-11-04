@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import type { reportWeaponSchema } from "~/components/match-page/match-page-schemas";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -7,13 +7,6 @@ import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import * as ReportedWeaponRepository from "../ReportedWeaponRepository.server";
 import * as SQMatchRepository from "../SQMatchRepository.server";
 import { action as rawMatchAction } from "./q.match.$id.server";
-
-vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
-	send: vi.fn(),
-	notifyStatusChanged: vi.fn(),
-	notifyNotificationsChanged: vi.fn(),
-	notifyRoomsChangedByRoomIds: vi.fn(),
-}));
 
 const WEAPON_SPL_ID = 40;
 

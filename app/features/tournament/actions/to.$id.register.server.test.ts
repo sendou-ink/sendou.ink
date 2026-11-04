@@ -1,5 +1,5 @@
 import { addDays, addMinutes, subMinutes } from "date-fns";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
@@ -11,11 +11,6 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import type { registerSchema } from "../tournament-schemas.server";
 import { action as registerAction } from "./to.$id.register.server";
-
-// adding a player notifies them; not under test here
-vi.mock("~/features/notifications/core/notify.server", () => ({
-	notify: () => Promise.resolve(),
-}));
 
 /** `maxMembersPerTeam` of a regular 4v4 tournament that sets no limit of its own. */
 const MAX_ROSTER_SIZE = 6;

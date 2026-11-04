@@ -7,12 +7,6 @@ import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { ResolveStaleSQMatchesRoutine } from "./resolveStaleSQMatches";
 
-vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
-	send: vi.fn(),
-	notifyStatusChanged: vi.fn(),
-	notifyNotificationsChanged: vi.fn(),
-}));
-
 vi.mock("~/features/mmr/tiered.server", () => ({
 	refreshUserSkills: vi.fn(),
 }));

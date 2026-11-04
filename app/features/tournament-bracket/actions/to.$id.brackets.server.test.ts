@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -11,13 +11,6 @@ import type { ModeShort } from "~/modules/in-game-lists/types";
 import { invariant } from "~/utils/invariant";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import { action } from "./to.$id.brackets.server";
-
-vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
-	send: vi.fn(),
-	notifyStatusChanged: vi.fn(),
-	notifyNotificationsChanged: vi.fn(),
-	notifyRoomsChangedByRoomIds: vi.fn(),
-}));
 
 const bracketsAction = wrappedAction<typeof bracketSchema>({
 	action,

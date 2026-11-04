@@ -66,6 +66,7 @@ export default defineConfig((config) => {
 			globalSetup: ["./scripts/ensure-test-db.ts"],
 			projects: [
 				"./vitest.unit.config.ts",
+				"./vitest.unit-isolated.config.ts",
 				"./vitest.browser.config.ts",
 				"./vitest.scanner.config.ts",
 			],

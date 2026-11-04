@@ -15,12 +15,6 @@ import type { lookingSchema } from "../q-action-schemas";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import { action as rawLookingAction } from "./q.looking";
 
-vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
-	send: vi.fn(),
-	notifyStatusChanged: vi.fn(),
-	notifyNotificationsChanged: vi.fn(),
-}));
-
 const SZ_ONLY_PREFERENCE: UserMapModePreferences["modes"] = [
 	{ mode: "SZ", preference: "PREFER" },
 	{ mode: "TC", preference: "AVOID" },

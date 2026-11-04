@@ -1,5 +1,5 @@
 import { addHours, subMinutes } from "date-fns";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as AssociationFactory from "~/db/seed/factories/AssociationFactory";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
@@ -14,11 +14,6 @@ import * as LobbyRepository from "../LobbyRepository.server";
 import type { lobbyActionSchema } from "../lobbies-schemas";
 import { lobbySearchParams } from "../lobbies-search-params";
 import { action } from "./lobbies.$id.server";
-
-// the progression's fire-and-forget notifications are not under test
-vi.mock("~/features/notifications/core/notify.server", () => ({
-	notify: () => Promise.resolve(),
-}));
 
 const lobbyAction = wrappedAction<typeof lobbyActionSchema>({ action });
 const lobbyFormAction = wrappedAction<typeof lobbyActionSchema>({

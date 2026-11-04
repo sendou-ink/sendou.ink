@@ -1,15 +1,10 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { wrappedAction } from "~/utils/Test";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import type { scrimRequestFormSchema } from "../scrims-schemas";
 import { action as scrimsAction } from "./scrims.server";
-
-// the action's fire-and-forget notification is not under test
-vi.mock("~/features/notifications/core/notify.server", () => ({
-	notify: () => Promise.resolve(),
-}));
 
 const requestScrim = wrappedAction<typeof scrimRequestFormSchema>({
 	action: scrimsAction,

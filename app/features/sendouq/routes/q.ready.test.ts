@@ -1,5 +1,5 @@
 import { subMinutes } from "date-fns";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -14,12 +14,6 @@ import type { readySchema } from "../q-action-schemas";
 import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
 import { pinClockInsideSeason } from "../tests/season-clock";
 import { action as rawReadyAction, loader as rawReadyLoader } from "./q.ready";
-
-vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
-	send: vi.fn(),
-	notifyStatusChanged: vi.fn(),
-	notifyNotificationsChanged: vi.fn(),
-}));
 
 const readyLoader = wrappedLoader<Awaited<ReturnType<typeof rawReadyLoader>>>({
 	loader: rawReadyLoader,

@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
@@ -8,11 +8,6 @@ import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import type { frontPageSchema } from "../q-action-schemas";
 import { sendouQInviteLink } from "../q-urls";
 import { action as rawFrontPageAction } from "./q";
-
-vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
-	send: vi.fn(),
-	notifyStatusChanged: vi.fn(),
-}));
 
 const frontPageAction = wrappedAction<typeof frontPageSchema>({
 	action: rawFrontPageAction,

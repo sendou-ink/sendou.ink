@@ -1,18 +1,11 @@
 import { add } from "date-fns";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as MapResultFactory from "~/db/seed/factories/MapResultFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import * as PlayerStatRepository from "./PlayerStatRepository.server";
-
-vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
-	send: vi.fn(),
-	notifyStatusChanged: vi.fn(),
-	notifyNotificationsChanged: vi.fn(),
-	notifyRoomsChangedByRoomIds: vi.fn(),
-}));
 
 const SEASON = Seasons.currentOrPrevious()!.nth;
 const DAY = add(Seasons.nthToDateRange(SEASON).starts, { hours: 1 });

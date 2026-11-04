@@ -28,7 +28,8 @@ vi.mock("./webPush.server", () => ({
 	},
 }));
 
-vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
+vi.mock("~/features/chat/ChatSystemMessage.server", async (importOriginal) => ({
+	...(await importOriginal()),
 	notifyNotificationsChanged: vi.fn(),
 }));
 

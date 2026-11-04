@@ -15,7 +15,8 @@ const { mockSeasonCurrent, mockSeasonPrevious } = vi.hoisted(() => ({
 	mockSeasonPrevious: vi.fn(),
 }));
 
-vi.mock("~/features/mmr/core/Seasons", () => ({
+vi.mock("~/features/mmr/core/Seasons", async (importOriginal) => ({
+	...(await importOriginal()),
 	current: mockSeasonCurrent,
 	previous: mockSeasonPrevious,
 }));

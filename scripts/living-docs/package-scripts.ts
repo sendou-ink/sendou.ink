@@ -47,8 +47,8 @@ const DESCRIPTIONS: Record<string, string> = {
 	"biome:check": "Biome lint and format check",
 	"biome:fix": "Biome lint and format, applying the safe fixes",
 	"biome:fix:unsafe": "Biome lint and format, applying the unsafe fixes too",
-	typecheck: "Type checks the app after generating the route types",
-	"typecheck:scripts": "Type checks scripts/",
+	typecheck:
+		"Type checks the app and scripts/ after generating the route types",
 	"typecheck:docs": "Type checks the docs site",
 	"test:unit:browser": "Runs the unit and browser (Vitest browser mode) tests",
 	"test:browser:ui": "Browser tests in Vitest's UI",
@@ -64,7 +64,7 @@ const DESCRIPTIONS: Record<string, string> = {
 	"check-unused-translations":
 		"Fails when an English translation key is used nowhere in app/, matched like the `i18n:usage` index",
 	checks:
-		"Everything CI checks: lint, unit and browser tests, translations, type checks and knip. A task isn't done until it passes",
+		"Everything CI checks: lint, unit and browser tests, translations, type checks, knip and the docs build, the read-only ones in parallel. A task isn't done until it passes",
 	"checks:scanner": "`checks` plus the scanner tests",
 	seed: "Rebuilds the dev dataset of db.sqlite3",
 	setup:
