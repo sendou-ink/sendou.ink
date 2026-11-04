@@ -48,7 +48,6 @@
 				"noJsxLeakedDollar": "error"
 			},
 			"correctness": {
-				"noInvalidGridAreas": "off",
 				"noUndeclaredVariables": "error",
 				"noUnusedInstantiation": "error",
 				"noNestedComponentDefinitions": "error",
