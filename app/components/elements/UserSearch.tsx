@@ -37,7 +37,7 @@ export function UserSearch({
 				type: "users",
 				limit: 6,
 			}),
-		parseResults: (data, query) => parseUserResults(data, query, initialUser),
+		parseResults: parseUserResults,
 		initialItem: initialUser,
 		initialSelectedId: initialUserId,
 		onChange,
@@ -60,13 +60,12 @@ export function UserSearch({
 function parseUserResults(
 	data: unknown,
 	query: string,
-	initialUser?: UserSearchResult,
 ): UserSearchResult[] | null {
 	const searchData = data as SearchLoaderData;
 	if (!searchData || searchData.query !== query) return null;
-	return searchData.results
-		.filter((result): result is UserSearchResult => result.type === "user")
-		.filter((user) => user.id !== initialUser?.id);
+	return searchData.results.filter(
+		(result): result is UserSearchResult => result.type === "user",
+	);
 }
 
 /** Loads the preselected id's user once; later changes come from picked results which carry the full user. */

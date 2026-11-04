@@ -13,7 +13,7 @@ interface UseEntitySearchArgs<TItem extends { id: number }> {
 	buildUrl: (query: string) => string;
 	/** Return `null` when the data does not (yet) correspond to the query, showing a placeholder. */
 	parseResults: (data: unknown, query: string) => TItem[] | null;
-	/** pinned to the top of the list (e.g. when editing) */
+	/** renders the selection before it is picked from the results (e.g. when editing) */
 	initialItem?: TItem;
 	/** preselected on mount even before its item is resolved */
 	initialSelectedId?: number;
@@ -26,6 +26,7 @@ export interface EntitySearch<TItem extends { id: number }> {
 	items: EntitySearchItem<TItem>[];
 	selectedKey: number | null;
 	onSelectionChange: (key: number) => void;
+	onOpenChange: (isOpen: boolean) => void;
 }
 
 /** State + data fetching for the entity search selects (`UserSearch` etc.); pass the result as `SearchSelect`'s `search` prop. */
@@ -40,6 +41,8 @@ export function useEntitySearch<TItem extends { id: number }>({
 	const [selectedKey, setSelectedKey] = React.useState<number | null>(
 		initialSelectedId ?? null,
 	);
+	const [pickedItem, setPickedItem] = React.useState<TItem | null>(null);
+	const [isOpen, setIsOpen] = React.useState(false);
 
 	const queryFetcher = useFetcher<unknown>();
 
@@ -49,7 +52,6 @@ export function useEntitySearch<TItem extends { id: number }>({
 		() => {
 			if (!query) return;
 			queryFetcher.load(buildUrl(query));
-			setSelectedKey(null);
 		},
 		SEARCH_DEBOUNCE_MS,
 		[query],
@@ -64,38 +66,23 @@ export function useEntitySearch<TItem extends { id: number }>({
 		}
 	}
 
-	const items = withInitialItem(
-		toEntitySearchItems(parseResults(queryFetcher.data, query)),
-		initialItem,
+	const selectedItem = [pickedItem, initialItem].find(
+		(item) => item && item.id === selectedKey,
 	);
 
-	const realItems = items.filter(
-		(item): item is TItem => typeof item.id === "number",
-	);
-
-	// clear the selection when its item is no longer among the results
-	const isSelectionValid =
-		!selectedKey ||
-		selectedKey === initialSelectedId ||
-		realItems.length === 0 ||
-		realItems.some((item) => item.id === selectedKey);
-	const effectiveSelectedKey = isSelectionValid ? selectedKey : null;
-
-	const prevEffectiveSelectedKey = React.useRef(effectiveSelectedKey);
-	React.useEffect(() => {
-		const selectionInvalidated =
-			!isSelectionValid && prevEffectiveSelectedKey.current !== null;
-		prevEffectiveSelectedKey.current = effectiveSelectedKey;
-		if (selectionInvalidated) {
-			setSelectedKey(null);
-			onChange?.(null);
-		}
-	});
+	// the closed select renders the selection from its item, the open list shows only results
+	const items: EntitySearchItem<TItem>[] =
+		!isOpen && selectedItem
+			? [selectedItem]
+			: toEntitySearchItems(parseResults(queryFetcher.data, query));
 
 	const onSelectionChange = (key: number) => {
+		const item = items.find(
+			(candidate): candidate is TItem => candidate.id === key,
+		);
 		setSelectedKey(key);
-		const item = realItems.find((candidate) => candidate.id === key);
 		if (item) {
+			setPickedItem(item);
 			onChange?.(item);
 		}
 	};
@@ -104,8 +91,9 @@ export function useEntitySearch<TItem extends { id: number }>({
 		filterText,
 		setFilterText,
 		items,
-		selectedKey: effectiveSelectedKey,
+		selectedKey,
 		onSelectionChange,
+		onOpenChange: setIsOpen,
 	};
 }
 
@@ -115,17 +103,4 @@ function toEntitySearchItems<TItem extends { id: number }>(
 	if (parsed === null) return [{ id: "PLACEHOLDER" }];
 	if (parsed.length === 0) return [{ id: "NO_RESULTS" }];
 	return parsed;
-}
-
-function withInitialItem<TItem extends { id: number }>(
-	items: EntitySearchItem<TItem>[],
-	initialItem?: TItem,
-): EntitySearchItem<TItem>[] {
-	if (!initialItem) return items;
-	return [
-		initialItem,
-		...items.filter(
-			(item) => typeof item.id !== "number" || item.id !== initialItem.id,
-		),
-	];
 }

@@ -80,6 +80,7 @@ export function SearchSelect<TItem extends { id: number; name: string }>({
 					search.onSelectionChange(Number(key));
 				}
 			}}
+			onOpenChange={search.onOpenChange}
 			aria-label={ariaLabel}
 			searchInputValue={search.filterText}
 			onSearchInputChange={search.setFilterText}

@@ -36,8 +36,7 @@ export function OrganizationSearch({
 				type: "organizations",
 				limit: 6,
 			}),
-		parseResults: (data, query) =>
-			parseOrganizationResults(data, query, initialOrganization),
+		parseResults: parseOrganizationResults,
 		initialItem: initialOrganization,
 		initialSelectedId: initialOrganizationId,
 		onChange,
@@ -59,16 +58,13 @@ export function OrganizationSearch({
 function parseOrganizationResults(
 	data: unknown,
 	query: string,
-	initialOrganization?: OrganizationSearchResult,
 ): OrganizationSearchResult[] | null {
 	const searchData = data as SearchLoaderData;
 	if (!searchData || searchData.query !== query) return null;
-	return searchData.results
-		.filter(
-			(result): result is OrganizationSearchResult =>
-				result.type === "organization",
-		)
-		.filter((org) => org.id !== initialOrganization?.id);
+	return searchData.results.filter(
+		(result): result is OrganizationSearchResult =>
+			result.type === "organization",
+	);
 }
 
 function useInitialOrganization(initialOrganizationId?: number) {
