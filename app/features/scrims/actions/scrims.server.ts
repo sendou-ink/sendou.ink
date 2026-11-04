@@ -22,7 +22,7 @@ import { assertUnreachable } from "~/utils/types";
 import { scrimsPage } from "~/utils/urls";
 import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
-import { SCRIM } from "../scrims-constants";
+import { SCRIM, SCRIMS_CHANNEL } from "../scrims-constants";
 import { scrimsActionSchema } from "../scrims-schemas";
 import { generateTimeOptions } from "../scrims-utils";
 import { usersListForPost, validatePickup } from "./scrims.new.server";
@@ -273,6 +273,8 @@ export const action = defineAction(
 				assertUnreachable(body);
 			}
 		}
+
+		ChatSystemMessage.send({ channel: SCRIMS_CHANNEL });
 
 		return null;
 	},

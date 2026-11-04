@@ -32,6 +32,7 @@ import {
 	availabilityRowStatus,
 	RegistrationAvailabilityPanel,
 } from "~/features/availability/components/RegistrationAvailabilityPanel";
+import { useTopicRevalidation } from "~/features/chat/chat-hooks";
 import type {
 	MemberRole,
 	MemberRoleType,
@@ -47,6 +48,7 @@ import {
 import { useTournament } from "~/features/tournament/tournament-context";
 import { tournamentJoinPage } from "~/features/tournament/tournament-urls";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentTeamChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { LUTI_ORGANIZATION_ID } from "~/features/tournament-organization/tournament-organization-constants";
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
@@ -107,6 +109,17 @@ export default function TournamentRegisterPage() {
 
 	const teamMemberOf = tournament.teamMemberOfByUser(user);
 	const teamOwned = tournament.ownedTeamByUser(user);
+
+	// own team's room only, refetching this page for every team's changes would be costly
+	useTopicRevalidation(
+		teamMemberOf
+			? tournamentTeamChannel({
+					tournamentId: tournament.ctx.id,
+					teamId: teamMemberOf.id,
+				})
+			: "",
+		Boolean(teamMemberOf) && !tournament.hasStarted,
+	);
 	const isRegularMemberOfATeam = teamMemberOf && !teamOwned;
 	const registrationClosedForNonParticipant =
 		!tournament.registrationOpen && !teamMemberOf;

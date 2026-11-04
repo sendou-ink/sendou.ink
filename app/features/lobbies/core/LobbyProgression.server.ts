@@ -13,7 +13,10 @@ import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
-import { SLOT_FILL_PRIORITY_MINUTES } from "../lobbies-constants";
+import {
+	LOBBIES_CHANNEL,
+	SLOT_FILL_PRIORITY_MINUTES,
+} from "../lobbies-constants";
 import { lobbyChannel } from "../lobbies-utils";
 import * as LobbyActivity from "./LobbyActivity.server";
 import * as LobbyMapList from "./LobbyMapList.server";
@@ -27,6 +30,17 @@ import * as WeaponRoll from "./WeaponRoll";
 
 /** Upper bound of transitions applied in one go, a backstop against a transition that doesn't settle. */
 const MAX_TRANSITIONS = 50;
+
+/** Transitions changing what the lobbies list shows: player counts, viewer statuses, host or the lobby ending. */
+const LISTING_TRANSITIONS = new Set<LobbyTransition.Transition["type"]>([
+	"END",
+	"TRANSFER_HOST",
+	"PROMOTE",
+	"START",
+	"START_SET",
+	"REMOVE",
+	"FILL_SLOTS",
+]);
 
 /** Timestamps are in seconds, so a moment after the deadline the check has surely run out. */
 const ADVANCE_AT_MARGIN_MS = 1_500;
@@ -42,17 +56,25 @@ const queues = new Map<number, Promise<void>>();
  *
  * @param hasChanged the caller already changed the lobby (e.g. reported a map), publish even if nothing else happens
  * @param affectedUserIds users the caller's change concerns who may not be participants anymore, e.g. who left
+ * @param listingChanged the caller's change shows on the lobbies list (e.g. a sign up), publish it there too
  */
 export function advance(
 	lobbyId: number,
 	{
 		hasChanged = false,
 		affectedUserIds = [],
-	}: { hasChanged?: boolean; affectedUserIds?: number[] } = {},
+		listingChanged = false,
+	}: {
+		hasChanged?: boolean;
+		affectedUserIds?: number[];
+		listingChanged?: boolean;
+	} = {},
 ): Promise<void> {
 	const previous = queues.get(lobbyId) ?? Promise.resolve();
 	const current = previous
-		.then(() => advanceNow({ lobbyId, hasChanged, affectedUserIds }))
+		.then(() =>
+			advanceNow({ lobbyId, hasChanged, affectedUserIds, listingChanged }),
+		)
 		.catch((error) => {
 			logger.error(`Advancing lobby ${lobbyId} failed`, error);
 		});
@@ -69,20 +91,24 @@ interface Effects {
 	/** Users whose chat rooms may have changed */
 	roomsChangedUserIds: Set<number>;
 	notifications: Array<Parameters<typeof notify>[0]>;
+	listingChanged: boolean;
 }
 
 async function advanceNow({
 	lobbyId,
 	hasChanged,
 	affectedUserIds,
+	listingChanged,
 }: {
 	lobbyId: number;
 	hasChanged: boolean;
 	affectedUserIds: number[];
+	listingChanged: boolean;
 }) {
 	const effects: Effects = {
 		roomsChangedUserIds: new Set(affectedUserIds),
 		notifications: [],
+		listingChanged,
 	};
 	let appliedCount = 0;
 	let participantUserIds = affectedUserIds;
@@ -103,6 +129,7 @@ async function advanceNow({
 		if (!transition) break;
 
 		await apply({ transition, loaded, effects });
+		if (LISTING_TRANSITIONS.has(transition.type)) effects.listingChanged = true;
 	}
 
 	if (appliedCount === MAX_TRANSITIONS) {
@@ -115,7 +142,10 @@ async function advanceNow({
 
 	await LobbyActivity.refresh();
 
-	ChatSystemMessage.send({ channel: lobbyChannel(lobbyId) });
+	ChatSystemMessage.send([
+		{ channel: lobbyChannel(lobbyId) },
+		...(effects.listingChanged ? [{ channel: LOBBIES_CHANNEL }] : []),
+	]);
 	ChatSystemMessage.notifyRoomsChanged([...effects.roomsChangedUserIds]);
 	ChatSystemMessage.notifyStatusChanged(participantUserIds);
 

@@ -1,14 +1,30 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { wrappedAction } from "~/utils/Test";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
-import type { scrimRequestFormSchema } from "../scrims-schemas";
+import { SCRIMS_CHANNEL } from "../scrims-constants";
+import type {
+	scrimRequestFormSchema,
+	scrimsActionSchema,
+} from "../scrims-schemas";
 import { action as scrimsAction } from "./scrims.server";
 
 const requestScrim = wrappedAction<typeof scrimRequestFormSchema>({
 	action: scrimsAction,
 	isJsonSubmission: true,
+});
+
+vi.mock("~/features/chat/ChatSystemMessage.server", async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import("~/features/chat/ChatSystemMessage.server")
+	>()),
+	send: vi.fn(),
+}));
+
+const postAction = wrappedAction<typeof scrimsActionSchema>({
+	action: scrimsAction,
 });
 
 const requestsForPost = async (scrimPostId: number) =>
@@ -48,5 +64,24 @@ describe("Scrim requests: pickup roster validation", () => {
 		// post creation rejects this via validatePickupFriends; the request path must too
 		expect(res?.fieldErrors?.from).toBeTruthy();
 		expect(await requestsForPost(post.id)).toHaveLength(0);
+	});
+});
+
+describe("Scrim posts: live scrims list", () => {
+	test("deleting a post refreshes the scrims list", async () => {
+		const [postOwner] = await UserFactory.createMany(1);
+		const post = await ScrimPostFactory.create({
+			users: [{ userId: postOwner.id, isOwner: 1 }],
+		});
+		vi.mocked(ChatSystemMessage.send).mockClear();
+
+		await postAction(
+			{ _action: "DELETE_POST", scrimPostId: post.id },
+			{ user: postOwner.id },
+		);
+
+		expect(ChatSystemMessage.send).toHaveBeenCalledWith({
+			channel: SCRIMS_CHANNEL,
+		});
 	});
 });

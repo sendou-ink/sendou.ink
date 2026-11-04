@@ -7,6 +7,10 @@ import {
 	notifyTournamentStatusChanged,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	tournamentChannel,
+	tournamentTeamChannel,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -95,7 +99,13 @@ export const action = defineAction(async ({ params, url }) => {
 
 	await notifyTournamentStatusChanged(tournamentId, [user.id]);
 
-	ChatSystemMessage.send({ channel: tournamentLFGChannel(tournamentId) });
+	ChatSystemMessage.send([
+		{ channel: tournamentLFGChannel(tournamentId) },
+		{ channel: tournamentChannel(tournamentId) },
+		{
+			channel: tournamentTeamChannel({ tournamentId, teamId: teamToJoin.id }),
+		},
+	]);
 
 	throw redirect(
 		tournament.registrationOpen

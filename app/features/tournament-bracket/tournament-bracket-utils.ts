@@ -11,6 +11,15 @@ import type { Standing } from "./core/Bracket";
 export const tournamentChannel = (tournamentId: number) =>
 	`${CHANNEL_PREFIX.tournament}${tournamentId}`;
 
+/** Channel of one team's registration (roster, check-in), so only its members' register pages refetch on a change to it. */
+export const tournamentTeamChannel = ({
+	tournamentId,
+	teamId,
+}: {
+	tournamentId: number;
+	teamId: number;
+}) => `${tournamentChannel(tournamentId)}__team__${teamId}`;
+
 /**
  * Channel of one bracket's (or, for types viewed one group at a time, one group's) match data.
  * Broadcasts only affecting that data go here instead of the tournament's channel so other viewers don't refetch.

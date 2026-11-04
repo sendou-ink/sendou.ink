@@ -13,6 +13,7 @@ import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { LocaleTime } from "~/components/LocaleTime";
 import { associationsPage } from "~/features/associations/associations-urls";
 import { useUser } from "~/features/auth/core/user";
+import { useTopicRevalidation } from "~/features/chat/chat-hooks";
 import { DualSelectFormField } from "~/form/fields/DualSelectFormField";
 import { TimeRangeFormField } from "~/form/fields/TimeRangeFormField";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
@@ -37,7 +38,7 @@ import { action } from "../actions/scrims.server";
 import { ScrimPostCard, ScrimRequestCard } from "../components/ScrimCard";
 import * as Scrim from "../core/Scrim";
 import { loader } from "../loaders/scrims.server";
-import { LUTI_DIVS } from "../scrims-constants";
+import { LUTI_DIVS, SCRIMS_CHANNEL } from "../scrims-constants";
 import { type newRequestSchema, scrimsActionSchema } from "../scrims-schemas";
 import { scrimsSearchParams } from "../scrims-search-params";
 import type { LutiDiv, ScrimFilters, ScrimPost } from "../scrims-types";
@@ -72,6 +73,7 @@ export default function ScrimsPage() {
 	const { t } = useTranslation(["calendar", "scrims"]);
 	const data = useLoaderData<typeof loader>();
 	const isHydrated = useHydrated();
+	useTopicRevalidation(SCRIMS_CHANNEL);
 	const [autoScrollToPostId] = useSearchParam(
 		scrimsSearchParams,
 		"pendingRequestPostId",

@@ -4,6 +4,7 @@ import type * as v from "valibot";
 import * as Visibility from "~/features/associations/core/Visibility";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -21,6 +22,7 @@ import {
 	RANGE_END_MINUTES,
 	type RangeEndOption,
 	SCRIM,
+	SCRIMS_CHANNEL,
 } from "../scrims-constants";
 import { type fromSchema, scrimsNewFormSchema } from "../scrims-schemas";
 import type { LutiDiv } from "../scrims-types";
@@ -75,6 +77,8 @@ export const action = defineAction(
 		if (body.from.mode === "PICKUP") {
 			await ScrimPickupRosterRepository.upsertOwn(body.from.users);
 		}
+
+		ChatSystemMessage.send({ channel: SCRIMS_CHANNEL });
 
 		return redirect(scrimsPage());
 	},

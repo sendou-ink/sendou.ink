@@ -11,3 +11,7 @@ More pages now update live without needing a refresh
 - Groups that time out drop off the SendouQ looking page right away
 - The other team's scrim page shows a canceled scrim as canceled
 - Reported weapons and scanned scoreboards show up for everyone on SendouQ, tournament match and lobby pages
+- The scrims page shows new posts and requests, accepted requests and cancellations as they happen
+- The tournament admin teams page updates as teams register, change their rosters and check in
+- Teammates on a tournament's register page see roster changes and check-ins without refreshing
+- The lobbies list shows new lobbies and player counts as they change

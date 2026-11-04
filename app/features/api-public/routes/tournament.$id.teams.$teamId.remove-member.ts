@@ -8,6 +8,10 @@ import {
 	requireTournamentOrganizer,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	tournamentChannel,
+	tournamentTeamChannel,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
 import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
@@ -71,7 +75,11 @@ export const action = defineAction(
 
 			clearTournamentDataCache(tournamentId);
 
-			ChatSystemMessage.send({ channel: tournamentLFGChannel(tournamentId) });
+			ChatSystemMessage.send([
+				{ channel: tournamentLFGChannel(tournamentId) },
+				{ channel: tournamentChannel(tournamentId) },
+				{ channel: tournamentTeamChannel({ tournamentId, teamId: team.id }) },
+			]);
 
 			return null;
 		}),

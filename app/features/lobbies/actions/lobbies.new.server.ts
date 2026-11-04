@@ -40,7 +40,10 @@ export const action = defineAction(
 			visibility: visibilityFromForm(body),
 		});
 
-		await LobbyProgression.advance(lobbyId, { hasChanged: true });
+		await LobbyProgression.advance(lobbyId, {
+			hasChanged: true,
+			listingChanged: true,
+		});
 
 		return redirect(lobbyPage(lobbyId));
 	},

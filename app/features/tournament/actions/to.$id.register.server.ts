@@ -17,7 +17,10 @@ import {
 	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
+import {
+	tournamentChannel,
+	tournamentTeamChannel,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -52,6 +55,7 @@ export const action = defineAction(
 			{ for: "action" },
 		);
 		const ownTeam = tournament.ownedTeamByUser(user);
+		const teamBeforeAction = tournament.teamMemberOfByUser(user);
 
 		errorToastIfFalsy(
 			!tournament.hasStarted,
@@ -60,7 +64,6 @@ export const action = defineAction(
 
 		const ownTeamCheckedIn = Boolean(ownTeam && ownTeam.checkIns.length > 0);
 		let statusChangedUserIds: number[] = [];
-		let emitTournamentUpdate = false;
 		let successMessage: string | null = null;
 
 		switch (data._action) {
@@ -297,7 +300,6 @@ export const action = defineAction(
 				});
 
 				statusChangedUserIds = teamMemberOf.memberUserIds;
-				emitTournamentUpdate = true;
 				break;
 			}
 			case "ADD_PLAYER": {
@@ -467,8 +469,17 @@ export const action = defineAction(
 
 		await notifyTournamentStatusChanged(tournamentId, statusChangedUserIds);
 
-		if (emitTournamentUpdate) {
+		// every other action changes a team as listed on the admin teams page
+		if (data._action !== "UPDATE_MAP_POOL") {
 			ChatSystemMessage.send({ channel: tournamentChannel(tournamentId) });
+		}
+		if (teamBeforeAction) {
+			ChatSystemMessage.send({
+				channel: tournamentTeamChannel({
+					tournamentId,
+					teamId: teamBeforeAction.id,
+				}),
+			});
 		}
 		// every other action changes a roster or a team shown in the LFG pool
 		if (data._action !== "UPDATE_MAP_POOL" && data._action !== "CHECK_IN") {

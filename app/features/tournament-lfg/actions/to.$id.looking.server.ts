@@ -10,6 +10,10 @@ import {
 	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	tournamentChannel,
+	tournamentTeamChannel,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
@@ -228,6 +232,19 @@ export const action = defineAction(
 				});
 
 				broadcastLookingUpdate();
+
+				// a registered team's roster changed: the admin teams page and its members' register pages
+				const registeredGroups = [ownGroup, theirGroup].filter(
+					(group) => !group.isPlaceholder,
+				);
+				if (registeredGroups.length > 0) {
+					broadcasts.push({ channel: tournamentChannel(tournamentId) });
+				}
+				for (const group of registeredGroups) {
+					broadcasts.push({
+						channel: tournamentTeamChannel({ tournamentId, teamId: group.id }),
+					});
+				}
 				break;
 			}
 			case "GIVE_MANAGER": {

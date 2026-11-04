@@ -1,5 +1,8 @@
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 
+/** Event bus channel that every user on the lobbies list subscribes to. */
+export const LOBBIES_CHANNEL = "lobbies";
+
 export const LOBBY_LABELS = ["CASUAL", "FOCUSED", "TRYHARD"] as const;
 export type LobbyLabel = (typeof LOBBY_LABELS)[number];
 

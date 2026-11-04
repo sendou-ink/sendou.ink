@@ -15,7 +15,10 @@ import {
 	requireTournamentOrganizer,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
+import {
+	tournamentChannel,
+	tournamentTeamChannel,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
 import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import { tournamentMatchChannel } from "~/features/tournament-match/tournament-match-utils";
 import { defineAction } from "~/form/define-action.server";
@@ -186,6 +189,9 @@ export const action = defineAction(
 		if (emitTournamentUpdate) {
 			ChatSystemMessage.send({ channel: tournamentChannel(tournamentId) });
 		}
+		ChatSystemMessage.send({
+			channel: tournamentTeamChannel({ tournamentId, teamId: body.teamId }),
+		});
 		if (emitLfgUpdate) {
 			ChatSystemMessage.send({ channel: tournamentLFGChannel(tournamentId) });
 		}

@@ -8,7 +8,10 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as LobbyActivity from "~/features/lobbies/core/LobbyActivity.server";
-import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
+import {
+	tournamentChannel,
+	tournamentTeamChannel,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
 import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
@@ -72,13 +75,14 @@ const scenario = async ({
 		requireInGameNames,
 	});
 
-	await TournamentTeamFactory.create({
+	const team = await TournamentTeamFactory.create({
 		tournamentId: tournament.id,
 		memberUserIds: [captain.id, ...teammates.map((user) => user.id)],
 	});
 
 	return {
 		tournamentId: tournament.id,
+		teamId: team.id,
 		addFriend: () =>
 			register(
 				{ _action: "ADD_PLAYER", userId: friend.id },
@@ -98,15 +102,21 @@ describe("Tournament registration ADD_PLAYER", () => {
 		expect(await memberCountOfOnlyTeam(tournamentId)).toBe(MAX_ROSTER_SIZE);
 	});
 
-	test("refreshes the tournament's LFG page", async () => {
+	test("refreshes the LFG page, the admin teams page and the team's register page", async () => {
 		vi.mocked(ChatSystemMessage.send).mockClear();
-		const { tournamentId, addFriend } = await scenario({ rosterSize: 1 });
+		const { tournamentId, teamId, addFriend } = await scenario({
+			rosterSize: 1,
+		});
 
 		await addFriend();
 
-		expect(ChatSystemMessage.send).toHaveBeenCalledWith({
-			channel: tournamentLFGChannel(tournamentId),
-		});
+		for (const channel of [
+			tournamentLFGChannel(tournamentId),
+			tournamentChannel(tournamentId),
+			tournamentTeamChannel({ tournamentId, teamId }),
+		]) {
+			expect(ChatSystemMessage.send).toHaveBeenCalledWith({ channel });
+		}
 	});
 
 	test("does not add a player to a team already at max capacity", async () => {

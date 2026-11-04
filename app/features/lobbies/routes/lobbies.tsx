@@ -10,13 +10,14 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { Main } from "~/components/Main";
+import { useTopicRevalidation } from "~/features/chat/chat-hooks";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { lobbiesPage, navIconUrl } from "~/utils/urls";
 import { LobbyCard } from "../components/LobbyCard";
 import { loader } from "../loaders/lobbies.server";
-import type { LobbyIndexTab } from "../lobbies-constants";
+import { LOBBIES_CHANNEL, type LobbyIndexTab } from "../lobbies-constants";
 import { lobbiesSearchParams } from "../lobbies-search-params";
 import styles from "./lobbies.module.css";
 
@@ -45,6 +46,7 @@ export default function LobbiesPage() {
 	const { t } = useTranslation(["lobbies"]);
 	const data = useLoaderData<typeof loader>();
 	const [tabFromUrl, setTab] = useSearchParam(lobbiesSearchParams, "tab");
+	useTopicRevalidation(LOBBIES_CHANNEL);
 
 	const tabs = [
 		{

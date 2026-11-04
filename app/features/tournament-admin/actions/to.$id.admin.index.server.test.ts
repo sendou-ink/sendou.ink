@@ -4,7 +4,10 @@ import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactor
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
-import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
+import {
+	tournamentChannel,
+	tournamentTeamChannel,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
 import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import type { adminTeamsActionSchema } from "../tournament-admin-schemas";
@@ -80,7 +83,7 @@ describe("Admin teams action CHECK_IN and CHECK_OUT", () => {
 	});
 
 	test.each(["CHECK_IN", "CHECK_OUT"] as const)(
-		"%s refreshes the tournament's live viewers",
+		"%s refreshes the tournament's live viewers and the team's register page",
 		async (_action) => {
 			const tournament = await TournamentFactory.create({
 				authorId: organizerId(),
@@ -98,6 +101,12 @@ describe("Admin teams action CHECK_IN and CHECK_OUT", () => {
 
 			expect(ChatSystemMessage.send).toHaveBeenCalledWith({
 				channel: tournamentChannel(tournament.id),
+			});
+			expect(ChatSystemMessage.send).toHaveBeenCalledWith({
+				channel: tournamentTeamChannel({
+					tournamentId: tournament.id,
+					teamId: team.id,
+				}),
 			});
 		},
 	);

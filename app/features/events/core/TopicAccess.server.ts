@@ -1,10 +1,16 @@
 import * as R from "remeda";
 import * as ChatRoomResolver from "~/features/chat/ChatRoomResolver.server";
+import { LOBBIES_CHANNEL } from "~/features/lobbies/lobbies-constants";
+import { SCRIMS_CHANNEL } from "~/features/scrims/scrims-constants";
 import { SENDOUQ_LOOKING_CHANNEL } from "~/features/sendouq/q-constants";
 import { hasPermission } from "~/modules/permissions/utils";
 import { CHANNEL_PREFIX } from "../events-types";
 
-const PUBLIC_TOPICS = new Set<string>([SENDOUQ_LOOKING_CHANNEL]);
+const PUBLIC_TOPICS = new Set<string>([
+	SENDOUQ_LOOKING_CHANNEL,
+	SCRIMS_CHANNEL,
+	LOBBIES_CHANNEL,
+]);
 const PUBLIC_TOPIC_PREFIXES = [
 	CHANNEL_PREFIX.tournament,
 	CHANNEL_PREFIX.tournamentMatch,

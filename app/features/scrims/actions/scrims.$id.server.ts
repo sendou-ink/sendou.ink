@@ -19,6 +19,7 @@ import * as ScrimMapByMap from "../core/ScrimMapByMap";
 import * as ScrimMapListRepository from "../ScrimMapListRepository.server";
 import * as ScrimMapRepository from "../ScrimMapRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
+import { SCRIMS_CHANNEL } from "../scrims-constants";
 import { scrimIdActionSchema } from "../scrims-schemas";
 
 export const action = defineAction(
@@ -48,6 +49,7 @@ export const action = defineAction(
 					ChatSystemMessage.notifyRoomsChangedByRoomIds([post.chatRoomId]);
 				}
 				broadcastRevalidate(post);
+				ChatSystemMessage.send({ channel: SCRIMS_CHANNEL });
 
 				const acceptedRequest = post.requests.find((r) => r.isAccepted);
 				if (acceptedRequest) {

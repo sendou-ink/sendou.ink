@@ -1,3 +1,4 @@
+import type * as v from "valibot";
 import { visibilityIssues } from "~/features/associations/associations-schemas";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -29,6 +30,21 @@ import {
 } from "../lobbies-schemas";
 import { lobbySearchParams } from "../lobbies-search-params";
 import { visibilityFromForm } from "../lobbies-utils";
+
+/** Actions changing what the lobbies list shows, see `LobbyCard`. */
+const LISTING_ACTIONS = new Set<
+	v.InferOutput<typeof lobbyActionSchema>["_action"]
+>([
+	"SIGN_UP",
+	"CHECK_IN",
+	"CONFIRM_READY",
+	"LEAVE",
+	"KICK",
+	"MAKE_HOST",
+	"UPDATE_SETTINGS",
+	"UPDATE_VISIBILITY",
+	"END_LOBBY",
+]);
 
 export const action = defineAction(
 	{ params: idObject, body: lobbyActionSchema },
@@ -411,6 +427,7 @@ export const action = defineAction(
 
 		await LobbyProgression.advance(id, {
 			hasChanged: true,
+			listingChanged: LISTING_ACTIONS.has(body._action),
 			// joining or leaving the lobby changes their chat rooms, ending it makes everyone's inactive
 			affectedUserIds:
 				body._action === "KICK"

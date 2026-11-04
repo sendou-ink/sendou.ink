@@ -1,9 +1,10 @@
 import { addHours, subMinutes } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as AssociationFactory from "~/db/seed/factories/AssociationFactory";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { withUserId, wrappedAction } from "~/utils/Test";
@@ -11,9 +12,17 @@ import * as LobbyActivity from "../core/LobbyActivity.server";
 import * as LobbySet from "../core/LobbySet";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
+import { LOBBIES_CHANNEL } from "../lobbies-constants";
 import type { lobbyActionSchema } from "../lobbies-schemas";
 import { lobbySearchParams } from "../lobbies-search-params";
 import { action } from "./lobbies.$id.server";
+
+vi.mock("~/features/chat/ChatSystemMessage.server", async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import("~/features/chat/ChatSystemMessage.server")
+	>()),
+	send: vi.fn(),
+}));
 
 const lobbyAction = wrappedAction<typeof lobbyActionSchema>({ action });
 const lobbyFormAction = wrappedAction<typeof lobbyActionSchema>({
@@ -514,5 +523,41 @@ describe("lobby action", () => {
 			{ user: hostId(), params: { id: String(lobby.id) } },
 		);
 		expect(await shareKeyOf()).not.toBe(oldShareKey);
+	});
+});
+
+describe("lobby action lobbies list broadcast", () => {
+	beforeEach(async () => {
+		await users.create(10);
+	});
+
+	const sentChannels = () =>
+		vi
+			.mocked(ChatSystemMessage.send)
+			.mock.calls.flat(2)
+			.map((broadcast) => broadcast.channel);
+
+	test("signing up refreshes the lobbies list", async () => {
+		const lobby = await LobbyFactory.create({ hostUserId: hostId() });
+		vi.mocked(ChatSystemMessage.send).mockClear();
+
+		await lobbyAction(
+			{ _action: "SIGN_UP" },
+			{ user: visitorId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(sentChannels()).toContain(LOBBIES_CHANNEL);
+	});
+
+	test("resetting the invite link leaves the lobbies list alone", async () => {
+		const lobby = await LobbyFactory.create({ hostUserId: hostId() });
+		vi.mocked(ChatSystemMessage.send).mockClear();
+
+		await lobbyAction(
+			{ _action: "RESET_SHARE_KEY" },
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(sentChannels()).not.toContain(LOBBIES_CHANNEL);
 	});
 });

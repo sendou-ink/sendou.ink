@@ -26,6 +26,7 @@ import {
 	type SortState,
 } from "~/components/SortableTableHeader";
 import { Table } from "~/components/Table";
+import { useTopicRevalidation } from "~/features/chat/chat-hooks";
 import { DroppedOutPopover } from "~/features/tournament/components/DroppedOutPopover";
 import { useTournament } from "~/features/tournament/tournament-context";
 import * as CheckIn from "~/features/tournament-bracket/core/CheckIn";
@@ -34,6 +35,7 @@ import type {
 	Tournament,
 } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { addSubForUserFormSchema } from "~/features/tournament-lfg/tournament-lfg-schemas";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
@@ -64,6 +66,12 @@ export default function TournamentAdminTeamsPage() {
 	const [search, setSearch] = React.useState("");
 	const [sort, setSort] = React.useState<SortState<SortKey>>(null);
 	const [exportOpen, setExportOpen] = React.useState(false);
+
+	// check-ins and registrations, after the start the room fills with bracket changes
+	useTopicRevalidation(
+		tournamentChannel(tournament.ctx.id),
+		!tournament.hasStarted,
+	);
 
 	const maxRosterSize = Math.max(
 		1,

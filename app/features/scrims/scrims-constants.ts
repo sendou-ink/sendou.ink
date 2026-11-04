@@ -25,6 +25,9 @@ export const RANGE_END_MINUTES = {
 
 export type RangeEndOption = keyof typeof RANGE_END_MINUTES;
 
+/** Event bus channel that every user on the scrims list subscribes to. */
+export const SCRIMS_CHANNEL = "scrims";
+
 export const SCRIM = {
 	MAX_PICKUP_SIZE_EXCLUDING_OWNER: 5,
 	MAX_SAVED_PICKUP_ROSTERS: 5,
