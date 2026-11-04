@@ -16,14 +16,12 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
-import { type ClipWindow, scoreWindows } from "./clips/scoring";
+import type { ClipCriteria } from "./clips/criteria";
+import type { ClipWindow } from "./clips/scoring";
 import type { ScannerMatch } from "./scanner-match";
 
 export const MONTAGE_MANIFEST_FILE = "tournament.json";
-/** the last one also covers longer streaks */
-export const MONTAGE_KILL_COUNTS = [2, 3, 4, 5] as const;
-export const MONTAGE_MAX_SECONDS_OPTIONS = [20, 30, 45, 60, 90] as const;
-export const DEFAULT_MONTAGE_CRITERIA: MontageCriteria = {
+export const DEFAULT_MONTAGE_CRITERIA: ClipCriteria = {
 	minKills: 3,
 	maxSecondsByKills: { 2: 20, 3: 30, 4: 45, 5: 60 },
 };
@@ -82,13 +80,6 @@ export interface MontageManifestVod {
 	teams: Array<Pick<MontageManifestTeam, "id" | "name" | "logo">>;
 	/** the streamer, when they have a sendou.ink account */
 	pov: { name: string; profilePath: string; avatar: string | null } | null;
-}
-
-/** What makes a streak a clip candidate. */
-export interface MontageCriteria {
-	minKills: number;
-	/** the clip's length cap before fast-forwarding, by splat count (`MONTAGE_KILL_COUNTS`) */
-	maxSecondsByKills: Record<number, number>;
 }
 
 /** A scanned game, as much of it as clip scoring needs. */
@@ -203,53 +194,6 @@ export function playbackDuration(segments: readonly PlaybackSegment[]): number {
 	return segments.reduce(
 		(sum, segment) => sum + (segment.to - segment.from) / segment.speed,
 		0,
-	);
-}
-
-/**
- * The game's clip candidates, chronological: streaks of at least `minKills`
- * splats that fit the length cap of their splat count. Where a streak
- * qualifies in several ways (5 splats in 50 s, or its first 3 in 25 s) the
- * best-scoring reading wins and no splat is in two candidates.
- */
-export function montageWindows(
-	game: Pick<MontageGame, "kills" | "deaths">,
-	criteria: MontageCriteria,
-): ClipWindow[] {
-	const windows = MONTAGE_KILL_COUNTS.filter(
-		(kills) => kills >= criteria.minKills,
-	)
-		.flatMap((kills) =>
-			scoreWindows(game, game.deaths, {
-				minKills: kills,
-				maxSeconds: maxSecondsFor(criteria, kills),
-			}),
-		)
-		.filter(
-			(window) =>
-				window.end - window.start <= maxSecondsFor(criteria, window.kills),
-		)
-		.sort((a, b) => b.score - a.score);
-
-	const kept: ClipWindow[] = [];
-	for (const window of windows) {
-		const sharesKill = kept.some((other) =>
-			other.killTimes.some((t) => window.killTimes.includes(t)),
-		);
-		if (!sharesKill) kept.push(window);
-	}
-	return kept.sort((a, b) => a.start - b.start);
-}
-
-/** The length cap for a streak of `kills` splats. */
-export function maxSecondsFor(
-	criteria: MontageCriteria,
-	kills: number,
-): number {
-	const counted = Math.min(kills, MONTAGE_KILL_COUNTS.at(-1)!);
-	return (
-		criteria.maxSecondsByKills[counted] ??
-		DEFAULT_MONTAGE_CRITERIA.maxSecondsByKills[counted]!
 	);
 }
 

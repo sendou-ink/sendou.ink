@@ -125,8 +125,8 @@ is the pure, swappable scorer: only the POV player's own kills feed it
 (`ScannerMatch.kills`, off the kill feed); a streak is consecutive kills with
 no POV death between them and no pause over `STREAK_MAX_GAP_S`, cut where the
 clip would outgrow `MAX_CLIP_SECONDS`; `MIN_KILLS` (4) makes it a window,
-scored `kills² + kills / span`. Both controllers run the same
-`scoreWindows(match, deaths)` → cut → `store/clips.ts` path, over the
+scored `kills² + kills / span`. Both controllers run windows → cut →
+`store/clips.ts` over the
 session's matches plus the stretches no scoreboard or minimap backs
 (`buildScannerMatches(…, { unbacked: true })`, `LiveSession.clipMatches`):
 a streak must not wait for a results screen that may never be read, and live
@@ -178,6 +178,16 @@ the ring would have dropped it by then:
   the window start are copied into a fresh MP4 (video + audio, no
   re-encode, so a minute of 1080p takes well under a second). mediabunny's
   `Conversion` with `trim` always transcodes; keep using the packet copy.
+  A file's windows come from the clip criteria picked under its header
+  (`VodClipsPanel`, `criteriaWindows` in `core/clips/criteria.ts`: min
+  splats and a length cap per splat count, kept in localStorage, the
+  defaults reading like the live scorer's 4 splats within a minute) rather
+  than the live `clipMinKills` setting, and live outside the scan
+  (`components/vod-clip-cutter.ts`): a criteria change re-reads the saved
+  scan, keeps the clips whose run of kills is still wanted (keyed by last
+  kill and count), deletes the rest and cuts the missing ones, the best
+  `MAX_VOD_CLIPS` (20) of them. A scan from an earlier visit kept no clips,
+  so the panel asks for its file to cut them.
 - **Encoder**: hardware first, then software — Chromium's
   `prefer-hardware` never falls back by itself (Linux, VMs, older GPUs). A
   hardware encoder can also fail only once frames flow (NVENC sessions taken
@@ -262,7 +272,7 @@ opens that folder through the File System Access API's directory picker
 (Chrome). `components/montage.ts` scans every VoD without games yet through
 `startVodScan` (`clips: false`: saved like any file scan, so they also show
 in the landing's list) and lists every streak meeting the criteria as a
-candidate, best score first (`montageWindows`): min splats (default 3) and
+candidate, best score first (`criteriaWindows`, shared with a VoD's clips): min splats (default 3) and
 a length cap per splat count before fast-forwarding (defaults 2: 20 s,
 3: 30 s, 4: 45 s, 5+: 60 s), picked on the page and kept in localStorage.
 Candidates are grouped by the POV player's base weapon (read off the

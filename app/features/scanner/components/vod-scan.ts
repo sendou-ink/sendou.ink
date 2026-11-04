@@ -5,20 +5,13 @@
  * demuxes, decodes, schedules and analyzes its slice itself
  * (worker/analyzer.worker.ts); the seek fallback drives a <video> element
  * through a single worker. The finished scan persists under its file name
- * (store/vods.ts), then the same path a live session takes runs: clips of
- * the scored windows are cut off the file. Unlike a live session, a VoD's
+ * (store/vods.ts), then its clips are cut off the file (vod-clip-cutter.ts). Unlike a live session, a VoD's
  * matches never upload: without a wall clock they can't be told apart from
  * someone else's games. A scan is all or nothing: leaving the page cancels it and nothing is saved.
  */
 import { useSyncExternalStore } from "react";
 import * as R from "remeda";
-import { extractVodClip, vodFrameThumbnail } from "../capture/vod-clips";
 import { openSeekScan, probeWebCodecs } from "../capture/vod-frames";
-import {
-	MAX_CLIP_SECONDS,
-	povDeathTimes,
-	scoreWindows,
-} from "../core/clips/scoring";
 import {
 	mergeScanTelemetry,
 	type ScanTelemetry,
@@ -31,7 +24,6 @@ import {
 } from "../core/match-builder";
 import { sessionSummary } from "../core/sessions";
 import { TimelineBuilder } from "../core/timeline/index";
-import { deleteVodClips, saveClip } from "../store/clips";
 import {
 	loadVodEventFrame,
 	loadVodEvents,
@@ -44,12 +36,11 @@ import {
 	type DoneInfo,
 	defaultScanWorkerCount,
 } from "../worker/client";
-import { refreshClips } from "./clips-feed";
 import { describeError } from "./errors";
 import type { FixtureData } from "./fixture-export";
 import type { ScanEvent } from "./session-data";
 import { readSettings } from "./settings";
-import { holdVisitLock, isThisVisitsVodClip, VISIT_ID } from "./visit";
+import { cutVodClips } from "./vod-clip-cutter";
 import { refreshVods } from "./vods-feed";
 
 /** `video/*` alone hides containers the OS doesn't know as video (e.g. .mkv on macOS) */
@@ -63,9 +54,6 @@ const SEEK_ACTIVE_STRIDE_S = 0.25;
  */
 const SEEK_CALM_STRIDE_S = 2.5;
 
-/** A file's clips: the best windows over the whole scan, as many as fit history's cap. */
-const MAX_VOD_CLIPS = 20;
-
 const UI_UPDATE_INTERVAL_MS = 250;
 /**
  * Each publish re-renders every match card (expanded ones draw whole charts),
@@ -74,10 +62,6 @@ const UI_UPDATE_INTERVAL_MS = 250;
 const EVENTS_PUBLISH_INTERVAL_MS = 1000;
 
 type VodScanStatus = "idle" | "scanning" | "done" | "error";
-
-type ClipsWork =
-	| { state: "cutting"; done: number; total: number }
-	| { state: "done"; saved: number; error: string | null };
 
 type VodScanMode = "active" | "skim";
 
@@ -107,7 +91,6 @@ export interface VodScanSnapshot {
 	error: string | null;
 	/** what the scan found, chronological; reloaded from the store once saved */
 	events: ScanEvent[];
-	clipsWork: ClipsWork | null;
 	/** seconds from the scan's start until it was saved; null until done */
 	tookSeconds: number | null;
 }
@@ -123,7 +106,6 @@ const IDLE: VodScanSnapshot = {
 	status: "idle",
 	error: null,
 	events: [],
-	clipsWork: null,
 	tookSeconds: null,
 };
 
@@ -523,7 +505,7 @@ export async function startVodScan(
 			tookSeconds: (performance.now() - scanStartedAt) / 1000,
 		});
 		void refreshVods();
-		if (clips) await cutClips(file, events, update);
+		if (clips) await cutVodClips({ name: file.name, file, events });
 	}
 }
 
@@ -531,89 +513,6 @@ export async function startVodScan(
 function withoutInvalidObjectives(events: ScanEvent[]): ScanEvent[] {
 	const invalid = new Set(invalidObjectiveEvents(buildScannerMatches(events)));
 	return invalid.size > 0 ? events.filter((e) => !invalid.has(e)) : events;
-}
-
-/** Clips the file's best scored windows, replacing any earlier clips of the same file. */
-async function cutClips(
-	file: File,
-	events: ScanEvent[],
-	update: (patch: Partial<VodScanSnapshot>) => void,
-): Promise<void> {
-	const windows = buildScannerMatches(events, undefined, { unbacked: true })
-		.flatMap((built) => {
-			return scoreWindows(built.match, povDeathTimes(built.sources), {
-				minKills: readSettings().clipMinKills,
-			}).map((window) => ({
-				window,
-				built,
-			}));
-		})
-		.sort((a, b) => b.window.score - a.window.score)
-		.slice(0, MAX_VOD_CLIPS);
-	// held before the first save, so another tab's page load never takes these for abandoned
-	await holdVisitLock();
-	await deleteVodClips((clip) => isThisVisitsVodClip(clip, file.name)).catch(
-		() => {},
-	);
-	if (windows.length === 0) {
-		await refreshClips();
-		return;
-	}
-	update({ clipsWork: { state: "cutting", done: 0, total: windows.length } });
-	let saved = 0;
-	let skipped = 0;
-	let error: string | null = null;
-	// best first: one clip failing (or not fitting) still leaves room to try the rest
-	for (const [index, { window, built }] of windows.entries()) {
-		try {
-			const clip = await extractVodClip(file, {
-				start: window.start,
-				end: window.end,
-				maxSeconds: MAX_CLIP_SECONDS,
-			});
-			const thumbnail = (await vodFrameThumbnail(file, window.t)) ?? undefined;
-			const stored = await saveClip(
-				{
-					createdAt: Date.now(),
-					bucket: "vod",
-					source: { kind: "vod", name: file.name, visit: VISIT_ID },
-					start: clip.start,
-					end: clip.end,
-					t: window.t,
-					time: window.time,
-					score: window.score,
-					kills: window.kills,
-					mode: built.match.mode,
-					stage: built.match.stage,
-					hasAudio: clip.hasAudio,
-					thumbnail,
-				},
-				clip.blob,
-			);
-			if (stored) {
-				saved++;
-				await refreshClips();
-			} else {
-				skipped++;
-			}
-		} catch (clipError) {
-			error ??= describeError(clipError);
-		}
-		update({
-			clipsWork: { state: "cutting", done: index + 1, total: windows.length },
-		});
-	}
-	update({
-		clipsWork: {
-			state: "done",
-			saved,
-			error:
-				error ??
-				(skipped > 0
-					? `${skipped} ${skipped === 1 ? "clip" : "clips"} left out, storage is full`
-					: null),
-		},
-	});
 }
 
 function toScanEvent(event: StoredVodEvent): ScanEvent {

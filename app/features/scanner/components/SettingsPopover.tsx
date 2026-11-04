@@ -91,7 +91,9 @@ export function SettingsPopover({
 							: "Use the graphics card (not supported by this browser)"}
 					</SendouSwitch>
 					<div className={styles.row}>
-						<span className={styles.rowLabel}>Clip on splats in a row</span>
+						<span className={styles.rowLabel}>
+							Clip live games on splats in a row
+						</span>
 						<SendouChipRadioGroup>
 							{CLIP_MIN_KILLS_OPTIONS.map((n) => (
 								<SendouChipRadio

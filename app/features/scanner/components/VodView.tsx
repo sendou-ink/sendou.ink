@@ -3,8 +3,8 @@
  * a progress bar where the LIVE pill is, a frame preview where the capture
  * preview is, and the same cards filling in underneath as games are found.
  * Leaving the scanner page cancels a running scan; nothing of it is saved. A finished scan (this visit's, from
- * vod-scan.ts, or a saved one from the store) shows its numbers, Add to VoDs
- * and Delete.
+ * vod-scan.ts, or a saved one from the store) shows its numbers, its clip
+ * criteria (VodClipsPanel), Add to VoDs and Delete.
  */
 import { GraduationCap, Trash2, Video, VolumeX } from "lucide-react";
 import { useState } from "react";
@@ -32,9 +32,11 @@ import { SessionView } from "./SessionView";
 import { sendouUpload } from "./sendou-upload";
 import type { ScanEvent } from "./session-data";
 import { useDebug } from "./use-debug";
+import { VodClipsPanel } from "./VodClipsPanel";
 import { VodMusicDialog } from "./VodMusicDialog";
 import styles from "./VodView.module.css";
 import { isThisVisitsVodClip } from "./visit";
+import { cancelVodClips } from "./vod-clip-cutter";
 import { cachedBuild, useStoredVod } from "./vod-data";
 import {
 	startVodScan,
@@ -99,11 +101,6 @@ function ScanVodView({ name }: { name: string }) {
 								<span>Scanned in {Math.round(scan.tookSeconds)}s</span>
 							</>
 						) : null}
-						{scan.clipsWork?.state === "cutting"
-							? `Saving clip ${Math.min(scan.clipsWork.done + 1, scan.clipsWork.total)}/${scan.clipsWork.total}…`
-							: scan.clipsWork?.state === "done" && scan.clipsWork.error
-								? `Clips: ${scan.clipsWork.error}`
-								: null}
 						{scan.error ? (
 							<span className={styles.error}>{scan.error}</span>
 						) : null}
@@ -167,6 +164,7 @@ function VodSessionView({
 	const [isRemovingMusic, setIsRemovingMusic] = useState(false);
 
 	const remove = async () => {
+		await cancelVodClips();
 		await deleteVod(name);
 		await deleteVodClips((clip) => isThisVisitsVodClip(clip, name));
 		await Promise.all([refreshVods(), refreshClips()]);
@@ -280,6 +278,9 @@ function VodSessionView({
 			)}
 		>
 			{status}
+			{!running && events.length > 0 ? (
+				<VodClipsPanel key={name} name={name} events={events} />
+			) : null}
 			{telemetry}
 			{isRemovingMusic ? (
 				<VodMusicDialog name={name} onClose={() => setIsRemovingMusic(false)} />

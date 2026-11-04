@@ -1,0 +1,37 @@
+.panel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.status {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2) var(--s-3);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.error {
+	color: var(--color-error);
+}
+
+.fileButton {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	height: var(--field-size-sm);
+	padding: 0 var(--field-padding);
+	border: var(--border-width) solid var(--color-fill-accent);
+	border-radius: var(--radius-field);
+	background: var(--color-fill-accent);
+	color: var(--color-fg-on-accent);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	cursor: pointer;
+
+	& input {
+		display: none;
+	}
+}

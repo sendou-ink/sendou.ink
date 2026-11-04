@@ -40,16 +40,14 @@ import { formatPosition } from "../core/format";
 import { mainWeaponLabel, modeLabel, stageLabel } from "../core/labels";
 import {
 	candidatesByBaseWeapon,
-	MONTAGE_KILL_COUNTS,
-	MONTAGE_MAX_SECONDS_OPTIONS,
 	type MontageCandidate,
 	type MontageManifestTopTeam,
 	type MontageManifestVod,
-	maxSecondsFor,
 	montageDuration,
 	montageTeamSections,
 } from "../core/montage";
 import { montageCollapsedGroupsPersisted } from "../scanner-persisted";
+import { ClipCriteriaFields } from "./ClipCriteriaFields";
 import { ClipVideo } from "./ClipVideo";
 import {
 	type MontageCard,
@@ -607,52 +605,11 @@ function CandidatesPanel({ montage }: { montage: MontageSnapshot }) {
 						))}
 					</SendouChipRadioGroup>
 				</span>
-				<span className={styles.criterion}>
-					<span className={styles.criterionLabel}>Min splats</span>
-					<SendouChipRadioGroup>
-						{MONTAGE_KILL_COUNTS.map((kills) => (
-							<SendouChipRadio
-								key={kills}
-								name="montage-min-kills"
-								value={String(kills)}
-								checked={montage.criteria.minKills === kills}
-								onChange={() => updateMontageCriteria({ minKills: kills })}
-							>
-								{kills}
-							</SendouChipRadio>
-						))}
-					</SendouChipRadioGroup>
-				</span>
-				{MONTAGE_KILL_COUNTS.filter(
-					(kills) => kills >= montage.criteria.minKills,
-				).map((kills) => (
-					<span key={kills} className={styles.criterion}>
-						<span className={styles.criterionLabel}>
-							{kills === MONTAGE_KILL_COUNTS.at(-1) ? `${kills}+` : kills}{" "}
-							splats, max
-						</span>
-						<SendouChipRadioGroup>
-							{MONTAGE_MAX_SECONDS_OPTIONS.map((seconds) => (
-								<SendouChipRadio
-									key={seconds}
-									name={`montage-max-seconds-${kills}`}
-									value={String(seconds)}
-									checked={maxSecondsFor(montage.criteria, kills) === seconds}
-									onChange={() =>
-										updateMontageCriteria({
-											maxSecondsByKills: {
-												...montage.criteria.maxSecondsByKills,
-												[kills]: seconds,
-											},
-										})
-									}
-								>
-									{seconds}s
-								</SendouChipRadio>
-							))}
-						</SendouChipRadioGroup>
-					</span>
-				))}
+				<ClipCriteriaFields
+					idPrefix="montage"
+					criteria={montage.criteria}
+					onChange={updateMontageCriteria}
+				/>
 			</div>
 			{candidates.length === 0 ? (
 				<p className={styles.note}>

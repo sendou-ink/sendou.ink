@@ -3,7 +3,7 @@
  * the VoD scan it drives. Opening a folder written by `pnpm vods:download`
  * (the File System Access API's directory picker) reads its manifest; every
  * VoD in it is scanned in turn through `startVodScan` (saved like any file
- * scan, no clips cut) and its streaks meeting the criteria (`montageWindows`:
+ * scan, no clips cut) and its streaks meeting the criteria (`criteriaWindows`:
  * min splats and a length cap per splat count, kept in localStorage) become
  * candidates of the top teams they can play under (a cast's go under
  * either side). Each pick plays under one team's card. The scanned games, the picks and
@@ -27,6 +27,11 @@ import {
 	renderMontage,
 } from "../capture/montage-render";
 import { extractVodClip, vodFrameThumbnail } from "../capture/vod-clips";
+import {
+	type ClipCriteria,
+	criteriaWindows,
+	withDefaultCaps,
+} from "../core/clips/criteria";
 import { povDeathTimes } from "../core/clips/scoring";
 import { buildScannerMatches } from "../core/match-builder";
 import {
@@ -35,14 +40,12 @@ import {
 	INTRO_CARD_SECONDS,
 	MONTAGE_MANIFEST_FILE,
 	type MontageCandidate,
-	type MontageCriteria,
 	type MontageGame,
 	type MontageManifest,
 	type MontageManifestVod,
 	type MontagePick,
 	montageDuration,
 	montageTeamSections,
-	montageWindows,
 	playbackDuration,
 	playbackSegments,
 	TEAM_CARD_SECONDS,
@@ -102,7 +105,7 @@ export interface MontageSnapshot {
 	folderError: string | null;
 	/** the games of the folder's scanned VoDs, by file name */
 	scanned: ReadonlyMap<string, MontageGame[]>;
-	criteria: MontageCriteria;
+	criteria: ClipCriteria;
 	/** every candidate meeting the criteria, best first */
 	candidates: MontageCandidate[];
 	/** in montage order within each team */
@@ -236,7 +239,7 @@ export function cancelMontageScan(): void {
 }
 
 /** Changes what makes a clip candidate; picks already made stay as they are. */
-export function updateMontageCriteria(patch: Partial<MontageCriteria>): void {
+export function updateMontageCriteria(patch: Partial<ClipCriteria>): void {
 	const criteria = { ...snapshot.criteria, ...patch };
 	set({ criteria });
 	PersistedState.write(montageCriteriaPersisted, criteria);
@@ -621,7 +624,7 @@ async function scannedGames(vod: MontageManifestVod): Promise<MontageGame[]> {
 function candidatesOf(
 	folder: MontageFolder | null,
 	scanned: MontageSnapshot["scanned"],
-	criteria: MontageCriteria,
+	criteria: ClipCriteria,
 ): MontageCandidate[] {
 	const topTeamIds = new Set(
 		(folder?.manifest.topTeams ?? []).map((team) => team.id),
@@ -631,7 +634,7 @@ function candidatesOf(
 			const teamIds = candidateTeamIds(vod, topTeamIds);
 			if (teamIds.length === 0) return [];
 			return (scanned.get(vod.file) ?? []).flatMap((game) =>
-				montageWindows(game, criteria).map((window) => ({
+				criteriaWindows(game, criteria).map((window) => ({
 					key: `${vod.file}@${window.start}-${window.end}`,
 					vod,
 					window,
@@ -711,16 +714,11 @@ function persist(): void {
 	void putMontage(montage).catch(() => {});
 }
 
-function loadCriteria(): MontageCriteria {
-	const stored = PersistedState.read(montageCriteriaPersisted);
-
-	return {
-		minKills: stored.minKills,
-		maxSecondsByKills: {
-			...DEFAULT_MONTAGE_CRITERIA.maxSecondsByKills,
-			...stored.maxSecondsByKills,
-		},
-	};
+function loadCriteria(): ClipCriteria {
+	return withDefaultCaps(
+		PersistedState.read(montageCriteriaPersisted),
+		DEFAULT_MONTAGE_CRITERIA,
+	);
 }
 
 /** A writable for a file the user picks; null when the browser has no save dialog (the render then downloads). */

@@ -17,7 +17,7 @@ export interface ScannerSettings {
 	upload: boolean;
 	/** keep the live ring buffer and cut clips of the best moments */
 	saveClips: boolean;
-	/** splats in a row that make a clip */
+	/** splats in a row that make a live clip (a VoD has its own criteria, vod-clip-cutter.ts) */
 	clipMinKills: ClipMinKills;
 	/** milliseconds the clips' sound is moved later (negative: earlier) against the picture */
 	audioOffsetMs: number;

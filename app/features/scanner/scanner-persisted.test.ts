@@ -6,6 +6,7 @@ import {
 import {
 	montageCollapsedGroupsPersisted,
 	montageCriteriaPersisted,
+	vodClipCriteriaPersisted,
 } from "./scanner-persisted";
 
 describe("montageCriteriaPersisted", () => {
@@ -25,6 +26,18 @@ describe("montageCriteriaPersisted", () => {
 
 	test("malformed values decode to the default", () => {
 		assertDecodesToDefault(montageCriteriaPersisted, ["not json", "[]"]);
+	});
+});
+
+describe("vodClipCriteriaPersisted", () => {
+	test("round-trips", () => {
+		assertRoundTrips(vodClipCriteriaPersisted, [
+			{ minKills: 2, maxSecondsByKills: { "2": 20, "5": 90 } },
+		]);
+	});
+
+	test("malformed values decode to the default", () => {
+		assertDecodesToDefault(vodClipCriteriaPersisted, ["not json", "[]"]);
 	});
 });
 
