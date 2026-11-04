@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useFetchers, useNavigation, useRevalidator } from "react-router";
+import * as R from "remeda";
 import {
 	useEventStreamCatchUp,
 	useEventsTopic,
@@ -58,12 +59,12 @@ export function useChatAutoScroll(
 		const offset = anchorOffsetRef.current?.() ?? null;
 		if (!messagesContainer || offset === null) return;
 
-		const top = offset - ANCHOR_MARGIN;
 		const bottom =
 			messagesContainer.scrollHeight - messagesContainer.clientHeight;
+		const top = R.clamp(offset - ANCHOR_MARGIN, { min: 0, max: bottom });
 
 		pinnedToBottomRef.current = top >= bottom;
-		messagesContainer.scrollTop = Math.min(top, bottom);
+		messagesContainer.scrollTop = top;
 	}, [ref]);
 
 	React.useEffect(() => {
@@ -172,12 +173,17 @@ export function useChatAutoScroll(
 	React.useEffect(() => {
 		if (!latestMessagePublicId) return;
 
-		if (latestMessageIsOwn || pinnedToBottomRef.current) {
+		const messagesContainer = ref.current;
+		const everyMessageFits =
+			messagesContainer != null &&
+			messagesContainer.scrollHeight <= messagesContainer.clientHeight;
+
+		if (latestMessageIsOwn || pinnedToBottomRef.current || everyMessageFits) {
 			scrollToBottom();
 		} else {
 			setUnseenMessages(true);
 		}
-	}, [latestMessagePublicId, latestMessageIsOwn, scrollToBottom]);
+	}, [ref, latestMessagePublicId, latestMessageIsOwn, scrollToBottom]);
 
 	React.useEffect(() => {
 		anchorOffsetRef.current =

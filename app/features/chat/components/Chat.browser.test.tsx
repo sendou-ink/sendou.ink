@@ -105,7 +105,10 @@ function renderChat(
 	return render(<RouterProvider router={router} />);
 }
 
-async function renderChatWithControls(initialMessages: ClientChatMessage[]) {
+async function renderChatWithControls(
+	initialMessages: ClientChatMessage[],
+	props: Partial<React.ComponentProps<typeof Chat>> = {},
+) {
 	const controls = {
 		addMessage: (_msg: ClientChatMessage) => {},
 	};
@@ -116,7 +119,7 @@ async function renderChatWithControls(initialMessages: ClientChatMessage[]) {
 
 		return (
 			<div style={{ width: 400 }}>
-				<Chat messages={messages} onSend={() => {}} />
+				<Chat messages={messages} onSend={() => {}} {...props} />
 			</div>
 		);
 	}
@@ -939,6 +942,51 @@ describe("Chat", () => {
 		await vi.waitFor(() => {
 			expect(isScrolledToBottom(log)).toBe(true);
 		});
+	});
+
+	test("shows no new messages button in a log short enough to show every message", async () => {
+		const { screen, controls } = await renderChatWithControls(manyMessages(2), {
+			firstUnreadMessageId: 1,
+		});
+
+		await expect
+			.element(screen.getByTestId("chat-unread-divider"))
+			.toBeInTheDocument();
+
+		controls.addMessage(
+			createMessage({ id: 3, publicId: "publicid-new", contents: "Arrived" }),
+		);
+
+		await expect.element(screen.getByText("Arrived")).toBeInTheDocument();
+		await wait(100);
+		await expect
+			.element(screen.getByRole("button", { name: "New messages" }))
+			.not.toBeInTheDocument();
+	});
+
+	test("shows no new messages button after jumping to a message in a short log", async () => {
+		const bob: ChatMessageAuthor = { ...ALICE, id: 2, username: "Bob" };
+		const { screen, controls } = await renderChatWithControls([
+			createMessage({ id: 1, publicId: "p1", contents: "who is hosting?" }),
+			createMessage({
+				id: 2,
+				publicId: "p2",
+				authorUserId: 2,
+				author: bob,
+				contents: "<reply-1> me",
+			}),
+		]);
+
+		await screen.getByRole("button", { name: /@Alice/ }).click();
+		controls.addMessage(
+			createMessage({ id: 3, publicId: "publicid-new", contents: "Arrived" }),
+		);
+
+		await expect.element(screen.getByText("Arrived")).toBeInTheDocument();
+		await wait(100);
+		await expect
+			.element(screen.getByRole("button", { name: "New messages" }))
+			.not.toBeInTheDocument();
 	});
 
 	test("keeps the reading position when a new message arrives while scrolled up", async () => {
