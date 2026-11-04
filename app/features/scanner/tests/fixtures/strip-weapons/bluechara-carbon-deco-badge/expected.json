@@ -1,0 +1,33 @@
+{
+  "event": "StripWeapons",
+  "data": {
+    "weapons": [
+      [
+        45,
+        50,
+        4051,
+        1002
+      ],
+      [
+        1001,
+        48,
+        252,
+        10
+      ]
+    ],
+    "weaponLabels": [
+      [
+        "Hero Shot Replica",
+        ".52 Gal",
+        "Heavy Edit Splatling Nouveau",
+        "Carbon Roller ANG-L"
+      ],
+      [
+        "Carbon Roller Deco",
+        "Plastic-Bottle Shot Replica",
+        "Rapid Blaster Pro WNT-R",
+        "Splattershot Jr."
+      ]
+    ]
+  }
+}

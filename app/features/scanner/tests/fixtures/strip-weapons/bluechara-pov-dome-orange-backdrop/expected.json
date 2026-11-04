@@ -1,0 +1,33 @@
+{
+  "event": "StripWeapons",
+  "data": {
+    "weapons": [
+      [
+        7030,
+        2021,
+        50,
+        1122
+      ],
+      [
+        10,
+        2030,
+        4030,
+        41
+      ]
+    ],
+    "weaponLabels": [
+      [
+        "Wellstring V",
+        "Z+F Splatterscope",
+        ".52 Gal",
+        "Painbrush BRN-Z"
+      ],
+      [
+        "Splattershot Jr.",
+        "E-liter 4K",
+        "Ballpoint Splatling",
+        "Tentatek Splattershot"
+      ]
+    ]
+  }
+}

@@ -159,6 +159,28 @@ export function slotRowPermutation(
 	return best.perm;
 }
 
+/**
+ * Per row, the slot the evidence places there, or null unless every
+ * assignment within MIN_ASSIGNMENT_MARGIN of the best (ties included) agrees
+ * on it: a row the evidence never touches stays open even where the
+ * as-drawn tie-break would fill it.
+ */
+export function decidedRowSlots(evidence: SlotRowEvidence): (number | null)[] {
+	const scored = PERMUTATIONS.map((perm) => ({
+		perm,
+		score: perm.reduce((sum, row, slot) => sum + evidence[slot]![row]!, 0),
+	}));
+	const best = Math.max(...scored.map((candidate) => candidate.score));
+	if (best < MIN_ASSIGNMENT_SCORE) return [null, null, null, null];
+	const close = scored.filter(
+		(candidate) => best - candidate.score < MIN_ASSIGNMENT_MARGIN,
+	);
+	return [0, 1, 2, 3].map((row) => {
+		const slots = new Set(close.map(({ perm }) => perm.indexOf(row)));
+		return slots.size === 1 ? [...slots][0]! : null;
+	});
+}
+
 /** The row whose name `name` most resembles, or null when none passes MIN_NAME_SIMILARITY. */
 export function rowByName(
 	name: string,

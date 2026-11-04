@@ -2457,6 +2457,57 @@ test("pov diamond cards match OCR-garbled names to their scoreboard rows", () =>
 	]);
 });
 
+/** A POV minimap read whose ally2 card (under a streamer's overlay) and own card show no weapon. */
+function povMinimapWithHiddenCards(t: number): DetectedEvent {
+	const data: MinimapData = {
+		stage: 0 as StageId,
+		spectator: false,
+		teammates: [
+			{ ...teammate(ALPHA[0]!), name: "w1" },
+			{ ...teammate(null), name: "w2" },
+			{ ...teammate(ALPHA[2]!), name: "w3" },
+			{ ...teammate(null), self: true },
+		],
+		enemies: BRAVO.map((id) => enemy(id)),
+		teamColors: [null, null],
+	};
+	return { type: "Minimap", t, confidence: 0.8, data };
+}
+
+// the strip seats the hidden ally (1001) first and the POV (3030) last
+const STRIP_SEATING: [MainWeaponId[], MainWeaponId[]] = [
+	[ALPHA[1]!, ALPHA[0]!, ALPHA[2]!, ALPHA[3]!],
+	BRAVO,
+];
+
+test("a minimap-grouped match takes unread cards' weapons from their strip slots", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		povMinimapWithHiddenCards(60),
+		...[90, 120, 150, 180].map((t) => stripWeaponsEvent(t, STRIP_SEATING)),
+		stripRead(200, { dead: [[0, 3]] }),
+		death(200, "l1"),
+		stripRead(230, { dead: [[0, 3]] }),
+		death(230, "l2"),
+	]);
+	assert.deepEqual(weapons(built[0]!.match), ALL);
+});
+
+test("an unread card's weapon stays unread while its strip slot is a toss-up", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		povMinimapWithHiddenCards(60),
+		...[90, 120, 150, 180].map((t) => stripWeaponsEvent(t, STRIP_SEATING)),
+	]);
+	assert.deepEqual(weapons(built[0]!.match), [
+		ALPHA[0],
+		null,
+		ALPHA[2],
+		null,
+		...BRAVO,
+	]);
+});
+
 function kill(
 	t: number,
 	names: (string | null)[],

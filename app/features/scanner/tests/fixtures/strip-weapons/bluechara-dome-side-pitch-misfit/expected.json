@@ -1,0 +1,33 @@
+{
+  "event": "StripWeapons",
+  "data": {
+    "weapons": [
+      [
+        7030,
+        1111,
+        230,
+        40
+      ],
+      [
+        1,
+        7031,
+        5011,
+        60
+      ]
+    ],
+    "weaponLabels": [
+      [
+        "Wellstring V",
+        "Octobrush Nouveau",
+        "Clash Blaster",
+        "Splattershot"
+      ],
+      [
+        "Neo Sploosh-o-matic",
+        "Custom Wellstring V",
+        "Enperry Splat Dualies",
+        "N-ZAP '85"
+      ]
+    ]
+  }
+}

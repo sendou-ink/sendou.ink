@@ -1,0 +1,33 @@
+{
+  "event": "StripWeapons",
+  "data": {
+    "weapons": [
+      [
+        4050,
+        40,
+        2041,
+        5001
+      ],
+      [
+        4000,
+        7011,
+        5001,
+        6020
+      ]
+    ],
+    "weaponLabels": [
+      [
+        "Heavy Edit Splatling",
+        "Splattershot",
+        "Custom E-liter 4K Scope",
+        "Dapple Dualies Nouveau"
+      ],
+      [
+        "Mini Splatling",
+        "Inkline Tri-Stringer",
+        "Dapple Dualies Nouveau",
+        "Undercover Brella"
+      ]
+    ]
+  }
+}

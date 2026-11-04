@@ -31,6 +31,8 @@ import {
 	STATUS_BAND,
 	STATUS_CAST_MIN_DPAD_WHITE,
 	STATUS_DARK_MAX_VALUE,
+	STATUS_DOME_CENTER_DY,
+	STATUS_DOME_RADIUS,
 	STATUS_DPAD_PROBES_EVEN,
 	STATUS_DPAD_PROBES_NARROW_LEFT,
 	STATUS_DPAD_PROBES_NARROW_RIGHT,
@@ -79,6 +81,7 @@ const PITCH_GEOMETRY: PitchGeometry[] = (() => {
 	) {
 		const scale = pitch / STATUS_REFERENCE_PITCH;
 		const apex = STATUS_ICON_CENTER_Y - STATUS_APEX_RISE * scale;
+		const domeCenter = STATUS_ICON_CENTER_Y + STATUS_DOME_CENTER_DY * scale;
 		// fit rows land on every STATUS_FIT_ROW_STEP-th band row, the only ones readBand sums
 		const rows = (top: number, bottom: number, step = STATUS_FIT_ROW_STEP) => {
 			const ys: number[] = [];
@@ -94,6 +97,20 @@ const PITCH_GEOMETRY: PitchGeometry[] = (() => {
 				Math.ceil(y - apex + 3),
 				Math.floor(y - apex + 9),
 			]),
+			dome: rows(6, 20).flatMap((y) => {
+				const half = Math.sqrt(
+					Math.max(
+						0,
+						(STATUS_DOME_RADIUS * scale) ** 2 - (y - domeCenter) ** 2,
+					),
+				);
+				return [
+					y,
+					Math.floor(half - 3),
+					Math.ceil(half + 3),
+					Math.floor(half + 9),
+				];
+			}),
 			corners: rows(-2, 12),
 			cornerNear: Math.round(0.4 * pitch),
 			cornerFar: Math.floor(0.5 * pitch),
@@ -249,7 +266,10 @@ interface Band {
  * (`state`: y, half width).
  */
 interface PitchGeometry {
+	/** kite apex flanks per row: y, inside half-width, outside near and far offsets */
 	edge: number[];
+	/** an octoling dome's top arc, same layout */
+	dome: number[];
 	corners: number[];
 	cornerNear: number;
 	cornerFar: number;
@@ -412,22 +432,37 @@ function hypothesisScore(
 	return score;
 }
 
-/** Apex edge contrast + gap-corner contrast + team ink inside the apex vs beside it. */
+/**
+ * Apex edge contrast + gap-corner contrast + team ink inside the apex vs
+ * beside it, under the kite's outline or the dome's, whichever fits better.
+ */
 function slotScore(band: Band, cx: number, geometry: PitchGeometry): number {
-	const edgeIn = newStats();
-	const edgeOut = newStats();
-	const { edge, corners, cornerNear, cornerFar } = geometry;
-	for (let i = 0; i < edge.length; i += 4) {
-		const y = edge[i]!;
-		const half = edge[i + 1]!;
-		addSegment(band, edgeIn, y, cx - half, cx + half);
-		addSegment(band, edgeOut, y, cx - edge[i + 3]!, cx - edge[i + 2]!);
-		addSegment(band, edgeOut, y, cx + edge[i + 2]!, cx + edge[i + 3]!);
-	}
+	const { corners, cornerNear, cornerFar } = geometry;
 	const cornersOut = newStats();
 	for (const y of corners) {
 		addSegment(band, cornersOut, y, cx - cornerFar, cx - cornerNear);
 		addSegment(band, cornersOut, y, cx + cornerNear, cx + cornerFar);
+	}
+	return Math.max(
+		outlineScore(band, cx, geometry.edge, cornersOut),
+		outlineScore(band, cx, geometry.dome, cornersOut),
+	);
+}
+
+function outlineScore(
+	band: Band,
+	cx: number,
+	outline: number[],
+	cornersOut: SegmentStats,
+): number {
+	const edgeIn = newStats();
+	const edgeOut = newStats();
+	for (let i = 0; i < outline.length; i += 4) {
+		const y = outline[i]!;
+		const half = outline[i + 1]!;
+		addSegment(band, edgeIn, y, cx - half, cx + half);
+		addSegment(band, edgeOut, y, cx - outline[i + 3]!, cx - outline[i + 2]!);
+		addSegment(band, edgeOut, y, cx + outline[i + 2]!, cx + outline[i + 3]!);
 	}
 	return (
 		contrast(edgeIn, edgeOut) +

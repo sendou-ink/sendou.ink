@@ -160,6 +160,15 @@ export const STATUS_ICON_CENTER_Y = 68;
 export const STATUS_APEX_RISE = 46;
 
 /**
+ * An octoling's dome at the reference pitch: a circle this far above the icon
+ * center with this radius (its top just under the kite apex). Its top arc is
+ * fitted as the kite's flanks are: inside a row of domes the flanks find no
+ * edge, and an in-between pitch lining gaps up with dome sides outscored them.
+ */
+export const STATUS_DOME_CENTER_DY = -5;
+export const STATUS_DOME_RADIUS = 39;
+
+/**
  * Fit weights (player-status.ts fitSide): the apex edge contrast is the
  * precise term; the gap corners (outside kite and dome alike) keep dome icons
  * readable; team ink inside the apex vs beside it pins alive icons a white X
@@ -243,15 +252,16 @@ export const STATUS_VACANT_BODY = { top: -20, bottom: 26, halfWidth: 28 };
 export const STATUS_VACANT_MIN_DARK = 0.85;
 export const STATUS_VACANT_MAX_GREY = 0.03;
 
-// Strip weapon-icon evidence (strip-weapons.ts): masked NCC at the fitted
-// scale, calibrated on the sendou-triton VoD (pitches 74-97).
+// Strip weapon-icon evidence (strip-weapons.ts): plate-composited NCC at the
+// fitted scale, calibrated on the sendou-triton VoD (pitches 74-97) and the
+// XHXYlzu4Zt8 one (octoling domes, team ink on a same-colored backdrop).
 
 /**
- * Each slot's crop is resampled to the reference pitch: a square of this half
- * size (reference px) about the icon center, nudged down STRIP_WEAPON_CENTER_DY.
+ * Each slot's crop is resampled to the reference pitch: a box of these half
+ * sizes (reference px) about the icon center, nudged down STRIP_WEAPON_CENTER_DY.
  * Leaves room for the template plus the search offsets.
  */
-export const STRIP_WEAPON_CROP_HALF = 52;
+export const STRIP_WEAPON_CROP_HALF = { x: 64, y: 52 };
 export const STRIP_WEAPON_CENTER_DY = 1;
 
 /** The game icon's full canvas width at the reference pitch (its art drawn at ~1.05x the pitch). */
@@ -261,15 +271,42 @@ export const STRIP_WEAPON_ICON_SIZE = 92;
 export const STRIP_WEAPON_MASK_MIN_ALPHA = 200;
 
 /**
- * Template offsets searched about the crop center (reference px): the fitted
- * centers wobble a few px across a strip, the icon's height barely.
+ * Radius (reference px) about the icon center that the plate always covers,
+ * kite and dome alike: the art's see-through pixels in it match the plate color.
  */
-export const STRIP_WEAPON_SEARCH = { x: 4, y: 1 };
+export const STRIP_WEAPON_PLATE_RADIUS = 32;
+
+/**
+ * The icon corner (reference px from its center) where kit variants draw their
+ * brand badge: the art's see-through pixels there match one flat color of
+ * their own (plate, strip band or scene), so a base kit loses to a drawn badge.
+ */
+export const STRIP_WEAPON_BADGE_CORNER = {
+	left: 12,
+	right: 36,
+	top: 16,
+	bottom: 42,
+};
+
+/**
+ * Template offsets searched about the crop center (reference px): the fitted
+ * centers wobble a few px across a strip, and an off fit (team ink on a
+ * backdrop of its own color) sits an outer icon up to ~15px off; the icon's
+ * height barely moves.
+ */
+export const STRIP_WEAPON_SEARCH = { x: 16, y: 1 };
+
+/**
+ * Top two candidates this close are told apart by the parts only one of them
+ * draws (strip-weapons.ts differenceScore): a kit's badge or a scope is too
+ * small a share of the icon to rank siblings in the full score.
+ */
+export const STRIP_WEAPON_TIE_MARGIN = 0.03;
 
 /** A half-resolution pass over every weapon shortlists this many for the full-resolution pass. */
 export const STRIP_WEAPON_SHORTLIST = 12;
 
-/** The true weapon ranks top-1 on ~93% of single reads; the aggregate needs only the runners-up's score floor. */
+/** The true weapon ranks top-1 on ~99% of single reads; the aggregate needs only the runners-up's score floor. */
 export const STRIP_WEAPON_TOP_K = 8;
 
 /** Below this best score the slot holds no weapon render (an empty seat, a covered icon) and is skipped. */

@@ -473,7 +473,9 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   no weapon render, gauge digit or badge covers, and its triangle core sits
   inside an octoling's dome too — plus how much more team ink they hold
   than their surroundings; the previous read's fit holds unless clearly
-  beaten. Each state then reads off the apex core alone: saturated ink of
+  beaten. Each icon scores under the kite outline or the dome's top arc,
+  whichever fits: a side of octolings has no flanks to find, and there an
+  in-between pitch lining gaps up with dome sides outscored the true one. Each state then reads off the apex core alone: saturated ink of
   any hue = alive, pale = special ready (the wash pulses from lilac or pink
   to near-white but never saturates or greys) unless both sides of the
   body still hold team ink (a weapon render pale over the apex, Painbrush's
@@ -491,11 +493,22 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   .52, Neo Splash, Snipewriter] vs rows [.52, Neo Splash, Snipewriter,
   Planetz]) — so every 5th counter read also samples a `StripWeapons`
   evidence event: a ranked weapon-icon match per alive slot. The fit pins
-  each icon's center and scale, so the slot is resampled to the reference
-  pitch and scored against every weapon's game icon at that one size over
-  the art's opaque pixels only (masked NCC — the team-ink plate and the
-  scene behind it never weigh in); the true weapon ranks top-1 on ~93% of
-  single reads, including special-ready washes. The builder solves each
+  each icon's scale and roughly its center, so the slot is resampled to the
+  reference pitch and scored against every weapon's game icon at that one
+  size, searched ±16px sideways (a fit can sit an icon off in a team-ink
+  backdrop). Each icon is composited over what shows through it: its opaque
+  pixels as drawn, its see-through pixels inside the plate disc and the
+  badge corner each as one flat color (the crop's mean there), so a weapon
+  answers for what it leaves uncovered — the badge a base kit lacks, the
+  plate between a Wellstring's arms that orange art would otherwise claim —
+  while the scene beyond the plate never weighs in. Two candidates within
+  0.03 are re-ranked on the parts only one of them draws (a badge, a scope),
+  each channel centered alone so a flat area explains nothing. On the
+  XHXYlzu4Zt8 VoD (X Battle POV, a streamer overlay over the left HUD) the
+  true weapon ranks top-1 on ~98.7% of single reads; what is left is mostly a
+  special in use (the slot shows the special's icon), a disconnect's empty
+  seat and a Carbon Roller Deco whose badge blurs out at the narrowest
+  pitch. The builder solves each
   side's slot→row assignment once per game from one evidence matrix
   (`core/slot-row-assignment.ts`): strip votes (a read's score over its
   candidate floor), the minimap cards' parsed weapons (the enemy column
@@ -504,7 +517,12 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   named teammate cards — against the strip read beside them, which tells
   apart two rows sharing a weapon. Thin or tied evidence keeps the
   as-drawn order. The POV overlay's teammate diamond follows neither
-  order and maps by card name instead. Strip-weapon fixtures live under
+  order and maps by card name instead. A game with no results screen takes
+  its rows from the minimap cards; a card left without a weapon (under a
+  streamer's overlay, the POV's own) gets the one its strip slot votes for,
+  the same evidence placing the slot — only where every near-best
+  assignment agrees on it and the slot's votes clearly lead
+  (`stripFilledRowWeapons`). Strip-weapon fixtures live under
   `tests/fixtures/strip-weapons/`. The builder additionally
   flips sub-2s dead-flag runs flanked by dense opposite reads — a splat
   outlasts the respawn wait, so those are misread blips (background ink

@@ -1,0 +1,33 @@
+{
+  "event": "StripWeapons",
+  "data": {
+    "weapons": [
+      [
+        2000,
+        4051,
+        3051,
+        1100
+      ],
+      [
+        71,
+        1021,
+        1001,
+        5010
+      ]
+    ],
+    "weaponLabels": [
+      [
+        "Classic Squiffer",
+        "Heavy Edit Splatling Nouveau",
+        "Dread Wringer D",
+        "Inkbrush"
+      ],
+      [
+        "Forge Splattershot Pro",
+        "Gold Dynamo Roller",
+        "Carbon Roller Deco",
+        "Splat Dualies"
+      ]
+    ]
+  }
+}
