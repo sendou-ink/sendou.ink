@@ -8,6 +8,7 @@ import {
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
+import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { invariant } from "~/utils/invariant";
@@ -93,6 +94,8 @@ export const action = defineAction(async ({ params, url }) => {
 	clearTournamentDataCache(tournamentId);
 
 	await notifyTournamentStatusChanged(tournamentId, [user.id]);
+
+	ChatSystemMessage.send({ channel: tournamentLFGChannel(tournamentId) });
 
 	throw redirect(
 		tournament.registrationOpen

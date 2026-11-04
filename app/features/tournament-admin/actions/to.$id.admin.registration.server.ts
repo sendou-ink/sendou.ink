@@ -12,6 +12,7 @@ import {
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
+import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import { defineAction } from "~/form/define-action.server";
 import type { ResolvedImages } from "~/form/parse.server";
 import { invariant } from "~/utils/invariant";
@@ -191,6 +192,8 @@ async function upsertRegistration(
 	await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 	clearTournamentDataCache(tournamentId);
+
+	ChatSystemMessage.send({ channel: tournamentLFGChannel(tournamentId) });
 
 	return redirect(tournamentAdminPage(tournamentId));
 }

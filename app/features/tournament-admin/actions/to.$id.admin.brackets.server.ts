@@ -1,4 +1,5 @@
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -8,6 +9,7 @@ import {
 	requireTournamentOrganizer,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy, successToast } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
@@ -102,6 +104,8 @@ export const action = defineAction(
 		}
 
 		clearTournamentDataCache(tournamentId);
+
+		ChatSystemMessage.send({ channel: tournamentChannel(tournamentId) });
 
 		return successToast(message);
 	},

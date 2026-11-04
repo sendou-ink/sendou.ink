@@ -74,6 +74,17 @@ export async function exists(id: number) {
 	return Boolean(row);
 }
 
+/** The match's chat room id, null when it has none or doesn't exist. */
+export async function findChatRoomIdById(id: number) {
+	const row = await db
+		.selectFrom("GroupMatch")
+		.select("chatRoomId")
+		.where("id", "=", id)
+		.executeTakeFirst();
+
+	return row?.chatRoomId ?? null;
+}
+
 /** Matches owning the given chat rooms, with both groups' members' user ids. */
 export async function findAllByChatRoomIds(chatRoomIds: number[]) {
 	if (chatRoomIds.length === 0) return [];

@@ -1,16 +1,27 @@
 import { addDays, addMinutes, subMinutes } from "date-fns";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as LobbyActivity from "~/features/lobbies/core/LobbyActivity.server";
+import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import type { registerSchema } from "../tournament-schemas.server";
 import { action as registerAction } from "./to.$id.register.server";
+
+vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
+	send: vi.fn(),
+	notifyStatusChanged: vi.fn(),
+	notifyNotificationsChanged: vi.fn(),
+	notifyRoomsChanged: vi.fn(),
+	notifyRoomsChangedByRoomIds: vi.fn(),
+}));
 
 /** `maxMembersPerTeam` of a regular 4v4 tournament that sets no limit of its own. */
 const MAX_ROSTER_SIZE = 6;
@@ -87,6 +98,17 @@ describe("Tournament registration ADD_PLAYER", () => {
 		expect(await memberCountOfOnlyTeam(tournamentId)).toBe(MAX_ROSTER_SIZE);
 	});
 
+	test("refreshes the tournament's LFG page", async () => {
+		vi.mocked(ChatSystemMessage.send).mockClear();
+		const { tournamentId, addFriend } = await scenario({ rosterSize: 1 });
+
+		await addFriend();
+
+		expect(ChatSystemMessage.send).toHaveBeenCalledWith({
+			channel: tournamentLFGChannel(tournamentId),
+		});
+	});
+
 	test("does not add a player to a team already at max capacity", async () => {
 		const { tournamentId, addFriend } = await scenario({
 			rosterSize: MAX_ROSTER_SIZE,
@@ -141,5 +163,28 @@ describe("Tournament registration CHECK_IN", () => {
 			.where("tournamentTeamId", "=", team.id)
 			.executeTakeFirst();
 		expect(checkIn).toBeDefined();
+	});
+
+	test("refreshes the tournament's live viewers", async () => {
+		vi.mocked(ChatSystemMessage.send).mockClear();
+		const captain = await UserFactory.createRegular();
+		const teammates = await UserFactory.createMany(3);
+		const tournament = await TournamentFactory.create({
+			authorId: captain.id,
+			startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+		});
+		await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [captain.id, ...teammates.map((user) => user.id)],
+		});
+
+		await register(
+			{ _action: "CHECK_IN" },
+			{ user: "regular", params: { id: String(tournament.id) } },
+		);
+
+		expect(ChatSystemMessage.send).toHaveBeenCalledWith({
+			channel: tournamentChannel(tournament.id),
+		});
 	});
 });

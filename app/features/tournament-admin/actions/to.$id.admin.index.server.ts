@@ -16,6 +16,7 @@ import {
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import { tournamentMatchChannel } from "~/features/tournament-match/tournament-match-utils";
 import { defineAction } from "~/form/define-action.server";
 import { invariant } from "~/utils/invariant";
@@ -33,6 +34,9 @@ export const action = defineAction(
 		);
 
 		let statusChangedUserIds: number[] = [];
+		let emitTournamentUpdate = false;
+		let emitLfgUpdate = false;
+		let endedMatchIds: number[] = [];
 
 		switch (body._action) {
 			case "CHECK_IN": {
@@ -69,6 +73,7 @@ export const action = defineAction(
 				}
 
 				statusChangedUserIds = team.memberUserIds;
+				emitTournamentUpdate = true;
 
 				break;
 			}
@@ -100,6 +105,7 @@ export const action = defineAction(
 				);
 
 				statusChangedUserIds = team.memberUserIds;
+				emitTournamentUpdate = true;
 
 				break;
 			}
@@ -123,6 +129,8 @@ export const action = defineAction(
 				await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 				statusChangedUserIds = team.memberUserIds;
+				emitTournamentUpdate = true;
+				emitLfgUpdate = true;
 
 				break;
 			}
@@ -136,19 +144,16 @@ export const action = defineAction(
 					"Team's bracket has not started, check them out instead",
 				);
 
-				const { endedMatchIds, statusChangedTeamIds } = await dropTeamOut({
+				const dropped = await dropTeamOut({
 					tournament,
 					teamId: body.teamId,
 				});
 
-				sendDroppedMatchChatMessages({
-					tournamentId: tournament.ctx.id,
-					endedMatchIds,
-				});
-
-				statusChangedUserIds = statusChangedTeamIds.flatMap(
+				endedMatchIds = dropped.endedMatchIds;
+				statusChangedUserIds = dropped.statusChangedTeamIds.flatMap(
 					(teamId) => tournament.teamById(teamId)?.memberUserIds ?? [],
 				);
+				emitTournamentUpdate = true;
 
 				break;
 			}
@@ -160,6 +165,7 @@ export const action = defineAction(
 				await TournamentTeamRepository.undoDropOut(team.id);
 
 				statusChangedUserIds = team.memberUserIds;
+				emitTournamentUpdate = true;
 
 				break;
 			}
@@ -171,6 +177,18 @@ export const action = defineAction(
 		clearTournamentDataCache(tournamentId);
 
 		await notifyTournamentStatusChanged(tournamentId, statusChangedUserIds);
+
+		ChatSystemMessage.send(
+			endedMatchIds.map((matchId) => ({
+				channel: tournamentMatchChannel(matchId),
+			})),
+		);
+		if (emitTournamentUpdate) {
+			ChatSystemMessage.send({ channel: tournamentChannel(tournamentId) });
+		}
+		if (emitLfgUpdate) {
+			ChatSystemMessage.send({ channel: tournamentLFGChannel(tournamentId) });
+		}
 
 		return null;
 	},
@@ -270,21 +288,4 @@ function teamIdsAffectedByDrop({
 	}
 
 	return Array.from(teamIds);
-}
-
-function sendDroppedMatchChatMessages({
-	tournamentId,
-	endedMatchIds,
-}: {
-	tournamentId: number;
-	endedMatchIds: number[];
-}) {
-	if (endedMatchIds.length === 0) return;
-
-	ChatSystemMessage.send([
-		...endedMatchIds.map((matchId) => ({
-			channel: tournamentMatchChannel(matchId),
-		})),
-		{ channel: tournamentChannel(tournamentId) },
-	]);
 }

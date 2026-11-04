@@ -51,6 +51,11 @@ export const action = defineAction(
 				SendouQMatch.allMembers(match).map((m) => m.id),
 			);
 
+		const broadcastMatchUpdate = () => {
+			if (!match.chatRoomId) return;
+			ChatSystemMessage.send({ channel: chatRoomChannel(match.chatRoomId) });
+		};
+
 		try {
 			switch (body._action) {
 				case "REPORT_SCORE": {
@@ -293,6 +298,8 @@ export const action = defineAction(
 						weaponSplId: body.weaponSplId,
 					});
 
+					broadcastMatchUpdate();
+
 					break;
 				}
 				case "UNDO_WEAPON_REPORT": {
@@ -300,6 +307,8 @@ export const action = defineAction(
 						matchId,
 						mapIndex: body.mapIndex,
 					});
+
+					broadcastMatchUpdate();
 
 					break;
 				}

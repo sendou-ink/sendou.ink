@@ -47,6 +47,7 @@ export const action = defineAction(
 				if (post.chatRoomId) {
 					ChatSystemMessage.notifyRoomsChangedByRoomIds([post.chatRoomId]);
 				}
+				broadcastRevalidate(post);
 
 				const acceptedRequest = post.requests.find((r) => r.isAccepted);
 				if (acceptedRequest) {

@@ -17,7 +17,9 @@ import {
 	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
+import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { logger } from "~/utils/logger";
@@ -58,6 +60,8 @@ export const action = defineAction(
 
 		const ownTeamCheckedIn = Boolean(ownTeam && ownTeam.checkIns.length > 0);
 		let statusChangedUserIds: number[] = [];
+		let emitTournamentUpdate = false;
+		let successMessage: string | null = null;
 
 		switch (data._action) {
 			case "UPSERT_TEAM": {
@@ -293,6 +297,7 @@ export const action = defineAction(
 				});
 
 				statusChangedUserIds = teamMemberOf.memberUserIds;
+				emitTournamentUpdate = true;
 				break;
 			}
 			case "ADD_PLAYER": {
@@ -415,11 +420,7 @@ export const action = defineAction(
 				await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 				if (skippedReasons.length > 0) {
-					clearTournamentDataCache(tournamentId);
-
-					return successToast(
-						`Added ${addedCount} player(s). ${skippedSummary(skippedReasons)}`,
-					);
+					successMessage = `Added ${addedCount} player(s). ${skippedSummary(skippedReasons)}`;
 				}
 
 				break;
@@ -465,6 +466,16 @@ export const action = defineAction(
 		clearTournamentDataCache(tournamentId);
 
 		await notifyTournamentStatusChanged(tournamentId, statusChangedUserIds);
+
+		if (emitTournamentUpdate) {
+			ChatSystemMessage.send({ channel: tournamentChannel(tournamentId) });
+		}
+		// every other action changes a roster or a team shown in the LFG pool
+		if (data._action !== "UPDATE_MAP_POOL" && data._action !== "CHECK_IN") {
+			ChatSystemMessage.send({ channel: tournamentLFGChannel(tournamentId) });
+		}
+
+		if (successMessage) return successToast(successMessage);
 
 		return null;
 	},

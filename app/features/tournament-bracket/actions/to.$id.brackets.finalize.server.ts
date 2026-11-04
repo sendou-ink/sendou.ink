@@ -1,5 +1,6 @@
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as Standings from "~/features/tournament/core/Standings";
 import { finalizeTournament } from "~/features/tournament-bracket/core/finalizeTournament.server";
@@ -15,6 +16,7 @@ import {
 } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import {
+	tournamentChannel,
 	validateBadgeReceivers,
 	validateTrophyReceiver,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
@@ -97,6 +99,8 @@ export const action = defineAction(
 
 		// ensure RunningTournament = sidebar updates
 		await tournamentFromDB(tournamentId);
+
+		ChatSystemMessage.send({ channel: tournamentChannel(tournamentId) });
 
 		return successToastWithRedirect({
 			url: tournamentBracketsPage({ tournamentId }),

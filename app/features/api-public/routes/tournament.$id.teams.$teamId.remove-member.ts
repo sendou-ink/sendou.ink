@@ -1,5 +1,6 @@
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
@@ -7,6 +8,7 @@ import {
 	requireTournamentOrganizer,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { id } from "~/utils/schema";
@@ -68,6 +70,8 @@ export const action = defineAction(
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 			clearTournamentDataCache(tournamentId);
+
+			ChatSystemMessage.send({ channel: tournamentLFGChannel(tournamentId) });
 
 			return null;
 		}),

@@ -593,6 +593,7 @@ export const action = defineAction(
 
 				emitMatchUpdate = true;
 				emitStatusUpdate = true;
+				emitTournamentUpdate = true;
 
 				break;
 			}
@@ -609,6 +610,7 @@ export const action = defineAction(
 
 				emitMatchUpdate = true;
 				emitStatusUpdate = true;
+				emitTournamentUpdate = true;
 
 				break;
 			}
@@ -682,6 +684,8 @@ export const action = defineAction(
 					createdAt: dateToDatabaseTimestamp(tournament.ctx.startsAt),
 				});
 
+				emitMatchUpdate = true;
+
 				break;
 			}
 			case "UNDO_WEAPON_REPORT": {
@@ -698,6 +702,8 @@ export const action = defineAction(
 					tournamentMatchId: matchId,
 					mapIndex: body.mapIndex,
 				});
+
+				emitMatchUpdate = true;
 
 				break;
 			}

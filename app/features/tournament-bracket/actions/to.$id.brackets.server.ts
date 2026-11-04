@@ -330,6 +330,7 @@ export const action = defineAction(
 				);
 
 				statusChangedUserIds = teamMemberOf.memberUserIds;
+				emitTournamentUpdate = true;
 				break;
 			}
 			case "OVERRIDE_BRACKET_PROGRESSION": {

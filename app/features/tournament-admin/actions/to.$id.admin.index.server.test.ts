@@ -1,11 +1,22 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import type { adminTeamsActionSchema } from "../tournament-admin-schemas";
 import { action } from "./to.$id.admin.index.server";
+
+vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
+	send: vi.fn(),
+	notifyStatusChanged: vi.fn(),
+	notifyNotificationsChanged: vi.fn(),
+	notifyRoomsChanged: vi.fn(),
+	notifyRoomsChangedByRoomIds: vi.fn(),
+}));
 
 const adminTeamsAction = wrappedAction<typeof adminTeamsActionSchema>({
 	action,
@@ -59,5 +70,65 @@ describe("Admin teams action UNDO_DROP_TEAM_OUT", () => {
 		expect(
 			(await tournamentFromDB(other.id)).teamById(droppedTeamId)?.droppedOut,
 		).toBeTruthy();
+	});
+});
+
+describe("Admin teams action CHECK_IN and CHECK_OUT", () => {
+	beforeEach(async () => {
+		await users.create(TEAM_COUNT + 2);
+		vi.mocked(ChatSystemMessage.send).mockClear();
+	});
+
+	test.each(["CHECK_IN", "CHECK_OUT"] as const)(
+		"%s refreshes the tournament's live viewers",
+		async (_action) => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+				minMembersPerTeam: 1,
+			});
+			const team = await TournamentTeamFactory.create(
+				{ tournamentId: tournament.id, memberUserIds: [users.id(1)] },
+				{ isCheckedIn: _action === "CHECK_OUT" },
+			);
+
+			await adminTeamsAction(
+				{ _action, teamId: team.id, bracketIdx: 0 },
+				{ user: organizerId(), params: { id: String(tournament.id) } },
+			);
+
+			expect(ChatSystemMessage.send).toHaveBeenCalledWith({
+				channel: tournamentChannel(tournament.id),
+			});
+		},
+	);
+});
+
+describe("Admin teams action DELETE_TEAM", () => {
+	beforeEach(async () => {
+		await users.create(TEAM_COUNT + 2);
+		vi.mocked(ChatSystemMessage.send).mockClear();
+	});
+
+	test("refreshes the tournament's bracket and LFG pages", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId(),
+			minMembersPerTeam: 1,
+		});
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [users.id(1)],
+		});
+
+		await adminTeamsAction(
+			{ _action: "DELETE_TEAM", teamId: team.id },
+			{ user: organizerId(), params: { id: String(tournament.id) } },
+		);
+
+		expect(ChatSystemMessage.send).toHaveBeenCalledWith({
+			channel: tournamentChannel(tournament.id),
+		});
+		expect(ChatSystemMessage.send).toHaveBeenCalledWith({
+			channel: tournamentLFGChannel(tournament.id),
+		});
 	});
 });

@@ -1,11 +1,16 @@
 import { subDays, subHours } from "date-fns";
 import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { chatRoomChannel } from "~/features/events/events-types";
+import { lobbyChannel } from "~/features/lobbies/lobbies-utils";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import {
 	isLinkableLobby,
 	isUploadedLobby,
 } from "~/features/scanner/scanner-types";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import { tournamentMatchChannel } from "~/features/tournament-match/tournament-match-utils";
 import { defineAction } from "~/form/define-action.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
@@ -102,6 +107,8 @@ export const action = defineAction(
 				link: ingestedMatchLink(resolved.context, game.target),
 			}));
 
+			await revalidateLinkedPages(matched.map(({ game }) => game.target));
+
 			logger.debug(
 				`ingest: ${Scoreboards.contextKey(resolved.context)} matched ${matched.length} games, ` +
 					`${linkedGamesCount} newly linked (stored ${insertedCount}, merged ${mergedCount})`,
@@ -122,6 +129,34 @@ export const action = defineAction(
 		} satisfies IngestResponse;
 	},
 );
+
+/** Match and lobby pages show linked scoreboards, so their viewers refetch, the sender's own tabs included. */
+async function revalidateLinkedPages(
+	targets: Scoreboards.IngestableGameTarget[],
+) {
+	const channels = new Set<string>();
+	for (const target of targets) {
+		if (target.type === "tournament") {
+			channels.add(tournamentMatchChannel(target.tournamentMatchId));
+		} else if (target.type === "lobby") {
+			channels.add(lobbyChannel(target.lobbyId));
+		}
+	}
+
+	const groupMatchIds = R.unique(
+		targets.flatMap((target) =>
+			target.type === "sendouq" ? [target.groupMatchId] : [],
+		),
+	);
+	for (const groupMatchId of groupMatchIds) {
+		const chatRoomId = await SQMatchRepository.findChatRoomIdById(groupMatchId);
+		if (chatRoomId !== null) channels.add(chatRoomChannel(chatRoomId));
+	}
+
+	ChatSystemMessage.send(
+		Array.from(channels, (channel) => ({ channel, authorUserId: null })),
+	);
+}
 
 async function requireIngestQuota(povUserId: number) {
 	const now = new Date();

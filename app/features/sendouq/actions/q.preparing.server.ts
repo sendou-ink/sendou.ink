@@ -38,7 +38,11 @@ export const action = defineAction(
 					ChatSystemMessage.notifyStatusChanged(
 						ownGroup.members.map((member) => member.id),
 					);
-					ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
+					ChatSystemMessage.send([
+						{ channel: SENDOUQ_LOOKING_CHANNEL },
+						// the other members are still on the preparing page
+						{ channel: sqGroupChannel(ownGroup.id) },
+					]);
 
 					return redirect(SENDOUQ_LOOKING_PAGE);
 				}

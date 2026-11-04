@@ -16,8 +16,8 @@ import { createRevalidateBroadcastThrottle } from "./revalidate-broadcast-thrott
 type RevalidateBroadcast = {
 	/** Channel whose subscribed pages should refetch, see `chatRoomChannel`. */
 	channel: string;
-	/** Actor whose own broadcast clients skip (their submission already reran the loaders). */
-	authorUserId?: number;
+	/** Actor whose own broadcast clients skip (their submission already reran the loaders), defaults to the request's user. `null` = nobody skips, for changes no page submission made. */
+	authorUserId?: number | null;
 	revalidateScope?: RevalidateScope;
 	type?: UnthrottledSystemMessageType;
 };
@@ -89,12 +89,15 @@ async function persistAndPublish(args: {
 function publishRevalidate(msg: {
 	channel: string;
 	revalidateScope?: RevalidateScope;
-	authorUserId?: number;
+	authorUserId?: number | null;
 }) {
 	EventBus.publish([msg.channel], {
 		kind: "revalidate",
 		scope: msg.revalidateScope,
-		authorUserId: msg.authorUserId ?? actorIdOrNullSafe() ?? undefined,
+		authorUserId:
+			msg.authorUserId === null
+				? undefined
+				: (msg.authorUserId ?? actorIdOrNullSafe() ?? undefined),
 	});
 }
 

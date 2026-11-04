@@ -251,7 +251,12 @@ export const action = defineAction(
 						currentGroup.members.map((member) => member.id),
 					);
 
-					broadcastLookingUpdate();
+					if (currentGroup.status === "PREPARING") {
+						// a preparing group isn't in the pool, so only its members (on the preparing page)
+						revalidateGroupTopic(currentGroup.id);
+					} else {
+						broadcastLookingUpdate();
+					}
 
 					throw redirect(SENDOUQ_PAGE);
 				}
