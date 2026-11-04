@@ -1,3 +1,4 @@
+import type { Ref } from "react";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { clipVolumePersisted } from "./clip-volume";
 
@@ -5,25 +6,47 @@ import { clipVolumePersisted } from "./clip-volume";
 export function ClipVideo({
 	src,
 	className,
+	ref,
+	controls = true,
+	autoPlay = true,
+	startAt,
+	onDurationChange,
 }: {
 	src: string;
 	className?: string;
+	ref?: Ref<HTMLVideoElement>;
+	controls?: boolean;
+	autoPlay?: boolean;
+	/** seconds a newly loaded source starts at */
+	startAt?: number;
+	onDurationChange?: (duration: number) => void;
 }) {
 	return (
 		// biome-ignore lint/a11y/useMediaCaption: game footage has no captions
 		<video
-			ref={applySavedVolume}
+			ref={(video) => {
+				applySavedVolume(video);
+				if (typeof ref === "function") ref(video);
+				else if (ref) ref.current = video;
+			}}
 			className={className}
 			src={src}
-			controls
-			autoPlay
+			controls={controls}
+			autoPlay={autoPlay}
 			playsInline
+			onLoadedMetadata={(event) => {
+				if (startAt !== undefined) event.currentTarget.currentTime = startAt;
+			}}
 			onVolumeChange={(event) =>
 				PersistedState.write(clipVolumePersisted, {
 					volume: event.currentTarget.volume,
 					muted: event.currentTarget.muted,
 				})
 			}
+			onDurationChange={(event) => {
+				const { duration } = event.currentTarget;
+				if (Number.isFinite(duration)) onDurationChange?.(duration);
+			}}
 		/>
 	);
 }

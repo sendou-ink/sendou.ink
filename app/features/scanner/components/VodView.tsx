@@ -6,7 +6,8 @@
  * vod-scan.ts, or a saved one from the store) shows its numbers, Add to VoDs
  * and Delete.
  */
-import { GraduationCap, Trash2, Video } from "lucide-react";
+import { GraduationCap, Trash2, Video, VolumeX } from "lucide-react";
+import { useState } from "react";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { LogInPopover } from "~/components/LogInPopover";
@@ -31,6 +32,7 @@ import { SessionView } from "./SessionView";
 import { sendouUpload } from "./sendou-upload";
 import type { ScanEvent } from "./session-data";
 import { useDebug } from "./use-debug";
+import { VodMusicDialog } from "./VodMusicDialog";
 import styles from "./VodView.module.css";
 import { isThisVisitsVodClip } from "./visit";
 import { cachedBuild, useStoredVod } from "./vod-data";
@@ -162,6 +164,7 @@ function VodSessionView({
 	const vodClips = clips.filter((clip) => isThisVisitsVodClip(clip, name));
 	const upload = running ? null : sendouUpload(events);
 	const built = cachedBuild(events);
+	const [isRemovingMusic, setIsRemovingMusic] = useState(false);
 
 	const remove = async () => {
 		await deleteVod(name);
@@ -232,6 +235,16 @@ function VodSessionView({
 									</LogInPopover>
 								)
 							) : null}
+							{!running ? (
+								<SendouButton
+									size="small"
+									variant="outlined"
+									icon={<VolumeX />}
+									onClick={() => setIsRemovingMusic(true)}
+								>
+									Remove music
+								</SendouButton>
+							) : null}
 							<ExportMenu
 								built={info.built}
 								events={events}
@@ -268,6 +281,9 @@ function VodSessionView({
 		>
 			{status}
 			{telemetry}
+			{isRemovingMusic ? (
+				<VodMusicDialog name={name} onClose={() => setIsRemovingMusic(false)} />
+			) : null}
 		</SessionView>
 	);
 }

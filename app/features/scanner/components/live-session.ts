@@ -19,6 +19,7 @@ import {
 	resolveVideoInput,
 	startSampler,
 } from "../capture/sampler";
+import { deleteStaleVodMusicFiles } from "../capture/vod-music";
 import {
 	type ClipWindow,
 	MAX_CLIP_SECONDS,
@@ -387,6 +388,7 @@ function endCapture(next: LiveSnapshot): void {
  * and rolls session clips left by a capture that never reached Stop (a
  * reload, a closed tab) into history — unless a capture is running in
  * another tab, whose session they are. A capture started meanwhile waits.
+ * Also deletes music-free VoDs left behind for downloading (vod-music.ts).
  */
 export function settleClipStore(): void {
 	if (clipStoreSettled) return;
@@ -396,6 +398,7 @@ export function settleClipStore(): void {
 			Promise.allSettled([
 				deleteClosedVisitsVodClips(),
 				rollAbandonedSessionClips(),
+				deleteStaleVodMusicFiles(),
 			]),
 		)
 		.then(() => refreshClips());

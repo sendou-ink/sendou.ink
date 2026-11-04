@@ -196,6 +196,59 @@ the ring would have dropped it by then:
   saved — on a file the scan carries on with the next window. Clip records carry the real `start`/`end`
   seconds (a packet-copied clip starts at a keyframe), and a card's deaths
   and kills get a ▶ when a clip covers their `t`.
+- **Trim** (`capture/clip-trim.ts`, `ClipTrimBar`): the clip dialog's
+  Trim (or a history card's scissors) swaps the video's controls for a
+  macOS Preview style bar — a filmstrip of keyframes, a yellow frame whose
+  handles set the range, playback that stops at its end — and downloads
+  the range. mediabunny's `Conversion` copies packets from the keyframe
+  before the start and writes an MP4 edit list hiding the lead-in, so the
+  cut is frame accurate with no re-encode. The stored clip is untouched.
+- **Mute music** (the clip dialog's switch, also in the trim bar;
+  `capture/clip-music.ts` and its worker, `core/music/`): the battle track is subtracted from the clip's
+  sound, the other game sounds kept, and the clip is written again (video
+  copied, sound re-encoded) for playback and download. Landmark
+  fingerprints (`fingerprint.ts`: paired spectrogram peaks, votes per
+  (track, offset)) name the track and the few places in it that sound
+  alike (a song repeats itself); each is aligned to a fraction of a sample
+  by phase-transform cross-correlation, with the drift between capture and
+  console clocks, and every second goes to the one that explains the clip
+  best — fingerprint votes alone thin out under game sounds and casters,
+  leaving the start and end of a clip untouched, and cannot tell a verse
+  from its repeat. The track, resampled onto the clip's timeline, comes out
+  through a per-bin gain fitted to the clip in the short-time Fourier
+  domain (the game ducks and filters the music, e.g. while splatted), plus
+  a Wiener post-filter (`music-removal.ts`). A 60 s clip takes a few
+  seconds. The music set lives on the CDN at `scanner/v1/bgm/`: `index.bin`
+  (fingerprints and the track list, ~1 MB) and the tracks themselves,
+  fetched only when matched. `pnpm scanner:build-music-index <folder>`
+  builds it from a folder of Opus tracks (titles from the file names, ids
+  slugs of the titles); `pnpm scanner:remove-music <video>`
+  runs the same removal in Node and writes before/after WAVs for listening.
+  Music missing from the set (lobby, results, a streamer's own) is left
+  alone. What is left of the music is mostly the reference's own mismatch:
+  the YouTube rips differ from the game's playback (the rips' repeats of a
+  passage already differ from each other by 8–11 dB), so a cleaner source
+  (the game's own streams) would cancel deeper.
+- **Remove music from a whole VoD** (the VoD view's Remove music;
+  `capture/vod-music.ts` and its worker, `core/music/music-stream.ts`): the
+  file itself again, video packets copied bit for bit, the music-free sound
+  as the first (default) audio track and the original audio tracks copied
+  after it. Two passes so hours of sound never sit in memory: the search
+  runs `findMusic` over 90 s windows overlapping by 20 s, each keeping the
+  segments in its middle, and the subtraction decodes the sound again in
+  30 s chunks with 3 s of margin either side (on the STFT's hop, so the
+  output is the whole-sound subtraction to −50 dB); chunks no segment
+  reaches pass through. Every track is muxed up to where the music-free
+  sound has got, so the muxer holds seconds, written to a file picked in
+  the save dialog, or without one (Firefox, Safari) to the origin private
+  file system and downloaded from there; those copies are deleted on a
+  page load an hour later (`deleteStaleVodMusicFiles`). The AAC encoder's
+  priming (2112 samples in Chrome on macOS) isn't signalled by
+  mediabunny's muxers, so `audioEncoderDelay` measures it by encoding a
+  click and the new sound starts that far in; the clip mute does the
+  same. A 33 min 1080p VoD takes about 25 s to search and 75 s to write in
+  Node (`pnpm scanner:remove-music <video> --video`, the same passes with
+  ffmpeg doing the decoding and muxing).
 
 ## Tournament montage (dev only, PoC)
 
@@ -269,6 +322,9 @@ pnpm scanner:bootstrap-atlas            # harvest labeled fixture crops into the
 pnpm scanner:build-glyph-atlas          # add the font-rendered charset (fonts required, see below)
 pnpm scanner:build-localized-entries    # regen localized closed sets from ../splat3
 pnpm scanner:build-planner-signatures   # regen the minimap stage-ID atlas from the assets repo
+pnpm scanner:build-music-index <folder> # regen the battle music set clips' "Mute music" subtracts
+pnpm scanner:remove-music <video>       # take the music out of a video's sound, before/after WAVs
+pnpm scanner:remove-music <video> --video # the whole video again without the music, original audio kept
 pnpm scanner:gpu-parity                 # every fixture: OpenCV vs WebGPU parse decisions + GPU upscale pixels
 pnpm scanner:gpu-replay <corpus-dir>    # replay recorded match requests on WebGPU, timed, exact-checked
 ```

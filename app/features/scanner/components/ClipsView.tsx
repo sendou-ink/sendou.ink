@@ -4,7 +4,7 @@ import clsx from "clsx";
  * in place, each downloadable and deletable. The lowest-scoring one is
  * replaced when the history is full — download anything worth keeping.
  */
-import { Download, Play, Trash2 } from "lucide-react";
+import { Download, Play, Scissors, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -21,6 +21,7 @@ import {
 	type ScannerClip,
 	storageUsage,
 } from "../store/clips";
+import { ClipDialog } from "./ClipDialog";
 import styles from "./ClipsView.module.css";
 import { ClipVideo } from "./ClipVideo";
 import { refreshClips, useClips } from "./clips-feed";
@@ -31,6 +32,7 @@ export function ClipsView() {
 	const clips = useClips();
 	const history = clips.filter((clip) => clip.bucket === "history");
 	const usage = useStorageUsage(clips.length);
+	const [trimming, setTrimming] = useState<ScannerClip | null>(null);
 
 	return (
 		<div className={styles.view}>
@@ -54,18 +56,33 @@ export function ClipsView() {
 			) : (
 				<div className={styles.grid}>
 					{history.map((clip) => (
-						<ClipCard key={clip.id} clip={clip} />
+						<ClipCard key={clip.id} clip={clip} onTrim={setTrimming} />
 					))}
 				</div>
 			)}
 			{usage !== null ? (
 				<p className={styles.storage}>~{formatBytes(usage)} used</p>
 			) : null}
+			{trimming ? (
+				<ClipDialog
+					clip={trimming}
+					clips={history}
+					onPlay={setTrimming}
+					onClose={() => setTrimming(null)}
+					startTrimming
+				/>
+			) : null}
 		</div>
 	);
 }
 
-function ClipCard({ clip }: { clip: ScannerClip }) {
+function ClipCard({
+	clip,
+	onTrim,
+}: {
+	clip: ScannerClip;
+	onTrim: (clip: ScannerClip) => void;
+}) {
 	const [url, setUrl] = useState<string | null>(null);
 	const formatDate = useEventDateTimeFormatter();
 	const where = [modeLabel(clip.mode), stageLabel(clip.stage)]
@@ -149,6 +166,14 @@ function ClipCard({ clip }: { clip: ScannerClip }) {
 							icon={<Download />}
 							aria-label="Download clip"
 							onClick={() => void download()}
+						/>
+						<SendouButton
+							variant="minimal"
+							size="small"
+							shape="circle"
+							icon={<Scissors />}
+							aria-label="Trim and download clip"
+							onClick={() => onTrim(clip)}
 						/>
 						<FormWithConfirm
 							dialogHeading="Delete this clip?"
