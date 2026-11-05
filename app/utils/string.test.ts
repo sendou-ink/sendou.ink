@@ -1,9 +1,28 @@
 import { describe, expect, test } from "vitest";
 import {
+	inGameNameWithoutDiscriminator,
 	pathnameFromPotentialURL,
 	removeMarkdown,
 	truncateBySentence,
 } from "./strings";
+
+describe("inGameNameWithoutDiscriminator()", () => {
+	test.each([
+		{ why: "plain name", inGameName: "Sendou#1234", expected: "Sendou" },
+		{
+			why: "# inside the name",
+			inGameName: "Brook #4#2564",
+			expected: "Brook #4",
+		},
+		{
+			why: "name starting with #",
+			inGameName: "# Sowoul ##1013",
+			expected: "# Sowoul #",
+		},
+	])("keeps the name of $why", ({ inGameName, expected }) => {
+		expect(inGameNameWithoutDiscriminator(inGameName)).toBe(expected);
+	});
+});
 
 describe("pathnameFromPotentialURL()", () => {
 	test("Resolves path name from valid URL", () => {

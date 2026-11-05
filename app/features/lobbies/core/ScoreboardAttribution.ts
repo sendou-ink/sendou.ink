@@ -195,7 +195,7 @@ function anchoredUserIds(
 	const byInGameName = read
 		? sidePlayers.filter((player) => {
 				const inGameName = player.inGameName
-					? Matches.normalizeInGameName(player.inGameName)
+					? Matches.normalizeSiteInGameName(player.inGameName)
 					: "";
 				return inGameName && isSameNameRead(read, inGameName);
 			})

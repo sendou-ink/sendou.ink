@@ -2,7 +2,11 @@ import type { GearType } from "~/modules/in-game-lists/types";
 import { assertUnreachable } from "./types";
 
 export function inGameNameWithoutDiscriminator(inGameName: string) {
-	return inGameName.split("#")[0];
+	const discriminatorIdx = inGameName.lastIndexOf("#");
+
+	return discriminatorIdx === -1
+		? inGameName
+		: inGameName.slice(0, discriminatorIdx);
 }
 
 export const rawSensToString = (sens: number) =>

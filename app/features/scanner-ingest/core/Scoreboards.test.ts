@@ -862,6 +862,25 @@ describe("Scoreboards.povWeaponId", () => {
 		},
 	);
 
+	test("a teammate's seat whose name differs only after a # is not the sender's", () => {
+		const names = NAMES.map((name, i) => (i === 0 ? "Brook #4" : name));
+
+		expect(
+			Scoreboards.povWeaponId({
+				match: testMatch({ povIndex: 0, names, weapons }),
+				game: testGame({
+					winnerUserIds: [1, 2, 3, 4],
+					loserUserIds: [5, 6, 7, 8],
+					inGameNameByUserId: new Map([
+						[1, "Brook #3#2493"],
+						[2, "Brook #4#2564"],
+					]),
+				}),
+				povUserId: SENDER_ID,
+			}),
+		).toBe(null);
+	});
+
 	test("returns null when the seat's weapon was not read", () => {
 		expect(
 			Scoreboards.povWeaponId({

@@ -165,12 +165,14 @@ export function gameStartedAt(match: ScannerMatch): number | null {
 	return startedAt;
 }
 
-/** Lowercased, width-normalized in-game name without the #discriminator. */
+/** Lowercased, width-normalized in-game name as read off a scoreboard, which shows no #discriminator. */
 export function normalizeInGameName(name: string): string {
-	return inGameNameWithoutDiscriminator(name)
-		.normalize("NFKC")
-		.trim()
-		.toLowerCase();
+	return name.normalize("NFKC").trim().toLowerCase();
+}
+
+/** {@link normalizeInGameName} of an in-game name saved on the site, its #discriminator dropped. */
+export function normalizeSiteInGameName(inGameName: string): string {
+	return normalizeInGameName(inGameNameWithoutDiscriminator(inGameName));
 }
 
 function canonicalObjective(

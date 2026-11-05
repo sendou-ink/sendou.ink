@@ -210,7 +210,8 @@ export function povWeaponId({
 	const seatName = Matches.normalizeInGameName(seat.name);
 	const seatUserIds = [...game.inGameNameByUserId]
 		.filter(
-			([, inGameName]) => Matches.normalizeInGameName(inGameName) === seatName,
+			([, inGameName]) =>
+				Matches.normalizeSiteInGameName(inGameName) === seatName,
 		)
 		.map(([userId]) => userId);
 	if (seatName && seatUserIds.length > 0 && !seatUserIds.includes(povUserId)) {

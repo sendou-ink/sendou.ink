@@ -327,6 +327,26 @@ describe("mergeMatches", () => {
 	});
 });
 
+describe("Matches.normalizeSiteInGameName", () => {
+	test.each([
+		{ why: "plain name", siteName: "Sendou#2955", read: "Sendou" },
+		{
+			why: "# inside the name",
+			siteName: "Kiter#2772#1382",
+			read: "Kiter#2772",
+		},
+		{
+			why: "name starting with #",
+			siteName: "# Sowoul ##1013",
+			read: "# Sowoul #",
+		},
+	])("matches the scoreboard read of a $why", ({ siteName, read }) => {
+		expect(Matches.normalizeSiteInGameName(siteName)).toBe(
+			Matches.normalizeInGameName(read),
+		);
+	});
+});
+
 describe("Matches.gameStartedAt", () => {
 	const PLAYED_AT = Date.UTC(2026, 7, 1, 18, 0, 0);
 
