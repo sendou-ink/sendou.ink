@@ -1,6 +1,10 @@
 import type { UserMapModePreferences } from "~/db/tables-json";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
-import { type MemberRole, TEAM } from "~/features/team/team-constants";
+import {
+	type MemberRole,
+	type MemberRoleType,
+	TEAM,
+} from "~/features/team/team-constants";
 import { invariant } from "~/utils/invariant";
 import { actAs } from "../core/actAs";
 import { defineFactory } from "../core/defineFactory";
@@ -22,10 +26,12 @@ type Options = {
 	/** SendouQ map & mode preferences, saved as the team edit page saves them. */
 	mapModePreferences?: UserMapModePreferences;
 	/** Roles of the members, keyed by user id, saved as the roster page saves them. Members left out keep none. */
-	roles?: Record<number, MemberRole>;
+	roles?: Record<number, MemberRole | CustomRole>;
 	/** Members who may edit the team like the owner does, saved as the roster page saves them. */
 	managerUserIds?: number[];
 };
+
+type CustomRole = { customRole: string; roleType: MemberRoleType };
 
 /** First of `memberUserIds` is the owner, the rest join like in production (within the non-patron team limit). */
 export const { create } = defineFactory({
@@ -65,9 +71,7 @@ export const { create } = defineFactory({
 				teamId: team.id,
 				members: team.memberUserIds.map((userId, index) => ({
 					userId,
-					role: roles?.[userId] ?? null,
-					customRole: null,
-					roleType: null,
+					...roleColumns(roles?.[userId]),
 					isManager: managerUserIds?.includes(userId) ?? false,
 					order: index,
 				})),
@@ -103,3 +107,9 @@ export const { create } = defineFactory({
 		});
 	},
 });
+
+function roleColumns(role: MemberRole | CustomRole | undefined) {
+	if (typeof role === "object") return { role: null, ...role };
+
+	return { role: role ?? null, customRole: null, roleType: null };
+}

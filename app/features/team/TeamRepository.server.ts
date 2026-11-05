@@ -610,7 +610,11 @@ export function insertOwnMembership({
 			.values({ userId, teamId, isMainTeam, order })
 			.onConflict((oc) =>
 				oc.columns(["userId", "teamId"]).doUpdateSet({
+					createdAt: databaseTimestampNow(),
 					leftAt: null,
+					role: null,
+					customRole: null,
+					roleType: null,
 					isMainTeam,
 					order,
 				}),
