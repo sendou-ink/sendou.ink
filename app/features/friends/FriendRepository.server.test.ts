@@ -1,7 +1,11 @@
+import { addDays, subDays } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as FriendRequestFactory from "~/db/seed/factories/FriendRequestFactory";
 import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { withUserId } from "~/utils/Test";
 import * as FriendRepository from "./FriendRepository.server";
 
@@ -418,6 +422,56 @@ describe("findByUserIdWithActivity", () => {
 		const result = await FriendRepository.findByUserIdWithActivity(users.id(1));
 
 		expect(result).toHaveLength(0);
+	});
+
+	const lookingTournamentNameOfFriend = async ({
+		startsAt,
+		regClosesAt,
+	}: {
+		startsAt: Date;
+		regClosesAt?: Date;
+	}) => {
+		await FriendshipFactory.create({
+			userOneId: users.id(1),
+			userTwoId: users.id(2),
+		});
+		const tournament = await TournamentFactory.create({
+			authorId: users.id(3),
+			name: "Looking Cup",
+			startTimes: [dateToDatabaseTimestamp(startsAt)],
+			regClosesAt: regClosesAt
+				? dateToDatabaseTimestamp(regClosesAt)
+				: undefined,
+		});
+		await TournamentLFGTeamFactory.create({
+			tournamentId: tournament.id,
+			userId: users.id(2),
+		});
+
+		const result = await FriendRepository.findByUserIdWithActivity(users.id(1));
+
+		return result.find((row) => row.id === users.id(2))?.tournamentName;
+	};
+
+	test("shows a friend looking for a team in an upcoming tournament", async () => {
+		expect(
+			await lookingTournamentNameOfFriend({ startsAt: addDays(new Date(), 1) }),
+		).toBe("Looking Cup");
+	});
+
+	test("ignores looking for a team in a tournament that has started", async () => {
+		expect(
+			await lookingTournamentNameOfFriend({ startsAt: subDays(new Date(), 7) }),
+		).toBeNull();
+	});
+
+	test("ignores looking for a team after registration has closed", async () => {
+		expect(
+			await lookingTournamentNameOfFriend({
+				startsAt: addDays(new Date(), 1),
+				regClosesAt: subDays(new Date(), 1),
+			}),
+		).toBeNull();
 	});
 });
 

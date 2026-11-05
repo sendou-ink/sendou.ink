@@ -93,19 +93,18 @@ function withLfgJoins<QB extends SelectQueryBuilder<any, any, any>>(qb: QB) {
 								"=",
 								"TournamentTeamMember.tournamentTeamId",
 							)
-							.where((innerEb) =>
-								innerEb.or([
-									innerEb(
-										sql`json_extract("LookingTournament"."settings", '$.regClosesAt')`,
-										"is",
-										null,
-									),
-									innerEb(
-										sql<number>`json_extract("LookingTournament"."settings", '$.regClosesAt')`,
-										">",
-										nowTimestamp,
-									),
-								]),
+							.where(
+								sql<number>`coalesce(
+									"LookingTournament"."settings" ->> 'regClosesAt',
+									(
+										select min("CalendarEventDate"."startsAt")
+										from "CalendarEventDate"
+										inner join "CalendarEvent" on "CalendarEvent"."id" = "CalendarEventDate"."eventId"
+										where "CalendarEvent"."tournamentId" = "LookingTournament"."id"
+									)
+								)`,
+								">",
+								nowTimestamp,
 							),
 					),
 				),
