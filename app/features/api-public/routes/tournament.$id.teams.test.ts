@@ -5,6 +5,7 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { type TestUser, withUserId, wrappedLoader } from "~/utils/Test";
+import { avatarUrl } from "~/utils/urls";
 import type { GetTournamentTeamsResponse } from "../schema";
 import { loader } from "./tournament.$id.teams";
 
@@ -189,6 +190,23 @@ describe("GET /api/tournament/:id/teams", () => {
 
 		expect(asOutsider[0].mapPool).toHaveLength(4);
 		expect(asOutsider[0].logoUrl).toEqual(expect.any(String));
+	});
+
+	test("returns the stored avatar of a member instead of the Discord CDN one", async () => {
+		const player = await UserFactory.create({ discordAvatar: "abc123" });
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId(),
+		});
+		await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [player.id],
+		});
+
+		const teams = await fetchTeams(tournament.id);
+
+		expect(teams[0].members[0].avatarUrl).toBe(
+			avatarUrl(`avatar-${player.id}-abc123.webp`, "lg"),
+		);
 	});
 
 	test("returns the tournament name organizers gave a player instead of their username", async () => {

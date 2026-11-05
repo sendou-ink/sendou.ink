@@ -12,7 +12,7 @@ export interface GetUserResponse {
 	discordId: string;
 	/** @example "https://sendou.ink/u/sendou" */
 	url: string;
-	/** @example "https://cdn.discordapp.com/avatars/79237403620945920/6fc41a44b069a0d2152ac06d1e496c6c.png" */
+	/** @example "https://sendou.nyc3.cdn.digitaloceanspaces.com/avatar-274-6fc41a44b069a0d2152ac06d1e496c6c.webp" */
 	avatarUrl: string | null;
 	/** @example "FI" */
 	country: string | null;
@@ -178,7 +178,7 @@ export type GetTournamentTeamsResponse = Array<{
 		name: string;
 		/** @example "79237403620945920" */
 		discordId: string;
-		/** @example "https://cdn.discordapp.com/avatars/79237403620945920/6fc41a44b069a0d2152ac06d1e496c6c.png" */
+		/** @example "https://sendou.nyc3.cdn.digitaloceanspaces.com/avatar-274-6fc41a44b069a0d2152ac06d1e496c6c.webp" */
 		avatarUrl: string | null;
 		/** @example "FI" */
 		country: string | null;

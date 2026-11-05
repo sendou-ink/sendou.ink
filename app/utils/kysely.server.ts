@@ -124,7 +124,7 @@ export function commonUserSelect<const O extends CommonUserSelectOptions>(
  * File name of the user's avatar (custom one over the one synced from their log in account) or
  * `null`, the client builds the URL with `avatarUrl()`.
  */
-function userAvatar(eb: ExpressionBuilder<DB, any>, alias = "User") {
+export function userAvatar(eb: ExpressionBuilder<DB, any>, alias = "User") {
 	const imageUrlOf = (column: "customAvatarImgId" | "syncedAvatarImgId") =>
 		eb
 			.selectFrom("UserSubmittedImage")

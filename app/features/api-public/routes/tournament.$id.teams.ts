@@ -27,9 +27,11 @@ import {
 	jsonArrayFrom,
 	jsonObjectFrom,
 	tournamentUsername,
+	userAvatar,
 } from "~/utils/kysely.server";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
+import { avatarUrl } from "~/utils/urls";
 import type { GetTournamentTeamsResponse } from "../schema";
 
 const ZERO_STATS: Standings.TeamRecord = {
@@ -109,7 +111,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						"User.id as userId",
 						tournamentUsername().as("username"),
 						"User.discordId",
-						"User.discordAvatar",
+						userAvatar(eb).as("avatar"),
 						"User.country",
 						"User.pronouns",
 						"TournamentTeamMember.inGameName",
@@ -206,9 +208,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 					userId: member.userId,
 					name: member.username,
 					discordId: member.discordId,
-					avatarUrl: member.discordAvatar
-						? `https://cdn.discordapp.com/avatars/${member.discordId}/${member.discordAvatar}.png`
-						: null,
+					avatarUrl: member.avatar ? avatarUrl(member.avatar, "lg") : null,
 					country: member.country,
 					captain: member.role === "OWNER",
 					inGameName: member.inGameName,
