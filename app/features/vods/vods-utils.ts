@@ -21,6 +21,7 @@ export function vodToVideoBeingAdded(vod: Vod): VideoBeingAdded {
 			startsAt: secondsToHoursMinutesSecondString(match.startsAt),
 		})),
 		type: vod.type,
+		teamSize: castTeamSize(vod),
 		pov:
 			typeof vod.pov === "string"
 				? { type: "NAME", name: vod.pov }
@@ -131,6 +132,13 @@ export function generateYoutubeTimestamps(
 	}
 
 	return lines.join("\n");
+}
+
+function castTeamSize(vod: Vod) {
+	if (vod.type !== "CAST") return undefined;
+
+	const weaponCount = vod.matches[0]?.weapons.length;
+	return weaponCount ? weaponCount / 2 : undefined;
 }
 
 function parseUrl(url: string) {
