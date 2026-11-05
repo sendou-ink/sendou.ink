@@ -213,10 +213,17 @@ describe("LobbyTransition.next", () => {
 		expect(result).toEqual({ type: "END" });
 	});
 
-	test("ends once everyone has left", () => {
-		expect(
-			LobbyTransition.next(state({ participants: [] }), STARTS_AT),
-		).toEqual({ type: "END" });
+	test.each([
+		{ why: "ends once everyone has left", now: STARTS_AT, type: "END" },
+		{
+			why: "deletes once everyone has left before the start",
+			now: STARTS_AT - 1,
+			type: "DELETE",
+		},
+	])("$why", ({ now, type }) => {
+		expect(LobbyTransition.next(state({ participants: [] }), now)).toEqual({
+			type,
+		});
 	});
 
 	test("passes the host to the longest-tenured participant", () => {

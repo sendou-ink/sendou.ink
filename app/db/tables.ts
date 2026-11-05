@@ -1528,7 +1528,7 @@ interface LobbyKickedUser {
 	createdAt: Generated<number>;
 }
 
-/** Left the lobby (or was removed by it) without being kicked, keeps access to its chat. */
+/** Left the lobby (or was removed by it) after playing a set without being kicked, keeps access to its chat. */
 interface LobbyLeftUser {
 	lobbyId: number;
 	userId: number;

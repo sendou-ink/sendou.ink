@@ -420,6 +420,7 @@
 	"chat.systemMsg.cancelRefused": "{{name}} refused canceling the match",
 	"chat.systemMsg.userJoined": "{{name}} joined the lobby",
 	"chat.systemMsg.userLeft": "{{name}} left the group",
+	"chat.systemMsg.userLeftLobby": "{{name}} left the lobby",
 	"chat.systemMsg.leavingAfterSet": "{{name}} will leave after this set",
 	"chat.systemMsg.stayingAfterSet": "{{name}} changed their mind and will stay after this set",
 	"chat.systemMsg.hostChanged": "{{name}} is now the host",

@@ -278,7 +278,7 @@ async function resolveLobbyRooms(
 		titleParams: { name: owner.name },
 		url: lobbyPage(owner.id),
 		imageUrl: null,
-		// leaving keeps the chat, only a kick takes it away
+		// leaving after playing a set keeps the chat, only a kick takes it away
 		participantUserIds: R.unique(
 			[...owner.participants, ...owner.leftUsers].map(
 				(participant) => participant.userId,

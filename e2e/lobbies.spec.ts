@@ -9,6 +9,7 @@ import {
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { lobbiesPage } from "~/utils/urls";
 import { chatHistoryStatus, openSecondUser } from "./helpers/chat";
 import type { Factories } from "./helpers/factories";
 import {
@@ -1605,16 +1606,18 @@ test.describe("Lobbies", () => {
 	});
 
 	/**
-	 * The lobby's chat is shared by everyone in it and stays with those who leave, only a kick takes it
-	 * away. While a set is played its two teams also get a chat of their own, fresh for every set.
+	 * The lobby's chat is shared by everyone in it and stays with players who leave after playing a set, only a
+	 * kick takes it away. While a set is played its two teams also get a chat of their own, fresh for every set.
 	 */
 	test.describe("Chat", () => {
-		test("leaving keeps the lobby's chat, being kicked takes it away", async ({
+		test("leaving before playing is noted in the chat and takes it away", async ({
 			page,
 			factories,
 		}) => {
 			const host = await factories.UserFactory.create();
-			const leaver = await factories.UserFactory.create();
+			const leaver = await factories.UserFactory.create({
+				discordName: "EarlyLeaver",
+			});
 			const lobby = await factories.LobbyFactory.create(
 				{ hostUserId: host.id },
 				{ signedUpUserIds: [leaver.id] },
@@ -1622,12 +1625,41 @@ test.describe("Lobbies", () => {
 			const lobbyPage = new LobbyPage(page);
 			const chat = new ChatSidebar(page);
 
-			await test.step("A participant leaves and still writes to the lobby", async () => {
+			await test.step("A participant leaves before playing and has no chat anymore", async () => {
 				await impersonate(page, leaver.id);
 				await lobbyPage.goto(lobby.id);
 				await expect(chat.locators.openChats).toHaveCount(1);
 
 				await lobbyPage.leave();
+				await expect(lobbyPage.locators.signUpButton).toBeVisible();
+				await isNotVisible(chat.locators.openChats);
+			});
+
+			await test.step("The host sees them leave in the chat only", async () => {
+				await impersonate(page, host.id);
+				await lobbyPage.goto(lobby.id);
+
+				await expect(
+					chat.chat().message("EarlyLeaver left the lobby"),
+				).toBeVisible();
+				await isNotVisible(lobbyPage.locators.leftUsers);
+			});
+		});
+
+		test("leaving after playing keeps the lobby's chat, being kicked takes it away", async ({
+			page,
+			factories,
+		}) => {
+			const { lobby, host, alphaPlayers } = await startedLobby(page, factories);
+			const leaver = alphaPlayers.find((player) => player.id !== host.id)!;
+			const lobbyPage = new LobbyPage(page);
+			const chat = new ChatSidebar(page);
+
+			await test.step("A player leaves mid-set and still writes to the lobby", async () => {
+				await impersonate(page, leaver.id);
+				await lobbyPage.goto(lobby.id, "action");
+				await lobbyPage.reportOwnTeamWin();
+				await lobbyPage.leaveMidSet();
 				await expect(lobbyPage.locators.signUpButton).toBeVisible();
 
 				await chat.chat().send("left but still here");
@@ -1645,11 +1677,11 @@ test.describe("Lobbies", () => {
 
 			await test.step("The host kicks the one who left", async () => {
 				await impersonate(page, host.id);
-				await lobbyPage.goto(lobby.id);
+				await lobbyPage.goto(lobby.id, "leaderboard");
 				await expect(chat.chat().message("left but still here")).toBeVisible();
 				await expect(lobbyPage.locators.leftUsers).toHaveCount(1);
 
-				await lobbyPage.kick(leaver.id);
+				await lobbyPage.kickLeftUser(leaver.id);
 				await expect(lobbyPage.locators.leftUsers).toHaveCount(0);
 			});
 
@@ -2083,6 +2115,33 @@ test.describe("Lobbies", () => {
 			await lobbyPage.goto(lobby.id);
 
 			await expect(lobbyPage.locators.endedStatus).toBeVisible();
+		});
+
+		test("a lobby everyone left before its start is deleted", async ({
+			page,
+			factories,
+		}) => {
+			const host = await factories.UserFactory.create();
+			const lobby = await factories.LobbyFactory.create({
+				hostUserId: host.id,
+			});
+			const lobbyPage = new LobbyPage(page);
+
+			await test.step("The host, the only one in it, leaves and lands on the lobby list", async () => {
+				await impersonate(page, host.id);
+				await lobbyPage.goto(lobby.id);
+				await lobbyPage.leave();
+
+				await expect(page).toHaveURL(lobbiesPage());
+			});
+
+			await test.step("The lobby is gone", async () => {
+				await lobbyPage.goto(lobby.id);
+
+				await expect(
+					new ErrorPage(page).locators.notFoundHeading,
+				).toBeVisible();
+			});
 		});
 
 		test("a started lobby everyone left ends", async ({ page, factories }) => {

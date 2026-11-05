@@ -301,9 +301,18 @@ export class LobbyPage {
 		);
 	}
 
-	/** As the host, kicks the participant, or one who left, out of the lobby for good through their player menu. */
+	/** As the host, kicks the participant out of the lobby for good through their player menu. */
 	async kick(userId: number) {
 		await this.openPlayerMenu(userId);
+		await this.page.getByRole("menuitem", { name: "Kick" }).click();
+		await modalClickConfirmButton(this.page);
+	}
+
+	/** As the host, kicks a player who left out of the lobby's chat through their row of the Rankings tab's left table. */
+	async kickLeftUser(userId: number) {
+		await this.locators.leftUsers
+			.getByTestId(`lobby-player-menu-${userId}`)
+			.click();
 		await this.page.getByRole("menuitem", { name: "Kick" }).click();
 		await modalClickConfirmButton(this.page);
 	}

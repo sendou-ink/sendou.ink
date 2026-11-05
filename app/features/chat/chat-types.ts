@@ -16,6 +16,7 @@ export type ChatRoomType =
 export type SystemMessageType =
 	| "USER_JOINED"
 	| "USER_LEFT"
+	| "USER_LEFT_LOBBY"
 	| "LEAVING_AFTER_SET"
 	| "STAYING_AFTER_SET"
 	| "HOST_CHANGED"
@@ -50,6 +51,7 @@ export type PersistedSystemMessageType = Extract<
 	| "CANCEL_REFUSED"
 	| "USER_JOINED"
 	| "USER_LEFT"
+	| "USER_LEFT_LOBBY"
 	| "LEAVING_AFTER_SET"
 	| "STAYING_AFTER_SET"
 	| "HOST_CHANGED"

@@ -7,10 +7,11 @@ import {
 import { SendouTabPanel } from "~/components/elements/Tabs";
 import { WeaponImage } from "~/components/Image";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
+import { useHasPermission } from "~/modules/permissions/hooks";
 import { useLobbyView } from "../lobbies-hooks";
 import { LobbyHeadToHeadGrid } from "./LobbyHeadToHeadGrid";
 import styles from "./LobbyLeaderboardTab.module.css";
-import { LobbyLeftUserTable, LobbyParticipantTable } from "./LobbyParticipants";
+import { LobbyParticipantTable } from "./LobbyParticipants";
 import { LobbyPlayerTable } from "./LobbyPlayerTable";
 
 const WEAPONS_SHOWN = 4;
@@ -115,5 +116,23 @@ export function LobbyLeaderboardTab() {
 				<LobbyLeftUserTable />
 			</div>
 		</SendouTabPanel>
+	);
+}
+
+/** For the host, players who left the lobby and so still have its chat, to kick them out of it. */
+function LobbyLeftUserTable() {
+	const { t } = useTranslation(["lobbies"]);
+	const { data } = useLobbyView();
+	const isHost = useHasPermission(data.lobby, "MANAGE");
+
+	if (!isHost || data.lobby.endedAt !== null) return null;
+
+	return (
+		<LobbyPlayerTable
+			title={t("lobbies:leaderboard.left")}
+			rows={data.lobby.leftUsers.map((user) => ({ user }))}
+			rowTestId="lobby-left-user"
+			columns={[]}
+		/>
 	);
 }

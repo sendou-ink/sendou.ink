@@ -1,3 +1,4 @@
+import { redirect } from "react-router";
 import type * as v from "valibot";
 import { visibilityIssues } from "~/features/associations/associations-schemas";
 import { requireUser } from "~/features/auth/core/user.server";
@@ -17,6 +18,7 @@ import {
 } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
+import { lobbiesPage } from "~/utils/urls";
 import * as LobbyProgression from "../core/LobbyProgression.server";
 import * as LobbySet from "../core/LobbySet";
 import * as LobbyState from "../core/LobbyState";
@@ -198,11 +200,13 @@ export const action = defineAction(
 					userId: user.id,
 					unfinishedSetId: unfinishedSetIdOf(viewer),
 				});
-				sendSetEndingMessage({
-					chatRoomId: lobby.chatRoomId,
-					userId: user.id,
-					setEnding,
-				});
+				if (lobby.chatRoomId) {
+					void ChatSystemMessage.sendPersisted({
+						roomId: lobby.chatRoomId,
+						type: setEndingMessageType(setEnding) ?? "USER_LEFT_LOBBY",
+						authorUserId: user.id,
+					});
+				}
 				LobbyVoice.ejectLeavers({
 					lobby: {
 						chatRoomId: lobby.chatRoomId,
@@ -441,6 +445,11 @@ export const action = defineAction(
 							: [],
 		});
 
+		const isLobbyDeleted =
+			body._action === "LEAVE" &&
+			!(await LobbyRepository.findProgressionStateById(id));
+		if (isLobbyDeleted) return redirect(lobbiesPage());
+
 		return null;
 	},
 );
@@ -454,14 +463,23 @@ function sendSetEndingMessage({
 	userId: number;
 	setEnding: LobbyMatchRepository.LeftSetEnding | null;
 }) {
-	if (!chatRoomId) return;
-	if (setEnding !== "FORFEITED" && setEnding !== "CALLED_OFF") return;
+	const type = setEndingMessageType(setEnding);
+	if (!chatRoomId || !type) return;
 
 	void ChatSystemMessage.sendPersisted({
 		roomId: chatRoomId,
-		type: setEnding === "FORFEITED" ? "SET_FORFEITED" : "SET_CALLED_OFF",
+		type,
 		authorUserId: userId,
 	});
+}
+
+function setEndingMessageType(
+	setEnding: LobbyMatchRepository.LeftSetEnding | null,
+) {
+	if (setEnding === "FORFEITED") return "SET_FORFEITED";
+	if (setEnding === "CALLED_OFF") return "SET_CALLED_OFF";
+
+	return null;
 }
 
 /** The latest set the user played a side of, the one whose weapons they report. */

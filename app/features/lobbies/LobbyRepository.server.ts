@@ -38,8 +38,8 @@ export type LobbyById = NonNullable<Unwrapped<typeof findById>>;
 
 /**
  * The lobby with its participants, if the actor may see it: by its visibility, its share key, or as a participant
- * or player of one of its sets or one who left it. `leftUsers` are those who left it and haven't signed up again,
- * they keep its chat until kicked. `isViewerKicked` is whether the host kicked the actor out of it,
+ * or player of one of its sets or one who left it. `leftUsers` are those who left it after playing a set and haven't
+ * signed up again, they keep its chat until kicked. `isViewerKicked` is whether the host kicked the actor out of it,
  * `hasViewerLeft` whether the actor left it at some point and so keeps its chat.
  * `permissions.MANAGE` is the host. `shareKey` goes to the host and, as everyone in a link-only lobby already
  * reached it through the link, to every viewer of one.
@@ -771,7 +771,7 @@ export async function updateParticipantsStatus({
 		.execute();
 }
 
-/** Removes the users from the lobby and from the lobby's ready checks. They keep the lobby's chat as having left it. */
+/** Removes the users from the lobby and from the lobby's ready checks. Those who played a set keep the lobby's chat as having left it. */
 export async function deleteParticipants(
 	{ lobbyId, userIds }: { lobbyId: number; userIds: number[] },
 	trx?: Transaction<DB>,
@@ -795,9 +795,21 @@ export async function deleteParticipants(
 				.where("LobbyReadyCheck.lobbyId", "=", lobbyId),
 		)
 		.execute();
+
+	const playedUserIds = await executor
+		.selectFrom("LobbySetParticipant")
+		.innerJoin("LobbySet", "LobbySet.id", "LobbySetParticipant.setId")
+		.select("LobbySetParticipant.userId")
+		.distinct()
+		.where("LobbySet.lobbyId", "=", lobbyId)
+		.where("LobbySetParticipant.userId", "in", userIds)
+		.where("LobbySetParticipant.side", "is not", null)
+		.execute();
+	if (playedUserIds.length === 0) return;
+
 	await executor
 		.insertInto("LobbyLeftUser")
-		.values(userIds.map((userId) => ({ lobbyId, userId })))
+		.values(playedUserIds.map(({ userId }) => ({ lobbyId, userId })))
 		.onConflict((oc) => oc.columns(["lobbyId", "userId"]).doNothing())
 		.execute();
 }
@@ -934,6 +946,11 @@ export async function update(
 		.set(values)
 		.where("Lobby.id", "=", id)
 		.execute();
+}
+
+/** Deletes the lobby with everything of it, its chat room left to the orphaned rooms cleanup. */
+export async function deleteById(id: number) {
+	await db.deleteFrom("Lobby").where("Lobby.id", "=", id).execute();
 }
 
 /**

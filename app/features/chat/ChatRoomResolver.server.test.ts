@@ -322,10 +322,20 @@ describe("ChatRoomResolver LOBBY rooms", () => {
 	const hostId = () => users.id(2);
 	const memberId = () => users.id(3);
 
-	const setupLobby = async () => {
+	const setupLobby = async ({ hasPlayed = true } = {}) => {
+		const playerIds = users.ids(9).slice(1);
 		const lobby = await LobbyFactory.create(
-			{ hostUserId: hostId() },
-			{ signedUpUserIds: [memberId()] },
+			{
+				hostUserId: hostId(),
+				startsAt: dateToDatabaseTimestamp(subHours(new Date(), 1)),
+			},
+			hasPlayed
+				? {
+						signedUpUserIds: playerIds.slice(1),
+						checkedInUserIds: playerIds,
+						playedSetCount: 1,
+					}
+				: { signedUpUserIds: [memberId()] },
 		);
 		const { chatRoomId } = await db
 			.selectFrom("Lobby")
@@ -399,6 +409,15 @@ describe("ChatRoomResolver LOBBY rooms", () => {
 		);
 	});
 
+	test("a participant who left before playing loses it", async () => {
+		const { lobbyId, chatRoomId } = await setupLobby({ hasPlayed: false });
+		await leave(lobbyId);
+
+		const room = await resolveOrThrow(chatRoomId);
+
+		expect(hasPermission(room, "VIEW", { id: memberId() })).toBe(false);
+	});
+
 	test("lists a participant who left and rejoined once", async () => {
 		const { lobbyId, chatRoomId } = await setupLobby();
 		await leave(lobbyId);
@@ -406,9 +425,9 @@ describe("ChatRoomResolver LOBBY rooms", () => {
 
 		const room = await resolveOrThrow(chatRoomId);
 
-		expect(room.participantUserIds.sort(byId)).toEqual(
-			[hostId(), memberId()].sort(byId),
-		);
+		expect(
+			room.participantUserIds.filter((userId) => userId === memberId()),
+		).toEqual([memberId()]);
 	});
 });
 

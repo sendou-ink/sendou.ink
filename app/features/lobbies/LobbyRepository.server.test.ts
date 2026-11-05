@@ -109,9 +109,9 @@ describe("LobbyRepository visibility", () => {
 	});
 
 	test.each([
-		{ why: "one who left still sees it", isKicked: false, expected: true },
-		{ why: "one who was kicked doesn't", isKicked: true, expected: false },
-	])("link-only: $why", async ({ isKicked, expected }) => {
+		{ why: "one who left before playing doesn't see it", isKicked: false },
+		{ why: "one who was kicked doesn't see it", isKicked: true },
+	])("link-only: $why", async ({ isKicked }) => {
 		const lobby = await LobbyFactory.create(
 			{ hostUserId: hostId(), visibility: "LINK_ONLY" },
 			{ signedUpUserIds: [memberId()] },
@@ -131,8 +131,7 @@ describe("LobbyRepository visibility", () => {
 			LobbyRepository.findById(lobby.id),
 		);
 
-		expect(Boolean(found)).toBe(expected);
-		expect(Boolean(found?.hasViewerLeft)).toBe(expected);
+		expect(found).toBeUndefined();
 	});
 
 	test("link-only: a participant other than the host gets the share key", async () => {
@@ -374,6 +373,58 @@ describe("LobbyRepository.findAllForIndex", () => {
 			lobby.id,
 		]);
 		expect(found?.id).toBe(lobby.id);
+	});
+});
+
+describe("LobbyRepository.removeParticipant", () => {
+	beforeEach(async () => {
+		await users.create(9);
+	});
+
+	const startedLobby = () =>
+		LobbyFactory.create(
+			{
+				hostUserId: hostId(),
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+			},
+			{
+				signedUpUserIds: users.ids(9).slice(1),
+				checkedInUserIds: users.ids(8),
+				playedSetCount: 1,
+			},
+		);
+
+	const leftUserIdsOf = async (lobbyId: number) =>
+		(
+			await withUserId(hostId(), () => LobbyRepository.findById(lobbyId))
+		)?.leftUsers.map((user) => user.id);
+
+	test("a player who played a set is listed as having left", async () => {
+		const lobby = await startedLobby();
+		const [set] = await LobbyMatchRepository.findAllSetsByLobbyId(lobby.id);
+		const leaverId = LobbySet.playersOf(set, "ALPHA").find(
+			(userId) => userId !== hostId(),
+		)!;
+
+		await LobbyRepository.removeParticipant({
+			lobbyId: lobby.id,
+			userId: leaverId,
+			unfinishedSetId: null,
+		});
+
+		expect(await leftUserIdsOf(lobby.id)).toEqual([leaverId]);
+	});
+
+	test("one who never played isn't listed as having left", async () => {
+		const lobby = await startedLobby();
+
+		await LobbyRepository.removeParticipant({
+			lobbyId: lobby.id,
+			userId: users.id(9),
+			unfinishedSetId: null,
+		});
+
+		expect(await leftUserIdsOf(lobby.id)).toEqual([]);
 	});
 });
 

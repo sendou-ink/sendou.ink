@@ -8,6 +8,7 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { withUserId, wrappedAction } from "~/utils/Test";
+import { lobbiesPage } from "~/utils/urls";
 import * as LobbyActivity from "../core/LobbyActivity.server";
 import * as LobbySet from "../core/LobbySet";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
@@ -22,6 +23,7 @@ vi.mock("~/features/chat/ChatSystemMessage.server", async (importOriginal) => ({
 		typeof import("~/features/chat/ChatSystemMessage.server")
 	>()),
 	send: vi.fn(),
+	sendPersisted: vi.fn(),
 }));
 
 const lobbyAction = wrappedAction<typeof lobbyActionSchema>({ action });
@@ -275,14 +277,25 @@ describe("lobby action", () => {
 	});
 
 	test("the host kicks a player who left, taking away the lobby's chat", async () => {
+		const playerIds = users.ids(8);
 		const lobby = await LobbyFactory.create(
-			{ hostUserId: hostId() },
-			{ signedUpUserIds: [visitorId()] },
+			{
+				hostUserId: hostId(),
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 30)),
+			},
+			{
+				signedUpUserIds: playerIds.slice(1),
+				checkedInUserIds: playerIds,
+				playedSetCount: 1,
+			},
 		);
 		await lobbyAction(
 			{ _action: "LEAVE" },
 			{ user: visitorId(), params: { id: String(lobby.id) } },
 		);
+		const leftUserIds = (
+			await withUserId(hostId(), () => LobbyRepository.findById(lobby.id))
+		)?.leftUsers.map((user) => user.id);
 
 		await lobbyAction(
 			{ _action: "KICK", userId: visitorId() },
@@ -292,8 +305,63 @@ describe("lobby action", () => {
 		const found = await withUserId(visitorId(), () =>
 			LobbyRepository.findById(lobby.id),
 		);
+		expect(leftUserIds).toEqual([visitorId()]);
 		expect(found?.isViewerKicked).toBe(true);
 		expect(found?.hasViewerLeft).toBe(false);
+	});
+
+	test("the last one leaving before the start deletes the lobby", async () => {
+		const lobby = await LobbyFactory.create({ hostUserId: hostId() });
+
+		const response = await lobbyAction(
+			{ _action: "LEAVE" },
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(response.status).toBe(302);
+		expect(response.headers.get("Location")).toBe(lobbiesPage());
+		expect(
+			await LobbyRepository.findProgressionStateById(lobby.id),
+		).toBeUndefined();
+	});
+
+	test("the last one leaving after the start ends the lobby", async () => {
+		const lobby = await LobbyFactory.create(
+			{
+				hostUserId: hostId(),
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+			},
+			{ checkedInUserIds: [hostId()] },
+		);
+
+		await lobbyAction(
+			{ _action: "LEAVE" },
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(
+			(await LobbyRepository.findProgressionStateById(lobby.id))?.endedAt,
+		).not.toBeNull();
+	});
+
+	test("leaving before playing is noted in the lobby's chat", async () => {
+		const lobby = await LobbyFactory.create(
+			{ hostUserId: hostId() },
+			{ signedUpUserIds: [visitorId()] },
+		);
+		vi.mocked(ChatSystemMessage.sendPersisted).mockClear();
+
+		await lobbyAction(
+			{ _action: "LEAVE" },
+			{ user: visitorId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(ChatSystemMessage.sendPersisted).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "USER_LEFT_LOBBY",
+				authorUserId: visitorId(),
+			}),
+		);
 	});
 
 	test("only the host confirms a disputed set", async () => {

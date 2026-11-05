@@ -77,6 +77,9 @@ export function MessageLog({
 			case "USER_LEFT": {
 				return t("common:chat.systemMsg.userLeft", { name });
 			}
+			case "USER_LEFT_LOBBY": {
+				return t("common:chat.systemMsg.userLeftLobby", { name });
+			}
 			case "LEAVING_AFTER_SET": {
 				return t("common:chat.systemMsg.leavingAfterSet", { name });
 			}

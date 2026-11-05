@@ -1,6 +1,6 @@
 /**
  * Decides the next change a lobby goes through (opening check-in, starting, promoting from the waitlist, filling the
- * room, ready checks, starting a set, passing on the host, ending) from its current state. Pure,
+ * room, ready checks, starting a set, passing on the host, ending or deleting) from its current state. Pure,
  * applied by `LobbyProgression`.
  */
 import {
@@ -46,6 +46,8 @@ export interface ProgressionState {
 /** A change to the lobby's state, applied by `LobbyProgression.advance` one at a time. */
 export type Transition =
 	| { type: "END" }
+	/** Before the start: everyone left, nothing of the lobby is worth keeping */
+	| { type: "DELETE" }
 	| { type: "TRANSFER_HOST"; userId: number }
 	/** Marks check-in open for good, notifying those with a spot */
 	| { type: "OPEN_CHECK_IN" }
@@ -73,7 +75,7 @@ export function next(state: ProgressionState, now: number): Transition | null {
 	const isPlaying = latestSet !== null && !LobbySet.isFinished(latestSet);
 
 	if (participants.length === 0) {
-		return hasStarted ? { type: "END" } : null;
+		return hasStarted ? { type: "END" } : { type: "DELETE" };
 	}
 
 	if (!participants.some((p) => p.userId === lobby.hostUserId)) {

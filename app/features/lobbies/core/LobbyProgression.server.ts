@@ -31,9 +31,10 @@ import * as WeaponRoll from "./WeaponRoll";
 /** Upper bound of transitions applied in one go, a backstop against a transition that doesn't settle. */
 const MAX_TRANSITIONS = 50;
 
-/** Transitions changing what the lobbies list shows: player counts, viewer statuses, host or the lobby ending. */
+/** Transitions changing what the lobbies list shows: player counts, viewer statuses, host or the lobby ending or going away. */
 const LISTING_TRANSITIONS = new Set<LobbyTransition.Transition["type"]>([
 	"END",
+	"DELETE",
 	"TRANSFER_HOST",
 	"PROMOTE",
 	"START",
@@ -214,6 +215,10 @@ async function apply({
 		case "END": {
 			await LobbyRepository.end(lobby.id);
 			roomsChanged(allUserIds);
+			break;
+		}
+		case "DELETE": {
+			await LobbyRepository.deleteById(lobby.id);
 			break;
 		}
 		case "TRANSFER_HOST": {
