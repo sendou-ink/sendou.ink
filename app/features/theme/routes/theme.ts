@@ -1,6 +1,7 @@
 import { data, type LoaderFunction, redirect } from "react-router";
 import * as v from "valibot";
 import { defineAction } from "~/form/define-action.server";
+import * as Revalidation from "~/modules/revalidation/revalidation";
 import { isTheme } from "../core/provider";
 import { getThemeSession } from "../core/theme-session.server";
 
@@ -14,10 +15,9 @@ export const action = defineAction(
 		const themeSession = await getThemeSession(request);
 
 		if (theme === "auto") {
-			return data(
-				{ success: true },
-				{ headers: { "Set-Cookie": await themeSession.destroy() } },
-			);
+			return data(Revalidation.none({ success: true }), {
+				headers: { "Set-Cookie": await themeSession.destroy() },
+			});
 		}
 
 		if (!isTheme(theme)) {
@@ -28,10 +28,9 @@ export const action = defineAction(
 		}
 
 		themeSession.setTheme(theme);
-		return data(
-			{ success: true },
-			{ headers: { "Set-Cookie": await themeSession.commit() } },
-		);
+		return data(Revalidation.none({ success: true }), {
+			headers: { "Set-Cookie": await themeSession.commit() },
+		});
 	},
 );
 

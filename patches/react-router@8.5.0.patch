@@ -1,34 +1,3 @@
-diff --git a/dist/development/lib/dom-export/hydrated-router.js b/dist/development/lib/dom-export/hydrated-router.js
-index df767ab6665e9a90344275d717bc31de81ff7228..5140b826243bcc00794aad943290bf49b6f30a66 100644
---- a/dist/development/lib/dom-export/hydrated-router.js
-+++ b/dist/development/lib/dom-export/hydrated-router.js
-@@ -149,7 +149,8 @@ function HydratedRouter(props) {
- 	let discoveryState;
- 	if (discoveryRuntime) discoveryState = UNSAFE_useCustomRouteDiscovery(discoveryRuntime, props.onError);
- 	else UNSAFE_useFogOFWarDiscovery(router, ssrInfo.manifest, ssrInfo.routeModules, ssr, ssrInfo.context.routeDiscovery, ssrInfo.context.isSpaMode, fetchImplementation, ssrInfo.context.unstable_apiServerOrigin, ssrInfo.context.unstable_apiOnly === true);
--	return /* @__PURE__ */ React$1.createElement(React$1.Fragment, null, /* @__PURE__ */ React$1.createElement(UNSAFE_FrameworkContext.Provider, { value: {
-+	// patched: a stable value so every <Link> doesn't re-render whenever the location changes
-+	let frameworkContext = React$1.useMemo(() => ({
- 		routeDiscoveryRuntime: discoveryRuntime,
- 		routeDiscoveryState: discoveryState,
- 		manifest: ssrInfo.manifest,
-@@ -161,7 +162,15 @@ function HydratedRouter(props) {
- 		unstable_apiOnly: ssrInfo.context.unstable_apiOnly,
- 		routeDiscovery: ssrInfo.context.routeDiscovery,
- 		unstable_apiServerOrigin: ssrInfo.context.unstable_apiServerOrigin
--	} }, /* @__PURE__ */ React$1.createElement(UNSAFE_RemixErrorBoundary, { location }, /* @__PURE__ */ React$1.createElement(RouterProvider$1, {
-+	}), [
-+		discoveryRuntime,
-+		discoveryState,
-+		ssrInfo.manifest,
-+		ssrInfo.routeModules,
-+		ssrInfo.context,
-+		criticalCss
-+	]);
-+	return /* @__PURE__ */ React$1.createElement(React$1.Fragment, null, /* @__PURE__ */ React$1.createElement(UNSAFE_FrameworkContext.Provider, { value: frameworkContext }, /* @__PURE__ */ React$1.createElement(UNSAFE_RemixErrorBoundary, { location }, /* @__PURE__ */ React$1.createElement(RouterProvider$1, {
- 		router,
- 		useTransitions: props.useTransitions,
- 		onError: props.onError
 diff --git a/dist/development/lib/dom/lib.js b/dist/development/lib/dom/lib.js
 index c64372fc278f3f0e154ce1b47c01a5fbaa2b2e04..f74c78434022bc03d703561379a565fbb8131d6f 100644
 --- a/dist/development/lib/dom/lib.js
@@ -213,6 +182,37 @@ index 49b10047d7f77a8c91a5eb70226b113b6c2b2ed2..2aeb742475ce678ceed83ba80f4ea1f0
  //#endregion
 -export { NO_BODY_STATUS_CODES, SingleFetchRedirectSymbol, StreamTransfer, decodeViaTurboStream, getSingleFetchDataStrategyImpl, getTurboStreamSingleFetchDataStrategy, singleFetchUrl, stripIndexParam };
 +export { JSON_TYPE_KEY, NO_BODY_STATUS_CODES, SingleFetchRedirectSymbol, StreamTransfer, decodeViaTurboStream, getSingleFetchDataStrategyImpl, getTurboStreamSingleFetchDataStrategy, singleFetchUrl, stripIndexParam };
+diff --git a/dist/development/lib/dom-export/hydrated-router.js b/dist/development/lib/dom-export/hydrated-router.js
+index df767ab6665e9a90344275d717bc31de81ff7228..5140b826243bcc00794aad943290bf49b6f30a66 100644
+--- a/dist/development/lib/dom-export/hydrated-router.js
++++ b/dist/development/lib/dom-export/hydrated-router.js
+@@ -149,7 +149,8 @@ function HydratedRouter(props) {
+ 	let discoveryState;
+ 	if (discoveryRuntime) discoveryState = UNSAFE_useCustomRouteDiscovery(discoveryRuntime, props.onError);
+ 	else UNSAFE_useFogOFWarDiscovery(router, ssrInfo.manifest, ssrInfo.routeModules, ssr, ssrInfo.context.routeDiscovery, ssrInfo.context.isSpaMode, fetchImplementation, ssrInfo.context.unstable_apiServerOrigin, ssrInfo.context.unstable_apiOnly === true);
+-	return /* @__PURE__ */ React$1.createElement(React$1.Fragment, null, /* @__PURE__ */ React$1.createElement(UNSAFE_FrameworkContext.Provider, { value: {
++	// patched: a stable value so every <Link> doesn't re-render whenever the location changes
++	let frameworkContext = React$1.useMemo(() => ({
+ 		routeDiscoveryRuntime: discoveryRuntime,
+ 		routeDiscoveryState: discoveryState,
+ 		manifest: ssrInfo.manifest,
+@@ -161,7 +162,15 @@ function HydratedRouter(props) {
+ 		unstable_apiOnly: ssrInfo.context.unstable_apiOnly,
+ 		routeDiscovery: ssrInfo.context.routeDiscovery,
+ 		unstable_apiServerOrigin: ssrInfo.context.unstable_apiServerOrigin
+-	} }, /* @__PURE__ */ React$1.createElement(UNSAFE_RemixErrorBoundary, { location }, /* @__PURE__ */ React$1.createElement(RouterProvider$1, {
++	}), [
++		discoveryRuntime,
++		discoveryState,
++		ssrInfo.manifest,
++		ssrInfo.routeModules,
++		ssrInfo.context,
++		criticalCss
++	]);
++	return /* @__PURE__ */ React$1.createElement(React$1.Fragment, null, /* @__PURE__ */ React$1.createElement(UNSAFE_FrameworkContext.Provider, { value: frameworkContext }, /* @__PURE__ */ React$1.createElement(UNSAFE_RemixErrorBoundary, { location }, /* @__PURE__ */ React$1.createElement(RouterProvider$1, {
+ 		router,
+ 		useTransitions: props.useTransitions,
+ 		onError: props.onError
 diff --git a/dist/development/lib/hooks.js b/dist/development/lib/hooks.js
 index 3a9d1d0abe4dcb90b1e8162db28fff27db78898c..5fa998f1568c944932b7db80b5b156823a5c0a77 100644
 --- a/dist/development/lib/hooks.js
@@ -307,10 +307,19 @@ index 865fabf95800603edec9f8ef546886fb049e7a57..bdbaee27652607050a25f4546780b1a4
  //#endregion
  export { V6RegExMatcher };
 diff --git a/dist/development/lib/router/router.js b/dist/development/lib/router/router.js
-index 96a9def58aa7936a638cb8b2bbc8befbb1022866..a13a417e876dcd042356474445b495f79e650d0e 100644
+index 96a9def58aa7936a638cb8b2bbc8befbb1022866..dcf789fe49282e9581e362ef6bc643231705c5d4 100644
 --- a/dist/development/lib/router/router.js
 +++ b/dist/development/lib/router/router.js
-@@ -2817,7 +2817,7 @@ function processLoaderData(state, matches, results, pendingActionResult, revalid
+@@ -2178,6 +2178,8 @@ function isNewRouteInstance(currentMatch, match) {
+ 	return currentMatch.pathname !== match.pathname || currentPath != null && currentPath.endsWith("*") && currentMatch.params["*"] !== match.params["*"];
+ }
+ function shouldRevalidateLoader(loaderMatch, arg) {
++	// patched: an action result opting out of revalidation (`Revalidation.none()`) overrides the routes' own choice
++	if (arg.actionResult != null && typeof arg.actionResult === "object" && arg.actionResult.__revalidate === false) return false;
+ 	if (loaderMatch.route.shouldRevalidate) {
+ 		let routeChoice = loaderMatch.route.shouldRevalidate(arg);
+ 		if (typeof routeChoice === "boolean") return routeChoice;
+@@ -2817,7 +2819,7 @@ function processLoaderData(state, matches, results, pendingActionResult, revalid
  }
  function mergeLoaderData(loaderData, newLoaderData, matches, errors) {
  	let mergedLoaderData = Object.entries(newLoaderData).filter(([, v]) => v !== ResetLoaderDataSymbol).reduce((merged, [k, v]) => {
@@ -319,7 +328,7 @@ index 96a9def58aa7936a638cb8b2bbc8befbb1022866..a13a417e876dcd042356474445b495f7
  		return merged;
  	}, {});
  	let preservedCount = 0;
-@@ -2831,6 +2831,30 @@ function mergeLoaderData(loaderData, newLoaderData, matches, errors) {
+@@ -2831,6 +2833,30 @@ function mergeLoaderData(loaderData, newLoaderData, matches, errors) {
  	}
  	return Object.keys(newLoaderData).length === 0 && preservedCount === Object.keys(loaderData).length ? loaderData : mergedLoaderData;
  }
@@ -398,6 +407,22 @@ index 979f27086e6ce619702a137887e6eae85a07b059..ff2ef6b207f4ac24a74c29962d4b709d
  	return Object.keys(manifest).reduce((memo, routeId) => {
  		let route = manifest[routeId];
  		if (route) memo[routeId] = route.module;
+diff --git a/dist/development/lib/server-runtime/server.js b/dist/development/lib/server-runtime/server.js
+index 0cc3dbf31a07de1b788be0fe784f6d5110d0d54d..b9a374c92f73cc9b92e7ffa65a3fd164af8f7b2c 100644
+--- a/dist/development/lib/server-runtime/server.js
++++ b/dist/development/lib/server-runtime/server.js
+@@ -118,6 +118,11 @@ function derive(build, mode) {
+ 				});
+ 				if (isRedirectResponse(response)) response = generateSingleFetchRedirectResponse(response, request, build, serverMode);
+ 			}
++			// patched: lets the app attach the revalidation's loader data to a mutation's response (single flight)
++			if (isMutationMethod(request.method) && build.entry.module.unstable_handleMutationResponse) response = await build.entry.module.unstable_handleMutationResponse(response, {
++				request,
++				load: (loaderRequest) => requestHandler(loaderRequest, initialContext)
++			});
+ 		} else if (!isSpaMode && matches && matches[matches.length - 1].route.module.default == null && matches[matches.length - 1].route.module.ErrorBoundary == null) response = await handleResourceRequest(serverMode, build, staticHandler, matches.slice(-1)[0].route.id, request, loadContext, handleError);
+ 		else {
+ 			let { pathname } = requestUrl;
 diff --git a/dist/development/lib/server-runtime/single-fetch.js b/dist/development/lib/server-runtime/single-fetch.js
 index 87bf19e2b18307702e293369c5d0a86a39b1f0e0..2ea2c5b59809c87a1a3b97a0b22cc3e43a1c3abd 100644
 --- a/dist/development/lib/server-runtime/single-fetch.js
@@ -562,37 +587,6 @@ index 3466186decd73dac3b1705b213594bb63548293d..56b8c9bdb147cc277e3363af93ca159c
  		let error = null;
  		switch (typeof input) {
  			case "boolean":
-diff --git a/dist/production/lib/dom-export/hydrated-router.js b/dist/production/lib/dom-export/hydrated-router.js
-index df767ab6665e9a90344275d717bc31de81ff7228..5140b826243bcc00794aad943290bf49b6f30a66 100644
---- a/dist/production/lib/dom-export/hydrated-router.js
-+++ b/dist/production/lib/dom-export/hydrated-router.js
-@@ -149,7 +149,8 @@ function HydratedRouter(props) {
- 	let discoveryState;
- 	if (discoveryRuntime) discoveryState = UNSAFE_useCustomRouteDiscovery(discoveryRuntime, props.onError);
- 	else UNSAFE_useFogOFWarDiscovery(router, ssrInfo.manifest, ssrInfo.routeModules, ssr, ssrInfo.context.routeDiscovery, ssrInfo.context.isSpaMode, fetchImplementation, ssrInfo.context.unstable_apiServerOrigin, ssrInfo.context.unstable_apiOnly === true);
--	return /* @__PURE__ */ React$1.createElement(React$1.Fragment, null, /* @__PURE__ */ React$1.createElement(UNSAFE_FrameworkContext.Provider, { value: {
-+	// patched: a stable value so every <Link> doesn't re-render whenever the location changes
-+	let frameworkContext = React$1.useMemo(() => ({
- 		routeDiscoveryRuntime: discoveryRuntime,
- 		routeDiscoveryState: discoveryState,
- 		manifest: ssrInfo.manifest,
-@@ -161,7 +162,15 @@ function HydratedRouter(props) {
- 		unstable_apiOnly: ssrInfo.context.unstable_apiOnly,
- 		routeDiscovery: ssrInfo.context.routeDiscovery,
- 		unstable_apiServerOrigin: ssrInfo.context.unstable_apiServerOrigin
--	} }, /* @__PURE__ */ React$1.createElement(UNSAFE_RemixErrorBoundary, { location }, /* @__PURE__ */ React$1.createElement(RouterProvider$1, {
-+	}), [
-+		discoveryRuntime,
-+		discoveryState,
-+		ssrInfo.manifest,
-+		ssrInfo.routeModules,
-+		ssrInfo.context,
-+		criticalCss
-+	]);
-+	return /* @__PURE__ */ React$1.createElement(React$1.Fragment, null, /* @__PURE__ */ React$1.createElement(UNSAFE_FrameworkContext.Provider, { value: frameworkContext }, /* @__PURE__ */ React$1.createElement(UNSAFE_RemixErrorBoundary, { location }, /* @__PURE__ */ React$1.createElement(RouterProvider$1, {
- 		router,
- 		useTransitions: props.useTransitions,
- 		onError: props.onError
 diff --git a/dist/production/lib/dom/lib.js b/dist/production/lib/dom/lib.js
 index c64372fc278f3f0e154ce1b47c01a5fbaa2b2e04..f74c78434022bc03d703561379a565fbb8131d6f 100644
 --- a/dist/production/lib/dom/lib.js
@@ -777,6 +771,37 @@ index 49b10047d7f77a8c91a5eb70226b113b6c2b2ed2..2aeb742475ce678ceed83ba80f4ea1f0
  //#endregion
 -export { NO_BODY_STATUS_CODES, SingleFetchRedirectSymbol, StreamTransfer, decodeViaTurboStream, getSingleFetchDataStrategyImpl, getTurboStreamSingleFetchDataStrategy, singleFetchUrl, stripIndexParam };
 +export { JSON_TYPE_KEY, NO_BODY_STATUS_CODES, SingleFetchRedirectSymbol, StreamTransfer, decodeViaTurboStream, getSingleFetchDataStrategyImpl, getTurboStreamSingleFetchDataStrategy, singleFetchUrl, stripIndexParam };
+diff --git a/dist/production/lib/dom-export/hydrated-router.js b/dist/production/lib/dom-export/hydrated-router.js
+index df767ab6665e9a90344275d717bc31de81ff7228..5140b826243bcc00794aad943290bf49b6f30a66 100644
+--- a/dist/production/lib/dom-export/hydrated-router.js
++++ b/dist/production/lib/dom-export/hydrated-router.js
+@@ -149,7 +149,8 @@ function HydratedRouter(props) {
+ 	let discoveryState;
+ 	if (discoveryRuntime) discoveryState = UNSAFE_useCustomRouteDiscovery(discoveryRuntime, props.onError);
+ 	else UNSAFE_useFogOFWarDiscovery(router, ssrInfo.manifest, ssrInfo.routeModules, ssr, ssrInfo.context.routeDiscovery, ssrInfo.context.isSpaMode, fetchImplementation, ssrInfo.context.unstable_apiServerOrigin, ssrInfo.context.unstable_apiOnly === true);
+-	return /* @__PURE__ */ React$1.createElement(React$1.Fragment, null, /* @__PURE__ */ React$1.createElement(UNSAFE_FrameworkContext.Provider, { value: {
++	// patched: a stable value so every <Link> doesn't re-render whenever the location changes
++	let frameworkContext = React$1.useMemo(() => ({
+ 		routeDiscoveryRuntime: discoveryRuntime,
+ 		routeDiscoveryState: discoveryState,
+ 		manifest: ssrInfo.manifest,
+@@ -161,7 +162,15 @@ function HydratedRouter(props) {
+ 		unstable_apiOnly: ssrInfo.context.unstable_apiOnly,
+ 		routeDiscovery: ssrInfo.context.routeDiscovery,
+ 		unstable_apiServerOrigin: ssrInfo.context.unstable_apiServerOrigin
+-	} }, /* @__PURE__ */ React$1.createElement(UNSAFE_RemixErrorBoundary, { location }, /* @__PURE__ */ React$1.createElement(RouterProvider$1, {
++	}), [
++		discoveryRuntime,
++		discoveryState,
++		ssrInfo.manifest,
++		ssrInfo.routeModules,
++		ssrInfo.context,
++		criticalCss
++	]);
++	return /* @__PURE__ */ React$1.createElement(React$1.Fragment, null, /* @__PURE__ */ React$1.createElement(UNSAFE_FrameworkContext.Provider, { value: frameworkContext }, /* @__PURE__ */ React$1.createElement(UNSAFE_RemixErrorBoundary, { location }, /* @__PURE__ */ React$1.createElement(RouterProvider$1, {
+ 		router,
+ 		useTransitions: props.useTransitions,
+ 		onError: props.onError
 diff --git a/dist/production/lib/hooks.js b/dist/production/lib/hooks.js
 index 53530d4909ce7df1529dbf52b65eeac5179e19d4..354c1933c06276edb0d453b9845db1304e354413 100644
 --- a/dist/production/lib/hooks.js
@@ -871,10 +896,19 @@ index 865fabf95800603edec9f8ef546886fb049e7a57..bdbaee27652607050a25f4546780b1a4
  //#endregion
  export { V6RegExMatcher };
 diff --git a/dist/production/lib/router/router.js b/dist/production/lib/router/router.js
-index 96a9def58aa7936a638cb8b2bbc8befbb1022866..a13a417e876dcd042356474445b495f79e650d0e 100644
+index 96a9def58aa7936a638cb8b2bbc8befbb1022866..dcf789fe49282e9581e362ef6bc643231705c5d4 100644
 --- a/dist/production/lib/router/router.js
 +++ b/dist/production/lib/router/router.js
-@@ -2817,7 +2817,7 @@ function processLoaderData(state, matches, results, pendingActionResult, revalid
+@@ -2178,6 +2178,8 @@ function isNewRouteInstance(currentMatch, match) {
+ 	return currentMatch.pathname !== match.pathname || currentPath != null && currentPath.endsWith("*") && currentMatch.params["*"] !== match.params["*"];
+ }
+ function shouldRevalidateLoader(loaderMatch, arg) {
++	// patched: an action result opting out of revalidation (`Revalidation.none()`) overrides the routes' own choice
++	if (arg.actionResult != null && typeof arg.actionResult === "object" && arg.actionResult.__revalidate === false) return false;
+ 	if (loaderMatch.route.shouldRevalidate) {
+ 		let routeChoice = loaderMatch.route.shouldRevalidate(arg);
+ 		if (typeof routeChoice === "boolean") return routeChoice;
+@@ -2817,7 +2819,7 @@ function processLoaderData(state, matches, results, pendingActionResult, revalid
  }
  function mergeLoaderData(loaderData, newLoaderData, matches, errors) {
  	let mergedLoaderData = Object.entries(newLoaderData).filter(([, v]) => v !== ResetLoaderDataSymbol).reduce((merged, [k, v]) => {
@@ -883,7 +917,7 @@ index 96a9def58aa7936a638cb8b2bbc8befbb1022866..a13a417e876dcd042356474445b495f7
  		return merged;
  	}, {});
  	let preservedCount = 0;
-@@ -2831,6 +2831,30 @@ function mergeLoaderData(loaderData, newLoaderData, matches, errors) {
+@@ -2831,6 +2833,30 @@ function mergeLoaderData(loaderData, newLoaderData, matches, errors) {
  	}
  	return Object.keys(newLoaderData).length === 0 && preservedCount === Object.keys(loaderData).length ? loaderData : mergedLoaderData;
  }
@@ -962,6 +996,22 @@ index 979f27086e6ce619702a137887e6eae85a07b059..ff2ef6b207f4ac24a74c29962d4b709d
  	return Object.keys(manifest).reduce((memo, routeId) => {
  		let route = manifest[routeId];
  		if (route) memo[routeId] = route.module;
+diff --git a/dist/production/lib/server-runtime/server.js b/dist/production/lib/server-runtime/server.js
+index 0cc3dbf31a07de1b788be0fe784f6d5110d0d54d..b9a374c92f73cc9b92e7ffa65a3fd164af8f7b2c 100644
+--- a/dist/production/lib/server-runtime/server.js
++++ b/dist/production/lib/server-runtime/server.js
+@@ -118,6 +118,11 @@ function derive(build, mode) {
+ 				});
+ 				if (isRedirectResponse(response)) response = generateSingleFetchRedirectResponse(response, request, build, serverMode);
+ 			}
++			// patched: lets the app attach the revalidation's loader data to a mutation's response (single flight)
++			if (isMutationMethod(request.method) && build.entry.module.unstable_handleMutationResponse) response = await build.entry.module.unstable_handleMutationResponse(response, {
++				request,
++				load: (loaderRequest) => requestHandler(loaderRequest, initialContext)
++			});
+ 		} else if (!isSpaMode && matches && matches[matches.length - 1].route.module.default == null && matches[matches.length - 1].route.module.ErrorBoundary == null) response = await handleResourceRequest(serverMode, build, staticHandler, matches.slice(-1)[0].route.id, request, loadContext, handleError);
+ 		else {
+ 			let { pathname } = requestUrl;
 diff --git a/dist/production/lib/server-runtime/single-fetch.js b/dist/production/lib/server-runtime/single-fetch.js
 index 87bf19e2b18307702e293369c5d0a86a39b1f0e0..2ea2c5b59809c87a1a3b97a0b22cc3e43a1c3abd 100644
 --- a/dist/production/lib/server-runtime/single-fetch.js

@@ -4,6 +4,7 @@ import { I18nextProvider } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
 import * as ConsoleCapture from "~/features/dev-tools/core/ConsoleCapture";
 import type { LanguageCode } from "~/modules/i18n/config";
+import { singleFlightFetch } from "~/modules/revalidation/single-flight.client";
 import { writeViewerTimezoneCookie } from "./features/timezone/timezone-cookie";
 import { i18nLoader } from "./modules/i18n/loader";
 import { loadDateFnsLocale } from "./utils/dates";
@@ -132,7 +133,7 @@ Promise.all([
 		hydrateRoot(
 			document,
 			<I18nextProvider i18n={i18next}>
-				<HydratedRouter />
+				<HydratedRouter unstable_fetch={singleFlightFetch} />
 			</I18nextProvider>,
 		),
 	)

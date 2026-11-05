@@ -13,6 +13,7 @@ import {
 import { ServerConfig } from "~/config.server";
 import { devToolsServerHooks } from "~/features/dev-tools/dev-tools-server-hooks.server";
 import { getI18nInstance } from "~/modules/i18n/i18next.server";
+
 import {
 	daily,
 	everyHourAt00,
@@ -23,6 +24,8 @@ import {
 import { loadAllDateFnsLocales } from "./utils/dates";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { logger } from "./utils/logger";
+
+export { handleMutationResponse as unstable_handleMutationResponse } from "~/modules/revalidation/single-flight.server";
 
 export const streamTimeout = 5000;
 
