@@ -95,6 +95,7 @@ export const testTournamentData = ({
 		bracketProgressionOverrides: [],
 		staff: [],
 		toSetMapPool: [],
+		venue: null,
 		latestTeamIdByDuplicatedUserId: {},
 		mapPickingStyle: "AUTO",
 		settings: {

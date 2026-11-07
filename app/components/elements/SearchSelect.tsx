@@ -7,6 +7,10 @@ import { SendouSelect, SendouSelectItem } from "./Select";
 import type { EntitySearch } from "./useEntitySearch";
 
 const PLACEHOLDER_TEXTS = {
+	addressSearch: {
+		placeholder: "common:forms.addressSearch.placeholder",
+		noResults: "common:forms.addressSearch.noResults",
+	},
 	organizationSearch: {
 		placeholder: "common:forms.organizationSearch.placeholder",
 		noResults: "common:forms.organizationSearch.noResults",
@@ -128,12 +132,18 @@ export function SearchSelectItem({
 	textValue,
 	testId,
 	leading,
+	isWide,
+	triggerText,
 	children,
 }: {
 	id: number;
 	textValue: string;
 	testId: string;
 	leading?: React.ReactNode;
+	/** The text takes the item's full width instead of a name's, e.g. for an address. */
+	isWide?: boolean;
+	/** Shown instead of the item's texts once it is the selection, e.g. an address over the place's name. */
+	triggerText?: string;
 	children: React.ReactNode;
 }) {
 	return (
@@ -144,7 +154,20 @@ export function SearchSelectItem({
 			data-testid={testId}
 		>
 			{leading}
-			<div className={styles.itemTextsContainer}>{children}</div>
+			<div
+				className={clsx(styles.itemTextsContainer, {
+					[styles.itemTextsContainerWide]: isWide,
+				})}
+			>
+				{triggerText ? (
+					<>
+						<span className={styles.triggerText}>{triggerText}</span>
+						<div className={styles.listTexts}>{children}</div>
+					</>
+				) : (
+					children
+				)}
+			</div>
 		</SendouSelectItem>
 	);
 }

@@ -1,5 +1,6 @@
 import type * as React from "react";
 import type * as v from "valibot";
+import type { AddressSearchResult } from "~/components/elements/AddressSearch";
 import type { TeamSearchResult } from "~/components/elements/TeamSearch";
 import type { TournamentSearchItem } from "~/components/elements/TournamentSearch";
 import type { UserSearchResult } from "~/components/elements/UserSearch";
@@ -176,6 +177,10 @@ interface FormFieldTeamSearch<T extends string> extends FormFieldBase<T> {
 	required: boolean;
 }
 
+interface FormFieldAddressSearch<T extends string> extends FormFieldBase<T> {
+	required: boolean;
+}
+
 interface FormFieldBadges<T extends string> extends FormFieldBase<T> {
 	maxCount?: number;
 }
@@ -230,6 +235,7 @@ export type FormField<V extends string = string> =
 	| FormFieldUserSearch<"user-search">
 	| FormFieldTournamentSearch<"tournament-search">
 	| FormFieldTeamSearch<"team-search">
+	| FormFieldAddressSearch<"address-search">
 	| FormFieldBadges<"badges">
 	| FormFieldTrophies<"trophies">
 	| FormFieldStageSelect<"stage-select">
@@ -372,6 +378,23 @@ export type MapPoolFieldOptions = {
 /** `options` prop config of the `user-search` field. `onUserSelected` exposes the resolved user; the stored value is only the id. */
 export type UserSearchFieldOptions = {
 	onUserSelected?: (user: UserSearchResult | null) => void;
+};
+
+/** Value of the `address-search` field, a place picked from the geocoder. */
+export type AddressFieldValue = {
+	/** Display address */
+	address: string;
+	city: string | null;
+	/** ISO 3166-1 alpha-2 */
+	countryCode: string;
+	latitude: number;
+	longitude: number;
+};
+
+/** `options` prop config of the `address-search` field. */
+export type AddressSearchFieldOptions = {
+	/** Exposes the whole result on selection, e.g. its timezone, which the stored value lacks. */
+	onAddressSelected?: (address: AddressSearchResult | null) => void;
 };
 
 /** `options` prop config of the `tournament-search` field. */

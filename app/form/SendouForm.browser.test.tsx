@@ -10,6 +10,7 @@ import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { FormField } from "./FormField";
 import {
+	addressSearchOptional,
 	array,
 	checkboxGroup,
 	datetime,
@@ -29,7 +30,7 @@ import {
 import { FormStep, SendouForm, useFormFieldContext } from "./SendouForm";
 import type { ArrayItemRenderContext, FormObjectSchema } from "./types";
 
-let mockFetcherData: { fieldErrors?: Record<string, string> } | undefined;
+let mockFetcherData: unknown;
 
 /** `fieldset` registers its metadata onto the object it is handed, so anything nested needs a fresh one. */
 const singleTextField = () =>
@@ -948,6 +949,50 @@ describe("SendouForm", () => {
 			await expect
 				.element(screen.getByText("This field is required").nth(1))
 				.toBeVisible();
+		});
+	});
+
+	describe("address search field", () => {
+		const ADDRESS_SEARCH = v.object({
+			venue: addressSearchOptional({ label: "labels.venueAddress" }),
+		});
+		const OAKLAND_ADDRESS =
+			"550 10th Street, 94607 Oakland, California, United States";
+
+		test("shows the picked place's address in the trigger, not its name", async () => {
+			mockFetcherData = {
+				query: "oakland",
+				results: [
+					{
+						id: 0,
+						name: `Oakland Convention Center, ${OAKLAND_ADDRESS}`,
+						placeName: "Oakland Convention Center",
+						address: OAKLAND_ADDRESS,
+						city: "Oakland",
+						countryCode: "US",
+						latitude: 37.8013,
+						longitude: -122.2768,
+						timezone: "America/Los_Angeles",
+					},
+				],
+			};
+			const screen = await renderForm(ADDRESS_SEARCH);
+
+			await userEvent.click(screen.getByLabelText("Venue address"));
+			await userEvent.type(
+				screen.getByTestId("address-search-input"),
+				"oakland",
+			);
+			await userEvent.click(screen.getByTestId("address-search-item"));
+
+			const trigger = screen.getByLabelText("Venue address");
+			// the hidden second line of the item holds the address too
+			await expect
+				.element(trigger.getByText(OAKLAND_ADDRESS).first())
+				.toBeVisible();
+			await expect
+				.element(trigger.getByText("Oakland Convention Center"))
+				.not.toBeVisible();
 		});
 	});
 

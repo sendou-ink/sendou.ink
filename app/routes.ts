@@ -180,6 +180,7 @@ export default [
 	...prefix("/calendar", [
 		index("features/calendar/routes/calendar.tsx"),
 		route("new", "features/calendar/routes/calendar.new.tsx"),
+		route("venue-search", "features/calendar/routes/calendar.venue-search.ts"),
 		route(":id", "features/calendar/routes/calendar.$id.tsx"),
 		route(
 			":id/report-winners",

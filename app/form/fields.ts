@@ -31,6 +31,8 @@ import {
 } from "~/utils/schema";
 import { imageValue } from "./image-field";
 import type {
+	AddressFieldValue,
+	AddressSearchFieldOptions,
 	BadgeOption,
 	FieldWithOptionalOptions,
 	FieldWithOptions,
@@ -960,6 +962,37 @@ export function teamSearchOptional(
 		required: false,
 	}) as unknown as v.GenericSchema<number | null, number | null> &
 		FieldWithOptions<TeamSearchFieldOptions>;
+}
+
+const addressValue = v.object({
+	address: v.pipe(v.string(), v.minLength(1), v.maxLength(300)),
+	city: v.nullable(v.pipe(v.string(), v.maxLength(100))),
+	countryCode: v.pipe(v.string(), v.regex(/^[A-Z]{2}$/)),
+	latitude: v.pipe(v.number(), v.minValue(-90), v.maxValue(90)),
+	longitude: v.pipe(v.number(), v.minValue(-180), v.maxValue(180)),
+});
+
+/** A place searched from the geocoder (OpenStreetMap), e.g. an event's venue. */
+export function addressSearchOptional(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "address-search" }>,
+			"type" | "initialValue" | "required"
+		>
+	>,
+) {
+	return register(optionalKey(v.nullable(addressValue)), {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "address-search",
+		initialValue: null,
+		required: false,
+	}) as unknown as v.GenericSchema<
+		AddressFieldValue | null,
+		AddressFieldValue | null
+	> &
+		FieldWithOptionalOptions<AddressSearchFieldOptions>;
 }
 
 export function badges(
