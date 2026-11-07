@@ -38,6 +38,7 @@
 	"details.weaponRandomizer": "Weapons",
 	"details.joining": "Joining",
 	"details.joining.application": "By application",
+	"edit.title": "Edit lobby",
 	"hostDispute.confirm": "Confirm result",
 	"hostDispute.explanation": "The set counts as reported and the next set starts.",
 	"hostDispute.heading": "Confirm {{side}}'s {{score}} win?",
@@ -82,10 +83,10 @@
 	"rosters.leavingAfterSet": "Leaving after this set",
 	"rosters.leavingAfterSet.explanation": "{{name}} leaves the lobby once this set is confirmed",
 	"settings.appliesFromNextSet": "Applies from the next set onward",
-	"settings.maps": "Maps",
 	"shareLink.copy": "Copy invite link",
 	"shareLink.explanation": "Anyone you share the invite link with can see the lobby and sign up, whatever its visibility. Resetting the link stops the old one from working.",
 	"shareLink.reset": "Reset invite link",
+	"shareLink.resetSuccess": "Invite link reset, the old one no longer works",
 	"side.ALPHA": "Alpha",
 	"side.BRAVO": "Bravo",
 	"sittingOut": "Sitting out until the host resumes them",
@@ -121,7 +122,6 @@
 	"viewerStatus.REGISTERED": "Signed up",
 	"viewerStatus.SPECTATING": "Spectating",
 	"viewerStatus.WAITLISTED": "Waitlisted",
-	"visibility.heading": "Who sees the lobby",
 	"weaponRandomizer.BALANCED": "Balanced random",
 	"weaponRandomizer.CHAOTIC": "Chaotic random"
 }

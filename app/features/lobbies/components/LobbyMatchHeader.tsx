@@ -1,16 +1,13 @@
-import { Check, CircleStop, Link } from "lucide-react";
+import { CircleStop, Pencil } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ActionButton } from "~/components/ActionButton";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton } from "~/components/elements/Button";
 import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
-import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { useLobbyView } from "../lobbies-hooks";
 import { lobbyActionSchema } from "../lobbies-schemas";
-import { lobbyShareLink } from "../lobbies-utils";
-import { LobbyMapsDialog } from "./LobbyMapsDialog";
-import { LobbySettingsPopover } from "./LobbySettingsPopover";
-import { LobbyVisibilityDialog } from "./LobbyVisibilityDialog";
+import { editLobbyPage, lobbyShareLink } from "../lobbies-utils";
+import { LobbyInviteLink } from "./LobbyInviteLink";
 
 export function LobbyMatchHeader() {
 	const { t } = useTranslation(["lobbies"]);
@@ -29,11 +26,14 @@ export function LobbyMatchHeader() {
 				shareKey || (isHost && isOngoing) ? (
 					<div className="stack horizontal sm items-center">
 						{shareKey ? (
-							<CopyShareLinkButton
+							<LobbyInviteLink
 								link={lobbyShareLink({ lobbyId: data.lobby.id, shareKey })}
+								isHost={isHost}
 							/>
 						) : null}
-						{isHost && isOngoing ? <HostControls /> : null}
+						{isHost && isOngoing ? (
+							<HostControls lobbyId={data.lobby.id} />
+						) : null}
 					</div>
 				) : undefined
 			}
@@ -43,31 +43,20 @@ export function LobbyMatchHeader() {
 	);
 }
 
-function CopyShareLinkButton({ link }: { link: string }) {
-	const { t } = useTranslation(["lobbies"]);
-	const { copyToClipboard, copySuccess } = useCopyToClipboard();
-
-	return (
-		<SendouButton
-			variant={copySuccess ? "outlined-success" : "outlined"}
-			size="small"
-			icon={copySuccess ? <Check /> : <Link />}
-			onClick={() => copyToClipboard(link)}
-			testId="lobby-copy-share-link-button"
-		>
-			{t("lobbies:shareLink.copy")}
-		</SendouButton>
-	);
-}
-
-function HostControls() {
-	const { t } = useTranslation(["lobbies"]);
+function HostControls({ lobbyId }: { lobbyId: number }) {
+	const { t } = useTranslation(["lobbies", "common"]);
 
 	return (
 		<>
-			<LobbyVisibilityDialog />
-			<LobbyMapsDialog />
-			<LobbySettingsPopover />
+			<LinkButton
+				to={editLobbyPage(lobbyId)}
+				size="small"
+				variant="outlined"
+				icon={<Pencil />}
+				testId="lobby-edit-button"
+			>
+				{t("common:actions.edit")}
+			</LinkButton>
 			<ActionButton
 				schema={lobbyActionSchema}
 				action="END_LOBBY"

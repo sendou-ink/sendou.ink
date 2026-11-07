@@ -6,6 +6,7 @@ import {
 import {
 	lobbiesSearchParams,
 	lobbySearchParams,
+	newLobbySearchParams,
 } from "./lobbies-search-params";
 
 describe("lobbiesSearchParams", () => {
@@ -29,5 +30,21 @@ describe("lobbySearchParams", () => {
 
 	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(lobbySearchParams, "key", [["short"]]);
+	});
+});
+
+describe("newLobbySearchParams", () => {
+	test("round-trips", () => {
+		assertRoundTrips(newLobbySearchParams, {
+			lobbyId: [null, 1, 12345],
+		});
+	});
+
+	test("malformed values decode to defaults", () => {
+		assertDecodesToDefault(newLobbySearchParams, "lobbyId", [
+			["0"],
+			["-1"],
+			["abc"],
+		]);
 	});
 });

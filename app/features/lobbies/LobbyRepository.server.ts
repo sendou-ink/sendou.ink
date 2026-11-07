@@ -987,17 +987,18 @@ export function kickParticipant(args: ParticipantRemoval) {
 /** Updates the settings the host can change after creating the lobby. */
 export async function updateSettings({
 	id,
-	bestOf,
-	weaponRandomizer,
 	isApplicationRequired,
-}: Pick<Tables["Lobby"], "id" | "bestOf" | "weaponRandomizer"> & {
+	...values
+}: Pick<
+	Tables["Lobby"],
+	"id" | "name" | "description" | "label" | "bestOf" | "weaponRandomizer"
+> & {
 	isApplicationRequired: boolean;
 }) {
 	await db
 		.updateTable("Lobby")
 		.set({
-			bestOf,
-			weaponRandomizer,
+			...values,
 			isApplicationRequired: toDBBoolean(isApplicationRequired),
 		})
 		.where("Lobby.id", "=", id)

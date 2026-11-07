@@ -15,3 +15,10 @@ export const lobbySearchParams = SearchParams.define({
 		loader: true,
 	}),
 });
+
+export const newLobbySearchParams = SearchParams.define({
+	/** The lobby the host is editing, null = making a new one */
+	lobbyId: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
+		loader: true,
+	}),
+});

@@ -7,10 +7,13 @@ import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, ModeWithStage } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { assertUnreachable } from "~/utils/types";
-import { lobbyPage, SENDOU_INK_BASE_URL } from "~/utils/urls";
+import { lobbyPage, newLobbyPage, SENDOU_INK_BASE_URL } from "~/utils/urls";
 import { CHAT_ROOM_LIFESPAN_HOURS, type LobbyMaps } from "./lobbies-constants";
-import type { lobbyVisibilitySchema } from "./lobbies-schemas";
-import { lobbySearchParams } from "./lobbies-search-params";
+import type { editLobbySchema } from "./lobbies-schemas";
+import {
+	lobbySearchParams,
+	newLobbySearchParams,
+} from "./lobbies-search-params";
 
 /** Topic the lobby's page revalidates on: every change to its participants and sets. */
 export const lobbyChannel = (lobbyId: number) =>
@@ -26,6 +29,10 @@ export const lobbyShareLink = ({
 }) =>
 	`${SENDOU_INK_BASE_URL}${lobbySearchParams.href(lobbyPage(lobbyId), { key: shareKey })}`;
 
+/** The new lobby page with the lobby's settings filled in, saving them to it. */
+export const editLobbyPage = (lobbyId: number) =>
+	newLobbySearchParams.href(newLobbyPage(), { lobbyId });
+
 /** When the lobby's chat rooms, its own and its sets' team chats, expire. */
 export const lobbyChatRoomExpiresAt = (startsAt: number) =>
 	addHours(databaseTimestampToDate(startsAt), CHAT_ROOM_LIFESPAN_HOURS);
@@ -33,7 +40,7 @@ export const lobbyChatRoomExpiresAt = (startsAt: number) =>
 /** The lobby's visibility, as `LobbyRepository.insert` takes it, from the values of its visibility fields. */
 export function visibilityFromForm(
 	values: Pick<
-		v.InferOutput<typeof lobbyVisibilitySchema>,
+		v.InferOutput<typeof editLobbySchema>,
 		"baseVisibility" | "notFoundVisibility"
 	>,
 ) {

@@ -1,4 +1,5 @@
 import { addHours, subMinutes } from "date-fns";
+import type * as v from "valibot";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as AssociationFactory from "~/db/seed/factories/AssociationFactory";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
@@ -9,7 +10,7 @@ import { notify } from "~/features/notifications/core/notify.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { withUserId, wrappedAction } from "~/utils/Test";
-import { lobbiesPage } from "~/utils/urls";
+import { lobbiesPage, lobbyPage } from "~/utils/urls";
 import * as LobbyActivity from "../core/LobbyActivity.server";
 import * as LobbySet from "../core/LobbySet";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
@@ -41,6 +42,26 @@ const users = UserFactory.pool();
 
 const hostId = () => users.id(1);
 const visitorId = () => users.id(2);
+
+type EditBody = Extract<
+	v.InferOutput<typeof lobbyActionSchema>,
+	{ _action: "EDIT" }
+>;
+
+const editBody = (overrides: Partial<EditBody> = {}): EditBody => ({
+	_action: "EDIT",
+	name: "Lobby",
+	description: null,
+	label: "CASUAL",
+	bestOf: "3",
+	maps: "RANKED",
+	mapsTournamentId: null,
+	weaponRandomizer: "OFF",
+	isApplicationRequired: false,
+	baseVisibility: "PUBLIC",
+	notFoundVisibility: { at: null, forAssociation: "PUBLIC" },
+	...overrides,
+});
 
 const participantsOf = async (lobbyId: number) =>
 	(await LobbyRepository.findProgressionStateById(lobbyId))?.participants ?? [];
@@ -531,6 +552,74 @@ describe("lobby action", () => {
 		).toBe(true);
 	});
 
+	test("the host edits the lobby's settings and is taken back to it", async () => {
+		const lobby = await LobbyFactory.create({ hostUserId: hostId() });
+
+		const response = await lobbyFormAction(
+			editBody({
+				name: "Edited lobby",
+				description: "New description",
+				label: "TRYHARD",
+				bestOf: "5",
+				maps: "SZ",
+				weaponRandomizer: "CHAOTIC",
+			}),
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(response.headers.get("Location")).toBe(lobbyPage(lobby.id));
+		expect(
+			await withUserId(hostId(), () => LobbyRepository.findById(lobby.id)),
+		).toMatchObject({
+			name: "Edited lobby",
+			description: "New description",
+			label: "TRYHARD",
+			bestOf: 5,
+			modes: ["SZ"],
+			weaponRandomizer: "CHAOTIC",
+		});
+	});
+
+	test("an emptied name renames the lobby after its current host", async () => {
+		const lobby = await LobbyFactory.create(
+			{ hostUserId: hostId() },
+			{ signedUpUserIds: [visitorId()] },
+		);
+		await lobbyAction(
+			{ _action: "MAKE_HOST", userId: visitorId() },
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		await lobbyFormAction(editBody({ name: null }), {
+			user: visitorId(),
+			params: { id: String(lobby.id) },
+		});
+
+		const edited = await withUserId(visitorId(), () =>
+			LobbyRepository.findById(lobby.id),
+		);
+		expect(edited?.name).toBe(`${edited?.hostUsername}'s lobby`);
+		expect(edited?.hostUserId).toBe(visitorId());
+	});
+
+	test("only the host can edit the lobby", async () => {
+		const lobby = await LobbyFactory.create(
+			{ hostUserId: hostId() },
+			{ signedUpUserIds: [visitorId()] },
+		);
+
+		await expect(
+			lobbyFormAction(editBody({ name: "Hijacked" }), {
+				user: visitorId(),
+				params: { id: String(lobby.id) },
+			}),
+		).rejects.toBeTruthy();
+		expect(
+			(await withUserId(hostId(), () => LobbyRepository.findById(lobby.id)))
+				?.name,
+		).not.toBe("Hijacked");
+	});
+
 	test("the host opens a lobby limited to an association to everyone", async () => {
 		const association = await AssociationFactory.create({ userId: hostId() });
 		const lobby = await LobbyFactory.create({
@@ -538,14 +627,10 @@ describe("lobby action", () => {
 			visibility: { forAssociation: association.id },
 		});
 
-		await lobbyFormAction(
-			{
-				_action: "UPDATE_VISIBILITY",
-				baseVisibility: "PUBLIC",
-				notFoundVisibility: { at: null, forAssociation: "PUBLIC" },
-			},
-			{ user: hostId(), params: { id: String(lobby.id) } },
-		);
+		await lobbyFormAction(editBody({ baseVisibility: "PUBLIC" }), {
+			user: hostId(),
+			params: { id: String(lobby.id) },
+		});
 
 		expect(
 			await withUserId(visitorId(), () => LobbyRepository.findById(lobby.id)),
@@ -557,14 +642,13 @@ describe("lobby action", () => {
 		const lobby = await LobbyFactory.create({ hostUserId: hostId() });
 
 		const result = await lobbyFormAction(
-			{
-				_action: "UPDATE_VISIBILITY",
+			editBody({
 				baseVisibility: association.id,
 				notFoundVisibility: {
 					at: addHours(new Date(), 2),
 					forAssociation: "PUBLIC",
 				},
-			},
+			}),
 			{ user: hostId(), params: { id: String(lobby.id) } },
 		);
 
@@ -779,15 +863,10 @@ describe("lobby action applications", () => {
 			appliedUserIds: applicantIds,
 		});
 
-		await lobbyFormAction(
-			{
-				_action: "UPDATE_SETTINGS",
-				bestOf: "3",
-				weaponRandomizer: "OFF",
-				isApplicationRequired: false,
-			},
-			{ user: hostId(), params: { id: String(lobby.id) } },
-		);
+		await lobbyFormAction(editBody({ isApplicationRequired: false }), {
+			user: hostId(),
+			params: { id: String(lobby.id) },
+		});
 
 		const participants = await participantsOf(lobby.id);
 		expect(participants.map((p) => p.status)).toEqual([
@@ -808,15 +887,10 @@ describe("lobby action applications", () => {
 
 	test("no longer requiring applying lets a declined applicant sign up", async () => {
 		const lobby = await applicationLobby({ deniedUserIds: [visitorId()] });
-		await lobbyFormAction(
-			{
-				_action: "UPDATE_SETTINGS",
-				bestOf: "3",
-				weaponRandomizer: "OFF",
-				isApplicationRequired: false,
-			},
-			{ user: hostId(), params: { id: String(lobby.id) } },
-		);
+		await lobbyFormAction(editBody({ isApplicationRequired: false }), {
+			user: hostId(),
+			params: { id: String(lobby.id) },
+		});
 		expect(
 			(await participantsOf(lobby.id)).some((p) => p.userId === visitorId()),
 		).toBe(false);

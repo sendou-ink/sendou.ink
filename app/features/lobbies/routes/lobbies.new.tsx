@@ -12,19 +12,21 @@ import {
 import type { CustomFieldRenderProps } from "~/form";
 import { SendouForm } from "~/form/SendouForm";
 import { useHasRole } from "~/modules/permissions/hooks";
+import { databaseTimestampToDate } from "~/utils/dates";
+import type { SerializeFrom } from "~/utils/remix";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { lobbiesPage, navIconUrl, SUPPORT_PAGE } from "~/utils/urls";
+import { lobbiesPage, lobbyPage, navIconUrl, SUPPORT_PAGE } from "~/utils/urls";
 import { action } from "../actions/lobbies.new.server";
 import { LobbyMapsFormFields } from "../components/LobbyMapsFormFields";
 import { loader } from "../loaders/lobbies.new.server";
-import { newLobbySchema } from "../lobbies-schemas";
+import { editLobbySchema, newLobbySchema } from "../lobbies-schemas";
 
 export { action, loader };
 
-export const meta: MetaFunction = (args) => {
+export const meta: MetaFunction<typeof loader> = (args) => {
 	return metaTags({
-		title: "New lobby",
+		title: args.loaderData?.lobbyToEdit ? "Edit lobby" : "New lobby",
 		image: ogPageImage("lobbies"),
 		location: args.location,
 	});
@@ -43,6 +45,17 @@ export default function NewLobbyPage() {
 	const { t } = useTranslation(["lobbies"]);
 	const data = useLoaderData<typeof loader>();
 	const isLobbyAdder = useHasRole("LOBBY_ADDER");
+
+	if (data.lobbyToEdit) {
+		return (
+			<Main>
+				<EditLobbyForm
+					lobby={data.lobbyToEdit}
+					associations={data.associations}
+				/>
+			</Main>
+		);
+	}
 
 	if (!isLobbyAdder) {
 		return (
@@ -117,5 +130,68 @@ export default function NewLobbyPage() {
 				)}
 			</SendouForm>
 		</Main>
+	);
+}
+
+type NewLobbyLoaderData = SerializeFrom<typeof loader>;
+
+function EditLobbyForm({
+	lobby,
+	associations,
+}: {
+	lobby: NonNullable<NewLobbyLoaderData["lobbyToEdit"]>;
+	associations: NewLobbyLoaderData["associations"];
+}) {
+	const { t } = useTranslation(["lobbies", "common"]);
+	const { at, forAssociation } = lobby.visibility.notFoundVisibility;
+
+	return (
+		<SendouForm
+			schema={editLobbySchema}
+			action={lobbyPage(lobby.id)}
+			title={t("lobbies:edit.title")}
+			submitButtonText={t("common:actions.save")}
+			defaultValues={{
+				name: lobby.name,
+				description: lobby.description,
+				label: lobby.label,
+				bestOf: `${lobby.bestOf}`,
+				...lobby.maps,
+				weaponRandomizer: lobby.weaponRandomizer,
+				isApplicationRequired: lobby.isApplicationRequired,
+				baseVisibility: lobby.visibility.baseVisibility,
+				notFoundVisibility: {
+					at: at === null ? null : databaseTimestampToDate(at),
+					forAssociation,
+				},
+			}}
+		>
+			{({ FormField }) => (
+				<>
+					<FormField name="name" />
+					<FormField name="description" />
+					<FormField name="label" />
+					{lobby.hasStarted ? (
+						<p className="text-lighter text-sm">
+							{t("lobbies:settings.appliesFromNextSet")}
+						</p>
+					) : null}
+					<FormField name="bestOf" />
+					<LobbyMapsFormFields />
+					<FormField name="weaponRandomizer" />
+					<FormField name="isApplicationRequired" />
+					<FormField name="baseVisibility">
+						{(props: CustomFieldRenderProps) => (
+							<BaseVisibilityFormField
+								associations={associations}
+								isLinkOnlyAvailable
+								{...props}
+							/>
+						)}
+					</FormField>
+					<NotFoundVisibilityFormField associations={associations} />
+				</>
+			)}
+		</SendouForm>
 	);
 }

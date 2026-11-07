@@ -1,7 +1,8 @@
 import type { Page } from "@playwright/test";
+import { editLobbySchema } from "~/features/lobbies/lobbies-schemas";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
-import { lobbyPage } from "~/utils/urls";
+import { lobbyPage, newLobbyPage } from "~/utils/urls";
 import {
 	expect,
 	modalClickConfirmButton,
@@ -10,6 +11,7 @@ import {
 	submit,
 	waitForPOSTResponse,
 } from "../../helpers/playwright";
+import { createFormHelpers } from "../../helpers/playwright-form";
 
 type Tab = "rosters" | "action" | "result" | "leaderboard";
 
@@ -20,13 +22,17 @@ const TAB_NAMES: Record<Tab, string> = {
 	leaderboard: "Rankings",
 };
 
+const isLobbyPageUrl = (url: URL) => /^\/lobbies\/\d+$/.test(url.pathname);
+
 /** A lobby: sign up and check in, then its sets on the shared match page. */
 export class LobbyPage {
 	private readonly page: Page;
 	readonly locators;
+	private readonly editForm;
 
 	constructor(page: Page) {
 		this.page = page;
+		this.editForm = createFormHelpers(page, editLobbySchema);
 		this.locators = {
 			signUpButton: page.getByTestId("lobby-sign-up-button"),
 			applyButton: page.getByTestId("lobby-apply-button"),
@@ -56,12 +62,14 @@ export class LobbyPage {
 			submitWeaponButton: page
 				.getByRole("button", { name: "Submit", exact: true })
 				.last(),
-			settingsButton: page.getByTestId("lobby-settings-button"),
-			mapsButton: page.getByTestId("lobby-maps-button"),
+			editButton: page.getByTestId("lobby-edit-button"),
 			mapPoolLink: page.getByTestId("lobby-map-pool-link"),
 			currentMap: page.locator('[data-testid^="banner-map-"]'),
 			copyShareLinkButton: page.getByTestId("lobby-copy-share-link-button"),
-			visibilityButton: page.getByTestId("lobby-visibility-button"),
+			inviteLinkButton: page.getByTestId("lobby-invite-link-button"),
+			shareLinkResetToast: page.getByText(
+				"Invite link reset, the old one no longer works",
+			),
 			resetShareLinkButton: page.getByTestId("lobby-reset-share-link-button"),
 			// shown in place of a link-only lobby opened without its link
 			inviteOnlyHeading: page.getByRole("heading", { name: "Invite only" }),
@@ -116,21 +124,16 @@ export class LobbyPage {
 		await navigate({ page: this.page, url: url.pathname + url.search });
 	}
 
-	/** Picks who sees the lobby, by the option's label, in the host's visibility dialog. */
+	/** As the host, picks who sees the lobby, by the option's label, on its edit page. */
 	async changeVisibility(label: string) {
-		await this.locators.visibilityButton.click();
-		await this.page
-			.getByRole("dialog")
-			.getByLabel("Visibility")
-			.selectOption({ label });
-		await waitForPOSTResponse(this.page, () =>
-			this.page.getByTestId("lobby-visibility-save-button").click(),
-		);
+		await this.openEditPage();
+		await this.page.getByLabel("Visibility").selectOption({ label });
+		await this.saveEdit();
 	}
 
-	/** Replaces the lobby's invite link from the host's visibility dialog, the old one no longer working. */
+	/** As the host, replaces the lobby's invite link in its invite link dialog, the old one no longer working. */
 	async resetShareLink() {
-		await this.locators.visibilityButton.click();
+		await this.locators.inviteLinkButton.click();
 		await waitForPOSTResponse(this.page, () =>
 			this.locators.resetShareLinkButton.click(),
 		);
@@ -141,6 +144,15 @@ export class LobbyPage {
 	async copyShareLink(): Promise<string> {
 		await this.locators.copyShareLinkButton.click();
 		return this.page.evaluate("navigator.clipboard.readText()");
+	}
+
+	/** As the host, copies the lobby's invite link from its invite link dialog and reads it off the clipboard. */
+	async copyShareLinkAsHost(): Promise<string> {
+		await this.locators.inviteLinkButton.click();
+		const link = await this.copyShareLink();
+		await this.page.keyboard.press("Escape");
+
+		return link;
 	}
 
 	/** The page heading with the lobby's name. */
@@ -380,36 +392,38 @@ export class LobbyPage {
 		);
 	}
 
-	/** As the host, changes how many maps the sets are a best of, from the next set on. */
-	async changeBestOf(count: number) {
-		await this.locators.settingsButton.click();
-		await waitForPOSTResponse(this.page, () =>
-			this.page
-				.getByRole("dialog")
-				.getByText(`Bo${count}`, { exact: true })
-				.click(),
-		);
+	/** As the host, renames the lobby on its edit page. */
+	async rename(name: string) {
+		await this.openEditPage();
+		await this.editForm.fill("name", name);
+		await this.saveEdit();
 	}
 
-	/** As the host, plays the sets on a custom map pool, pasting a map pool link of it, from the next set on. */
+	/** As the host, changes how many maps the sets are a best of, from the next set on, on its edit page. */
+	async changeBestOf(count: number) {
+		await this.openEditPage();
+		await this.page.getByText(`Bo${count}`, { exact: true }).click();
+		await this.saveEdit();
+	}
+
+	/** As the host, plays the sets on a custom map pool, pasting a map pool link of it, from the next set on, on its edit page. */
 	async changeMapPool(mapPool: MapPool) {
-		await this.locators.mapsButton.click();
+		await this.openEditPage();
 		await this.selectMaps("Custom...");
 		await this.page
-			.getByRole("dialog")
 			.getByRole("button", { name: "Paste from a map pool link" })
 			.click();
 		await this.page
 			.getByLabel("Map pool link")
 			.fill(`https://sendou.ink${mapsPageWithMapPool(mapPool)}`);
-		await submit(this.page, "lobby-maps-save-button");
+		await this.saveEdit();
 	}
 
-	/** As the host, picks the sets' maps from the players' preferences in ranked modes again, from the next set on. */
+	/** As the host, picks the sets' maps from the players' preferences in ranked modes again, from the next set on, on its edit page. */
 	async useRankedModes() {
-		await this.locators.mapsButton.click();
+		await this.openEditPage();
 		await this.selectMaps("Ranked modes only");
-		await submit(this.page, "lobby-maps-save-button");
+		await this.saveEdit();
 	}
 
 	/** As the host, ends the lobby for everyone. */
@@ -418,12 +432,18 @@ export class LobbyPage {
 		await modalClickConfirmButton(this.page);
 	}
 
-	// the dialog shares the select's "Maps" label, so the select is found by its name
+	private async openEditPage() {
+		await this.locators.editButton.click();
+		await this.page.waitForURL((url) => url.pathname === newLobbyPage());
+	}
+
+	private async saveEdit() {
+		await submit(this.page);
+		await this.page.waitForURL(isLobbyPageUrl);
+	}
+
 	private async selectMaps(label: string) {
-		await this.page
-			.getByRole("dialog")
-			.locator('select[name="maps"]')
-			.selectOption({ label });
+		await this.page.locator('select[name="maps"]').selectOption({ label });
 	}
 
 	private async openPlayerMenu(userId: number) {

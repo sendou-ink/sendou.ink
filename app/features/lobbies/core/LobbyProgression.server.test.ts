@@ -188,6 +188,9 @@ describe("LobbyProgression.advance", () => {
 
 		await LobbyRepository.updateSettings({
 			id: lobbyId,
+			name: "Lobby",
+			description: null,
+			label: "CASUAL",
 			bestOf: 3,
 			weaponRandomizer: "OFF",
 			isApplicationRequired: false,

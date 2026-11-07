@@ -540,9 +540,11 @@ test.describe("Lobbies", () => {
 
 			await impersonate(page, host.id);
 			await lobbyPage.goto(lobby.id);
-			const oldShareLink = await lobbyPage.copyShareLink();
+			const oldShareLink = await lobbyPage.copyShareLinkAsHost();
 			await lobbyPage.resetShareLink();
-			const shareLink = await lobbyPage.copyShareLink();
+			// toasts render hidden in e2e runs
+			await expect(lobbyPage.locators.shareLinkResetToast).toBeAttached();
+			const shareLink = await lobbyPage.copyShareLinkAsHost();
 			expect(shareLink).not.toBe(oldShareLink);
 
 			await test.step("A member sees the lobby but gets no link to share", async () => {
@@ -595,7 +597,7 @@ test.describe("Lobbies", () => {
 
 			await expect(lobbyPage.heading(LOBBY_NAME)).toBeVisible();
 			const lobbyId = Number(new URL(page.url()).pathname.split("/").at(-1));
-			const shareLink = await lobbyPage.copyShareLink();
+			const shareLink = await lobbyPage.copyShareLinkAsHost();
 
 			await test.step("The host's address bar shows the link", async () => {
 				expect(new URL(page.url()).search).toBe(new URL(shareLink).search);
@@ -1709,6 +1711,28 @@ test.describe("Lobbies", () => {
 			const lobbies = new LobbiesPage(page);
 			await lobbies.goto();
 			await expect(lobbies.weaponRandomizer(LOBBY_NAME)).toHaveText(
+				"Balanced random",
+			);
+		});
+
+		test("the host renames the lobby on its edit page, its other settings kept", async ({
+			page,
+			factories,
+		}) => {
+			await factories.UserFactory.setFriendCode(ADMIN_ID);
+
+			await impersonate(page, ADMIN_ID);
+			const newLobby = new NewLobbyPage(page);
+			await newLobby.goto();
+			await newLobby.form.fill("name", LOBBY_NAME);
+			await newLobby.selectWeaponRandomizer("Balanced");
+			await newLobby.save();
+
+			const lobbyPage = new LobbyPage(page);
+			await lobbyPage.rename("Renamed 8s");
+
+			await expect(lobbyPage.heading("Renamed 8s")).toBeVisible();
+			await expect(lobbyPage.locators.weaponRandomizer).toHaveText(
 				"Balanced random",
 			);
 		});

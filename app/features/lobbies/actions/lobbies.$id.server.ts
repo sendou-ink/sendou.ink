@@ -19,7 +19,7 @@ import {
 } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
-import { lobbiesPage } from "~/utils/urls";
+import { lobbiesPage, lobbyPage } from "~/utils/urls";
 import * as LobbyProgression from "../core/LobbyProgression.server";
 import * as LobbySet from "../core/LobbySet";
 import * as LobbyState from "../core/LobbyState";
@@ -46,9 +46,7 @@ const LISTING_ACTIONS = new Set<
 	"APPROVE_APPLICATION",
 	"KICK",
 	"MAKE_HOST",
-	"UPDATE_SETTINGS",
-	"UPDATE_MAPS",
-	"UPDATE_VISIBILITY",
+	"EDIT",
 	"END_LOBBY",
 ]);
 
@@ -305,14 +303,32 @@ export const action = defineAction(
 				});
 				break;
 			}
-			case "UPDATE_SETTINGS": {
+			case "EDIT": {
 				requirePermission(lobby, "MANAGE");
+				const [issue] = visibilityIssues(body, {
+					startsAt: databaseTimestampToDate(lobby.startsAt),
+					isEdit: true,
+					messages: LOBBY_VISIBILITY_ISSUE_MESSAGES,
+				});
+				if (issue) return { fieldErrors: { [issue.path[0]]: issue.message } };
 
 				await LobbyRepository.updateSettings({
 					id,
+					name: body.name ?? `${lobby.hostUsername}'s lobby`,
+					description: body.description,
+					label: body.label,
 					bestOf: Number(body.bestOf) as LobbyBestOf,
 					weaponRandomizer: body.weaponRandomizer,
 					isApplicationRequired: body.isApplicationRequired,
+				});
+				await LobbyRepository.updateMaps({
+					id,
+					...(await mapsFromForm(body)),
+				});
+				await LobbyRepository.updateVisibility({
+					id,
+					visibility: visibilityFromForm(body),
+					ownerId: lobby.hostUserId,
 				});
 
 				// anyone may join now, so those waiting on the host are let in
@@ -325,31 +341,6 @@ export const action = defineAction(
 						autoAcceptedUserIds.push(application.id);
 					}
 				}
-				break;
-			}
-			case "UPDATE_MAPS": {
-				requirePermission(lobby, "MANAGE");
-
-				await LobbyRepository.updateMaps({
-					id,
-					...(await mapsFromForm(body)),
-				});
-				break;
-			}
-			case "UPDATE_VISIBILITY": {
-				requirePermission(lobby, "MANAGE");
-				const [issue] = visibilityIssues(body, {
-					startsAt: databaseTimestampToDate(lobby.startsAt),
-					isEdit: true,
-					messages: LOBBY_VISIBILITY_ISSUE_MESSAGES,
-				});
-				if (issue) return { fieldErrors: { [issue.path[0]]: issue.message } };
-
-				await LobbyRepository.updateVisibility({
-					id,
-					visibility: visibilityFromForm(body),
-					ownerId: lobby.hostUserId,
-				});
 				break;
 			}
 			case "RESET_SHARE_KEY": {
@@ -466,6 +457,7 @@ export const action = defineAction(
 			body._action === "LEAVE" &&
 			!(await LobbyRepository.findProgressionStateById(id));
 		if (isLobbyDeleted) return redirect(lobbiesPage());
+		if (body._action === "EDIT") return redirect(lobbyPage(id));
 
 		return null;
 	},

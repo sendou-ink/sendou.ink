@@ -110,25 +110,31 @@ function mapsIssues(
 	}
 }
 
+const nameField = textFieldOptional({
+	label: "labels.name",
+	bottomText: "bottomTexts.lobbyName",
+	maxLength: LOBBY_NAME_MAX_LENGTH,
+});
+
+const descriptionField = textAreaOptional({
+	label: "labels.description",
+	maxLength: LOBBY_DESCRIPTION_MAX_LENGTH,
+});
+
+const labelField = select({
+	label: "labels.lobbyLabel",
+	bottomText: "bottomTexts.lobbyLabel",
+	items: LOBBY_LABELS.map((label) => ({
+		label: `options.lobbyLabel.${label}` as const,
+		value: label,
+	})),
+});
+
 export const newLobbySchema = v.pipe(
 	v.object({
-		name: textFieldOptional({
-			label: "labels.name",
-			bottomText: "bottomTexts.lobbyName",
-			maxLength: LOBBY_NAME_MAX_LENGTH,
-		}),
-		description: textAreaOptional({
-			label: "labels.description",
-			maxLength: LOBBY_DESCRIPTION_MAX_LENGTH,
-		}),
-		label: select({
-			label: "labels.lobbyLabel",
-			bottomText: "bottomTexts.lobbyLabel",
-			items: LOBBY_LABELS.map((label) => ({
-				label: `options.lobbyLabel.${label}` as const,
-				value: label,
-			})),
-		}),
+		name: nameField,
+		description: descriptionField,
+		label: labelField,
 		startsAt: datetime({
 			label: "labels.start",
 			bottomText: "bottomTexts.lobbyStart",
@@ -164,27 +170,22 @@ export const newLobbySchema = v.pipe(
 	}),
 );
 
-export const lobbySettingsSchema = v.object({
-	_action: stringConstant("UPDATE_SETTINGS"),
-	bestOf: bestOfField,
-	weaponRandomizer: weaponRandomizerField,
-	isApplicationRequired: isApplicationRequiredField,
-});
-
-export const lobbyMapsSchema = v.pipe(
+/** The settings of {@link newLobbySchema} the host can change later, its visibility checked against the lobby's start by the action, see `visibilityIssues`. */
+export const editLobbySchema = v.pipe(
 	v.object({
-		_action: stringConstant("UPDATE_MAPS"),
+		_action: stringConstant("EDIT"),
+		name: nameField,
+		description: descriptionField,
+		label: labelField,
+		bestOf: bestOfField,
 		...mapsFields,
+		weaponRandomizer: weaponRandomizerField,
+		isApplicationRequired: isApplicationRequiredField,
+		baseVisibility: baseVisibilityWithLinkOnlyField,
+		notFoundVisibility: notFoundVisibilityField,
 	}),
 	superRefine((values, ctx) => mapsIssues(values, ctx)),
 );
-
-/** Checked against the lobby's start by the action, see `visibilityIssues`. */
-export const lobbyVisibilitySchema = v.object({
-	_action: stringConstant("UPDATE_VISIBILITY"),
-	baseVisibility: baseVisibilityWithLinkOnlyField,
-	notFoundVisibility: notFoundVisibilityField,
-});
 
 const lobbySide = v.picklist(LOBBY_SIDES);
 const reportedCount = v.pipe(coerceNumber(), v.integer(), v.minValue(0));
@@ -211,9 +212,7 @@ export const lobbyActionSchema = v.union([
 	v.object({ _action: _action("HOST_CONFIRM_SET"), setId: id }),
 	reportWeaponSchema,
 	undoWeaponReportSchema,
-	lobbySettingsSchema,
-	lobbyMapsSchema,
-	lobbyVisibilitySchema,
+	editLobbySchema,
 	v.object({ _action: _action("RESET_SHARE_KEY") }),
 	v.object({ _action: _action("WITHDRAW_APPLICATION") }),
 	v.object({ _action: _action("APPROVE_APPLICATION"), userId: id }),

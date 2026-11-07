@@ -1,7 +1,5 @@
 import { data, type LoaderFunctionArgs, redirect } from "react-router";
 import * as R from "remeda";
-import * as AssociationRepository from "~/features/associations/AssociationRepository.server";
-import * as Visibility from "~/features/associations/core/Visibility";
 import { getUser } from "~/features/auth/core/user.server";
 import * as RouteChatRooms from "~/features/chat/RouteChatRooms.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
@@ -10,7 +8,6 @@ import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerInges
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { hasPermission } from "~/modules/permissions/utils";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { databaseTimestampNow } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
@@ -162,11 +159,6 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 			startsAt: lobby.startsAt,
 		}),
 		hasFriendCode,
-		/** The host's current visibility of the lobby to edit and who they can limit it to */
-		visibility:
-			user && hasPermission(lobby, "MANAGE", user)
-				? await visibilityForHost({ lobby, hostUserId: user.id })
-				: null,
 		/** The viewer's team chat while they play a set, a voice call in their previous one follows them into it. */
 		teamChatRoomId: viewerTeamChatRoomId,
 		chatRooms: await RouteChatRooms.resolve(
@@ -189,28 +181,6 @@ function withShareKey(url: URL, shareKey: string) {
 	);
 
 	return `${url.pathname}?${next}`;
-}
-
-async function visibilityForHost({
-	lobby,
-	hostUserId,
-}: {
-	lobby: LobbyRepository.LobbyById;
-	hostUserId: number;
-}) {
-	const rows = await LobbyRepository.findVisibilityRowsById(lobby.id);
-	const associations =
-		await AssociationRepository.findByMemberUserId(hostUserId);
-
-	return {
-		associations: Visibility.withAudiencesOf(associations, rows),
-		current: lobby.isLinkOnly
-			? {
-					baseVisibility: "LINK_ONLY" as const,
-					notFoundVisibility: { at: null, forAssociation: "PUBLIC" as const },
-				}
-			: Visibility.toForm(rows),
-	};
 }
 
 async function currentMapVoterIds(
