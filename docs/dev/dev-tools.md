@@ -15,7 +15,7 @@ Hide it with the `–` button or `Alt+Shift+D` (it remembers), `Esc` closes the 
 | **Live events** | What the server pushed down this tab's event stream, the connection state and subscribed topics. "Ping me" round-trips an event through the whole pipeline. |
 | **Warnings** | Console errors & warnings, uncaught errors and hydration mismatches since the page loaded, deduplicated. Also the dev server's console errors & warnings (loader and action errors included) with the request they happened in. The badge counts them. |
 | **Server** | Which database file is in use, the in-memory switches (season ended, plus voting active), refreshing the caches, reseeding and running any routine now. |
-| **Triggers** | Toasts, error pages (each status, a render crash) and a sample notification of any type to yourself. |
+| **Triggers** | Toasts, error pages (each status, a render crash), a sample notification of any type to yourself and simulated ads (grey boxes in the header and sticky footer ad slots, for checking the layout while Fuse is off). |
 | **Links** | The local docs site (`pnpm run dev:docs`) and the dev only pages (OG images, changelog image, bracket test...). |
 
 ## CLI

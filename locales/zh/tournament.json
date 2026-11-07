@@ -156,7 +156,6 @@
 	"progression.error.SAME_PLACEMENT_TO_MULTIPLE_BRACKETS": "相同的名次导向了多个对战表",
 	"progression.error.GAP_IN_PLACEMENTS": "晋级名次之间存在断层",
 	"progression.error.TOO_MANY_PLACEMENTS": "名次数量过多（超过了小组中的队伍总数）",
-	"progression.error.PLACEMENT_TOO_HIGH": "名次过高（最大值为 {{max}}）",
 	"progression.error.DUPLICATE_BRACKET_NAME": "对战表名称重复",
 	"progression.error.NAME_MISSING": "缺少对战表名称",
 	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "包含提前晋级/淘汰的瑞士轮对战表必须导向另一个对战表",

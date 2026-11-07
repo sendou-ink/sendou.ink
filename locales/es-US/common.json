@@ -33,7 +33,6 @@
 	"maps.mapPool": "Grupo de escenarios",
 	"maps.tournamentMaplist": "Crear lista de escenarios para torneo (maps.iplabs.ink)",
 	"maps.validation.NOT_IN_POOL": "No se pueden elegir escenarios fuera del grupo de escenarios",
-	"maps.validation.VALID": "¡Grupo de escenarios correcto!",
 	"forms.errors.title": "Los siguientes errores deben corregirse",
 	"tag.name.MONEY": "Premios en efectivo",
 	"tag.name.LOW": "Límite de habilidad",

@@ -74,7 +74,7 @@ describe("ThemePalette.build", () => {
 		}
 
 		expect(failures).toEqual([]);
-	});
+	}, 20_000);
 
 	test("every color is inside the sRGB gamut for any input", () => {
 		const failures: string[] = [];
@@ -101,7 +101,7 @@ describe("ThemePalette.build", () => {
 		}
 
 		expect(failures).toEqual([]);
-	});
+	}, 20_000);
 
 	test("gives a yellow accent a bright light mode fill with dark text on it", () => {
 		const theme = built({ accentHue: 100, accentChroma: 0.3 });

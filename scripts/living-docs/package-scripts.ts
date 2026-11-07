@@ -62,7 +62,7 @@ const DESCRIPTIONS: Record<string, string> = {
 	"check-translation-sync":
 		"Fails when the translation jsons are out of sync with English",
 	"check-unused-translations":
-		"Fails when an English translation key is used nowhere in app/, matched like the `i18n:usage` index",
+		"Fails when an English translation key is used nowhere in app/, matched like the `i18n:usage` index but with template literal keys narrowed by the TypeScript types of their interpolated values",
 	checks:
 		"Everything CI checks: lint, unit and browser tests, translations, type checks, knip and the docs build, the read-only ones in parallel. A task isn't done until it passes",
 	"checks:scanner": "`checks` plus the scanner tests",

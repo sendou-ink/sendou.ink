@@ -19,6 +19,7 @@
 
 	& img {
 		flex: none;
+		max-width: none;
 	}
 }
 

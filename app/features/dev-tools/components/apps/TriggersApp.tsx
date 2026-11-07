@@ -3,10 +3,13 @@ import * as React from "react";
 import { useFetcher, useLocation } from "react-router";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouSection } from "~/components/elements/Section";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { toastQueue } from "~/components/elements/Toast";
 import { useUser } from "~/features/auth/core/user";
+import { usePersistedState } from "~/modules/persisted-state/hooks";
 import { postDev } from "../../core/dev-api";
 import type { DEV_ERROR_KINDS } from "../../dev-tools-constants";
+import { simulateAdsPersisted } from "../../dev-tools-persisted";
 import type { DevApp } from "../../dev-tools-types";
 import { DEV_NOTIFICATIONS_URL, devErrorUrl } from "../../dev-tools-urls";
 import type { DevNotificationsLoaderData } from "../../routes/dev.notifications";
@@ -14,7 +17,7 @@ import type { DevNotificationsLoaderData } from "../../routes/dev.notifications"
 export const triggersDevApp: DevApp = {
 	id: "triggers",
 	title: "Triggers",
-	description: "Toasts, error pages and notifications on demand",
+	description: "Toasts, error pages, notifications and ads on demand",
 	icon: <Zap />,
 	size: "md",
 	Component: TriggersApp,
@@ -37,6 +40,7 @@ function TriggersApp() {
 			<ToastsSection />
 			<ErrorPagesSection />
 			<NotificationsSection />
+			<AdsSection />
 		</div>
 	);
 }
@@ -193,6 +197,26 @@ function NotificationsSection() {
 					Log in first, notifications go to you
 				</p>
 			)}
+		</SendouSection>
+	);
+}
+
+function AdsSection() {
+	const [simulateAds, setSimulateAds] = usePersistedState(simulateAdsPersisted);
+
+	return (
+		<SendouSection title="Ads">
+			<p className="text-xs text-lighter">
+				Grey boxes in the header and sticky footer ad slots, reserving the same
+				space real ads do. Hidden for supporters, like real ads.
+			</p>
+			<SendouSwitch
+				isSelected={simulateAds}
+				onChange={setSimulateAds}
+				size="small"
+			>
+				Simulate ads
+			</SendouSwitch>
 		</SendouSection>
 	);
 }

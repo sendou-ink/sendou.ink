@@ -1,7 +1,11 @@
 import type { Page } from "@playwright/test";
 import { newHomePageSchema } from "~/features/settings/settings-schemas";
 import { SETTINGS_PAGE } from "~/utils/urls";
-import { navigate, waitForPOSTResponse } from "../../helpers/playwright";
+import {
+	expect,
+	navigate,
+	waitForPOSTResponse,
+} from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 import { FeedPostPage } from "./feed-post-page";
 
@@ -42,7 +46,9 @@ export class FeedPage {
 	async openPost(text: string | RegExp) {
 		await this.post(text).getByRole("link", { name: "Comments" }).click();
 		await this.page.waitForURL(/\/feed\//);
+		const postPage = new FeedPostPage(this.page);
+		await expect(postPage.locators.commentsRegion).toBeVisible();
 
-		return new FeedPostPage(this.page);
+		return postPage;
 	}
 }

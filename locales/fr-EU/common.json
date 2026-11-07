@@ -182,7 +182,6 @@
 	"maps.tournamentMaplist": "Créer une liste de stages de tournoi (maps.iplabs.ink)",
 	"maps.validation.STAGE_REPEAT_IN_SAME_MODE": "Impossible de choisir le même stage deux fois dans le même mode",
 	"maps.validation.TOO_MUCH_STAGE_REPEAT": "Impossible de choisir le même stage plus de {{maxStageRepeat}} fois",
-	"maps.validation.VALID": "Liste de stages valide !",
 	"results": "Résultats",
 	"forms.name": "Nom",
 	"forms.description": "Description",

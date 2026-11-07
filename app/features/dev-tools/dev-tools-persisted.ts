@@ -31,3 +31,11 @@ export const scenarioParamsPersisted = PersistedState.defineMap({
 	schema: v.record(v.string(), v.union([v.string(), v.number()])),
 	default: {},
 });
+
+/** Whether grey stand-ins fill the ad slots, for checking the layout with ads while Fuse is off. */
+export const simulateAdsPersisted = PersistedState.define({
+	key: "dev-simulate-ads",
+	storage: "local",
+	schema: v.boolean(),
+	default: false,
+});

@@ -153,7 +153,6 @@
 	"maps.tournamentMaplist": "大会ステージリストを作る (maps.iplabs.ink)",
 	"maps.validation.STAGE_REPEAT_IN_SAME_MODE": "同じルールで1回以上同じマップを選択できません",
 	"maps.validation.TOO_MUCH_STAGE_REPEAT": "同じステージを {{maxStageRepeat}} 回以上選択できません",
-	"maps.validation.VALID": "ステージリストに問題はありません！",
 	"results": "結果",
 	"forms.name": "名前",
 	"forms.description": "説明",
