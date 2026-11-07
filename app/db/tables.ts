@@ -322,6 +322,23 @@ interface CalendarEventDate {
 	startsAt: number;
 }
 
+/** Where an in-person (LAN) event is held. An event having one is what makes it a LAN. */
+interface CalendarEventVenue {
+	eventId: number;
+	/** E.g. "Hilton Ballroom B" */
+	name: string;
+	/** Display address from the geocoder */
+	address: string;
+	/** From the geocoder, e.g. for the "LAN · Austin" chip. Null if it gave none. */
+	city: string | null;
+	/** ISO 3166-1 alpha-2 */
+	countryCode: string;
+	latitude: number;
+	longitude: number;
+	/** IANA timezone, e.g. "America/Chicago" */
+	timezone: string;
+}
+
 interface CalendarEventResultPlayer {
 	name: string | null;
 	teamId: number;
@@ -1743,6 +1760,7 @@ export interface DB {
 	CalendarEventDate: CalendarEventDate;
 	CalendarEventResultPlayer: CalendarEventResultPlayer;
 	CalendarEventResultTeam: CalendarEventResultTeam;
+	CalendarEventVenue: CalendarEventVenue;
 	ChatMessage: ChatMessage;
 	ChatMessageReadIndicator: ChatMessageReadIndicator;
 	ChatRoom: ChatRoom;

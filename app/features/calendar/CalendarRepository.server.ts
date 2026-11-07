@@ -2,6 +2,7 @@ import { sub } from "date-fns";
 import type {
 	Expression,
 	ExpressionBuilder,
+	Kysely,
 	NotNull,
 	Transaction,
 } from "kysely";
@@ -53,6 +54,16 @@ import { calendarEventSorter } from "./calendar-utils";
 
 const RECENT_TOURNAMENTS_SHOWN = 10;
 
+const VENUE_COLUMNS = [
+	"CalendarEventVenue.name",
+	"CalendarEventVenue.address",
+	"CalendarEventVenue.city",
+	"CalendarEventVenue.countryCode",
+	"CalendarEventVenue.latitude",
+	"CalendarEventVenue.longitude",
+	"CalendarEventVenue.timezone",
+] as const;
+
 function hasBadge(eb: ExpressionBuilder<DB, "CalendarEventDate">) {
 	return eb
 		.exists(
@@ -94,6 +105,16 @@ const withTrophy = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
 			.select(["Trophy.id", "Trophy.name", "Trophy.model"])
 			.whereRef("Trophy.id", "=", "CalendarEvent.trophyId"),
 	).as("trophy");
+};
+
+/** The event's venue as a JSON object, `null` for an online event. */
+export const withVenue = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
+	return jsonObjectFrom(
+		eb
+			.selectFrom("CalendarEventVenue")
+			.select(VENUE_COLUMNS)
+			.whereRef("CalendarEventVenue.eventId", "=", "CalendarEvent.id"),
+	).as("venue");
 };
 
 function tournamentOrganization(organizationId: Expression<number | null>) {
@@ -343,6 +364,7 @@ export async function findById(
 			"CalendarEventDate.eventId",
 			...commonUserSelect(eb, { idAs: "authorId" }),
 			hasBadge(eb),
+			withVenue(eb),
 			tournamentOrganization(eb.ref("CalendarEvent.organizationId")).as(
 				"organization",
 			),
@@ -554,6 +576,8 @@ type CreateArgs = Pick<
 	startTimes: Array<Tables["CalendarEventDate"]["startsAt"]>;
 	badges: Array<Tables["CalendarEventBadge"]["badgeId"]>;
 	trophyId?: Tables["CalendarEvent"]["trophyId"];
+	/** Where the event is held in person, `null` for an online event. */
+	venue?: CalendarEventVenueArgs | null;
 	/** The organizer's map pool: the maps of a "TO" tournament or the custom pool of a team picked one. */
 	mapPoolMaps?: Array<Pick<Tables["MapPoolMap"], "mode" | "stageId">>;
 	isFullTournament: boolean;
@@ -677,6 +701,7 @@ export async function insert(args: CreateArgs) {
 
 		await insertDates({ eventId, startTimes: args.startTimes }, trx);
 		await insertBadges({ eventId, badges: args.badges }, trx);
+		await upsertVenue({ eventId, venue: args.venue ?? null }, trx);
 
 		await upsertMapPool({ eventId, mapPoolMaps: args.mapPoolMaps ?? [] }, trx);
 
@@ -764,6 +789,9 @@ export async function update(args: UpdateArgs) {
 			.where("eventId", "=", args.eventId)
 			.execute();
 		await insertBadges({ eventId: args.eventId, badges: args.badges }, trx);
+		if (args.venue !== undefined) {
+			await upsertVenue({ eventId: args.eventId, venue: args.venue }, trx);
+		}
 
 		await upsertMapPool(
 			{ eventId: args.eventId, mapPoolMaps: args.mapPoolMaps ?? [] },
@@ -1016,6 +1044,37 @@ async function upsertMapPool(
 				calendarEventId: eventId,
 			})),
 		)
+		.execute();
+}
+
+type CalendarEventVenueArgs = Omit<Tables["CalendarEventVenue"], "eventId">;
+
+/**
+ * Sets where the event is held in person, `null` makes it an online event. Exported for the venue factory, the app sets it via `insert` / `update`.
+ * @internal
+ */
+export async function upsertVenue(
+	{
+		eventId,
+		venue,
+	}: {
+		eventId: number;
+		venue: CalendarEventVenueArgs | null;
+	},
+	executor: Kysely<DB> = db,
+) {
+	if (!venue) {
+		await executor
+			.deleteFrom("CalendarEventVenue")
+			.where("eventId", "=", eventId)
+			.execute();
+		return;
+	}
+
+	await executor
+		.insertInto("CalendarEventVenue")
+		.values({ ...venue, eventId })
+		.onConflict((oc) => oc.column("eventId").doUpdateSet(venue))
 		.execute();
 }
 

@@ -12,6 +12,7 @@ import {
 } from "~/utils/dates";
 import type { AnySyncSchema, DayMonthYear } from "~/utils/schema";
 import { formRegistry } from "./fields";
+import { AddressSearchFormField } from "./fields/AddressSearchFormField";
 import { ArrayFormField } from "./fields/ArrayFormField";
 import { BadgesFormField } from "./fields/BadgesFormField";
 import { DatetimeFormField } from "./fields/DatetimeFormField";
@@ -42,6 +43,8 @@ import { WeaponSelectFormField } from "./fields/WeaponSelectFormField";
 import type { ImageFieldValue } from "./image-field";
 import { EMPTY_FORM_STORE, useOptionalFormFieldContext } from "./SendouForm";
 import type {
+	AddressFieldValue,
+	AddressSearchFieldOptions,
 	ArrayItemRenderContext,
 	BadgeOption,
 	CustomFieldRenderProps,
@@ -534,6 +537,20 @@ export function FormField({
 				onChange={handleChange as (v: number | null) => void}
 				onTeamSelected={teamOptions?.onTeamSelected}
 				initialTeam={teamOptions?.initialTeam}
+			/>
+		);
+	}
+
+	if (formField.type === "address-search") {
+		const addressOptions = options as AddressSearchFieldOptions | undefined;
+		return (
+			<AddressSearchFormField
+				{...commonProps}
+				{...formField}
+				disabled={isDisabled}
+				value={value as AddressFieldValue | null}
+				onChange={handleChange as (v: AddressFieldValue | null) => void}
+				onAddressSelected={addressOptions?.onAddressSelected}
 			/>
 		);
 	}

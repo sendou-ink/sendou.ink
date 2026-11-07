@@ -7,6 +7,7 @@ import {
 	calendarEventsSearchParams,
 	calendarNewSearchParams,
 	calendarSearchParams,
+	venueSearchSearchParams,
 } from "./calendar-search-params";
 import * as CalendarEvent from "./core/CalendarEvent";
 
@@ -120,5 +121,13 @@ describe("calendarNewSearchParams", () => {
 			["yes"],
 			[""],
 		]);
+	});
+});
+
+describe("venueSearchSearchParams", () => {
+	test("round-trips", () => {
+		assertRoundTrips(venueSearchSearchParams, {
+			q: ["", "austin convention center", "Messuaukio 1, Helsinki"],
+		});
 	});
 });

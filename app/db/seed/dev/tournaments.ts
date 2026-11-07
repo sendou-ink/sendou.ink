@@ -21,6 +21,7 @@ import {
 import { NZAP_YOUTUBE_ID } from "../constants";
 import { faker, unique } from "../core/faker";
 import * as showcaseNames from "../core/showcaseNames";
+import * as CalendarEventVenueFactory from "../factories/CalendarEventVenueFactory";
 import * as ImageFactory from "../factories/ImageFactory";
 import * as SavedCalendarEventFactory from "../factories/SavedCalendarEventFactory";
 import * as TournamentFactory from "../factories/TournamentFactory";
@@ -266,7 +267,7 @@ export async function seedTournaments({
 	});
 	await seedPaddlingPool({ users, organizations, rosters });
 	await seedLowInk({ users, organizations, rosters });
-	await seedSwimOrSink({ users, organizations, rosters });
+	const swimOrSink = await seedSwimOrSink({ users, organizations, rosters });
 	const luti = await seedLuti({
 		users,
 		organizations,
@@ -292,6 +293,9 @@ export async function seedTournaments({
 		rosters,
 		seriesLogoImgIds,
 	});
+
+	// last so the venue's random values don't shift what the other tournaments were seeded with
+	await CalendarEventVenueFactory.create({ eventId: swimOrSink.eventId });
 
 	return {
 		regOpen: inTheZone,
@@ -441,7 +445,7 @@ async function seedLowInk({ users, rosters }: Ctx) {
 	await TournamentFactory.playOut(tournament.id, 0);
 }
 
-/** #4 round robin → SE, TO maps — everybody checked in, not started. N-ZAP isn't registered, so it is his saved one. */
+/** #4 round robin → SE, TO maps, a LAN — everybody checked in, not started. N-ZAP isn't registered, so it is his saved one. */
 async function seedSwimOrSink({ users, rosters }: Ctx) {
 	const tournament = await TournamentFactory.create({
 		name: nameFor("Swim or Sink"),
@@ -466,6 +470,8 @@ async function seedSwimOrSink({ users, rosters }: Ctx) {
 		userId: users.nzapId,
 		tournamentId: tournament.id,
 	});
+
+	return tournament;
 }
 
 /**

@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
 
 /** Integer primary keys that are some other table's id, not a generated one. */
-const NATURAL_PRIMARY_KEYS = ["PlusTier"];
+const NATURAL_PRIMARY_KEYS = ["PlusTier", "CalendarEventVenue"];
 
 /** Integer `...Id` columns that intentionally have no foreign key. Game data ids ending in `SplId` are always exempt. */
 const NOT_FOREIGN_KEYS: Record<string, string> = {

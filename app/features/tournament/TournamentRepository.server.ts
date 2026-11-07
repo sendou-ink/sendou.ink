@@ -17,6 +17,7 @@ import type {
 	TournamentSettings,
 } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
+import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import type { StreamAccount } from "~/features/live-streams/live-streams-constants";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
 import { organizerPermissions } from "~/features/tournament/core/permissions";
@@ -132,6 +133,7 @@ export async function findById(id: number) {
 					),
 			).as("organization"),
 			tournamentLogoWithDefault(eb).as("logoUrl"),
+			CalendarRepository.withVenue(eb),
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")

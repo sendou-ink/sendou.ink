@@ -29,6 +29,7 @@ import {
 	calendarNewSchema,
 	customTeamPickPool,
 	teamPickSettingsFromFormValues,
+	venueFromFormValues,
 } from "../calendar-new-schemas";
 import { formValuesToInputBrackets } from "../calendar-progression-form";
 import type { CalendarEventTag } from "../calendar-types";
@@ -140,6 +141,7 @@ export const action = defineAction(
 				? []
 				: data.badges.filter((badge) => attachableBadgeIds.has(badge)),
 			trophyId: data.trophyId ?? null,
+			venue: venueFromFormValues(data),
 			// resolved by resolveImages from the `image()` field
 			avatarImgId: data.avatarImgId ?? undefined,
 			toToolsEnabled: data.toToolsEnabled,

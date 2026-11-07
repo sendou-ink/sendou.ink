@@ -794,6 +794,16 @@ export class Tournament {
 		return this.ctx.settings.isTest ?? false;
 	}
 
+	/** Where the tournament is held in person, `null` for an online tournament. */
+	get venue() {
+		return this.ctx.venue;
+	}
+
+	/** Held in person (has a venue), gating the LAN only features. */
+	get isLan() {
+		return this.ctx.venue !== null;
+	}
+
 	/** Hidden during preparation, must be opened before bracket start. */
 	get isDraft() {
 		return this.ctx.settings.isDraft ?? false;
