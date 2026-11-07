@@ -18,6 +18,8 @@ import {
 import { resample } from "../../core/music/resample";
 
 const SAMPLE_RATE = 24_000;
+// real DSP over many seconds of audio, several times slower on CI than locally
+const AUDIO_TEST_TIMEOUT_MS = 60_000;
 
 describe("fft", () => {
 	test("matches a direct DFT and round-trips through the inverse", () => {
@@ -83,7 +85,7 @@ describe("encodeMusicIndex", () => {
 	});
 });
 
-describe("removeMusic", () => {
+describe("removeMusic", { timeout: AUDIO_TEST_TIMEOUT_MS }, () => {
 	test("takes the music out and keeps the other sounds", async () => {
 		const music = melody(40);
 		const index = indexOf(music);
@@ -188,7 +190,7 @@ describe("removeMusic", () => {
 	});
 });
 
-describe("createMusicFinder", () => {
+describe("createMusicFinder", { timeout: AUDIO_TEST_TIMEOUT_MS }, () => {
 	test("finds music across windows and the subtractor takes it out", async () => {
 		// the track playing from 20 s to 110 s, across the finder's two windows (0–90 s and 30–120 s)
 		const music = melody(100);
@@ -240,10 +242,10 @@ describe("createMusicFinder", () => {
 		expect(decibels(energy(changed) / energy(before(sound)))).toBeLessThan(
 			-100,
 		);
-	}, 20_000);
+	});
 });
 
-describe("createMusicSubtractor", () => {
+describe("createMusicSubtractor", { timeout: AUDIO_TEST_TIMEOUT_MS }, () => {
 	test("comes out as if the whole sound was subtracted at once", async () => {
 		const music = melody(100);
 		const sounds = gameSounds(90);
@@ -284,7 +286,7 @@ describe("createMusicSubtractor", () => {
 			(value, i) => value - whole[i]!,
 		);
 		expect(decibels(energy(difference) / energy(whole))).toBeLessThan(-50);
-	}, 20_000);
+	});
 });
 
 function indexOf(music: Float32Array) {
