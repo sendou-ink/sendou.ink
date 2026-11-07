@@ -224,7 +224,6 @@
 	"maps.validation.STAGE_REPEAT_IN_SAME_MODE": "No se puede elegir el mismo escenario dos veces en el mismo modo",
 	"maps.validation.TOO_MUCH_STAGE_REPEAT": "No se puede elegir un escenario más de {{maxStageRepeat}} veces",
 	"maps.validation.NOT_IN_POOL": "No se pueden elegir escenarios fuera del grupo de mapas",
-	"maps.validation.VALID": "¡Grupo de mapas correcto!",
 	"results": "Resultados",
 	"forms.name": "Nombre",
 	"forms.description": "Descripción",

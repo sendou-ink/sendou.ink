@@ -2,11 +2,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { API, type Type } from "typescript/unstable/sync";
 import { parseSync } from "vite";
 
 // Generates the index of where each translation key is used (source files and the routes rendering them)
 // shown on the /translate page. Literal keys are matched exactly, template literals (t(`sorts.${x}`)) by
-// their static parts and the route of a file is found by following imports from each route module.
+// their static parts plus, when the TypeScript type of an interpolated value is a union of literals
+// (t(`sorts.${sort}`) with sort: "A" | "B"), exactly those values. The route of a file is found by
+// following imports from each route module.
 // With --check-unused it instead fails if a key of the English translations is used nowhere.
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -35,7 +38,15 @@ type ParsedFile = {
 	imports: string[];
 	namespaces: string[];
 	literals: string[];
-	templates: string[][];
+	templates: Template[];
+};
+
+type Template = {
+	quasis: string[];
+	/** Where the type of each interpolated value can be asked from the type checker, null if not */
+	expressionPositions: Array<number | null>;
+	/** Possible values of each interpolated value, null if any string is possible */
+	expressionValues: Array<string[] | null>;
 };
 
 const startedAt = performance.now();
@@ -44,6 +55,9 @@ const englishKeys = loadEnglishKeys();
 const knownIds = knownIdsOf(englishKeys);
 const files = listSourceFiles(APP);
 const parsed = new Map(files.map((file) => [file, parseFile(file)]));
+const isCheckingUnused = process.argv.includes("--check-unused");
+// costs seconds of type checking, the usage index can live with a few extra files listed for a key
+if (isCheckingUnused) resolveTemplateExpressionValues();
 
 const routes = flattenRoutes(
 	(await import(pathToFileURL(path.join(APP, "routes.ts")).href))
@@ -68,8 +82,8 @@ for (const [file, { namespaces, literals, templates }] of parsed) {
 	for (const literal of literals) {
 		for (const id of matchLiteral(literal, namespaces)) ids.add(id);
 	}
-	for (const parts of templates) {
-		for (const id of matchTemplate(parts, namespaces)) ids.add(id);
+	for (const template of templates) {
+		for (const id of matchTemplate(template, namespaces)) ids.add(id);
 	}
 	if (ids.size === 0) continue;
 
@@ -89,7 +103,7 @@ for (const entry of Object.values(usage)) {
 	entry.r.sort((a, b) => a - b);
 }
 
-if (process.argv.includes("--check-unused")) {
+if (isCheckingUnused) {
 	const unusedKeys = findUnusedKeys();
 	if (unusedKeys.length > 0) {
 		console.error(
@@ -177,14 +191,17 @@ function matchLiteral(literal: string, fileNamespaces: string[]): string[] {
 		.map((namespace) => `${namespace}:${literal}`);
 }
 
-function matchTemplate(parts: string[], fileNamespaces: string[]): string[] {
-	const separatorIdx = parts[0].indexOf(":");
-	const explicitNamespace = parts[0].slice(0, separatorIdx);
+function matchTemplate(
+	{ quasis, expressionValues }: Template,
+	fileNamespaces: string[],
+): string[] {
+	const separatorIdx = quasis[0].indexOf(":");
+	const explicitNamespace = quasis[0].slice(0, separatorIdx);
 	const hasExplicitNamespace =
 		separatorIdx !== -1 && knownIds.has(explicitNamespace);
 	const idParts = hasExplicitNamespace
-		? [parts[0].slice(separatorIdx + 1), ...parts.slice(1)]
-		: parts;
+		? [quasis[0].slice(separatorIdx + 1), ...quasis.slice(1)]
+		: quasis;
 	const staticPart = idParts.join("");
 
 	let namespaces = fileNamespaces;
@@ -201,7 +218,16 @@ function matchTemplate(parts: string[], fileNamespaces: string[]): string[] {
 	}
 
 	const pattern = new RegExp(
-		`^${idParts.map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join(".+")}$`,
+		`^${idParts
+			.map((part, i) => {
+				if (i === 0) return escapeRegExp(part);
+				const values = expressionValues[i - 1];
+				const expression = values
+					? `(?:${values.map(escapeRegExp).join("|")})`
+					: ".+";
+				return `${expression}${escapeRegExp(part)}`;
+			})
+			.join("")}$`,
 	);
 
 	return namespaces.flatMap((namespace) =>
@@ -209,6 +235,68 @@ function matchTemplate(parts: string[], fileNamespaces: string[]): string[] {
 			.filter((id) => pattern.test(id))
 			.map((id) => `${namespace}:${id}`),
 	);
+}
+
+function escapeRegExp(text: string) {
+	return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Asks the type checker what each interpolated identifier or property (`${sort}`, `${build.mode}`) can be */
+function resolveTemplateExpressionValues() {
+	const api = new API({ cwd: ROOT });
+	try {
+		const project = api
+			.updateSnapshot({ openProjects: [path.join(ROOT, "tsconfig.json")] })
+			.getProjects()[0];
+
+		for (const [file, { namespaces, templates }] of parsed) {
+			// checking a file is the slow part, skip those whose templates can't be a key anyway
+			const keyTemplates = templates.filter(
+				(template) => matchTemplate(template, namespaces).length > 0,
+			);
+			const positions = keyTemplates
+				.flatMap((template) => template.expressionPositions)
+				.filter((position) => position !== null);
+			if (positions.length === 0) continue;
+
+			const types = project.checker.getTypeAtPosition(
+				path.join(APP, file),
+				positions,
+			);
+			const valuesByPosition = new Map(
+				positions.map((position, i) => [position, literalValues(types[i])]),
+			);
+			for (const template of keyTemplates) {
+				template.expressionValues = template.expressionPositions.map(
+					(position) =>
+						position === null ? null : (valuesByPosition.get(position) ?? null),
+				);
+			}
+		}
+	} finally {
+		api.close();
+	}
+}
+
+function literalValues(type: Type | undefined): string[] | null {
+	if (!type) return null;
+
+	const members = type.isUnionType() ? (type.getTypes() ?? []) : [type];
+	if (members.length === 0) return null;
+
+	const values: string[] = [];
+	for (const member of members) {
+		if (
+			!member.isStringLiteralType() &&
+			!member.isNumberLiteralType() &&
+			!member.isBooleanLiteralType()
+		) {
+			return null;
+		}
+		values.push(String(member.value));
+	}
+
+	return values;
 }
 
 function listSourceFiles(dir: string): string[] {
@@ -291,9 +379,11 @@ function parseFile(file: string): ParsedFile {
 					if (n.expressions.length === 0) {
 						result.literals.push(n.quasis[0].value.cooked);
 					} else {
-						result.templates.push(
-							n.quasis.map((quasi: any) => quasi.value.cooked),
-						);
+						result.templates.push({
+							quasis: n.quasis.map((quasi: any) => quasi.value.cooked),
+							expressionPositions: n.expressions.map(typeLookupPosition),
+							expressionValues: n.expressions.map(() => null),
+						});
 					}
 					break;
 				case "TSTypeAnnotation":
@@ -314,6 +404,19 @@ function parseFile(file: string): ParsedFile {
 	result.namespaces = [...new Set(result.namespaces)];
 
 	return result;
+}
+
+function typeLookupPosition(expression: any): number | null {
+	if (expression.type === "Identifier") return expression.start;
+	if (
+		expression.type === "MemberExpression" &&
+		!expression.computed &&
+		!expression.optional
+	) {
+		return expression.property.start;
+	}
+
+	return null;
 }
 
 function stringValues(node: any): string[] {

@@ -44,7 +44,6 @@
 	"maps.mapPool": "Arenen-Pool",
 	"maps.tournamentMaplist": "Arenen-Liste für Turnier erstellen (maps.iplabs.ink)",
 	"maps.validation.TOO_MUCH_STAGE_REPEAT": "Arena kann nicht mehr als {{maxStageRepeat}} Mal ausgewählt werden",
-	"maps.validation.VALID": "Arenen-Pool ok!",
 	"results": "Ergebnisse",
 	"forms.name": "Name",
 	"forms.description": "Beschreibung",
