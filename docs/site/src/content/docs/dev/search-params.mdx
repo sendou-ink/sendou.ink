@@ -140,6 +140,8 @@ export const shouldRevalidate = SearchParams.skipSearchOnlyRevalidation;
 
 Splitting a page into a layout route (data depending on few params, with its own definition) and an index route (a paginated list, say) this way keeps pagination from refetching the rest of the page.
 
+A route with a loader and child routes should export one of the two, otherwise every param a child writes reruns the parent's loader too. Leaf routes can leave it out: nearly every search change there touches their own params, so the router default does the same.
+
 ## Enforcement
 
 The `no-raw-search-params` Biome plugin fails the lint on `useSearchParams()` and on `…searchParams.get/getAll/has(…)` anywhere in `app/` outside this module.
