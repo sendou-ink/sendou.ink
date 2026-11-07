@@ -395,6 +395,7 @@ async function startSet({ lobby, sets }: LoadedState) {
 		alpha: preferencesOf(result.alpha),
 		bravo: preferencesOf(result.bravo),
 		modes: lobby.modes,
+		mapPool: lobby.mapPool,
 		bestOf: lobby.bestOf,
 		playedMaps: sets.flatMap((set) =>
 			set.games.flatMap((game) =>

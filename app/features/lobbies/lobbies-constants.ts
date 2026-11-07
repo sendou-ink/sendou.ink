@@ -14,6 +14,12 @@ export type LobbyLabel = (typeof LOBBY_LABELS)[number];
 export const LOBBY_WEAPON_RANDOMIZERS = ["OFF", "CHAOTIC", "BALANCED"] as const;
 export type LobbyWeaponRandomizer = (typeof LOBBY_WEAPON_RANDOMIZERS)[number];
 
+/**
+ * Where a set's maps come from: the players' match profile preferences among ranked modes, Splat Zones or every mode,
+ * or a map pool, a tournament's or a custom one, played in rotation
+ */
+export type LobbyMaps = "RANKED" | "SZ" | "ALL" | "TOURNAMENT" | "CUSTOM";
+
 export const LOBBY_BEST_OFS = [1, 3, 5, 7, 9] as const;
 export type LobbyBestOf = (typeof LOBBY_BEST_OFS)[number];
 

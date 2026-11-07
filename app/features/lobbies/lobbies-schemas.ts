@@ -5,16 +5,22 @@ import {
 	undoWeaponReportSchema,
 } from "~/components/match-page/match-page-schemas";
 import {
-	checkboxGroup,
 	datetime,
+	mapPoolOptional,
 	radioGroup,
 	select,
 	stringConstant,
 	textAreaOptional,
 	textFieldOptional,
+	tournamentSearchOptional,
 } from "~/form/fields";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import { _action, coerceNumber, id, superRefine } from "~/utils/schema";
+import {
+	_action,
+	coerceNumber,
+	id,
+	superRefine,
+	type ValidationCtx,
+} from "~/utils/schema";
 import {
 	baseVisibilityWithLinkOnlyField,
 	notFoundVisibilityField,
@@ -28,6 +34,7 @@ import {
 	LOBBY_SIDES,
 	LOBBY_SPECTATOR_COUNTS,
 	LOBBY_WEAPON_RANDOMIZERS,
+	type LobbyMaps,
 } from "./lobbies-constants";
 
 const bestOfField = radioGroup({
@@ -56,14 +63,46 @@ export const LOBBY_VISIBILITY_ISSUE_MESSAGES = {
 	startingNow: "forms:errors.canNotSetIfStartingNow",
 };
 
-const modesField = checkboxGroup({
-	label: "labels.lobbyModes",
-	items: modesShort.map((mode) => ({
-		label: `modes.${mode}` as const,
-		value: mode,
-	})),
-	minLength: 1,
+const mapsItems = [
+	{ label: "options.scrimMaps.rankedOnly" as const, value: "RANKED" },
+	{ label: "options.scrimMaps.szOnly" as const, value: "SZ" },
+	{ label: "options.scrimMaps.allModes" as const, value: "ALL" },
+	{ label: "options.scrimMaps.tournament" as const, value: "TOURNAMENT" },
+	{ label: "options.lobbyMaps.custom" as const, value: "CUSTOM" },
+] as const satisfies ReadonlyArray<{ label: string; value: LobbyMaps }>;
+
+const mapsField = select({
+	label: "labels.scrimMaps",
+	bottomText: "bottomTexts.lobbyMaps",
+	items: [...mapsItems],
 });
+
+const mapsFields = {
+	maps: mapsField,
+	mapsTournamentId: tournamentSearchOptional({
+		label: "labels.scrimMapsTournament",
+	}),
+	mapPool: mapPoolOptional({ label: "labels.mapPool" }),
+};
+
+function mapsIssues(
+	values: {
+		maps: LobbyMaps;
+		mapsTournamentId?: number | null;
+		mapPool?: string;
+	},
+	ctx: ValidationCtx,
+) {
+	if (values.maps === "TOURNAMENT" && !values.mapsTournamentId) {
+		ctx.addIssue({
+			path: ["mapsTournamentId"],
+			message: "forms:errors.tournamentMustBeSelected",
+		});
+	}
+	if (values.maps === "CUSTOM" && !values.mapPool) {
+		ctx.addIssue({ path: ["mapPool"], message: "forms:errors.required" });
+	}
+}
 
 export const newLobbySchema = v.pipe(
 	v.object({
@@ -93,7 +132,7 @@ export const newLobbySchema = v.pipe(
 			maxMessage: "errors.dateTooFarInFuture",
 		}),
 		bestOf: bestOfField,
-		modes: modesField,
+		...mapsFields,
 		weaponRandomizer: weaponRandomizerField,
 		spectators: radioGroup({
 			label: "labels.lobbySpectators",
@@ -108,6 +147,7 @@ export const newLobbySchema = v.pipe(
 		notFoundVisibility: notFoundVisibilityField,
 	}),
 	superRefine((lobby, ctx) => {
+		mapsIssues(lobby, ctx);
 		for (const issue of visibilityIssues(lobby, {
 			startsAt: lobby.startsAt,
 			messages: LOBBY_VISIBILITY_ISSUE_MESSAGES,
@@ -120,9 +160,16 @@ export const newLobbySchema = v.pipe(
 export const lobbySettingsSchema = v.object({
 	_action: stringConstant("UPDATE_SETTINGS"),
 	bestOf: bestOfField,
-	modes: modesField,
 	weaponRandomizer: weaponRandomizerField,
 });
+
+export const lobbyMapsSchema = v.pipe(
+	v.object({
+		_action: stringConstant("UPDATE_MAPS"),
+		...mapsFields,
+	}),
+	superRefine((values, ctx) => mapsIssues(values, ctx)),
+);
 
 /** Checked against the lobby's start by the action, see `visibilityIssues`. */
 export const lobbyVisibilitySchema = v.object({
@@ -157,6 +204,7 @@ export const lobbyActionSchema = v.union([
 	reportWeaponSchema,
 	undoWeaponReportSchema,
 	lobbySettingsSchema,
+	lobbyMapsSchema,
 	lobbyVisibilitySchema,
 	v.object({ _action: _action("RESET_SHARE_KEY") }),
 	v.object({ _action: _action("KICK"), userId: id }),

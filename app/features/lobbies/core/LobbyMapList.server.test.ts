@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { UserMapModePreferences } from "~/db/tables-json";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import type { ModeWithStage } from "~/modules/in-game-lists/types";
 import type { LobbyMapSource } from "../lobbies-constants";
 import * as LobbyMapList from "./LobbyMapList.server";
 
@@ -103,10 +104,55 @@ describe("LobbyMapList.generate", () => {
 				{ userId: 4, preferences: bravo },
 			],
 			modes: ["SZ", "TC", "RM", "CB"],
+			mapPool: null,
 			bestOf: 5,
 			playedMaps: [],
 		});
 
 		expect(maps.map((map) => map.source)).toEqual(Array(5).fill(expected));
+	});
+
+	const MAP_POOL: ModeWithStage[] = [
+		{ mode: "SZ", stageId: 1 },
+		{ mode: "SZ", stageId: 2 },
+		{ mode: "TC", stageId: 3 },
+		{ mode: "TC", stageId: 4 },
+		{ mode: "RM", stageId: 5 },
+	];
+
+	const generateFromMapPool = (playedMaps: ModeWithStage[] = []) =>
+		LobbyMapList.generate({
+			alpha: [{ userId: 1, preferences: POOLING_EVERY_MAP }],
+			bravo: [{ userId: 3, preferences: POOLING_EVERY_MAP }],
+			modes: ["CB"],
+			mapPool: MAP_POOL,
+			bestOf: 5,
+			playedMaps,
+		});
+
+	test("picks only maps of the map pool, whatever the modes", async () => {
+		const maps = await generateFromMapPool();
+
+		expect(maps).toHaveLength(5);
+		for (const map of maps) {
+			expect(
+				MAP_POOL.some(
+					(poolMap) =>
+						poolMap.mode === map.mode && poolMap.stageId === map.stageId,
+				),
+			).toBe(true);
+		}
+	});
+
+	test("picks none of the map pool's maps for either side", async () => {
+		const maps = await generateFromMapPool();
+
+		expect(maps.map((map) => map.source)).toEqual(Array(5).fill("DEFAULT"));
+	});
+
+	test("starts with a different mode than the last one played", async () => {
+		const maps = await generateFromMapPool([{ mode: "SZ", stageId: 1 }]);
+
+		expect(maps[0].mode).not.toBe("SZ");
 	});
 });

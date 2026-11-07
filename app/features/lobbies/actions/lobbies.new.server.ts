@@ -15,6 +15,7 @@ import {
 } from "../lobbies-constants";
 import { newLobbySchema } from "../lobbies-schemas";
 import { visibilityFromForm } from "../lobbies-utils";
+import { mapsFromForm } from "../lobbies-utils.server";
 
 export const action = defineAction(
 	{ body: newLobbySchema },
@@ -27,6 +28,8 @@ export const action = defineAction(
 			"Set your friend code first",
 		);
 
+		const maps = await mapsFromForm(body);
+
 		const lobbyId = await LobbyRepository.insert({
 			hostUserId: user.id,
 			name: body.name ?? `${user.username}'s lobby`,
@@ -34,7 +37,7 @@ export const action = defineAction(
 			label: body.label,
 			startsAt: dateToDatabaseTimestamp(body.startsAt),
 			bestOf: Number(body.bestOf) as LobbyBestOf,
-			modes: body.modes,
+			...maps,
 			weaponRandomizer: body.weaponRandomizer,
 			roomSize: (PLAYERS_PER_SET + Number(body.spectators)) as LobbyRoomSize,
 			visibility: visibilityFromForm(body),

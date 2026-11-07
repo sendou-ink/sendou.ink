@@ -33,6 +33,8 @@ export const { create } = defineFactory({
 		startsAt: dateToDatabaseTimestamp(addHours(new Date(), 1)),
 		bestOf: 3 as const,
 		modes: ["SZ", "TC", "RM", "CB"] satisfies InsertArgs["modes"],
+		mapPool: null as InsertArgs["mapPool"],
+		mapsTournamentId: null as InsertArgs["mapsTournamentId"],
 		roomSize: 8 as const,
 		visibility: null,
 	}),

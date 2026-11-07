@@ -57,6 +57,14 @@ export function LobbyCard({ lobby }: { lobby: LobbyListItem }) {
 						<ModeImage key={mode} mode={mode} size={18} />
 					))}
 				</LobbyInfoItem>
+				{lobby.mapPool ? (
+					<LobbyInfoItem label={t("lobbies:details.mapPool")}>
+						{lobby.mapsTournamentName ??
+							t("lobbies:details.mapPoolCount", {
+								count: lobby.mapPool.length,
+							})}
+					</LobbyInfoItem>
+				) : null}
 				{lobby.endedAt === null ? (
 					<LobbyInfoItem label={t("lobbies:card.players")}>
 						{lobby.playerCount}/{lobby.roomSize}

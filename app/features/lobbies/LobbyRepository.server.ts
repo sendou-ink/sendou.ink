@@ -62,6 +62,9 @@ export async function findById(
 			"Lobby.startsAt",
 			"Lobby.bestOf",
 			"Lobby.modes",
+			"Lobby.mapPool",
+			"Lobby.mapsTournamentId",
+			mapsTournamentName(eb).as("mapsTournamentName"),
 			"Lobby.roomSize",
 			"Lobby.weaponRandomizer",
 			"Lobby.chatRoomId",
@@ -244,6 +247,7 @@ export async function findProgressionStateById(id: number) {
 			"Lobby.startsAt",
 			"Lobby.bestOf",
 			"Lobby.modes",
+			"Lobby.mapPool",
 			"Lobby.roomSize",
 			"Lobby.weaponRandomizer",
 			"Lobby.chatRoomId",
@@ -328,6 +332,8 @@ const listColumns = [
 	"Lobby.label",
 	"Lobby.startsAt",
 	"Lobby.modes",
+	"Lobby.mapPool",
+	"Lobby.mapsTournamentId",
 	"Lobby.roomSize",
 	"Lobby.weaponRandomizer",
 	"Lobby.endedAt",
@@ -345,6 +351,7 @@ function listQuery({
 		.innerJoin("User", "User.id", "Lobby.hostUserId")
 		.select((eb) => [
 			...listColumns,
+			mapsTournamentName(eb).as("mapsTournamentName"),
 			...commonUserSelect(eb, { prefix: "host" }),
 			eb.not(isPublicNow({ entity: "Lobby", now })).as("isPrivate"),
 			eb
@@ -653,15 +660,16 @@ export async function findAllUnendedIdsNearStart() {
 
 type InsertArgs = Omit<
 	TablesInsertable["Lobby"],
-	"chatRoomId" | "modes" | "shareKey"
+	"chatRoomId" | "modes" | "mapPool" | "shareKey"
 > & {
 	modes: Tables["Lobby"]["modes"];
+	mapPool: Tables["Lobby"]["mapPool"];
 	/** `LINK_ONLY` = seen only through the share link, by those not participating */
 	visibility: AssociationVisibility | "LINK_ONLY" | null;
 };
 
 /** Inserts the lobby with its chat room and visibility, the host as its first participant. Returns the id. */
-export function insert({ visibility, modes, ...args }: InsertArgs) {
+export function insert({ visibility, modes, mapPool, ...args }: InsertArgs) {
 	return db.transaction().execute(async (trx) => {
 		const chatRoom = await ChatRepository.insertRoom(
 			{ type: "LOBBY", expiresAt: lobbyChatRoomExpiresAt(args.startsAt) },
@@ -673,6 +681,7 @@ export function insert({ visibility, modes, ...args }: InsertArgs) {
 			.values({
 				...args,
 				modes: JSON.stringify(modes),
+				mapPool: mapPool ? JSON.stringify(mapPool) : null,
 				chatRoomId: chatRoom.id,
 				shareKey: shortNanoid(),
 			})
@@ -851,15 +860,28 @@ export function kickParticipant(args: ParticipantRemoval) {
 export async function updateSettings({
 	id,
 	bestOf,
-	modes,
 	weaponRandomizer,
-}: Pick<Tables["Lobby"], "id" | "bestOf" | "modes" | "weaponRandomizer">) {
+}: Pick<Tables["Lobby"], "id" | "bestOf" | "weaponRandomizer">) {
+	await db
+		.updateTable("Lobby")
+		.set({ bestOf, weaponRandomizer })
+		.where("Lobby.id", "=", id)
+		.execute();
+}
+
+/** Replaces where the lobby's sets get their maps from: the modes of the players' preferences or a map pool. */
+export async function updateMaps({
+	id,
+	modes,
+	mapPool,
+	mapsTournamentId,
+}: Pick<Tables["Lobby"], "id" | "modes" | "mapPool" | "mapsTournamentId">) {
 	await db
 		.updateTable("Lobby")
 		.set({
-			bestOf,
 			modes: JSON.stringify(modes),
-			weaponRandomizer,
+			mapPool: mapPool ? JSON.stringify(mapPool) : null,
+			mapsTournamentId,
 		})
 		.where("Lobby.id", "=", id)
 		.execute();
@@ -1039,6 +1061,14 @@ export function findResultPlacementsByUserId(userId: number) {
 }
 
 /** A link-only lobby has no `ContentVisibility` rows, its share link being the only way in for others. */
+function mapsTournamentName(eb: ExpressionBuilder<DB, "Lobby">) {
+	return eb
+		.selectFrom("CalendarEvent")
+		.select("CalendarEvent.name")
+		.whereRef("CalendarEvent.tournamentId", "=", "Lobby.mapsTournamentId")
+		.limit(1);
+}
+
 function isLinkOnly(eb: ExpressionBuilder<DB, "Lobby">) {
 	return eb.not(
 		eb.exists(

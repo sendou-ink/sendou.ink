@@ -8,6 +8,7 @@ import { useHasPermission } from "~/modules/permissions/hooks";
 import { useLobbyView } from "../lobbies-hooks";
 import { lobbyActionSchema } from "../lobbies-schemas";
 import { lobbyShareLink } from "../lobbies-utils";
+import { LobbyMapsDialog } from "./LobbyMapsDialog";
 import { LobbySettingsPopover } from "./LobbySettingsPopover";
 import { LobbyVisibilityDialog } from "./LobbyVisibilityDialog";
 
@@ -65,6 +66,7 @@ function HostControls() {
 	return (
 		<>
 			<LobbyVisibilityDialog />
+			<LobbyMapsDialog />
 			<LobbySettingsPopover />
 			<ActionButton
 				schema={lobbyActionSchema}

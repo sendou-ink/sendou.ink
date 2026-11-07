@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { newLobbySchema } from "~/features/lobbies/lobbies-schemas";
 import { newLobbyPage } from "~/utils/urls";
-import { navigate, submit } from "../../helpers/playwright";
+import { navigate, selectTournament, submit } from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 
 /** The form making a new lobby. */
@@ -34,6 +34,12 @@ export class NewLobbyPage {
 	/** Picks the weapon randomizer, by its chip's label. */
 	async selectWeaponRandomizer(label: "Off" | "Chaotic" | "Balanced") {
 		await this.page.getByText(label, { exact: true }).click();
+	}
+
+	/** Plays the sets on the map pool of the tournament found by the name. */
+	async selectTournamentMaps(tournamentName: string) {
+		await this.form.select("maps", "TOURNAMENT");
+		await selectTournament({ page: this.page, query: tournamentName });
 	}
 
 	/** Makes the lobby, the maker becoming its host. */

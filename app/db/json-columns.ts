@@ -11,6 +11,7 @@ export const JSON_COLUMNS: ReadonlySet<string> = new Set([
 	"FeedEvent.data",
 	"IngestedMatch.data",
 	"LFGPost.languages",
+	"Lobby.mapPool",
 	"Lobby.modes",
 	"LobbySet.rolledWeapons",
 	"Notification.meta",

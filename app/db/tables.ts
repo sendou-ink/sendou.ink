@@ -94,6 +94,7 @@ import type {
 	BuildAbilitiesTuple,
 	MainWeaponId,
 	ModeShort,
+	ModeWithStage,
 	RankedModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
@@ -1489,6 +1490,10 @@ interface Lobby {
 	startsAt: number;
 	bestOf: LobbyBestOf;
 	modes: JSONColumnType<ModeShort[]>;
+	/** Maps the sets are played on in plain rotation, `null` = picked from the players' match profile map preferences among `modes` */
+	mapPool: JSONColumnTypeNullable<ModeWithStage[]>;
+	/** Tournament `mapPool` was copied from, `null` for a custom one */
+	mapsTournamentId: number | null;
 	/** How many fit in the room: 8 players plus up to 2 spectators, the rest are waitlisted */
 	roomSize: LobbyRoomSize;
 	/** Whether the players of a set get random weapons, rolled when the set starts */

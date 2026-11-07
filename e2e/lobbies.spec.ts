@@ -1,15 +1,23 @@
 import type { Page } from "@playwright/test";
-import { addMinutes, addSeconds, subHours, subMinutes } from "date-fns";
+import {
+	addDays,
+	addMinutes,
+	addSeconds,
+	subHours,
+	subMinutes,
+} from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import {
 	CHECK_IN_LEAD_MINUTES,
 	type LobbyRoomSize,
 	type LobbyWeaponRandomizer,
 } from "~/features/lobbies/lobbies-constants";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import type { ModeWithStage } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { lobbiesPage } from "~/utils/urls";
+import { lobbiesPage, tournamentRulesPage } from "~/utils/urls";
 import { chatHistoryStatus, openSecondUser } from "./helpers/chat";
 import type { Factories } from "./helpers/factories";
 import {
@@ -39,6 +47,12 @@ const MAPS_TO_WIN = 2;
 const ASSOCIATION_NAME = "Inkling Alliance";
 const WEAPON_NAME = "Splattershot";
 const LOBBY_DESCRIPTION = "Bring your main, no Tacticooler";
+const MAPS_TOURNAMENT_NAME = "Lobby Warmup Cup";
+const LOBBY_MAP_POOL = new MapPool([
+	{ mode: "SZ", stageId: 1 },
+	{ mode: "SZ", stageId: 2 },
+	{ mode: "SZ", stageId: 3 },
+]);
 
 test.describe("Lobbies", () => {
 	/**
@@ -1606,6 +1620,82 @@ test.describe("Lobbies", () => {
 	});
 
 	/**
+	 * The sets' maps are picked from the players' preferences in the modes the host picks, unless the host picks a map pool
+	 * instead, when making the lobby or between sets: a tournament's or a custom one. Its sets are then played on its maps in
+	 * plain rotation, so nobody is shown as having voted for them.
+	 */
+	test.describe("Map pool", () => {
+		test("a tournament's map pool picked when making the lobby, then a custom one and back to ranked modes by the host", async ({
+			page,
+			factories,
+		}) => {
+			await factories.UserFactory.setFriendCode(ADMIN_ID);
+			const tournament = await factories.TournamentFactory.create({
+				authorId: ADMIN_ID,
+				name: MAPS_TOURNAMENT_NAME,
+				startTimes: [dateToDatabaseTimestamp(addDays(new Date(), 1))],
+				mapPoolMaps: LOBBY_MAP_POOL.stageModePairs,
+			});
+			await impersonate(page, ADMIN_ID);
+			const lobbyPage = new LobbyPage(page);
+
+			await test.step("The tournament's pool links to its rules from the page and shows on the card", async () => {
+				const newLobby = new NewLobbyPage(page);
+				await newLobby.goto();
+				await newLobby.form.fill("name", LOBBY_NAME);
+				await newLobby.selectTournamentMaps(MAPS_TOURNAMENT_NAME);
+				await newLobby.save();
+
+				await expect(lobbyPage.locators.mapPoolLink).toHaveText(
+					MAPS_TOURNAMENT_NAME,
+				);
+				await expect(lobbyPage.locators.mapPoolLink).toHaveAttribute(
+					"href",
+					tournamentRulesPage(tournament.id),
+				);
+				const lobbyId = Number(page.url().split("/").at(-1));
+
+				const lobbies = new LobbiesPage(page);
+				await lobbies.goto();
+				await expect(lobbies.card(LOBBY_NAME)).toContainText(
+					MAPS_TOURNAMENT_NAME,
+				);
+
+				await lobbyPage.goto(lobbyId);
+			});
+
+			await test.step("The host switches to a custom pool", async () => {
+				await lobbyPage.changeMapPool(LOBBY_MAP_POOL);
+
+				await expect(lobbyPage.locators.mapPoolLink).toHaveText("3 maps");
+			});
+
+			await test.step("The host goes back to the players' preferences in ranked modes", async () => {
+				await lobbyPage.useRankedModes();
+
+				await isNotVisible(lobbyPage.locators.mapPoolLink);
+			});
+		});
+
+		test("sets are played on the map pool's maps, nobody voting for them", async ({
+			page,
+			factories,
+		}) => {
+			await startedLobby(page, factories, {
+				isPoolingEveryMap: true,
+				mapPool: LOBBY_MAP_POOL.stageModePairs,
+			});
+			const lobbyPage = new LobbyPage(page);
+
+			await expect(lobbyPage.locators.currentMap).toHaveAttribute(
+				"data-testid",
+				/^banner-map-SZ-[123]$/,
+			);
+			await isNotVisible(lobbyPage.locators.mapVotersBadge);
+		});
+	});
+
+	/**
 	 * The lobby's chat is shared by everyone in it and stays with players who leave after playing a set, only a
 	 * kick takes it away. While a set is played its two teams also get a chat of their own, fresh for every set.
 	 */
@@ -2230,6 +2320,7 @@ async function startedLobby(
 		roomSize?: LobbyRoomSize;
 		weaponRandomizer?: LobbyWeaponRandomizer;
 		isPoolingEveryMap?: boolean;
+		mapPool?: ModeWithStage[];
 	} = {},
 ) {
 	return startLobby(page, await lobbyAwaitingLastCheckIn(factories, options));
@@ -2237,7 +2328,7 @@ async function startedLobby(
 
 /**
  * A lobby that started a minute ago, its full room checked in but the last player. The first player is the host.
- * With `isPoolingEveryMap` every player has every map in their match profile pool.
+ * With `isPoolingEveryMap` every player has every map in their match profile pool. `mapPool` is the host's map pool.
  */
 async function lobbyAwaitingLastCheckIn(
 	factories: Factories,
@@ -2245,10 +2336,12 @@ async function lobbyAwaitingLastCheckIn(
 		roomSize = ROOM_SIZE,
 		weaponRandomizer = "OFF",
 		isPoolingEveryMap = false,
+		mapPool,
 	}: {
 		roomSize?: LobbyRoomSize;
 		weaponRandomizer?: LobbyWeaponRandomizer;
 		isPoolingEveryMap?: boolean;
+		mapPool?: ModeWithStage[];
 	} = {},
 ) {
 	const users = await factories.UserFactory.createMany(
@@ -2277,6 +2370,7 @@ async function lobbyAwaitingLastCheckIn(
 			startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
 			bestOf: BEST_OF,
 			weaponRandomizer,
+			mapPool: mapPool ?? null,
 		},
 		{
 			signedUpUserIds: idsOf(players.slice(1)),

@@ -40,6 +40,8 @@ The statuses are `LobbyState.status`. Nothing is stored about which one a lobby 
 	Confirmed --> [*]
 	Forfeited --> [*]`} />
 
+A set's maps (`LobbyMapList.generate`) are picked like SendouQ's from the players' match profile map preferences among the modes the host picked (ranked modes, Splat Zones only or every mode), each map remembering which side(s) voted for it. Or the host picks a map pool, a copy of a tournament's or a custom one, whose maps are then played in plain rotation. Either way they continue from the maps already played in the lobby.
+
 Only confirmed and forfeited sets count towards the lobby's ratings (`LobbyRating`) and rankings (`Leaderboard`). The ratings are lobby-local, recomputed from the sets every time, and never touch the SendouQ ones.
 
 ## Where to start reading

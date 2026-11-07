@@ -32,6 +32,7 @@ import {
 } from "../lobbies-schemas";
 import { lobbySearchParams } from "../lobbies-search-params";
 import { visibilityFromForm } from "../lobbies-utils";
+import { mapsFromForm } from "../lobbies-utils.server";
 
 /** Actions changing what the lobbies list shows, see `LobbyCard`. */
 const LISTING_ACTIONS = new Set<
@@ -44,6 +45,7 @@ const LISTING_ACTIONS = new Set<
 	"KICK",
 	"MAKE_HOST",
 	"UPDATE_SETTINGS",
+	"UPDATE_MAPS",
 	"UPDATE_VISIBILITY",
 	"END_LOBBY",
 ]);
@@ -314,8 +316,16 @@ export const action = defineAction(
 				await LobbyRepository.updateSettings({
 					id,
 					bestOf: Number(body.bestOf) as LobbyBestOf,
-					modes: body.modes,
 					weaponRandomizer: body.weaponRandomizer,
+				});
+				break;
+			}
+			case "UPDATE_MAPS": {
+				requirePermission(lobby, "MANAGE");
+
+				await LobbyRepository.updateMaps({
+					id,
+					...(await mapsFromForm(body)),
 				});
 				break;
 			}

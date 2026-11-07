@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, test } from "vitest";
 import * as AssociationFactory from "~/db/seed/factories/AssociationFactory";
 import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { withNoUser, withUserId } from "~/utils/Test";
 import * as LobbySet from "./core/LobbySet";
@@ -494,5 +496,36 @@ describe("LobbyRepository.findAllUpcomingOfFriendsByUserId", () => {
 		expect(rows.map((row) => [row.friendId, row.lobbyId])).toEqual([
 			[hostId(), lobby.id],
 		]);
+	});
+});
+
+describe("LobbyRepository.findById maps tournament", () => {
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test("a deleted tournament leaves the lobby its copy of the map pool", async () => {
+		const mapPool = [{ mode: "SZ" as const, stageId: 1 as const }];
+		const tournament = await TournamentFactory.create({
+			authorId: hostId(),
+			mapPoolMaps: mapPool,
+		});
+		const lobby = await LobbyFactory.create({
+			hostUserId: hostId(),
+			modes: ["SZ"],
+			mapPool,
+			mapsTournamentId: tournament.id,
+		});
+
+		await CalendarRepository.deleteById(tournament.eventId);
+
+		const found = await withUserId(hostId(), () =>
+			LobbyRepository.findById(lobby.id),
+		);
+		expect(found).toMatchObject({
+			mapPool,
+			mapsTournamentId: null,
+			mapsTournamentName: null,
+		});
 	});
 });

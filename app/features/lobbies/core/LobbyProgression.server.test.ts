@@ -189,7 +189,6 @@ describe("LobbyProgression.advance", () => {
 		await LobbyRepository.updateSettings({
 			id: lobbyId,
 			bestOf: 3,
-			modes: ["SZ", "TC", "RM", "CB"],
 			weaponRandomizer: "OFF",
 		});
 		await LobbyProgression.advance(lobbyId);
@@ -199,6 +198,32 @@ describe("LobbyProgression.advance", () => {
 		await playOut(lobbyId);
 
 		expect((await latestSet(lobbyId)).rolledWeapons).toBeNull();
+	});
+
+	test("a map pool set mid-set gives the next set its maps", async () => {
+		const lobbyId = await startedLobby({ checkedInCount: 8 });
+		const mapPool = [
+			{ mode: "TC" as const, stageId: 1 as const },
+			{ mode: "TC" as const, stageId: 2 as const },
+			{ mode: "TC" as const, stageId: 3 as const },
+		];
+
+		await LobbyRepository.updateMaps({
+			id: lobbyId,
+			modes: ["TC"],
+			mapPool,
+			mapsTournamentId: null,
+		});
+		await playOut(lobbyId);
+
+		const { games } = await latestSet(lobbyId);
+		expect(
+			games.every((game) =>
+				mapPool.some(
+					(map) => map.mode === game.mode && map.stageId === game.stageId,
+				),
+			),
+		).toBe(true);
 	});
 
 	test("stays pending with 7 checked in", async () => {

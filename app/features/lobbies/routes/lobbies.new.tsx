@@ -16,6 +16,7 @@ import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { lobbiesPage, navIconUrl, SUPPORT_PAGE } from "~/utils/urls";
 import { action } from "../actions/lobbies.new.server";
+import { LobbyMapsFormFields } from "../components/LobbyMapsFormFields";
 import { loader } from "../loaders/lobbies.new.server";
 import { newLobbySchema } from "../lobbies-schemas";
 
@@ -81,7 +82,9 @@ export default function NewLobbyPage() {
 					label: "CASUAL",
 					startsAt: new Date(),
 					bestOf: "3",
-					modes: ["SZ", "TC", "RM", "CB"],
+					maps: "RANKED",
+					mapsTournamentId: null,
+					mapPool: "",
 					weaponRandomizer: "OFF",
 					spectators: "0",
 					baseVisibility: "PUBLIC",
@@ -95,7 +98,7 @@ export default function NewLobbyPage() {
 						<FormField name="label" />
 						<FormField name="startsAt" />
 						<FormField name="bestOf" />
-						<FormField name="modes" />
+						<LobbyMapsFormFields />
 						<FormField name="weaponRandomizer" />
 						<FormField name="spectators" />
 						<FormField name="baseVisibility">

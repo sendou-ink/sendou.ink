@@ -1,10 +1,13 @@
 import type { Page } from "@playwright/test";
+import type { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
 import { lobbyPage } from "~/utils/urls";
 import {
 	expect,
 	modalClickConfirmButton,
 	navigate,
 	selectWeapon,
+	submit,
 	waitForPOSTResponse,
 } from "../../helpers/playwright";
 
@@ -48,6 +51,9 @@ export class LobbyPage {
 				.getByRole("button", { name: "Submit", exact: true })
 				.last(),
 			settingsButton: page.getByTestId("lobby-settings-button"),
+			mapsButton: page.getByTestId("lobby-maps-button"),
+			mapPoolLink: page.getByTestId("lobby-map-pool-link"),
+			currentMap: page.locator('[data-testid^="banner-map-"]'),
 			copyShareLinkButton: page.getByTestId("lobby-copy-share-link-button"),
 			visibilityButton: page.getByTestId("lobby-visibility-button"),
 			resetShareLinkButton: page.getByTestId("lobby-reset-share-link-button"),
@@ -351,10 +357,39 @@ export class LobbyPage {
 		);
 	}
 
+	/** As the host, plays the sets on a custom map pool, pasting a map pool link of it, from the next set on. */
+	async changeMapPool(mapPool: MapPool) {
+		await this.locators.mapsButton.click();
+		await this.selectMaps("Custom...");
+		await this.page
+			.getByRole("dialog")
+			.getByRole("button", { name: "Paste from a map pool link" })
+			.click();
+		await this.page
+			.getByLabel("Map pool link")
+			.fill(`https://sendou.ink${mapsPageWithMapPool(mapPool)}`);
+		await submit(this.page, "lobby-maps-save-button");
+	}
+
+	/** As the host, picks the sets' maps from the players' preferences in ranked modes again, from the next set on. */
+	async useRankedModes() {
+		await this.locators.mapsButton.click();
+		await this.selectMaps("Ranked modes only");
+		await submit(this.page, "lobby-maps-save-button");
+	}
+
 	/** As the host, ends the lobby for everyone. */
 	async endLobby() {
 		await this.locators.endLobbyButton.click();
 		await modalClickConfirmButton(this.page);
+	}
+
+	// the dialog shares the select's "Maps" label, so the select is found by its name
+	private async selectMaps(label: string) {
+		await this.page
+			.getByRole("dialog")
+			.locator('select[name="maps"]')
+			.selectOption({ label });
 	}
 
 	private async openPlayerMenu(userId: number) {
