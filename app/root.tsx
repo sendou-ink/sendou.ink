@@ -33,7 +33,11 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Route } from "./+types/root";
 import { Catcher } from "./components/Catcher";
 import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
-import { FusePageInit } from "./components/fuse/Fuse";
+import {
+	FusePageInit,
+	SimulatedStickyFooterAd,
+	useAdsShown,
+} from "./components/fuse/Fuse";
 import { Layout, NPROGRESS_ANCHOR_ID } from "./components/layout";
 import { UserProvider } from "./features/auth/core/user";
 import { getUser } from "./features/auth/core/user.server";
@@ -204,6 +208,7 @@ function Document({
 	const locale = rootData?.locale ?? DEFAULT_LANGUAGE;
 	const gameLanguage = rootData?.gameLanguage ?? DEFAULT_LANGUAGE;
 	const customThemeStyle = useCustomThemeVars();
+	const adsShown = useAdsShown(rootData?.user);
 
 	useChangeLanguage({ locale, gameLanguage });
 	usePreloadTranslation();
@@ -224,11 +229,7 @@ function Document({
 			dir={i18n.dir()}
 			className={htmlThemeClass}
 			style={htmlStyle}
-			data-fuse={
-				Config.fuseEnabled && !rootData?.user?.roles.includes("MINOR_SUPPORT")
-					? "true"
-					: undefined
-			}
+			data-fuse={adsShown ? "true" : undefined}
 			suppressHydrationWarning
 		>
 			<head>
@@ -817,6 +818,7 @@ function MyFuse({ data: rootData }: { data: RootLoaderData | undefined }) {
 	return (
 		<ClientErrorBoundary fallback={null}>
 			<FusePageInit />
+			<SimulatedStickyFooterAd />
 		</ClientErrorBoundary>
 	);
 }

@@ -12,7 +12,6 @@ import {
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
-import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { ScheduleNudge } from "~/features/availability/components/ScheduleNudge";
 import { useChatContext } from "~/features/chat/ChatProvider";
@@ -44,7 +43,7 @@ import { Avatar } from "../Avatar";
 import { SendouButton, type SendouButtonProps } from "../elements/Button";
 import { isOwnToggle } from "../elements/Popover";
 import { Flipper } from "../Flipper";
-import { FuseZone } from "../fuse/Fuse";
+import { FuseZone, useAdsShown } from "../fuse/Fuse";
 import { Image } from "../Image";
 import { ListLink } from "../ListItem";
 import { MobileNav } from "../MobileNav";
@@ -269,9 +268,7 @@ export function Layout({
 	const isFrontPage = location.pathname === "/";
 
 	const showLeaderboard =
-		Config.fuseEnabled &&
-		!data?.user?.roles.includes("MINOR_SUPPORT") &&
-		!location.pathname.includes("plans");
+		useAdsShown(data?.user) && !location.pathname.includes("plans");
 
 	const sideNavFooterContent = (
 		<SideNavFooter>

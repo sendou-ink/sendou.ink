@@ -8,6 +8,7 @@ import {
 	scenarioFilterPersisted,
 	scenarioLogInPersisted,
 	scenarioParamsPersisted,
+	simulateAdsPersisted,
 } from "./dev-tools-persisted";
 
 describe("devToolbarPersisted", () => {
@@ -56,5 +57,15 @@ describe("scenarioParamsPersisted", () => {
 
 	test("malformed values decode to the default", () => {
 		assertDecodesToDefault(scenarioParamsPersisted, ["[]", '{"teams":true}']);
+	});
+});
+
+describe("simulateAdsPersisted", () => {
+	test("round-trips", () => {
+		assertRoundTrips(simulateAdsPersisted, [true, false]);
+	});
+
+	test("malformed values decode to the default", () => {
+		assertDecodesToDefault(simulateAdsPersisted, ["yes", "1"]);
 	});
 });
