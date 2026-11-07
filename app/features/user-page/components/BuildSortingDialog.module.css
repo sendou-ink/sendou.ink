@@ -8,13 +8,6 @@
 	gap: var(--s-5);
 }
 
-.info {
-	margin: 0;
-	font-size: var(--font-sm);
-	color: var(--color-text-high);
-	line-height: var(--line-height);
-}
-
 .section {
 	display: flex;
 	flex-direction: column;
@@ -65,9 +58,8 @@
 .rule {
 	display: flex;
 	align-items: center;
-	gap: var(--s-3);
-	min-height: 4rem;
-	padding: var(--s-2) var(--s-2) var(--s-2) var(--s-1);
+	gap: var(--s-2);
+	padding: var(--s-1-5) var(--s-2) var(--s-1-5) var(--s-1);
 	background-color: var(--color-bg-high);
 	border: var(--border-style);
 	border-radius: var(--radius-box);
@@ -92,6 +84,11 @@
 	color: var(--color-text-high);
 	cursor: grab;
 	touch-action: none;
+	transition: color 0.2s;
+
+	&:hover {
+		color: var(--color-text);
+	}
 
 	& svg {
 		width: 18px;
@@ -111,31 +108,29 @@
 	display: grid;
 	place-items: center;
 	flex-shrink: 0;
-	width: 1.75rem;
-	height: 1.75rem;
-	border: var(--border-style-accent);
-	border-radius: var(--radius-full);
-	background-color: var(--color-bg-accent);
-	color: var(--color-fg-accent);
-	font-size: var(--font-xs);
-	font-weight: var(--weight-extra);
+	align-self: stretch;
+	margin-block: calc(var(--s-1-5) * -1);
+	margin-inline-start: calc(var(--s-1) * -1);
+	width: 1.25rem;
+	padding-inline-start: var(--s-2);
+	box-sizing: content-box;
+	border-inline-start: var(--border-style);
+	color: var(--color-text-high);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
 }
 
 .ruleText {
 	display: flex;
-	flex-direction: column;
-	gap: var(--s-0-5);
+	align-items: center;
+	gap: var(--s-2);
 	flex: 1;
 	min-width: 0;
 }
 
 .ruleLabel {
+	font-size: var(--font-sm);
 	font-weight: var(--weight-bold);
-}
-
-.ruleDescription {
-	font-size: var(--font-xs);
-	color: var(--color-text-high);
 }
 
 .ruleActions {
@@ -165,7 +160,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: var(--s-1-5);
-	height: var(--field-size);
+	height: calc(var(--field-size) * 0.9);
 	padding: 0 var(--s-4) 0 var(--s-2-5);
 	border: var(--border-style);
 	border-radius: var(--radius-full);
@@ -174,6 +169,9 @@
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
 	cursor: pointer;
+	transition:
+		border-color 0.15s,
+		background-color 0.15s;
 
 	&:hover {
 		border-color: var(--color-fg-accent);

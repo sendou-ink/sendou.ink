@@ -23,6 +23,7 @@ import { useTranslation } from "react-i18next";
 import type { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { InfoPopover } from "~/components/InfoPopover";
 import { SubmitButton } from "~/components/SubmitButton";
 import {
 	BUILD_SORT_IDENTIFIERS,
@@ -119,8 +120,6 @@ export function BuildSortingDialog({
 					name="buildSorting"
 					value={JSON.stringify(buildSorting)}
 				/>
-				<p className={styles.info}>{t("user:builds.sorting.info")}</p>
-
 				<section className={styles.section}>
 					<div className={styles.sectionHeader}>
 						<h3 className={styles.sectionHeading}>
@@ -165,9 +164,6 @@ export function BuildSortingDialog({
 				</section>
 
 				<section className={clsx(styles.section, styles.addSection)}>
-					<h3 className={styles.sectionHeading}>
-						{t("user:builds.sorting.addRule")}
-					</h3>
 					{addableSortGroups.length === 0 ? (
 						<span className={styles.allInUse}>
 							{t("user:builds.sorting.allInUse")}
@@ -250,9 +246,7 @@ function SortableRule({
 			<span className={styles.position}>{position}</span>
 			<div className={styles.ruleText}>
 				<span className={styles.ruleLabel}>{label}</span>
-				<span className={styles.ruleDescription}>
-					{t(`user:builds.sorting.desc.${sort}`)}
-				</span>
+				<InfoPopover tiny>{t(`user:builds.sorting.desc.${sort}`)}</InfoPopover>
 			</div>
 			<div className={styles.ruleActions}>
 				<SendouButton
