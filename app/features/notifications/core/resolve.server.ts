@@ -61,6 +61,8 @@ const RESOLUTION_TRIGGERS = {
 	LOBBY_PROMOTED: "visits the lobby's page",
 	LOBBY_HOST: "visits the lobby's page",
 	LOBBY_READY_CHECK: "confirms being ready, or visits the lobby's page",
+	LOBBY_APPLICATION_RECEIVED: "visits the lobby's page",
+	LOBBY_APPLICATION_APPROVED: "visits the lobby's page",
 } as const satisfies Record<Notification["type"], string | null>;
 
 type ResolvableNotificationType = {

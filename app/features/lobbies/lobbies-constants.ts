@@ -79,5 +79,8 @@ export type LobbyParticipantStatus =
 	| "CHECKED_IN"
 	| "IN_ROOM";
 
+/** Of an application to a lobby requiring one: `PENDING` until the host approves (making a participant of the applicant, the application gone) or denies it */
+export type LobbyApplicationState = "PENDING" | "DENIED";
+
 /** Error data of a link-only lobby opened without its share key */
 export const LOBBY_LINK_ONLY_ERROR = "LINK_ONLY";

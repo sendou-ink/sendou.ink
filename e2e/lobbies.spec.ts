@@ -1571,6 +1571,114 @@ test.describe("Lobbies", () => {
 	});
 
 	/**
+	 * A host can make a lobby require applying to join it, when making it or later. Signing up then sends the host
+	 * an application instead, the applicant taking no spot until the host accepts it, which signs them up like
+	 * signing up would and notifies them. An applicant can withdraw their application, one the host declines can't
+	 * apply again. Turning the option off accepts everyone still waiting.
+	 */
+	test.describe("Applying", () => {
+		test("an applicant gets in once the host accepts them", async ({
+			page,
+			factories,
+		}) => {
+			const applicant = await factories.UserFactory.create();
+			await factories.UserFactory.setFriendCode(ADMIN_ID);
+			const lobbyPage = new LobbyPage(page);
+			let lobbyId = 0;
+
+			await test.step("The host makes a lobby requiring applying", async () => {
+				await impersonate(page, ADMIN_ID);
+				const newLobby = new NewLobbyPage(page);
+				await newLobby.goto();
+				await newLobby.form.fill("name", LOBBY_NAME);
+				await newLobby.form.check("isApplicationRequired");
+				await newLobby.save();
+
+				await expect(lobbyPage.locators.applicationRequired).toBeVisible();
+				lobbyId = Number(page.url().split("/").at(-1));
+			});
+
+			await test.step("Signing up applies, taking no spot", async () => {
+				await impersonate(page, applicant.id);
+				await lobbyPage.goto(lobbyId);
+				await lobbyPage.apply();
+
+				await expect(lobbyPage.locators.viewerStatus).toContainText(
+					"You applied",
+				);
+				await expect(lobbyPage.locators.participants).toHaveCount(1);
+			});
+
+			await test.step("The host accepts the application", async () => {
+				await impersonate(page, ADMIN_ID);
+				await lobbyPage.goto(lobbyId);
+				await expect(lobbyPage.locators.applications).toHaveCount(1);
+				await lobbyPage.acceptApplication(applicant.id);
+
+				await expect(lobbyPage.locators.applications).toHaveCount(0);
+				await expect(lobbyPage.locators.participants).toHaveCount(2);
+			});
+
+			await test.step("The applicant is notified and signed up", async () => {
+				await impersonate(page, applicant.id);
+				const notifications = await openNotifications(page);
+				await expect(
+					notifications.notification(`You're in ${LOBBY_NAME}`),
+				).toBeVisible();
+
+				await lobbyPage.goto(lobbyId);
+				await expect(lobbyPage.locators.viewerStatus).toContainText(
+					"You're signed up",
+				);
+			});
+		});
+
+		test("a declined applicant can't apply again", async ({
+			page,
+			factories,
+		}) => {
+			const host = await factories.UserFactory.create();
+			const applicant = await factories.UserFactory.create();
+			const lobby = await factories.LobbyFactory.create(
+				{ hostUserId: host.id, isApplicationRequired: true },
+				{ appliedUserIds: [applicant.id] },
+			);
+			const lobbyPage = new LobbyPage(page);
+
+			await impersonate(page, host.id);
+			await lobbyPage.goto(lobby.id);
+			await lobbyPage.declineApplication(applicant.id);
+			await expect(lobbyPage.locators.applications).toHaveCount(0);
+
+			await impersonate(page, applicant.id);
+			await lobbyPage.goto(lobby.id);
+			await expect(lobbyPage.locators.viewerStatus).toContainText(
+				"The host declined your application",
+			);
+			await isNotVisible(lobbyPage.locators.applyButton);
+		});
+
+		test("an applicant withdraws their application", async ({
+			page,
+			factories,
+		}) => {
+			const host = await factories.UserFactory.create();
+			const applicant = await factories.UserFactory.create();
+			const lobby = await factories.LobbyFactory.create(
+				{ hostUserId: host.id, isApplicationRequired: true },
+				{ appliedUserIds: [applicant.id] },
+			);
+			const lobbyPage = new LobbyPage(page);
+
+			await impersonate(page, applicant.id);
+			await lobbyPage.goto(lobby.id);
+			await lobbyPage.withdrawApplication();
+
+			await expect(lobbyPage.locators.applyButton).toBeVisible();
+		});
+	});
+
+	/**
 	 * A lobby has a chat for everyone in it and one per team, a team's chat reaching only its
 	 * players. Every set starts with fresh team chats while the lobby's chat carries on. The
 	 * lobby page opens a player's two chats side by side.

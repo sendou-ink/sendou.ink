@@ -37,6 +37,8 @@ const RESOLVED_NOTIFICATION_TYPES = [
 	"LOBBY_PROMOTED",
 	"LOBBY_HOST",
 	"LOBBY_READY_CHECK",
+	"LOBBY_APPLICATION_RECEIVED",
+	"LOBBY_APPLICATION_APPROVED",
 ] as const;
 
 export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
@@ -112,6 +114,7 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 
 	const userIds = R.unique([
 		...lobby.participants.map((participant) => participant.id),
+		...lobby.applications.map((application) => application.id),
 		...sets.flatMap((set) => set.participants.map((p) => p.userId)),
 	]);
 
@@ -151,6 +154,7 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 			isPlayingUnfinishedSet,
 			hasFriendCode,
 			isKicked: lobby.isViewerKicked,
+			application: lobby.viewerApplication,
 			isCheckInOpen,
 			activeCount,
 			roomSize: lobby.roomSize,

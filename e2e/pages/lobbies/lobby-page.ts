@@ -29,6 +29,12 @@ export class LobbyPage {
 		this.page = page;
 		this.locators = {
 			signUpButton: page.getByTestId("lobby-sign-up-button"),
+			applyButton: page.getByTestId("lobby-apply-button"),
+			withdrawApplicationButton: page.getByTestId(
+				"lobby-withdraw-application-button",
+			),
+			applications: page.getByTestId("lobby-application"),
+			applicationRequired: page.getByTestId("lobby-application-required"),
 			checkInButton: page.getByTestId("lobby-check-in-button"),
 			leaveButton: page.getByTestId("lobby-leave-button"),
 			dropAfterSetButton: page.getByTestId("lobby-drop-after-set-button"),
@@ -187,6 +193,34 @@ export class LobbyPage {
 	async signUp() {
 		await waitForPOSTResponse(this.page, () =>
 			this.locators.signUpButton.click(),
+		);
+	}
+
+	/** Applies to join a lobby requiring it, the host deciding whether the viewer gets in. */
+	async apply() {
+		await waitForPOSTResponse(this.page, () =>
+			this.locators.applyButton.click(),
+		);
+	}
+
+	/** Withdraws the viewer's pending application. */
+	async withdrawApplication() {
+		await waitForPOSTResponse(this.page, () =>
+			this.locators.withdrawApplicationButton.click(),
+		);
+	}
+
+	/** As the host, accepts the user's application, signing them up. */
+	async acceptApplication(userId: number) {
+		await waitForPOSTResponse(this.page, () =>
+			this.page.getByTestId(`lobby-accept-application-${userId}`).click(),
+		);
+	}
+
+	/** As the host, declines the user's application, keeping them from applying again. */
+	async declineApplication(userId: number) {
+		await waitForPOSTResponse(this.page, () =>
+			this.page.getByTestId(`lobby-decline-application-${userId}`).click(),
 		);
 	}
 

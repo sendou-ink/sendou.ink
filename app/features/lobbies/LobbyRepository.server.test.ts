@@ -376,6 +376,27 @@ describe("LobbyRepository.findAllForIndex", () => {
 		]);
 		expect(found?.id).toBe(lobby.id);
 	});
+
+	test("an applicant's lobby lists as applied, the applicant taking no spot", async () => {
+		const lobby = await LobbyFactory.create(
+			{ hostUserId: hostId(), isApplicationRequired: true },
+			{ appliedUserIds: [memberId()] },
+		);
+
+		const listed = await withUserId(memberId(), () =>
+			LobbyRepository.findAllForIndex(),
+		);
+		const listedLobby = listed.upcoming.find(
+			(candidate) => candidate.id === lobby.id,
+		);
+
+		expect(listedLobby).toMatchObject({
+			isApplicationRequired: true,
+			hasViewerApplied: true,
+			viewerStatus: null,
+			playerCount: 1,
+		});
+	});
 });
 
 describe("LobbyRepository.removeParticipant", () => {

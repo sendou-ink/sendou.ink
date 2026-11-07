@@ -12,6 +12,7 @@ import {
 	stringConstant,
 	textAreaOptional,
 	textFieldOptional,
+	toggle,
 	tournamentSearchOptional,
 } from "~/form/fields";
 import {
@@ -75,6 +76,11 @@ const mapsField = select({
 	label: "labels.scrimMaps",
 	bottomText: "bottomTexts.lobbyMaps",
 	items: [...mapsItems],
+});
+
+const isApplicationRequiredField = toggle({
+	label: "labels.lobbyIsApplicationRequired",
+	bottomText: "bottomTexts.lobbyIsApplicationRequired",
 });
 
 const mapsFields = {
@@ -143,6 +149,7 @@ export const newLobbySchema = v.pipe(
 				value: String(count) as `${(typeof LOBBY_SPECTATOR_COUNTS)[number]}`,
 			})),
 		}),
+		isApplicationRequired: isApplicationRequiredField,
 		baseVisibility: baseVisibilityWithLinkOnlyField,
 		notFoundVisibility: notFoundVisibilityField,
 	}),
@@ -161,6 +168,7 @@ export const lobbySettingsSchema = v.object({
 	_action: stringConstant("UPDATE_SETTINGS"),
 	bestOf: bestOfField,
 	weaponRandomizer: weaponRandomizerField,
+	isApplicationRequired: isApplicationRequiredField,
 });
 
 export const lobbyMapsSchema = v.pipe(
@@ -207,6 +215,9 @@ export const lobbyActionSchema = v.union([
 	lobbyMapsSchema,
 	lobbyVisibilitySchema,
 	v.object({ _action: _action("RESET_SHARE_KEY") }),
+	v.object({ _action: _action("WITHDRAW_APPLICATION") }),
+	v.object({ _action: _action("APPROVE_APPLICATION"), userId: id }),
+	v.object({ _action: _action("DENY_APPLICATION"), userId: id }),
 	v.object({ _action: _action("KICK"), userId: id }),
 	v.object({ _action: _action("TOGGLE_SIT_OUT"), userId: id }),
 	v.object({ _action: _action("MAKE_HOST"), userId: id }),

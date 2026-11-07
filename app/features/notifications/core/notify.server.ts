@@ -57,6 +57,8 @@ const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
 	LOBBY_PROMOTED: "high",
 	LOBBY_HOST: "normal",
 	LOBBY_READY_CHECK: "high",
+	LOBBY_APPLICATION_RECEIVED: "normal",
+	LOBBY_APPLICATION_APPROVED: "high",
 };
 
 /**

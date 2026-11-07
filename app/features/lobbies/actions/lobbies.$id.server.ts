@@ -3,6 +3,7 @@ import type * as v from "valibot";
 import { visibilityIssues } from "~/features/associations/associations-schemas";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { notify } from "~/features/notifications/core/notify.server";
 import { linkStoredMatches } from "~/features/scanner-ingest/core/relink.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as UserActivity from "~/features/user-activity/core/UserActivity.server";
@@ -42,6 +43,7 @@ const LISTING_ACTIONS = new Set<
 	"CHECK_IN",
 	"CONFIRM_READY",
 	"LEAVE",
+	"APPROVE_APPLICATION",
 	"KICK",
 	"MAKE_HOST",
 	"UPDATE_SETTINGS",
@@ -77,28 +79,9 @@ export const action = defineAction(
 
 			return LobbySet.sideOf(set, participant.id) ? set.id : null;
 		};
-		const requireNoConflict = () => {
-			const conflict = UserActivity.lobbyConflict(
-				UserActivity.resolve(user.id),
-				id,
-			);
-			errorToastIfFalsy(
-				conflict !== "SENDOUQ",
-				"Leave SendouQ before checking in to a lobby",
-			);
-			errorToastIfFalsy(
-				conflict !== "TOURNAMENT",
-				"You can't check in to a lobby while playing in a tournament",
-			);
-			errorToastIfFalsy(
-				conflict !== "LOBBY",
-				"Leave the other lobby before checking in to this one",
-			);
-		};
-		const activeCount = lobby.participants.filter(
-			(participant) =>
-				participant.status === "IN_ROOM" || participant.status === "CHECKED_IN",
-		).length;
+		const autoAcceptedUserIds: number[] = [];
+		const requireNoConflict = () =>
+			errorToastIfConflict({ userId: user.id, lobbyId: id });
 
 		switch (body._action) {
 			case "SIGN_UP": {
@@ -108,57 +91,69 @@ export const action = defineAction(
 					"The host kicked you from this lobby",
 				);
 				errorToastIfFalsy(
+					lobby.viewerApplication !== "DENIED",
+					"The host denied your application to this lobby",
+				);
+				errorToastIfFalsy(
 					await UserRepository.findCurrentFriendCodeByUserId(user.id),
 					"Set your friend code first",
 				);
 
-				const withSpotCount = lobby.participants.filter(
-					(participant) => participant.status !== "WAITLISTED",
-				).length;
-				// after the start the sign-up opening check-in is present too
-				const isLate =
-					hasStarted &&
-					LobbyState.isCheckInOpen({
-						lobby,
-						participants: [...lobby.participants, { status: "REGISTERED" }],
-						now,
-					});
-				const isPresentRightAway = isLate && activeCount < lobby.roomSize;
-				if (isPresentRightAway) requireNoConflict();
-
-				await LobbyRepository.insertParticipant({
-					lobbyId: id,
-					userId: user.id,
-					status: isPresentRightAway
-						? "CHECKED_IN"
-						: !isLate && withSpotCount < lobby.roomSize
-							? "REGISTERED"
-							: "WAITLISTED",
-				});
-				if (isPresentRightAway) {
-					await LobbyMatchRepository.confirmReadyChecks({
+				if (lobby.isApplicationRequired) {
+					await LobbyRepository.insertApplication({
 						lobbyId: id,
 						userId: user.id,
 					});
+					if (lobby.viewerApplication === null) {
+						void notify({
+							userIds: [lobby.hostUserId],
+							notification: {
+								type: "LOBBY_APPLICATION_RECEIVED",
+								meta: {
+									lobbyId: id,
+									lobbyName: lobby.name,
+									applicantUsername: user.username,
+								},
+							},
+						});
+					}
+					break;
 				}
-				if (hasStarted && lobby.chatRoomId) {
-					void ChatSystemMessage.sendPersisted({
-						roomId: lobby.chatRoomId,
-						type: "USER_JOINED",
-						authorUserId: user.id,
-					});
-				}
+
+				await signUp({ lobby, userId: user.id, onConflict: "REJECT" });
+				break;
+			}
+			case "WITHDRAW_APPLICATION": {
+				await LobbyRepository.deletePendingApplication({
+					lobbyId: id,
+					userId: user.id,
+				});
+				break;
+			}
+			case "APPROVE_APPLICATION": {
+				requirePermission(lobby, "MANAGE");
+				const application = notFoundIfNullish(
+					lobby.applications.find((candidate) => candidate.id === body.userId),
+				);
+
+				await acceptApplication({ lobby, userId: application.id });
+				break;
+			}
+			case "DENY_APPLICATION": {
+				requirePermission(lobby, "MANAGE");
+				notFoundIfNullish(
+					lobby.applications.find((candidate) => candidate.id === body.userId),
+				);
+
+				await LobbyRepository.denyApplication({
+					lobbyId: id,
+					userId: body.userId,
+				});
 				break;
 			}
 			case "CHECK_IN": {
 				errorToastIfFalsy(viewer, "Not signed up");
-				const actions = viewerActions({
-					lobby,
-					sets,
-					viewer,
-					now,
-					activeCount,
-				});
+				const actions = viewerActions({ lobby, sets, viewer, now });
 				errorToastIfFalsy(actions.CHECK_IN, "Can't check in right now");
 				requireNoConflict();
 
@@ -317,7 +312,19 @@ export const action = defineAction(
 					id,
 					bestOf: Number(body.bestOf) as LobbyBestOf,
 					weaponRandomizer: body.weaponRandomizer,
+					isApplicationRequired: body.isApplicationRequired,
 				});
+
+				// anyone may join now, so those waiting on the host are let in
+				if (!body.isApplicationRequired) {
+					for (const application of lobby.applications) {
+						await acceptApplication({
+							lobby: notFoundIfNullish(await LobbyRepository.findById(id)),
+							userId: application.id,
+						});
+						autoAcceptedUserIds.push(application.id);
+					}
+				}
 				break;
 			}
 			case "UPDATE_MAPS": {
@@ -444,7 +451,7 @@ export const action = defineAction(
 			listingChanged: LISTING_ACTIONS.has(body._action),
 			// joining or leaving the lobby changes their chat rooms, ending it makes everyone's inactive
 			affectedUserIds:
-				body._action === "KICK"
+				body._action === "KICK" || body._action === "APPROVE_APPLICATION"
 					? [body.userId]
 					: body._action === "SIGN_UP" || body._action === "LEAVE"
 						? [user.id]
@@ -452,7 +459,7 @@ export const action = defineAction(
 							? [...lobby.participants, ...lobby.leftUsers].map(
 									(participant) => participant.id,
 								)
-							: [],
+							: autoAcceptedUserIds,
 		});
 
 		const isLobbyDeleted =
@@ -463,6 +470,114 @@ export const action = defineAction(
 		return null;
 	},
 );
+
+const CONFLICT_MESSAGES = {
+	SENDOUQ: "Leave SendouQ before checking in to a lobby",
+	TOURNAMENT: "You can't check in to a lobby while playing in a tournament",
+	LOBBY: "Leave the other lobby before checking in to this one",
+} as const;
+
+function errorToastIfConflict({
+	userId,
+	lobbyId,
+}: {
+	userId: number;
+	lobbyId: number;
+}) {
+	const conflict = UserActivity.lobbyConflict(
+		UserActivity.resolve(userId),
+		lobbyId,
+	);
+	if (conflict) errorToast(CONFLICT_MESSAGES[conflict]);
+}
+
+/**
+ * Makes a participant of the user, as signing up or the host approving their application does. Before the start
+ * they get a spot if one is free, else they're waitlisted. After it, with check-in open, they're present right away
+ * if the room has space, the sign-up opening check-in counting too.
+ */
+async function signUp({
+	lobby,
+	userId,
+	onConflict,
+}: {
+	lobby: LobbyRepository.LobbyById;
+	userId: number;
+	/** What happens when they'd be present right away but are active elsewhere (e.g. SendouQ): `REJECT` errors out, `SIGN_UP_ABSENT` signs them up without checking them in */
+	onConflict: "REJECT" | "SIGN_UP_ABSENT";
+}) {
+	const now = databaseTimestampNow();
+	const hasStarted = now >= lobby.startsAt;
+
+	const withSpotCount = lobby.participants.filter(
+		(participant) => participant.status !== "WAITLISTED",
+	).length;
+	const isLate =
+		hasStarted &&
+		LobbyState.isCheckInOpen({
+			lobby,
+			participants: [...lobby.participants, { status: "REGISTERED" }],
+			now,
+		});
+
+	let isPresentRightAway = isLate && activeCountOf(lobby) < lobby.roomSize;
+	if (isPresentRightAway && onConflict === "REJECT") {
+		errorToastIfConflict({ userId, lobbyId: lobby.id });
+	} else if (isPresentRightAway) {
+		isPresentRightAway =
+			UserActivity.lobbyConflict(UserActivity.resolve(userId), lobby.id) ===
+			null;
+	}
+
+	await LobbyRepository.insertParticipant({
+		lobbyId: lobby.id,
+		userId,
+		status: isPresentRightAway
+			? "CHECKED_IN"
+			: !isLate && withSpotCount < lobby.roomSize
+				? "REGISTERED"
+				: "WAITLISTED",
+	});
+	if (isPresentRightAway) {
+		await LobbyMatchRepository.confirmReadyChecks({
+			lobbyId: lobby.id,
+			userId,
+		});
+	}
+	if (hasStarted && lobby.chatRoomId) {
+		void ChatSystemMessage.sendPersisted({
+			roomId: lobby.chatRoomId,
+			type: "USER_JOINED",
+			authorUserId: userId,
+		});
+	}
+}
+
+/** Signs the applicant up as {@link signUp} would, even if busy elsewhere, and tells them they got in. */
+async function acceptApplication({
+	lobby,
+	userId,
+}: {
+	lobby: LobbyRepository.LobbyById;
+	userId: number;
+}) {
+	await signUp({ lobby, userId, onConflict: "SIGN_UP_ABSENT" });
+	void notify({
+		userIds: [userId],
+		notification: {
+			type: "LOBBY_APPLICATION_APPROVED",
+			meta: { lobbyId: lobby.id, lobbyName: lobby.name },
+		},
+	});
+}
+
+/** Participants present: checked in or in the room. */
+function activeCountOf(lobby: LobbyRepository.LobbyById) {
+	return lobby.participants.filter(
+		(participant) =>
+			participant.status === "IN_ROOM" || participant.status === "CHECKED_IN",
+	).length;
+}
 
 function sendSetEndingMessage({
 	chatRoomId,
@@ -505,13 +620,11 @@ function viewerActions({
 	sets,
 	viewer,
 	now,
-	activeCount,
 }: {
 	lobby: LobbyRepository.LobbyById;
 	sets: LobbyMatchRepository.LobbySetWithGames[];
 	viewer: LobbyRepository.LobbyById["participants"][number];
 	now: number;
-	activeCount: number;
 }) {
 	const latestSet = sets.at(-1);
 	const isPlaying = latestSet !== undefined && !LobbySet.isFinished(latestSet);
@@ -529,8 +642,9 @@ function viewerActions({
 		isPlayingUnfinishedSet: false,
 		hasFriendCode: true,
 		isKicked: lobby.isViewerKicked,
+		application: lobby.viewerApplication,
 		isCheckInOpen,
-		activeCount,
+		activeCount: activeCountOf(lobby),
 		roomSize: lobby.roomSize,
 		now,
 		startsAt: lobby.startsAt,

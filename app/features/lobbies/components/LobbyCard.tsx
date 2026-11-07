@@ -80,10 +80,23 @@ export function LobbyCard({ lobby }: { lobby: LobbyListItem }) {
 						</span>
 					</LobbyInfoItem>
 				) : null}
+				{lobby.isApplicationRequired ? (
+					<LobbyInfoItem label={t("lobbies:details.joining")}>
+						<span data-testid="lobby-application-required">
+							{t("lobbies:details.joining.application")}
+						</span>
+					</LobbyInfoItem>
+				) : null}
 				{lobby.viewerStatus && lobby.endedAt === null ? (
 					<LobbyInfoItem label={t("lobbies:card.status")}>
 						<span className={styles.viewerStatus}>
 							{t(`lobbies:viewerStatus.${lobby.viewerStatus}`)}
+						</span>
+					</LobbyInfoItem>
+				) : lobby.hasViewerApplied && lobby.endedAt === null ? (
+					<LobbyInfoItem label={t("lobbies:card.status")}>
+						<span className={styles.viewerStatus}>
+							{t("lobbies:viewerStatus.APPLIED")}
 						</span>
 					</LobbyInfoItem>
 				) : null}
@@ -123,7 +136,11 @@ function LobbyCardActions({ lobby }: { lobby: LobbyListItem }) {
 
 	const isOpen = lobby.endedAt === null;
 	const canJoin =
-		isOpen && Boolean(user) && !lobby.viewerStatus && data.hasFriendCode;
+		isOpen &&
+		Boolean(user) &&
+		!lobby.viewerStatus &&
+		!lobby.hasViewerApplied &&
+		data.hasFriendCode;
 	// in the room leaving might forfeit a set, done from the lobby page instead
 	const canLeave =
 		isOpen &&
@@ -149,7 +166,9 @@ function LobbyCardActions({ lobby }: { lobby: LobbyListItem }) {
 					size="small"
 					testId="lobby-join-button"
 				>
-					{t("common:actions.join")}
+					{lobby.isApplicationRequired
+						? t("common:actions.apply")
+						: t("common:actions.join")}
 				</ActionButton>
 			) : null}
 			{canLeave ? (

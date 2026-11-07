@@ -16,6 +16,7 @@ import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { lobbiesPage, navIconUrl } from "~/utils/urls";
 import { action } from "../actions/lobbies.$id.server";
+import { LobbyApplications } from "../components/LobbyApplications";
 import { LobbyDetails } from "../components/LobbyDetails";
 import { LobbyMatchBanner } from "../components/LobbyMatchBanner";
 import { LobbyMatchHeader } from "../components/LobbyMatchHeader";
@@ -63,6 +64,7 @@ export default function LobbyPage() {
 			<MatchPage>
 				<LobbyMatchHeader />
 				<LobbyViewerPanel />
+				<LobbyApplications />
 				{hasStarted || isEnded ? <LobbyMatchBanner /> : <LobbyStartBanner />}
 				<LobbyMatchTabs />
 				<LobbyDetails />

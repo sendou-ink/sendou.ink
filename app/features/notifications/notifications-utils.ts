@@ -98,6 +98,8 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 		case "LOBBY_PROMOTED":
 		case "LOBBY_HOST":
 		case "LOBBY_READY_CHECK":
+		case "LOBBY_APPLICATION_RECEIVED":
+		case "LOBBY_APPLICATION_APPROVED":
 			return "lobbies";
 		default:
 			assertUnreachable(type);
@@ -192,7 +194,9 @@ export const notificationLink = (
 		case "LOBBY_STARTED":
 		case "LOBBY_PROMOTED":
 		case "LOBBY_HOST":
-		case "LOBBY_READY_CHECK": {
+		case "LOBBY_READY_CHECK":
+		case "LOBBY_APPLICATION_RECEIVED":
+		case "LOBBY_APPLICATION_APPROVED": {
 			return lobbyPage(notification.meta.lobbyId);
 		}
 		case "CHAT_MENTION": {

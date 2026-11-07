@@ -21,6 +21,7 @@ import * as Leaderboard from "./core/Leaderboard";
 import * as LobbyMatchRepository from "./LobbyMatchRepository.server";
 import {
 	CHECK_IN_LEAD_MINUTES,
+	type LobbyApplicationState,
 	type LobbyParticipantStatus,
 } from "./lobbies-constants";
 import { lobbyChatRoomExpiresAt } from "./lobbies-utils";
@@ -40,7 +41,8 @@ export type LobbyById = NonNullable<Unwrapped<typeof findById>>;
  * The lobby with its participants, if the actor may see it: by its visibility, its share key, or as a participant
  * or player of one of its sets or one who left it. `leftUsers` are those who left it after playing a set and haven't
  * signed up again, they keep its chat until kicked. `isViewerKicked` is whether the host kicked the actor out of it,
- * `hasViewerLeft` whether the actor left it at some point and so keeps its chat.
+ * `hasViewerLeft` whether the actor left it at some point and so keeps its chat. While the lobby requires applying,
+ * `viewerApplication` is the state of the actor's application to it and `applications` the pending ones, for the host.
  * `permissions.MANAGE` is the host. `shareKey` goes to the host and, as everyone in a link-only lobby already
  * reached it through the link, to every viewer of one.
  */
@@ -67,6 +69,7 @@ export async function findById(
 			mapsTournamentName(eb).as("mapsTournamentName"),
 			"Lobby.roomSize",
 			"Lobby.weaponRandomizer",
+			"Lobby.isApplicationRequired",
 			"Lobby.chatRoomId",
 			"Lobby.hostUserId",
 			"Lobby.pendingSince",
@@ -117,6 +120,37 @@ export async function findById(
 					)
 					.orderBy("LobbyLeftUser.createdAt", "asc"),
 			).as("leftUsers"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("LobbyApplication")
+					.innerJoin("User", "User.id", "LobbyApplication.userId")
+					.select((innerEb) => [
+						...commonUserSelect(innerEb),
+						"LobbyApplication.createdAt",
+						matchProfileWeapons(innerEb).as("weapons"),
+					])
+					.whereRef("LobbyApplication.lobbyId", "=", "Lobby.id")
+					.where("LobbyApplication.deniedAt", "is", null)
+					.orderBy("LobbyApplication.createdAt", "asc")
+					.orderBy("LobbyApplication.userId", "asc"),
+			).as("applications"),
+			viewerId === null
+				? sql<null>`null`.as("viewerApplication")
+				: eb
+						.selectFrom("LobbyApplication")
+						.select((innerEb) =>
+							innerEb
+								.case()
+								.when("LobbyApplication.deniedAt", "is", null)
+								.then(sql.lit("PENDING"))
+								.else(sql.lit("DENIED"))
+								.end()
+								.$castTo<LobbyApplicationState>()
+								.as("state"),
+						)
+						.whereRef("LobbyApplication.lobbyId", "=", "Lobby.id")
+						.where("LobbyApplication.userId", "=", viewerId)
+						.as("viewerApplication"),
 			viewerId === null
 				? sql<number>`0`.as("isViewerKicked")
 				: eb
@@ -153,6 +187,7 @@ export async function findById(
 	if (!row) return;
 
 	const isLinkOnlyLobby = Boolean(row.isLinkOnly);
+	const isApplicationRequired = Boolean(row.isApplicationRequired);
 
 	return {
 		...row,
@@ -160,8 +195,21 @@ export async function findById(
 			isLinkOnlyLobby || row.hostUserId === viewerId ? row.shareKey : null,
 		isPrivate: Boolean(row.isPrivate),
 		isLinkOnly: isLinkOnlyLobby,
+		isApplicationRequired,
 		isViewerKicked: Boolean(row.isViewerKicked),
 		hasViewerLeft: Boolean(row.hasViewerLeft),
+		viewerApplication: isApplicationRequired
+			? (row.viewerApplication ?? null)
+			: null,
+		applications:
+			isApplicationRequired &&
+			row.endedAt === null &&
+			row.hostUserId === viewerId
+				? row.applications.map((application) => ({
+						...application,
+						weaponPool: application.weapons.map((weapon) => weapon.weaponSplId),
+					}))
+				: [],
 		participants: row.participants.map((participant) => ({
 			...participant,
 			isDroppingAfterSet: Boolean(participant.isDroppingAfterSet),
@@ -336,6 +384,7 @@ const listColumns = [
 	"Lobby.mapsTournamentId",
 	"Lobby.roomSize",
 	"Lobby.weaponRandomizer",
+	"Lobby.isApplicationRequired",
 	"Lobby.endedAt",
 ] as const;
 
@@ -371,6 +420,18 @@ function listQuery({
 			viewerId === null
 				? sql<number>`0`.as("isViewerPlaying")
 				: isPlaying(eb, viewerId).as("isViewerPlaying"),
+			viewerId === null
+				? sql<number>`0`.as("hasViewerApplied")
+				: eb
+						.exists(
+							eb
+								.selectFrom("LobbyApplication")
+								.select("LobbyApplication.userId")
+								.whereRef("LobbyApplication.lobbyId", "=", "Lobby.id")
+								.where("LobbyApplication.userId", "=", viewerId)
+								.where("LobbyApplication.deniedAt", "is", null),
+						)
+						.as("hasViewerApplied"),
 		]);
 }
 
@@ -413,7 +474,8 @@ function isPlaying(eb: ExpressionBuilder<DB, "Lobby">, userId: number) {
 
 /**
  * Lobbies for the index page: running and upcoming ones visible to the actor, with the actor's own (participating)
- * lobbies first, and ended ones the actor played in. `viewerStatus` tells apart spectating from playing in the room.
+ * lobbies first, and ended ones the actor played in. `viewerStatus` tells apart spectating from playing in the room,
+ * `hasViewerApplied` is whether the actor's application to a lobby requiring one is pending.
  */
 export async function findAllForIndex() {
 	const viewerId = actorIdOrNull();
@@ -429,6 +491,9 @@ export async function findAllForIndex() {
 				? ("SPECTATING" as const)
 				: row.viewerStatus,
 		isPrivate: Boolean(row.isPrivate),
+		isApplicationRequired: Boolean(row.isApplicationRequired),
+		hasViewerApplied:
+			Boolean(row.isApplicationRequired) && Boolean(row.hasViewerApplied),
 		playerCount: row.playerCount ?? 0,
 	});
 
@@ -660,16 +725,23 @@ export async function findAllUnendedIdsNearStart() {
 
 type InsertArgs = Omit<
 	TablesInsertable["Lobby"],
-	"chatRoomId" | "modes" | "mapPool" | "shareKey"
+	"chatRoomId" | "modes" | "mapPool" | "shareKey" | "isApplicationRequired"
 > & {
 	modes: Tables["Lobby"]["modes"];
 	mapPool: Tables["Lobby"]["mapPool"];
+	isApplicationRequired?: boolean;
 	/** `LINK_ONLY` = seen only through the share link, by those not participating */
 	visibility: AssociationVisibility | "LINK_ONLY" | null;
 };
 
 /** Inserts the lobby with its chat room and visibility, the host as its first participant. Returns the id. */
-export function insert({ visibility, modes, mapPool, ...args }: InsertArgs) {
+export function insert({
+	visibility,
+	modes,
+	mapPool,
+	isApplicationRequired = false,
+	...args
+}: InsertArgs) {
 	return db.transaction().execute(async (trx) => {
 		const chatRoom = await ChatRepository.insertRoom(
 			{ type: "LOBBY", expiresAt: lobbyChatRoomExpiresAt(args.startsAt) },
@@ -682,6 +754,7 @@ export function insert({ visibility, modes, mapPool, ...args }: InsertArgs) {
 				...args,
 				modes: JSON.stringify(modes),
 				mapPool: mapPool ? JSON.stringify(mapPool) : null,
+				isApplicationRequired: toDBBoolean(isApplicationRequired),
 				chatRoomId: chatRoom.id,
 				shareKey: shortNanoid(),
 			})
@@ -713,17 +786,72 @@ export function insert({ visibility, modes, mapPool, ...args }: InsertArgs) {
 	});
 }
 
-/** Signs the user up. Signing up again after leaving starts from the end of the queue. */
-export async function insertParticipant(
+/** Signs the user up, their application to the lobby (if any) done with. Signing up again after leaving starts from the end of the queue. */
+export function insertParticipant(
 	args: Pick<
 		TablesInsertable["LobbyParticipant"],
 		"lobbyId" | "userId" | "status"
 	>,
 ) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.insertInto("LobbyParticipant")
+			.values(args)
+			.onConflict((oc) => oc.columns(["lobbyId", "userId"]).doNothing())
+			.execute();
+		await trx
+			.deleteFrom("LobbyApplication")
+			.where("LobbyApplication.lobbyId", "=", args.lobbyId)
+			.where("LobbyApplication.userId", "=", args.userId)
+			.execute();
+	});
+}
+
+/** Applies to join the lobby, pending until the host approves or denies it. */
+export async function insertApplication({
+	lobbyId,
+	userId,
+}: {
+	lobbyId: number;
+	userId: number;
+}) {
 	await db
-		.insertInto("LobbyParticipant")
-		.values(args)
+		.insertInto("LobbyApplication")
+		.values({ lobbyId, userId })
 		.onConflict((oc) => oc.columns(["lobbyId", "userId"]).doNothing())
+		.execute();
+}
+
+/** Withdraws the user's pending application to the lobby. */
+export async function deletePendingApplication({
+	lobbyId,
+	userId,
+}: {
+	lobbyId: number;
+	userId: number;
+}) {
+	await db
+		.deleteFrom("LobbyApplication")
+		.where("LobbyApplication.lobbyId", "=", lobbyId)
+		.where("LobbyApplication.userId", "=", userId)
+		.where("LobbyApplication.deniedAt", "is", null)
+		.execute();
+}
+
+/** Denies the user's pending application to the lobby, keeping them from applying again. */
+export async function denyApplication({
+	lobbyId,
+	userId,
+}: {
+	lobbyId: number;
+	userId: number;
+}) {
+	await db
+		.updateTable("LobbyApplication")
+		.set({ deniedAt: databaseTimestampNow() })
+		.where("LobbyApplication.lobbyId", "=", lobbyId)
+		.where("LobbyApplication.userId", "=", userId)
+		.where("LobbyApplication.deniedAt", "is", null)
 		.execute();
 }
 
@@ -861,10 +989,17 @@ export async function updateSettings({
 	id,
 	bestOf,
 	weaponRandomizer,
-}: Pick<Tables["Lobby"], "id" | "bestOf" | "weaponRandomizer">) {
+	isApplicationRequired,
+}: Pick<Tables["Lobby"], "id" | "bestOf" | "weaponRandomizer"> & {
+	isApplicationRequired: boolean;
+}) {
 	await db
 		.updateTable("Lobby")
-		.set({ bestOf, weaponRandomizer })
+		.set({
+			bestOf,
+			weaponRandomizer,
+			isApplicationRequired: toDBBoolean(isApplicationRequired),
+		})
 		.where("Lobby.id", "=", id)
 		.execute();
 }
@@ -976,8 +1111,8 @@ export async function deleteById(id: number) {
 }
 
 /**
- * Ends the lobby. Its chat rooms become inactive, nobody counts as active in it anymore and sets that hadn't
- * got a single map reported are dropped. The placements of its leaderboard are saved as the players' results.
+ * Ends the lobby. Its chat rooms become inactive, nobody counts as active in it anymore, its applications are
+ * dropped and so are sets that hadn't got a single map reported. The placements of its leaderboard are saved as the players' results.
  */
 export function end(id: number) {
 	return db.transaction().execute(async (trx) => {
@@ -1011,6 +1146,11 @@ export function end(id: number) {
 		await trx
 			.deleteFrom("LobbyReadyCheck")
 			.where("LobbyReadyCheck.lobbyId", "=", id)
+			.execute();
+
+		await trx
+			.deleteFrom("LobbyApplication")
+			.where("LobbyApplication.lobbyId", "=", id)
 			.execute();
 
 		await trx

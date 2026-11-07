@@ -617,6 +617,62 @@ const SCENARIOS: Scenario[] = [
 		},
 	}),
 	defineScenario({
+		id: "lobby-applications",
+		title: "Lobby requiring applications",
+		description:
+			"A lobby starting later where signing up applies and the host accepts or declines who gets in.",
+		category: "Lobbies",
+		params: {
+			signedUp: numberParam("Others signed up", {
+				min: 0,
+				max: 20,
+				default: 3,
+			}),
+			applicants: numberParam("Others applied", {
+				min: 0,
+				max: 20,
+				default: 3,
+			}),
+			you: selectParam(
+				"You are",
+				[
+					{ value: "not-applied", label: "Not applied" },
+					{ value: "applied", label: "Applied, pending" },
+					{ value: "declined", label: "Declined" },
+					{ value: "accepted", label: "Accepted, signed up" },
+					{ value: "host", label: "Its host" },
+				],
+				"not-applied",
+			),
+		},
+		run: async ({ signedUp, applicants, you }) => {
+			const [hostId, ...otherIds] = await freshShowcaseUserIds(
+				signedUp + applicants + 1,
+			);
+			const [viewerId] =
+				you === "host" ? [hostId] : await freshShowcaseUserIds(1);
+			const signedUpIds = otherIds.slice(0, signedUp);
+			const applicantIds = otherIds.slice(signedUp);
+
+			const lobby = await LobbyFactory.create(
+				{
+					hostUserId: hostId,
+					name: `Dev 8s ${freshSuffix()}`,
+					isApplicationRequired: true,
+				},
+				{
+					signedUpUserIds:
+						you === "accepted" ? [viewerId, ...signedUpIds] : signedUpIds,
+					appliedUserIds:
+						you === "applied" ? [...applicantIds, viewerId] : applicantIds,
+					deniedUserIds: you === "declined" ? [viewerId] : [],
+				},
+			);
+
+			return { userId: viewerId, path: lobbyPage(lobby.id) };
+		},
+	}),
+	defineScenario({
 		id: "lobby-set",
 		title: "Playing a lobby set",
 		description:

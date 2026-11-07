@@ -87,6 +87,7 @@ export default function NewLobbyPage() {
 					mapPool: "",
 					weaponRandomizer: "OFF",
 					spectators: "0",
+					isApplicationRequired: false,
 					baseVisibility: "PUBLIC",
 					notFoundVisibility: { at: null, forAssociation: "PUBLIC" },
 				}}
@@ -101,6 +102,7 @@ export default function NewLobbyPage() {
 						<LobbyMapsFormFields />
 						<FormField name="weaponRandomizer" />
 						<FormField name="spectators" />
+						<FormField name="isApplicationRequired" />
 						<FormField name="baseVisibility">
 							{(props: CustomFieldRenderProps) => (
 								<BaseVisibilityFormField

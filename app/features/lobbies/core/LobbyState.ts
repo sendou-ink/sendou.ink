@@ -5,6 +5,7 @@
 import {
 	AUTO_CLOSE_MINUTES,
 	CHECK_IN_LEAD_MINUTES,
+	type LobbyApplicationState,
 	type LobbyParticipantStatus,
 	PLAYERS_PER_SET,
 } from "../lobbies-constants";
@@ -161,6 +162,7 @@ export function nextHost<T extends { userId: number; joinedAt: number }>(
 
 /** What the viewer may do on the lobby page, see {@link viewerActions}. */
 export interface ViewerActions {
+	/** Sign up, or apply to a lobby requiring it */
 	SIGN_UP: boolean;
 	CHECK_IN: boolean;
 	/** Leave the lobby right away, forfeiting a set being played */
@@ -176,6 +178,7 @@ export function viewerActions({
 	isPlayingUnfinishedSet,
 	hasFriendCode,
 	isKicked,
+	application,
 	isCheckInOpen: checkInOpen,
 	activeCount,
 	roomSize,
@@ -188,6 +191,8 @@ export function viewerActions({
 	hasFriendCode: boolean;
 	/** The host kicked the viewer out of the lobby */
 	isKicked: boolean;
+	/** The viewer's application to the lobby, while it requires applying */
+	application: LobbyApplicationState | null;
 	/** See {@link isCheckInOpen} */
 	isCheckInOpen: boolean;
 	/** Participants present (checked in or in the room) */
@@ -207,7 +212,7 @@ export function viewerActions({
 
 	if (!viewer) {
 		return {
-			SIGN_UP: hasFriendCode && !isKicked,
+			SIGN_UP: hasFriendCode && !isKicked && application === null,
 			CHECK_IN: false,
 			LEAVE: false,
 			DROP_AFTER_SET: false,

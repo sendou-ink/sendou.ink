@@ -5,6 +5,7 @@ import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { notify } from "~/features/notifications/core/notify.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { withUserId, wrappedAction } from "~/utils/Test";
@@ -24,6 +25,10 @@ vi.mock("~/features/chat/ChatSystemMessage.server", async (importOriginal) => ({
 	>()),
 	send: vi.fn(),
 	sendPersisted: vi.fn(),
+}));
+
+vi.mock("~/features/notifications/core/notify.server", () => ({
+	notify: vi.fn(),
 }));
 
 const lobbyAction = wrappedAction<typeof lobbyActionSchema>({ action });
@@ -591,6 +596,251 @@ describe("lobby action", () => {
 			{ user: hostId(), params: { id: String(lobby.id) } },
 		);
 		expect(await shareKeyOf()).not.toBe(oldShareKey);
+	});
+});
+
+describe("lobby action applications", () => {
+	beforeEach(async () => {
+		await users.create(10);
+		vi.mocked(notify).mockClear();
+	});
+
+	const applicationLobby = (
+		options: Parameters<typeof LobbyFactory.create>[1] = {},
+		args: Partial<Parameters<typeof LobbyFactory.create>[0]> = {},
+	) =>
+		LobbyFactory.create(
+			{ hostUserId: hostId(), isApplicationRequired: true, ...args },
+			options,
+		);
+	const viewOf = (lobbyId: number, userId: number) =>
+		withUserId(userId, () => LobbyRepository.findById(lobbyId));
+
+	test("signing up to a lobby requiring it applies, notifying the host", async () => {
+		const lobby = await applicationLobby();
+
+		await lobbyAction(
+			{ _action: "SIGN_UP" },
+			{ user: visitorId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(
+			(await participantsOf(lobby.id)).some((p) => p.userId === visitorId()),
+		).toBe(false);
+		expect((await viewOf(lobby.id, visitorId()))?.viewerApplication).toBe(
+			"PENDING",
+		);
+		expect(
+			(await viewOf(lobby.id, hostId()))?.applications.map((a) => a.id),
+		).toEqual([visitorId()]);
+		expect(vi.mocked(notify)).toHaveBeenCalledWith(
+			expect.objectContaining({
+				userIds: [hostId()],
+				notification: expect.objectContaining({
+					type: "LOBBY_APPLICATION_RECEIVED",
+				}),
+			}),
+		);
+	});
+
+	test("only the host sees the applications", async () => {
+		const lobby = await applicationLobby({
+			signedUpUserIds: [users.id(3)],
+			appliedUserIds: [visitorId()],
+		});
+
+		expect((await viewOf(lobby.id, users.id(3)))?.applications).toEqual([]);
+	});
+
+	test("the host accepting an application signs the applicant up, notifying them", async () => {
+		const lobby = await applicationLobby({ appliedUserIds: [visitorId()] });
+
+		await lobbyAction(
+			{ _action: "APPROVE_APPLICATION", userId: visitorId() },
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(
+			(await participantsOf(lobby.id)).find((p) => p.userId === visitorId())
+				?.status,
+		).toBe("REGISTERED");
+		expect((await viewOf(lobby.id, visitorId()))?.viewerApplication).toBeNull();
+		expect(vi.mocked(notify)).toHaveBeenCalledWith(
+			expect.objectContaining({
+				userIds: [visitorId()],
+				notification: expect.objectContaining({
+					type: "LOBBY_APPLICATION_APPROVED",
+				}),
+			}),
+		);
+	});
+
+	test("accepting an application into a full lobby waitlists", async () => {
+		const lobby = await applicationLobby({
+			signedUpUserIds: users.ids(9).slice(2),
+			appliedUserIds: [visitorId()],
+		});
+
+		await lobbyAction(
+			{ _action: "APPROVE_APPLICATION", userId: visitorId() },
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(
+			(await participantsOf(lobby.id)).find((p) => p.userId === visitorId())
+				?.status,
+		).toBe("WAITLISTED");
+	});
+
+	test("accepting an applicant in SendouQ after the start signs them up without checking them in", async () => {
+		const lobby = await applicationLobby(
+			{ checkedInUserIds: [hostId()], appliedUserIds: [visitorId()] },
+			{ startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)) },
+		);
+		await SQGroupFactory.create({ memberUserIds: [visitorId()] });
+		await refreshSendouQInstance();
+
+		await lobbyAction(
+			{ _action: "APPROVE_APPLICATION", userId: visitorId() },
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(
+			(await participantsOf(lobby.id)).find((p) => p.userId === visitorId())
+				?.status,
+		).toBe("WAITLISTED");
+	});
+
+	test("only the host accepts applications", async () => {
+		const lobby = await applicationLobby({
+			signedUpUserIds: [users.id(3)],
+			appliedUserIds: [visitorId()],
+		});
+
+		await expect(
+			lobbyAction(
+				{ _action: "APPROVE_APPLICATION", userId: visitorId() },
+				{ user: users.id(3), params: { id: String(lobby.id) } },
+			),
+		).rejects.toBeTruthy();
+
+		expect(
+			(await participantsOf(lobby.id)).some((p) => p.userId === visitorId()),
+		).toBe(false);
+	});
+
+	test("a declined applicant can't apply again", async () => {
+		const lobby = await applicationLobby({ appliedUserIds: [visitorId()] });
+		await lobbyAction(
+			{ _action: "DENY_APPLICATION", userId: visitorId() },
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		await lobbyAction(
+			{ _action: "SIGN_UP" },
+			{ user: visitorId(), params: { id: String(lobby.id) } },
+		);
+
+		expect((await viewOf(lobby.id, visitorId()))?.viewerApplication).toBe(
+			"DENIED",
+		);
+		expect((await viewOf(lobby.id, hostId()))?.applications).toEqual([]);
+	});
+
+	test("a kicked player can't apply", async () => {
+		const lobby = await applicationLobby({ signedUpUserIds: [visitorId()] });
+		await lobbyAction(
+			{ _action: "KICK", userId: visitorId() },
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		await lobbyAction(
+			{ _action: "SIGN_UP" },
+			{ user: visitorId(), params: { id: String(lobby.id) } },
+		);
+
+		expect((await viewOf(lobby.id, visitorId()))?.viewerApplication).toBeNull();
+	});
+
+	test("withdrawing an application removes it", async () => {
+		const lobby = await applicationLobby({ appliedUserIds: [visitorId()] });
+
+		await lobbyAction(
+			{ _action: "WITHDRAW_APPLICATION" },
+			{ user: visitorId(), params: { id: String(lobby.id) } },
+		);
+
+		expect((await viewOf(lobby.id, visitorId()))?.viewerApplication).toBeNull();
+	});
+
+	test("no longer requiring applying accepts the pending applicants in order, past the room size waitlisted", async () => {
+		const applicantIds = users.ids(10).slice(1);
+		const lobby = await applicationLobby({
+			appliedUserIds: applicantIds,
+		});
+
+		await lobbyFormAction(
+			{
+				_action: "UPDATE_SETTINGS",
+				bestOf: "3",
+				weaponRandomizer: "OFF",
+				isApplicationRequired: false,
+			},
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		const participants = await participantsOf(lobby.id);
+		expect(participants.map((p) => p.status)).toEqual([
+			...Array(8).fill("REGISTERED"),
+			"WAITLISTED",
+			"WAITLISTED",
+		]);
+		expect(participants.at(-1)?.userId).toBe(applicantIds.at(-1));
+		expect(vi.mocked(notify)).toHaveBeenCalledWith(
+			expect.objectContaining({
+				userIds: [visitorId()],
+				notification: expect.objectContaining({
+					type: "LOBBY_APPLICATION_APPROVED",
+				}),
+			}),
+		);
+	});
+
+	test("no longer requiring applying lets a declined applicant sign up", async () => {
+		const lobby = await applicationLobby({ deniedUserIds: [visitorId()] });
+		await lobbyFormAction(
+			{
+				_action: "UPDATE_SETTINGS",
+				bestOf: "3",
+				weaponRandomizer: "OFF",
+				isApplicationRequired: false,
+			},
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+		expect(
+			(await participantsOf(lobby.id)).some((p) => p.userId === visitorId()),
+		).toBe(false);
+
+		await lobbyAction(
+			{ _action: "SIGN_UP" },
+			{ user: visitorId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(
+			(await participantsOf(lobby.id)).find((p) => p.userId === visitorId())
+				?.status,
+		).toBe("REGISTERED");
+	});
+
+	test("ending the lobby drops its applications", async () => {
+		const lobby = await applicationLobby({ appliedUserIds: [visitorId()] });
+
+		await lobbyAction(
+			{ _action: "END_LOBBY" },
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		expect((await viewOf(lobby.id, visitorId()))?.viewerApplication).toBeNull();
 	});
 });
 

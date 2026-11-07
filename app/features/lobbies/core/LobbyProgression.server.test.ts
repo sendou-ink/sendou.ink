@@ -190,6 +190,7 @@ describe("LobbyProgression.advance", () => {
 			id: lobbyId,
 			bestOf: 3,
 			weaponRandomizer: "OFF",
+			isApplicationRequired: false,
 		});
 		await LobbyProgression.advance(lobbyId);
 

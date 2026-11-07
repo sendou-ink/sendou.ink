@@ -39,6 +39,7 @@ export const action = defineAction(
 			bestOf: Number(body.bestOf) as LobbyBestOf,
 			...maps,
 			weaponRandomizer: body.weaponRandomizer,
+			isApplicationRequired: body.isApplicationRequired,
 			roomSize: (PLAYERS_PER_SET + Number(body.spectators)) as LobbyRoomSize,
 			visibility: visibilityFromForm(body),
 		});

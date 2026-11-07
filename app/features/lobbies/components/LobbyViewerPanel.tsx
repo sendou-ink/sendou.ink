@@ -13,7 +13,7 @@ import { useLobbyView } from "../lobbies-hooks";
 import { lobbyActionSchema } from "../lobbies-schemas";
 import styles from "./LobbyViewerPanel.module.css";
 
-/** What the viewer's standing in the lobby is and what they can do about it: sign up, check in, confirm, leave. Hidden while they play a set, its Action tab has their options then. */
+/** What the viewer's standing in the lobby is and what they can do about it: sign up (or apply), check in, confirm, leave. Hidden while they play a set, its Action tab has their options then. */
 export function LobbyViewerPanel() {
 	const { t } = useTranslation(["lobbies", "common"]);
 	const user = useUser();
@@ -26,16 +26,25 @@ export function LobbyViewerPanel() {
 	const { viewer, viewerActions } = data;
 
 	if (!viewer) {
+		const { isViewerKicked, viewerApplication, isApplicationRequired } =
+			data.lobby;
+
 		return (
 			<div className={styles.root}>
 				<div className={styles.text} data-testid="lobby-viewer-status">
-					{data.lobby.isViewerKicked
+					{isViewerKicked
 						? t("lobbies:viewer.kicked")
-						: data.hasFriendCode
-							? t("lobbies:viewer.notSignedUp")
-							: t("lobbies:viewer.friendCodeNeeded")}
+						: viewerApplication === "DENIED"
+							? t("lobbies:viewer.applicationDeclined")
+							: viewerApplication === "PENDING"
+								? t("lobbies:viewer.applied")
+								: !data.hasFriendCode
+									? t("lobbies:viewer.friendCodeNeeded")
+									: isApplicationRequired
+										? t("lobbies:viewer.notApplied")
+										: t("lobbies:viewer.notSignedUp")}
 				</div>
-				{!data.hasFriendCode && !data.lobby.isViewerKicked ? (
+				{!data.hasFriendCode && !isViewerKicked && !viewerApplication ? (
 					<FriendCodePopover size="small" />
 				) : null}
 				{viewerActions.SIGN_UP ? (
@@ -44,9 +53,28 @@ export function LobbyViewerPanel() {
 							schema={lobbyActionSchema}
 							action="SIGN_UP"
 							size="small"
-							testId="lobby-sign-up-button"
+							testId={
+								isApplicationRequired
+									? "lobby-apply-button"
+									: "lobby-sign-up-button"
+							}
 						>
-							{t("lobbies:actions.signUp")}
+							{isApplicationRequired
+								? t("common:actions.apply")
+								: t("lobbies:actions.signUp")}
+						</ActionButton>
+					</div>
+				) : null}
+				{viewerApplication === "PENDING" ? (
+					<div className={styles.buttons}>
+						<ActionButton
+							schema={lobbyActionSchema}
+							action="WITHDRAW_APPLICATION"
+							size="small"
+							variant="outlined-destructive"
+							testId="lobby-withdraw-application-button"
+						>
+							{t("lobbies:actions.withdrawApplication")}
 						</ActionButton>
 					</div>
 				) : null}

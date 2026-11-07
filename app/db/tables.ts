@@ -1498,6 +1498,8 @@ interface Lobby {
 	roomSize: LobbyRoomSize;
 	/** Whether the players of a set get random weapons, rolled when the set starts */
 	weaponRandomizer: Generated<LobbyWeaponRandomizer>;
+	/** Signing up makes a `LobbyApplication` the host approves or denies, instead of a participant right away */
+	isApplicationRequired: Generated<DBBoolean>;
 	/** Common chat used while pending and by spectators */
 	chatRoomId: number | null;
 	/** When check-in opened (enough signed up, the start near), its notification sent. Stays open from then on */
@@ -1530,6 +1532,15 @@ interface LobbyParticipant {
 interface LobbyKickedUser {
 	lobbyId: number;
 	userId: number;
+	createdAt: Generated<number>;
+}
+
+/** Asked to join a lobby that requires applying. Approving makes a participant of them, denying keeps them from applying again. */
+interface LobbyApplication {
+	lobbyId: number;
+	userId: number;
+	/** The host denied it, `null` while pending */
+	deniedAt: number | null;
 	createdAt: Generated<number>;
 }
 
@@ -1863,6 +1874,7 @@ export interface DB {
 	AssociationMember: AssociationMember;
 	ContentVisibility: ContentVisibility;
 	Lobby: Lobby;
+	LobbyApplication: LobbyApplication;
 	LobbyGame: LobbyGame;
 	LobbyKickedUser: LobbyKickedUser;
 	LobbyLeftUser: LobbyLeftUser;

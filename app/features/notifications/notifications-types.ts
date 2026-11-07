@@ -140,6 +140,14 @@ export type Notification =
 			{ lobbyId: number; lobbyName: string }
 	  >
 	| NotificationItem<
+			"LOBBY_APPLICATION_RECEIVED",
+			{ lobbyId: number; lobbyName: string; applicantUsername: string }
+	  >
+	| NotificationItem<
+			"LOBBY_APPLICATION_APPROVED",
+			{ lobbyId: number; lobbyName: string }
+	  >
+	| NotificationItem<
 			"CHAT_MENTION",
 			{
 				roomId: number;

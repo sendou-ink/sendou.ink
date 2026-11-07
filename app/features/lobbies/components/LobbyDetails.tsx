@@ -65,6 +65,13 @@ export function LobbyDetails() {
 						</span>
 					</DetailsItem>
 				) : null}
+				{lobby.isApplicationRequired ? (
+					<DetailsItem label={t("lobbies:details.joining")}>
+						<span data-testid="lobby-application-required">
+							{t("lobbies:details.joining.application")}
+						</span>
+					</DetailsItem>
+				) : null}
 			</div>
 			{lobby.description ? (
 				<p className={styles.description} data-testid="lobby-description">

@@ -1,0 +1,25 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.title {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	text-transform: uppercase;
+}
+
+.playerCell {
+	width: 100%;
+}
+
+.weapons img {
+	max-inline-size: none;
+}
+
+.buttons {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--s-2);
+}

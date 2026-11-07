@@ -522,6 +522,8 @@
 	"options.lobbyWeaponRandomizer.OFF": "Off",
 	"options.lobbyWeaponRandomizer.CHAOTIC": "Chaotic",
 	"options.lobbyWeaponRandomizer.BALANCED": "Balanced",
+	"labels.lobbyIsApplicationRequired": "Require applying to join",
+	"bottomTexts.lobbyIsApplicationRequired": "Players apply to join and the host approves who gets in. Turning it off later lets in everyone still waiting",
 	"labels.lobbySpectators": "Spectators",
 	"bottomTexts.lobbySpectators": "Players in the room on top of the 8 playing. Spectators rotate in every set, so a different player sits out each time. Everyone else joins the waitlist",
 	"errors.dateAfterLobbyStart": "Date can not be after the lobby's start",
