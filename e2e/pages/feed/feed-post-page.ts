@@ -15,6 +15,7 @@ export class FeedPostPage {
 		const comments = page.getByRole("region", { name: "Comments" });
 		this.locators = {
 			post: page.getByRole("main").getByRole("article"),
+			commentsRegion: comments,
 			comments: comments.getByTestId("chat-message-row"),
 			noCommentsText: page.getByText("No comments yet. Say something nice!"),
 			composer: comments.getByPlaceholder("Press enter to send"),
