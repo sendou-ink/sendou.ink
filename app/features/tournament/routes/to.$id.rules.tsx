@@ -2,10 +2,10 @@ import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
+import { SendouSection } from "~/components/elements/Section";
 import { Image } from "~/components/Image";
 import { containerClassName } from "~/components/Main";
 import { MapPoolStages } from "~/components/MapPoolStages";
-import { Section } from "~/components/Section";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
 import { useTournament } from "~/features/tournament/tournament-context";
@@ -41,7 +41,7 @@ function OrganizerMapPool() {
 	const mapPool = new MapPool(tournament.ctx.toSetMapPool);
 
 	return (
-		<Section title={t("calendar:forms.mapPool")}>
+		<SendouSection title={t("calendar:forms.mapPool")}>
 			<div>
 				<MapPoolStages mapPool={mapPool} />
 				<div className="stack items-center mt-4">
@@ -51,7 +51,7 @@ function OrganizerMapPool() {
 					</LinkButton>
 				</div>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 

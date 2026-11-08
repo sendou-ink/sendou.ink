@@ -2,8 +2,8 @@ import clsx from "clsx";
 import { parse } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { type MetaFunction, useLoaderData } from "react-router";
+import { SendouSection } from "~/components/elements/Section";
 import { Main } from "~/components/Main";
-import { Section } from "~/components/Section";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -50,7 +50,7 @@ function EstablishedStatus() {
 	);
 
 	return (
-		<Section title={t("org:stats.established.title")}>
+		<SendouSection title={t("org:stats.established.title")}>
 			<div className="stack md">
 				<div
 					role="progressbar"
@@ -113,7 +113,7 @@ function EstablishedStatus() {
 					))}
 				</div>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 

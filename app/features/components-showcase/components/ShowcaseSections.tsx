@@ -16,6 +16,7 @@ import { SendouDatePicker } from "~/components/elements/DatePicker";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { SendouPopover } from "~/components/elements/Popover";
+import { SendouSection } from "~/components/elements/Section";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { SendouSwitch } from "~/components/elements/Switch";
 import {
@@ -46,7 +47,6 @@ import {
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import { RelativeTime } from "~/components/RelativeTime";
-import { Section } from "~/components/Section";
 import { StageSelect } from "~/components/StageSelect";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SubNav, SubNavLink } from "~/components/SubNav";
@@ -209,7 +209,7 @@ function ComponentRow({
 
 function ButtonsSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Primary (default)">
 					<SendouButton>Primary Button</SendouButton>
@@ -386,7 +386,7 @@ function ButtonsSection() {
 					<SubmitButton>Submit Form</SubmitButton>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -408,7 +408,7 @@ function PendingButtonDemo() {
 
 function AlertsSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Info (default)">
 					<Alert>This is an informational alert message.</Alert>
@@ -436,13 +436,13 @@ function AlertsSection() {
 					<Alert tiny>This is a tiny alert message.</Alert>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function InputsSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Basic Input">
 					<Input placeholder="Enter text..." aria-label="Basic input" />
@@ -515,7 +515,7 @@ function InputsSection() {
 					</div>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -529,7 +529,7 @@ const SELECT_ITEMS = [
 
 function SelectSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Basic Select">
 					<SendouSelect
@@ -614,7 +614,7 @@ function SelectSection() {
 					</select>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -622,7 +622,7 @@ function SwitchSection() {
 	const [isOn, setIsOn] = useState(false);
 
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Large">
 					<SendouSwitch size="large" isSelected={isOn} onChange={setIsOn}>
@@ -650,7 +650,7 @@ function SwitchSection() {
 					<SendouSwitch isDisabled>Disabled switch</SendouSwitch>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -663,7 +663,7 @@ function CheckboxSection() {
 	});
 
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Single Checkbox">
 					<label className="stack horizontal sm items-center">
@@ -746,7 +746,7 @@ function CheckboxSection() {
 					</label>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -757,7 +757,7 @@ function RadioButtonSection() {
 	const [chipVertical, setChipVertical] = useState("A");
 
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Basic Radio Group">
 					<div className="stack sm">
@@ -904,7 +904,7 @@ function RadioButtonSection() {
 					</SendouChipRadioGroup>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -917,7 +917,7 @@ function FieldsetSection() {
 	});
 
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Basic Fieldset">
 					<fieldset style={{ padding: "1rem" }}>
@@ -1041,13 +1041,13 @@ function FieldsetSection() {
 					</fieldset>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function DetailsSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Basic Details">
 					<details>
@@ -1146,13 +1146,13 @@ function DetailsSection() {
 					</div>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function TabsSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack lg">
 				<ComponentRow label="Basic Tabs">
 					<SendouTabs>
@@ -1224,7 +1224,7 @@ function TabsSection() {
 					</SendouTabs>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -1232,7 +1232,7 @@ function DialogSection() {
 	const [isOpen, setIsOpen] = useState(false);
 
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="With Trigger">
 					<SendouDialog
@@ -1266,13 +1266,13 @@ function DialogSection() {
 					</div>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function PopoverSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Basic Popover">
 					<SendouPopover
@@ -1298,13 +1298,13 @@ function PopoverSection() {
 					</div>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function MenuSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Basic Menu">
 					<SendouMenu trigger={<SendouButton>Open Menu</SendouButton>}>
@@ -1351,7 +1351,7 @@ function MenuSection() {
 					</SendouMenu>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -1363,7 +1363,7 @@ function FilterBarSection() {
 	const [stage, setStage] = useState<string | null>(null);
 
 	return (
-		<Section>
+		<SendouSection>
 			<FilterBar
 				pills={[
 					{
@@ -1423,13 +1423,13 @@ function FilterBarSection() {
 					) : null
 				}
 			/>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function ToastSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Success Toast">
 					<SendouButton
@@ -1472,13 +1472,13 @@ function ToastSection() {
 					</SendouButton>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function DividerSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack lg">
 				<ComponentRow label="Basic Divider">
 					<div className="stack sm" style={{ width: "100%" }}>
@@ -1504,13 +1504,13 @@ function DividerSection() {
 					</div>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function TableSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Basic Table">
 					<Table>
@@ -1583,7 +1583,7 @@ function TableSection() {
 					</Table>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -1592,7 +1592,7 @@ function PaginationSection() {
 	const pagesCount = 50;
 
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Basic Pagination">
 					<Pagination
@@ -1624,13 +1624,13 @@ function PaginationSection() {
 					/>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function AvatarSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Size xxxs">
 					<Avatar
@@ -1672,7 +1672,7 @@ function AvatarSection() {
 					<Avatar user={{ id: 8, avatar: null }} size="lg" alt="User avatar" />
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -1714,13 +1714,13 @@ const USER_CARD_DATA = {
 
 function UserCardSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Click the trigger">
 					<UserCard data={USER_CARD_DATA}>Sendou</UserCard>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -1824,7 +1824,7 @@ const RESULTS_GRAPHIC_TEAMS: TournamentResultsGraphicTeam[] = [
 
 function TournamentResultsGraphicSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Top 8 export image">
 					<TournamentResultsGraphic
@@ -1843,7 +1843,7 @@ function TournamentResultsGraphicSection() {
 					/>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -1932,7 +1932,7 @@ const RUN_GRAPHIC_MATCHES: TournamentRunGraphicMatch[] = [
 
 function TournamentRunGraphicSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Team run export image">
 					<TournamentRunGraphic
@@ -1965,7 +1965,7 @@ function TournamentRunGraphicSection() {
 					/>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -2121,7 +2121,7 @@ const SEASON_SUMMARY_STATS: SeasonSummaryGraphicStats = {
 
 function SeasonSummaryGraphicSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Season summary export image">
 					<SeasonSummaryGraphic
@@ -2141,7 +2141,7 @@ function SeasonSummaryGraphicSection() {
 					/>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -2205,7 +2205,7 @@ const LFG_GRAPHIC_TEAM_POST: LFGPostGraphicPost = {
 
 function LFGPostGraphicSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Player post">
 					<LFGPostGraphic post={LFG_GRAPHIC_USER_POST} />
@@ -2215,7 +2215,7 @@ function LFGPostGraphicSection() {
 					<LFGPostGraphic post={LFG_GRAPHIC_TEAM_POST} />
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -2223,7 +2223,7 @@ const COMP_GRAPHIC_WEAPON_IDS: MainWeaponId[] = [40, 220, 2070, 5010];
 
 function CompGraphicSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="With title">
 					<CompGraphic
@@ -2240,7 +2240,7 @@ function CompGraphicSection() {
 					/>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -2332,7 +2332,7 @@ const CHANGELOG_GRAPHIC_ENTRIES_LARGE: ChangelogGraphicEntry[] = [
 
 function ChangelogGraphicSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Small update (4 entries)">
 					<ChangelogGraphic
@@ -2348,13 +2348,13 @@ function ChangelogGraphicSection() {
 					/>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function FormMessageSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Error Message">
 					<FormMessage type="error">
@@ -2378,13 +2378,13 @@ function FormMessageSection() {
 					</div>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function SubNavSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Primary SubNav">
 					<SubNav>
@@ -2414,7 +2414,7 @@ function SubNavSection() {
 					</SubNav>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -2433,7 +2433,7 @@ function DatePickerSection() {
 	};
 
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Calendar">
 					<SendouCalendar
@@ -2486,13 +2486,13 @@ function DatePickerSection() {
 					/>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function SplatoonImagesSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="WeaponImage (build)">
 					<div className="stack horizontal sm">
@@ -2570,13 +2570,13 @@ function SplatoonImagesSection() {
 					</div>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function AbilitySection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Main Size">
 					<div className="stack horizontal sm">
@@ -2626,13 +2626,13 @@ function AbilitySection() {
 					</div>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function FlagSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Regular Size">
 					<div className="stack horizontal sm">
@@ -2660,13 +2660,13 @@ function FlagSection() {
 					</div>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function PlacementSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Top 3 (with icons)">
 					<div className="stack horizontal md items-center">
@@ -2701,13 +2701,13 @@ function PlacementSection() {
 					</div>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function BadgeSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Basic Badge">
 					<div className="stack horizontal sm">
@@ -2773,13 +2773,13 @@ function BadgeSection() {
 					</div>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function TrophySection() {
 	return (
-		<Section>
+		<SendouSection>
 			<TrophyContextProvider>
 				<div className="stack md">
 					<ComponentRow label="Interactive (drag to rotate)">
@@ -2808,13 +2808,13 @@ function TrophySection() {
 					</ComponentRow>
 				</div>
 			</TrophyContextProvider>
-		</Section>
+		</SendouSection>
 	);
 }
 
 function TierPillSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="All Tiers">
 					<div className="stack horizontal sm flex-wrap">
@@ -2832,7 +2832,7 @@ function TierPillSection() {
 					</div>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -2843,7 +2843,7 @@ function GameSelectSection() {
 	const [selectedStage, setSelectedStage] = useState<StageId | null>(null);
 
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="WeaponSelect">
 					<WeaponSelect
@@ -2867,7 +2867,7 @@ function GameSelectSection() {
 					<WeaponSelect label="Required Weapon" isRequired />
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -2879,7 +2879,7 @@ const DYNAMIC_SELECT_OPTIONS = [
 
 function FormFieldsSection() {
 	return (
-		<Section>
+		<SendouSection>
 			<p className="mb-4" style={{ fontSize: "var(--font-sm)", opacity: 0.8 }}>
 				Schema-based form fields using SendouForm. Each field type is defined
 				with valibot schemas that generate both UI and validation.
@@ -3025,7 +3025,7 @@ function FormFieldsSection() {
 					</div>
 				)}
 			</SendouForm>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -3061,7 +3061,7 @@ function ScheduleSection() {
 	const rangeCount = week.reduce((acc, day) => acc + day.ranges.length, 0);
 
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<div className="stack sm">
 					<div className={styles.componentLabel}>Week availability editor</div>
@@ -3102,7 +3102,7 @@ function ScheduleSection() {
 					</div>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -3254,7 +3254,7 @@ function HeaderActivitiesSection() {
 	const selectedVoiceId = voiceOverride?.status ?? "none";
 
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Activities (shown next to the search & add new buttons in the header)">
 					<div className="stack horizontal sm">
@@ -3357,7 +3357,7 @@ function HeaderActivitiesSection() {
 					</SendouChipRadioGroup>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -3448,13 +3448,21 @@ function MiscSection() {
 	const [colorValue, setColorValue] = useState("#3b82f6");
 
 	return (
-		<Section>
+		<SendouSection>
 			<div className="stack md">
 				<ComponentRow label="Section Component">
-					<Section title="Section Title" className="stack sm">
+					<SendouSection
+						title="Section Title"
+						icon={Search}
+						action={
+							<SendouButton size="small" variant="minimal">
+								Show all
+							</SendouButton>
+						}
+					>
 						<p>This is content inside a Section component.</p>
 						<p>It provides consistent styling for content blocks.</p>
-					</Section>
+					</SendouSection>
 				</ComponentRow>
 
 				<ComponentRow label="Progress Bar">
@@ -3677,6 +3685,6 @@ function MiscSection() {
 					/>
 				</ComponentRow>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }

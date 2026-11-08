@@ -5,13 +5,13 @@ import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouSection } from "~/components/elements/Section";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { MapPoolStages } from "~/components/MapPoolStages";
 import { Placement } from "~/components/Placement";
-import { Section } from "~/components/Section";
 import { Table } from "~/components/Table";
 import { UserLink } from "~/components/UserLink";
 import { calendarEditPage } from "~/features/calendar/calendar-urls";
@@ -190,52 +190,54 @@ function Results() {
 	);
 
 	return (
-		<Section title={t("calendar:results")} className={styles.resultsSection}>
-			{data.event.participantCount ? (
-				<div className={styles.resultsParticipantCount}>
-					{isTeamResults
-						? t("calendar:participatedCount", {
-								count: data.event.participantCount,
-							})
-						: t("calendar:participatedPlayerCount", {
-								count: data.event.participantCount,
-							})}
-				</div>
-			) : null}
-			<Table>
-				<thead>
-					<tr>
-						<th>{t("calendar:forms.team.placing")}</th>
-						<th>{t("common:forms.name")}</th>
-						<th>{t("calendar:members")}</th>
-					</tr>
-				</thead>
-				<tbody>
-					{data.results.map((result, i) => (
-						<tr key={i}>
-							<td className="pl-4">
-								<Placement placement={result.placement} />
-							</td>
-							<td>{result.teamName}</td>
-							<td>
-								<ul className={styles.resultsPlayers}>
-									{result.players.map((player) => {
-										return (
-											<li
-												key={player.name ? player.name : player.id}
-												className="flex items-center"
-											>
-												<UserLink user={player} />
-											</li>
-										);
-									})}
-								</ul>
-							</td>
+		<SendouSection title={t("calendar:results")}>
+			<div className={styles.resultsSection}>
+				{data.event.participantCount ? (
+					<div className={styles.resultsParticipantCount}>
+						{isTeamResults
+							? t("calendar:participatedCount", {
+									count: data.event.participantCount,
+								})
+							: t("calendar:participatedPlayerCount", {
+									count: data.event.participantCount,
+								})}
+					</div>
+				) : null}
+				<Table>
+					<thead>
+						<tr>
+							<th>{t("calendar:forms.team.placing")}</th>
+							<th>{t("common:forms.name")}</th>
+							<th>{t("calendar:members")}</th>
 						</tr>
-					))}
-				</tbody>
-			</Table>
-		</Section>
+					</thead>
+					<tbody>
+						{data.results.map((result, i) => (
+							<tr key={i}>
+								<td className="pl-4">
+									<Placement placement={result.placement} />
+								</td>
+								<td>{result.teamName}</td>
+								<td>
+									<ul className={styles.resultsPlayers}>
+										{result.players.map((player) => {
+											return (
+												<li
+													key={player.name ? player.name : player.id}
+													className="flex items-center"
+												>
+													<UserLink user={player} />
+												</li>
+											);
+										})}
+									</ul>
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</Table>
+			</div>
+		</SendouSection>
 	);
 }
 
@@ -248,7 +250,7 @@ function MapPoolInfo() {
 	const mapPool = new MapPool(data.event.mapPool);
 
 	return (
-		<Section title={t("calendar:forms.mapPool")}>
+		<SendouSection title={t("calendar:forms.mapPool")}>
 			<div className={styles.mapPoolSection}>
 				<MapPoolStages mapPool={mapPool} />
 				<LinkButton
@@ -261,7 +263,7 @@ function MapPoolInfo() {
 					{t("calendar:createMapList")}
 				</LinkButton>
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
 
@@ -270,7 +272,7 @@ function Description() {
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<Section title={t("forms.description")}>
+		<SendouSection title={t("forms.description")}>
 			<div className="stack sm">
 				<div className={styles.author}>
 					<Avatar
@@ -283,6 +285,6 @@ function Description() {
 					<div className="whitespace-pre-wrap">{data.event.description}</div>
 				) : null}
 			</div>
-		</Section>
+		</SendouSection>
 	);
 }
