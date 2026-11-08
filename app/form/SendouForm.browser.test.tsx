@@ -14,6 +14,7 @@ import {
 	array,
 	checkboxGroup,
 	datetime,
+	datetimeOptional,
 	fieldset,
 	radioGroup,
 	select,
@@ -28,9 +29,14 @@ import {
 	userSearch,
 } from "./fields";
 import { FormStep, SendouForm, useFormFieldContext } from "./SendouForm";
-import type { ArrayItemRenderContext, FormObjectSchema } from "./types";
+import type {
+	ArrayItemRenderContext,
+	FormObjectSchema,
+	FormTimeZone,
+} from "./types";
 
 let mockFetcherData: unknown;
+const mockFetcherSubmit = vi.fn();
 
 /** `fieldset` registers its metadata onto the object it is handed, so anything nested needs a fresh one. */
 const singleTextField = () =>
@@ -97,7 +103,7 @@ vi.mock("react-router", async () => {
 				return mockFetcherData;
 			},
 			state: "idle",
-			submit: vi.fn(),
+			submit: mockFetcherSubmit,
 			load: vi.fn(),
 		}),
 	};
@@ -143,6 +149,7 @@ function renderForm(
 describe("SendouForm", () => {
 	beforeEach(() => {
 		mockFetcherData = undefined;
+		mockFetcherSubmit.mockClear();
 	});
 
 	describe("basic form rendering", () => {
@@ -284,6 +291,115 @@ describe("SendouForm", () => {
 			await expect
 				.element(screen.getByText("Date is incomplete or doesn't exist"))
 				.toBeVisible();
+		});
+	});
+
+	describe("datetime field with a time zone", () => {
+		// 10:00 in Chicago, whatever zone the test browser runs in
+		const CHICAGO_TEN_AM = new Date("2026-11-20T16:00:00.000Z");
+
+		const zonedSchema = () =>
+			v.object({
+				zone: textFieldOptional({ label: "labels.name", maxLength: 100 }),
+				startTime: datetime({ label: "labels.startTime" }),
+				brackets: array({
+					label: "labels.brackets",
+					max: 3,
+					field: fieldset({
+						fields: v.object({
+							startTime: datetimeOptional({ label: "labels.startTime" }),
+						}),
+					}),
+				}),
+			});
+
+		const renderZonedForm = async (
+			timeZone: FormTimeZone,
+			{ withOnApply = true }: { withOnApply?: boolean } = {},
+		) => {
+			const onApply = vi.fn();
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm
+								schema={zonedSchema()}
+								defaultValues={{
+									zone: "America/Chicago",
+									startTime: CHICAGO_TEN_AM,
+									brackets: [{ startTime: CHICAGO_TEN_AM }],
+								}}
+								timeZone={timeZone}
+								onApply={withOnApply ? onApply : undefined}
+							>
+								<FormField name="zone" />
+								<FormField name="startTime" />
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+
+			const screen = await render(<RouterProvider router={router} />);
+			return { screen, onApply };
+		};
+
+		test("shows the wall-clock time and zone of the form's time zone", async () => {
+			const { screen } = await renderZonedForm("America/Chicago");
+
+			await expect
+				.element(screen.getByLabelText("Start time"))
+				.toHaveValue("2026-11-20T10:00");
+			await expect.element(screen.getByText("(venue time, CST)")).toBeVisible();
+		});
+
+		test("submits instants in the form's time zone, nested fields too", async () => {
+			const { screen, onApply } = await renderZonedForm("America/Chicago");
+
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			const values = onApply.mock.calls[0][0];
+			expect(values.startTime.toISOString()).toBe(CHICAGO_TEN_AM.toISOString());
+			expect(values.brackets[0].startTime.toISOString()).toBe(
+				CHICAGO_TEN_AM.toISOString(),
+			);
+		});
+
+		test("sends instants in the form's time zone to the server", async () => {
+			const { screen } = await renderZonedForm("America/Chicago", {
+				withOnApply: false,
+			});
+
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			const submitted = mockFetcherSubmit.mock.calls[0][0];
+			expect(submitted.startTime.toISOString()).toBe(
+				CHICAGO_TEN_AM.toISOString(),
+			);
+			expect(submitted.brackets[0].startTime.toISOString()).toBe(
+				CHICAGO_TEN_AM.toISOString(),
+			);
+		});
+
+		test("keeps the typed wall-clock time when the time zone changes", async () => {
+			const { screen, onApply } = await renderZonedForm(
+				(values) => values.zone as string,
+			);
+
+			await userEvent.fill(
+				screen.getByLabelText("Name").element(),
+				"Asia/Tokyo",
+			);
+			await expect
+				.element(screen.getByLabelText("Start time"))
+				.toHaveValue("2026-11-20T10:00");
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply.mock.calls[0][0].startTime.toISOString()).toBe(
+				"2026-11-20T01:00:00.000Z",
+			);
 		});
 	});
 

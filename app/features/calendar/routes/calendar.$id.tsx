@@ -8,12 +8,12 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouSection } from "~/components/elements/Section";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
-import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { MapPoolStages } from "~/components/MapPoolStages";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
 import { UserLink } from "~/components/UserLink";
+import { VenueLocaleTime } from "~/components/VenueLocaleTime";
 import { calendarEditPage } from "~/features/calendar/calendar-urls";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
@@ -97,8 +97,9 @@ export default function CalendarEventPage() {
 									number: i + 1,
 								})}
 							</span>
-							<LocaleTime
+							<VenueLocaleTime
 								date={startTime}
+								venueTimezone={data.event.venue?.timezone}
 								options={{
 									hour: "numeric",
 									minute: "numeric",

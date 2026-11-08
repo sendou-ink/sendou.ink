@@ -1,0 +1,9 @@
+.container {
+	display: flex;
+	flex-direction: column;
+}
+
+.viewerTime {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}

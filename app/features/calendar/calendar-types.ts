@@ -32,6 +32,8 @@ interface CommonEvent {
 		Pick<Tables["Badge"], "id" | "code" | "displayName" | "hue">
 	> | null;
 	trophyId: Tables["CalendarEvent"]["trophyId"];
+	/** Where a LAN is held, `null` for an online event. */
+	venue: Pick<Tables["CalendarEventVenue"], "timezone"> | null;
 }
 
 export interface CalendarEvent extends CommonEvent {

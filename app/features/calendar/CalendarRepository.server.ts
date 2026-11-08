@@ -175,9 +175,15 @@ function findAllBetweenTwoTimestampsQuery({
 			"CalendarEventDate.eventId",
 		)
 		.leftJoin("Tournament", "CalendarEvent.tournamentId", "Tournament.id")
+		.leftJoin(
+			"CalendarEventVenue",
+			"CalendarEventVenue.eventId",
+			"CalendarEvent.id",
+		)
 		.select((eb) => [
 			"CalendarEvent.id as eventId",
 			"CalendarEvent.authorId",
+			"CalendarEventVenue.timezone as venueTimezone",
 			"CalendarEvent.organizationId",
 			"Tournament.id as tournamentId",
 			"Tournament.settings as tournamentSettings",
@@ -298,6 +304,7 @@ function findAllBetweenTwoTimestampsMapped(
 							: null,
 				badges: row.badges,
 				trophyId: row.trophyId,
+				venue: row.venueTimezone ? { timezone: row.venueTimezone } : null,
 				logoUrl: row.logoUrl,
 				startsAt: row.normalizedStartsAt,
 				isRanked: row.tournamentSettings

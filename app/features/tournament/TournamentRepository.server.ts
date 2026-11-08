@@ -844,11 +844,17 @@ export function findAllForShowcase() {
 			"CalendarEvent.id",
 			"CalendarEventDate.eventId",
 		)
+		.leftJoin(
+			"CalendarEventVenue",
+			"CalendarEventVenue.eventId",
+			"CalendarEvent.id",
+		)
 		.select((eb) => [
 			"Tournament.id",
 			"Tournament.settings",
 			"Tournament.tier",
 			"Tournament.isFinalized",
+			"CalendarEventVenue.timezone as venueTimezone",
 			"CalendarEvent.authorId",
 			"CalendarEvent.name",
 			"CalendarEvent.organizationId",

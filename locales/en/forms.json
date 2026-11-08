@@ -151,6 +151,8 @@
 	"labels.venueName": "Venue name",
 	"bottomTexts.venueName": "E.g. \"Hilton Ballroom B\"",
 	"labels.venueTimezone": "Venue timezone",
+	"datetime.venueTime": "(venue time, {{timeZone}})",
+	"datetime.venueTimeNotice": "Times are in {{timeZone}}, the venue's timezone",
 	"options.duration.30m": "30 minutes",
 	"options.duration.1h": "1 hour",
 	"options.duration.1h30m": "1.5 hours",

@@ -25,6 +25,7 @@ function makeEvent(
 		normalizedTeamCount: 0,
 		badges: [],
 		trophyId: null,
+		venue: null,
 		logoUrl: null,
 		name: "",
 		url: "",

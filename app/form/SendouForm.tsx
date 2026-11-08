@@ -24,6 +24,7 @@ import styles from "./SendouForm.module.css";
 import type {
 	FormObjectSchema,
 	FormStepDefinition,
+	FormTimeZone,
 	TypedFormFieldComponent,
 } from "./types";
 import {
@@ -34,11 +35,14 @@ import {
 	buildFieldPath,
 	errorMessageId,
 	getNestedValue,
+	instantsToWallClocks,
 	issuePathKeys,
 	RENDERS_FIELD_ERRORS_KEY,
+	resolveFormTimeZone,
 	seedArrayItemDefaults,
 	setNestedValue,
 	validateField,
+	wallClocksToInstants,
 } from "./utils";
 
 type RequiredDefaultKeys<T extends v.ObjectEntries> = {
@@ -87,6 +91,7 @@ type FormFieldContextValue = Omit<
 	"values" | "clientErrors"
 > & {
 	store: FormStore;
+	timeZone: FormTimeZone | undefined;
 	steps: ReadonlyArray<FormStepDefinition> | undefined;
 	currentStepIdx: number;
 	goToStep: (stepIdx: number) => void;
@@ -137,6 +142,11 @@ type BaseFormProps<T extends v.ObjectEntries> = {
 	steps?: ReadonlyArray<FormStepDefinition<keyof T & string>>;
 	/** Shows the submit button on every step, not only the last, e.g. when editing something already valid. */
 	submitOnEveryStep?: boolean;
+	/**
+	 * Zone every `datetime` field is entered in, e.g. a LAN's venue. The fields keep the typed wall-clock times when
+	 * it changes, they become instants in it on submit. Default: the browser's zone.
+	 */
+	timeZone?: FormTimeZone;
 };
 
 /**
@@ -184,6 +194,7 @@ interface LatestFormProps {
 	currentStepIdx: number;
 	hasSubmitted: boolean;
 	pushStepToUrl: (stepIdx: number) => void;
+	timeZone: FormTimeZone | undefined;
 }
 
 export function SendouForm<T extends v.ObjectEntries>(
@@ -226,6 +237,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 	onSuccess,
 	steps,
 	submitOnEveryStep = false,
+	timeZone,
 }: SendouFormProps<T>) {
 	const { t } = useTranslation(["forms"]);
 	const fetcher = useFetcher<{ fieldErrors?: Record<string, string> }>();
@@ -248,7 +260,11 @@ function SendouFormInner<T extends v.ObjectEntries>({
 	const formRef = React.useRef<HTMLElement | null>(null);
 
 	const [store] = React.useState(() => {
-		const initialValues = buildInitialValues(schema, defaultValues);
+		const initialValues = instantsToWallClocks(
+			schema as FormObjectSchema,
+			buildInitialValues(schema, defaultValues),
+			timeZone,
+		);
 		return createFormStore(
 			initialValues,
 			saveAttempted ? computeTopLevelFieldErrors(schema, initialValues) : {},
@@ -266,6 +282,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 		steps,
 		currentStepIdx,
 		hasSubmitted,
+		timeZone,
 		// in a microtask: the navigation's transition, if started within the submit event, makes React treat the form as running an action
 		pushStepToUrl: (stepIdx) =>
 			queueMicrotask(() =>
@@ -358,6 +375,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 			submitToServer: actions.submitToServer,
 			fetcherState: fetcher.state,
 			store,
+			timeZone,
 			steps: steps as ReadonlyArray<FormStepDefinition> | undefined,
 			currentStepIdx,
 			goToStep: actions.goToStep,
@@ -372,6 +390,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 			readOnly,
 			fetcher.state,
 			store,
+			timeZone,
 			actions,
 			steps,
 			currentStepIdx,
@@ -859,10 +878,17 @@ function createFormActions({
 		return true;
 	};
 
+	const toInstants = (values: Record<string, unknown>) =>
+		wallClocksToInstants(
+			latest.current.schema,
+			values,
+			latest.current.timeZone,
+		);
+
 	const submitValues = (values: Record<string, unknown>) => {
 		const { fetcher, action, revalidateRoot } = latest.current;
 		const submitted = {
-			...values,
+			...toInstants(values),
 			[RENDERS_FIELD_ERRORS_KEY]: true,
 			...(revalidateRoot ? { revalidateRoot: true } : {}),
 		};
@@ -942,7 +968,7 @@ function createFormActions({
 		// before `onApply` since it may navigate synchronously (e.g. calendar filters) and the blocker
 		// would still see the form as dirty
 		store.setDirty(false);
-		latest.current.onApply?.(store.values);
+		latest.current.onApply?.(toInstants(store.values));
 
 		submitValues(valuesToSubmit);
 	};
@@ -963,7 +989,7 @@ function createFormActions({
 		const hasFieldErrors = Object.keys(newErrors).length > 0;
 
 		if (mode === "client") {
-			onApply?.(updatedValues);
+			onApply?.(toInstants(updatedValues));
 		} else if (mode === "autoSubmit" && !hasFieldErrors) {
 			submitValues(updatedValues);
 		}
@@ -989,7 +1015,7 @@ function createFormActions({
 		if (onApply) {
 			// see the same note in autoSubmit above
 			store.setDirty(false);
-			onApply(store.values);
+			onApply(toInstants(store.values));
 		} else {
 			submitValues(store.values);
 		}
@@ -1192,6 +1218,16 @@ export function useFormFieldContext(): FormContextValue {
 		submitToServer: context.submitToServer,
 		fetcherState: context.fetcherState,
 	};
+}
+
+/** The zone the form's `datetime` fields are entered in (see the `timeZone` prop), `null` for the browser's own. */
+export function useFormTimeZone(): string | null {
+	const context = React.useContext(FormContext);
+	const store = context?.store ?? EMPTY_FORM_STORE;
+
+	const getTimeZone = () =>
+		resolveFormTimeZone(context?.timeZone, store.values);
+	return React.useSyncExternalStore(store.subscribe, getTimeZone, getTimeZone);
 }
 
 export function useOptionalFormFieldContext() {

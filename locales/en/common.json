@@ -207,6 +207,8 @@
 	"actions.copyToClipboard": "Copy to clipboard",
 	"actions.copied": "Copied!",
 	"actions.copyTimestampForDiscord": "Copy Discord timestamp",
+	"venueTime.local": "{{time}} local",
+	"venueTime.viewer": "{{time}} your time",
 	"actions.close": "Close",
 	"actions.dismiss": "Dismiss",
 	"actions.cancel": "Cancel",

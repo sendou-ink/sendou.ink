@@ -405,6 +405,12 @@ export type TournamentSearchFieldOptions = {
 	onTournamentSelected?: (tournament: TournamentSearchItem | null) => void;
 };
 
+/** IANA zone a form's `datetime` fields are entered in, or how to resolve it from the form values. Nullish = the browser's own. */
+export type FormTimeZone =
+	| string
+	| null
+	| ((values: Record<string, unknown>) => string | null | undefined);
+
 /** One step of a multi-step `SendouForm`, rendered by the `<FormStep>` of the same `name`. */
 export interface FormStepDefinition<TFieldName extends string = string> {
 	name: string;

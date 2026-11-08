@@ -487,6 +487,16 @@ function validateTeamPick(
 	}
 }
 
+/** Zone the times of the form are entered in: a LAN's venue zone, `null` (browser's own) otherwise. */
+export function venueTimeZoneFromFormValues(values: Record<string, unknown>) {
+	if (!values.toToolsEnabled || !values.isLan) return null;
+
+	const timeZone = values.venueTimezone;
+	return typeof timeZone === "string" && TIMEZONES.includes(timeZone)
+		? timeZone
+		: null;
+}
+
 /** The venue the form values describe, `null` for an online tournament or a calendar event. */
 export function venueFromFormValues(
 	data: Pick<
