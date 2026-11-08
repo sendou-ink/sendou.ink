@@ -33,7 +33,10 @@ interface CommonEvent {
 	> | null;
 	trophyId: Tables["CalendarEvent"]["trophyId"];
 	/** Where a LAN is held, `null` for an online event. */
-	venue: Pick<Tables["CalendarEventVenue"], "timezone"> | null;
+	venue: Pick<
+		Tables["CalendarEventVenue"],
+		"timezone" | "city" | "countryCode"
+	> | null;
 }
 
 export interface CalendarEvent extends CommonEvent {

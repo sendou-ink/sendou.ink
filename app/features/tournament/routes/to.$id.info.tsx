@@ -5,6 +5,7 @@ import { useLoaderData } from "react-router";
 import { ModeImage } from "~/components/Image";
 import { containerClassName } from "~/components/Main";
 import { TierPill } from "~/components/TierPill";
+import { VenueInfo } from "~/features/calendar/components/VenueInfo";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { metaTags } from "~/utils/remix";
@@ -58,6 +59,9 @@ export default function TournamentInfoPage() {
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
 			<TournamentHeader tournament={tournament} estimatedEndsAt={data.endsAt} />
+			{tournament.venue ? (
+				<VenueInfo venue={tournament.venue} className="justify-center" />
+			) : null}
 			<div className="stack md">
 				<FactCardGrid facts={facts} />
 				<TournamentHeaderActions

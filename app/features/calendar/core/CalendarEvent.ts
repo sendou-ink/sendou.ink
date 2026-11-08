@@ -44,8 +44,13 @@ assertType<(typeof FILTERS_KEYS)[number], keyof CalendarFilters>();
 assertType<keyof CalendarFilters, (typeof FILTERS_KEYS)[number]>();
 
 /** Whether the tag tells the team size (1v1, 2v2 or 3v3). Tournaments never store these, their tag is derived from `minMembersPerTeam` via {@link versusTag}. */
-export function isVersusTag(tag: CalendarEventTag): tag is VersusTag {
+function isVersusTag(tag: CalendarEventTag): tag is VersusTag {
 	return Object.hasOwn(MEMBERS_PER_TEAM_BY_VERSUS_TAG, tag);
+}
+
+/** Whether tournaments get the tag from their settings instead of storing it: the team size tag (see {@link isVersusTag}) and LAN, implied by a venue. */
+export function isDerivedTournamentTag(tag: CalendarEventTag): boolean {
+	return isVersusTag(tag) || tag === "LAN";
 }
 
 /** The tag telling the team size of a tournament with the given minimum members per team, null for 4v4. */
@@ -183,7 +188,7 @@ function matchesFilter(
 				return true;
 			}
 
-			return event.tags.some((tag) => tags.includes(tag));
+			return tagsWithVenue(event).some((tag) => tags.includes(tag));
 		}
 		case "tagsExcluded": {
 			const tags = filters[key];
@@ -191,7 +196,7 @@ function matchesFilter(
 				return true;
 			}
 
-			return !event.tags.some((tag) => tags.includes(tag));
+			return !tagsWithVenue(event).some((tag) => tags.includes(tag));
 		}
 		case "games": {
 			const games = filters[key];
@@ -333,4 +338,11 @@ function orgNameMatches({
 	value: string;
 }) {
 	return orgName.trim().toLowerCase() === value.trim().toLowerCase();
+}
+
+// a venue is a virtual LAN tag, cards show it as the venue chip instead
+function tagsWithVenue(event: CalendarEvent): Array<CalendarEventTag> {
+	if (!event.venue || event.tags.includes("LAN")) return event.tags;
+
+	return [...event.tags, "LAN"];
 }

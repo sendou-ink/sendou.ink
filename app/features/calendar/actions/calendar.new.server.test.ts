@@ -497,6 +497,17 @@ describe("calendar new action: venue", () => {
 		expect(tournament.venue?.name).toBe("Hilton Ballroom B");
 	});
 
+	test("tournament doesn't store the LAN tag, its venue implies it", async () => {
+		const res = await editAction(
+			calendarNewFormValues({ ...lanFields, tags: ["LAN", "SPECIAL"] }),
+			{ user: "regular" },
+		);
+
+		expect(
+			(await CalendarRepository.findById(createdEventId(res)))?.tags,
+		).toEqual(["SPECIAL"]);
+	});
+
 	test("online tournament ignores leftover venue fields", async () => {
 		const res = await editAction(
 			calendarNewFormValues({ ...lanFields, isLan: false }),
