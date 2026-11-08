@@ -26,9 +26,8 @@ import {
 } from "~/utils/urls";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import type { TierRange } from "../q-types";
-import { getTierIndex } from "../q-utils.server";
 import { isInLookingPool } from "./groups";
-import { tierDifferenceToRangeOrExact } from "./groups.server";
+import { getTierIndex, tierDifferenceToRangeOrExact } from "./groups.server";
 import * as ReadyCheck from "./ready-check.server";
 
 type DBGroupRow = Awaited<
@@ -328,7 +327,7 @@ class SendouQClass {
 			const tierRangeOrExact = tierDifferenceToRangeOrExact({
 				ourTier: ownTier ?? FALLBACK_TIER,
 				theirTier: group.tier ?? FALLBACK_TIER,
-				hasLeviathan: this.#isAccurateTiers,
+				isAccurateTiers: this.#isAccurateTiers,
 			});
 
 			if (tierRangeOrExact.type === "exact") {

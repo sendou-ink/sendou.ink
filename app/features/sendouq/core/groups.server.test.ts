@@ -77,7 +77,7 @@ describe("tierDifferenceToRangeOrExact()", () => {
 			const result = tierDifferenceToRangeOrExact({
 				ourTier: input[0],
 				theirTier: input[1],
-				hasLeviathan: true,
+				isAccurateTiers: true,
 			});
 			expect(result).toEqual(expected);
 		});
@@ -87,7 +87,7 @@ describe("tierDifferenceToRangeOrExact()", () => {
 		const result = tierDifferenceToRangeOrExact({
 			ourTier: { isPlus: true, name: "DIAMOND" },
 			theirTier: { isPlus: false, name: "DIAMOND" },
-			hasLeviathan: false,
+			isAccurateTiers: false,
 		});
 		expect(result).toEqual({
 			type: "exact",

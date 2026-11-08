@@ -1,6 +1,4 @@
-import { TIERS } from "~/features/mmr/mmr-constants";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
-import type { TieredSkill } from "~/features/mmr/tiered.server";
 
 export class SendouQError extends Error {
 	constructor(message: string, options?: ErrorOptions) {
@@ -28,29 +26,4 @@ export async function seasonInitialSkillsExist(season: number) {
 /** Clears the in-process cache backing `seasonInitialSkillsExist`. */
 export function clearSeasonSkillsCache() {
 	seasonsKnownToHaveSkills.clear();
-}
-
-const allTiersOrdered = TIERS.flatMap((t) => [
-	{ name: t.name, isPlus: true },
-	{ name: t.name, isPlus: false },
-]).reverse();
-const allTiersOrderedWithLeviathan = allTiersOrdered.filter(
-	(t) => t.name !== "LEVIATHAN",
-);
-
-export function getTierIndex(
-	tier: TieredSkill["tier"] | null | undefined,
-	isAccurateTiers: boolean,
-) {
-	if (!tier) return null;
-
-	const tiers = isAccurateTiers
-		? allTiersOrdered
-		: allTiersOrderedWithLeviathan;
-
-	const index = tiers.findIndex(
-		(t) => t.name === tier.name && t.isPlus === tier.isPlus,
-	);
-
-	return index === -1 ? null : index;
 }

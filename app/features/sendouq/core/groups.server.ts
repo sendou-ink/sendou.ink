@@ -3,35 +3,33 @@ import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { invariant } from "~/utils/invariant";
 import type { TierDifference } from "../q-types";
 
-const allTiersOrdered = TIERS.flatMap((tier) => [
+const ALL_TIERS_ORDERED = TIERS.flatMap((tier) => [
 	{ name: tier.name, isPlus: true },
 	{ name: tier.name, isPlus: false },
 ]).reverse();
+const TIERS_ORDERED_WITHOUT_LEVIATHAN = ALL_TIERS_ORDERED.filter(
+	(tier) => tier.name !== "LEVIATHAN",
+);
+
 export function tierDifferenceToRangeOrExact({
 	ourTier,
 	theirTier,
-	hasLeviathan,
+	isAccurateTiers,
 }: {
 	ourTier: TieredSkill["tier"];
 	theirTier: TieredSkill["tier"];
-	hasLeviathan: boolean;
+	isAccurateTiers: boolean;
 }): TierDifference {
 	if (ourTier.name === theirTier.name && ourTier.isPlus === theirTier.isPlus) {
 		return { type: "exact", diff: 0, tier: structuredClone(ourTier) };
 	}
 
-	const tiers = hasLeviathan
-		? allTiersOrdered
-		: allTiersOrdered.filter((tier) => tier.name !== "LEVIATHAN");
+	const tiers = orderedTiers(isAccurateTiers);
 
-	const tier1Idx = tiers.findIndex(
-		(t) => t.name === ourTier.name && t.isPlus === ourTier.isPlus,
-	);
-	const tier2Idx = tiers.findIndex(
-		(t) => t.name === theirTier.name && t.isPlus === theirTier.isPlus,
-	);
-	invariant(tier1Idx !== -1, "tier1 not found");
-	invariant(tier2Idx !== -1, "tier2 not found");
+	const tier1Idx = getTierIndex(ourTier, isAccurateTiers);
+	const tier2Idx = getTierIndex(theirTier, isAccurateTiers);
+	invariant(tier1Idx !== null, "tier1 not found");
+	invariant(tier2Idx !== null, "tier2 not found");
 
 	const idxDiff = Math.abs(tier1Idx - tier2Idx);
 
@@ -50,4 +48,22 @@ export function tierDifferenceToRangeOrExact({
 		diff: [-idxDiff, idxDiff],
 		range: [structuredClone(lowerTier), structuredClone(upperTier)],
 	};
+}
+
+/** Position of the tier in the best-first tier list (Leviathan left out unless tiers are accurate), null if not found. */
+export function getTierIndex(
+	tier: TieredSkill["tier"] | null | undefined,
+	isAccurateTiers: boolean,
+) {
+	if (!tier) return null;
+
+	const index = orderedTiers(isAccurateTiers).findIndex(
+		(t) => t.name === tier.name && t.isPlus === tier.isPlus,
+	);
+
+	return index === -1 ? null : index;
+}
+
+function orderedTiers(isAccurateTiers: boolean) {
+	return isAccurateTiers ? ALL_TIERS_ORDERED : TIERS_ORDERED_WITHOUT_LEVIATHAN;
 }
