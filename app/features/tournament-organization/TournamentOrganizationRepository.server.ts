@@ -23,6 +23,7 @@ import {
 } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 import { mySlugify } from "~/utils/urls";
+import * as Series from "./core/Series";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "./tournament-organization-constants";
 
 interface CreateArgs {
@@ -544,11 +545,7 @@ export async function findAllSeriesWinsByUserId({
 		eb.and([
 			eb("CalendarEvent.organizationId", "=", organizationId),
 			eb("CalendarEvent.hidden", "=", 0),
-			eb.or(
-				substringMatches.map((match) =>
-					eb("CalendarEvent.name", "like", `%${match}%`),
-				),
-			),
+			calendarEventNameMatchesSeries(substringMatches)(eb),
 		]);
 
 	const tournamentWins = await db
@@ -772,12 +769,9 @@ export function update({
 
 			for (const s of insertedSeries) {
 				const matchingTiers = finalizedTournaments
-					.filter((t) => {
-						const eventNameLower = t.name.toLowerCase();
-						return s.substringMatches.some((match) =>
-							eventNameLower.includes(match.toLowerCase()),
-						);
-					})
+					.filter((t) =>
+						Series.matchesEventName({ series: s, eventName: t.name }),
+					)
 					.filter((t) => t.tier !== null)
 					.map((t) => t.tier);
 
@@ -932,12 +926,7 @@ export async function updateSeriesTierHistory({
 		.where("organizationId", "=", organizationId)
 		.execute();
 
-	const eventNameLower = eventName.toLowerCase();
-	const matchingSeries = series.find((s) =>
-		s.substringMatches.some((match) =>
-			eventNameLower.includes(match.toLowerCase()),
-		),
-	);
+	const matchingSeries = Series.findByEventName({ series, eventName });
 
 	if (!matchingSeries) return;
 

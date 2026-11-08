@@ -33,6 +33,7 @@ import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.s
 import * as SplatoonRotationRepository from "~/features/splatoon-rotations/SplatoonRotationRepository.server";
 import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
 import { eventLeaderboards } from "~/features/tournament-organization/core/leaderboards.server";
+import * as Series from "~/features/tournament-organization/core/Series";
 import type {
 	BuildAbilitiesTuple,
 	MainWeaponId,
@@ -3467,13 +3468,12 @@ async function seriesWinOf(result: {
 }) {
 	if (result.organizationId === null) return null;
 
-	const series = (
-		await FeedRepository.findSeriesByOrganizationId(result.organizationId)
-	).find((s) =>
-		s.substringMatches.some((sub) =>
-			result.name.toLowerCase().includes(sub.toLowerCase()),
+	const series = Series.findByEventName({
+		series: await FeedRepository.findSeriesByOrganizationId(
+			result.organizationId,
 		),
-	);
+		eventName: result.name,
+	});
 	if (!series) return null;
 
 	return {

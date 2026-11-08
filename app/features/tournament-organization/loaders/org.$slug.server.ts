@@ -4,6 +4,7 @@ import { calculateTentativeTier } from "~/features/tournament/core/tiering";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { eventLeaderboards } from "../core/leaderboards.server";
+import * as Series from "../core/Series";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { TOURNAMENT_SERIES_LEADERBOARD_SIZE } from "../tournament-organization-constants";
 import { tournamentOrganizationSearchParams } from "../tournament-organization-search-params";
@@ -27,9 +28,12 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
 	const seriesId =
 		_seriesId ??
-		organization.series.find((s) =>
-			s.substringMatches.some((match) => source?.toLowerCase().includes(match)),
-		)?.id;
+		(source
+			? Series.findByEventName({
+					series: organization.series,
+					eventName: source,
+				})?.id
+			: undefined);
 
 	const seriesInfo = async () => {
 		const series = seriesId
