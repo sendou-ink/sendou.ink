@@ -70,7 +70,7 @@ function DamageComboBar({
 						key={index}
 						segment={segment}
 						totalDamage={totalWithInk}
-						damageTypeLabel={t(`analyzer:damage.${segment.damageType}` as any)}
+						damageTypeLabel={t(`analyzer:damage.${segment.damageType}`)}
 						onToggleFilter={onToggleFilter}
 					/>
 				))}
@@ -234,7 +234,7 @@ function FilteredItem({ filterKey, onRestore }: FilteredItemProps) {
 				isSubWeapon={filterKey.weaponType === "sub"}
 				isSpecialWeapon={filterKey.weaponType === "special"}
 			/>
-			<span>{t(`analyzer:damage.${filterKey.damageType}` as any)}</span>
+			<span>{t(`analyzer:damage.${filterKey.damageType}`)}</span>
 		</button>
 	);
 }

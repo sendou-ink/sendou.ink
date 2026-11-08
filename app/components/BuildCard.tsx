@@ -116,8 +116,8 @@ export function BuildCard({
 						{modes.map((mode) => (
 							<Image
 								key={mode}
-								alt={t(`game-misc:MODE_LONG_${mode}` as any)}
-								title={t(`game-misc:MODE_LONG_${mode}` as any)}
+								alt={t(`game-misc:MODE_LONG_${mode}`)}
+								title={t(`game-misc:MODE_LONG_${mode}`)}
 								path={modeImageUrl(mode)}
 								containerClassName={styles.mode}
 								className={styles.modeImage}
@@ -407,7 +407,7 @@ function AllWeaponsList({
 					to={weaponBuildPageUrl(weapon)}
 					icon={<WeaponCircle weapon={weapon} />}
 				>
-					{t(`weapons:MAIN_${weapon.weaponSplId}` as any)}
+					{t(`weapons:MAIN_${weapon.weaponSplId}`)}
 				</ListLink>
 			))}
 		</div>
@@ -426,7 +426,7 @@ function RoundWeaponImage({
 	return (
 		<Link
 			to={weaponBuildPageUrl(weapon)}
-			title={t(`weapons:MAIN_${weapon.weaponSplId}` as any)}
+			title={t(`weapons:MAIN_${weapon.weaponSplId}`)}
 			className={styles.weaponLink}
 		>
 			<WeaponCircle weapon={weapon} isSmall={isSmall} />

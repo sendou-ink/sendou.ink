@@ -135,10 +135,8 @@ export default function WelcomePage() {
 			<h1 className="text-xl">{t("welcome:title")}</h1>
 			{SECTION_KEYS.map((sectionKey) => (
 				<section key={sectionKey} className="stack sm">
-					<h2 className="text-lg">
-						{t(`welcome:${sectionKey}.header` as any)}
-					</h2>
-					{(t(`welcome:${sectionKey}.body` as any) as string)
+					<h2 className="text-lg">{t(`welcome:${sectionKey}.header`)}</h2>
+					{(t(`welcome:${sectionKey}.body`) as string)
 						.split("\n\n")
 						.map((paragraph) => (
 							<ParagraphWithPagePills key={paragraph} text={paragraph} />

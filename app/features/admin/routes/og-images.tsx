@@ -63,7 +63,7 @@ export default function OgImages() {
 			<div className={styles.grid}>
 				{OG_IMAGE_PAGES.map((page) => (
 					<PreviewCard key={page} label={`${page}.png`}>
-						<PageOg page={page} title={t(`common:pages.${page}` as any)} />
+						<PageOg page={page} title={t(`common:pages.${page}`)} />
 					</PreviewCard>
 				))}
 			</div>

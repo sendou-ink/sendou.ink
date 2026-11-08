@@ -175,7 +175,7 @@ function ObjectDamagePage({ weapon }: { weapon: AnyWeapon }) {
 											handleChange({ newDamageType: optionDamageType })
 										}
 									>
-										{t(`analyzer:damage.${optionDamageType}` as any)}
+										{t(`analyzer:damage.${optionDamageType}`)}
 									</SendouChipRadio>
 								))}
 							</SendouChipRadioGroup>
@@ -473,7 +473,7 @@ function DamageReceiversGrid({
 							})}
 						</div>
 						<div className="stack horizontal sm justify-center items-center">
-							{t(`analyzer:damage.${damage.type}` as any)}
+							{t(`analyzer:damage.${damage.type}`)}
 							{damage.objectShredder ? (
 								<Ability ability="OS" size="TINY" />
 							) : null}

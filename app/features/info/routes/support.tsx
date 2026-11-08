@@ -212,7 +212,7 @@ function SupportTable() {
 											</SendouButton>
 										}
 									>
-										{t(`support.perk.${perk.name}.extra` as any)}
+										{t(`support.perk.${perk.name}.extra`)}
 									</SendouPopover>
 								</>
 							) : null}
