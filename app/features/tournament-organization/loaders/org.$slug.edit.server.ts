@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
+import * as Badges from "~/features/badges/core/Badges.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { organizationFromParams } from "../tournament-organization-utils.server";
 
@@ -8,23 +8,11 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 	requirePermission(organization, "EDIT");
 
-	const badgeOptions = async () => {
-		const result = await BadgeRepository.findByManagersList(
-			organization.members.map((member) => member.id),
-		);
-
-		// a badge the org no longer manages stays deletable
-		for (const badge of organization.badges) {
-			if (!result.some((b) => b.id === badge.id)) {
-				result.push(badge);
-			}
-		}
-
-		return result;
-	};
-
 	return {
 		organization,
-		badgeOptions: await badgeOptions(),
+		badgeOptions: await Badges.attachable({
+			managerIds: organization.members.map((member) => member.id),
+			attached: organization.badges,
+		}),
 	};
 }

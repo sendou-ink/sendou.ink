@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
+import * as Badges from "~/features/badges/core/Badges.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -108,11 +108,14 @@ export const action = defineAction(
 				).includes(imgId),
 		});
 
-		const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
-		const attachableBadgeIds = new Set([
-			...managedBadges.map((badge) => badge.id),
-			...(eventToEdit?.badgePrizes ?? []).map((badge) => badge.id),
-		]);
+		const attachableBadgeIds = new Set(
+			(
+				await Badges.attachable({
+					managerIds: [user.id],
+					attached: eventToEdit?.badgePrizes ?? [],
+				})
+			).map((badge) => badge.id),
+		);
 
 		const dates =
 			isAddingTournament && data.startTime ? [data.startTime] : data.date;

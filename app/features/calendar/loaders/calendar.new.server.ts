@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
+import * as Badges from "~/features/badges/core/Badges.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
@@ -71,7 +71,10 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		);
 	}
 
-	const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
+	const badgeOptions = await Badges.attachable({
+		managerIds: [user.id],
+		attached: eventToEdit?.badgePrizes ?? [],
+	});
 
 	const organizations = (
 		await findValidOrganizations(
@@ -107,7 +110,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 						? eventToCopyRaw.organization
 						: null,
 				badgePrizes: eventToCopyRaw.badgePrizes?.filter((badge) =>
-					managedBadges.some((mb) => mb.id === badge.id),
+					badgeOptions.some((option) => option.id === badge.id),
 				),
 				trophy: eventToCopyRaw.trophy
 					? trophies.some((t) => t.id === eventToCopyRaw.trophy?.id)
@@ -117,22 +120,10 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 			}
 		: undefined;
 
-	// plus already-attached prize badges the user no longer manages, so the selection still renders and stays removable
-	const badgeOptions = R.uniqueBy(
-		[...managedBadges, ...(eventToEdit?.badgePrizes ?? [])].map((badge) => ({
-			id: badge.id,
-			code: badge.code,
-			displayName: badge.displayName,
-			hue: badge.hue,
-		})),
-		(badge) => badge.id,
-	);
-
 	return {
 		isAddingTournament: Boolean(
 			tournament || copyEventId !== null || eventToEdit?.tournament,
 		),
-		managedBadges,
 		badgeOptions,
 		eventToEdit: canEditEvent ? eventToEdit : undefined,
 		eventToCopy,
