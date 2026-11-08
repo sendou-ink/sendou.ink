@@ -18,7 +18,7 @@ import {
 	isTournamentTeamInfoRevealed,
 	requireTournamentVisible,
 	tournamentDataCached,
-	tournamentFromDB,
+	tournamentSharedCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -152,7 +152,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		: null;
 
 	const fullTournament = hasStarted
-		? await tournamentFromDB(tournamentId)
+		? await tournamentSharedCached(tournamentId)
 		: null;
 	const placementByTeamId = fullTournament
 		? new Map(

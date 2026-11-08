@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as v from "valibot";
 import type { Bracket } from "~/features/tournament-bracket/core/Bracket";
-import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentSharedCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { coerceNumber, id } from "~/utils/schema";
 import type { GetTournamentBracketResponse } from "../schema";
@@ -17,7 +17,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: paramsSchema,
 	});
 
-	const tournament = await tournamentFromDB(tournamentId);
+	const tournament = await tournamentSharedCached(tournamentId);
 
 	const bracket = notFoundIfNullish(tournament.bracketByIdx(bidx));
 
