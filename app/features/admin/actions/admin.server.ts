@@ -187,6 +187,6 @@ export const action = defineAction(
 			}
 		}
 
-		return successToast(message);
+		successToast(message);
 	},
 );

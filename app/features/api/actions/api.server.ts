@@ -20,20 +20,16 @@ export const action = defineAction(
 			case "GENERATE_READ": {
 				await ApiRepository.generateToken(user.id, "read");
 				await refreshApiTokensCache();
-				successToast("Read token generated successfully");
-				break;
+				return successToast("Read token generated successfully");
 			}
 			case "GENERATE_WRITE": {
 				await ApiRepository.generateToken(user.id, "write");
 				await refreshApiTokensCache();
-				successToast("Write token generated successfully");
-				break;
+				return successToast("Write token generated successfully");
 			}
 			default: {
 				throw new Error("Invalid action");
 			}
 		}
-
-		return null;
 	},
 );

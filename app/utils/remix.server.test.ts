@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
-	errorToastRedirect,
+	errorToast,
 	paginate,
 	safeReturnTo,
 	successToast,
@@ -19,6 +19,9 @@ const captureRedirect = (fn: () => void) => {
 	}
 	return null;
 };
+
+const redirectLocation = (fn: () => void) =>
+	captureRedirect(fn)!.headers.get("Location")!;
 
 describe("paginate()", () => {
 	test("returns the page count rounded up", () => {
@@ -152,8 +155,9 @@ describe("successToastWithRedirect()", () => {
 		["100% complete", "a percent sign"],
 		["Team + org linked", "a plus sign"],
 	])("round trips a message containing %s (%s)", (message) => {
-		const response = successToastWithRedirect({ message, url: "/to/1" });
-		const location = response.headers.get("Location")!;
+		const location = redirectLocation(() =>
+			successToastWithRedirect({ message, url: "/to/1" }),
+		);
 
 		expect(new URLSearchParams(location.split("?")[1]).get("__success")).toBe(
 			message,
@@ -161,35 +165,35 @@ describe("successToastWithRedirect()", () => {
 	});
 
 	test("keeps the search params already on the url", () => {
-		const response = successToastWithRedirect({
-			message: "Tournament finalized",
-			url: "/to/1/brackets?bracket=1",
-		});
-
-		const searchParams = new URLSearchParams(
-			response.headers.get("Location")!.split("?")[1],
+		const location = redirectLocation(() =>
+			successToastWithRedirect({
+				message: "Tournament finalized",
+				url: "/to/1/brackets?bracket=1",
+			}),
 		);
+
+		const searchParams = new URLSearchParams(location.split("?")[1]);
 
 		expect(searchParams.get("bracket")).toBe("1");
 		expect(searchParams.get("__success")).toBe("Tournament finalized");
 	});
 
 	test("keeps the hash at the end of the url", () => {
-		const response = successToastWithRedirect({
-			message: "Saved",
-			url: "/u/sendou#results",
-		});
-
-		expect(response.headers.get("Location")).toBe(
-			"/u/sendou?__success=Saved#results",
+		const location = redirectLocation(() =>
+			successToastWithRedirect({
+				message: "Saved",
+				url: "/u/sendou#results",
+			}),
 		);
+
+		expect(location).toBe("/u/sendou?__success=Saved#results");
 	});
 });
 
-describe("errorToastRedirect()", () => {
+describe("errorToast()", () => {
 	const redirectLocationOf = (url: string, message: string) =>
 		runWithRequestContext({ url: new URL(url) }, () =>
-			errorToastRedirect(message).headers.get("Location"),
+			redirectLocation(() => errorToast(message)),
 		);
 
 	test("keeps the search params of the current request", () => {
@@ -212,7 +216,7 @@ describe("successToast()", () => {
 	test("keeps the search params of the current request", () => {
 		const location = runWithRequestContext(
 			{ url: new URL("https://sendou.ink/to/1/brackets?bracket=1") },
-			() => successToast("Saved").headers.get("Location"),
+			() => redirectLocation(() => successToast("Saved")),
 		);
 
 		expect(location).toBe("/to/1/brackets?bracket=1&__success=Saved");

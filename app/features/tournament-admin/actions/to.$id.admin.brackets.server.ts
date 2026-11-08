@@ -107,6 +107,6 @@ export const action = defineAction(
 
 		ChatSystemMessage.send({ channel: tournamentChannel(tournamentId) });
 
-		return successToast(message);
+		successToast(message);
 	},
 );

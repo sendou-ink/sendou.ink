@@ -19,6 +19,9 @@ export class ApiPage {
 			noAccessMessage: page.getByText("You do not have access to the API"),
 			// the revealed token is shown in a popover, rendered outside its section
 			tokenInput: page.locator("input[readonly]"),
+			readTokenGeneratedToast: page.getByText(
+				"Read token generated successfully",
+			),
 		};
 	}
 

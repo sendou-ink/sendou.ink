@@ -1,11 +1,7 @@
 import type { ActionFunctionArgs, Params } from "react-router";
 import * as v from "valibot";
 import { logger } from "~/utils/logger";
-import {
-	badRequest,
-	errorToastRedirect,
-	parseParams,
-} from "~/utils/remix.server";
+import { badRequest, errorToast, parseParams } from "~/utils/remix.server";
 import type { AnySchema, AnySyncSchema } from "~/utils/schema";
 import {
 	DEFAULT_MAX_BODY_BYTES,
@@ -126,7 +122,7 @@ export function defineAction(
 			logger.error("Invalid action body", v.flatten(parsed.issues));
 			if (inputs.onInvalidBody === "badRequest") badRequest();
 
-			throw errorToastRedirect("Validation failed");
+			errorToast("Validation failed");
 		}
 
 		const body = parsed.output;

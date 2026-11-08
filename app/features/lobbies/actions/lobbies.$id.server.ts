@@ -245,7 +245,7 @@ export const action = defineAction(
 					reportedCount: body.reportedCount,
 				});
 				if (result === "STALE") return null;
-				if (result === "NOT_ALLOWED") return errorToast("Can't report");
+				if (result === "NOT_ALLOWED") errorToast("Can't report");
 
 				await linkStoredMatches({ type: "lobby", lobbySetId: set.id });
 				break;
@@ -258,21 +258,21 @@ export const action = defineAction(
 					isHost: hasPermission(lobby, "MANAGE", user),
 				});
 				if (result === "STALE") return null;
-				if (result === "NOT_ALLOWED") return errorToast("Can't undo");
+				if (result === "NOT_ALLOWED") errorToast("Can't undo");
 				break;
 			}
 			case "CONFIRM_SET": {
 				const set = setOfLobby(body.setId);
 				const result = await LobbyMatchRepository.confirmSet(set.id);
 				if (result === "STALE") return null;
-				if (result === "NOT_ALLOWED") return errorToast("Can't confirm");
+				if (result === "NOT_ALLOWED") errorToast("Can't confirm");
 				break;
 			}
 			case "DISPUTE_SET": {
 				const set = setOfLobby(body.setId);
 				const result = await LobbyMatchRepository.disputeSet(set.id);
 				if (result === "STALE") return null;
-				if (result === "NOT_ALLOWED") return errorToast("Can't dispute");
+				if (result === "NOT_ALLOWED") errorToast("Can't dispute");
 				break;
 			}
 			case "HOST_CONFIRM_SET": {
@@ -280,7 +280,7 @@ export const action = defineAction(
 				const set = setOfLobby(body.setId);
 				const result = await LobbyMatchRepository.confirmDisputedSet(set.id);
 				if (result === "STALE") return null;
-				if (result === "NOT_ALLOWED") return errorToast("Can't confirm");
+				if (result === "NOT_ALLOWED") errorToast("Can't confirm");
 				break;
 			}
 			case "REPORT_WEAPON": {

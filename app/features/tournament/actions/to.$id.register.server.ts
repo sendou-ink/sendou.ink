@@ -486,7 +486,7 @@ export const action = defineAction(
 			ChatSystemMessage.send({ channel: tournamentLFGChannel(tournamentId) });
 		}
 
-		if (successMessage) return successToast(successMessage);
+		if (successMessage) successToast(successMessage);
 
 		return null;
 	},

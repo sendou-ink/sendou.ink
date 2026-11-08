@@ -35,6 +35,6 @@ export const action = defineAction(
 		await TrophyRepository.syncSpecialTrophies();
 		await XRankPlacementRepository.refreshTenStarWeapons(user.id);
 
-		return successToast("Unlink successful");
+		successToast("Unlink successful");
 	},
 );

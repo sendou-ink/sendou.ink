@@ -66,6 +66,8 @@ test.describe("Public API", () => {
 
 		const token = await api.generateToken("read");
 		expect(token).toHaveLength(TOKEN_LENGTH);
+		// toasts render hidden in e2e runs
+		await expect(api.locators.readTokenGeneratedToast).toBeAttached();
 
 		const response = await page.request.fetch(`/api/user/${ADMIN_ID}`, {
 			headers: authorized(token),

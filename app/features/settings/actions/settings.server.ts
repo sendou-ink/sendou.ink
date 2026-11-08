@@ -28,7 +28,7 @@ export const action = defineAction(
 		switch (body._action) {
 			case "UPDATE_CUSTOM_THEME": {
 				if (!isSupporter(user)) {
-					throw errorToast("Custom themes are for supporters only");
+					errorToast("Custom themes are for supporters only");
 				}
 
 				const clampedTheme = body.newValue

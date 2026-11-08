@@ -77,7 +77,7 @@ export const action = defineAction(
 		});
 
 		if (!finalized) {
-			return successToastWithRedirect({
+			successToastWithRedirect({
 				url: tournamentBracketsPage({ tournamentId }),
 				message: "Tournament was already finalized",
 			});
@@ -102,7 +102,7 @@ export const action = defineAction(
 
 		ChatSystemMessage.send({ channel: tournamentChannel(tournamentId) });
 
-		return successToastWithRedirect({
+		successToastWithRedirect({
 			url: tournamentBracketsPage({ tournamentId }),
 			message: "Tournament finalized",
 		});

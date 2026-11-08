@@ -1,6 +1,6 @@
 /**
  * Runs an action for API use, converting its redirect-based responses to JSON: `successToast`
- * returns `redirect("?__success=message")`, `errorToastIfFalsy/errorToastIfErr` throw
+ * throws `redirect("?__success=message")`, `errorToast/errorToastIfFalsy/errorToastIfErr` throw
  * `redirect("?__error=message")`, and validation failures return `{ fieldErrors }` (when the internal request
  * sets `RENDERS_FIELD_ERRORS_KEY`).
  */
@@ -32,7 +32,12 @@ export async function wrapActionForApi(
 		if (e instanceof Response && e.status === 302) {
 			const location = e.headers.get("Location") ?? "";
 			const search = location.slice(location.indexOf("?") + 1);
-			const errorMsg = new URLSearchParams(search).get("__error");
+			const searchParams = new URLSearchParams(search);
+			if (searchParams.has("__success")) {
+				return new Response(null, { status: 200 });
+			}
+
+			const errorMsg = searchParams.get("__error");
 			if (errorMsg !== null) {
 				return new Response(JSON.stringify({ error: errorMsg }), {
 					status: 400,

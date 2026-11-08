@@ -10,7 +10,7 @@ import { logger } from "~/utils/logger";
 import {
 	badRequest,
 	canAccessLohiEndpoint,
-	errorToastRedirect,
+	errorToast,
 	errorToastWithRedirect,
 	forbidden,
 	safeReturnTo,
@@ -83,14 +83,14 @@ export const refreshFromDiscordAction = defineAction(
 		const returnTo = safeReturnTo(body.returnTo ?? null);
 
 		if (await isImpersonating(request)) {
-			throw errorToastWithRedirect({
+			errorToastWithRedirect({
 				url: returnTo ?? SETTINGS_PAGE,
 				message: "Can't refresh from Discord while impersonating",
 			});
 		}
 
 		if (DiscordRefresh.isOnCooldown(user.id)) {
-			throw errorToastWithRedirect({
+			errorToastWithRedirect({
 				url: returnTo ?? SETTINGS_PAGE,
 				message: REFRESH_COOLDOWN_MESSAGE,
 			});
@@ -232,7 +232,7 @@ function parseSearchParams<T extends AnySyncSchema>({
 	} catch (e) {
 		logger.error("Error parsing search params", e);
 
-		throw errorToastRedirect("Validation failed");
+		errorToast("Validation failed");
 	}
 }
 
@@ -353,47 +353,61 @@ async function refreshCallback({
 		"Set-Cookie": await DiscordRefresh.clearFlagCookieHeader(),
 	};
 	const returnTo = safeReturnTo(refresh.returnTo) ?? SETTINGS_PAGE;
-	const failed = (message: string) =>
+	function failed(message: string): never {
 		errorToastWithRedirect({ url: returnTo, message, headers });
+	}
 
 	// biome-ignore lint/plugin: OAuth callback param, its name and values defined by the provider
 	if (url.searchParams.has("error")) {
-		return failed("Refreshing from Discord was canceled");
+		failed("Refreshing from Discord was canceled");
 	}
 
 	const user = getUser();
 	if (!user || user.id !== refresh.userId || (await isImpersonating(request))) {
-		return failed("Refreshing from Discord failed");
+		failed("Refreshing from Discord failed");
 	}
 
 	if (DiscordRefresh.isOnCooldown(user.id)) {
-		return failed(REFRESH_COOLDOWN_MESSAGE);
+		failed(REFRESH_COOLDOWN_MESSAGE);
 	}
 	DiscordRefresh.startCooldown(user.id);
 
-	try {
-		const profile = await authenticator.authenticate("discord", request);
+	const failureMessage = await refreshUserFromDiscord({
+		request,
+		discordId: user.discordId,
+	});
+	if (failureMessage) failed(failureMessage);
 
-		if (profile.user.id !== user.discordId) {
-			return failed(
-				"The Discord account you authorized is not the one linked to your sendou.ink account",
-			);
-		}
-
-		await upsertUser(profile);
-	} catch (error) {
-		logger.error("Error during refresh from Discord:", error);
-
-		return failed(
-			error instanceof Error && classifyAuthError(error) === "discordOverloaded"
-				? "Discord is overloaded right now, try again later"
-				: "Refreshing from Discord failed",
-		);
-	}
-
-	return successToastWithRedirect({
+	successToastWithRedirect({
 		url: returnTo,
 		message: "Your avatar, name and connections were refreshed from Discord",
 		headers,
 	});
+}
+
+async function refreshUserFromDiscord({
+	request,
+	discordId,
+}: {
+	request: Request;
+	discordId: string;
+}) {
+	try {
+		const profile = await authenticator.authenticate("discord", request);
+
+		if (profile.user.id !== discordId) {
+			return "The Discord account you authorized is not the one linked to your sendou.ink account";
+		}
+
+		await upsertUser(profile);
+
+		return null;
+	} catch (error) {
+		logger.error("Error during refresh from Discord:", error);
+
+		return error instanceof Error &&
+			classifyAuthError(error) === "discordOverloaded"
+			? "Discord is overloaded right now, try again later"
+			: "Refreshing from Discord failed";
+	}
 }

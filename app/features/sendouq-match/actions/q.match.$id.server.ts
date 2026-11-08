@@ -75,12 +75,12 @@ export const action = defineAction(
 					}
 
 					if (result.status === "INVALID_WINNER") {
-						return errorToast("Invalid winner id");
+						errorToast("Invalid winner id");
 					}
 
 					if (result.status === "SCORE_DISAGREEMENT") {
 						await refreshSendouQInstance();
-						return errorToast(
+						errorToast(
 							"Score does not match the other team's report. Contact the other team to adjust.",
 						);
 					}
@@ -320,7 +320,7 @@ export const action = defineAction(
 					});
 
 					if (result.status === "NOT_ALLOWED") {
-						return errorToast("Cannot undo report");
+						errorToast("Cannot undo report");
 					}
 					if (result.status === "ALREADY_LOCKED") {
 						return null;
@@ -345,7 +345,7 @@ export const action = defineAction(
 					});
 
 					if (result.status === "NOT_ALLOWED") {
-						return errorToast("Cannot undo map report");
+						errorToast("Cannot undo map report");
 					}
 					if (result.status === "ALREADY_LOCKED") {
 						return null;
@@ -410,7 +410,7 @@ export const action = defineAction(
 						return null;
 					}
 					if (result.status === "NOT_ALLOWED") {
-						return errorToast("Cannot accept own cancel request");
+						errorToast("Cannot accept own cancel request");
 					}
 
 					await notifyStaffOfCanceledMatch(match);
@@ -473,7 +473,7 @@ export const action = defineAction(
 						return null;
 					}
 					if (result.status === "NOT_ALLOWED") {
-						return errorToast("Cannot refuse own cancel request");
+						errorToast("Cannot refuse own cancel request");
 					}
 
 					if (match.chatRoomId) {

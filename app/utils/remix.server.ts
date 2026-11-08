@@ -107,7 +107,6 @@ export function formDataToObject(formData: FormData) {
 
 const LOHI_TOKEN_HEADER_NAME = "Lohi-Token";
 
-/** Some endpoints can only be accessed with an auth token. Used by Lohi bot and cron jobs. */
 /** A `returnTo` form value narrowed to a same-site path, so that redirecting to it can not leave the site. */
 export function safeReturnTo(value: FormDataEntryValue | null) {
 	if (typeof value !== "string") return null;
@@ -117,14 +116,9 @@ export function safeReturnTo(value: FormDataEntryValue | null) {
 	return value;
 }
 
+/** Some endpoints can only be accessed with an auth token. Used by Lohi bot and cron jobs. */
 export function canAccessLohiEndpoint(request: Request) {
 	return request.headers.get(LOHI_TOKEN_HEADER_NAME) === ServerConfig.lohiToken;
-}
-
-export function errorToastRedirect(message: string) {
-	return redirect(
-		urlWithToastParam(currentRequestPath() ?? "", "__error", message),
-	);
 }
 
 /** Asserts condition is truthy. Throws a redirect triggering an error toast with given message otherwise.  */
@@ -134,7 +128,7 @@ export function errorToastIfFalsy(
 ): asserts condition {
 	if (condition) return;
 
-	throw errorToastRedirect(message);
+	errorToast(message);
 }
 
 /** Asserts `Result` is `Ok`; on `Err` throws a redirect showing the error as a toast. */
@@ -142,21 +136,25 @@ export function errorToastIfErr<T, E extends string>(
 	value: Result<T, E>,
 ): asserts value is Ok<T> {
 	if (!value.ok) {
-		throw errorToastRedirect(value.error);
+		errorToast(value.error);
 	}
 }
 
-/** Throws a redirect triggering an error toast with given message.  */
-export function errorToast(message: string) {
-	throw errorToastRedirect(message);
+/** Throws a redirect back to the current page triggering an error toast with given message.  */
+export function errorToast(message: string): never {
+	throw redirect(
+		urlWithToastParam(currentRequestPath() ?? "", "__error", message),
+	);
 }
 
-export function successToast(message: string) {
-	return redirect(
+/** Throws a redirect back to the current page triggering a success toast with given message.  */
+export function successToast(message: string): never {
+	throw redirect(
 		urlWithToastParam(currentRequestPath() ?? "", "__success", message),
 	);
 }
 
+/** Throws a redirect to `url` triggering a success toast with given message.  */
 export function successToastWithRedirect({
 	message,
 	url,
@@ -165,10 +163,11 @@ export function successToastWithRedirect({
 	message: string;
 	url: string;
 	headers?: HeadersInit;
-}) {
-	return redirect(urlWithToastParam(url, "__success", message), { headers });
+}): never {
+	throw redirect(urlWithToastParam(url, "__success", message), { headers });
 }
 
+/** Throws a redirect to `url` triggering an error toast with given message.  */
 export function errorToastWithRedirect({
 	message,
 	url,
@@ -177,8 +176,8 @@ export function errorToastWithRedirect({
 	message: string;
 	url: string;
 	headers?: HeadersInit;
-}) {
-	return redirect(urlWithToastParam(url, "__error", message), { headers });
+}): never {
+	throw redirect(urlWithToastParam(url, "__error", message), { headers });
 }
 
 function urlWithToastParam(
