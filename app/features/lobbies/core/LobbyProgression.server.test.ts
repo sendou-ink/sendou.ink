@@ -9,6 +9,7 @@ import { withUserId } from "~/utils/Test";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
 import type { LobbyWeaponRandomizer } from "../lobbies-constants";
+import { editArgs } from "../tests/fixtures";
 import * as LobbyProgression from "./LobbyProgression.server";
 import * as LobbySet from "./LobbySet";
 
@@ -186,15 +187,9 @@ describe("LobbyProgression.advance", () => {
 		});
 		const set = await latestSet(lobbyId);
 
-		await LobbyRepository.updateSettings({
-			id: lobbyId,
-			name: "Lobby",
-			description: null,
-			label: "CASUAL",
-			bestOf: 3,
-			weaponRandomizer: "OFF",
-			isApplicationRequired: false,
-		});
+		await LobbyRepository.edit(
+			editArgs({ id: lobbyId, ownerId: hostId(), weaponRandomizer: "OFF" }),
+		);
 		await LobbyProgression.advance(lobbyId);
 
 		expect((await latestSet(lobbyId)).rolledWeapons).toEqual(set.rolledWeapons);
@@ -212,12 +207,9 @@ describe("LobbyProgression.advance", () => {
 			{ mode: "TC" as const, stageId: 3 as const },
 		];
 
-		await LobbyRepository.updateMaps({
-			id: lobbyId,
-			modes: ["TC"],
-			mapPool,
-			mapsTournamentId: null,
-		});
+		await LobbyRepository.edit(
+			editArgs({ id: lobbyId, ownerId: hostId(), modes: ["TC"], mapPool }),
+		);
 		await playOut(lobbyId);
 
 		const { games } = await latestSet(lobbyId);

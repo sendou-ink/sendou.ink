@@ -312,7 +312,9 @@ export const action = defineAction(
 				});
 				if (issue) return { fieldErrors: { [issue.path[0]]: issue.message } };
 
-				await LobbyRepository.updateSettings({
+				const maps = await mapsFromForm(body);
+
+				await LobbyRepository.edit({
 					id,
 					name: body.name ?? `${lobby.hostUsername}'s lobby`,
 					description: body.description,
@@ -320,13 +322,7 @@ export const action = defineAction(
 					bestOf: Number(body.bestOf) as LobbyBestOf,
 					weaponRandomizer: body.weaponRandomizer,
 					isApplicationRequired: body.isApplicationRequired,
-				});
-				await LobbyRepository.updateMaps({
-					id,
-					...(await mapsFromForm(body)),
-				});
-				await LobbyRepository.updateVisibility({
-					id,
+					...maps,
 					visibility: visibilityFromForm(body),
 					ownerId: lobby.hostUserId,
 				});

@@ -752,8 +752,7 @@ export function insert({
 			.insertInto("Lobby")
 			.values({
 				...args,
-				modes: JSON.stringify(modes),
-				mapPool: mapPool ? JSON.stringify(mapPool) : null,
+				...serializeMaps({ modes, mapPool }),
 				isApplicationRequired: toDBBoolean(isApplicationRequired),
 				chatRoomId: chatRoom.id,
 				shareKey: shortNanoid(),
@@ -761,16 +760,14 @@ export function insert({
 			.returning(["id", "createdAt"])
 			.executeTakeFirstOrThrow();
 
-		if (visibility !== "LINK_ONLY") {
-			await trx
-				.insertInto("ContentVisibility")
-				.values(
-					Visibility.toRows(visibility, {
-						createdAt: lobby.createdAt,
-						ownerId: args.hostUserId,
-					}).map((row) => ({ ...row, lobbyId: lobby.id })),
-				)
-				.execute();
+		const rows = visibilityRows({
+			visibility,
+			lobbyId: lobby.id,
+			ownerId: args.hostUserId,
+			createdAt: lobby.createdAt,
+		});
+		if (rows.length > 0) {
+			await trx.insertInto("ContentVisibility").values(rows).execute();
 		}
 
 		await trx
@@ -984,73 +981,59 @@ export function kickParticipant(args: ParticipantRemoval) {
 	});
 }
 
-/** Updates the settings the host can change after creating the lobby. */
-export async function updateSettings({
-	id,
-	isApplicationRequired,
-	...values
-}: Pick<
+type EditArgs = Pick<
 	Tables["Lobby"],
-	"id" | "name" | "description" | "label" | "bestOf" | "weaponRandomizer"
+	| "id"
+	| "name"
+	| "description"
+	| "label"
+	| "bestOf"
+	| "weaponRandomizer"
+	| "modes"
+	| "mapPool"
+	| "mapsTournamentId"
 > & {
 	isApplicationRequired: boolean;
-}) {
-	await db
-		.updateTable("Lobby")
-		.set({
-			...values,
-			isApplicationRequired: toDBBoolean(isApplicationRequired),
-		})
-		.where("Lobby.id", "=", id)
-		.execute();
-}
-
-/** Replaces where the lobby's sets get their maps from: the modes of the players' preferences or a map pool. */
-export async function updateMaps({
-	id,
-	modes,
-	mapPool,
-	mapsTournamentId,
-}: Pick<Tables["Lobby"], "id" | "modes" | "mapPool" | "mapsTournamentId">) {
-	await db
-		.updateTable("Lobby")
-		.set({
-			modes: JSON.stringify(modes),
-			mapPool: mapPool ? JSON.stringify(mapPool) : null,
-			mapsTournamentId,
-		})
-		.where("Lobby.id", "=", id)
-		.execute();
-}
-
-/** Replaces who sees the lobby, its new audience in effect right away. Its share key keeps working. */
-export function updateVisibility({
-	id,
-	visibility,
-	ownerId,
-}: {
-	id: number;
 	visibility: InsertArgs["visibility"];
 	/** The host, whose friends a friends only lobby is visible to */
 	ownerId: number;
-}) {
+};
+
+/** Saves the settings the host can change after creating the lobby, the new audience in effect right away. Its share key keeps working. */
+export function edit({
+	id,
+	ownerId,
+	visibility,
+	modes,
+	mapPool,
+	isApplicationRequired,
+	...values
+}: EditArgs) {
 	return db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("Lobby")
+			.set({
+				...values,
+				...serializeMaps({ modes, mapPool }),
+				isApplicationRequired: toDBBoolean(isApplicationRequired),
+			})
+			.where("Lobby.id", "=", id)
+			.execute();
+
 		await trx
 			.deleteFrom("ContentVisibility")
 			.where("ContentVisibility.lobbyId", "=", id)
 			.execute();
 
-		if (visibility === "LINK_ONLY") return;
-
-		await trx
-			.insertInto("ContentVisibility")
-			.values(
-				Visibility.toRows(visibility, {
-					createdAt: databaseTimestampNow(),
-					ownerId,
-				}).map((row) => ({ ...row, lobbyId: id })),
-			)
-			.execute();
+		const rows = visibilityRows({
+			visibility,
+			lobbyId: id,
+			ownerId,
+			createdAt: databaseTimestampNow(),
+		});
+		if (rows.length > 0) {
+			await trx.insertInto("ContentVisibility").values(rows).execute();
+		}
 	});
 }
 
@@ -1263,4 +1246,33 @@ async function deleteParticipantEndingSet(
 	await deleteParticipants({ lobbyId, userIds: [userId] }, trx);
 
 	return setEnding;
+}
+
+function serializeMaps({
+	modes,
+	mapPool,
+}: Pick<Tables["Lobby"], "modes" | "mapPool">) {
+	return {
+		modes: JSON.stringify(modes),
+		mapPool: mapPool ? JSON.stringify(mapPool) : null,
+	};
+}
+
+function visibilityRows({
+	visibility,
+	lobbyId,
+	ownerId,
+	createdAt,
+}: {
+	visibility: InsertArgs["visibility"];
+	lobbyId: number;
+	ownerId: number;
+	createdAt: number;
+}) {
+	if (visibility === "LINK_ONLY") return [];
+
+	return Visibility.toRows(visibility, { createdAt, ownerId }).map((row) => ({
+		...row,
+		lobbyId,
+	}));
 }

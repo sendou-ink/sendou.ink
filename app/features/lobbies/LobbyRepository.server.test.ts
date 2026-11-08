@@ -13,6 +13,7 @@ import * as LobbySet from "./core/LobbySet";
 import "./core/LobbyProgression.server";
 import * as LobbyMatchRepository from "./LobbyMatchRepository.server";
 import * as LobbyRepository from "./LobbyRepository.server";
+import { editArgs } from "./tests/fixtures";
 
 const users = UserFactory.pool();
 
@@ -205,14 +206,12 @@ describe("LobbyRepository visibility", () => {
 		expect(Boolean(found)).toBe(expected);
 	});
 
-	test("updateVisibility: opening a lobby to everyone shows it to outsiders", async () => {
+	test("edit: opening a lobby to everyone shows it to outsiders", async () => {
 		const lobby = await associationLobby();
 
-		await LobbyRepository.updateVisibility({
-			id: lobby.id,
-			visibility: null,
-			ownerId: hostId(),
-		});
+		await LobbyRepository.edit(
+			editArgs({ id: lobby.id, ownerId: hostId(), visibility: null }),
+		);
 
 		const found = await withUserId(outsiderId(), () =>
 			LobbyRepository.findById(lobby.id),
@@ -220,15 +219,13 @@ describe("LobbyRepository visibility", () => {
 		expect(found?.isPrivate).toBe(false);
 	});
 
-	test("updateVisibility: making a lobby link-only keeps its share key", async () => {
+	test("edit: making a lobby link-only keeps its share key", async () => {
 		const lobby = await LobbyFactory.create({ hostUserId: hostId() });
 		const shareKey = await hostShareKeyOf(lobby.id);
 
-		await LobbyRepository.updateVisibility({
-			id: lobby.id,
-			visibility: "LINK_ONLY",
-			ownerId: hostId(),
-		});
+		await LobbyRepository.edit(
+			editArgs({ id: lobby.id, ownerId: hostId(), visibility: "LINK_ONLY" }),
+		);
 
 		expect(await LobbyRepository.isLinkOnlyById(lobby.id)).toBe(true);
 		expect(await hostShareKeyOf(lobby.id)).toBe(shareKey);
