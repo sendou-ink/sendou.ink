@@ -103,6 +103,7 @@
 		"isbot": "5.2.3",
 		"kysely": "0.29.0",
 		"lucide-react": "1.72.0",
+		"maplibre-gl": "6.17.0",
 		"markdown-to-jsx": "9.10.6",
 		"mediabunny": "1.65.2",
 		"nanoid": "6.0.2",

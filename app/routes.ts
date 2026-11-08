@@ -181,6 +181,7 @@ export default [
 		index("features/calendar/routes/calendar.tsx"),
 		route("new", "features/calendar/routes/calendar.new.tsx"),
 		route("venue-search", "features/calendar/routes/calendar.venue-search.ts"),
+		route("lan-map", "features/calendar/routes/calendar.lan-map.tsx"),
 		route(":id", "features/calendar/routes/calendar.$id.tsx"),
 		route(
 			":id/report-winners",

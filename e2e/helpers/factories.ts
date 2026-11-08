@@ -47,6 +47,9 @@ export async function loadFactories(parallelIndex: number) {
 		CalendarEventResultFactory: await import(
 			"~/db/seed/factories/CalendarEventResultFactory"
 		),
+		CalendarEventVenueFactory: await import(
+			"~/db/seed/factories/CalendarEventVenueFactory"
+		),
 		FriendRequestFactory: await import(
 			"~/db/seed/factories/FriendRequestFactory"
 		),
