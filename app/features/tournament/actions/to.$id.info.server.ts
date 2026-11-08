@@ -14,9 +14,10 @@ export const action = defineAction(
 
 		switch (body._action) {
 			case "SAVE_TOURNAMENT": {
-				const count = await SavedCalendarEventRepository.countByUserId(user.id);
+				const upcomingCount =
+					await SavedCalendarEventRepository.countUpcomingByUserId(user.id);
 				errorToastIfFalsy(
-					count < TOURNAMENT.MAX_SAVED_COUNT,
+					upcomingCount < TOURNAMENT.MAX_SAVED_COUNT,
 					"Maximum saved tournaments reached",
 				);
 

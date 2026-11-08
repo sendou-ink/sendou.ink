@@ -2,6 +2,7 @@ import { db } from "~/db/sql";
 import { actorId } from "~/features/auth/core/user.server";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import { databaseTimestampNow } from "~/utils/dates";
 
 export function saveOwn(tournamentId: number) {
 	return db
@@ -58,11 +59,18 @@ export async function isSaved({
 	return Boolean(row);
 }
 
-export async function countByUserId(userId: number): Promise<number> {
+/** Counts the saved tournaments of the user that haven't started yet. */
+export async function countUpcomingByUserId(userId: number): Promise<number> {
 	const result = await db
 		.selectFrom("SavedCalendarEvent")
 		.select((eb) => eb.fn.countAll<number>().as("count"))
-		.where("userId", "=", userId)
+		.where("SavedCalendarEvent.userId", "=", userId)
+		.where("SavedCalendarEvent.calendarEventId", "in", (eb) =>
+			eb
+				.selectFrom("CalendarEventDate")
+				.select("CalendarEventDate.eventId")
+				.where("CalendarEventDate.startsAt", ">", databaseTimestampNow()),
+		)
 		.executeTakeFirstOrThrow();
 
 	return result.count;

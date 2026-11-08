@@ -2013,8 +2013,10 @@ export function buildCases(fx: Fixtures): {
 				tournamentId,
 			}),
 	);
-	add("SavedCalendarEventRepository.countByUserId", fx.heavyUser, (user) =>
-		SavedCalendarEventRepository.countByUserId(user.id),
+	add(
+		"SavedCalendarEventRepository.countUpcomingByUserId",
+		fx.heavyUser,
+		(user) => SavedCalendarEventRepository.countUpcomingByUserId(user.id),
 	);
 	add(
 		"SavedCalendarEventRepository.findAllUpcomingByUserId",
