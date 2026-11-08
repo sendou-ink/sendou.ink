@@ -1,10 +1,27 @@
-import type * as v from "valibot";
 import type { Tables } from "~/db/tables";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
-import type { videoSchema } from "./vods-schemas";
+import type { DayMonthYear } from "~/utils/schema";
 
-export type VideoBeingAdded = v.InferOutput<typeof videoSchema>;
+export interface VideoBeingAdded {
+	type: Tables["Video"]["type"];
+	eventId?: number;
+	youtubeUrl: string;
+	title: string;
+	date: DayMonthYear;
+	pov?: { type: "USER"; userId: number } | { type: "NAME"; name: string };
+	teamSize?: number;
+	matches: Array<{
+		startsAt: string;
+		stageId: StageId;
+		mode: ModeShort;
+		weapons: MainWeaponId[];
+	}>;
+}
 
 export interface Vod {
 	id: Tables["Video"]["id"];

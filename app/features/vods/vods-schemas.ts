@@ -15,86 +15,11 @@ import {
 	weaponSelectOptional,
 } from "~/form/fields";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import {
-	dayMonthYear,
-	id,
-	modeShort,
-	nonEmptyString,
-	preprocess,
-	stageId,
-	weaponSplId,
-} from "~/utils/schema";
-import { dayMonthYearToDate } from "../../utils/dates";
+import { id, nonEmptyString } from "~/utils/schema";
 import { videoMatchTypes } from "./vods-constants";
 import { extractYoutubeIdFromVideoUrl } from "./vods-utils";
 
 export const HOURS_MINUTES_SECONDS_REGEX = /^(\d{1,2}:)?\d{1,2}:\d{2}$/;
-
-const videoMatchSchema = v.object({
-	startsAt: v.pipe(
-		v.string(),
-		v.regex(
-			HOURS_MINUTES_SECONDS_REGEX,
-			"Invalid time format. Use HH:MM:SS or MM:SS",
-		),
-	),
-	stageId,
-	mode: modeShort,
-	weapons: v.array(weaponSplId),
-});
-
-export const videoSchema = preprocess(
-	(val: any) => (val.type === "CAST" ? { ...val, pov: undefined } : val),
-	v.pipe(
-		v.object({
-			type: v.picklist(videoMatchTypes),
-			eventId: v.optional(v.number()),
-			youtubeUrl: v.pipe(
-				v.string(),
-				v.check((val) => {
-					const videoId = extractYoutubeIdFromVideoUrl(val);
-
-					return videoId !== null;
-				}, "Invalid YouTube URL"),
-			),
-			title: v.pipe(nonEmptyString, v.maxLength(100)),
-			date: v.pipe(
-				dayMonthYear,
-				v.check((data) => {
-					const date = dayMonthYearToDate(data);
-
-					return date < add(new Date(), { days: 1 });
-				}, "Date must not be in the future"),
-			),
-			pov: v.optional(
-				v.union([
-					v.object({
-						type: v.literal("USER"),
-						userId: id,
-					}),
-					v.object({
-						type: v.literal("NAME"),
-						name: v.pipe(nonEmptyString, v.maxLength(100)),
-					}),
-				]),
-			),
-			teamSize: v.optional(
-				v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(4)),
-			),
-			matches: v.array(videoMatchSchema),
-		}),
-		v.check((data) => {
-			if (data.type === "CAST") {
-				const teamSize = data.teamSize ?? 4;
-				return data.matches.every(
-					(match) => match.weapons.length === teamSize * 2,
-				);
-			}
-
-			return data.matches.every((match) => match.weapons.length === 1);
-		}),
-	),
-);
 
 const povSchema = v.union([
 	v.object({
