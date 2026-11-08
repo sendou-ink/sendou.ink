@@ -211,12 +211,17 @@ export function ClipDialog({
 								onClick={(e) => {
 									// a plain anchor with `download` saves instead of navigating
 									e.preventDefault();
-									const a = document.createElement("a");
-									a.href = url;
-									a.download = playMusicFree
-										? clipFileName(clip).replace(/\.mp4$/, "-no-music.mp4")
-										: clipFileName(clip);
-									a.click();
+									const blob =
+										playMusicFree && music?.status === "removed"
+											? music.blob
+											: loaded?.blob;
+									if (!blob) return;
+									downloadBlob(
+										playMusicFree
+											? clipFileName(clip).replace(/\.mp4$/, "-no-music.mp4")
+											: clipFileName(clip),
+										blob,
+									);
 								}}
 							>
 								Download

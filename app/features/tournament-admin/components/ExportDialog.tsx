@@ -10,6 +10,7 @@ import * as CheckIn from "~/features/tournament-bracket/core/CheckIn";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import * as CSV from "~/modules/csv";
 import { databaseTimestampToDate } from "~/utils/dates";
+import { downloadBlob, downloadCsv } from "~/utils/download";
 import { teamPage, userPage } from "~/utils/urls";
 import styles from "./ExportDialog.module.css";
 
@@ -478,14 +479,12 @@ function handleDownload({
 	filename: string;
 	format: ExportFormat;
 }) {
-	const isCsv = format === "csv";
-	const element = document.createElement("a");
-	const file = new Blob(isCsv ? [CSV.BOM, content] : [content], {
-		type: isCsv ? "text/csv;charset=utf-8" : "text/plain;charset=utf-8",
-	});
-	element.href = URL.createObjectURL(file);
-	element.download = filename;
-	document.body.appendChild(element);
-	element.click();
-	document.body.removeChild(element);
+	if (format === "csv") {
+		downloadCsv(filename, content);
+		return;
+	}
+	downloadBlob(
+		filename,
+		new Blob([content], { type: "text/plain;charset=utf-8" }),
+	);
 }

@@ -5,6 +5,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { toastQueue } from "~/components/elements/Toast";
 import { languageSearchParams } from "~/modules/i18n/i18n-search-params";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
+import { downloadBlob } from "~/utils/download";
 import * as TranslationDrafts from "../core/TranslationDrafts";
 import type { TranslatableLanguage } from "../translate-constants";
 import {
@@ -44,9 +45,9 @@ export function DraftActions({
 
 		if (files.length === 1) {
 			const [namespace, content] = files[0];
-			saveFile(
-				new Blob([toJson(content)], { type: "application/json" }),
+			downloadBlob(
 				`${namespace}.json`,
+				new Blob([toJson(content)], { type: "application/json" }),
 			);
 			return;
 		}
@@ -59,9 +60,9 @@ export function DraftActions({
 				]),
 			),
 		);
-		saveFile(
-			new Blob([new Uint8Array(zip)], { type: "application/zip" }),
+		downloadBlob(
 			`sendou-ink-translations-${language}.zip`,
+			new Blob([new Uint8Array(zip)], { type: "application/zip" }),
 		);
 	};
 
@@ -187,13 +188,4 @@ async function readTranslationFiles(fileList: FileList) {
 
 function toJson(content: Record<string, string>) {
 	return `${JSON.stringify(content, null, "\t")}\n`;
-}
-
-function saveFile(blob: Blob, fileName: string) {
-	const url = URL.createObjectURL(blob);
-	const link = document.createElement("a");
-	link.href = url;
-	link.download = fileName;
-	link.click();
-	URL.revokeObjectURL(url);
 }

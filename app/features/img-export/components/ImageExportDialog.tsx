@@ -12,6 +12,7 @@ import { SendouSwitch } from "~/components/elements/Switch";
 import { useTheme } from "~/features/theme/core/provider";
 import { useCopyPngToClipboard } from "~/hooks/useCopyToClipboard";
 import { useMediaQuery } from "~/hooks/useMediaQuery";
+import { downloadBlob } from "~/utils/download";
 import { SENDOU_INK_BASE_URL } from "~/utils/urls";
 import { SNAPDOM_CAPTURE_OPTIONS } from "../img-export-constants";
 import { GraphicQrCodeContext } from "./Graphic";
@@ -259,14 +260,7 @@ async function saveImage(
 	}
 
 	// a blob url is used over a data url because iOS Safari fails to save big data urls
-	const url = URL.createObjectURL(blob);
-	const anchor = document.createElement("a");
-	anchor.href = url;
-	anchor.download = filename;
-	document.body.appendChild(anchor);
-	anchor.click();
-	anchor.remove();
-	URL.revokeObjectURL(url);
+	downloadBlob(filename, blob);
 }
 
 function useIsMobile() {
