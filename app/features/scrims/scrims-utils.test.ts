@@ -323,8 +323,13 @@ describe("requestStarts", () => {
 		).toEqual([at("19:00")]);
 	});
 
-	test("offers now once the whole flexibility has passed", () => {
-		expect(requestStarts({ post, now: at("21:00") })).toEqual([at("21:00")]);
+	test("keeps offering every start once the whole flexibility has passed", () => {
+		expect(requestStarts({ post, now: at("21:00") })).toEqual([
+			at("19:00"),
+			at("19:30"),
+			at("20:00"),
+			at("20:30"),
+		]);
 	});
 });
 

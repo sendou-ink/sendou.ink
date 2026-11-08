@@ -8,6 +8,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
+	databaseTimestampNow,
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
@@ -24,7 +25,7 @@ import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { SCRIM, SCRIMS_CHANNEL } from "../scrims-constants";
 import { scrimsActionSchema } from "../scrims-schemas";
-import { generateTimeOptions } from "../scrims-utils";
+import { requestStarts } from "../scrims-utils";
 import { usersListForPost, validatePickup } from "./scrims.new.server";
 
 export const action = defineAction(
@@ -77,16 +78,15 @@ export const action = defineAction(
 				}
 
 				if (post.rangeEndsAt && body.at) {
-					const validTimeOptions = generateTimeOptions(
-						databaseTimestampToDate(post.startsAt),
-						databaseTimestampToDate(post.rangeEndsAt),
-					);
-					const requestTime = body.at.getTime();
+					const validStarts = requestStarts({
+						post,
+						now: databaseTimestampNow() - SCRIM.REQUEST_START_GRACE_SECONDS,
+					});
 
-					if (!validTimeOptions.includes(requestTime)) {
+					if (!validStarts.includes(dateToDatabaseTimestamp(body.at))) {
 						return {
 							fieldErrors: {
-								at: "Selected time must be one of the available options",
+								at: "Selected time is not available anymore, please pick another one",
 							},
 						};
 					}

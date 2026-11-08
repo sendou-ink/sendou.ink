@@ -16,7 +16,7 @@ import type { loader as scrimsLoader } from "../loaders/scrims.server";
 import { SCRIM } from "../scrims-constants";
 import { scrimRequestFormSchema } from "../scrims-schemas";
 import type { ScrimPost } from "../scrims-types";
-import { generateTimeOptions } from "../scrims-utils";
+import { requestStarts } from "../scrims-utils";
 import { ScrimAvailabilityRows, useRosterFit } from "./ScrimAvailability";
 import { WithFormField } from "./WithFormField";
 
@@ -37,22 +37,16 @@ export function ScrimRequestModal({
 	// only the starts still on offer: the server clips the roster schedules to
 	// them, and defaulting to a time already past would show the whole roster
 	// as unavailable. Once every start has passed the full list stays on offer.
-	const allTimeOptions = post.rangeEndsAt
-		? generateTimeOptions(
-				databaseTimestampToDate(post.startsAt),
-				databaseTimestampToDate(post.rangeEndsAt),
-			)
+	const timeOptions = post.rangeEndsAt
+		? requestStarts({ post, now: data.availability.now }).map((startsAt) => {
+				const date = databaseTimestampToDate(startsAt);
+
+				return {
+					value: String(date.getTime()),
+					label: timeFormatter.format(date) ?? "",
+				};
+			})
 		: [];
-	const upcomingTimeOptions = allTimeOptions.filter(
-		(timestamp) =>
-			dateToDatabaseTimestamp(new Date(timestamp)) >= data.availability.now,
-	);
-	const timeOptions = (
-		upcomingTimeOptions.length > 0 ? upcomingTimeOptions : allTimeOptions
-	).map((timestamp) => ({
-		value: String(timestamp),
-		label: timeFormatter.format(new Date(timestamp)) ?? "",
-	}));
 
 	return (
 		<SendouDialog heading={t("scrims:requestModal.title")} onClose={close}>

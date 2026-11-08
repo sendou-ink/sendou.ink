@@ -37,6 +37,8 @@ export const SCRIM = {
 	REQUEST_MESSAGE_MAX_LENGTH: 200,
 	MAX_TIME_RANGE_MS: 3 * 60 * 60 * 1000, // 3 hours
 	AUTO_CANCEL_WINDOW_HOURS: 1,
+	/** How long after a start passes a request for it is still accepted, the open request modal may not have dropped it yet */
+	REQUEST_START_GRACE_SECONDS: 30 * 60,
 };
 
 export const SCRIM_TRACKING_AUTO_LOCK_HOURS = 4;

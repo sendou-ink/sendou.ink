@@ -83,7 +83,7 @@ export const serializeLutiDiv = (div: LutiDiv): number => {
 	return Number(div);
 };
 
-/** Starts a request can still be made for: the post's start, the half hours inside its flexibility and its end, past ones dropped. No flexibility left offers `now` ("looking now"). */
+/** Starts a request can still be made for: the post's start, the half hours inside its flexibility and its end, past ones dropped. Once all have passed a flexible post keeps offering all of them, one with no flexibility offers `now` ("looking now"). */
 export function requestStarts({
 	post,
 	now,
@@ -91,16 +91,17 @@ export function requestStarts({
 	post: Pick<ScrimPost, "startsAt" | "rangeEndsAt">;
 	now: number;
 }): Array<number> {
-	const starts = post.rangeEndsAt
-		? generateTimeOptions(
-				databaseTimestampToDate(post.startsAt),
-				databaseTimestampToDate(post.rangeEndsAt),
-			).map((timestamp) => dateToDatabaseTimestamp(new Date(timestamp)))
-		: [post.startsAt];
+	if (!post.rangeEndsAt) {
+		return post.startsAt >= now ? [post.startsAt] : [now];
+	}
 
+	const starts = generateTimeOptions(
+		databaseTimestampToDate(post.startsAt),
+		databaseTimestampToDate(post.rangeEndsAt),
+	).map((timestamp) => dateToDatabaseTimestamp(new Date(timestamp)));
 	const upcoming = starts.filter((startsAt) => startsAt >= now);
 
-	return upcoming.length > 0 ? upcoming : [now];
+	return upcoming.length > 0 ? upcoming : starts;
 }
 
 /** The whole span the scrim could take up: earliest start still on offer to the end of a scrim from the latest one. */
@@ -119,6 +120,7 @@ export function postSpan({
 	};
 }
 
+/** @internal */
 export function generateTimeOptions(startDate: Date, endDate: Date): number[] {
 	const timestamps = new Set<number>();
 
