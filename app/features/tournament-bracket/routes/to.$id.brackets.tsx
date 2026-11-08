@@ -1,4 +1,3 @@
-import { sub } from "date-fns";
 import {
 	Check,
 	Eye,
@@ -577,7 +576,7 @@ function BracketTabContent({
 								<span>
 									(open{" "}
 									<LocaleTimeRange
-										from={sub(bracket.startTime, { hours: 1 })}
+										from={tournament.bracketCheckInStartsAt(bracketIdx)!}
 										to={bracket.startTime}
 										options={{
 											hour: "numeric",

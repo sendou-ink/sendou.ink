@@ -578,7 +578,7 @@ function mostRecentStartTime(tournament: Tournament) {
 
 /** A scheduled bracket the tournament is about to resume with, e.g. day 2 of a two day event once its check-in opens. */
 function hasImminentBracket(tournament: Tournament) {
-	const opensAt = new Date(Date.now() + TOURNAMENT.REGULAR_CHECK_IN_WINDOW_MS);
+	const opensAt = new Date(Date.now() + TOURNAMENT.BRACKET_CHECK_IN_WINDOW_MS);
 
 	return tournament.ctx.settings.bracketProgression.some((bracket) => {
 		if (!bracket.startTime) return false;

@@ -1,4 +1,3 @@
-import { sub } from "date-fns";
 import type { Tables } from "~/db/tables";
 import type {
 	TeamPickSettings,
@@ -1089,15 +1088,26 @@ export class Tournament {
 		return count > 1;
 	}
 
+	/** When check-in opens for a follow-up bracket that has its own start time, null if it has none. */
+	bracketCheckInStartsAt(bracketIdx: number) {
+		const startTime = this.bracketMetaByIdx(bracketIdx)?.startTime;
+		if (!startTime) return null;
+
+		return new Date(
+			startTime.getTime() - TOURNAMENT.BRACKET_CHECK_IN_WINDOW_MS,
+		);
+	}
+
 	canCheckInToBracket(bracketIdx: number, user: OptionalIdObject) {
 		const bracket = this.bracketMetaByIdx(bracketIdx);
 		// using regular check-in
 		if (!bracket?.teamsPendingCheckIn) return false;
 
 		if (bracket.startTime) {
+			const now = new Date();
 			const checkInOpen =
-				sub(bracket.startTime.getTime(), { hours: 1 }).getTime() < Date.now() &&
-				bracket.startTime.getTime() > Date.now();
+				this.bracketCheckInStartsAt(bracketIdx)! < now &&
+				bracket.startTime > now;
 
 			if (!checkInOpen) return false;
 		}

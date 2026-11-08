@@ -22,6 +22,8 @@ export const TOURNAMENT = {
 	VOD_VISIBILITY_DAYS: 7,
 	/** How long before the start regular check-in opens, closing when the tournament starts */
 	REGULAR_CHECK_IN_WINDOW_MS: 60 * 60 * 1000,
+	/** How long before a follow-up bracket's own start time its check-in opens, closing when it starts */
+	BRACKET_CHECK_IN_WINDOW_MS: 60 * 60 * 1000,
 	ROUND_NAMES: {
 		WB_FINALS: "WB Finals",
 		GRAND_FINALS: "Grand Finals",

@@ -1,4 +1,3 @@
-import { sub } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { ActionButton } from "~/components/ActionButton";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
@@ -34,7 +33,7 @@ export function BracketCheckIn({ bracketIdx }: { bracketIdx: number }) {
 				<span className="text-lighter text-xxs">
 					{t("tournament:bracket.checkIn.opens")}{" "}
 					<LocaleTimeRange
-						from={sub(bracket.startTime, { hours: 1 })}
+						from={tournament.bracketCheckInStartsAt(bracket.idx)!}
 						to={bracket.startTime}
 						options={{
 							hour: "numeric",
