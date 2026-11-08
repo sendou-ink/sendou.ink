@@ -548,6 +548,36 @@ test.describe("Public API - Write endpoints", () => {
 		const data = await response.json();
 		expect(data.error).toBe("Not an organizer");
 	});
+
+	test("returns 400 when a non-organizer updates seeds", async ({
+		page,
+		factories,
+	}) => {
+		const { tournamentId, teamId } = await organizedTournament(factories);
+		const outsider = await factories.UserFactory.create(null, {
+			roles: ["API_ACCESSER"],
+		});
+		const { token } = await factories.ApiTokenFactory.create({
+			userId: outsider.id,
+			type: "write",
+		});
+
+		await impersonate(page, outsider.id);
+
+		const response = await page.request.fetch(
+			`/api/tournament/${tournamentId}/seeds`,
+			{
+				method: "POST",
+				headers: authorized(token),
+				data: { tournamentTeamIds: [teamId] },
+				maxRedirects: 0,
+			},
+		);
+
+		expect(response.status()).toBe(400);
+		const data = await response.json();
+		expect(data.error).toBe("Not an organizer");
+	});
 });
 
 /** A tournament the admin organizes, with teams registered and a write token to manage it with. */

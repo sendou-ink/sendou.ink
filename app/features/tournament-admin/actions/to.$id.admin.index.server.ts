@@ -12,7 +12,6 @@ import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
 	notifyTournamentStatusChanged,
-	requireTournamentOrganizer,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import {
@@ -33,7 +32,7 @@ export const action = defineAction(
 	async ({ params, body }) => {
 		const { tournament, tournamentId, user } = await tournamentFromParams(
 			params,
-			{ for: "action" },
+			{ for: "organizer" },
 		);
 
 		let statusChangedUserIds: number[] = [];
@@ -43,7 +42,6 @@ export const action = defineAction(
 
 		switch (body._action) {
 			case "CHECK_IN": {
-				requireTournamentOrganizer(tournament, user);
 				const team = tournament.teamById(body.teamId);
 				errorToastIfFalsy(team, "Invalid team id");
 				errorToastIfFalsy(
@@ -81,7 +79,6 @@ export const action = defineAction(
 				break;
 			}
 			case "CHECK_OUT": {
-				requireTournamentOrganizer(tournament, user);
 				const team = tournament.teamById(body.teamId);
 				errorToastIfFalsy(team, "Invalid team id");
 
@@ -113,7 +110,6 @@ export const action = defineAction(
 				break;
 			}
 			case "DELETE_TEAM": {
-				requireTournamentOrganizer(tournament, user);
 				const team = tournament.teamById(body.teamId);
 				errorToastIfFalsy(team, "Invalid team id");
 				errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
@@ -138,7 +134,6 @@ export const action = defineAction(
 				break;
 			}
 			case "DROP_TEAM_OUT": {
-				requireTournamentOrganizer(tournament, user);
 				const team = tournament.teamById(body.teamId);
 				errorToastIfFalsy(team, "Invalid team id");
 				errorToastIfFalsy(
@@ -161,7 +156,6 @@ export const action = defineAction(
 				break;
 			}
 			case "UNDO_DROP_TEAM_OUT": {
-				requireTournamentOrganizer(tournament, user);
 				const team = tournament.teamById(body.teamId);
 				errorToastIfFalsy(team, "Invalid team id");
 

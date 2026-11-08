@@ -20,11 +20,12 @@ export const action = defineAction(
 			params,
 			{ for: "action" },
 		);
+		// not `for: "organizer"`: the public API maps only this error toast to a 400
+		requireTournamentOrganizer(tournament, user);
 
 		let message: string;
 		switch (body._action) {
 			case "UPDATE_SEEDS": {
-				requireTournamentOrganizer(tournament, user);
 				errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
 				await TournamentRepository.updateTeamSeeds({
@@ -36,7 +37,6 @@ export const action = defineAction(
 				break;
 			}
 			case "UPDATE_STARTING_BRACKETS": {
-				requireTournamentOrganizer(tournament, user);
 				errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
 				const validBracketIdxs =
@@ -63,7 +63,6 @@ export const action = defineAction(
 				break;
 			}
 			case "UPDATE_AB_DIVISIONS": {
-				requireTournamentOrganizer(tournament, user);
 				errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
 				errorToastIfFalsy(
