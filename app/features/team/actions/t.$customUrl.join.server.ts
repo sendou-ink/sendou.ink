@@ -5,9 +5,9 @@ import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";
 import { validateInviteCode } from "../loaders/t.$customUrl.join.server";
 import * as TeamRepository from "../TeamRepository.server";
-import { TEAM } from "../team-constants";
 import { teamParamsSchema } from "../team-schemas.server";
 import { teamJoinSearchParams } from "../team-search-params";
+import { maxTeamCount } from "../team-utils";
 
 export const action = defineAction(
 	{ params: teamParamsSchema },
@@ -35,10 +35,7 @@ export const action = defineAction(
 		);
 
 		await TeamRepository.insertOwnMembership({
-			maxTeamsAllowed:
-				user.patronTier && user.patronTier >= 2
-					? TEAM.MAX_TEAM_COUNT_PATRON
-					: TEAM.MAX_TEAM_COUNT_NON_PATRON,
+			maxTeamsAllowed: maxTeamCount(user),
 			teamId: team.id,
 		});
 

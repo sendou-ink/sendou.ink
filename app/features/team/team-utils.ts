@@ -3,6 +3,7 @@ import type {
 	MemberRole,
 	MemberRoleType,
 } from "~/features/team/team-constants";
+import { isSupporter } from "~/modules/permissions/utils";
 import type * as TeamRepository from "./TeamRepository.server";
 import { NON_PLAYER_TEAM_ROLES, TEAM } from "./team-constants";
 
@@ -37,9 +38,14 @@ export function isTeamFull(team: TeamRepository.findByCustomUrl) {
 export function canAddCustomizedColors(team: {
 	members: { patronTier: number | null }[];
 }) {
-	return team.members.some(
-		(member) => member.patronTier && member.patronTier >= 2,
-	);
+	return team.members.some(isSupporter);
+}
+
+/** How many teams the user may be a member of at once. */
+export function maxTeamCount(user: { patronTier: number | null }) {
+	return isSupporter(user)
+		? TEAM.MAX_TEAM_COUNT_PATRON
+		: TEAM.MAX_TEAM_COUNT_NON_PATRON;
 }
 
 /** Who becomes owner after the current one leaves. */

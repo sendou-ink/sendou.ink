@@ -4,8 +4,8 @@ import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
-import { TEAM } from "../team-constants";
 import { createTeamSchemaServer } from "../team-schemas.server";
+import { maxTeamCount } from "../team-utils";
 
 export const action = defineAction(
 	{ body: createTeamSchemaServer },
@@ -15,12 +15,8 @@ export const action = defineAction(
 		const currentTeamCount = (
 			await TeamRepository.findAllMemberOfByUserId(user.id)
 		).length;
-		const maxTeamCount = user.roles.includes("SUPPORTER")
-			? TEAM.MAX_TEAM_COUNT_PATRON
-			: TEAM.MAX_TEAM_COUNT_NON_PATRON;
-
 		errorToastIfFalsy(
-			currentTeamCount < maxTeamCount,
+			currentTeamCount < maxTeamCount(user),
 			"Already in max amount of teams",
 		);
 
