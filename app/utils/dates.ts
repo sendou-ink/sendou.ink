@@ -1,3 +1,4 @@
+import { TZDate } from "@date-fns/tz";
 import type { Locale } from "date-fns";
 import { formatDistanceToNow as dateFnsFormatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
@@ -90,6 +91,40 @@ export function localDateToDayMonthYear(date: Date): DayMonthYear {
 		month: date.getMonth(),
 		year: date.getFullYear(),
 	};
+}
+
+/**
+ * The instant at which the clock in `timeZone` reads what `wallClock` reads in local time, e.g. a "10:00" typed
+ * into a form turned into 10:00 at the venue.
+ */
+export function wallClockToInstant(wallClock: Date, timeZone: string) {
+	return new Date(
+		new TZDate(
+			wallClock.getFullYear(),
+			wallClock.getMonth(),
+			wallClock.getDate(),
+			wallClock.getHours(),
+			wallClock.getMinutes(),
+			wallClock.getSeconds(),
+			wallClock.getMilliseconds(),
+			timeZone,
+		).getTime(),
+	);
+}
+
+/** Local time `Date` reading what the clock in `timeZone` reads at `instant`, the inverse of {@link wallClockToInstant}. */
+export function instantToWallClock(instant: Date, timeZone: string) {
+	const zoned = new TZDate(instant.getTime(), timeZone);
+
+	return new Date(
+		zoned.getFullYear(),
+		zoned.getMonth(),
+		zoned.getDate(),
+		zoned.getHours(),
+		zoned.getMinutes(),
+		zoned.getSeconds(),
+		zoned.getMilliseconds(),
+	);
 }
 
 /** Day/month/year to a database timestamp, noon UTC. */

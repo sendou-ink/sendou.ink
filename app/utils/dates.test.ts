@@ -1,5 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { weekNumberToDate, weekNumberToDateRange } from "./dates";
+import {
+	instantToWallClock,
+	wallClockToInstant,
+	weekNumberToDate,
+	weekNumberToDateRange,
+} from "./dates";
 
 describe("weekNumberToDate", () => {
 	// the bug only manifests west of UTC
@@ -48,5 +53,97 @@ describe("weekNumberToDateRange", () => {
 		});
 
 		expect(endTime.getTime() - startTime.getTime()).toBe(SEVEN_DAYS_MS);
+	});
+});
+
+describe("wallClockToInstant", () => {
+	// the browser's zone, it changes its clocks on different days than the venue
+	const originalTimezone = process.env.TZ;
+	beforeAll(() => {
+		process.env.TZ = "Europe/Helsinki";
+	});
+	afterAll(() => {
+		process.env.TZ = originalTimezone;
+	});
+
+	test.each([
+		{
+			why: "before US DST starts",
+			day: [2026, 2, 7],
+			expected: "2026-03-07T16:00:00.000Z",
+		},
+		{
+			why: "after US DST starts",
+			day: [2026, 2, 9],
+			expected: "2026-03-09T15:00:00.000Z",
+		},
+		{
+			why: "before EU DST ends",
+			day: [2026, 9, 24],
+			expected: "2026-10-24T15:00:00.000Z",
+		},
+		{
+			why: "after EU DST ends, US not yet",
+			day: [2026, 9, 26],
+			expected: "2026-10-26T15:00:00.000Z",
+		},
+		{
+			why: "after US DST ends",
+			day: [2026, 10, 2],
+			expected: "2026-11-02T16:00:00.000Z",
+		},
+	])("10:00 in Chicago $why", ({ day, expected }) => {
+		const [year, month, date] = day as [number, number, number];
+		const wallClock = new Date(year, month, date, 10, 0);
+
+		expect(wallClockToInstant(wallClock, "America/Chicago").toISOString()).toBe(
+			expected,
+		);
+	});
+
+	test("is identity in the local zone", () => {
+		const wallClock = new Date(2026, 9, 25, 12, 30);
+
+		expect(wallClockToInstant(wallClock, "Europe/Helsinki").getTime()).toBe(
+			wallClock.getTime(),
+		);
+	});
+});
+
+describe("instantToWallClock", () => {
+	const originalTimezone = process.env.TZ;
+	beforeAll(() => {
+		process.env.TZ = "Europe/Helsinki";
+	});
+	afterAll(() => {
+		process.env.TZ = originalTimezone;
+	});
+
+	test.each([
+		{ why: "in CST", instant: "2026-03-07T16:00:00.000Z", date: 7 },
+		{ why: "in CDT", instant: "2026-03-09T15:00:00.000Z", date: 9 },
+		{
+			why: "after EU DST ends, US not yet",
+			instant: "2026-10-26T15:00:00.000Z",
+			date: 26,
+		},
+	])("reads the venue clock $why", ({ instant, date }) => {
+		const wallClock = instantToWallClock(new Date(instant), "America/Chicago");
+
+		expect(wallClock.getDate()).toBe(date);
+		expect(wallClock.getHours()).toBe(10);
+		expect(wallClock.getMinutes()).toBe(0);
+	});
+
+	test.each([
+		{ why: "Chicago", timeZone: "America/Chicago" },
+		{ why: "Tokyo (crosses the date line)", timeZone: "Asia/Tokyo" },
+		{ why: "Kathmandu (45 min offset)", timeZone: "Asia/Kathmandu" },
+	])("round trips with wallClockToInstant in $why", ({ timeZone }) => {
+		const wallClock = new Date(2026, 10, 1, 23, 45);
+
+		expect(
+			instantToWallClock(wallClockToInstant(wallClock, timeZone), timeZone),
+		).toEqual(wallClock);
 	});
 });

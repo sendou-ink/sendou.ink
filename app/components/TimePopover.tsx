@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { Check, Clipboard } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useVenueTimeFormat } from "~/hooks/intl/useVenueTimeFormat";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { SendouButton } from "./elements/Button";
 import { SendouAnchoredPopover } from "./elements/Popover";
@@ -19,12 +20,15 @@ export function TimePopover({
 	underline = true,
 	className,
 	footerText,
+	venueTimezone,
 }: {
 	date: Date;
 	options?: Intl.DateTimeFormatOptions;
 	underline?: boolean;
 	className?: string;
 	footerText?: string;
+	/** Shows the time in the venue's zone ("10:00 local") instead of the viewer's. */
+	venueTimezone?: string | null;
 }) {
 	const [open, setOpen] = useState(false);
 
@@ -33,6 +37,8 @@ export function TimePopover({
 	const { t } = useTranslation(["common"]);
 
 	const { copyToClipboard, copySuccess } = useCopyToClipboard();
+
+	const venueTime = useVenueTimeFormat(options, venueTimezone);
 
 	return (
 		<div>
@@ -49,7 +55,17 @@ export function TimePopover({
 					setOpen(true);
 				}}
 			>
-				<LocaleTime date={date} options={options} inline />
+				{venueTimezone ? (
+					<time
+						suppressHydrationWarning
+						dateTime={date.toISOString()}
+						className={clsx({ invisible: !venueTime.isLoaded })}
+					>
+						{venueTime.format(date).venue}
+					</time>
+				) : (
+					<LocaleTime date={date} options={options} inline />
+				)}
 			</button>
 			<SendouAnchoredPopover
 				isOpen={open}
@@ -64,6 +80,7 @@ export function TimePopover({
 								timeZoneName: "long",
 								hour: "numeric",
 								minute: "numeric",
+								timeZone: venueTimezone ?? undefined,
 							}}
 						/>
 					</div>

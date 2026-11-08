@@ -60,6 +60,7 @@ import {
 	teamPickSettingsFromFormValues,
 	tournamentTagsField,
 	valuesMovedWithStartTime,
+	venueTimeZoneFromFormValues,
 } from "../calendar-new-schemas";
 import {
 	type BracketFormValue,
@@ -70,6 +71,7 @@ import {
 import { calendarNewSearchParams } from "../calendar-search-params";
 import type { CalendarEventTag } from "../calendar-types";
 import { BracketProgressionBuilder } from "../components/BracketProgressionBuilder";
+import { VenueTimeNotice } from "../components/VenueTimeNotice";
 import { loader } from "../loaders/calendar.new.server";
 
 export { action, loader };
@@ -169,6 +171,7 @@ export default function CalendarNewEventPage() {
 					fullWidth
 					steps={data.isAddingTournament ? TOURNAMENT_FORM_STEPS : undefined}
 					submitOnEveryStep={Boolean(data.eventToEdit)}
+					timeZone={venueTimeZoneFromFormValues}
 				>
 					{data.isAddingTournament ? (
 						<TournamentSteps />
@@ -666,6 +669,7 @@ function VenueFields() {
 					<FormField name="venueAddress" options={addressOptions} required />
 					<FormField name="venueName" required />
 					<FormField name="venueTimezone" options={TIMEZONE_OPTIONS} />
+					<VenueTimeNotice timeZone={venueTimeZoneFromFormValues(values)} />
 				</>
 			) : null}
 		</>

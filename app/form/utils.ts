@@ -1,7 +1,9 @@
+import { isPlainObject } from "remeda";
 import * as v from "valibot";
+import { instantToWallClock, wallClockToInstant } from "~/utils/dates";
 import type { AnySyncSchema } from "~/utils/schema";
 import { getFormFieldMetadata } from "./fields";
-import type { FormField, FormObjectSchema } from "./types";
+import type { FormField, FormObjectSchema, FormTimeZone } from "./types";
 
 /** Body key a submitter sets when it renders `fieldErrors`; without it an invalid body fails with an error toast. */
 export const RENDERS_FIELD_ERRORS_KEY = "_rendersFieldErrors";
@@ -275,4 +277,85 @@ export function ariaAttributes({
 		"aria-errormessage": error && name ? errorMessageId(name) : undefined,
 		"aria-required": required ? ("true" as const) : undefined,
 	};
+}
+
+/** The zone the form's `datetime` fields are entered in, `null` for the browser's own. */
+export function resolveFormTimeZone(
+	timeZone: FormTimeZone | undefined,
+	values: Record<string, unknown>,
+): string | null {
+	const resolved = typeof timeZone === "function" ? timeZone(values) : timeZone;
+
+	return resolved || null;
+}
+
+/**
+ * Form `datetime` fields hold wall-clock times read in the browser's zone: instants coming in (e.g. default values)
+ * become the wall clock they have in the form's time zone, so changing the zone keeps the typed times.
+ */
+export function instantsToWallClocks(
+	schema: FormObjectSchema,
+	values: Record<string, unknown>,
+	timeZone: FormTimeZone | undefined,
+) {
+	const zone = resolveFormTimeZone(timeZone, values);
+	if (!zone) return values;
+
+	return mapDatetimeValues(schema.entries, values, (date) =>
+		instantToWallClock(date, zone),
+	);
+}
+
+/** Inverse of {@link instantsToWallClocks}, the instants the typed wall-clock times are in the form's time zone. */
+export function wallClocksToInstants(
+	schema: FormObjectSchema,
+	values: Record<string, unknown>,
+	timeZone: FormTimeZone | undefined,
+) {
+	const zone = resolveFormTimeZone(timeZone, values);
+	if (!zone) return values;
+
+	return mapDatetimeValues(schema.entries, values, (date) =>
+		wallClockToInstant(date, zone),
+	);
+}
+
+function mapDatetimeValues(
+	entries: v.ObjectEntries,
+	values: Record<string, unknown>,
+	convert: (date: Date) => Date,
+): Record<string, unknown> {
+	const result = { ...values };
+	for (const [key, fieldSchema] of Object.entries(entries)) {
+		if (!(key in values)) continue;
+
+		result[key] = mapDatetimeValue(
+			getFormFieldMetadata(fieldSchema as AnySyncSchema),
+			values[key],
+			convert,
+		);
+	}
+
+	return result;
+}
+
+function mapDatetimeValue(
+	formField: FormField | undefined,
+	value: unknown,
+	convert: (date: Date) => Date,
+): unknown {
+	if (formField?.type === "datetime") {
+		return value instanceof Date ? convert(value) : value;
+	}
+
+	if (formField?.type === "fieldset" && isPlainObject(value)) {
+		return mapDatetimeValues(formField.fields.entries, value, convert);
+	}
+
+	if (formField?.type === "array" && Array.isArray(value)) {
+		const itemField = getFormFieldMetadata(formField.field);
+		return value.map((item) => mapDatetimeValue(itemField, item, convert));
+	}
+
+	return value;
 }

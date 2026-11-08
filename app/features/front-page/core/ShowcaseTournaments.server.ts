@@ -346,6 +346,9 @@ function mapTournamentFromDB(
 		hasVods: (tournament.vodCount ?? 0) > 0,
 		badges: tournament.badges,
 		trophyId: tournament.trophyId,
+		venue: tournament.venueTimezone
+			? { timezone: tournament.venueTimezone }
+			: null,
 		firstPlacers,
 	};
 }

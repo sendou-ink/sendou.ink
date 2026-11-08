@@ -99,6 +99,11 @@
 	gap: var(--s-1);
 }
 
+.viewerTime {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-body);
+}
+
 .estimatedEnd {
 	display: flex;
 	align-items: center;

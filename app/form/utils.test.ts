@@ -1,12 +1,21 @@
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 import { preprocess } from "~/utils/schema";
-import { array, textField } from "./fields";
+import {
+	array,
+	datetimeOptional,
+	fieldset,
+	textField,
+	textFieldOptional,
+} from "./fields";
 import {
 	getNestedSchema,
 	getNestedValue,
+	instantsToWallClocks,
+	resolveFormTimeZone,
 	setNestedValue,
 	validateField,
+	wallClocksToInstants,
 } from "./utils";
 
 describe("getNestedValue", () => {
@@ -185,4 +194,133 @@ describe("validateField", () => {
 			expect(validateField(linksSchema, "links[0]", value)).toBe(expected);
 		},
 	);
+});
+
+describe("resolveFormTimeZone", () => {
+	test.each([
+		{ why: "a zone", timeZone: "Asia/Tokyo", expected: "Asia/Tokyo" },
+		{ why: "no zone", timeZone: undefined, expected: null },
+		{ why: "null", timeZone: null, expected: null },
+		{ why: "an empty string", timeZone: "", expected: null },
+		{ why: "a function", timeZone: () => "Asia/Tokyo", expected: "Asia/Tokyo" },
+		{ why: "a function returning null", timeZone: () => null, expected: null },
+		{
+			why: "a function returning undefined",
+			timeZone: () => undefined,
+			expected: null,
+		},
+	])("resolves $why", ({ timeZone, expected }) => {
+		expect(resolveFormTimeZone(timeZone, {})).toBe(expected);
+	});
+});
+
+describe("wallClocksToInstants", () => {
+	// 10:00 in Chicago, whatever zone the tests run in
+	const CHICAGO_TEN_AM = new Date("2026-11-20T16:00:00.000Z");
+	const tenAmWallClock = () => new Date(2026, 10, 20, 10, 0);
+
+	const schema = v.object({
+		zone: textFieldOptional({ label: "labels.name", maxLength: 100 }),
+		startTime: datetimeOptional({ label: "labels.startTime" }),
+		bracket: fieldset({
+			fields: v.object({
+				startTime: datetimeOptional({ label: "labels.startTime" }),
+			}),
+		}),
+		brackets: array({
+			label: "labels.brackets",
+			max: 3,
+			field: fieldset({
+				fields: v.object({
+					startTime: datetimeOptional({ label: "labels.startTime" }),
+				}),
+			}),
+		}),
+		times: array({
+			label: "labels.dates",
+			max: 3,
+			field: datetimeOptional({ label: "labels.startTime" }),
+		}),
+	});
+
+	test("converts top-level, fieldset, array of fieldset and array datetimes", () => {
+		const result = wallClocksToInstants(
+			schema,
+			{
+				startTime: tenAmWallClock(),
+				bracket: { startTime: tenAmWallClock() },
+				brackets: [{ startTime: tenAmWallClock() }],
+				times: [tenAmWallClock()],
+			},
+			"America/Chicago",
+		);
+
+		expect(result).toEqual({
+			startTime: CHICAGO_TEN_AM,
+			bracket: { startTime: CHICAGO_TEN_AM },
+			brackets: [{ startTime: CHICAGO_TEN_AM }],
+			times: [CHICAGO_TEN_AM],
+		});
+	});
+
+	test.each([
+		{ why: "null", value: null },
+		{ why: "undefined", value: undefined },
+	])("leaves an unset datetime ($why) alone", ({ value }) => {
+		const result = wallClocksToInstants(
+			schema,
+			{ startTime: value, bracket: { startTime: value }, brackets: [{}] },
+			"America/Chicago",
+		);
+
+		expect(result).toEqual({
+			startTime: value,
+			bracket: { startTime: value },
+			brackets: [{}],
+		});
+	});
+
+	test("doesn't add keys missing from the values", () => {
+		const result = wallClocksToInstants(
+			schema,
+			{ zone: "x" },
+			"America/Chicago",
+		);
+
+		expect(result).toEqual({ zone: "x" });
+	});
+
+	test.each([
+		{ why: "no zone", timeZone: undefined },
+		{ why: "a function returning null", timeZone: () => null },
+	])("returns the values as they are with $why", ({ timeZone }) => {
+		const values = { startTime: tenAmWallClock() };
+
+		expect(wallClocksToInstants(schema, values, timeZone)).toBe(values);
+	});
+
+	test("resolves a function zone from the values", () => {
+		const result = wallClocksToInstants(
+			schema,
+			{ zone: "America/Chicago", startTime: tenAmWallClock() },
+			(values) => values.zone as string,
+		);
+
+		expect(result.startTime).toEqual(CHICAGO_TEN_AM);
+	});
+
+	test("round trips with instantsToWallClocks", () => {
+		const values = {
+			startTime: tenAmWallClock(),
+			brackets: [{ startTime: tenAmWallClock() }],
+		};
+
+		expect(
+			instantsToWallClocks(
+				schema,
+				wallClocksToInstants(schema, values, "Asia/Kathmandu"),
+				"Asia/Kathmandu",
+			),
+		).toEqual(values);
+	});
 });

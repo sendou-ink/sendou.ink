@@ -53,6 +53,7 @@ import { LUTI_ORGANIZATION_ID } from "~/features/tournament-organization/tournam
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useVenueTimeFormat } from "~/hooks/intl/useVenueTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useHydrated } from "~/hooks/useHydrated";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -332,12 +333,15 @@ function RegistrationProgress({
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
-	const { formatter: registrationClosesFormatter } = useDateTimeFormat({
-		minute: "numeric",
-		hour: "numeric",
-		day: "numeric",
-		month: "numeric",
-	});
+	const { format: formatRegistrationCloses } = useVenueTimeFormat(
+		{
+			minute: "numeric",
+			hour: "numeric",
+			day: "numeric",
+			month: "numeric",
+		},
+		tournament.venue?.timezone,
+	);
 
 	const completedIfTruthy = (condition: unknown) =>
 		condition ? "completed" : "incomplete";
@@ -371,12 +375,13 @@ function RegistrationProgress({
 		tournament.registrationClosesAt.getTime() !==
 		tournament.ctx.startsAt.getTime();
 
+	const registrationClosesAt = formatRegistrationCloses(
+		tournament.isLeague
+			? tournament.ctx.startsAt
+			: tournament.registrationClosesAt,
+	);
 	const registrationClosesAtString =
-		registrationClosesFormatter.format(
-			tournament.isLeague
-				? tournament.ctx.startsAt
-				: tournament.registrationClosesAt,
-		) ?? "";
+		registrationClosesAt.venue ?? registrationClosesAt.viewer;
 
 	return (
 		<div>
@@ -445,19 +450,25 @@ function CheckIn({
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const isHydrated = useHydrated();
-	const { formatter: checkInFormatter } = useDateTimeFormat({
-		minute: "numeric",
-		hour: "numeric",
-		day: "2-digit",
-		month: "2-digit",
-	});
+	const tournament = useTournament();
+	const { format: formatCheckIn } = useVenueTimeFormat(
+		{
+			minute: "numeric",
+			hour: "numeric",
+			day: "2-digit",
+			month: "2-digit",
+		},
+		tournament.venue?.timezone,
+	);
 
 	const now = useAutoRerender();
 	const status: "OVER" | "OPEN" | "UPCOMING" =
 		now > endDate ? "OVER" : now >= startDate ? "OPEN" : "UPCOMING";
 
-	const checkInStartsString = checkInFormatter.format(startDate) ?? "";
-	const checkInEndsString = checkInFormatter.format(endDate) ?? "";
+	const checkInStarts = formatCheckIn(startDate);
+	const checkInEnds = formatCheckIn(endDate);
+	const checkInStartsString = checkInStarts.venue ?? checkInStarts.viewer;
+	const checkInEndsString = checkInEnds.venue ?? checkInEnds.viewer;
 
 	if (status === "UPCOMING") {
 		return (

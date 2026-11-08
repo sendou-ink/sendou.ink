@@ -7,11 +7,12 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Flag } from "~/components/Flag";
 import { Image, ModeImage } from "~/components/Image";
-import { LocaleTime } from "~/components/LocaleTime";
 import { TierPill } from "~/components/TierPill";
+import { VenueLocaleTime } from "~/components/VenueLocaleTime";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import type { TrophyModelLoaderData } from "~/features/trophies/routes/trophies.$id.model";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
+import { useVenueTimeFormat } from "~/hooks/intl/useVenueTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSpoilerFree } from "~/hooks/useSpoilerFree";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -39,6 +40,10 @@ export function TournamentCard({
 	const isHydrated = useHydrated();
 	const formatDistanceToNow = useFormatDistanceToNow();
 	const { isCensored, reveal } = useSpoilerFree();
+	const { format: formatVenueTime } = useVenueTimeFormat(
+		{ weekday: "short", hour: "numeric", minute: "numeric" },
+		tournament.venue?.timezone,
+	);
 
 	const isShowcase = tournament.type === "showcase";
 	const isCalendar = tournament.type === "calendar";
@@ -51,6 +56,11 @@ export function TournamentCard({
 	const startDate = isShowcase
 		? databaseTimestampToDate(tournament.startsAt)
 		: null;
+	// the calendar groups events under the viewer's time already, a LAN's own only shows when it differs
+	const calendarVenueTime =
+		tournament.type === "calendar" && tournament.venue
+			? { at: tournament.at, ...formatVenueTime(new Date(tournament.at)) }
+			: null;
 
 	return (
 		<div
@@ -107,8 +117,9 @@ export function TournamentCard({
 				</div>
 				{startDate ? (
 					timeFormat === "absolute" ? (
-						<LocaleTime
+						<VenueLocaleTime
 							date={startDate}
+							venueTimezone={tournament.venue?.timezone}
 							className={styles.time}
 							options={{
 								month: "short",
@@ -130,6 +141,14 @@ export function TournamentCard({
 								: "Placeholder"}
 						</time>
 					)
+				) : null}
+				{calendarVenueTime?.viewer ? (
+					<time
+						className={styles.time}
+						dateTime={new Date(calendarVenueTime.at).toISOString()}
+					>
+						{calendarVenueTime.venue}
+					</time>
 				) : null}
 				{isCalendar ? (
 					<div className="stack sm items-center my-2">
