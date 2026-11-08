@@ -45,6 +45,9 @@ export const PATCHES: Array<Patch> = [
 	{ patch: "0.9.9", date: "2022-09-09" },
 ];
 
+/** Latest game patch as shown in the calculators, e.g. "11.3" (trailing ".0" dropped). */
+export const CURRENT_PATCH = PATCHES[0].patch.replace(/\.0$/, "");
+
 const RECENT_PATCH_MAX_AGE_IN_DAYS = 365;
 
 /** {@link PATCHES} from roughly the last year, keeping the builds date filter dropdown short. */

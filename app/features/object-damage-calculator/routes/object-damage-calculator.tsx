@@ -28,6 +28,7 @@ import {
 } from "~/components/WeaponLanding";
 import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
 import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
+import { CURRENT_PATCH } from "~/features/builds/builds-constants";
 import type {
 	SpecialWeaponId,
 	SubWeaponId,
@@ -72,8 +73,6 @@ import { loader } from "../loaders/object-damage-calculator.server";
 import styles from "./object-damage-calculator.module.css";
 
 export { loader };
-
-export const CURRENT_PATCH = "11.3";
 
 export const shouldRevalidate: ShouldRevalidateFunction = () => false;
 

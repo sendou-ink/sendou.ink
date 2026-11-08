@@ -34,6 +34,7 @@ import {
 	type WeaponLandingState,
 } from "~/components/WeaponLanding";
 import { useUser } from "~/features/auth/core/user";
+import { CURRENT_PATCH } from "~/features/builds/builds-constants";
 import { objectDamageCalculatorPage } from "~/features/object-damage-calculator/calculator-urls";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { userNewBuildPage } from "~/features/user-page/user-page-urls";
@@ -108,8 +109,6 @@ import { loader } from "../loaders/analyzer.server";
 import styles from "./analyzer.module.css";
 
 export { loader };
-
-export const CURRENT_PATCH = "11.3";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
