@@ -1,7 +1,10 @@
+import * as R from "remeda";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as BadgeFactory from "~/db/seed/factories/BadgeFactory";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
+import * as FeedRepository from "~/features/feed/FeedRepository.server";
 import * as BadgeRepository from "./BadgeRepository.server";
 import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
 
@@ -73,7 +76,75 @@ describe("replaceOwners", () => {
 		const updated = await BadgeRepository.findById(badge.id);
 		expect(updated?.owners).toHaveLength(0);
 	});
+
+	describe("with a badge won at a tournament", () => {
+		const users = UserFactory.pool();
+		const winnerId = () => users.id(1);
+		const loserId = () => users.id(2);
+		const addedByManagerId = () => users.id(3);
+		let badgeId: number;
+
+		beforeEach(async () => {
+			await users.create(3);
+			badgeId = (await BadgeFactory.create()).id;
+			await TournamentFactory.createPlayed(
+				{ authorId: winnerId(), minMembersPerTeam: 1, badges: [badgeId] },
+				{ teamRosters: [[winnerId()], [loserId()]], playedOut: "all" },
+			);
+		});
+
+		test("keeps the win tied to the tournament when another owner is added", async () => {
+			await BadgeRepository.replaceOwners({
+				badgeId,
+				ownerIds: [winnerId(), addedByManagerId()],
+			});
+
+			expect(await tournamentWinnerIds()).toEqual([winnerId()]);
+			expect(await ownerCounts(badgeId)).toEqual([
+				{ id: winnerId(), count: 1 },
+				{ id: addedByManagerId(), count: 1 },
+			]);
+		});
+
+		test("grants extra copies to a winner on top of their tournament win", async () => {
+			await BadgeRepository.replaceOwners({
+				badgeId,
+				ownerIds: [winnerId(), winnerId(), winnerId()],
+			});
+
+			expect(await tournamentWinnerIds()).toEqual([winnerId()]);
+			expect(await ownerCounts(badgeId)).toEqual([
+				{ id: winnerId(), count: 3 },
+			]);
+		});
+
+		test("removes the win when the winner is removed from the owners", async () => {
+			await BadgeRepository.replaceOwners({
+				badgeId,
+				ownerIds: [addedByManagerId()],
+			});
+
+			expect(await tournamentWinnerIds()).toEqual([]);
+			expect(await ownerCounts(badgeId)).toEqual([
+				{ id: addedByManagerId(), count: 1 },
+			]);
+		});
+	});
 });
+
+async function tournamentWinnerIds() {
+	const owners =
+		await FeedRepository.findAllTournamentBadgeOwnersStartedAfter(0);
+	return owners.map((owner) => owner.userId);
+}
+
+async function ownerCounts(badgeId: number) {
+	const badge = await BadgeRepository.findById(badgeId);
+	return R.sortBy(
+		badge!.owners.map(({ id, count }) => ({ id, count })),
+		(owner) => owner.id,
+	);
+}
 
 /** Gives the user a linked X Rank player whose one placement is worth `power`. */
 const givePeakXp = (userId: number, power: number) =>

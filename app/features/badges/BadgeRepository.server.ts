@@ -196,6 +196,12 @@ export function replaceManagers({
 	});
 }
 
+/**
+ * Sets who owns the badge and how many times, one `ownerIds` entry per copy. Copies won at a
+ * tournament keep their tournament link: a user's tournament wins count first towards their new
+ * total and the rest is a manual grant. Lowering a total below the user's wins removes the most
+ * recent ones.
+ */
 export function replaceOwners({
 	badgeId,
 	ownerIds,
@@ -204,26 +210,58 @@ export function replaceOwners({
 	ownerIds: number[];
 }) {
 	return db.transaction().execute(async (trx) => {
-		await trx
-			.deleteFrom("TournamentBadgeOwner")
+		const newCounts = new Map<number, number>();
+		for (const userId of ownerIds) {
+			newCounts.set(userId, (newCounts.get(userId) ?? 0) + 1);
+		}
+
+		const tournamentWins = await trx
+			.selectFrom("TournamentBadgeOwner")
+			.select(["userId", "tournamentId"])
 			.where("badgeId", "=", badgeId)
+			.where("tournamentId", "is not", null)
+			.$narrowType<{ tournamentId: NotNull }>()
+			.orderBy("tournamentId", "asc")
 			.execute();
 
-		const counts = new Map<number, number>();
-		for (const userId of ownerIds) {
-			counts.set(userId, (counts.get(userId) ?? 0) + 1);
+		const keptWinCounts = new Map<number, number>();
+		const removedWins: typeof tournamentWins = [];
+		for (const win of tournamentWins) {
+			const keptCount = keptWinCounts.get(win.userId) ?? 0;
+			if (keptCount < (newCounts.get(win.userId) ?? 0)) {
+				keptWinCounts.set(win.userId, keptCount + 1);
+			} else {
+				removedWins.push(win);
+			}
 		}
 
 		await trx
-			.insertInto("TournamentBadgeOwner")
-			.values(
-				Array.from(counts, ([userId, count]) => ({
-					badgeId,
-					userId,
-					count,
-				})),
-			)
+			.deleteFrom("TournamentBadgeOwner")
+			.where("badgeId", "=", badgeId)
+			.where("tournamentId", "is", null)
 			.execute();
+
+		for (const win of removedWins) {
+			await trx
+				.deleteFrom("TournamentBadgeOwner")
+				.where("badgeId", "=", badgeId)
+				.where("userId", "=", win.userId)
+				.where("tournamentId", "=", win.tournamentId)
+				.execute();
+		}
+
+		const manualGrants = Array.from(newCounts, ([userId, count]) => ({
+			badgeId,
+			userId,
+			count: count - (keptWinCounts.get(userId) ?? 0),
+		})).filter((grant) => grant.count > 0);
+
+		if (manualGrants.length > 0) {
+			await trx
+				.insertInto("TournamentBadgeOwner")
+				.values(manualGrants)
+				.execute();
+		}
 	});
 }
 
