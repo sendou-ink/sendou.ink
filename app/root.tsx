@@ -44,7 +44,7 @@ import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
 import { ChatProvider } from "./features/chat/ChatProvider";
 import { resolveRoomList } from "./features/chat/chat-room-list.server";
-import { isMatchResultsScopedRevalidation } from "./features/chat/revalidation-scope";
+import { isBroadcastRevalidation } from "./features/chat/revalidation-scope";
 import { GlobalStatusProvider } from "./features/global-status/GlobalStatusProvider";
 import { getSidenavSession } from "./features/layout/core/sidenav-session.server";
 import { LayoutDataProvider } from "./features/layout/LayoutDataProvider";
@@ -127,7 +127,7 @@ const DEV_FAVICON_COLORS: Record<string, DevFaviconColors | undefined> = {
 };
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
-	if (isMatchResultsScopedRevalidation(args)) return false;
+	if (isBroadcastRevalidation(args)) return false;
 	if (isRevalidation(args)) return true;
 
 	if (args.formData?.get("revalidateRoot") === "true") return true;

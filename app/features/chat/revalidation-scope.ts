@@ -128,6 +128,19 @@ export function isMatchResultsScopedRevalidation(
 }
 
 /**
+ * Whether the pending revalidation was triggered by a broadcast or an event stream catch-up,
+ * whatever its scope. The app shell's data (sidebar, header status, chat room list) is kept fresh
+ * by its own events and polling, so the root loader skips these instead of being rebuilt for
+ * every viewer of the channel.
+ */
+export function isBroadcastRevalidation(args: ShouldRevalidateFunctionArgs) {
+	if (!isRevalidation(args)) return false;
+
+	forgetStalePendingRevalidations();
+	return pendingRevalidations > 0;
+}
+
+/**
  * Forgets revalidations counted as in flight for implausibly long: a `revalidate()` interrupted
  * by a navigation never settles and would leave `activeScope` stuck for the life of the tab.
  * Only the stuck case is forgotten, so a genuine in-flight one keeps its scope.

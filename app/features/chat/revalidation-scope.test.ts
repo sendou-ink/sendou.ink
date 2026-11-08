@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
 	holdRevalidations,
 	holdRevalidationsDuring,
+	isBroadcastRevalidation,
 	isMatchResultsScopedRevalidation,
 	revalidateWithScope,
 	scheduleBroadcastRevalidation,
@@ -284,5 +285,59 @@ describe("holdRevalidations", () => {
 
 		otherRelease();
 		expect(revalidate).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe("isBroadcastRevalidation", () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	test.each([
+		{ why: "unscoped", scope: undefined },
+		{ why: "match results scoped", scope: "MATCH_RESULTS" as const },
+	])(
+		"is true while a $why broadcast revalidation is in flight and false after",
+		async ({ scope }) => {
+			const { promise, resolve } = deferred();
+
+			scheduleBroadcastRevalidation(() => promise, scope);
+			vi.runAllTimers();
+			expect(isBroadcastRevalidation(revalidationArgs())).toBe(true);
+
+			resolve();
+			await vi.runAllTimersAsync();
+			expect(isBroadcastRevalidation(revalidationArgs())).toBe(false);
+		},
+	);
+
+	test.each([
+		{
+			why: "a navigation",
+			args: { nextUrl: new URL("https://sendou.ink/to/1/teams") },
+		},
+		{ why: "a submission", args: { formMethod: "POST" as const } },
+	])("is false for $why during a broadcast revalidation", async ({ args }) => {
+		const { promise, resolve } = deferred();
+
+		revalidateWithScope(() => promise, undefined);
+		expect(isBroadcastRevalidation({ ...revalidationArgs(), ...args })).toBe(
+			false,
+		);
+
+		resolve();
+		await vi.runAllTimersAsync();
+	});
+
+	test("is false once a never settling broadcast revalidation is stale", async () => {
+		revalidateWithScope(() => new Promise<void>(() => {}), undefined);
+		expect(isBroadcastRevalidation(revalidationArgs())).toBe(true);
+
+		await vi.advanceTimersByTimeAsync(PENDING_REVALIDATION_STALE_MS);
+		expect(isBroadcastRevalidation(revalidationArgs())).toBe(false);
 	});
 });

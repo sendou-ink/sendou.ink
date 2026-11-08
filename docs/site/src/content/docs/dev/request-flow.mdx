@@ -302,7 +302,7 @@ function broadcastRevalidate(post: ScrimPost) {
 }
 ```
 
-Every page subscribes to the channels of the rooms its loader returned as `chatRooms` (`ChatProvider`), which is how both sides of this scrim, and only they, hear about it. On the event the page reruns its loaders after a random delay of up to 1.5s so a busy channel doesn't make every client refetch at once, skipping the event when it was the user's own (their submission revalidated already). See "Real time" in [architecture.md](/dev/architecture/#real-time) and [ChatSystemMessage.server.ts](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/chat/ChatSystemMessage.server.ts).
+Every page subscribes to the channels of the rooms its loader returned as `chatRooms` (`ChatProvider`), which is how both sides of this scrim, and only they, hear about it. On the event the page reruns its loaders after a random delay of up to 1.5s so a busy channel doesn't make every client refetch at once, skipping the event when it was the user's own (their submission revalidated already). The root loader sits these out too (`isBroadcastRevalidation`): the sidebar, header status and chat room list have their own events and polling. See "Real time" in [architecture.md](/dev/architecture/#real-time) and [ChatSystemMessage.server.ts](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/chat/ChatSystemMessage.server.ts).
 
 No event carries data. The server only says "something changed", the loader stays the one place deciding what a page shows and who may see it.
 
