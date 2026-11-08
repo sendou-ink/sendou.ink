@@ -184,6 +184,8 @@ function findAllBetweenTwoTimestampsQuery({
 			"CalendarEvent.id as eventId",
 			"CalendarEvent.authorId",
 			"CalendarEventVenue.timezone as venueTimezone",
+			"CalendarEventVenue.city as venueCity",
+			"CalendarEventVenue.countryCode as venueCountryCode",
 			"CalendarEvent.organizationId",
 			"Tournament.id as tournamentId",
 			"Tournament.settings as tournamentSettings",
@@ -304,7 +306,14 @@ function findAllBetweenTwoTimestampsMapped(
 							: null,
 				badges: row.badges,
 				trophyId: row.trophyId,
-				venue: row.venueTimezone ? { timezone: row.venueTimezone } : null,
+				venue:
+					row.venueTimezone && row.venueCountryCode
+						? {
+								timezone: row.venueTimezone,
+								city: row.venueCity,
+								countryCode: row.venueCountryCode,
+							}
+						: null,
 				logoUrl: row.logoUrl,
 				startsAt: row.normalizedStartsAt,
 				isRanked: row.tournamentSettings

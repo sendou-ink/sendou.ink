@@ -209,6 +209,7 @@
 	"actions.copyTimestampForDiscord": "Copy Discord timestamp",
 	"venueTime.local": "{{time}} local",
 	"venueTime.viewer": "{{time}} your time",
+	"venue.openInMaps": "Open in maps",
 	"actions.close": "Close",
 	"actions.dismiss": "Dismiss",
 	"actions.cancel": "Cancel",

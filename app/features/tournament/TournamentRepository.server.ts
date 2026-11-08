@@ -855,6 +855,8 @@ export function findAllForShowcase() {
 			"Tournament.tier",
 			"Tournament.isFinalized",
 			"CalendarEventVenue.timezone as venueTimezone",
+			"CalendarEventVenue.city as venueCity",
+			"CalendarEventVenue.countryCode as venueCountryCode",
 			"CalendarEvent.authorId",
 			"CalendarEvent.name",
 			"CalendarEvent.organizationId",

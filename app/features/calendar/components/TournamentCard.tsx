@@ -152,6 +152,7 @@ export function TournamentCard({
 				) : null}
 				{isCalendar ? (
 					<div className="stack sm items-center my-2">
+						{tournament.venue ? <LanChip venue={tournament.venue} /> : null}
 						<Tags tags={tournament.tags} small centered maxVisible={2} />
 					</div>
 				) : null}
@@ -163,6 +164,9 @@ export function TournamentCard({
 				) : null}
 			</Link>
 			<div className="stack horizontal justify-between items-center">
+				{isShowcase && tournament.venue ? (
+					<LanChip venue={tournament.venue} className={styles.lanChipFooter} />
+				) : null}
 				{isShowcase &&
 				tournament.firstPlacers.length > 0 &&
 				isCensored(tournament.id) ? (
@@ -189,6 +193,26 @@ export function TournamentCard({
 					) : null}
 				</div>
 			</div>
+		</div>
+	);
+}
+
+function LanChip({
+	venue,
+	className,
+}: {
+	venue: NonNullable<CalendarEvent["venue"]>;
+	className?: string;
+}) {
+	const { t } = useTranslation(["common"]);
+
+	return (
+		<div className={clsx(styles.lanChip, className)} data-testid="lan-chip">
+			<span className={styles.lanChipText}>
+				{t("common:tag.name.LAN")}
+				{venue.city ? ` · ${venue.city}` : null}
+			</span>
+			<Flag tiny countryCode={venue.countryCode} />
 		</div>
 	);
 }

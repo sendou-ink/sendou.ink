@@ -85,6 +85,14 @@ export const GITHUB_CONTRIBUTORS_URL =
 export const ipLabsMaps = (pool: string) =>
 	`https://maps.iplabs.ink/?3&pool=${pool}`;
 export const SPLATOON_3_INK = "https://splatoon3.ink/";
+export const openStreetMapUrl = ({
+	latitude,
+	longitude,
+}: {
+	latitude: number;
+	longitude: number;
+}) =>
+	`https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=17/${latitude}/${longitude}`;
 export const RHODESMAS_FREESOUND_PROFILE_URL =
 	"https://freesound.org/people/rhodesmas/";
 export const SPR_INFO_URL =

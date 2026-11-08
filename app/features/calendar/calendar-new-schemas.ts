@@ -41,11 +41,11 @@ import * as CalendarEvent from "./core/CalendarEvent";
 // the league tag is derived from the league setting, never picked by hand
 const PICKABLE_TAGS = CALENDAR_EVENT.TAGS.filter((tag) => tag !== "LEAGUE");
 
-/** The `tags` field as rendered for tournaments, their team size tag is derived from `minMembersPerTeam` instead. */
+/** The `tags` field as rendered for tournaments, their team size and LAN tags are derived from their settings and venue instead. */
 export const tournamentTagsField = checkboxGroup({
 	label: "labels.tags",
 	items: tagItems(
-		PICKABLE_TAGS.filter((tag) => !CalendarEvent.isVersusTag(tag)),
+		PICKABLE_TAGS.filter((tag) => !CalendarEvent.isDerivedTournamentTag(tag)),
 	),
 });
 

@@ -134,7 +134,9 @@ export const action = defineAction(
 				: data.discordInviteCode,
 			tags: sortedTagsOrNull(
 				isAddingTournament
-					? data.tags.filter((tag) => !CalendarEvent.isVersusTag(tag))
+					? data.tags.filter(
+							(tag) => !CalendarEvent.isDerivedTournamentTag(tag),
+						)
 					: data.tags,
 			),
 			badges: data.trophyId

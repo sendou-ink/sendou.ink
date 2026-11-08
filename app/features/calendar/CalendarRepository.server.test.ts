@@ -316,6 +316,34 @@ describe("findAllBetweenTwoTimestamps", () => {
 		expect(tagsOf("League")).toEqual(["LEAGUE", "SPECIAL"]);
 		expect(tagsOf("Tournament")).toEqual(["SPECIAL"]);
 	});
+
+	test("gives a LAN its venue's timezone, city and country, an online event none", async () => {
+		const lan = await TournamentFactory.create({
+			authorId: authorId(),
+			name: "LAN",
+		});
+		await CalendarEventVenueFactory.create({
+			eventId: lan.eventId,
+			city: "Austin",
+			countryCode: "US",
+			timezone: "America/Chicago",
+		});
+		await TournamentFactory.create({ authorId: authorId(), name: "Online" });
+
+		const days = await CalendarRepository.findAllBetweenTwoTimestamps({
+			startTime: sub(new Date(), { hours: 1 }),
+			endTime: new Date(Date.now() + 60 * 60 * 1000),
+		});
+		const eventOf = (name: string) =>
+			days.flatMap((day) => day.events).find((event) => event.name === name);
+
+		expect(eventOf("LAN")?.venue).toEqual({
+			timezone: "America/Chicago",
+			city: "Austin",
+			countryCode: "US",
+		});
+		expect(eventOf("Online")?.venue).toBeNull();
+	});
 });
 
 describe("upsertVenue", () => {

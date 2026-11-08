@@ -15,6 +15,7 @@ import { Table } from "~/components/Table";
 import { UserLink } from "~/components/UserLink";
 import { VenueLocaleTime } from "~/components/VenueLocaleTime";
 import { calendarEditPage } from "~/features/calendar/calendar-urls";
+import { VenueInfo } from "~/features/calendar/components/VenueInfo";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
 import { useHasPermission } from "~/modules/permissions/hooks";
@@ -117,6 +118,7 @@ export default function CalendarEventPage() {
 						<h2>{data.event.name}</h2>
 						<Tags tags={data.event.tags} />
 					</div>
+					{data.event.venue ? <VenueInfo venue={data.event.venue} /> : null}
 					<div className="stack horizontal sm flex-wrap">
 						{data.event.discordUrl ? (
 							<LinkButton
