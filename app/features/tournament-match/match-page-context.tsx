@@ -130,6 +130,7 @@ export function MatchPageProvider({
 			tournament,
 			user,
 			teams,
+			isParticipant,
 			matchIsOver: data.matchIsOver,
 			waitingForPreviousMatch,
 		}),
@@ -244,21 +245,20 @@ function resolveCanReportScore({
 	tournament,
 	user,
 	teams,
+	isParticipant,
 	matchIsOver,
 	waitingForPreviousMatch,
 }: {
 	tournament: ReturnType<typeof useTournament>;
 	user: ReturnType<typeof useUser>;
 	teams: [MatchPageTeam | null, MatchPageTeam | null];
+	isParticipant: boolean;
 	matchIsOver: boolean;
 	waitingForPreviousMatch: boolean;
 }) {
 	const [teamOne, teamTwo] = teams;
 	if (!teamOne || !teamTwo) return false;
 	if (waitingForPreviousMatch || matchIsOver) return false;
-
-	const userTeamId = tournament.teamMemberOfByUser(user)?.id;
-	const isParticipant = userTeamId === teamOne.id || userTeamId === teamTwo.id;
 
 	return isParticipant || tournament.isOrganizer(user);
 }

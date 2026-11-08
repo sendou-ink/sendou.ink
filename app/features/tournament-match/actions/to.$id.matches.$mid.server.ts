@@ -47,7 +47,7 @@ import { assertUnreachable } from "~/utils/types";
 import { executeRoll } from "../core/executeRoll.server";
 import * as LeagueScheduling from "../core/LeagueScheduling";
 import { resolveMatchMapList } from "../core/mapList.server";
-import { reportScore } from "../core/reportScore.server";
+import { reportScore, requireCanReportScore } from "../core/reportScore.server";
 import type { FindMatchById } from "../TournamentMatchRepository.server";
 import { tournamentMatchChannel } from "../tournament-match-utils";
 
@@ -69,26 +69,6 @@ export const action = defineAction(
 		if (match.tournamentId !== tournamentId) {
 			notFound();
 		}
-
-		const validateCanReportScore = () => {
-			const isMemberOfATeamInTheMatch = match.players.some(
-				(p) => p.id === user?.id,
-			);
-
-			errorToastIfFalsy(
-				tournament.matchStatusById(match.id) !== "PENDING",
-				"Match is locked, waiting for teams to finish their previous matches",
-			);
-
-			errorToastIfFalsy(
-				canReportTournamentScore({
-					match,
-					isMemberOfATeamInTheMatch,
-					isOrganizer: tournament.isOrganizer(user),
-				}),
-				"Unauthorized",
-			);
-		};
 
 		const scores: [number, number] = [
 			match.opponentOne?.score ?? 0,
@@ -170,7 +150,7 @@ export const action = defineAction(
 				break;
 			}
 			case "UNDO_REPORT_SCORE": {
-				validateCanReportScore();
+				requireCanReportScore({ match, tournament, user });
 				// they are trying to remove score from the past
 				if (body.position !== scores[0] + scores[1] - 1) {
 					return null;
@@ -1101,18 +1081,6 @@ function pickBanChatMessageType(
 		default:
 			assertUnreachable(actionType);
 	}
-}
-
-function canReportTournamentScore({
-	match,
-	isMemberOfATeamInTheMatch,
-	isOrganizer,
-}: {
-	match: NonNullable<FindMatchById>;
-	isMemberOfATeamInTheMatch: boolean;
-	isOrganizer: boolean;
-}) {
-	return !match.winnerSide && (isMemberOfATeamInTheMatch || isOrganizer);
 }
 
 function isCastAccountOf(tournament: Tournament, account: StreamAccount) {

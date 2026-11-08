@@ -52,14 +52,7 @@ export async function reportScore({
 		return null;
 	}
 
-	errorToastIfFalsy(
-		tournament.matchStatusById(match.id) !== "PENDING",
-		"Match is locked, waiting for teams to finish their previous matches",
-	);
-	errorToastIfFalsy(
-		canReportScore({ match, tournament, user }),
-		"Unauthorized",
-	);
+	requireCanReportScore({ match, tournament, user });
 	errorToastIfFalsy(
 		match.opponentOne?.id === winnerTeamId ||
 			match.opponentTwo?.id === winnerTeamId,
@@ -172,7 +165,8 @@ export async function reportScore({
 	return { setOver, endedMatchIds };
 }
 
-function canReportScore({
+/** Throws an error toast unless the user may report or undo a score of the match right now. */
+export function requireCanReportScore({
 	match,
 	tournament,
 	user,
@@ -181,10 +175,14 @@ function canReportScore({
 	tournament: Tournament;
 	user: { id: number };
 }) {
-	if (match.winnerSide) return false;
-
-	return (
-		match.players.some((player) => player.id === user.id) ||
-		tournament.isOrganizer(user)
+	errorToastIfFalsy(
+		tournament.matchStatusById(match.id) !== "PENDING",
+		"Match is locked, waiting for teams to finish their previous matches",
+	);
+	errorToastIfFalsy(
+		!match.winnerSide &&
+			(match.players.some((player) => player.id === user.id) ||
+				tournament.isOrganizer(user)),
+		"Unauthorized",
 	);
 }
