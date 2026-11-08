@@ -247,6 +247,10 @@ export default [
 			"broadcast/:channel",
 			"features/broadcast/routes/to.$id.broadcast.$channel.tsx",
 		),
+		route(
+			"broadcast/:channel/design",
+			"features/broadcast/routes/to.$id.broadcast.$channel.design.tsx",
+		),
 
 		route("looking", "features/tournament-lfg/routes/to.$id.looking.tsx"),
 
@@ -280,6 +284,10 @@ export default [
 	route(
 		"/to/:id/broadcast/:channel/program",
 		"features/broadcast/routes/to.$id.broadcast.$channel.program.tsx",
+	),
+	route(
+		"/to/:id/broadcast/:channel/design/canvas",
+		"features/broadcast/routes/to.$id.broadcast.$channel.design.canvas.tsx",
 	),
 	route(
 		"/to/:id/broadcast/:channel/signal",

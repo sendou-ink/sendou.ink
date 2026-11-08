@@ -2,24 +2,34 @@ import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./BroadcastPreview.module.css";
 
-/** An overlay page scaled down to the container's width, exactly as it airs, over a stand-in for the gameplay footage. */
+/**
+ * An overlay page scaled down to the container's width, exactly as it airs, over a screenshot of the game feed or a
+ * stand-in for it.
+ */
 export function BroadcastPreview({
 	src,
 	title,
 	iframeRef,
+	footageUrl,
 }: {
 	src: string;
 	title: string;
 	/** e.g. to post the overlay a message */
 	iframeRef?: React.Ref<HTMLIFrameElement>;
+	/** Screenshot of the game feed under the overlay. */
+	footageUrl?: string | null;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 
 	return (
 		<div className={styles.preview}>
-			<span className={styles.gameplay}>
-				{t("broadcast:dashboard.gameplay")}
-			</span>
+			{footageUrl ? (
+				<img className={styles.footage} src={footageUrl} alt="" />
+			) : (
+				<span className={styles.gameplay}>
+					{t("broadcast:dashboard.gameplay")}
+				</span>
+			)}
 			<iframe
 				ref={iframeRef}
 				key={src}

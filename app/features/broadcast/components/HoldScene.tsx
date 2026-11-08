@@ -7,16 +7,19 @@ import type {
 	BroadcastState,
 	BroadcastView,
 } from "../broadcast-types";
-import { formatClock, scenePart } from "../broadcast-utils";
+import { combineStyles, formatClock, scenePart } from "../broadcast-utils";
 import * as Producer from "../core/Producer";
-import styles from "./HoldScene.module.css";
+import layout from "./HoldScene.layout.module.css";
+import look from "./HoldScene.module.css";
 import { Matchup } from "./Matchup";
 import { SceneBackdrop } from "./SceneBackdrop";
 import { Ticker } from "./Ticker";
 
+const styles = combineStyles(look, layout);
+
 const part = scenePart("hold");
 
-/** Full screen of the scenes without gameplay (starting soon, break, technical difficulties, ending): a big title, the headline, the featured match and the other matches' ticker. Starting soon given a duration counts it down. Also the scenes' fallback when they have nothing to show. */
+/** Full screen of the scenes without gameplay (starting soon, break, technical difficulties, ending): a big title, the headline and, on break, the next match and the other matches' ticker. Starting soon given a duration counts it down. Also the scenes' fallback when they have nothing to show. */
 export function HoldScene({
 	scene,
 	state,
@@ -27,12 +30,11 @@ export function HoldScene({
 	view: BroadcastView;
 }) {
 	const { t } = useTranslation(["broadcast"]);
-	const match = state.match;
-	const isOver = match?.progress[view].isOver ?? false;
+	const nextMatch =
+		state.match && !state.match.progress[view].isOver ? state.match : null;
 	const headline =
 		state.settings.headline ||
 		(scene === "technical" ? t("broadcast:overlay.standBy") : null);
-	const showsMatch = match && (scene !== "ending" || isOver);
 
 	return (
 		<div className={styles.hold}>
@@ -57,19 +59,22 @@ export function HoldScene({
 					</p>
 				) : null}
 			</div>
-			{showsMatch ? (
+			{scene === "break" && nextMatch ? (
 				<div className={styles.matchup}>
 					<div className={styles.matchupLabel} {...part("matchup-label")}>
-						{isOver
-							? t("broadcast:overlay.final")
-							: match.progress[view].resultCount > 0
-								? t("broadcast:overlay.nowPlaying")
-								: t("broadcast:overlay.upNext")}
+						{t("broadcast:overlay.upNext")}
 					</div>
-					<Matchup match={match} view={view} producer={state[view]} />
+					<Matchup
+						match={nextMatch}
+						view={view}
+						producer={state[view]}
+						showsScore={false}
+					/>
 				</div>
 			) : null}
-			<Ticker matches={state.otherMatches} className={styles.ticker} />
+			{scene === "break" ? (
+				<Ticker matches={state.otherMatches} className={styles.ticker} />
+			) : null}
 		</div>
 	);
 }

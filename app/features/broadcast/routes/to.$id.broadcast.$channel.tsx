@@ -1,31 +1,23 @@
 import clsx from "clsx";
 import {
 	ArrowLeftRight,
+	Brush,
 	Cable,
 	ChevronLeft,
 	ChevronRight,
 	ChevronsLeft,
 	CircleCheck,
 	CircleDashed,
-	Clapperboard,
-	Clock,
-	Coffee,
-	Flag,
-	Gamepad2,
 	Hand,
 	Link2,
 	type LucideIcon,
-	Map as MapIcon,
-	Mic,
 	Palette,
 	Pause,
 	Play,
 	Plus,
 	ScanEye,
 	TriangleAlert,
-	Trophy,
 	Unlink,
-	Users,
 	X,
 } from "lucide-react";
 import * as React from "react";
@@ -34,12 +26,13 @@ import { Link, useLoaderData, useRevalidator } from "react-router";
 import * as R from "remeda";
 import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import {
 	SendouTab,
 	SendouTabList,
@@ -55,7 +48,6 @@ import {
 import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import { useLatestRef } from "~/hooks/useLatestRef";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
@@ -69,7 +61,6 @@ import {
 	BROADCAST_PROTOTYPE_CLIPS,
 	BROADCAST_REHEARSE_MESSAGE,
 	BROADCAST_SCENE_DURATIONS_MS,
-	BROADCAST_SCENE_GROUPS,
 	BROADCAST_SCENE_PARTS,
 	BROADCAST_THEME_TOKENS,
 	BROADCAST_TRANSITIONS,
@@ -89,12 +80,12 @@ import { broadcastDashboardSearchParams } from "../broadcast-search-params";
 import type {
 	BroadcastAdvance,
 	BroadcastMatch,
-	BroadcastScene,
 	BroadcastState,
 	BroadcastView,
 	ProducerState,
 } from "../broadcast-types";
 import {
+	broadcastDesignPage,
 	broadcastOverlayPage,
 	broadcastSignalUrl,
 	broadcastStreamUrl,
@@ -107,6 +98,11 @@ import {
 	roundLabel,
 } from "../broadcast-utils";
 import { BroadcastPreview } from "../components/BroadcastPreview";
+import {
+	SCENE_ICONS,
+	ScenePicker,
+	useSceneHotkeys,
+} from "../components/ScenePicker";
 import * as BracketFocus from "../core/BracketFocus";
 import type * as ClipTransfer from "../core/ClipTransfer";
 import * as Producer from "../core/Producer";
@@ -126,24 +122,6 @@ export const handle: SendouRouteHandle = {
 
 // the staged item is highlighted for this long before it goes on air by itself
 const AUTO_TAKE_IMMINENT_MS = 5_000;
-
-const SCENE_ICONS: Record<BroadcastScene, LucideIcon> = {
-	starting: Clock,
-	casters: Mic,
-	rosters: Users,
-	maps: MapIcon,
-	game: Gamepad2,
-	break: Coffee,
-	replays: Clapperboard,
-	bracket: Trophy,
-	technical: TriangleAlert,
-	ending: Flag,
-};
-
-/** Number keys 1–9 and 0 pick these, in this order. */
-const SCENES_BY_HOTKEY: BroadcastScene[] = BROADCAST_SCENE_GROUPS.flatMap(
-	(group) => group.scenes,
-);
 
 type DashboardTab = (typeof BROADCAST_DASHBOARD_TABS)[number];
 
@@ -189,7 +167,12 @@ export default function BroadcastDashboardPage() {
 		now !== null &&
 		autoTakeAt - now <= AUTO_TAKE_IMMINENT_MS;
 	const areClipsOnSources = everySourceHasClips(clipSender.statuses);
-	useSceneHotkeys(selected);
+	const { submit: submitScene } = useActionSubmit(broadcastActionSchema);
+	useSceneHotkeys({
+		selected: selected.scene,
+		onSelect: (scene) =>
+			submitScene("SET_SCENE", { itemId: selected.id, scene }),
+	});
 
 	const rehearse = () =>
 		nextPreviewRef.current?.contentWindow?.postMessage(
@@ -337,7 +320,7 @@ export default function BroadcastDashboardPage() {
 						/>
 					</SendouTabPanel>
 					<SendouTabPanel id="theme">
-						<Theme state={state} />
+						<Theme state={state} designUrl={broadcastDesignPage(pageArgs)} />
 					</SendouTabPanel>
 				</SendouTabs>
 			</div>
@@ -354,61 +337,6 @@ function useRevalidateOnFeaturedMatchChange(featuredMatchId: number | null) {
 	React.useEffect(() => {
 		if (isStale) revalidate();
 	}, [isStale, revalidate]);
-}
-
-/** The number keys pick the selected item's scene. */
-function useSceneHotkeys(selected: ProducerState) {
-	const { submit } = useActionSubmit(broadcastActionSchema);
-	const latest = useLatestRef({ selected, submit });
-
-	React.useEffect(() => {
-		const onKeyDown = (event: KeyboardEvent) => {
-			if (!isShortcut(event) || !/^\d$/.test(event.key)) return;
-			const current = latest.current;
-
-			// 1 is the first scene, 0 the tenth
-			const scene = SCENES_BY_HOTKEY[(Number(event.key) + 9) % 10];
-			if (!scene || scene === current.selected.scene) return;
-
-			current.submit("SET_SCENE", { itemId: current.selected.id, scene });
-		};
-
-		window.addEventListener("keydown", onKeyDown);
-		return () => window.removeEventListener("keydown", onKeyDown);
-	}, [latest]);
-}
-
-/** A key press without modifiers that isn't typing into a field or meant for an open popover or dialog. */
-function isShortcut(event: KeyboardEvent) {
-	if (
-		event.repeat ||
-		event.ctrlKey ||
-		event.metaKey ||
-		event.altKey ||
-		event.shiftKey
-	) {
-		return false;
-	}
-
-	const target = event.target;
-	if (!(target instanceof HTMLElement)) return true;
-
-	const isTyping =
-		target.isContentEditable ||
-		target instanceof HTMLTextAreaElement ||
-		target instanceof HTMLSelectElement ||
-		(target instanceof HTMLInputElement &&
-			!["radio", "checkbox", "button", "submit"].includes(target.type));
-
-	return !isTyping && !target.closest("[popover], dialog");
-}
-
-function Keycap({ children }: { children: React.ReactNode }) {
-	return (
-		<kbd className={styles.keycap} aria-hidden>
-			{children}
-		</kbd>
-	);
 }
 
 function Health({
@@ -710,6 +638,7 @@ function ViewHeader({
 	);
 }
 
+/** Time left of the scene on air, only while next goes on air by itself once it runs out (not held or waiting for a game event). */
 function LiveTimer({
 	state,
 	now,
@@ -721,7 +650,14 @@ function LiveTimer({
 	const startedAt = Producer.liveStartedAt(state);
 	const endsAt = Producer.liveEndsAt(state);
 
-	if (startedAt === null || endsAt === null || now === null) return null;
+	if (
+		startedAt === null ||
+		endsAt === null ||
+		now === null ||
+		Producer.autoTakeAt(state) === null
+	) {
+		return null;
+	}
 
 	const progress = R.clamp((now - startedAt) / (endsAt - startedAt), {
 		min: 0,
@@ -806,6 +742,7 @@ function Queue({
 	areClipsOnSources: boolean;
 }) {
 	const { t } = useTranslation(["broadcast"]);
+	const tournament = useTournament();
 	const { submit } = useActionSubmit(broadcastActionSchema);
 	const staged = Producer.stagedItems(state);
 
@@ -821,7 +758,12 @@ function Queue({
 					item.scene === "replays" &&
 					item.clipId !== null &&
 					!areClipsOnSources;
-				const detail = itemDetail(item);
+				const detail = itemDetail(
+					item,
+					item.scene === "team"
+						? pickedTeamName({ state, tournament, item })
+						: undefined,
+				);
 
 				return (
 					<li key={item.id} className={styles.queueEntry}>
@@ -1025,7 +967,21 @@ function SceneEditor({
 }) {
 	return (
 		<div className={styles.editor}>
-			<ScenePicker state={state} selected={selected} />
+			<ScenePicker
+				selected={selected.scene}
+				liveScene={state.live.scene}
+				renderTile={(scene, tile) => (
+					<ActionButton
+						schema={broadcastActionSchema}
+						action="SET_SCENE"
+						fields={{ itemId: selected.id, scene }}
+						className={tile.className}
+						testId={`broadcast-scene-${scene}`}
+					>
+						{tile.children}
+					</ActionButton>
+				)}
+			/>
 			<div className={styles.properties}>
 				<TransitionProperty selected={selected} />
 				{state.match ? (
@@ -1037,57 +993,11 @@ function SceneEditor({
 				{selected.scene === "replays" ? (
 					<ClipProperty selected={selected} />
 				) : null}
+				{selected.scene === "team" ? (
+					<TeamProperty state={state} selected={selected} />
+				) : null}
 				<DurationProperty selected={selected} />
 			</div>
-		</div>
-	);
-}
-
-function ScenePicker({
-	state,
-	selected,
-}: {
-	state: BroadcastState;
-	selected: ProducerState;
-}) {
-	const { t } = useTranslation(["broadcast"]);
-
-	return (
-		<div className={styles.sceneGroups}>
-			{BROADCAST_SCENE_GROUPS.map((group) => (
-				<fieldset key={group.key} className={styles.sceneGroup}>
-					<legend className={styles.sceneGroupLabel}>
-						{t(`broadcast:dashboard.sceneGroup.${group.key}`)}
-					</legend>
-					{group.scenes.map((scene) => {
-						const Icon = SCENE_ICONS[scene];
-						const hotkey = (SCENES_BY_HOTKEY.indexOf(scene) + 1) % 10;
-
-						return (
-							<ActionButton
-								key={scene}
-								schema={broadcastActionSchema}
-								action="SET_SCENE"
-								fields={{ itemId: selected.id, scene }}
-								className={clsx(styles.sceneTile, {
-									[styles.sceneTileSelected]: selected.scene === scene,
-								})}
-								formClassName={styles.sceneForm}
-								testId={`broadcast-scene-${scene}`}
-							>
-								{state.live.scene === scene ? (
-									<span className={styles.liveBadge}>
-										{t("broadcast:dashboard.live")}
-									</span>
-								) : null}
-								<Keycap>{hotkey}</Keycap>
-								<Icon className={styles.sceneIcon} />
-								{t(`broadcast:scene.${scene}`)}
-							</ActionButton>
-						);
-					})}
-				</fieldset>
-			))}
 		</div>
 	);
 }
@@ -1183,31 +1093,37 @@ function BracketProperties({ selected }: { selected: ProducerState }) {
 		);
 	}
 
+	const hasDoubleElimination = showableIdxs.some(
+		(idx) => tournament.bracketsMeta[idx].type === "double_elimination",
+	);
+
 	return (
 		<>
-			<Property label={t("broadcast:dashboard.bracket.focus")}>
-				<SendouChipRadioGroup
-					aria-label={t("broadcast:dashboard.bracket.focus")}
-					wrap
-				>
-					{BROADCAST_BRACKET_FOCUSES.map((focus) => (
-						<SendouChipRadio
-							key={focus}
-							name="broadcast-bracket-focus"
-							value={focus}
-							checked={selected.bracketFocus === focus}
-							onChange={() =>
-								submit("SET_BRACKET_FOCUS", { itemId: selected.id, focus })
-							}
-						>
-							{t(`broadcast:bracketFocus.${focus}`)}
-						</SendouChipRadio>
-					))}
-				</SendouChipRadioGroup>
-				<span className="text-xs text-lighter">
-					{t("broadcast:dashboard.bracket.explanation")}
-				</span>
-			</Property>
+			{hasDoubleElimination ? (
+				<Property label={t("broadcast:dashboard.bracket.focus")}>
+					<SendouChipRadioGroup
+						aria-label={t("broadcast:dashboard.bracket.focus")}
+						wrap
+					>
+						{BROADCAST_BRACKET_FOCUSES.map((focus) => (
+							<SendouChipRadio
+								key={focus}
+								name="broadcast-bracket-focus"
+								value={focus}
+								checked={selected.bracketFocus === focus}
+								onChange={() =>
+									submit("SET_BRACKET_FOCUS", { itemId: selected.id, focus })
+								}
+							>
+								{t(`broadcast:bracketFocus.${focus}`)}
+							</SendouChipRadio>
+						))}
+					</SendouChipRadioGroup>
+					<span className="text-xs text-lighter">
+						{t("broadcast:dashboard.bracket.explanation")}
+					</span>
+				</Property>
+			) : null}
 			{showableIdxs.length > 1 ? (
 				<Property label={t("broadcast:dashboard.bracket.bracket")}>
 					<SendouChipRadioGroup
@@ -1276,6 +1192,58 @@ function ClipProperty({ selected }: { selected: ProducerState }) {
 			</SendouChipRadioGroup>
 			<span className="text-xs text-lighter">
 				{t("broadcast:dashboard.clips.explanation")}
+			</span>
+		</Property>
+	);
+}
+
+function TeamProperty({
+	state,
+	selected,
+}: {
+	state: BroadcastState;
+	selected: ProducerState;
+}) {
+	const { t } = useTranslation(["broadcast"]);
+	const tournament = useTournament();
+	const { submit } = useActionSubmit(broadcastActionSchema);
+	const featuredSides = state.match
+		? matchSides(state.match, "next", selected)
+		: null;
+	const featuredItem = (teamPick: "left" | "right", idx: 0 | 1) => ({
+		id: teamPick,
+		name: `${t(`broadcast:dashboard.team.${teamPick}`)} · ${
+			featuredSides?.[idx].team?.name ?? t("broadcast:overlay.tbd")
+		}`,
+	});
+	const items = [
+		featuredItem("left", 0),
+		featuredItem("right", 1),
+		...tournament.ctx.teams.map((team) => ({ id: team.id, name: team.name })),
+	];
+
+	return (
+		<Property label={t("broadcast:dashboard.team.label")}>
+			<SendouSelect
+				aria-label={t("broadcast:dashboard.team.label")}
+				items={items}
+				selectedKey={selected.teamPick}
+				onSelectionChange={(key) => {
+					if (typeof key === "number" || key === "left" || key === "right") {
+						submit("SET_TEAM", { itemId: selected.id, teamPick: key });
+					}
+				}}
+				search={{ placeholder: t("broadcast:dashboard.team.search") }}
+				data-testid="broadcast-team-select"
+			>
+				{(item) => (
+					<SendouSelectItem key={item.id} id={item.id}>
+						{item.name}
+					</SendouSelectItem>
+				)}
+			</SendouSelect>
+			<span className="text-xs text-lighter">
+				{t("broadcast:dashboard.team.explanation")}
 			</span>
 		</Property>
 	);
@@ -1492,11 +1460,25 @@ function ClipOverlays({
 	);
 }
 
-function Theme({ state }: { state: BroadcastState }) {
+function Theme({
+	state,
+	designUrl,
+}: {
+	state: BroadcastState;
+	designUrl: string;
+}) {
 	const { t } = useTranslation(["broadcast"]);
 
 	return (
 		<div className="stack lg">
+			<div className="stack xs items-start">
+				<LinkButton to={designUrl} size="small" icon={<Brush />}>
+					{t("broadcast:dashboard.theme.design")}
+				</LinkButton>
+				<span className="text-xs text-lighter">
+					{t("broadcast:dashboard.theme.designHint")}
+				</span>
+			</div>
 			<SendouForm
 				schema={broadcastThemeFormSchema}
 				defaultValues={{
@@ -1577,15 +1559,34 @@ function everySourceHasClips(statuses: ClipTransfer.ClipPeerStatus[]) {
 		.every((status) => status.missingCount === 0 || status.transferMs !== null);
 }
 
-/** Clip and length of a staged item, e.g. "4 splats · 0:25". */
-function itemDetail(item: ProducerState) {
+/** Name of the team the item's team scene shows, `undefined` while the featured match's isn't decided. */
+function pickedTeamName({
+	state,
+	tournament,
+	item,
+}: {
+	state: BroadcastState;
+	tournament: ReturnType<typeof useTournament>;
+	item: ProducerState;
+}) {
+	if (typeof item.teamPick === "number") {
+		return tournament.teamById(item.teamPick)?.name;
+	}
+	if (!state.match) return undefined;
+
+	return matchSides(state.match, "next", item)[item.teamPick === "left" ? 0 : 1]
+		.team?.name;
+}
+
+/** Clip or team and length of a staged item, e.g. "4 splats · 0:25". */
+function itemDetail(item: ProducerState, teamName?: string) {
 	const clip = BROADCAST_PROTOTYPE_CLIPS.find(
 		(prototypeClip) =>
 			item.scene === "replays" && prototypeClip.id === item.clipId,
 	);
 	const length = Producer.lengthMs(item);
 
-	return [clip?.name, length !== null ? formatClock(length) : null]
+	return [clip?.name, teamName, length !== null ? formatClock(length) : null]
 		.filter(Boolean)
 		.join(" · ");
 }

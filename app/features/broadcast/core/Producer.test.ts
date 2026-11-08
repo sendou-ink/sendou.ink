@@ -30,6 +30,7 @@ const item = (
 	bracketIdx: null,
 	bracketFocus: "remaining",
 	clipId: null,
+	teamPick: "left",
 	durationMs: null,
 	advance: "timer",
 	...overrides,
@@ -83,7 +84,7 @@ describe("Producer.take", () => {
 				bracketFocus: "losers",
 			}),
 			next: item(3, {
-				scene: "maps",
+				scene: "results",
 				swapSides: true,
 				bracketIdx: 1,
 				bracketFocus: "losers",

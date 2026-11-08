@@ -1,110 +1,65 @@
+/* Sizes and spots of the replays scene, the rules below follow them. */
+:global([data-broadcast]) {
+	--replays-bug-inset: 56px;
+	--replays-bug-height: 56px;
+	--replays-label-size: 28px;
+	--replays-corner-size: 80px;
+	--replays-corner-inset: 28px;
+}
+
 .replays {
-	position: absolute;
-	inset: 0;
 	font-family: var(--bc-font-display);
 }
 
 .clip {
-	position: absolute;
-	inset: 0;
-	width: 100%;
-	height: 100%;
 	object-fit: cover;
 	background: black;
 }
 
 .corner {
-	--size: 80px;
-	--inset: 28px;
-
-	position: absolute;
-	width: var(--size);
-	height: var(--size);
 	border: 0 solid var(--bc-accent);
-	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
-		var(--scene-enter-delay) both;
 
 	&[data-corner="tl"] {
-		--bc-enter-x: calc(var(--bc-enter-distance) * -1);
-		--bc-enter-y: calc(var(--bc-enter-distance) * -1);
-
-		top: var(--inset);
-		left: var(--inset);
 		border-top-width: 6px;
 		border-left-width: 6px;
 	}
 
 	&[data-corner="tr"] {
-		--bc-enter-x: var(--bc-enter-distance);
-		--bc-enter-y: calc(var(--bc-enter-distance) * -1);
-
-		top: var(--inset);
-		right: var(--inset);
 		border-top-width: 6px;
 		border-right-width: 6px;
 	}
 
 	&[data-corner="bl"] {
-		--bc-enter-x: calc(var(--bc-enter-distance) * -1);
-		--bc-enter-y: var(--bc-enter-distance);
-
-		bottom: var(--inset);
-		left: var(--inset);
 		border-bottom-width: 6px;
 		border-left-width: 6px;
 	}
 
 	&[data-corner="br"] {
-		--bc-enter-x: var(--bc-enter-distance);
-		--bc-enter-y: var(--bc-enter-distance);
-
-		right: var(--inset);
-		bottom: var(--inset);
 		border-right-width: 6px;
 		border-bottom-width: 6px;
 	}
 }
 
 .bug {
-	--bc-enter-x: calc(var(--bc-enter-distance) * -1);
-
-	position: absolute;
-	top: 56px;
-	left: 56px;
-	display: flex;
-	align-items: center;
-	gap: 14px;
-	height: 56px;
-	padding: 0 22px 0 18px;
 	border: var(--bc-border-width) solid var(--bc-border);
 	border-radius: var(--bc-radius);
 	background: var(--bc-surface);
-	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
-		calc(var(--scene-enter-delay) + var(--bc-stagger)) both;
 }
 
 .dot {
-	width: 16px;
-	height: 16px;
 	border-radius: 50%;
-	background: var(--color-error);
-	animation: var(--bc-anim-pulse) 1.2s ease-in-out infinite;
+	background: var(--bc-alert);
 }
 
 .label {
-	font-size: 28px;
-	font-weight: 700;
+	font-size: var(--replays-label-size);
+	font-weight: var(--bc-weight-bold);
 	text-transform: uppercase;
 }
 
 .game {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	padding-left: 14px;
 	border-left: var(--bc-border-width) solid var(--bc-border);
 	color: var(--bc-text-muted);
 	font-size: 20px;
-	font-weight: 600;
-	white-space: nowrap;
+	font-weight: var(--bc-weight-semibold);
 }

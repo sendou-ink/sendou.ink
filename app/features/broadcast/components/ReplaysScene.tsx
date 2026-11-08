@@ -3,9 +3,12 @@ import { useTranslation } from "react-i18next";
 import { ModeImage } from "~/components/Image";
 import { BroadcastClipsContext } from "../broadcast-clips-context";
 import type { BroadcastState, BroadcastView } from "../broadcast-types";
-import { scenePart } from "../broadcast-utils";
+import { combineStyles, scenePart } from "../broadcast-utils";
 import * as Producer from "../core/Producer";
-import styles from "./ReplaysScene.module.css";
+import layout from "./ReplaysScene.layout.module.css";
+import look from "./ReplaysScene.module.css";
+
+const styles = combineStyles(look, layout);
 
 const part = scenePart("replays");
 

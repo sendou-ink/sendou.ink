@@ -5,17 +5,25 @@ import type {
 	BroadcastOtherMatch,
 	BroadcastOtherMatchTeam,
 } from "../broadcast-types";
-import { scenePart } from "../broadcast-utils";
-import styles from "./Ticker.module.css";
+import { combineStyles, scenePart } from "../broadcast-utils";
+import layout from "./Ticker.layout.module.css";
+import look from "./Ticker.module.css";
+
+const styles = combineStyles(look, layout);
 
 const part = scenePart("ticker");
 
-/** "Elsewhere": the tournament's other matches scrolling by with their seeds and set scores. Nothing without other matches. */
+/**
+ * "Elsewhere": the tournament's other matches scrolling by with their seeds and set scores. Nothing without other
+ * matches. The `bar` variant has no surface or label of its own, for inside another bar.
+ */
 export function Ticker({
 	matches,
+	variant,
 	className,
 }: {
 	matches: BroadcastOtherMatch[];
+	variant?: "bar";
 	className?: string;
 }) {
 	const { t } = useTranslation(["broadcast"]);
@@ -25,12 +33,15 @@ export function Ticker({
 	return (
 		<div
 			className={clsx(styles.ticker, className)}
+			data-variant={variant}
 			style={{ "--ticker-matches": matches.length } as React.CSSProperties}
 			{...part("ticker")}
 		>
-			<div className={styles.label} {...part("ticker-label")}>
-				{t("broadcast:overlay.elsewhere")}
-			</div>
+			{variant === "bar" ? null : (
+				<div className={styles.label} {...part("ticker-label")}>
+					{t("broadcast:overlay.elsewhere")}
+				</div>
+			)}
 			<div className={styles.viewport}>
 				<div className={styles.track}>
 					{/* twice in a row, scrolling by one copy loops seamlessly */}

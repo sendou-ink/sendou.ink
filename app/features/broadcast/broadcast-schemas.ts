@@ -107,6 +107,11 @@ export const broadcastActionSchema = v.union([
 		focus: v.picklist(BROADCAST_BRACKET_FOCUSES),
 	}),
 	v.object({
+		_action: _action("SET_TEAM"),
+		itemId: id,
+		teamPick: v.union([v.picklist(["left", "right"]), id]),
+	}),
+	v.object({
 		_action: _action("SET_CLIP"),
 		itemId: id,
 		/** `undefined` leaves the replays footage to OBS. */

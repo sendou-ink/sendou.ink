@@ -197,7 +197,12 @@ export function createSender({
 			emit();
 			const timeout = setTimeout(() => {
 				reconnectTimeouts.delete(timeout);
-				if (peers.some((known) => known.id === peer.id)) void connect(peer);
+				if (
+					peers.some((known) => known.id === peer.id) &&
+					!connections.has(peer.id)
+				) {
+					void connect(peer);
+				}
 			}, RECONNECT_DELAY_MS);
 			reconnectTimeouts.add(timeout);
 		};

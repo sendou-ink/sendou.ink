@@ -1,35 +1,36 @@
-.ticker {
-	--bc-enter-y: var(--bc-enter-distance);
-	--ticker-gap: 56px;
+/* Sizes and spots of the other matches' ticker, the rules below follow them. */
+:global([data-broadcast]) {
+	--ticker-height: 50px;
+	--ticker-label-size: 18px;
+	--ticker-text-size: 20px;
+	--ticker-bar-text-size: 19px;
+	--ticker-match-gap: 56px;
+}
 
-	display: flex;
-	align-items: stretch;
-	height: 50px;
-	overflow: hidden;
+.ticker {
 	border-radius: var(--bc-radius-small);
 	background: var(--bc-surface);
 	font-family: var(--bc-font-body);
-	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
-		calc(var(--scene-enter-delay) + 6 * var(--bc-stagger)) both;
+
+	&[data-variant="bar"] {
+		border-radius: 0;
+		background: none;
+
+		& .match {
+			font-size: var(--ticker-bar-text-size);
+		}
+	}
 }
 
 .label {
-	display: flex;
-	flex-shrink: 0;
-	align-items: center;
-	padding: 0 20px;
 	background: var(--bc-accent);
 	color: var(--bc-accent-text);
-	font-size: 18px;
-	font-weight: 700;
+	font-size: var(--ticker-label-size);
+	font-weight: var(--bc-weight-bold);
 	text-transform: uppercase;
-	white-space: nowrap;
 }
 
 .viewport {
-	flex: 1;
-	min-width: 0;
-	overflow: hidden;
 	mask-image: linear-gradient(
 		to right,
 		transparent,
@@ -39,47 +40,19 @@
 	);
 }
 
-.track {
-	display: flex;
-	width: max-content;
-	height: 100%;
-	animation: var(--bc-anim-ticker) calc(var(--ticker-matches) * 7s) linear
-		infinite;
-}
-
-.matches {
-	display: flex;
-	align-items: center;
-	gap: var(--ticker-gap);
-	/* the same space before the next copy as between the matches */
-	padding: 0 calc(var(--ticker-gap) / 2);
-}
-
 .match {
-	display: flex;
-	align-items: center;
-	gap: 14px;
-	font-size: 20px;
-	font-weight: 600;
-	white-space: nowrap;
+	font-size: var(--ticker-text-size);
+	font-weight: var(--bc-weight-semibold);
 }
 
 .round {
 	color: var(--bc-text-muted);
 	font-size: 15px;
-	font-weight: 700;
+	font-weight: var(--bc-weight-bold);
 	text-transform: uppercase;
 }
 
 .team {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-
-	&:last-child {
-		flex-direction: row-reverse;
-	}
-
 	&[data-loser] .name {
 		color: var(--bc-text-muted);
 	}
@@ -90,25 +63,10 @@
 	font-size: 15px;
 }
 
-.name {
-	max-width: 360px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.scores {
-	display: flex;
-	gap: 4px;
-}
-
 .score {
-	display: grid;
-	place-items: center;
-	min-width: 30px;
-	height: 30px;
 	border-radius: var(--bc-radius-small);
 	background: var(--bc-surface-high);
-	font-weight: 700;
+	font-weight: var(--bc-weight-bold);
 	font-variant-numeric: tabular-nums;
 
 	&[data-winner] {

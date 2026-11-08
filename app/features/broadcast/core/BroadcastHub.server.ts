@@ -20,6 +20,8 @@ import * as Producer from "./Producer";
 const REBUILD_DEBOUNCE_MS = 250;
 // timers can fire a little early
 const AUTO_TAKE_TOLERANCE_MS = 50;
+const FIRST_BUILD_RETRY_BASE_MS = 1_000;
+const FIRST_BUILD_RETRY_MAX_MS = 30_000;
 
 interface HubKey {
 	tournamentId: number;
@@ -46,6 +48,9 @@ interface Hub extends HubKey {
 	rebuildTimer: ReturnType<typeof setTimeout> | null;
 	/** Puts the staged item on air once the live scene has run its length, see `Producer.autoTakeAt`. */
 	autoTakeTimer: ReturnType<typeof setTimeout> | null;
+	/** Retries a failed build while there is no state to show yet. */
+	retryTimer: ReturnType<typeof setTimeout> | null;
+	failedBuildCount: number;
 	isBuilding: boolean;
 	isDirty: boolean;
 }
@@ -223,6 +228,8 @@ function createHub(key: HubKey): Hub {
 		resubscribe: new AbortController(),
 		rebuildTimer: null,
 		autoTakeTimer: null,
+		retryTimer: null,
+		failedBuildCount: 0,
 		isBuilding: false,
 		isDirty: false,
 	};
@@ -240,6 +247,7 @@ function disconnect(hub: Hub, client: Client) {
 	hub.stop.abort();
 	if (hub.rebuildTimer) clearTimeout(hub.rebuildTimer);
 	if (hub.autoTakeTimer) clearTimeout(hub.autoTakeTimer);
+	if (hub.retryTimer) clearTimeout(hub.retryTimer);
 	if (hubs.get(hubId(hub)) === hub) hubs.delete(hubId(hub));
 }
 
@@ -281,6 +289,7 @@ async function rebuild(hub: Hub) {
 			if (!built || hub.stop.signal.aborted) continue;
 
 			hub.snapshot = built.snapshot;
+			hub.failedBuildCount = 0;
 			scheduleAutoTake(hub);
 			if (!R.isDeepEqual(built.eventChannels, hub.eventChannels)) {
 				hub.eventChannels = built.eventChannels;
@@ -291,9 +300,24 @@ async function rebuild(hub: Hub) {
 		} while (hub.isDirty && !hub.stop.signal.aborted);
 	} catch (error) {
 		logger.error("Building the broadcast state failed", error);
+		if (!hub.snapshot) scheduleFirstBuildRetry(hub);
 	} finally {
 		hub.isBuilding = false;
 	}
+}
+
+function scheduleFirstBuildRetry(hub: Hub) {
+	if (hub.retryTimer || hub.stop.signal.aborted) return;
+
+	const delay = Math.min(
+		FIRST_BUILD_RETRY_BASE_MS * 2 ** hub.failedBuildCount,
+		FIRST_BUILD_RETRY_MAX_MS,
+	);
+	hub.failedBuildCount++;
+	hub.retryTimer = setTimeout(() => {
+		hub.retryTimer = null;
+		void rebuild(hub);
+	}, delay);
 }
 
 /**

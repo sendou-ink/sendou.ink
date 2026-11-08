@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import { BROADCAST_INK_COLORS } from "../broadcast-constants";
 import type { BroadcastInkColorKey, BroadcastInkRgb } from "../broadcast-types";
 
@@ -34,14 +35,20 @@ export function closestPair(
 ): BroadcastInkColorKey | null {
 	const [first, second] = inks.map(toLab) as [Lab, Lab];
 	const ranked = REFERENCES.map((pair) => {
-		const straight = [deltaE2000(first, pair.a), deltaE2000(second, pair.b)];
-		const flipped = [deltaE2000(first, pair.b), deltaE2000(second, pair.a)];
-		const sides = mean(straight) <= mean(flipped) ? straight : flipped;
+		const straight: [number, number] = [
+			deltaE2000(first, pair.a),
+			deltaE2000(second, pair.b),
+		];
+		const flipped: [number, number] = [
+			deltaE2000(first, pair.b),
+			deltaE2000(second, pair.a),
+		];
+		const sides = R.mean(straight) <= R.mean(flipped) ? straight : flipped;
 
 		return {
 			key: pair.key,
 			isColorLock: pair.isColorLock,
-			distance: mean(sides),
+			distance: R.mean(sides),
 			worst: Math.max(...sides),
 		};
 	}).sort((a, b) => a.distance - b.distance);
@@ -61,10 +68,6 @@ export function closestPair(
 	}
 
 	return closest.key;
-}
-
-function mean(values: number[]) {
-	return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
 function hexToRgb(hex: string): BroadcastInkRgb {

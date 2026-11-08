@@ -68,109 +68,6 @@
 	}
 }
 
-.keycap {
-	padding: 0 var(--s-1);
-	border: 1px solid var(--color-border);
-	border-bottom-width: 2px;
-	border-radius: var(--radius-selector);
-	background-color: var(--color-bg);
-	color: var(--color-text-high);
-	font-family: inherit;
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-semi);
-	line-height: 1.4;
-	opacity: 0.8;
-}
-
-.sceneGroups {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-2);
-}
-
-/* every group a row of the same columns, the legend in the space left of them */
-.sceneGroup {
-	position: relative;
-	display: grid;
-	grid-template-columns: repeat(4, minmax(0, 1fr));
-	gap: var(--s-1-5);
-	min-width: 0;
-	padding: 0 0 0 3.25rem;
-	margin: 0;
-	border: none;
-	background: none;
-}
-
-.sceneGroupLabel {
-	position: absolute;
-	top: 50%;
-	left: 0;
-	padding: 0;
-	color: var(--color-text-high);
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-bold);
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-	transform: translateY(-50%);
-}
-
-.sceneForm {
-	display: contents;
-}
-
-.sceneTile {
-	position: relative;
-	flex-direction: column;
-	gap: var(--s-0-5);
-	width: 100%;
-	height: 100%;
-	min-height: 3.25rem;
-	padding: var(--s-1);
-	border: 2px solid var(--color-border);
-	border-radius: var(--radius-field);
-	background-color: var(--color-bg);
-	color: var(--color-text);
-	font-size: var(--font-xs);
-	line-height: 1.1;
-	text-align: center;
-	white-space: normal;
-	--button-hover-bg: var(--color-bg-higher);
-
-	& .keycap {
-		position: absolute;
-		top: 2px;
-		right: 2px;
-		padding: 0 3px;
-		line-height: 1.2;
-	}
-}
-
-.sceneTileSelected {
-	border-color: var(--color-fg-accent);
-	background-color: var(--color-bg-accent);
-	color: var(--color-fg-accent);
-	--button-hover-bg: var(--color-bg-accent);
-}
-
-.sceneIcon {
-	flex-shrink: 0;
-	width: 18px;
-	height: 18px;
-}
-
-.liveBadge {
-	position: absolute;
-	top: 0;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	padding: 0 var(--s-1-5);
-	border-radius: var(--radius-field);
-	background-color: var(--color-error);
-	color: var(--color-text-on-dark);
-	font-size: var(--font-2xs);
-	text-transform: uppercase;
-}
-
 .viewHeader {
 	font-size: var(--font-md);
 	text-transform: uppercase;
@@ -194,7 +91,7 @@
 /* fixed label column, one sized to the labels shown would move the controls when the scene changes */
 .properties {
 	display: grid;
-	grid-template-columns: 6.5rem 1fr;
+	grid-template-columns: 6.5rem minmax(0, 1fr);
 	gap: var(--s-3) var(--s-3);
 	align-items: baseline;
 
@@ -209,6 +106,11 @@
 	grid-column: 1 / -1;
 	grid-template-columns: subgrid;
 	align-items: baseline;
+
+	/* long values (team names) wrap or truncate instead of widening the editor */
+	& > * {
+		min-width: 0;
+	}
 
 	@container (width < 360px) {
 		gap: var(--s-1-5);

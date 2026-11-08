@@ -1,4 +1,5 @@
 import type {
+	BroadcastGameResult,
 	BroadcastScene,
 	BroadcastSettings,
 	BroadcastTransition,
@@ -11,9 +12,11 @@ export const BROADCAST_SCENES = [
 	"rosters",
 	"maps",
 	"game",
+	"results",
 	"break",
 	"replays",
 	"bracket",
+	"team",
 	"technical",
 	"ending",
 ] as const;
@@ -53,8 +56,16 @@ export const BROADCAST_SCENE_DURATIONS_MS: Partial<
 			60_000, 120_000, 180_000, 300_000, 600_000, 900_000, 1_200_000, 1_800_000,
 		],
 	},
+	results: {
+		defaultMs: null,
+		optionsMs: [10_000, 15_000, 20_000, 30_000, 45_000, 60_000],
+	},
 	bracket: {
 		defaultMs: 15_000,
+		optionsMs: [10_000, 15_000, 20_000, 30_000, 45_000, 60_000],
+	},
+	team: {
+		defaultMs: 20_000,
 		optionsMs: [10_000, 15_000, 20_000, 30_000, 45_000, 60_000],
 	},
 };
@@ -225,6 +236,111 @@ export const BROADCAST_PROTOTYPE_CLIPS = [
 	},
 ] as const;
 
+// xxx: prototype, the scanner reads these off the game's end screens eventually
+/** Counter reads of the prototype game: seconds into the game, alpha's and bravo's count, who held the objective. */
+const PROTOTYPE_OBJECTIVE: Array<[number, number, number, 0 | 1 | null]> = [
+	[0, 100, 100, null],
+	[10, 100, 100, null],
+	[20, 100, 100, 0],
+	[30, 92, 100, 0],
+	[40, 84, 100, 0],
+	[50, 76, 100, 0],
+	[60, 70, 100, 1],
+	[70, 70, 94, 1],
+	[80, 70, 86, 1],
+	[90, 70, 78, 1],
+	[100, 70, 72, null],
+	[110, 70, 72, 0],
+	[120, 63, 72, 0],
+	[130, 55, 72, 0],
+	[140, 47, 72, 0],
+	[150, 40, 72, 0],
+	[160, 36, 72, null],
+	[170, 36, 72, 1],
+	[180, 36, 64, 1],
+	[190, 36, 57, 1],
+	[200, 36, 50, 1],
+	[210, 36, 45, null],
+	[220, 36, 45, 0],
+	[230, 29, 45, 0],
+	[240, 22, 45, 0],
+	[250, 16, 45, 0],
+	[260, 14, 45, 1],
+	[270, 14, 41, 1],
+	[280, 14, 41, null],
+	[290, 12, 41, 0],
+	[300, 12, 41, 0],
+];
+
+// xxx: prototype, the scanner reads these off the game's end screens eventually
+/** Game the results scene shows, its teams in the featured match's bracket order. */
+export const BROADCAST_PROTOTYPE_GAME_RESULT: BroadcastGameResult = {
+	map: { mode: "SZ", stageId: 10 },
+	winner: 0,
+	isKnockout: false,
+	teams: [
+		{
+			score: 88,
+			players: [
+				{
+					name: "Noodle",
+					weaponSplId: 40,
+					abilities: ["LDE", "RSU", "SJ"],
+				},
+				{
+					name: "InkJet",
+					weaponSplId: 2010,
+					abilities: ["CB", "ISM", "SJ"],
+				},
+				{
+					name: "Squidly",
+					weaponSplId: 3010,
+					abilities: ["LDE", "SSU", "OS"],
+				},
+				{
+					name: "Marina♪",
+					weaponSplId: 1010,
+					abilities: ["OG", "NS", "SSU"],
+				},
+			],
+		},
+		{
+			score: 59,
+			players: [
+				{
+					name: "Kraken",
+					weaponSplId: 8000,
+					abilities: ["LDE", "RP", "SJ"],
+				},
+				{
+					name: "Blitz",
+					weaponSplId: 4010,
+					abilities: ["CB", "RSU", "SJ"],
+				},
+				{
+					name: "Mochi",
+					weaponSplId: 5010,
+					abilities: ["LDE", "QR", "SJ"],
+				},
+				{
+					name: "Zap",
+					weaponSplId: 6010,
+					abilities: ["ISM", "SPU", "SJ"],
+				},
+			],
+		},
+	],
+	objective: PROTOTYPE_OBJECTIVE.map(([t, alpha, bravo, control]) => ({
+		t,
+		data: {
+			time: 300 - t,
+			score: [alpha, bravo],
+			penalty: [null, null],
+			control,
+		},
+	})),
+};
+
 /** Overlay URLs are public, so connections per broadcast are capped. */
 export const BROADCAST_MAX_CONNECTIONS = 40;
 
@@ -247,12 +363,16 @@ export const BROADCAST_THEME_TOKENS = [
 	"--bc-text-muted",
 	"--bc-accent",
 	"--bc-accent-text",
+	"--bc-alert",
 	"--bc-team-a",
 	"--bc-team-b",
 	"--bc-team-a-text",
 	"--bc-team-b-text",
 	"--bc-font-display",
 	"--bc-font-body",
+	"--bc-weight-semibold",
+	"--bc-weight-bold",
+	"--bc-weight-heavy",
 	"--bc-radius",
 	"--bc-radius-small",
 	"--bc-border-width",
@@ -269,6 +389,71 @@ export const BROADCAST_THEME_TOKENS = [
 	"--bc-stinger-entrance-at",
 ] as const;
 
+/**
+ * The overlays' stylesheets the designer lays out for editing, in its order, named after their `.module.css` files in
+ * `components/`. Their classes are `.{stylesheet}-{class}` in the custom CSS, e.g. `.GameScene-infoCard`.
+ * Renaming one, or a class of one, breaks the themes editing it.
+ */
+export const BROADCAST_THEME_STYLESHEETS = [
+	"BroadcastOverlay",
+	"Stinger",
+	"SceneBackdrop",
+	"TeamLogo",
+	"Matchup",
+	"Ticker",
+	"GameScene",
+	"RostersScene",
+	"MapsScene",
+	"ResultsScene",
+	"ReplaysScene",
+	"CastersScene",
+	"BracketScene",
+	"TeamScene",
+	"HoldScene",
+] as const;
+
+/** Screenshots of the game feed the designer can show under the overlay, by the gameplay they show (paths for `broadcastDesignImageUrl`). */
+export const BROADCAST_DESIGN_FOOTAGE = {
+	gameplay: "footage/gameplay.webp",
+	minimap: "footage/minimap.webp",
+	none: null,
+} as const;
+
+/** Posted by the designer to its canvas with the state to render, see `BroadcastDesignMessage`. */
+export const BROADCAST_DESIGN_MESSAGE = "broadcast:design";
+
+/** Posted by the designer's canvas once it listens for {@link BROADCAST_DESIGN_MESSAGE}. */
+export const BROADCAST_DESIGN_READY_MESSAGE = "broadcast:design-ready";
+
+/** How long the designer's mock team and player names are. */
+export const BROADCAST_DESIGN_NAME_LENGTHS = [
+	"short",
+	"typical",
+	"long",
+] as const;
+
+/** How far the designer's mock set is. */
+export const BROADCAST_DESIGN_SET_STAGES = [
+	"start",
+	"ongoing",
+	"decider",
+	"over",
+] as const;
+
+/** Brackets the designer can mock for the bracket scene. */
+export const BROADCAST_DESIGN_BRACKETS = [
+	"double_elimination",
+	"single_elimination",
+	"round_robin",
+	"swiss",
+] as const;
+
+export const BROADCAST_DESIGN_BEST_OF = [3, 5, 7] as const;
+
+export const BROADCAST_DESIGN_MAX_PLAYERS = 4;
+
+export const BROADCAST_DESIGN_MAX_OTHER_MATCHES = 8;
+
 /** Scenes without gameplay, all drawn by the same full screen design. */
 export const BROADCAST_HOLD_SCENES = [
 	"starting",
@@ -277,10 +462,10 @@ export const BROADCAST_HOLD_SCENES = [
 	"ending",
 ] as const satisfies ReadonlyArray<(typeof BROADCAST_SCENES)[number]>;
 
-/** The dashboard's scene buttons, grouped and in the order the number keys 1–9 and 0 pick them. Every scene is in one group. */
+/** The dashboard's scene buttons, grouped and in the order the number keys 1–9 and 0 pick the first ten. Every scene is in one group. */
 export const BROADCAST_SCENE_GROUPS = [
-	{ key: "match", scenes: ["rosters", "maps", "game", "replays"] },
-	{ key: "show", scenes: ["casters", "bracket"] },
+	{ key: "match", scenes: ["rosters", "maps", "game", "results", "replays"] },
+	{ key: "show", scenes: ["casters", "bracket", "team"] },
 	{ key: "hold", scenes: BROADCAST_HOLD_SCENES },
 ] as const satisfies ReadonlyArray<{
 	key: string;
@@ -295,20 +480,22 @@ export const BROADCAST_SCENE_GROUPS = [
  */
 export const BROADCAST_SCENE_PARTS = {
 	game: [
+		"info-bar",
+		"tournament-logo",
+		"round",
+		"set-length",
+		"casters",
+		"caster",
+		"caster-pronouns",
 		"scoreboard",
 		"team",
+		"team-logo",
+		"team-seed",
 		"team-name",
 		"team-score",
-		"map-intro",
-		"game-number",
-		"mode",
-		"stage",
-		"info-bar",
-		"info-row",
-		"casters",
-		"mic",
-		"round",
-		"tournament-logo",
+		"roster",
+		"player",
+		"player-name",
 	],
 	rosters: [
 		"header",
@@ -340,6 +527,31 @@ export const BROADCAST_SCENE_PARTS = {
 		"stage",
 		"winner",
 	],
+	results: [
+		"map",
+		"map-video",
+		"round",
+		"games",
+		"game-number",
+		"mode",
+		"stage",
+		"team",
+		"team-header",
+		"team-logo",
+		"team-name",
+		"team-score",
+		"result",
+		"player",
+		"player-weapon",
+		"player-name",
+		"player-abilities",
+		"objective",
+		"control",
+		"control-share",
+		"objective-chart",
+		"objective-line",
+		"control-lane",
+	],
 	casters: [
 		"header",
 		"tournament-name",
@@ -353,6 +565,7 @@ export const BROADCAST_SCENE_PARTS = {
 		"tournament-logo",
 		"tournament-name",
 		"bracket-name",
+		"group-name",
 		"side",
 		"round",
 		"round-name",
@@ -362,6 +575,40 @@ export const BROADCAST_SCENE_PARTS = {
 		"team-seed",
 		"team-name",
 		"team-score",
+		"standings",
+		"standing",
+		"standing-placement",
+		"standing-sets",
+		"standing-maps",
+		"swiss-round",
+	],
+	team: [
+		"header",
+		"team-logo",
+		"team-name",
+		"team-seed",
+		"tournament-name",
+		"stat",
+		"stat-label",
+		"stat-value",
+		"stat-share",
+		"section-title",
+		"player",
+		"player-avatar",
+		"player-name",
+		"player-weapons",
+		"mode-record",
+		"map-pool",
+		"map",
+		"map-mode",
+		"map-name",
+		"set",
+		"set-score",
+		"set-round",
+		"set-opponent",
+		"set-opponent-seed",
+		"set-games",
+		"set-game",
 	],
 	replays: [
 		"clip",
@@ -379,7 +626,15 @@ export const BROADCAST_SCENE_PARTS = {
 		"headline",
 		"matchup-label",
 	],
-	matchup: ["matchup", "team", "team-logo", "team-name", "team-score", "round"],
+	matchup: [
+		"matchup",
+		"team",
+		"team-logo",
+		"team-seed",
+		"team-name",
+		"team-score",
+		"round",
+	],
 	ticker: [
 		"ticker",
 		"ticker-label",
@@ -421,7 +676,6 @@ export const BROADCAST_KEYFRAMES = [
 	"bc-reveal",
 	"bc-count",
 	"bc-pulse",
-	"bc-zoom",
 	"bc-fade-in",
 	"bc-fade-out",
 	"bc-alert-slide",
@@ -432,6 +686,7 @@ export const BROADCAST_KEYFRAMES = [
 	"bc-panel-iris-out",
 	"bc-camera",
 	"bc-dim",
+	"bc-glow",
 ] as const;
 
 export const DEFAULT_BROADCAST_SETTINGS = {

@@ -1,87 +1,46 @@
+/* Sizes and spots of the casters scene, the rules below follow them. */
+:global([data-broadcast]) {
+	--casters-header-top: 56px;
+	--casters-eyebrow-size: 26px;
+	--casters-title-size: 72px;
+	--casters-name-size: 34px;
+	--casters-pronouns-size: 26px;
+	--casters-matchup-bottom: 60px;
+}
+
 .casters {
-	position: absolute;
-	inset: 0;
 	font-family: var(--bc-font-display);
-}
-
-.backdrop {
-	position: absolute;
-	inset: 0;
-}
-
-.header {
-	--bc-enter-y: calc(var(--bc-enter-distance) * -1);
-
-	position: absolute;
-	top: 56px;
-	right: 0;
-	left: 0;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 6px;
-	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
-		var(--scene-enter-delay) both;
 }
 
 .eyebrow {
 	color: var(--bc-text-muted);
-	font-size: 26px;
-	font-weight: 600;
+	font-size: var(--casters-eyebrow-size);
+	font-weight: var(--bc-weight-semibold);
 }
 
 .title {
-	margin: 0;
-	font-size: 72px;
-	font-weight: 700;
+	font-size: var(--casters-title-size);
+	font-weight: var(--bc-weight-bold);
 	line-height: 1;
 	text-transform: uppercase;
 }
 
 .frame {
-	--bc-enter-y: var(--bc-enter-distance);
-
-	position: absolute;
 	border-radius: 2px;
 	/* outside the frame, so the camera under it shows whole */
 	outline: 6px solid var(--bc-border);
-	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
-		calc(var(--scene-enter-delay) + (var(--i) + 1) * var(--bc-stagger)) both;
 }
 
 .name {
-	position: absolute;
-	top: calc(100% + 24px);
-	right: 0;
-	left: 0;
-	width: fit-content;
-	max-width: 100%;
-	margin-inline: auto;
-	padding: 10px 28px;
-	overflow: hidden;
 	border-bottom: 5px solid var(--bc-accent);
 	border-radius: var(--bc-radius-small);
 	background: var(--bc-surface);
-	font-size: 34px;
-	font-weight: 700;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	font-size: var(--casters-name-size);
+	font-weight: var(--bc-weight-bold);
 }
 
 .pronouns {
-	margin-inline-start: 14px;
 	color: var(--bc-text-muted);
-	font-size: 26px;
-	font-weight: 600;
-}
-
-.matchup {
-	--bc-enter-y: var(--bc-enter-distance);
-
-	position: absolute;
-	right: 220px;
-	bottom: 60px;
-	left: 220px;
-	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
-		calc(var(--scene-enter-delay) + 4 * var(--bc-stagger)) both;
+	font-size: var(--casters-pronouns-size);
+	font-weight: var(--bc-weight-semibold);
 }

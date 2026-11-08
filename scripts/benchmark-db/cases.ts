@@ -8,6 +8,7 @@ import * as AssociationRepository from "~/features/associations/AssociationRepos
 import * as LogInLinkRepository from "~/features/auth/LogInLinkRepository.server";
 import * as AvailabilityRepository from "~/features/availability/AvailabilityRepository.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
+import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { RECENT_PATCHES } from "~/features/builds/builds-constants";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
@@ -280,6 +281,35 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("BadgeRepository.findByAuthorUserId", fx.badgeAuthorId, (userId) =>
 		BadgeRepository.findByAuthorUserId(userId),
+	);
+
+	add("BroadcastRepository.findByChannel", fx.broadcast, (broadcast) =>
+		BroadcastRepository.findByChannel(broadcast),
+	);
+	add("BroadcastRepository.findAllByChatRoomIds", fx.broadcast, (broadcast) =>
+		BroadcastRepository.findAllByChatRoomIds(broadcast.chatRoomIds),
+	);
+	add(
+		"BroadcastRepository.findAllCastersByUserIds",
+		fx.manyUserIds,
+		(userIds) => BroadcastRepository.findAllCastersByUserIds(userIds),
+	);
+	add(
+		"BroadcastRepository.findAllPlayersByTournamentTeamIds",
+		fx.manyTournamentTeamIds,
+		(tournamentTeamIds) =>
+			BroadcastRepository.findAllPlayersByTournamentTeamIds(tournamentTeamIds),
+	);
+	add(
+		"BroadcastRepository.findAllGameResultsByMatchIds",
+		fx.manyTournamentMatchIds,
+		(matchIds) => BroadcastRepository.findAllGameResultsByMatchIds(matchIds),
+	);
+	add(
+		"BroadcastRepository.findMapPoolByTournamentTeamId",
+		fx.heavyTournamentTeamId,
+		(tournamentTeamId) =>
+			BroadcastRepository.findMapPoolByTournamentTeamId(tournamentTeamId),
 	);
 
 	add("BuildRepository.findAllByUserId", fx.heavyBuildUserId, (userId) =>

@@ -3,8 +3,8 @@ import { describe, expect, test } from "vitest";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import type {
-	BroadcastBracket,
 	BroadcastBracketFocus,
+	BroadcastEliminationBracket,
 } from "../broadcast-types";
 import * as BracketFocus from "./BracketFocus";
 
@@ -54,6 +54,36 @@ describe("BracketFocus.layout", () => {
 			),
 		).toEqual(sides);
 	});
+
+	test.each<{ focus: BroadcastBracketFocus }>([
+		{ focus: "remaining" },
+		{ focus: "losers" },
+	])(
+		"lays out single elimination as one side with the $focus focus",
+		({ focus }) => {
+			const bracket = layout({
+				type: "single_elimination",
+				data: Engine.create({
+					type: "single_elimination",
+					seeding: R.range(1, 9),
+					settings: {},
+				}),
+				focus,
+			});
+
+			expect(roundsOf(bracket)).toEqual({
+				winners: [
+					["Round 1", 4, "pairs"],
+					["Semis", 2, "pairs"],
+					["Finals", 1, null],
+					["3rd place match", 1, null],
+				],
+			});
+			expect(
+				bracket.sides[0].rounds.at(-1)?.matches.every((match) => !match?.isFed),
+			).toBe(true);
+		},
+	);
 
 	test("keeps byes as empty slots that feed nothing", () => {
 		const bracket = layout({ data: doubleElimination(7) });
@@ -164,10 +194,12 @@ function doubleElimination(teamCount: number) {
 }
 
 function layout({
+	type = "double_elimination",
 	data,
 	focus = "remaining",
 	featured = null,
 }: {
+	type?: Parameters<typeof BracketFocus.layout>[0]["type"];
 	data: BracketData;
 	focus?: BroadcastBracketFocus;
 	featured?: Parameters<typeof BracketFocus.layout>[0]["featured"];
@@ -175,6 +207,7 @@ function layout({
 	return BracketFocus.layout({
 		idx: 0,
 		name: "Main bracket",
+		type,
 		data,
 		groupId: data.group[0]?.id,
 		focus,
@@ -217,17 +250,20 @@ function teamIdsOf(data: BracketData, matchId: number) {
 	return [match?.opponent1?.id, match?.opponent2?.id];
 }
 
-function matchesOf(bracket: BroadcastBracket) {
+function matchesOf(bracket: BroadcastEliminationBracket) {
 	return bracket.sides.flatMap((side) =>
 		side.rounds.flatMap((round) => round.matches),
 	);
 }
 
-function matchOf(bracket: BroadcastBracket, matchId: number) {
+function matchOf(bracket: BroadcastEliminationBracket, matchId: number) {
 	return matchesOf(bracket).find((match) => match?.id === matchId);
 }
 
-function teamIdsShown(bracket: BroadcastBracket, exceptMatchId: number) {
+function teamIdsShown(
+	bracket: BroadcastEliminationBracket,
+	exceptMatchId: number,
+) {
 	return matchesOf(bracket)
 		.filter((match) => match?.id !== exceptMatchId)
 		.flatMap((match) =>
@@ -235,7 +271,7 @@ function teamIdsShown(bracket: BroadcastBracket, exceptMatchId: number) {
 		);
 }
 
-function roundsOf(bracket: BroadcastBracket) {
+function roundsOf(bracket: BroadcastEliminationBracket) {
 	return Object.fromEntries(
 		bracket.sides.map((side) => [
 			side.type,
@@ -248,7 +284,7 @@ function roundsOf(bracket: BroadcastBracket) {
 	);
 }
 
-function roundNamesOf(bracket: BroadcastBracket) {
+function roundNamesOf(bracket: BroadcastEliminationBracket) {
 	return Object.fromEntries(
 		bracket.sides.map((side) => [
 			side.type,

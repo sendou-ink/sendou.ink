@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import { fixedLanguageMiddleware } from "~/modules/i18n/i18next.server";
@@ -55,9 +56,17 @@ export default function BroadcastOverlayPage() {
 		<BroadcastClipsContext.Provider
 			value={{ urls: clips.urls, isMuted: preview, clockOffsetMs }}
 		>
-			<BroadcastOverlay state={state} view={view} rehearsals={rehearsals} />
+			{/* a crash shows nothing over the footage, tried again with the next state */}
+			<ClientErrorBoundary fallback={null} resetKeys={[state]}>
+				<BroadcastOverlay state={state} view={view} rehearsals={rehearsals} />
+			</ClientErrorBoundary>
 		</BroadcastClipsContext.Provider>
 	);
+}
+
+/** On air the error page would cover the footage, nothing is shown instead. */
+export function ErrorBoundary() {
+	return null;
 }
 
 /** How many times the dashboard embedding this preview asked it to play the staged transition. */

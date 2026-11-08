@@ -7,14 +7,18 @@ import type {
 	BroadcastView,
 } from "../broadcast-types";
 import {
+	combineStyles,
 	type MatchSide,
 	matchSides,
 	roundLabel,
 	scenePart,
 } from "../broadcast-utils";
 import { SetLength } from "./SetLength";
-import styles from "./Stinger.module.css";
+import layout from "./Stinger.layout.module.css";
+import look from "./Stinger.module.css";
 import { TeamLogo } from "./TeamLogo";
+
+const styles = combineStyles(look, layout);
 
 const part = scenePart("stinger");
 

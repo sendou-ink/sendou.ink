@@ -4,26 +4,36 @@ import type {
 	BroadcastView,
 	ProducerState,
 } from "../broadcast-types";
-import { matchSides, roundLabel, scenePart } from "../broadcast-utils";
-import styles from "./Matchup.module.css";
+import {
+	combineStyles,
+	matchSides,
+	roundLabel,
+	scenePart,
+} from "../broadcast-utils";
+import layout from "./Matchup.layout.module.css";
+import look from "./Matchup.module.css";
 import { SetLength } from "./SetLength";
 import { TeamLogo } from "./TeamLogo";
 
+const styles = combineStyles(look, layout);
+
 const part = scenePart("matchup");
 
-/** The featured match in a line: both teams with the set score once it started, round and set length under. */
+/** The featured match in a line: both teams with their seeds and the set score once it started (unless `showsScore` is off), round and set length under. */
 export function Matchup({
 	match,
 	view,
 	producer,
+	showsScore = true,
 }: {
 	match: BroadcastMatch;
 	view: BroadcastView;
 	producer: Pick<ProducerState, "swapSides">;
+	showsScore?: boolean;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const sides = matchSides(match, view, producer);
-	const hasStarted = match.progress[view].resultCount > 0;
+	const hasStarted = showsScore && match.progress[view].resultCount > 0;
 
 	return (
 		<div className={styles.matchup} {...part("matchup")}>
@@ -41,9 +51,16 @@ export function Matchup({
 							className={styles.logo}
 							{...part("team-logo")}
 						/>
-						<span className={styles.name} {...part("team-name")}>
-							{side.team?.name ?? t("broadcast:overlay.tbd")}
-						</span>
+						<div className={styles.title}>
+							<span className={styles.name} {...part("team-name")}>
+								{side.team?.name ?? t("broadcast:overlay.tbd")}
+							</span>
+							{side.team?.seed ? (
+								<span className={styles.seed} {...part("team-seed")}>
+									{t("broadcast:overlay.seed", { seed: side.team.seed })}
+								</span>
+							) : null}
+						</div>
 						{hasStarted ? (
 							<span className={styles.score} {...part("team-score")}>
 								{side.score}

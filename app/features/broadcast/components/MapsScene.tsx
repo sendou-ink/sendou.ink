@@ -8,16 +8,20 @@ import type {
 	BroadcastView,
 } from "../broadcast-types";
 import {
+	combineStyles,
 	type MatchSide,
 	matchSides,
 	roundLabel,
 	scenePart,
 } from "../broadcast-utils";
 import { HoldScene } from "./HoldScene";
-import styles from "./MapsScene.module.css";
+import layout from "./MapsScene.layout.module.css";
+import look from "./MapsScene.module.css";
 import { SceneBackdrop } from "./SceneBackdrop";
 import { SetLength } from "./SetLength";
 import { TeamLogo } from "./TeamLogo";
+
+const styles = combineStyles(look, layout);
 
 const part = scenePart("maps");
 

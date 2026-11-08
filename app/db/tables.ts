@@ -1236,7 +1236,7 @@ interface LiveStream {
 }
 
 /** Overlay broadcast of one of the tournament's cast accounts (`Tournament.castAccounts`). Created on its first write or with its chat room once the cast account is set. */
-export interface TournamentBroadcast {
+interface TournamentBroadcast {
 	id: GeneratedAlways<number>;
 	tournamentId: number;
 	platform: StreamPlatform;
@@ -1246,7 +1246,6 @@ export interface TournamentBroadcast {
 	state: JSONColumnType<BroadcastStoredState>;
 	/** Theme, not staged */
 	settings: JSONColumnType<BroadcastSettings>;
-	/** Team and player values the producer edited over the tournament's, not staged */
 	/** Chat of the tournament's organizers and streamers producing the broadcast, created once the cast account is set */
 	chatRoomId: number | null;
 	createdAt: Generated<number>;

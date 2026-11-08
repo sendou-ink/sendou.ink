@@ -8,15 +8,19 @@ import type {
 	BroadcastWeaponImages,
 } from "../broadcast-types";
 import {
+	combineStyles,
 	type MatchSide,
 	matchSides,
 	roundLabel,
 	scenePart,
 } from "../broadcast-utils";
-import styles from "./RostersScene.module.css";
+import layout from "./RostersScene.layout.module.css";
+import look from "./RostersScene.module.css";
 import { SceneBackdrop } from "./SceneBackdrop";
 import { SetLength } from "./SetLength";
 import { TeamLogo } from "./TeamLogo";
+
+const styles = combineStyles(look, layout);
 
 const part = scenePart("rosters");
 

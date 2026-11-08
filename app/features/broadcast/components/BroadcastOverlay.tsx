@@ -1,19 +1,26 @@
 import { useState } from "react";
+import { resolveThemeClasses } from "../broadcast-theme";
 import type {
 	BroadcastScene,
 	BroadcastState,
 	BroadcastTransition,
 	BroadcastView,
 } from "../broadcast-types";
+import { combineStyles } from "../broadcast-utils";
 import { BracketScene } from "./BracketScene";
-import styles from "./BroadcastOverlay.module.css";
+import layout from "./BroadcastOverlay.layout.module.css";
+import look from "./BroadcastOverlay.module.css";
 import { CastersScene } from "./CastersScene";
 import { GameScene } from "./GameScene";
 import { HoldScene } from "./HoldScene";
 import { MapsScene } from "./MapsScene";
 import { ReplaysScene } from "./ReplaysScene";
+import { ResultsScene } from "./ResultsScene";
 import { RostersScene } from "./RostersScene";
 import { Stinger } from "./Stinger";
+import { TeamScene } from "./TeamScene";
+
+const styles = combineStyles(look, layout);
 
 interface Stage {
 	/** What changing makes the overlay transition: the Take on live, the staged scene on next. */
@@ -84,7 +91,7 @@ export function BroadcastOverlay({
 		<>
 			<div
 				className={styles.canvas}
-				// the default tokens are sendou.ink's dark theme
+				// sendou.ink's own components in the scenes follow its dark theme, as the overlay's tokens do
 				data-theme="dark"
 				data-broadcast
 			>
@@ -137,7 +144,9 @@ export function BroadcastOverlay({
 			</div>
 			{state.settings.css ? (
 				// unlayered, so it beats the overlays' own (layered) styles without specificity fights
-				<style>{escapeStyleText(state.settings.css)}</style>
+				<style>
+					{escapeStyleText(resolveThemeClasses(state.settings.css))}
+				</style>
 			) : null}
 		</>
 	);
@@ -243,10 +252,14 @@ function Scene({
 			return <MapsScene state={state} view={view} />;
 		case "casters":
 			return <CastersScene state={state} view={view} />;
+		case "results":
+			return <ResultsScene state={state} view={view} />;
 		case "replays":
 			return <ReplaysScene state={state} view={view} />;
 		case "bracket":
 			return <BracketScene state={state} view={view} />;
+		case "team":
+			return <TeamScene state={state} view={view} />;
 		default:
 			return <HoldScene scene={scene} state={state} view={view} />;
 	}

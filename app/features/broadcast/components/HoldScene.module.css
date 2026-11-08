@@ -1,80 +1,38 @@
+/* Sizes and spots of the full screen hold scenes (starting, break, standby, ending), the rules below follow them. */
+:global([data-broadcast]) {
+	--hold-content-top: 150px;
+	--hold-inline-margin: 140px;
+	--hold-matchup-bottom: 130px;
+	--hold-ticker-bottom: 48px;
+	--hold-logo-size: 128px;
+	--hold-eyebrow-size: 32px;
+	--hold-title-size: 140px;
+	--hold-countdown-size: 120px;
+	--hold-headline-size: 40px;
+}
+
 .hold {
-	position: absolute;
-	inset: 0;
 	font-family: var(--bc-font-display);
 }
 
-.content {
-	--bc-enter-y: var(--bc-enter-distance);
-
-	position: absolute;
-	top: 150px;
-	left: 140px;
-	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	gap: 18px;
-	max-width: 1300px;
-
-	& > * {
-		animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
-			calc(var(--scene-enter-delay) + var(--k, 0) * var(--bc-stagger)) both;
-	}
-
-	& > :nth-child(2) {
-		--k: 1;
-	}
-
-	& > :nth-child(3) {
-		--k: 2;
-	}
-
-	& > :nth-child(n + 4) {
-		--k: 4;
-	}
-}
-
 .tournamentLogo {
-	width: 128px;
-	height: 128px;
-	margin-bottom: 12px;
 	border-radius: 50%;
 	object-fit: cover;
 }
 
 .eyebrow {
-	max-width: 100%;
-	overflow: hidden;
 	color: var(--bc-text-muted);
-	font-size: 32px;
-	font-weight: 600;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	font-size: var(--hold-eyebrow-size);
+	font-weight: var(--bc-weight-semibold);
 }
 
 .title {
-	position: relative;
-	margin: 0;
-	padding-bottom: 28px;
-	font-size: 140px;
-	font-weight: 700;
+	font-size: var(--hold-title-size);
+	font-weight: var(--bc-weight-bold);
 	line-height: 0.95;
 	text-transform: uppercase;
 
-	.content > & {
-		animation:
-			var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
-			calc(var(--scene-enter-delay) + 2 * var(--bc-stagger)) both,
-			var(--bc-anim-reveal) calc(var(--bc-enter-duration) * 1.6) var(--bc-ease)
-			calc(var(--scene-enter-delay) + 2 * var(--bc-stagger)) both;
-	}
-
 	&::after {
-		position: absolute;
-		bottom: 0;
-		left: 0;
-		width: 200px;
-		height: 8px;
 		border-radius: 4px;
 		background: var(--bc-accent);
 		content: "";
@@ -82,59 +40,25 @@
 }
 
 .countdown {
-	min-height: 1em;
 	color: var(--bc-accent);
-	font-size: 120px;
-	font-weight: 700;
+	font-size: var(--hold-countdown-size);
+	font-weight: var(--bc-weight-bold);
 	font-variant-numeric: tabular-nums;
 	line-height: 1;
 }
 
 .headline {
-	max-width: 1200px;
-	margin: 12px 0 0;
 	color: var(--bc-text-muted);
-	font-size: 40px;
-	font-weight: 600;
+	font-size: var(--hold-headline-size);
+	font-weight: var(--bc-weight-semibold);
 	line-height: 1.3;
 }
 
-.matchup {
-	--bc-enter-y: var(--bc-enter-distance);
-
-	position: absolute;
-	right: 140px;
-	bottom: 130px;
-	left: 140px;
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
-		calc(var(--scene-enter-delay) + 5 * var(--bc-stagger)) both;
-
-	[data-variant="alert"] ~ & {
-		bottom: 150px;
-	}
-}
-
 .matchupLabel {
-	align-self: center;
-	padding: 4px 18px;
 	border-radius: var(--bc-radius-small);
 	background: var(--bc-accent);
 	color: var(--bc-accent-text);
 	font-size: 22px;
-	font-weight: 700;
+	font-weight: var(--bc-weight-bold);
 	text-transform: uppercase;
-}
-
-.ticker {
-	position: absolute;
-	right: 140px;
-	bottom: 48px;
-	left: 140px;
-
-	[data-variant="alert"] ~ & {
-		bottom: 60px;
-	}
 }

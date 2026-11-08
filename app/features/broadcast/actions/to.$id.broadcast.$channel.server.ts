@@ -14,9 +14,9 @@ import * as CastChannel from "../core/CastChannel";
 import * as Producer from "../core/Producer";
 
 const STALE_TAKE_MESSAGE =
-	"Someone else took in the meantime, check what is live now";
+	"Someone else already pressed Take. Check what is live now.";
 const STALE_ITEM_MESSAGE =
-	"That scene isn't staged anymore, check what is live and queued now";
+	"That scene isn't staged anymore. Check what is live and queued now.";
 
 export const action = defineAction(
 	{ params: broadcastParamsSchema, body: broadcastActionSchema },
@@ -80,6 +80,10 @@ export const action = defineAction(
 			}
 			case "SET_BRACKET_FOCUS": {
 				await editItem(body.itemId, { bracketFocus: body.focus });
+				break;
+			}
+			case "SET_TEAM": {
+				await editItem(body.itemId, { teamPick: body.teamPick });
 				break;
 			}
 			case "SET_CLIP": {

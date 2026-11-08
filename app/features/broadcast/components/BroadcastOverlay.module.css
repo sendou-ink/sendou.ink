@@ -1,35 +1,36 @@
 /*
  * Theming contract, see feature-readmes/broadcast.mdx:
- * - tokens on [data-broadcast] (defaults follow sendou.ink's dark theme)
+ * - tokens on [data-broadcast] (defaults are sendou.ink's default dark theme as plain values, so a user's own site
+ *   theme never changes the overlay)
  * - the global bc-* keyframes below and in Stinger.module.css, redefine one to change every element using it,
  *   or point a --bc-anim-* token at keyframes of your own (for the whole canvas or any part of it)
  * - [data-part] and state attributes ([data-team], [data-status]...) on the markup
  */
 .canvas {
 	/* colors */
-	--bc-bg: var(--color-bg);
-	--bc-surface: var(--color-bg-high);
-	--bc-surface-high: var(--color-bg-higher);
-	--bc-border: var(--color-border);
-	--bc-text: var(--color-text);
-	--bc-text-muted: color-mix(
-		in oklch,
-		var(--color-text) 45%,
-		var(--color-text-high)
-	);
-	--bc-accent: var(--color-fill-accent);
-	--bc-accent-text: var(--color-fg-on-accent);
-	--bc-team-a: var(--color-chart-alpha);
-	--bc-team-b: var(--color-chart-bravo);
-	--bc-team-a-text: var(--color-text-on-dark);
-	--bc-team-b-text: var(--color-text-on-dark);
+	--bc-bg: #090f1e;
+	--bc-surface: #141f40;
+	--bc-surface-high: #243155;
+	--bc-border: #243155;
+	--bc-text: #ffffff;
+	--bc-text-muted: #b4bed8;
+	--bc-accent: #a2cbfc;
+	--bc-accent-text: #090f1e;
+	--bc-alert: #ff1c6c;
+	--bc-team-a: #da5b76;
+	--bc-team-b: #6572e4;
+	--bc-team-a-text: #ffffff;
+	--bc-team-b-text: #ffffff;
 
 	/* shapes */
 	--bc-font-display: lexend, sans-serif;
 	--bc-font-body: lexend, sans-serif;
-	--bc-radius: var(--radius-box);
-	--bc-radius-small: var(--radius-field);
-	--bc-border-width: var(--border-width);
+	--bc-weight-semibold: 600;
+	--bc-weight-bold: 700;
+	--bc-weight-heavy: 800;
+	--bc-radius: 12px;
+	--bc-radius-small: 8px;
+	--bc-border-width: 2px;
 
 	/* motion */
 	--bc-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -54,7 +55,6 @@
 	--bc-anim-reveal: bc-reveal;
 	--bc-anim-count: bc-count;
 	--bc-anim-pulse: bc-pulse;
-	--bc-anim-zoom: bc-zoom;
 	--bc-anim-fade-in: bc-fade-in;
 	--bc-anim-fade-out: bc-fade-out;
 	--bc-anim-alert-slide: bc-alert-slide;
@@ -65,11 +65,7 @@
 	--bc-anim-panel-iris-out: bc-panel-iris-out;
 	--bc-anim-camera: bc-camera;
 	--bc-anim-dim: bc-dim;
-
-	position: relative;
-	width: 1920px;
-	height: 1080px;
-	overflow: hidden;
+	--bc-anim-glow: bc-glow;
 	color: var(--bc-text);
 	font-family: var(--bc-font-body);
 	-webkit-font-smoothing: antialiased;
@@ -83,29 +79,6 @@
 	& [data-team="b"] {
 		--team-color: var(--bc-team-b);
 		--team-color-text: var(--bc-team-b-text);
-	}
-}
-
-.scene {
-	position: absolute;
-	inset: 0;
-	/* the scenes' entrance animations add this to their delays */
-	--scene-enter-delay: 0ms;
-
-	/* waits for the stinger to reveal the scene, see Stinger.module.css for the phases */
-	&[data-entrance="stinger"] {
-		--scene-enter-delay: calc(
-			var(--bc-stinger-duration) *
-			(var(--bc-stinger-entrance-at) - var(--bc-stinger-covered-at))
-		);
-	}
-
-	&[data-transition="in"] {
-		animation: var(--bc-anim-fade-in) var(--bc-transition-duration) ease both;
-	}
-
-	&[data-transition="out"] {
-		animation: var(--bc-anim-fade-out) var(--bc-transition-duration) ease both;
 	}
 }
 
@@ -148,13 +121,6 @@
 @keyframes :global(bc-pulse) {
 	50% {
 		opacity: 0.55;
-	}
-}
-
-/* Slow movement of a picture, e.g. the stage in the map intro. */
-@keyframes :global(bc-zoom) {
-	from {
-		transform: scale(1.12);
 	}
 }
 

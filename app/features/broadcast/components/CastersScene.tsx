@@ -2,10 +2,13 @@ import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { BROADCAST_CANVAS } from "../broadcast-constants";
 import type { BroadcastState, BroadcastView } from "../broadcast-types";
-import { pronounsLabel, scenePart } from "../broadcast-utils";
-import styles from "./CastersScene.module.css";
+import { combineStyles, pronounsLabel, scenePart } from "../broadcast-utils";
+import layout from "./CastersScene.layout.module.css";
+import look from "./CastersScene.module.css";
 import { Matchup } from "./Matchup";
 import { SceneBackdrop } from "./SceneBackdrop";
+
+const styles = combineStyles(look, layout);
 
 const part = scenePart("casters");
 

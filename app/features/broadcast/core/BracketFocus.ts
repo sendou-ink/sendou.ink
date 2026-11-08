@@ -1,3 +1,5 @@
+import type { Tables } from "~/db/tables";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as EliminationLayout from "~/features/tournament-bracket/core/EliminationLayout";
 import type {
 	BracketData,
@@ -7,17 +9,24 @@ import type {
 import { getRounds } from "~/features/tournament-bracket/core/rounds";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type {
-	BroadcastBracket,
 	BroadcastBracketFocus,
 	BroadcastBracketMatch,
 	BroadcastBracketRound,
 	BroadcastBracketSide,
 	BroadcastBracketTeam,
+	BroadcastEliminationBracket,
 	MatchProgress,
 } from "../broadcast-types";
 
+const SHOWABLE_BRACKET_TYPES: Array<Tables["TournamentStage"]["type"]> = [
+	"single_elimination",
+	"double_elimination",
+	"round_robin",
+	"swiss",
+];
+
 /** The featured match as far as a view shows it. */
-interface FeaturedMatch {
+export interface FeaturedMatch {
 	id: number;
 	progress: Pick<MatchProgress, "resultCount" | "scores" | "isOver">;
 }
@@ -33,13 +42,14 @@ const SIDES_IN_FOCUS: Record<
 };
 
 /**
- * Lays out a double elimination bracket for the bracket scene: the sides in focus, compactified to the rounds
- * still being played unless the whole bracket is in focus. The featured match is shown as far as the view
+ * Lays out an elimination bracket for the bracket scene: of double elimination the sides in focus, compactified to
+ * the rounds still being played unless the whole bracket is in focus. The featured match is shown as far as the view
  * shows it, so a result not on air yet doesn't spoil it, neither does its winner advancing in the bracket.
  */
 export function layout({
 	idx,
 	name,
+	type,
 	data,
 	groupId,
 	focus,
@@ -48,18 +58,23 @@ export function layout({
 }: {
 	idx: number;
 	name: string;
+	type: "single_elimination" | "double_elimination";
 	data: BracketData;
 	/** Group shown of a bracket split into groups. */
 	groupId: number | undefined;
 	focus: BroadcastBracketFocus;
 	featured: FeaturedMatch | null;
 	teamById: (id: number) => BroadcastBracketTeam | null;
-}): BroadcastBracket {
+}): BroadcastEliminationBracket {
 	const bracketData = asOnAir(data, featured);
 
-	const sides = SIDES_IN_FOCUS[focus].flatMap((type) => {
+	const sideTypes =
+		type === "single_elimination"
+			? (["winners"] as const)
+			: SIDES_IN_FOCUS[focus];
+	const sides = sideTypes.flatMap((sideType) => {
 		const rounds = sideRounds({
-			type,
+			type: type === "single_elimination" ? "single" : sideType,
 			bracketData,
 			groupId,
 			isCompactified: focus !== "whole",
@@ -75,7 +90,7 @@ export function layout({
 		if (rounds.length === 0) return [];
 
 		const side: BroadcastBracketSide = {
-			type,
+			type: sideType,
 			slotCount: Math.max(...rounds.map((round) => round.matches.length)),
 			rounds,
 		};
@@ -83,7 +98,7 @@ export function layout({
 		return [side];
 	});
 
-	return { idx, name, sides };
+	return { type: "elimination", idx, name, sides };
 }
 
 /**
@@ -97,7 +112,7 @@ export function resolveBracketIdx({
 }: {
 	pickedIdx: number | null;
 	featuredMatchBracketIdx: number | null;
-	/** Started double elimination brackets. */
+	/** See {@link showableBracketIdxs}. */
 	showableIdxs: number[];
 }) {
 	for (const idx of [pickedIdx, featuredMatchBracketIdx]) {
@@ -107,13 +122,14 @@ export function resolveBracketIdx({
 	return showableIdxs.at(-1) ?? null;
 }
 
-/** Brackets the bracket scene can show: the double elimination ones that have started. */
+/** Brackets the bracket scene can show: the elimination, round robin and Swiss ones that have started. */
 export function showableBracketIdxs(
 	tournament: Pick<Tournament, "bracketsMeta">,
 ) {
 	return tournament.bracketsMeta
 		.filter(
-			(bracket) => bracket.type === "double_elimination" && !bracket.preview,
+			(bracket) =>
+				SHOWABLE_BRACKET_TYPES.includes(bracket.type) && !bracket.preview,
 		)
 		.map((bracket) => bracket.idx);
 }
@@ -130,7 +146,7 @@ function sideRounds({
 	groupId,
 	isCompactified,
 }: {
-	type: BroadcastBracketSide["type"];
+	type: BroadcastBracketSide["type"] | "single";
 	bracketData: BracketData;
 	groupId: number | undefined;
 	isCompactified: boolean;
@@ -169,7 +185,7 @@ function toBroadcastRound({
 	teamById: (id: number) => BroadcastBracketTeam | null;
 }): BroadcastBracketRound {
 	const feedersOf = (matchIdx: number) => {
-		if (!previousRound) return [];
+		if (!previousRound || isThirdPlaceMatch(round)) return [];
 		if (previousRound.matches.length === round.matches.length) {
 			return [previousRound.matches[matchIdx]];
 		}
@@ -180,11 +196,12 @@ function toBroadcastRound({
 	return {
 		id: round.id,
 		name: round.name,
-		connector: !nextRound
-			? null
-			: nextRound.matches.length === round.matches.length
-				? "straight"
-				: "pairs",
+		connector:
+			!nextRound || isThirdPlaceMatch(nextRound)
+				? null
+				: nextRound.matches.length === round.matches.length
+					? "straight"
+					: "pairs",
 		matches: round.matches.map((match, matchIdx) =>
 			isBye(match)
 				? null
@@ -200,7 +217,8 @@ function toBroadcastRound({
 	};
 }
 
-function toBroadcastMatch({
+/** The match as the bracket scene shows it, see {@link asOnAir} for the featured match's. */
+export function toBroadcastMatch({
 	match,
 	isFeatured,
 	isFed,
@@ -236,9 +254,9 @@ function toBroadcastMatch({
 
 /**
  * The bracket with the featured match at the view's progress. While the view has its set going, its teams are
- * taken out of the matches they advanced to.
+ * taken out of the elimination matches they advanced to.
  */
-function asOnAir(
+export function asOnAir(
 	data: BracketData,
 	featured: FeaturedMatch | null,
 ): BracketData {
@@ -248,6 +266,13 @@ function asOnAir(
 	const { progress } = featured;
 	const hasStarted = progress.resultCount > 0 || progress.isOver;
 	const isResultHidden = Boolean(featuredMatch.winnerSide) && !progress.isOver;
+	const featuredStageType = data.stage.find(
+		(stage) => stage.id === featuredMatch.stageId,
+	)?.type;
+	const hasAdvancedTeams =
+		isResultHidden &&
+		(featuredStageType === "single_elimination" ||
+			featuredStageType === "double_elimination");
 	const featuredTeamIds = [
 		featuredMatch.opponent1?.id,
 		featuredMatch.opponent2?.id,
@@ -280,7 +305,7 @@ function asOnAir(
 					winnerSide: progress.isOver ? match.winnerSide : null,
 				};
 			}
-			if (!isResultHidden || match.winnerSide) return match;
+			if (!hasAdvancedTeams || match.winnerSide) return match;
 
 			return {
 				...match,
@@ -289,6 +314,10 @@ function asOnAir(
 			};
 		}),
 	};
+}
+
+function isThirdPlaceMatch(round: SideRound) {
+	return round.name === TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH;
 }
 
 function isBye(match: MatchData) {

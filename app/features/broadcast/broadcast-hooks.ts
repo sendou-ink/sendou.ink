@@ -245,8 +245,8 @@ const MIN_ZOOM_SCALE = 1.35;
 
 /**
  * Frames the element in its parent like a camera: an overview scaled to fill the parent within its padding, then
- * zoomed in on the `zoomTarget` inside it, centering it in the parent's whole box as far as the `zoomedOut` element
- * stays above the view. Without a target the overview stays put. Sets the `--camera-overview` and `--camera-zoom`
+ * zoomed in on the `zoomTarget` elements inside it (as far in as they all still fit within the padding), centering
+ * them in the parent's whole box as far as the `zoomedOut` element stays above the view. Without a target the overview stays put. Sets the `--camera-overview` and `--camera-zoom`
  * transforms on the element for its animation between them. Framed again whenever `content` changes.
  */
 export function useCamera<T extends HTMLElement>({
@@ -296,11 +296,15 @@ export function useCamera<T extends HTMLElement>({
 				center: { x: size.width / 2, y: size.height / 2 },
 			});
 
-			const target = element.querySelector<HTMLElement>(zoomTarget);
+			const targets = Array.from(
+				element.querySelectorAll<HTMLElement>(zoomTarget),
+			);
 			const hidden = zoomedOut
 				? element.querySelector<HTMLElement>(zoomedOut)
 				: null;
-			const zoom = target
+			const targetBounds =
+				targets.length > 0 ? boundsWithin(targets, element) : null;
+			const zoom = targetBounds
 				? cameraTransform({
 						box: {
 							x: 0,
@@ -308,8 +312,18 @@ export function useCamera<T extends HTMLElement>({
 							width: parent.clientWidth,
 							height: parent.clientHeight,
 						},
-						scale: Math.max(MIN_ZOOM_SCALE, overviewScale * ZOOM_FACTOR),
-						center: centerWithin(target, element),
+						scale: Math.max(
+							overviewScale,
+							Math.min(
+								Math.max(MIN_ZOOM_SCALE, overviewScale * ZOOM_FACTOR),
+								contentBox.width / targetBounds.width,
+								contentBox.height / targetBounds.height,
+							),
+						),
+						center: {
+							x: targetBounds.x + targetBounds.width / 2,
+							y: targetBounds.y + targetBounds.height / 2,
+						},
 						hiddenAbove: hidden ? hidden.offsetTop + hidden.offsetHeight : 0,
 					})
 				: overview;
@@ -354,10 +368,32 @@ function cameraTransform({
 	return `translate(${x}px, ${y}px) scale(${scale})`;
 }
 
-/** Center of the element in the coordinates of its ancestor's layout box, transforms not counted. */
-function centerWithin(element: HTMLElement, ancestor: HTMLElement) {
-	let x = element.offsetWidth / 2;
-	let y = element.offsetHeight / 2;
+/** Box around the elements in the coordinates of their ancestor's layout box, transforms not counted. */
+function boundsWithin(elements: HTMLElement[], ancestor: HTMLElement) {
+	const boxes = elements.map((element) => {
+		const position = offsetWithin(element, ancestor);
+
+		return {
+			left: position.x,
+			top: position.y,
+			right: position.x + element.offsetWidth,
+			bottom: position.y + element.offsetHeight,
+		};
+	});
+	const left = Math.min(...boxes.map((box) => box.left));
+	const top = Math.min(...boxes.map((box) => box.top));
+
+	return {
+		x: left,
+		y: top,
+		width: Math.max(...boxes.map((box) => box.right)) - left,
+		height: Math.max(...boxes.map((box) => box.bottom)) - top,
+	};
+}
+
+function offsetWithin(element: HTMLElement, ancestor: HTMLElement) {
+	let x = 0;
+	let y = 0;
 	let node: HTMLElement | null = element;
 	while (node && node !== ancestor) {
 		x += node.offsetLeft;

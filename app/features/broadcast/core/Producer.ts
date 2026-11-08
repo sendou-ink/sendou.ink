@@ -19,10 +19,12 @@ const SCENE_AFTER: Record<BroadcastScene, BroadcastScene> = {
 	casters: "rosters",
 	rosters: "game",
 	maps: "game",
-	game: "maps",
+	game: "results",
+	results: "maps",
 	break: "game",
 	replays: "game",
 	bracket: "rosters",
+	team: "rosters",
 	technical: "game",
 	ending: "starting",
 };
@@ -34,6 +36,7 @@ const DEFAULT_PRODUCER_STATE: Omit<ProducerState, "id"> = {
 	bracketIdx: null,
 	bracketFocus: "remaining",
 	clipId: null,
+	teamPick: "left",
 	durationMs: null,
 	advance: "timer",
 };

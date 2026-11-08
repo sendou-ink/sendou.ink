@@ -1,6 +1,8 @@
+import type { ObjectiveTimelineEvent } from "~/components/ObjectiveTimeline";
 import type { Pronouns } from "~/db/tables-json";
 import type { StreamPlatform } from "~/features/live-streams/live-streams-constants";
 import type {
+	AbilityWithUnknown,
 	MainWeaponId,
 	ModeShort,
 	StageId,
@@ -8,6 +10,7 @@ import type {
 import type {
 	BROADCAST_ADVANCES,
 	BROADCAST_BRACKET_FOCUSES,
+	BROADCAST_DESIGN_MESSAGE,
 	BROADCAST_INK_COLORS,
 	BROADCAST_SCENES,
 	BROADCAST_STREAM_ROLES,
@@ -43,6 +46,8 @@ interface BroadcastGameInk extends BroadcastInk {
 
 export type BroadcastView = (typeof BROADCAST_VIEWS)[number];
 
+type BroadcastTeamPick = "left" | "right" | number;
+
 export type BroadcastStreamRole = (typeof BROADCAST_STREAM_ROLES)[number];
 
 /** What the producer controls of one scene: staged as `next` (or queued after it) and put on air as `live` by a Take. */
@@ -59,6 +64,8 @@ export interface ProducerState {
 	bracketFocus: BroadcastBracketFocus;
 	/** Clip the replays scene plays, `null` leaves the footage under it to OBS. */
 	clipId: string | null;
+	/** Team of the team scene: one of the featured match's by its side (following the match cast), or any by its id. */
+	teamPick: BroadcastTeamPick;
 	/**
 	 * How long the scene stays on air before the item after it can go on air by itself, `null` until a Take.
 	 * The replays scene playing a clip lasts as long as the clip instead.
@@ -129,9 +136,19 @@ export interface BroadcastState extends BroadcastStoredState {
 	match: BroadcastMatch | null;
 	/** What the bracket scene shows in each view, `null` without a double elimination bracket to show. */
 	bracket: Record<BroadcastView, BroadcastBracket | null>;
+	/** What the team scene shows in each view, `null` when the view is on another scene or the team is not found. */
+	team: Record<BroadcastView, BroadcastTeamSpotlight | null>;
 	/** The tournament's other matches being played, what the "elsewhere" ticker shows. */
 	otherMatches: BroadcastOtherMatch[];
 	health: BroadcastHealth;
+}
+
+/** What the designer posts to its canvas to render. */
+export interface BroadcastDesignMessage {
+	type: typeof BROADCAST_DESIGN_MESSAGE;
+	state: BroadcastState;
+	/** Bumped to play the scene's transition again. */
+	rehearsals: number;
 }
 
 export type BroadcastStreamMessage =
@@ -228,6 +245,32 @@ export interface BroadcastGame {
 	winner: 0 | 1 | null;
 }
 
+/** A game as the scanner read it, what the results scene shows. */
+export interface BroadcastGameResult {
+	map: BroadcastMap;
+	/** Index of the winning team in bracket order. */
+	winner: 0 | 1;
+	isKnockout: boolean;
+	/** In bracket order. */
+	teams: [BroadcastGameResultTeam, BroadcastGameResultTeam];
+	/** Objective counter reads over the game, scores in bracket order. */
+	objective: ObjectiveTimelineEvent[];
+}
+
+interface BroadcastGameResultTeam {
+	/** 0-100, how much of the counter the team took. */
+	score: number;
+	players: BroadcastGameResultPlayer[];
+}
+
+interface BroadcastGameResultPlayer {
+	/** In-game name. */
+	name: string;
+	weaponSplId: MainWeaponId;
+	/** Main abilities of the head, clothes and shoes. */
+	abilities: AbilityWithUnknown[];
+}
+
 export interface BroadcastTeam {
 	id: number;
 	name: string;
@@ -247,14 +290,82 @@ export interface BroadcastPlayer {
 	name: string;
 	avatarUrl: string | null;
 	weapons: MainWeaponId[];
+	/** Country code, e.g. "FI". */
+	country: string | null;
 }
 
-/** A double elimination bracket (one group of it) laid out as the producer's focus shows it. */
-export interface BroadcastBracket {
+/** What the bracket scene shows: a double elimination bracket, or one group of a round robin or Swiss bracket. */
+export type BroadcastBracket =
+	| BroadcastEliminationBracket
+	| BroadcastRoundRobinBracket
+	| BroadcastSwissBracket;
+
+/** An elimination bracket (one group of it) laid out as the producer's focus shows it. */
+export interface BroadcastEliminationBracket {
+	type: "elimination";
 	idx: number;
 	name: string;
-	/** Winners (ending with the grand finals) first, then losers. Only the sides in focus. */
+	/** Winners (ending with the grand finals) first, then losers. Only the sides in focus. Single elimination's one side is winners. */
 	sides: BroadcastBracketSide[];
+}
+
+/** One group of a round robin or Swiss bracket, as far as the view shows the featured match. */
+interface BroadcastGroupBracket {
+	idx: number;
+	name: string;
+	/** E.g. 1 for group A, `null` when the bracket has only one group. */
+	groupNumber: number | null;
+	/**
+	 * Runs of the standings shown, best first. Of a big group only the rows around the featured match's teams (or the
+	 * top), two runs when its teams are far apart.
+	 */
+	standings: BroadcastStandingsRun[];
+	/** Teams of the standings left out below the last run. */
+	standingsHiddenBelow: number;
+}
+
+export interface BroadcastRoundRobinBracket extends BroadcastGroupBracket {
+	type: "round_robin";
+	/** Every round of the group, of a big group only the ones around the round being played. */
+	rounds: BroadcastGroupRound[];
+}
+
+export interface BroadcastSwissBracket extends BroadcastGroupBracket {
+	type: "swiss";
+	/** The round shown: the featured match's, or else the last one paired. `null` before any is. */
+	roundNumber: number | null;
+	roundCount: number;
+	/** The round's matches by the record their teams went into it with, best first. Byes left out. */
+	pools: BroadcastSwissPool[];
+}
+
+interface BroadcastStandingsRun {
+	/** Teams of the standings left out between the run before (or the top) and this one. */
+	hiddenAbove: number;
+	standings: BroadcastStanding[];
+}
+
+export interface BroadcastStanding {
+	placement: number;
+	team: BroadcastBracketTeam;
+	setWins: number;
+	setLosses: number;
+	mapWins: number;
+	mapLosses: number;
+}
+
+interface BroadcastGroupRound {
+	id: number;
+	/** 1 for the group's first round. */
+	number: number;
+	/** Byes left out. */
+	matches: BroadcastBracketMatch[];
+}
+
+interface BroadcastSwissPool {
+	wins: number;
+	losses: number;
+	matches: BroadcastBracketMatch[];
 }
 
 export interface BroadcastBracketSide {
@@ -285,6 +396,39 @@ export interface BroadcastBracketMatch {
 	isFeatured: boolean;
 	/** Connected to a match of the previous round shown, which a team advances from. */
 	isFed: boolean;
+}
+
+/** One team's tournament so far, what the team scene shows. */
+export interface BroadcastTeamSpotlight {
+	team: BroadcastTeam;
+	/** Over the sets played, as far as the view shows the featured match. */
+	record: BroadcastTeamRecord;
+	/** Games won and lost per mode, in the modes' usual order. Modes not played are left out, all of them in a one mode tournament. */
+	modes: Array<{ mode: ModeShort; wins: number; losses: number }>;
+	/** Maps the team picked for the tournament's map lists, empty when teams don't pick maps. */
+	mapPool: BroadcastMap[];
+	/** In the order the team played them, ending with the set being played or the next one when known. */
+	sets: BroadcastTeamSet[];
+}
+
+export interface BroadcastTeamRecord {
+	setWins: number;
+	setLosses: number;
+	mapWins: number;
+	mapLosses: number;
+}
+
+export interface BroadcastTeamSet {
+	matchId: number;
+	/** E.g. "Main bracket · WB Semis", see `roundLabel`. */
+	roundLabel: string;
+	/** `null` when not decided yet. */
+	opponent: BroadcastBracketTeam | null;
+	/** The team's first. */
+	scores: [number, number];
+	status: "win" | "loss" | "live" | "upcoming";
+	/** Reported games in playing order. */
+	games: Array<BroadcastMap & { isWin: boolean }>;
 }
 
 export interface BroadcastOtherMatch {

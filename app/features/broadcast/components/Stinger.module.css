@@ -1,3 +1,17 @@
+/* Sizes and spots of the stinger transition, the rules below follow them. */
+:global([data-broadcast]) {
+	--stinger-team-logo-size: 260px;
+	--stinger-team-name-size: 68px;
+	--stinger-score-size: 150px;
+	--stinger-versus-size: 180px;
+	--stinger-versus-text-size: 72px;
+	--stinger-title-logo-size: 360px;
+	--stinger-title-size: 76px;
+	--stinger-header-bottom: 72px;
+	--stinger-tournament-name-size: 52px;
+	--stinger-header-logo-size: 104px;
+}
+
 /*
  * The panels, then the card. Phases, as fractions of --bc-stinger-duration: 0–0.30 the panels cover the screen,
  * --bc-stinger-covered-at (0.32) the scene changes underneath, the card shows from --content-at to 0.67,
@@ -6,31 +20,7 @@
  * The default design: the teams clash from both sides on two of the panels.
  */
 .stinger {
-	--d: var(--bc-stinger-duration);
-	--cover: calc(var(--d) * 0.24);
-	--reveal-at: calc(var(--d) * var(--bc-stinger-reveal-at));
-	--reveal: calc(var(--d) * 0.28);
-	--content-at: calc(var(--d) * 0.16);
-	--content-in: calc(var(--d) * 0.14);
-	--content-out-at: calc(var(--d) * 0.6);
-	--content-out: calc(var(--d) * 0.07);
-	/* timing only, not to be themed */
-	--stinger-clock: bc-stinger-clock;
-
-	position: absolute;
-	inset: 0;
-	z-index: 10;
-	overflow: hidden;
-	pointer-events: none;
 	font-family: var(--bc-font-display);
-	animation: var(--stinger-clock) calc(var(--d) * 1.02) linear both;
-}
-
-/* ends when the panels cover the screen, the scene changes then */
-.coverClock {
-	position: absolute;
-	animation: var(--stinger-clock) calc(var(--d) * var(--bc-stinger-covered-at))
-		linear both;
 }
 
 @keyframes :global(bc-stinger-clock) {
@@ -46,27 +36,7 @@
 /* panels, the two team colored ones meeting at a slanted seam */
 
 .panel {
-	--from: -101%;
-
-	position: absolute;
-	inset: 0;
-	clip-path: polygon(0 0, 57% 0, 43% 100%, 0 100%);
 	background: var(--team-color, var(--bc-bg));
-	will-change: transform;
-	animation:
-		var(--bc-anim-panel-slide-in) var(--cover) var(--bc-stinger-ease) both,
-		var(--bc-anim-panel-slide-out) var(--reveal) var(--bc-stinger-ease)
-		var(--reveal-at) forwards;
-
-	&[data-index="1"] {
-		--from: 101%;
-
-		clip-path: polygon(57% 0, 100% 0, 100% 100%, 43% 100%);
-	}
-
-	&:not([data-team]) {
-		display: none;
-	}
 
 	.stinger:not([data-has-match]) & {
 		--team-color: var(--bc-bg);
@@ -79,9 +49,6 @@
 	/* an accent stripe on the seam */
 	.stinger:not([data-has-match]) &[data-index="2"] {
 		--team-color: var(--bc-accent);
-
-		display: block;
-		clip-path: polygon(56.4% 0, 58% 0, 44% 100%, 42.4% 100%);
 	}
 }
 
@@ -123,42 +90,14 @@
 /* card: the teams on their own halves, the tournament on the header */
 
 .card {
-	position: absolute;
-	inset: 0;
-	z-index: 1;
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-	align-items: center;
-	padding-inline: 100px;
 	text-align: center;
 }
 
-.teams {
-	display: contents;
-}
-
 .team {
-	--bc-enter-x: calc(var(--bc-enter-distance) * -5);
-	--bc-exit-y: calc(var(--bc-enter-distance) * -1);
-
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 22px;
-	min-width: 0;
 	color: var(--team-color-text);
-	animation:
-		var(--bc-anim-enter) var(--content-in) var(--bc-ease) var(--content-at) both,
-		var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
-		var(--content-out-at) forwards;
-
-	&[data-team="b"] {
-		--bc-enter-x: calc(var(--bc-enter-distance) * 5);
-	}
 }
 
 .teamLogo {
-	width: 260px;
 	/* a monogram on its own team's color would only be the letter */
 	background: color-mix(in oklch, var(--team-color) 70%, black);
 	box-shadow: 0 0 0 10px
@@ -166,63 +105,27 @@
 }
 
 .teamName {
-	max-width: 100%;
-	overflow: hidden;
-	font-size: 68px;
-	font-weight: 700;
-	text-overflow: ellipsis;
+	font-size: var(--stinger-team-name-size);
+	font-weight: var(--bc-weight-bold);
 	text-transform: uppercase;
-	white-space: nowrap;
 }
 
 .teamScore {
-	min-width: 76px;
-	font-size: 150px;
-	font-weight: 700;
+	font-size: var(--stinger-score-size);
+	font-weight: var(--bc-weight-bold);
 	line-height: 0.9;
 }
 
 /* on the seam of the panels, which crosses the middle of the screen */
 .versus {
-	--bc-enter-y: calc(var(--bc-enter-distance) * 2);
-	--bc-exit-y: calc(var(--bc-enter-distance) * -1);
-
-	display: grid;
-	place-items: center;
-	width: 180px;
-	height: 180px;
 	border-radius: 50%;
 	background: var(--bc-bg);
 	color: var(--bc-text);
-	font-size: 72px;
-	font-weight: 700;
-	animation:
-		var(--bc-anim-enter) var(--content-in) var(--bc-ease) calc(var(--d) * 0.2)
-		both,
-		var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
-		var(--content-out-at) forwards;
-}
-
-/* without a match, the tournament on the theme's own colors instead of the teams' */
-.titleCard {
-	--bc-enter-y: calc(var(--bc-enter-distance) * 3);
-	--bc-exit-y: calc(var(--bc-enter-distance) * -1);
-
-	grid-column: 1 / -1;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 48px;
-	min-width: 0;
-	animation:
-		var(--bc-anim-enter) var(--content-in) var(--bc-ease) var(--content-at) both,
-		var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
-		var(--content-out-at) forwards;
+	font-size: var(--stinger-versus-text-size);
+	font-weight: var(--bc-weight-bold);
 }
 
 .titleCardLogo {
-	width: 360px;
-	height: 360px;
 	border-radius: 50%;
 	object-fit: cover;
 	box-shadow:
@@ -231,87 +134,43 @@
 }
 
 .titleCardName {
-	max-width: 100%;
-	/* descenders past the tight line height */
-	overflow: clip;
-	overflow-clip-margin: 0.25em;
 	color: var(--bc-text);
-	font-size: 76px;
-	font-weight: 700;
+	font-size: var(--stinger-title-size);
+	font-weight: var(--bc-weight-bold);
 	line-height: 1.1;
-	text-overflow: ellipsis;
 	text-shadow: 0 4px 24px rgb(0 0 0 / 0.6);
-	white-space: nowrap;
 }
 
 /* the tournament at the bottom, going into the game with the round */
 .header {
-	--bc-enter-y: calc(var(--bc-enter-distance) * 2);
-	--bc-exit-y: var(--bc-enter-distance);
-	--logo-size: 104px;
 	--logo-inset: 18px;
 	--logo-edge: calc(var(--logo-inset) + var(--bc-border-width));
-
-	position: absolute;
-	right: 0;
-	bottom: 72px;
-	left: 0;
-	display: flex;
-	align-items: center;
-	gap: 28px;
-	width: fit-content;
-	max-width: 1500px;
-	margin-inline: auto;
-	padding: var(--logo-inset) 40px var(--logo-inset) var(--logo-inset);
 	border: var(--bc-border-width) solid var(--bc-border);
 	/* concentric with the round logo */
-	border-radius: calc(var(--logo-size) / 2 + var(--logo-edge));
+	border-radius: calc(var(--stinger-header-logo-size) / 2 + var(--logo-edge));
 	background: var(--bc-bg);
 	color: var(--bc-text);
 	text-align: left;
-	animation:
-		var(--bc-anim-enter) var(--content-in) var(--bc-ease)
-		calc(var(--content-at) + var(--d) * 0.05) both,
-		var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
-		var(--content-out-at) forwards;
 }
 
 .headerLogo {
-	width: var(--logo-size);
-	height: var(--logo-size);
 	border-radius: 50%;
 	object-fit: cover;
 }
 
-.headerText {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	min-width: 0;
-}
-
 .tournamentName {
-	/* descenders past the tight line height */
-	overflow: clip;
-	overflow-clip-margin: 0.25em;
-	font-size: 52px;
-	font-weight: 700;
+	font-size: var(--stinger-tournament-name-size);
+	font-weight: var(--bc-weight-bold);
 	line-height: 1.05;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .round {
-	display: flex;
-	align-items: center;
-	gap: 16px;
 	color: var(--bc-text-muted);
 	font-size: 28px;
-	font-weight: 600;
+	font-weight: var(--bc-weight-semibold);
 }
 
 .setLength {
-	padding: 2px 12px;
 	border-radius: var(--bc-radius-small);
 	background: var(--bc-accent);
 	color: var(--bc-accent-text);

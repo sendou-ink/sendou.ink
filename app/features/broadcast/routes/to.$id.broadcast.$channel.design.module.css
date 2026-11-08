@@ -1,0 +1,110 @@
+.designer {
+	container-type: inline-size;
+}
+
+.back {
+	display: grid;
+	place-items: center;
+	color: var(--color-text-high);
+
+	& svg {
+		width: 20px;
+		height: 20px;
+	}
+}
+
+/* the preview and its scenario next to the editor, stacked when narrow */
+.workspace {
+	display: grid;
+	grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+	gap: var(--s-6);
+	align-items: start;
+
+	@container (width < 1000px) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.controls {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+	gap: var(--s-3);
+	align-items: end;
+}
+
+.play {
+	display: flex;
+	align-items: end;
+}
+
+.scenario {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	min-width: 0;
+	margin: 0;
+	padding: var(--s-4);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+}
+
+.switches {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-4);
+}
+
+.editor {
+	@container (width >= 1000px) {
+		position: sticky;
+		top: var(--s-4);
+	}
+}
+
+.code {
+	width: 100%;
+	max-width: none;
+	margin: 0;
+	padding: var(--s-3);
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background: var(--color-bg-high);
+	color: var(--color-text);
+	font-family:
+		ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+	font-size: var(--font-xs);
+	line-height: 1.5;
+	tab-size: 2;
+	white-space: pre;
+	overflow: auto;
+}
+
+textarea.code {
+	height: 70vh;
+	min-height: 20rem;
+	resize: vertical;
+}
+
+.variables {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2);
+	min-height: 2rem;
+}
+
+.variable {
+	display: inline-flex;
+	align-items: center;
+}
+
+.result {
+	& summary {
+		cursor: pointer;
+	}
+
+	& pre {
+		max-height: 20rem;
+		margin-block-start: var(--s-2);
+	}
+}

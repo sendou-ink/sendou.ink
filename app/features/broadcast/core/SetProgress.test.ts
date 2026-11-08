@@ -118,3 +118,96 @@ describe("SetProgress.liveResultCount", () => {
 		).toBe(expected);
 	});
 });
+
+describe("SetProgress.gamesUntilDecided", () => {
+	const bestOf5 = { count: 5, countType: "BEST_OF" } as const;
+	const gamesWon = (...winners: Array<0 | 1 | null>) =>
+		winners.map((winner) => ({ map: null, winner }));
+	const progressWith = ({
+		winners,
+		gameNumber,
+		isOver = false,
+	}: {
+		winners: Array<0 | 1 | null>;
+		gameNumber: number;
+		isOver?: boolean;
+	}) => ({
+		resultCount: winners.filter((winner) => winner !== null).length,
+		scores: [0, 0] as [number, number],
+		isOver,
+		gameNumber,
+		currentMap: null,
+		games: gamesWon(...winners),
+	});
+
+	test.each([
+		{
+			why: "the set is still open",
+			progress: progressWith({
+				winners: [0, 1, null, null, null],
+				gameNumber: 3,
+			}),
+			currentWinner: 0 as const,
+			expected: 5,
+		},
+		{
+			why: "the game being played clinches the set",
+			progress: progressWith({
+				winners: [0, 0, null, null, null],
+				gameNumber: 3,
+			}),
+			currentWinner: 0 as const,
+			expected: 3,
+		},
+		{
+			why: "the clinching result is reported",
+			progress: progressWith({
+				winners: [0, 1, 1, 1, null],
+				gameNumber: 4,
+				isOver: true,
+			}),
+			currentWinner: null,
+			expected: 4,
+		},
+		{
+			why: "an admin ended the set early",
+			progress: progressWith({
+				winners: [0, null, null, null, null],
+				gameNumber: 1,
+				isOver: true,
+			}),
+			currentWinner: null,
+			expected: 1,
+		},
+		{
+			why: "the game being played has no result yet",
+			progress: progressWith({
+				winners: [0, 0, null, null, null],
+				gameNumber: 3,
+			}),
+			currentWinner: null,
+			expected: 5,
+		},
+	])(
+		"leaves $expected games when $why",
+		({ progress, currentWinner, expected }) => {
+			expect(
+				SetProgress.gamesUntilDecided({
+					progress,
+					match: bestOf5,
+					currentWinner,
+				}),
+			).toHaveLength(expected);
+		},
+	);
+
+	test("keeps every game of a play all set", () => {
+		expect(
+			SetProgress.gamesUntilDecided({
+				progress: progressWith({ winners: [0, 0, null], gameNumber: 3 }),
+				match: { count: 3, countType: "PLAY_ALL" },
+				currentWinner: 0,
+			}),
+		).toHaveLength(3);
+	});
+});

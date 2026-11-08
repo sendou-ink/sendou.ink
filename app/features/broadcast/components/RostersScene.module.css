@@ -1,222 +1,95 @@
+/* Sizes and spots of the rosters scene, the rules below follow them. */
+:global([data-broadcast]) {
+	--rosters-header-top: 56px;
+	--rosters-logo-size: 104px;
+	--rosters-title-size: 52px;
+	--rosters-round-size: 28px;
+	--rosters-teams-top: 236px;
+	--rosters-inline-margin: 96px;
+	--rosters-teams-gap: 200px;
+	--rosters-team-name-size: 58px;
+	--rosters-player-name-size: 42px;
+	--rosters-team-logo-size: 132px;
+	--rosters-versus-size: 112px;
+	--rosters-player-height: 124px;
+}
+
 .rosters {
-	position: absolute;
-	inset: 0;
 	font-family: var(--bc-font-display);
 }
 
-.header {
-	--bc-enter-y: calc(var(--bc-enter-distance) * -1);
-
-	position: absolute;
-	top: 56px;
-	right: 0;
-	left: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 28px;
-	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
-		var(--scene-enter-delay) both;
-}
-
 .tournamentLogo {
-	width: 104px;
-	height: 104px;
 	border-radius: 50%;
 	object-fit: cover;
 }
 
-.headerText {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	min-width: 0;
-	max-width: 1400px;
-}
-
 .tournamentName {
-	/* descenders past the tight line height */
-	overflow: clip;
-	overflow-clip-margin: 0.25em;
-	font-size: 52px;
-	font-weight: 700;
+	font-size: var(--rosters-title-size);
+	font-weight: var(--bc-weight-bold);
 	line-height: 1.05;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .round {
 	color: var(--bc-text-muted);
-	font-size: 28px;
-	font-weight: 600;
+	font-size: var(--rosters-round-size);
+	font-weight: var(--bc-weight-semibold);
 }
 
 .teams {
-	--team-logo-size: 132px;
 	--team-header-padding: 20px;
 	--team-header-border: 6px;
-	--versus-size: 112px;
-
-	position: absolute;
-	top: 236px;
-	right: 96px;
-	bottom: 56px;
-	left: 96px;
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 200px;
 }
 
 .versus {
-	position: absolute;
-	top: calc(
-		var(--team-logo-size) +
-		var(--team-header-padding) +
-		var(--team-header-border) /
-		2 -
-		var(--versus-size) /
-		2
-	);
-	left: 50%;
-	display: grid;
-	place-items: center;
-	width: var(--versus-size);
-	height: var(--versus-size);
-	margin-left: calc(var(--versus-size) / -2);
 	border-radius: 50%;
 	background: var(--bc-accent);
 	color: var(--bc-accent-text);
 	font-size: 44px;
-	font-weight: 700;
-	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
-		calc(var(--scene-enter-delay) + 3 * var(--bc-stagger)) both;
-}
-
-.team {
-	--bc-enter-x: calc(var(--bc-enter-distance) * -1);
-
-	display: flex;
-	flex-direction: column;
-	gap: 32px;
-	min-width: 0;
-
-	&[data-team="b"] {
-		--bc-enter-x: var(--bc-enter-distance);
-	}
+	font-weight: var(--bc-weight-bold);
 }
 
 .teamHeader {
-	display: flex;
-	align-items: center;
-	gap: 28px;
-	padding-bottom: var(--team-header-padding);
 	border-bottom: var(--team-header-border) solid var(--team-color);
 	border-image: linear-gradient(to right, transparent, var(--team-color)) 1;
-	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
-		calc(var(--scene-enter-delay) + var(--bc-stagger)) both;
 
 	[data-team="b"] > & {
-		flex-direction: row-reverse;
 		text-align: right;
 		border-image: linear-gradient(to left, transparent, var(--team-color)) 1;
 	}
 }
 
-.teamLogo {
-	width: var(--team-logo-size);
-}
-
-.teamTitle {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	gap: 8px;
-	min-width: 0;
-
-	[data-team="b"] & {
-		align-items: flex-end;
-	}
-}
-
 .teamName {
-	max-width: 100%;
-	margin: 0;
-	/* descenders past the tight line height */
-	overflow: clip;
-	overflow-clip-margin: 0.25em;
-	font-size: 58px;
-	font-weight: 700;
+	font-size: var(--rosters-team-name-size);
+	font-weight: var(--bc-weight-bold);
 	line-height: 1.05;
-	text-overflow: ellipsis;
 	text-transform: uppercase;
-	white-space: nowrap;
 }
 
 .seed {
-	padding: 2px 12px;
 	border-radius: var(--bc-radius-small);
 	background: var(--bc-surface);
 	color: var(--bc-text-muted);
 	font-size: 20px;
-	font-weight: 600;
-}
-
-.players {
-	--player-height: 124px;
-
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-	margin: 0;
-	padding: 0;
-	list-style: none;
+	font-weight: var(--bc-weight-semibold);
 }
 
 .player {
-	display: flex;
-	align-items: center;
-	gap: 24px;
-	height: var(--player-height);
-	padding: 0 24px;
 	border: var(--bc-border-width) solid var(--bc-border);
 	border-radius: var(--bc-radius);
 	background: var(--bc-surface);
-	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
-		calc(var(--scene-enter-delay) + (var(--i) + 2) * var(--bc-stagger)) both;
-
-	[data-team="b"] & {
-		flex-direction: row-reverse;
-	}
 }
 
 .avatar {
-	flex-shrink: 0;
-	width: calc(var(--player-height) - 28px);
-	height: calc(var(--player-height) - 28px);
 	border-radius: 50%;
 	background: var(--bc-bg);
 	object-fit: cover;
 }
 
 .playerName {
-	flex: 1;
-	min-width: 0;
-	overflow: hidden;
-	font-size: 42px;
-	font-weight: 600;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	font-size: var(--rosters-player-name-size);
+	font-weight: var(--bc-weight-semibold);
 
 	[data-team="b"] & {
 		text-align: right;
-	}
-}
-
-.weapons {
-	display: flex;
-	gap: 10px;
-
-	[data-team="b"] & {
-		flex-direction: row-reverse;
 	}
 }

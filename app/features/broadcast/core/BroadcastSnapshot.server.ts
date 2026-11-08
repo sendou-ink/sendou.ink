@@ -1,4 +1,8 @@
 import * as R from "remeda";
+import {
+	type Bracket,
+	createBracket,
+} from "~/features/tournament-bracket/core/Bracket";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import {
@@ -10,11 +14,14 @@ import {
 import { resolveMatchMapList } from "~/features/tournament-match/core/mapList.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { tournamentMatchChannel } from "~/features/tournament-match/tournament-match-utils";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import { avatarUrl } from "~/utils/urls";
 import * as BroadcastRepository from "../BroadcastRepository.server";
 import { DEFAULT_BROADCAST_SETTINGS } from "../broadcast-constants";
 import type {
+	BroadcastBracket,
+	BroadcastBracketFocus,
 	BroadcastBracketTeam,
 	BroadcastCaster,
 	BroadcastChannel,
@@ -23,14 +30,18 @@ import type {
 	BroadcastPlayer,
 	BroadcastState,
 	BroadcastTeam,
+	BroadcastTeamSpotlight,
 	BroadcastView,
 	LiveResults,
 	ProducerState,
 } from "../broadcast-types";
+import { matchSides, roundLabel } from "../broadcast-utils";
 import * as BracketFocus from "./BracketFocus";
 import * as CastChannel from "./CastChannel";
+import * as GroupFocus from "./GroupFocus";
 import * as Producer from "./Producer";
 import * as SetProgress from "./SetProgress";
+import * as TeamSpotlight from "./TeamSpotlight";
 
 type PlayerRow = Awaited<
 	ReturnType<typeof BroadcastRepository.findAllPlayersByTournamentTeamIds>
@@ -87,13 +98,28 @@ export async function build({
 		const shown = shownBrackets[view];
 		if (!shown) return null;
 
-		return BracketFocus.layout({
+		return bracketLayout({
 			...shown,
 			focus: state[view].bracketFocus,
 			featured: match ? { id: match.id, progress: match.progress[view] } : null,
 			teamById: (id) => bracketTeam(tournament, id),
 		});
 	};
+
+	const teamOf = (view: BroadcastView) => {
+		const producer = state[view];
+		if (producer.scene !== "team") return null;
+
+		const teamId = pickedTeamId({ match, view, producer });
+		if (typeof teamId !== "number") return null;
+
+		return teamSpotlight({
+			tournament,
+			teamId,
+			featured: match ? { id: match.id, progress: match.progress[view] } : null,
+		});
+	};
+	const teams = { live: await teamOf("live"), next: await teamOf("next") };
 
 	return {
 		channel,
@@ -108,6 +134,7 @@ export async function build({
 			},
 			match,
 			bracket: { live: bracketOf("live"), next: bracketOf("next") },
+			team: teams,
 			otherMatches: otherMatches({ tournament, featuredMatchId: match?.id }),
 		},
 		eventChannels: R.unique([
@@ -116,6 +143,13 @@ export async function build({
 			// scores of sets still going are only sent to their bracket's channel
 			...[shownBrackets.live, shownBrackets.next].flatMap((shown) =>
 				shown ? [shown.eventChannel] : [],
+			),
+			...[teams.live, teams.next].flatMap((spotlight) =>
+				(spotlight?.sets ?? []).flatMap((set) =>
+					set.status === "live"
+						? [matchEventChannel(tournament, set.matchId)]
+						: [],
+				),
 			),
 		]),
 	};
@@ -146,9 +180,7 @@ function shownBracket({
 			?.groupId ?? bracket.data.group[0]?.id;
 
 	return {
-		idx,
-		name: bracket.name,
-		data: bracket.data,
+		bracket,
 		groupId,
 		eventChannel: tournamentBracketChannel({
 			tournamentId: tournament.ctx.id,
@@ -159,6 +191,64 @@ function shownBracket({
 					: null,
 		}),
 	};
+}
+
+function bracketLayout({
+	bracket,
+	groupId,
+	focus,
+	featured,
+	teamById,
+}: {
+	bracket: Bracket;
+	groupId: number | undefined;
+	focus: BroadcastBracketFocus;
+	featured: BracketFocus.FeaturedMatch | null;
+	teamById: (id: number) => BroadcastBracketTeam | null;
+}): BroadcastBracket | null {
+	if (
+		bracket.type === "single_elimination" ||
+		bracket.type === "double_elimination"
+	) {
+		return BracketFocus.layout({
+			idx: bracket.idx,
+			name: bracket.name,
+			type: bracket.type,
+			data: bracket.data,
+			groupId,
+			focus,
+			featured,
+			teamById,
+		});
+	}
+	if (
+		(bracket.type !== "round_robin" && bracket.type !== "swiss") ||
+		typeof groupId !== "number"
+	) {
+		return null;
+	}
+
+	// standings counting the featured match only as far as it is on air
+	const onAir = createBracket({
+		...bracket,
+		type: bracket.type,
+		data: BracketFocus.asOnAir(bracket.data, featured),
+	});
+	const args = {
+		idx: bracket.idx,
+		name: bracket.name,
+		data: onAir.data,
+		groupId,
+		standings: onAir.liveStandings.filter(
+			(standing) => standing.groupId === groupId,
+		),
+		featuredMatchId: featured?.id ?? null,
+		teamById,
+	};
+
+	return bracket.type === "swiss"
+		? GroupFocus.swiss(args)
+		: GroupFocus.roundRobin(args);
 }
 
 function bracketTeam(
@@ -299,19 +389,7 @@ async function featuredMatch({
 			: null;
 		if (!opponent?.id || !tournamentTeam) return null;
 
-		return {
-			id: tournamentTeam.id,
-			name: tournamentTeam.name,
-			logoUrl: tournamentTeam.logoUrl,
-			seed: tournamentTeam.seed,
-			players: rosterPlayers({
-				players: players.filter(
-					(player) => player.tournamentTeamId === tournamentTeam.id,
-				),
-				tournament,
-				tournamentTeam,
-			}).map(toBroadcastPlayer),
-		};
+		return toBroadcastTeam({ tournament, tournamentTeam, players });
 	};
 
 	const names = tournament.matchContextNamesById(matchId);
@@ -336,6 +414,129 @@ async function featuredMatch({
 			),
 			next: progressAt(results.length),
 		},
+	};
+}
+
+async function teamSpotlight({
+	tournament,
+	teamId,
+	featured,
+}: {
+	tournament: Tournament;
+	teamId: number;
+	featured: BracketFocus.FeaturedMatch | null;
+}): Promise<BroadcastTeamSpotlight | null> {
+	const tournamentTeam = tournament.teamById(teamId);
+	if (!tournamentTeam) return null;
+
+	const brackets = R.sortBy(
+		tournament.brackets.filter((bracket) => !bracket.preview),
+		(bracket) => bracket.createdAt ?? Number.POSITIVE_INFINITY,
+		(bracket) => bracket.idx,
+	);
+	const matchIds = brackets.flatMap((bracket) =>
+		bracket.data.match
+			.filter(
+				(match) =>
+					match.opponent1?.id === teamId || match.opponent2?.id === teamId,
+			)
+			.map((match) => match.id),
+	);
+	const games =
+		await BroadcastRepository.findAllGameResultsByMatchIds(matchIds);
+	const players = await BroadcastRepository.findAllPlayersByTournamentTeamIds([
+		teamId,
+	]);
+	// map pools are revealed once the tournament starts
+	const mapPool =
+		tournament.teamsPrePickMaps && tournament.hasStarted
+			? await BroadcastRepository.findMapPoolByTournamentTeamId(teamId)
+			: [];
+	const hasManyBrackets = tournament.ctx.settings.bracketProgression.length > 1;
+	const spotlight = TeamSpotlight.build({
+		teamId,
+		brackets,
+		games,
+		featured,
+		teamById: (id) => bracketTeam(tournament, id),
+		roundLabelOf: (matchId) => {
+			const names = tournament.matchContextNamesById(matchId);
+
+			return roundLabel({
+				bracketName: hasManyBrackets ? names.bracketName : null,
+				roundName: names.roundNameWithoutMatchIdentifier ?? null,
+			});
+		},
+	});
+
+	return {
+		...spotlight,
+		team: toBroadcastTeam({ tournament, tournamentTeam, players }),
+		modes: tournament.modesIncluded.length > 1 ? spotlight.modes : [],
+		mapPool: R.sortBy(
+			mapPool,
+			(map) => modesShort.indexOf(map.mode),
+			(map) => map.stageId,
+		),
+	};
+}
+
+function pickedTeamId({
+	match,
+	view,
+	producer,
+}: {
+	match: BroadcastMatch | null;
+	view: BroadcastView;
+	producer: ProducerState;
+}) {
+	if (typeof producer.teamPick === "number") return producer.teamPick;
+	if (!match) return null;
+
+	return matchSides(match, view, producer)[producer.teamPick === "left" ? 0 : 1]
+		.team?.id;
+}
+
+/** Channel the match's score updates are sent to: its bracket's (or group's), the tournament's when not found. */
+function matchEventChannel(tournament: Tournament, matchId: number) {
+	const bracketIdx = tournament.matchIdToBracketIdx(matchId);
+	const bracket =
+		typeof bracketIdx === "number" ? tournament.bracketByIdx(bracketIdx) : null;
+	if (typeof bracketIdx !== "number" || !bracket) {
+		return tournamentChannel(tournament.ctx.id);
+	}
+
+	const groupId =
+		bracket.data.match.find((match) => match.id === matchId)?.groupId ?? null;
+
+	return tournamentBracketChannel({
+		tournamentId: tournament.ctx.id,
+		bracketIdx,
+		groupId: showsOneGroupAtATime(bracket) ? groupId : null,
+	});
+}
+
+function toBroadcastTeam({
+	tournament,
+	tournamentTeam,
+	players,
+}: {
+	tournament: Tournament;
+	tournamentTeam: Tournament["ctx"]["teams"][number];
+	players: PlayerRow[];
+}): BroadcastTeam {
+	return {
+		id: tournamentTeam.id,
+		name: tournamentTeam.name,
+		logoUrl: tournamentTeam.logoUrl,
+		seed: tournamentTeam.seed,
+		players: rosterPlayers({
+			players: players.filter(
+				(player) => player.tournamentTeamId === tournamentTeam.id,
+			),
+			tournament,
+			tournamentTeam,
+		}).map(toBroadcastPlayer),
 	};
 }
 
@@ -368,5 +569,6 @@ function toBroadcastPlayer(player: PlayerRow): BroadcastPlayer {
 			: player.username,
 		avatarUrl: player.avatar ? avatarUrl(player.avatar, "lg") : null,
 		weapons: player.weapons.map((weapon) => weapon.weaponSplId),
+		country: player.country,
 	};
 }

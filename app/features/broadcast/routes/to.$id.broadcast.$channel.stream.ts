@@ -6,7 +6,10 @@ import { notFound, notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { broadcastParamsSchema } from "../broadcast-schemas";
 import { broadcastStreamSearchParams } from "../broadcast-search-params";
 import type { BroadcastStreamMessage } from "../broadcast-types";
-import { isBroadcastProducer } from "../broadcast-utils.server";
+import {
+	isBroadcastEnabled,
+	isBroadcastProducer,
+} from "../broadcast-utils.server";
 import * as BroadcastHub from "../core/BroadcastHub.server";
 import * as CastChannel from "../core/CastChannel";
 
@@ -19,6 +22,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const { tournament, tournamentId } = await tournamentFromParams(params, {
 		for: "view",
 	});
+	if (!isBroadcastEnabled(tournament)) notFound();
 	const { channel: slug } = parseParams({
 		params,
 		schema: broadcastParamsSchema,

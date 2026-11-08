@@ -1,7 +1,9 @@
+import { isSetOverByResults } from "~/features/tournament-match/tournament-match-utils";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type {
 	BroadcastGame,
 	BroadcastMap,
+	BroadcastMatch,
 	LiveResults,
 	MatchProgress,
 } from "../broadcast-types";
@@ -78,6 +80,44 @@ export function atResultCount({
 				: (plannedMaps[count] ?? null),
 		games,
 	};
+}
+
+/**
+ * The set's games without the ones it ended before: those after the game a team clinched it in, or every unplayed one
+ * once the set is over (an admin can end it early). The game being played counts as won by `currentWinner`, its
+ * result being known before it is reported.
+ */
+export function gamesUntilDecided({
+	progress,
+	match,
+	currentWinner,
+}: {
+	progress: MatchProgress;
+	match: Pick<BroadcastMatch, "count" | "countType">;
+	currentWinner: 0 | 1 | null;
+}): BroadcastGame[] {
+	const results: Array<{ winnerTeamId: number }> = [];
+
+	for (const [i, game] of progress.games.entries()) {
+		const gameWinner =
+			game.winner ?? (i + 1 === progress.gameNumber ? currentWinner : null);
+		if (gameWinner === null) {
+			return progress.isOver ? progress.games.slice(0, i) : progress.games;
+		}
+
+		results.push({ winnerTeamId: gameWinner });
+		if (
+			isSetOverByResults({
+				results,
+				count: match.count,
+				countType: match.countType,
+			})
+		) {
+			return progress.games.slice(0, i + 1);
+		}
+	}
+
+	return progress.games;
 }
 
 /** How many of the match's results are on air: what the last Take or "show now" put there, all of them for a match not taken yet. */

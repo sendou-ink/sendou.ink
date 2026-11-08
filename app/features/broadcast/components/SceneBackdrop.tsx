@@ -1,6 +1,10 @@
 import type { StageId } from "~/modules/in-game-lists/types";
 import { stageVideoUrl } from "~/utils/urls";
-import styles from "./SceneBackdrop.module.css";
+import { combineStyles } from "../broadcast-utils";
+import layout from "./SceneBackdrop.layout.module.css";
+import look from "./SceneBackdrop.module.css";
+
+const styles = combineStyles(look, layout);
 
 /** Background of the full screen scenes, plain by default so themes can bring their own. */
 export function SceneBackdrop({

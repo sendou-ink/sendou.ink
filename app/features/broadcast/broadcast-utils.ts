@@ -1,3 +1,4 @@
+import type { ObjectiveTimelineEvent } from "~/components/ObjectiveTimeline";
 import type { Pronouns } from "~/db/tables-json";
 import {
 	BROADCAST_INK_COLORS,
@@ -19,6 +20,25 @@ export const scenePart =
 	(name: (typeof BROADCAST_SCENE_PARTS)[S][number]) => ({
 		"data-part": name,
 	});
+
+/**
+ * Classes of a component's look and layout stylesheets (`X.module.css` and `X.layout.module.css`) together, each
+ * class name both modules' classes of it.
+ */
+export function combineStyles(
+	...modules: CSSModuleClasses[]
+): Record<string, string> {
+	const combined: Record<string, string> = {};
+	for (const module of modules) {
+		for (const [name, className] of Object.entries(module)) {
+			combined[name] = combined[name]
+				? `${combined[name]} ${className}`
+				: className;
+		}
+	}
+
+	return combined;
+}
 
 /** One of the featured match's teams as it stands in the set, see {@link matchSides}. */
 export interface MatchSide {
@@ -113,6 +133,28 @@ export function formatClock(ms: number) {
 	const seconds = Math.max(0, Math.ceil(ms / 1000));
 
 	return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+/**
+ * Share of the game (0-1) each team held the objective, in the reads' team order. A read's control lasts until the
+ * next read, the time neither held it is left out of both.
+ */
+export function controlShares(
+	events: readonly ObjectiveTimelineEvent[],
+): [number, number] {
+	const sorted = events.toSorted((a, b) => a.t - b.t);
+	const duration = (sorted.at(-1)?.t ?? 0) - (sorted[0]?.t ?? 0);
+	const held: [number, number] = [0, 0];
+	if (duration <= 0) return held;
+
+	for (let i = 0; i < sorted.length - 1; i++) {
+		const control = sorted[i]!.data.control;
+		if (control === null) continue;
+
+		held[control] += sorted[i + 1]!.t - sorted[i]!.t;
+	}
+
+	return [held[0] / duration, held[1] / duration];
 }
 
 function sideOf(
