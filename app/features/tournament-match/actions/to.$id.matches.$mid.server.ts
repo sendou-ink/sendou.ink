@@ -17,8 +17,8 @@ import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
+	refreshTournamentCache,
 	requireTournamentOrganizer,
-	tournamentFromDB,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import {
@@ -103,6 +103,7 @@ export const action = defineAction(
 		let onlyMatchResultsChanged = false;
 		let setIsOver = false;
 		let emitStatusUpdate = false;
+		let rostersChanged = false;
 		let endedDroppedMatchIds: number[] = [];
 		let followingMatchIds: number[] = [];
 
@@ -164,6 +165,7 @@ export const action = defineAction(
 				});
 
 				emitMatchUpdate = true;
+				rostersChanged = true;
 
 				break;
 			}
@@ -881,11 +883,11 @@ export const action = defineAction(
 			}
 		}
 
-		clearTournamentDataCache(tournamentId);
+		clearTournamentDataCache(tournamentId, { keepRosters: !rostersChanged });
 
 		// refresh RunningTournaments so the sidebar doesn't show stale matches while the TO delays finalizing
 		if (setIsOver || emitStatusUpdate) {
-			const refreshedTournament = await tournamentFromDB(tournamentId);
+			const refreshedTournament = await refreshTournamentCache(tournamentId);
 			const followingMatches = refreshedTournament.followingMatches(match.id);
 
 			if (setIsOver) {

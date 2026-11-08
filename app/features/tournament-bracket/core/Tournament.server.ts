@@ -296,8 +296,19 @@ export async function notifyTournamentStatusChanged(
 ) {
 	if (userIds.length === 0) return;
 
-	syncTournamentToRegistry(await tournamentSharedCached(tournamentId));
+	await refreshTournamentCache(tournamentId);
 	ChatSystemMessage.notifyStatusChanged(userIds);
+}
+
+/**
+ * Rebuilds the tournament after a write into the (just cleared) cache and syncs the registry from it,
+ * so the revalidation that follows the action finds a warm cache instead of building it again.
+ */
+export async function refreshTournamentCache(tournamentId: number) {
+	const tournament = await tournamentSharedCached(tournamentId);
+	syncTournamentToRegistry(tournament);
+
+	return tournament;
 }
 
 const TOURNAMENT_DATA_CACHE_MAX_ENTRIES = 250;
@@ -525,9 +536,15 @@ function censoredTeams({
 	});
 }
 
-export function clearTournamentDataCache(tournamentId: number) {
+/** `keepRosters` for writes that leave every team's members, check-ins, active roster and map pool as they were e.g. score reports. */
+export function clearTournamentDataCache(
+	tournamentId: number,
+	{ keepRosters = false }: { keepRosters?: boolean } = {},
+) {
 	tournamentDataCache.delete(tournamentId);
-	tournamentTeamsCache.delete(tournamentId);
+	if (!keepRosters) {
+		tournamentTeamsCache.delete(tournamentId);
+	}
 }
 
 export function clearAllTournamentDataCache() {

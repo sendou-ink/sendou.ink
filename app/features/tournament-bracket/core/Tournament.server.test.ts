@@ -1,13 +1,22 @@
 import { addHours, addMinutes, subHours, subMinutes } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as Engine from "./engine";
 import { RunningTournaments } from "./RunningTournaments.server";
 import {
+	clearTournamentDataCache,
 	evictStaleRunningTournaments,
+	refreshTournamentCache,
 	serializeBracket,
+	tournamentSharedCached,
+	tournamentTeamsFullCached,
 } from "./Tournament.server";
 import { progressions, testTournament } from "./tests/test-utils";
+
+const users = UserFactory.pool();
 
 const SWISS_SETTINGS = { groupCount: 2, roundCount: 3 };
 
@@ -187,5 +196,61 @@ describe("evictStaleRunningTournaments", () => {
 		evictStaleRunningTournaments();
 
 		expect(RunningTournaments.has(1)).toBe(false);
+	});
+});
+
+describe("refreshTournamentCache", () => {
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test("stores the rebuild for the next viewer", async () => {
+		const { id: tournamentId } = await TournamentFactory.create({
+			authorId: users.id(1),
+		});
+
+		clearTournamentDataCache(tournamentId);
+		const refreshed = await refreshTournamentCache(tournamentId);
+
+		expect(await tournamentSharedCached(tournamentId)).toBe(refreshed);
+	});
+});
+
+describe("clearTournamentDataCache", () => {
+	beforeEach(async () => {
+		await users.create(3);
+	});
+
+	const setupWithRosterCached = async () => {
+		const { id: tournamentId } = await TournamentFactory.create({
+			authorId: users.id(1),
+		});
+		await TournamentTeamFactory.create({
+			tournamentId,
+			memberUserIds: [users.id(2)],
+		});
+		await tournamentTeamsFullCached({ tournamentId });
+		await TournamentTeamFactory.create({
+			tournamentId,
+			memberUserIds: [users.id(3)],
+		});
+
+		return tournamentId;
+	};
+
+	test("keeps the rosters cached with keepRosters", async () => {
+		const tournamentId = await setupWithRosterCached();
+
+		clearTournamentDataCache(tournamentId, { keepRosters: true });
+
+		expect(await tournamentTeamsFullCached({ tournamentId })).toHaveLength(1);
+	});
+
+	test("drops the rosters by default", async () => {
+		const tournamentId = await setupWithRosterCached();
+
+		clearTournamentDataCache(tournamentId);
+
+		expect(await tournamentTeamsFullCached({ tournamentId })).toHaveLength(2);
 	});
 });
