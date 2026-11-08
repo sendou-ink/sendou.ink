@@ -23,6 +23,8 @@ import styles from "./q.ready.module.css";
 
 export { action, loader };
 
+const EXPIRED_REVALIDATION_RETRY_MS = 5000;
+
 export const handle: SendouRouteHandle = {
 	i18n: ["q", "user"],
 	breadcrumb: () => ({
@@ -96,13 +98,25 @@ function Countdown({ expiresAt }: { expiresAt: number }) {
 	);
 
 	const isOver = secondsLeft === 0;
+	const nowMs = now.getTime();
+	const lastRevalidatedAtRef = React.useRef<number | null>(null);
 	React.useEffect(() => {
 		// the ready check is resolved when someone asks for its state, so being
 		// the one who ran out of time we ask
-		if (isOver && revalidator.state === "idle") {
-			revalidator.revalidate();
+		if (!isOver || revalidator.state !== "idle") return;
+
+		// a device clock running ahead of the server's sees the countdown end before it actually does
+		const lastRevalidatedAt = lastRevalidatedAtRef.current;
+		if (
+			lastRevalidatedAt !== null &&
+			nowMs - lastRevalidatedAt < EXPIRED_REVALIDATION_RETRY_MS
+		) {
+			return;
 		}
-	}, [isOver, revalidator]);
+
+		lastRevalidatedAtRef.current = nowMs;
+		revalidator.revalidate();
+	}, [isOver, revalidator, nowMs]);
 
 	return (
 		<div
