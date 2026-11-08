@@ -1,7 +1,7 @@
 import {
 	MODULE_MOCKING_TEST_FILES,
 	unitProjectConfig,
-} from "./vitest.unit.config";
+} from "./vitest.unit.config.ts";
 
 export default unitProjectConfig({
 	name: "unit-isolated",
