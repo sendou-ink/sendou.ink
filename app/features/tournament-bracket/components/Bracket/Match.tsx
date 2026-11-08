@@ -208,11 +208,7 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 
 		return streamingParticipants.some((p) => matchParticipants.includes(p));
 	};
-	const toBeCasted =
-		!isOver &&
-		tournament.ctx.castedMatchesInfo?.lockedMatches?.some(
-			(lm) => lm.matchId === match.id,
-		);
+	const toBeCasted = !isOver && tournament.isMatchLockedForCast(match.id);
 
 	return (
 		<div className={styles.matchHeader}>
@@ -514,10 +510,7 @@ function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 	const isOver = Boolean(match.winnerSide);
 	if (isOver) return null;
 
-	const isLocked = tournament.ctx.castedMatchesInfo?.lockedMatches?.some(
-		(lm) => lm.matchId === match.id,
-	);
-	if (isLocked) return null;
+	if (tournament.isMatchLockedForCast(match.id)) return null;
 
 	const round = bracket.data.round.find((r) => r.id === match.roundId);
 	const bestOf = round?.maps?.count;

@@ -37,9 +37,7 @@ export function matchIsLocked({
 }) {
 	if (scores[0] !== 0 || scores[1] !== 0) return false;
 
-	const locked = tournament.ctx.castedMatchesInfo?.lockedMatches ?? [];
-
-	return locked.some((lm) => lm.matchId === matchId);
+	return tournament.isMatchLockedForCast(matchId);
 }
 
 export function pickInfoText({

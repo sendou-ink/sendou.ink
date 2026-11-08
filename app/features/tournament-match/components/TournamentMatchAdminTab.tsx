@@ -139,9 +139,7 @@ function AdminCastSection({
 	const currentlyCastedOn =
 		castedMatchesInfo?.castedMatches.find((cm) => cm.matchId === matchId) ??
 		null;
-	const isLocked =
-		castedMatchesInfo?.lockedMatches?.some((lm) => lm.matchId === matchId) ??
-		false;
+	const isLocked = tournament.isMatchLockedForCast(matchId);
 
 	const canLock = matchStatus === "PENDING" && !isLocked;
 	const canUnlock = !isMatchStarted && isLocked;

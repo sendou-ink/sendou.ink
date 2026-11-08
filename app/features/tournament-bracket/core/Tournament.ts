@@ -900,6 +900,15 @@ export class Tournament {
 		throw new Error("Match not found");
 	}
 
+	/** Whether the match is held back from starting until a cast picks it up. */
+	isMatchLockedForCast(matchId: number) {
+		return (
+			this.ctx.castedMatchesInfo?.lockedMatches.some(
+				(lm) => lm.matchId === matchId,
+			) ?? false
+		);
+	}
+
 	matchIdToBracketIdx(matchId: number) {
 		const idx = this.brackets.findIndex(
 			(bracket) =>
@@ -1301,11 +1310,7 @@ export class Tournament {
 						return { type: "WAITING_FOR_MATCH", ...matchLocation } as const;
 					}
 
-					if (
-						this.ctx.castedMatchesInfo?.lockedMatches.some(
-							(lm) => lm.matchId === match.id,
-						)
-					) {
+					if (this.isMatchLockedForCast(match.id)) {
 						return { type: "WAITING_FOR_CAST", ...matchLocation } as const;
 					}
 
