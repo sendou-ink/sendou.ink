@@ -9,14 +9,12 @@ import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeap
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as SearchParams from "~/modules/search-params/search-params";
-import { databaseTimestampNow } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFound, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
 import * as Leaderboard from "../core/Leaderboard";
 import * as LobbyMapList from "../core/LobbyMapList.server";
 import * as LobbySet from "../core/LobbySet";
-import * as LobbyState from "../core/LobbyState";
 import * as ScoreboardAttribution from "../core/ScoreboardAttribution";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
@@ -25,6 +23,7 @@ import {
 	LOBBY_SIDE_TEAM_ID,
 } from "../lobbies-constants";
 import { lobbySearchParams } from "../lobbies-search-params";
+import { lobbyViewerState } from "../lobbies-utils.server";
 
 export type LobbyLoaderData = SerializeFrom<typeof loader>;
 
@@ -78,36 +77,29 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 		}
 	}
 
-	const now = databaseTimestampNow();
 	const latestSet = sets.at(-1) ?? null;
-	const isPlaying = latestSet !== null && !LobbySet.isFinished(latestSet);
-	const { status, isCheckInOpen } = LobbyState.statusAndCheckIn({
-		lobby,
-		participants: lobby.participants,
-		isPlaying,
-		now,
-	});
-
-	const viewerSide =
-		latestSet && viewer?.status === "IN_ROOM"
-			? LobbySet.sideOf(latestSet, viewer.id)
-			: null;
-	const isPlayingUnfinishedSet = isPlaying && viewerSide !== null;
-
 	const hasFriendCode = user
 		? Boolean(await UserRepository.findCurrentFriendCodeByUserId(user.id))
 		: false;
+	const {
+		status,
+		isCheckInOpen,
+		side: viewerSide,
+		isPlayingUnfinishedSet,
+		actions: viewerActions,
+	} = lobbyViewerState({
+		lobby,
+		sets,
+		viewer,
+		hasFriendCode,
+	});
 
-	const activeCount = lobby.participants.filter(
-		(participant) =>
-			participant.status === "IN_ROOM" || participant.status === "CHECKED_IN",
-	).length;
-
-	const viewerTeamChatRoomId = isPlayingUnfinishedSet
-		? viewerSide === "ALPHA"
-			? latestSet.alphaChatRoomId
-			: latestSet.bravoChatRoomId
-		: null;
+	const viewerTeamChatRoomId =
+		latestSet && isPlayingUnfinishedSet
+			? viewerSide === "ALPHA"
+				? latestSet.alphaChatRoomId
+				: latestSet.bravoChatRoomId
+			: null;
 
 	const userIds = R.unique([
 		...lobby.participants.map((participant) => participant.id),
@@ -145,19 +137,7 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 					isPlayingUnfinishedSet,
 				}
 			: null,
-		viewerActions: LobbyState.viewerActions({
-			status,
-			viewer,
-			isPlayingUnfinishedSet,
-			hasFriendCode,
-			isKicked: lobby.isViewerKicked,
-			application: lobby.viewerApplication,
-			isCheckInOpen,
-			activeCount,
-			roomSize: lobby.roomSize,
-			now,
-			startsAt: lobby.startsAt,
-		}),
+		viewerActions,
 		hasFriendCode,
 		/** The viewer's team chat while they play a set, a voice call in their previous one follows them into it. */
 		teamChatRoomId: viewerTeamChatRoomId,

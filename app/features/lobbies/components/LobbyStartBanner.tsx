@@ -42,9 +42,7 @@ export function LobbyStartBanner() {
 	const checkedInCount = data.lobby.participants.filter(
 		(participant) => participant.status === "CHECKED_IN",
 	).length;
-	const signedUpCount = data.lobby.participants.filter(
-		(participant) => participant.status !== "WAITLISTED",
-	).length;
+	const signedUpCount = LobbyState.signedUpCount(data.lobby.participants);
 
 	return (
 		<MatchBannerContainer>

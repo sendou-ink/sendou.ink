@@ -180,7 +180,7 @@ export function viewerActions({
 	isKicked,
 	application,
 	isCheckInOpen: checkInOpen,
-	activeCount,
+	activeCount: presentCount,
 	roomSize,
 	now,
 	startsAt,
@@ -225,7 +225,7 @@ export function viewerActions({
 		(hasStarted
 			? viewer.status !== "CHECKED_IN" &&
 				viewer.status !== "IN_ROOM" &&
-				activeCount < roomSize
+				presentCount < roomSize
 			: viewer.status === "REGISTERED");
 
 	return {
@@ -236,7 +236,17 @@ export function viewerActions({
 	};
 }
 
-function signedUpCount(
+/** Participants present: checked in or in the room. */
+export function activeCount(
+	participants: Array<{ status: LobbyParticipantStatus }>,
+) {
+	return participants.filter(
+		(p) => p.status === "IN_ROOM" || p.status === "CHECKED_IN",
+	).length;
+}
+
+/** Participants holding a spot, i.e. everyone but the waitlisted. */
+export function signedUpCount(
 	participants: Array<{ status: LobbyParticipantStatus }>,
 ) {
 	return participants.filter((p) => p.status !== "WAITLISTED").length;

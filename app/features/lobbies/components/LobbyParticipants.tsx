@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { WeaponPool } from "~/components/match-page/WeaponPool";
+import * as LobbyState from "../core/LobbyState";
 import type { LobbyParticipantStatus } from "../lobbies-constants";
 import { useLobbyView } from "../lobbies-hooks";
 import styles from "./LobbyParticipants.module.css";
@@ -19,9 +20,7 @@ export function LobbyParticipants() {
 			(participant) => participant.status === status,
 		);
 
-	const spotsTaken = data.lobby.participants.filter(
-		(participant) => participant.status !== "WAITLISTED",
-	).length;
+	const spotsTaken = LobbyState.signedUpCount(data.lobby.participants);
 
 	return (
 		<div className={styles.root}>

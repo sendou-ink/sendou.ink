@@ -33,7 +33,7 @@ import {
 } from "../lobbies-schemas";
 import { lobbySearchParams } from "../lobbies-search-params";
 import { visibilityFromForm } from "../lobbies-utils";
-import { mapsFromForm } from "../lobbies-utils.server";
+import { lobbyViewerState, mapsFromForm } from "../lobbies-utils.server";
 
 /** Actions changing what the lobbies list shows, see `LobbyCard`. */
 const LISTING_ACTIONS = new Set<
@@ -77,6 +77,15 @@ export const action = defineAction(
 
 			return LobbySet.sideOf(set, participant.id) ? set.id : null;
 		};
+		const viewerActions = async () =>
+			lobbyViewerState({
+				lobby,
+				sets,
+				viewer: viewer ?? null,
+				hasFriendCode: Boolean(
+					await UserRepository.findCurrentFriendCodeByUserId(user.id),
+				),
+			}).actions;
 		const autoAcceptedUserIds: number[] = [];
 		const requireNoConflict = () =>
 			errorToastIfConflict({ userId: user.id, lobbyId: id });
@@ -84,18 +93,7 @@ export const action = defineAction(
 		switch (body._action) {
 			case "SIGN_UP": {
 				errorToastIfFalsy(!viewer, "Already signed up");
-				errorToastIfFalsy(
-					!lobby.isViewerKicked,
-					"The host kicked you from this lobby",
-				);
-				errorToastIfFalsy(
-					lobby.viewerApplication !== "DENIED",
-					"The host denied your application to this lobby",
-				);
-				errorToastIfFalsy(
-					await UserRepository.findCurrentFriendCodeByUserId(user.id),
-					"Set your friend code first",
-				);
+				errorToastIfFalsy((await viewerActions()).SIGN_UP, "Can't sign up");
 
 				if (lobby.isApplicationRequired) {
 					await LobbyRepository.insertApplication({
@@ -151,8 +149,10 @@ export const action = defineAction(
 			}
 			case "CHECK_IN": {
 				errorToastIfFalsy(viewer, "Not signed up");
-				const actions = viewerActions({ lobby, sets, viewer, now });
-				errorToastIfFalsy(actions.CHECK_IN, "Can't check in right now");
+				errorToastIfFalsy(
+					(await viewerActions()).CHECK_IN,
+					"Can't check in right now",
+				);
 				requireNoConflict();
 
 				await LobbyRepository.updateParticipant({
@@ -217,7 +217,7 @@ export const action = defineAction(
 			case "TOGGLE_DROP_AFTER_SET": {
 				errorToastIfFalsy(viewer, "Not signed up");
 				errorToastIfFalsy(
-					viewer.isDroppingAfterSet || unfinishedSetIdOf(viewer) !== null,
+					viewer.isDroppingAfterSet || (await viewerActions()).DROP_AFTER_SET,
 					"Not playing a set",
 				);
 
@@ -501,9 +501,7 @@ async function signUp({
 	const now = databaseTimestampNow();
 	const hasStarted = now >= lobby.startsAt;
 
-	const withSpotCount = lobby.participants.filter(
-		(participant) => participant.status !== "WAITLISTED",
-	).length;
+	const withSpotCount = LobbyState.signedUpCount(lobby.participants);
 	const isLate =
 		hasStarted &&
 		LobbyState.isCheckInOpen({
@@ -512,7 +510,8 @@ async function signUp({
 			now,
 		});
 
-	let isPresentRightAway = isLate && activeCountOf(lobby) < lobby.roomSize;
+	let isPresentRightAway =
+		isLate && LobbyState.activeCount(lobby.participants) < lobby.roomSize;
 	if (isPresentRightAway && onConflict === "REJECT") {
 		errorToastIfConflict({ userId, lobbyId: lobby.id });
 	} else if (isPresentRightAway) {
@@ -563,14 +562,6 @@ async function acceptApplication({
 	});
 }
 
-/** Participants present: checked in or in the room. */
-function activeCountOf(lobby: LobbyRepository.LobbyById) {
-	return lobby.participants.filter(
-		(participant) =>
-			participant.status === "IN_ROOM" || participant.status === "CHECKED_IN",
-	).length;
-}
-
 function sendSetEndingMessage({
 	chatRoomId,
 	userId,
@@ -605,40 +596,4 @@ function latestPlayedSetOf(
 	userId: number,
 ) {
 	return sets.findLast((set) => LobbySet.sideOf(set, userId) !== null);
-}
-
-function viewerActions({
-	lobby,
-	sets,
-	viewer,
-	now,
-}: {
-	lobby: LobbyRepository.LobbyById;
-	sets: LobbyMatchRepository.LobbySetWithGames[];
-	viewer: LobbyRepository.LobbyById["participants"][number];
-	now: number;
-}) {
-	const latestSet = sets.at(-1);
-	const isPlaying = latestSet !== undefined && !LobbySet.isFinished(latestSet);
-
-	const { status, isCheckInOpen } = LobbyState.statusAndCheckIn({
-		lobby,
-		participants: lobby.participants,
-		isPlaying,
-		now,
-	});
-
-	return LobbyState.viewerActions({
-		status,
-		viewer,
-		isPlayingUnfinishedSet: false,
-		hasFriendCode: true,
-		isKicked: lobby.isViewerKicked,
-		application: lobby.viewerApplication,
-		isCheckInOpen,
-		activeCount: activeCountOf(lobby),
-		roomSize: lobby.roomSize,
-		now,
-		startsAt: lobby.startsAt,
-	});
 }
