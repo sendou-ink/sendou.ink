@@ -7,13 +7,20 @@ import { notify } from "~/features/notifications/core/notify.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
-import { errorToastIfFalsy } from "~/utils/remix.server";
+import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
+import { queueJoinBlocker } from "../core/queue-join.server";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { preparingSchema } from "../q-action-schemas";
 import { SENDOUQ_LOOKING_CHANNEL, sqGroupChannel } from "../q-constants";
 import { SendouQError } from "../q-utils.server";
+
+const FRIEND_QUEUE_JOIN_BLOCKER_MESSAGES = {
+	IN_LOBBY: "User you are trying to add is in a lobby",
+	NO_FRIEND_CODE: "User you are trying to add has no friend code set",
+	FRIEND_CODE_TOO_RECENT: "User you are trying to add can't join the queue yet",
+} as const;
 
 export type SendouQPreparingAction = typeof action;
 
@@ -58,10 +65,10 @@ export const action = defineAction(
 						).friends.some((friendUser) => friendUser.id === body.id),
 						"Not a friend",
 					);
-					errorToastIfFalsy(
-						(await UserRepository.findLeanById(body.id))?.friendCode,
-						"User you are trying to add has no friend code set",
-					);
+					const friend = await UserRepository.findLeanById(body.id);
+					errorToastIfFalsy(friend, "User not found");
+					const blocker = await queueJoinBlocker(friend);
+					if (blocker) errorToast(FRIEND_QUEUE_JOIN_BLOCKER_MESSAGES[blocker]);
 
 					const { chatRoomIdToRevalidate } =
 						await SQGroupRepository.insertMember(ownGroup.id, {

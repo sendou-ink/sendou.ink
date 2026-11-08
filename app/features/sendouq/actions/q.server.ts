@@ -7,10 +7,9 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
-import * as UserActivity from "~/features/user-activity/core/UserActivity.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
-import { errorToastIfFalsy } from "~/utils/remix.server";
+import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
 import { normalizeFriendCode } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
 import {
@@ -18,6 +17,7 @@ import {
 	SENDOUQ_PREPARING_PAGE,
 	SUSPENDED_PAGE,
 } from "~/utils/urls";
+import { queueJoinBlocker } from "../core/queue-join.server";
 import {
 	refreshSendouQInstance,
 	SendouQ,
@@ -26,7 +26,6 @@ import {
 import { frontPageSchema } from "../q-action-schemas";
 import { SENDOUQ_LOOKING_CHANNEL, sqGroupChannel } from "../q-constants";
 import { qSearchParams } from "../q-search-params";
-import { userCanJoinQueueAt } from "../q-utils";
 import { SendouQError, seasonInitialSkillsExist } from "../q-utils.server";
 
 export const action = defineAction(
@@ -173,21 +172,18 @@ export const action = defineAction(
 	},
 );
 
-async function validateCanJoinQ(user: { id: number; discordId: string }) {
-	errorToastIfFalsy(
-		!UserActivity.resolve(user.id).lobby,
-		"Leave the lobby you are in first",
-	);
+const QUEUE_JOIN_BLOCKER_MESSAGES = {
+	IN_LOBBY: "Leave the lobby you are in first",
+	NO_FRIEND_CODE: "No friend code",
+	FRIEND_CODE_TOO_RECENT: "Can't join queue right now",
+} as const;
 
-	const friendCode = await UserRepository.findCurrentFriendCodeByUserId(
-		user.id,
-	);
-	errorToastIfFalsy(friendCode, "No friend code");
-	const canJoinQueue = userCanJoinQueueAt(user, friendCode) === "NOW";
+async function validateCanJoinQ(user: { id: number; discordId: string }) {
+	const blocker = await queueJoinBlocker(user);
+	if (blocker) errorToast(QUEUE_JOIN_BLOCKER_MESSAGES[blocker]);
 
 	const season = Seasons.current();
 	errorToastIfFalsy(season, "Season is not active");
-	errorToastIfFalsy(canJoinQueue, "Can't join queue right now");
 	errorToastIfFalsy(
 		await seasonInitialSkillsExist(season.nth),
 		"Season's starting powers are not set yet. Please contact staff on the Discord helpdesk",
