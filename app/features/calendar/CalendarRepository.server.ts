@@ -341,6 +341,66 @@ function findAllBetweenTwoTimestampsMapped(
 	return dates;
 }
 
+/**
+ * Every listed (not draft or test, see `hidden`) event with a venue that is upcoming or still running (its last day
+ * started under a day ago), the LANs of the LAN map. A tournament has one day, a plain event one or more: one row
+ * per event either way. Soonest first, `startsAt` is the event's first day.
+ */
+export async function findAllUpcomingWithVenue() {
+	const rows = await db
+		.selectFrom("CalendarEvent")
+		.innerJoin(
+			"CalendarEventVenue",
+			"CalendarEventVenue.eventId",
+			"CalendarEvent.id",
+		)
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select((eb) => [
+			"CalendarEvent.id",
+			"CalendarEvent.name",
+			"CalendarEvent.tournamentId",
+			eb.fn.min("CalendarEventDate.startsAt").as("startsAt"),
+			tournamentLogoWithDefault(eb).as("logoUrl"),
+			"CalendarEventVenue.name as venueName",
+			"CalendarEventVenue.city",
+			"CalendarEventVenue.countryCode",
+			"CalendarEventVenue.latitude",
+			"CalendarEventVenue.longitude",
+			"CalendarEventVenue.timezone",
+		])
+		.where("CalendarEvent.hidden", "=", 0)
+		.groupBy("CalendarEvent.id")
+		.having(
+			(eb) => eb.fn.max("CalendarEventDate.startsAt"),
+			">=",
+			dateToDatabaseTimestamp(sub(new Date(), { days: 1 })),
+		)
+		.orderBy("startsAt", "asc")
+		.execute();
+
+	return rows.map((row) => ({
+		id: row.id,
+		name: row.name,
+		url: row.tournamentId
+			? tournamentPage(row.tournamentId)
+			: calendarEventPage(row.id),
+		logoUrl: row.logoUrl,
+		startsAt: row.startsAt,
+		venue: {
+			name: row.venueName,
+			city: row.city,
+			countryCode: row.countryCode,
+			latitude: row.latitude,
+			longitude: row.longitude,
+			timezone: row.timezone,
+		},
+	}));
+}
+
 export async function findById(
 	id: number,
 	{

@@ -129,6 +129,7 @@ export const NEW_TEAM_PAGE = "/t/new";
 export const CALENDAR_PAGE = "/calendar";
 export const CALENDAR_NEW_PAGE = "/calendar/new";
 export const CALENDAR_VENUE_SEARCH_ROUTE = "/calendar/venue-search";
+export const LAN_MAP_PAGE = "/calendar/lan-map";
 export const TOURNAMENT_NEW_PAGE = "/calendar/new?tournament=true";
 export const ORGANIZATION_NEW_PAGE = "/org/new";
 export const STOP_IMPERSONATING_URL = "/auth/impersonate/stop";

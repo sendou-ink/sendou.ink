@@ -434,6 +434,9 @@ export function buildCases(fx: Fixtures): {
 		fx.calendarWindow,
 		(window) => CalendarRepository.findAllBetweenTwoTimestamps(window),
 	);
+	addStatic("CalendarRepository.findAllUpcomingWithVenue", () =>
+		CalendarRepository.findAllUpcomingWithVenue(),
+	);
 	add("CalendarRepository.findById", fx.heavyCalendarEventId, (eventId) =>
 		CalendarRepository.findById(eventId, {
 			includeMapPool: true,

@@ -1,4 +1,4 @@
-import { sub } from "date-fns";
+import { add, sub } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
 import * as CalendarEventVenueFactory from "~/db/seed/factories/CalendarEventVenueFactory";
@@ -10,6 +10,7 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
+import { calendarEventPage, tournamentPage } from "~/utils/urls";
 import * as CalendarRepository from "./CalendarRepository.server";
 
 const users = UserFactory.pool();
@@ -343,6 +344,112 @@ describe("findAllBetweenTwoTimestamps", () => {
 			countryCode: "US",
 		});
 		expect(eventOf("Online")?.venue).toBeNull();
+	});
+});
+
+describe("findAllUpcomingWithVenue", () => {
+	const authorId = () => users.id(1);
+
+	const createEvent = async ({
+		name,
+		startTimes,
+		isDraft,
+		hasVenue = true,
+	}: {
+		name: string;
+		startTimes: Date[];
+		isDraft?: boolean;
+		hasVenue?: boolean;
+	}) => {
+		const event = await CalendarEventFactory.create({
+			authorId: authorId(),
+			name,
+			isDraft,
+			startTimes: startTimes.map(dateToDatabaseTimestamp),
+		});
+		if (hasVenue) await CalendarEventVenueFactory.create({ eventId: event.id });
+
+		return event;
+	};
+
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test("lists upcoming and still running events with a venue, soonest first", async () => {
+		await createEvent({
+			name: "Later",
+			startTimes: [add(new Date(), { days: 10 })],
+		});
+		await createEvent({
+			name: "Sooner",
+			startTimes: [add(new Date(), { days: 2 })],
+		});
+		await createEvent({
+			name: "Running",
+			startTimes: [
+				sub(new Date(), { days: 1, hours: 2 }),
+				sub(new Date(), { hours: 2 }),
+			],
+		});
+		await createEvent({
+			name: "Past",
+			startTimes: [sub(new Date(), { days: 3 })],
+		});
+		await createEvent({
+			name: "Online",
+			startTimes: [add(new Date(), { days: 1 })],
+			hasVenue: false,
+		});
+		await createEvent({
+			name: "Draft",
+			startTimes: [add(new Date(), { days: 1 })],
+			isDraft: true,
+		});
+
+		const events = await CalendarRepository.findAllUpcomingWithVenue();
+
+		expect(events.map((event) => event.name)).toEqual([
+			"Running",
+			"Sooner",
+			"Later",
+		]);
+	});
+
+	test("gives the event's first day, venue and page", async () => {
+		const firstDay = add(new Date(), { days: 2 });
+		const event = await createEvent({
+			name: "LAN",
+			startTimes: [firstDay, add(firstDay, { days: 1 })],
+			hasVenue: false,
+		});
+		const venue = {
+			name: "Messukeskus",
+			city: "Helsinki",
+			countryCode: "FI",
+			latitude: 60.2033,
+			longitude: 24.9364,
+			timezone: "Europe/Helsinki",
+		};
+		await CalendarEventVenueFactory.create({ eventId: event.id, ...venue });
+
+		const [lan] = await CalendarRepository.findAllUpcomingWithVenue();
+
+		expect(lan.startsAt).toBe(dateToDatabaseTimestamp(firstDay));
+		expect(lan.url).toBe(calendarEventPage(event.id));
+		expect(lan.venue).toEqual(venue);
+	});
+
+	test("links a tournament's venue to the tournament page", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: authorId(),
+			startTimes: [dateToDatabaseTimestamp(add(new Date(), { days: 2 }))],
+		});
+		await CalendarEventVenueFactory.create({ eventId: tournament.eventId });
+
+		const [lan] = await CalendarRepository.findAllUpcomingWithVenue();
+
+		expect(lan.url).toBe(tournamentPage(tournament.id));
 	});
 });
 

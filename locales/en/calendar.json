@@ -180,5 +180,10 @@
 	"newTournament.review": "Review",
 	"newTournament.review.noName": "No name yet",
 	"newTournament.review.mapCount_one": "{{count}} map",
-	"newTournament.review.mapCount_other": "{{count}} maps"
+	"newTournament.review.mapCount_other": "{{count}} maps",
+	"lanMap.title": "LAN map",
+	"lanMap.noLans": "No upcoming LANs",
+	"lanMap.cluster_one": "{{count}} LAN",
+	"lanMap.cluster_other": "{{count}} LANs",
+	"lanMap.unsupported": "Couldn't load the map, your browser might not support WebGL"
 }
