@@ -1623,6 +1623,11 @@ export class Tournament {
 		return hasPermission(this.ctx, "MANAGE_MATCHES", user);
 	}
 
+	/** Report and undo game results of any match, not only their own team's. */
+	canReportAnyScore(user: OptionalIdObject) {
+		return hasPermission(this.ctx, "REPORT_SCORES", user);
+	}
+
 	/** Live streams of the tournament, empty in the views whose loader did not ship them. */
 	get streams(): TournamentStream[] {
 		return this.args.streams ?? [];

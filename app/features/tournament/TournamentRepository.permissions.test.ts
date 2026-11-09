@@ -14,6 +14,7 @@ const orgStreamerId = () => users.id(4);
 const staffOrganizerId = () => users.id(5);
 const staffStreamerId = () => users.id(6);
 const outsiderId = () => users.id(7);
+const staffPoolCaptainId = () => users.id(8);
 
 type Members = NonNullable<
 	Parameters<typeof TournamentOrganizationFactory.create>[1]
@@ -59,7 +60,7 @@ const permissionsOfTournament = async ({
 
 describe("TournamentRepository.findById", () => {
 	beforeEach(async () => {
-		await users.create(7);
+		await users.create(8);
 	});
 
 	test("author of an organization-less tournament holds every permission but the in-game names one", async () => {
@@ -71,6 +72,7 @@ describe("TournamentRepository.findById", () => {
 			ADMIN: [authorId()],
 			ORGANIZE: [authorId()],
 			MANAGE_MATCHES: [authorId()],
+			REPORT_SCORES: [authorId()],
 			EDIT_EVENT_INFO: [authorId()],
 			EDIT_IN_GAME_NAMES: [],
 		});
@@ -85,6 +87,7 @@ describe("TournamentRepository.findById", () => {
 			staff: [
 				{ userId: staffOrganizerId(), role: "ORGANIZER" },
 				{ userId: staffStreamerId(), role: "STREAMER" },
+				{ userId: staffPoolCaptainId(), role: "POOL_CAPTAIN" },
 			],
 		});
 
@@ -107,6 +110,26 @@ describe("TournamentRepository.findById", () => {
 			].sort((a, b) => a - b),
 		);
 		expect(permissions.MANAGE_MATCHES).not.toContain(outsiderId());
+		expect(permissions.REPORT_SCORES.sort((a, b) => a - b)).toEqual(
+			[
+				authorId(),
+				orgAdminId(),
+				orgOrganizerId(),
+				staffOrganizerId(),
+				staffPoolCaptainId(),
+			].sort((a, b) => a - b),
+		);
+	});
+
+	test("a pool captain holds only the score reporting permission", async () => {
+		const permissions = await permissionsOfTournament({
+			staff: [{ userId: staffPoolCaptainId(), role: "POOL_CAPTAIN" }],
+		});
+
+		const held = Object.entries(permissions)
+			.filter(([, userIds]) => userIds.includes(staffPoolCaptainId()))
+			.map(([name]) => name);
+		expect(held).toEqual(["REPORT_SCORES"]);
 	});
 
 	test.each<{ why: string; isEstablished: boolean; grant: Grant }>([

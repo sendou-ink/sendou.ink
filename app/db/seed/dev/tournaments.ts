@@ -445,7 +445,7 @@ async function seedLowInk({ users, rosters }: Ctx) {
 	await TournamentFactory.playOut(tournament.id, 0);
 }
 
-/** #4 round robin → SE, TO maps, a LAN — everybody checked in, not started. N-ZAP isn't registered, so it is his saved one. */
+/** #4 round robin → SE, TO maps, a LAN with a pool captain — everybody checked in, not started. N-ZAP isn't registered, so it is his saved one. */
 async function seedSwimOrSink({ users, rosters }: Ctx) {
 	const tournament = await TournamentFactory.create({
 		name: nameFor("Swim or Sink"),
@@ -469,6 +469,15 @@ async function seedSwimOrSink({ users, rosters }: Ctx) {
 	await SavedCalendarEventFactory.create({
 		userId: users.nzapId,
 		tournamentId: tournament.id,
+	});
+
+	const registeredUserIds = new Set(
+		teamRosters.flatMap((roster) => roster.memberUserIds),
+	);
+	await TournamentStaffFactory.create({
+		tournamentId: tournament.id,
+		userId: users.showcaseIds.find((id) => !registeredUserIds.has(id))!,
+		role: "POOL_CAPTAIN",
 	});
 
 	return tournament;

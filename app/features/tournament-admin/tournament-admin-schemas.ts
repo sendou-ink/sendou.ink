@@ -24,7 +24,7 @@ export function adminStaffFormSchemaServer({
 	tournament: Tournament;
 }) {
 	return v.pipe(
-		adminStaffFormSchema,
+		adminStaffFormSchema({ isLan: tournament.isLan }),
 		superRefine((data, ctx) => {
 			for (const [index, staffer] of data.staff.entries()) {
 				if (staffer.userId === tournament.ctx.author.id) {

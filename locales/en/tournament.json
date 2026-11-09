@@ -132,6 +132,7 @@
 	"admin.audit.detail.tournamentNameCleared": "Name cleared",
 	"staff.role.ORGANIZER": "organizer",
 	"staff.role.STREAMER": "streamer",
+	"staff.role.POOL_CAPTAIN": "pool captain",
 	"staff.author": "author",
 	"staff.organization": "organization",
 	"staff.divider.fromOrganization": "From organization",

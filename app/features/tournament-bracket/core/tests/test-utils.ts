@@ -114,6 +114,7 @@ export const testTournamentData = ({
 			ADMIN: [1],
 			ORGANIZE: [1],
 			MANAGE_MATCHES: [1],
+			REPORT_SCORES: [1],
 			EDIT_EVENT_INFO: [1],
 			EDIT_IN_GAME_NAMES: [],
 		},
