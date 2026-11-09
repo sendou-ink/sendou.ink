@@ -71,6 +71,9 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 									>
 										{result.tournamentName}
 									</Link>
+									{result.div ? (
+										<span className="text-lighter">({result.div})</span>
+									) : null}
 									{result.tier ? <TierPill tier={result.tier} /> : null}
 								</div>
 							</td>

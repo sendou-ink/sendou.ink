@@ -234,6 +234,7 @@ export async function findResultsById(teamId: number) {
 					"TournamentResult.tournamentId",
 					"TournamentResult.placement",
 					"TournamentResult.participantCount",
+					"TournamentResult.div",
 					"TournamentTeam.startingBracketIdx",
 				])
 				.where("teamId", "=", teamId)
@@ -267,6 +268,7 @@ export async function findResultsById(teamId: number) {
 			"results.tournamentId",
 			"results.participantCount",
 			"results.tournamentTeamId",
+			"results.div",
 			"CalendarEvent.name as tournamentName",
 			"CalendarEventDate.startsAt",
 			sql<

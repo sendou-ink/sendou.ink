@@ -12,7 +12,7 @@ import * as TeamRepository from "./TeamRepository.server";
 import { TEAM } from "./team-constants";
 
 describe("findResultsById", () => {
-	test("participant who was on the roster at the result's time but left later is not a sub", async () => {
+	const seedTeamResult = async ({ div }: { div: string | null }) => {
 		const [owner, formerMember] = await UserFactory.createMany(2);
 		const team = await TeamFactory.create({
 			memberUserIds: [owner.id, formerMember.id],
@@ -42,10 +42,18 @@ describe("findResultsById", () => {
 					placement: 1,
 					participantCount: 8,
 					tournamentTeamId: tournamentTeam.id,
-					div: null,
+					div,
 				})),
 				setResults: new Map(),
 			},
+		});
+
+		return { team, tournament, formerMember };
+	};
+
+	test("participant who was on the roster at the result's time but left later is not a sub", async () => {
+		const { team, tournament, formerMember } = await seedTeamResult({
+			div: null,
 		});
 
 		const { startsAt } = await db
@@ -66,6 +74,14 @@ describe("findResultsById", () => {
 
 		expect(results).toHaveLength(1);
 		expect(results[0].subs).toHaveLength(0);
+	});
+
+	test("returns the division the team placed in", async () => {
+		const { team } = await seedTeamResult({ div: "D2" });
+
+		const results = await TeamRepository.findResultsById(team.id);
+
+		expect(results[0].div).toBe("D2");
 	});
 });
 
