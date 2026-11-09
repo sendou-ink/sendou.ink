@@ -54,10 +54,11 @@ function AddedForEventForm({
 	onCancel: () => void;
 }) {
 	const { t } = useTranslation(["common"]);
+	const tournament = useTournament();
 
 	return (
 		<SendouForm
-			schema={adminStaffFormSchema}
+			schema={adminStaffFormSchema({ isLan: tournament.isLan })}
 			fullWidth
 			submitButtonText={t("common:actions.save")}
 			onSuccess={onSuccess}

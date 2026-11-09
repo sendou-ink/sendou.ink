@@ -268,6 +268,7 @@ function tournament(organizationId: number | null, id = 1) {
 				ADMIN: [ORGANIZER_ID],
 				ORGANIZE: [ORGANIZER_ID],
 				MANAGE_MATCHES: [ORGANIZER_ID, STREAMER_ID],
+				REPORT_SCORES: [ORGANIZER_ID, STREAMER_ID],
 				EDIT_EVENT_INFO: [ORGANIZER_ID],
 				EDIT_IN_GAME_NAMES: [],
 			},

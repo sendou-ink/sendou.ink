@@ -1150,6 +1150,7 @@ describe("canReportAnyScore", () => {
 				ADMIN: [authorId],
 				ORGANIZE: [authorId, organizerId],
 				MANAGE_MATCHES: [authorId, organizerId, streamerId],
+				REPORT_SCORES: [authorId, organizerId, streamerId],
 				EDIT_EVENT_INFO: [authorId],
 				EDIT_IN_GAME_NAMES: [],
 			},
