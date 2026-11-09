@@ -70,7 +70,7 @@ function TeamPickRules() {
 		<div className="text-sm text-lighter text-semi-bold stack xs">
 			<div>{t("tournament:rules.teamPick.picks", { picks })}</div>
 			<div>{t(`tournament:rules.teamPick.pool.${teamPick.pool}`)}</div>
-			<div>{t("tournament:rules.teamPick.neutral")}</div>
+			<div>{t("tournament:rules.teamPick.mapList")}</div>
 			{teamPick.modes.length > 1 ? (
 				<div>
 					{t("tournament:rules.teamPick.stageRepeat", {

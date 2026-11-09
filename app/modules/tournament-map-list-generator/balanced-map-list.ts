@@ -20,12 +20,15 @@ type ModeWithStageAndScore = TournamentMapListMap & {
 };
 
 const OPTIMAL_MAPLIST_SCORE = 0;
-const MAX_RECURSION_DEPTH = 5_000;
+const MAX_RECURSION_DEPTH = 20_000;
 const UNFAIR_PENALTY = 100;
 const FALLBACK_NEUTRAL_MAP_PENALTY = 5;
-/** Below the bad last map penalty (1) so a common map still decides the match when a fixed mode order runs the picks dry. */
-const EARLY_NEUTRAL_MAP_PENALTY = 0.5;
-/** Below the early neutral map penalty so recency only chooses between a team's picks, never trades one for a random map. */
+/** Above a team's pick deciding the match so a random map is only used when no fair list does without it. */
+const RANDOM_MAP_PENALTY = 3;
+const TEAM_PICK_DECIDES_PENALTY = 1;
+/** Random maps of a mode only differ by recency (they're sorted by it) and stage repeats, so trying a couple per slot is enough. */
+const RANDOM_MAP_CANDIDATES_PER_SLOT = 2;
+/** Below the team pick deciding penalty so recency only chooses between a team's picks, never trades one for a random map. */
 const MAX_RECENCY_PENALTY = 0.4;
 
 type MapListGenerationError =
@@ -83,26 +86,28 @@ function generateWithInput(
 			return false;
 		}
 		invariant(mapList.length <= input.count, "mapList.length > input.count");
-		const mapListScore = rateMapList();
-		if (typeof mapListScore === "number" && mapListScore < bestMapList.score) {
-			bestMapList.maps = [...mapList];
-			bestMapList.score = mapListScore;
-		}
+		// the partial score only grows as maps are added
+		const partialScore = rateMapListSoFar();
+		if (partialScore >= bestMapList.score) return true;
 
-		// There can't be better map list than this
-		if (bestMapList.score === OPTIMAL_MAPLIST_SCORE) {
+		if (mapList.length === input.count) {
+			const score = partialScore + rateFullMapList();
+			if (score < bestMapList.score) {
+				bestMapList.maps = [...mapList];
+				bestMapList.score = score;
+			}
 			return true;
 		}
 
-		// a fixed mode can run the teams' picks dry before the last slot, the pool covers the rest
-		const stageList = isNeutralSlot()
-			? [...stages.filter((stage) => stage.score === 0), ...neutralStages]
-			: fixedModeOfSlot(mapList.length)
-				? [...stages, ...neutralStages]
-				: stages;
-
-		for (const stage of stageList) {
+		// random maps are tried last and penalized, they only fill slots the picks can't fairly
+		const randomMapsTriedByMode = new Map<ModeShort, number>();
+		for (const stage of [...stages, ...neutralStages]) {
 			if (!stageIsOk(stage)) continue;
+			if (stage.isNeutral) {
+				const tried = randomMapsTriedByMode.get(stage.mode) ?? 0;
+				if (tried === RANDOM_MAP_CANDIDATES_PER_SLOT) continue;
+				randomMapsTriedByMode.set(stage.mode, tried + 1);
+			}
 			mapList.push(stage);
 			usedStages.add(stageKey(stage));
 
@@ -111,6 +116,9 @@ function generateWithInput(
 
 			usedStages.delete(stageKey(stage));
 			mapList.pop();
+
+			// There can't be better map list than this
+			if (bestMapList.score === OPTIMAL_MAPLIST_SCORE) return false;
 		}
 
 		return true;
@@ -247,8 +255,7 @@ function generateWithInput(
 		return input.teams.every((team) => team.maps.isEmpty());
 	}
 
-	/** The last slot, decided by a map both teams picked or a random one from the pool. */
-	function isNeutralSlot() {
+	function isLastSlot() {
 		return mapList.length === input.count - 1;
 	}
 
@@ -284,9 +291,9 @@ function generateWithInput(
 		if (isNotFollowingModeOrder(stage)) return false;
 		if (isEarlyModeRepeat(stage)) return false;
 		if (isNotFollowingModePattern(stage)) return false;
-		if (isMakingThingsUnfair(stage)) return false;
 		if (isStageRepeatWithoutBreak(stage)) return false;
 		if (isSecondPickBySameTeamInRow(stage)) return false;
+		if (isLastPickLeavingPicksUneven(stage)) return false;
 		if (wouldUseUpCommonMaps(stage)) return false;
 
 		return true;
@@ -339,21 +346,6 @@ function generateWithInput(
 		return mapList[mapList.length - 1].mode !== previousModeShouldBe;
 	}
 
-	// don't allow making two picks from one team in row
-	function isMakingThingsUnfair(stage: StageValidatorInput) {
-		// e.g. Bo5 with 100% overlap in one mode only: overlap, T1, T2, T1, RANDOM must be allowed;
-		// scoring still prefers better options
-		if (stage.source === "RANDOM") return false;
-
-		const score = mapList.reduce((acc, cur) => acc + cur.score, 0);
-		const newScore = score + stage.score;
-
-		if (score !== 0 && newScore !== 0) return true;
-		if (newScore !== 0 && mapList.length + 1 === input.count) return true;
-
-		return false;
-	}
-
 	function isStageRepeatWithoutBreak(stage: StageValidatorInput) {
 		const lastStage = mapList[mapList.length - 1];
 		if (!lastStage) return false;
@@ -361,12 +353,25 @@ function generateWithInput(
 		return lastStage.stageId === stage.stageId;
 	}
 
+	/** Picks alternate between the teams, neutral maps in between don't count. */
 	function isSecondPickBySameTeamInRow(stage: StageValidatorInput) {
-		const lastStage = mapList[mapList.length - 1];
-		if (!lastStage) return false;
 		if (stage.score === 0) return false;
 
-		return lastStage.score === stage.score;
+		const lastPick = mapList.findLast((map) => map.score !== 0);
+
+		return lastPick?.score === stage.score;
+	}
+
+	/** A team's pick can decide the match only when it evens out the picks. */
+	function isLastPickLeavingPicksUneven(stage: StageValidatorInput) {
+		if (stage.score === 0 || !isLastSlot()) return false;
+
+		return pickBalance() + stage.score !== 0;
+	}
+
+	/** Positive when the first team has more picks in the list, negative when the second team has. */
+	function pickBalance() {
+		return mapList.reduce((acc, cur) => acc + cur.score, 0);
 	}
 
 	/** A map both teams picked is reserved for the last slot when one exists. */
@@ -392,39 +397,33 @@ function generateWithInput(
 		return commonMapsLeft.length === 0;
 	}
 
-	function rateMapList() {
-		// not a full map list
-		if (mapList.length !== input.count) return;
-
+	/** Penalties of the maps so far, a lower bound for the score of any full list starting with them. */
+	function rateMapListSoFar() {
 		let score = OPTIMAL_MAPLIST_SCORE;
 
 		const appearedMaps = new Map<StageId, number>();
-		for (const stage of mapList) {
-			const timesAppeared = appearedMaps.get(stage.stageId) ?? 0;
+		for (const map of mapList) {
+			const timesAppeared = appearedMaps.get(map.stageId) ?? 0;
+			score += timesAppeared;
+			appearedMaps.set(map.stageId, timesAppeared + 1);
 
-			if (timesAppeared > 0) {
-				score += timesAppeared;
-			}
-
-			appearedMaps.set(stage.stageId, timesAppeared + 1);
-		}
-
-		if (!lastMapIsAGoodNeutralMap()) {
-			score += 1;
-		}
-
-		const fairnessBalance = mapList.reduce((acc, cur) => acc + cur.score, 0);
-		if (fairnessBalance !== 0) {
-			score += UNFAIR_PENALTY;
-		}
-
-		for (const [i, map] of mapList.entries()) {
 			score += recencyPenalty(map);
+			if (map.isNeutral) score += RANDOM_MAP_PENALTY;
 			if (map.isFallback) score += FALLBACK_NEUTRAL_MAP_PENALTY;
-			if (map.isNeutral && i !== mapList.length - 1) {
-				score += EARLY_NEUTRAL_MAP_PENALTY;
-			}
 		}
+
+		return score;
+	}
+
+	/** Penalties only a full list has, on top of {@link rateMapListSoFar}. */
+	function rateFullMapList() {
+		let score = 0;
+
+		if (!lastMapIsAGoodNeutralMap()) score += 1;
+		if (mapList[mapList.length - 1].score !== 0) {
+			score += TEAM_PICK_DECIDES_PENALTY;
+		}
+		if (pickBalance() !== 0) score += UNFAIR_PENALTY;
 
 		return score;
 	}

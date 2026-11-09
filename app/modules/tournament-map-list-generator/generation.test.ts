@@ -6,6 +6,7 @@ import { SENDOUQ_MAP_POOL } from "~/features/match-profile/banned-maps";
 import { unwrap, unwrapErr } from "~/utils/result";
 import { rankedModesShort } from "../in-game-lists/modes";
 import type {
+	ModeShort,
 	ModeWithStage,
 	RankedModeShort,
 	StageId,
@@ -384,6 +385,113 @@ describe("Tournament map list generator", () => {
 				if (typeof mapList[j].source !== "number") continue;
 				expect(mapList[j].source).not.toBe(mapList[j + 1].source);
 			}
+		}
+	});
+
+	// paddling pool 394: many teams picked the same two RM maps
+	const identicalModeArgs = (modeOrder: ModeShort[]) => ({
+		count: modeOrder.length,
+		pool: MapPool.ALL,
+		modesIncluded: ["SZ", "TC", "RM", "CB"] as ModeShort[],
+		modeOrder,
+		teams: [
+			{
+				id: 1,
+				maps: new MapPool({
+					...MapPool.EMPTY.parsed,
+					SZ: [0, 1],
+					TC: [2, 3],
+					RM: [16, 17],
+					CB: [4, 5],
+				}),
+			},
+			{
+				id: 2,
+				maps: new MapPool({
+					...MapPool.EMPTY.parsed,
+					SZ: [6, 7],
+					TC: [8, 9],
+					RM: [16, 17],
+					CB: [10, 11],
+				}),
+			},
+		] as TournamentMaplistInput["teams"],
+	});
+
+	const pickSources = (mapList: Array<{ source: unknown }>) =>
+		mapList
+			.map((map) => map.source)
+			.filter((source) => typeof source === "number");
+
+	test.each([
+		{ why: "first slot", modeOrder: ["RM", "SZ", "CB"] },
+		{ why: "middle slot", modeOrder: ["TC", "RM", "SZ"] },
+		{ why: "Bo5", modeOrder: ["TC", "RM", "SZ", "CB", "TC"] },
+	] satisfies Array<{ why: string; modeOrder: ModeShort[] }>)(
+		"Uses a map both teams picked instead of a random map when its mode can't be a team's pick ($why)",
+		({ modeOrder }) => {
+			for (let i = 1; i <= 10; i++) {
+				const mapList = generateMaps({
+					...identicalModeArgs(modeOrder),
+					seed: String(i),
+				});
+
+				expect(mapList.map((map) => map.mode)).toEqual(modeOrder);
+				expect(mapList.some((map) => map.source === "RANDOM")).toBe(false);
+				expect(R.sort(pickSources(mapList), (a, b) => a - b)).toEqual(
+					modeOrder.length === 3 ? [1, 2] : [1, 1, 2, 2],
+				);
+			}
+		},
+	);
+
+	test("Picks alternate between the teams across a map both teams picked", () => {
+		for (let i = 1; i <= 10; i++) {
+			const mapList = generateMaps({
+				...identicalModeArgs(["CB", "RM", "SZ", "RM", "TC"]),
+				seed: String(i),
+			});
+
+			const sources = pickSources(mapList);
+			for (let j = 0; j < sources.length - 1; j++) {
+				expect(sources[j]).not.toBe(sources[j + 1]);
+			}
+		}
+	});
+
+	test("Fills a slot the picks can't fairly with a random map when there is no mode order", () => {
+		for (let i = 1; i <= 5; i++) {
+			const mapList = generateMaps({
+				count: 7,
+				seed: String(i),
+				pool: MapPool.ALL,
+				modesIncluded: ["SZ", "TC", "RM"],
+				teams: [
+					{
+						id: 1,
+						maps: new MapPool({
+							...MapPool.EMPTY.parsed,
+							SZ: [3, 1],
+							TC: [8, 9],
+							RM: [6, 7],
+						}),
+					},
+					{
+						id: 2,
+						maps: new MapPool({
+							...MapPool.EMPTY.parsed,
+							SZ: [1, 3],
+							TC: [5, 9],
+							RM: [0, 3],
+						}),
+					},
+				],
+			});
+
+			expect(mapList.filter((map) => map.source === "RANDOM")).toHaveLength(1);
+			expect(R.sort(pickSources(mapList), (a, b) => a - b)).toEqual([
+				1, 1, 2, 2,
+			]);
 		}
 	});
 
@@ -851,13 +959,9 @@ describe("TournamentMapListGeneratorOneMode", () => {
 			count: 7,
 		});
 
-		for (const [i, stage] of mapList.entries()) {
-			if (i === 6) {
-				expect(stage?.source).toBe("RANDOM");
-			} else {
-				expect(stage?.source).toBe("BOTH");
-			}
-		}
+		expect(mapList.filter((map) => map.source === "BOTH")).toHaveLength(6);
+		expect(mapList.filter((map) => map.source === "RANDOM")).toHaveLength(1);
+		expect(mapList[6].source).toBe("BOTH");
 	});
 
 	test("Handles one team submitted no maps", () => {

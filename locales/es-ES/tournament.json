@@ -73,7 +73,6 @@
 	"rules.teamPick.pool.SENDOUQ": "Los mapas se limitan a los permitidos en SendouQ",
 	"rules.teamPick.pool.ALL": "Se permite cualquier mapa",
 	"rules.teamPick.pool.CUSTOM": "Los mapas se limitan al grupo de mapas de arriba",
-	"rules.teamPick.neutral": "Si ambos equipos eligieron el mismo mapa, se usa como mapa decisivo; si no, se usa un mapa aleatorio del grupo que ningún equipo haya elegido",
 	"mapList.rerollModeOrder": "Volver a sortear el orden de modos",
 	"mapList.rerollAllMaps": "Volver a sortear todos los mapas",
 	"mapList.teamsPick": "Elección del equipo",

@@ -73,7 +73,7 @@
 	"rules.teamPick.pool.SENDOUQ": "Maps are limited to the SendouQ legal maps",
 	"rules.teamPick.pool.ALL": "Every map is allowed",
 	"rules.teamPick.pool.CUSTOM": "Maps are limited to the map pool above",
-	"rules.teamPick.neutral": "If both teams picked the same map, it is used as the deciding map, otherwise a random map from the pool that neither team picked",
+	"rules.teamPick.mapList": "The teams' picks alternate, both teams getting the same number of them. The remaining maps are ones both teams picked or, when there aren't enough of those, random maps from the pool that neither team picked",
 	"mapList.rerollModeOrder": "Reroll mode order",
 	"mapList.rerollAllMaps": "Reroll all maps",
 	"mapList.teamsPick": "Team's pick",
