@@ -73,6 +73,13 @@ export const action = defineAction(
 					),
 					"Can't change started brackets",
 				);
+				errorToastIfFalsy(
+					!Progression.changedStartingBrackets(
+						tournament.ctx.settings.bracketProgression,
+						body.bracketProgression,
+					),
+					"Can't add, remove or move divisions after the tournament has started",
+				);
 
 				await TournamentRepository.updateProgression({
 					tournamentId: tournament.ctx.id,

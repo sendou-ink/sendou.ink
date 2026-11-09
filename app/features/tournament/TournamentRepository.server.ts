@@ -1181,6 +1181,11 @@ export async function findFriendCodesByTournamentId(tournamentId: number) {
 	}, {});
 }
 
+/**
+ * Updates the bracket progression of a started tournament, whose starting brackets (divisions) must
+ * stay as they are. Follow-up check-ins and prepared maps are cleared only for the brackets whose
+ * format changed.
+ */
 export function updateProgression({
 	tournamentId,
 	bracketProgression,
@@ -1189,48 +1194,31 @@ export function updateProgression({
 	bracketProgression: TournamentSettings["bracketProgression"];
 }) {
 	return db.transaction().execute(async (trx) => {
-		const { settings: existingSettings } = await trx
+		const { settings: existingSettings, preparedMaps } = await trx
 			.selectFrom("Tournament")
-			.select("settings")
+			.select(["settings", "preparedMaps"])
 			.where("id", "=", tournamentId)
 			.executeTakeFirstOrThrow();
 
-		const changedFormat = Progression.changedBracketProgressionFormat(
+		const changedFormatBracketIdxs = Progression.changedFormatBracketIdxs(
 			existingSettings.bracketProgression,
 			bracketProgression,
 		);
 
-		if (
-			changedFormat ||
-			Progression.changedStartingBrackets(
-				existingSettings.bracketProgression,
-				bracketProgression,
-			)
-		) {
-			const allTournamentTeamsOfTournament = (
-				await trx
-					.selectFrom("TournamentTeam")
-					.select("id")
-					.where("tournamentId", "=", tournamentId)
-					.execute()
-			).map((t) => t.id);
-
+		if (changedFormatBracketIdxs.length > 0) {
 			await trx
 				.deleteFrom("TournamentTeamCheckIn")
-				.where("TournamentTeamCheckIn.bracketIdx", "is not", null)
 				.where(
-					"TournamentTeamCheckIn.tournamentTeamId",
+					"TournamentTeamCheckIn.bracketIdx",
 					"in",
-					allTournamentTeamsOfTournament,
+					changedFormatBracketIdxs,
 				)
-				.execute();
-
-			await trx
-				.updateTable("TournamentTeam")
-				.set({
-					startingBracketIdx: null,
-				})
-				.where("tournamentId", "=", tournamentId)
+				.where("TournamentTeamCheckIn.tournamentTeamId", "in", (eb) =>
+					eb
+						.selectFrom("TournamentTeam")
+						.select("TournamentTeam.id")
+						.where("TournamentTeam.tournamentId", "=", tournamentId),
+				)
 				.execute();
 		}
 
@@ -1243,7 +1231,14 @@ export function updateProgression({
 			.updateTable("Tournament")
 			.set({
 				settings: JSON.stringify(newSettings),
-				preparedMaps: changedFormat ? null : undefined,
+				preparedMaps:
+					preparedMaps && changedFormatBracketIdxs.length > 0
+						? JSON.stringify(
+								preparedMaps.map((maps, bracketIdx) =>
+									changedFormatBracketIdxs.includes(bracketIdx) ? null : maps,
+								),
+							)
+						: undefined,
 			})
 			.where("id", "=", tournamentId)
 			.execute();

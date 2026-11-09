@@ -1094,6 +1094,16 @@ export function changedBracketProgressionFormat(
 	oldProgression: ParsedBracket[],
 	newProgression: ParsedBracket[],
 ): boolean {
+	return changedFormatBracketIdxs(oldProgression, newProgression).length > 0;
+}
+
+/** Indexes of the old progression's brackets that were removed or had a field affecting the format changed. */
+export function changedFormatBracketIdxs(
+	oldProgression: ParsedBracket[],
+	newProgression: ParsedBracket[],
+): number[] {
+	const changed: number[] = [];
+
 	for (let i = 0; i < oldProgression.length; i++) {
 		const oldBracket = oldProgression[i];
 		const newBracket = newProgression.at(i);
@@ -1105,11 +1115,11 @@ export function changedBracketProgressionFormat(
 			newBracket.type !== oldBracket.type ||
 			!R.isDeepEqual(newBracket.settings, oldBracket.settings)
 		) {
-			return true;
+			changed.push(i);
 		}
 	}
 
-	return false;
+	return changed;
 }
 
 /** Returns true if the set of brackets that teams can start in changed */

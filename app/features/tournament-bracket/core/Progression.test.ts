@@ -1091,6 +1091,60 @@ describe("changedBracketProgression", () => {
 	});
 });
 
+const division = (
+	name: string,
+	overrides: Partial<Progression.ParsedBracket> = {},
+): Progression.ParsedBracket => ({
+	name,
+	type: "single_elimination",
+	requiresCheckIn: false,
+	settings: {},
+	...overrides,
+});
+
+const D1 = division("Division 1");
+const D2 = division("Division 2");
+const D3 = division("Division 3");
+
+describe("changedFormatBracketIdxs", () => {
+	test.each([
+		{ why: "identical", newProgression: [D1, D2], expected: [] },
+		{ why: "bracket appended", newProgression: [D1, D2, D3], expected: [] },
+		{
+			why: "only requiresCheckIn changed",
+			newProgression: [D1, { ...D2, requiresCheckIn: true }],
+			expected: [],
+		},
+		{
+			why: "settings changed",
+			newProgression: [
+				D1,
+				{ ...D2, settings: { skippedRounds: ["THIRD_PLACE_MATCH"] } },
+			],
+			expected: [1],
+		},
+		{
+			why: "type changed",
+			newProgression: [{ ...D1, type: "double_elimination" }, D2],
+			expected: [0],
+		},
+		{
+			why: "name changed",
+			newProgression: [D1, { ...D2, name: "Division Two" }],
+			expected: [1],
+		},
+		{ why: "trailing bracket removed", newProgression: [D1], expected: [1] },
+	] satisfies Array<{
+		why: string;
+		newProgression: Progression.ParsedBracket[];
+		expected: number[];
+	}>)("$why", ({ newProgression, expected }) => {
+		expect(
+			Progression.changedFormatBracketIdxs([D1, D2], newProgression),
+		).toEqual(expected);
+	});
+});
+
 describe("bracketIdxsForStandings", () => {
 	test("handles SE", () => {
 		expect(

@@ -25,6 +25,8 @@ type InsertArgs = Omit<
 type Options = {
 	/** Has the team checked in to the tournament? */
 	isCheckedIn?: boolean;
+	/** Follow-up brackets (by index) the team has checked in to. */
+	checkedInToBracketIdxs?: number[];
 	/** Is the team looking for more players on the tournament's LFG page? */
 	isLooking?: boolean;
 	/** Teams this team has liked in the LFG matchmaking view. */
@@ -90,7 +92,13 @@ export const { create } = defineFactory({
 	},
 	applyOptions: async (
 		team,
-		{ isCheckedIn, isLooking, likedTeamIds, startingBracketIdx }: Options,
+		{
+			isCheckedIn,
+			checkedInToBracketIdxs,
+			isLooking,
+			likedTeamIds,
+			startingBracketIdx,
+		}: Options,
 	) => {
 		if (typeof startingBracketIdx === "number") {
 			await TournamentTeamRepository.updateStartingBrackets([
@@ -101,6 +109,12 @@ export const { create } = defineFactory({
 		if (isCheckedIn) {
 			await actAs(team.ownerUserId, () =>
 				TournamentTeamRepository.checkIn(team.id),
+			);
+		}
+
+		for (const bracketIdx of checkedInToBracketIdxs ?? []) {
+			await actAs(team.ownerUserId, () =>
+				TournamentTeamRepository.checkIn(team.id, { bracketIdx }),
 			);
 		}
 

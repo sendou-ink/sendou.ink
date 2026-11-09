@@ -20,6 +20,7 @@ import { resolveMatchMapList } from "~/features/tournament-match/core/mapList.se
 import { reportScore } from "~/features/tournament-match/core/reportScore.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { invariant } from "~/utils/invariant";
+import { actAs } from "../core/actAs";
 import { backdate } from "../core/backdate";
 import { defineFactory } from "../core/defineFactory";
 import { eventDefaults } from "./CalendarEventFactory";
@@ -207,6 +208,16 @@ export async function playOut(
 	}
 
 	return matches;
+}
+
+/** Saves maps prepared for a bracket that has not started yet, as the organizer does from its preview. */
+export function prepareMaps({
+	authorId,
+	...args
+}: Parameters<typeof TournamentRepository.upsertPreparedMaps>[0] & {
+	authorId: number;
+}) {
+	return actAs(authorId, () => TournamentRepository.upsertPreparedMaps(args));
 }
 
 /**
