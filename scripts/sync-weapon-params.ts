@@ -13,7 +13,9 @@ import {
 	loadWeaponInfoSpecial,
 	loadWeaponInfoSub,
 	MUSH_DIR,
+	mainWeaponShouldBeSkipped,
 	PARAMETER_DIR,
+	weaponRowIdToFileName,
 } from "./utils";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -38,15 +40,6 @@ const SPECIAL_OUTPUT_FILE = path.join(
 	"all-version-special-params.json",
 );
 
-const WEAPON_TYPES_TO_IGNORE = [
-	"Mission",
-	"Coop",
-	"Hero",
-	"Rival",
-	"SalmonBuddy",
-	"Sdodr",
-];
-
 type MainWeapon = (typeof weapons)[number];
 
 function parseVersionToDisplay(version: string): string {
@@ -61,17 +54,6 @@ function sortVersions(versions: string[]): string[] {
 	return versions.sort(
 		(a, b) => Number.parseInt(a, 10) - Number.parseInt(b, 10),
 	);
-}
-
-function mainWeaponShouldBeSkipped(mainWeapon: MainWeapon): boolean {
-	return WEAPON_TYPES_TO_IGNORE.includes(mainWeapon.Type);
-}
-
-function weaponRowIdToFileName(rowId: string): string {
-	const parts = rowId.split("_");
-	const category = parts[0];
-	const codeName = parts[1];
-	return `Weapon${category}${codeName ?? ""}.game__GameParameterTable.json`;
 }
 
 function buildWeaponFileNameToIdMap(): Map<string, number> {

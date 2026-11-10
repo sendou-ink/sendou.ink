@@ -49,7 +49,7 @@ pnpm dlx sharp-cli --input '*.png' --output '{dir}/{name}.avif' --format avif
 
 1. Drop the whole [splat3 repository](https://github.com/Leanny/splat3) into `/scripts/dicts/splat3` (pull before).
 1. If the dump's shape changed, update `/scripts/splat3-types.ts` to match (the dump is gitignored, so these types are hand-maintained rather than inferred from the JSON).
-1. Update all `CURRENT_SEASON` constants
+1. Update `CURRENT_SEASON` in `/scripts/utils.ts`
 1. Add the latest patch to the top of `PATCHES` in `builds-constants.ts` (the calculators' `CURRENT_PATCH` is derived from it)
 1. Update the stage list in `stage-ids.ts` and `create-misc-json.ts`. Add images from Lean's repository and avify them.
 1. `pnpm exec vite-node scripts/create-misc-json.ts`

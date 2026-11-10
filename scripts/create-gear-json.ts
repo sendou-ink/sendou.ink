@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { brandIds } from "~/modules/in-game-lists/brand-ids";
 import { invariant } from "~/utils/invariant";
 import {
+	CURRENT_SEASON,
 	LANG_JSONS_TO_CREATE,
 	loadGearInfoClothes,
 	loadGearInfoHead,
@@ -19,7 +20,6 @@ const clothes = loadGearInfoClothes();
 const head = loadGearInfoHead();
 const shoes = loadGearInfoShoes();
 
-const CURRENT_SEASON = 9;
 const OUTPUT_DIR_PATH = path.join(__dirname, "output");
 
 const LEAN_HEAD_CODE = "Hed";

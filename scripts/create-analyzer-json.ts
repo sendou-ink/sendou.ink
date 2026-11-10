@@ -32,8 +32,11 @@ import {
 	loadWeaponInfoMain,
 	loadWeaponInfoSpecial,
 	loadWeaponInfoSub,
+	mainWeaponShouldBeSkipped,
 	translationJsonFolderName,
+	WEAPON_TYPES_TO_IGNORE,
 	weaponParamsDir,
+	weaponRowIdToFileName,
 } from "./utils";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -43,8 +46,6 @@ const playersParams = loadSplPlayerParams();
 const weapons = loadWeaponInfoMain();
 const subWeapons = loadWeaponInfoSub();
 const specialWeapons = loadWeaponInfoSpecial();
-
-const CURRENT_SEASON = 9;
 
 type MainWeapon = (typeof weapons)[number];
 type SubWeapon = (typeof subWeapons)[number];
@@ -1332,28 +1333,6 @@ function resolveSubWeaponOverwrites(subWeapon: SubWeapon, params: any) {
 	);
 }
 
-const WEAPON_TYPES_TO_IGNORE = [
-	"Mission",
-	"Coop",
-	"Hero",
-	"Rival",
-	"SalmonBuddy",
-	"Sdodr",
-];
-
-const INTERNAL_WEAPON_NAMES_TO_IGNORE: readonly string[] = ["Free"] as const;
-function mainWeaponShouldBeSkipped(mainWeapon: MainWeapon) {
-	if (
-		WEAPON_TYPES_TO_IGNORE.includes(mainWeapon.Type) ||
-		INTERNAL_WEAPON_NAMES_TO_IGNORE.includes(mainWeapon.__RowId) ||
-		mainWeapon.Season > CURRENT_SEASON
-	) {
-		return true;
-	}
-
-	return false;
-}
-
 function subWeaponShouldBeSkipped(subWeapon: SubWeapon) {
 	if (subWeapon.Id === 10000) return true;
 	if (WEAPON_TYPES_TO_IGNORE.some((val) => subWeapon.__RowId.includes(val))) {
@@ -1381,17 +1360,10 @@ function loadWeaponParamsObject(
 ) {
 	return JSON.parse(
 		fs.readFileSync(
-			path.join(weaponParamsDir(), weaponRowIdToFileName(weapon)),
+			path.join(weaponParamsDir(), weaponRowIdToFileName(weapon.__RowId)),
 			"utf8",
 		),
 	).GameParameters;
-}
-
-function weaponRowIdToFileName(weapon: MainWeapon | SubWeapon | SpecialWeapon) {
-	const [category, codeName] = weapon.__RowId.split("_");
-	invariant(category);
-
-	return `Weapon${category}${codeName ?? ""}.game__GameParameterTable.json`;
 }
 
 function translationsToArray({

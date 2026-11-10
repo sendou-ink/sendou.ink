@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { invariant } from "~/utils/invariant";
 import type {
 	DamageRateInfoConfig,
 	GearInfoEntry,
@@ -15,6 +16,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const SPLAT3_DATA_PATH = path.join(__dirname, "dicts", "splat3", "data");
+
+/** Latest released season, gear and weapons from later seasons are left out of the generated data. */
+export const CURRENT_SEASON = 9;
+
+/** Weapon dump `Type`s (and `__RowId` fragments for subs/specials) that aren't usable in versus. */
+export const WEAPON_TYPES_TO_IGNORE = [
+	"Mission",
+	"Coop",
+	"Hero",
+	"Rival",
+	"SalmonBuddy",
+	"Sdodr",
+];
+
+const INTERNAL_MAIN_WEAPON_NAMES_TO_IGNORE = ["Free"];
 
 /** Per-version weapon/sub/special `GameParameterTable` dumps, keyed by patch version folder. */
 export const PARAMETER_DIR = path.join(SPLAT3_DATA_PATH, "parameter");
@@ -66,6 +82,27 @@ export function translationJsonFolderName(langCode: string) {
 /** Latest-version directory holding the per-weapon `GameParameterTable` dumps. */
 export function weaponParamsDir() {
 	return path.join(PARAMETER_DIR, "latest", "weapon");
+}
+
+/** Whether a `WeaponInfoMain` entry is left out of the generated weapon data (non-versus or not yet released). */
+export function mainWeaponShouldBeSkipped(mainWeapon: {
+	Type: string;
+	__RowId: string;
+	Season: number;
+}) {
+	return (
+		WEAPON_TYPES_TO_IGNORE.includes(mainWeapon.Type) ||
+		INTERNAL_MAIN_WEAPON_NAMES_TO_IGNORE.includes(mainWeapon.__RowId) ||
+		mainWeapon.Season > CURRENT_SEASON
+	);
+}
+
+/** File name of a weapon's `GameParameterTable` dump, e.g. `Shooter_Short_00` → `WeaponShooterShort.game__GameParameterTable.json`. */
+export function weaponRowIdToFileName(rowId: string) {
+	const [category, codeName] = rowId.split("_");
+	invariant(category);
+
+	return `Weapon${category}${codeName ?? ""}.game__GameParameterTable.json`;
 }
 
 export const loadWeaponInfoMain = () =>
