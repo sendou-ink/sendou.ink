@@ -109,8 +109,8 @@ export function trajectoryParams(
 
 /**
  * The shot's position on every frame until it lands, bursts or stops. The brake phase ends early once
- * the shot falls faster than `brakeToFreeVelocityY`. Bouncing shots (`bounceAfterMaxSpeed` set)
- * bounce `burstFrame` times instead of landing.
+ * the shot falls faster than `brakeToFreeVelocityY`. Bouncing shots (`bounceAfterMaxSpeed` set, their
+ * speed capped at it after each bounce) burst on their `burstFrame`th ground hit instead of landing.
  */
 export function simulateTrajectory(
 	params: TrajectoryParams,
@@ -175,8 +175,7 @@ export function simulateTrajectory(
 					return points;
 				}
 				y = Math.abs(y);
-				vy = Math.abs(vy);
-				vz *= bounceAfterMaxSpeed;
+				[vz, vy] = bounce(vz, vy, bounceAfterMaxSpeed);
 			} else {
 				return points;
 			}
@@ -199,8 +198,7 @@ export function simulateTrajectory(
 					return points;
 				}
 				y = Math.abs(y);
-				vy = Math.abs(vy);
-				vz *= bounceAfterMaxSpeed;
+				[vz, vy] = bounce(vz, vy, bounceAfterMaxSpeed);
 			} else {
 				points.push({ z, y });
 				return points;
@@ -220,6 +218,14 @@ export function simulateTrajectory(
 	}
 
 	return points;
+}
+
+/** Velocity after bouncing off the ground: going up again, its speed capped at `maxSpeed`. */
+function bounce(vz: number, vy: number, maxSpeed: number): [number, number] {
+	const speed = Math.hypot(vz, vy);
+	const scale = speed > maxSpeed ? maxSpeed / speed : 1;
+
+	return [vz * scale, Math.abs(vy) * scale];
 }
 
 /** How many hits splat at point blank and up to which distance that many still do. */

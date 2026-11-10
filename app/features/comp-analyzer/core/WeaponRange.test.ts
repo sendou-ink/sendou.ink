@@ -121,6 +121,26 @@ describe("WeaponRange.variantsOf", () => {
 		expect(highestPoint).toBeGreaterThan(1);
 	});
 
+	test.each([
+		{
+			weaponId: 3040,
+			expected: 2.87,
+			why: "Explosher explodes where it lands",
+		},
+		{
+			weaponId: 3020,
+			expected: undefined,
+			why: "Sloshing Machine has no blast",
+		},
+		{ weaponId: 210, expected: 3.385, why: "Blaster" },
+	] satisfies Array<{
+		weaponId: MainWeaponId;
+		expected: number | undefined;
+		why: string;
+	}>)("blast radius: $why", ({ weaponId, expected }) => {
+		expect(WeaponRange.ofMainWeapon(weaponId).blastRadius).toBe(expected);
+	});
+
 	test("rollers carry their one-shot distance per swing", () => {
 		const [vertical, horizontal] = WeaponRange.variantsOf(1010);
 
@@ -192,6 +212,52 @@ describe("WeaponRange.simulateTrajectory", () => {
 		);
 
 		expect(earlyFree).toBeGreaterThan(fullBrake);
+	});
+});
+
+describe("WeaponRange.simulateTrajectory bouncing", () => {
+	const params: WeaponRange.TrajectoryParams = {
+		spawnSpeed: 0.54,
+		spawnAngle: 0,
+		spawnOffsetZ: 0,
+		goStraightStateEndMaxSpeed: 10,
+		goStraightToBrakeStateFrame: 3,
+		freeGravity: 0.015,
+		freeAirResist: 0.01,
+		brakeAirResist: 0.01,
+		brakeGravity: 0.01,
+		brakeToFreeFrame: 1,
+		brakeToFreeVelocityY: 10,
+		burstFrame: 3,
+		bounceAfterMaxSpeed: 0.4,
+	};
+
+	test("caps the speed after a bounce instead of scaling it down", () => {
+		const trajectory = WeaponRange.simulateTrajectory(params);
+		const firstBounceIndex = trajectory.findIndex(
+			(point, i) => i > 0 && point.y > trajectory[i - 1].y,
+		);
+		const afterBounce = trajectory[firstBounceIndex + 1];
+		const atBounce = trajectory[firstBounceIndex];
+
+		expect(
+			Math.hypot(afterBounce.z - atBounce.z, afterBounce.y - atBounce.y),
+		).toBeLessThanOrEqual(0.4);
+		expect(afterBounce.z - atBounce.z).toBeGreaterThan(0.3);
+	});
+
+	test("bursts on the burstFrame-th ground hit", () => {
+		const trajectory = WeaponRange.simulateTrajectory(params);
+		const groundHits = trajectory.filter(
+			(point, i) =>
+				i > 0 &&
+				i < trajectory.length - 1 &&
+				point.y < trajectory[i - 1].y &&
+				point.y < trajectory[i + 1].y,
+		);
+
+		expect(groundHits).toHaveLength(2);
+		expect(trajectory.at(-1)?.y).toBe(0);
 	});
 });
 

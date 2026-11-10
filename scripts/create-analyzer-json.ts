@@ -304,17 +304,22 @@ function extractRangeParams(
 
 	if (isSlosher) {
 		const units = params.UnitGroupParam?.Unit;
-		const unitForRange = units?.reduce(
-			(best: any, unit: any) =>
-				(unit?.SpawnSpeedGround ?? 0) > (best?.SpawnSpeedGround ?? 0)
-					? unit
-					: best,
-			units?.[0],
+		const unitIndexForRange: number = (units ?? []).reduce(
+			(bestIndex: number, unit: any, index: number) =>
+				(unit?.SpawnSpeedGround ?? 0) >
+				(units[bestIndex]?.SpawnSpeedGround ?? 0)
+					? index
+					: bestIndex,
+			0,
 		);
+		const unitForRange = units?.[unitIndexForRange];
 		const isBloblobber = weapon.Id === 3030 || weapon.Id === 3031;
-		const bounceAfterMaxSpeed = params.BounceGroupParam?.BounceParam?.find(
-			(bounceParam: any) => bounceParam.BounceAfterMaxSpeed !== undefined,
-		)?.BounceAfterMaxSpeed;
+		const bounceAfterMaxSpeed =
+			params.BounceGroupParam?.BounceParam?.find(
+				(bounceParam: any) =>
+					(bounceParam.UnitOrderNum ?? 0) === unitIndexForRange,
+			)?.BounceAfterMaxSpeed ?? DEFAULT_BOUNCE_AFTER_MAX_SPEED;
+		const blastDistanceDamage = params.BlastParam?.BlastParam?.DistanceDamage;
 		return {
 			...rangeParamsFromMoveParam(
 				unitForRange?.MoveParam,
@@ -323,6 +328,7 @@ function extractRangeParams(
 			Range_ZRate: zRate,
 			Range_BounceAfterMaxSpeed: isBloblobber ? bounceAfterMaxSpeed : undefined,
 			Range_BurstFrame: isBloblobber ? BLOBLOBBER_BOUNCES : undefined,
+			BlastRadius: blastDistanceDamage?.at(-1)?.Distance,
 		};
 	}
 
@@ -524,6 +530,8 @@ function extractRangeParams(
 
 // how many times a Bloblobber bubble bounces before bursting, not in the params
 const BLOBLOBBER_BOUNCES = 3;
+// game default of a bounce param that doesn't set its own (Bloblobber's first bubble)
+const DEFAULT_BOUNCE_AFTER_MAX_SPEED = 0.4;
 
 function rangeParamsFromMoveParam(
 	moveParam: any,
