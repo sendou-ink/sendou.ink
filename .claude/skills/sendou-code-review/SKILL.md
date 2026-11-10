@@ -30,7 +30,7 @@ Then gather the small context you do read:
 - `wc -l $M/review.patch $M/copy.patch` → sizes for sharding decisions.
 - `cat .nvmrc` → Node version.
 
-Do NOT paste CLAUDE.md/AGENTS.md into any prompt — the agent that needs them reads them from the repo itself.
+Do NOT paste AGENTS.md into any prompt — the agent that needs it reads it from the repo itself.
 
 If `review.patch` is empty (no diff, no untracked files) and `copy.patch` is empty, tell the user: "Nothing to review. Either check out a feature branch or make some changes." and stop.
 
@@ -91,12 +91,12 @@ Check whether the implementation actually does what the spec describes:
 Only flag real gaps. Do not flag things the spec doesn't mention. category: "spec"; in detail state what the spec expected vs what the code does.
 ```
 
-### Agent 2: Conventions (CLAUDE.md rules + modernization)
+### Agent 2: Conventions (AGENTS.md rules + modernization)
 
 ```
 You are reviewing code changes for project-rule compliance and modern-practice opportunities.
 
-First read CLAUDE.md and AGENTS.md at the repo root for the project rules.
+First read AGENTS.md at the repo root for the project rules.
 
 A) Rule violations — only flag CLEAR violations; where a rule says "prefer"/"avoid", use judgement (a minor deviation in context is not a violation). category: "claude-md", severity: "warning", claim quotes the rule.
 
@@ -276,7 +276,7 @@ From the surviving findings (verified + pre-checked + measured + copy):
 
 1. **Deduplicate**: merge findings multiple agents flagged from different angles, keeping the best explanation.
 2. **Filter**: drop nitpicks that wouldn't matter in practice or would make the code worse/more complex — including weak copy suggestions.
-3. **Prioritize**: Typecheck failures > Security > Bugs > DB Performance (critical/warning) > Spec Violations > Test Coverage > Abstraction > CLAUDE.md Violations > Copy (warning) > Modernization > Copy (info) > DB Performance (info).
+3. **Prioritize**: Typecheck failures > Security > Bugs > DB Performance (critical/warning) > Spec Violations > Test Coverage > Abstraction > AGENTS.md Violations > Copy (warning) > Modernization > Copy (info) > DB Performance (info).
 
 ## Step 7: Write the report file
 
