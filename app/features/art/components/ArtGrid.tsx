@@ -29,6 +29,7 @@ import { ResponsiveMasonry } from "../../../modules/responsive-masonry/component
 import { ART_PER_PAGE } from "../art-constants";
 import { artGridSearchParams } from "../art-search-params";
 import type { ListedArt } from "../art-types";
+import * as ArtListing from "../core/ArtListing";
 import styles from "./ArtGrid.module.css";
 
 const preloadedImageUrls = new Set<string>();
@@ -56,7 +57,7 @@ export function ArtGrid({
 	} = usePagination({
 		items: arts,
 		pageSize: ART_PER_PAGE,
-		initialPage: pageOfArt(arts, bigArtId),
+		initialPage: ArtListing.pageOf(arts, bigArtId),
 	});
 	const isHydrated = useHydrated();
 
@@ -555,16 +556,6 @@ function useImageAspectRatio() {
 	};
 
 	return [aspectRatio, imageRef] as const;
-}
-
-/** Page the art is on, so that a shared `?big=` link renders the page containing it. */
-function pageOfArt(arts: ListedArt[], artId: number | null) {
-	if (typeof artId !== "number") return 1;
-
-	const index = arts.findIndex((art) => art.id === artId);
-	if (index === -1) return 1;
-
-	return Math.floor(index / ART_PER_PAGE) + 1;
 }
 
 /** Touch devices have no hover to reveal the lightbox info with, so a tap on the image toggles it instead. */
