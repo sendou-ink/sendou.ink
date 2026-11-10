@@ -434,24 +434,23 @@ function selectMostPopular<T>(items: T[]): T {
 function mapResultDeltas(
 	results: AllMatchResult[],
 ): TournamentSummary["mapResultDeltas"] {
-	const result: TournamentSummary["mapResultDeltas"] = [];
+	const result = new Map<
+		string,
+		TournamentSummary["mapResultDeltas"][number]
+	>();
 
 	const addMapResult = (
 		mapResult: Pick<Tables["MapResult"], "stageId" | "mode" | "userId"> & {
 			type: "win" | "loss";
 		},
 	) => {
-		const existingResult = result.find(
-			(r) =>
-				r.userId === mapResult.userId &&
-				r.stageId === mapResult.stageId &&
-				r.mode === mapResult.mode,
-		);
+		const key = `${mapResult.userId}-${mapResult.stageId}-${mapResult.mode}`;
+		const existingResult = result.get(key);
 
 		if (existingResult) {
 			existingResult[mapResult.type === "win" ? "wins" : "losses"] += 1;
 		} else {
-			result.push({
+			result.set(key, {
 				userId: mapResult.userId,
 				stageId: mapResult.stageId,
 				mode: mapResult.mode,
@@ -475,23 +474,22 @@ function mapResultDeltas(
 		}
 	}
 
-	return result;
+	return Array.from(result.values());
 }
 
 function playerResultDeltas(
 	results: AllMatchResult[],
 ): TournamentSummary["playerResultDeltas"] {
-	const result: TournamentSummary["playerResultDeltas"] = [];
+	const result = new Map<
+		string,
+		TournamentSummary["playerResultDeltas"][number]
+	>();
 
 	const addPlayerResult = (
 		playerResult: TournamentSummary["playerResultDeltas"][number],
 	) => {
-		const existingResult = result.find(
-			(r) =>
-				r.type === playerResult.type &&
-				r.otherUserId === playerResult.otherUserId &&
-				r.ownerUserId === playerResult.ownerUserId,
-		);
+		const key = `${playerResult.type}-${playerResult.ownerUserId}-${playerResult.otherUserId}`;
+		const existingResult = result.get(key);
 
 		if (existingResult) {
 			existingResult.mapLosses += playerResult.mapLosses;
@@ -499,7 +497,7 @@ function playerResultDeltas(
 			existingResult.setLosses += playerResult.setLosses;
 			existingResult.setWins += playerResult.setWins;
 		} else {
-			result.push(playerResult);
+			result.set(key, playerResult);
 		}
 	};
 
@@ -597,7 +595,7 @@ function playerResultDeltas(
 		}
 	}
 
-	return result;
+	return Array.from(result.values());
 }
 
 function tournamentResults({

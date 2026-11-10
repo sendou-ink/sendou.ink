@@ -1548,48 +1548,45 @@ export function finalize({
 		if (!(await claimFinalization(trx, tournamentId))) return false;
 
 		const skillTeamUsers: Array<{ skillId: number; userId: number }> = [];
-		for (const skill of summary.skills) {
+		if (summary.skills.length > 0) {
 			invariant(seasonValue !== null, "Season missing for skill");
-			// A skill row keys on either userId (solo) or identifier (team), never both. The
-			// matchesCount subquery filters by whichever is present so it hits exactly one index:
-			// `where "userId" = ? or "identifier" = ?` with a NULL parameter makes the planner
-			// (stat4, NULL ~900K rows for Skill.identifier) pick a pathological MULTI-INDEX OR plan.
-			const insertedSkill = await trx
-				.insertInto("Skill")
-				.values((eb) => ({
-					tournamentId,
-					mu: skill.mu,
-					sigma: skill.sigma,
-					ordinal: ordinal(skill),
-					userId: skill.userId,
-					identifier: skill.identifier,
-					matchesCount: eb(
-						eb.val(skill.matchesCount),
-						"+",
-						eb
-							.selectFrom("Skill")
-							.select((e2) =>
-								e2.fn
-									.coalesce(e2.fn.max("matchesCount"), e2.val(0))
-									.as("matchesCount"),
-							)
-							.$if(skill.userId !== null, (qb) =>
-								qb.where("userId", "=", skill.userId),
-							)
-							.$if(skill.identifier !== null, (qb) =>
-								qb.where("identifier", "=", skill.identifier),
-							)
-							.where("season", "=", seasonValue),
-					),
-					season: seasonValue,
-					createdAt: databaseTimestampNow(),
-				}))
-				.returningAll()
-				.executeTakeFirstOrThrow();
 
-			if (insertedSkill.identifier) {
-				for (const userId of identifierToUserIds(insertedSkill.identifier)) {
-					skillTeamUsers.push({ skillId: insertedSkill.id, userId });
+			const seasonMatchesCounts = await seasonMatchesCountsBySkillOwner(trx, {
+				skills: summary.skills,
+				season: seasonValue,
+			});
+			const createdAt = databaseTimestampNow();
+
+			for (const chunk of R.chunk(summary.skills, SUMMARY_INSERT_CHUNK_SIZE)) {
+				const insertedSkills = await trx
+					.insertInto("Skill")
+					.values(
+						chunk.map((skill) => ({
+							tournamentId,
+							mu: skill.mu,
+							sigma: skill.sigma,
+							ordinal: ordinal(skill),
+							userId: skill.userId,
+							identifier: skill.identifier,
+							matchesCount:
+								skill.matchesCount +
+								(skill.userId !== null
+									? (seasonMatchesCounts.byUserId.get(skill.userId) ?? 0)
+									: (seasonMatchesCounts.byIdentifier.get(skill.identifier!) ??
+										0)),
+							season: seasonValue,
+							createdAt,
+						})),
+					)
+					.returning(["id", "identifier"])
+					.execute();
+
+				for (const insertedSkill of insertedSkills) {
+					if (!insertedSkill.identifier) continue;
+
+					for (const userId of identifierToUserIds(insertedSkill.identifier)) {
+						skillTeamUsers.push({ skillId: insertedSkill.id, userId });
+					}
 				}
 			}
 		}
@@ -1764,6 +1761,50 @@ export function finalize({
  */
 export function finalizeWithoutSummary(tournamentId: number) {
 	return claimFinalization(db, tournamentId);
+}
+
+/**
+ * Highest matchesCount so far this season of each user and team the skills are for. Users and teams
+ * are queried separately so each hits its own index: an `or` over both makes the planner pick a
+ * pathological MULTI-INDEX OR plan (stat4, ~900K NULL rows for Skill.identifier).
+ */
+async function seasonMatchesCountsBySkillOwner(
+	trx: Transaction<DB>,
+	{ skills, season }: { skills: TournamentSummary["skills"]; season: number },
+) {
+	const byUserId = new Map<number, number>();
+	const byIdentifier = new Map<string, number>();
+
+	const userIds = skills.flatMap((skill) => skill.userId ?? []);
+	for (const chunk of R.chunk(userIds, SUMMARY_INSERT_CHUNK_SIZE)) {
+		const rows = await trx
+			.selectFrom("Skill")
+			.select(({ fn }) => ["userId", fn.max("matchesCount").as("matchesCount")])
+			.where("season", "=", season)
+			.where("userId", "in", chunk)
+			.groupBy("userId")
+			.execute();
+
+		for (const row of rows) byUserId.set(row.userId!, row.matchesCount);
+	}
+
+	const identifiers = skills.flatMap((skill) => skill.identifier ?? []);
+	for (const chunk of R.chunk(identifiers, SUMMARY_INSERT_CHUNK_SIZE)) {
+		const rows = await trx
+			.selectFrom("Skill")
+			.select(({ fn }) => [
+				"identifier",
+				fn.max("matchesCount").as("matchesCount"),
+			])
+			.where("season", "=", season)
+			.where("identifier", "in", chunk)
+			.groupBy("identifier")
+			.execute();
+
+		for (const row of rows) byIdentifier.set(row.identifier!, row.matchesCount);
+	}
+
+	return { byUserId, byIdentifier };
 }
 
 /**

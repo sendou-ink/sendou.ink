@@ -245,6 +245,55 @@ describe("TournamentRepository.finalize", () => {
 		expect(second.matchesCount).toBe(8);
 	});
 
+	test("team skill accumulates matchesCount within the season and links its members", async () => {
+		const teamSkill = (
+			matchesCount: number,
+		): TournamentSummary["skills"][number] => ({
+			userId: null,
+			identifier: "1-2-3-4",
+			mu: 25,
+			sigma: 8.333,
+			matchesCount,
+		});
+		const soloSkill: TournamentSummary["skills"][number] = {
+			userId: users.id(5),
+			identifier: null,
+			mu: 25,
+			sigma: 8.333,
+			matchesCount: 2,
+		};
+
+		const { id: firstTournamentId } = await createTournament();
+		await TournamentRepository.finalize({
+			tournamentId: firstTournamentId,
+			season: 1,
+			summary: emptySummary([teamSkill(5)]),
+		});
+
+		const { id: secondTournamentId } = await createTournament();
+		await TournamentRepository.finalize({
+			tournamentId: secondTournamentId,
+			season: 1,
+			summary: emptySummary([soloSkill, teamSkill(3)]),
+		});
+
+		const second = await db
+			.selectFrom("Skill")
+			.select(["id", "matchesCount"])
+			.where("identifier", "=", "1-2-3-4")
+			.where("tournamentId", "=", secondTournamentId)
+			.executeTakeFirstOrThrow();
+		const members = await db
+			.selectFrom("SkillTeamUser")
+			.select("userId")
+			.where("skillId", "=", second.id)
+			.orderBy("userId", "asc")
+			.execute();
+
+		expect(second.matchesCount).toBe(8);
+		expect(members.map((member) => member.userId)).toEqual([1, 2, 3, 4]);
+	});
+
 	test("a second finalize of the same tournament is a no-op", async () => {
 		const { id: tournamentId } = await createTournament();
 		const summary = emptySummary([
