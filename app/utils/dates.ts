@@ -102,21 +102,15 @@ export function dayMonthYearToDatabaseTimestamp(args: DayMonthYear) {
 export function weekNumberToDate({
 	week,
 	year,
-	position = "start",
 }: {
 	week: number;
 	year: number;
-	/** start = Date of Monday, end = Date of Sunday */
-	position?: "start" | "end";
 }) {
 	const result = new Date(Date.UTC(year, 0, 4));
 
 	result.setUTCDate(
 		result.getUTCDate() - (result.getUTCDay() || 7) + 1 + 7 * (week - 1),
 	);
-	if (position === "end") {
-		result.setUTCDate(result.getUTCDate() + 6);
-	}
 	return result;
 }
 

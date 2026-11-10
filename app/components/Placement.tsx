@@ -9,7 +9,6 @@ import {
 export type PlacementProps = {
 	placement: number;
 	iconClassName?: string;
-	textClassName?: string;
 	size?: number;
 	textOnly?: boolean;
 	/** Render plain text, no icon or wrapping html elements */
@@ -33,7 +32,6 @@ const getSpecialPlacementIconPath = (placement: number): string | null => {
 export function Placement({
 	placement,
 	iconClassName,
-	textClassName,
 	size = 20,
 	textOnly = false,
 	showAsSuperscript = true,
@@ -53,7 +51,7 @@ export function Placement({
 
 	if (!iconPath) {
 		return (
-			<span className={textClassName}>
+			<span>
 				{placement}
 				{isSuperscript ? <sup>{ordinalSuffixText}</sup> : ordinalSuffixText}
 			</span>

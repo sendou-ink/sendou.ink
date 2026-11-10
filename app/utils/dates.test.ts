@@ -17,13 +17,6 @@ describe("weekNumberToDate", () => {
 
 		expect(start.toISOString().slice(0, 10)).toBe("2024-01-01");
 	});
-
-	test("returns the Sunday of the ISO week regardless of server timezone", () => {
-		// ISO week 1 of 2024 ends on Sunday 2024-01-07
-		const end = weekNumberToDate({ week: 1, year: 2024, position: "end" });
-
-		expect(end.toISOString().slice(0, 10)).toBe("2024-01-07");
-	});
 });
 
 describe("weekNumberToDateRange", () => {

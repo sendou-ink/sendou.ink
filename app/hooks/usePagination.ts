@@ -43,9 +43,6 @@ export function usePagination<T>({
 		[pagesCount, scrollToTop],
 	);
 
-	const thereIsNextPage = currentPage < pagesCount;
-	const thereIsPreviousPage = currentPage > 1;
-
 	// an external list change can leave us on a page that no longer exists
 	if (itemsToDisplay.length === 0 && currentPage > 1) {
 		setCurrentPage(1);
@@ -58,8 +55,6 @@ export function usePagination<T>({
 		nextPage,
 		previousPage,
 		setPage,
-		thereIsNextPage,
-		thereIsPreviousPage,
 		everythingVisible: items.length === itemsToDisplay.length,
 	};
 }

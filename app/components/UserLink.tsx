@@ -19,13 +19,11 @@ type UnlinkedPlayer = { name: string | null } & {
 export function UserLink({
 	user,
 	size = "xxs",
-	direction = "horizontal",
 	className,
 	children,
 }: {
 	user: UserLinkUser | UnlinkedPlayer;
 	size?: React.ComponentProps<typeof Avatar>["size"];
-	direction?: "horizontal" | "vertical";
 	className?: string;
 	/** Replaces the plain username text (avatar is always rendered) */
 	children?: React.ReactNode;
@@ -39,9 +37,7 @@ export function UserLink({
 	return (
 		<Link
 			to={userPage(linkedUser)}
-			className={clsx(styles.userLink, className, {
-				[styles.vertical]: direction === "vertical",
-			})}
+			className={clsx(styles.userLink, className)}
 		>
 			<Avatar user={linkedUser} size={size} />
 			{children ?? linkedUser.username}

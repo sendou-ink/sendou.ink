@@ -5,7 +5,6 @@ import styles from "./Main.module.css";
 export function Main({
 	children,
 	className,
-	classNameOverwrite,
 	halfWidth,
 	bigger,
 	breakoutContainer,
@@ -14,7 +13,6 @@ export function Main({
 }: {
 	children: React.ReactNode;
 	className?: string;
-	classNameOverwrite?: string;
 	halfWidth?: boolean;
 	bigger?: boolean;
 	breakoutContainer?: boolean;
@@ -23,21 +21,15 @@ export function Main({
 }) {
 	return (
 		<main
-			className={
-				classNameOverwrite
-					? clsx(classNameOverwrite, {
-							[styles.narrow]: halfWidth,
-						})
-					: clsx(
-							styles.main,
-							styles.normal,
-							{
-								[styles.narrow]: halfWidth,
-								[styles.wide]: bigger,
-							},
-							className,
-						)
-			}
+			className={clsx(
+				styles.main,
+				styles.normal,
+				{
+					[styles.narrow]: halfWidth,
+					[styles.wide]: bigger,
+				},
+				className,
+			)}
 			data-main-breakout={breakoutContainer || undefined}
 			data-testid={testId}
 			style={style}
@@ -49,11 +41,7 @@ export function Main({
 
 export { styles as mainStyles };
 
-export const containerClassName = (width: "narrow" | "normal" | "wide") => {
-	if (width === "narrow") {
-		return styles.narrow;
-	}
-
+export const containerClassName = (width: "normal" | "wide") => {
 	if (width === "wide") {
 		return styles.wide;
 	}
