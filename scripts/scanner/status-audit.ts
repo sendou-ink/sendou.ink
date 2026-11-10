@@ -284,8 +284,10 @@ function parsePlayerStatusCell(cell: string): PlayerStatusData {
 		time: m === undefined ? null : parseClock(m, s!),
 		special: [a.special, b.special],
 		dead: [a.dead, b.dead],
-		// the CSV carries no camera-badge evidence
+		// the CSV carries no camera-badge evidence or ink
 		cast: null,
+		teamHue: [null, null],
+		teamInk: [null, null],
 	};
 }
 

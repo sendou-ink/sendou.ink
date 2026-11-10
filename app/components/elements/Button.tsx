@@ -13,6 +13,7 @@ type ButtonVariant =
 	| "outlined"
 	| "outlined-success"
 	| "outlined-destructive"
+	| "outlined-warning"
 	| "minimal"
 	| "minimal-success"
 	| "minimal-destructive"
@@ -173,6 +174,8 @@ function buttonClassName({
 				return styles.outlinedSuccess;
 			case "outlined-destructive":
 				return styles.outlinedDestructive;
+			case "outlined-warning":
+				return styles.outlinedWarning;
 			case "minimal":
 				return styles.minimal;
 			case "minimal-success":

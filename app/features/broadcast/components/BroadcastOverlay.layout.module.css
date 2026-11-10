@@ -1,0 +1,30 @@
+/* How the canvas and its scene layers are laid out and change, their look is in BroadcastOverlay.module.css. */
+.canvas {
+	position: relative;
+	width: 1920px;
+	height: 1080px;
+	overflow: hidden;
+}
+
+.scene {
+	position: absolute;
+	inset: 0;
+	/* the scenes' entrance animations add this to their delays */
+	--scene-enter-delay: 0ms;
+
+	/* waits for the stinger to reveal the scene, see Stinger.module.css for the phases */
+	&[data-entrance="stinger"] {
+		--scene-enter-delay: calc(
+			var(--bc-stinger-duration) *
+			(var(--bc-stinger-entrance-at) - var(--bc-stinger-covered-at))
+		);
+	}
+
+	&[data-transition="in"] {
+		animation: var(--bc-anim-fade-in) var(--bc-transition-duration) ease both;
+	}
+
+	&[data-transition="out"] {
+		animation: var(--bc-anim-fade-out) var(--bc-transition-duration) ease both;
+	}
+}

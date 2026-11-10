@@ -39,6 +39,8 @@ const config = {
 		"!scripts/living-docs/capture.ts!",
 		"!vite-css-plugins.ts!",
 		"!docs/site/src/plugins/**!",
+		// XXX: draft broadcast theme pasted into the designer by hand, remove once it moves to the theme docs
+		"!zine-theme.css",
 	],
 	compilers: {
 		css: (text: string, path: string) => {

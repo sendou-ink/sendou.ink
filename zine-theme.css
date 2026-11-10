@@ -1,0 +1,772 @@
+/** xxx: before merge tweak and to docs */
+
+@import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@500;700&display=swap");
+
+/* ZINE: cut-and-paste paper. Same markup, only CSS. */
+
+/* 1. tokens */
+[data-broadcast] {
+	--bc-bg: #f3ecdc;
+	--bc-surface: #fffdf7;
+	--bc-border: #141414;
+	--bc-text: #141414;
+	--bc-text-muted: #5e5747;
+	--bc-accent: #ff4f9a;
+	--bc-accent-text: #141414;
+	--bc-team-a: #ff7a1a;
+	--bc-team-a-text: #141414;
+	--bc-team-b: #2f5bff;
+	--bc-team-b-text: #fffdf7;
+	--bc-font-display: "Archivo Black", "Arial Black", sans-serif;
+	--bc-font-body: "Space Grotesk", sans-serif;
+	--bc-radius: 0;
+	--bc-radius-small: 0;
+	--bc-border-width: 5px;
+	--bc-ease: cubic-bezier(0.25, 0.8, 0.3, 1);
+	--bc-ease-in: cubic-bezier(0.5, 0, 0.9, 0.4);
+	--bc-stinger-ease: cubic-bezier(0.3, 0, 0.2, 1);
+	--bc-enter-duration: 550ms;
+	--bc-stagger: 110ms;
+	--bc-stinger-duration: 2600ms;
+
+	/* the stinger's panels use keyframes of this theme */
+	--bc-anim-panel-slide-in: zine-drop;
+	--bc-anim-panel-slide-out: zine-toss;
+
+	/* theme's own */
+	--zine-shadow: 8px 8px 0 var(--bc-border);
+	--zine-shadow-small: 5px 5px 0 var(--bc-border);
+}
+
+/* 2. keyframes: every element using them changes */
+
+/* stamped on instead of sliding */
+@keyframes bc-enter {
+	from {
+		opacity: 0;
+		transform: scale(1.7);
+	}
+	35% {
+		opacity: 1;
+	}
+	60% {
+		transform: scale(0.93);
+	}
+	80% {
+		transform: scale(1.03);
+	}
+}
+
+/* falls off the page */
+@keyframes bc-exit {
+	to {
+		opacity: 0;
+		transform: translateY(80px) rotate(12deg) scale(0.85);
+	}
+}
+
+/* typed out */
+@keyframes bc-reveal {
+	from {
+		clip-path: inset(-50px 100% -50px -50px);
+		animation-timing-function: steps(9, end);
+	}
+	to {
+		clip-path: inset(-50px -50px -50px -50px);
+	}
+}
+
+/* flips like a scoreboard card */
+@keyframes bc-count {
+	from {
+		opacity: 0;
+		transform: perspective(240px) rotateX(-110deg);
+	}
+}
+
+/* wobbles */
+@keyframes bc-pulse {
+	50% {
+		transform: scale(1.12) rotate(-4deg);
+	}
+}
+
+/* stinger: sheets of paper slapped on top of each other, then tossed down */
+@keyframes zine-drop {
+	from {
+		transform: translateY(-120%) rotate(-12deg);
+	}
+	72% {
+		transform: translateY(1.5%) rotate(var(--tilt));
+	}
+	to {
+		transform: translateY(0) rotate(var(--tilt));
+	}
+}
+
+@keyframes zine-toss {
+	from {
+		transform: rotate(var(--tilt));
+	}
+	to {
+		transform: translateY(125%) rotate(16deg);
+	}
+}
+
+/* 3. parts & states */
+
+/* paper everywhere */
+[data-part="backdrop"] {
+	background-color: var(--bc-bg);
+	background-image: radial-gradient(
+		rgb(20 20 20 / 0.12) 2px,
+		transparent 2.6px
+	);
+	background-size: 28px 28px;
+	box-shadow:
+		inset 0 0 0 18px var(--bc-border),
+		inset 0 0 0 30px var(--bc-accent);
+}
+
+/* ---------- GAME: scoreboard to the bottom left as one strip, info top right ---------- */
+[data-scene="game"] [data-part="scoreboard"] {
+	top: auto;
+	bottom: 34px;
+	left: 34px;
+	flex-direction: row;
+	flex-wrap: wrap-reverse;
+	align-items: flex-end;
+	gap: 0;
+	width: 900px;
+	min-width: 0;
+}
+
+[data-scene="game"] [data-part="team"] {
+	flex: 1 1 0;
+	min-width: 0;
+	height: 68px;
+	border: 5px solid var(--bc-border);
+	border-radius: 0;
+	background: var(--bc-surface);
+	box-shadow: var(--zine-shadow);
+	rotate: -1.2deg;
+
+	&[data-team="b"] {
+		flex-direction: row-reverse;
+		margin-left: -5px;
+		rotate: 1deg;
+	}
+
+	/* a bit of tape in the team's color */
+	&::before {
+		position: absolute;
+		top: -15px;
+		left: 42%;
+		z-index: 1;
+		width: 92px;
+		height: 26px;
+		background: var(--team-color);
+		opacity: 0.85;
+		rotate: -5deg;
+		content: "";
+	}
+}
+
+[data-scene="game"] [data-part="team-name"] {
+	max-width: none;
+	padding: 0 22px;
+	border-radius: 0;
+	background: none;
+	font-size: 30px;
+	font-weight: 400;
+	letter-spacing: 0.02em;
+
+	[data-team="b"] > & {
+		justify-content: flex-end;
+	}
+}
+
+[data-scene="game"] [data-part="team-score"] {
+	width: 76px;
+	border-left: 5px solid var(--bc-border);
+	border-radius: 0;
+	font-size: 46px;
+
+	[data-team="b"] > & {
+		border-left: 0;
+		border-right: 5px solid var(--bc-border);
+	}
+}
+
+[data-scene="game"] [data-part="match-point"] {
+	top: -24px;
+	left: 14px;
+	margin: 0;
+	border: 3px solid var(--bc-border);
+	border-radius: 0;
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+	font-family: var(--bc-font-display);
+	font-weight: 400;
+	rotate: -5deg;
+
+	[data-team="b"] > & {
+		left: auto;
+		right: 14px;
+		rotate: 5deg;
+	}
+}
+
+[data-scene="game"] [data-part="map-intro"] {
+	flex-basis: 100%;
+	height: 118px;
+	margin: 0 0 22px;
+	border: 5px solid var(--bc-border);
+	border-radius: 0;
+	box-shadow: var(--zine-shadow);
+	rotate: -0.6deg;
+}
+
+[data-scene="game"] [data-part="game-number"] {
+	align-self: flex-start;
+	padding: 2px 10px;
+	background: var(--bc-border);
+	color: var(--bc-bg);
+}
+
+[data-scene="game"] [data-part="stage"] {
+	font-family: var(--bc-font-display);
+	font-weight: 400;
+}
+
+[data-scene="game"] [data-part="info-bar"] {
+	top: 34px;
+	bottom: auto;
+	right: 34px;
+	gap: 14px;
+}
+
+[data-scene="game"] [data-part="info-row"] {
+	height: 54px;
+	overflow: visible;
+	border: 4px solid var(--bc-border);
+	border-radius: 0;
+	background: var(--bc-surface);
+	box-shadow: var(--zine-shadow-small);
+	rotate: 1deg;
+
+	& + & {
+		rotate: -1deg;
+	}
+}
+
+[data-scene="game"] :is([data-part="casters"], [data-part="round"]) {
+	background: none;
+	font-size: 22px;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+[data-scene="game"] :is([data-part="mic"], [data-part="tournament-logo"]) {
+	width: 54px;
+	height: auto;
+	border-left: 4px solid var(--bc-border);
+}
+
+/* ---------- HOLD (starting soon, break...): a centered poster ---------- */
+[data-part="backdrop"] + div:not([data-part]) {
+	inset: 0 0 230px;
+	align-items: center;
+	justify-content: center;
+	gap: 26px;
+	max-width: none;
+	text-align: center;
+}
+
+[data-part="backdrop"] + div:not([data-part]) [data-part="tournament-logo"] {
+	width: 150px;
+	height: 150px;
+	margin: 0;
+	border: 6px solid var(--bc-border);
+	box-shadow: var(--zine-shadow);
+	rotate: -5deg;
+}
+
+[data-part="backdrop"] + div:not([data-part]) [data-part="tournament-name"] {
+	padding: 4px 18px;
+	background: var(--bc-border);
+	color: var(--bc-bg);
+	font-family: var(--bc-font-body);
+	font-weight: 700;
+	text-transform: uppercase;
+	rotate: 1.5deg;
+}
+
+[data-part="backdrop"] + div:not([data-part]) [data-part="title"] {
+	padding: 18px 48px 10px;
+	border: 7px solid var(--bc-border);
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+	box-shadow: 16px 16px 0 var(--bc-border);
+	max-width: 1500px;
+	font-size: 110px;
+	font-weight: 400;
+	rotate: -2deg;
+
+	&::after {
+		display: none;
+	}
+}
+
+[data-part="backdrop"] + div:not([data-part]) [data-part="headline"] {
+	max-width: 1300px;
+	margin: 18px 0 0;
+	padding: 12px 30px;
+	border: 4px solid var(--bc-border);
+	background: var(--bc-surface);
+	box-shadow: var(--zine-shadow-small);
+	color: var(--bc-text);
+	font-family: var(--bc-font-body);
+	font-size: 36px;
+	font-weight: 700;
+	rotate: 1deg;
+}
+
+[data-part="backdrop"] + div:not([data-part]) + div {
+	right: 280px;
+	bottom: 90px;
+	left: 280px;
+}
+
+[data-part="matchup-label"] {
+	padding: 6px 20px;
+	background: var(--bc-border);
+	color: var(--bc-bg);
+	font-weight: 400;
+	rotate: -2deg;
+}
+
+/* ---------- the matchup, wherever it shows ---------- */
+[data-part="matchup"] [data-part="team"] {
+	height: 108px;
+	border: 5px solid var(--bc-border);
+	background: var(--team-color);
+	color: var(--team-color-text);
+	box-shadow: var(--zine-shadow);
+	rotate: -1.5deg;
+
+	&[data-team="b"] {
+		rotate: 1.5deg;
+	}
+}
+
+[data-part="matchup"] [data-part="team-name"] {
+	font-weight: 400;
+	text-transform: uppercase;
+}
+
+[data-part="matchup"] [data-part="team-logo"] {
+	border: 4px solid var(--bc-border);
+}
+
+[data-part="matchup"] [data-part="team-score"] {
+	border: 4px solid var(--bc-border);
+	background: var(--bc-surface);
+	color: var(--bc-text);
+	font-weight: 400;
+}
+
+/* the vs between the teams */
+[data-part="matchup"] > div > span {
+	display: grid;
+	place-items: center;
+	width: 86px;
+	height: 86px;
+	border-radius: 50%;
+	background: var(--bc-border);
+	color: var(--bc-bg);
+	font-family: var(--bc-font-display);
+	font-weight: 400;
+	z-index: 1;
+}
+
+[data-part="matchup"] [data-part="round"] {
+	align-self: center;
+	margin-top: 8px;
+	padding: 4px 16px;
+	border: 3px solid var(--bc-border);
+	background: var(--bc-surface);
+	color: var(--bc-text);
+	font-family: var(--bc-font-body);
+	font-weight: 700;
+}
+
+/* ---------- ROSTERS ---------- */
+[data-scene="rosters"] [data-part="header"] {
+	top: 54px;
+	right: auto;
+	left: 50%;
+	padding: 16px 40px 16px 16px;
+	border: 5px solid var(--bc-border);
+	background: var(--bc-surface);
+	box-shadow: var(--zine-shadow);
+	translate: -50% 0;
+	rotate: -1deg;
+}
+
+[data-scene="rosters"] [data-part="tournament-logo"] {
+	width: 96px;
+	height: 96px;
+	border: 4px solid var(--bc-border);
+}
+[data-scene="rosters"] [data-part="tournament-name"] {
+	font-weight: 400;
+}
+[data-scene="rosters"] [data-part="round"] {
+	font-family: var(--bc-font-body);
+	font-weight: 700;
+}
+
+[data-scene="rosters"] [data-part="set-length"] {
+	border: 3px solid var(--bc-border);
+	font-family: var(--bc-font-display);
+	rotate: 3deg;
+}
+
+[data-scene="rosters"] [data-part="versus"] {
+	top: 34px;
+	border-radius: 0;
+	background: var(--bc-border);
+	color: var(--bc-bg);
+	box-shadow: 8px 8px 0 var(--bc-accent);
+	font-weight: 400;
+	rotate: 8deg;
+}
+
+[data-scene="rosters"] [data-part="team"] {
+	padding-top: 24px;
+}
+
+[data-scene="rosters"] [data-part="team"] > div:first-child {
+	padding: 16px 24px;
+	border: 5px solid var(--bc-border);
+	background: var(--team-color);
+	color: var(--team-color-text);
+	box-shadow: var(--zine-shadow);
+	rotate: -1deg;
+
+	[data-team="b"] > & {
+		rotate: 1deg;
+	}
+}
+
+[data-scene="rosters"] [data-team="b"] [data-part="team-seed"] {
+	align-self: flex-end;
+}
+[data-scene="rosters"] [data-part="team-logo"] {
+	width: 110px;
+	border: 4px solid var(--bc-border);
+}
+[data-scene="rosters"] [data-part="team-name"] {
+	font-weight: 400;
+}
+
+[data-scene="rosters"] [data-part="team-seed"] {
+	align-self: flex-start;
+	background: var(--bc-border);
+	color: var(--bc-bg);
+	font-family: var(--bc-font-body);
+	font-weight: 700;
+}
+
+[data-scene="rosters"] [data-part="player"] {
+	border: 4px solid var(--bc-border);
+	box-shadow: var(--zine-shadow-small);
+	rotate: -0.5deg;
+
+	&:nth-child(even) {
+		rotate: 0.6deg;
+	}
+	&[data-active="false"] [data-part="player-name"] {
+		text-decoration: line-through 4px;
+	}
+}
+
+[data-scene="rosters"] [data-part="player-avatar"] {
+	border: 3px solid var(--bc-border);
+	border-radius: 0;
+}
+[data-scene="rosters"] [data-part="player-name"] {
+	font-family: var(--bc-font-body);
+	font-weight: 700;
+}
+
+[data-scene="rosters"] [data-part="player-sub"] {
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+	rotate: -4deg;
+}
+
+/* ---------- MAPS ---------- */
+[data-scene="maps"] [data-part="round"] {
+	padding: 4px 18px;
+	background: var(--bc-border);
+	color: var(--bc-bg);
+	font-family: var(--bc-font-body);
+	font-weight: 700;
+	rotate: -1.5deg;
+}
+
+[data-scene="maps"] [data-part="team-name"] {
+	font-weight: 400;
+}
+[data-scene="maps"] [data-part="team-logo"] {
+	border: 4px solid var(--bc-border);
+	box-shadow: var(--zine-shadow-small);
+}
+
+[data-scene="maps"] [data-part="score"] {
+	font-weight: 400;
+
+	& [data-team] {
+		border: 6px solid var(--bc-border);
+		box-shadow: var(--zine-shadow);
+		rotate: -3deg;
+	}
+
+	& [data-team="b"] {
+		rotate: 3deg;
+	}
+}
+
+[data-scene="maps"] [data-part="game"] {
+	border: 5px solid var(--bc-border);
+	box-shadow: var(--zine-shadow);
+	rotate: -1.2deg;
+
+	&:nth-child(even) {
+		rotate: 1.2deg;
+	}
+
+	&[data-status="current"] {
+		outline: 0;
+		box-shadow: 12px 12px 0 var(--bc-accent);
+		translate: 0 -18px;
+		rotate: 0deg;
+	}
+}
+
+[data-scene="maps"] [data-part="game-number"] {
+	background: var(--bc-border);
+	color: var(--bc-bg);
+	font-weight: 400;
+}
+
+[data-scene="maps"] [data-part="up-next"] {
+	border: 3px solid var(--bc-border);
+	font-family: var(--bc-font-display);
+	font-weight: 400;
+	rotate: 4deg;
+}
+
+[data-scene="maps"] [data-part="stage"] {
+	font-weight: 400;
+}
+[data-scene="maps"] [data-part="mode"] {
+	font-family: var(--bc-font-body);
+	font-weight: 700;
+}
+[data-scene="maps"] [data-part="winner"] {
+	border-top: 5px solid var(--bc-border);
+	font-family: var(--bc-font-body);
+}
+
+/* ---------- CASTERS ---------- */
+[data-scene="casters"] [data-part="title"] {
+	margin-top: 6px;
+	padding: 8px 28px 2px;
+	border: 5px solid var(--bc-border);
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+	box-shadow: var(--zine-shadow);
+	font-weight: 400;
+	rotate: -1.5deg;
+}
+
+[data-scene="casters"] [data-part="tournament-name"] {
+	font-family: var(--bc-font-body);
+	font-weight: 700;
+	color: var(--bc-text);
+}
+
+[data-scene="casters"] [data-part="camera"] {
+	outline-width: 8px;
+	box-shadow: 18px 18px 0 0 var(--bc-border);
+}
+
+[data-scene="casters"] [data-part="caster-name"] {
+	top: calc(100% - 10px);
+	padding: 8px 26px;
+	border: 5px solid var(--bc-border);
+	box-shadow: var(--zine-shadow-small);
+	font-family: var(--bc-font-body);
+	rotate: -2deg;
+}
+
+/* ---------- REPLAYS ---------- */
+[data-scene="replays"] [data-part="corner"] {
+	--size: 120px;
+	border-color: var(--bc-border);
+	filter: drop-shadow(5px 5px 0 var(--bc-accent));
+}
+
+[data-scene="replays"] [data-part="replay-bug"] {
+	border: 5px solid var(--bc-border);
+	box-shadow: var(--zine-shadow);
+	rotate: -2deg;
+}
+
+[data-scene="replays"] [data-part="replay-dot"] {
+	border: 3px solid var(--bc-border);
+	border-radius: 0;
+	rotate: 45deg;
+	background: var(--bc-accent);
+}
+[data-scene="replays"] [data-part="replay-label"] {
+	font-weight: 400;
+}
+[data-scene="replays"] [data-part="game"] {
+	font-family: var(--bc-font-body);
+	font-weight: 700;
+	color: var(--bc-text);
+}
+
+/* ---------- STINGER ---------- */
+[data-part="stinger-panel"] {
+	--tilt: -2deg;
+
+	inset: -12%;
+	height: auto;
+	border: 8px solid var(--bc-border);
+	background-color: var(--team-color, var(--bc-bg));
+	background-image: radial-gradient(
+		rgb(20 20 20 / 0.16) 3px,
+		transparent 3.6px
+	);
+	background-size: 30px 30px;
+	clip-path: none;
+	animation:
+		var(--bc-anim-panel-slide-in) calc(var(--d) * 0.24) var(--bc-stinger-ease)
+		calc(var(--d) * 0.025 * min(var(--i), 3)) both,
+		var(--bc-anim-panel-slide-out) calc(var(--d) * 0.26)
+		cubic-bezier(0.45, 0, 0.75, 0.55)
+		calc(var(--reveal-at) + var(--d) * 0.04 * min(var(--j), 3)) forwards;
+
+	&:nth-child(odd) {
+		--tilt: 2.5deg;
+	}
+}
+
+[data-part="stinger-card"] {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 26px;
+}
+
+[data-part="stinger-card"]
+	:is(
+		[data-part="stinger-tournament-logo"],
+		[data-part="stinger-team"],
+		[data-part="stinger-vs"]
+	) {
+	animation:
+		var(--bc-anim-enter) var(--content-in) var(--bc-ease)
+		calc(var(--content-at) + var(--k, 0) * var(--d) * 0.03) both,
+		var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
+		var(--content-out-at) forwards;
+}
+
+[data-part="stinger-tournament-logo"] {
+	display: none;
+}
+
+[data-part="stinger-card"]:not([data-has-teams])
+	[data-part="stinger-tournament-logo"] {
+	position: static;
+	display: block;
+	width: 150px;
+	height: 150px;
+	margin: 0;
+	border: 6px solid var(--bc-border);
+	box-shadow: var(--zine-shadow);
+	rotate: -5deg;
+}
+
+[data-part="stinger-teams"] {
+	display: flex;
+	align-items: center;
+	gap: 34px;
+	margin-top: 16px;
+}
+
+[data-part="stinger-team"] {
+	--k: 4;
+
+	position: static;
+	flex-direction: row;
+	gap: 18px;
+	width: auto;
+	padding: 14px 22px;
+	border: 6px solid var(--bc-border);
+	background: var(--team-color);
+	color: var(--team-color-text);
+	box-shadow: var(--zine-shadow);
+	rotate: -2deg;
+
+	&[data-team="b"] {
+		--k: 5;
+		flex-direction: row-reverse;
+		rotate: 2deg;
+	}
+}
+
+[data-part="stinger-team-logo"] {
+	width: 84px;
+	border: 4px solid var(--bc-border);
+}
+
+[data-part="stinger-team-name"] {
+	max-width: 520px;
+	font-size: 44px;
+	font-weight: 400;
+	text-transform: uppercase;
+}
+
+[data-part="stinger-team-score"] {
+	min-width: 70px;
+	padding: 0 14px;
+	border: 4px solid var(--bc-border);
+	background: var(--bc-surface);
+	color: var(--bc-text);
+	font-size: 50px;
+	font-weight: 400;
+	line-height: 1.2;
+}
+
+[data-part="stinger-vs"] {
+	--k: 4.5;
+
+	position: static;
+	width: 96px;
+	height: 96px;
+	margin: 0;
+	display: grid;
+	place-items: center;
+	border-radius: 50%;
+	background: var(--bc-border);
+	color: var(--bc-bg);
+	font-size: 38px;
+	font-weight: 400;
+}

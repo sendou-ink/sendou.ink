@@ -1,0 +1,327 @@
+.teamScene {
+	position: absolute;
+	inset: 0;
+}
+
+.header {
+	--bc-enter-y: calc(var(--bc-enter-distance) * -1);
+
+	position: absolute;
+	top: var(--team-scene-header-top);
+	right: var(--team-scene-inline-margin);
+	left: var(--team-scene-inline-margin);
+	display: flex;
+	align-items: center;
+	gap: 36px;
+	padding-bottom: 28px;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		var(--scene-enter-delay) both;
+}
+
+.logo {
+	flex-shrink: 0;
+	width: var(--team-scene-logo-size);
+}
+
+.identity {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 10px;
+	min-width: 0;
+}
+
+.eyebrow {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	min-width: 0;
+	white-space: nowrap;
+
+	& > :first-child {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+}
+
+.seed {
+	flex-shrink: 0;
+	padding: 2px 12px;
+}
+
+/* shrinks to fit (useFitText) */
+.name {
+	margin: 0;
+	/* descenders past the tight line height */
+	overflow: clip;
+	overflow-clip-margin: 0.25em;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.stats {
+	display: flex;
+	flex-shrink: 0;
+	gap: 20px;
+}
+
+.stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	min-width: 180px;
+	padding: 14px 24px;
+}
+
+.body {
+	position: absolute;
+	top: var(--team-scene-body-top);
+	right: var(--team-scene-inline-margin);
+	bottom: var(--team-scene-body-bottom);
+	left: var(--team-scene-inline-margin);
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 72px;
+}
+
+.column {
+	display: flex;
+	flex-direction: column;
+	gap: 28px;
+	min-width: 0;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	min-height: 0;
+}
+
+.sectionTitle {
+	margin: 0;
+	animation: var(--bc-anim-fade-in) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + var(--bc-stagger)) both;
+}
+
+/* the cards side by side */
+.players {
+	--bc-enter-y: var(--bc-enter-distance);
+
+	display: flex;
+	gap: 12px;
+	height: 268px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.player {
+	position: relative;
+	display: flex;
+	flex: 1 1 0;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+	padding: 22px 10px 12px;
+	overflow: hidden;
+	isolation: isolate;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + (var(--i) + 2) * var(--bc-stagger)) both;
+
+	/* the team's color shining down from the card's top edge, sweeping over the cards one after another */
+	&::before {
+		position: absolute;
+		z-index: -1;
+		top: 0;
+		right: -40%;
+		left: -40%;
+		height: 80%;
+		transform-origin: 50% 0;
+		animation: var(--bc-anim-glow) 8.5s ease-in-out calc(var(--i) * 0.85s)
+			infinite both;
+	}
+}
+
+.avatar {
+	flex-shrink: 0;
+	width: var(--team-scene-avatar-size);
+	height: var(--team-scene-avatar-size);
+}
+
+.playerName {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	max-width: 100%;
+}
+
+/* shrinks to fit (useFitText) */
+.playerNameText {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.weapons {
+	display: flex;
+	justify-content: center;
+	gap: 4px;
+	width: 100%;
+	min-height: 52px;
+	margin-top: auto;
+	padding: 4px;
+}
+
+.modes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	animation: var(--bc-anim-fade-in) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + 2 * var(--bc-stagger)) both;
+}
+
+.mode {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 18px 8px 12px;
+}
+
+.mapPool {
+	--bc-enter-y: var(--bc-enter-distance);
+
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 16px 14px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.map {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + (var(--i) + 3) * var(--bc-stagger) / 2) both;
+}
+
+.mapThumbnail {
+	position: relative;
+	overflow: hidden;
+}
+
+.mapImage {
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+}
+
+.mapMode {
+	position: absolute;
+	top: 6px;
+	left: 6px;
+	padding: 2px 8px;
+}
+
+.mapName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.empty {
+	margin: 0;
+}
+
+.sets {
+	--bc-enter-x: var(--bc-enter-distance);
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--team-scene-set-gap);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.set {
+	display: grid;
+	grid-template-columns: 112px minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 24px;
+	height: var(--team-scene-set-height);
+	padding-inline-end: 16px;
+	overflow: hidden;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + (var(--i) + 2) * var(--bc-stagger)) both;
+}
+
+.setScore {
+	display: grid;
+	place-items: center;
+	align-self: stretch;
+}
+
+.setInfo {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.setRound {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.setOpponent {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+}
+
+.opponentLogo {
+	flex-shrink: 0;
+	width: 36px;
+}
+
+.opponentSeed {
+	flex-shrink: 0;
+	padding: 1px 8px;
+}
+
+.opponentName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.setGames {
+	display: flex;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* a game won on a tile, a game lost faded out */
+.setGame {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+}

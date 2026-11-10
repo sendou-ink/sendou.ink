@@ -209,11 +209,53 @@ function Document({
 	const gameLanguage = rootData?.gameLanguage ?? DEFAULT_LANGUAGE;
 	const customThemeStyle = useCustomThemeVars();
 	const adsShown = useAdsShown(rootData?.user);
+	const isBare = useIsBareRoute();
 
 	useChangeLanguage({ locale, gameLanguage });
 	usePreloadTranslation();
 	useLoadingIndicator();
 	useTriggerToasts();
+
+	const preloadLinks = rootData?.i18nPreloadUrls?.map((url) => (
+		<link
+			key={url}
+			rel="preload"
+			as="fetch"
+			crossOrigin="anonymous"
+			href={url}
+		/>
+	));
+
+	if (isBare) {
+		return (
+			<html
+				lang={locale}
+				data-game-language={gameLanguage}
+				dir={i18n.dir()}
+				// matches the dashboard preview's iframe so its background stays transparent, "normal" would follow the embedding page's theme
+				style={{ colorScheme: "light" }}
+				suppressHydrationWarning
+			>
+				<head>
+					<meta charSet="utf-8" />
+					<meta name="viewport" content="width=device-width, initial-scale=1" />
+					<Meta />
+					<Links />
+					{preloadLinks}
+					<Fonts />
+				</head>
+				<body style={{ background: "transparent" }}>
+					{IS_E2E_TEST_RUN ? <HydrationTestIndicator /> : null}
+					<React.StrictMode>
+						<UserProvider user={rootData?.user}>
+							<SearchParamsProvider>{children}</SearchParamsProvider>
+						</UserProvider>
+					</React.StrictMode>
+					<Scripts />
+				</body>
+			</html>
+		);
+	}
 
 	const htmlStyle: Record<string, string | number> = {
 		...Object.fromEntries(customThemeStyle),
@@ -257,15 +299,7 @@ function Document({
 				<Meta />
 				<StylesheetPreloads />
 				<Links />
-				{rootData?.i18nPreloadUrls?.map((url) => (
-					<link
-						key={url}
-						rel="preload"
-						as="fetch"
-						crossOrigin="anonymous"
-						href={url}
-					/>
-				))}
+				{preloadLinks}
 				<ThemeHead />
 				{rootData?.devFaviconColors ? (
 					<DevFavicon colors={rootData.devFaviconColors} />
@@ -451,6 +485,14 @@ function useCustomThemeVars() {
 	}
 
 	return styles;
+}
+
+function useIsBareRoute() {
+	const matches = useMatches();
+
+	return matches.some(
+		(match) => (match.handle as SendouRouteHandle | undefined)?.bare,
+	);
 }
 
 export default function App() {

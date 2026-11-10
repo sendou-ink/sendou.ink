@@ -1,0 +1,65 @@
+.casters {
+	position: absolute;
+	inset: 0;
+}
+
+.backdrop {
+	position: absolute;
+	inset: 0;
+}
+
+.header {
+	--bc-enter-y: calc(var(--bc-enter-distance) * -1);
+
+	position: absolute;
+	top: var(--casters-header-top);
+	right: 0;
+	left: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		var(--scene-enter-delay) both;
+}
+
+.title {
+	margin: 0;
+}
+
+.frame {
+	--bc-enter-y: var(--bc-enter-distance);
+
+	position: absolute;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + (var(--i) + 1) * var(--bc-stagger)) both;
+}
+
+.name {
+	position: absolute;
+	top: calc(100% + 24px);
+	right: 0;
+	left: 0;
+	width: fit-content;
+	max-width: 100%;
+	margin-inline: auto;
+	padding: 10px 28px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.pronouns {
+	margin-inline-start: 14px;
+}
+
+.matchup {
+	--bc-enter-y: var(--bc-enter-distance);
+
+	position: absolute;
+	right: 220px;
+	bottom: var(--casters-matchup-bottom);
+	left: 220px;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + 4 * var(--bc-stagger)) both;
+}

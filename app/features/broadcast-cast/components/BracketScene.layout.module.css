@@ -1,0 +1,282 @@
+.bracket {
+	position: absolute;
+	inset: 0;
+}
+
+.header {
+	--bc-enter-y: calc(var(--bc-enter-distance) * -1);
+
+	display: flex;
+	/* as wide as the bracket, a long name doesn't widen it */
+	width: 0;
+	min-width: 100%;
+	align-items: center;
+	gap: 28px;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		var(--scene-enter-delay) both;
+}
+
+.tournamentLogo {
+	width: 96px;
+	height: 96px;
+}
+
+.headerText {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+
+.tournamentName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.bracketName {
+	margin: 0;
+	/* descenders past the tight line height */
+	overflow: clip;
+	overflow-clip-margin: 0.25em;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.groupName {
+	margin-inline-start: 0.5em;
+}
+
+/* the area the bracket is framed in (useCamera): the overview within the padding, zoomed in it bleeds to the edges */
+.stage {
+	position: absolute;
+	inset: 0;
+	padding: var(--bracket-padding);
+	overflow: hidden;
+}
+
+/* the header and the bracket, moving together */
+.camera {
+	--camera-hold: 3000ms;
+	--camera-duration: 1400ms;
+
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 40px;
+	width: max-content;
+	height: max-content;
+	transform: var(--camera-overview);
+	transform-origin: 0 0;
+	/* the overview held for a moment, then zoomed in on the featured match */
+	animation: var(--bc-anim-camera) var(--camera-duration)
+		cubic-bezier(0.65, 0, 0.35, 1)
+		calc(var(--scene-enter-delay) + var(--camera-hold)) both;
+}
+
+.sides {
+	display: flex;
+	flex-direction: column;
+	gap: 48px;
+}
+
+.side {
+	display: flex;
+	gap: var(--column-gap);
+}
+
+.round {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: var(--match-width);
+}
+
+.roundName {
+	overflow: hidden;
+	padding: 0 4px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.slots {
+	display: flex;
+	flex-direction: column;
+	height: calc(var(--slots) * var(--slot-height));
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* every slot of a round as tall, so a match sits halfway between the two it is fed by */
+.slot {
+	position: relative;
+	display: flex;
+	flex: 1;
+	align-items: center;
+
+	/* the line in from the previous round */
+	&[data-fed]::before {
+		position: absolute;
+		top: calc(50% - var(--line-width) / 2);
+		right: 100%;
+		width: calc(var(--column-gap) / 2);
+	}
+
+	/* the line out towards the next round, joining its pair halfway */
+	[data-connector] > .slots > &:not([data-bye])::after {
+		position: absolute;
+		top: calc(50% - var(--line-width) / 2);
+		left: 100%;
+		width: calc(var(--column-gap) / 2);
+	}
+
+	[data-connector="pairs"] > .slots > &:not([data-bye]):nth-child(odd)::after {
+		bottom: 0;
+	}
+
+	[data-connector="pairs"] > .slots > &:not([data-bye]):nth-child(even)::after {
+		top: 0;
+		bottom: calc(50% - var(--line-width) / 2);
+	}
+}
+
+.match {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	overflow: hidden;
+}
+
+/* the rest dim once the camera has settled, the featured match (and its teams' standings) standing out */
+.camera:has([data-featured]) :is(.match, .standing):not([data-featured]) {
+	animation: var(--bc-anim-dim) var(--bc-enter-duration) ease
+		calc(var(--scene-enter-delay) + var(--camera-hold) + var(--camera-duration))
+		both;
+}
+
+.team {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: var(--team-height);
+	padding-inline-start: 10px;
+
+	&[data-team] {
+		padding-inline-start: 16px;
+	}
+}
+
+.logo {
+	flex-shrink: 0;
+	width: 28px;
+}
+
+.seed {
+	min-width: 18px;
+}
+
+.name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.score {
+	display: grid;
+	place-items: center;
+	align-self: stretch;
+	width: 44px;
+}
+
+/* a round robin group: its standings next to its rounds */
+.group {
+	display: flex;
+	align-items: flex-start;
+	gap: 64px;
+}
+
+.standings {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: var(--bracket-standings-width);
+}
+
+.standingsHeader,
+.standing {
+	display: grid;
+	grid-template-columns: 40px 44px 28px minmax(0, 1fr) 80px 80px;
+	align-items: center;
+	column-gap: 12px;
+	padding-inline: 16px;
+}
+
+.standingsHeader {
+	white-space: nowrap;
+
+	& .standingSets {
+		grid-column: 5;
+	}
+}
+
+.standingsList {
+	--cut-fade: 96px;
+
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	list-style: none;
+}
+
+.standing {
+	position: relative;
+	height: var(--standing-height);
+}
+
+.standingLogo {
+	width: 44px;
+}
+
+.standingName {
+	grid-column: 4;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.groupRounds {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+.groupRound {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.groupMatches {
+	display: grid;
+	grid-auto-columns: var(--match-width);
+	grid-auto-flow: column;
+
+	/* a Swiss pool's matches wrap */
+	[data-pools] & {
+		grid-template-columns: repeat(var(--columns), var(--match-width));
+		grid-auto-flow: row;
+	}
+
+	gap: 24px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}

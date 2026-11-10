@@ -28,6 +28,7 @@ export function featureOf(
 		case "TOURNAMENT_TEAM":
 			return room.isLookingForMembers ? "LFG" : "TOURNAMENTS";
 		case "SCRIM":
+		case "TOURNAMENT_BROADCAST":
 			return null;
 	}
 }

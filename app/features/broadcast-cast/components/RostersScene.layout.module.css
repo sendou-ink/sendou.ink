@@ -1,0 +1,173 @@
+.rosters {
+	position: absolute;
+	inset: 0;
+}
+
+.header {
+	--bc-enter-y: calc(var(--bc-enter-distance) * -1);
+
+	position: absolute;
+	top: var(--rosters-header-top);
+	right: 0;
+	left: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 28px;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		var(--scene-enter-delay) both;
+}
+
+.tournamentLogo {
+	width: var(--rosters-logo-size);
+	height: var(--rosters-logo-size);
+}
+
+.headerText {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+	max-width: 1400px;
+}
+
+.tournamentName {
+	/* descenders past the tight line height */
+	overflow: clip;
+	overflow-clip-margin: 0.25em;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.teams {
+	position: absolute;
+	top: var(--rosters-teams-top);
+	right: var(--rosters-inline-margin);
+	bottom: 56px;
+	left: var(--rosters-inline-margin);
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--rosters-teams-gap);
+}
+
+.versus {
+	position: absolute;
+	top: calc(
+		var(--rosters-team-logo-size) +
+		var(--team-header-padding) +
+		var(--team-header-border) /
+		2 -
+		var(--rosters-versus-size) /
+		2
+	);
+	left: 50%;
+	display: grid;
+	place-items: center;
+	width: var(--rosters-versus-size);
+	height: var(--rosters-versus-size);
+	margin-left: calc(var(--rosters-versus-size) / -2);
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + 3 * var(--bc-stagger)) both;
+}
+
+.team {
+	--bc-enter-x: calc(var(--bc-enter-distance) * -1);
+
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+	min-width: 0;
+
+	&[data-team="b"] {
+		--bc-enter-x: var(--bc-enter-distance);
+	}
+}
+
+.teamHeader {
+	display: flex;
+	align-items: center;
+	gap: 28px;
+	padding-bottom: var(--team-header-padding);
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + var(--bc-stagger)) both;
+
+	[data-team="b"] > & {
+		flex-direction: row-reverse;
+	}
+}
+
+.teamLogo {
+	width: var(--rosters-team-logo-size);
+}
+
+.teamTitle {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	min-width: 0;
+
+	[data-team="b"] & {
+		align-items: flex-end;
+	}
+}
+
+.teamName {
+	max-width: 100%;
+	margin: 0;
+	/* descenders past the tight line height */
+	overflow: clip;
+	overflow-clip-margin: 0.25em;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.seed {
+	padding: 2px 12px;
+}
+
+.players {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.player {
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	height: var(--rosters-player-height);
+	padding: 0 24px;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + (var(--i) + 2) * var(--bc-stagger)) both;
+
+	[data-team="b"] & {
+		flex-direction: row-reverse;
+	}
+}
+
+.avatar {
+	flex-shrink: 0;
+	width: calc(var(--rosters-player-height) - 28px);
+	height: calc(var(--rosters-player-height) - 28px);
+}
+
+.playerName {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.weapons {
+	display: flex;
+	gap: 10px;
+
+	[data-team="b"] & {
+		flex-direction: row-reverse;
+	}
+}

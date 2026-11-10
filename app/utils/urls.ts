@@ -489,6 +489,8 @@ export const modeImageUrl = (mode: ModeShortWithSpecial) =>
 	`${STATIC_ASSETS_URL}/img/modes/${mode}`;
 export const stageImageUrl = (stageId: StageId) =>
 	`${STATIC_ASSETS_URL}/img/stages/${stageId}`;
+export const stageVideoUrl = (stageId: StageId) =>
+	`${STATIC_ASSETS_URL}/videos/stages/${stageId}.mp4`;
 export const stageBannerImageUrl = (stageId: StageId) =>
 	`${STATIC_ASSETS_URL}/img/stage-banners/${stageId}.avif`;
 export const tierImageUrl = (tier: TierName | "CALCULATING") =>

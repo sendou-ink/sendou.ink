@@ -175,6 +175,14 @@ export interface Fixtures {
 	feedCommentItemIds: string[] | null;
 	/** Posts with the most reactions. Null until users have reacted. */
 	feedReactionItemIds: string[] | null;
+	/** Newest overlay broadcast and the chat rooms of the newest broadcasts. */
+	broadcast: {
+		tournamentId: number;
+		channel: Pick<Tables["TournamentBroadcast"], "platform" | "account">;
+		chatRoomIds: number[];
+	} | null;
+	/** Matches of the tournament with the most matches. */
+	manyTournamentMatchIds: number[] | null;
 }
 
 /**
@@ -277,6 +285,8 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		siteTotalCounts: await resolveSiteTotalCounts(),
 		feedCommentItemIds: await resolveFeedCommentItemIds(),
 		feedReactionItemIds: await resolveFeedReactionItemIds(),
+		broadcast: await resolveBroadcast(),
+		manyTournamentMatchIds: await resolveManyTournamentMatchIds(),
 	};
 
 	const nullFixtures = Object.entries(fixtures)
@@ -1818,4 +1828,42 @@ async function resolveFeedReactionItemIds() {
 		.execute();
 
 	return rows.length > 0 ? rows.map((row) => row.itemId) : null;
+}
+
+async function resolveBroadcast() {
+	const rows = await db
+		.selectFrom("TournamentBroadcast")
+		.select(["tournamentId", "platform", "account", "chatRoomId"])
+		.orderBy("id", "desc")
+		.limit(25)
+		.execute();
+	const [newest] = rows;
+	if (!newest) return null;
+
+	return {
+		tournamentId: newest.tournamentId,
+		channel: { platform: newest.platform, account: newest.account },
+		chatRoomIds: rows
+			.map((row) => row.chatRoomId)
+			.filter((id) => typeof id === "number"),
+	};
+}
+
+async function resolveManyTournamentMatchIds() {
+	const tournamentId = await resolveHeaviestBracketTournamentId();
+	if (tournamentId === null) return null;
+
+	const rows = await db
+		.selectFrom("TournamentMatch")
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentMatch.stageId",
+		)
+		.select("TournamentMatch.id")
+		.where("TournamentStage.tournamentId", "=", tournamentId)
+		.limit(64)
+		.execute();
+
+	return rows.length > 0 ? rows.map((row) => row.id) : null;
 }

@@ -59,6 +59,8 @@ const schema = v.pipe(
 		DAILY_API_KEY: v.optional(v.string()),
 		DAILY_DOMAIN: v.optional(v.string()),
 		DAILY_WEBHOOK_SECRET: v.optional(v.string()),
+
+		BROADCAST_ORG_IDS: v.optional(v.string(), isProd ? "" : "*"),
 	}),
 	superRefine((val, ctx) => {
 		requireTogether(ctx, val, "TWITCH_CLIENT_ID", "TWITCH_CLIENT_SECRET");
@@ -126,7 +128,19 @@ export const ServerConfig = {
 		domain: values.DAILY_DOMAIN,
 		webhookSecret: values.DAILY_WEBHOOK_SECRET,
 	},
+
+	/** Organizations whose tournaments can use broadcast overlays, `"*"` for every tournament. */
+	broadcastOrgIds: parseOrgIds(values.BROADCAST_ORG_IDS),
 };
+
+function parseOrgIds(value: string): number[] | "*" {
+	if (value.trim() === "*") return "*";
+
+	return value
+		.split(",")
+		.map((part) => Number(part.trim()))
+		.filter((id) => Number.isInteger(id) && id > 0);
+}
 
 /** Adds a validation issue unless `a` and `b` are both set or both unset. */
 function requireTogether(

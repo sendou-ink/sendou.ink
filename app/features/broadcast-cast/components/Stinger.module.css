@@ -1,0 +1,178 @@
+/* Sizes and spots of the stinger transition, the rules below follow them. */
+:global([data-broadcast]) {
+	--stinger-team-logo-size: 260px;
+	--stinger-team-name-size: 68px;
+	--stinger-score-size: 150px;
+	--stinger-versus-size: 180px;
+	--stinger-versus-text-size: 72px;
+	--stinger-title-logo-size: 360px;
+	--stinger-title-size: 76px;
+	--stinger-header-bottom: 72px;
+	--stinger-tournament-name-size: 52px;
+	--stinger-header-logo-size: 104px;
+}
+
+/*
+ * The panels, then the card. Phases, as fractions of --bc-stinger-duration: 0–0.30 the panels cover the screen,
+ * --bc-stinger-covered-at (0.32) the scene changes underneath, the card shows from --content-at to 0.67,
+ * --bc-stinger-reveal-at (0.66) to 1 the panels reveal the new scene, whose entrance starts at
+ * --bc-stinger-entrance-at (0.8) once they have cleared most of the screen.
+ * The default design: the teams clash from both sides on two of the panels.
+ */
+.stinger {
+	font-family: var(--bc-font-display);
+}
+
+@keyframes :global(bc-stinger-clock) {
+	from {
+		visibility: visible;
+	}
+
+	to {
+		visibility: visible;
+	}
+}
+
+/* panels, the two team colored ones meeting at a slanted seam */
+
+.panel {
+	background: var(--team-color, var(--bc-bg));
+
+	.stinger:not([data-has-match]) & {
+		--team-color: var(--bc-bg);
+	}
+
+	.stinger:not([data-has-match]) &[data-index="1"] {
+		--team-color: var(--bc-surface);
+	}
+
+	/* an accent stripe on the seam */
+	.stinger:not([data-has-match]) &[data-index="2"] {
+		--team-color: var(--bc-accent);
+	}
+}
+
+/* A panel sliding in from --from, e.g. -100% for the left. --panel-shape transforms it on the way (skew...). */
+@keyframes :global(bc-panel-slide-in) {
+	from {
+		transform: translateX(var(--from)) var(--panel-shape, scale(1));
+	}
+
+	to {
+		transform: translateX(0) var(--panel-shape, scale(1));
+	}
+}
+
+/* A panel sliding out to --to, back where it came from by default. */
+@keyframes :global(bc-panel-slide-out) {
+	to {
+		transform: translateX(var(--to, var(--from))) var(--panel-shape, scale(1));
+	}
+}
+
+/* A panel opening from the center like a camera iris. */
+@keyframes :global(bc-panel-iris-in) {
+	from {
+		clip-path: circle(0% at 50% 50%);
+	}
+
+	to {
+		clip-path: circle(75% at 50% 50%);
+	}
+}
+
+@keyframes :global(bc-panel-iris-out) {
+	to {
+		clip-path: circle(0% at 50% 50%);
+	}
+}
+
+/* card: the teams on their own halves, the tournament on the header */
+
+.card {
+	text-align: center;
+}
+
+.team {
+	color: var(--team-color-text);
+}
+
+.teamLogo {
+	/* a monogram on its own team's color would only be the letter */
+	background: color-mix(in oklch, var(--team-color) 70%, black);
+	box-shadow: 0 0 0 10px
+		color-mix(in oklch, var(--team-color-text) 22%, transparent);
+}
+
+.teamName {
+	font-size: var(--stinger-team-name-size);
+	font-weight: var(--bc-weight-bold);
+	text-transform: uppercase;
+}
+
+.teamScore {
+	font-size: var(--stinger-score-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 0.9;
+}
+
+/* on the seam of the panels, which crosses the middle of the screen */
+.versus {
+	border-radius: 50%;
+	background: var(--bc-bg);
+	color: var(--bc-text);
+	font-size: var(--stinger-versus-text-size);
+	font-weight: var(--bc-weight-bold);
+}
+
+.titleCardLogo {
+	border-radius: 50%;
+	object-fit: cover;
+	box-shadow:
+		0 0 0 var(--bc-border-width) var(--bc-border),
+		0 32px 96px rgb(0 0 0 / 0.5);
+}
+
+.titleCardName {
+	color: var(--bc-text);
+	font-size: var(--stinger-title-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 1.1;
+	text-shadow: 0 4px 24px rgb(0 0 0 / 0.6);
+}
+
+/* the tournament at the bottom, going into the game with the round */
+.header {
+	--logo-inset: 18px;
+	--logo-edge: calc(var(--logo-inset) + var(--bc-border-width));
+	border: var(--bc-border-width) solid var(--bc-border);
+	/* concentric with the round logo */
+	border-radius: calc(var(--stinger-header-logo-size) / 2 + var(--logo-edge));
+	background: var(--bc-bg);
+	color: var(--bc-text);
+	text-align: left;
+}
+
+.headerLogo {
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.tournamentName {
+	font-size: var(--stinger-tournament-name-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 1.05;
+}
+
+.round {
+	color: var(--bc-text-muted);
+	font-size: 28px;
+	font-weight: var(--bc-weight-semibold);
+}
+
+.setLength {
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+	font-size: 22px;
+}

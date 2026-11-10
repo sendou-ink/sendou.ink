@@ -1,6 +1,7 @@
 import analyzer from "../../../locales/en/analyzer.json";
 import art from "../../../locales/en/art.json";
 import badges from "../../../locales/en/badges.json";
+import broadcast from "../../../locales/en/broadcast.json";
 import builds from "../../../locales/en/builds.json";
 import calendar from "../../../locales/en/calendar.json";
 import common from "../../../locales/en/common.json";
@@ -32,6 +33,7 @@ export const resources = {
 		analyzer,
 		art,
 		badges,
+		broadcast,
 		builds,
 		calendar,
 		common,

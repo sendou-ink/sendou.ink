@@ -1,0 +1,252 @@
+/* Sizes and spots of the bracket scene, the rules below follow them. */
+:global([data-broadcast]) {
+	--bracket-padding: 48px 80px;
+	--bracket-eyebrow-size: 28px;
+	--bracket-title-size: 56px;
+	--bracket-match-width: 300px;
+	--bracket-team-height: 42px;
+	--bracket-slot-height: 112px;
+	--bracket-column-gap: 64px;
+	--bracket-line-width: 3px;
+	--bracket-standing-height: 64px;
+	--bracket-standings-width: 620px;
+	--bracket-team-name-size: 21px;
+	--bracket-score-size: 22px;
+	--bracket-standing-name-size: 26px;
+}
+
+.bracket {
+	font-family: var(--bc-font-display);
+}
+
+.tournamentLogo {
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.tournamentName {
+	color: var(--bc-text-muted);
+	font-size: var(--bracket-eyebrow-size);
+	font-weight: var(--bc-weight-semibold);
+}
+
+.bracketName {
+	font-size: var(--bracket-title-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 1.05;
+	text-transform: uppercase;
+}
+
+.groupName {
+	color: var(--bc-accent);
+}
+
+.sides {
+	--match-width: var(--bracket-match-width);
+	--team-height: var(--bracket-team-height);
+	--slot-height: var(--bracket-slot-height);
+	--column-gap: var(--bracket-column-gap);
+	--line-width: var(--bracket-line-width);
+	--line: var(--line-width) solid var(--bc-border);
+}
+
+.roundName {
+	font-size: 20px;
+	font-weight: var(--bc-weight-bold);
+	text-align: center;
+	text-transform: uppercase;
+}
+
+/* every slot of a round as tall, so a match sits halfway between the two it is fed by */
+.slot {
+	/* the line in from the previous round */
+	&[data-fed]::before {
+		border-top: var(--line);
+		content: "";
+	}
+
+	/* the line out towards the next round, joining its pair halfway */
+	[data-connector] > .slots > &:not([data-bye])::after {
+		border-top: var(--line);
+		content: "";
+	}
+
+	[data-connector="pairs"] > .slots > &:not([data-bye]):nth-child(odd)::after {
+		border-right: var(--line);
+	}
+
+	[data-connector="pairs"] > .slots > &:not([data-bye]):nth-child(even)::after {
+		border-top: none;
+		border-right: var(--line);
+		border-bottom: var(--line);
+	}
+}
+
+.match {
+	border: var(--bc-border-width) solid var(--bc-border);
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-surface);
+
+	&[data-status="waiting"] {
+		opacity: 0.7;
+	}
+}
+
+.team {
+	& + & {
+		border-top: var(--bc-border-width) solid var(--bc-border);
+	}
+
+	&[data-team] {
+		box-shadow: inset 6px 0 0 var(--team-color);
+	}
+
+	&[data-result="win"] {
+		font-weight: var(--bc-weight-bold);
+
+		& .score {
+			background: var(--bc-accent);
+			color: var(--bc-accent-text);
+		}
+	}
+
+	&[data-result="loss"] {
+		& .logo,
+		& .seed,
+		& .name {
+			opacity: 0.45;
+		}
+	}
+
+	&[data-tbd] .name {
+		color: var(--bc-text-muted);
+	}
+}
+
+.seed {
+	color: var(--bc-text-muted);
+	font-size: 15px;
+	font-weight: var(--bc-weight-semibold);
+	text-align: center;
+}
+
+.name {
+	font-size: var(--bracket-team-name-size);
+	font-weight: var(--bc-weight-semibold);
+}
+
+.score {
+	background: var(--bc-surface-high);
+	font-size: var(--bracket-score-size);
+	font-weight: var(--bc-weight-bold);
+}
+
+/* a round robin group: its standings next to its rounds */
+.group {
+	--match-width: var(--bracket-match-width);
+	--team-height: var(--bracket-team-height);
+	--standing-height: var(--bracket-standing-height);
+}
+
+.standingsHeader {
+	color: var(--bc-text-muted);
+	font-size: 18px;
+	font-weight: var(--bc-weight-bold);
+	text-transform: uppercase;
+}
+
+.standingsList {
+	border: var(--bc-border-width) solid var(--bc-border);
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-surface);
+
+	/* the standings go on past the rows shown */
+	&[data-cut-above] {
+		border-top-color: transparent;
+		mask-image: linear-gradient(to bottom, transparent, black var(--cut-fade));
+	}
+
+	&[data-cut-below] {
+		border-bottom-color: transparent;
+		mask-image: linear-gradient(to top, transparent, black var(--cut-fade));
+	}
+
+	&[data-cut-above][data-cut-below] {
+		mask-image: linear-gradient(
+			to bottom,
+			transparent,
+			black var(--cut-fade),
+			black calc(100% - var(--cut-fade)),
+			transparent
+		);
+	}
+}
+
+.standing {
+	& + & {
+		border-top: var(--bc-border-width) solid var(--bc-border);
+	}
+
+	&[data-team] {
+		box-shadow: inset 8px 0 0 var(--team-color);
+	}
+
+	& .seed {
+		font-size: 18px;
+	}
+}
+
+.placement {
+	color: var(--bc-text-muted);
+	font-size: 28px;
+	font-weight: var(--bc-weight-bold);
+	text-align: center;
+}
+
+.standingName {
+	font-size: var(--bracket-standing-name-size);
+	font-weight: var(--bc-weight-semibold);
+}
+
+.standingSets,
+.standingMaps {
+	font-size: 26px;
+	font-weight: var(--bc-weight-bold);
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+.standingMaps {
+	color: var(--bc-text-muted);
+	font-weight: var(--bc-weight-semibold);
+}
+
+.groupRound {
+	& .roundName {
+		text-align: start;
+	}
+}
+
+.swissRoundName {
+	font-size: 26px;
+	font-weight: var(--bc-weight-bold);
+	text-transform: uppercase;
+}
+
+/* The bracket's camera moving from the overview to the featured match (or staying put when it reads fine). */
+@keyframes :global(bc-camera) {
+	from {
+		transform: var(--camera-overview);
+	}
+
+	to {
+		transform: var(--camera-zoom);
+	}
+}
+
+/* Everything but what is in focus fading back, e.g. the bracket's other matches. */
+@keyframes :global(bc-dim) {
+	to {
+		opacity: 0.35;
+	}
+}

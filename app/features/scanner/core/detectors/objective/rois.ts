@@ -216,6 +216,10 @@ export const STATUS_TEAM_HUE_ROIS: readonly [Roi, Roi] = [
 	{ x: 1050, y: 45, w: 370, h: 41 },
 ];
 
+/** Reported team hue: refined over the ink this close to the modal bin's center, from at least this many samples. */
+export const STATUS_TEAM_HUE_REFINE_DIST = 15;
+export const STATUS_TEAM_HUE_MIN_SAMPLES = 200;
+
 /**
  * Slot state off the apex fractions. Over every fixture slot: alive apexes
  * read ink >=0.43 vs <=0.19 otherwise; ready read pale >=0.6 at grey <=0.14,
