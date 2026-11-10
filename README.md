@@ -145,8 +145,7 @@ For developers reading the [Architecture](https://docs.sendou.ink/dev/architectu
 ## Tech stack
 
 - **Language**: TypeScript
-- **Frameworks**: Node.js, React, Remix
-- **UI Library**: React Aria Components
+- **Frameworks**: Node.js, React, React Router
 - **Database**: SQLite3 (via Kysely)
 - **Styling**: CSS Modules
 - **Validation**: Valibot

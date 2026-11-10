@@ -8,7 +8,7 @@ description: Run, debug, and manage Playwright e2e tests. Use when running e2e t
 ## Architecture overview
 
 - Tests live in `e2e/*.spec.ts`, config in `playwright.config.ts`
-- Page objects live in `e2e/pages/<feature>/` — every spec uses them; conventions in `docs/dev/e2e-page-objects.md`, gotchas in `docs/dev/e2e-page-objects-migration.md`
+- Page objects live in `e2e/pages/<feature>/` — every spec uses them. One class per page (e.g. `e2e/pages/builds/builds-page.ts`): a `goto()` wrapping `navigate()`, locator methods, and action methods named after what the user does (with JSDoc, they become the living docs' step names, see `docs/site/src/content/docs/dev/living-docs.mdx`)
 - Global setup (`e2e/global-setup.ts`) builds the app (skipped when no build input changed since the last e2e build — tracked via `.e2e-build-marker`), creates/migrates per-worker databases (via `scripts/ensure-test-db.ts`: pending migrations are applied, drifted databases are rebuilt), and starts one server per worker
 - Port calculation: `E2E_BASE_PORT = PORT (from .env) + 500`. Worker N uses port base+N, except ports on the WHATWG fetch bad port list (e.g. 6679) are skipped — see `e2eWorkerPort` in `e2e/helpers/playwright.ts`
 - Worker count: `E2E_WORKERS` env, defaulting to `min(8, max(4, cores - 2))`
@@ -51,7 +51,7 @@ pnpm run test:e2e:flaky-detect
 ```bash
 E2E_FORCE_BUILD=true pnpm run test:e2e
 ```
-Global setup reuses the previous build when nothing under `app/`, `public/`, the lockfile, or the vite/react-router configs changed. Use this override if you suspect a stale build (e.g. after changing env-dependent build behavior).
+Global setup reuses the previous build when nothing under `app/`, `public/`, `package.json`, the lockfile or `vite.config.ts` changed. Use this override if you suspect a stale build (e.g. after changing env-dependent build behavior).
 
 ## Debugging failures
 
@@ -83,7 +83,7 @@ pnpm exec playwright show-trace test-results/<test-folder>/trace.zip
 When a failure needs full DOM snapshots to understand, re-run just that test with `--trace retain-on-failure` (the CLI flag records complete traces).
 
 ### Re-render races
-Live events run on an in-process event bus per worker server (SSE, see `app/features/events`), so cross-worker crosstalk cannot cause flakes. Google Fonts are also blocked (DNS level, `--host-resolver-rules` in `playwright.config.ts`) so font swaps never reflow the page mid-test. Re-renders from the test's own action revalidations can still swallow a React Aria press (press start registers, press end never fires — no POST); `waitForPOSTResponse` retries for this, so route flows through it rather than adding sleeps.
+Live events run on an in-process event bus per worker server (SSE, see `app/features/events`), so cross-worker crosstalk cannot cause flakes. Google Fonts are also blocked (DNS level, `--host-resolver-rules` in `playwright.config.ts`) so font swaps never reflow the page mid-test.
 
 Other known sources, each handled once in the helpers or page objects:
 - YouTube is stubbed (a fake `window.YT` init script, its hosts cut off at DNS): the real player loads from the internet at its own pace and, arriving mid-test, closed an open select on the VoD form
@@ -116,7 +116,7 @@ test.describe("Feature", () => {
 
 Key rules:
 - The database starts each test holding only the admin and N-ZAP; the `factories` worker fixture (see `e2e/helpers/factories.ts` for the registry) creates everything else
-- Locators live in page objects under `e2e/pages/` — specs contain no raw `getByTestId`/`getByRole` calls; see `docs/dev/e2e-page-objects.md`
+- Locators live in page objects under `e2e/pages/` — specs contain no raw `getByTestId`/`getByRole` calls
 - Use `navigate()` instead of `page.goto()` — it waits for hydration (page objects' `goto()` methods wrap it)
 - Use `submit()` instead of clicking submit buttons directly — it waits for the POST response
 - Use `impersonate(page, userId?)` to authenticate. Default is admin (ADMIN_ID); prefer N-ZAP (`NZAP_TEST_ID`) when the flow doesn't need admin rights
