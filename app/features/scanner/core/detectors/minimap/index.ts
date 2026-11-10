@@ -20,6 +20,7 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { toAbilityWithUnknown, toMainWeaponId } from "../../../scanner-types";
 import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import {
 	copyRoi,
@@ -207,21 +208,50 @@ function minTopCorner(gray: Mat, hsv: Mat, roi: Roi): CornerProbe {
 
 function onLightSurface(corner: CornerProbe): boolean {
 	return (
-		corner.mean >= SPECIAL_READY_MIN_CORNER_MEAN &&
-		corner.brighterMean <= SPECIAL_READY_MAX_CORNER_MEAN &&
-		corner.saturation <= SPECIAL_READY_MAX_CORNER_SATURATION
+		Decisions.atLeast(
+			"minimap:SPECIAL_READY_MIN_CORNER_MEAN",
+			corner.mean,
+			SPECIAL_READY_MIN_CORNER_MEAN,
+		) &&
+		Decisions.atMost(
+			"minimap:SPECIAL_READY_MAX_CORNER_MEAN",
+			corner.brighterMean,
+			SPECIAL_READY_MAX_CORNER_MEAN,
+		) &&
+		Decisions.atMost(
+			"minimap:SPECIAL_READY_MAX_CORNER_SATURATION",
+			corner.saturation,
+			SPECIAL_READY_MAX_CORNER_SATURATION,
+		)
 	);
 }
 
 /** the cross probe's saturated strokes are crisp enough to be the X, not scene bleed */
 function crossedOut(crossFraction: number, crossLap: number): boolean {
-	if (crossFraction < CROSS_MIN_FRACTION) return false;
-	return (
-		crossLap >=
-		(crossFraction > CROSS_BLEED_MIN_FRACTION
-			? CROSS_BLEED_MIN_LAPLACIAN
-			: CROSS_MIN_LAPLACIAN)
-	);
+	if (
+		Decisions.below(
+			"minimap:CROSS_MIN_FRACTION",
+			crossFraction,
+			CROSS_MIN_FRACTION,
+		)
+	) {
+		return false;
+	}
+	return Decisions.above(
+		"minimap:CROSS_BLEED_MIN_FRACTION",
+		crossFraction,
+		CROSS_BLEED_MIN_FRACTION,
+	)
+		? Decisions.atLeast(
+				"minimap:CROSS_BLEED_MIN_LAPLACIAN",
+				crossLap,
+				CROSS_BLEED_MIN_LAPLACIAN,
+			)
+		: Decisions.atLeast(
+				"minimap:CROSS_MIN_LAPLACIAN",
+				crossLap,
+				CROSS_MIN_LAPLACIAN,
+			);
 }
 
 function medianBrightness(gray: Mat): number {
@@ -293,11 +323,27 @@ export function createMinimapDetector(
 	): GateResult {
 		let darkOk = 0;
 		for (const roi of darkProbes) {
-			if (meanBrightness(gray, roi) <= GATE_DARK_MAX_MEAN) darkOk++;
+			if (
+				Decisions.atMost(
+					"minimap:GATE_DARK_MAX_MEAN#probe",
+					meanBrightness(gray, roi),
+					GATE_DARK_MAX_MEAN,
+				)
+			) {
+				darkOk++;
+			}
 		}
 		let brightOk = 0;
 		for (const roi of brightProbes) {
-			if (maxBrightness(gray, roi) >= GATE_BRIGHT_MIN_MAX) brightOk++;
+			if (
+				Decisions.atLeast(
+					"minimap:GATE_BRIGHT_MIN_MAX",
+					maxBrightness(gray, roi),
+					GATE_BRIGHT_MIN_MAX,
+				)
+			) {
+				brightOk++;
+			}
 		}
 		return {
 			pass: darkOk === darkProbes.length && brightOk === brightProbes.length,
@@ -311,8 +357,12 @@ export function createMinimapDetector(
 	 * pill in the corner does, when the rest of the disc and ring hold.
 	 */
 	function overlayGate(gray: Mat): GateResult {
-		const isDark = (roi: Roi) =>
-			meanBrightness(gray, roi) <= GATE_DARK_MAX_MEAN;
+		const isDark = (site: "closeRing" | "closeTop", roi: Roi) =>
+			Decisions.atMost(
+				`minimap:GATE_DARK_MAX_MEAN#${site}`,
+				meanBrightness(gray, roi),
+				GATE_DARK_MAX_MEAN,
+			);
 		const [topGap, ...otherGaps] = GATE_CLOSE_X_DARK;
 		const [topRing, ...otherRing] = GATE_CLOSE_DARK_PROBES;
 		const chrome = probeGate(
@@ -320,15 +370,21 @@ export function createMinimapDetector(
 			[...GATE_CLOSE_X_DARK, ...GATE_SPAWN_DARK_PROBES],
 			[...GATE_CLOSE_X_BRIGHT, GATE_SPAWN_BRIGHT],
 		);
-		const darkRing = GATE_CLOSE_DARK_PROBES.filter(isDark).length;
+		const darkRing = GATE_CLOSE_DARK_PROBES.filter((roi) =>
+			isDark("closeRing", roi),
+		).length;
 		const score = (chrome.score + darkRing / GATE_CLOSE_DARK_PROBES.length) / 2;
-		if (!isDark(topGap!) && !isDark(topRing!)) {
+		if (!isDark("closeTop", topGap!) && !isDark("closeTop", topRing!)) {
 			const uncovered = probeGate(
 				gray,
 				[...otherGaps, ...GATE_SPAWN_DARK_PROBES],
 				[...GATE_CLOSE_X_BRIGHT, GATE_SPAWN_BRIGHT],
 			);
-			return { pass: uncovered.pass && otherRing.every(isDark), score };
+			return {
+				pass:
+					uncovered.pass && otherRing.every((roi) => isDark("closeRing", roi)),
+				score,
+			};
 		}
 		return {
 			pass:
@@ -392,7 +448,11 @@ export function createMinimapDetector(
 		return matches.map((match) => {
 			debugRow.push(match);
 			confidences.push(Math.max(0, match.score));
-			return match.score >= ABILITY_MIN_SCORE
+			return Decisions.atLeast(
+				"minimap:ABILITY_MIN_SCORE",
+				match.score,
+				ABILITY_MIN_SCORE,
+			)
 				? toAbilityWithUnknown(match.id)
 				: null;
 		});
@@ -432,7 +492,12 @@ export function createMinimapDetector(
 				cardWeapons
 					? matchWeaponSteps(crop, cardWeapons, { inkThreshold: darkThreshold })
 					: done(null),
-				lightWeapons && cornerMin >= WEAPON_BLEED_MIN_CORNER_MEAN
+				lightWeapons &&
+				Decisions.atLeast(
+					"minimap:WEAPON_BLEED_MIN_CORNER_MEAN",
+					cornerMin,
+					WEAPON_BLEED_MIN_CORNER_MEAN,
+				)
 					? matchWeaponSteps(crop, lightWeapons, {
 							inkThreshold: SPECIAL_READY_INK_THRESHOLD,
 						})
@@ -451,9 +516,24 @@ export function createMinimapDetector(
 		return disambiguateWeaponBySub(match, sub);
 	}
 
+	function reachesWeaponFloor(score: number, floor: number): boolean {
+		return Decisions.atLeast(
+			floor === WEAPON_MIN_SCORE
+				? "minimap:WEAPON_MIN_SCORE"
+				: "minimap:SPECIAL_READY_WEAPON_MIN_SCORE",
+			score,
+			floor,
+		);
+	}
+
 	/** The score floor for the surface the weapon was matched over. */
 	function weaponScoreFloor(lightSurface: boolean, cornerMin: number): number {
-		return lightSurface || cornerMin >= WEAPON_BLEED_MIN_CORNER_MEAN
+		return lightSurface ||
+			Decisions.atLeast(
+				"minimap:WEAPON_BLEED_MIN_CORNER_MEAN",
+				cornerMin,
+				WEAPON_BLEED_MIN_CORNER_MEAN,
+			)
 			? SPECIAL_READY_WEAPON_MIN_SCORE
 			: WEAPON_MIN_SCORE;
 	}
@@ -531,7 +611,13 @@ export function createMinimapDetector(
 			[0, 1, 2, 3].map((row) => {
 				const layout = spectatorCardLayout(row, dx);
 				const presence = meanBrightness(lap, layout.name);
-				if (presence < PRESENCE_MIN_LAPLACIAN) {
+				if (
+					Decisions.below(
+						"minimap:PRESENCE_MIN_LAPLACIAN#spectator",
+						presence,
+						PRESENCE_MIN_LAPLACIAN,
+					)
+				) {
 					return { dx, row, layout, presence, probes: null };
 				}
 				const crossFraction = saturatedFraction(hsv, layout.cross);
@@ -630,7 +716,10 @@ export function createMinimapDetector(
 			});
 
 			const floor = weaponScoreFloor(lightSurface, cornerMin);
-			const matched = weapon !== null && weapon.score >= floor ? weapon : null;
+			const matched =
+				weapon !== null && reachesWeaponFloor(weapon.score, floor)
+					? weapon
+					: null;
 			if (!matched) weaponUnread = true;
 			const fields = {
 				name,
@@ -710,7 +799,13 @@ export function createMinimapDetector(
 		const cards = CARD_LAYOUTS.map((layout) => {
 			// presence: the card is crisp UI, an absent card shows blurred scene
 			const presence = meanBrightness(lap, layout.name);
-			if (presence < PRESENCE_MIN_LAPLACIAN) {
+			if (
+				Decisions.below(
+					"minimap:PRESENCE_MIN_LAPLACIAN#card",
+					presence,
+					PRESENCE_MIN_LAPLACIAN,
+				)
+			) {
 				return { layout, presence, probes: null };
 			}
 			const crossFraction = saturatedFraction(hsv, layout.cross);
@@ -727,7 +822,13 @@ export function createMinimapDetector(
 		const rows = ENEMY_ROW_CYS.map((cy) => {
 			const weaponRoi = enemyWeaponRoi(cy);
 			const presence = meanBrightness(lap, weaponRoi);
-			if (presence < PRESENCE_MIN_LAPLACIAN) {
+			if (
+				Decisions.below(
+					"minimap:PRESENCE_MIN_LAPLACIAN#enemyRow",
+					presence,
+					PRESENCE_MIN_LAPLACIAN,
+				)
+			) {
 				return { cy, weaponRoi, presence, probes: null };
 			}
 			const crossFraction = saturatedFraction(hsv, enemyCrossRoi(cy));
@@ -844,7 +945,10 @@ export function createMinimapDetector(
 			});
 
 			const floor = weaponScoreFloor(lightSurface, cornerMin);
-			const matched = weapon !== null && weapon.score >= floor ? weapon : null;
+			const matched =
+				weapon !== null && reachesWeaponFloor(weapon.score, floor)
+					? weapon
+					: null;
 			// an occluding cross-out is itself proof the card is drawn
 			const hasEvidence =
 				occluded ||
@@ -896,7 +1000,10 @@ export function createMinimapDetector(
 			});
 
 			const floor = weaponScoreFloor(lightSurface, cornerMin);
-			const matched = weapon !== null && weapon.score >= floor ? weapon : null;
+			const matched =
+				weapon !== null && reachesWeaponFloor(weapon.score, floor)
+					? weapon
+					: null;
 			sideSubTiles[1].push(enemySubTileRoi(cy));
 			enemies.push({
 				name: null,

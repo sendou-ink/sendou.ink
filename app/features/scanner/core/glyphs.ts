@@ -12,6 +12,7 @@
  * are re-classified merged and kept only when the merge decisively wins.
  */
 import { getCV, type Mat } from "./cv";
+import * as Decisions from "./decisions";
 import type { FrameData } from "./image";
 import { all, type MatchSteps } from "./match-steps";
 
@@ -298,7 +299,9 @@ function splitWideSegment(
 			best = i;
 		}
 	}
-	if (best < 0 || bestRatio > 0.45) return [seg];
+	if (best < 0 || Decisions.above("glyphs:splitDipMaxRatio", bestRatio, 0.45)) {
+		return [seg];
+	}
 	// The dip is often a plateau of equally-low columns whose ink ownership
 	// is ambiguous; cut at whichever edge leaves the left part closest to a
 	// whole glyph width.
@@ -560,12 +563,24 @@ function* classifySegment(
 		const fixture = candidates.find(
 			(c) =>
 				c.source === "fixture" &&
-				top.score - c.score < FIXTURE_TIEBREAK &&
+				Decisions.below(
+					"glyphs:FIXTURE_TIEBREAK#score",
+					top.score - c.score,
+					FIXTURE_TIEBREAK,
+				) &&
 				// ...only when the fixture's raw correlation is also competitive: a fixture
 				// crop of a *different* char landing near the top via the ink penalty must
 				// not displace a well-matching font glyph
-				top.ncc - c.ncc < FIXTURE_TIEBREAK &&
-				top.inkCoverage - c.inkCoverage < FIXTURE_TIEBREAK_MAX_INK_GAP,
+				Decisions.below(
+					"glyphs:FIXTURE_TIEBREAK#ncc",
+					top.ncc - c.ncc,
+					FIXTURE_TIEBREAK,
+				) &&
+				Decisions.below(
+					"glyphs:FIXTURE_TIEBREAK_MAX_INK_GAP",
+					top.inkCoverage - c.inkCoverage,
+					FIXTURE_TIEBREAK_MAX_INK_GAP,
+				),
 		);
 		if (fixture && fixture !== top) {
 			candidates.splice(candidates.indexOf(fixture), 1);
@@ -815,7 +830,11 @@ function* mergeSplitGlyphs(
 	const baseline = bottoms[Math.floor(bottoms.length / 2)] ?? 0;
 	const strayMark = ({ seg, ranked }: ClassifiedSegment) =>
 		RAISED_MARKS.has(ranked[0]?.char ?? "") &&
-		baseline - seg.y1 <= RAISED_MARK_BASELINE_SLACK_PX;
+		Decisions.atMost(
+			"glyphs:RAISED_MARK_BASELINE_SLACK_PX",
+			baseline - seg.y1,
+			RAISED_MARK_BASELINE_SLACK_PX,
+		);
 	const mergeCandidate = (i: number) => {
 		const a = items[i]!;
 		const b = items[i + 1]!;
@@ -829,7 +848,13 @@ function* mergeSplitGlyphs(
 		let floor = fragmentBest + MERGE_MARGIN;
 		if (strayMark(a) || strayMark(b)) {
 			floor = Math.min(floor, MERGE_STRONG_READ);
-		} else if (Math.min(aScore, bScore) < MERGE_WEAK_FRAGMENT) {
+		} else if (
+			Decisions.below(
+				"glyphs:MERGE_WEAK_FRAGMENT",
+				Math.min(aScore, bScore),
+				MERGE_WEAK_FRAGMENT,
+			)
+		) {
 			floor = Math.min(
 				floor,
 				Math.max(MERGE_STRONG_READ, fragmentBest - MERGE_WEAK_SLACK),
@@ -867,7 +892,7 @@ function* mergeSplitGlyphs(
 			// full run (rare): the winning merge's ranked list must also carry
 			// the sub-floor runner-up candidates downstream consumers see
 			const ranked = yield* classify(ctx, seg, undefined, maxCandidates);
-			if ((ranked[0]?.score ?? 0) > floor) {
+			if (Decisions.above("glyphs:mergeFloor", ranked[0]?.score ?? 0, floor)) {
 				// stay at i: the merged segment may absorb yet another stroke
 				items.splice(i, 2, { seg, ranked });
 				merged = true;
@@ -1069,7 +1094,16 @@ function* recutMiscutPairs(
 		const b = items[i + 1]!;
 		const aScore = a.ranked[0]?.score ?? 0;
 		const bScore = b.ranked[0]?.score ?? 0;
-		if (aScore >= RECUT_MAX_SCORE || bScore >= RECUT_MAX_SCORE) return null;
+		if (
+			Decisions.atLeast(
+				"glyphs:RECUT_MAX_SCORE#pair",
+				aScore,
+				RECUT_MAX_SCORE,
+			) ||
+			Decisions.atLeast("glyphs:RECUT_MAX_SCORE#pair", bScore, RECUT_MAX_SCORE)
+		) {
+			return null;
+		}
 		if (b.seg.x0 - a.seg.x1 > maxGap) return null;
 		const floor = Math.max(
 			RECUT_MIN_SCORE,
@@ -1120,7 +1154,18 @@ function* splitFusedGlyphs(
 	const minWidth = ctx.set.medianWidth * FUSED_MIN_WIDTH_RATIO;
 	const fused = (item: ClassifiedSegment) => {
 		const score = item.ranked[0]?.score ?? 0;
-		if (score >= RECUT_MAX_SCORE || item.seg.x1 - item.seg.x0 < minWidth)
+		if (
+			Decisions.atLeast(
+				"glyphs:RECUT_MAX_SCORE#fused",
+				score,
+				RECUT_MAX_SCORE,
+			) ||
+			Decisions.below(
+				"glyphs:FUSED_MIN_WIDTH_RATIO",
+				item.seg.x1 - item.seg.x0,
+				minWidth,
+			)
+		)
 			return null;
 		const floor = Math.max(RECUT_MIN_SCORE, score + RECUT_MARGIN);
 		const cuts = deepestDipCuts(
@@ -1190,7 +1235,10 @@ function* resegmentWeakRuns(
 			end++;
 		}
 		const weakest = Math.min(...items.slice(start, end).map(score));
-		if (end - start >= 2 && weakest < RECUT_MAX_SCORE) {
+		if (
+			end - start >= 2 &&
+			Decisions.below("glyphs:RECUT_MAX_SCORE#run", weakest, RECUT_MAX_SCORE)
+		) {
 			runs.push({
 				start,
 				end,
@@ -1281,7 +1329,8 @@ function* bestSegmentation(
 		for (const [i, { to, seg }] of viable.entries()) {
 			const ranked = reads[i]!;
 			const pieceScore = ranked[0]?.score ?? 0;
-			if (pieceScore <= floor) continue;
+			if (Decisions.atMost("glyphs:resegmentFloor", pieceScore, floor))
+				continue;
 			const weakest = Math.min(head.weakest, pieceScore);
 			const total = head.total + pieceScore;
 			const current = best[to];

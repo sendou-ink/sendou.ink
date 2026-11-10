@@ -3,6 +3,7 @@
  * grayscale binarization threshold, so it runs on the green channel.
  */
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import {
 	type GlyphSet,
 	type RecognizedText,
@@ -29,7 +30,14 @@ function resolveQsByDescent(raw: RecognizedText): string {
 	const baseline = anchors[Math.floor(anchors.length / 2)]!;
 	return raw.chars
 		.map((c) =>
-			Q_TWINS.has(c.char) && c.y1 - baseline >= Q_DESCENT_MIN_PX ? "Q" : c.char,
+			Q_TWINS.has(c.char) &&
+			Decisions.atLeast(
+				"scoreboard-battle-log-replay/code:Q_DESCENT_MIN_PX",
+				c.y1 - baseline,
+				Q_DESCENT_MIN_PX,
+			)
+				? "Q"
+				: c.char,
 		)
 		.join("");
 }
@@ -51,7 +59,15 @@ function resolveUsByTopRightInk(
 	const chars = raw.chars.map((c) => {
 		if (c.char !== "L") return c;
 		const u = c.candidates?.find((k) => k.char === "U");
-		if (!u || c.score - u.score > LU_SCORE_MARGIN) return c;
+		if (
+			!u ||
+			Decisions.above(
+				"scoreboard-battle-log-replay/code:LU_SCORE_MARGIN",
+				c.score - u.score,
+				LU_SCORE_MARGIN,
+			)
+		)
+			return c;
 		const xMid = Math.ceil((c.x0 + c.x1) / 2);
 		const yMid = Math.floor((c.y0 + c.y1) / 2);
 		let ink = 0;
@@ -62,7 +78,12 @@ function resolveUsByTopRightInk(
 				if (data[y * cols + x]! > LU_INK_THRESHOLD) ink++;
 			}
 		}
-		return total > 0 && ink / total >= LU_TOP_RIGHT_MIN_FRACTION
+		return total > 0 &&
+			Decisions.atLeast(
+				"scoreboard-battle-log-replay/code:LU_TOP_RIGHT_MIN_FRACTION",
+				ink / total,
+				LU_TOP_RIGHT_MIN_FRACTION,
+			)
 			? { ...c, char: "U" }
 			: c;
 	});

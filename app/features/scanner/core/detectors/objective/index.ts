@@ -15,6 +15,7 @@
  * counter (`TIMER_VARIANT`): a readable timer alone emits the strip reads.
  */
 import { type Mat, minMaxLoc } from "../../cv";
+import * as Decisions from "../../decisions";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
 	copyRoi,
@@ -208,14 +209,22 @@ export function createObjectiveDetector(
 	}
 
 	function plateProbeOk(gray: Mat, roi: Roi): boolean {
-		return meanStd(gray, roi).std <= GATE_PLATE_MAX_STD;
+		return Decisions.atMost(
+			"objective:GATE_PLATE_MAX_STD",
+			meanStd(gray, roi).std,
+			GATE_PLATE_MAX_STD,
+		);
 	}
 
 	function scoreInkOk(frame: Mat, roi: Roi): boolean {
 		const band = maxChannel(frame, roi);
 		const { maxVal } = minMaxLoc(band);
 		band.delete();
-		return maxVal >= GATE_SCORE_MIN_MAX_BRIGHTNESS;
+		return Decisions.atLeast(
+			"objective:GATE_SCORE_MIN_MAX_BRIGHTNESS",
+			maxVal,
+			GATE_SCORE_MIN_MAX_BRIGHTNESS,
+		);
 	}
 
 	/** The timer box, then the track's dot comb (TC/RM), the SZ/CB plates or neither (TW). */
@@ -223,7 +232,14 @@ export function createObjectiveDetector(
 		const gray = frameGray(frame);
 		const timerChecks = timerBoxChecks(gray);
 		const timerBox = timerChecks.every(Boolean);
-		if (timerBox && trackComb(frame) >= GATE_TRACK_MIN_COMB) {
+		if (
+			timerBox &&
+			Decisions.atLeast(
+				"objective:GATE_TRACK_MIN_COMB",
+				trackComb(frame),
+				GATE_TRACK_MIN_COMB,
+			)
+		) {
 			return { pass: true, score: 1, variant: TRACK_VARIANT };
 		}
 		const checks = [
@@ -312,7 +328,18 @@ export function createObjectiveDetector(
 		if (!penaltySet) return null;
 		const pillLikeProbes = PENALTY_PROBE_ROIS[side].filter((roi) => {
 			const { mean, std } = meanStd(gray, roi);
-			return mean <= PENALTY_PROBE_MAX_MEAN && std <= PENALTY_PROBE_MAX_STD;
+			return (
+				Decisions.atMost(
+					"objective:PENALTY_PROBE_MAX_MEAN",
+					mean,
+					PENALTY_PROBE_MAX_MEAN,
+				) &&
+				Decisions.atMost(
+					"objective:PENALTY_PROBE_MAX_STD",
+					std,
+					PENALTY_PROBE_MAX_STD,
+				)
+			);
 		}).length;
 		if (pillLikeProbes === 0) return null;
 		const band = minChannel(frame, PENALTY_ROIS[side]);
@@ -330,7 +357,11 @@ export function createObjectiveDetector(
 		const read = trailingDigitRun(raw, penaltySet);
 		if (
 			pillLikeProbes < PENALTY_PROBE_ROIS[side].length &&
-			read.confidence < PENALTY_SINGLE_PROBE_MIN_CONF
+			Decisions.below(
+				"objective:PENALTY_SINGLE_PROBE_MIN_CONF",
+				read.confidence,
+				PENALTY_SINGLE_PROBE_MIN_CONF,
+			)
 		) {
 			return null;
 		}
@@ -446,7 +477,11 @@ export function createObjectiveDetector(
 				penalty,
 				control:
 					score.value !== null &&
-					fill.saturation >= CONTROL_PLATE_MIN_SATURATION,
+					Decisions.atLeast(
+						"objective:CONTROL_PLATE_MIN_SATURATION",
+						fill.saturation,
+						CONTROL_PLATE_MIN_SATURATION,
+					),
 				fill,
 				// both ROIs together always cover whichever carries the team color
 				teamColor: meanInkColor(frame, [

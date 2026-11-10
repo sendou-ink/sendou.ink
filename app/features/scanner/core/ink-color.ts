@@ -5,6 +5,7 @@
  * signal where screen position is not one (casts reorder HUD sides).
  */
 import type { Mat } from "./cv";
+import * as Decisions from "./decisions";
 import { copyRoi, type Roi } from "./image";
 
 export interface InkRgb {
@@ -50,7 +51,9 @@ export function meanInkColor(
 		}
 		crop.delete();
 	}
-	if (count < MIN_INK_PIXELS) return null;
+	if (Decisions.below("ink-color:MIN_INK_PIXELS#mean", count, MIN_INK_PIXELS)) {
+		return null;
+	}
 	return {
 		r: Math.round(r / count),
 		g: Math.round(g / count),
@@ -88,7 +91,15 @@ export function dominantInkColor(
 		}
 		crop.delete();
 	}
-	if (pixels.length < MIN_INK_PIXELS) return null;
+	if (
+		Decisions.below(
+			"ink-color:MIN_INK_PIXELS#dominant",
+			pixels.length,
+			MIN_INK_PIXELS,
+		)
+	) {
+		return null;
+	}
 
 	const bins = new Array<number>(360 / HUE_BIN_DEGREES).fill(0);
 	for (const { hue } of pixels) {
@@ -110,7 +121,15 @@ export function dominantInkColor(
 	const near = pixels.filter(
 		(pixel) => hueDistance(pixel.hue, modeHue) <= DOMINANT_HUE_TOLERANCE,
 	);
-	if (near.length < MIN_INK_PIXELS) return null;
+	if (
+		Decisions.below(
+			"ink-color:MIN_INK_PIXELS#nearModeHue",
+			near.length,
+			MIN_INK_PIXELS,
+		)
+	) {
+		return null;
+	}
 	return {
 		r: Math.round(near.reduce((sum, p) => sum + p.r, 0) / near.length),
 		g: Math.round(near.reduce((sum, p) => sum + p.g, 0) / near.length),

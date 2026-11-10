@@ -5,6 +5,7 @@
  * coarse-to-fine (quarter-res ranking, shortlist re-matched at full res).
  */
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import type { FrameData } from "../../image";
 import type { MatchSteps } from "../../match-steps";
 
@@ -353,7 +354,14 @@ export function* matchWeaponSteps(
 	const unscopedId = SCOPED_TWINS.get(first.id);
 	if (unscopedId) {
 		const twin = ranked.find((r) => r.id === unscopedId);
-		if (twin && first.score - twin.score < TWIN_MARGIN) {
+		if (
+			twin &&
+			Decisions.below(
+				"scoreboard/weapons:TWIN_MARGIN",
+				first.score - twin.score,
+				TWIN_MARGIN,
+			)
+		) {
 			twinAmbiguous = true;
 			first = twin;
 			const i = top.findIndex((t) => t.id === twin.id);

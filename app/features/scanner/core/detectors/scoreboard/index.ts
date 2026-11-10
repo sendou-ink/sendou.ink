@@ -9,6 +9,7 @@ import type {
 } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
 import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import {
 	copyRoi,
@@ -202,14 +203,33 @@ export function createScoreboardDetector(
 		let darkOk = 0;
 		let suffixOk = 0;
 		for (const cy of ROW_CENTERS) {
-			if (meanBrightness(frame, gateDarkProbe(cy)) < GATE_DARK_MAX_MEAN)
+			if (
+				Decisions.below(
+					"scoreboard:GATE_DARK_MAX_MEAN",
+					meanBrightness(frame, gateDarkProbe(cy)),
+					GATE_DARK_MAX_MEAN,
+				)
+			)
 				darkOk++;
-			if (maxBrightness(gray, paintSuffixRoi(cy)) > GATE_TEXT_MIN_MAX)
+			if (
+				Decisions.above(
+					"scoreboard:GATE_TEXT_MIN_MAX",
+					maxBrightness(gray, paintSuffixRoi(cy)),
+					GATE_TEXT_MIN_MAX,
+				)
+			)
 				suffixOk++;
 		}
 		let panelOk = 0;
 		for (const roi of GATE_PANEL_PROBES) {
-			if (meanBrightness(frame, roi) < GATE_PANEL_MAX_MEAN) panelOk++;
+			if (
+				Decisions.below(
+					"scoreboard:GATE_PANEL_MAX_MEAN",
+					meanBrightness(frame, roi),
+					GATE_PANEL_MAX_MEAN,
+				)
+			)
+				panelOk++;
 		}
 
 		const score =
@@ -372,9 +392,21 @@ function isNoContest(rgb: Mat): boolean {
 		const count = pixels.length / channels;
 		const meanValue = valueSum / count;
 		return (
-			ink / count <= NO_CONTEST_MAX_INK_SHARE &&
-			meanValue >= NO_CONTEST_GREY_VALUE_RANGE[0] &&
-			meanValue <= NO_CONTEST_GREY_VALUE_RANGE[1]
+			Decisions.atMost(
+				"scoreboard:NO_CONTEST_MAX_INK_SHARE",
+				ink / count,
+				NO_CONTEST_MAX_INK_SHARE,
+			) &&
+			Decisions.atLeast(
+				"scoreboard:NO_CONTEST_GREY_VALUE_RANGE#min",
+				meanValue,
+				NO_CONTEST_GREY_VALUE_RANGE[0],
+			) &&
+			Decisions.atMost(
+				"scoreboard:NO_CONTEST_GREY_VALUE_RANGE#max",
+				meanValue,
+				NO_CONTEST_GREY_VALUE_RANGE[1],
+			)
 		);
 	});
 }

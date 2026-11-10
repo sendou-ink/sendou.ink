@@ -18,6 +18,7 @@ import {
 	toMainWeaponId,
 } from "../../../scanner-types";
 import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
 	copyRoi,
@@ -115,19 +116,45 @@ export function createScoreboardOwnDetector(
 	function gate(frame: Mat): GateResult {
 		let panelOk = 0;
 		for (const roi of GATE_PANEL_PROBES) {
-			if (meanBrightness(frame, roi) < GATE_PANEL_MAX_MEAN) panelOk++;
+			if (
+				Decisions.below(
+					"scoreboard-own:GATE_PANEL_MAX_MEAN",
+					meanBrightness(frame, roi),
+					GATE_PANEL_MAX_MEAN,
+				)
+			)
+				panelOk++;
 		}
 
 		const gray = frameGray(frame);
 		let textOk = 0;
 		for (const roi of GATE_TITLE_TEXT_PROBES) {
-			if (maxBrightness(gray, roi) > GATE_TEXT_MIN_MAX) textOk++;
+			if (
+				Decisions.above(
+					"scoreboard-own:GATE_TEXT_MIN_MAX",
+					maxBrightness(gray, roi),
+					GATE_TEXT_MIN_MAX,
+				)
+			)
+				textOk++;
 		}
 
 		let stripOk = 0;
 		for (let row = 0; row < GEAR_ROWS; row++) {
 			const mean = meanBrightness(frame, gateStripProbe(row));
-			if (mean >= GATE_STRIP_MIN_MEAN && mean <= GATE_STRIP_MAX_MEAN) stripOk++;
+			if (
+				Decisions.atLeast(
+					"scoreboard-own:GATE_STRIP_MIN_MEAN",
+					mean,
+					GATE_STRIP_MIN_MEAN,
+				) &&
+				Decisions.atMost(
+					"scoreboard-own:GATE_STRIP_MAX_MEAN",
+					mean,
+					GATE_STRIP_MAX_MEAN,
+				)
+			)
+				stripOk++;
 		}
 
 		const score =
@@ -220,7 +247,13 @@ export function createScoreboardOwnDetector(
 				: null;
 			if (match) {
 				weaponScore = match.score;
-				if (match.score >= WEAPON_MIN_SCORE) {
+				if (
+					Decisions.atLeast(
+						"scoreboard-own:WEAPON_MIN_SCORE",
+						match.score,
+						WEAPON_MIN_SCORE,
+					)
+				) {
 					weapon = match.entry.entry.name;
 					weaponId = toMainWeaponId(match.entry.entry.id);
 				}

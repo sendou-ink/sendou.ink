@@ -23,6 +23,7 @@
  */
 import { CANONICAL_WIDTH } from "../../canonical";
 import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { copyRoi, type Roi } from "../../image";
 import type { DetectedEvent } from "../types";
 import {
@@ -569,7 +570,13 @@ function readSlot(
 		grey / count,
 	];
 	const [inkShare, paleShare, greyShare] = fractions;
-	if (inkShare >= STATUS_ALIVE_MIN_INK) {
+	if (
+		Decisions.atLeast(
+			"objective/player-status:STATUS_ALIVE_MIN_INK",
+			inkShare,
+			STATUS_ALIVE_MIN_INK,
+		)
+	) {
 		return {
 			state: "alive",
 			confidence: Math.min(1, inkShare / (2 * STATUS_ALIVE_MIN_INK)),
@@ -577,8 +584,16 @@ function readSlot(
 		};
 	}
 	if (
-		paleShare >= STATUS_READY_MIN_PALE &&
-		greyShare <= STATUS_READY_MAX_GREY
+		Decisions.atLeast(
+			"objective/player-status:STATUS_READY_MIN_PALE",
+			paleShare,
+			STATUS_READY_MIN_PALE,
+		) &&
+		Decisions.atMost(
+			"objective/player-status:STATUS_READY_MAX_GREY",
+			greyShare,
+			STATUS_READY_MAX_GREY,
+		)
 	) {
 		return {
 			state: bodyStaysInked(band, cx, pitch) ? "alive" : "ready",
@@ -623,7 +638,11 @@ function bodyStaysInked(band: Band, cx: number, pitch: number): boolean {
 				count++;
 			}
 		}
-		return ink / count >= STATUS_WASH_MAX_BODY_INK;
+		return Decisions.atLeast(
+			"objective/player-status:STATUS_WASH_MAX_BODY_INK",
+			ink / count,
+			STATUS_WASH_MAX_BODY_INK,
+		);
 	});
 }
 
@@ -660,8 +679,16 @@ function isVacant(band: Band, cx: number, pitch: number): boolean {
 		}
 	}
 	return (
-		dark / count >= STATUS_VACANT_MIN_DARK &&
-		grey / count < STATUS_VACANT_MAX_GREY
+		Decisions.atLeast(
+			"objective/player-status:STATUS_VACANT_MIN_DARK",
+			dark / count,
+			STATUS_VACANT_MIN_DARK,
+		) &&
+		Decisions.below(
+			"objective/player-status:STATUS_VACANT_MAX_GREY",
+			grey / count,
+			STATUS_VACANT_MAX_GREY,
+		)
 	);
 }
 
@@ -719,6 +746,10 @@ function badgesVisible(frame: Mat, probes: readonly Roi[]): boolean {
 			count++;
 		}
 		crop.delete();
-		return white / count >= STATUS_CAST_MIN_DPAD_WHITE;
+		return Decisions.atLeast(
+			"objective/player-status:STATUS_CAST_MIN_DPAD_WHITE",
+			white / count,
+			STATUS_CAST_MIN_DPAD_WHITE,
+		);
 	});
 }

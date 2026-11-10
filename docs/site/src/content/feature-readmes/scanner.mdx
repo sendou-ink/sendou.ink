@@ -322,7 +322,7 @@ is built in memory and downloaded.
 ```sh
 pnpm test:scanner                       # golden-file suite over tests/fixtures/ (Vitest, Node)
 pnpm test:unit:browser                  # includes tests/logic/ — the fixture-free half, see below
-pnpm scanner:report                     # accuracy table + name character error rate across fixtures
+pnpm scanner:report                     # accuracy table + name character error rate across fixtures, then the threshold margins (--margins = those alone)
 pnpm scanner:fixtures [name-substring]  # run detectors over matching fixtures, verbose
 pnpm scanner:replay <dir> <startT> <fps> # replay ffmpeg-extracted frames through the scheduler+detectors
 pnpm scanner:unpack-zip <zip> <new-dir> # validate + unpack a user's Game data zip (refuses anything matchZip doesn't write)
@@ -870,6 +870,41 @@ and stay out of CI.
 `tests/logic/*.test.ts` are pure logic over synthetic events — no images, no
 assets checkout — so they belong to the `unit` project and do run in CI. Put
 new tests there whenever they can be written without a frame.
+
+## Threshold margins
+
+The detectors hold a few hundred tuning constants, each attested only by the
+fixtures that happened to exist when it was set. Where a detector compares a
+measured value (a gate probe's brightness, a match score, a score margin
+between twins, a pixel share) to such a constant, it does so through
+`core/decisions.ts`: `Decisions.atLeast(id, value, threshold)` and its
+siblings `above`, `atMost`, `below` are the plain comparison, plus a record of
+it when a recorder is set. The id is `<file under core/>:<CONSTANT>`
+(`death:GATE_DARK_MAX_MEAN`, `scoreboard/names:BH_SCORE_MARGIN`), with a
+`#site` suffix when one constant decides more than one thing.
+
+`pnpm scanner:report` ends with the audit (`scripts/scanner/threshold-margins.ts`):
+every detector runs over every fixture, cross-detector negatives included, and
+each threshold is printed with the fixture value nearest to it on the passing
+side (the comparison held) and on the failing side, sorted by the smaller of
+the two margins as a share of the span the observed values cover. The ranking
+counts a detector's decisions on the fixtures of its own screen; what it
+measured on the other detectors' fixtures is listed beside them as "other
+screens", and thresholds only those reach come last. `pnpm scanner:report
+--margins` prints the audit alone.
+
+- A margin near zero means one fixture sits on the threshold: the next
+  encode of the same screen can land on the other side. Before moving such a
+  constant, look at what is nearest: one probe of several that are counted
+  flips nothing on its own, and a floor cut through thousands of per-glyph
+  scores always has a fixture on it (moving it only moves which one).
+- "never on any fixture" means the threshold is attested from one side only:
+  nothing shows where it stops being safe.
+- Decisions short-circuit as in production, so a later condition is recorded
+  only for reads that passed the earlier ones.
+- New threshold comparisons go through `Decisions`; per-pixel classification
+  loops and the glyph prescreen stay plain comparisons (too hot, and a single
+  pixel decides nothing).
 
 ## Event tapes
 

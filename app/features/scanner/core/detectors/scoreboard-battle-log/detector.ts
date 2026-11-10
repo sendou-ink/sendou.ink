@@ -16,6 +16,7 @@ import {
 	unionRoi,
 } from "../../canonical";
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
 	createProbeWarp,
@@ -255,13 +256,19 @@ export function createBattleLogDetector(
 			for (const base of rois.ROW_CENTERS) {
 				const cy = base + dy;
 				if (
-					meanBrightness(probes.mat, probes.local(rois.gateDarkProbe(cy))) <
-					rois.GATE_DARK_MAX_MEAN
+					Decisions.below(
+						`${layout.id}:GATE_DARK_MAX_MEAN`,
+						meanBrightness(probes.mat, probes.local(rois.gateDarkProbe(cy))),
+						rois.GATE_DARK_MAX_MEAN,
+					)
 				)
 					darkOk++;
 				if (
-					maxBrightness(gray, probes.local(rois.paintSuffixRoi(cy))) >
-					rois.GATE_TEXT_MIN_MAX
+					Decisions.above(
+						`${layout.id}:GATE_TEXT_MIN_MAX`,
+						maxBrightness(gray, probes.local(rois.paintSuffixRoi(cy))),
+						rois.GATE_TEXT_MIN_MAX,
+					)
 				)
 					suffixOk++;
 			}
@@ -269,8 +276,11 @@ export function createBattleLogDetector(
 		let colorOk = 0;
 		for (const roi of rois.GATE_COLOR_PROBES) {
 			if (
-				probeSaturation(probes.mat, probes.local(roi)) >=
-				rois.GATE_COLOR_MIN_SATURATION
+				Decisions.atLeast(
+					`${layout.id}:GATE_COLOR_MIN_SATURATION`,
+					probeSaturation(probes.mat, probes.local(roi)),
+					rois.GATE_COLOR_MIN_SATURATION,
+				)
 			)
 				colorOk++;
 		}
@@ -387,7 +397,13 @@ export function createBattleLogDetector(
 				);
 				if (match) {
 					resultScore = match.score;
-					if (match.score >= RESULT_MIN_SCORE)
+					if (
+						Decisions.atLeast(
+							`${layout.id}:RESULT_MIN_SCORE`,
+							match.score,
+							RESULT_MIN_SCORE,
+						)
+					)
 						result = match.entry.canonical as PanelResult;
 				}
 			}

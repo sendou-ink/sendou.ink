@@ -5,6 +5,7 @@
  */
 import { toMainWeaponId } from "../../../scanner-types";
 import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import type { GlyphSet } from "../../glyphs";
 import { cropRoi, type Roi } from "../../image";
 import { all, type MatchSteps } from "../../match-steps";
@@ -100,7 +101,12 @@ export function* parseScoreboardRowSteps(
 		player: {
 			name: name?.name ?? "",
 			weaponId:
-				weapon && weapon.score >= WEAPON_MIN_SCORE
+				weapon &&
+				Decisions.atLeast(
+					"scoreboard/row:WEAPON_MIN_SCORE",
+					weapon.score,
+					WEAPON_MIN_SCORE,
+				)
 					? toMainWeaponId(weapon.id)
 					: null,
 			paint: paint?.value ?? null,

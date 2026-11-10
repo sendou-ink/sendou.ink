@@ -9,6 +9,7 @@
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat, minMaxLoc } from "../../cv";
+import * as Decisions from "../../decisions";
 import {
 	type GlyphSet,
 	type RecognizedText,
@@ -136,7 +137,13 @@ function findLineBands(binary: Mat): LineBand[] {
 		if (last && band.y0 <= last.y1) last.y1 = Math.max(last.y1, band.y1);
 		else merged.push(band);
 	}
-	return merged.filter((b) => b.y1 - b.y0 >= LINE_MIN_HEIGHT);
+	return merged.filter((b) =>
+		Decisions.atLeast(
+			"map-start:LINE_MIN_HEIGHT",
+			b.y1 - b.y0,
+			LINE_MIN_HEIGHT,
+		),
+	);
 }
 
 /** Trim a line band to its text columns so the raw OCR crop excludes edge background. */
@@ -180,7 +187,14 @@ export function createMapStartDetector(
 	function gate(frame: Mat): GateResult {
 		let darkOk = 0;
 		for (const roi of GATE_DARK_PROBES) {
-			if (meanBrightness(frame, roi) < GATE_DARK_MAX_MEAN) darkOk++;
+			if (
+				Decisions.below(
+					"map-start:GATE_DARK_MAX_MEAN",
+					meanBrightness(frame, roi),
+					GATE_DARK_MAX_MEAN,
+				)
+			)
+				darkOk++;
 		}
 
 		const gray = frameGray(frame);
@@ -193,9 +207,21 @@ export function createMapStartDetector(
 		const whiteFraction = cv.countNonZero(bin) / (bin.rows * bin.cols);
 		bin.delete();
 		const textOk =
-			maxVal > GATE_TEXT_MIN_MAX &&
-			whiteFraction > GATE_TEXT_MIN_FRACTION &&
-			whiteFraction < GATE_TEXT_MAX_FRACTION;
+			Decisions.above(
+				"map-start:GATE_TEXT_MIN_MAX",
+				maxVal,
+				GATE_TEXT_MIN_MAX,
+			) &&
+			Decisions.above(
+				"map-start:GATE_TEXT_MIN_FRACTION",
+				whiteFraction,
+				GATE_TEXT_MIN_FRACTION,
+			) &&
+			Decisions.below(
+				"map-start:GATE_TEXT_MAX_FRACTION",
+				whiteFraction,
+				GATE_TEXT_MAX_FRACTION,
+			);
 
 		// label-to-title gap is solid ink here: near-totally dark (scoreboard pills
 		// aren't) with no bright pixels (death's "Splatted by" line crosses it)
@@ -211,8 +237,16 @@ export function createMapStartDetector(
 		bandDark.delete();
 		band.delete();
 		const inkOk =
-			brightFraction <= GATE_INK_BAND_MAX_BRIGHT &&
-			darkFraction >= GATE_INK_BAND_MIN_DARK;
+			Decisions.atMost(
+				"map-start:GATE_INK_BAND_MAX_BRIGHT",
+				brightFraction,
+				GATE_INK_BAND_MAX_BRIGHT,
+			) &&
+			Decisions.atLeast(
+				"map-start:GATE_INK_BAND_MIN_DARK",
+				darkFraction,
+				GATE_INK_BAND_MIN_DARK,
+			);
 
 		const score =
 			(darkOk / GATE_DARK_PROBES.length + (textOk ? 1 : 0) + (inkOk ? 1 : 0)) /
@@ -310,7 +344,14 @@ export function createMapStartDetector(
 			if (match && match.score > stageScore) {
 				stageScore = match.score;
 				stageReading = read.text;
-				if (match.score >= MIN_MATCH_SCORE) stage = match.entry.stageId;
+				if (
+					Decisions.atLeast(
+						"map-start:MIN_MATCH_SCORE#stage",
+						match.score,
+						MIN_MATCH_SCORE,
+					)
+				)
+					stage = match.entry.stageId;
 			}
 		}
 		masked.delete();
@@ -339,7 +380,13 @@ export function createMapStartDetector(
 			);
 			crop.delete();
 			labelScore = closestBy(label.text, ALL_MODE_LABELS, (l) => l)?.score ?? 0;
-			if (labelScore < LABEL_MIN_SCORE) {
+			if (
+				Decisions.below(
+					"map-start:LABEL_MIN_SCORE",
+					labelScore,
+					LABEL_MIN_SCORE,
+				)
+			) {
 				return [];
 			}
 		}
@@ -359,7 +406,14 @@ export function createMapStartDetector(
 				: null;
 			if (match) {
 				modeScore = match.score;
-				if (match.score >= MIN_MATCH_SCORE) mode = match.entry.mode;
+				if (
+					Decisions.atLeast(
+						"map-start:MIN_MATCH_SCORE#mode",
+						match.score,
+						MIN_MATCH_SCORE,
+					)
+				)
+					mode = match.entry.mode;
 			}
 		}
 		const { stage = null, stageScore = 0, stageReading = "" } = stageRead ?? {};

@@ -1,5 +1,6 @@
 /** Pure constants/types shared by UI and pipeline; no OpenCV dependency, so the main bundle never pulls in the WASM. */
 import * as R from "remeda";
+import * as Decisions from "./decisions";
 
 export const CANONICAL_WIDTH = 1920;
 export const CANONICAL_HEIGHT = 1080;
@@ -156,7 +157,14 @@ function contentBoxOfSegments(
 					};
 					const aspectError =
 						Math.abs(box.w / box.h - canonicalAspect) / canonicalAspect;
-					if (aspectError > CONTENT_ASPECT_TOLERANCE) continue;
+					if (
+						Decisions.above(
+							"canonical:CONTENT_ASPECT_TOLERANCE",
+							aspectError,
+							CONTENT_ASPECT_TOLERANCE,
+						)
+					)
+						continue;
 					const score =
 						top.votes +
 						bottom.votes +
@@ -203,7 +211,15 @@ function barDepth(
 	maxRamp: number,
 ): number {
 	const level = meanAt(0);
-	if (level > BORDER_LINE_MAX_MEAN) return 0;
+	if (
+		Decisions.above(
+			"canonical:BORDER_LINE_MAX_MEAN#edgeLevel",
+			level,
+			BORDER_LINE_MAX_MEAN,
+		)
+	) {
+		return 0;
+	}
 	let depth = 1;
 	while (
 		depth < maxDepth &&
@@ -252,7 +268,13 @@ function barCandidates(
 			(other) => Math.abs(other - depth) <= BORDER_DEPTH_SPREAD,
 		);
 		for (const other of near) claimed.add(other);
-		if (near.length >= BORDER_MIN_VOTES) {
+		if (
+			Decisions.atLeast(
+				"canonical:BORDER_MIN_VOTES",
+				near.length,
+				BORDER_MIN_VOTES,
+			)
+		) {
 			candidates.push({ depth, votes: near.length });
 		}
 	}

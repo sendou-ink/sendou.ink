@@ -10,6 +10,7 @@
  */
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import { copyRoi, frameGray, frameRgb, roiSignature } from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
@@ -97,11 +98,22 @@ export function createXRankPositionDetector(
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
 		const checks = [
-			allDark(gray, POSITION_DARK_PROBES, CARD_DARK_MAX_MEAN),
-			rgbFraction(rgb, POSITION_LABEL_ROI, isTitleTeal) >=
+			allDark(
+				"x-rank/position:CARD_DARK_MAX_MEAN",
+				gray,
+				POSITION_DARK_PROBES,
+				CARD_DARK_MAX_MEAN,
+			),
+			Decisions.atLeast(
+				"x-rank/position:POSITION_LABEL_MIN_FRACTION",
+				rgbFraction(rgb, POSITION_LABEL_ROI, isTitleTeal),
 				POSITION_LABEL_MIN_FRACTION,
-			rgbFraction(rgb, POSITION_NUMBER_ROI, isNumberInk) >=
+			),
+			Decisions.atLeast(
+				"x-rank/position:POSITION_NUMBER_MIN_FRACTION",
+				rgbFraction(rgb, POSITION_NUMBER_ROI, isNumberInk),
 				POSITION_NUMBER_MIN_FRACTION,
+			),
 		];
 		const pass = checks.every(Boolean);
 		return {
@@ -196,8 +208,22 @@ function arrowDirection(rgb: Mat): XRankPositionDirection | null {
 	const y0 = widths.findIndex((w) => w > 0);
 	const y1 = widths.findLastIndex((w) => w > 0);
 	if (y0 < 0) return null;
-	if (x1 - x0 >= y1 - y0) return x1 - x0 >= ARROW_MIN_LENGTH ? "SAME" : null;
-	if (y1 - y0 < ARROW_MIN_LENGTH) return null;
+	if (x1 - x0 >= y1 - y0)
+		return Decisions.atLeast(
+			"x-rank/position:ARROW_MIN_LENGTH#flat",
+			x1 - x0,
+			ARROW_MIN_LENGTH,
+		)
+			? "SAME"
+			: null;
+	if (
+		Decisions.below(
+			"x-rank/position:ARROW_MIN_LENGTH#upright",
+			y1 - y0,
+			ARROW_MIN_LENGTH,
+		)
+	)
+		return null;
 	const band = Math.max(1, Math.round((y1 - y0) * ARROW_END_FRACTION));
 	const mean = (from: number) =>
 		widths.slice(from, from + band).reduce((sum, w) => sum + w, 0) / band;

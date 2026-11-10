@@ -11,6 +11,7 @@
  */
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import { frameGray, frameRgb, type Roi, roiSignature } from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
@@ -92,22 +93,43 @@ export function createXSetCountDetector(
 
 	function gate(frame: Mat): GateResult {
 		const gray = frameGray(frame);
-		const dark = allDark(gray, COUNT_DARK_PROBES, CARD_DARK_MAX_MEAN);
+		const dark = allDark(
+			"x-rank/set-count:CARD_DARK_MAX_MEAN",
+			gray,
+			COUNT_DARK_PROBES,
+			CARD_DARK_MAX_MEAN,
+		);
 		const label = brightFraction(gray, COUNT_LABEL_BAND, NUMBER_BIN_THRESHOLD);
 		const digitFractions = [COUNT_WINS_DIGIT_ROI, COUNT_LOSSES_DIGIT_ROI].map(
 			(roi) => brightFraction(gray, roi, NUMBER_BIN_THRESHOLD),
 		);
 		const digitsOk = digitFractions.every(
-			(f) => f >= DIGIT_MIN_FRACTION && f <= DIGIT_MAX_FRACTION,
+			(f) =>
+				Decisions.atLeast(
+					"x-rank/set-count:DIGIT_MIN_FRACTION",
+					f,
+					DIGIT_MIN_FRACTION,
+				) &&
+				Decisions.atMost(
+					"x-rank/set-count:DIGIT_MAX_FRACTION",
+					f,
+					DIGIT_MAX_FRACTION,
+				),
 		);
-		const seriesSlotsEmpty = COUNT_SERIES_SLOT_PROBES.every(
-			(roi) =>
-				brightFraction(gray, roi, NUMBER_BIN_THRESHOLD) <
+		const seriesSlotsEmpty = COUNT_SERIES_SLOT_PROBES.every((roi) =>
+			Decisions.below(
+				"x-rank/set-count:SERIES_SLOT_MAX_FRACTION",
+				brightFraction(gray, roi, NUMBER_BIN_THRESHOLD),
 				SERIES_SLOT_MAX_FRACTION,
+			),
 		);
 		const checks = [
 			dark,
-			label >= LABEL_MIN_FRACTION,
+			Decisions.atLeast(
+				"x-rank/set-count:LABEL_MIN_FRACTION",
+				label,
+				LABEL_MIN_FRACTION,
+			),
 			digitsOk,
 			seriesSlotsEmpty,
 		];
@@ -150,21 +172,27 @@ export function createXSetCountDetector(
 		]);
 		const wins = setDigit(winsRead.text);
 		const losses = setDigit(lossesRead.text);
-		const winSlots = COUNT_WIN_SLOT_CENTERS_X.filter(
-			(x) =>
+		const winSlots = COUNT_WIN_SLOT_CENTERS_X.filter((x) =>
+			Decisions.atLeast(
+				"x-rank/set-count:WIN_SLOT_MIN_INK",
 				rgbFraction(
 					rgb,
 					slotRoi(x, COUNT_WIN_SLOT_Y, COUNT_WIN_SLOT_HALF),
 					isInk,
-				) >= WIN_SLOT_MIN_INK,
+				),
+				WIN_SLOT_MIN_INK,
+			),
 		).length;
-		const lossSlots = COUNT_LOSS_SLOT_CENTERS_X.filter(
-			(x) =>
+		const lossSlots = COUNT_LOSS_SLOT_CENTERS_X.filter((x) =>
+			Decisions.atLeast(
+				"x-rank/set-count:LOSS_SLOT_MIN_CROSS",
 				rgbFraction(
 					rgb,
 					slotRoi(x, COUNT_LOSS_SLOT_Y, COUNT_LOSS_SLOT_HALF),
 					isCrossStroke,
-				) >= LOSS_SLOT_MIN_CROSS,
+				),
+				LOSS_SLOT_MIN_CROSS,
+			),
 		).length;
 		const consistent = wins === winSlots && losses === lossSlots;
 		const digitScore = minScore([
