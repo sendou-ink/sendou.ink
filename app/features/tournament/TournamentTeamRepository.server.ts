@@ -280,6 +280,49 @@ export function insert({
 	});
 }
 
+/** A player without an account an organizer adds to a LAN tournament's roster, created as a placeholder user (`User.isPlaceholder`). */
+interface NewPlaceholderPlayer {
+	name: string;
+	inGameName: string | null;
+}
+
+/** Names of the players without an account on the tournament's teams. */
+export function findPlaceholderNamesByTournamentId(tournamentId: number) {
+	return db
+		.selectFrom("TournamentTeamMember")
+		.innerJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentTeamMember.tournamentTeamId",
+		)
+		.innerJoin("User", "User.id", "TournamentTeamMember.userId")
+		.select(["TournamentTeam.id as tournamentTeamId", "User.username"])
+		.where("TournamentTeam.tournamentId", "=", tournamentId)
+		.where("User.isPlaceholder", "=", 1)
+		.execute();
+}
+
+/**
+ * Creates the user of a player without an account, to be added to a roster. Exported for the user factory, the app creates them via `upsertRegistration`.
+ * @internal
+ */
+export function insertPlaceholderPlayer(
+	{ name, inGameName }: NewPlaceholderPlayer,
+	trx?: Transaction<DB>,
+) {
+	return (trx ?? db)
+		.insertInto("User")
+		.values({
+			discordId: null,
+			defaultName: name,
+			inGameName,
+			isPlaceholder: 1,
+			createdAt: databaseTimestampNow(),
+		})
+		.returning("id")
+		.executeTakeFirstOrThrow();
+}
+
 /**
  * Creates a registration or applies a full-state edit to an existing one (`tournamentTeamId`)
  * in one transaction: name, linked team, owner, members, in-game names, tournament names and
@@ -295,8 +338,10 @@ export function upsertRegistration({
 	avatarImgId,
 	ownerUserId,
 	ownerChange,
-	membersToAdd,
+	membersToAdd: existingUsersToAdd,
 	membersToRemove,
+	newPlaceholders = [],
+	placeholderRenames = [],
 	inGameNameUpdates,
 	tournamentNameUpdates,
 	mapPool,
@@ -309,12 +354,19 @@ export function upsertRegistration({
 	teamId: number | null;
 	/** Resolved pickup team logo image id (null for none / linked teams). */
 	avatarImgId: number | null;
-	/** Roster owner/captain. Assigned the OWNER role when creating a new team. */
-	ownerUserId: number;
+	/** Roster owner/captain, or one of `newPlaceholders`. Assigned the OWNER role when creating a new team. */
+	ownerUserId: number | NewPlaceholderPlayer;
 	/** Owner transfer for an existing team (null when unchanged or when creating). */
-	ownerChange: { oldOwnerId: number; newOwnerId: number } | null;
+	ownerChange: {
+		oldOwnerId: number;
+		newOwnerId: number | NewPlaceholderPlayer;
+	} | null;
 	membersToAdd: number[];
 	membersToRemove: number[];
+	/** Created and added to the roster. */
+	newPlaceholders?: NewPlaceholderPlayer[];
+	/** Name changes of placeholder players already on the roster. */
+	placeholderRenames?: Array<{ userId: number; name: string }>;
 	inGameNameUpdates: Array<{ userId: number; inGameName: string }>;
 	/** Organizer-set names shown in every tournament. `null` clears the user's current one. */
 	tournamentNameUpdates: Array<{
@@ -375,6 +427,27 @@ export function upsertRegistration({
 			await replaceCounterpickMaps(trx, { tournamentTeamId: id, mapPool });
 		}
 
+		const placeholderIds = new Map<NewPlaceholderPlayer, number>();
+		for (const placeholder of newPlaceholders) {
+			placeholderIds.set(
+				placeholder,
+				(await insertPlaceholderPlayer(placeholder, trx)).id,
+			);
+		}
+		const resolveUserId = (member: number | NewPlaceholderPlayer) =>
+			typeof member === "number" ? member : placeholderIds.get(member)!;
+		const ownerId = resolveUserId(ownerUserId);
+		const membersToAdd = [...existingUsersToAdd, ...placeholderIds.values()];
+
+		for (const { userId, name: placeholderName } of placeholderRenames) {
+			await trx
+				.updateTable("User")
+				.set({ defaultName: placeholderName })
+				.where("User.id", "=", userId)
+				.where("User.isPlaceholder", "=", 1)
+				.execute();
+		}
+
 		for (const userId of membersToRemove) {
 			await TournamentAuditLogRepository.insert(
 				{
@@ -411,7 +484,7 @@ export function upsertRegistration({
 				>
 			> = [];
 			for (const userId of membersToAdd) {
-				const isOwner = isNew && userId === ownerUserId;
+				const isOwner = isNew && userId === ownerId;
 				members.push({
 					tournamentTeamId: id,
 					userId,
@@ -432,9 +505,7 @@ export function upsertRegistration({
 				await TournamentAuditLogRepository.insert(
 					{
 						type:
-							isNew && userId === ownerUserId
-								? "TEAM_REGISTERED"
-								: "MEMBER_ADDED",
+							isNew && userId === ownerId ? "TEAM_REGISTERED" : "MEMBER_ADDED",
 						tournamentTeamId: id,
 						subjectUserId: userId,
 					},
@@ -456,7 +527,11 @@ export function upsertRegistration({
 				.updateTable("TournamentTeamMember")
 				.set({ role: "OWNER" })
 				.where("TournamentTeamMember.tournamentTeamId", "=", id)
-				.where("TournamentTeamMember.userId", "=", ownerChange.newOwnerId)
+				.where(
+					"TournamentTeamMember.userId",
+					"=",
+					resolveUserId(ownerChange.newOwnerId),
+				)
 				.execute();
 		}
 

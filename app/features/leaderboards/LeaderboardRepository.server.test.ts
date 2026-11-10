@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { actAs } from "~/db/seed/core/actAs";
+import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as SQReportedWeaponFactory from "~/db/seed/factories/SQReportedWeaponFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
@@ -321,5 +322,23 @@ describe("LeaderboardRepository.findTeamLeaderboardBySeason", () => {
 			[userIdsToIdentifier(topRoster()), 1],
 			[userIdsToIdentifier(beatenRoster()), 2],
 		]);
+	});
+});
+
+describe("LeaderboardRepository.findUserSPLeaderboard", () => {
+	test("leaves out placeholder players until claimed", async () => {
+		const user = await UserFactory.create();
+		const placeholder = await UserFactory.createPlaceholder();
+		for (const userId of [user.id, placeholder.id]) {
+			await SkillFactory.create(
+				{ userId, season: SEASON },
+				{ matchesCount: MATCHES_COUNT_NEEDED_FOR_LEADERBOARD },
+			);
+		}
+
+		const leaderboard =
+			await LeaderboardRepository.findUserSPLeaderboard(SEASON);
+
+		expect(leaderboard.map((entry) => entry.id)).toEqual([user.id]);
 	});
 });

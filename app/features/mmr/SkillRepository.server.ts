@@ -58,12 +58,14 @@ export async function findCurrentTeamSkills({
 	);
 }
 
-/** Ordinals of the season's latest skill of every user who has one, best first. */
+/** Ordinals of the season's latest skill of every user who has one, best first. Placeholder players' skill stays hidden until claimed. */
 export async function findOrderedUserOrdinalsBySeason(season: number) {
 	return db
 		.selectFrom(latestSkillPerSeason({ season, by: "userId" }).as("latest"))
-		.select(["ordinal", "matchesCount", "userId"])
-		.orderBy("ordinal", "desc")
+		.innerJoin("User", "User.id", "latest.userId")
+		.select(["latest.ordinal", "latest.matchesCount", "latest.userId"])
+		.where("User.isPlaceholder", "=", 0)
+		.orderBy("latest.ordinal", "desc")
 		.execute();
 }
 

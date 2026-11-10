@@ -1683,6 +1683,7 @@ const USER_CARD_DATA = {
 	customUrl: "sendou",
 	banner: { type: "STAGE", stageId: 5 },
 	shortBio: "Very show bio goes here maybe max two lines that gets clamped.",
+	isPlaceholder: false,
 	customTheme: null,
 	friendCode: "1234-1234-1234",
 	freeAgentPostId: 1,

@@ -6,11 +6,13 @@ import * as TeamPick from "~/features/tournament/core/TeamPick";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { tournamentTeamNameTaken } from "~/features/tournament/tournament-utils.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { superRefineAsync } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
 import {
 	ADMIN_REGISTRATION_MAX_MEMBERS,
 	adminRegistrationFormSchema,
+	placeholderNameKey,
 } from "./tournament-admin-registration-schemas";
 
 /**
@@ -90,7 +92,9 @@ export function adminRegistrationFormSchemaServer({
 			const currentMemberIds = team?.memberUserIds ?? [];
 
 			if (team) {
-				const submittedMemberIds = data.members.map((member) => member.userId);
+				const submittedMemberIds = data.members.flatMap(
+					(member) => member.userId ?? [],
+				);
 				const membersToRemove = currentMemberIds.filter(
 					(memberId) => !submittedMemberIds.includes(memberId),
 				);
@@ -120,10 +124,87 @@ export function adminRegistrationFormSchemaServer({
 				}
 			}
 
+			const otherTeamsPlaceholderNames = data.members.some(
+				(member) => member.isPlaceholder,
+			)
+				? new Set(
+						(
+							await TournamentTeamRepository.findPlaceholderNamesByTournamentId(
+								tournament.ctx.id,
+							)
+						)
+							.filter(
+								(placeholder) => placeholder.tournamentTeamId !== team?.id,
+							)
+							.map((placeholder) => placeholderNameKey(placeholder.username)),
+					)
+				: new Set<string>();
+
 			for (const [index, member] of data.members.entries()) {
+				if (
+					member.isPlaceholder &&
+					member.placeholderName &&
+					otherTeamsPlaceholderNames.has(
+						placeholderNameKey(member.placeholderName),
+					)
+				) {
+					ctx.addIssue({
+						message: "forms:errors.regPlaceholderNameTaken",
+						path: ["members", index, "placeholderName"],
+					});
+				}
+
+				if (typeof member.userId !== "number") {
+					if (!member.isPlaceholder) continue;
+
+					if (!tournament.isLan) {
+						ctx.addIssue({
+							message: "forms:errors.regPlaceholderLanOnly",
+							path: ["members", index, "placeholderName"],
+						});
+					}
+
+					if (
+						tournament.ctx.settings.requireInGameNames &&
+						!member.inGameName
+					) {
+						ctx.addIssue({
+							message: "forms:errors.required",
+							path: ["members", index, "inGameName"],
+						});
+					}
+					continue;
+				}
+
 				const path = ["members", index, "userId"];
 
 				const isCurrentMember = currentMemberIds.includes(member.userId);
+
+				// a placeholder belongs to the one team it was created for, it is never added anywhere else
+				const placeholder = isCurrentMember
+					? await UserRepository.findPlaceholderById(member.userId)
+					: undefined;
+				if (placeholder) {
+					if (
+						tournament.ctx.settings.requireInGameNames &&
+						!member.inGameName &&
+						!placeholder.inGameName
+					) {
+						ctx.addIssue({
+							message: "forms:errors.required",
+							path: ["members", index, "inGameName"],
+						});
+					}
+					continue;
+				}
+
+				if (member.isPlaceholder) {
+					ctx.addIssue({
+						message: "forms:errors.regMemberInvalid",
+						path: ["members", index, "placeholderName"],
+					});
+					continue;
+				}
 
 				const reason = await TeamEligibility.ineligibleReason({
 					tournament,

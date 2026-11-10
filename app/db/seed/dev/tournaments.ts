@@ -30,6 +30,7 @@ import * as TournamentMatchScheduleFactory from "../factories/TournamentMatchSch
 import * as TournamentStaffFactory from "../factories/TournamentStaffFactory";
 import * as TournamentStreamerFactory from "../factories/TournamentStreamerFactory";
 import * as TournamentTeamFactory from "../factories/TournamentTeamFactory";
+import * as UserFactory from "../factories/UserFactory";
 import type { SeededBadges } from "./badges";
 import type { SeededOrganization } from "./organizations";
 import type { SeededTeams } from "./teams";
@@ -97,6 +98,13 @@ const CORE_PLAYER_COUNT = 8;
 const REGISTERED_TEAM_SHARE = 0.4;
 /** Solo players looking for a team in a tournament whose registration has closed. */
 const SUB_COUNT = 7;
+/** Name and in-game name of the players without accounts of the LAN's walk-in team. */
+const PLACEHOLDER_TEAM_MEMBERS = [
+	["Mika", "Mika#2817"],
+	["Juno", "Juno#4410"],
+	["Rhea", "Rhea#9032"],
+	["Tavi", null],
+] as const;
 
 /** One team's registration: the site team it registers as, when it is one of them. */
 type Roster = {
@@ -294,8 +302,9 @@ export async function seedTournaments({
 		seriesLogoImgIds,
 	});
 
-	// last so the venue's random values don't shift what the other tournaments were seeded with
+	// last so the venue's and placeholders' random values don't shift what the other tournaments were seeded with
 	await CalendarEventVenueFactory.create({ eventId: swimOrSink.eventId });
+	await registerPlaceholderTeam(swimOrSink.id);
 
 	return {
 		regOpen: inTheZone,
@@ -445,7 +454,7 @@ async function seedLowInk({ users, rosters }: Ctx) {
 	await TournamentFactory.playOut(tournament.id, 0);
 }
 
-/** #4 round robin → SE, TO maps, a LAN with a pool captain — everybody checked in, not started. N-ZAP isn't registered, so it is his saved one. */
+/** #4 round robin → SE, TO maps, a LAN with a pool captain and a team of players without accounts — everybody checked in, not started. N-ZAP isn't registered, so it is his saved one. */
 async function seedSwimOrSink({ users, rosters }: Ctx) {
 	const tournament = await TournamentFactory.create({
 		name: nameFor("Swim or Sink"),
@@ -1006,6 +1015,25 @@ async function seedTournamentExtras(tournamentId: number, users: SeededUsers) {
 		);
 		lfgTeamIds.push(team.id);
 	}
+}
+
+/** A team the organizer added of players without accounts, as at a LAN where people walk in. */
+async function registerPlaceholderTeam(tournamentId: number) {
+	const memberUserIds: number[] = [];
+	for (const [name, inGameName] of PLACEHOLDER_TEAM_MEMBERS) {
+		memberUserIds.push(
+			(await UserFactory.createPlaceholder({ name, inGameName })).id,
+		);
+	}
+
+	await TournamentTeamFactory.create(
+		{
+			tournamentId,
+			team: { name: "Walk-in Wahoos", prefersNotToHost: 0, teamId: null },
+			memberUserIds,
+		},
+		{ isCheckedIn: true },
+	);
 }
 
 async function registerTeams({

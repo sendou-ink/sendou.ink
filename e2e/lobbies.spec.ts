@@ -1838,7 +1838,7 @@ test.describe("Lobbies", () => {
 		}) => {
 			const host = await factories.UserFactory.create();
 			const leaver = await factories.UserFactory.create({
-				discordName: "EarlyLeaver",
+				defaultName: "EarlyLeaver",
 			});
 			const lobby = await factories.LobbyFactory.create(
 				{ hostUserId: host.id },
@@ -2478,7 +2478,7 @@ async function lobbyAwaitingLastCheckIn(
 ) {
 	const users = await factories.UserFactory.createMany(
 		roomSize,
-		(i) => ({ discordName: `${PLAYER_NAME_PREFIX}${i}` }),
+		(i) => ({ defaultName: `${PLAYER_NAME_PREFIX}${i}` }),
 		isPoolingEveryMap
 			? {
 					matchProfile: {

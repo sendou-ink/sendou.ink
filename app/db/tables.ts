@@ -1114,10 +1114,12 @@ interface User {
 	customAvatarImgId: number | null;
 	/** Avatar copied from the account the user logs in with. */
 	syncedAvatarImgId: number | null;
-	discordId: string;
-	discordName: string;
+	/** `null` for placeholder players. */
+	discordId: string | null;
+	/** Name shown unless `customName` is set: the Discord display name, synced on log in, or for placeholder players the name the organizer typed. */
+	defaultName: string;
 	customName: string | null;
-	/** coalesce(customName, discordName) */
+	/** coalesce(customName, defaultName) */
 	username: ColumnType<string, never, never>;
 	/** Name the user is shown under in tournaments, set by organizers of established organizations. `null` = their `username` is used. */
 	tournamentName: string | null;
@@ -1130,6 +1132,8 @@ interface User {
 	isVideoAdder: Generated<DBBoolean>;
 	isTournamentOrganizer: Generated<DBBoolean>;
 	isApiAccesser: Generated<DBBoolean>;
+	/** Player without an account, added by a LAN tournament's organizer to a team. Belongs to that one tournament only, can't log in and is left out of searches, leaderboards and notifications until an admin merges it into the real user's account. */
+	isPlaceholder: Generated<DBBoolean>;
 	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
 	pronouns: JSONColumnTypeNullable<Pronouns>;
 	patronStartedAt: number | null;

@@ -6,6 +6,7 @@ import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import * as DiscordAvatar from "~/features/auth/core/DiscordAvatar.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { invariant } from "~/utils/invariant";
@@ -93,7 +94,7 @@ const GRANT_ROLE: Record<Role, (userId: number) => Promise<unknown>> = {
 export const { create, createMany } = defineFactory({
 	defaults: ({ seq }) => ({
 		discordId: fakeDiscordId(seq),
-		discordName: unique(() => faker.internet.username()),
+		defaultName: unique(() => faker.internet.username()),
 		discordUniqueName: null,
 		discordAvatar: null,
 		twitch: null,
@@ -126,6 +127,15 @@ export const { create, createMany } = defineFactory({
 		return user;
 	},
 	applyOptions: (user, options: Options) => grant(user.id, options),
+});
+
+/** A player without an account an organizer added to a LAN tournament, see `User.isPlaceholder`. Add it to a team with `TournamentTeamFactory`. */
+export const { create: createPlaceholder } = defineFactory({
+	defaults: () => ({
+		name: unique(() => faker.internet.username()),
+		inGameName: null,
+	}),
+	insert: TournamentTeamRepository.insertPlaceholderPlayer,
 });
 
 /** Sets the user's friend code as submitted by themselves. */
@@ -433,7 +443,7 @@ async function linkConnections(
 		.selectFrom("User")
 		.select([
 			"discordId",
-			"discordName",
+			"defaultName",
 			"discordUniqueName",
 			"twitch",
 			"youtubeId",
@@ -442,6 +452,11 @@ async function linkConnections(
 		])
 		.where("id", "=", userId)
 		.executeTakeFirstOrThrow();
+	invariant(user.discordId, "A placeholder player has no connections");
 
-	await UserRepository.upsert({ ...user, ...connections });
+	await UserRepository.upsert({
+		...user,
+		discordId: user.discordId,
+		...connections,
+	});
 }

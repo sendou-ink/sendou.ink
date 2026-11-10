@@ -119,3 +119,18 @@ describe("SkillRepository.findSeasonPeakOrdinalByUserId", () => {
 		expect(peak).toBeNull();
 	});
 });
+
+describe("SkillRepository.findOrderedUserOrdinalsBySeason", () => {
+	test("leaves out placeholder players, their skill hidden until claimed", async () => {
+		const user = await UserFactory.create();
+		const placeholder = await UserFactory.createPlaceholder();
+		for (const userId of [user.id, placeholder.id]) {
+			await SkillFactory.create({ userId, season: SEASON });
+		}
+
+		const ordinals =
+			await SkillRepository.findOrderedUserOrdinalsBySeason(SEASON);
+
+		expect(ordinals.map((row) => row.userId)).toEqual([user.id]);
+	});
+});

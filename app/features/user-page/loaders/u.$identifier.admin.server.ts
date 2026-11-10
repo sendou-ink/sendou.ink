@@ -34,9 +34,9 @@ export const loader = async () => {
 
 	return {
 		...userData,
-		discordAccountCreatedAt: convertSnowflakeToDate(
-			userData.discordId,
-		).getTime(),
+		discordAccountCreatedAt: userData.discordId
+			? convertSnowflakeToDate(userData.discordId).getTime()
+			: null,
 		friendCodes,
 		reports,
 		reportsMonthlyCounts: reportsMonthlyCounts(reports),

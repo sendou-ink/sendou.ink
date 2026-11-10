@@ -604,7 +604,7 @@ function createTournament(factories: Factories) {
 /** Users a user search finds by the name given to them. */
 function createNamedUsers(factories: Factories, names: string[]) {
 	return factories.UserFactory.createMany(names.length, (index) => ({
-		discordName: names[index],
+		defaultName: names[index],
 	}));
 }
 

@@ -19,7 +19,7 @@ import { UserPage } from "./pages/user/user-page";
 
 const PUBLIC_USER = {
 	discordId: "123456789012345678",
-	discordName: "Chirpy",
+	defaultName: "Chirpy",
 };
 const BUILD_WEAPON_ID = 40;
 const BUILD_WEAPON_SLUG = "splattershot";
@@ -40,7 +40,7 @@ test.describe("Public pages", () => {
 	}) => {
 		const user = await factories.UserFactory.create({
 			discordId: PUBLIC_USER.discordId,
-			discordName: PUBLIC_USER.discordName,
+			defaultName: PUBLIC_USER.defaultName,
 		});
 		await factories.BuildFactory.create({
 			ownerId: user.id,
@@ -67,7 +67,7 @@ test.describe("Public pages", () => {
 		await userPage.goto(user.id);
 		await expectNoErrorPage(page);
 		await expect(
-			userPage.usernameHeading(PUBLIC_USER.discordName),
+			userPage.usernameHeading(PUBLIC_USER.defaultName),
 		).toBeVisible();
 
 		const builds = new BuildsPage(page);

@@ -15,7 +15,7 @@ test.describe("Invitational tournament", () => {
 	}) => {
 		const tournament = await createInvitational(factories);
 		const captain = await factories.UserFactory.create({
-			discordName: "Captain Carla",
+			defaultName: "Captain Carla",
 		});
 
 		await impersonate(page, captain.id);
@@ -56,10 +56,10 @@ test.describe("Invitational tournament", () => {
 	}) => {
 		const tournament = await createInvitational(factories);
 		const captain = await factories.UserFactory.create({
-			discordName: "Captain Carla",
+			defaultName: "Captain Carla",
 		});
 		const member = await factories.UserFactory.create({
-			discordName: "Member Mia",
+			defaultName: "Member Mia",
 		});
 
 		await impersonate(page, NZAP_TEST_ID);

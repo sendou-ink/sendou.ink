@@ -42,6 +42,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				inGameName: member.inGameName,
 				tournamentName: member.tournamentName,
 				isOwner: member.role === "OWNER",
+				isPlaceholder: Boolean(member.isPlaceholder),
 			})),
 		})),
 	};

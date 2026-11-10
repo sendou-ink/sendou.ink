@@ -127,11 +127,11 @@ export async function resetForTest(page: Page, factories: Factories) {
 
 	await factories.UserFactory.createAdmin({
 		discordId: ADMIN_DISCORD_ID,
-		discordName: "Sendou",
+		defaultName: "Sendou",
 	});
 	await factories.UserFactory.createRegular({
 		discordId: NZAP_TEST_DISCORD_ID,
-		discordName: "N-ZAP",
+		defaultName: "N-ZAP",
 	});
 
 	await flushIfDirty(page, { resetDevOverrides: true });

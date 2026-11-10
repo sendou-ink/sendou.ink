@@ -2208,6 +2208,12 @@ export function buildCases(fx: Fixtures): {
 		(tournamentTeamId) =>
 			TournamentTeamRepository.findAllChatRoomIdsByIds([tournamentTeamId]),
 	);
+	add(
+		"TournamentTeamRepository.findPlaceholderNamesByTournamentId",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentTeamRepository.findPlaceholderNamesByTournamentId(tournamentId),
+	);
 	add("TournamentTeamRepository.isPickupAvatarImgId", fx.imageId, (imageId) =>
 		TournamentTeamRepository.isPickupAvatarImgId(imageId),
 	);
@@ -2281,6 +2287,12 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("UserRepository.findPageUserByIdentifier", fx.heavyUser, (user) =>
 		UserRepository.findPageUserByIdentifier(user.identifier),
+	);
+	add("UserRepository.findPlaceholderById", fx.heavyUser, (user) =>
+		UserRepository.findPlaceholderById(user.id),
+	);
+	add("UserRepository.filterOutPlaceholders", fx.manyUserIds, (userIds) =>
+		UserRepository.filterOutPlaceholders(userIds),
 	);
 	add("UserRepository.findCountriesByUserIds", fx.skillBatch, (skillBatch) =>
 		UserRepository.findCountriesByUserIds(skillBatch.userIds),

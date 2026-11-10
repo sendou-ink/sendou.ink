@@ -46,8 +46,10 @@ export function convertSnowflakeToDate(snowflake: string) {
 }
 
 const AGED_CRITERIA = 1000 * 60 * 60 * 24 * 30 * 3; // 3 months
-export function userDiscordIdIsAged(user: { discordId: string }) {
-	if (!user.discordId || user.discordId.length < DISCORD_ID_MIN_LENGTH) {
+export function userDiscordIdIsAged(user: { discordId: string | null }) {
+	if (user.discordId === null) return false;
+
+	if (user.discordId.length < DISCORD_ID_MIN_LENGTH) {
 		logger.error("Invalid or missing discord id", {
 			discordId: user.discordId,
 		});
