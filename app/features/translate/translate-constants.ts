@@ -17,14 +17,6 @@ export const PRIORITY_NAMESPACES: readonly string[] = [
 	"forms",
 ];
 
-/** Generated from game data, not translated by hand */
-export const GENERATED_NAMESPACES = [
-	"weapons",
-	"gear",
-	"game-badges",
-	"game-misc",
-] as const;
-
 export const TRANSLATABLE_LANGUAGES = languages
 	.map((language) => language.code)
 	.filter(

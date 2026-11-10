@@ -7,6 +7,7 @@ import * as TranslationSyntax from "../app/features/translate/core/TranslationSy
 import {
 	DEFAULT_LANGUAGE,
 	gameLanguages,
+	isGameNamespace,
 	languageChain,
 	languages,
 } from "../app/modules/i18n/config.ts";
@@ -61,7 +62,7 @@ for (const file of fileNames) {
 	const key = file.replace(".json", "");
 	const englishContentKeys = getKeysWithoutSuffix(englishContent, "en", file);
 
-	if (file !== "gear.json" && file !== "weapons.json") {
+	if (!isGameNamespace(key)) {
 		totalTranslationCounts[key] = englishContentKeys.length;
 	}
 
@@ -107,7 +108,7 @@ for (const file of fileNames) {
 			(missingKey) => !translatedKeys.has(missingKey),
 		);
 
-		if (key === "weapons" || key === "gear") {
+		if (isGameNamespace(key)) {
 			if (missingKeys.length > 0) {
 				throw new Error(`missing keys in ${lang}/${file}`);
 			}
@@ -299,7 +300,7 @@ function MDOverviewTable({
 		0,
 	);
 	const relevantFiles = fileNames.filter(
-		(name) => name !== "weapons.json" && name !== "gear.json",
+		(name) => !isGameNamespace(name.replace(".json", "")),
 	);
 
 	const rows: string[] = [];

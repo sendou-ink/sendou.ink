@@ -1,8 +1,7 @@
 import * as R from "remeda";
-import { languageChain } from "~/modules/i18n/config";
+import { isGameNamespace, languageChain } from "~/modules/i18n/config";
 import { resources } from "~/modules/i18n/resources.server";
 import {
-	GENERATED_NAMESPACES,
 	PRIORITY_NAMESPACES,
 	TRANSLATABLE_LANGUAGES,
 	type TranslatableLanguage,
@@ -50,7 +49,7 @@ export function english(): TranslationUnits.Translations {
 	englishCache ??= Object.fromEntries(
 		R.sortBy(
 			Object.entries(allTranslations.en).filter(
-				([namespace]) => !isGenerated(namespace),
+				([namespace]) => !isGameNamespace(namespace),
 			),
 			([namespace]) => namespacePriority(namespace),
 			([namespace]) => namespace,
@@ -69,7 +68,7 @@ export function translations(
 ): TranslationUnits.Translations {
 	let cached = translationsCache.get(language);
 	if (!cached) {
-		const own = withoutGenerated(allTranslations[language] ?? {});
+		const own = withoutGameNamespaces(allTranslations[language] ?? {});
 		const inheritedTranslations = inherited(language);
 		cached = R.mapValues(
 			{ ...inheritedTranslations, ...own },
@@ -107,14 +106,12 @@ function namespacePriority(namespace: string) {
 	return index === -1 ? PRIORITY_NAMESPACES.length : index;
 }
 
-function isGenerated(namespace: string) {
-	return GENERATED_NAMESPACES.some((generated) => generated === namespace);
-}
-
-function withoutGenerated(languageTranslations: TranslationUnits.Translations) {
+function withoutGameNamespaces(
+	languageTranslations: TranslationUnits.Translations,
+) {
 	return Object.fromEntries(
 		Object.entries(languageTranslations).filter(
-			([namespace]) => !isGenerated(namespace),
+			([namespace]) => !isGameNamespace(namespace),
 		),
 	);
 }

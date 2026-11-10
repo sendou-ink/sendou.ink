@@ -59,16 +59,6 @@ describe("TranslationUnits.fromEnglish", () => {
 			"MAIN_0",
 		]);
 	});
-
-	test("skips excluded namespaces", () => {
-		const units = TranslationUnits.fromEnglish({
-			english,
-			language: "de",
-			excludedNamespaces: ["weapons"],
-		});
-
-		expect(units.some((unit) => unit.namespace === "weapons")).toBe(false);
-	});
 });
 
 describe("TranslationUnits.progress", () => {

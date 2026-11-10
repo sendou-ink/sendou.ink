@@ -4,9 +4,10 @@ import {
 	config,
 	DEFAULT_LANGUAGE,
 	type GameLanguageCode,
+	isGameNamespace,
 	languageChain,
 } from "./config";
-import { isGameNamespace, localeFileUrl } from "./locale-files";
+import { localeFileUrl } from "./locale-files";
 
 let gameLanguage: GameLanguageCode = DEFAULT_LANGUAGE;
 const gameTranslationsCache = new Map<

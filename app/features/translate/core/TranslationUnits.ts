@@ -44,11 +44,9 @@ export type TranslationUnit = {
 export function fromEnglish({
 	english,
 	language,
-	excludedNamespaces = [],
 }: {
 	english: Translations;
 	language: string;
-	excludedNamespaces?: readonly string[];
 }): TranslationUnit[] {
 	const pluralCategories = new Intl.PluralRules(language).resolvedOptions()
 		.pluralCategories;
@@ -56,8 +54,6 @@ export function fromEnglish({
 	const result: TranslationUnit[] = [];
 
 	for (const [namespace, keys] of Object.entries(english)) {
-		if (excludedNamespaces.includes(namespace)) continue;
-
 		const handledPluralIds = new Set<string>();
 
 		for (const [key, source] of Object.entries(keys)) {

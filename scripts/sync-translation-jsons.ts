@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 import * as TranslationUnits from "../app/features/translate/core/TranslationUnits.ts";
 import {
 	DEFAULT_LANGUAGE,
-	GAME_NAMESPACES,
 	gameLanguages,
+	isGameNamespace,
 	languageChain,
 	languages,
 } from "../app/modules/i18n/config.ts";
@@ -30,7 +30,6 @@ type Translations = Record<string, string>;
 
 const englishFiles = jsonFiles(DEFAULT_LANGUAGE);
 const siteLanguageCodes = new Set<string>(languages.map((lang) => lang.code));
-const gameNamespaces = new Set<string>(GAME_NAMESPACES);
 
 // parents before their variants, which are compared against the already synced parent
 const languagesToSync = gameLanguages
@@ -112,7 +111,7 @@ function isIncluded(language: string, file: string) {
 
 	return (
 		siteLanguageCodes.has(language) ||
-		gameNamespaces.has(file.replace(".json", ""))
+		isGameNamespace(file.replace(".json", ""))
 	);
 }
 

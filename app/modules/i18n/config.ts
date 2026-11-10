@@ -168,6 +168,11 @@ export const GAME_NAMESPACES = [
 	"weapons",
 ] as const;
 
+/** Whether the namespace holds in-game names, which are shown in the game language */
+export function isGameNamespace(namespace: string) {
+	return GAME_NAMESPACES.some((gameNamespace) => gameNamespace === namespace);
+}
+
 /** Regional variants that only hold what differs from the language they fall back to */
 const PARENT_LANGUAGES: Partial<Record<GameLanguageCode, GameLanguageCode>> = {
 	"es-US": "es-ES",

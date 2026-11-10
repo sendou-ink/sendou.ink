@@ -1,6 +1,6 @@
 import {
-	GAME_NAMESPACES,
 	type GameLanguageCode,
+	isGameNamespace,
 	type LanguageCode,
 	languageChain,
 } from "./config";
@@ -19,11 +19,6 @@ export function localeFileUrl(
 	return (
 		localeFileUrls[`../../../locales/${language}/${namespace}.json`] ?? null
 	);
-}
-
-/** Whether the namespace holds in-game names, which are shown in the game language */
-export function isGameNamespace(namespace: string) {
-	return GAME_NAMESPACES.some((gameNamespace) => gameNamespace === namespace);
 }
 
 /** Languages whose files make up the namespace's translations, most specific first */
