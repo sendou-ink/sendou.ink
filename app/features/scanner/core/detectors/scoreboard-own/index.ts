@@ -67,6 +67,12 @@ export const SCOREBOARD_OWN_EVENT_TYPE = "ScoreboardOwn";
 
 /** Snapped weapon reading below this is reported as null (kept in debug). */
 const WEAPON_MIN_SCORE = 0.55;
+/**
+ * A badge scoring under this is covered (a streamer's chat box over the gear
+ * cards reads ~0.2, clean badges 0.45+): it reads UNKNOWN and is left out of
+ * the confidence, so the header still carries the read.
+ */
+const ABILITY_MIN_SCORE = 0.35;
 
 interface WeaponCandidate {
 	text: string;
@@ -228,9 +234,13 @@ export function createScoreboardOwnDetector(
 			const ids: AbilityWithUnknown[] = [];
 			const debug: (WeaponMatch | null)[] = [];
 			for (const match of matches) {
-				ids.push(toAbilityWithUnknown(match.id) ?? "UNKNOWN");
 				debug.push(match);
-				confidences.push(Math.max(0, match.score));
+				if (match.score < ABILITY_MIN_SCORE) {
+					ids.push("UNKNOWN");
+					continue;
+				}
+				ids.push(toAbilityWithUnknown(match.id) ?? "UNKNOWN");
+				confidences.push(match.score);
 			}
 			abilityRows.push(ids);
 			abilityDebug.push(debug);

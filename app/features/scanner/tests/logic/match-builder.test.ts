@@ -691,12 +691,19 @@ const OWN_BUILD: AbilityWithUnknown[][] = [
 	["SJ", "SSU", "SSU", "IRU"],
 ];
 
-function ownResults(t: number): DetectedEvent {
+function ownResults(
+	t: number,
+	{
+		lobby = "PRIVATE" as ScoreboardOwnData["lobby"],
+		stage = 0 as StageId | null,
+		weaponId = 40 as MainWeaponId | null,
+	} = {},
+): DetectedEvent {
 	const data: ScoreboardOwnData = {
-		lobby: "PRIVATE",
+		lobby,
 		mode: "SZ",
-		stage: 0,
-		weaponId: 40,
+		stage,
+		weaponId,
 		abilities: OWN_BUILD,
 	};
 	return { type: "ScoreboardOwn", t, confidence: 0.9, data };
@@ -710,6 +717,52 @@ test("the personal results screen completes the POV player's build", () => {
 	]);
 	assert.deepEqual(built!.match.teams[1].players[1]!.abilities, OWN_BUILD);
 	assert.equal(built!.sources.length, 3);
+});
+
+test("a personal results screen shown before the results screen completes the POV player's build", () => {
+	const [built] = buildScannerMatches([
+		mapStart(0),
+		ownResults(300),
+		scoreboard(320, { povIndex: 5 }),
+	]);
+	assert.deepEqual(built!.match.teams[1].players[1]!.abilities, OWN_BUILD);
+	assert.equal(built!.sources.length, 3);
+});
+
+test("a personal results screen with no results screen after it names the game's lobby and stage", () => {
+	const built = buildScannerMatches([
+		mapStart(0, { stage: null }),
+		...counterReads(10, 200),
+		ownResults(230, { lobby: "SERIES", stage: 3 }),
+	]);
+	assert.equal(built.length, 1);
+	assert.equal(built[0]!.match.lobby, "SERIES");
+	assert.equal(built[0]!.match.mode, "SZ");
+	assert.equal(built[0]!.match.stage, 3);
+	assert.equal(built[0]!.sources.at(-1)!.type, "ScoreboardOwn");
+});
+
+test("a personal results screen backs a game with neither intro nor map read", () => {
+	const built = buildScannerMatches([
+		...counterReads(10, 200),
+		ownResults(230, { lobby: "X" }),
+	]);
+	assert.equal(built.length, 1);
+	assert.equal(built[0]!.match.lobby, "X");
+	assert.equal(built[0]!.match.startsAt, 10);
+	assert.equal(built[0]!.match.endsAt, 230);
+});
+
+test("a minimap-grouped match puts the personal results' weapon and build on the POV's card", () => {
+	const [built] = buildScannerMatches([
+		mapStart(0),
+		povMinimapWithHiddenCards(60),
+		...counterReads(70, 200),
+		ownResults(230, { weaponId: ALPHA[3]! }),
+	]);
+	const pov = built!.match.teams[0].players[3]!;
+	assert.equal(pov.weaponId, ALPHA[3]);
+	assert.deepEqual(pov.abilities, OWN_BUILD);
 });
 
 test("a personal results screen long after the scoreboard is left alone", () => {
@@ -2706,6 +2759,66 @@ test("unbacked matches without kill reads are not emitted", () => {
 		unbacked: true,
 	});
 	assert.deepEqual(built, []);
+});
+
+test("the personal results' weapon seats the POV, so an unread teammate takes the other strip slot", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		povMinimapWithHiddenCards(60),
+		...[90, 120, 150, 180].map((t) => stripWeaponsEvent(t, STRIP_SEATING)),
+		ownResults(230, { weaponId: ALPHA[3]! }),
+	]);
+	assert.deepEqual(weapons(built[0]!.match), ALL);
+});
+
+// the hidden ally's slot (STRIP_SEATING slot 0) reads two kits of one weapon close together
+function kitTieStripRead(
+	t: number,
+	leader: MainWeaponId,
+	runnerUp: MainWeaponId,
+): DetectedEvent {
+	const event = stripWeaponsEvent(t, STRIP_SEATING);
+	const data = event.data as StripWeaponsData;
+	data.slots[0][0] = [
+		{ weaponId: leader, score: 0.9 },
+		{ weaponId: runnerUp, score: 0.85 },
+		{ weaponId: 7010 as MainWeaponId, score: FLOOR_SCORE },
+	];
+	return event;
+}
+
+function hiddenAllyKitTieGame(
+	reads: [MainWeaponId, MainWeaponId][],
+): DetectedEvent[] {
+	return [
+		mapStart(0),
+		povMinimapWithHiddenCards(60),
+		...reads.map(([leader, runnerUp], i) =>
+			kitTieStripRead(90 + i * 10, leader, runnerUp),
+		),
+		ownResults(230, { weaponId: ALPHA[3]! }),
+	];
+}
+
+test("an unread card takes the kit its strip slot ranks first read after read", () => {
+	const [built] = buildScannerMatches(
+		hiddenAllyKitTieGame(Array(6).fill([1001, 1000])),
+	);
+	assert.equal(built!.match.teams[0].players[1]!.weaponId, 1001);
+});
+
+test("an unread card whose strip slot splits between two kits takes the base weapon", () => {
+	const [built] = buildScannerMatches(
+		hiddenAllyKitTieGame([
+			[1001, 1000],
+			[1000, 1001],
+			[1001, 1000],
+			[1000, 1001],
+			[1001, 1000],
+			[1000, 1001],
+		]),
+	);
+	assert.equal(built!.match.teams[0].players[1]!.weaponId, 1000);
 });
 
 function counterReads(from: number, to: number): DetectedEvent[] {

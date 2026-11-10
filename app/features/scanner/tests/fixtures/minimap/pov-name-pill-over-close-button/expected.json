@@ -1,0 +1,45 @@
+{
+	"event": "Minimap",
+	"data": {
+		"stage": 3,
+		"stageLabel": "Undertow Spillway",
+		"spectator": false,
+		"teammates": [
+			{
+				"self": false,
+				"name": "こなみ",
+				"dead": false
+			},
+			{
+				"self": false,
+				"dead": false
+			},
+			{
+				"self": false,
+				"name": "*ももたんとーん*",
+				"dead": false
+			},
+			{
+				"self": true,
+				"dead": false
+			}
+		],
+		"enemies": [
+			{
+				"dead": false
+			},
+			{
+				"dead": false
+			},
+			{
+				"dead": false
+			},
+			{
+				"dead": false
+			}
+		]
+	},
+	"options": {
+		"notes": "BlueChara VoD [XHXYlzu4Zt8] at t=983.5, the map opened early in an Anarchy Series game. The streamer's white name pill (\"Agaric (6 ft 2)\") in the top-left corner covers the top of the close-button disc: its top gap probe reads 245 and the ring probe above it 184, against the 85 dark ceiling. Every other probe passes. The pill comes and goes during the stream, and with it the gate missed every map screen of the Series games. The left teammate's name (チコミAngelic) misreads and the self card sits under the streamer's avatar, so neither name is asserted."
+	}
+}

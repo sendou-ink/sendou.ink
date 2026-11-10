@@ -185,6 +185,8 @@ export const PRESENCE_MIN_LAPLACIAN = 8;
 /**
  * Close-button gate: white ✕ on a dark disc (center (110,92) ±4px). Bright
  * probes trace crossing + arms, dark probes the cardinal gaps, so a blob fails.
+ * The top gap and the top ring probe come first: the gate lets both be
+ * covered together (a streamer's name pill in the corner).
  */
 export const GATE_CLOSE_X_BRIGHT: readonly Roi[] = [
 	{ x: 104, y: 88, w: 12, h: 10 },

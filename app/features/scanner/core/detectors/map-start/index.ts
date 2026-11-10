@@ -63,6 +63,13 @@ export const MAP_START_EVENT_TYPE = "MapStart";
 const LABEL_MIN_SCORE = 0.5;
 /** Accept a closed-set match only above this score (1 = exact). */
 const MIN_MATCH_SCORE = 0.62;
+/**
+ * A snapped mode with the stage unread (a streamer's overlay over the stage
+ * line) scores in this range by its mode score: every snapped mode clears the
+ * timeline floor (0.6), so the intro still opens its game, and a frame that
+ * reads the stage too outranks it.
+ */
+const MODE_ONLY_CONFIDENCE = { min: 0.6, max: 0.7 };
 
 interface LineBand {
 	y0: number;
@@ -361,9 +368,10 @@ export function createMapStartDetector(
 			{
 				type: MAP_START_EVENT_TYPE,
 				t,
-				// mean, so a clean mode read survives an unreadable stage (map-start is
-				// the only mode source for VoD matches)
-				confidence: (modeScore + stageScore) / 2,
+				confidence:
+					stage === null && mode !== null
+						? modeOnlyConfidence(modeScore)
+						: (modeScore + stageScore) / 2,
 				data: { mode, stage },
 				debug: {
 					label: label?.text,
@@ -386,4 +394,11 @@ export function createMapStartDetector(
 			runSync(parseSteps(frame, t, gateResult, false)),
 		parseSteps,
 	};
+}
+
+function modeOnlyConfidence(modeScore: number): number {
+	const { min, max } = MODE_ONLY_CONFIDENCE;
+	return (
+		min + ((max - min) * (modeScore - MIN_MATCH_SCORE)) / (1 - MIN_MATCH_SCORE)
+	);
 }

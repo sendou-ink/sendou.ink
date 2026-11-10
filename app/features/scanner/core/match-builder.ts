@@ -4,8 +4,8 @@
  * closes one, and deaths in between belong to it; a scoreboard with no
  * preceding MapStart claims the last 8 minutes of deaths. Without delimiters
  * (casted footage) minimaps group per map by stage change and time gap. A
- * match is emitted only when a scoreboard or minimaps back it, regardless of
- * lobby/outcome — `ingestSkipReasons` filters those (the clip scorer alone
+ * match is emitted only when a scoreboard, a personal results screen,
+ * minimaps or a played counter back it, regardless of lobby/outcome — `ingestSkipReasons` filters those (the clip scorer alone
  * asks for the unbacked ones too). Deaths are harvested
  * onto player rows as enemy builds (ability-harvest.ts).
  */
@@ -15,6 +15,7 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
+import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import { isUploadedLobby } from "../scanner-types";
 import {
 	type GearMains,
@@ -239,8 +240,11 @@ export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
 
 /**
  * Splits a timeline into ScannerMatch objects, chronological. A personal
- * results screen identifies no match of its own but completes the POV
- * player's build on the match whose results screen it follows, and the X
+ * results screen joins the game being gathered (matchmade lobbies show it
+ * before the results screen, Anarchy Series often with none after it): its
+ * lobby, mode and stage stand in for a missing results screen's and its build
+ * completes the POV player's. With no game open it completes the match whose
+ * results screen it follows, else claims the counter reads before it. The X
  * Battle lobby cards (shown before that game's results screen) join the
  * sources of the game they report on. A battle
  * history screen showing an already built game (≥6 shared paint totals, stage
@@ -443,8 +447,22 @@ export function buildScannerMatches<E extends DetectedEvent>(
 		} else if (event.type === KILL_EVENT_TYPE) {
 			(open?.kills ?? orphanKills).push(event);
 		} else if (event.type === SCOREBOARD_OWN_EVENT_TYPE) {
-			const completed = withOwnResults(built.at(-1), event);
-			if (completed) built[built.length - 1] = completed;
+			if (!open) {
+				const completed = withOwnResults(built.at(-1), event);
+				if (completed) {
+					built[built.length - 1] = completed;
+					continue;
+				}
+				if (followsMatch(built.at(-1), event)) continue;
+				// a game with no intro or map read ends on it: its reads are still orphans
+				const claimed = claimOrphans(event.t);
+				if (claimed.objectives.length === 0) continue;
+				open = claimed;
+			}
+			// shown before the results screen (if any): the game being gathered
+			// ended on it, and it is the game's only results when none follows
+			open.ownResults ??= event;
+			vote(open.stageVotes, (event.data as ScoreboardOwnData).stage);
 		} else if (X_BATTLE_CARD_EVENT_TYPES.includes(event.type)) {
 			// the lobby shows the cards before the game's results screen, so
 			// they usually join the game still being gathered
@@ -477,25 +495,71 @@ function withOwnResults<E extends DetectedEvent>(
 	event: E,
 ): BuiltMatch<E> | undefined {
 	const pov = last?.match.pov;
-	if (!last || !pov || last.match.endsAt === null) return undefined;
-	if (event.t - last.match.endsAt > OWN_RESULTS_WINDOW_SECONDS)
-		return undefined;
+	if (!last || !pov || !followsMatch(last, event)) return undefined;
 	const data = event.data as ScoreboardOwnData;
-	const team = last.match.teams[pov.team];
-	const player = team.players[pov.index];
+	const player = last.match.teams[pov.team].players[pov.index];
 	if (!player || data.abilities.length === 0) return undefined;
-	const teams = [...last.match.teams] as ScannerMatch["teams"];
-	teams[pov.team] = {
+	return {
+		match: {
+			...last.match,
+			teams: withOwnBuild(last.match.teams, pov, data),
+		},
+		sources: [...last.sources, event],
+	};
+}
+
+/** Whether a personal results screen is seen soon enough after the match closed to belong to it. */
+function followsMatch<E extends DetectedEvent>(
+	last: BuiltMatch<E> | undefined,
+	event: E,
+): boolean {
+	return (
+		last !== undefined &&
+		last.match.endsAt !== null &&
+		event.t - last.match.endsAt <= OWN_RESULTS_WINDOW_SECONDS
+	);
+}
+
+function withOwnBuildOn(
+	teams: ScannerMatch["teams"],
+	pov: { team: 0 | 1; index: number } | null,
+	own: ScoreboardOwnData | undefined,
+): ScannerMatch["teams"] {
+	return own && pov ? withOwnBuild(teams, pov, own) : teams;
+}
+
+/**
+ * The POV row with the personal results screen's build (a gear card a
+ * streamer's overlay covered keeps what the row had) and, when the row's
+ * weapon is unread, its weapon.
+ */
+function withOwnBuild(
+	teams: ScannerMatch["teams"],
+	pov: { team: 0 | 1; index: number },
+	own: ScoreboardOwnData,
+): ScannerMatch["teams"] {
+	const team = teams[pov.team];
+	const player = team.players[pov.index];
+	if (!player) return teams;
+	const abilities =
+		own.abilities.length === 0
+			? player.abilities
+			: own.abilities.map((row, slot) =>
+					row.every((ability) => ability === "UNKNOWN") &&
+					player.abilities?.[slot]
+						? player.abilities[slot]!
+						: row,
+				);
+	const result = [...teams] as ScannerMatch["teams"];
+	result[pov.team] = {
 		...team,
 		players: team.players.with(pov.index, {
 			...player,
-			abilities: data.abilities,
+			weaponId: player.weaponId ?? own.weaponId,
+			...(abilities ? { abilities } : null),
 		}),
 	};
-	return {
-		match: { ...last.match, teams },
-		sources: [...last.sources, event],
-	};
+	return result;
 }
 
 /**
@@ -751,6 +815,8 @@ interface OpenMatch<E extends DetectedEvent> {
 	kills: E[];
 	/** X Battle lobby cards reporting on this game; ride along in its sources */
 	xBattleCards: E[];
+	/** the personal results screen, when shown before any results screen closed the game */
+	ownResults: E | null;
 	/** the board a replay was played back from, or the results screen that closed the game */
 	scoreboard: E | null;
 	/** history screens showing the game again; ride along in its sources */
@@ -767,6 +833,7 @@ interface OpenMatch<E extends DetectedEvent> {
 function isBacked<E extends DetectedEvent>(open: OpenMatch<E>): boolean {
 	return (
 		open.scoreboard !== null ||
+		open.ownResults !== null ||
 		open.minimaps.length > 0 ||
 		hasPlayedCounter(open)
 	);
@@ -795,6 +862,7 @@ function startMatch<E extends DetectedEvent>(): OpenMatch<E> {
 		stripWeapons: [],
 		kills: [],
 		xBattleCards: [],
+		ownResults: null,
 		scoreboard: null,
 		revisits: [],
 		stageVotes: new Map(),
@@ -873,6 +941,7 @@ function openMatchInputs<E extends DetectedEvent>(open: OpenMatch<E>): E[] {
 		...open.stripWeapons,
 		...open.kills,
 		...open.xBattleCards,
+		...(open.ownResults ? [open.ownResults] : []),
 		...(open.scoreboard ? [open.scoreboard] : []),
 		...open.revisits,
 	];
@@ -907,6 +976,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 
 	const board = open.scoreboard?.data as ScoreboardData | undefined;
 	const start = open.mapStart?.data as MapStartData | undefined;
+	const own = open.ownResults?.data as ScoreboardOwnData | undefined;
 	const deaths = open.deaths.map((event) => event.data as DeathData);
 	const objectives = open.objectives.map((event) => ({
 		t: event.t,
@@ -929,11 +999,18 @@ function toBuiltMatch<E extends DetectedEvent>(
 		data: event.data as KillData,
 	}));
 	const minimaps = minimapReads.map((read) => read.data);
+	// without a results screen the minimap's own card is the POV's row, and
+	// its personal results' weapon seats it before the strip evidence does
+	const selfIndex = board ? null : minimapSelfIndex(minimaps);
 	const minimapTeams = board
 		? null
-		: teamsFromMinimaps(mostConfidentFirst(open.minimaps), deaths);
+		: withOwnBuildOn(
+				teamsFromMinimaps(mostConfidentFirst(open.minimaps), deaths),
+				selfIndex === null ? null : { team: 0, index: selfIndex },
+				own,
+			);
 
-	const mode = matchMode(board?.mode ?? null, start?.mode ?? null);
+	const mode = matchMode(board?.mode ?? own?.mode ?? null, start?.mode ?? null);
 	// reads of the overlay the mode doesn't draw are lookalike misreads; the
 	// icon strip, minimap card states and the kill feed are drawn in every mode
 	const counterKind = matchCounterKind(
@@ -983,9 +1060,14 @@ function toBuiltMatch<E extends DetectedEvent>(
 		playedAt: playedAt(open.scoreboard),
 		// only X Battle shows its lobby cards: they tell a game whose results
 		// screen was missed (or its header unread) apart from other lobbies
-		lobby: board?.lobby ?? (open.xBattleCards.length > 0 ? "X" : null),
+		lobby:
+			board?.lobby ?? own?.lobby ?? (open.xBattleCards.length > 0 ? "X" : null),
 		mode,
-		stage: board?.stage ?? start?.stage ?? leadingStage(open.stageVotes),
+		stage:
+			board?.stage ??
+			start?.stage ??
+			own?.stage ??
+			leadingStage(open.stageVotes),
 		matchScores: board?.matchScores.some((score) => score !== null)
 			? board.matchScores
 			: null,
@@ -1002,7 +1084,16 @@ function toBuiltMatch<E extends DetectedEvent>(
 		playerStatus: progress.playerStatus,
 		kills: progress.kills,
 		teams: board
-			? teamsFromScoreboard(board, deaths, minimaps, progress.minimapEnemySide)
+			? withOwnBuildOn(
+					teamsFromScoreboard(
+						board,
+						deaths,
+						minimaps,
+						progress.minimapEnemySide,
+					),
+					pov,
+					own,
+				)
 			: withRowWeapons(minimapTeams!, progress.rowWeapons),
 		winner: board ? 0 : null,
 		pov,
@@ -1356,11 +1447,19 @@ const KILL_STRIP_DELAY_SECONDS = 1;
 
 /**
  * A strip slot's summed votes must reach this to name an unread row's weapon
- * (a handful of reads; a game's worth runs 10+), and lead the runner-up by
- * this factor: siblings split a slot's votes, a near split names neither.
+ * (a handful of reads; a game's worth runs 10+), and lead the best other
+ * weapon by this factor: siblings split a slot's votes, a near split names
+ * neither.
  */
 const MIN_STRIP_FILL_VOTE = 1;
 const STRIP_FILL_LEAD = 1.5;
+/**
+ * Two kits of one weapon both score high on every read (they share the
+ * render), so summed votes barely separate them. The kit the slot ranks first
+ * on at least this share of the reads ranking both is named; a closer split
+ * names the base weapon.
+ */
+const KIT_HEAD_TO_HEAD_SHARE = 0.75;
 
 /** What slotRowEvidence reads: the match's sources plus the rows (scoreboard or minimap) they are matched to. */
 interface SlotRowInputs {
@@ -1545,8 +1644,10 @@ function slotRowEvidence({
  * hidden under a streamer's overlay, the POV's own), off the strip slot the
  * identity evidence places at each such row: the slot's StripWeapons votes
  * (each read's score over its candidate floor) summed per weapon, taken when
- * they clearly lead (MIN_STRIP_FILL_VOTE, STRIP_FILL_LEAD). Rows the evidence
- * leaves open, and rows a card named, stay as they are.
+ * they clearly lead every other weapon (MIN_STRIP_FILL_VOTE, STRIP_FILL_LEAD).
+ * Between kits of that weapon, the one ranked above the other read by read
+ * (KIT_HEAD_TO_HEAD_SHARE), else the base weapon. Rows the evidence leaves
+ * open, and rows a card named, stay as they are.
  */
 function stripFilledRowWeapons(inputs: SlotRowInputs): (MainWeaponId | null)[] {
 	const evidence = slotRowEvidence(inputs);
@@ -1568,6 +1669,7 @@ function stripVoteWinner(
 	slot: number,
 ): MainWeaponId | null {
 	const votes = new Map<MainWeaponId, number>();
+	const rankings: MainWeaponId[][] = [];
 	for (const read of stripWeapons) {
 		const candidates =
 			read.data.slots[stripSourceSide(live, swapFlags, swap, read.t, side)][
@@ -1578,11 +1680,40 @@ function stripVoteWinner(
 		for (const { weaponId, score } of candidates) {
 			votes.set(weaponId, (votes.get(weaponId) ?? 0) + score - floor);
 		}
+		rankings.push(candidates.map((candidate) => candidate.weaponId));
 	}
-	const [first, second] = [...votes.entries()].sort((a, b) => b[1] - a[1]);
+	const ranked = [...votes.entries()].sort((a, b) => b[1] - a[1]);
+	const [first] = ranked;
 	if (!first || first[1] < MIN_STRIP_FILL_VOTE) return null;
-	if (second && first[1] < STRIP_FILL_LEAD * second[1]) return null;
-	return first[0];
+	const base = weaponIdToBaseWeaponId(first[0]);
+	const isKit = ([weaponId]: [MainWeaponId, number]) =>
+		weaponIdToBaseWeaponId(weaponId) === base;
+	const rival = ranked.find((entry) => !isKit(entry));
+	if (rival && first[1] < STRIP_FILL_LEAD * rival[1]) return null;
+	const kit = ranked.find((entry) => entry !== first && isKit(entry));
+	if (!kit || first[1] >= STRIP_FILL_LEAD * kit[1]) return first[0];
+	return headToHeadKit(rankings, first[0], kit[0]) ?? base;
+}
+
+/** The kit ranked above the other on at least KIT_HEAD_TO_HEAD_SHARE of the reads ranking both; null on a closer split. */
+function headToHeadKit(
+	rankings: readonly MainWeaponId[][],
+	a: MainWeaponId,
+	b: MainWeaponId,
+): MainWeaponId | null {
+	let aAhead = 0;
+	let both = 0;
+	for (const ranking of rankings) {
+		const aRank = ranking.indexOf(a);
+		const bRank = ranking.indexOf(b);
+		if (aRank === -1 || bRank === -1) continue;
+		both++;
+		if (aRank < bRank) aAhead++;
+	}
+	if (both === 0) return null;
+	if (aAhead / both >= KIT_HEAD_TO_HEAD_SHARE) return a;
+	if ((both - aAhead) / both >= KIT_HEAD_TO_HEAD_SHARE) return b;
+	return null;
 }
 
 /** The strip side a read draws `teams` side `side` on (casts follow the specced player). */

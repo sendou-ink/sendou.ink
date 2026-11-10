@@ -41,12 +41,16 @@ export const OWN_ABILITY_ART_RATIO = 1.0;
 /** Badges sit on a light-gray strip (~140-155); 170 keeps it out while art clears on max channel. */
 export const OWN_ABILITY_INK_THRESHOLD = 170;
 
-/** Gate probes on uniform dark panel (~35, edge ~54), dodging banner/medals/cards. */
+/**
+ * Gate probes on uniform dark panel (~35, edge ~54), dodging banner/medals/cards.
+ * The bottom one sits under the clothes card, left of where a streamer's chat
+ * box covers the bottom-right corner.
+ */
 export const GATE_PANEL_PROBES: readonly Roi[] = [
 	{ x: 860, y: 245, w: 30, h: 20 },
 	{ x: 1690, y: 395, w: 30, h: 20 },
 	{ x: 875, y: 695, w: 30, h: 20 },
-	{ x: 1400, y: 985, w: 30, h: 20 },
+	{ x: 1180, y: 985, w: 30, h: 20 },
 ];
 export const GATE_PANEL_MAX_MEAN = 65;
 

@@ -1,0 +1,10 @@
+{
+  "event": "MapStart",
+  "data": {
+    "mode": "TC",
+    "stage": null
+  },
+  "options": {
+    "notes": "BlueChara VoD [XHXYlzu4Zt8] at t=3709, the intro of an X Battle game on Scorch Gorge. The streamer's chat box covers the stage name. The bright desert leaks around the title, which reads \"Toweij rrControl\" (0.8) at best over the intro's frames; scaled down with the stage unread it fell under the timeline's 0.6 floor, and the game merged into the next one on the same stage."
+  }
+}

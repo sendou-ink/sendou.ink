@@ -12,6 +12,7 @@ import {
 } from "../core/detectors/map-start/index";
 import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
+import { TimelineBuilder } from "../core/timeline/index";
 import {
 	fieldTestOptions,
 	loadFixtures,
@@ -54,6 +55,15 @@ for (const fixture of fixtures) {
 				: "no event (gate did not fire)",
 		);
 		const expected = fixture.expected.data ?? {};
+
+		await t.test("clears the timeline's confidence floor", () => {
+			const { action } = new TimelineBuilder().push(event);
+			assert.notEqual(
+				action,
+				"dropped",
+				`confidence ${event.confidence.toFixed(3)} is under the floor`,
+			);
+		});
 
 		await t.test(
 			"mode",

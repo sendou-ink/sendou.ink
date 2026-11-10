@@ -1,0 +1,12 @@
+{
+  "event": "ScoreboardOwn",
+  "data": {
+    "lobby": "SERIES",
+    "mode": "SZ",
+    "stage": 3,
+    "stageLabel": "Undertow Spillway"
+  },
+  "options": {
+    "notes": "BlueChara VoD [XHXYlzu4Zt8] at t=883, the personal results of an Anarchy Series game. The streamer's chat box covers the bottom-right corner (the old bottom panel probe at x=1400 read 156 against the 65 ceiling) and most of the clothes and shoes cards. The covered badges score ~0.2 and read UNKNOWN. The weapon card title (Heavy Edit Splatling Nouveau, condensed) does not read, so weaponId is not asserted."
+  }
+}

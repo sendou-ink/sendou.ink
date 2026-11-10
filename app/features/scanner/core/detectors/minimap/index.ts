@@ -305,22 +305,37 @@ export function createMinimapDetector(
 		};
 	}
 
-	/** POV overlay chrome: close-button disc + Spawn Point pill. */
+	/**
+	 * POV overlay chrome: close-button disc + Spawn Point pill. The disc's top
+	 * (its top gap and the ring above it) may be covered, as a streamer's name
+	 * pill in the corner does, when the rest of the disc and ring hold.
+	 */
 	function overlayGate(gray: Mat): GateResult {
+		const isDark = (roi: Roi) =>
+			meanBrightness(gray, roi) <= GATE_DARK_MAX_MEAN;
+		const [topGap, ...otherGaps] = GATE_CLOSE_X_DARK;
+		const [topRing, ...otherRing] = GATE_CLOSE_DARK_PROBES;
 		const chrome = probeGate(
 			gray,
 			[...GATE_CLOSE_X_DARK, ...GATE_SPAWN_DARK_PROBES],
 			[...GATE_CLOSE_X_BRIGHT, GATE_SPAWN_BRIGHT],
 		);
-		const darkRing = GATE_CLOSE_DARK_PROBES.filter(
-			(roi) => meanBrightness(gray, roi) <= GATE_DARK_MAX_MEAN,
-		).length;
+		const darkRing = GATE_CLOSE_DARK_PROBES.filter(isDark).length;
+		const score = (chrome.score + darkRing / GATE_CLOSE_DARK_PROBES.length) / 2;
+		if (!isDark(topGap!) && !isDark(topRing!)) {
+			const uncovered = probeGate(
+				gray,
+				[...otherGaps, ...GATE_SPAWN_DARK_PROBES],
+				[...GATE_CLOSE_X_BRIGHT, GATE_SPAWN_BRIGHT],
+			);
+			return { pass: uncovered.pass && otherRing.every(isDark), score };
+		}
 		return {
 			pass:
 				chrome.pass &&
 				darkRing >=
 					GATE_CLOSE_DARK_PROBES.length - GATE_CLOSE_RING_MAX_BRIGHT_PROBES,
-			score: (chrome.score + darkRing / GATE_CLOSE_DARK_PROBES.length) / 2,
+			score,
 		};
 	}
 

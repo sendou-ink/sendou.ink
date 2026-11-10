@@ -1,0 +1,10 @@
+{
+  "event": "MapStart",
+  "data": {
+    "mode": "SZ",
+    "stage": null
+  },
+  "options": {
+    "notes": "BlueChara VoD [XHXYlzu4Zt8] at t=972, the intro of an Anarchy Series game on Undertow Spillway. The streamer's chat box covers the bottom-right corner, stage name included, so only the mode reads. Before the mode-only confidence the read scored (0.9 + 0) / 2 = 0.45, under the timeline's 0.6 floor, and none of the stream's Series games got a card."
+  }
+}

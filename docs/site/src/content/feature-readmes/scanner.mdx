@@ -379,10 +379,16 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   the shapes).
 - `core/match-builder.ts` turns a timeline into `ScannerMatch`es: a MapStart
   opens a match, a scoreboard closes one (claiming the last 8 min of deaths
-  when the intro was missed). A match needs a scoreboard, a minimap or a
-  minute of counter reads after its intro to be kept (the last for footage
-  with neither, e.g. no results screen shown and the map never opened; it
-  has no players, so it is not uploaded). Minimaps group per map by confirmed stage
+  when the intro was missed). A match needs a scoreboard, a personal results
+  screen, a minimap or a minute of counter reads after its intro to be kept
+  (the last for footage with neither, e.g. no results screen shown and the
+  map never opened; it has no players, so it is not uploaded). Matchmade
+  lobbies show the personal results before the results screen (X Battle:
+  personal results, set card, results screen), and Anarchy Series often
+  shows no results screen at all. So a personal results screen seen while a
+  game is open joins it, and its lobby, mode and stage stand in for a
+  results screen's. With no game open and no match just closed, it claims
+  the counter reads before it the way a scoreboard does. Minimaps group per map by confirmed stage
   change and >5 min gap — an intro's stage outranks minimap reads, so a
   match it opened splits only once no later minimap of that game reads it. A battle history screen (battle log, replay
   browser) showing a game already built — at least 6 paint totals shared
@@ -421,8 +427,11 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   drawn grey, and "No contest." for a score — `noContest`) discards the game
   being gathered, so the replay of that map is its only card. An event belongs to at most one match; deaths
   reveal enemy builds (`ability-harvest.ts`), the personal results screen
-  (`ScoreboardOwn`, seen within `OWN_RESULTS_WINDOW_SECONDS` of a closed
-  match's scoreboard) completes the POV player's full build, and minimap
+  (`ScoreboardOwn`, joined to the open game or seen within
+  `OWN_RESULTS_WINDOW_SECONDS` of a closed match's scoreboard) completes the
+  POV player's full build (on a minimap-grouped match the own card's row,
+  its weapon too when unread; a gear card whose badges all read under the
+  covered floor keeps what the row had), and minimap
   cards contribute everyone else's mains — so a card's Builds section
   covers both teams, each row rendered as far as it was read. Partial matches are fine —
   scanner-ingest merges them server-side. Senders filter with
@@ -531,8 +540,13 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   its rows from the minimap cards; a card left without a weapon (under a
   streamer's overlay, the POV's own) gets the one its strip slot votes for,
   the same evidence placing the slot — only where every near-best
-  assignment agrees on it and the slot's votes clearly lead
-  (`stripFilledRowWeapons`). Strip-weapon fixtures live under
+  assignment agrees on it and the slot's votes clearly lead every other
+  weapon (`stripFilledRowWeapons`). Two kits of that weapon share the render,
+  so both score high on every read and summed votes barely tell them apart:
+  the kit ranked above the other on ≥75% of the reads ranking both is taken,
+  a closer split the base weapon (`weaponIdToBaseWeaponId`). On the
+  XHXYlzu4Zt8 VoD a Custom Range Blaster led its kit 29 reads of 30 but only
+  6.39 to 4.58 on votes. Strip-weapon fixtures live under
   `tests/fixtures/strip-weapons/`. The builder additionally
   flips sub-2s dead-flag runs flanked by dense opposite reads — a splat
   outlasts the respawn wait, so those are misread blips (background ink
@@ -696,6 +710,18 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   layout drawn in perspective (the quick battle log card) additionally
   names a `RECTIFY` quad: its ROIs are in the frame warped by that
   homography, which the debug overlays map back onto the raw frame.
+- Streamer overlays (an avatar or webcam, a chat box, a name pill) sit in
+  the picture's corners, over parts some screens are read by. On the
+  XHXYlzu4Zt8 VoD (avatar bottom-left, chat box bottom-right, a name pill
+  top-left that comes and goes) every Anarchy Series game was lost to them,
+  so: an intro whose stage line is covered scores its mode read alone, in
+  0.6-0.7 (every snapped mode clears the timeline floor, and a frame that
+  reads the stage too outranks it; a bright stage leaks into the title, so
+  even a clear intro can snap at 0.7-0.8); the minimap gate
+  lets the close button's top gap and the ring probe above it be covered
+  together; the personal results' bottom panel probe sits under the clothes
+  card, and its covered ability badges (~0.2, clean ones 0.45+) read
+  UNKNOWN and stay out of its confidence.
 - New event types implement `Detector` (`core/detectors/types.ts`): a cheap
   `gate(mat)` at sample rate plus `parseSteps` (match steps, see "WebGPU")
   when the gate fires, `parse` being `runSync` of it. Register in
