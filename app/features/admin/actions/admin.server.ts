@@ -2,6 +2,7 @@ import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
+import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { requireRole } from "~/modules/permissions/guards.server";
@@ -53,6 +54,31 @@ export const action = defineAction(
 
 					throw err;
 				}
+			}
+			case "CLAIM_PLACEHOLDER": {
+				requireRole("STAFF");
+
+				try {
+					const errorMessage = await AdminRepository.claimPlaceholder({
+						placeholderUserId: body.placeholderUserId,
+						userId: body.user,
+					});
+
+					if (errorMessage) {
+						errorToast(`Claiming failed. Reason: ${errorMessage}`);
+					}
+				} catch (err) {
+					if (errorIsSqliteForeignKeyConstraintFailure(err)) {
+						errorToast("Placeholder has data preventing the claim");
+					}
+
+					throw err;
+				}
+
+				clearAllTournamentDataCache();
+
+				message = "Placeholder claimed";
+				break;
 			}
 			case "REFRESH": {
 				requireRole("ADMIN");
