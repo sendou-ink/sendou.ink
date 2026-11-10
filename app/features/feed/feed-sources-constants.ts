@@ -1,5 +1,69 @@
+import { LFG } from "~/features/lfg/lfg-constants";
+import { tierNumberToName } from "~/features/tournament/core/tiering";
 import type { NavIcon } from "~/utils/urls";
-import type { FeedAudience, FeedItemType } from "./feed-constants";
+import * as FeedLfgMatch from "./core/FeedLfgMatch";
+import {
+	FEED_COMEBACK_MIN_BREAK_DAYS,
+	FEED_FEATURED_RESULT_MAX_TIER,
+	FEED_FEATURED_RESULT_MIN_TEAMS,
+	FEED_FRIENDS_SAVED_FULL_WEIGHT,
+	FEED_ITEM_TYPES,
+	FEED_LEADERBOARD_TOP_COUNT,
+	FEED_LFG_FULL_MATCH_HOURS,
+	FEED_LFG_MIN_MATCH,
+	FEED_LFG_NO_MATCH_HOURS,
+	FEED_LFG_NO_MATCH_TIER_STEPS,
+	FEED_LFG_TIMEZONE_WEIGHT,
+	FEED_MAX_AGE_HALF_LIVES,
+	FEED_RIVALRY_MIN_SETS,
+	FEED_ROTATION_LOOKBACK_WEEKS,
+	FEED_ROTATION_MAX_LISTED,
+	FEED_ROTATION_MIN_WEEKS,
+	FEED_SCRIM_FIT_MAX_DIV_GAP,
+	FEED_SCRIM_HISTORY_DAYS,
+	FEED_SCRIM_LOOKING_NOW_HOURS,
+	FEED_SCRIM_USUAL_OPPONENT_MIN_SCRIMS,
+	FEED_SEASON_COUNTDOWN_DAYS,
+	FEED_SEASON_ENDING_DAYS,
+	FEED_SEASON_ENDING_MAX_SP_SHORT,
+	FEED_SERIES_STANDINGS_DAYS,
+	FEED_SITE_MILESTONE_MIN,
+	FEED_SQ_STREAK_MIN_SETS,
+	FEED_SQ_UPSET_MIN_TIER_STEPS,
+	FEED_TOURNAMENT_UPSET_MIN_SEED_GAP,
+	type FeedAudience,
+	type FeedItemType,
+	SQ_SET_MILESTONES,
+} from "./feed-constants";
+
+const ORDINAL_RULES = new Intl.PluralRules("en", { type: "ordinal" });
+const ORDINAL_SUFFIXES: Partial<Record<Intl.LDMLPluralRule, string>> = {
+	one: "st",
+	two: "nd",
+	few: "rd",
+};
+
+const LFG_SKILL_WEIGHT = 1 - FEED_LFG_TIMEZONE_WEIGHT;
+const LFG_HALF_MATCH_HOURS =
+	(FEED_LFG_FULL_MATCH_HOURS + FEED_LFG_NO_MATCH_HOURS) / 2;
+const LFG_NEVER_SHOWN_HOURS = firstInteger(
+	(hours) =>
+		FEED_LFG_TIMEZONE_WEIGHT * FeedLfgMatch.timezoneScore(hours) +
+			LFG_SKILL_WEIGHT <
+		FEED_LFG_MIN_MATCH,
+);
+const LFG_LEVEL_MAX_TIER_STEPS =
+	firstInteger((steps) => FeedLfgMatch.levelMatch(0, steps) === null) - 1;
+const LFG_BUMPED_DAYS =
+	(FEED_MAX_AGE_HALF_LIVES * FEED_ITEM_TYPES.LFG_PLAYER.halfLifeHours) / 24;
+
+const LFG_EXAMPLE_HOURS = 2;
+const LFG_EXAMPLE_TIER_STEPS = 2;
+const LFG_EXAMPLE_TIMEZONE = FeedLfgMatch.timezoneScore(LFG_EXAMPLE_HOURS);
+const LFG_EXAMPLE_SKILL = FeedLfgMatch.skillScore(LFG_EXAMPLE_TIER_STEPS);
+const LFG_EXAMPLE_MATCH =
+	FEED_LFG_TIMEZONE_WEIGHT * LFG_EXAMPLE_TIMEZONE +
+	LFG_SKILL_WEIGHT * LFG_EXAMPLE_SKILL;
 
 export type FeedSourceAudience = FeedAudience | "ASSOCIATION" | "PLUS_TIER";
 
@@ -49,7 +113,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 		sources: [
 			{
 				item: "SQ_SET",
-				when: "Only sets with a story, never every set. Either a friend ranked up and the new tier is at least their tier last season (getting back to Gold isn't news for someone who's usually Leviathan), or they won against a team at least 2 tiers higher (an upset). Tier promotions are part of this item, not a separate one.",
+				when: `Only sets with a story, never every set. Either a friend ranked up and the new tier is at least their tier last season (getting back to Gold isn't news for someone who's usually Leviathan), or they won against a team at least ${FEED_SQ_UPSET_MIN_TIER_STEPS} tiers higher (an upset). Tier promotions are part of this item, not a separate one.`,
 				example: {
 					actor: "Callie",
 					text: "**Callie** ranked up to **Diamond+** after a SendouQ set win · 4–2",
@@ -57,7 +121,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "SQ_STREAK",
-				when: "A friend wins 5 sets in a row. Updated in place while the streak continues.",
+				when: `A friend wins ${FEED_SQ_STREAK_MIN_SETS} sets in a row. Updated in place while the streak continues.`,
 				example: {
 					actor: "Pearl",
 					text: "**Pearl** is on a **7-set** win streak",
@@ -73,7 +137,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "SQ_MILESTONE",
-				when: "A friend plays their 100th, 250th, 500th or 1000th set.",
+				when: `A friend plays their ${orList(SQ_SET_MILESTONES.map(ordinal))} set.`,
 				example: {
 					actor: "Marina",
 					text: "**Marina** played their **500th** SendouQ set",
@@ -89,7 +153,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "SQ_RIVALRY",
-				when: "You or a friend has played the same opponent 4+ times this season and it's close: the set gap is at most 1, or a fifth of the sets played. One-sided matchups aren't rivalries.",
+				when: `You or a friend has played the same opponent ${FEED_RIVALRY_MIN_SETS}+ times this season and it's close: the set gap is at most 1, or a fifth of the sets played. One-sided matchups aren't rivalries.`,
 				example: {
 					actor: "Callie",
 					text: "**Callie** keeps running into **Frye** · 5–4 in sets",
@@ -97,7 +161,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "SQ_SEASON_START",
-				when: "3 days before a season starts, a countdown. When it starts, another post saying it's on. Replaces the season banner of the old front page.",
+				when: `${FEED_SEASON_COUNTDOWN_DAYS} days before a season starts, a countdown. When it starts, another post saying it's on. Replaces the season banner of the old front page.`,
 				example: {
 					actor: "SendouQ",
 					text: "**SendouQ Season 14** starts Mon, Dec 7, 19:00",
@@ -105,7 +169,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "LEADERBOARD_TOP",
-				when: "Sunday morning, the top 5 players and teams of the season with how much each player's SP moved during the week. Replaces the leaderboards of the old front page.",
+				when: `Sunday morning, the top ${FEED_LEADERBOARD_TOP_COUNT} players and teams of the season with how much each player's SP moved during the week. Replaces the leaderboards of the old front page.`,
 				example: {
 					actor: "Leaderboards",
 					text: "**Top of the SendouQ leaderboard** this week",
@@ -113,7 +177,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "SQ_SEASON_ENDING",
-				when: "3 days before a season ends, to everyone who has played in it: your rank and SP, plus a goal you can still reach (the sets you're short of getting ranked, or the next tier when it's at most 30 SP away).",
+				when: `${FEED_SEASON_ENDING_DAYS} days before a season ends, to everyone who has played in it: your rank and SP, plus a goal you can still reach (the sets you're short of getting ranked, or the next tier when it's at most ${FEED_SEASON_ENDING_MAX_SP_SHORT} SP away).`,
 				example: {
 					actor: "SendouQ",
 					text: "Season 13 ends in **3 days** · 2 more sets to get ranked",
@@ -193,7 +257,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "TO_UPSET",
-				when: "A friend's team pulls off an upset: it beats a team seeded at least 5 places higher. Only wins, never a friend's team being upset. The post says which friend, so it's clear why it's in your feed.",
+				when: `A friend's team pulls off an upset: it beats a team seeded at least ${FEED_TOURNAMENT_UPSET_MIN_SEED_GAP} places higher. Only wins, never a friend's team being upset. The post says which friend, so it's clear why it's in your feed.`,
 				example: {
 					actor: "Callie",
 					text: "**Callie**'s team (seed 10) upset seed 1 at **In The Zone 55**",
@@ -201,7 +265,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "TO_RESULT_FEATURED",
-				when: "The biggest finalized tournament of the last week, for everyone: tier S or better, or 48+ teams. Replaces the results of the old front page.",
+				when: `The biggest finalized tournament of the last week, for everyone: tier ${tierNumberToName(FEED_FEATURED_RESULT_MAX_TIER)} or better, or ${FEED_FEATURED_RESULT_MIN_TEAMS}+ teams. Replaces the results of the old front page.`,
 				example: {
 					actor: "In The Zone 55",
 					text: "**Moonlight** won **In The Zone 55**",
@@ -249,7 +313,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "TO_LFG",
-				when: "A team in the tournament LFG for an upcoming tournament you aren't in is a player short, matched to your level: the same skill signal as the LFG section, your SendouQ tier against the team's median member, shown at a match of at least 0.5 (3 tier steps). Of the teams, the best match × recency of their latest roster change is shown. Weapons aren't matched, for the same reason as LFG posts: shows the team's own message if they wrote one, since there's no way to know which role they need.",
+				when: `A team in the tournament LFG for an upcoming tournament you aren't in is a player short, matched to your level: the same skill signal as the LFG section, your SendouQ tier against the team's median member, shown at a match of at least ${FEED_LFG_MIN_MATCH} (${LFG_LEVEL_MAX_TIER_STEPS} tier steps). Of the teams, the best match × recency of their latest roster change is shown. Weapons aren't matched, for the same reason as LFG posts: shows the team's own message if they wrote one, since there's no way to know which role they need.`,
 				action: "Show interest",
 				example: {
 					actor: "Fresh Season",
@@ -315,7 +379,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "TO_SERIES",
-				when: "After each event in a series with a leaderboard, if you played in it in the last 90 days.",
+				when: `After each event in a series with a leaderboard, if you played in it in the last ${FEED_SERIES_STANDINGS_DAYS} days.`,
 				example: {
 					actor: "Triton",
 					text: "**Triton-Cup** standings, last 90 days · you are #39",
@@ -378,7 +442,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "CALENDAR_FRIENDS_SAVED",
-				when: "Friends saved an upcoming tournament you haven't saved or registered for yourself. The one most of them saved is shown, and the more friends saved it the higher it ranks (full weight at 3).",
+				when: `Friends saved an upcoming tournament you haven't saved or registered for yourself. The one most of them saved is shown, and the more friends saved it the higher it ranks (full weight at ${FEED_FRIENDS_SAVED_FULL_WEIGHT}).`,
 				example: {
 					actor: "Calendar",
 					text: "**3 friends** saved **Milkcup #26**",
@@ -497,12 +561,11 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 		navIcon: "scrims",
 		note: "Associations don't create items of their own. They are used here as an audience: a scrim posted to an association is only shown to its members.",
 		algorithm: {
-			gate: "Only for members of a team, and only posts made by teams (pick-ups aren't shown). Open scrim posts only: a post leaves the feed as soon as a request on it is accepted, and when its start time passes (\"looking now\" posts stay for 3 hours, as on the scrims page). Posts follow the scrims page's visibility, so a post shared only to an association reaches its members only.",
+			gate: `Only for members of a team, and only posts made by teams (pick-ups aren't shown). Open scrim posts only: a post leaves the feed as soon as a request on it is accepted, and when its start time passes ("looking now" posts stay for ${FEED_SCRIM_LOOKING_NOW_HOURS} hours, as on the scrims page). Posts follow the scrims page's visibility, so a post shared only to an association reaches its members only.`,
 			signals: [
 				{
 					name: "Usual opponents",
-					measure:
-						"Teams yours has scrimmed at least twice in the last 3 months, counting accepted scrims that weren't canceled.",
+					measure: `Teams yours has scrimmed at least ${timesWord(FEED_SCRIM_USUAL_OPPONENT_MIN_SCRIMS)} in the last ${FEED_SCRIM_HISTORY_DAYS / 30} months, counting accepted scrims that weren't canceled.`,
 					scoring: "A new post by one of them is always shown.",
 				},
 				{
@@ -512,10 +575,8 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 				},
 				{
 					name: "Fit",
-					measure:
-						"Posts by anyone else, against your team's division (the median LUTI div of its members) and the hours (UTC) your team's scrims of the last 3 months started at.",
-					scoring:
-						"Shown only within 1 division of the post's range and in an hour your team has scrimmed in before. A post without a division range fits any team; a team without LUTI divs only fits those.",
+					measure: `Posts by anyone else, against your team's division (the median LUTI div of its members) and the hours (UTC) your team's scrims of the last ${FEED_SCRIM_HISTORY_DAYS / 30} months started at.`,
+					scoring: `Shown only within ${FEED_SCRIM_FIT_MAX_DIV_GAP} division${FEED_SCRIM_FIT_MAX_DIV_GAP === 1 ? "" : "s"} of the post's range and in an hour your team has scrimmed in before. A post without a division range fits any team; a team without LUTI divs only fits those.`,
 				},
 			],
 			decision:
@@ -545,26 +606,23 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 		name: "LFG",
 		navIcon: "lfg",
 		algorithm: {
-			gate: "Only if you have an LFG post of your own that's under 30 days old, the same window the LFG page shows. You only see posts that answer yours: looking for a team gets teams recruiting, recruiting gets players looking (coaching posts are planned). Posts limited to a Plus tier follow the LFG page's rule, and your own team's posts are skipped. If the posts both list languages, they need one in common.",
+			gate: `Only if you have an LFG post of your own that's under ${LFG.POST_FRESHNESS_DAYS} days old, the same window the LFG page shows. You only see posts that answer yours: looking for a team gets teams recruiting, recruiting gets players looking (coaching posts are planned). Posts limited to a Plus tier follow the LFG page's rule, and your own team's posts are skipped. If the posts both list languages, they need one in common.`,
 			signals: [
 				{
 					name: "Timezone",
 					measure:
 						"Hours between your post's timezone and theirs, with the LFG page's helper (follows daylight saving and wraps around the date line, so it's never more than 12).",
-					scoring: "0–1 h: 1, then down evenly to 0 at 7 h (e.g. 4 h: 0.5).",
+					scoring: `0–${FEED_LFG_FULL_MATCH_HOURS} h: 1, then down evenly to 0 at ${FEED_LFG_NO_MATCH_HOURS} h (e.g. ${LFG_HALF_MATCH_HOURS} h: 0.5).`,
 				},
 				{
 					name: "Skill",
 					measure:
 						"Steps between the best accurate SendouQ tiers of the last two finished seasons, the tier the user card on the post shows. Each plus tier is its own step, e.g. Diamond+ → Diamond → Platinum+. A team post uses its median member.",
-					scoring:
-						"0 steps: 1, then down evenly to 0 at 6 steps. No accurate tier on either side: 0.5.",
+					scoring: `0 steps: 1, then down evenly to 0 at ${FEED_LFG_NO_MATCH_TIER_STEPS} steps. No accurate tier on either side: ${FeedLfgMatch.skillScore(null)}.`,
 				},
 			],
-			decision:
-				"Match = 0.75 × timezone + 0.25 × skill, and the post is shown when the match is at least 0.5, so posts 6 h or more apart never are. Of the posts bumped in the last 5 days, the one with the best match × recency is shown, so a fresh good fit beats an old perfect one. With several posts of your own, each post is matched against the one it fits best.",
-			workedExample:
-				"You're looking for a team: Europe/Helsinki, Diamond+. Deepsea is recruiting: Europe/London (2 h → 0.83), median member Platinum+ (2 steps → 0.67). Match = 0.625 + 0.17 = 0.79, so the post is shown.",
+			decision: `Match = ${FEED_LFG_TIMEZONE_WEIGHT} × timezone + ${LFG_SKILL_WEIGHT} × skill, and the post is shown when the match is at least ${FEED_LFG_MIN_MATCH}, so posts ${LFG_NEVER_SHOWN_HOURS} h or more apart never are. Of the posts bumped in the last ${LFG_BUMPED_DAYS} days, the one with the best match × recency is shown, so a fresh good fit beats an old perfect one. With several posts of your own, each post is matched against the one it fits best.`,
+			workedExample: `You're looking for a team: Europe/Helsinki, Diamond+. Deepsea is recruiting: Europe/London (${LFG_EXAMPLE_HOURS} h → ${twoDecimals(LFG_EXAMPLE_TIMEZONE)}), median member Platinum+ (${LFG_EXAMPLE_TIER_STEPS} steps → ${twoDecimals(LFG_EXAMPLE_SKILL)}). Match = ${twoDecimals(FEED_LFG_TIMEZONE_WEIGHT * LFG_EXAMPLE_TIMEZONE)} + ${twoDecimals(LFG_SKILL_WEIGHT * LFG_EXAMPLE_SKILL)} = ${twoDecimals(LFG_EXAMPLE_MATCH)}, so the post ${LFG_EXAMPLE_MATCH >= FEED_LFG_MIN_MATCH ? "is" : "isn't"} shown.`,
 			openQuestions: [
 				"Weapons are left out for now. Should they reward overlap or the role the team is missing? Team posts don't say which weapons they want.",
 				"Should the match take the place of audience affinity in the ranking score, and should a post you've already seen come back only after it's bumped?",
@@ -810,7 +868,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "COMEBACK",
-				when: "A friend plays SendouQ or a tournament after 90+ days without either.",
+				when: `A friend plays SendouQ or a tournament after ${FEED_COMEBACK_MIN_BREAK_DAYS}+ days without either.`,
 				example: {
 					actor: "Marie",
 					text: "**Marie** is back after **7 months** away",
@@ -913,7 +971,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 			},
 			{
 				item: "SITE_MILESTONE",
-				when: "The site reaches a round number of users, SendouQ sets, tournaments or art pieces (1, 2 or 5 times a power of ten, from 1,000 up).",
+				when: `The site reaches a round number of users, SendouQ sets, tournaments or art pieces (1, 2 or 5 times a power of ten, from ${FEED_SITE_MILESTONE_MIN.toLocaleString("en")} up).`,
 				example: {
 					actor: "sendou.ink",
 					text: "**100,000** SendouQ sets have been played",
@@ -954,12 +1012,11 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 		name: "Splatoon rotations",
 		navIcon: "maps",
 		algorithm: {
-			gate: "Only upcoming rotations (Anarchy Series, Anarchy Open and X Battle, from splatoon3.ink, about a day ahead), never the one that's on now. You need SendouQ or tournament matches in the last 8 weeks so your usual hours are known, and a map pool in your match profile (or a team practice focus, a future feature).",
+			gate: `Only upcoming rotations (Anarchy Series, Anarchy Open and X Battle, from splatoon3.ink, about a day ahead), never the one that's on now. You need SendouQ or tournament matches in the last ${FEED_ROTATION_LOOKBACK_WEEKS} weeks so your usual hours are known, and a map pool in your match profile (or a team practice focus, a future feature).`,
 			signals: [
 				{
 					name: "Usual hours",
-					measure:
-						"Start times of your SendouQ matches and tournament games in the last 8 weeks, grouped by hour of the week. An hour counts once you've played in it on 2 different weeks.",
+					measure: `Start times of your SendouQ matches and tournament games in the last ${FEED_ROTATION_LOOKBACK_WEEKS} weeks, grouped by hour of the week. An hour counts once you've played in it on ${FEED_ROTATION_MIN_WEEKS} different weeks.`,
 					scoring:
 						"Fits if any hour of the 2-hour rotation is a usual hour, give or take an hour so daylight saving and starting a bit late don't matter.",
 				},
@@ -977,8 +1034,7 @@ export const FEED_SOURCE_FEATURES: FeedSourceFeature[] = [
 						"Counts the same as your map pool, so a rotation fits if a stage is in either.",
 				},
 			],
-			decision:
-				"A rotation is shown only when it fits both your usual hours and your maps. All the fitting rotations go into one post, so there's never a post for every 2-hour change: the next 4 are listed with stages from your pool highlighted, the rest as a count.",
+			decision: `A rotation is shown only when it fits both your usual hours and your maps. All the fitting rotations go into one post, so there's never a post for every 2-hour change: the next ${FEED_ROTATION_MAX_LISTED} are listed with stages from your pool highlighted, the rest as a count.`,
 			workedExample:
 				"You've played SendouQ on Monday and Thursday evenings, 20:00–23:00, for the last few weeks, and your Splat Zones pool has Hammerhead Bridge. Monday 21:00 X Battle is Splat Zones on Hammerhead Bridge and Mahi-Mahi Resort, so it's shown with Hammerhead Bridge highlighted. Tuesday 21:00 is skipped (not a usual day), and Monday's Rainmaker rotation is skipped because you avoid Rainmaker.",
 		},
@@ -1035,3 +1091,29 @@ export const FEED_SOURCE_NONE: Array<{ name: string; reason: string }> = [
 		reason: "Moderation is not public activity.",
 	},
 ];
+
+function ordinal(value: number) {
+	return `${value}${ORDINAL_SUFFIXES[ORDINAL_RULES.select(value)] ?? "th"}`;
+}
+
+function orList(items: string[]) {
+	return items.length < 2
+		? items.join("")
+		: `${items.slice(0, -1).join(", ")} or ${items.at(-1)}`;
+}
+
+function timesWord(count: number) {
+	if (count === 1) return "once";
+	if (count === 2) return "twice";
+	return `${count} times`;
+}
+
+function twoDecimals(value: number) {
+	return String(Math.round(value * 100) / 100);
+}
+
+function firstInteger(predicate: (value: number) => boolean) {
+	let value = 0;
+	while (!predicate(value)) value++;
+	return value;
+}

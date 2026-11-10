@@ -70,7 +70,8 @@ export function medianTierRank(tierRanks: number[]) {
 		: (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
-function timezoneScore(hours: number) {
+/** Timezone part of `match`, 0–1 from the hours between the posts' timezones */
+export function timezoneScore(hours: number) {
 	return closeness({
 		distance: hours,
 		full: FEED_LFG_FULL_MATCH_HOURS,
@@ -78,7 +79,8 @@ function timezoneScore(hours: number) {
 	});
 }
 
-function skillScore(tierSteps: number | null) {
+/** Skill part of `match`, 0–1 from the tier steps between the posts, `null` when either has no accurate tier */
+export function skillScore(tierSteps: number | null) {
 	if (tierSteps === null) return 0.5;
 
 	return closeness({

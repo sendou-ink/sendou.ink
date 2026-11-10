@@ -70,6 +70,7 @@ import {
 	FEED_SCRIM_LOOKING_NOW_HOURS,
 	FEED_SEASON_COUNTDOWN_DAYS,
 	FEED_SEASON_ENDING_DAYS,
+	FEED_SERIES_STANDINGS_DAYS,
 	FEED_SITE_MILESTONE_MIN,
 	FEED_SPOTLIGHTS,
 	FEED_SQ_UPSET_MIN_TIER_STEPS,
@@ -101,7 +102,6 @@ const NOW_AFTER_LATEST_MATCH_SECONDS = 30 * 60;
 const MINUTE_MS = 60 * 1000;
 /** How far back the latest team join, build, friendship and lobby of a friend are looked for */
 const RECENT_ACTIVITY_DAYS = 30;
-const SERIES_STANDINGS_DAYS = 90;
 const HOUR_MS = 60 * MINUTE_MS;
 
 /** Which post type the viewer needs for the LFG item and which type it shows */
@@ -1528,7 +1528,7 @@ async function buildSeriesStandings(ctx: FeedContext) {
 	};
 }
 
-/** Leaderboard points standings and participants of the last 90 days of every series that shows a leaderboard */
+/** Leaderboard points standings and participants of the last `FEED_SERIES_STANDINGS_DAYS` of every series that shows a leaderboard */
 function seriesStandings(ctx: FeedContext) {
 	return FeedCache.cached({
 		key: `${ctx.mode}-series-standings`,
@@ -1546,7 +1546,7 @@ function seriesStandings(ctx: FeedContext) {
 				const events = await FeedRepository.findSeriesEventsWithResults({
 					organizationId: series.organizationId,
 					substringMatches: series.substringMatches,
-					from: ctx.now - SERIES_STANDINGS_DAYS * DAY,
+					from: ctx.now - FEED_SERIES_STANDINGS_DAYS * DAY,
 					to: ctx.now,
 				});
 				if (events.length === 0) continue;

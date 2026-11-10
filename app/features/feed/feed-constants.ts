@@ -617,6 +617,12 @@ export const FEED_TOURNAMENT_UPSET_MIN_SEED_GAP = 5;
 
 export const SQ_SET_MILESTONES = [100, 250, 500, 1000, 1500, 2000];
 
+/** SendouQ sets won in a row before it's a win streak */
+export const FEED_SQ_STREAK_MIN_SETS = 3;
+
+/** Days a tournament series' leaderboard standings look back, and how recently the viewer must have played in it */
+export const FEED_SERIES_STANDINGS_DAYS = 90;
+
 /** Days before a SendouQ season starts that its countdown post goes up */
 export const FEED_SEASON_COUNTDOWN_DAYS = 3;
 

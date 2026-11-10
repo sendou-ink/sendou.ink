@@ -5,6 +5,7 @@ import {
 	FEED_COMEBACK_MIN_BREAK_DAYS,
 	FEED_EVENT_MAX_RETENTION_DAYS,
 	FEED_EVENT_RETENTION_DAYS,
+	FEED_SQ_STREAK_MIN_SETS,
 	FEED_SQ_UPSET_MIN_TIER_STEPS,
 	SQ_SET_MILESTONES,
 } from "../feed-constants";
@@ -15,7 +16,6 @@ import type {
 } from "../feed-types";
 
 const DAY = 24 * 60 * 60;
-const MIN_STREAK = 3;
 const TIER_ORDER = [
 	"IRON",
 	"BRONZE",
@@ -196,7 +196,7 @@ export function derive({
 	const latestLossIndex = sqPlays.findLastIndex((play) => !play.isWin);
 	const streak = sqPlays.length - 1 - latestLossIndex;
 	const latest = sqPlays.at(-1);
-	if (streak >= MIN_STREAK && latest && latest.at >= since) {
+	if (streak >= FEED_SQ_STREAK_MIN_SETS && latest && latest.at >= since) {
 		events.push({ type: "SQ_STREAK", at: latest.at, data: { streak } });
 	}
 
