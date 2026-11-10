@@ -9,18 +9,14 @@ export function BadgesSelector({
 	selectedBadges,
 	onChange,
 	onBlur,
-	children,
 	maxCount,
-	showSelect = true,
 	disabled,
 }: {
 	options: BadgeDisplayProps["badges"];
 	selectedBadges: number[];
 	onChange: (newBadges: number[]) => void;
 	onBlur?: () => void;
-	children?: React.ReactNode;
 	maxCount?: number;
-	showSelect?: boolean;
 	disabled?: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
@@ -39,41 +35,37 @@ export function BadgesSelector({
 						})}
 					onChange={disabled ? undefined : onChange}
 					key={selectedBadges.join(",")}
-				>
-					{children}
-				</BadgeDisplay>
+				/>
 			) : (
 				<div className="text-lighter text-md font-bold">
 					{t("common:badges.selector.none")}
 				</div>
 			)}
-			{showSelect ? (
-				options.length === 0 ? (
-					<div className="text-warning text-xs">
-						{t("common:badges.selector.noneAvailable")}
-					</div>
-				) : (
-					<select
-						onBlur={() => onBlur?.()}
-						onChange={(e) =>
-							onChange([...selectedBadges, Number(e.target.value)])
-						}
-						disabled={
-							disabled || Boolean(maxCount && selectedBadges.length >= maxCount)
-						}
-						data-testid="badges-selector"
-					>
-						<option>{t("common:badges.selector.select")}</option>
-						{options
-							.filter((badge) => !selectedBadges.includes(badge.id))
-							.map((badge) => (
-								<option key={badge.id} value={badge.id}>
-									{badge.displayName}
-								</option>
-							))}
-					</select>
-				)
-			) : null}
+			{options.length === 0 ? (
+				<div className="text-warning text-xs">
+					{t("common:badges.selector.noneAvailable")}
+				</div>
+			) : (
+				<select
+					onBlur={() => onBlur?.()}
+					onChange={(e) =>
+						onChange([...selectedBadges, Number(e.target.value)])
+					}
+					disabled={
+						disabled || Boolean(maxCount && selectedBadges.length >= maxCount)
+					}
+					data-testid="badges-selector"
+				>
+					<option>{t("common:badges.selector.select")}</option>
+					{options
+						.filter((badge) => !selectedBadges.includes(badge.id))
+						.map((badge) => (
+							<option key={badge.id} value={badge.id}>
+								{badge.displayName}
+							</option>
+						))}
+				</select>
+			)}
 		</div>
 	);
 }

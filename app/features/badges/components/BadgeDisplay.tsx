@@ -15,20 +15,16 @@ import styles from "./BadgeDisplay.module.css";
 export interface BadgeDisplayProps {
 	badges: Array<Omit<Tables["Badge"], "authorId"> & { count?: number }>;
 	onChange?: (badgeIds: number[]) => void;
-	children?: React.ReactNode;
 	showText?: boolean;
 	/** Fit inside tight containers (e.g. a popover) instead of the fixed 20rem box */
 	compact?: boolean;
-	className?: string;
 }
 
 export function BadgeDisplay({
 	badges: _badges,
 	onChange,
-	children,
 	showText = true,
 	compact = false,
-	className,
 }: BadgeDisplayProps) {
 	const { t } = useTranslation("badges");
 	const [badges, setBadges] = React.useState(_badges);
@@ -80,13 +76,13 @@ export function BadgeDisplay({
 				</div>
 			) : null}
 			<div
-				className={clsx(className, styles.badges, {
+				className={clsx(styles.badges, {
 					[styles.badgesCompact]: compact,
 					"justify-center": smallBadges.length === 0,
 				})}
 			>
 				<Badge badge={bigBadge} size={125} isAnimated />
-				{!children && smallBadges.length > 0 ? (
+				{smallBadges.length > 0 ? (
 					<div className={styles.smallBadges}>
 						{itemsToDisplay.map((badge) => (
 							<div key={badge.id} className={styles.smallBadgeContainer}>
@@ -103,22 +99,19 @@ export function BadgeDisplay({
 						))}
 					</div>
 				) : null}
-				{children}
 			</div>
 			{!isPaginated ? (
 				<div className={styles.badgeExplanation}>
 					{badgeExplanationText(t, bigBadge)}
-					{onChange ? (
-						<SendouButton
-							icon={<Trash />}
-							variant="minimal-destructive"
-							onClick={() =>
-								onChange(
-									badges.filter((b) => b.id !== bigBadge.id).map((b) => b.id),
-								)
-							}
-						/>
-					) : null}
+					<SendouButton
+						icon={<Trash />}
+						variant="minimal-destructive"
+						onClick={() =>
+							onChange(
+								badges.filter((b) => b.id !== bigBadge.id).map((b) => b.id),
+							)
+						}
+					/>
 				</div>
 			) : null}
 			{!everythingVisible ? (
