@@ -1,0 +1,104 @@
+.hold {
+	position: absolute;
+	inset: 0;
+}
+
+.content {
+	--bc-enter-y: var(--bc-enter-distance);
+
+	position: absolute;
+	top: var(--hold-content-top);
+	left: var(--hold-inline-margin);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 18px;
+	max-width: 1300px;
+
+	& > * {
+		animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+			calc(var(--scene-enter-delay) + var(--k, 0) * var(--bc-stagger)) both;
+	}
+
+	& > :nth-child(2) {
+		--k: 1;
+	}
+
+	& > :nth-child(3) {
+		--k: 2;
+	}
+
+	& > :nth-child(n + 4) {
+		--k: 4;
+	}
+}
+
+.tournamentLogo {
+	width: var(--hold-logo-size);
+	height: var(--hold-logo-size);
+	margin-bottom: 12px;
+}
+
+.eyebrow {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.title {
+	position: relative;
+	margin: 0;
+	padding-bottom: 28px;
+
+	.content > & {
+		animation:
+			var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+			calc(var(--scene-enter-delay) + 2 * var(--bc-stagger)) both,
+			var(--bc-anim-reveal) calc(var(--bc-enter-duration) * 1.6) var(--bc-ease)
+			calc(var(--scene-enter-delay) + 2 * var(--bc-stagger)) both;
+	}
+
+	&::after {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 200px;
+		height: 8px;
+	}
+}
+
+.countdown {
+	min-height: 1em;
+}
+
+.headline {
+	max-width: 1200px;
+	margin: 12px 0 0;
+}
+
+.matchup {
+	--bc-enter-y: var(--bc-enter-distance);
+
+	position: absolute;
+	right: var(--hold-inline-margin);
+	bottom: var(--hold-matchup-bottom);
+	left: var(--hold-inline-margin);
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + 5 * var(--bc-stagger)) both;
+}
+
+.matchupLabel {
+	align-self: center;
+	padding: 4px 18px;
+}
+
+.ticker {
+	position: absolute;
+	right: var(--hold-inline-margin);
+	bottom: var(--hold-ticker-bottom);
+	left: var(--hold-inline-margin);
+}

@@ -32,6 +32,7 @@ import {
 	MAP_START_EVENT_TYPE,
 	type MapStartData,
 } from "../core/detectors/map-start/index";
+import { MINIMAP_DETECTOR_ID } from "../core/detectors/minimap/index";
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
 import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
 import type { DetectedEvent } from "../core/detectors/types";
@@ -46,6 +47,7 @@ import {
 } from "../store/clips";
 import { saveEvent, trimEvents } from "../store/events";
 import { AnalyzerClient } from "../worker/client";
+import * as BroadcastLink from "./broadcast-link";
 import { getClips, refreshClips } from "./clips-feed";
 import { describeError } from "./errors";
 import {
@@ -324,6 +326,7 @@ export async function startCapture(): Promise<void> {
 		clipTimer = setInterval(clipTick, CLIP_TICK_MS);
 		audioTimer = setInterval(audioCheck, AUDIO_CHECK_MS);
 		unsubscribeFeed = subscribeFeed(clipTick);
+		BroadcastLink.setCapturing(true);
 		// a session is only worth coming back to if the browser keeps it
 		requestPersistentStorage();
 		void trimEvents()
@@ -435,6 +438,7 @@ export function saveCurrentFrameAsFixture(): void {
 }
 
 function release(): void {
+	BroadcastLink.setCapturing(false);
 	releaseCaptureLock?.();
 	releaseCaptureLock = null;
 	stopSampler?.();
@@ -517,8 +521,12 @@ function onResult(
 	result: Parameters<ConstructorParameters<typeof AnalyzerClient>[0]>[0],
 ): void {
 	if (!result.gate.pass) return;
+	if (result.detector === MINIMAP_DETECTOR_ID) {
+		BroadcastLink.observeMapOpen(result.t);
+	}
 	for (const event of result.events as DetectedEvent<FixtureData>[]) {
 		if (event.type === OBJECTIVE_EVENT_TYPE && objectiveBlocked) continue;
+		BroadcastLink.observeEvent(event);
 		const action = timeline.push(event);
 		if (action.action === "merged" || action.action === "dropped") continue;
 		if (event.type === MAP_START_EVENT_TYPE) {

@@ -94,6 +94,14 @@
 	--button-hover-bg: var(--color-error-low);
 }
 
+.outlinedWarning {
+	border-color: var(--color-warning);
+	background-color: transparent;
+	color: var(--color-warning);
+	outline-color: var(--color-warning);
+	--button-hover-bg: var(--color-warning-low);
+}
+
 .small {
 	font-size: var(--font-xs);
 	height: var(--field-size-sm);

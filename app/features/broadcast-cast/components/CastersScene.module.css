@@ -1,0 +1,46 @@
+/* Sizes and spots of the casters scene, the rules below follow them. */
+:global([data-broadcast]) {
+	--casters-header-top: 56px;
+	--casters-eyebrow-size: 26px;
+	--casters-title-size: 72px;
+	--casters-name-size: 34px;
+	--casters-pronouns-size: 26px;
+	--casters-matchup-bottom: 60px;
+}
+
+.casters {
+	font-family: var(--bc-font-display);
+}
+
+.eyebrow {
+	color: var(--bc-text-muted);
+	font-size: var(--casters-eyebrow-size);
+	font-weight: var(--bc-weight-semibold);
+}
+
+.title {
+	font-size: var(--casters-title-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 1;
+	text-transform: uppercase;
+}
+
+.frame {
+	border-radius: 2px;
+	/* outside the frame, so the camera under it shows whole */
+	outline: 6px solid var(--bc-border);
+}
+
+.name {
+	border-bottom: 5px solid var(--bc-accent);
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-surface);
+	font-size: var(--casters-name-size);
+	font-weight: var(--bc-weight-bold);
+}
+
+.pronouns {
+	color: var(--bc-text-muted);
+	font-size: var(--casters-pronouns-size);
+	font-weight: var(--bc-weight-semibold);
+}

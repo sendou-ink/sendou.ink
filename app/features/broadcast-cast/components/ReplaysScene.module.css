@@ -1,0 +1,65 @@
+/* Sizes and spots of the replays scene, the rules below follow them. */
+:global([data-broadcast]) {
+	--replays-bug-inset: 56px;
+	--replays-bug-height: 56px;
+	--replays-label-size: 28px;
+	--replays-corner-size: 80px;
+	--replays-corner-inset: 28px;
+}
+
+.replays {
+	font-family: var(--bc-font-display);
+}
+
+.clip {
+	object-fit: cover;
+	background: black;
+}
+
+.corner {
+	border: 0 solid var(--bc-accent);
+
+	&[data-corner="tl"] {
+		border-top-width: 6px;
+		border-left-width: 6px;
+	}
+
+	&[data-corner="tr"] {
+		border-top-width: 6px;
+		border-right-width: 6px;
+	}
+
+	&[data-corner="bl"] {
+		border-bottom-width: 6px;
+		border-left-width: 6px;
+	}
+
+	&[data-corner="br"] {
+		border-right-width: 6px;
+		border-bottom-width: 6px;
+	}
+}
+
+.bug {
+	border: var(--bc-border-width) solid var(--bc-border);
+	border-radius: var(--bc-radius);
+	background: var(--bc-surface);
+}
+
+.dot {
+	border-radius: 50%;
+	background: var(--bc-alert);
+}
+
+.label {
+	font-size: var(--replays-label-size);
+	font-weight: var(--bc-weight-bold);
+	text-transform: uppercase;
+}
+
+.game {
+	border-left: var(--bc-border-width) solid var(--bc-border);
+	color: var(--bc-text-muted);
+	font-size: 20px;
+	font-weight: var(--bc-weight-semibold);
+}

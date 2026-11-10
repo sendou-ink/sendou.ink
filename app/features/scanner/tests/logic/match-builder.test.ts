@@ -1902,7 +1902,14 @@ function playerStatus(
 		cast = null as true | null,
 	} = {},
 ): DetectedEvent {
-	const data: PlayerStatusData = { time, special, dead, cast };
+	const data: PlayerStatusData = {
+		time,
+		special,
+		dead,
+		cast,
+		teamHue: [null, null],
+		teamInk: [null, null],
+	};
 	return { type: "PlayerStatus", t, confidence: 0.9, data };
 }
 

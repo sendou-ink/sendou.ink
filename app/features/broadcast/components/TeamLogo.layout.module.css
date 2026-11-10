@@ -1,0 +1,11 @@
+.logo {
+	flex-shrink: 0;
+	aspect-ratio: 1;
+}
+
+.monogram {
+	display: grid;
+	place-items: center;
+	/* scales with the logo's size */
+	container-type: size;
+}

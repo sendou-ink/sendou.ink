@@ -1,0 +1,83 @@
+/* Sizes and spots of the other matches' ticker, the rules below follow them. */
+:global([data-broadcast]) {
+	--ticker-height: 50px;
+	--ticker-label-size: 18px;
+	--ticker-text-size: 20px;
+	--ticker-bar-text-size: 19px;
+	--ticker-match-gap: 56px;
+}
+
+.ticker {
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-surface);
+	font-family: var(--bc-font-body);
+
+	&[data-variant="bar"] {
+		border-radius: 0;
+		background: none;
+
+		& .match {
+			font-size: var(--ticker-bar-text-size);
+		}
+	}
+}
+
+.label {
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+	font-size: var(--ticker-label-size);
+	font-weight: var(--bc-weight-bold);
+	text-transform: uppercase;
+}
+
+.viewport {
+	mask-image: linear-gradient(
+		to right,
+		transparent,
+		#000 32px,
+		#000 calc(100% - 32px),
+		transparent
+	);
+}
+
+.match {
+	font-size: var(--ticker-text-size);
+	font-weight: var(--bc-weight-semibold);
+}
+
+.round {
+	color: var(--bc-text-muted);
+	font-size: 15px;
+	font-weight: var(--bc-weight-bold);
+	text-transform: uppercase;
+}
+
+.team {
+	&[data-loser] .name {
+		color: var(--bc-text-muted);
+	}
+}
+
+.seed {
+	color: var(--bc-text-muted);
+	font-size: 15px;
+}
+
+.score {
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-surface-high);
+	font-weight: var(--bc-weight-bold);
+	font-variant-numeric: tabular-nums;
+
+	&[data-winner] {
+		background: var(--bc-accent);
+		color: var(--bc-accent-text);
+	}
+}
+
+/* the matches moving along, one copy of them per loop */
+@keyframes :global(bc-ticker) {
+	to {
+		transform: translateX(-50%);
+	}
+}

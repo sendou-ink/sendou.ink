@@ -77,7 +77,11 @@ export default function TournamentLayout() {
 
 	const content = (
 		<>
-			<TournamentNav tournament={tournament} streamsCount={data.streamsCount} />
+			<TournamentNav
+				tournament={tournament}
+				streamsCount={data.streamsCount}
+				isBroadcastEnabled={data.isBroadcastEnabled}
+			/>
 			<TournamentProvider tournament={tournament}>
 				<Outlet
 					context={

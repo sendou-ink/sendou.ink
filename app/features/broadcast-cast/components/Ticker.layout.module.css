@@ -1,0 +1,84 @@
+.ticker {
+	--bc-enter-y: var(--bc-enter-distance);
+
+	display: flex;
+	align-items: stretch;
+	height: var(--ticker-height);
+	overflow: hidden;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + 6 * var(--bc-stagger)) both;
+
+	&[data-variant="bar"] {
+		height: 100%;
+		animation: none;
+	}
+}
+
+.label {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	padding: 0 20px;
+	white-space: nowrap;
+}
+
+.viewport {
+	flex: 1;
+	min-width: 0;
+	container-type: inline-size;
+	overflow: hidden;
+}
+
+.track {
+	display: flex;
+	width: max-content;
+	height: 100%;
+	animation: var(--bc-anim-ticker) calc(var(--ticker-matches) * 7s) linear
+		infinite;
+}
+
+.matches {
+	display: flex;
+	/* a copy at least as wide as the ticker, so a few matches don't leave it empty while scrolling */
+	min-width: 100cqi;
+	justify-content: space-around;
+	align-items: center;
+	gap: var(--ticker-match-gap);
+	/* the same space before the next copy as between the matches */
+	padding: 0 calc(var(--ticker-match-gap) / 2);
+}
+
+.match {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	white-space: nowrap;
+}
+
+.team {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+
+	&:last-child {
+		flex-direction: row-reverse;
+	}
+}
+
+.name {
+	max-width: 360px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.scores {
+	display: flex;
+	gap: 4px;
+}
+
+.score {
+	display: grid;
+	place-items: center;
+	min-width: 30px;
+	height: 30px;
+}

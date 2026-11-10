@@ -1,0 +1,32 @@
+.backdrop {
+	background: var(--bc-bg);
+}
+
+.video {
+	object-fit: cover;
+	opacity: 0.35;
+}
+
+.vignette {
+	background: radial-gradient(
+		ellipse at center,
+		transparent 55%,
+		color-mix(in srgb, var(--bc-bg) 70%, transparent) 75%,
+		var(--bc-bg) 92%
+	);
+}
+
+.alertStripes {
+	background: repeating-linear-gradient(
+		-45deg,
+		var(--bc-accent) 0 24px,
+		transparent 24px 48px
+	);
+}
+
+/* the stripes moving along, one period of them per loop */
+@keyframes :global(bc-alert-slide) {
+	to {
+		transform: translateX(-67.88px);
+	}
+}

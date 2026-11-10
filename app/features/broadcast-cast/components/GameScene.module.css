@@ -1,0 +1,140 @@
+/* Sizes and spots of the game scene, the rules below follow them. */
+:global([data-broadcast]) {
+	--game-info-top: 28px;
+	--game-info-left: 28px;
+	--game-info-max-width: 500px;
+	--game-round-size: 21px;
+	--game-casters-size: 18px;
+	--game-team-name-size: 34px;
+	--game-seed-size: 22px;
+	--game-score-size: 42px;
+	--game-score-width: 84px;
+	--game-logo-size: 46px;
+	--game-player-size: 22px;
+	--game-bar-height: 68px;
+	--game-ticker-height: 34px;
+}
+
+.infoCard {
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-bg);
+	box-shadow: 0 10px 28px rgb(0 0 0 / 35%);
+}
+
+.tournamentLogo {
+	object-fit: cover;
+}
+
+.roundRow {
+	font-family: var(--bc-font-display);
+	font-size: var(--game-round-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 1.25;
+	text-transform: uppercase;
+}
+
+.setLength {
+	color: var(--bc-text-muted);
+}
+
+.castersRow {
+	color: var(--bc-text);
+	font-size: var(--game-casters-size);
+	font-weight: var(--bc-weight-semibold);
+	line-height: 1.3;
+}
+
+.micIcon {
+	color: var(--bc-text-muted);
+}
+
+.caster {
+	& + &::before {
+		color: var(--bc-text-muted);
+		content: "·";
+	}
+}
+
+.pronouns {
+	border-radius: 4px;
+	background: var(--bc-surface-high);
+	color: var(--bc-text-muted);
+	font-size: 11px;
+	font-weight: var(--bc-weight-bold);
+	letter-spacing: 0.05em;
+	line-height: 1.2;
+	text-transform: uppercase;
+}
+
+.scoreboard {
+	font-family: var(--bc-font-display);
+
+	&::before {
+		background: var(--bc-bg);
+		content: "";
+	}
+}
+
+.team {
+	&[data-loser] .teamName {
+		color: var(--bc-text-muted);
+	}
+}
+
+.nameplate {
+	border-top-right-radius: var(--bc-radius-small);
+	background: var(--bc-bg);
+
+	[data-team="b"] > & {
+		border-top-right-radius: 0;
+		border-top-left-radius: var(--bc-radius-small);
+	}
+}
+
+.teamLogo {
+	/* the ink colors are kept to the rosters, not the monogram */
+	--team-color: var(--bc-surface-high);
+	--team-color-text: var(--bc-text);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--bc-text) 18%, transparent);
+}
+
+.seed {
+	color: var(--bc-text-muted);
+	font-size: var(--game-seed-size);
+	font-variant-numeric: tabular-nums;
+	font-weight: var(--bc-weight-bold);
+}
+
+.teamName {
+	font-size: var(--game-team-name-size);
+	font-weight: var(--bc-weight-bold);
+	letter-spacing: 0.01em;
+	text-transform: uppercase;
+}
+
+.score {
+	background: var(--bc-surface-high);
+	font-size: var(--game-score-size);
+	font-variant-numeric: tabular-nums;
+	font-weight: var(--bc-weight-heavy);
+}
+
+.roster {
+	border-radius: var(--bc-radius-small);
+	background: color-mix(in srgb, var(--bc-bg) 90%, transparent);
+	box-shadow: 0 10px 28px rgb(0 0 0 / 35%);
+
+	/* the team's color along the roster's outer edge */
+	&::before {
+		border-radius: 3px;
+		background: var(--team-color);
+		content: "";
+	}
+}
+
+.player {
+	font-family: var(--bc-font-body);
+	font-size: var(--game-player-size);
+	font-weight: var(--bc-weight-semibold);
+	line-height: 1.4;
+}

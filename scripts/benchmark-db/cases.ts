@@ -8,6 +8,8 @@ import * as AssociationRepository from "~/features/associations/AssociationRepos
 import * as LogInLinkRepository from "~/features/auth/LogInLinkRepository.server";
 import * as AvailabilityRepository from "~/features/availability/AvailabilityRepository.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
+import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.server";
+import * as BroadcastCastRepository from "~/features/broadcast-cast/BroadcastCastRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { RECENT_PATCHES } from "~/features/builds/builds-constants";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
@@ -280,6 +282,36 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("BadgeRepository.findByAuthorUserId", fx.badgeAuthorId, (userId) =>
 		BadgeRepository.findByAuthorUserId(userId),
+	);
+
+	add("BroadcastRepository.findByChannel", fx.broadcast, (broadcast) =>
+		BroadcastRepository.findByChannel(broadcast),
+	);
+	add("BroadcastRepository.findAllByChatRoomIds", fx.broadcast, (broadcast) =>
+		BroadcastRepository.findAllByChatRoomIds(broadcast.chatRoomIds),
+	);
+	add(
+		"BroadcastCastRepository.findAllCastersByUserIds",
+		fx.manyUserIds,
+		(userIds) => BroadcastCastRepository.findAllCastersByUserIds(userIds),
+	);
+	add(
+		"BroadcastRepository.findAllPlayersByTournamentTeamIds",
+		fx.manyTournamentTeamIds,
+		(tournamentTeamIds) =>
+			BroadcastRepository.findAllPlayersByTournamentTeamIds(tournamentTeamIds),
+	);
+	add(
+		"BroadcastCastRepository.findAllGameResultsByMatchIds",
+		fx.manyTournamentMatchIds,
+		(matchIds) =>
+			BroadcastCastRepository.findAllGameResultsByMatchIds(matchIds),
+	);
+	add(
+		"BroadcastCastRepository.findMapPoolByTournamentTeamId",
+		fx.heavyTournamentTeamId,
+		(tournamentTeamId) =>
+			BroadcastCastRepository.findMapPoolByTournamentTeamId(tournamentTeamId),
 	);
 
 	add("BuildRepository.findAllByUserId", fx.heavyBuildUserId, (userId) =>
