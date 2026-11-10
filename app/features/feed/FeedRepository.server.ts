@@ -384,25 +384,10 @@ export function findTournamentMatchesByTeamId({
 			"TournamentStage.id",
 			"TournamentMatch.stageId",
 		)
-		.innerJoin(
-			"TournamentRound",
-			"TournamentRound.id",
-			"TournamentMatch.roundId",
-		)
-		.innerJoin(
-			"TournamentGroup",
-			"TournamentGroup.id",
-			"TournamentMatch.groupId",
-		)
 		.select([
-			"TournamentMatch.id",
 			"TournamentMatch.opponentOne",
 			"TournamentMatch.opponentTwo",
 			"TournamentMatch.winnerSide",
-			"TournamentStage.name as bracketName",
-			"TournamentStage.type as bracketType",
-			"TournamentRound.number as roundNumber",
-			"TournamentGroup.number as groupNumber",
 		])
 		.where("TournamentStage.tournamentId", "=", tournamentId)
 		.where((eb) =>
