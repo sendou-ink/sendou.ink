@@ -3,14 +3,13 @@ import * as R from "remeda";
 import type { getUser } from "~/features/auth/core/user.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	tournamentFromParams,
-	tournamentSharedCached,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFound } from "~/utils/remix.server";
 import type {
@@ -55,21 +54,23 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	}
 
 	if (tournament.registrationOpen) {
-		return lookingMode({ tournamentId, user });
+		return lookingMode({ tournament, user });
 	}
 
-	return subsMode({ tournamentId, user });
+	return subsMode({ tournament, user });
 };
 
 async function lookingMode({
-	tournamentId,
+	tournament,
 	user,
 }: {
-	tournamentId: number;
+	tournament: Tournament;
 	user: ReturnType<typeof getUser>;
 }) {
 	const rawGroups =
-		await TournamentLFGRepository.findLookingTeamsByTournamentId(tournamentId);
+		await TournamentLFGRepository.findLookingTeamsByTournamentId(
+			tournament.ctx.id,
+		);
 
 	const groups: LFGGroup[] = rawGroups.map((group) => {
 		const members = transformMembers(group.members);
@@ -96,7 +97,7 @@ async function lookingMode({
 
 	const ownTeam = await resolveOwnTeam({
 		user,
-		tournamentId,
+		tournament,
 		ownGroup,
 	});
 
@@ -115,23 +116,23 @@ async function lookingMode({
 		ownTeam,
 		likes,
 		matchProfile: ownGroup || ownTeam ? null : await findOwnMatchProfile(user),
-		tournamentId,
 	};
 }
 
 async function subsMode({
-	tournamentId,
+	tournament,
 	user,
 }: {
-	tournamentId: number;
+	tournament: Tournament;
 	user: ReturnType<typeof getUser>;
 }) {
-	const rawSubGroups =
-		await TournamentLFGRepository.findSubGroups(tournamentId);
+	const rawSubGroups = await TournamentLFGRepository.findSubGroups(
+		tournament.ctx.id,
+	);
 
 	const subs = rawSubGroups.map((group) => {
 		const member = group.members[0];
-		const weapons = parseWeapons(member.weapons);
+		const weapons = toWeapons(member.weapons);
 
 		const languages = member.languages ?? [];
 
@@ -159,28 +160,28 @@ async function subsMode({
 		subs,
 		hasOwnSubPost,
 		matchProfile: hasOwnSubPost ? null : await findOwnMatchProfile(user),
-		tournamentId,
 	};
 }
 
 async function resolveOwnTeam({
 	user,
-	tournamentId,
+	tournament,
 	ownGroup,
 }: {
 	user: ReturnType<typeof getUser>;
-	tournamentId: number;
+	tournament: Tournament;
 	ownGroup: LFGGroup | null;
 }): Promise<LFGOwnTeam | null> {
 	if (!user) return null;
 	if (ownGroup) return null;
 
-	const tournament = await tournamentSharedCached(tournamentId);
-
 	const teamLite = tournament.teamMemberOfByUser(user);
 	if (!teamLite) return null;
 
-	const teamsFull = await tournamentTeamsFullCached({ tournamentId, user });
+	const teamsFull = await tournamentTeamsFullCached({
+		tournamentId: tournament.ctx.id,
+		user,
+	});
 	const team = teamsFull.find((t) => t.id === teamLite.id);
 	if (!team) return null;
 
@@ -221,15 +222,15 @@ async function findOwnMatchProfile(user: ReturnType<typeof getUser>) {
 	return { vc, languages: languages ?? [], weaponPool };
 }
 
-function transformMembers(
-	rawMembers: Awaited<
-		ReturnType<typeof TournamentLFGRepository.findLookingTeamsByTournamentId>
-	>[number]["members"],
-): LFGGroupMember[] {
+type MemberRow = Awaited<
+	ReturnType<typeof TournamentLFGRepository.findLookingTeamsByTournamentId>
+>[number]["members"][number];
+
+function transformMembers(rawMembers: MemberRow[]): LFGGroupMember[] {
 	return rawMembers.map((m) => {
 		const languages = m.languages ?? [];
 
-		const weapons = parseWeapons(m.weapons);
+		const weapons = toWeapons(m.weapons);
 
 		return {
 			id: m.id,
@@ -246,25 +247,12 @@ function transformMembers(
 	});
 }
 
-function parseWeapons(raw: unknown): Array<{
-	weaponSplId: MainWeaponId;
-	isFavorite: boolean;
-	isTenStar: boolean;
-}> | null {
-	if (!raw) return null;
+function toWeapons(weapons: MemberRow["weapons"]) {
+	if (weapons.length === 0) return null;
 
-	const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-	if (!Array.isArray(parsed) || parsed.length === 0) return null;
-
-	return parsed.map(
-		(w: {
-			weaponSplId: MainWeaponId;
-			isFavorite: number | boolean;
-			isTenStar: number | boolean;
-		}) => ({
-			weaponSplId: w.weaponSplId,
-			isFavorite: Boolean(w.isFavorite),
-			isTenStar: Boolean(w.isTenStar),
-		}),
-	);
+	return weapons.map((weapon) => ({
+		weaponSplId: weapon.weaponSplId,
+		isFavorite: Boolean(weapon.isFavorite),
+		isTenStar: Boolean(weapon.isTenStar),
+	}));
 }
