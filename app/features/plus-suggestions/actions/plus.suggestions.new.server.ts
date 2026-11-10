@@ -9,11 +9,7 @@ import {
 } from "~/features/plus-voting/core";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
-import {
-	badRequestIfFalsy,
-	errorToastIfFalsy,
-	unauthorizedIfFalsy,
-} from "~/utils/remix.server";
+import { badRequestIfFalsy, errorToastIfFalsy } from "~/utils/remix.server";
 import { PLUS_TIERS } from "../plus-suggestions-constants";
 import { newSuggestionFormSchemaServer } from "../plus-suggestions-schemas.server";
 import { canSuggestNewUser } from "../plus-suggestions-utils";
@@ -29,8 +25,6 @@ export const action = defineAction(
 				t === Number(body.tier),
 		);
 		errorToastIfFalsy(tier, "Invalid tier selected");
-
-		unauthorizedIfFalsy(user.plusTier && user.plusTier <= tier);
 
 		const suggested = badRequestIfFalsy(
 			await UserRepository.findLeanById(body.userId),

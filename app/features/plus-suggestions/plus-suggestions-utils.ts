@@ -15,7 +15,6 @@ export function canAddCommentToSuggestionFE(
 ) {
 	return Boolean(
 		!alreadyCommentedByUser(args) &&
-			isPlusServerMember(args.user) &&
 			args.user?.plusTier &&
 			args.targetPlusTier >= args.user.plusTier,
 	);
@@ -33,9 +32,7 @@ export function canAddCommentToSuggestionBE({
 			suggestions,
 			suggested,
 			targetPlusTier,
-		}) &&
-			playerAlreadySuggested({ suggestions, suggested, targetPlusTier }) &&
-			targetPlusTierIsSmallerOrEqual({ user, targetPlusTier }),
+		}) && playerAlreadySuggested({ suggestions, suggested, targetPlusTier }),
 	);
 }
 
@@ -66,13 +63,6 @@ function playerAlreadySuggested({
 			suggestion.suggested.id === suggested.id &&
 			suggestion.tier === targetPlusTier,
 	);
-}
-
-function targetPlusTierIsSmallerOrEqual({
-	user,
-	targetPlusTier,
-}: Pick<CanAddCommentToSuggestionArgs, "user" | "targetPlusTier">) {
-	return user?.plusTier && user.plusTier <= targetPlusTier;
 }
 
 interface CanSuggestNewUserArgs {
