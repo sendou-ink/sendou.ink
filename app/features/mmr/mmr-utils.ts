@@ -7,7 +7,8 @@ import {
 } from "openskill";
 import { invariant } from "~/utils/invariant";
 import type { TierName } from "./mmr-constants";
-import { SP_BASE, SP_PER_ORDINAL, TIERS } from "./mmr-constants";
+import { LOWEST_TIER, SP_BASE, SP_PER_ORDINAL, TIERS } from "./mmr-constants";
+import type { SkillTierInterval, TieredSkill } from "./tiered.server";
 
 const TAU = 0.3;
 
@@ -94,4 +95,19 @@ export function compareTwoTiers(tier1: TierName, tier2: TierName) {
 		TIERS.findIndex(({ name }) => name === tier1) -
 		TIERS.findIndex(({ name }) => name === tier2)
 	);
+}
+
+/** Tier the ordinal falls in, {@link LOWEST_TIER} when it is under every threshold (the lowest interval has none). */
+export function tierOfOrdinal(
+	intervals: SkillTierInterval[],
+	ordinalValue: number,
+): TieredSkill["tier"] {
+	const interval = intervals.find(
+		(i) =>
+			typeof i.neededOrdinal === "number" && ordinalValue >= i.neededOrdinal,
+	);
+
+	return interval
+		? { name: interval.name, isPlus: interval.isPlus }
+		: LOWEST_TIER;
 }

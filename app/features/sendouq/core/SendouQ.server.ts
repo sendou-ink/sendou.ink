@@ -6,7 +6,8 @@ import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as MapVotes from "~/features/match-profile/core/MapVotes";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { defaultOrdinal } from "~/features/mmr/mmr-utils";
+import { LOWEST_TIER } from "~/features/mmr/mmr-constants";
+import { defaultOrdinal, tierOfOrdinal } from "~/features/mmr/mmr-utils";
 import { type TieredSkill, userSkills } from "~/features/mmr/tiered.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as SendouQMatch from "~/features/sendouq-match/core/SendouQMatch";
@@ -52,7 +53,6 @@ export type SQOwnGroup = SerializeFrom<
 export type SQMatch = SerializeFrom<ReturnType<SendouQClass["mapMatch"]>>;
 export type SQGroupMember = NonNullable<SQGroup["members"]>[number];
 
-const FALLBACK_TIER = { isPlus: false, name: "IRON" } as const;
 const SECONDS_TILL_STALE =
 	process.env.NODE_ENV === "development" || IS_E2E_TEST_RUN ? 1_000_000 : 1_800;
 
@@ -325,8 +325,8 @@ class SendouQClass {
 			}
 
 			const tierRangeOrExact = tierDifferenceToRangeOrExact({
-				ourTier: ownTier ?? FALLBACK_TIER,
-				theirTier: group.tier ?? FALLBACK_TIER,
+				ourTier: ownTier ?? LOWEST_TIER,
+				theirTier: group.tier ?? LOWEST_TIER,
 				isAccurateTiers: this.#isAccurateTiers,
 			});
 
@@ -522,11 +522,7 @@ class SendouQClass {
 		);
 	}
 
-	#groupTier(
-		group: DBGroupRow | DBMatch["groupAlpha"] | DBMatch["groupBravo"],
-	): TieredSkill["tier"] | undefined {
-		if (!group.members) return;
-
+	#groupTier(group: DBGroupRow): TieredSkill["tier"] {
 		const skills = group.members.map(
 			(m) => this.#userSkills[String(m.id)] ?? { ordinal: defaultOrdinal() },
 		);
@@ -534,13 +530,7 @@ class SendouQClass {
 		const averageOrdinal =
 			skills.reduce((acc, s) => acc + s.ordinal, 0) / skills.length;
 
-		return (
-			this.#intervals.find(
-				(i) =>
-					typeof i.neededOrdinal === "number" &&
-					averageOrdinal >= i.neededOrdinal,
-			) ?? { isPlus: false, name: "IRON" }
-		);
+		return tierOfOrdinal(this.#intervals, averageOrdinal);
 	}
 
 	#isSuitableLookingGroup({

@@ -11,6 +11,7 @@ import {
 	type TierName,
 	USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN,
 } from "./mmr-constants";
+import { tierOfOrdinal } from "./mmr-utils";
 import * as SkillRepository from "./SkillRepository.server";
 
 export interface TieredSkill {
@@ -38,14 +39,11 @@ export async function freshUserSkills(season: number): Promise<{
 		isAccurateTiers,
 		userSkills: Object.fromEntries(
 			points.map((p) => {
-				const { name, isPlus } = intervals.find(
-					(t) => t.neededOrdinal! <= p.ordinal,
-				) ?? { name: "IRON", isPlus: false };
 				return [
 					p.userId as number,
 					{
 						ordinal: p.ordinal,
-						tier: { name, isPlus },
+						tier: tierOfOrdinal(intervals, p.ordinal),
 						approximate: p.matchesCount < MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
 					},
 				];

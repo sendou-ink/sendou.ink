@@ -1,4 +1,5 @@
 import * as R from "remeda";
+import { tierOfOrdinal } from "~/features/mmr/mmr-utils";
 import type { SkillTierInterval } from "~/features/mmr/tiered.server";
 import {
 	FEED_COMEBACK_MIN_BREAK_DAYS,
@@ -162,8 +163,8 @@ export function derive({
 
 		const tiers = tiersOfSeason(play.season);
 		if (play.isWin && play.previousOrdinal !== null && tiers) {
-			const from = tierOf(tiers.intervals, play.previousOrdinal);
-			const to = tierOf(tiers.intervals, play.ordinal);
+			const from = tierOfOrdinal(tiers.intervals, play.previousOrdinal);
+			const to = tierOfOrdinal(tiers.intervals, play.ordinal);
 			const isNotable =
 				!tiers.previousSeasonTier ||
 				tierRank(to) >= tierRank(tiers.previousSeasonTier);
@@ -212,14 +213,6 @@ export function derive({
 			),
 		).map((ofType) => R.firstBy(ofType, [(event) => event.at, "desc"])!),
 	];
-}
-
-function tierOf(intervals: SkillTierInterval[], ordinal: number): FeedTier {
-	const interval = intervals.find((t) => t.neededOrdinal! <= ordinal);
-
-	return interval
-		? { name: interval.name, isPlus: interval.isPlus }
-		: { name: "IRON", isPlus: false };
 }
 
 /** Position on the ladder where each plus tier is its own step, e.g. Diamond+ is one above Diamond. */
