@@ -365,11 +365,7 @@ function registeredTeamCount({
 	tournament: Tournament;
 	bracketIdx: number;
 }): ExpectedTeamCount | null {
-	const teams = tournament.isMultiStartingBracket
-		? tournament.ctx.teams.filter(
-				(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
-			)
-		: tournament.ctx.teams;
+	const teams = tournament.teamsOfStartingBracket(bracketIdx);
 
 	// the organizer adds the teams of an invitational, all of them are expected to play
 	if (tournament.isInvitational) {

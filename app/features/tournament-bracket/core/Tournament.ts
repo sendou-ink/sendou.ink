@@ -304,13 +304,7 @@ export class Tournament {
 			];
 		}
 
-		const teams = this.isMultiStartingBracket
-			? this.ctx.teams.filter(
-					(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
-				)
-			: this.ctx.teams;
-
-		return teams.map((team) => team.id);
+		return this.teamsOfStartingBracket(bracketIdx).map((team) => team.id);
 	}
 
 	/** Count of {@link eligibleTeamIdsOfBracket}. */
@@ -544,14 +538,8 @@ export class Tournament {
 	}
 
 	private resolveTeamsFromSignups(bracketIdx: number) {
-		const teams = this.isMultiStartingBracket
-			? this.ctx.teams.filter(
-					(team) => this.startingBracketIdxOfTeam(team) === bracketIdx,
-				)
-			: this.ctx.teams;
-
 		return {
-			teams: teams.map((team) => team.id),
+			teams: this.teamsOfStartingBracket(bracketIdx).map((team) => team.id),
 			relevantMatchesFinished: true,
 		};
 	}
@@ -569,6 +557,15 @@ export class Tournament {
 		}
 
 		return team.startingBracketIdx;
+	}
+
+	/** Teams that play the given starting bracket first, see {@link startingBracketIdxOfTeam}. */
+	teamsOfStartingBracket(bracketIdx: number) {
+		if (!this.isMultiStartingBracket) return this.ctx.teams;
+
+		return this.ctx.teams.filter(
+			(team) => this.startingBracketIdxOfTeam(team) === bracketIdx,
+		);
 	}
 
 	private followUpBracketSeeding(

@@ -454,14 +454,9 @@ function AbDivisionImbalanceWarning() {
 		.map((bracket, bracketIdx) => {
 			if (bracket.sources || !bracket.settings?.hasAbDivisions) return null;
 
-			const bracketTeams = tournament.isMultiStartingBracket
-				? tournament.ctx.teams.filter(
-						(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
-					)
-				: tournament.ctx.teams;
-			const checkedInTeams = bracketTeams.filter(
-				(team) => team.checkIns.length > 0,
-			);
+			const checkedInTeams = tournament
+				.teamsOfStartingBracket(bracketIdx)
+				.filter((team) => team.checkIns.length > 0);
 
 			const { a, b } = AbDivisions.countByDivision(checkedInTeams);
 			const diff = Math.abs(a - b);

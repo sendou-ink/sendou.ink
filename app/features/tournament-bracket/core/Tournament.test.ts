@@ -533,6 +533,23 @@ describe("eligibleTeamIdsOfBracket", () => {
 		expect(tournament.eligibleTeamIdsOfBracket(0)).toEqual([1, 3]);
 		expect(tournament.eligibleTeamIdsOfBracket(1)).toEqual([2]);
 	});
+
+	test("counts a team with an invalid starting bracket idx in the first bracket", () => {
+		const tournament = testTournament({
+			ctx: {
+				teams: [
+					tournamentCtxTeam(1, { startingBracketIdx: 0 }),
+					tournamentCtxTeam(2, { startingBracketIdx: 1 }),
+					tournamentCtxTeam(3, { startingBracketIdx: 2 }),
+				],
+				settings: {
+					bracketProgression: progressions.manyStartBrackets,
+				},
+			},
+		});
+
+		expect(tournament.eligibleTeamIdsOfBracket(0)).toEqual([1, 3]);
+	});
 });
 
 describe("League divisions", () => {
