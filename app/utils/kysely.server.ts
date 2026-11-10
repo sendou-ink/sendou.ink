@@ -20,7 +20,9 @@ import {
 } from "~/db/json-selections";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
+import type { CustomTheme } from "~/db/tables-json";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { SUPPORTER_MIN_PATRON_TIER } from "~/modules/permissions/utils";
 import { dateToDatabaseTimestamp } from "./dates";
 import { safeNumberParse } from "./number";
 import { USER_SUBMITTED_IMAGE_ROOT } from "./urls";
@@ -149,11 +151,18 @@ export type UserWithPlusTier = Tables["User"] & {
 	plusTier: Tables["PlusTier"]["tier"] | null;
 };
 
-const userChatNameHueRaw = sql<
-	string | null
->`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme" ->> '--_chat-h', null)`;
+const userIsSupporter = sql<SqlBool>`COALESCE("User"."patronTier", 0) >= ${sql.lit(SUPPORTER_MIN_PATRON_TIER)}`;
 
-export const userChatNameHue = userChatNameHueRaw.as("chatNameHue");
+/** The user's custom theme, null unless they are a supporter (lapsed supporters lose theirs). */
+export const supporterCustomTheme = asJson(
+	sql<CustomTheme | null>`IIF(${userIsSupporter}, "User"."customTheme", null)`,
+);
+
+export const userChatNameHue = sql<
+	string | null
+>`IIF(${userIsSupporter}, "User"."customTheme" ->> '--_chat-h', null)`.as(
+	"chatNameHue",
+);
 
 /**
  * The {@link CommonUser} fields as a plain record of Kysely expressions, for spreading into a
@@ -622,7 +631,7 @@ export function jsonBuildObject<O extends Record<string, Expression<unknown>>>(
  * Re-tags an expression with `json()` so it stays nested inside {@link jsonBuildObject}/{@link jsonArrayFrom}.
  * Only needed when the helpers can't recognize it as JSON, e.g. a raw `IIF(...)` over a JSON column.
  */
-export function asJson<T>(expr: Expression<T>): RawBuilder<T> {
+function asJson<T>(expr: Expression<T>): RawBuilder<T> {
 	return sql<T>`json(${expr})`;
 }
 

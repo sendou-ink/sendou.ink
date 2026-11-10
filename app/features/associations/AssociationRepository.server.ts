@@ -3,6 +3,7 @@ import type { Tables, TablesInsertable } from "~/db/tables";
 import type { AssociationVirtualIdentifier } from "~/features/associations/associations-constants";
 import { ASSOCIATION } from "~/features/associations/associations-constants";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
+import { isSupporter } from "~/modules/permissions/utils";
 import { LimitReachedError } from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
 import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
@@ -197,10 +198,9 @@ export function insert({ userId, ...associationArgs }: InsertArgs) {
 			.where("AssociationMember.userId", "=", userId)
 			.executeTakeFirstOrThrow();
 
-		const maxCount =
-			(patronTier ?? 0) >= 2
-				? ASSOCIATION.MAX_COUNT_SUPPORTER
-				: ASSOCIATION.MAX_COUNT_REGULAR_USER;
+		const maxCount = isSupporter({ patronTier })
+			? ASSOCIATION.MAX_COUNT_SUPPORTER
+			: ASSOCIATION.MAX_COUNT_REGULAR_USER;
 
 		if (count > maxCount) {
 			throw new LimitReachedError("Max amount of associations reached");

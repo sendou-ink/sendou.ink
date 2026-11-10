@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import { db } from "~/db/sql";
 import type { ApiTokenType } from "~/features/api/api-types";
+import { SUPPORTER_MIN_PATRON_TIER } from "~/modules/permissions/utils";
 
 const API_TOKEN_LENGTH = 20;
 
@@ -58,7 +59,7 @@ export async function findAllApiTokens() {
 			eb.or([
 				eb("User.isApiAccesser", "=", 1),
 				eb("User.isTournamentOrganizer", "=", 1),
-				eb("User.patronTier", ">=", 2),
+				eb("User.patronTier", ">=", SUPPORTER_MIN_PATRON_TIER),
 				eb.and([
 					eb("TournamentOrganization.isEstablished", "=", 1),
 					eb.or([

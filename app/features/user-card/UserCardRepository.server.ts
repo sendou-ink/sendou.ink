@@ -4,7 +4,7 @@ import { sql } from "kysely";
 import { ServerConfig } from "~/config.server";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import type { CustomTheme, PeakXP } from "~/db/tables-json";
+import type { PeakXP } from "~/db/tables-json";
 import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import { LFG } from "~/features/lfg/lfg-constants";
@@ -17,11 +17,11 @@ import { LRUCache } from "~/modules/cache";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
-	asJson,
 	commonUserObjectFields,
 	concatUserSubmittedImagePrefix,
 	jsonBuildObject,
 	jsonObjectFrom,
+	supporterCustomTheme,
 } from "~/utils/kysely.server";
 import { PRESET_COLORS } from "../tier-list-maker/tier-list-maker-constants";
 import type {
@@ -352,9 +352,7 @@ function userCardDataJsonObject(
 		...commonUserObjectFields(eb),
 		shortBio: eb.ref("User.shortBio"),
 		div: eb.ref("User.div"),
-		customTheme: asJson(
-			sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
-		),
+		customTheme: supporterCustomTheme,
 		hiddenCardStats: eb.ref("User.hiddenCardStats"),
 		banner: bannerJson(eb),
 		friendCode: include?.friendCode

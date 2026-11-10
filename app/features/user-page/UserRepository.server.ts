@@ -25,11 +25,11 @@ import {
 } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import {
-	asJson,
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
 	jsonObjectFrom,
+	supporterCustomTheme,
 	tournamentLogoOrNull,
 	userByIdentifierQuery,
 } from "~/utils/kysely.server";
@@ -136,9 +136,7 @@ export function findLayoutDataById(userId: number, loggedInUserId?: number) {
 			"PlusTier.tier as plusTier",
 			"User.commissionText",
 			"User.commissionsOpen",
-			asJson(
-				sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
-			).as("customTheme"),
+			supporterCustomTheme.as("customTheme"),
 			eb
 				.selectFrom("TournamentResult")
 				.whereRef("TournamentResult.userId", "=", "User.id")
@@ -477,9 +475,7 @@ export function findAllPatrons() {
 			"User.discordId",
 			"User.username",
 			"User.patronTier",
-			asJson(
-				sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
-			).as("customTheme"),
+			supporterCustomTheme.as("customTheme"),
 		])
 		.where("User.patronTier", "is not", null)
 		.orderBy("User.patronTier", "desc")
@@ -494,9 +490,7 @@ export async function findAllPatronsForFooter() {
 		.select([
 			"User.id",
 			"User.username",
-			asJson(
-				sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
-			).as("customTheme"),
+			supporterCustomTheme.as("customTheme"),
 		])
 		.where("User.patronTier", "is not", null)
 		.orderBy("User.id", "asc")
