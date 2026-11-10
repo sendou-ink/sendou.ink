@@ -1,6 +1,7 @@
 import * as React from "react";
 import type { MetaFunction } from "react-router";
 import { Form, useLoaderData } from "react-router";
+import type * as v from "valibot";
 import { Catcher } from "~/components/Catcher";
 import { SendouButton } from "~/components/elements/Button";
 import {
@@ -10,6 +11,7 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { UserSearch } from "~/components/elements/UserSearch";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Main } from "~/components/Main";
 import { UserLink } from "~/components/UserLink";
 import { SendouForm } from "~/form/SendouForm";
@@ -20,6 +22,7 @@ import { impersonateUrl, STOP_IMPERSONATING_URL } from "~/utils/urls";
 import { action } from "../actions/admin.server";
 import {
 	banUserSchema,
+	claimPlaceholderSchema,
 	forcePatronSchema,
 	friendCodeSearchSchema,
 	giveApiAccessSchema,
@@ -119,6 +122,7 @@ function AdminActions() {
 			{isAdmin ? <GiveApiAccess /> : null}
 			{isStaff ? <UpdateFriendCode /> : null}
 			{isStaff ? <MigrateUser /> : null}
+			{isStaff ? <ClaimPlaceholder /> : null}
 			{isAdmin ? <ForcePatron /> : null}
 			{isStaff ? <BanUser /> : null}
 			{isStaff ? <UnbanUser /> : null}
@@ -171,6 +175,48 @@ function MigrateUser() {
 				</>
 			)}
 		</SendouForm>
+	);
+}
+
+function ClaimPlaceholder() {
+	const [claim, setClaim] = React.useState<v.InferOutput<
+		typeof claimPlaceholderSchema
+	> | null>(null);
+
+	return (
+		<>
+			<SendouForm
+				schema={claimPlaceholderSchema}
+				title="Claim placeholder"
+				submitButtonText="Claim"
+				onApply={setClaim}
+			>
+				{({ FormField }) => (
+					<>
+						<FormField name="placeholderUserId" />
+						<FormField name="user" />
+					</>
+				)}
+			</SendouForm>
+			<FormWithConfirm
+				isOpen={claim !== null}
+				onOpenChange={(isOpen) => {
+					if (!isOpen) setClaim(null);
+				}}
+				dialogHeading={`Claim placeholder player ${claim?.placeholderUserId}?`}
+				description="Its tournament results, skill and stats move to the chosen user and the placeholder is deleted. This can't be undone."
+				submitButtonText="Claim"
+				fields={
+					claim
+						? [
+								["_action", "CLAIM_PLACEHOLDER"],
+								["placeholderUserId", claim.placeholderUserId],
+								["user", claim.user],
+							]
+						: []
+				}
+			/>
+		</>
 	);
 }
 

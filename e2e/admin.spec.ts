@@ -158,6 +158,25 @@ test.describe("Admin panel", () => {
 		await expect(userPage.usernameHeading(KEEPER.defaultName)).toBeVisible();
 	});
 
+	test("claims a placeholder player for a user", async ({
+		page,
+		factories,
+	}) => {
+		const placeholder = await factories.UserFactory.createPlaceholder();
+		await factories.UserFactory.create({ ...KEEPER });
+
+		await impersonate(page, ADMIN_ID);
+		const adminActions = new AdminActionsPage(page);
+		await adminActions.goto();
+		await adminActions.claimPlaceholder({
+			placeholderUserId: placeholder.id,
+			userName: KEEPER.defaultName,
+		});
+
+		const placeholderPage = await page.request.get(`/u/${placeholder.id}`);
+		expect(placeholderPage.status()).toBe(404);
+	});
+
 	test("keeps the scroll position when an action shows a toast", async ({
 		page,
 		factories,

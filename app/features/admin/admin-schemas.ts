@@ -29,6 +29,16 @@ export const migrateUserSchema = v.object({
 	}),
 });
 
+export const claimPlaceholderSchema = v.object({
+	_action: stringConstant("CLAIM_PLACEHOLDER"),
+	placeholderUserId: numberField({
+		label: "labels.adminPlaceholderUserId",
+		bottomText: "bottomTexts.adminPlaceholderUserId",
+		min: 1,
+	}),
+	user: userSearch({ label: "labels.adminClaimingUser" }),
+});
+
 export const linkPlayerSchema = v.object({
 	_action: stringConstant("LINK_PLAYER"),
 	user: userField,
@@ -101,6 +111,7 @@ export const refreshPlusTiersSchema = v.object({
 
 export const adminActionSchema = v.union([
 	migrateUserSchema,
+	claimPlaceholderSchema,
 	linkPlayerSchema,
 	giveArtistSchema,
 	giveVideoAdderSchema,

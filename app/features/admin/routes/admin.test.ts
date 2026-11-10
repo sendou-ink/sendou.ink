@@ -395,3 +395,38 @@ describe("Account migration", () => {
 		}
 	});
 });
+
+describe("Claiming a placeholder", () => {
+	beforeEach(async () => {
+		await createUsers(2);
+	});
+
+	const claimAction = (placeholderUserId: number) =>
+		adminAction(
+			{
+				_action: "CLAIM_PLACEHOLDER",
+				placeholderUserId,
+				user: users.id(1),
+			},
+			{ user: "admin" },
+		);
+
+	test("deletes the claimed placeholder", async () => {
+		const placeholder = await UserFactory.createPlaceholder();
+
+		await claimAction(placeholder.id);
+
+		expect(await UserRepository.findPlaceholderById(placeholder.id)).toBe(
+			undefined,
+		);
+	});
+
+	test("shows why a claim failed", async () => {
+		const response = await claimAction(users.id(2));
+
+		assertResponseErrored(
+			response,
+			"placeholder is not a player without an account",
+		);
+	});
+});
