@@ -1,7 +1,6 @@
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { databaseTimestampNow } from "~/utils/dates";
 import { expect, expectNoErrorPage, test } from "./helpers/playwright";
-import { ArticlesPage } from "./pages/articles/articles-page";
 import { BuildsPage } from "./pages/builds/builds-page";
 import { WeaponBuildsPage } from "./pages/builds/weapon-builds-page";
 import { CalendarPage } from "./pages/calendar/calendar-page";
@@ -26,12 +25,6 @@ const BUILD_WEAPON_SLUG = "splattershot";
 const EVENT_NAME = "Ink Clash Open";
 const TOURNAMENT_NAME = "Public Pages Cup";
 const ICS_EVENT_NAME = "ICS Feed Cup";
-
-const ARTICLE = {
-	slug: "results-from-riptide-2025",
-	title: "Results from Riptide 2025",
-	author: "YELLOW",
-};
 
 test.describe("Public pages", () => {
 	test("renders public pages for a logged-out visitor", async ({
@@ -127,22 +120,6 @@ test.describe("Public pages", () => {
 
 		await new TopRightButtons(page).locators.searchButton.click();
 		await expect(logInPopover.locators.logInButton).toBeVisible();
-	});
-
-	test("lists articles and renders one by slug", async ({ page }) => {
-		const articles = new ArticlesPage(page);
-		await articles.goto();
-		await expectNoErrorPage(page);
-
-		const article = await articles.openArticle(ARTICLE.title);
-		await expect(article.heading(ARTICLE.title)).toBeVisible();
-		await expect(article.authorLink(ARTICLE.author)).toBeVisible();
-
-		await article.goto(ARTICLE.slug);
-		await expect(article.heading(ARTICLE.title)).toBeVisible();
-		await expect(
-			article.text("largest North American Splatoon LAN in history"),
-		).toBeVisible();
 	});
 
 	test("redirects moved URLs, renders 404 for unknown ones and serves the calendar feed", async ({

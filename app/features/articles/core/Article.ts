@@ -1,4 +1,13 @@
+/**
+ * An article as its page shows it: the authors it is credited to, where their names link to, the
+ * body without a title line repeating the page's heading and the description of its link previews.
+ */
+
+import type * as v from "valibot";
 import { truncateBySentence } from "~/utils/strings";
+import type { articleDataSchema } from "../articles-schemas.server";
+
+const SENDOU_INK_ORIGIN = "https://sendou.ink";
 
 const LEADING_LINES_SEARCHED_FOR_TITLE = 3;
 
@@ -10,6 +19,47 @@ const DESCRIPTION_MAX_LENGTH = 160;
 const SOURCE_NOTICE_REGEX = /^(this )?article (was )?(originally|ported)\b/i;
 const ITALIC_REGEX = /^(\*|_)(?!\1).*[^*_]\1$/;
 const ABBREVIATION_END_REGEX = /\b(vs|etc|e\.g|i\.e|approx|ca)\.$/i;
+
+/** An author an article is credited to, `link` leading to their sendou.ink user page or elsewhere. */
+export interface ArticleAuthor {
+	name: string;
+	link: string | null;
+}
+
+/** The front matter's `author`: a name, a name with a link, or a list of them. */
+type FrontMatterAuthor = v.InferOutput<typeof articleDataSchema>["author"];
+
+/** The authors of an article, from the front matter's `author` in any of its forms. */
+export function normalizeAuthors(
+	frontMatterAuthor: FrontMatterAuthor,
+): ArticleAuthor[] {
+	const authors = Array.isArray(frontMatterAuthor)
+		? frontMatterAuthor
+		: [frontMatterAuthor];
+
+	return authors.map((author) =>
+		typeof author === "string" ? { name: author, link: null } : author,
+	);
+}
+
+/**
+ * Where an author's name links to, `null` for an author without a link. A sendou.ink link becomes
+ * a path within the app (`isInternal`), anything else is kept as is.
+ */
+export function authorHref(
+	author: ArticleAuthor,
+): { href: string; isInternal: boolean } | null {
+	if (!author.link) return null;
+
+	if (author.link.includes(SENDOU_INK_ORIGIN)) {
+		return {
+			href: author.link.replace(SENDOU_INK_ORIGIN, ""),
+			isInternal: true,
+		};
+	}
+
+	return { href: author.link, isInternal: false };
+}
 
 /**
  * The body of an article without a heading of its title, as the page shows the title above the body
