@@ -746,7 +746,99 @@ describe("UserRepository", () => {
 			expect(await ImageRepository.findById(previousImgId!)).toBeUndefined();
 		});
 	});
+
+	describe("UserRepository.updatePatronData", () => {
+		const STARTED_AT = dateToDatabaseTimestamp(
+			new Date("2026-01-01T00:00:00Z"),
+		);
+
+		afterEach(() => {
+			vi.useRealTimers();
+		});
+
+		test("sets the patron data of the listed users", async () => {
+			const { id } = await UserFactory.create({ discordId: "100" });
+
+			await UserRepository.updatePatronData([
+				{ discordId: "100", patronTier: 2, patronStartedAt: STARTED_AT },
+			]);
+
+			expect(await patronData(id)).toEqual({
+				patronTier: 2,
+				patronStartedAt: STARTED_AT,
+				patronExpiresAt: null,
+			});
+		});
+
+		test("clears the patron data of a patron no longer listed", async () => {
+			const { id: stillPatronId } = await UserFactory.create({
+				discordId: "100",
+			});
+			const { id: formerPatronId } = await UserFactory.create({
+				discordId: "200",
+			});
+
+			await UserRepository.updatePatronData([
+				{ discordId: "100", patronTier: 2, patronStartedAt: STARTED_AT },
+				{ discordId: "200", patronTier: 1, patronStartedAt: STARTED_AT },
+			]);
+			await UserRepository.updatePatronData([
+				{ discordId: "100", patronTier: 3, patronStartedAt: STARTED_AT },
+			]);
+
+			expect((await patronData(stillPatronId)).patronTier).toBe(3);
+			expect(await patronData(formerPatronId)).toEqual({
+				patronTier: null,
+				patronStartedAt: null,
+				patronExpiresAt: null,
+			});
+		});
+
+		test("keeps a granted patronage that has not expired", async () => {
+			const { id } = await UserFactory.create(null, { patronTier: 2 });
+
+			await UserRepository.updatePatronData([]);
+
+			expect((await patronData(id)).patronTier).toBe(2);
+		});
+
+		test("clears a granted patronage that has expired", async () => {
+			const { id } = await UserFactory.create(null, { patronTier: 2 });
+
+			vi.useFakeTimers({ toFake: ["Date"] });
+			vi.setSystemTime(addDays(new Date(), 400));
+
+			await UserRepository.updatePatronData([]);
+
+			expect((await patronData(id)).patronTier).toBeNull();
+		});
+
+		test("replaces a granted patronage of a listed user", async () => {
+			const { id } = await UserFactory.create(
+				{ discordId: "100" },
+				{ patronTier: 2 },
+			);
+
+			await UserRepository.updatePatronData([
+				{ discordId: "100", patronTier: 1, patronStartedAt: STARTED_AT },
+			]);
+
+			expect(await patronData(id)).toEqual({
+				patronTier: 1,
+				patronStartedAt: STARTED_AT,
+				patronExpiresAt: null,
+			});
+		});
+	});
 });
+
+function patronData(userId: number) {
+	return db
+		.selectFrom("User")
+		.select(["patronTier", "patronStartedAt", "patronExpiresAt"])
+		.where("id", "=", userId)
+		.executeTakeFirstOrThrow();
+}
 
 function ids(patrons: Array<{ id: number }>) {
 	return patrons.map((patron) => patron.id);

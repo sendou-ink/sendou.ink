@@ -1529,6 +1529,8 @@ export type UpdatePatronDataArgs = Array<
 >;
 export function updatePatronData(users: UpdatePatronDataArgs) {
 	return db.transaction().execute(async (trx) => {
+		const patronDiscordIds = users.map((user) => user.discordId);
+
 		await trx
 			.updateTable("User")
 			.set({
@@ -1536,11 +1538,16 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 				patronStartedAt: null,
 				patronExpiresAt: null,
 			})
+			// "> 0" instead of "is not null" so that the patronTier index gets used
+			.where("patronTier", ">", 0)
 			.where((eb) =>
 				eb.or([
 					eb("patronExpiresAt", "<", databaseTimestampNow()),
 					eb("patronExpiresAt", "is", null),
 				]),
+			)
+			.$if(patronDiscordIds.length > 0, (qb) =>
+				qb.where("discordId", "not in", patronDiscordIds),
 			)
 			.execute();
 
@@ -1553,6 +1560,13 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 					patronExpiresAt: null,
 				})
 				.where("User.discordId", "=", user.discordId)
+				.where((eb) =>
+					eb.or([
+						eb("patronTier", "is not", user.patronTier),
+						eb("patronStartedAt", "is not", user.patronStartedAt),
+						eb("patronExpiresAt", "is not", null),
+					]),
+				)
 				.execute();
 		}
 	});
