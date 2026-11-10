@@ -10,6 +10,7 @@ import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
 	modesIncluded,
+	seedsByStartingBracket,
 	sortTeamsBySeeding,
 	tournamentInWeaponReportingWindow,
 	tournamentIsRanked,
@@ -130,6 +131,11 @@ export class Tournament {
 	private _derivedMeta: BracketDerivedMeta[] | undefined;
 	private _bracketsMeta: BracketMeta[] | undefined;
 	private readonly bracketIdxsBeingBuilt = new Set<number>();
+	private readonly teamsById: Map<
+		number,
+		TournamentData["ctx"]["teams"][number]
+	>;
+	private readonly seedByTeamId: Map<number, number>;
 
 	constructor(args: TournamentArgs) {
 		const { data, ctx, bracketsMeta, brackets } = args;
@@ -164,6 +170,8 @@ export class Tournament {
 				: teamsInSeedOrder,
 			startsAt: databaseTimestampToDate(ctx.startsAt),
 		};
+		this.teamsById = new Map(this.ctx.teams.map((team) => [team.id, team]));
+		this.seedByTeamId = seedsByStartingBracket(this.ctx.teams);
 
 		for (const bracket of brackets ?? []) {
 			this._brackets[bracket.idx] = createBracket({
@@ -849,28 +857,10 @@ export class Tournament {
 	}
 
 	teamById(id: number) {
-		let result: (typeof this.ctx.teams)[number] | null = null;
-		let seed = 0;
-		let currStartingBracketIdx = this.ctx.teams.at(0)?.startingBracketIdx ?? 0;
+		const team = this.teamsById.get(id);
+		if (!team) return;
 
-		for (const team of this.ctx.teams) {
-			const teamStartingBracketIdx = team.startingBracketIdx ?? 0;
-			if (teamStartingBracketIdx !== currStartingBracketIdx) {
-				currStartingBracketIdx = teamStartingBracketIdx;
-				seed = 1;
-			} else {
-				seed++;
-			}
-
-			if (team.id === id) {
-				result = team;
-				break;
-			}
-		}
-
-		if (!result) return;
-
-		return { ...result, seed };
+		return { ...team, seed: this.seedByTeamId.get(id)! };
 	}
 
 	/** User ids of the given team's members who played at least one map of the tournament. */
