@@ -29,10 +29,6 @@ export class MapPool {
 		return new MapPool(init).serialized;
 	}
 
-	static parse(init: MapPoolObject | string | DbMapPoolList) {
-		return new MapPool(init).parsed;
-	}
-
 	static toDbList(init: MapPoolObject | string | DbMapPoolList) {
 		return new MapPool(init).dbList;
 	}
@@ -77,12 +73,6 @@ export class MapPool {
 		return this.asObject;
 	}
 
-	get dbList(): DbMapPoolList {
-		return Object.entries(this.parsed).flatMap(([mode, stages]) =>
-			stages.flatMap((stageId) => ({ mode: mode as ModeShort, stageId })),
-		);
-	}
-
 	get stages() {
 		return Object.values(this.parsed).flat();
 	}
@@ -93,10 +83,15 @@ export class MapPool {
 		) as ModeShort[];
 	}
 
-	get stageModePairs() {
+	get stageModePairs(): DbMapPoolList {
 		return Object.entries(this.parsed).flatMap(([mode, stages]) =>
 			stages.map((stageId) => ({ mode: mode as ModeShort, stageId })),
 		);
+	}
+
+	/** Same pairs as `stageModePairs`, in the shape the database stores. */
+	get dbList(): DbMapPoolList {
+		return this.stageModePairs;
 	}
 
 	has({ stageId, mode }: { stageId: StageId; mode: ModeShort }) {
@@ -113,10 +108,6 @@ export class MapPool {
 		);
 	}
 
-	overlaps(other: MapPool): boolean {
-		return this.stageModePairs.some((pair) => other.has(pair));
-	}
-
 	isEmpty(): boolean {
 		return Object.values(this.parsed).every((stages) => stages.length === 0);
 	}
@@ -127,10 +118,6 @@ export class MapPool {
 
 	get length() {
 		return this.stageModePairs.length;
-	}
-
-	getClonedObject() {
-		return structuredClone(this.parsed) as MapPoolObject;
 	}
 
 	toString() {
@@ -196,21 +183,9 @@ export class MapPool {
 		...MapPool.EMPTY.parsed,
 		SZ: [...stageIds],
 	});
-	static TC = new MapPool({
-		...MapPool.EMPTY.parsed,
-		TC: [...stageIds],
-	});
 	static CB = new MapPool({
 		...MapPool.EMPTY.parsed,
 		CB: [...stageIds],
-	});
-	static RM = new MapPool({
-		...MapPool.EMPTY.parsed,
-		RM: [...stageIds],
-	});
-	static TW = new MapPool({
-		...MapPool.EMPTY.parsed,
-		TW: [...stageIds],
 	});
 }
 

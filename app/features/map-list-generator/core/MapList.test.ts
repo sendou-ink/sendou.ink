@@ -146,7 +146,7 @@ describe("MapList.generate()", () => {
 		test("follows a pattern where starting and ending mode is the same", () => {
 			const gen = initGenerator(
 				new MapPool({
-					...ALL_MODES_TEST_MAP_POOL.getClonedObject(),
+					...ALL_MODES_TEST_MAP_POOL.parsed,
 					TW: [] as StageId[],
 				}),
 			);
