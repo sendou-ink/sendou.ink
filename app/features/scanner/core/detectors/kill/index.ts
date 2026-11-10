@@ -11,6 +11,7 @@
  * mode, not only where the counter is parsed.
  */
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import {
 	copyRoi,
@@ -168,15 +169,43 @@ export function createKillDetector(
 		const text = textRoi(row);
 		const textFraction = whiteFraction(gray, text);
 		return [
-			...darkProbes(row).map(
-				(roi) => meanBrightness(gray, roi) <= GATE_DARK_MAX_MEAN,
+			...darkProbes(row).map((roi) =>
+				Decisions.atMost(
+					"kill:GATE_DARK_MAX_MEAN",
+					meanBrightness(gray, roi),
+					GATE_DARK_MAX_MEAN,
+				),
 			),
-			skullMean >= GATE_SKULL_MIN_MEAN &&
-				skullMean <= GATE_SKULL_MAX_MEAN &&
-				maxBrightness(gray, skull) >= GATE_SKULL_MIN_MAX,
-			maxBrightness(gray, text) >= GATE_TEXT_MIN_MAX &&
-				textFraction >= GATE_TEXT_MIN_FRACTION &&
-				textFraction <= GATE_TEXT_MAX_FRACTION,
+			Decisions.atLeast(
+				"kill:GATE_SKULL_MIN_MEAN",
+				skullMean,
+				GATE_SKULL_MIN_MEAN,
+			) &&
+				Decisions.atMost(
+					"kill:GATE_SKULL_MAX_MEAN",
+					skullMean,
+					GATE_SKULL_MAX_MEAN,
+				) &&
+				Decisions.atLeast(
+					"kill:GATE_SKULL_MIN_MAX",
+					maxBrightness(gray, skull),
+					GATE_SKULL_MIN_MAX,
+				),
+			Decisions.atLeast(
+				"kill:GATE_TEXT_MIN_MAX",
+				maxBrightness(gray, text),
+				GATE_TEXT_MIN_MAX,
+			) &&
+				Decisions.atLeast(
+					"kill:GATE_TEXT_MIN_FRACTION",
+					textFraction,
+					GATE_TEXT_MIN_FRACTION,
+				) &&
+				Decisions.atMost(
+					"kill:GATE_TEXT_MAX_FRACTION",
+					textFraction,
+					GATE_TEXT_MAX_FRACTION,
+				),
 		];
 	}
 
@@ -266,7 +295,15 @@ export function createKillDetector(
 				messageScore: message?.score,
 				memoized: memoized !== null,
 			});
-			if (!message || message.score < MESSAGE_MIN_SCORE) break;
+			if (
+				!message ||
+				Decisions.below(
+					"kill:MESSAGE_MIN_SCORE",
+					message.score,
+					MESSAGE_MIN_SCORE,
+				)
+			)
+				break;
 			names.push(message.name);
 			confidences.push((message.score + parsed.confidence) / 2);
 		}

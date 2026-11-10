@@ -7,6 +7,7 @@ import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
 import type { Roi } from "../../canonical";
 import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import type { GlyphSet, RecognizedChar } from "../../glyphs";
 import { ALL_STAGE_ENTRIES, LOBBY_MODE_COMBOS } from "../../localized";
 import { all, type MatchSteps } from "../../match-steps";
@@ -124,7 +125,14 @@ function parseTopBand(
 		);
 		if (match) {
 			stageScore = match.score;
-			if (match.score >= MIN_MATCH_SCORE) stage = match.entry.stageId;
+			if (
+				Decisions.atLeast(
+					"scoreboard-battle-log-replay/header:MIN_MATCH_SCORE#stage",
+					match.score,
+					MIN_MATCH_SCORE,
+				)
+			)
+				stage = match.entry.stageId;
 		}
 	}
 	return { reading, timestamp, stage, stageScore };
@@ -187,7 +195,14 @@ export function* parseReplayHeaderSteps(
 		let bottomMatch = bottomReading
 			? closestBy(bottomReading, LOBBY_MODE_COMBOS, (c) => c.text)
 			: null;
-		if (!bottomMatch || bottomMatch.score < MIN_MATCH_SCORE) {
+		if (
+			!bottomMatch ||
+			Decisions.below(
+				"scoreboard-battle-log-replay/header:MIN_MATCH_SCORE#liftedRetry",
+				bottomMatch.score,
+				MIN_MATCH_SCORE,
+			)
+		) {
 			const reading = yield* readTagBandSteps(
 				gray,
 				bands.bottom,
@@ -212,7 +227,14 @@ export function* parseReplayHeaderSteps(
 
 	let lobby: ScannerLobby | null = null;
 	let mode: ModeShort | null = null;
-	if (bottomMatch && bottomMatch.score >= MIN_MATCH_SCORE) {
+	if (
+		bottomMatch &&
+		Decisions.atLeast(
+			"scoreboard-battle-log-replay/header:MIN_MATCH_SCORE#lobbyMode",
+			bottomMatch.score,
+			MIN_MATCH_SCORE,
+		)
+	) {
 		lobby = bottomMatch.entry.lobby;
 		mode = bottomMatch.entry.mode;
 	}

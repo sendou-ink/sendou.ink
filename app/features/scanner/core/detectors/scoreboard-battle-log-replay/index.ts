@@ -6,6 +6,7 @@
  * scoreboard helpers with glyph sets rescaled to this screen.
  */
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
 	cropRoi,
@@ -168,14 +169,39 @@ export function createScoreboardBattleLogReplayDetector(
 		for (const dx of PANEL_XS) {
 			for (const cy of ROW_CENTERS) {
 				const flat = meanBrightness(frame, gateFlatProbe(cy, dx));
-				if (flat >= GATE_FLAT_MIN_MEAN && flat <= GATE_FLAT_MAX_MEAN) flatOk++;
-				if (maxBrightness(gray, paintSuffixRoi(cy, dx)) > GATE_TEXT_MIN_MAX)
+				if (
+					Decisions.atLeast(
+						"scoreboard-battle-log-replay:GATE_FLAT_MIN_MEAN",
+						flat,
+						GATE_FLAT_MIN_MEAN,
+					) &&
+					Decisions.atMost(
+						"scoreboard-battle-log-replay:GATE_FLAT_MAX_MEAN",
+						flat,
+						GATE_FLAT_MAX_MEAN,
+					)
+				)
+					flatOk++;
+				if (
+					Decisions.above(
+						"scoreboard-battle-log-replay:GATE_TEXT_MIN_MAX",
+						maxBrightness(gray, paintSuffixRoi(cy, dx)),
+						GATE_TEXT_MIN_MAX,
+					)
+				)
 					suffixOk++;
 			}
 		}
 		let gapOk = 0;
 		for (const roi of GATE_GAP_PROBES) {
-			if (meanBrightness(frame, roi) < GATE_GAP_MAX_MEAN) gapOk++;
+			if (
+				Decisions.below(
+					"scoreboard-battle-log-replay:GATE_GAP_MAX_MEAN",
+					meanBrightness(frame, roi),
+					GATE_GAP_MAX_MEAN,
+				)
+			)
+				gapOk++;
 		}
 		const codeFraction = greenFraction(frame, REPLAY_CODE_ROI);
 
@@ -190,7 +216,11 @@ export function createScoreboardBattleLogReplayDetector(
 			flatOk >= 7 &&
 			suffixOk >= 7 &&
 			gapOk === 2 &&
-			codeFraction >= GATE_CODE_MIN_FRACTION;
+			Decisions.atLeast(
+				"scoreboard-battle-log-replay:GATE_CODE_MIN_FRACTION",
+				codeFraction,
+				GATE_CODE_MIN_FRACTION,
+			);
 		// browsing between replays never drops this gate, so fingerprint what
 		// differs between battles (timestamp, code, names) for the scheduler
 		const signature = pass ? contentSignature(gray) : undefined;
@@ -234,7 +264,18 @@ export function createScoreboardBattleLogReplayDetector(
 		// bottom row (gate's flatOk >= 7 tolerates it); skip it, no phantom player
 		const rowCenters = ROW_CENTERS.filter((cy) => {
 			const flat = meanBrightness(rgb, gateFlatProbe(cy, dx));
-			return flat >= GATE_FLAT_MIN_MEAN && flat <= GATE_FLAT_MAX_MEAN;
+			return (
+				Decisions.atLeast(
+					"scoreboard-battle-log-replay:GATE_FLAT_MIN_MEAN#rowPresent",
+					flat,
+					GATE_FLAT_MIN_MEAN,
+				) &&
+				Decisions.atMost(
+					"scoreboard-battle-log-replay:GATE_FLAT_MAX_MEAN#rowPresent",
+					flat,
+					GATE_FLAT_MAX_MEAN,
+				)
+			);
 		});
 		// the point total is read only to recognize a knockout below (only a
 		// knockout's full count reaches 500); never emitted as a score
@@ -300,7 +341,11 @@ export function createScoreboardBattleLogReplayDetector(
 		let matchScore: ParsedNumber | null = matchRead;
 		if (matchScore) {
 			if (
-				matchScore.confidence < MATCH_SCORE_MIN_CONF ||
+				Decisions.below(
+					"scoreboard-battle-log-replay:MATCH_SCORE_MIN_CONF",
+					matchScore.confidence,
+					MATCH_SCORE_MIN_CONF,
+				) ||
 				(matchScore.value !== null && matchScore.value > KO_MATCH_SCORE)
 			) {
 				matchScore = { ...matchScore, value: null };
@@ -329,7 +374,13 @@ export function createScoreboardBattleLogReplayDetector(
 				);
 				if (match) {
 					resultScore = match.score;
-					if (match.score >= RESULT_MIN_SCORE)
+					if (
+						Decisions.atLeast(
+							"scoreboard-battle-log-replay:RESULT_MIN_SCORE",
+							match.score,
+							RESULT_MIN_SCORE,
+						)
+					)
 						result = match.entry.canonical as PanelResult;
 				}
 			}

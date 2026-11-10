@@ -5,6 +5,7 @@
  * count decides.
  */
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { cropRoi, type Roi } from "../../image";
 
 const YELLOW_R_MIN = 190;
@@ -51,11 +52,23 @@ export function findPovIndex(fractions: readonly number[]): number | null {
 	for (let i = 0; i < fractions.length; i++) {
 		if (best < 0 || fractions[i]! > fractions[best]!) best = i;
 	}
-	if (best < 0 || fractions[best]! < POV_MIN_FRACTION) return null;
+	if (
+		best < 0 ||
+		Decisions.below(
+			"scoreboard/pov:POV_MIN_FRACTION",
+			fractions[best]!,
+			POV_MIN_FRACTION,
+		)
+	)
+		return null;
 	for (let i = 0; i < fractions.length; i++) {
 		if (
 			i !== best &&
-			fractions[i]! > fractions[best]! * POV_RUNNER_UP_MAX_RATIO
+			Decisions.above(
+				"scoreboard/pov:POV_RUNNER_UP_MAX_RATIO",
+				fractions[i]!,
+				fractions[best]! * POV_RUNNER_UP_MAX_RATIO,
+			)
 		)
 			return null;
 	}

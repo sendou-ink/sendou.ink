@@ -17,6 +17,7 @@
  */
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { copyRoi, type FrameData } from "../../image";
 import type { DetectedEvent } from "../types";
 import type { PlayerStatusData, StripFit } from "./player-status";
@@ -205,7 +206,15 @@ function matchSlot(
 			}),
 		}))
 		.sort((a, b) => b.match.score - a.match.score);
-	if (ranked[0]!.match.score < STRIP_WEAPON_MIN_SCORE) return null;
+	if (
+		Decisions.below(
+			"objective/strip-weapons:STRIP_WEAPON_MIN_SCORE",
+			ranked[0]!.match.score,
+			STRIP_WEAPON_MIN_SCORE,
+		)
+	) {
+		return null;
+	}
 	const candidates = ranked
 		.slice(0, STRIP_WEAPON_TOP_K)
 		.map(({ template, match }) => ({
@@ -215,7 +224,11 @@ function matchSlot(
 	const [first, second] = ranked;
 	if (
 		second &&
-		first!.match.score - second.match.score <= STRIP_WEAPON_TIE_MARGIN &&
+		Decisions.atMost(
+			"objective/strip-weapons:STRIP_WEAPON_TIE_MARGIN",
+			first!.match.score - second.match.score,
+			STRIP_WEAPON_TIE_MARGIN,
+		) &&
 		differenceScore(fine, second, first!) >
 			differenceScore(fine, first!, second)
 	) {

@@ -2,7 +2,9 @@
 /**
  * Accuracy report across all fixtures, separate from pass/fail testing:
  * aggregate per-field accuracy plus character error rate (CER) for names,
- * the metric that drives glyph atlas expansion. Usage: pnpm scanner:report
+ * the metric that drives glyph atlas expansion, followed by the threshold
+ * margin audit (threshold-margins.ts). Usage: pnpm scanner:report [--margins]
+ * (--margins = the audit alone)
  */
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import {
@@ -38,9 +40,11 @@ import {
 	runDetectorOnFixture,
 } from "../../app/features/scanner/node/fixtures";
 import { loadScoreboardResources } from "../../app/features/scanner/node/resources";
+import { printThresholdMargins } from "./threshold-margins";
 
 await loadOpenCV();
 const resources = await loadScoreboardResources();
+const marginsOnly = process.argv.includes("--margins");
 
 interface Config {
 	label: string;
@@ -106,7 +110,7 @@ function pct(t: Tally): string {
 	return `${((100 * t.ok) / t.total).toFixed(1).padStart(5)}% (${t.ok}/${t.total})`;
 }
 
-for (const config of configs) {
+for (const config of marginsOnly ? [] : configs) {
 	// Shared negatives count toward gate accuracy (expectPositive is false).
 	const fixtures = [
 		...loadFixtures(config.fixturesDir),
@@ -226,7 +230,7 @@ for (const config of configs) {
 }
 
 // Map-start fixtures only carry mode + stage, so they get their own pass.
-{
+if (!marginsOnly) {
 	const detector = createMapStartDetector(resources);
 	const fixtures = loadFixtures("map-start");
 	const tally = {
@@ -276,7 +280,7 @@ for (const config of configs) {
 }
 
 // Scoreboard-own fixtures carry header + own weapon + ability grid.
-{
+if (!marginsOnly) {
 	const detector = createScoreboardOwnDetector(resources);
 	const fixtures = [
 		...loadFixtures("scoreboard-own"),
@@ -348,7 +352,7 @@ for (const config of configs) {
 }
 
 // Minimap fixtures carry teammates/enemies, so they get their own pass.
-{
+if (!marginsOnly) {
 	const detector = createMinimapDetector(resources);
 	const fixtures = [...loadFixtures("minimap"), ...loadFixtures("negative")];
 	const tally = {
@@ -467,7 +471,7 @@ for (const config of configs) {
 
 // Death fixtures carry a different data shape (weapon text, ability grid,
 // splash-tag name), so they get their own pass instead of a Config entry.
-{
+if (!marginsOnly) {
 	const detector = createDeathDetector(resources);
 	const fixtures = loadFixtures("death");
 	const tally = {
@@ -536,7 +540,7 @@ for (const config of configs) {
 }
 
 // Kill fixtures: the feed's stacked rows (names, newest first) and the timer.
-{
+if (!marginsOnly) {
 	const detector = createKillDetector(resources);
 	const fixtures = loadFixtures("kill");
 	const tally = {
@@ -601,3 +605,5 @@ for (const config of configs) {
 		for (const m of misses) console.info(`  ${m}`);
 	}
 }
+
+await printThresholdMargins(resources);

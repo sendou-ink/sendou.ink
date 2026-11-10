@@ -1,5 +1,6 @@
 /** Player name recognition: glyph matching over the name ROI. */
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import {
 	type GlyphSet,
 	type RecognizedChar,
@@ -157,7 +158,11 @@ function resolveUnderscoreByBaseline(raw: RecognizedText): RecognizedText {
 	const baseline = anchors[Math.floor(anchors.length / 2)]!;
 	const chars = raw.chars.map((c) => {
 		if (!BASELINE_BAR_CHARS.has(c.char)) return c;
-		const onBaseline = baseline - c.y1 <= UNDERSCORE_BASELINE_SLACK_PX;
+		const onBaseline = Decisions.atMost(
+			"scoreboard/names:UNDERSCORE_BASELINE_SLACK_PX",
+			baseline - c.y1,
+			UNDERSCORE_BASELINE_SLACK_PX,
+		);
 		if (onBaseline) return c.char === "_" ? c : { ...c, char: "_" };
 		return c.char === "_" ? { ...c, char: "-" } : c;
 	});
@@ -191,7 +196,11 @@ function fixDotsByPosition(raw: RecognizedText): RecognizedText {
 	const baseline = anchors[Math.floor(anchors.length / 2)]!;
 	const chars = raw.chars.map((c, i) => {
 		if (!DOT_CHARS.has(c.char)) return c;
-		const raised = baseline - c.y1 > DOT_BASELINE_SLACK_PX;
+		const raised = Decisions.above(
+			"scoreboard/names:DOT_BASELINE_SLACK_PX#dot",
+			baseline - c.y1,
+			DOT_BASELINE_SLACK_PX,
+		);
 		if (raised && c.char === ".") {
 			const alt = c.candidates?.find(
 				(k) => DOT_CHARS.has(k.char) && k.char !== ".",
@@ -224,7 +233,11 @@ function resolveRingByPosition(raw: RecognizedText): RecognizedText {
 	const baseline = anchors[Math.floor(anchors.length / 2)]!;
 	const chars = raw.chars.map((c) => {
 		if (!RING_CHARS.has(c.char)) return c;
-		const raised = baseline - c.y1 > DOT_BASELINE_SLACK_PX;
+		const raised = Decisions.above(
+			"scoreboard/names:DOT_BASELINE_SLACK_PX#ring",
+			baseline - c.y1,
+			DOT_BASELINE_SLACK_PX,
+		);
 		return { ...c, char: raised ? "°" : "。" };
 	});
 	return { ...raw, text: retext(raw.text, chars), chars };
@@ -252,7 +265,13 @@ function resolveBhByBowlFloor(
 		if (!twin) return false;
 		return (
 			c.candidates?.some(
-				(k) => k.char === twin && c.score - k.score <= BH_SCORE_MARGIN,
+				(k) =>
+					k.char === twin &&
+					Decisions.atMost(
+						"scoreboard/names:BH_SCORE_MARGIN",
+						c.score - k.score,
+						BH_SCORE_MARGIN,
+					),
 			) ?? false
 		);
 	};
@@ -291,7 +310,16 @@ function resolveBhByBowlFloor(
 			c.y0 + Math.round(h * 0.45),
 			c.y0 + Math.round(h * 0.6),
 		);
-		return { ...c, char: floor - mid >= BH_BOWL_MIN_CONTRAST ? "b" : "h" };
+		return {
+			...c,
+			char: Decisions.atLeast(
+				"scoreboard/names:BH_BOWL_MIN_CONTRAST",
+				floor - mid,
+				BH_BOWL_MIN_CONTRAST,
+			)
+				? "b"
+				: "h",
+		};
 	});
 	gray.delete();
 	return { ...raw, text: retext(raw.text, chars), chars };
@@ -325,7 +353,11 @@ function resolveDoByCorners(
 		c.candidates?.find(
 			(k) =>
 				(ROUND_CHARS.has(c.char) ? k.char === "D" : ROUND_CHARS.has(k.char)) &&
-				c.score - k.score <= DO_SCORE_MARGIN,
+				Decisions.atMost(
+					"scoreboard/names:DO_SCORE_MARGIN",
+					c.score - k.score,
+					DO_SCORE_MARGIN,
+				),
 		);
 	const contested = (c: RecognizedChar) =>
 		(ROUND_CHARS.has(c.char) || c.char === "D") && twinOf(c) !== undefined;
@@ -340,8 +372,16 @@ function resolveDoByCorners(
 		const ends = cornerAsymmetry(data, cols, c);
 		const isD =
 			c.char === "D"
-				? !((ends.top + ends.bottom) / h < O_MAX_CORNER_ASYMMETRY)
-				: Math.max(ends.top, ends.bottom) / h >= D_MIN_END_ASYMMETRY;
+				? !Decisions.below(
+						"scoreboard/names:O_MAX_CORNER_ASYMMETRY",
+						(ends.top + ends.bottom) / h,
+						O_MAX_CORNER_ASYMMETRY,
+					)
+				: Decisions.atLeast(
+						"scoreboard/names:D_MIN_END_ASYMMETRY",
+						Math.max(ends.top, ends.bottom) / h,
+						D_MIN_END_ASYMMETRY,
+					);
 		if (isD === (c.char === "D")) return c;
 		const twin = twinOf(c)!;
 		return { ...c, char: twin.char, score: twin.score };
@@ -432,13 +472,19 @@ const STEM_TWINS: {
 		read: "r",
 		twin: "T",
 		margin: 0.05,
-		isTwin: (bottom) => bottom.centroid >= 0.43,
+		isTwin: (bottom) =>
+			Decisions.atLeast(
+				"scoreboard/names:stemTwinRTMinCentroid",
+				bottom.centroid,
+				0.43,
+			),
 	},
 	{
 		read: "u",
 		twin: "Y",
 		margin: 0.1,
-		isTwin: (bottom) => bottom.width < 0.5,
+		isTwin: (bottom) =>
+			Decisions.below("scoreboard/names:stemTwinUYMaxWidth", bottom.width, 0.5),
 	},
 ];
 const STEM_BOTTOM_FRACTION = 0.3;
@@ -454,7 +500,11 @@ function resolveStemTwins(
 			(k) =>
 				rule !== undefined &&
 				k.char === rule.twin &&
-				c.score - k.score <= rule.margin,
+				Decisions.atMost(
+					`scoreboard/names:stemTwinMargin#${rule.read}${rule.twin}`,
+					c.score - k.score,
+					rule.margin,
+				),
 		);
 		return rule && twin ? { rule, twin } : undefined;
 	};
@@ -538,7 +588,11 @@ function resolveSbByLeftStem(
 		c.candidates?.find(
 			(k) =>
 				k.char === LEFT_STEM_TWINS[c.char] &&
-				c.score - k.score <= LEFT_STEM_SCORE_MARGIN,
+				Decisions.atMost(
+					"scoreboard/names:LEFT_STEM_SCORE_MARGIN",
+					c.score - k.score,
+					LEFT_STEM_SCORE_MARGIN,
+				),
 		);
 	if (!raw.chars.some(contested)) return raw;
 
@@ -549,7 +603,15 @@ function resolveSbByLeftStem(
 		const twin = contested(c);
 		if (!twin) return c;
 		const indent = maxLeftIndent(data, cols, c, binThreshold);
-		if (indent === null || indent > LEFT_STEM_MAX_INDENT) return c;
+		if (
+			indent === null ||
+			Decisions.above(
+				"scoreboard/names:LEFT_STEM_MAX_INDENT",
+				indent,
+				LEFT_STEM_MAX_INDENT,
+			)
+		)
+			return c;
 		return { ...c, char: twin.char, score: twin.score };
 	});
 	gray.delete();
@@ -626,7 +688,15 @@ function resolveExclamationByNotch(
 	const chars = raw.chars.map((c) => {
 		if (!EXCLAMATION_STEM_READS.has(c.char)) return c;
 		const h = baseline - c.y0;
-		if (h < 6 || c.y0 - lineTop > EXCLAMATION_MAX_TOP_OFFSET * h) return c;
+		if (
+			h < 6 ||
+			Decisions.above(
+				"scoreboard/names:EXCLAMATION_MAX_TOP_OFFSET",
+				c.y0 - lineTop,
+				EXCLAMATION_MAX_TOP_OFFSET * h,
+			)
+		)
+			return c;
 		const upper: number[] = [];
 		for (let y = c.y0; y < c.y0 + Math.round(h / 2); y++) {
 			upper.push(rowMax(c, y));
@@ -653,8 +723,16 @@ function resolveExclamationByNotch(
 		);
 		for (let y = notchY + 1; y < dotEnd; y++) dot = Math.max(dot, rowMax(c, y));
 		const isExclamation =
-			stem - notch >= EXCLAMATION_MIN_NOTCH_DEPTH * stem &&
-			dot - notch >= EXCLAMATION_MIN_DOT_RISE * stem;
+			Decisions.atLeast(
+				"scoreboard/names:EXCLAMATION_MIN_NOTCH_DEPTH",
+				stem - notch,
+				EXCLAMATION_MIN_NOTCH_DEPTH * stem,
+			) &&
+			Decisions.atLeast(
+				"scoreboard/names:EXCLAMATION_MIN_DOT_RISE",
+				dot - notch,
+				EXCLAMATION_MIN_DOT_RISE * stem,
+			);
 		return isExclamation ? { ...c, char: "!" } : c;
 	});
 	gray.delete();
@@ -697,10 +775,23 @@ function resolveCaseByCapLine(raw: RecognizedText): RecognizedText {
 	if (capHeight <= 0) return raw;
 	const chars = raw.chars.map((c) => {
 		const twins = CAP_TWINS[c.char];
-		if (!twins || c.y0 - capLine > CAP_LINE_MAX_OFFSET * capHeight) return c;
+		if (
+			!twins ||
+			Decisions.above(
+				"scoreboard/names:CAP_LINE_MAX_OFFSET",
+				c.y0 - capLine,
+				CAP_LINE_MAX_OFFSET * capHeight,
+			)
+		)
+			return c;
 		const capital = c.candidates?.find(
 			(k) =>
-				twins.includes(k.char) && c.score - k.score <= CAP_LINE_SCORE_MARGIN,
+				twins.includes(k.char) &&
+				Decisions.atMost(
+					"scoreboard/names:CAP_LINE_SCORE_MARGIN",
+					c.score - k.score,
+					CAP_LINE_SCORE_MARGIN,
+				),
 		);
 		return capital ? { ...c, char: capital.char, score: capital.score } : c;
 	});
@@ -761,7 +852,13 @@ function resolveVoicedByMark(
 		const twins = VOICED_TWINS[c.char];
 		if (!twins) return undefined;
 		return c.candidates?.find(
-			(k) => twins.includes(k.char) && c.score - k.score <= VOICED_SCORE_MARGIN,
+			(k) =>
+				twins.includes(k.char) &&
+				Decisions.atMost(
+					"scoreboard/names:VOICED_SCORE_MARGIN",
+					c.score - k.score,
+					VOICED_SCORE_MARGIN,
+				),
 		);
 	};
 	if (!raw.chars.some(voicedRunnerUp)) return raw;
@@ -841,7 +938,15 @@ function hasFloatingMark(
 		markX0 = Math.min(markX0, lo);
 		markX1 = Math.max(markX1, hi);
 	}
-	if (markRows < 2 || markRows > MARK_MAX_HEIGHT_FRACTION * h) return false;
+	if (
+		markRows < 2 ||
+		Decisions.above(
+			"scoreboard/names:MARK_MAX_HEIGHT_FRACTION",
+			markRows,
+			MARK_MAX_HEIGHT_FRACTION * h,
+		)
+	)
+		return false;
 	if (y >= c.y1) return false;
 	for (; y < c.y1; y++) {
 		let ink = 0;
@@ -850,11 +955,30 @@ function hasFloatingMark(
 		}
 		if (ink > gapMaxInk) break;
 	}
-	if (c.y1 - y < BASE_MIN_HEIGHT_FRACTION * h) return false;
+	if (
+		Decisions.below(
+			"scoreboard/names:BASE_MIN_HEIGHT_FRACTION",
+			c.y1 - y,
+			BASE_MIN_HEIGHT_FRACTION * h,
+		)
+	)
+		return false;
 	return (
-		(markX0 - c.x0) / w >= shape.minLeft &&
-		(markX1 + 1 - c.x0) / w >= shape.minRight &&
-		(markX1 + 1 - markX0) / w <= shape.maxWidth
+		Decisions.atLeast(
+			"scoreboard/names:markShapeMinLeft",
+			(markX0 - c.x0) / w,
+			shape.minLeft,
+		) &&
+		Decisions.atLeast(
+			"scoreboard/names:markShapeMinRight",
+			(markX1 + 1 - c.x0) / w,
+			shape.minRight,
+		) &&
+		Decisions.atMost(
+			"scoreboard/names:markShapeMaxWidth",
+			(markX1 + 1 - markX0) / w,
+			shape.maxWidth,
+		)
 	);
 }
 
@@ -893,7 +1017,11 @@ function resolveAccentByMark(
 			(k) =>
 				k.char !== stripMarks(k.char) &&
 				stripMarks(k.char).toLowerCase() === c.char.toLowerCase() &&
-				c.score - k.score <= ACCENT_SCORE_MARGIN,
+				Decisions.atMost(
+					"scoreboard/names:ACCENT_SCORE_MARGIN",
+					c.score - k.score,
+					ACCENT_SCORE_MARGIN,
+				),
 		);
 	};
 	if (!raw.chars.some(accentedRunnerUp)) return raw;
@@ -940,7 +1068,14 @@ function resolveDescenderByBaseline(raw: RecognizedText): RecognizedText {
 	const baseline = anchors[Math.floor(anchors.length / 2)]!;
 	const chars = raw.chars.map((c) => {
 		if (DESCENDER_LETTERS.has(c.char) || !LATIN_LETTER.test(c.char)) return c;
-		if (c.y1 - baseline < DESCENT_MIN_PX) return c;
+		if (
+			Decisions.below(
+				"scoreboard/names:DESCENT_MIN_PX#letter",
+				c.y1 - baseline,
+				DESCENT_MIN_PX,
+			)
+		)
+			return c;
 		const descender = DOTTED_STEMS.has(c.char)
 			? (c.candidates?.find((k) => k.char === "j") ?? {
 					char: "j",
@@ -949,7 +1084,11 @@ function resolveDescenderByBaseline(raw: RecognizedText): RecognizedText {
 			: c.candidates?.find(
 					(k) =>
 						DESCENDER_LETTERS.has(k.char) &&
-						c.score - k.score <= DESCENDER_SCORE_MARGIN,
+						Decisions.atMost(
+							"scoreboard/names:DESCENDER_SCORE_MARGIN",
+							c.score - k.score,
+							DESCENDER_SCORE_MARGIN,
+						),
 				);
 		return descender
 			? { ...c, char: descender.char, score: descender.score }
@@ -984,7 +1123,13 @@ function resolveCaseByDescent(raw: RecognizedText): string {
 			const rc: RecognizedChar = raw.chars[ci++]!;
 			const twin = DESCENDER_TWINS[rc.char];
 			if (!twin) return rc.char;
-			return rc.y1 - baseline >= DESCENT_MIN_PX ? twin[1] : twin[0];
+			return Decisions.atLeast(
+				"scoreboard/names:DESCENT_MIN_PX#twin",
+				rc.y1 - baseline,
+				DESCENT_MIN_PX,
+			)
+				? twin[1]
+				: twin[0];
 		})
 		.join("");
 }
@@ -1011,7 +1156,11 @@ function preferPlainTies(raw: RecognizedText, margin: number): RecognizedText {
 		const pick = c.candidates.find(
 			(k) =>
 				(k.char === plain || (accented && BAR_CHARS.has(k.char))) &&
-				top - k.score <= margin,
+				Decisions.atMost(
+					"scoreboard/names:plainTieMargin",
+					top - k.score,
+					margin,
+				),
 		);
 		return pick ? { ...c, char: pick.char, score: pick.score } : c;
 	});

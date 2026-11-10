@@ -4,6 +4,7 @@
  */
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { type GlyphSet, recognizeTextSteps } from "../../glyphs";
 import { copyRoi, type FrameData, meanBrightness, type Roi } from "../../image";
 import { all, type MatchSteps } from "../../match-steps";
@@ -135,7 +136,11 @@ export function* readModeIconSteps(
 		}
 	}
 	search.delete();
-	return best.score >= MODE_ICON_MIN_SCORE
+	return Decisions.atLeast(
+		"x-rank/shared:MODE_ICON_MIN_SCORE",
+		best.score,
+		MODE_ICON_MIN_SCORE,
+	)
 		? best
 		: { mode: null, score: best.score };
 }
@@ -168,11 +173,17 @@ export function* readNumberSteps(
 		RUN_MIN_INK,
 		lineHeight * lineHeight * RUN_MIN_INK_RATIO,
 	);
-	const inked = runs.filter((r) => r.ink >= minInk);
+	const inked = runs.filter((r) =>
+		Decisions.atLeast("x-rank/shared:RUN_MIN_INK", r.ink, minInk),
+	);
 	const lead = extras === "sign" ? inked[0] : undefined;
 	const kept = lead ? inked.slice(1) : inked;
 	const isTall = (r: InkRun) =>
-		r.y1 - r.y0 >= lineHeight * PUNCTUATION_MAX_HEIGHT_RATIO;
+		Decisions.atLeast(
+			"x-rank/shared:PUNCTUATION_MAX_HEIGHT_RATIO",
+			r.y1 - r.y0,
+			lineHeight * PUNCTUATION_MAX_HEIGHT_RATIO,
+		);
 	const tall = kept.filter(isTall);
 	const lineTop = Math.min(...tall.map((r) => r.y0));
 	const crops = tall.map((r) => {
@@ -199,7 +210,11 @@ export function* readNumberSteps(
 
 	// a symbol can split into several runs (位's two radicals)
 	const isSymbol = (index: number) =>
-		minScore(reads[index]!.chars.map((c) => c.score)) < SYMBOL_MAX_SCORE;
+		Decisions.below(
+			"x-rank/shared:SYMBOL_MAX_SCORE",
+			minScore(reads[index]!.chars.map((c) => c.score)),
+			SYMBOL_MAX_SCORE,
+		);
 	let first = 0;
 	let last = tall.length - 1;
 	if (extras === "symbols") {
@@ -221,7 +236,13 @@ export function* readNumberSteps(
 				text += char.char;
 				digitScores.push(char.score);
 			}
-		} else if (run.y0 - lineTop >= lineHeight * DOT_MIN_TOP_RATIO) {
+		} else if (
+			Decisions.atLeast(
+				"x-rank/shared:DOT_MIN_TOP_RATIO",
+				run.y0 - lineTop,
+				lineHeight * DOT_MIN_TOP_RATIO,
+			)
+		) {
 			text += ".";
 		} else {
 			text += "-";
@@ -235,13 +256,16 @@ export function minScore(scores: readonly number[]): number {
 	return scores.length > 0 ? Math.min(...scores) : 0;
 }
 
-/** Every probe's mean brightness is at most `max`. */
+/** Every probe's mean brightness is at most `max`; `id` names the decision (decisions.ts). */
 export function allDark(
+	id: string,
 	gray: Mat,
 	probes: readonly Roi[],
 	max: number,
 ): boolean {
-	return probes.every((roi) => meanBrightness(gray, roi) <= max);
+	return probes.every((roi) =>
+		Decisions.atMost(id, meanBrightness(gray, roi), max),
+	);
 }
 
 /** Fraction of `roi`'s pixels (of an RGB mat) passing `predicate`. */
@@ -273,7 +297,11 @@ export function brightFraction(gray: Mat, roi: Roi, threshold: number): number {
 }
 
 function isFlat(run: InkRun): boolean {
-	return (run.y1 - run.y0) / (run.x1 - run.x0) < MINUS_MAX_ASPECT;
+	return Decisions.below(
+		"x-rank/shared:MINUS_MAX_ASPECT",
+		(run.y1 - run.y0) / (run.x1 - run.x0),
+		MINUS_MAX_ASPECT,
+	);
 }
 
 /** Column runs of ink in a binary mat, each with its row extent and pixel count. */

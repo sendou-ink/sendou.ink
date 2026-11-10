@@ -11,6 +11,7 @@
  */
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import { copyRoi, frameGray, frameRgb, roiSignature } from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
@@ -147,14 +148,33 @@ export function createXSetResultDetector(
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
 		const dark =
-			allDark(gray, RESULT_DARK_PROBES, CARD_DARK_MAX_MEAN) &&
-			allDark(gray, RESULT_PANEL_PROBES, PANEL_DARK_MAX_MEAN);
+			allDark(
+				"x-rank/set-result:CARD_DARK_MAX_MEAN",
+				gray,
+				RESULT_DARK_PROBES,
+				CARD_DARK_MAX_MEAN,
+			) &&
+			allDark(
+				"x-rank/set-result:PANEL_DARK_MAX_MEAN",
+				gray,
+				RESULT_PANEL_PROBES,
+				PANEL_DARK_MAX_MEAN,
+			);
 		const firstTile = tileResults(rgb).length > 0;
 		const power = brightFraction(gray, RESULT_POWER_ROI, NUMBER_BIN_THRESHOLD);
 		const checks = [
 			dark,
 			firstTile,
-			power >= POWER_MIN_FRACTION && power <= POWER_MAX_FRACTION,
+			Decisions.atLeast(
+				"x-rank/set-result:POWER_MIN_FRACTION",
+				power,
+				POWER_MIN_FRACTION,
+			) &&
+				Decisions.atMost(
+					"x-rank/set-result:POWER_MAX_FRACTION",
+					power,
+					POWER_MAX_FRACTION,
+				),
 		];
 		const pass = checks.every(Boolean);
 		return {
@@ -275,7 +295,13 @@ function tileResults(rgb: Mat): XSetGameResult[] {
 	crop.delete();
 
 	return runsOf(rowInk, RESULT_TILE_LINE_MAX_GAP)
-		.filter(([y0, y1]) => y1 - y0 >= RESULT_TILE_LINE_MIN_HEIGHT)
+		.filter(([y0, y1]) =>
+			Decisions.atLeast(
+				"x-rank/set-result:RESULT_TILE_LINE_MIN_HEIGHT",
+				y1 - y0,
+				RESULT_TILE_LINE_MIN_HEIGHT,
+			),
+		)
 		.flatMap(([y0, y1]) => {
 			const victory = new Array<number>(cols).fill(0);
 			const defeat = new Array<number>(cols).fill(0);
@@ -288,7 +314,13 @@ function tileResults(rgb: Mat): XSetGameResult[] {
 			}
 			const columnInk = victory.map((v, x) => v + defeat[x]!);
 			return runsOf(columnInk, RESULT_TILE_TEXT_MAX_GAP)
-				.filter(([x0, x1]) => x1 - x0 >= RESULT_TILE_TEXT_MIN_WIDTH)
+				.filter(([x0, x1]) =>
+					Decisions.atLeast(
+						"x-rank/set-result:RESULT_TILE_TEXT_MIN_WIDTH",
+						x1 - x0,
+						RESULT_TILE_TEXT_MIN_WIDTH,
+					),
+				)
 				.map(([x0, x1]): XSetGameResult => {
 					const sum = (counts: number[]) =>
 						counts.slice(x0, x1).reduce((a, b) => a + b, 0);
@@ -323,7 +355,11 @@ function plausiblePower(power: number | null): number | null {
 
 function parsedNumber(read: NumberRead, pattern: RegExp): number | null {
 	if (
-		minScore(read.digitScores) < NUMBER_MIN_SCORE ||
+		Decisions.below(
+			"x-rank/set-result:NUMBER_MIN_SCORE",
+			minScore(read.digitScores),
+			NUMBER_MIN_SCORE,
+		) ||
 		!pattern.test(read.text)
 	) {
 		return null;

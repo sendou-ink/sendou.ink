@@ -8,6 +8,7 @@
  * read kept (valid over none, longer run over shorter, then confidence).
  */
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import {
 	type GlyphSet,
 	type RecognizedChar,
@@ -244,9 +245,17 @@ export function trailingDigitRun(
 	} = options;
 	const maxGap = Math.max(4, Math.round(set.medianWidth * DIGIT_GAP_MAX_RATIO));
 	const fullHeight = (c: RecognizedChar) =>
-		c.y1 - c.y0 >= set.height * minHeightRatio;
+		Decisions.atLeast(
+			"scoreboard/banner:DIGIT_MIN_HEIGHT_RATIO",
+			c.y1 - c.y0,
+			set.height * minHeightRatio,
+		);
 	const isRunDigit = (c: RecognizedChar) =>
-		c.score >= extendMinScore && fullHeight(c);
+		Decisions.atLeast(
+			"scoreboard/banner:extendMinScore",
+			c.score,
+			extendMinScore,
+		) && fullHeight(c);
 
 	const run: RecognizedChar[] = [];
 	let i = raw.chars.length - 1;
@@ -257,14 +266,29 @@ export function trailingDigitRun(
 		run.unshift(c);
 	}
 	if (run.length === 0) return { ...EMPTY_READ, reading: raw.text };
-	if (!run.some((c) => c.score >= minCharScore)) {
+	if (
+		!run.some((c) =>
+			Decisions.atLeast(
+				"scoreboard/banner:minCharScore#run",
+				c.score,
+				minCharScore,
+			),
+		)
+	) {
 		return { ...EMPTY_READ, reading: raw.text };
 	}
 	// a further digit left of the run means an unreadable glyph split the number
 	// (turf war "48", ".", "7"); the tail is not the score
 	for (let k = i; k >= 0; k--) {
 		const c = raw.chars[k]!;
-		if (c.score >= minCharScore && fullHeight(c)) {
+		if (
+			Decisions.atLeast(
+				"scoreboard/banner:minCharScore#leftOfRun",
+				c.score,
+				minCharScore,
+			) &&
+			fullHeight(c)
+		) {
 			return { ...EMPTY_READ, reading: raw.text };
 		}
 	}
