@@ -11,7 +11,6 @@ const SCANNER_VIEWS = [
 	"coach",
 	"clips",
 	"debug",
-	"fixtures",
 	"montage",
 ] as const;
 
@@ -27,11 +26,6 @@ export const scannerSearchParams = SearchParams.define({
 	}),
 	/** `view=coach`: the file second the video opens at (a game card's start) */
 	t: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))), {
-		loader: false,
-	}),
-	/** Fixtures view filter: comma-separated substrings, any match keeps a case */
-	q: SP.param(v.pipe(v.string(), v.maxLength(200)), {
-		default: "",
 		loader: false,
 	}),
 	/** Inspect handoff key: the debug view claims this frame on load */

@@ -889,14 +889,7 @@ untrusted: unpack it only with `pnpm scanner:unpack-zip`
 (`node/game-data-zip.ts`), which accepts nothing but that exact shape — the
 `scanner-misread` Claude skill drives the zip → fixtures → fix loop. **Fixture ground-truth labels are
 hand-corrected by the user (the Splatoon domain authority) — treat them as
-definitive over any matcher output.** The dev-only fixtures view
-(`/scanner?view=fixtures`) renders every fixture's frame beside its
-`expected.json` for that ground-truth review — player-status and
-strip-weapons cases get per-slot icon crops with the expected label under
-each icon, and Inspect re-analyzes any frame in the debug view (`/scanner?view=debug`). The `q`
-param narrows by case-name substring (comma = OR) and lives in the URL, so
-finished labeling work can be handed over as a reviewable link, e.g.
-`/scanner?view=fixtures&q=gauge-overlay,ready-trough`. Fixtures are committed as plain blobs
+definitive over any matcher output.** Fixtures are committed as plain blobs
 (no LFS for now); keep additions deliberate — fixture IO is isolated in
 `node/fixtures.ts` if a retreat to LFS/an external corpus is needed.
 

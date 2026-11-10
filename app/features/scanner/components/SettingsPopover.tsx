@@ -1,7 +1,7 @@
 /**
  * The settings popover, opened from ⚙ on the landing and the live header:
  * the upload, clip and GPU toggles, the retention notes, and the debug tools
- * (enabling debug mode, saving the live frame, the fixtures and montage links in development). The source lives on the landing's Live card, the one place
+ * (enabling debug mode, saving the live frame, the montage link in development). The source lives on the landing's Live card, the one place
  * it must be right.
  */
 import { Bug, Camera, Settings } from "lucide-react";
@@ -175,24 +175,14 @@ export function SettingsPopover({
 								</SendouButton>
 							) : null}
 							{showDevLinks ? (
-								<>
-									<Link
-										to={scannerSearchParams.href(SCANNER_PAGE, {
-											view: "fixtures",
-										})}
-										defaultShouldRevalidate={false}
-									>
-										Fixtures
-									</Link>
-									<Link
-										to={scannerSearchParams.href(SCANNER_PAGE, {
-											view: "montage",
-										})}
-										defaultShouldRevalidate={false}
-									>
-										Tournament montage
-									</Link>
-								</>
+								<Link
+									to={scannerSearchParams.href(SCANNER_PAGE, {
+										view: "montage",
+									})}
+									defaultShouldRevalidate={false}
+								>
+									Tournament montage
+								</Link>
 							) : null}
 						</div>
 					</section>

@@ -11,7 +11,6 @@ import { useSearchParam } from "~/modules/search-params/hooks";
 import { scannerSearchParams } from "../scanner-search-params";
 import { ClipsView } from "./ClipsView";
 import { CoachView } from "./CoachView";
-import { FixturesPage } from "./FixturesPage";
 import { LandingView } from "./LandingView";
 import { LiveView } from "./LiveView";
 import {
@@ -66,8 +65,6 @@ export function ScannerApp() {
 			<ClipsView />
 		) : view === "debug" ? (
 			<ScreenshotPage />
-		) : view === "fixtures" && process.env.NODE_ENV === "development" ? (
-			<FixturesPage />
 		) : view === "montage" && process.env.NODE_ENV === "development" ? (
 			<MontageView />
 		) : (

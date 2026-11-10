@@ -76,7 +76,7 @@ const QUICK_TO_RAW = invertHomography(homographyFromQuad(QUICK_RECTIFY));
 const onRawFrame = (roi: Roi) => projectedBounds(QUICK_TO_RAW, roi);
 
 /** Draw a ROI crop from the normalized frame, scaled up. */
-export function RoiCrop(props: {
+function RoiCrop(props: {
 	frame: HTMLCanvasElement;
 	roi: Roi;
 	scale?: number;
@@ -222,7 +222,7 @@ function playerFlags(p: { dead: boolean; specialReady: boolean }) {
 	return `${p.dead ? " ✗" : ""}${p.specialReady ? " ★" : ""}`;
 }
 
-export function formatTimer(time: number | null) {
+function formatTimer(time: number | null) {
 	if (time === null) return "?:??";
 	return `${Math.floor(time / 60)}:${String(time % 60).padStart(2, "0")}`;
 }

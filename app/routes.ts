@@ -36,10 +36,6 @@ const devOnlyRoutes =
 					"/lobbies/weapon-roll-test",
 					"features/lobbies/routes/lobbies.weapon-roll-test.tsx",
 				),
-				route(
-					"/scanner/fixtures/:detector?/:caseName?",
-					"features/scanner/routes/scanner.fixtures.ts",
-				),
 				...prefix("/dev", [
 					route("/identity", "features/dev-tools/routes/dev.identity.ts"),
 					route("/scenarios", "features/dev-tools/routes/dev.scenarios.ts"),
