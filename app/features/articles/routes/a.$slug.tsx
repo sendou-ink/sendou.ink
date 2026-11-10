@@ -12,6 +12,7 @@ import {
 	navIconUrl,
 } from "~/utils/urls";
 import { metaTags, type SerializeFrom } from "../../../utils/remix";
+import * as Article from "../core/Article";
 
 import { loader } from "../loaders/a.$slug.server";
 
@@ -57,7 +58,7 @@ export default function ArticlePage() {
 		<Main>
 			<article className="article">
 				<h1>{data.title}</h1>
-				<div className="text-sm text-lighter">
+				<div className="text-sm text-lighter" data-testid="article-byline">
 					by <Author /> •{" "}
 					<LocaleTime
 						date={new Date(data.date)}
@@ -72,53 +73,27 @@ export default function ArticlePage() {
 					/>
 				</div>
 				<Markdown>
-					{contentWithoutLeadingTitle(data.content, data.title)}
+					{Article.bodyWithoutLeadingTitle(data.content, data.title)}
 				</Markdown>
 			</article>
 		</Main>
 	);
 }
 
-function normalizeText(text: string) {
-	return text
-		.replace(/\*+/g, "")
-		.replace(/…/g, "...")
-		.replace(/\\!/g, "!")
-		.trim();
-}
-
-function contentWithoutLeadingTitle(content: string, title: string) {
-	const trimmed = content.trimStart();
-	const firstLineEnd = trimmed.indexOf("\n");
-	const firstLine =
-		firstLineEnd === -1 ? trimmed : trimmed.slice(0, firstLineEnd);
-
-	if (
-		firstLine.startsWith("# ") &&
-		normalizeText(firstLine.slice(2)) === normalizeText(title)
-	) {
-		return trimmed.slice(firstLine.length).trimStart();
-	}
-
-	return content;
-}
-
 function Author() {
 	const data = useLoaderData<typeof loader>();
 
 	return data.authors.map((author, i) => {
-		if (!author.link) return author.name;
-
-		const authorLink = author.link.includes("https://sendou.ink")
-			? author.link.replace("https://sendou.ink", "")
-			: author.link;
+		const link = Article.authorHref(author);
 
 		return (
 			<React.Fragment key={author.name}>
-				{author.link.includes("https://sendou.ink") ? (
-					<Link to={authorLink}>{author.name}</Link>
+				{!link ? (
+					author.name
+				) : link.isInternal ? (
+					<Link to={link.href}>{author.name}</Link>
 				) : (
-					<a href={author.link}>{author.name}</a>
+					<a href={link.href}>{author.name}</a>
 				)}
 				{i < data.authors.length - 1 ? " & " : ""}
 			</React.Fragment>

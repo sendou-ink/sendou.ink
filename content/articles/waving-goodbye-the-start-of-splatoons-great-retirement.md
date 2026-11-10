@@ -1,5 +1,5 @@
 ---
-title: "Waving Goodbye: The Start of Splatoon's ''Great Retirement''"
+title: "Waving Goodbye: The Start of Splatoon's \"Great Retirement\""
 date: 2026-01-15
 author:
    - name: YELLOW
