@@ -154,7 +154,6 @@ export const action = defineAction(
 					if (!ourGroup || !theirGroup) return null;
 
 					const { id: survivingGroupId } = groupAfterMorph({
-						liker: "THEM",
 						ourGroup,
 						theirGroup,
 					});

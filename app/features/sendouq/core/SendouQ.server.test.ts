@@ -198,51 +198,6 @@ describe("SendouQ", () => {
 		});
 	});
 
-	describe("currentViewByUserId", () => {
-		beforeEach(async () => {
-			await users.create(8);
-		});
-
-		test("returns 'default' when user not in any group", async () => {
-			await refreshSendouQInstance();
-
-			const view = SendouQ.currentViewByUserId(users.id(1));
-
-			expect(view).toBe("default");
-		});
-
-		test("returns 'preparing' when user in PREPARING group", async () => {
-			await createGroup([1], { status: "PREPARING" });
-			await refreshSendouQInstance();
-
-			const view = SendouQ.currentViewByUserId(users.id(1));
-
-			expect(view).toBe("preparing");
-		});
-
-		test("returns 'match' when user in ACTIVE group with matchId", async () => {
-			await SQMatchFactory.create({
-				alphaUserIds: userIds([1, 2, 3, 4]),
-				bravoUserIds: userIds([5, 6, 7, 8]),
-			});
-
-			await refreshSendouQInstance();
-
-			const view = SendouQ.currentViewByUserId(users.id(1));
-
-			expect(view).toBe("match");
-		});
-
-		test("returns 'looking' when user in ACTIVE group without matchId", async () => {
-			await createGroup([1], { status: "ACTIVE" });
-			await refreshSendouQInstance();
-
-			const view = SendouQ.currentViewByUserId(users.id(1));
-
-			expect(view).toBe("looking");
-		});
-	});
-
 	describe("findOwnGroup", () => {
 		beforeEach(async () => {
 			await users.create(8);

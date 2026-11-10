@@ -1,34 +1,20 @@
 import type { Tables } from "~/db/tables";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { GroupExpiryStatus } from "../q-types";
-import type { SQGroup } from "./SendouQ.server";
 
 // group expires in 30min without actions performed
 const GROUP_EXPIRES_IN_MS = 30 * 60 * 1000;
 const GROUP_EXPIRING_SOON_IN_MS = 10 * 60 * 1000;
 
-/** Whose settings two morphing groups keep: the bigger group's, or at equal size the liked group's. */
-export function groupAfterMorph({
+/** Whose settings two morphing groups keep: the bigger group's, or at equal size ours (the liked group's). */
+export function groupAfterMorph<Group extends { members: unknown[] }>({
 	ourGroup,
 	theirGroup,
-	liker,
 }: {
-	ourGroup: SQGroup;
-	theirGroup: SQGroup;
-	liker: "US" | "THEM";
+	ourGroup: Group;
+	theirGroup: Group;
 }) {
-	const ourMembers = ourGroup.members ?? [];
-	const theirMembers = theirGroup.members ?? [];
-
-	if (ourMembers.length > theirMembers.length) {
-		return ourGroup;
-	}
-
-	if (theirMembers.length > ourMembers.length) {
-		return theirGroup;
-	}
-
-	if (liker === "US") {
+	if (theirGroup.members.length > ourGroup.members.length) {
 		return theirGroup;
 	}
 

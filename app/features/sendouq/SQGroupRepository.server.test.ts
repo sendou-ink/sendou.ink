@@ -221,7 +221,6 @@ describe("insert", () => {
 		await SQGroupRepository.insertFromPrevious({
 			previousGroupId: alphaGroupId,
 			memberUserIds: alphaMembers.map((member) => member.id),
-			status: "ACTIVE",
 		});
 		const votesBefore = await fetchVotes(alphaGroupId);
 

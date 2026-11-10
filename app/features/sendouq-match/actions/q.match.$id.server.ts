@@ -184,7 +184,6 @@ export const action = defineAction(
 					await SQGroupRepository.insertFromPrevious({
 						previousGroupId: body.previousGroupId,
 						memberUserIds: previousGroup.members.map((m) => m.id),
-						status: "ACTIVE",
 					});
 
 					await refreshSendouQInstance();
@@ -259,7 +258,6 @@ export const action = defineAction(
 							await SQGroupRepository.insertFromPrevious({
 								previousGroupId: viewerGroup.id,
 								memberUserIds: survivors.map((m) => m.id),
-								status: "ACTIVE",
 							});
 						} catch (error) {
 							// a concurrent voter may have already created the successor

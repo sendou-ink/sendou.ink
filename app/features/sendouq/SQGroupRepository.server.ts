@@ -114,7 +114,7 @@ export async function findCurrentGroups() {
 					vc: eb.ref("User.vc"),
 				}).as("members"),
 			])
-			// != INACTIVE (same set as ACTIVE or PREPARING) so the partial
+			// != INACTIVE (same set as ACTIVE, PREPARING or READY_CHECK) so the partial
 			// group_status_active index applies
 			.where("Group.status", "!=", "INACTIVE")
 			.groupBy("Group.id")
@@ -179,13 +179,10 @@ export async function insert(args: CreateGroupArgs) {
 type CreateGroupFromPreviousGroupArgs = {
 	previousGroupId: number;
 	memberUserIds: number[];
-	status?: Exclude<Tables["Group"]["status"], "INACTIVE">;
 };
 export async function insertFromPrevious(
 	args: CreateGroupFromPreviousGroupArgs,
 ) {
-	const status = args.status ?? "PREPARING";
-
 	return db.transaction().execute(async (trx) => {
 		const previousGroup = await trx
 			.selectFrom("Group")
@@ -226,7 +223,7 @@ export async function insertFromPrevious(
 			.values({
 				chatRoomId,
 				inviteCode: shortNanoid(),
-				status,
+				status: "ACTIVE",
 				matchmade: previousGroup.matchmade,
 			})
 			.returning("id")

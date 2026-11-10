@@ -113,18 +113,6 @@ class SendouQClass {
 		}));
 	}
 
-	/** The current view state for a user based on their group status. */
-	currentViewByUserId(userId: number) {
-		const ownGroup = this.findOwnGroup(userId);
-
-		if (!ownGroup) return "default";
-		if (ownGroup.status === "PREPARING") return "preparing";
-		if (ownGroup.matchId) return "match";
-		if (ownGroup.status === "READY_CHECK") return "ready";
-
-		return "looking";
-	}
-
 	/** The user's group, or undefined if not in one. */
 	findOwnGroup(userId: number) {
 		return this.groups.find((group) =>
