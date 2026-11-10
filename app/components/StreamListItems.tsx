@@ -1,11 +1,10 @@
-import { isToday, isTomorrow } from "date-fns";
 import { Bookmark, BookmarkCheck } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import type { SidebarStream } from "~/features/core/streams/streams.server";
-import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
+import { useRelativeDayFormat } from "~/hooks/intl/useRelativeDayFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl, tournamentInfoPage } from "~/utils/urls";
@@ -23,41 +22,10 @@ export function StreamListItems({
 	isLoggedIn?: boolean;
 	savedTournamentIds?: number[];
 }) {
-	const { t, i18n } = useTranslation(["front"]);
+	const { t } = useTranslation(["front"]);
 	const formatDistanceToNow = useFormatDistanceToNow();
-	const { formatter: timeFormatter } = useDateTimeFormat({
-		hour: "numeric",
-		minute: "numeric",
-	});
-	const { formatter: dateTimeFormatter } = useDateTimeFormat({
-		month: "numeric",
-		day: "numeric",
-		hour: "numeric",
-		minute: "numeric",
-	});
+	const { formatRelativeDate } = useRelativeDayFormat();
 	const isHydrated = useHydrated();
-
-	const formatRelativeDate = (timestamp: number) => {
-		const date = new Date(timestamp * 1000);
-		const timeStr = timeFormatter.format(date);
-
-		if (isToday(date)) {
-			const rtf = new Intl.RelativeTimeFormat(i18n.language, {
-				numeric: "auto",
-			});
-			const dayStr = rtf.format(0, "day");
-			return `${dayStr.charAt(0).toUpperCase() + dayStr.slice(1)}, ${timeStr}`;
-		}
-		if (isTomorrow(date)) {
-			const rtf = new Intl.RelativeTimeFormat(i18n.language, {
-				numeric: "auto",
-			});
-			const dayStr = rtf.format(1, "day");
-			return `${dayStr.charAt(0).toUpperCase() + dayStr.slice(1)}, ${timeStr}`;
-		}
-
-		return dateTimeFormatter.format(date);
-	};
 
 	return (
 		<>

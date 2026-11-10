@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import { isToday, isTomorrow } from "date-fns";
 import {
 	Calendar,
 	ChevronRight,
@@ -18,7 +17,7 @@ import { useChatContext } from "~/features/chat/ChatProvider";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { useGlobalStatus } from "~/features/global-status/GlobalStatusProvider";
 import { useLayoutData } from "~/features/layout/LayoutDataProvider";
-import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useRelativeDayFormat } from "~/hooks/intl/useRelativeDayFormat";
 import { useClosePopoversOnNavigation } from "~/hooks/useClosePopoversOnNavigation";
 import { useHydrated } from "~/hooks/useHydrated";
 import { MOBILE_LAYOUT_QUERY, useLayoutSize } from "~/hooks/useLayoutSize";
@@ -71,42 +70,6 @@ const AuthErrorDialog = React.lazy(() =>
 
 /** Loading-bar track inside the header that NProgress mounts into; styled in common.css. */
 export const NPROGRESS_ANCHOR_ID = "nprogress-anchor";
-
-function useRelativeDayFormat() {
-	const { i18n } = useTranslation();
-	const { formatter: timeFormatter } = useDateTimeFormat({
-		hour: "numeric",
-		minute: "numeric",
-	});
-	const { formatter: dateTimeFormatter } = useDateTimeFormat({
-		month: "numeric",
-		day: "numeric",
-		hour: "numeric",
-		minute: "numeric",
-	});
-
-	const formatRelativeDay = (daysFromToday: number) => {
-		const rtf = new Intl.RelativeTimeFormat(i18n.language, { numeric: "auto" });
-		const str = rtf.format(daysFromToday, "day");
-		return str.charAt(0).toUpperCase() + str.slice(1);
-	};
-
-	const formatRelativeDate = (timestamp: number) => {
-		const date = new Date(timestamp * 1000);
-		const timeStr = timeFormatter.format(date);
-
-		if (isToday(date)) {
-			return `${formatRelativeDay(0)}, ${timeStr}`;
-		}
-		if (isTomorrow(date)) {
-			return `${formatRelativeDay(1)}, ${timeStr}`;
-		}
-
-		return dateTimeFormatter.format(date);
-	};
-
-	return { formatRelativeDate };
-}
 
 function useBreadcrumbData() {
 	const { t } = useTranslation();

@@ -1,13 +1,14 @@
-import { isToday, isTomorrow } from "date-fns";
 import { useTranslation } from "react-i18next";
 import type { SidebarEvent } from "~/features/sidebar/core/sidebar.server";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useRelativeDayFormat } from "~/hooks/intl/useRelativeDayFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import styles from "./EventsList.module.css";
 import { ListLink } from "./ListItem";
 
 export function EventsList({ events }: { events: SidebarEvent[] }) {
-	const { t, i18n } = useTranslation(["front"]);
+	const { t } = useTranslation(["front"]);
+	const { relativeDayLabel } = useRelativeDayFormat();
 	const { formatter: dateFormatter } = useDateTimeFormat({
 		weekday: "long",
 		month: "numeric",
@@ -54,23 +55,8 @@ export function EventsList({ events }: { events: SidebarEvent[] }) {
 		return date.toDateString();
 	};
 
-	const formatDayHeader = (date: Date) => {
-		if (isToday(date)) {
-			const rtf = new Intl.RelativeTimeFormat(i18n.language, {
-				numeric: "auto",
-			});
-			const str = rtf.format(0, "day");
-			return str.charAt(0).toUpperCase() + str.slice(1);
-		}
-		if (isTomorrow(date)) {
-			const rtf = new Intl.RelativeTimeFormat(i18n.language, {
-				numeric: "auto",
-			});
-			const str = rtf.format(1, "day");
-			return str.charAt(0).toUpperCase() + str.slice(1);
-		}
-		return dateFormatter.format(date);
-	};
+	const formatDayHeader = (date: Date) =>
+		relativeDayLabel(date) ?? dateFormatter.format(date);
 
 	const groupedEvents = events.reduce<Record<string, typeof events>>(
 		(acc, event) => {
