@@ -8,13 +8,8 @@
  */
 import type { ScoreboardData } from "../detectors/scoreboard/index";
 import type { ScoreboardBattleLogReplayData } from "../detectors/scoreboard-battle-log-replay/index";
+import { areDifferentReplayCodes } from "../replay-code";
 import { nameSimilarity } from "../text";
-
-/**
- * Re-reads of one replay code on a low-fidelity capture differ in a few glyphs
- * (U/V, G/C); different replays share almost no positions.
- */
-const CODE_DIFF_MIN = 7;
 
 /** Paint totals are reliable per-match fingerprints; compared only when both read this many of 8 rows. */
 const PAINT_MIN_READ = 6;
@@ -32,14 +27,6 @@ const RENAME_MIN_NAMES_COMPARED = 4;
 const RENAME_MAX_NAMES_KEPT = 1;
 /** Names at least this alike are one name re-read (OCR jitter); alias and real name share next to nothing. */
 const SAME_NAME_MIN_SIMILARITY = 0.5;
-
-/** Positions where two equal-length strings disagree (∞ on length mismatch). */
-function charDiff(a: string, b: string): number {
-	if (a.length !== b.length) return Number.POSITIVE_INFINITY;
-	let n = 0;
-	for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) n++;
-	return n;
-}
 
 /** Size of the multiset intersection of two number lists. */
 export function multisetOverlap(a: number[], b: number[]): number {
@@ -179,11 +166,7 @@ export function sameScoreboardMatch(a: unknown, b: unknown): boolean {
 	if (tsA !== null && tsB !== null && tsA !== tsB) return false;
 	const codeA = da.replayCode ?? null;
 	const codeB = db.replayCode ?? null;
-	if (
-		codeA !== null &&
-		codeB !== null &&
-		charDiff(codeA, codeB) >= CODE_DIFF_MIN
-	)
+	if (codeA !== null && codeB !== null && areDifferentReplayCodes(codeA, codeB))
 		return false;
 
 	// same lobby, different map: names stay identical, but the paint totals

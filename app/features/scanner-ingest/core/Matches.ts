@@ -1,4 +1,5 @@
 /** Pure logic for stored scanner matches: canonical serialization (hashing), same-game identity of two partials, and merging a partial into a stored one. */
+import { isSameReplayCode } from "~/features/scanner/core/replay-code";
 import type {
 	ScannerMatch,
 	ScannerMatchObjective,
@@ -7,9 +8,6 @@ import type {
 	ScannerMatchTeam,
 } from "~/features/scanner/core/scanner-match";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
-
-/** Replay codes of different games share almost no positions; fewer differing characters than this is OCR jitter of the same code. */
-const REPLAY_CODE_MAX_OCR_ERRORS = 3;
 
 /** Two reads of one game land within this of each other (clock skew, retries). */
 const PLAYED_AT_AFFINITY_MS = 10 * 60 * 1000;
@@ -81,8 +79,10 @@ export function isSameMatch(a: ScannerMatch, b: ScannerMatch): boolean {
 	if (a.mode !== null && b.mode !== null && a.mode !== b.mode) return false;
 	if (a.stage !== null && b.stage !== null && a.stage !== b.stage) return false;
 
-	const codeDiff = replayCodeDiff(a.replayCode, b.replayCode);
-	if (codeDiff !== null && codeDiff > REPLAY_CODE_MAX_OCR_ERRORS) return false;
+	const bothCodesRead = a.replayCode !== null && b.replayCode !== null;
+	if (bothCodesRead && !isSameReplayCode(a.replayCode!, b.replayCode!)) {
+		return false;
+	}
 
 	const playedDiff =
 		a.playedAt !== null && b.playedAt !== null
@@ -92,7 +92,7 @@ export function isSameMatch(a: ScannerMatch, b: ScannerMatch): boolean {
 		return false;
 	}
 
-	if (codeDiff !== null) return true;
+	if (bothCodesRead) return true;
 
 	const aligned = bestAlignment(a, b);
 	if (rostersContradict(a, b, aligned.orientation)) return false;
@@ -220,17 +220,6 @@ function canonicalPlayer(player: ScannerMatchPlayer): ScannerMatchPlayer {
 		s: player.s,
 		...(player.abilities ? { abilities: player.abilities } : null),
 	};
-}
-
-/** Positions at which two replay codes differ (a length mismatch counts every position of the longer); null when either is unread. */
-function replayCodeDiff(a: string | null, b: string | null): number | null {
-	if (a === null || b === null) return null;
-	const longer = Math.max(a.length, b.length);
-	let diff = longer - Math.min(a.length, b.length);
-	for (let i = 0; i < Math.min(a.length, b.length); i++) {
-		if (a[i] !== b[i]) diff++;
-	}
-	return diff;
 }
 
 interface Alignment {
