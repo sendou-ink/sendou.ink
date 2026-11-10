@@ -20,6 +20,6 @@
 	"match.confirmScore.wrongSent": "Se avisó al otro equipo en el chat de la partida.",
 	"match.rematch.vote.no": "No, ya terminé",
 	"ready.explanation": "Se encontró un grupo. La partida empieza cuando todos los miembros de ambos grupos hayan confirmado. Si se acaba el tiempo, ambos grupos vuelven a buscar.",
-	"tiers.info.p2": "Nota: nadie tiene rango Leviathan hasta que haya al menos {{usersMin}} jugadores en la tabla de posiciones (o {{teamsMin}} en el caso de los equipos)",
+	"tiers.info.p2": "Nota: nadie tiene rango Leviathan hasta que haya al menos {{usersMin}} jugadores en la tabla de posiciones",
 	"streams.noStreams": "En este momento no hay partidas transmitidas"
 }

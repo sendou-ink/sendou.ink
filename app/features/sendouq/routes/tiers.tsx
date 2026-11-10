@@ -4,7 +4,6 @@ import { useLoaderData } from "react-router";
 import { TierImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import {
-	TEAM_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN,
 	TIERS,
 	USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN,
 } from "~/features/mmr/mmr-constants";
@@ -66,7 +65,6 @@ export default function TiersPage() {
 			<p>
 				{t("q:tiers.info.p2", {
 					usersMin: USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN,
-					teamsMin: TEAM_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN,
 				})}
 			</p>
 			<div>

@@ -189,7 +189,7 @@
 	"ready.member.waiting": "Not ready yet",
 	"tiers.currentCriteria": "Current criteria",
 	"tiers.info.p1": "For example, Leviathan is the top 5% of players. Diamond is the 85th percentile etc.",
-	"tiers.info.p2": "Note: Nobody has Leviathan rank before there are at least {{usersMin}} players on the leaderboard (or {{teamsMin}} for teams)",
+	"tiers.info.p2": "Note: Nobody has Leviathan rank before there are at least {{usersMin}} players on the leaderboard",
 	"tiers.info.p3": "Each rank also has a plus tier (see BRONZE+ as an example below). This means that you are in the top 50% of that rank.",
 	"streams.noStreams": "No streamed matches currently"
 }

@@ -5,7 +5,6 @@ import { cache, ttl } from "~/utils/cache.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards/leaderboards-constants";
 import { USER_SKILLS_CACHE_KEY } from "../sendouq/q-constants";
 import {
-	TEAM_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN,
 	TIERS,
 	TIERS_BEFORE_LEVIATHAN,
 	type TierName,
@@ -32,7 +31,7 @@ export async function freshUserSkills(season: number): Promise<{
 }> {
 	const points = await SkillRepository.findOrderedUserOrdinalsBySeason(season);
 
-	const { intervals, isAccurateTiers } = skillTierIntervals(points, "user");
+	const { intervals, isAccurateTiers } = skillTierIntervals(points);
 
 	return {
 		intervals,
@@ -101,16 +100,12 @@ export type SkillTierInterval = ReturnType<
 
 function skillTierIntervals(
 	orderedPoints: Array<Pick<Tables["Skill"], "ordinal" | "matchesCount">>,
-	type: "user" | "team",
 ) {
-	const LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN =
-		type === "user"
-			? USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN
-			: TEAM_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN;
 	let points = orderedPoints.filter(
 		(p) => p.matchesCount >= MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
 	);
-	const hasLeviathan = points.length >= LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN;
+	const hasLeviathan =
+		points.length >= USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN;
 	if (!hasLeviathan) {
 		// tiers from all entries, whether or not they have enough to be on the leaderboard
 		points = orderedPoints;

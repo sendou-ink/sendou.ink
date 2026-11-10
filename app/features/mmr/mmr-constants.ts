@@ -71,4 +71,3 @@ export const LOWEST_TIER = { name: "IRON", isPlus: false } as const;
 export const CANCELED_MATCH_SEASON = -1;
 
 export const USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN = 200;
-export const TEAM_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN = 100;

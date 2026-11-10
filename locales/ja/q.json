@@ -87,7 +87,7 @@
 	"preparing.joinQ": "列に入る",
 	"tiers.currentCriteria": "現在の基準",
 	"tiers.info.p1": "例として、Leviathanはプレイヤーの上位5%、Diamondは上位15%",
-	"tiers.info.p2": "注：{{usersMin}}のプレイヤーはLeviathanのランクを持っていません。(チームの場合{{teamsMin}})",
+	"tiers.info.p2": "注：{{usersMin}}のプレイヤーはLeviathanのランクを持っていません。",
 	"tiers.info.p3": "各ランクは＋ティアがあります。(下記のBRONZE+をご覧ください。)ランクの上位50%にいるということです。",
 	"streams.noStreams": "配信されてるマッチはありません"
 }

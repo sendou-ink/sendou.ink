@@ -189,7 +189,7 @@
 	"ready.member.waiting": "Aún no está listo",
 	"tiers.currentCriteria": "Criterios actuales",
 	"tiers.info.p1": "Por ejemplo, Leviathan se encuentra entre el 5% de los mejores jugadores. Diamond es el percentil 85, etc.",
-	"tiers.info.p2": "Nota: nadie tiene rango Leviathan hasta que haya al menos {{usersMin}} jugadores en la clasificación (o {{teamsMin}} en el caso de los equipos)",
+	"tiers.info.p2": "Nota: nadie tiene rango Leviathan hasta que haya al menos {{usersMin}} jugadores en la clasificación",
 	"tiers.info.p3": "Cada rango tiene también un nivel plus (mira BRONZE+ abajo como ejemplo). Significa que estás en el 50% superior de ese rango.",
 	"streams.noStreams": "Ahora mismo no hay partidas retransmitidas"
 }
