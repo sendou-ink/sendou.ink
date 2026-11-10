@@ -1079,18 +1079,6 @@ interface UnvalidatedUserSubmittedImage {
 	validatedAt: number | null;
 }
 
-interface UnvalidatedVideo {
-	eventId: number | null;
-	id: GeneratedAlways<number>;
-	submitterUserId: number;
-	title: string;
-	type: (typeof videoMatchTypes)[number];
-	validatedAt: number | null;
-	/** When the video was published on YouTube. Day precision only, stored as noon UTC of that day. */
-	youtubePublishedAt: number;
-	youtubeId: string;
-}
-
 interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
 	banned: Generated<number | null>;
@@ -1290,15 +1278,11 @@ interface UserReport {
 	createdAt: Generated<number>;
 }
 
-/** Read-only. See {@link DB} for how this view relates to `UnvalidatedVideo`. */
 interface Video {
-	eventId: number | null;
 	id: GeneratedAlways<number>;
 	submitterUserId: number;
 	title: string;
 	type: (typeof videoMatchTypes)[number];
-	/** Never `null` in practice, the view filters unvalidated rows out. */
-	validatedAt: number | null;
 	/** When the video was published on YouTube. Day precision only, stored as noon UTC of that day. */
 	youtubePublishedAt: number;
 	youtubeId: string;
@@ -1729,7 +1713,7 @@ export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
 
 /**
  * Every table and view. Views (marked below) are read-only. Base table / filtered view pairs use an
- * `All` or `Unvalidated` prefix on the table (`AllTeam`/`Team`, `UnvalidatedVideo`/`Video`): write to
+ * `All` or `Unvalidated` prefix on the table (`AllTeam`/`Team`, `UnvalidatedUserSubmittedImage`/`UserSubmittedImage`): write to
  * the prefixed table, read from the view unless you want the filtered-out rows.
  */
 export interface DB {
@@ -1841,8 +1825,6 @@ export interface DB {
 	FriendRequest: FriendRequest;
 	/** Table backing the `UserSubmittedImage` view. Includes images awaiting validation. */
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;
-	/** Table backing the `Video` view. Includes videos awaiting validation. */
-	UnvalidatedVideo: UnvalidatedVideo;
 	User: User;
 	UserSearch: UserSearch;
 	UserResultHighlight: UserResultHighlight;
@@ -1853,7 +1835,6 @@ export interface DB {
 	UserFriendCode: UserFriendCode;
 	UserWidget: UserWidget;
 	UserReport: UserReport;
-	/** VIEW over `UnvalidatedVideo`, excludes videos awaiting validation. Insert/update via `UnvalidatedVideo`. */
 	Video: Video;
 	VideoMatch: VideoMatch;
 	VideoMatchPlayer: VideoMatchPlayer;

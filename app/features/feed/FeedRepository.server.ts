@@ -1794,20 +1794,19 @@ export function findLatestBuildIdsOfHighXpOwners(minPeakXp: number) {
 	);
 }
 
-export async function findLatestValidatedVideo(before: number) {
+export async function findLatestVideo(before: number) {
 	const video = await db
-		.selectFrom("UnvalidatedVideo")
+		.selectFrom("Video")
 		.select([
-			"UnvalidatedVideo.id",
-			"UnvalidatedVideo.title",
-			"UnvalidatedVideo.type",
-			"UnvalidatedVideo.youtubeId",
-			"UnvalidatedVideo.youtubePublishedAt",
-			"UnvalidatedVideo.submitterUserId",
+			"Video.id",
+			"Video.title",
+			"Video.type",
+			"Video.youtubeId",
+			"Video.youtubePublishedAt",
+			"Video.submitterUserId",
 		])
-		.where("UnvalidatedVideo.validatedAt", "is not", null)
-		.where("UnvalidatedVideo.youtubePublishedAt", "<", before)
-		.orderBy("UnvalidatedVideo.youtubePublishedAt", "desc")
+		.where("Video.youtubePublishedAt", "<", before)
+		.orderBy("Video.youtubePublishedAt", "desc")
 		.limit(1)
 		.executeTakeFirst();
 	if (!video) return;

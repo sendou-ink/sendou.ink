@@ -14,10 +14,7 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
-import {
-	databaseTimestampNow,
-	dayMonthYearToDatabaseTimestamp,
-} from "~/utils/dates";
+import { dayMonthYearToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import {
 	type CommonUser,
@@ -196,7 +193,6 @@ function resolvePov(
 
 export async function update(
 	args: VideoBeingAdded & {
-		isValidated: boolean;
 		id: number;
 	},
 ) {
@@ -206,7 +202,6 @@ export async function update(
 export async function insert(
 	args: VideoBeingAdded & {
 		submitterUserId: number;
-		isValidated: boolean;
 	},
 ) {
 	return save(args);
@@ -215,7 +210,6 @@ export async function insert(
 async function save(
 	args: VideoBeingAdded & {
 		submitterUserId?: number;
-		isValidated: boolean;
 		id?: number;
 	},
 ) {
@@ -227,9 +221,7 @@ async function save(
 			title: args.title,
 			type: args.type,
 			youtubePublishedAt: dayMonthYearToDatabaseTimestamp(args.date),
-			eventId: args.eventId ?? null,
 			youtubeId,
-			validatedAt: args.isValidated ? databaseTimestampNow() : null,
 		};
 		if (args.id) {
 			await trx
@@ -239,7 +231,7 @@ async function save(
 
 			// editing keeps the video's original submitter
 			await trx
-				.updateTable("UnvalidatedVideo")
+				.updateTable("Video")
 				.set(video)
 				.where("id", "=", args.id)
 				.execute();
@@ -250,9 +242,9 @@ async function save(
 				"Submitter is required to add a video",
 			);
 			const result = await trx
-				.insertInto("UnvalidatedVideo")
+				.insertInto("Video")
 				.values({ ...video, submitterUserId: args.submitterUserId })
-				.returning("UnvalidatedVideo.id")
+				.returning("Video.id")
 				.executeTakeFirstOrThrow();
 			videoId = result.id;
 		}
@@ -292,7 +284,7 @@ async function save(
 }
 
 export function deleteById(id: number) {
-	return db.deleteFrom("UnvalidatedVideo").where("id", "=", id).execute();
+	return db.deleteFrom("Video").where("id", "=", id).execute();
 }
 
 const vodsWithMatches = () =>
@@ -328,15 +320,12 @@ function filteredWeaponFirst(
 }
 
 /** Conditions the filters put on the match rows. `userId` makes the vod's own filters moot: it is the user's vods regardless. */
-function vodFilters({ weapon, mode, stageId, type, userId }: VodFilters) {
+function vodFilters({ weapon, mode, stageId, userId }: VodFilters) {
 	return (eb: ExpressionBuilder<VodsWithMatchesDB, VodsTables>) => {
 		const conditions: Expression<SqlBool>[] = [];
 		if (userId) {
 			conditions.push(eb("VideoMatchPlayer.playerUserId", "=", userId));
 		} else {
-			if (type) {
-				conditions.push(eb("Video.type", "=", type));
-			}
 			if (mode) {
 				conditions.push(eb("VideoMatch.mode", "=", mode));
 			}

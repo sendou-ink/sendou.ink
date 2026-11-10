@@ -25,13 +25,11 @@ export const action = defineAction(
 		const savedVideo = body.vodToEditId
 			? await VodRepository.update({
 					...video,
-					isValidated: true,
 					id: body.vodToEditId,
 				})
 			: await VodRepository.insert({
 					...video,
 					submitterUserId: user.id,
-					isValidated: true,
 				});
 
 		throw redirect(vodVideoPage(savedVideo.id));
@@ -41,15 +39,12 @@ export const action = defineAction(
 type VodFormData = v.InferOutput<typeof vodFormSchemaServer>;
 
 function transformFormDataToVideo(data: VodFormData): VideoBeingAdded {
-	const teamSize = data.teamSize ? Number(data.teamSize) : 4;
-
 	return {
 		type: data.type,
 		youtubeUrl: data.youtubeUrl,
 		title: data.title,
 		date: data.date,
 		pov: transformPov(data.pov),
-		teamSize: data.type === "CAST" ? teamSize : undefined,
 		matches: data.matches.map((match) => ({
 			startsAt: match.startsAt,
 			mode: match.mode,

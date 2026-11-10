@@ -196,6 +196,21 @@ describe("countVods", () => {
 		["by weapon id 0", () => ({ weapon: 0 as const }), 1],
 		["by stage id 0", () => ({ stageId: 0 as const }), 1],
 		["by type", () => ({ type: "CAST" as const }), 1],
+		[
+			"by type and mode",
+			() => ({ type: "CAST" as const, mode: "SZ" as const }),
+			1,
+		],
+		[
+			"by type and weapon",
+			() => ({ type: "CAST" as const, weapon: 1000 as const }),
+			1,
+		],
+		[
+			"by user ignoring type",
+			() => ({ type: "CAST" as const, userId: users.id(1) }),
+			1,
+		],
 		["by user", () => ({ userId: users.id(1) }), 1],
 		["without filters", () => ({}), 3],
 	])(
@@ -272,7 +287,6 @@ describe("insert", () => {
 			type: "TOURNAMENT",
 			pov: { type: "USER", userId: users.id(1) },
 			submitterUserId: users.id(1),
-			isValidated: true,
 		});
 
 		const vod = await VodRepository.findVodById(result.id);
@@ -297,7 +311,6 @@ describe("insert", () => {
 			matches: [],
 			type: "TOURNAMENT",
 			submitterUserId: users.id(1),
-			isValidated: true,
 		});
 
 		const result = await VodRepository.findVodById(id);
@@ -325,7 +338,6 @@ describe("insert", () => {
 			type: "TOURNAMENT",
 			pov: { type: "NAME", name: "TestPlayer" },
 			submitterUserId: users.id(1),
-			isValidated: true,
 		});
 
 		const vod = await VodRepository.findVodById(result.id);
@@ -353,7 +365,6 @@ describe("insert", () => {
 			type: "TOURNAMENT",
 			pov: { type: "USER", userId: users.id(1) },
 			submitterUserId: users.id(1),
-			isValidated: true,
 		});
 
 		const vod = await VodRepository.findVodById(result.id);
@@ -393,7 +404,6 @@ describe("update", () => {
 			],
 			type: "CAST",
 			pov: { type: "USER", userId: users.id(2) },
-			isValidated: true,
 		});
 
 		const result = await VodRepository.findVodById(vod.id);
@@ -428,7 +438,6 @@ describe("update", () => {
 			],
 			type: "TOURNAMENT",
 			pov: { type: "USER", userId: users.id(2) },
-			isValidated: true,
 		});
 
 		const result = await VodRepository.findVodById(vod.id);
@@ -464,7 +473,6 @@ describe("update", () => {
 			],
 			type: "TOURNAMENT",
 			pov: { type: "USER", userId: users.id(1) },
-			isValidated: true,
 		});
 
 		const result = await VodRepository.findVodById(vod.id);

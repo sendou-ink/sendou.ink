@@ -896,8 +896,8 @@ export function buildCases(fx: Fixtures): {
 	addStatic("FeedRepository.findLatestBuildIdsOfHighXpOwners", () =>
 		FeedRepository.findLatestBuildIdsOfHighXpOwners(FEED_HIGH_XP),
 	);
-	add("FeedRepository.findLatestValidatedVideo", fx.feedNow, (now) =>
-		FeedRepository.findLatestValidatedVideo(now),
+	add("FeedRepository.findLatestVideo", fx.feedNow, (now) =>
+		FeedRepository.findLatestVideo(now),
 	);
 	addStatic("FeedRepository.findAllUserPlacementsOfLatestMonth", () =>
 		FeedRepository.findAllUserPlacementsOfLatestMonth(),

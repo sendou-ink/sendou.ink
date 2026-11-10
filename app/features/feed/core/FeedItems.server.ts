@@ -2764,7 +2764,7 @@ async function buildBuildForYou(ctx: FeedContext) {
 }
 
 async function buildVodNew(ctx: SharedFeedContext) {
-	const video = await FeedRepository.findLatestValidatedVideo(ctx.now);
+	const video = await FeedRepository.findLatestVideo(ctx.now);
 	if (!video) return null;
 
 	const players = R.uniqueBy(

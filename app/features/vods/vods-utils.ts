@@ -5,7 +5,9 @@ import type { VideoBeingAdded, Vod } from "./vods-types";
 const YOUTUBE_HOSTS = ["youtube.com", "www.youtube.com", "m.youtube.com"];
 const YOUTUBE_VIDEO_ID_PATH_PREFIXES = ["live", "embed"];
 
-export function vodToVideoBeingAdded(vod: Vod): VideoBeingAdded {
+export function vodToVideoBeingAdded(
+	vod: Vod,
+): VideoBeingAdded & { teamSize?: number } {
 	const dateObj = databaseTimestampToDate(vod.youtubePublishedAt);
 
 	return {

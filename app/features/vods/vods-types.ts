@@ -9,12 +9,10 @@ import type { DayMonthYear } from "~/utils/schema";
 
 export interface VideoBeingAdded {
 	type: Tables["Video"]["type"];
-	eventId?: number;
 	youtubeUrl: string;
 	title: string;
 	date: DayMonthYear;
 	pov?: { type: "USER"; userId: number } | { type: "NAME"; name: string };
-	teamSize?: number;
 	matches: Array<{
 		startsAt: string;
 		stageId: StageId;
