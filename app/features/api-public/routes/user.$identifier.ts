@@ -9,8 +9,8 @@ import {
 	jsonArrayFrom,
 	peakXpOverallSql,
 	userAvatar,
+	userByIdentifierQuery,
 } from "~/utils/kysely.server";
-import { safeNumberParse } from "~/utils/number";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { avatarUrl, badgeUrl } from "~/utils/urls";
 import type { GetUserResponse } from "../schema";
@@ -59,16 +59,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						.orderBy("TeamMemberWithSecondary.createdAt", "asc"),
 				).as("teams"),
 			])
-			.where((eb) => {
-				// we don't want to parse discord id's as numbers (length = 18)
-				const parsedId =
-					identifier.length < 10 ? safeNumberParse(identifier) : null;
-				if (parsedId) {
-					return eb("User.id", "=", parsedId);
-				}
-
-				return eb("User.discordId", "=", identifier);
-			})
+			.where("User.id", "=", userByIdentifierQuery(identifier))
 			.executeTakeFirst(),
 	);
 
