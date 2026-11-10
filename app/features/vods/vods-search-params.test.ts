@@ -39,7 +39,6 @@ describe("vodsNewSearchParams", () => {
 	const ingestMatch = {
 		startsAt: 30,
 		mode: "SZ" as const,
-		modeAssumed: true,
 		stage: 0 as const,
 		weapons: [40 as const, null],
 	};

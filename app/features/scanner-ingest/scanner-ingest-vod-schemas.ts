@@ -12,8 +12,6 @@ const ingestVodMatchSchema = v.object({
 	startsAt: v.pipe(v.number(), v.integer(), v.minValue(0)),
 	/** null when no source read it */
 	mode: v.nullable(modeShortSchema),
-	/** true when `mode` is the scanner's fabricated default (SZ), not a read. Informational only: assumed modes are still stored, casted footage never exposes the mode. */
-	modeAssumed: v.optional(v.boolean()),
 	/** null when no source read it */
 	stage: v.nullable(stageIdSchema),
 	/** sendou main-weapon ids; null for a slot that never read */

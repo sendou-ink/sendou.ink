@@ -4,8 +4,7 @@
  * search param of /vods/new carries (an `SP.json` param), which prefills a
  * new VoD (the user adds URL/title/date and fixes misreads). Footage with the
  * casted 8-player spectator map screen is a CAST VoD; anything else keeps the
- * form's default type. A match without a mode read prefills the SZ default,
- * flagged `modeAssumed` — the fabricated default lives here, not on ScannerMatch.
+ * form's default type.
  */
 import type {
 	IngestVodMatchInput,
@@ -13,7 +12,7 @@ import type {
 } from "~/features/scanner-ingest/scanner-ingest-vod-schemas";
 import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
 import { newVodPage } from "~/features/vods/vods-urls";
-import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists/types";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { DetectedEvent } from "../core/detectors/types";
 import { buildScannerMatches } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";
@@ -24,9 +23,6 @@ import type { ScannerMatch } from "../core/scanner-match";
  * surface that instead of emitting a URL the server rejects opaquely.
  */
 const MAX_URL_LENGTH = 8000;
-
-/** The prefill default for a match whose mode no source read. */
-const DEFAULT_VOD_MODE = "SZ" satisfies ModeShort;
 
 export interface SendouUpload {
 	/** prefilled /vods/new path (same-origin); null when nothing usable to send */
@@ -63,8 +59,7 @@ export function sendouUpload(events: readonly DetectedEvent[]): SendouUpload {
 function toPrefillMatch(match: ScannerMatch): IngestVodMatchInput {
 	return {
 		startsAt: match.startsAt ?? 0,
-		mode: match.mode ?? DEFAULT_VOD_MODE,
-		modeAssumed: match.mode === null,
+		mode: match.mode,
 		stage: match.stage,
 		// /vods/new splits this at a fixed 4 slots per team, so pad short rosters
 		weapons: match.teams.flatMap((team) =>
