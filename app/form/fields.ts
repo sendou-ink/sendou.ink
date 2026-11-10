@@ -911,8 +911,11 @@ export function userSearch(args: UserSearchArgs): v.GenericSchema<number> {
 
 export function userSearchOptional(
 	args: UserSearchArgs,
-): v.OptionalSchema<v.GenericSchema<number>, undefined> {
-	return register(v.optional(id), userSearchMetadata(args, false)) as never;
+): v.GenericSchema<number | null, number | null> {
+	return register(
+		optionalKey(preprocess(falsyToNull, v.nullable(id))),
+		userSearchMetadata(args, false),
+	) as never;
 }
 
 function userSearchMetadata(args: UserSearchArgs, required: boolean) {

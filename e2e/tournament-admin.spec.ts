@@ -83,7 +83,7 @@ test.describe("Tournament admin team management", () => {
 	}) => {
 		const tournament = await createTournament(factories);
 		const player = await factories.UserFactory.create({
-			discordName: "Rostered Riko",
+			defaultName: "Rostered Riko",
 		});
 
 		await impersonate(page, NZAP_TEST_ID);
@@ -123,7 +123,7 @@ test.describe("Tournament admin team management", () => {
 		);
 		const importedRoster = await factories.UserFactory.createMany(
 			ROSTER_SIZE,
-			(i) => ({ discordName: importedRosterNames[i] }),
+			(i) => ({ defaultName: importedRosterNames[i] }),
 		);
 		await factories.TournamentTeamFactory.create({
 			tournamentId: pastTournament.id,

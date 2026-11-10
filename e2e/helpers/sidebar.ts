@@ -33,7 +33,7 @@ export function createNamedUsers(
 ) {
 	return factories.UserFactory.createMany(names.length, (index) => ({
 		...overrides,
-		discordName: names[index],
+		defaultName: names[index],
 	}));
 }
 

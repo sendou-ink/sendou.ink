@@ -18,8 +18,8 @@ import { SideNav } from "./pages/layout/side-nav";
 import { SettingsPage } from "./pages/settings/settings-page";
 
 const SESSION_COOKIE_NAME = "__session";
-const KEEPER = { discordId: "323456789012345678", discordName: "KeeperUser" };
-const LEAVER = { discordId: "423456789012345678", discordName: "LeaverUser" };
+const KEEPER = { discordId: "323456789012345678", defaultName: "KeeperUser" };
+const LEAVER = { discordId: "423456789012345678", defaultName: "LeaverUser" };
 
 test.describe("Auth", () => {
 	test("logs in via a log in link and logs out from the settings page", async ({
@@ -75,15 +75,15 @@ test.describe("Auth", () => {
 
 		await logInLinkPage.goto(leaverLogInLink.code);
 		await expect(sideNav.locators.footerUsername).toHaveText(
-			LEAVER.discordName,
+			LEAVER.defaultName,
 		);
 
 		const admin = await openSecondUser(browser, workerBaseURL);
 		const adminActions = new AdminActionsPage(admin.page);
 		await adminActions.goto();
 		await adminActions.migrateUser({
-			oldUserName: KEEPER.discordName,
-			newUserName: LEAVER.discordName,
+			oldUserName: KEEPER.defaultName,
+			newUserName: LEAVER.defaultName,
 		});
 		await admin.close();
 
@@ -107,7 +107,7 @@ test.describe("Auth", () => {
 		await page.context().addCookies([staleCookie!]);
 		await logInLinkPage.goto(keeperLogInLink.code);
 		await expect(sideNav.locators.footerUsername).toHaveText(
-			KEEPER.discordName,
+			KEEPER.defaultName,
 		);
 	});
 

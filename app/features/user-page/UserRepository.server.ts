@@ -54,7 +54,7 @@ export function findIdByIdentifier(identifier: string) {
 /** Identity of the user a `/u/:identifier` page is about, incl. what their canonical page URL needs. */
 export function findPageUserByIdentifier(identifier: string) {
 	return userByIdentifierQuery(identifier)
-		.select("User.customUrl")
+		.select(["User.customUrl", "User.isPlaceholder"])
 		.executeTakeFirst();
 }
 
@@ -73,7 +73,35 @@ export async function findCountriesByUserIds(userIds: number[]) {
 	return new Map(rows.map((row) => [row.id, row.country]));
 }
 
-/** Discord ids of the given users keyed by user id. Not for public responses. */
+/** A placeholder player (`User.isPlaceholder`), `undefined` for real users. */
+export function findPlaceholderById(id: number) {
+	return db
+		.selectFrom("User")
+		.select(["User.id", "User.username", "User.inGameName"])
+		.where("User.id", "=", id)
+		.where("User.isPlaceholder", "=", 1)
+		.executeTakeFirst();
+}
+
+/** The given user ids minus placeholder players, who can't receive anything as they can't log in. */
+export async function filterOutPlaceholders(userIds: number[]) {
+	if (userIds.length === 0) return [];
+
+	const placeholderIds = new Set(
+		(
+			await db
+				.selectFrom("User")
+				.select("User.id")
+				.where("User.id", "in", userIds)
+				.where("User.isPlaceholder", "=", 1)
+				.execute()
+		).map((row) => row.id),
+	);
+
+	return userIds.filter((userId) => !placeholderIds.has(userId));
+}
+
+/** Discord ids of the given users keyed by user id, placeholder players left out. Not for public responses. */
 export async function findDiscordIdsByUserIds(userIds: number[]) {
 	if (userIds.length === 0) return new Map<number, string>();
 
@@ -81,6 +109,8 @@ export async function findDiscordIdsByUserIds(userIds: number[]) {
 		.selectFrom("User")
 		.select(["User.id", "User.discordId"])
 		.where("User.id", "in", userIds)
+		.where("User.discordId", "is not", null)
+		.$narrowType<{ discordId: NotNull }>()
 		.execute();
 
 	return new Map(rows.map((row) => [row.id, row.discordId]));
@@ -135,6 +165,7 @@ export function findLayoutDataById(userId: number, loggedInUserId?: number) {
 			"User.pronouns",
 			"User.country",
 			"User.inGameName",
+			"User.isPlaceholder",
 			"PlusTier.tier as plusTier",
 			"User.commissionText",
 			"User.commissionsOpen",
@@ -326,11 +357,13 @@ export async function findUsernameById(id: number) {
 	return user?.username ?? null;
 }
 
+/** Placeholder players are left out: they can't log in or be added anywhere outside their own tournament. */
 export async function findLeanById(id: number) {
 	const user = await db
 		.selectFrom("User")
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.where("User.id", "=", id)
+		.where("User.isPlaceholder", "=", 0)
 		.select(({ eb }) => [
 			...commonUserSelect(eb),
 			"User.discordId",
@@ -371,6 +404,7 @@ export async function findLeanById(id: number) {
 					.where("TeamMember.userId", "=", id),
 			).as("team"),
 		])
+		.$narrowType<{ discordId: NotNull }>()
 		.executeTakeFirst();
 
 	if (!user) return;
@@ -993,6 +1027,7 @@ export async function search({
 		.selectFrom("User")
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.select(searchSelectedFields)
+		.where("User.isPlaceholder", "=", 0)
 		.where((eb) =>
 			eb.or(
 				includeExactMatches
@@ -1049,7 +1084,8 @@ export function searchExact(args: {
 	let query = db
 		.selectFrom("User")
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-		.select(searchSelectedFields);
+		.select(searchSelectedFields)
+		.where("User.isPlaceholder", "=", 0);
 
 	let filtered = false;
 
@@ -1207,14 +1243,13 @@ export function insertFriendCode(args: TablesInsertable["UserFriendCode"]) {
 export function upsert(
 	args: Pick<
 		TablesInsertable["User"],
-		| "discordId"
-		| "discordName"
+		| "defaultName"
 		| "discordUniqueName"
 		| "twitch"
 		| "youtubeId"
 		| "youtubeName"
 		| "bsky"
-	>,
+	> & { discordId: string },
 ) {
 	return db
 		.insertInto("User")

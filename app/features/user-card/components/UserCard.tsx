@@ -350,7 +350,7 @@ function CardContent({
 						{process.env.NODE_ENV === "development" ? (
 							<ImpersonateButton userId={data.id} />
 						) : null}
-						{friendship && !friendship.isFriend ? (
+						{friendship && !friendship.isFriend && !data.isPlaceholder ? (
 							<FriendRequestButton
 								targetUserId={data.id}
 								sentFriendRequest={friendship.sentFriendRequest}

@@ -176,8 +176,8 @@ export type GetTournamentTeamsResponse = Array<{
 		userId: number;
 		/** @example "Sendou" */
 		name: string;
-		/** @example "79237403620945920" */
-		discordId: string;
+		/** `null` for a player added by the organizer of a LAN tournament without a sendou.ink account. @example "79237403620945920" */
+		discordId: string | null;
 		/** @example "https://sendou.nyc3.cdn.digitaloceanspaces.com/avatar-274-6fc41a44b069a0d2152ac06d1e496c6c.webp" */
 		avatarUrl: string | null;
 		/** @example "FI" */

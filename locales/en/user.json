@@ -196,6 +196,8 @@
 	"results.filter.size": "Size",
 	"results.filter.size.min": "Minimum teams",
 	"seasons": "Seasons",
+	"placeholder.unclaimed": "Unclaimed player",
+	"placeholder.claimHint": "Added by a tournament organizer without an account. Is this you? Ask on <0>our Discord helpdesk</0> to claim it.",
 	"seasons.noQ": "This user has not played SendouQ this season",
 	"seasons.noSeasons": "This user has not participated in any seasons",
 	"seasons.tabs.sets": "Sets",

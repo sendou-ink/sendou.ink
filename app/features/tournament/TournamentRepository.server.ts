@@ -537,6 +537,7 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
 						"User.discordId",
 						"User.country",
 						"User.tournamentName",
+						"User.isPlaceholder",
 						"SeedingSkill.ordinal",
 						"TournamentTeamMember.role",
 						"TournamentTeamMember.createdAt",
@@ -605,7 +606,8 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
 		...team,
 		members: team.members.map(({ ordinal: _, discordId, ...member }) => ({
 			...member,
-			isFreshAccount: accountCreatedInTheLastSixMonths(discordId),
+			isFreshAccount:
+				discordId !== null && accountCreatedInTheLastSixMonths(discordId),
 		})),
 		avgSeedingSkillOrdinal:
 			R.mean(

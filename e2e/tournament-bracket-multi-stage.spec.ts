@@ -184,7 +184,7 @@ test.describe("Tournament bracket multi stage", () => {
 		// the to-be double registrant plays in Sendou's team; the admin add
 		// flow requires a friend code, which the admin user itself lacks
 		const doubleRegistrant = await factories.UserFactory.create({
-			discordName: "Duplicate Dave",
+			defaultName: "Duplicate Dave",
 		});
 		const teams = await createTeams(factories, tournament.id, [
 			{ members: [ADMIN_ID, doubleRegistrant.id] },

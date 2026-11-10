@@ -41,7 +41,7 @@ test.describe("Plus Server", () => {
 		await factories.UserFactory.grant(ADMIN_ID, { plusTier: 1 });
 		await factories.UserFactory.grant(NZAP_TEST_ID, { plusTier: 1 });
 		const suggested = await factories.UserFactory.create({
-			discordName: SUGGESTED_NAME,
+			defaultName: SUGGESTED_NAME,
 			discordId: SUGGESTED_DISCORD_ID,
 			profile: null,
 		});
@@ -117,7 +117,7 @@ test.describe("Plus Server", () => {
 
 		const completedVoting = lastCompletedVoting(new Date());
 		const failer = await factories.UserFactory.create({
-			discordName: FAILER_NAME,
+			defaultName: FAILER_NAME,
 			discordId: FAILER_DISCORD_ID,
 			profile: null,
 		});
@@ -172,7 +172,7 @@ test.describe("Plus Server", () => {
 	}) => {
 		await factories.UserFactory.grant(ADMIN_ID, { plusTier: 1 });
 		const suggested = await factories.UserFactory.create({
-			discordName: SUGGESTED_NAME,
+			defaultName: SUGGESTED_NAME,
 			discordId: SUGGESTED_DISCORD_ID,
 			profile: null,
 		});

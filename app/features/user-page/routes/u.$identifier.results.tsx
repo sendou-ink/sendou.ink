@@ -1,11 +1,17 @@
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
+import { Alert } from "~/components/Alert";
+import { Avatar } from "~/components/Avatar";
 import { LinkButton } from "~/components/elements/Button";
+import { PageHeader } from "~/components/PageHeader";
 import { Pagination } from "~/components/Pagination";
 import { useUser } from "~/features/auth/core/user";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
-import { userResultsEditHighlightsPage } from "~/utils/urls";
+import {
+	SENDOU_INK_DISCORD_URL,
+	userResultsEditHighlightsPage,
+} from "~/utils/urls";
 import { ResultsFiltersBar } from "../components/ResultsFiltersBar";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.results.server";
@@ -29,13 +35,40 @@ export default function UserResultsPage() {
 
 	return (
 		<div className="stack lg">
-			<SubPageHeader user={layoutData.user} title={t("common:results")}>
-				{user?.id === layoutData.user.id ? (
-					<LinkButton to={userResultsEditHighlightsPage(user)} size="small">
-						{t("results.highlights.choose")}
-					</LinkButton>
-				) : null}
-			</SubPageHeader>
+			{layoutData.user.isPlaceholder ? (
+				// results are a placeholder player's whole page, so there is no profile to go back to
+				<PageHeader
+					image={<Avatar user={layoutData.user} size="sm" />}
+					title={layoutData.user.username}
+					subtitle={t("user:placeholder.unclaimed")}
+				/>
+			) : (
+				<SubPageHeader user={layoutData.user} title={t("common:results")}>
+					{user?.id === layoutData.user.id ? (
+						<LinkButton to={userResultsEditHighlightsPage(user)} size="small">
+							{t("results.highlights.choose")}
+						</LinkButton>
+					) : null}
+				</SubPageHeader>
+			)}
+			{layoutData.user.isPlaceholder ? (
+				<Alert>
+					<Trans
+						t={t}
+						i18nKey="user:placeholder.claimHint"
+						components={[
+							<a
+								key="discord"
+								href={SENDOU_INK_DISCORD_URL}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								our Discord helpdesk
+							</a>,
+						]}
+					/>
+				</Alert>
+			) : null}
 			<ResultsFiltersBar />
 			{data.results.value.length > 0 ? (
 				<UserResultsTable

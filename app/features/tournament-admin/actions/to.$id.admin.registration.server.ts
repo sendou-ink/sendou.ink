@@ -22,7 +22,10 @@ import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { tournamentAdminPage } from "~/utils/urls";
-import type { adminRegistrationFormSchema } from "../tournament-admin-registration-schemas";
+import {
+	type adminRegistrationFormSchema,
+	newPlaceholderOwnerId,
+} from "../tournament-admin-registration-schemas";
 import { adminRegistrationFormSchemaServer } from "../tournament-admin-registration-schemas.server";
 
 export const action = defineAction(
@@ -64,8 +67,27 @@ async function upsertRegistration(
 		isCurrentImgId: TournamentTeamRepository.isPickupAvatarImgId,
 	});
 
-	const submittedMembers = data.members;
-	const ownerUserId = Number(data.ownerId);
+	const submittedMembers = data.members.flatMap((member) =>
+		typeof member.userId === "number"
+			? [{ ...member, userId: member.userId }]
+			: [],
+	);
+	const newPlaceholders = data.members.flatMap((member) =>
+		member.isPlaceholder &&
+		typeof member.userId !== "number" &&
+		member.placeholderName
+			? [
+					{
+						name: member.placeholderName,
+						inGameName: member.inGameName ?? null,
+					},
+				]
+			: [],
+	);
+	const ownerUserId =
+		newPlaceholders.find(
+			(placeholder) => newPlaceholderOwnerId(placeholder.name) === data.ownerId,
+		) ?? Number(data.ownerId);
 
 	const linkedTeamId = data.linkedTeam ? data.teamId : null;
 	const name = linkedTeamId
@@ -101,6 +123,14 @@ async function upsertRegistration(
 			? { oldOwnerId: currentOwner.userId, newOwnerId: ownerUserId }
 			: null;
 	})();
+
+	const placeholderRenames = submittedMembers.flatMap((member) => {
+		if (!member.isPlaceholder || !member.placeholderName) return [];
+		const current = team?.members.find((m) => m.userId === member.userId);
+		if (!current?.isPlaceholder || current.username === member.placeholderName)
+			return [];
+		return [{ userId: member.userId, name: member.placeholderName }];
+	});
 
 	const inGameNameUpdates = submittedMembers.flatMap((member) => {
 		if (!member.inGameName) return [];
@@ -141,6 +171,8 @@ async function upsertRegistration(
 			ownerChange,
 			membersToAdd,
 			membersToRemove,
+			newPlaceholders,
+			placeholderRenames,
 			inGameNameUpdates,
 			tournamentNameUpdates,
 			mapPool,

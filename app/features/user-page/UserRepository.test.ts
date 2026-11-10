@@ -18,7 +18,7 @@ describe("UserRepository", () => {
 	test("created user has createdAt field", async () => {
 		await UserRepository.upsert({
 			discordId: "1",
-			discordName: "TestUser",
+			defaultName: "TestUser",
 		});
 
 		const user = await UserRepository.findModInfoById(1);
@@ -30,7 +30,7 @@ describe("UserRepository", () => {
 	test("updates user name when upserting", async () => {
 		const { id } = await UserRepository.upsert({
 			discordId: "1",
-			discordName: "TestUser",
+			defaultName: "TestUser",
 		});
 
 		const user = await UserRepository.findLayoutDataById(id);
@@ -39,7 +39,7 @@ describe("UserRepository", () => {
 
 		await UserRepository.upsert({
 			discordId: "1",
-			discordName: "UpdatedUser",
+			defaultName: "UpdatedUser",
 		});
 
 		const updatedUser = await UserRepository.findLayoutDataById(id);
@@ -49,7 +49,7 @@ describe("UserRepository", () => {
 	test("updating a user doesn't change the createdAt field", async () => {
 		await UserRepository.upsert({
 			discordId: "1",
-			discordName: "TestUser",
+			defaultName: "TestUser",
 		});
 
 		const user = await UserRepository.findModInfoById(1);
@@ -57,7 +57,7 @@ describe("UserRepository", () => {
 
 		await UserRepository.upsert({
 			discordId: "1",
-			discordName: "UpdatedUser",
+			defaultName: "UpdatedUser",
 		});
 
 		const updatedUser = await UserRepository.findModInfoById(1);
@@ -67,7 +67,7 @@ describe("UserRepository", () => {
 	test("new user gets joinOrder of 1", async () => {
 		const { id } = await UserRepository.upsert({
 			discordId: "1",
-			discordName: "TestUser",
+			defaultName: "TestUser",
 		});
 
 		const result = await UserRepository.findJoinOrderByUserId(id);
@@ -78,12 +78,12 @@ describe("UserRepository", () => {
 	test("joinOrder increments for each new user and does not change on update", async () => {
 		const { id: firstId } = await UserRepository.upsert({
 			discordId: "1",
-			discordName: "FirstUser",
+			defaultName: "FirstUser",
 		});
 
 		const { id: secondId } = await UserRepository.upsert({
 			discordId: "2",
-			discordName: "SecondUser",
+			defaultName: "SecondUser",
 		});
 
 		expect(
@@ -95,7 +95,7 @@ describe("UserRepository", () => {
 
 		await UserRepository.upsert({
 			discordId: "1",
-			discordName: "UpdatedFirstUser",
+			defaultName: "UpdatedFirstUser",
 		});
 
 		expect(
@@ -544,6 +544,43 @@ describe("UserRepository", () => {
 		});
 	});
 
+	describe("placeholder players", () => {
+		test("UserRepository.search leaves them out", async () => {
+			await UserFactory.createPlaceholder({ name: "Placeholderina" });
+			const user = await UserFactory.create({ defaultName: "Placeholderino" });
+
+			const results = await UserRepository.search({
+				query: "Placeholder",
+				limit: 10,
+			});
+
+			expect(results.map((result) => result.id)).toEqual([user.id]);
+		});
+
+		test("UserRepository.searchExact leaves them out", async () => {
+			const placeholder = await UserFactory.createPlaceholder();
+
+			expect(await UserRepository.searchExact({ id: placeholder.id })).toEqual(
+				[],
+			);
+		});
+
+		test("UserRepository.findLeanById leaves them out so they can't log in", async () => {
+			const placeholder = await UserFactory.createPlaceholder();
+
+			expect(await UserRepository.findLeanById(placeholder.id)).toBeUndefined();
+		});
+
+		test("UserRepository.filterOutPlaceholders keeps only real users", async () => {
+			const placeholder = await UserFactory.createPlaceholder();
+			const user = await UserFactory.create();
+
+			expect(
+				await UserRepository.filterOutPlaceholders([placeholder.id, user.id]),
+			).toEqual([user.id]);
+		});
+	});
+
 	describe("UserRepository.findStoredWidgetsByUserId", () => {
 		const sixMainWidgets: Parameters<typeof UserFactory.create>[1] = {
 			widgets: [
@@ -865,8 +902,8 @@ describe("UserRepository", () => {
 
 	describe("UserRepository.search", () => {
 		beforeEach(async () => {
-			await UserFactory.create({ discordName: "Братислава" });
-			await UserFactory.create({ discordName: "Ángel_2" });
+			await UserFactory.create({ defaultName: "Братислава" });
+			await UserFactory.create({ defaultName: "Ángel_2" });
 		});
 
 		const searchUsernames = async (query: string) =>
