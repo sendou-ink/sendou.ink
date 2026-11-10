@@ -85,17 +85,6 @@ export function escapeHtml(text: string) {
 		.replaceAll('"', "&quot;");
 }
 
-/** Removes the indentation shared by every line, `firstLineIndent` being what the first line lost to slicing. */
-export function dedent(code: string, firstLineIndent = "") {
-	const lines = `${firstLineIndent}${code}`.split("\n");
-	const indents = lines
-		.filter((line) => line.trim() !== "")
-		.map((line) => line.match(/^[\t ]*/)?.[0].length ?? 0);
-	const shared = Math.min(...indents);
-
-	return lines.map((line) => line.slice(shared)).join("\n");
-}
-
 function identifierClass(identifier: string, code: string, end: number) {
 	if (KEYWORDS.has(identifier)) return "k";
 	if (LITERALS.has(identifier)) return "l";
