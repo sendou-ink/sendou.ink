@@ -25,28 +25,25 @@ export const loader = async () => {
 	);
 	const unique = R.uniqueBy(friendsWithActivity, (f) => f.id);
 
-	const [
-		pendingRequests,
-		incomingRequests,
-		streamedSendouQMatches,
-		upcomingLobbiesOfFriends,
-		visibleLobbies,
-		schedules,
-	] = await Promise.all([
-		FriendRepository.findPendingSentRequests(user.id),
-		FriendRepository.findPendingReceivedRequests(user.id),
-		resolveSendouQMatchStreams(),
-		resolveUpcomingLobbiesOfFriends(user.id),
-		resolveVisibleActiveLobbiesOfFriends({
-			viewerId: user.id,
-			friendIds: unique.map((f) => f.id),
-		}),
-		FriendSchedule.findByUserIds({
-			userIds: unique.map((f) => f.id),
-			timezone: getViewerTimezone() ?? "UTC",
-			viewerId: user.id,
-		}),
-	]);
+	const pendingRequests = await FriendRepository.findPendingSentRequests(
+		user.id,
+	);
+	const incomingRequests = await FriendRepository.findPendingReceivedRequests(
+		user.id,
+	);
+	const streamedSendouQMatches = await resolveSendouQMatchStreams();
+	const upcomingLobbiesOfFriends = await resolveUpcomingLobbiesOfFriends(
+		user.id,
+	);
+	const visibleLobbies = await resolveVisibleActiveLobbiesOfFriends({
+		viewerId: user.id,
+		friendIds: unique.map((f) => f.id),
+	});
+	const schedules = await FriendSchedule.findByUserIds({
+		userIds: unique.map((f) => f.id),
+		timezone: getViewerTimezone() ?? "UTC",
+		viewerId: user.id,
+	});
 
 	const friends = R.sortBy(
 		unique

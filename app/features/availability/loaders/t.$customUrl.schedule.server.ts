@@ -47,18 +47,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			timezone,
 		).endsAt,
 	};
-	const [{ reportedWeeks, busyByUserId }, teamEvents] = await Promise.all([
-		VisibleSchedules.findByUserIds({
-			userIds: members.map((member) => member.id),
-			viewerId: user.id,
-			...horizon,
-		}),
-		// team events are the team's own data, visible to every member no matter what they share
-		AvailabilityRepository.findTeamEventsByTeamId({
-			teamId: team.id,
-			...horizon,
-		}),
-	]);
+	const { reportedWeeks, busyByUserId } = await VisibleSchedules.findByUserIds({
+		userIds: members.map((member) => member.id),
+		viewerId: user.id,
+		...horizon,
+	});
+	// team events are the team's own data, visible to every member no matter what they share
+	const teamEvents = await AvailabilityRepository.findTeamEventsByTeamId({
+		teamId: team.id,
+		...horizon,
+	});
 
 	const playerIds = members
 		.filter((member) => getMemberRoleType(member) !== "OTHER")

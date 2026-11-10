@@ -44,10 +44,12 @@ export async function eventLeaderboards(events: EventLeaderboardEvent[]) {
 		}
 	}
 
-	const [tournamentResults, calendarEventResults] = await Promise.all([
-		TournamentRepository.findTopThreeResultsByTournamentIds(tournamentIds),
-		CalendarRepository.findTopThreeResultsByEventIds(calendarEventIds),
-	]);
+	const tournamentResults =
+		await TournamentRepository.findTopThreeResultsByTournamentIds(
+			tournamentIds,
+		);
+	const calendarEventResults =
+		await CalendarRepository.findTopThreeResultsByEventIds(calendarEventIds);
 
 	const points = new Map<number, LeaderboardInfo>();
 

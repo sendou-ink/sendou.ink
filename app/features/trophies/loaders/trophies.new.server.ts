@@ -15,13 +15,13 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 	const canReview = canReviewTrophies(user);
 	const canBackfill = canBackfillTrophies(user);
 
-	const [rawItems, ownUnreviewedCount, trophies] = await Promise.all([
-		canReview
-			? TrophyRepository.allPending()
-			: TrophyRepository.pendingBySubmitter(user.id),
-		TrophyRepository.unreviewedCountBySubmitter(user.id),
-		TrophyRepository.findAllForEditing(),
-	]);
+	const rawItems = canReview
+		? await TrophyRepository.allPending()
+		: await TrophyRepository.pendingBySubmitter(user.id);
+	const ownUnreviewedCount = await TrophyRepository.unreviewedCountBySubmitter(
+		user.id,
+	);
+	const trophies = await TrophyRepository.findAllForEditing();
 
 	const editableTrophies = trophies.filter((trophy) =>
 		hasPermission(trophy, "EDIT", user),

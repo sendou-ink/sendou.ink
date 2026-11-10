@@ -8,17 +8,15 @@ import * as TrophyRepository from "../TrophyRepository.server";
 const TROPHIES_CACHE_KEY = "trophies";
 
 export const loader = async () => {
-	const [trophies, xpTrophies] = await Promise.all([
-		cachified({
-			key: TROPHIES_CACHE_KEY,
-			cache,
-			ttl: ttl(hoursToMilliseconds(2)),
-			async getFreshValue() {
-				return TrophyRepository.all();
-			},
-		}),
-		TrophyRepository.findAllXp(),
-	]);
+	const trophies = await cachified({
+		key: TROPHIES_CACHE_KEY,
+		cache,
+		ttl: ttl(hoursToMilliseconds(2)),
+		async getFreshValue() {
+			return TrophyRepository.all();
+		},
+	});
+	const xpTrophies = await TrophyRepository.findAllXp();
 
 	return {
 		trophies,

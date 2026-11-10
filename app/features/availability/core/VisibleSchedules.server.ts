@@ -30,19 +30,17 @@ export async function findByUserIds({
 				viewerId,
 			});
 
-	const [reportedWeeks, busyByUserId] = await Promise.all([
-		AvailabilityRepository.findAllWeeksByUserIds({
-			userIds: visibleUserIds,
-			startsAt,
-			endsAt,
-		}),
-		Commitments.busyBlocksByUserIds({
-			userIds: visibleUserIds,
-			startsAt,
-			endsAt,
-			excludeTournamentId,
-		}),
-	]);
+	const reportedWeeks = await AvailabilityRepository.findAllWeeksByUserIds({
+		userIds: visibleUserIds,
+		startsAt,
+		endsAt,
+	});
+	const busyByUserId = await Commitments.busyBlocksByUserIds({
+		userIds: visibleUserIds,
+		startsAt,
+		endsAt,
+		excludeTournamentId,
+	});
 
 	return { reportedWeeks, busyByUserId };
 }

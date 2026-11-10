@@ -22,13 +22,11 @@ export async function resolve(
 	const viewableRooms = rooms.filter((room) =>
 		hasPermission(room, "VIEW", user),
 	);
-	const [stats, participantsById] = await Promise.all([
-		ChatRepository.findMessageStatsByRoomIds(
-			user.id,
-			viewableRooms.map((room) => room.roomId),
-		),
-		findParticipantsById(viewableRooms),
-	]);
+	const stats = await ChatRepository.findMessageStatsByRoomIds(
+		user.id,
+		viewableRooms.map((room) => room.roomId),
+	);
+	const participantsById = await findParticipantsById(viewableRooms);
 	const statsByRoomId = new Map(stats.map((row) => [row.roomId, row]));
 	const roomsById = new Map(viewableRooms.map((room) => [room.roomId, room]));
 

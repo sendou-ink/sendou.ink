@@ -350,22 +350,20 @@ async function resolveIngestContext({
 		const since = dateToDatabaseTimestamp(
 			subDays(new Date(), CONTENT_RESOLUTION_WINDOW_DAYS),
 		);
-		const games = (
-			await Promise.all([
-				ScannerIngestRepository.gamesPlayedByUserSince({
-					userId: povUserId,
-					since,
-				}),
-				ScannerIngestRepository.sendouqGamesPlayedByUserSince({
-					userId: povUserId,
-					since,
-				}),
-				ScannerIngestRepository.lobbyGamesPlayedByUserSince({
-					userId: povUserId,
-					since,
-				}),
-			])
-		).flat();
+		const games = [
+			...(await ScannerIngestRepository.gamesPlayedByUserSince({
+				userId: povUserId,
+				since,
+			})),
+			...(await ScannerIngestRepository.sendouqGamesPlayedByUserSince({
+				userId: povUserId,
+				since,
+			})),
+			...(await ScannerIngestRepository.lobbyGamesPlayedByUserSince({
+				userId: povUserId,
+				since,
+			})),
+		];
 		const context = Scoreboards.resolveContext({ matches, games, povUserId });
 		if (context) {
 			const key = Scoreboards.contextKey(context);

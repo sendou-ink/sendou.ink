@@ -6,14 +6,14 @@ import * as UserCardRepository from "../UserCardRepository.server";
 export const loader = async () => {
 	const user = requireUser();
 
-	const [{ userCards }, extras, hasLinkedPlayer] = await Promise.all([
-		UserCardRepository.findAllByUserIds({
-			userIds: [user.id],
-			includeHiddenStats: true,
-		}),
-		UserCardRepository.findCardEditExtrasByUserId(user.id),
-		XRankPlacementRepository.isPlayerLinkedByUserId(user.id),
-	]);
+	const { userCards } = await UserCardRepository.findAllByUserIds({
+		userIds: [user.id],
+		includeHiddenStats: true,
+	});
+	const extras = await UserCardRepository.findCardEditExtrasByUserId(user.id);
+	const hasLinkedPlayer = await XRankPlacementRepository.isPlayerLinkedByUserId(
+		user.id,
+	);
 
 	const card = userCards[user.id];
 	invariant(card, "card data not found for own user");

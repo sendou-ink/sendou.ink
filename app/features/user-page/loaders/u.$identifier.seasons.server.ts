@@ -78,14 +78,13 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 };
 
 async function statsPeek(args: { season: number; userId: number }) {
-	const [stages, weapons, mates] = await Promise.all([
-		PlayerStatRepository.findSeasonStagesByUserId(args),
-		ReportedWeaponRepository.findSeasonReportedWeaponsByUserId(args),
-		PlayerStatRepository.findSeasonMatesEnemiesByUserId({
-			...args,
-			type: "MATE",
-		}),
-	]);
+	const stages = await PlayerStatRepository.findSeasonStagesByUserId(args);
+	const weapons =
+		await ReportedWeaponRepository.findSeasonReportedWeaponsByUserId(args);
+	const mates = await PlayerStatRepository.findSeasonMatesEnemiesByUserId({
+		...args,
+		type: "MATE",
+	});
 
 	const topMate = mates.at(0);
 	const topWeapon = SeasonSummary.topWeaponUsages(weapons).at(0) ?? null;

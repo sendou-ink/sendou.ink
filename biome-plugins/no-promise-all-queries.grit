@@ -10,7 +10,8 @@ language js
 	$queries <: contains or {
 		`$_.execute()`,
 		`$_.executeTakeFirst()`,
-		`$_.executeTakeFirstOrThrow()`
+		`$_.executeTakeFirstOrThrow()`,
+		`$repository.$_($...)` where { $repository <: r".*Repository" }
 	},
 	register_diagnostic(span=$call, message="Don't wrap queries in `Promise.all`: `node:sqlite` is synchronous, so they can't run in parallel. Await them one after another.", severity="error")
 }

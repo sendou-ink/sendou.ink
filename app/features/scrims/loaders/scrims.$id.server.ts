@@ -78,10 +78,10 @@ async function resolveMapByMap({
 	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>;
 	user: AuthenticatedUser;
 }) {
-	const [mapLists, maps] = await Promise.all([
-		ScrimMapListRepository.findMapListsByScrimPostId(post.id),
-		ScrimMapRepository.findMapsByScrimPostId(post.id),
-	]);
+	const mapLists = await ScrimMapListRepository.findMapListsByScrimPostId(
+		post.id,
+	);
+	const maps = await ScrimMapRepository.findMapsByScrimPostId(post.id);
 
 	const pool = mapLists.length > 0 ? ScrimMapByMap.unionPool(mapLists) : null;
 	const currentMap = maps.find((m) => m.reportedAt === null) ?? null;

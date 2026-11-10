@@ -45,10 +45,11 @@ const allTeams = cliArgs.includes("--all-teams");
 const includeWinless = cliArgs.includes("--include-winless");
 const dryRun = cliArgs.includes("--dry-run");
 
-const [vods, tournament] = await Promise.all([
-	TournamentMatchVodRepository.findAllForDownloadByTournamentId(tournamentId),
-	tournamentFromDB(tournamentId),
-]);
+const vods =
+	await TournamentMatchVodRepository.findAllForDownloadByTournamentId(
+		tournamentId,
+	);
+const tournament = await tournamentFromDB(tournamentId);
 const topStandings = resolveTopStandings();
 const topTeamIds = new Set(topStandings.map((standing) => standing.team.id));
 const outputDir = path.join(OUTPUT_ROOT, String(tournamentId));

@@ -17,22 +17,20 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 	const fullMonths = recentFullMonths(ESTABLISHED_ORG.MONTHS_CONSIDERED);
 
-	const monthlyCounts = await Promise.all(
-		fullMonths.map((month) =>
-			TournamentOrganizationRepository.countActiveParticipants({
+	const monthlyStats: Array<{ month: string; count: number }> = [];
+	for (const month of fullMonths) {
+		monthlyStats.push({
+			month: format(month, MONTH_PARAM_FORMAT),
+			count: await TournamentOrganizationRepository.countActiveParticipants({
 				organizationId: organization.id,
 				startTime: dateToDatabaseTimestamp(month),
 				endTime: dateToDatabaseTimestamp(addMonths(month, 1)),
 			}),
-		),
-	);
+		});
+	}
 
-	const monthlyStats = fullMonths.map((month, index) => ({
-		month: format(month, MONTH_PARAM_FORMAT),
-		count: monthlyCounts[index],
-	}));
-
-	const averageMonthlyParticipants = R.mean(monthlyCounts) ?? 0;
+	const averageMonthlyParticipants =
+		R.mean(monthlyStats.map((stat) => stat.count)) ?? 0;
 
 	return {
 		monthlyStats,

@@ -55,33 +55,23 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 };
 
 async function overview(args: { season: number; userId: number }) {
-	const [
-		skill,
-		maps,
-		sets,
-		tournamentPlacements,
-		skills,
-		stages,
-		weapons,
-		mates,
-		enemies,
-	] = await Promise.all([
-		rankedUserSkill(args),
-		PlayerStatRepository.findSeasonMapWinrateByUserId(args),
-		PlayerStatRepository.findSeasonSetWinrateByUserId(args),
-		PlayerStatRepository.findSeasonTournamentPlacementsByUserId(args),
-		SkillRepository.findSeasonProgressionByUserId(args),
-		PlayerStatRepository.findSeasonStagesByUserId(args),
-		ReportedWeaponRepository.findSeasonReportedWeaponsByUserId(args),
-		PlayerStatRepository.findSeasonMatesEnemiesByUserId({
-			...args,
-			type: "MATE",
-		}),
-		PlayerStatRepository.findSeasonMatesEnemiesByUserId({
-			...args,
-			type: "ENEMY",
-		}),
-	]);
+	const skill = await rankedUserSkill(args);
+	const maps = await PlayerStatRepository.findSeasonMapWinrateByUserId(args);
+	const sets = await PlayerStatRepository.findSeasonSetWinrateByUserId(args);
+	const tournamentPlacements =
+		await PlayerStatRepository.findSeasonTournamentPlacementsByUserId(args);
+	const skills = await SkillRepository.findSeasonProgressionByUserId(args);
+	const stages = await PlayerStatRepository.findSeasonStagesByUserId(args);
+	const weapons =
+		await ReportedWeaponRepository.findSeasonReportedWeaponsByUserId(args);
+	const mates = await PlayerStatRepository.findSeasonMatesEnemiesByUserId({
+		...args,
+		type: "MATE",
+	});
+	const enemies = await PlayerStatRepository.findSeasonMatesEnemiesByUserId({
+		...args,
+		type: "ENEMY",
+	});
 
 	return {
 		skill,
@@ -106,10 +96,10 @@ async function playersWithActivity(args: {
 	userId: number;
 	type: "MATE" | "ENEMY";
 }) {
-	const [players, setParticipants] = await Promise.all([
-		PlayerStatRepository.findSeasonMatesEnemiesByUserId(args),
-		PlayerStatRepository.findSeasonSetParticipantsByUserId(args),
-	]);
+	const players =
+		await PlayerStatRepository.findSeasonMatesEnemiesByUserId(args);
+	const setParticipants =
+		await PlayerStatRepository.findSeasonSetParticipantsByUserId(args);
 
 	const activity = SeasonPlayerActivity.summarize(setParticipants);
 

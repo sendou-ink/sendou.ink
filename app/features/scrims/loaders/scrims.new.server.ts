@@ -13,10 +13,10 @@ export type ScrimsNewLoaderData = SerializeFrom<typeof loader>;
 export const loader = async () => {
 	const user = requireUser();
 
-	const [teams, friendsAndTeammates] = await Promise.all([
-		TeamRepository.findAllByMemberUserId(user.id),
-		SQGroupRepository.findFriendsAndTeammates(user.id),
-	]);
+	const teams = await TeamRepository.findAllByMemberUserId(user.id);
+	const friendsAndTeammates = await SQGroupRepository.findFriendsAndTeammates(
+		user.id,
+	);
 
 	// everyone the post could be made with whose schedule the author may see:
 	// their teams' rosters and their friends, the same visibility rule the rest

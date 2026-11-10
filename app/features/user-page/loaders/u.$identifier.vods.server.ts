@@ -10,14 +10,12 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
 
 	const { page } = userVodsSearchParams.parse(request);
 
-	const [vods, totalCount] = await Promise.all([
-		VodRepository.findVods({
-			userId,
-			limit: VODS_PAGE_BATCH_SIZE,
-			offset: (page - 1) * VODS_PAGE_BATCH_SIZE,
-		}),
-		VodRepository.countVods({ userId }),
-	]);
+	const vods = await VodRepository.findVods({
+		userId,
+		limit: VODS_PAGE_BATCH_SIZE,
+		offset: (page - 1) * VODS_PAGE_BATCH_SIZE,
+	});
+	const totalCount = await VodRepository.countVods({ userId });
 
 	return {
 		vods,

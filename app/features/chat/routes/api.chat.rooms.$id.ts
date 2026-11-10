@@ -19,10 +19,10 @@ export const loader = async ({
 
 	const room = await ChatRoomResolver.requireRoom(roomId, "VIEW");
 
-	const [[stats], participantsById] = await Promise.all([
-		ChatRepository.findMessageStatsByRoomIds(user.id, [roomId]),
-		findParticipantsById([room]),
+	const [stats] = await ChatRepository.findMessageStatsByRoomIds(user.id, [
+		roomId,
 	]);
+	const participantsById = await findParticipantsById([room]);
 
 	return { room: roomListItem(room, { stats, participantsById, user }) };
 };

@@ -39,26 +39,23 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		};
 	}
 
-	const [tournaments, changelog, leaderboards, rotations, weaponPool] =
-		await Promise.all([
-			ShowcaseTournaments.categorizedTournamentsByUserId(null),
-			cachified({
-				key: "front-changelog",
-				cache,
-				ttl: ttl(hoursToMilliseconds(1)),
-				staleWhileRevalidate: ttl(hoursToMilliseconds(2)),
-				async getFreshValue() {
-					return Changelog.get();
-				},
-			}),
-			cachedLeaderboards(),
-			SplatoonRotationRepository.findAll(),
-			user
-				? MatchProfileRepository.findSettingsByUserId(user.id).then(
-						(s) => s.weaponPool ?? null,
-					)
-				: Promise.resolve(null),
-		]);
+	const tournaments =
+		await ShowcaseTournaments.categorizedTournamentsByUserId(null);
+	const changelog = await cachified({
+		key: "front-changelog",
+		cache,
+		ttl: ttl(hoursToMilliseconds(1)),
+		staleWhileRevalidate: ttl(hoursToMilliseconds(2)),
+		async getFreshValue() {
+			return Changelog.get();
+		},
+	});
+	const leaderboards = await cachedLeaderboards();
+	const rotations = await SplatoonRotationRepository.findAll();
+	const weaponPool = user
+		? ((await MatchProfileRepository.findSettingsByUserId(user.id))
+				.weaponPool ?? null)
+		: null;
 
 	return {
 		feed: null,
@@ -92,13 +89,11 @@ function cachedLeaderboards(): Promise<{
 		async getFreshValue() {
 			const season = Seasons.currentOrPrevious()?.nth ?? 1;
 
-			const [team, user] = await Promise.all([
-				LeaderboardRepository.findTeamLeaderboardBySeason({
-					season,
-					onlyOneEntryPerUser: true,
-				}),
-				cachedFullUserLeaderboard(season),
-			]);
+			const team = await LeaderboardRepository.findTeamLeaderboardBySeason({
+				season,
+				onlyOneEntryPerUser: true,
+			});
+			const user = await cachedFullUserLeaderboard(season);
 
 			return {
 				user: user.slice(0, ENTRIES_PER_LEADERBOARD).map((entry) => ({

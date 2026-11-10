@@ -26,18 +26,16 @@ export async function myScheduleData(userId: number) {
 		addWeeks(now, AVAILABILITY.WEEK_HORIZON - 1),
 		timezone,
 	).endsAt;
-	const [reportedWeeks, busyBlocks] = await Promise.all([
-		AvailabilityRepository.findAllWeeksByUserIds({
-			userIds: [userId],
-			startsAt: lastWeekRange.startsAt,
-			endsAt: horizonEndsAt,
-		}),
-		Commitments.busyBlocksByUserIds({
-			userIds: [userId],
-			startsAt: Availability.weekRange(now, timezone).startsAt,
-			endsAt: horizonEndsAt,
-		}),
-	]);
+	const reportedWeeks = await AvailabilityRepository.findAllWeeksByUserIds({
+		userIds: [userId],
+		startsAt: lastWeekRange.startsAt,
+		endsAt: horizonEndsAt,
+	});
+	const busyBlocks = await Commitments.busyBlocksByUserIds({
+		userIds: [userId],
+		startsAt: Availability.weekRange(now, timezone).startsAt,
+		endsAt: horizonEndsAt,
+	});
 
 	const weeks = R.range(0, AVAILABILITY.WEEK_HORIZON).map((weekOffset) =>
 		editorWeek({

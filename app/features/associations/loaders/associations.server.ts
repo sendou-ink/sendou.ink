@@ -15,14 +15,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		})
 	).actual;
 
-	const associationsWithInviteCodes = await Promise.all(
-		associations.map(async (association) => ({
+	const associationsWithInviteCodes: Array<
+		(typeof associations)[number] & { inviteCode: string | undefined }
+	> = [];
+	for (const association of associations) {
+		associationsWithInviteCodes.push({
 			...association,
 			inviteCode: association.permissions.MANAGE_INVITE_LINK.includes(user.id)
 				? await AssociationRepository.findInviteCodeById(association.id)
 				: undefined,
-		})),
-	);
+		});
+	}
 
 	return {
 		associations: associationsWithInviteCodes,

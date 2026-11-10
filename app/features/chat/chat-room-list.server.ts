@@ -14,13 +14,11 @@ export async function resolveRoomList(user: {
 	id: number;
 }): Promise<ChatRoomListItem[]> {
 	const rooms = await ChatRoomResolver.findAllByUserId(user.id);
-	const [messageStats, participantsById] = await Promise.all([
-		ChatRepository.findMessageStatsByRoomIds(
-			user.id,
-			rooms.map((room) => room.roomId),
-		),
-		findParticipantsById(rooms),
-	]);
+	const messageStats = await ChatRepository.findMessageStatsByRoomIds(
+		user.id,
+		rooms.map((room) => room.roomId),
+	);
+	const participantsById = await findParticipantsById(rooms);
 	const statsByRoomId = new Map(messageStats.map((row) => [row.roomId, row]));
 
 	return rooms.map((room) =>

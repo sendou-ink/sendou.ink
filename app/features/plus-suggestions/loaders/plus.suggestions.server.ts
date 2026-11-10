@@ -40,13 +40,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		});
 	}
 
-	const [suggestions, summary] = await Promise.all([
-		PlusSuggestionRepository.findAllByMonth({ ...monthYear, tier: shownTier }),
-		PlusSuggestionRepository.findMonthSummary({
-			...monthYear,
-			userId: user?.id ?? null,
-		}),
-	]);
+	const suggestions = await PlusSuggestionRepository.findAllByMonth({
+		...monthYear,
+		tier: shownTier,
+	});
+	const summary = await PlusSuggestionRepository.findMonthSummary({
+		...monthYear,
+		userId: user?.id ?? null,
+	});
 
 	const cardUserIds = R.unique(
 		suggestions.flatMap((suggestion) => [

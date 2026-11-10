@@ -14,14 +14,12 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
 		type: type ?? undefined,
 	};
 
-	const [vods, totalCount] = await Promise.all([
-		VodRepository.findVods({
-			...filters,
-			limit: VODS_PAGE_BATCH_SIZE,
-			offset: (page - 1) * VODS_PAGE_BATCH_SIZE,
-		}),
-		VodRepository.countVods(filters),
-	]);
+	const vods = await VodRepository.findVods({
+		...filters,
+		limit: VODS_PAGE_BATCH_SIZE,
+		offset: (page - 1) * VODS_PAGE_BATCH_SIZE,
+	});
+	const totalCount = await VodRepository.countVods(filters);
 
 	return {
 		vods,

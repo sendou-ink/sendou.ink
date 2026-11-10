@@ -54,22 +54,20 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
 			}
 		: {};
 
-	const [results, totalCount, mateUsername] = await Promise.all([
-		UserRepository.findResultsByUserId(userId, {
-			showHighlightsOnly,
-			...filters,
-			...(isChoosingHighlights
-				? { limit: HIGHLIGHTS_RESULTS_MAX }
-				: { limit: RESULTS_PER_PAGE, offset: (page - 1) * RESULTS_PER_PAGE }),
-		}),
-		UserRepository.countResultsByUserId(userId, {
-			showHighlightsOnly,
-			...filters,
-		}),
-		filters.mateUserId
-			? UserRepository.findUsernameById(filters.mateUserId)
-			: null,
-	]);
+	const results = await UserRepository.findResultsByUserId(userId, {
+		showHighlightsOnly,
+		...filters,
+		...(isChoosingHighlights
+			? { limit: HIGHLIGHTS_RESULTS_MAX }
+			: { limit: RESULTS_PER_PAGE, offset: (page - 1) * RESULTS_PER_PAGE }),
+	});
+	const totalCount = await UserRepository.countResultsByUserId(userId, {
+		showHighlightsOnly,
+		...filters,
+	});
+	const mateUsername = filters.mateUserId
+		? await UserRepository.findUsernameById(filters.mateUserId)
+		: null;
 
 	return {
 		results: {

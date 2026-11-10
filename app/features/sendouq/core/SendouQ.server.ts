@@ -616,13 +616,11 @@ export async function refreshSendouQInstance() {
 async function freshSendouQInstance() {
 	const season = Seasons.currentOrPrevious();
 
-	const [groups, recentMatches, skills, receivedLikerGroupIds] =
-		await Promise.all([
-			SQGroupRepository.findCurrentGroups(),
-			SQGroupRepository.findRecentlyFinishedMatches(),
-			userSkills(season!.nth),
-			SQGroupRepository.findCurrentReceivedLikerGroupIds(),
-		]);
+	const groups = await SQGroupRepository.findCurrentGroups();
+	const recentMatches = await SQGroupRepository.findRecentlyFinishedMatches();
+	const skills = await userSkills(season!.nth);
+	const receivedLikerGroupIds =
+		await SQGroupRepository.findCurrentReceivedLikerGroupIds();
 
 	return new SendouQClass(groups, recentMatches, skills, receivedLikerGroupIds);
 }

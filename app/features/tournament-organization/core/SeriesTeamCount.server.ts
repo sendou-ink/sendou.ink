@@ -57,12 +57,15 @@ function cachedSeriesTeamCounts() {
 }
 
 async function seriesTeamCounts() {
-	const [series, tournaments] = await Promise.all([
-		TournamentOrganizationRepository.findAllSeries(),
-		TournamentOrganizationRepository.findAllOrganizedTournamentTeamCounts({
-			startedAfter: dateToDatabaseTimestamp(subDays(new Date(), LOOKBACK_DAYS)),
-		}),
-	]);
+	const series = await TournamentOrganizationRepository.findAllSeries();
+	const tournaments =
+		await TournamentOrganizationRepository.findAllOrganizedTournamentTeamCounts(
+			{
+				startedAfter: dateToDatabaseTimestamp(
+					subDays(new Date(), LOOKBACK_DAYS),
+				),
+			},
+		);
 
 	const result = new Map<number, Array<SeriesTeamCounts>>();
 	for (const row of series) {

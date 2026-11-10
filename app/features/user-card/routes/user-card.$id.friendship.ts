@@ -32,22 +32,20 @@ export const loader = async ({
 	const { mutuals: withMutualFriends } =
 		userCardFriendshipSearchParams.parse(request);
 
-	const [friendship, pendingRequest, mutualFriends] = await Promise.all([
-		FriendRepository.findFriendship({
-			userOneId: viewer.id,
-			userTwoId: targetUserId,
-		}),
-		FriendRepository.findFriendRequestBetween({
-			senderId: viewer.id,
-			receiverId: targetUserId,
-		}),
-		withMutualFriends
-			? FriendRepository.findMutualFriends({
-					loggedInUserId: viewer.id,
-					targetUserId,
-				})
-			: [],
-	]);
+	const friendship = await FriendRepository.findFriendship({
+		userOneId: viewer.id,
+		userTwoId: targetUserId,
+	});
+	const pendingRequest = await FriendRepository.findFriendRequestBetween({
+		senderId: viewer.id,
+		receiverId: targetUserId,
+	});
+	const mutualFriends = withMutualFriends
+		? await FriendRepository.findMutualFriends({
+				loggedInUserId: viewer.id,
+				targetUserId,
+			})
+		: [];
 
 	return {
 		isFriend: Boolean(friendship),

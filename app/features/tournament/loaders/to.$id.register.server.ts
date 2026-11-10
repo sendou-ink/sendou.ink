@@ -24,17 +24,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const friendPlayers = await SQGroupRepository.findFriendsAndTeammates(
 		user.id,
 	);
-	const [availability, teams] = await Promise.all([
-		rosterAvailability({
+	const availability =
+		(await rosterAvailability({
 			tournament,
 			userId: user.id,
 			friendIds: friendPlayers.friends.map((friend) => friend.id),
 		})?.catch((error) => {
 			logger.error("Failed to resolve registration availability", error);
 			return null;
-		}) ?? null,
-		TeamRepository.findAllMemberOfByUserId(user.id),
-	]);
+		})) ?? null;
+	const teams = await TeamRepository.findAllMemberOfByUserId(user.id);
 
 	if (!teamMemberOf) {
 		return {

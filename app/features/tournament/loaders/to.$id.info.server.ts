@@ -15,13 +15,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		},
 	);
 
-	const [description, endsAt] = await Promise.all([
-		TournamentRepository.findDescriptionById(tournamentId),
-		estimatedEnd(tournament)?.catch((error) => {
+	const description =
+		await TournamentRepository.findDescriptionById(tournamentId);
+	const endsAt =
+		(await estimatedEnd(tournament)?.catch((error) => {
 			logger.error("Failed to estimate the tournament's end", error);
 			return null;
-		}) ?? null,
-	]);
+		})) ?? null;
 
 	if (!user) {
 		return { isSaved: false, description, endsAt };

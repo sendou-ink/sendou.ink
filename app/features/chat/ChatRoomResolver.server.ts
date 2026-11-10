@@ -174,12 +174,12 @@ async function resolveTournamentMatchRooms(
 			),
 		),
 	);
-	const [members, organizers] = await Promise.all([
-		TournamentTeamRepository.findAllMembersByTeamIds(teamIds),
-		TournamentRepository.findOrganizerPermissionsByTournamentIds(
+	const members =
+		await TournamentTeamRepository.findAllMembersByTeamIds(teamIds);
+	const organizers =
+		await TournamentRepository.findOrganizerPermissionsByTournamentIds(
 			R.unique(owners.map((owner) => owner.tournamentId)),
-		),
-	]);
+		);
 
 	return joinOwners(rooms, owners, (owner) => {
 		const opponentTeamIds = [

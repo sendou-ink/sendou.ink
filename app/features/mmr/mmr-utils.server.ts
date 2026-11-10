@@ -22,10 +22,14 @@ export async function seasonRatings({
 	userIds: Array<number>;
 	identifiers: Array<SkillTeamIdentifier>;
 }) {
-	const [userSkills, teamSkills] = await Promise.all([
-		SkillRepository.findCurrentUserSkills({ season, userIds }),
-		SkillRepository.findCurrentTeamSkills({ season, identifiers }),
-	]);
+	const userSkills = await SkillRepository.findCurrentUserSkills({
+		season,
+		userIds,
+	});
+	const teamSkills = await SkillRepository.findCurrentTeamSkills({
+		season,
+		identifiers,
+	});
 
 	const loadedUserIds = new Set(userIds);
 	const loadedIdentifiers = new Set(identifiers);

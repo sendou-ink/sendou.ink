@@ -70,11 +70,9 @@ async function postIdsWithParticipantInTierRange({
 	if (minTier === null && maxTier === null) return null;
 
 	const latestSeason = Seasons.currentOrPrevious()!.nth;
-	const [posts, latestSeasonSkills, previousSeasonSkills] = await Promise.all([
-		LFGRepository.findAllVisibleParticipantIds(),
-		userSkills(latestSeason),
-		userSkills(latestSeason - 1),
-	]);
+	const posts = await LFGRepository.findAllVisibleParticipantIds();
+	const latestSeasonSkills = await userSkills(latestSeason);
+	const previousSeasonSkills = await userSkills(latestSeason - 1);
 
 	const someSeasonTier = (
 		userId: number,

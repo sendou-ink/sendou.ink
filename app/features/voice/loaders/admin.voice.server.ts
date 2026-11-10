@@ -25,39 +25,24 @@ export const loader = async () => {
 
 	const since = dateToDatabaseTimestamp(subDays(new Date(), STATS_DAYS));
 
-	const [
-		settings,
-		available,
-		monthMinutes,
-		monthMinutesByFeature,
-		adoption,
-		playerAdoption,
-		voiceChatPreferences,
-		platforms,
-		leaveReasons,
-		errorCounts,
-		latestErrors,
-		ratings,
-		feedbackComments,
-		liveRooms,
-	] = await Promise.all([
-		VoiceRepository.findSettings(),
-		VoiceAvailability.isAvailable(),
-		VoiceAvailability.monthParticipantMinutes(),
-		VoiceRepository.sumParticipantMinutesByFeatureSince(
+	const settings = await VoiceRepository.findSettings();
+	const available = await VoiceAvailability.isAvailable();
+	const monthMinutes = await VoiceAvailability.monthParticipantMinutes();
+	const monthMinutesByFeature =
+		await VoiceRepository.sumParticipantMinutesByFeatureSince(
 			dateToDatabaseTimestamp(startOfMonth(new Date())),
-		),
-		VoiceRepository.findDailyAdoptionSince(since),
-		VoiceRepository.findPlayerAdoptionSince(since),
-		VoiceRepository.findVoiceChatPreferenceStatsSince(since),
-		VoiceRepository.findPlatformStatsSince(since),
-		VoiceRepository.countLeaveReasonsSince(since),
-		VoiceRepository.countClientErrorsSince(since),
-		VoiceRepository.findLatestClientErrors(),
-		VoiceRepository.countRatingsSince(since),
-		VoiceRepository.findLatestFeedbackComments(),
-		liveRoomsWithTypes(),
-	]);
+		);
+	const adoption = await VoiceRepository.findDailyAdoptionSince(since);
+	const playerAdoption = await VoiceRepository.findPlayerAdoptionSince(since);
+	const voiceChatPreferences =
+		await VoiceRepository.findVoiceChatPreferenceStatsSince(since);
+	const platforms = await VoiceRepository.findPlatformStatsSince(since);
+	const leaveReasons = await VoiceRepository.countLeaveReasonsSince(since);
+	const errorCounts = await VoiceRepository.countClientErrorsSince(since);
+	const latestErrors = await VoiceRepository.findLatestClientErrors();
+	const ratings = await VoiceRepository.countRatingsSince(since);
+	const feedbackComments = await VoiceRepository.findLatestFeedbackComments();
+	const liveRooms = await liveRoomsWithTypes();
 
 	return {
 		statsDays: STATS_DAYS,

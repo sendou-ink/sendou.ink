@@ -219,10 +219,10 @@ async function loadMapByMapContext({
 }) {
 	const viewerSide = Scrim.sideOfUser(post, user.id);
 
-	const [maps, mapLists] = await Promise.all([
-		ScrimMapRepository.findMapsByScrimPostId(post.id),
-		ScrimMapListRepository.findMapListsByScrimPostId(post.id),
-	]);
+	const maps = await ScrimMapRepository.findMapsByScrimPostId(post.id);
+	const mapLists = await ScrimMapListRepository.findMapListsByScrimPostId(
+		post.id,
+	);
 
 	if (
 		Scrim.isTrackingLocked({
