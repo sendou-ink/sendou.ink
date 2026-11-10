@@ -27,6 +27,7 @@ import {
 import { ART_TABS, artSearchParams } from "../art-search-params";
 import { ArtGrid } from "../components/ArtGrid";
 import { TagSelect } from "../components/TagSelect";
+import * as ArtListing from "../core/ArtListing";
 import { loader } from "../loaders/art.server";
 
 export { loader };
@@ -66,13 +67,13 @@ export default function ArtPage() {
 	] = useSearchParamsTyped(artSearchParams);
 	const switchId = React.useId();
 
-	const showcaseArts = !showOpenCommissions
-		? data.showcaseArts
-		: data.showcaseArts.filter((art) => art.author?.commissionsOpen);
+	const showcaseArts = showOpenCommissions
+		? ArtListing.withCommissionsOpen(data.showcaseArts)
+		: data.showcaseArts;
 
-	const recentlyUploadedArts = !showOpenCommissions
-		? data.recentlyUploadedArts
-		: data.recentlyUploadedArts.filter((art) => art.author?.commissionsOpen);
+	const recentlyUploadedArts = showOpenCommissions
+		? ArtListing.withCommissionsOpen(data.recentlyUploadedArts)
+		: data.recentlyUploadedArts;
 
 	return (
 		<Main className="stack lg">

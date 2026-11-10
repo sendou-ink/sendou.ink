@@ -88,7 +88,7 @@ describe("findAllTags", () => {
 	});
 });
 
-describe("unlinkUserFromArt", () => {
+describe("unlinkOwnFromArt", () => {
 	beforeEach(async () => {
 		await users.create(2);
 	});
@@ -196,6 +196,60 @@ describe("findArtsByUserId", () => {
 
 		expect(result).toHaveLength(1);
 		expect(result[0].id).toBe(art.id);
+	});
+
+	test("gives an author only to art made of the user by someone else", async () => {
+		await ArtFactory.create({ authorId: users.id(1) });
+		await ArtFactory.create({
+			authorId: users.id(2),
+			linkedUsers: [users.id(1)],
+		});
+
+		const result = await ArtRepository.findArtsByUserId(users.id(1));
+
+		expect(result.map((art) => art.author?.id)).toEqual([
+			users.id(2),
+			undefined,
+		]);
+	});
+
+	test("leaves out art made of the user when asked to", async () => {
+		const own = await ArtFactory.create({ authorId: users.id(1) });
+		await ArtFactory.create({
+			authorId: users.id(2),
+			linkedUsers: [users.id(1)],
+		});
+
+		const result = await ArtRepository.findArtsByUserId(users.id(1), {
+			includeTagged: false,
+		});
+
+		expect(result.map((art) => art.id)).toEqual([own.id]);
+	});
+});
+
+describe("findById", () => {
+	beforeEach(async () => {
+		await users.create(3);
+	});
+
+	test("lets the author edit and the tagged users unlink", async () => {
+		const art = await ArtFactory.create({
+			authorId: users.id(1),
+			linkedUsers: [users.id(2), users.id(3)],
+		});
+
+		const result = await ArtRepository.findById(art.id);
+
+		expect(result?.linkedUserIds).toEqual([users.id(2), users.id(3)]);
+		expect(result?.permissions).toEqual({
+			EDIT: [users.id(1)],
+			UNLINK: [users.id(2), users.id(3)],
+		});
+	});
+
+	test("returns undefined for an unknown id", async () => {
+		expect(await ArtRepository.findById(999)).toBeUndefined();
 	});
 });
 
