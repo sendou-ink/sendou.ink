@@ -20,7 +20,7 @@ import {
 	jsonArrayFrom,
 	jsonObjectFrom,
 	tournamentLogoWithDefault,
-	tournamentTeamCount,
+	tournamentRegisteredTeamCount,
 } from "~/utils/kysely.server";
 import { getTentativeTier } from "../tournament-organization/core/tentativeTiers.server";
 import { sortTrophiesByFavorites } from "../user-page/core/trophy-sorting.server";
@@ -334,7 +334,7 @@ export async function findTournamentsByTrophyId(trophyId: number) {
 			"Tournament.tier",
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			calendarEventStartTime(eb).as("startTime"),
-			tournamentTeamCount(eb).as("teamsCount"),
+			tournamentRegisteredTeamCount(eb).as("teamsCount"),
 		])
 		.where("CalendarEvent.trophyId", "=", trophyId)
 		.where("CalendarEvent.hidden", "=", 0)
@@ -368,7 +368,7 @@ export async function findWinsByOwner({
 			"CalendarEvent.name",
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			calendarEventStartTime(eb).as("startTime"),
-			tournamentTeamCount(eb).as("teamsCount"),
+			tournamentRegisteredTeamCount(eb).as("teamsCount"),
 		])
 		.where("TrophyOwner.trophyId", "=", trophyId)
 		.where("TrophyOwner.userId", "=", userId)

@@ -20,6 +20,7 @@ import {
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
 	tournamentLogoWithDefault,
+	tournamentRegisteredTeamCount,
 } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 import { mySlugify } from "~/utils/urls";
@@ -403,24 +404,15 @@ export function findAllOrganizedTournamentTeamCounts({
 			"CalendarEventDate.eventId",
 			"CalendarEvent.id",
 		)
+		.innerJoin("Tournament", "Tournament.id", "CalendarEvent.tournamentId")
 		.select((eb) => [
 			"CalendarEvent.name",
 			"CalendarEvent.organizationId",
 			eb.fn.min("CalendarEventDate.startsAt").as("startsAt"),
-			eb
-				.selectFrom("TournamentTeam")
-				.select(({ fn }) => fn.countAll<number>().as("count"))
-				.whereRef(
-					"TournamentTeam.tournamentId",
-					"=",
-					"CalendarEvent.tournamentId",
-				)
-				.where("TournamentTeam.isPlaceholder", "=", 0)
-				.as("teamCount"),
+			tournamentRegisteredTeamCount(eb).as("teamCount"),
 		])
 		.$narrowType<{ organizationId: NotNull; teamCount: NotNull }>()
 		.where("CalendarEvent.organizationId", "is not", null)
-		.where("CalendarEvent.tournamentId", "is not", null)
 		.where("CalendarEvent.hidden", "=", 0)
 		.where("CalendarEventDate.startsAt", ">=", startedAfter)
 		.where("CalendarEventDate.startsAt", "<=", databaseTimestampNow())

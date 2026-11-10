@@ -34,9 +34,9 @@ import {
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
 	jsonObjectFrom,
+	tournamentActiveTeamCount,
 	tournamentLogoWithDefault,
 	tournamentMembersCount,
-	tournamentTeamsCount,
 } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
@@ -170,7 +170,7 @@ function findAllBetweenTwoTimestampsQuery({
 				"normalizedStartsAt",
 			),
 			withOrganization(eb).as("organization"),
-			tournamentTeamsCount(eb).as("teamsCount"),
+			tournamentActiveTeamCount(eb).as("teamsCount"),
 			tournamentMembersCount(eb).as("membersCount"),
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonArrayFrom(

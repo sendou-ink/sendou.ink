@@ -260,8 +260,8 @@ export function calendarEventNameMatchesSeries(substringMatches: string[]) {
 		);
 }
 
-/** Subquery counting a tournament's non-placeholder teams. Correlates on `"Tournament"."id"`. */
-export function tournamentTeamCount(
+/** Subquery counting all of a tournament's non-placeholder teams, checked in or not (see {@link tournamentActiveTeamCount}). Correlates on `"Tournament"."id"`. */
+export function tournamentRegisteredTeamCount(
 	eb: ExpressionBuilder<Tables, "Tournament">,
 ) {
 	return eb
@@ -306,7 +306,9 @@ function tournamentCheckedInTeams(eb: ExpressionBuilder<DB, "Tournament">) {
 }
 
 /** Subquery counting the teams of {@link tournamentCheckedInTeams}. Correlates on `"Tournament"."id"`. */
-export function tournamentTeamsCount(eb: ExpressionBuilder<DB, "Tournament">) {
+export function tournamentActiveTeamCount(
+	eb: ExpressionBuilder<DB, "Tournament">,
+) {
 	return tournamentCheckedInTeams(eb).select(({ fn }) => [
 		fn.count<number>("TournamentTeam.id").distinct().as("count"),
 	]);

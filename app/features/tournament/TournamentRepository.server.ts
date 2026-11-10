@@ -40,9 +40,9 @@ import {
 	isLiveStreamOf,
 	jsonArrayFrom,
 	jsonObjectFrom,
+	tournamentActiveTeamCount,
 	tournamentLogoWithDefault,
 	tournamentMembersCount,
-	tournamentTeamsCount,
 	tournamentUsername,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
@@ -851,7 +851,7 @@ export function findAllForShowcase() {
 			"CalendarEvent.organizationId",
 			"CalendarEventDate.startsAt",
 			"CalendarEvent.hidden",
-			tournamentTeamsCount(eb).as("teamsCount"),
+			tournamentActiveTeamCount(eb).as("teamsCount"),
 			tournamentMembersCount(eb).as("membersCount"),
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonObjectFrom(
@@ -947,7 +947,7 @@ export function findShowcaseCountsById(tournamentId: number) {
 	return db
 		.selectFrom("Tournament")
 		.select((eb) => [
-			tournamentTeamsCount(eb).as("teamsCount"),
+			tournamentActiveTeamCount(eb).as("teamsCount"),
 			tournamentMembersCount(eb).as("membersCount"),
 		])
 		.where("Tournament.id", "=", tournamentId)

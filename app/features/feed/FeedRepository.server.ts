@@ -9,6 +9,7 @@ import {
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
 	tournamentLogoWithDefault,
+	tournamentRegisteredTeamCount,
 	userChatNameHue,
 	visibleThroughAssociationTo,
 	visibleTo,
@@ -939,7 +940,7 @@ export function findBiggestFinalizedTournaments({
 		.select((eb) => [
 			"Tournament.id as tournamentId",
 			"Tournament.tier",
-			tournamentTeamCount(eb).as("teamCount"),
+			tournamentRegisteredTeamCount(eb).$asScalar().$notNull().as("teamCount"),
 			calendarEventStartTime(eb).$asScalar().$notNull().as("startsAt"),
 		])
 		.where("Tournament.isFinalized", "=", 1)
@@ -994,7 +995,7 @@ export function findTournamentsWithRegistrationClosedBetween({
 			"Tournament.id as tournamentId",
 			regClosesAt.as("regClosesAt"),
 			calendarEventStartTime(eb).$asScalar().$notNull().as("startsAt"),
-			tournamentTeamCount(eb).as("teamCount"),
+			tournamentRegisteredTeamCount(eb).$asScalar().$notNull().as("teamCount"),
 		])
 		.where(regClosesAt, ">=", from)
 		.where(regClosesAt, "<=", to)
@@ -1110,16 +1111,6 @@ function publicTournaments() {
 		.innerJoin("Tournament", "Tournament.id", "CalendarEvent.tournamentId")
 		.where("CalendarEvent.hidden", "=", 0)
 		.where(sql<boolean>`coalesce("Tournament"."settings" ->> 'isTest', 0) = 0`);
-}
-
-function tournamentTeamCount(eb: ExpressionBuilder<Tables, "Tournament">) {
-	return eb
-		.selectFrom("TournamentTeam")
-		.select((countEb) => countEb.fn.countAll<number>().as("c"))
-		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-		.where("TournamentTeam.isPlaceholder", "=", 0)
-		.$asScalar()
-		.$notNull();
 }
 
 // ---------- Teams & scrims ----------
