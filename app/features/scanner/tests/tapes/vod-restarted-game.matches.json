@@ -1,0 +1,737 @@
+{
+	"invalidObjectiveEvents": "",
+	"matches": [
+		{
+			"sources": "1-23",
+			"match": {
+				"startsAt": 10591,
+				"endsAt": 10625,
+				"playedAt": null,
+				"lobby": null,
+				"mode": "SZ",
+				"stage": 17,
+				"matchScores": null,
+				"replayCode": null,
+				"cast": false,
+				"objective": {
+					"mode": "SZ",
+					"samples": [
+						{"t":10606,"time":300,"score":[100,100],"penalty":[null,null],"control":null},
+						{"t":10616,"time":291,"score":[100,100],"penalty":[null,null],"control":1},
+						{"t":10617,"time":290,"score":[100,98],"penalty":[null,null],"control":1},
+						{"t":10618,"time":289,"score":[100,96],"penalty":[null,null],"control":1},
+						{"t":10619,"time":288,"score":[100,95],"penalty":[null,null],"control":1},
+						{"t":10620,"time":287,"score":[100,93],"penalty":[null,null],"control":1},
+						{"t":10621,"time":286,"score":[100,91],"penalty":[null,null],"control":1},
+						{"t":10622,"time":285,"score":[100,90],"penalty":[null,null],"control":1},
+						{"t":10624,"time":283,"score":[100,88],"penalty":[null,null],"control":1}
+					]
+				},
+				"playerStatus": {
+					"samples": [
+						{
+							"t": 10604,
+							"time": 300,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10608,
+							"time": null,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10609,
+							"time": 298,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10614,
+							"time": 293,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10618,
+							"time": 289,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10619,
+							"time": 288,
+							"special": [[true,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10624,
+							"time": 283,
+							"special": [[true,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10625,
+							"time": 282,
+							"special": [[true,false,true,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						}
+					]
+				},
+				"kills": null,
+				"teams": [
+					{
+						"players": [
+							{"name":"Florescent","weaponId":211,"paint":null,"ka":null,"d":null,"s":null,"abilities":[["OG"],["SSU"],["SJ"]]},
+							{"name":"くらうに ★～","weaponId":2070,"paint":null,"ka":null,"d":null,"s":null,"abilities":[["LDE"],["SCU"],["ISM"]]},
+							{"name":"Bocchi","weaponId":4010,"paint":null,"ka":null,"d":null,"s":null,"abilities":[["RSU"],["RSU"],["RES"]]},
+							{"name":"have faith","weaponId":50,"paint":null,"ka":null,"d":null,"s":null,"abilities":[["SSU"],["SSU"],["SJ"]]}
+						]
+					},
+					{
+						"players": [
+							{"name":null,"weaponId":60,"paint":null,"ka":null,"d":null,"s":null,"abilities":[["LDE"],["SPU"],["SJ"]]},
+							{"name":null,"weaponId":20,"paint":null,"ka":null,"d":null,"s":null,"abilities":[["SSU"],["SSU"],["SJ"]]},
+							{"name":null,"weaponId":4041,"paint":null,"ka":null,"d":null,"s":null,"abilities":[["RSU"],["RSU"],["SJ"]]},
+							{"name":null,"weaponId":2030,"paint":null,"ka":null,"d":null,"s":null,"abilities":[["LDE"],["RP"],["OS"]]}
+						]
+					}
+				],
+				"winner": null,
+				"pov": null
+			}
+		},
+		{
+			"sources": "24-216 218-219",
+			"match": {
+				"startsAt": 10776,
+				"endsAt": 10938,
+				"playedAt": null,
+				"lobby": "PRIVATE",
+				"mode": "SZ",
+				"stage": 17,
+				"matchScores": [100,0],
+				"replayCode": null,
+				"cast": false,
+				"objective": {
+					"mode": "SZ",
+					"samples": [
+						{"t":10795,"time":297,"score":[100,100],"penalty":[null,null],"control":null},
+						{"t":10802,"time":290,"score":[100,99],"penalty":[null,null],"control":1},
+						{"t":10805,"time":287,"score":[100,99],"penalty":[null,null],"control":null},
+						{"t":10812,"time":280,"score":[100,99],"penalty":[null,2],"control":0},
+						{"t":10813,"time":279,"score":[98,99],"penalty":[null,2],"control":0},
+						{"t":10814,"time":278,"score":[97,99],"penalty":[null,2],"control":0},
+						{"t":10815,"time":277,"score":[95,99],"penalty":[null,2],"control":0},
+						{"t":10816,"time":276,"score":[93,99],"penalty":[null,2],"control":0},
+						{"t":10817,"time":275,"score":[92,99],"penalty":[null,2],"control":0},
+						{"t":10818,"time":274,"score":[90,99],"penalty":[null,2],"control":null},
+						{"t":10820,"time":272,"score":[90,99],"penalty":[9,2],"control":1},
+						{"t":10821,"time":271,"score":[90,98],"penalty":[9,null],"control":1},
+						{"t":10822,"time":270,"score":[90,96],"penalty":[9,null],"control":1},
+						{"t":10823,"time":269,"score":[90,95],"penalty":[9,null],"control":1},
+						{"t":10826,"time":266,"score":[90,90],"penalty":[9,null],"control":1},
+						{"t":10827,"time":265,"score":[90,88],"penalty":[9,null],"control":1},
+						{"t":10828,"time":264,"score":[90,86],"penalty":[9,null],"control":1},
+						{"t":10829,"time":263,"score":[90,85],"penalty":[9,null],"control":1},
+						{"t":10830,"time":262,"score":[90,83],"penalty":[9,null],"control":1},
+						{"t":10831,"time":261,"score":[90,81],"penalty":[9,null],"control":1},
+						{"t":10832,"time":260,"score":[90,80],"penalty":[9,null],"control":1},
+						{"t":10833,"time":259,"score":[90,78],"penalty":[9,null],"control":1},
+						{"t":10834,"time":258,"score":[90,76],"penalty":[9,null],"control":1},
+						{"t":10835,"time":257,"score":[90,75],"penalty":[9,null],"control":1},
+						{"t":10836,"time":256,"score":[90,73],"penalty":[9,null],"control":1},
+						{"t":10837,"time":255,"score":[90,71],"penalty":[9,null],"control":1},
+						{"t":10838,"time":254,"score":[90,70],"penalty":[9,null],"control":1},
+						{"t":10839,"time":253,"score":[90,68],"penalty":[9,null],"control":1},
+						{"t":10840,"time":252,"score":[90,66],"penalty":[9,null],"control":1},
+						{"t":10841,"time":251,"score":[90,65],"penalty":[9,null],"control":1},
+						{"t":10843,"time":249,"score":[90,64],"penalty":[9,null],"control":null},
+						{"t":10844,"time":248,"score":[90,64],"penalty":[8,28],"control":0},
+						{"t":10845,"time":247,"score":[90,64],"penalty":[7,28],"control":0},
+						{"t":10846,"time":246,"score":[90,64],"penalty":[5,28],"control":0},
+						{"t":10847,"time":245,"score":[90,64],"penalty":[3,28],"control":0},
+						{"t":10848,"time":244,"score":[90,64],"penalty":[2,28],"control":0},
+						{"t":10849,"time":243,"score":[89,64],"penalty":[null,28],"control":0},
+						{"t":10850,"time":242,"score":[87,64],"penalty":[null,28],"control":0},
+						{"t":10851,"time":241,"score":[86,64],"penalty":[null,28],"control":0},
+						{"t":10852,"time":240,"score":[84,64],"penalty":[null,28],"control":0},
+						{"t":10853,"time":239,"score":[82,64],"penalty":[null,28],"control":0},
+						{"t":10854,"time":238,"score":[81,64],"penalty":[null,28],"control":0},
+						{"t":10855,"time":237,"score":[79,64],"penalty":[null,28],"control":0},
+						{"t":10856,"time":236,"score":[77,64],"penalty":[null,28],"control":0},
+						{"t":10857,"time":235,"score":[76,64],"penalty":[null,28],"control":0},
+						{"t":10858,"time":234,"score":[74,64],"penalty":[null,28],"control":0},
+						{"t":10859,"time":233,"score":[72,64],"penalty":[null,28],"control":0},
+						{"t":10860,"time":232,"score":[71,64],"penalty":[null,28],"control":0},
+						{"t":10861,"time":231,"score":[69,64],"penalty":[null,28],"control":0},
+						{"t":10862,"time":230,"score":[67,64],"penalty":[null,28],"control":0},
+						{"t":10863,"time":229,"score":[66,64],"penalty":[null,28],"control":0},
+						{"t":10864,"time":228,"score":[64,64],"penalty":[null,28],"control":0},
+						{"t":10865,"time":227,"score":[62,64],"penalty":[null,28],"control":0},
+						{"t":10866,"time":226,"score":[61,64],"penalty":[null,28],"control":0},
+						{"t":10867,"time":225,"score":[59,64],"penalty":[null,28],"control":0},
+						{"t":10868,"time":224,"score":[57,64],"penalty":[null,28],"control":0},
+						{"t":10869,"time":223,"score":[56,64],"penalty":[null,28],"control":0},
+						{"t":10870,"time":222,"score":[54,64],"penalty":[null,28],"control":0},
+						{"t":10871,"time":221,"score":[52,64],"penalty":[null,28],"control":0},
+						{"t":10872,"time":220,"score":[51,64],"penalty":[null,28],"control":0},
+						{"t":10873,"time":219,"score":[49,64],"penalty":[null,28],"control":0},
+						{"t":10874,"time":218,"score":[47,64],"penalty":[null,28],"control":0},
+						{"t":10875,"time":217,"score":[46,64],"penalty":[null,28],"control":0},
+						{"t":10876,"time":216,"score":[44,64],"penalty":[null,28],"control":0},
+						{"t":10877,"time":215,"score":[42,64],"penalty":[null,28],"control":0},
+						{"t":10878,"time":214,"score":[41,64],"penalty":[null,28],"control":0},
+						{"t":10879,"time":213,"score":[39,64],"penalty":[null,28],"control":0},
+						{"t":10880,"time":212,"score":[37,64],"penalty":[null,28],"control":0},
+						{"t":10881,"time":211,"score":[36,64],"penalty":[null,28],"control":0},
+						{"t":10882,"time":210,"score":[34,64],"penalty":[null,28],"control":0},
+						{"t":10883,"time":209,"score":[32,64],"penalty":[null,28],"control":0},
+						{"t":10884,"time":208,"score":[31,64],"penalty":[null,28],"control":0},
+						{"t":10885,"time":207,"score":[29,64],"penalty":[null,28],"control":0},
+						{"t":10891,"time":201,"score":[28,64],"penalty":[null,28],"control":null},
+						{"t":10892,"time":200,"score":[28,64],"penalty":[null,28],"control":0},
+						{"t":10893,"time":199,"score":[26,64],"penalty":[null,28],"control":0},
+						{"t":10894,"time":198,"score":[24,64],"penalty":[null,28],"control":0},
+						{"t":10895,"time":197,"score":[23,64],"penalty":[null,28],"control":0},
+						{"t":10896,"time":196,"score":[21,64],"penalty":[null,28],"control":0},
+						{"t":10897,"time":195,"score":[19,64],"penalty":[null,28],"control":0},
+						{"t":10898,"time":194,"score":[18,64],"penalty":[null,28],"control":null},
+						{"t":10899,"time":193,"score":[18,64],"penalty":[null,28],"control":0},
+						{"t":10900,"time":192,"score":[16,64],"penalty":[null,28],"control":0},
+						{"t":10901,"time":191,"score":[15,64],"penalty":[null,28],"control":0},
+						{"t":10902,"time":190,"score":[13,64],"penalty":[null,28],"control":0},
+						{"t":10903,"time":189,"score":[null,64],"penalty":[null,28],"control":null},
+						{"t":10904,"time":188,"score":[10,64],"penalty":[null,28],"control":0},
+						{"t":10905,"time":187,"score":[8,64],"penalty":[null,28],"control":0},
+						{"t":10907,"time":185,"score":[5,64],"penalty":[null,28],"control":0},
+						{"t":10908,"time":184,"score":[3,64],"penalty":[null,28],"control":0},
+						{"t":10909,"time":183,"score":[1,64],"penalty":[null,28],"control":0}
+					]
+				},
+				"playerStatus": {
+					"samples": [
+						{
+							"t": 10789,
+							"time": 300,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10794,
+							"time": 298,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10799,
+							"time": 293,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10804,
+							"time": 288,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10805,
+							"time": 287,
+							"special": [[true,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10806,
+							"time": 286,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10811,
+							"time": 281,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10812,
+							"time": 280,
+							"special": [[false,false,false,false],[false,true,false,false]],
+							"dead": [[true,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10813,
+							"time": 279,
+							"special": [[false,false,false,false],[false,true,false,false]],
+							"dead": [[true,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10814,
+							"time": 278,
+							"special": [[false,false,false,false],[false,true,false,true]],
+							"dead": [[true,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10816,
+							"time": 276,
+							"special": [[false,false,false,false],[false,true,false,true]],
+							"dead": [[true,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10817,
+							"time": 275,
+							"special": [[false,false,false,false],[false,true,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10818,
+							"time": 274,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10820,
+							"time": 272,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10821,
+							"time": 271,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,true],[false,false,false,false]]
+						},
+						{
+							"t": 10822,
+							"time": 270,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,true,true],[false,false,false,false]]
+						},
+						{
+							"t": 10823,
+							"time": 269,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,true,true],[false,true,false,false]]
+						},
+						{
+							"t": 10824,
+							"time": null,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,true,false],[false,true,false,false]]
+						},
+						{
+							"t": 10826,
+							"time": 266,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,true,false,false]]
+						},
+						{
+							"t": 10827,
+							"time": 265,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10830,
+							"time": 262,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10831,
+							"time": 261,
+							"special": [[false,false,false,true],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10834,
+							"time": 258,
+							"special": [[false,false,false,true],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10835,
+							"time": 257,
+							"special": [[false,false,false,true],[false,false,true,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10836,
+							"time": 256,
+							"special": [[false,false,false,true],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10837,
+							"time": 255,
+							"special": [[false,true,false,true],[false,true,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10838,
+							"time": 254,
+							"special": [[false,true,false,true],[false,true,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10839,
+							"time": 253,
+							"special": [[false,false,false,true],[false,true,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,true]]
+						},
+						{
+							"t": 10840,
+							"time": 252,
+							"special": [[false,false,false,true],[false,true,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,true]]
+						},
+						{
+							"t": 10841,
+							"time": 251,
+							"special": [[false,false,false,true],[false,true,false,false]],
+							"dead": [[false,false,false,false],[true,false,false,true]]
+						},
+						{
+							"t": 10845,
+							"time": 247,
+							"special": [[false,false,false,true],[false,true,false,false]],
+							"dead": [[false,false,false,false],[true,false,false,true]]
+						},
+						{
+							"t": 10846,
+							"time": 246,
+							"special": [[false,false,false,true],[false,false,false,false]],
+							"dead": [[false,false,false,false],[true,false,false,false]]
+						},
+						{
+							"t": 10847,
+							"time": 245,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[true,true,false,false]]
+						},
+						{
+							"t": 10848,
+							"time": 244,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[true,true,false,false]]
+						},
+						{
+							"t": 10849,
+							"time": 243,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,true,false,false]]
+						},
+						{
+							"t": 10854,
+							"time": 238,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,true,false,false]]
+						},
+						{
+							"t": 10855,
+							"time": 237,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10858,
+							"time": 234,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10859,
+							"time": 233,
+							"special": [[false,false,false,false],[true,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10860,
+							"time": 232,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10861,
+							"time": 231,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10862,
+							"time": 230,
+							"special": [[false,false,false,false],[false,false,false,true]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10865,
+							"time": 227,
+							"special": [[false,false,false,false],[false,false,false,true]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10866,
+							"time": 226,
+							"special": [[false,false,false,false],[false,true,false,true]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10867,
+							"time": 225,
+							"special": [[false,false,false,false],[false,true,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,true]]
+						},
+						{
+							"t": 10869,
+							"time": 223,
+							"special": [[false,false,false,false],[false,true,false,false]],
+							"dead": [[false,false,false,false],[false,false,false,true]]
+						},
+						{
+							"t": 10870,
+							"time": 222,
+							"special": [[false,false,false,false],[false,true,true,false]],
+							"dead": [[false,false,false,false],[false,false,false,true]]
+						},
+						{
+							"t": 10871,
+							"time": 221,
+							"special": [[false,false,false,false],[false,true,true,true]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10873,
+							"time": 219,
+							"special": [[false,false,false,false],[false,true,true,true]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10874,
+							"time": 218,
+							"special": [[false,false,false,false],[false,true,false,true]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10876,
+							"time": 216,
+							"special": [[false,false,false,false],[false,true,false,true]],
+							"dead": [[false,false,false,false],[false,false,false,false]]
+						},
+						{
+							"t": 10877,
+							"time": 215,
+							"special": [[false,false,false,false],[false,true,false,true]],
+							"dead": [[false,false,false,true],[false,false,false,false]]
+						},
+						{
+							"t": 10878,
+							"time": 214,
+							"special": [[false,false,false,false],[false,true,false,true]],
+							"dead": [[false,false,false,true],[false,false,false,false]]
+						},
+						{
+							"t": 10879,
+							"time": 213,
+							"special": [[false,true,false,false],[false,true,false,true]],
+							"dead": [[false,false,false,true],[false,false,false,false]]
+						},
+						{
+							"t": 10880,
+							"time": 212,
+							"special": [[false,true,false,false],[false,true,false,true]],
+							"dead": [[false,false,false,true],[false,false,false,false]]
+						},
+						{
+							"t": 10881,
+							"time": 211,
+							"special": [[true,false,false,false],[false,true,false,true]],
+							"dead": [[false,false,false,true],[false,false,false,false]]
+						},
+						{
+							"t": 10882,
+							"time": 210,
+							"special": [[false,false,false,false],[false,true,false,true]],
+							"dead": [[false,false,true,true],[false,false,false,false]]
+						},
+						{
+							"t": 10883,
+							"time": 209,
+							"special": [[false,false,false,false],[false,false,false,true]],
+							"dead": [[false,false,true,true],[false,false,false,false]]
+						},
+						{
+							"t": 10884,
+							"time": 208,
+							"special": [[false,false,false,false],[false,false,false,true]],
+							"dead": [[false,false,true,true],[false,false,false,false]]
+						},
+						{
+							"t": 10885,
+							"time": 207,
+							"special": [[false,false,false,false],[false,false,false,true]],
+							"dead": [[false,false,true,false],[false,false,false,false]]
+						},
+						{
+							"t": 10886,
+							"time": 206,
+							"special": [[false,false,false,false],[false,false,false,true]],
+							"dead": [[false,false,true,false],[false,false,false,false]]
+						},
+						{
+							"t": 10887,
+							"time": null,
+							"special": [[false,false,false,false],[false,false,false,true]],
+							"dead": [[false,false,true,false],[false,false,false,false]]
+						},
+						{
+							"t": 10891,
+							"time": 201,
+							"special": [[false,false,false,false],[false,false,false,true]],
+							"dead": [[false,false,false,false],[true,false,false,false]]
+						},
+						{
+							"t": 10895,
+							"time": 197,
+							"special": [[false,false,false,false],[false,false,false,true]],
+							"dead": [[false,false,false,false],[true,false,false,false]]
+						},
+						{
+							"t": 10896,
+							"time": 196,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,true],[true,false,false,false]]
+						},
+						{
+							"t": 10897,
+							"time": 195,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,true],[true,true,false,true]]
+						},
+						{
+							"t": 10898,
+							"time": 194,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,true],[true,true,true,true]]
+						},
+						{
+							"t": 10899,
+							"time": 193,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,true],[false,true,true,true]]
+						},
+						{
+							"t": 10900,
+							"time": 192,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,true,true,true]]
+						},
+						{
+							"t": 10904,
+							"time": 188,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,true,true,true]]
+						},
+						{
+							"t": 10905,
+							"time": 187,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,true,false]]
+						},
+						{
+							"t": 10906,
+							"time": 186,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[false,false,true,false]]
+						},
+						{
+							"t": 10907,
+							"time": 185,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[true,false,false,false]]
+						},
+						{
+							"t": 10908,
+							"time": 184,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[true,false,false,false]]
+						},
+						{
+							"t": 10909,
+							"time": 183,
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,true,false],[true,false,false,false]]
+						}
+					]
+				},
+				"kills": [{"t":10840,"time":252,"name":"Elis"},{"t":10906,"time":186,"name":"Elis"}],
+				"teams": [
+					{
+						"players": [
+							{"name":"くらうに ★～","weaponId":2070,"paint":798,"ka":7,"d":1,"s":3,"abilities":[["LDE"],["SCU"],["ISM"]]},
+							{"name":"Bocchi","weaponId":4010,"paint":913,"ka":3,"d":0,"s":3,"abilities":[["RSU"],["RSU"],["RES"]]},
+							{"name":"have faith","weaponId":50,"paint":401,"ka":5,"d":3,"s":1},
+							{"name":"Florescent","weaponId":211,"paint":347,"ka":4,"d":3,"s":1,"abilities":[["OG"],["SSU"],["SJ"]]}
+						]
+					},
+					{
+						"players": [
+							{"name":"Elis","weaponId":60,"paint":715,"ka":6,"d":3,"s":2,"abilities":[["LDE"],["SPU"],["SJ"]]},
+							{"name":"merocïョ・-","weaponId":0,"paint":697,"ka":4,"d":3,"s":3,"abilities":[["SSU"],["SSU"],["SJ"]]},
+							{
+								"name": "GOLD SHIP",
+								"weaponId": 2030,
+								"paint": 452,
+								"ka": 4,
+								"d": 1,
+								"s": 2,
+								"abilities": [["LDE","SRU","QSJ","QSJ"],["RP","SSU","SSU","ISM"],["OS","SSU","ISM","SSU"]]
+							},
+							{"name":"Jrod_14","weaponId":4041,"paint":626,"ka":0,"d":3,"s":2,"abilities":[["RSU"],["RSU"],["SJ"]]}
+						]
+					}
+				],
+				"winner": 0,
+				"pov": {"team":0,"index":2}
+			}
+		},
+		{
+			"sources": "220",
+			"historyOnly": true,
+			"match": {
+				"startsAt": 10962,
+				"endsAt": 10962,
+				"playedAt": 1783116900000,
+				"lobby": "PRIVATE",
+				"mode": "SZ",
+				"stage": 21,
+				"matchScores": [100,0],
+				"replayCode": null,
+				"cast": false,
+				"objective": null,
+				"playerStatus": null,
+				"kills": null,
+				"teams": [
+					{
+						"players": [
+							{"name":"merocïっ・・・","weaponId":0,"paint":1317,"ka":13,"d":8,"s":6},
+							{"name":"Elis","weaponId":60,"paint":1761,"ka":10,"d":3,"s":7},
+							{"name":"Jrod_14","weaponId":4041,"paint":1050,"ka":6,"d":9,"s":3},
+							{"name":"Gnιn SHIP","weaponId":2030,"paint":896,"ka":9,"d":4,"s":3}
+						]
+					},
+					{
+						"players": [
+							{"name":"<らラに ★～","weaponId":2070,"paint":1714,"ka":13,"d":2,"s":7},
+							{"name":"have raith","weaponId":50,"paint":1041,"ka":12,"d":8,"s":4},
+							{"name":"Bocchi","weaponId":4011,"paint":1459,"ka":10,"d":5,"s":6},
+							{"name":"Florescent","weaponId":211,"paint":731,"ka":7,"d":10,"s":3}
+						]
+					}
+				],
+				"winner": 0,
+				"pov": {"team":1,"index":1}
+			}
+		}
+	]
+}

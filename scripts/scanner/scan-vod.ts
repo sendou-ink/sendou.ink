@@ -8,7 +8,7 @@
  *
  * Requires ffmpeg (and ffprobe for the progress percentage) on PATH.
  *
- * Usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir] [--cues file.json]
+ * Usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir] [--cues file.json] [--tape name [--description text]]
  * --telemetry prints the VoD tab's ?telemetry=true scan counters after the run.
  * --gpu matches templates on WebGPU (worker/gpu-matcher.ts) like the browser's
  *   GPU path; needs Dawn (node/webgpu.ts: WEBGPU_NODE). The CSV must stay
@@ -18,6 +18,8 @@
  * --cues writes what a linked broadcast's GameCues get as they come in (the
  *   events it reads and the map overlay's gate passes), as the compact rows
  *   of the cue timing fixtures (tests/fixtures/game-cues, GameCuesVods.test.ts).
+ * --tape also saves the events as an event tape (tests/tape.ts) for the
+ *   golden tests; --description says which builder situations it holds.
  */
 import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
@@ -49,6 +51,7 @@ import { runSync } from "../../app/features/scanner/core/match-steps";
 import { TimelineBuilder } from "../../app/features/scanner/core/timeline/index";
 import { loadScoreboardResources } from "../../app/features/scanner/node/resources";
 import { nodeGpu } from "../../app/features/scanner/node/webgpu";
+import * as Tape from "../../app/features/scanner/tests/tape";
 import { createGpuMatcher } from "../../app/features/scanner/worker/gpu-matcher";
 import { recordingRunner } from "./match-corpus";
 
@@ -62,7 +65,7 @@ const PROGRESS_INTERVAL_SECONDS = 60;
 const options = parseArgs(process.argv.slice(2));
 if (!options) {
 	console.error(
-		"usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir] [--cues file.json]",
+		"usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir] [--cues file.json] [--tape name [--description text]]",
 	);
 	process.exit(1);
 }
@@ -76,6 +79,8 @@ const {
 	gpu,
 	recordDir,
 	cuesPath,
+	tapeName,
+	tapeDescription,
 } = options;
 
 await loadOpenCV();
@@ -164,6 +169,15 @@ if (cuesPath) {
 		`[\n${cueRows.map((row) => JSON.stringify(row)).join(",\n")}\n]\n`,
 	);
 }
+const tapePath =
+	tapeName === undefined
+		? null
+		: Tape.save({
+				name: tapeName,
+				description: tapeDescription,
+				source: `${basename(videoPath)} --fps ${fps} --start ${start}${duration === undefined ? "" : ` --duration ${duration}`}`,
+				events: timeline.events,
+			});
 printSummary();
 
 function parseArgs(argv: string[]): {
@@ -176,6 +190,8 @@ function parseArgs(argv: string[]): {
 	gpu: boolean;
 	recordDir: string | undefined;
 	cuesPath: string | undefined;
+	tapeName: string | undefined;
+	tapeDescription: string;
 } | null {
 	let parsedVideoPath: string | undefined;
 	let parsedFps = DEFAULT_FPS;
@@ -186,6 +202,8 @@ function parseArgs(argv: string[]): {
 	let parsedGpu = false;
 	let parsedRecordDir: string | undefined;
 	let parsedCuesPath: string | undefined;
+	let parsedTapeName: string | undefined;
+	let parsedTapeDescription = "";
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i]!;
 		if (arg === "--fps") parsedFps = Number(argv[++i]);
@@ -196,6 +214,8 @@ function parseArgs(argv: string[]): {
 		else if (arg === "--gpu") parsedGpu = true;
 		else if (arg === "--record") parsedRecordDir = argv[++i];
 		else if (arg === "--cues") parsedCuesPath = argv[++i];
+		else if (arg === "--tape") parsedTapeName = argv[++i];
+		else if (arg === "--description") parsedTapeDescription = argv[++i] ?? "";
 		else if (!arg.startsWith("--") && parsedVideoPath === undefined)
 			parsedVideoPath = arg;
 		else return null;
@@ -221,6 +241,8 @@ function parseArgs(argv: string[]): {
 		gpu: parsedGpu,
 		recordDir: parsedRecordDir,
 		cuesPath: parsedCuesPath,
+		tapeName: parsedTapeName,
+		tapeDescription: parsedTapeDescription,
 	};
 }
 
@@ -363,6 +385,7 @@ function printSummary(): void {
 	);
 	console.error(`timeline events: ${timeline.events.length} (${countText})`);
 	console.error(`wrote ${outPath}`);
+	if (tapePath) console.error(`wrote ${tapePath}`);
 	if (telemetry) printTelemetry();
 	if (matcher) console.error(`GPU matcher: ${JSON.stringify(matcher.stats)}`);
 	if (recorder) console.error(recorder.save());
