@@ -161,6 +161,10 @@ export default [
 		"features/trophies/routes/trophies.$id.wins.$userId.ts",
 	),
 	route(
+		"/trophies/:id/model",
+		"features/trophies/routes/trophies.$id.model.ts",
+	),
+	route(
 		"/trophies/:id/tournaments",
 		"features/trophies/routes/trophies.$id.tournaments.ts",
 	),

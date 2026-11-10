@@ -160,3 +160,9 @@
 	padding: 0 var(--s-1);
 	height: var(--selector-size);
 }
+
+.trophyLoading {
+	width: 20rem;
+	max-width: 100%;
+	aspect-ratio: 1 / 1;
+}

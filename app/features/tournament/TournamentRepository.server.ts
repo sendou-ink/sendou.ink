@@ -875,12 +875,7 @@ export function findAllForShowcase() {
 					.whereRef("CalendarEventBadge.eventId", "=", "CalendarEvent.id")
 					.orderBy("Badge.id", "asc"),
 			).as("badges"),
-			jsonObjectFrom(
-				eb
-					.selectFrom("Trophy")
-					.select(["Trophy.model"])
-					.whereRef("Trophy.id", "=", "CalendarEvent.trophyId"),
-			).as("trophy"),
+			"CalendarEvent.trophyId",
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentResult")

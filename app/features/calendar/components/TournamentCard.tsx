@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { ShieldMinus, Users } from "lucide-react";
 import { lazy } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Flag } from "~/components/Flag";
@@ -10,11 +10,12 @@ import { Image, ModeImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { TierPill } from "~/components/TierPill";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import type { TrophyModelLoaderData } from "~/features/trophies/routes/trophies.$id.model";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSpoilerFree } from "~/hooks/useSpoilerFree";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { navIconUrl, smallImageUrl } from "~/utils/urls";
+import { navIconUrl, smallImageUrl, trophyModelPage } from "~/utils/urls";
 import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
 import { Tags } from "./Tags";
 import styles from "./TournamentCard.module.css";
@@ -153,11 +154,11 @@ export function TournamentCard({
 				) : null}
 				{modes ? <ModesRow modes={modes} /> : null}
 				<div className={styles.pillsContainer}>
-					{tournament.trophy ||
+					{tournament.trophyId !== null ||
 					(tournament.badges && tournament.badges.length > 0) ? (
 						<PrizesPill
 							badges={tournament.badges}
-							trophy={tournament.trophy?.model}
+							trophyId={tournament.trophyId}
 						/>
 					) : null}
 					{isHostedOnSendouInk ? (
@@ -328,13 +329,29 @@ function ModesRow({ modes }: { modes: NonNullable<CalendarEvent["modes"]> }) {
 
 function PrizesPill({
 	badges,
-	trophy,
+	trophyId,
 }: {
 	badges: CalendarEvent["badges"];
-	trophy?: string;
+	trophyId: CalendarEvent["trophyId"];
 }) {
+	const trophyFetcher = useFetcher<TrophyModelLoaderData>();
+
+	const loadTrophyModel = (isOpen: boolean) => {
+		if (
+			!isOpen ||
+			trophyId === null ||
+			trophyFetcher.data ||
+			trophyFetcher.state !== "idle"
+		) {
+			return;
+		}
+
+		trophyFetcher.load(trophyModelPage(trophyId));
+	};
+
 	return (
 		<SendouPopover
+			onOpenChange={loadTrophyModel}
 			trigger={
 				<SendouButton
 					variant="minimal"
@@ -343,15 +360,21 @@ function PrizesPill({
 				>
 					<Image
 						size={18}
-						path={trophy ? navIconUrl("trophies") : navIconUrl("badges")}
+						path={
+							trophyId !== null ? navIconUrl("trophies") : navIconUrl("badges")
+						}
 						alt="Badge prizes"
 						className={styles.badgeNavIcon}
 					/>
 				</SendouButton>
 			}
 		>
-			{trophy ? (
-				<Trophy model={trophy} />
+			{trophyId !== null ? (
+				trophyFetcher.data ? (
+					<Trophy model={trophyFetcher.data.model} />
+				) : (
+					<div className={styles.trophyLoading} aria-busy />
+				)
 			) : badges ? (
 				<BadgeDisplay badges={badges} showText={false} compact />
 			) : null}

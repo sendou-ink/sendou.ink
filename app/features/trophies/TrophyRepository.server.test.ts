@@ -307,6 +307,18 @@ describe("trophy list tiers", () => {
 	}
 });
 
+describe("findModelById", () => {
+	test("returns the model of the trophy", async () => {
+		const trophy = await TrophyFactory.create({ model: "model-data" });
+
+		expect(await TrophyRepository.findModelById(trophy.id)).toBe("model-data");
+	});
+
+	test("returns null for an unknown id", async () => {
+		expect(await TrophyRepository.findModelById(999_999)).toBe(null);
+	});
+});
+
 describe("existsByName", () => {
 	let ownerId: number;
 	let approverIds: number[];

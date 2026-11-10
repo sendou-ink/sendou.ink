@@ -31,7 +31,7 @@ interface CommonEvent {
 	badges: Array<
 		Pick<Tables["Badge"], "id" | "code" | "displayName" | "hue">
 	> | null;
-	trophy: Pick<Tables["Trophy"], "model"> | null;
+	trophyId: Tables["CalendarEvent"]["trophyId"];
 }
 
 export interface CalendarEvent extends CommonEvent {

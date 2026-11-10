@@ -264,6 +264,8 @@ export const trophyPlacementsPage = (args: {
 	trophyId: number;
 	userId: number;
 }) => `${TROPHIES_PAGE}/${args.trophyId}/placements/${args.userId}`;
+export const trophyModelPage = (trophyId: number) =>
+	`${TROPHIES_PAGE}/${trophyId}/model`;
 export const trophyTournamentsPage = (trophyId: number) =>
 	`${TROPHIES_PAGE}/${trophyId}/tournaments`;
 export const trophyBackfillPage = (args: {

@@ -345,7 +345,7 @@ function mapTournamentFromDB(
 		modes: null,
 		hasVods: (tournament.vodCount ?? 0) > 0,
 		badges: tournament.badges,
-		trophy: tournament.trophy,
+		trophyId: tournament.trophyId,
 		firstPlacers,
 	};
 }

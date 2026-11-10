@@ -191,12 +191,7 @@ function findAllBetweenTwoTimestampsQuery({
 					)
 					.orderBy("Badge.id", "asc"),
 			).as("badges"),
-			jsonObjectFrom(
-				eb
-					.selectFrom("Trophy")
-					.select(["Trophy.model"])
-					.whereRef("Trophy.id", "=", "CalendarEvent.trophyId"),
-			).as("trophy"),
+			"CalendarEvent.trophyId",
 		])
 		.where("CalendarEvent.hidden", "=", 0)
 		.where(
@@ -281,7 +276,7 @@ function findAllBetweenTwoTimestampsMapped(
 								)
 							: null,
 				badges: row.badges,
-				trophy: row.trophy,
+				trophyId: row.trophyId,
 				logoUrl: row.logoUrl,
 				startsAt: row.normalizedStartsAt,
 				isRanked: row.tournamentSettings

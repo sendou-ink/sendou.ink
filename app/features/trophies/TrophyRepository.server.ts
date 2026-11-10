@@ -534,6 +534,16 @@ export function findAllXp() {
 		.execute();
 }
 
+export async function findModelById(trophyId: number) {
+	const row = await db
+		.selectFrom("Trophy")
+		.select("Trophy.model")
+		.where("Trophy.id", "=", trophyId)
+		.executeTakeFirst();
+
+	return row?.model ?? null;
+}
+
 export async function findCodeById(trophyId: number) {
 	const row = await db
 		.selectFrom("Trophy")
