@@ -25,18 +25,15 @@ import {
 } from "../core/canonical";
 import { getCV, loadOpenCV, type Mat } from "../core/cv";
 import { runDetectorPass } from "../core/detectors/frame-pass";
-import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { MINIMAP_DETECTOR_ID } from "../core/detectors/minimap/index";
-import {
-	createAllDetectors,
-	SCOREBOARD_EVENT_TYPES,
-} from "../core/detectors/registry";
+import { createAllDetectors } from "../core/detectors/registry";
 import { DetectorScheduler } from "../core/detectors/scheduler";
 import {
 	createScanTelemetry,
 	type ScanTelemetry,
 } from "../core/detectors/telemetry";
 import type { Detector } from "../core/detectors/types";
+import type { DetectedEvent } from "../core/events";
 import {
 	type FrameData,
 	normalizeFrame,
@@ -122,7 +119,7 @@ interface Pulled extends SourceItem {
 	read: Promise<PreparedFrame> | null;
 }
 
-let detectors: Detector<unknown>[] = [];
+let detectors: Detector<DetectedEvent>[] = [];
 let gpuMatcher: GpuMatcher | null = null;
 let gpuScaler: GpuFrameScaler | null = null;
 let scheduler: DetectorScheduler | null = null;
@@ -215,8 +212,6 @@ async function init({
 		detectors = createAllDetectors(resources);
 		scheduler = new DetectorScheduler(detectors, {
 			suppressSteadyFrames,
-			matchOpeningTypes: [MAP_START_EVENT_TYPE],
-			matchClosingTypes: SCOREBOARD_EVENT_TYPES,
 		});
 		collectTelemetry = collect;
 		attachFrames = attach;

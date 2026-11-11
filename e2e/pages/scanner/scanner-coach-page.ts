@@ -1,5 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
-import type { DetectedEvent } from "~/features/scanner/core/detectors/types";
+import type { DetectedEvent } from "~/features/scanner/core/events";
 import { buildScannerMatches } from "~/features/scanner/core/match-builder";
 import { sessionSummary } from "~/features/scanner/core/sessions";
 import { scannerSearchParams } from "~/features/scanner/scanner-search-params";

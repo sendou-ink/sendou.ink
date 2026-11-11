@@ -6,10 +6,7 @@
 import assert from "node:assert/strict";
 import { loadOpenCV } from "../core/cv";
 import { createDeathDetector } from "../core/detectors/death/index";
-import {
-	createMapStartDetector,
-	type MapStartData,
-} from "../core/detectors/map-start/index";
+import { createMapStartDetector } from "../core/detectors/map-start/index";
 import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { TimelineBuilder } from "../core/timeline/index";
@@ -32,10 +29,7 @@ test("map-start fixtures exist", () => {
 
 for (const fixture of fixtures) {
 	test(`map-start/${fixture.name}`, async (t) => {
-		const { gate, events } = await runDetectorOnFixture<MapStartData>(
-			detector,
-			fixture,
-		);
+		const { gate, events } = await runDetectorOnFixture(detector, fixture);
 		const expectPositive = fixture.expected.event === "MapStart";
 
 		await t.test("gate", () => {

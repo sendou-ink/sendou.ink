@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { DetectedEvent } from "../core/detectors/types";
+import type { DetectedEvent } from "../core/events";
 import {
 	deleteEvents,
 	listEvents,
 	saveEvent,
 	updateEventsSend,
 } from "../store/events";
+import { stubEvent } from "../tests/stub-event";
 import { getFeed, refreshFeed, refreshFeedEvents } from "./events-feed";
 
 const START = new Date(2030, 0, 1, 20, 0).getTime();
@@ -20,7 +21,7 @@ function mapStart(t: number): DetectedEvent {
 }
 
 function scoreboard(t: number): DetectedEvent {
-	return {
+	return stubEvent({
 		type: "Scoreboard",
 		t,
 		confidence: 0.9,
@@ -41,7 +42,7 @@ function scoreboard(t: number): DetectedEvent {
 				}),
 			),
 		},
-	};
+	});
 }
 
 async function saveAt(minutes: number, event: DetectedEvent): Promise<number> {

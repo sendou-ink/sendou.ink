@@ -13,11 +13,7 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
-import { MAP_START_EVENT_TYPE } from "../../app/features/scanner/core/detectors/map-start/index";
-import {
-	createAllDetectors,
-	SCOREBOARD_EVENT_TYPES,
-} from "../../app/features/scanner/core/detectors/registry";
+import { createAllDetectors } from "../../app/features/scanner/core/detectors/registry";
 import { DetectorScheduler } from "../../app/features/scanner/core/detectors/scheduler";
 import { normalizeFrame, toMat } from "../../app/features/scanner/core/image";
 import { readImage } from "../../app/features/scanner/node/image-io";
@@ -33,10 +29,7 @@ const fps = Number(fpsArg);
 
 await loadOpenCV();
 const detectors = createAllDetectors(await loadScoreboardResources());
-const scheduler = new DetectorScheduler(detectors, {
-	matchOpeningTypes: [MAP_START_EVENT_TYPE],
-	matchClosingTypes: SCOREBOARD_EVENT_TYPES,
-});
+const scheduler = new DetectorScheduler(detectors);
 scheduler.reset(startT);
 
 const files = readdirSync(framesDir)

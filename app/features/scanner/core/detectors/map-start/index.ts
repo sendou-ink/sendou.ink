@@ -25,7 +25,7 @@ import {
 import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import { closestBy } from "../../text";
 import type { ScoreboardResources } from "../scoreboard/index";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	BLOCK_MASK_RADIUS,
 	GATE_DARK_MAX_MEAN,
@@ -59,6 +59,16 @@ export interface MapStartData {
 }
 
 export const MAP_START_EVENT_TYPE = "MapStart";
+
+export const MAP_START_EVENT: EventKind<
+	typeof MAP_START_EVENT_TYPE,
+	MapStartData
+> = {
+	type: MAP_START_EVENT_TYPE,
+	match: "opens",
+};
+
+type MapStartEvent = EventOf<typeof MAP_START_EVENT>;
 
 /** "MODE" must read back at least this well for parse to emit. */
 const LABEL_MIN_SCORE = 0.5;
@@ -169,7 +179,7 @@ function bandExtent(
 
 export function createMapStartDetector(
 	resources: ScoreboardResources,
-): Detector<MapStartData> {
+): Detector<MapStartEvent> {
 	const cv = getCV();
 
 	const scaled = (
@@ -364,7 +374,7 @@ export function createMapStartDetector(
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<MapStartData>[]> {
+	): MatchSteps<MapStartEvent[]> {
 		const gray = frameGray(frame);
 
 		// 1. confirm the constant label — a gate hit without it is a lookalike

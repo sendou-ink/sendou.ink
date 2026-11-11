@@ -20,7 +20,7 @@ import {
 } from "~/features/broadcast/broadcast-urls";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { gameSummary } from "../core/broadcast-summary";
-import type { DetectedEvent } from "../core/detectors/types";
+import type { DetectedEvent } from "../core/events";
 import * as GameCues from "../core/GameCues";
 import {
 	broadcastLinkPersisted,

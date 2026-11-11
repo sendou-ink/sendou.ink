@@ -16,7 +16,7 @@ import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import { copyRoi, frameGray, frameRgb, roiSignature } from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
 import type { ScoreboardResources } from "../scoreboard/index";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	CARD_DARK_MAX_MEAN,
 	CARD_ICON_ROI,
@@ -48,6 +48,17 @@ import {
 } from "./shared";
 
 export const X_SET_RESULT_EVENT_TYPE = "XSetResult";
+
+export const X_SET_RESULT_EVENT: EventKind<
+	typeof X_SET_RESULT_EVENT_TYPE,
+	XSetResultData
+> = {
+	type: X_SET_RESULT_EVENT_TYPE,
+	progress: xSetResultProgress,
+	carryOver: xSetResultCarryOver,
+};
+
+type XSetResultEvent = EventOf<typeof X_SET_RESULT_EVENT>;
 
 type XSetGameResult = "WIN" | "LOSE";
 
@@ -81,22 +92,20 @@ const MIN_POWER = 1500;
  * all, then the power counted further toward its new value. A power further away than the whole change
  * can't lie on the same count, so it's a misread and orders nothing.
  */
-export function xSetResultProgress(a: unknown, b: unknown): number {
-	const da = a as XSetResultData;
-	const db = b as XSetResultData;
-	if (da.results.length !== db.results.length) {
-		return db.results.length - da.results.length;
+function xSetResultProgress(a: XSetResultData, b: XSetResultData): number {
+	if (a.results.length !== b.results.length) {
+		return b.results.length - a.results.length;
 	}
 	const shown = (d: XSetResultData) => (d.powerChange === null ? 0 : 1);
-	if (shown(da) !== shown(db)) return shown(db) - shown(da);
+	if (shown(a) !== shown(b)) return shown(b) - shown(a);
 	const read = (d: XSetResultData) => (d.power === null ? 0 : 1);
-	if (read(da) !== read(db)) return read(db) - read(da);
-	if (da.power === null || db.power === null || db.powerChange === null) {
+	if (read(a) !== read(b)) return read(b) - read(a);
+	if (a.power === null || b.power === null || b.powerChange === null) {
 		return 0;
 	}
-	const delta = db.power - da.power;
-	if (Math.abs(delta) > Math.abs(db.powerChange) + POWER_EPSILON) return 0;
-	return Math.sign(delta * Math.sign(db.powerChange));
+	const delta = b.power - a.power;
+	if (Math.abs(delta) > Math.abs(b.powerChange) + POWER_EPSILON) return 0;
+	return Math.sign(delta * Math.sign(b.powerChange));
 }
 
 /**
@@ -106,9 +115,10 @@ export function xSetResultProgress(a: unknown, b: unknown): number {
  * settles to that sum. A read power off the count between the two is left
  * as read.
  */
-export function xSetResultCarryOver(kept: unknown, further: unknown): unknown {
-	const before = kept as XSetResultData;
-	const after = further as XSetResultData;
+function xSetResultCarryOver(
+	before: XSetResultData,
+	after: XSetResultData,
+): XSetResultData {
 	if (
 		before.powerChange !== null ||
 		before.power === null ||
@@ -127,7 +137,7 @@ export function xSetResultCarryOver(kept: unknown, further: unknown): unknown {
 
 export function createXSetResultDetector(
 	resources: ScoreboardResources,
-): Detector<XSetResultData> {
+): Detector<XSetResultEvent> {
 	const sets = new Map<number, GlyphSet | null>();
 	const digitGlyphs = (height: number) => {
 		if (!sets.has(height)) {
@@ -191,7 +201,7 @@ export function createXSetResultDetector(
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<XSetResultData>[]> {
+	): MatchSteps<XSetResultEvent[]> {
 		const headerSet = digitGlyphs(RESULT_HEADER_HEIGHT);
 		const powerSet = digitGlyphs(RESULT_POWER_HEIGHT);
 		const changeSet = digitGlyphs(RESULT_CHANGE_HEIGHT);

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { DetectedEvent } from "../core/detectors/types";
+import type { DetectedEvent } from "../core/events";
 import { sessionSummary } from "../core/sessions";
 import { deleteEvents, listEvents, loadEventFrame, saveEvent } from "./events";
 import { trimFrames } from "./frames";

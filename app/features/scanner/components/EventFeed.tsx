@@ -1,29 +1,14 @@
 /** The latest reads of a running capture as one-line rows, newest first. */
 import * as R from "remeda";
-import {
-	DEATH_EVENT_TYPE,
-	type DeathData,
-} from "../core/detectors/death/index";
+import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import { KILL_EVENT_TYPE } from "../core/detectors/kill/index";
-import {
-	MAP_START_EVENT_TYPE,
-	type MapStartData,
-} from "../core/detectors/map-start/index";
+import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_OWN_EVENT_TYPE } from "../core/detectors/scoreboard-own/index";
-import {
-	X_RANK_POSITION_EVENT_TYPE,
-	type XRankPositionData,
-} from "../core/detectors/x-rank/position";
-import {
-	X_SET_COUNT_EVENT_TYPE,
-	type XSetCountData,
-} from "../core/detectors/x-rank/set-count";
-import {
-	X_SET_RESULT_EVENT_TYPE,
-	type XSetResultData,
-} from "../core/detectors/x-rank/set-result";
+import { X_RANK_POSITION_EVENT_TYPE } from "../core/detectors/x-rank/position";
+import { X_SET_COUNT_EVENT_TYPE } from "../core/detectors/x-rank/set-count";
+import { X_SET_RESULT_EVENT_TYPE } from "../core/detectors/x-rank/set-result";
 import { formatPosition } from "../core/format";
 import {
 	modeLabel,
@@ -111,14 +96,14 @@ function withUniqueKeys(items: FeedItem[]) {
 function eventLabel(event: ScanEvent): string | null {
 	switch (event.type) {
 		case MAP_START_EVENT_TYPE: {
-			const data = event.data as MapStartData;
+			const { data } = event;
 			const what = [modeLabel(data.mode), stageLabel(data.stage)]
 				.filter(Boolean)
 				.join(" on ");
 			return what ? `Game started: ${what}` : "Game started";
 		}
 		case DEATH_EVENT_TYPE: {
-			const name = (event.data as DeathData).name;
+			const { name } = event.data;
 			return name ? `Splatted by ${name}` : "Splatted";
 		}
 		case SCOREBOARD_EVENT_TYPE:
@@ -128,11 +113,11 @@ function eventLabel(event: ScanEvent): string | null {
 		case SCOREBOARD_BATTLE_LOG_EVENT_TYPE:
 			return "Battle history read";
 		case X_SET_COUNT_EVENT_TYPE:
-			return `X Battle set ${xSetCountLabel(event.data as XSetCountData)}`;
+			return `X Battle set ${xSetCountLabel(event.data)}`;
 		case X_SET_RESULT_EVENT_TYPE:
-			return `X Battle set over: ${xSetResultLabel(event.data as XSetResultData)}`;
+			return `X Battle set over: ${xSetResultLabel(event.data)}`;
 		case X_RANK_POSITION_EVENT_TYPE:
-			return `X Rank position ${xRankPositionLabel(event.data as XRankPositionData)}`;
+			return `X Rank position ${xRankPositionLabel(event.data)}`;
 		default:
 			return null;
 	}

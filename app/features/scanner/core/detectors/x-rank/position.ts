@@ -15,7 +15,7 @@ import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import { copyRoi, frameGray, frameRgb, roiSignature } from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
 import type { ScoreboardResources } from "../scoreboard/index";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	CARD_DARK_MAX_MEAN,
 	NUMBER_BIN_THRESHOLD,
@@ -37,6 +37,16 @@ import {
 } from "./shared";
 
 export const X_RANK_POSITION_EVENT_TYPE = "XRankPosition";
+
+export const X_RANK_POSITION_EVENT: EventKind<
+	typeof X_RANK_POSITION_EVENT_TYPE,
+	XRankPositionData
+> = {
+	type: X_RANK_POSITION_EVENT_TYPE,
+	progress: xRankPositionProgress,
+};
+
+type XRankPositionEvent = EventOf<typeof X_RANK_POSITION_EVENT>;
 
 type XRankPositionDirection = "UP" | "DOWN" | "SAME";
 
@@ -63,26 +73,25 @@ const ARROW_END_RATIO = 1.5;
  * Timeline animation order of two reads of one card: positive when `b`'s
  * number is further along the arrow's direction (a DOWN arrow counts up).
  */
-export function xRankPositionProgress(a: unknown, b: unknown): number {
-	const da = a as XRankPositionData;
-	const db = b as XRankPositionData;
-	const direction = db.direction ?? da.direction;
+function xRankPositionProgress(
+	a: XRankPositionData,
+	b: XRankPositionData,
+): number {
+	const direction = b.direction ?? a.direction;
 	if (
-		da.position === null ||
-		db.position === null ||
+		a.position === null ||
+		b.position === null ||
 		!direction ||
 		direction === "SAME"
 	) {
 		return 0;
 	}
-	return Math.sign(
-		(db.position - da.position) * (direction === "DOWN" ? 1 : -1),
-	);
+	return Math.sign((b.position - a.position) * (direction === "DOWN" ? 1 : -1));
 }
 
 export function createXRankPositionDetector(
 	resources: ScoreboardResources,
-): Detector<XRankPositionData> {
+): Detector<XRankPositionEvent> {
 	let digits: GlyphSet | null | undefined;
 	const digitGlyphs = () => {
 		digits ??= resources.teamDigits
@@ -130,7 +139,7 @@ export function createXRankPositionDetector(
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<XRankPositionData>[]> {
+	): MatchSteps<XRankPositionEvent[]> {
 		const set = digitGlyphs();
 		if (!set) return [];
 		const gray = frameGray(frame);

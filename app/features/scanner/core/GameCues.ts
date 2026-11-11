@@ -15,15 +15,13 @@
  */
 
 import { MAP_START_EVENT_TYPE } from "./detectors/map-start/index";
-import {
-	OBJECTIVE_EVENT_TYPE,
-	type ObjectiveData,
-} from "./detectors/objective/index";
+import { OBJECTIVE_EVENT_TYPE } from "./detectors/objective/index";
 import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
+	type PlayerStatusEvent,
 } from "./detectors/objective/player-status";
-import type { DetectedEvent } from "./detectors/types";
+import type { DetectedEvent } from "./events";
 import { hueDistance, type InkRgb } from "./ink-color";
 
 /** HUD reads with both teams' ink agreeing it takes for the ink to be known, the HUD fading in reads off at first. */
@@ -131,11 +129,10 @@ export function step(state: GameCuesState, input: GameCuesInput): Stepped {
 function readEvent(state: GameCuesState, event: DetectedEvent): Stepped {
 	if (event.type === MAP_START_EVENT_TYPE) return readIntro(state, event.t);
 	if (event.type === OBJECTIVE_EVENT_TYPE) {
-		const { data } = event as DetectedEvent<ObjectiveData>;
-		return { state: readTime(state, event.t, data.time), cues: [] };
+		return { state: readTime(state, event.t, event.data.time), cues: [] };
 	}
 	if (event.type === PLAYER_STATUS_EVENT_TYPE) {
-		return readHud(state, event as DetectedEvent<PlayerStatusData>);
+		return readHud(state, event);
 	}
 
 	return { state, cues: [] };
@@ -155,10 +152,7 @@ function readIntro(state: GameCuesState, t: number): Stepped {
 	};
 }
 
-function readHud(
-	state: GameCuesState,
-	event: DetectedEvent<PlayerStatusData>,
-): Stepped {
+function readHud(state: GameCuesState, event: PlayerStatusEvent): Stepped {
 	const { time, teamHue, teamInk } = event.data;
 	const read = readTime(state, event.t, time);
 	if (state.isInkSettled) return { state: read, cues: [] };

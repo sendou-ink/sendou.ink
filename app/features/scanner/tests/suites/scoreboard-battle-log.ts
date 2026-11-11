@@ -13,7 +13,7 @@ import type {
 	ScoreboardRowDebug,
 } from "../../core/detectors/scoreboard/index";
 import type { ScoreboardBattleLogData } from "../../core/detectors/scoreboard-battle-log/index";
-import type { Detector } from "../../core/detectors/types";
+import type { Detector, EventRecord } from "../../core/detectors/types";
 import {
 	fieldTestOptions,
 	loadFixtures,
@@ -29,7 +29,7 @@ export interface BattleLogSuite {
 	eventType: string;
 	createDetector(
 		resources: ScoreboardResources,
-	): Detector<ScoreboardBattleLogData>;
+	): Detector<EventRecord<string, ScoreboardBattleLogData>>;
 }
 
 export async function runScoreboardBattleLogSuite(suite: BattleLogSuite) {

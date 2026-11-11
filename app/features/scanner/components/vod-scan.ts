@@ -16,7 +16,7 @@ import {
 	mergeScanTelemetry,
 	type ScanTelemetry,
 } from "../core/detectors/telemetry";
-import type { DetectedEvent } from "../core/detectors/types";
+import { type DetectedEvent, detectionOf } from "../core/events";
 import { formatPosition } from "../core/format";
 import {
 	buildScannerMatches,
@@ -37,7 +37,6 @@ import {
 	defaultScanWorkerCount,
 } from "../worker/client";
 import { describeError } from "./errors";
-import type { FixtureData } from "./fixture-export";
 import type { ScanEvent } from "./session-data";
 import { readSettings } from "./settings";
 import { cutVodClips } from "./vod-clip-cutter";
@@ -268,7 +267,7 @@ export async function startVodScan(
 						if (result.minimapSnapshot) {
 							minimaps.push({ t: result.t, image: result.minimapSnapshot });
 						}
-						for (const event of result.events as DetectedEvent<FixtureData>[]) {
+						for (const event of result.events) {
 							const action = timeline.push(event);
 							if (action.action === "merged" || action.action === "dropped")
 								continue;
@@ -490,10 +489,7 @@ export async function startVodScan(
 				summary: sessionSummary(buildScannerMatches(events)),
 			},
 			events.map((event) => ({
-				type: event.type,
-				t: event.t,
-				confidence: event.confidence,
-				data: event.data,
+				...detectionOf(event),
 				frame: frames.get(event),
 			})),
 			minimaps,
@@ -517,11 +513,8 @@ function withoutInvalidObjectives(events: ScanEvent[]): ScanEvent[] {
 
 function toScanEvent(event: StoredVodEvent): ScanEvent {
 	return {
+		...detectionOf(event),
 		id: event.id,
-		type: event.type,
-		t: event.t,
-		confidence: event.confidence,
-		data: event.data,
 		hasFrame: event.hasFrame,
 	};
 }

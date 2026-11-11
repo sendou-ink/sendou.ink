@@ -13,14 +13,11 @@ import { createDeathDetector } from "../core/detectors/death/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
 import { createMinimapDetector } from "../core/detectors/minimap/index";
 import { createObjectiveDetector } from "../core/detectors/objective/index";
-import {
-	PLAYER_STATUS_EVENT_TYPE,
-	type PlayerStatusData,
-} from "../core/detectors/objective/player-status";
+import { PLAYER_STATUS_EVENT_TYPE } from "../core/detectors/objective/player-status";
 import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
-import type { DetectedEvent, Detector } from "../core/detectors/types";
+import type { Detector } from "../core/detectors/types";
 import {
 	fieldTestOptions,
 	loadFixtures,
@@ -56,9 +53,7 @@ for (const fixture of fixtures) {
 		});
 
 		if (!expectPositive) return;
-		const event = events.find((e) => e.type === PLAYER_STATUS_EVENT_TYPE) as
-			| DetectedEvent<PlayerStatusData>
-			| undefined;
+		const event = events.find((e) => e.type === PLAYER_STATUS_EVENT_TYPE);
 		assert.ok(
 			event,
 			gate.pass
@@ -128,19 +123,16 @@ for (const fixture of fixtures) {
 // The status strip only exists on the live-gameplay HUD, which replaces no
 // other detector's screen — their gates must stay quiet on these frames
 // (death excepted: its overlay rides live gameplay, see objective.test.ts).
-const otherDetectors: readonly [string, Detector<unknown>][] = [
-	["scoreboard", createScoreboardDetector(resources) as Detector<unknown>],
+const otherDetectors: readonly [string, Detector][] = [
+	["scoreboard", createScoreboardDetector(resources) as Detector],
 	[
 		"scoreboard-battle-log-replay",
-		createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
+		createScoreboardBattleLogReplayDetector(resources) as Detector,
 	],
-	[
-		"scoreboard-own",
-		createScoreboardOwnDetector(resources) as Detector<unknown>,
-	],
-	["death", createDeathDetector(resources) as Detector<unknown>],
-	["map-start", createMapStartDetector(resources) as Detector<unknown>],
-	["minimap", createMinimapDetector(resources) as Detector<unknown>],
+	["scoreboard-own", createScoreboardOwnDetector(resources) as Detector],
+	["death", createDeathDetector(resources) as Detector],
+	["map-start", createMapStartDetector(resources) as Detector],
+	["minimap", createMinimapDetector(resources) as Detector],
 ];
 for (const fixture of fixtures.filter(
 	(f) => f.expected.event === "PlayerStatus",

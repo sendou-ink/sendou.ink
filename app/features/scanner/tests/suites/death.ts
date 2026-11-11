@@ -8,13 +8,9 @@
 
 import assert from "node:assert/strict";
 import { loadOpenCV } from "../../core/cv";
-import {
-	createDeathDetector,
-	type DeathData,
-} from "../../core/detectors/death/index";
+import { createDeathDetector } from "../../core/detectors/death/index";
 import { createScoreboardDetector } from "../../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../../core/detectors/scoreboard-battle-log-replay/index";
-import type { Detector } from "../../core/detectors/types";
 import { type FrameData, normalizeFrame, toMat } from "../../core/image";
 import {
 	fieldTestOptions,
@@ -44,10 +40,7 @@ export async function runDeathSuite(
 
 	for (const fixture of mine(fixtures)) {
 		test(`death/${fixture.name}`, async (t) => {
-			const { gate, events } = await runDetectorOnFixture<DeathData>(
-				detector,
-				fixture,
-			);
+			const { gate, events } = await runDetectorOnFixture(detector, fixture);
 			const expectPositive = fixture.expected.event === "Death";
 
 			await t.test("gate", () => {
@@ -178,7 +171,7 @@ export async function runDeathSuite(
 }
 
 function parseKillerName(
-	detector: Detector<DeathData>,
+	detector: ReturnType<typeof createDeathDetector>,
 	image: FrameData,
 ): string | null | undefined {
 	const src = toMat(image);

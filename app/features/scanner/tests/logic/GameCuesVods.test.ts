@@ -15,7 +15,7 @@ import { describe, expect, test } from "vitest";
 import { MAP_START_EVENT_TYPE } from "../../core/detectors/map-start/index";
 import { OBJECTIVE_EVENT_TYPE } from "../../core/detectors/objective/index";
 import { PLAYER_STATUS_EVENT_TYPE } from "../../core/detectors/objective/player-status";
-import type { DetectedEvent } from "../../core/detectors/types";
+import type { DetectedEvent } from "../../core/events";
 import * as GameCues from "../../core/GameCues";
 
 const FIXTURES_DIR = new URL("../fixtures/game-cues", import.meta.url).pathname;

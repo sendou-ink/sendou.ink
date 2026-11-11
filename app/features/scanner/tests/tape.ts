@@ -12,8 +12,8 @@
  */
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import type { DetectedEvent } from "../core/detectors/types";
 import * as EventVersion from "../core/event-version";
+import type { DetectedEvent } from "../core/events";
 
 const TAPE_VERSION = 1;
 const TAPE_EXTENSION = ".tape.jsonl";
@@ -21,10 +21,10 @@ const TAPE_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const FRACTION_DIGITS = 4;
 const TAPES_DIR = join(import.meta.dirname, "tapes");
 
-export interface TapeEvent extends DetectedEvent {
+export type TapeEvent = DetectedEvent & {
 	/** wall-clock ms of detection; live captures only */
 	detectedAt?: number;
-}
+};
 
 export interface Tape {
 	/** file name without the extension */

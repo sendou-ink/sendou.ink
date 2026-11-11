@@ -18,8 +18,6 @@ const OPTS = {
 	minImprovement: 0.001,
 	quietAfterS: 10,
 	matchOpenMaxS: 60,
-	matchOpeningTypes: ["MapStart"],
-	matchClosingTypes: ["Scoreboard"],
 };
 
 function make(detector: Partial<SchedulingInfo>, options = {}) {

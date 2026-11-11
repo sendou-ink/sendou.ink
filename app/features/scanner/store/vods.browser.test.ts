@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as EventVersion from "../core/event-version";
 import { sessionSummary } from "../core/sessions";
+import { stubEvent } from "../tests/stub-event";
 import { tx, VOD_EVENTS_STORE } from "./db";
 import {
 	deleteVod,
@@ -34,7 +35,12 @@ async function minimapTimes(name: string): Promise<number[]> {
 	return (await loadVodMinimaps(name)).map((minimap) => minimap.t);
 }
 
-const DEATH = { type: "Death", t: 1, confidence: 1, data: { name: "a" } };
+const DEATH = stubEvent({
+	type: "Death",
+	t: 1,
+	confidence: 1,
+	data: { name: "a" },
+});
 
 /** A record as some other version of the code left it in the store. */
 function putRawEvent(record: StoredVodEvent): Promise<number> {

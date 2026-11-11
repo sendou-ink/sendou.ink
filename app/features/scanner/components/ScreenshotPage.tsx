@@ -14,20 +14,22 @@ import { downloadCsv } from "~/utils/download";
 import { mainWeaponImageUrl } from "~/utils/urls";
 import { CANONICAL_HEIGHT, CANONICAL_WIDTH, type Roi } from "../core/canonical";
 import { eventsToCsv } from "../core/csv/events";
-import type { DeathData } from "../core/detectors/death/index";
+import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import * as death from "../core/detectors/death/rois";
-import type { KillData } from "../core/detectors/kill/index";
+import { KILL_EVENT_TYPE } from "../core/detectors/kill/index";
 import * as kill from "../core/detectors/kill/rois";
-import type { MapStartData } from "../core/detectors/map-start/index";
+import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import * as mapStart from "../core/detectors/map-start/rois";
-import type { MinimapData } from "../core/detectors/minimap/index";
+import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
 import * as minimap from "../core/detectors/minimap/rois";
-import type { ObjectiveData } from "../core/detectors/objective/index";
+import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
 import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
 } from "../core/detectors/objective/player-status";
 import * as objective from "../core/detectors/objective/rois";
+import { STRIP_WEAPONS_EVENT_TYPE } from "../core/detectors/objective/strip-weapons";
+import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/quick-scoreboard-battle-log/index";
 import {
 	RECTIFY as QUICK_RECTIFY,
 	ROIS as quick,
@@ -35,15 +37,17 @@ import {
 import type { ScoreboardRowDebug } from "../core/detectors/scoreboard/index";
 import * as sb from "../core/detectors/scoreboard/rois";
 import type { BattleLogRois } from "../core/detectors/scoreboard-battle-log/detector";
+import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
 import { ROIS as bl } from "../core/detectors/scoreboard-battle-log/rois";
+import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log-replay/index";
 import * as replay from "../core/detectors/scoreboard-battle-log-replay/rois";
-import type { ScoreboardOwnData } from "../core/detectors/scoreboard-own/index";
+import { SCOREBOARD_OWN_EVENT_TYPE } from "../core/detectors/scoreboard-own/index";
 import * as own from "../core/detectors/scoreboard-own/rois";
-import type { DetectedEvent } from "../core/detectors/types";
-import type { XRankPositionData } from "../core/detectors/x-rank/position";
+import { X_RANK_POSITION_EVENT_TYPE } from "../core/detectors/x-rank/position";
 import * as xRank from "../core/detectors/x-rank/rois";
-import type { XSetCountData } from "../core/detectors/x-rank/set-count";
-import type { XSetResultData } from "../core/detectors/x-rank/set-result";
+import { X_SET_COUNT_EVENT_TYPE } from "../core/detectors/x-rank/set-count";
+import { X_SET_RESULT_EVENT_TYPE } from "../core/detectors/x-rank/set-result";
+import { isScoreboardEvent } from "../core/events";
 import {
 	lobbyLabel,
 	mainWeaponLabel,
@@ -64,7 +68,7 @@ import { scannerSearchParams } from "../scanner-search-params";
 import { claimInspectFrame } from "../store/inspect";
 import { AnalyzerClient } from "../worker/client";
 import type { WorkerResponse } from "../worker/protocol";
-import { type CardData, downloadExpectedJson } from "./fixture-export";
+import { downloadExpectedJson } from "./fixture-export";
 import { drawNormalizedCanvas } from "./normalized-canvas";
 import styles from "./ScreenshotPage.module.css";
 import { SessionHeader } from "./SessionHeader";
@@ -232,48 +236,51 @@ function gateSummary(result: Result): string | null {
 	const event = result.events[0];
 	if (!event) return null;
 	const confidence = `${((event.confidence ?? 0) * 100).toFixed(1)}% conf`;
-	switch (result.detector) {
-		case "death": {
-			const data = event.data as DeathData;
+	switch (event.type) {
+		case DEATH_EVENT_TYPE: {
+			const { data } = event;
 			return `${confidence} · splatted by ${weaponLabel(data.weaponType, data.weaponId) ?? "?"} (${data.name ?? "?"})`;
 		}
-		case "map-start": {
-			const data = event.data as MapStartData;
+		case MAP_START_EVENT_TYPE: {
+			const { data } = event;
 			return `${confidence} · ${modeLabel(data.mode) ?? "?"} · ${stageLabel(data.stage) ?? "?"}`;
 		}
-		case "scoreboard-own": {
-			const data = event.data as ScoreboardOwnData;
+		case SCOREBOARD_OWN_EVENT_TYPE: {
+			const { data } = event;
 			return `${confidence} · ${[lobbyLabel(data.lobby), modeLabel(data.mode), stageLabel(data.stage)].map((v) => v ?? "?").join(" · ")} · ${mainWeaponLabel(data.weaponId) ?? "?"}`;
 		}
-		case "minimap": {
-			const data = event.data as MinimapData;
+		case MINIMAP_EVENT_TYPE: {
+			const { data } = event;
 			const players = data.teammates
 				.map((p) => `${p.name ?? "?"}${playerFlags(p)}`)
 				.join(", ");
 			return `${confidence} · ${data.stage ?? "?"} · ${players}`;
 		}
-		case "objective": {
-			const data = event.data as unknown as ObjectiveData;
+		case OBJECTIVE_EVENT_TYPE: {
+			const { data } = event;
 			return `${confidence} · ${formatTimer(data.time)} · score ${data.score[0] ?? "?"}–${data.score[1] ?? "?"}`;
 		}
-		case "x-set-count": {
-			const data = event.data as unknown as XSetCountData;
+		case X_SET_COUNT_EVENT_TYPE: {
+			const { data } = event;
 			return `${confidence} · ${modeLabel(data.mode) ?? "?"} · set ${xSetCountLabel(data)}`;
 		}
-		case "x-set-result": {
-			const data = event.data as unknown as XSetResultData;
+		case X_SET_RESULT_EVENT_TYPE: {
+			const { data } = event;
 			return `${confidence} · ${modeLabel(data.mode) ?? "?"} · ${xSetResultLabel(data)}`;
 		}
-		case "x-rank-position": {
-			const data = event.data as unknown as XRankPositionData;
+		case X_RANK_POSITION_EVENT_TYPE: {
+			const { data } = event;
 			return `${confidence} · ${modeLabel(data.mode) ?? "?"} · ${xRankPositionLabel(data)}`;
 		}
-		case "kill": {
-			const data = event.data as unknown as KillData;
+		case KILL_EVENT_TYPE: {
+			const { data } = event;
 			return `${confidence} · ${formatTimer(data.time)} · splatted ${data.names.map((name) => name ?? "?").join(", ")}`;
 		}
+		case PLAYER_STATUS_EVENT_TYPE:
+		case STRIP_WEAPONS_EVENT_TYPE:
+			return confidence;
 		default: {
-			const data = event.data as CardData;
+			const { data } = event;
 			return `${confidence} · scores ${JSON.stringify(data.matchScores)} · ${[lobbyLabel(data.lobby), modeLabel(data.mode), stageLabel(data.stage)].map((v) => v ?? "?").join(" · ")}`;
 		}
 	}
@@ -597,19 +604,12 @@ export function ScreenshotPage() {
 		);
 	}, [inspectKey, setInspectKey, analyze]);
 
-	const event = active?.events[0] as DetectedEvent<CardData> | undefined;
+	const event = active?.events[0];
 	const rows = (event?.debug?.rows ?? []) as ScoreboardRowDebug[];
 	const isReplay = activeDetector === "scoreboard-battle-log-replay";
 	const isScoreboardBattleLog = activeDetector === "scoreboard-battle-log";
 	const isQuickScoreboardBattleLog =
 		activeDetector === "quick-scoreboard-battle-log";
-	const isDeath = activeDetector === "death";
-	const isMapStart = activeDetector === "map-start";
-	const isOwn = activeDetector === "scoreboard-own";
-	const isMinimap = activeDetector === "minimap";
-	const isObjective = activeDetector === "objective";
-	const isKill = activeDetector === "kill";
-	const isXRank = activeDetector.startsWith("x-");
 	const winnerSide = String(event?.debug?.winnerSide ?? "left");
 	const rowRois = isReplay
 		? replayRows(winnerSide)
@@ -645,9 +645,7 @@ export function ScreenshotPage() {
 					<SendouButton
 						variant="outlined"
 						size="small"
-						onClick={() =>
-							downloadExpectedJson(event?.data ?? null, event?.type)
-						}
+						onClick={() => downloadExpectedJson(event ?? null)}
 					>
 						Download expected.json
 					</SendouButton>
@@ -689,7 +687,7 @@ export function ScreenshotPage() {
 				</div>
 			) : null}
 
-			{frame && event && isReplay ? (
+			{frame && event?.type === SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE ? (
 				<div className={styles.detail}>
 					<div className={styles.detailStats}>
 						<Stat label="timestamp">{event.data.timestamp ?? "?"}</Stat>
@@ -717,8 +715,8 @@ export function ScreenshotPage() {
 			) : null}
 
 			{frame &&
-			event &&
-			(isScoreboardBattleLog || isQuickScoreboardBattleLog) ? (
+			(event?.type === SCOREBOARD_BATTLE_LOG_EVENT_TYPE ||
+				event?.type === QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE) ? (
 				<div className={styles.detail}>
 					<div className={styles.detailStats}>
 						<Stat label="timestamp">{event.data.timestamp ?? "?"}</Stat>
@@ -750,10 +748,10 @@ export function ScreenshotPage() {
 				</div>
 			) : null}
 
-			{frame && event && isDeath ? (
+			{frame && event?.type === DEATH_EVENT_TYPE ? (
 				<div className={styles.detail}>
 					{(() => {
-						const data = event.data as unknown as DeathData;
+						const { data } = event;
 						return (
 							<>
 								<div className={styles.detailStats}>
@@ -785,10 +783,10 @@ export function ScreenshotPage() {
 				</div>
 			) : null}
 
-			{frame && event && isMapStart ? (
+			{frame && event?.type === MAP_START_EVENT_TYPE ? (
 				<div className={styles.detail}>
 					{(() => {
-						const data = event.data as unknown as MapStartData;
+						const { data } = event;
 						return (
 							<>
 								<div className={styles.detailStats}>
@@ -818,10 +816,10 @@ export function ScreenshotPage() {
 				</div>
 			) : null}
 
-			{frame && event && isOwn ? (
+			{frame && event?.type === SCOREBOARD_OWN_EVENT_TYPE ? (
 				<div className={styles.detail}>
 					{(() => {
-						const data = event.data as unknown as ScoreboardOwnData;
+						const { data } = event;
 						return (
 							<>
 								<div className={styles.detailStats}>
@@ -858,10 +856,10 @@ export function ScreenshotPage() {
 				</div>
 			) : null}
 
-			{frame && event && isMinimap ? (
+			{frame && event?.type === MINIMAP_EVENT_TYPE ? (
 				<div className={styles.detail}>
 					{(() => {
-						const data = event.data as unknown as MinimapData;
+						const { data } = event;
 						return (
 							<>
 								<div className={styles.detailStats}>
@@ -906,13 +904,13 @@ export function ScreenshotPage() {
 				</div>
 			) : null}
 
-			{frame && event && isObjective ? (
+			{frame && event?.type === OBJECTIVE_EVENT_TYPE ? (
 				<div className={styles.detail}>
 					{(() => {
-						const data = event.data as unknown as ObjectiveData;
+						const { data } = event;
 						const status = active?.events.find(
 							(e) => e.type === PLAYER_STATUS_EVENT_TYPE,
-						) as DetectedEvent<PlayerStatusData> | undefined;
+						);
 						return (
 							<>
 								<div className={styles.detailStats}>
@@ -987,10 +985,10 @@ export function ScreenshotPage() {
 				</div>
 			) : null}
 
-			{frame && event && isKill ? (
+			{frame && event?.type === KILL_EVENT_TYPE ? (
 				<div className={styles.detail}>
 					{(() => {
-						const data = event.data as unknown as KillData;
+						const { data } = event;
 						const killRows = (event.debug?.rows ?? []) as { raw?: string }[];
 						return (
 							<>
@@ -1029,15 +1027,7 @@ export function ScreenshotPage() {
 				</div>
 			) : null}
 
-			{frame &&
-			event &&
-			!isDeath &&
-			!isMapStart &&
-			!isOwn &&
-			!isMinimap &&
-			!isObjective &&
-			!isKill &&
-			!isXRank ? (
+			{frame && event && isScoreboardEvent(event) ? (
 				<table className={styles.inspector}>
 					<thead>
 						<tr>

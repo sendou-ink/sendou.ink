@@ -43,7 +43,7 @@ import {
 	tiedWeaponsWithDistinctSubs,
 } from "../scoreboard/specials";
 import { matchWeaponSteps, type WeaponMatch } from "../scoreboard/weapons";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	badgeRoi,
 	CARD_LAYOUTS,
@@ -139,6 +139,20 @@ export interface MinimapData {
 
 export const MINIMAP_EVENT_TYPE = "Minimap";
 
+/**
+ * Players flick the map open for 1-3s and each open is a fresh sample, so
+ * frames merge only within one open (a mid-open dead/special flip stays its
+ * own event via the content guard).
+ */
+export const MINIMAP_EVENT: EventKind<typeof MINIMAP_EVENT_TYPE, MinimapData> =
+	{
+		type: MINIMAP_EVENT_TYPE,
+		mergeWindowS: 5,
+		sameData: sameMinimapStatusData,
+	};
+
+type MinimapEvent = EventOf<typeof MINIMAP_EVENT>;
+
 export const MINIMAP_DETECTOR_ID = "minimap";
 
 /**
@@ -146,9 +160,7 @@ export const MINIMAP_DETECTOR_ID = "minimap";
  * card/row keeps its dead/special state, so each flip stays its own event.
  * Names/weapons/badges are not compared (OCR wobble is still the same state).
  */
-export function sameMinimapStatusData(a: unknown, b: unknown): boolean {
-	const da = a as MinimapData;
-	const db = b as MinimapData;
+function sameMinimapStatusData(a: MinimapData, b: MinimapData): boolean {
 	const sameSide = (
 		xs: readonly { dead: boolean; specialReady: boolean }[],
 		ys: readonly { dead: boolean; specialReady: boolean }[],
@@ -158,9 +170,7 @@ export function sameMinimapStatusData(a: unknown, b: unknown): boolean {
 			(x, i) =>
 				x.dead === ys[i]!.dead && x.specialReady === ys[i]!.specialReady,
 		);
-	return (
-		sameSide(da.teammates, db.teammates) && sameSide(da.enemies, db.enemies)
-	);
+	return sameSide(a.teammates, b.teammates) && sameSide(a.enemies, b.enemies);
 }
 
 /** Badge match below this is reported as null (kept in debug). */
@@ -286,7 +296,7 @@ function saturatedFraction(hsv: Mat, roi: Roi): number {
 
 export function createMinimapDetector(
 	resources: ScoreboardResources,
-): Detector<MinimapData> {
+): Detector<MinimapEvent> {
 	const nameGlyphs: GlyphSet | null = resources.nameGlyphs
 		? scaleGlyphSet(
 				resources.nameGlyphs,
@@ -594,7 +604,7 @@ export function createMinimapDetector(
 		gray: Mat,
 		t: number,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<MinimapData>[]> {
+	): MatchSteps<MinimapEvent[]> {
 		const rgb = frameRgb(frame);
 		const hsv = frameHsv(frame);
 		const lap = laplacianAbs(gray);
@@ -776,7 +786,7 @@ export function createMinimapDetector(
 		t: number,
 		gateResult: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<MinimapData>[]> {
+	): MatchSteps<MinimapEvent[]> {
 		const gray = frameGray(frame);
 
 		const isSpectator = gateResult?.variant

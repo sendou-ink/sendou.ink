@@ -35,7 +35,7 @@ import { closestEntry, matchKey, rankBy, rankByRead } from "../../text";
 import type { ScoreboardResources } from "../scoreboard/index";
 import { type ParsedName, parseNameSteps } from "../scoreboard/names";
 import { matchWeaponSteps, type WeaponMatch } from "../scoreboard/weapons";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	DEATH_MESSAGE_TEMPLATES,
 	type DeathMessageTemplate,
@@ -88,6 +88,14 @@ export interface DeathData {
 }
 
 export const DEATH_EVENT_TYPE = "Death";
+
+/** The overlay shows ~5s and respawn takes ~8.5s, so repeat frames of one death land inside the window while consecutive deaths fall outside. */
+export const DEATH_EVENT: EventKind<typeof DEATH_EVENT_TYPE, DeathData> = {
+	type: DEATH_EVENT_TYPE,
+	mergeWindowS: 8,
+};
+
+type DeathEvent = EventOf<typeof DEATH_EVENT>;
 
 /** The constant message line must read back at least this well to emit. */
 const LINE1_MIN_SCORE = 0.5;
@@ -202,7 +210,7 @@ function candidatesFor(template: DeathMessageTemplate): WeaponCandidate[] {
 
 export function createDeathDetector(
 	resources: ScoreboardResources,
-): Detector<DeathData> {
+): Detector<DeathEvent> {
 	const cv = getCV();
 
 	const scaled = (
@@ -771,7 +779,7 @@ export function createDeathDetector(
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<DeathData>[]> {
+	): MatchSteps<DeathEvent[]> {
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
 

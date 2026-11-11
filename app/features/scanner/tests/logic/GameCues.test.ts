@@ -9,7 +9,7 @@ import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
 } from "../../core/detectors/objective/player-status";
-import type { DetectedEvent } from "../../core/detectors/types";
+import type { DetectedEvent } from "../../core/events";
 import * as GameCues from "../../core/GameCues";
 
 const LIME = { hue: 76, ink: { r: 163, g: 198, b: 67 } };

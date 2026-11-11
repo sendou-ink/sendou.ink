@@ -4,7 +4,7 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { sendouUpload } from "../components/sendou-upload";
 import type { MinimapData } from "../core/detectors/minimap/index";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
-import type { DetectedEvent } from "../core/detectors/types";
+import type { DetectedEvent } from "../core/events";
 import { test } from "./node-test-compat";
 
 const ALPHA: MainWeaponId[] = [40, 1001, 2010, 3030];

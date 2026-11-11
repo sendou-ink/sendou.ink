@@ -20,8 +20,9 @@ import {
 	meanBrightness,
 } from "../../image";
 import { all, done, type MatchSteps, runSync } from "../../match-steps";
+import { sameScoreboardMatch } from "../../timeline/same-scoreboard";
 import type { StripWeaponTemplate } from "../objective/strip-weapons";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	FULL_COUNT_TEAM_SCORE,
 	parseBannerScoreSteps,
@@ -180,9 +181,20 @@ export interface ScoreboardResources {
 
 export const SCOREBOARD_EVENT_TYPE = "Scoreboard";
 
+export const SCOREBOARD_EVENT: EventKind<
+	typeof SCOREBOARD_EVENT_TYPE,
+	ScoreboardData
+> = {
+	type: SCOREBOARD_EVENT_TYPE,
+	sameData: sameScoreboardMatch,
+	match: "closes",
+};
+
+type ScoreboardEvent = EventOf<typeof SCOREBOARD_EVENT>;
+
 export function createScoreboardDetector(
 	resources: ScoreboardResources,
-): Detector<ScoreboardData> {
+): Detector<ScoreboardEvent> {
 	const teamDigits =
 		resources.teamDigits ??
 		(resources.paintDigits
@@ -246,7 +258,7 @@ export function createScoreboardDetector(
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<ScoreboardData>[]> {
+	): MatchSteps<ScoreboardEvent[]> {
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
 

@@ -32,25 +32,25 @@ const resources = await loadScoreboardResources();
 const CARDS: {
 	dir: string;
 	event: Fixture["expected"]["event"];
-	detector: Detector<unknown>;
+	detector: Detector;
 	fields: string[];
 }[] = [
 	{
 		dir: "x-set-count",
 		event: "XSetCount",
-		detector: createXSetCountDetector(resources) as Detector<unknown>,
+		detector: createXSetCountDetector(resources) as Detector,
 		fields: ["mode", "wins", "losses"],
 	},
 	{
 		dir: "x-set-result",
 		event: "XSetResult",
-		detector: createXSetResultDetector(resources) as Detector<unknown>,
+		detector: createXSetResultDetector(resources) as Detector,
 		fields: ["mode", "results", "powerChange", "power"],
 	},
 	{
 		dir: "x-rank-position",
 		event: "XRankPosition",
-		detector: createXRankPositionDetector(resources) as Detector<unknown>,
+		detector: createXRankPositionDetector(resources) as Detector,
 		fields: ["mode", "position", "direction"],
 	},
 ];
