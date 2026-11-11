@@ -1,4 +1,3 @@
-import { sub } from "date-fns";
 import { redirect } from "react-router";
 import * as R from "remeda";
 import type { DBBoolean } from "~/db/tables";
@@ -15,8 +14,6 @@ import type * as SkillDifference from "~/features/sendouq-match/core/SkillDiffer
 import type * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
-import { databaseTimestampToDate } from "~/utils/dates";
-import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import type { SerializeFrom } from "~/utils/remix";
 import {
 	SENDOUQ_LOOKING_PAGE,
@@ -27,7 +24,7 @@ import {
 } from "~/utils/urls";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import type { TierRange } from "../q-types";
-import { isInLookingPool } from "./groups";
+import { groupExpiryStatus, isInLookingPool } from "./groups";
 import { getTierIndex, tierDifferenceToRangeOrExact } from "./groups.server";
 import * as ReadyCheck from "./ready-check.server";
 
@@ -52,9 +49,6 @@ export type SQOwnGroup = SerializeFrom<
 >;
 export type SQMatch = SerializeFrom<ReturnType<SendouQClass["mapMatch"]>>;
 export type SQGroupMember = NonNullable<SQGroup["members"]>[number];
-
-const SECONDS_TILL_STALE =
-	process.env.NODE_ENV === "development" || IS_E2E_TEST_RUN ? 1_000_000 : 1_800;
 
 class SendouQClass {
 	groups;
@@ -539,9 +533,7 @@ class SendouQClass {
 			return false;
 		}
 
-		const staleThreshold = sub(new Date(), { seconds: SECONDS_TILL_STALE });
-		const groupLastAction = databaseTimestampToDate(group.latestActionAt);
-		return groupLastAction >= staleThreshold;
+		return groupExpiryStatus(group.latestActionAt) !== "EXPIRED";
 	}
 }
 
