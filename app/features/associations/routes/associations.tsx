@@ -316,6 +316,9 @@ function AssociationMember({
 								variant="minimal-destructive"
 								size="small"
 								type="submit"
+								aria-label={t("scrims:associations.removeMember.label", {
+									username: member.username,
+								})}
 							/>
 						</FormWithConfirm>
 					) : null}

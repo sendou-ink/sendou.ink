@@ -25,8 +25,8 @@ import {
 import {
 	baseVisibilityWithLinkOnlyField,
 	notFoundVisibilityField,
-	visibilityIssues,
 } from "../associations/associations-schemas";
+import * as Visibility from "../associations/core/Visibility";
 import {
 	LOBBY_BEST_OFS,
 	LOBBY_DESCRIPTION_MAX_LENGTH,
@@ -58,7 +58,7 @@ const weaponRandomizerField = radioGroup({
 	})),
 });
 
-/** Messages of `visibilityIssues` for a lobby */
+/** Messages of `Visibility.formIssues` for a lobby */
 export const LOBBY_VISIBILITY_ISSUE_MESSAGES = {
 	afterStart: "forms:errors.dateAfterLobbyStart",
 	startingNow: "forms:errors.canNotSetIfStartingNow",
@@ -161,7 +161,7 @@ export const newLobbySchema = v.pipe(
 	}),
 	superRefine((lobby, ctx) => {
 		mapsIssues(lobby, ctx);
-		for (const issue of visibilityIssues(lobby, {
+		for (const issue of Visibility.formIssues(lobby, {
 			startsAt: lobby.startsAt,
 			messages: LOBBY_VISIBILITY_ISSUE_MESSAGES,
 		})) {
@@ -170,7 +170,7 @@ export const newLobbySchema = v.pipe(
 	}),
 );
 
-/** The settings of {@link newLobbySchema} the host can change later, its visibility checked against the lobby's start by the action, see `visibilityIssues`. */
+/** The settings of {@link newLobbySchema} the host can change later, its visibility checked against the lobby's start by the action, see `Visibility.formIssues`. */
 export const editLobbySchema = v.pipe(
 	v.object({
 		_action: stringConstant("EDIT"),
