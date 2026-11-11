@@ -1,10 +1,12 @@
 import { addDays, subDays } from "date-fns";
 import type * as v from "valibot";
 import { describe, expect, test } from "vitest";
+import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import * as ScrimMapListRepository from "~/features/scrims/ScrimMapListRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { wrappedAction } from "~/utils/Test";
 import { action } from "./calendar.$id";
@@ -64,6 +66,39 @@ describe("calendar event deletion", () => {
 
 		const eventAfter = await CalendarRepository.findById(tournament.eventId);
 		expect(eventAfter).toBeNull();
+	});
+
+	test("lets the author delete their not-yet-started tournament after a scrim used its map pool", async () => {
+		await UserFactory.createAdmin();
+		const regular = await UserFactory.createRegular();
+		const scrimHost = await UserFactory.create();
+		const scrimGuest = await UserFactory.create();
+		const tournament = await TournamentFactory.create({
+			authorId: regular.id,
+			startTimes: [dateToDatabaseTimestamp(addDays(new Date(), 7))],
+		});
+		const scrimPost = await ScrimPostFactory.create(
+			{ users: [{ userId: scrimHost.id, isOwner: 1 }] },
+			{
+				requests: [
+					{ users: [{ userId: scrimGuest.id, isOwner: 1 }], isAccepted: true },
+				],
+				mapLists: [
+					{ side: "ALPHA", source: "TOURNAMENT", tournamentId: tournament.id },
+				],
+			},
+		);
+
+		await deleteAction(
+			{},
+			{ user: "regular", params: { id: String(tournament.eventId) } },
+		);
+
+		const eventAfter = await CalendarRepository.findById(tournament.eventId);
+		expect(eventAfter).toBeNull();
+		expect(
+			await ScrimMapListRepository.findMapListsByScrimPostId(scrimPost.id),
+		).toMatchObject([{ side: "ALPHA", tournament: undefined, mapList: [] }]);
 	});
 
 	test("lets an admin of an established organization delete its tournament", async () => {

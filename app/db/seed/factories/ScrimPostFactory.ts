@@ -1,3 +1,4 @@
+import * as ScrimMapListRepository from "~/features/scrims/ScrimMapListRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import { defineFactory } from "../core/defineFactory";
@@ -15,6 +16,15 @@ type Request = Pick<InsertRequestArgs, "users"> &
 type Options = {
 	/** Requests made to the post, created in the order given. */
 	requests?: Array<Request>;
+	/** Map lists the sides submitted, after the requests are created. */
+	mapLists?: Array<
+		Omit<
+			Parameters<
+				typeof ScrimMapListRepository.submitMapListAndGenerateIfNeeded
+			>[0],
+			"scrimPostId"
+		>
+	>;
 };
 
 /** `users` is the side offering the scrim, one of them its owner. Requests to the post are `options`. */
@@ -35,7 +45,7 @@ export const { create } = defineFactory({
 	insert: async (args: Parameters<typeof ScrimPostRepository.insert>[0]) => ({
 		id: await ScrimPostRepository.insert(args),
 	}),
-	applyOptions: async (post, { requests }: Options) => {
+	applyOptions: async (post, { requests, mapLists }: Options) => {
 		for (const request of requests ?? []) {
 			const requestId = await ScrimPostRepository.insertRequest({
 				scrimPostId: post.id,
@@ -48,6 +58,13 @@ export const { create } = defineFactory({
 			if (request.isAccepted) {
 				await ScrimPostRepository.acceptRequest(requestId);
 			}
+		}
+
+		for (const mapList of mapLists ?? []) {
+			await ScrimMapListRepository.submitMapListAndGenerateIfNeeded({
+				...mapList,
+				scrimPostId: post.id,
+			});
 		}
 	},
 });
