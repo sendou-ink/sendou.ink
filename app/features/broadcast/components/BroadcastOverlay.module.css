@@ -6,6 +6,7 @@
  *   or point a --bc-anim-* token at keyframes of your own (for the whole canvas or any part of it)
  * - [data-part] and state attributes ([data-team], [data-status]...) on the markup
  */
+/* xxx: maybe some sort of grid system in the theming so people can also move elements around */
 .canvas {
 	/* colors */
 	--bc-bg: #090f1e;

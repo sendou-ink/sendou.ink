@@ -344,16 +344,6 @@
 	}
 }
 
-.reference {
-	& summary {
-		cursor: pointer;
-	}
-
-	& > div {
-		margin-block-start: var(--s-3);
-	}
-}
-
 .inkSwatches {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));

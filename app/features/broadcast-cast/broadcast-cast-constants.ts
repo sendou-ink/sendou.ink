@@ -253,7 +253,7 @@ export const BROADCAST_DESIGN_MAX_PLAYERS = 4;
 export const BROADCAST_DESIGN_MAX_OTHER_MATCHES = 8;
 
 /** Scenes without gameplay, all drawn by the same full screen design. */
-export const BROADCAST_HOLD_SCENES = [
+const BROADCAST_HOLD_SCENES = [
 	"starting",
 	"break",
 	"technical",
@@ -461,31 +461,6 @@ export const BROADCAST_SCENE_PARTS = {
 		"stinger-set-length",
 	],
 } as const;
-
-/**
- * Global keyframes the overlays animate with, documented in `feature-readmes/broadcast.mdx`. Each is used through
- * its `--bc-anim-*` token (`bc-enter` through `--bc-anim-enter`). Redefining the keyframes in the custom CSS changes
- * every element using it, pointing the token at other keyframes changes the elements under where it is set.
- * Renaming one breaks users' themes.
- */
-export const BROADCAST_KEYFRAMES = [
-	"bc-enter",
-	"bc-exit",
-	"bc-reveal",
-	"bc-count",
-	"bc-pulse",
-	"bc-fade-in",
-	"bc-fade-out",
-	"bc-alert-slide",
-	"bc-ticker",
-	"bc-panel-slide-in",
-	"bc-panel-slide-out",
-	"bc-panel-iris-in",
-	"bc-panel-iris-out",
-	"bc-camera",
-	"bc-dim",
-	"bc-glow",
-] as const;
 
 export const BROADCAST_HEADLINE_MAX_LENGTH = 100;
 

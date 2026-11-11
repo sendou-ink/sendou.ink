@@ -39,13 +39,13 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { InfoPopover } from "~/components/InfoPopover";
 import { InviteLinkInput } from "~/components/InviteLinkInput";
 import { Config } from "~/config";
 import {
 	BROADCAST_ADVANCES,
 	BROADCAST_INK_COLORS,
 	BROADCAST_REHEARSE_MESSAGE,
-	BROADCAST_THEME_TOKENS,
 	BROADCAST_TRANSITIONS,
 } from "~/features/broadcast/broadcast-constants";
 import {
@@ -88,11 +88,8 @@ import { tournamentMatchPage } from "~/utils/urls";
 import {
 	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_DASHBOARD_TABS,
-	BROADCAST_HOLD_SCENES,
-	BROADCAST_KEYFRAMES,
 	BROADCAST_PROTOTYPE_CLIPS,
 	BROADCAST_SCENE_DURATIONS_MS,
-	BROADCAST_SCENE_PARTS,
 	CAST_PRODUCER_RULES,
 } from "../broadcast-cast-constants";
 import {
@@ -1350,12 +1347,14 @@ function Setup({
 	return (
 		<div className="stack xl">
 			<section className="stack md">
-				<h2 className={styles.panelHeader}>
-					{t("broadcast:dashboard.setup.header")}
-				</h2>
-				<p className="text-sm text-lighter">
-					{t("broadcast:dashboard.setup.program")}
-				</p>
+				<div className="stack horizontal xs items-center">
+					<h2 className={styles.panelHeader}>
+						{t("broadcast:dashboard.setup.header")}
+					</h2>
+					<InfoPopover tiny>
+						{t("broadcast:dashboard.setup.program")}
+					</InfoPopover>
+				</div>
 				<InviteLinkInput
 					label={t("broadcast:dashboard.setup.programLabel")}
 					link={programUrl}
@@ -1426,21 +1425,19 @@ function ClipOverlays({
 	statuses: ClipTransfer.ClipPeerStatus[];
 }) {
 	const { t } = useTranslation(["broadcast"]);
+	const shownStatuses = withOnePreview(statuses);
 
 	return (
 		<div className="stack xs text-sm">
 			<span className="font-semi-bold">
 				{t("broadcast:dashboard.clips.overlays")}
 			</span>
-			<span className="text-xs text-lighter">
-				{t("broadcast:dashboard.clips.transfer")}
-			</span>
-			{statuses.length === 0 ? (
+			{shownStatuses.length === 0 ? (
 				<span className="text-lighter">
 					{t("broadcast:dashboard.clips.noOverlays")}
 				</span>
 			) : (
-				statuses.map((status) => (
+				shownStatuses.map((status) => (
 					<span key={status.peer.id}>
 						{t(`broadcast:dashboard.clips.role.${status.peer.role}`)} ·{" "}
 						<span className="text-lighter">{status.connectionState}</span>
@@ -1502,69 +1499,30 @@ function Theme({
 					</>
 				)}
 			</SendouForm>
-			<details className={styles.reference}>
-				<summary className="text-sm font-semi-bold">
-					{t("broadcast:dashboard.theme.reference")}
-				</summary>
-				<ThemeReference />
-			</details>
 		</div>
 	);
-}
-
-function ThemeReference() {
-	const { t } = useTranslation(["broadcast"]);
-
-	return (
-		<div className="stack sm text-sm">
-			<div>
-				<span className="font-semi-bold">
-					{t("broadcast:dashboard.theme.tokens")}:
-				</span>{" "}
-				<code>{BROADCAST_THEME_TOKENS.join(", ")}</code>
-			</div>
-			<div>
-				<span className="font-semi-bold">
-					{t("broadcast:dashboard.theme.keyframes")}:
-				</span>{" "}
-				<code>
-					{BROADCAST_KEYFRAMES.map(
-						(keyframes) =>
-							`${keyframes} (--bc-anim-${keyframes.replace("bc-", "")})`,
-					).join(", ")}
-				</code>
-			</div>
-			{R.keys(BROADCAST_SCENE_PARTS).map((design) => (
-				<div key={design}>
-					<span className="font-semi-bold">
-						{t("broadcast:dashboard.theme.parts")} (
-						<code>{designSelector(design)}</code>):
-					</span>{" "}
-					<code>{BROADCAST_SCENE_PARTS[design].join(", ")}</code>
-				</div>
-			))}
-		</div>
-	);
-}
-
-function designSelector(design: keyof typeof BROADCAST_SCENE_PARTS) {
-	if (design === "stinger" || design === "matchup" || design === "ticker") {
-		return `[data-part="${design}"]`;
-	}
-	if (design === "hold") {
-		return BROADCAST_HOLD_SCENES.map((scene) => `[data-scene="${scene}"]`).join(
-			", ",
-		);
-	}
-
-	return `[data-scene="${design}"]`;
 }
 
 /** Whether every OBS source has every clip, one going on air without it shows the OBS footage instead. */
 function everySourceHasClips(statuses: ClipTransfer.ClipPeerStatus[]) {
 	return statuses
 		.filter((status) => status.peer.role === "source")
-		.every((status) => status.missingCount === 0 || status.transferMs !== null);
+		.every(hasEveryClip);
+}
+
+function hasEveryClip(status: ClipTransfer.ClipPeerStatus) {
+	return status.missingCount === 0 || status.transferMs !== null;
+}
+
+/** The dashboard's live and next previews as one row, the one still missing clips if either is. */
+function withOnePreview(statuses: ClipTransfer.ClipPeerStatus[]) {
+	const previews = statuses.filter((status) => status.peer.role === "preview");
+	const preview =
+		previews.find((status) => !hasEveryClip(status)) ?? previews[0];
+
+	return statuses.filter(
+		(status) => status.peer.role !== "preview" || status === preview,
+	);
 }
 
 /** Name of the team the item's team scene shows, `undefined` while the featured match's isn't decided. */
