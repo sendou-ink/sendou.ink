@@ -28,6 +28,7 @@ import * as TournamentFactory from "../factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "../factories/TournamentLFGTeamFactory";
 import * as TournamentMatchScheduleFactory from "../factories/TournamentMatchScheduleFactory";
 import * as TournamentStaffFactory from "../factories/TournamentStaffFactory";
+import * as TournamentStationFactory from "../factories/TournamentStationFactory";
 import * as TournamentStreamerFactory from "../factories/TournamentStreamerFactory";
 import * as TournamentTeamFactory from "../factories/TournamentTeamFactory";
 import * as UserFactory from "../factories/UserFactory";
@@ -50,6 +51,20 @@ const PADDLING_POOL_CAST_ACCOUNTS: CastAccount[] = [
 		account: "UCpaddlingPoolCasts00000",
 		name: "Paddling Pool Casts",
 	},
+];
+const SWIM_OR_SINK_CAST_ACCOUNTS: CastAccount[] = [
+	{ platform: "TWITCH", account: "swim_or_sink_lan", name: "swim_or_sink_lan" },
+];
+const SWIM_OR_SINK_STATIONS = [
+	{
+		name: "Stream",
+		locationNote: "On stage",
+		castAccount: SWIM_OR_SINK_CAST_ACCOUNTS[0],
+	},
+	{ name: "Station 1", locationNote: "North corner, by the windows" },
+	{ name: "Station 2", locationNote: "North corner" },
+	{ name: "Station 3", locationNote: "Back wall" },
+	{ name: "Station 4", locationNote: "Back wall, next to the bar" },
 ];
 /** Uneven counts from a custom pool: every SZ stage, half of the legal TC stages. */
 const PADDLING_POOL_TEAM_PICK: TeamPickSettings = {
@@ -305,6 +320,20 @@ export async function seedTournaments({
 	// last so the venue's and placeholders' random values don't shift what the other tournaments were seeded with
 	await CalendarEventVenueFactory.create({ eventId: swimOrSink.eventId });
 	await registerPlaceholderTeam(swimOrSink.id);
+	await TournamentStationFactory.createMany(
+		SWIM_OR_SINK_STATIONS.length,
+		(index) => {
+			const { castAccount, ...station } = SWIM_OR_SINK_STATIONS[index];
+
+			return {
+				...station,
+				tournamentId: swimOrSink.id,
+				castAccount: castAccount
+					? { platform: castAccount.platform, account: castAccount.account }
+					: null,
+			};
+		},
+	);
 
 	return {
 		regOpen: inTheZone,
@@ -454,18 +483,21 @@ async function seedLowInk({ users, rosters }: Ctx) {
 	await TournamentFactory.playOut(tournament.id, 0);
 }
 
-/** #4 round robin → SE, TO maps, a LAN with a pool captain and a team of players without accounts — everybody checked in, not started. N-ZAP isn't registered, so it is his saved one. */
+/** #4 round robin → SE, TO maps, a LAN with a pool captain, a team of players without accounts and stations incl. a stream station — everybody checked in, not started. N-ZAP isn't registered, so it is his saved one. */
 async function seedSwimOrSink({ users, rosters }: Ctx) {
-	const tournament = await TournamentFactory.create({
-		name: nameFor("Swim or Sink"),
-		authorId: users.adminId,
-		avatarFileName: "swim-or-sink.png",
-		startTimes: [dateToDatabaseTimestamp(hoursAgo(1))],
-		mapPickingStyle: "TO",
-		mapPoolMaps: toSetMapPool(),
-		bracketProgression: ROUND_ROBIN_TO_SINGLE_ELIMINATION,
-		teamsPerGroup: 4,
-	});
+	const tournament = await TournamentFactory.create(
+		{
+			name: nameFor("Swim or Sink"),
+			authorId: users.adminId,
+			avatarFileName: "swim-or-sink.png",
+			startTimes: [dateToDatabaseTimestamp(hoursAgo(1))],
+			mapPickingStyle: "TO",
+			mapPoolMaps: toSetMapPool(),
+			bracketProgression: ROUND_ROBIN_TO_SINGLE_ELIMINATION,
+			teamsPerGroup: 4,
+		},
+		{ castAccounts: SWIM_OR_SINK_CAST_ACCOUNTS },
+	);
 
 	const teamRosters = rosters.take({ teamCount: 12, teamSize: 4 });
 

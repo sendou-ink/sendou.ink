@@ -117,6 +117,7 @@ export function TournamentCard({
 				</div>
 				{startDate ? (
 					timeFormat === "absolute" ? (
+						// XXX: on the front page a LAN's venue + viewer time lines wrap, making the card taller than its fixed-height container so it overflows
 						<VenueLocaleTime
 							date={startDate}
 							venueTimezone={tournament.venue?.timezone}

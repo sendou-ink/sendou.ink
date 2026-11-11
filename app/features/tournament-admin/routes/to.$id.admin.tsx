@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import {
+	Gamepad2,
 	History,
 	ListOrdered,
 	SquarePen,
@@ -35,7 +36,14 @@ export { action } from "../actions/to.$id.admin.index.server";
 
 const HORIZONTAL_TABS_BELOW = 720;
 
-type AdminTab = "teams" | "seeds" | "staff" | "stream" | "brackets" | "audit";
+type AdminTab =
+	| "teams"
+	| "seeds"
+	| "staff"
+	| "stream"
+	| "stations"
+	| "brackets"
+	| "audit";
 
 export default function TournamentAdminLayout() {
 	const { t } = useTranslation(["tournament", "calendar"]);
@@ -52,6 +60,7 @@ export default function TournamentAdminLayout() {
 	const showStaffTab = tournament.isAdmin(user);
 	const showBracketsTab = tournament.ctx.isFinalized ? showReopen : true;
 	const showStreamTab = !tournament.ctx.isFinalized;
+	const showStationsTab = tournament.isLan && !tournament.ctx.isFinalized;
 	const showSeedsTab = !tournament.hasStarted;
 
 	if (!tournament.isOrganizer(user)) {
@@ -126,6 +135,15 @@ export default function TournamentAdminLayout() {
 					{showStreamTab ? (
 						<SendouTab id="stream" href={`${adminPage}/stream`} icon={<Tv />}>
 							{t("tournament:admin.tab.stream")}
+						</SendouTab>
+					) : null}
+					{showStationsTab ? (
+						<SendouTab
+							id="stations"
+							href={`${adminPage}/stations`}
+							icon={<Gamepad2 />}
+						>
+							{t("tournament:admin.tab.stations")}
 						</SendouTab>
 					) : null}
 					{showBracketsTab ? (

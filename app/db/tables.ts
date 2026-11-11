@@ -40,7 +40,10 @@ import type {
 } from "~/features/feed/feed-constants";
 import type { FeedEventData, FeedEventType } from "~/features/feed/feed-types";
 import type { LFGType } from "~/features/lfg/lfg-constants";
-import type { StreamPlatform } from "~/features/live-streams/live-streams-constants";
+import type {
+	StreamAccount,
+	StreamPlatform,
+} from "~/features/live-streams/live-streams-constants";
 import type {
 	LobbyBestOf,
 	LobbyLabel,
@@ -876,6 +879,28 @@ interface TournamentLFGLike {
 	likerTeamId: number;
 	targetTeamId: number;
 	createdAt: Generated<number>;
+}
+
+/** A setup at a LAN tournament's venue where matches are played. */
+interface TournamentStation {
+	id: GeneratedAlways<number>;
+	tournamentId: number;
+	/** E.g. "Station 3" */
+	name: string;
+	/** Where to find it at the venue, e.g. "north corner, by the windows" */
+	locationNote: string | null;
+	/** One of the tournament's cast accounts, making this its stream station: matches played here are cast. */
+	castAccount: JSONColumnTypeNullable<StreamAccount>;
+	/** Order of the stations, 0 first. Auto-assignment prefers the lowest free one. */
+	position: number;
+}
+
+/** A match queued on a station, a match being on at most one station. */
+interface TournamentMatchStation {
+	matchId: number;
+	stationId: number;
+	/** Order in the station's queue, 0 first. */
+	position: number;
 }
 
 interface TournamentStaff {
@@ -1809,6 +1834,8 @@ export interface DB {
 	Tournament: Tournament;
 	TournamentDivisionTier: TournamentDivisionTier;
 	TournamentStaff: TournamentStaff;
+	TournamentStation: TournamentStation;
+	TournamentMatchStation: TournamentMatchStation;
 	TournamentGroup: TournamentGroup;
 	TournamentLFGLike: TournamentLFGLike;
 	TournamentMatch: TournamentMatch;

@@ -316,6 +316,8 @@ type TypedFormFieldProps<
 > = {
 	name: TName;
 	label?: string;
+	/** Extra element rendered next to the label, e.g. an `<InfoPopover />`. Only `text-field` and `switch` support it. */
+	labelPopover?: React.ReactNode;
 	disabled?: boolean;
 	/** Focuses the field on mount. Only `text-field` and `text-area` support it. */
 	autoFocus?: boolean;

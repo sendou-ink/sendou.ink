@@ -109,6 +109,8 @@ export interface TournamentSettings {
 	isLeague?: boolean;
 	/** Team picked map configuration, always set when `Tournament.mapPickingStyle` is "AUTO". */
 	teamPick?: TeamPickSettings;
+	/** LAN only: put playable matches on free stations automatically, default true */
+	autoAssignStations?: boolean;
 }
 
 export interface TeamPickSettings {

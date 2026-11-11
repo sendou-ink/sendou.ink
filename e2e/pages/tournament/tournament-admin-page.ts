@@ -10,6 +10,7 @@ import {
 import { createFormHelpers } from "../../helpers/playwright-form";
 import { CalendarNewEventPage } from "../calendar/calendar-new-event-page";
 import { TournamentAdminStaffPage } from "./tournament-admin-staff-page";
+import { TournamentAdminStationsPage } from "./tournament-admin-stations-page";
 import { TournamentAdminStreamPage } from "./tournament-admin-stream-page";
 import { TournamentNav } from "./tournament-nav";
 
@@ -63,6 +64,11 @@ export class TournamentAdminPage {
 	async openStaff() {
 		await this.adminTab("Staff").click();
 		return new TournamentAdminStaffPage(this.page);
+	}
+
+	async openStations() {
+		await this.adminTab("Stations").click();
+		return new TournamentAdminStationsPage(this.page);
 	}
 
 	async openStream() {

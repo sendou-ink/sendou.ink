@@ -329,6 +329,76 @@ test.describe("Tournament admin bracket progression editing", () => {
 	});
 });
 
+test.describe("Tournament admin LAN stations", () => {
+	test("adds stations incl. a stream station and removes one", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create(
+			{ authorId: NZAP_TEST_ID },
+			{
+				castAccounts: [
+					{ platform: "TWITCH", account: "lan_cast", name: "lan_cast" },
+				],
+			},
+		);
+		await factories.CalendarEventVenueFactory.create({
+			eventId: tournament.eventId,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+		const stations = await admin.openStations();
+
+		await expect(stations.locators.autoAssignSwitch).toBeChecked();
+		await stations.fillStation(0, {
+			name: "Stream",
+			locationNote: "On stage",
+			castAccount: "lan_cast (Twitch)",
+		});
+		await stations.addStation();
+		await stations.fillStation(1, { name: "Station 1" });
+		await stations.save();
+
+		await stations.goto(tournament.id);
+		await expect(stations.locators.nameInputs).toHaveCount(2);
+		await expect(stations.locators.nameInputs.nth(0)).toHaveValue("Stream");
+		await expect(stations.locators.locationNoteInputs.nth(0)).toHaveValue(
+			"On stage",
+		);
+		await expect(
+			stations.locators.castAccountSelects.nth(0).locator("option:checked"),
+		).toHaveText("lan_cast (Twitch)");
+		await expect(stations.locators.nameInputs.nth(1)).toHaveValue("Station 1");
+
+		await stations.removeStation(0);
+		await stations.save();
+
+		await stations.goto(tournament.id);
+		await expect(stations.locators.nameInputs).toHaveCount(1);
+		await expect(stations.locators.nameInputs.nth(0)).toHaveValue("Station 1");
+	});
+
+	test("hides the Stations tab of an online tournament", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+
+		await expect(admin.adminTab("Staff")).toBeVisible();
+		await expect(admin.adminTab("Stations")).toHaveCount(0);
+	});
+});
+
 /** A tournament whose check-in window is open but that has not started. */
 async function createTournament(
 	factories: Factories,

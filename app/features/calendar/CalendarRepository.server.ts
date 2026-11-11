@@ -898,6 +898,7 @@ async function updateTournamentTables(
 		thirdPlaceMatch: args.thirdPlaceMatch,
 		isRanked: args.isRanked,
 		isTest: existingSettings.isTest, // this one is not editable after creation
+		autoAssignStations: existingSettings.autoAssignStations, // set on the admin stations page
 		isLeague: args.isLeague,
 		isDraft: args.isDraft,
 		isInvitational: args.isInvitational,

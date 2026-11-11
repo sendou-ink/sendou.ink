@@ -804,6 +804,11 @@ export class Tournament {
 		return this.ctx.venue !== null;
 	}
 
+	/** LAN only: playable matches are put on free stations without an organizer placing them. */
+	get autoAssignsStations() {
+		return this.ctx.settings.autoAssignStations ?? true;
+	}
+
 	/** Hidden during preparation, must be opened before bracket start. */
 	get isDraft() {
 		return this.ctx.settings.isDraft ?? false;
