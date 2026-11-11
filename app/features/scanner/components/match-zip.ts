@@ -6,6 +6,7 @@
  */
 import { strToU8, type Zippable, zipSync } from "fflate";
 import type { ExportClip } from "../core/csv/matches";
+import * as EventVersion from "../core/event-version";
 import type { BuiltMatch } from "../core/match-builder";
 import { buildExpectedJson, type FixtureData } from "./fixture-export";
 import type { GetFrame, ScanEvent } from "./session-data";
@@ -39,6 +40,7 @@ export async function matchZip(
 				);
 			}
 			return {
+				v: EventVersion.CURRENT,
 				type: event.type,
 				t: event.t,
 				detectedAt: event.detectedAt,

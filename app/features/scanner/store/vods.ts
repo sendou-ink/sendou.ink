@@ -7,6 +7,7 @@
  * overwrites the previous save; the frames age out by `frames.ts`.
  */
 
+import * as EventVersion from "../core/event-version";
 import type { SessionSummary } from "../core/sessions";
 import {
 	readwrite,
@@ -34,6 +35,8 @@ export interface StoredVodEvent {
 	id?: number;
 	/** owning VoD name (indexed) */
 	vod: string;
+	/** `core/event-version.ts` version `type` and `data` were written at; absent on events stored before the stamp */
+	v?: number;
 	type: string;
 	t: number;
 	confidence: number;
@@ -43,7 +46,10 @@ export interface StoredVodEvent {
 }
 
 /** A vod-event to persist, with its (separately stored) frame attached. */
-export type VodEventToSave = Omit<StoredVodEvent, "id" | "vod" | "hasFrame"> & {
+export type VodEventToSave = Omit<
+	StoredVodEvent,
+	"id" | "vod" | "v" | "hasFrame"
+> & {
 	frame?: Blob;
 };
 
@@ -118,6 +124,7 @@ export async function saveVod(
 				const add = eventStore.add({
 					...event,
 					vod: meta.name,
+					v: EventVersion.CURRENT,
 					hasFrame: frame !== undefined,
 				}) as IDBRequest<number>;
 				if (frame) add.onsuccess = () => frameStore.put(frame, add.result);
@@ -147,6 +154,7 @@ export function loadVod(name: string): Promise<VodSummary | undefined> {
 	);
 }
 
+/** The VoD's events, chronological, in the current event shapes (`EventVersion.readable`). */
 export async function loadVodEvents(name: string): Promise<StoredVodEvent[]> {
 	const events = await tx(
 		VOD_EVENTS_STORE,
@@ -156,7 +164,7 @@ export async function loadVodEvents(name: string): Promise<StoredVodEvent[]> {
 				StoredVodEvent[]
 			>,
 	);
-	return events.sort((a, b) => a.t - b.t);
+	return EventVersion.readable(events).sort((a, b) => a.t - b.t);
 }
 
 /** The VoD's map-open frames, chronological. */

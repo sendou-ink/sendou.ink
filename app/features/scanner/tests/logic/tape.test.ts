@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import * as EventVersion from "../../core/event-version";
 import * as Tape from "../tape";
 
 const EVENTS: Tape.TapeEvent[] = [
@@ -73,6 +74,24 @@ describe("Tape.serialize", () => {
 });
 
 describe("Tape.parse", () => {
+	test("reads a tape recorded before the event version stamp", () => {
+		const text = [
+			JSON.stringify({ tape: 1, description: "one game", source: "video.mkv" }),
+			...EVENTS.map((event) => JSON.stringify(event)),
+		].join("\n");
+
+		expect(Tape.parse("unstamped", text).events).toEqual(EVENTS);
+	});
+
+	test("leaves out the events of a tape recorded at a newer event version", () => {
+		const text = tapeText(EVENTS).replace(
+			`"events":${EventVersion.CURRENT}`,
+			`"events":${EventVersion.CURRENT + 1}`,
+		);
+
+		expect(Tape.parse("newer", text).events).toEqual([]);
+	});
+
 	test.each([
 		{ why: "an empty file", text: "" },
 		{ why: "a missing header", text: `${JSON.stringify(EVENTS[0])}\n` },

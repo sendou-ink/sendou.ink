@@ -182,6 +182,14 @@ describe("extractGameDataZip", () => {
 			reason: /string over/,
 		},
 		{
+			why: "an event version that is not an integer",
+			files: () => ({
+				...validFiles(),
+				"events.json": json([{ ...validEvent(), v: "1" }]),
+			}),
+			reason: /non-integer v/,
+		},
+		{
 			why: "unknown event type",
 			files: () => ({
 				...validFiles(),
@@ -285,7 +293,14 @@ async function scannerZip() {
 }
 
 function validEvent() {
-	return { type: "Death", t: 162, confidence: 0.9, data: {}, frame: FOLDER };
+	return {
+		v: 1,
+		type: "Death",
+		t: 162,
+		confidence: 0.9,
+		data: {},
+		frame: FOLDER,
+	};
 }
 
 function validFiles(): Zippable {

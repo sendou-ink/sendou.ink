@@ -51,6 +51,7 @@ const EVENT_TYPES = [
 ] as const;
 
 const EVENT_KEYS = new Set([
+	"v",
 	"type",
 	"t",
 	"detectedAt",
@@ -560,10 +561,13 @@ function summarize(
 			if (!EVENT_KEYS.has(key))
 				fail(`events.json[${index}] has an unexpected key ${key}`);
 		}
-		const { type, t, confidence, detectedAt, data, frame } = event;
+		const { v, type, t, confidence, detectedAt, data, frame } = event;
 		if (!isEventType(type)) fail(`events.json[${index}] has an unknown type`);
 		if (typeof t !== "number" || typeof confidence !== "number") {
 			fail(`events.json[${index}] lacks a numeric t/confidence`);
+		}
+		if (v !== undefined && !Number.isSafeInteger(v)) {
+			fail(`events.json[${index}] has a non-integer v`);
 		}
 		if (detectedAt !== undefined && typeof detectedAt !== "number") {
 			fail(`events.json[${index}] has a non-numeric detectedAt`);
