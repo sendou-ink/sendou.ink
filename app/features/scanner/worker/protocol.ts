@@ -1,6 +1,7 @@
 import type { ScanTelemetry } from "../core/detectors/telemetry";
 import type { GateResult } from "../core/detectors/types";
 import type { DetectedEvent } from "../core/events";
+import type { TimelineChange } from "../core/timeline/index";
 
 export interface InitRequest {
 	kind: "init";
@@ -65,8 +66,15 @@ export type WorkerResponse =
 			detector: string;
 			t: number;
 			gate: GateResult;
+			/** every read of the frame, as parsed */
 			events: DetectedEvent[];
-			/** lossless image of the exact frame that was analyzed; present when events fired */
+			/**
+			 * what those reads changed in the worker's timeline (one per chunk scan
+			 * or per-frame stream), which is the scan's only one: reads it merged or
+			 * dropped are not here
+			 */
+			changes: TimelineChange[];
+			/** lossless image of the exact frame that was analyzed; present when a change added or replaced an event */
 			frame?: Blob;
 			/** downscaled image of the frame, on every minimap gate pass of an open a read of it was kept from (`snapshotMinimaps`) */
 			minimapSnapshot?: Blob;

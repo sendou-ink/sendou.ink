@@ -3,7 +3,7 @@
  * CLI equivalent of the VoD tab: scans a video with the full detector registry
  * and writes the same events CSV the tab's Export menu downloads. ffmpeg
  * decodes to raw RGBA frames piped through the DetectorScheduler + detectors
- * and a TimelineBuilder with the tab's default options, so the CSV matches a
+ * and the timeline through the worker's own frame pass, so the CSV matches a
  * browser scan (minus keyframe skimming, which only affects speed).
  *
  * Requires ffmpeg (and ffprobe for the progress percentage) on PATH.
@@ -278,6 +278,7 @@ async function processFrame(t: number): Promise<void> {
 		detectors,
 		due,
 		scheduler,
+		timeline,
 		telemetry,
 		runSteps,
 	});
@@ -290,10 +291,10 @@ async function processFrame(t: number): Promise<void> {
 			passLatencies.set(detector.id, list);
 		}
 	}
-	for (const { events } of outcomes) {
-		for (const event of events) {
-			const action = timeline.push(event);
+	for (const { actions } of outcomes) {
+		for (const action of actions) {
 			if (action.action === "added" || action.action === "replaced") {
+				const { event } = action;
 				console.error(
 					`  event t=${event.t.toFixed(2)} ${event.type} conf=${event.confidence.toFixed(3)}`,
 				);

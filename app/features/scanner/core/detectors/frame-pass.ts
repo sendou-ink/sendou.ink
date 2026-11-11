@@ -7,11 +7,14 @@
  * detector. Parse results are recorded with the scheduler in registry order
  * afterwards; scheduler decisions within a frame depend only on each
  * detector's own state, so this ordering is equivalent to gating and parsing
- * one detector at a time.
+ * one detector at a time. The pass also owns the scan's timeline: every
+ * parsed event is pushed here and nowhere else, and the outcome says what the
+ * push did.
  */
 import type { Mat } from "../cv";
 import type { DetectedEvent } from "../events";
 import { all, type MatchScores, type MatchSteps } from "../match-steps";
+import type { TimelineAction, TimelineBuilder } from "../timeline/index";
 import type { DetectorScheduler } from "./scheduler";
 import { detectorTelemetry, type ScanTelemetry } from "./telemetry";
 import type { Detector, GateResult } from "./types";
@@ -23,6 +26,8 @@ export interface DetectorOutcome {
 	parsed: boolean;
 	/** empty when the gate failed or the scheduler suppressed the parse */
 	events: DetectedEvent[];
+	/** what the timeline did with each of `events`, in their order */
+	actions: TimelineAction[];
 }
 
 /** Runs match steps to completion, answering requests in batches (a GPU driver's `run`). */
@@ -35,6 +40,7 @@ export async function runDetectorPass({
 	detectors,
 	due,
 	scheduler,
+	timeline,
 	telemetry,
 	runSteps,
 	speculative = true,
@@ -45,6 +51,7 @@ export async function runDetectorPass({
 	detectors: readonly Detector<DetectedEvent>[];
 	due: readonly string[];
 	scheduler: DetectorScheduler;
+	timeline: TimelineBuilder;
 	telemetry: ScanTelemetry | null;
 	/** batching driver; omitted = every parse runs synchronously */
 	runSteps?: StepsRunner;
@@ -69,7 +76,7 @@ export async function runDetectorPass({
 		if (counters && gate.pass) counters.gatePasses++;
 		const parsed = gate.pass && scheduler.shouldParse(detector.id, t);
 		if (counters && gate.pass && !parsed) counters.suppressedParses++;
-		gated.push({ detector, gate, parsed, events: [] });
+		gated.push({ detector, gate, parsed, events: [], actions: [] });
 	}
 
 	const parsing = gated.filter((outcome) => outcome.parsed);
@@ -99,9 +106,11 @@ export async function runDetectorPass({
 		}
 	}
 
-	for (const { detector, events } of parsing) {
+	for (const outcome of parsing) {
+		const { detector, events } = outcome;
 		if (telemetry) detectorTelemetry(telemetry, detector.id).parses++;
 		scheduler.recordParse(detector.id, t, events);
+		outcome.actions = events.map((event) => timeline.push(event));
 	}
 	return gated;
 }
