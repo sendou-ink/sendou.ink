@@ -73,6 +73,38 @@ export function phase({
 	return "UNSCHEDULED";
 }
 
+/** Which point of the scheduling flow the set `match` is at right now. */
+export function phaseOfMatch({
+	match,
+	hasScheduling,
+	now,
+}: {
+	match: {
+		winnerSide: string | null;
+		opponentOne: { id?: number | null } | null;
+		opponentTwo: { id?: number | null } | null;
+		roundIsPlayableAt: number | null;
+		scheduledAt: number | null;
+	};
+	/** False outside leagues and in a league's real-time brackets. */
+	hasScheduling: boolean;
+	now: number;
+}): Phase {
+	return phase({
+		hasScheduling,
+		isOver: Boolean(match.winnerSide),
+		hasBothTeams: Boolean(match.opponentOne?.id && match.opponentTwo?.id),
+		isPlayableAt: match.roundIsPlayableAt,
+		scheduledAt: match.scheduledAt,
+		now,
+	});
+}
+
+/** Whether candidate times can be put up and accepted in `currentPhase`. */
+export function isBoardOpen(currentPhase: Phase) {
+	return currentPhase !== "CLOSED" && currentPhase !== "NOT_OPEN";
+}
+
 /** When teams can start putting times on the board: a day before the round is playable, right away without a playable time. */
 export function opensAt(isPlayableAt: number | null) {
 	if (isPlayableAt === null) return 0;
@@ -139,9 +171,7 @@ export function validateProposals({
 	setByOrganizer: boolean;
 }): ProposalError | null {
 	if (setByOrganizer) return "ORGANIZER_LOCKED";
-	if (currentPhase === "CLOSED" || currentPhase === "NOT_OPEN") {
-		return "NOT_OPEN";
-	}
+	if (!isBoardOpen(currentPhase)) return "NOT_OPEN";
 	if (proposedAts.length > LEAGUE_SCHEDULING.MAX_OPEN_PROPOSALS_PER_TEAM) {
 		return "TOO_MANY";
 	}

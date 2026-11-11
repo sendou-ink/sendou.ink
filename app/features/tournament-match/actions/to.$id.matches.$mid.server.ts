@@ -755,7 +755,7 @@ export const action = defineAction(
 			case "ACCEPT_PROPOSAL": {
 				const schedule = leagueSchedule(tournament, match);
 				errorToastIfFalsy(
-					schedule.phase !== "CLOSED" && schedule.phase !== "NOT_OPEN",
+					LeagueScheduling.isBoardOpen(schedule.phase),
 					"Set can't be scheduled",
 				);
 
@@ -942,12 +942,9 @@ function leagueSchedule(
 
 	return {
 		now,
-		phase: LeagueScheduling.phase({
+		phase: LeagueScheduling.phaseOfMatch({
+			match,
 			hasScheduling: tournament.matchHasScheduling(match.id),
-			isOver: Boolean(match.winnerSide),
-			hasBothTeams: Boolean(match.opponentOne?.id && match.opponentTwo?.id),
-			isPlayableAt: match.roundIsPlayableAt,
-			scheduledAt: match.scheduledAt,
 			now,
 		}),
 	};

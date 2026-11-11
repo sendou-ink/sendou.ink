@@ -184,7 +184,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		bracket,
 		user,
 		isParticipant,
-		matchIsOver,
 	});
 
 	const canJoin =
@@ -281,32 +280,23 @@ async function resolveLeagueSchedule({
 	bracket,
 	user,
 	isParticipant,
-	matchIsOver,
 }: {
 	tournament: Tournament;
 	match: NonNullable<TournamentMatchRepository.FindMatchById>;
 	bracket: Bracket | null;
 	user: { id: number } | undefined;
 	isParticipant: boolean;
-	matchIsOver: boolean;
 }) {
 	const now = databaseTimestampNow();
 	const hasScheduling = bracket?.hasScheduling ?? false;
 	const isPlayableAt = hasScheduling ? match.roundIsPlayableAt : null;
-	const phase = LeagueScheduling.phase({
-		hasScheduling,
-		isOver: matchIsOver,
-		hasBothTeams: Boolean(match.opponentOne?.id && match.opponentTwo?.id),
-		isPlayableAt,
-		scheduledAt: match.scheduledAt,
-		now,
-	});
+	const phase = LeagueScheduling.phaseOfMatch({ match, hasScheduling, now });
 	const ownTeamId =
 		match.players.find((player) => player.id === user?.id)?.tournamentTeamId ??
 		null;
 	const canSeeBoard =
 		hasScheduling && (isParticipant || tournament.isOrganizerOrStreamer(user));
-	const boardOpen = phase !== "CLOSED" && phase !== "NOT_OPEN";
+	const boardOpen = LeagueScheduling.isBoardOpen(phase);
 
 	if (hasScheduling && user) {
 		for (const type of [

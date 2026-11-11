@@ -71,6 +71,75 @@ describe("LeagueScheduling.phase", () => {
 	});
 });
 
+describe("LeagueScheduling.phaseOfMatch", () => {
+	const match = {
+		winnerSide: null,
+		opponentOne: { id: 1 },
+		opponentTwo: { id: 2 },
+		roundIsPlayableAt: PLAYABLE_AT,
+		scheduledAt: null,
+	};
+
+	test.each([
+		{
+			why: "open set",
+			args: { match, hasScheduling: true, now: PLAYABLE_AT },
+			expected: "UNSCHEDULED",
+		},
+		{
+			why: "no scheduling",
+			args: { match, hasScheduling: false, now: PLAYABLE_AT },
+			expected: "CLOSED",
+		},
+		{
+			why: "winner decided",
+			args: {
+				match: { ...match, winnerSide: "opponent1" },
+				hasScheduling: true,
+				now: PLAYABLE_AT,
+			},
+			expected: "CLOSED",
+		},
+		{
+			why: "team missing",
+			args: {
+				match: { ...match, opponentTwo: null },
+				hasScheduling: true,
+				now: PLAYABLE_AT,
+			},
+			expected: "CLOSED",
+		},
+		{
+			why: "round not open yet",
+			args: { match, hasScheduling: true, now: PLAYABLE_AT - DAY - 1 },
+			expected: "NOT_OPEN",
+		},
+		{
+			why: "time agreed",
+			args: {
+				match: { ...match, scheduledAt: PLAYABLE_AT + HOUR },
+				hasScheduling: true,
+				now: PLAYABLE_AT,
+			},
+			expected: "SCHEDULED",
+		},
+	])("$why -> $expected", ({ args, expected }) => {
+		expect(LeagueScheduling.phaseOfMatch(args)).toBe(expected);
+	});
+});
+
+describe("LeagueScheduling.isBoardOpen", () => {
+	test.each([
+		{ phase: "CLOSED", expected: false },
+		{ phase: "NOT_OPEN", expected: false },
+		{ phase: "UNSCHEDULED", expected: true },
+		{ phase: "SCHEDULED_LOCKED", expected: true },
+		{ phase: "SCHEDULED", expected: true },
+	] as const)("$phase -> $expected", ({ phase, expected }) => {
+		expect(LeagueScheduling.isBoardOpen(phase)).toBe(expected);
+	});
+});
+
 describe("LeagueScheduling.opensAt", () => {
 	test("a day before the round is playable", () => {
 		expect(LeagueScheduling.opensAt(PLAYABLE_AT)).toBe(PLAYABLE_AT - DAY);

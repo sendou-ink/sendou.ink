@@ -9,6 +9,7 @@ import {
 	groupNumberToLetters,
 	tournamentTeamToActiveRosterUserIds,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
+import * as LeagueScheduling from "./core/LeagueScheduling";
 import type { TournamentMatchLoaderData } from "./loaders/to.$id.matches.$mid.server";
 import { matchIsLocked, resolveHostingTeam } from "./tournament-match-utils";
 
@@ -146,8 +147,7 @@ export function MatchPageProvider({
 		leagueBlocksPlay,
 		hasScheduleBoard:
 			data.schedule.canSeeBoard &&
-			data.schedule.phase !== "CLOSED" &&
-			data.schedule.phase !== "NOT_OPEN",
+			LeagueScheduling.isBoardOpen(data.schedule.phase),
 		lockedForCast,
 		waitingForPreviousMatch,
 	});
