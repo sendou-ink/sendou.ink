@@ -74,7 +74,7 @@ describe("Producer.take", () => {
 					bracketFocus: "losers",
 				}),
 			}),
-			{ liveResults: { matchId: 1, count: 2 }, now: 5 },
+			{ liveResults: { matchId: 1, count: 2 }, now: 5, hasMatch: true },
 		);
 
 		expect(taken).toEqual({
@@ -107,7 +107,7 @@ describe("Producer.take", () => {
 				next: item(2, { scene: "replays" }),
 				queue: [item(3, { scene: "maps" }), item(4)],
 			}),
-			{ liveResults: null, now: 5 },
+			{ liveResults: null, now: 5, hasMatch: true },
 		);
 
 		expect(taken.live.id).toBe(2);
@@ -119,7 +119,7 @@ describe("Producer.take", () => {
 		const taken = Producer.take(
 			rules,
 			stateWith({ next: item(2, { scene: "bracket", durationMs: 20_000 }) }),
-			{ liveResults: null, now: 5 },
+			{ liveResults: null, now: 5, hasMatch: true },
 		);
 
 		expect(taken.next).toMatchObject({ scene: "rosters", durationMs: null });
@@ -127,10 +127,19 @@ describe("Producer.take", () => {
 		const afterClip = Producer.take(
 			rules,
 			stateWith({ next: item(2, { scene: "replays", clipId: clip.id }) }),
-			{ liveResults: null, now: 5 },
+			{ liveResults: null, now: 5, hasMatch: true },
 		);
 
 		expect(afterClip.next).toMatchObject({ scene: "game", clipId: null });
+	});
+	test("stages starting soon in place of a scene showing the match's teams without a match", () => {
+		const taken = Producer.take(rules, stateWith({ next: item(2) }), {
+			liveResults: null,
+			now: 5,
+			hasMatch: false,
+		});
+
+		expect(taken.next).toMatchObject({ scene: "starting", advance: "game" });
 	});
 });
 
@@ -166,7 +175,7 @@ describe("Producer.autoTakeAt", () => {
 		});
 
 		expect(Producer.liveEndsAt(rules, state)).toBe(TAKEN_AT + clip.durationMs);
-		expect(Producer.autoTakeAt(rules, state)).toBe(
+		expect(Producer.autoTakeAt(rules, state, { hasMatch: true })).toBe(
 			TAKEN_AT + clip.durationMs - 704,
 		);
 	});
@@ -181,7 +190,9 @@ describe("Producer.autoTakeAt", () => {
 			next: item(2, { transition: "cut" }),
 		});
 
-		expect(Producer.autoTakeAt(rules, state)).toBe(TAKEN_AT + 704 + 15_000);
+		expect(Producer.autoTakeAt(rules, state, { hasMatch: true })).toBe(
+			TAKEN_AT + 704 + 15_000,
+		);
 	});
 
 	test.each([
@@ -203,8 +214,43 @@ describe("Producer.autoTakeAt", () => {
 				takenAt: null,
 			}),
 		},
-	])("is null when $why", ({ state }) => {
-		expect(Producer.autoTakeAt(rules, state)).toBeNull();
+		{
+			why: "next shows the match's teams without a match",
+			state: stateWith({
+				live: item(1, { scene: "bracket", durationMs: 15_000 }),
+				next: item(2, { scene: "rosters" }),
+			}),
+			hasMatch: false,
+		},
+	])("is null when $why", ({ state, hasMatch = true }) => {
+		expect(Producer.autoTakeAt(rules, state, { hasMatch })).toBeNull();
+	});
+});
+
+describe("Producer.canTake", () => {
+	test.each([
+		{ why: "a match scene with a match", scene: "maps", hasMatch: true },
+		{
+			why: "a scene without the match's teams",
+			scene: "bracket",
+			hasMatch: false,
+		},
+	] as const)("takes $why", ({ scene, hasMatch }) => {
+		const state = stateWith({ next: item(2, { scene }) });
+
+		expect(Producer.canTake(rules, state, { hasMatch })).toBe(true);
+	});
+
+	test.each([
+		{ why: "rosters", next: item(2, { scene: "rosters" }) },
+		{
+			why: "the team scene following a side",
+			next: item(2, { scene: "team", teamPick: "right" }),
+		},
+	])("doesn't take $why without a match", ({ next }) => {
+		expect(
+			Producer.canTake(rules, stateWith({ next }), { hasMatch: false }),
+		).toBe(false);
 	});
 });
 
@@ -304,6 +350,19 @@ describe("Producer.applyGameSignal", () => {
 		expect(applied?.ink?.key).toBe("greenPink");
 	});
 
+	test("leaves a scene showing the match's teams staged without a match", () => {
+		const applied = Producer.applyGameSignal(
+			rules,
+			stateWith({
+				live: item(1, { scene: "game" }),
+				next: item(2, { scene: "results", advance: "game" }),
+			}),
+			{ signal: { type: "end" }, liveResults: null, now: 5 },
+		);
+
+		expect(applied).toBeNull();
+	});
+
 	test("puts the scene after the game on air as it ends", () => {
 		const applied = Producer.applyGameSignal(
 			rules,
@@ -382,13 +441,20 @@ describe("Producer.enqueue", () => {
 	test("queues the scene following the last staged item with a new id", () => {
 		const state = stateWith({ queue: [item(3, { scene: "bracket" })] });
 
-		const queued = Producer.enqueue(rules, state);
+		const queued = Producer.enqueue(rules, state, { hasMatch: true });
 
 		expect(queued.queue.at(-1)).toMatchObject({
 			id: state.lastItemId + 1,
 			scene: "rosters",
 		});
 		expect(queued.lastItemId).toBe(state.lastItemId + 1);
+	});
+	test("queues starting soon in place of a scene showing the match's teams without a match", () => {
+		const state = stateWith({ queue: [item(3, { scene: "bracket" })] });
+
+		const queued = Producer.enqueue(rules, state, { hasMatch: false });
+
+		expect(queued.queue.at(-1)?.scene).toBe("starting");
 	});
 });
 

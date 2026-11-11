@@ -2,6 +2,7 @@ import type { BroadcastView } from "~/features/broadcast/broadcast-types";
 import type { BroadcastSceneSet } from "~/features/broadcast/components/BroadcastOverlay";
 import { CAST_THEME_CLASSES } from "../broadcast-cast-theme";
 import type { CastBroadcastState } from "../broadcast-cast-types";
+import { needsFeaturedMatch } from "../broadcast-cast-utils";
 import { BracketScene } from "./BracketScene";
 import { CastersScene } from "./CastersScene";
 import { GameScene } from "./GameScene";
@@ -20,6 +21,7 @@ export const CAST_SCENE_SET: BroadcastSceneSet<CastBroadcastState> = {
 	themeClasses: CAST_THEME_CLASSES,
 };
 
+/** A scene showing the featured match's teams falls back to the break scene while no match is cast, e.g. as it got uncast on air. */
 function CastScene({
 	state,
 	view,
@@ -27,7 +29,11 @@ function CastScene({
 	state: CastBroadcastState;
 	view: BroadcastView;
 }) {
-	const scene = state[view].scene;
+	const { scene, teamPick } = state[view];
+
+	if (!state.match && needsFeaturedMatch(scene, teamPick)) {
+		return <HoldScene scene="break" state={state} view={view} />;
+	}
 
 	switch (scene) {
 		case "game":

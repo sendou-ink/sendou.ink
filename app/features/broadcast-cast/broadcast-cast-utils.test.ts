@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { controlShares } from "./broadcast-cast-utils";
+import { controlShares, needsFeaturedMatch } from "./broadcast-cast-utils";
 
 describe("controlShares", () => {
 	const read = (t: number, control: 0 | 1 | null) => ({
@@ -27,5 +27,38 @@ describe("controlShares", () => {
 		{ why: "a single read", events: [read(5, 0)] },
 	])("gives nothing for $why", ({ events }) => {
 		expect(controlShares(events)).toEqual([0, 0]);
+	});
+});
+
+describe("needsFeaturedMatch", () => {
+	test.each([
+		{ why: "rosters", scene: "rosters", teamPick: undefined, expected: true },
+		{ why: "maps", scene: "maps", teamPick: undefined, expected: true },
+		{ why: "results", scene: "results", teamPick: undefined, expected: true },
+		{
+			why: "team following a side",
+			scene: "team",
+			teamPick: "left",
+			expected: true,
+		},
+		{ why: "team picked by id", scene: "team", teamPick: 5, expected: false },
+		{
+			why: "team without a pick",
+			scene: "team",
+			teamPick: undefined,
+			expected: false,
+		},
+		{ why: "game", scene: "game", teamPick: undefined, expected: false },
+		{ why: "replays", scene: "replays", teamPick: undefined, expected: false },
+		{ why: "bracket", scene: "bracket", teamPick: undefined, expected: false },
+		{ why: "casters", scene: "casters", teamPick: undefined, expected: false },
+		{
+			why: "a hold scene",
+			scene: "break",
+			teamPick: undefined,
+			expected: false,
+		},
+	] as const)("$why: $expected", ({ scene, teamPick, expected }) => {
+		expect(needsFeaturedMatch(scene, teamPick)).toBe(expected);
 	});
 });

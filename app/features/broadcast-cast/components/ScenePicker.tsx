@@ -43,18 +43,20 @@ const SCENES_BY_HOTKEY: CastScene[] = BROADCAST_SCENE_GROUPS.flatMap(
 
 /**
  * Every scene as a tile with its icon and hotkey, in its group. `renderTile` makes the button picking the scene
- * out of the tile's props, e.g. one submitting it.
+ * out of the tile's props, e.g. one submitting it. Scenes `isDisabled` gives can't be picked.
  */
 export function ScenePicker({
 	selected,
 	liveScene,
+	isDisabled,
 	renderTile,
 }: {
 	selected: CastScene;
 	liveScene?: CastScene;
+	isDisabled?: (scene: CastScene) => boolean;
 	renderTile: (
 		scene: CastScene,
-		tile: { className: string; children: React.ReactNode },
+		tile: { className: string; isDisabled: boolean; children: React.ReactNode },
 	) => React.ReactNode;
 }) {
 	const { t } = useTranslation(["broadcast"]);
@@ -76,6 +78,7 @@ export function ScenePicker({
 									className: clsx(styles.tile, {
 										[styles.tileSelected]: selected === scene,
 									}),
+									isDisabled: isDisabled?.(scene) ?? false,
 									children: (
 										<>
 											{liveScene === scene ? (
@@ -102,15 +105,17 @@ export function ScenePicker({
 	);
 }
 
-/** The number keys pick the scene their {@link ScenePicker} tile shows. */
+/** The number keys pick the scene their {@link ScenePicker} tile shows, unless `isDisabled` gives it. */
 export function useSceneHotkeys({
 	selected,
+	isDisabled,
 	onSelect,
 }: {
 	selected: CastScene;
+	isDisabled?: (scene: CastScene) => boolean;
 	onSelect: (scene: CastScene) => void;
 }) {
-	const latest = useLatestRef({ selected, onSelect });
+	const latest = useLatestRef({ selected, isDisabled, onSelect });
 
 	React.useEffect(() => {
 		const onKeyDown = (event: KeyboardEvent) => {
@@ -119,7 +124,9 @@ export function useSceneHotkeys({
 
 			// 1 is the first scene, 0 the tenth
 			const scene = SCENES_BY_HOTKEY[(Number(event.key) + 9) % 10];
-			if (!scene || scene === current.selected) return;
+			if (!scene || scene === current.selected || current.isDisabled?.(scene)) {
+				return;
+			}
 
 			current.onSelect(scene);
 		};

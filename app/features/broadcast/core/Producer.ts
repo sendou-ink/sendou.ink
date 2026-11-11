@@ -26,6 +26,10 @@ export interface Rules<Item extends ProducerState> {
 	lengthMs?(item: Item): number | null;
 	/** The item without what doesn't carry over to the item following it (e.g. a clip picked for it). */
 	followedBy?(item: Item): Item;
+	/** Whether the item's scene shows the featured match, so it can't go on air without one. */
+	needsMatch?(item: Item): boolean;
+	/** Staged instead of the scene that logically follows when that one needs the featured match and there is none. */
+	sceneWithoutMatch?: Item["scene"];
 }
 
 /** Fields of a staged item the producer edits, see {@link editItem}. */
@@ -68,15 +72,24 @@ export function withDefaults<Item extends ProducerState>(
 
 /**
  * Puts the staged state on air, along with the match results next showed. The first queued item gets staged, or
- * without one the scene that logically follows (e.g. rosters → game → rosters).
+ * without one the scene that logically follows (e.g. rosters → game → rosters, see `Rules.sceneWithoutMatch`).
  */
 export function take<Item extends ProducerState>(
 	rules: Rules<Item>,
 	state: BroadcastStoredState<Item>,
-	{ liveResults, now }: { liveResults: LiveResults | null; now: number },
+	{
+		liveResults,
+		now,
+		hasMatch,
+	}: { liveResults: LiveResults | null; now: number; hasMatch: boolean },
 ): BroadcastStoredState<Item> {
 	const [queued, ...queue] = state.queue;
-	const next = queued ?? followingItem(rules, state.next, state.lastItemId + 1);
+	const next =
+		queued ??
+		followingItem(rules, state.next, {
+			id: state.lastItemId + 1,
+			hasMatch,
+		});
 
 	return {
 		takeId: state.takeId + 1,
@@ -88,6 +101,15 @@ export function take<Item extends ProducerState>(
 		liveResults,
 		ink: state.ink,
 	};
+}
+
+/** Whether a Take can put the staged item on air: one showing the featured match (see `Rules.needsMatch`) only with one. */
+export function canTake<Item extends ProducerState>(
+	rules: Rules<Item>,
+	state: BroadcastStoredState<Item>,
+	{ hasMatch }: { hasMatch: boolean },
+) {
+	return hasMatch || !rules.needsMatch?.(state.next);
 }
 
 /**
@@ -124,15 +146,17 @@ export function liveEndsAt<Item extends ProducerState>(
 
 /**
  * When the staged item goes on air by itself (epoch ms): its transition timed to hide the scene on air as that one
- * ends. `null` when it waits for a Take.
+ * ends. `null` when it waits for a Take or can't go on air (see {@link canTake}).
  */
 export function autoTakeAt<Item extends ProducerState>(
 	rules: Rules<Item>,
 	state: BroadcastStoredState<Item>,
+	{ hasMatch }: { hasMatch: boolean },
 ) {
 	const endsAt = liveEndsAt(rules, state);
 	if (
 		endsAt === null ||
+		!canTake(rules, state, { hasMatch }) ||
 		effectiveAdvance(rules, state.live, state.next) !== "timer" ||
 		state.takenAt === null
 	) {
@@ -185,7 +209,8 @@ export function effectiveAdvance<Item extends ProducerState>(
  * What the scanner seeing a game start or end changes. A start colors the game with the ink read (Color Lock carrying
  * over from the broadcast's previous game, see `InkColor.closestPair`), the teams keeping the sides they had earlier
  * in the set (the pair's first color always goes to the same lobby team). Either puts the
- * staged item on air when it waits for that event. `null` when nothing changes.
+ * staged item on air when it waits for that event, unless it can't go on air (see {@link canTake}). `null` when
+ * nothing changes.
  */
 export function applyGameSignal<Item extends ProducerState>(
 	rules: Rules<Item>,
@@ -223,8 +248,15 @@ export function applyGameSignal<Item extends ProducerState>(
 
 	const isWaitedFor =
 		effectiveAdvance(rules, state.live, state.next) === "game" &&
-		gameCue(rules, state.live, state.next) === signal.type;
-	if (isWaitedFor) return take(rules, colored, { liveResults, now });
+		gameCue(rules, state.live, state.next) === signal.type &&
+		canTake(rules, state, { hasMatch: liveResults !== null });
+	if (isWaitedFor) {
+		return take(rules, colored, {
+			liveResults,
+			now,
+			hasMatch: liveResults !== null,
+		});
+	}
 
 	return colored === state ? null : colored;
 }
@@ -273,18 +305,22 @@ export function editItem<Item extends ProducerState>(
 }
 
 /**
- * Queues the scene that logically follows the last staged item, with that item's settings. The new item's id is
- * `lastItemId + 1` of the state given.
+ * Queues the scene that logically follows the last staged item (see `Rules.sceneWithoutMatch`), with that item's
+ * settings. The new item's id is `lastItemId + 1` of the state given.
  */
 export function enqueue<Item extends ProducerState>(
 	rules: Rules<Item>,
 	state: BroadcastStoredState<Item>,
+	{ hasMatch }: { hasMatch: boolean },
 ): BroadcastStoredState<Item> {
 	const staged = stagedItems(state);
 	const id = state.lastItemId + 1;
 
 	return {
-		...withStaged(state, [...staged, followingItem(rules, staged.at(-1)!, id)]),
+		...withStaged(state, [
+			...staged,
+			followingItem(rules, staged.at(-1)!, { id, hasMatch }),
+		]),
 		lastItemId: id,
 	};
 }
@@ -330,12 +366,19 @@ function withStaged<Item extends ProducerState>(
 function followingItem<Item extends ProducerState>(
 	rules: Rules<Item>,
 	item: Item,
-	id: number,
+	{ id, hasMatch }: { id: number; hasMatch: boolean },
 ): Item {
-	const scene: Item["scene"] = rules.sceneAfter[item.scene as Item["scene"]];
+	const followed = rules.followedBy ? rules.followedBy(item) : item;
+	const after: Item["scene"] = rules.sceneAfter[item.scene as Item["scene"]];
+	const scene =
+		!hasMatch &&
+		rules.sceneWithoutMatch &&
+		rules.needsMatch?.({ ...followed, scene: after })
+			? rules.sceneWithoutMatch
+			: after;
 
 	return {
-		...(rules.followedBy ? rules.followedBy(item) : item),
+		...followed,
 		id,
 		scene,
 		durationMs: rules.defaultDurationMs(scene),
