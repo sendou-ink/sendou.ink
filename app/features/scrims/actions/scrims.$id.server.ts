@@ -37,7 +37,7 @@ export const action = defineAction(
 				errorToastIfFalsy(Scrim.isAccepted(post), "Scrim is not accepted");
 				errorToastIfFalsy(!post.canceled, "Scrim is already canceled");
 
-				if (databaseTimestampToDate(Scrim.getStartTime(post)) < new Date()) {
+				if (databaseTimestampToDate(post.startsAt) < new Date()) {
 					errorToast(
 						"Cannot cancel a scrim that was already scheduled to start",
 					);
@@ -226,7 +226,7 @@ async function loadMapByMapContext({
 
 	if (
 		Scrim.isTrackingLocked({
-			startTime: Scrim.getStartTime(post),
+			startTime: post.startsAt,
 			maps,
 			mapLists,
 		})

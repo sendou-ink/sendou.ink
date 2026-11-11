@@ -314,6 +314,56 @@ describe("findUserScrims", () => {
 	});
 });
 
+describe("findById", () => {
+	const WINDOW_OPENS_AT = dbTs(BOOKED_AT) - 3600;
+	const WINDOW_CLOSES_AT = dbTs(BOOKED_AT) + 3600;
+
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test.each([
+		{
+			why: "the accepted request's chosen start",
+			request: { isAccepted: true, startsAt: dbTs(BOOKED_AT) },
+			expected: {
+				startsAt: dbTs(BOOKED_AT),
+				rangeEndsAt: null,
+			},
+		},
+		{
+			why: "the window start when the accepted request chose none",
+			request: { isAccepted: true, startsAt: undefined },
+			expected: { startsAt: WINDOW_OPENS_AT, rangeEndsAt: null },
+		},
+		{
+			why: "the window while no request is accepted",
+			request: { isAccepted: false, startsAt: dbTs(BOOKED_AT) },
+			expected: {
+				startsAt: WINDOW_OPENS_AT,
+				rangeEndsAt: WINDOW_CLOSES_AT,
+			},
+		},
+	])("starts at $why", async ({ request, expected }) => {
+		const { id } = await ScrimPostFactory.create(
+			{
+				startsAt: WINDOW_OPENS_AT,
+				rangeEndsAt: WINDOW_CLOSES_AT,
+				users: [{ userId: users.id(1), isOwner: 1 }],
+			},
+			{
+				requests: [
+					{ ...request, users: [{ userId: users.id(2), isOwner: 1 }] },
+				],
+			},
+		);
+
+		const post = await ScrimPostRepository.findById(id);
+
+		expect(post).toMatchObject(expected);
+	});
+});
+
 describe("findAcceptedScrimsBetweenTwoTimestamps", () => {
 	beforeEach(async () => {
 		await users.create(2);

@@ -87,7 +87,7 @@ async function resolveMapByMap({
 	const currentMap = maps.find((m) => m.reportedAt === null) ?? null;
 	const viewerSide = Scrim.sideOfUser(post, user.id);
 	const locked = Scrim.isTrackingLocked({
-		startTime: Scrim.getStartTime(post),
+		startTime: post.startsAt,
 		maps,
 		mapLists,
 	});

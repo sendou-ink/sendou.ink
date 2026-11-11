@@ -7,6 +7,7 @@ export type ScrimSide = "ALPHA" | "BRAVO";
 
 export interface ScrimPost {
 	id: number;
+	/** When the scrim starts. For an accepted post this is the booked time, not the window start. */
 	startsAt: number;
 	rangeEndsAt: number | null;
 	createdAt: number;

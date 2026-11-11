@@ -432,13 +432,14 @@ const mapDBRowToScrimPost = (
 		canceled,
 	};
 
-	if (!Scrim.isAccepted(result)) {
+	const acceptedRequest = result.requests.find((r) => r.isAccepted);
+	if (!acceptedRequest) {
 		return result;
 	}
 
 	return {
 		...result,
-		startsAt: Scrim.getStartTime(result),
+		startsAt: acceptedRequest.startsAt ?? result.startsAt,
 		rangeEndsAt: null,
 	};
 };

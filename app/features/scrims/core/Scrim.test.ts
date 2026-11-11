@@ -6,7 +6,6 @@ import {
 	applyFilters,
 	defaultFilters,
 	filtersAreDefault,
-	getStartTime,
 	isAccepted,
 	isParticipating,
 	isTrackingLocked,
@@ -1021,40 +1020,6 @@ describe("Scrim.resolvePoolCode", () => {
 		[17, "SC9"],
 	])("post %i plays in pool %s", (postId, expected) => {
 		expect(resolvePoolCode(postId)).toBe(expected);
-	});
-});
-
-describe("Scrim.getStartTime", () => {
-	const POST_STARTS_AT = 1_000;
-	const REQUEST_STARTS_AT = 2_000;
-
-	const postWithRequest = (request: {
-		isAccepted: boolean;
-		startsAt: number | null;
-	}) =>
-		({
-			...createPost([{ id: 1 }], [{ ...request, users: [{ id: 2 }] }]),
-			startsAt: POST_STARTS_AT,
-		}) as ScrimPost;
-
-	test.each([
-		{
-			why: "the accepted request's chosen start",
-			request: { isAccepted: true, startsAt: REQUEST_STARTS_AT },
-			expected: REQUEST_STARTS_AT,
-		},
-		{
-			why: "the post's start when the accepted request chose none",
-			request: { isAccepted: true, startsAt: null },
-			expected: POST_STARTS_AT,
-		},
-		{
-			why: "the post's start while no request is accepted",
-			request: { isAccepted: false, startsAt: REQUEST_STARTS_AT },
-			expected: POST_STARTS_AT,
-		},
-	])("$why", ({ request, expected }) => {
-		expect(getStartTime(postWithRequest(request))).toBe(expected);
 	});
 });
 

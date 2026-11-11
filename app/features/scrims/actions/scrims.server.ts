@@ -190,9 +190,7 @@ export const action = defineAction(
 					);
 
 					try {
-						const bookedAt = databaseTimestampToDate(
-							Scrim.getStartTime(fullPost),
-						);
+						const bookedAt = databaseTimestampToDate(fullPost.startsAt);
 						const startTime = dateToDatabaseTimestamp(
 							sub(bookedAt, { hours: SCRIM.AUTO_CANCEL_WINDOW_HOURS }),
 						);

@@ -76,10 +76,7 @@ export function ScrimMatchBanner() {
 function ScrimMatchBannerTopRow() {
 	const data = useLoaderData<typeof loader>();
 
-	const acceptedRequest = data.post.requests.find((r) => r.isAccepted);
-	const scheduledAt = databaseTimestampToDate(
-		acceptedRequest?.startsAt ?? data.post.startsAt,
-	);
+	const scheduledAt = databaseTimestampToDate(data.post.startsAt);
 
 	return (
 		<MatchBannerTopRow>

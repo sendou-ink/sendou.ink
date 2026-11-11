@@ -65,12 +65,6 @@ export function participantIdsListFromAccepted(post: ScrimPost) {
 		.concat(acceptedRequest?.users.map((u) => u.id) ?? []);
 }
 
-/** The scrim's actual start: the accepted request's time when the post has a range (rangeEndsAt set), else the post's start. */
-export function getStartTime(post: ScrimPost): number {
-	const acceptedRequest = post.requests.find((r) => r.isAccepted);
-	return acceptedRequest?.startsAt ?? post.startsAt;
-}
-
 /** Display name of a scrim side: the team name, else "{ownerUsername}'s pickup". */
 export function sideDisplayName(side: {
 	team: { name: string } | null;
