@@ -410,6 +410,38 @@ describe("TournamentTeamRepository", () => {
 			).toContain(memberId());
 		});
 
+		test.each([
+			{ why: "joins past a not checked-in team", isCheckedIn: false },
+			{ why: "returns null for a checked-in team", isCheckedIn: true },
+		])("ignoring not checked-in teams $why", async ({ isCheckedIn }) => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+			await TournamentTeamFactory.create(
+				{
+					tournamentId: tournament.id,
+					memberUserIds: [memberId()],
+					team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+				},
+				{ isCheckedIn },
+			);
+			const team = await TournamentTeamFactory.create({
+				tournamentId: tournament.id,
+				memberUserIds: [ownerId()],
+				team: { name: "Team Teal", prefersNotToHost: 0, teamId: null },
+			});
+
+			const result = await withUserId(memberId(), () =>
+				TournamentTeamRepository.join({
+					newTeamId: team.id,
+					userId: memberId(),
+					ignoreNotCheckedInTeams: true,
+				}),
+			);
+
+			expect(result === null).toBe(isCheckedIn);
+		});
+
 		test("joining on your own is not marked as organizer added", async () => {
 			const tournament = await TournamentFactory.create({
 				authorId: organizerId(),

@@ -551,7 +551,11 @@ async function registrationClosedNow(
 /** Re-checked inside the writing transaction, the caller's check can be stale by the time it writes. LFG placeholder teams don't count. */
 async function isOnTournamentTeam(
 	trx: Transaction<DB>,
-	{ userId, tournamentId }: { userId: number; tournamentId: number },
+	{
+		userId,
+		tournamentId,
+		onlyCheckedInTeams = false,
+	}: { userId: number; tournamentId: number; onlyCheckedInTeams?: boolean },
 ) {
 	const membership = await trx
 		.selectFrom("TournamentTeamMember")
@@ -564,6 +568,19 @@ async function isOnTournamentTeam(
 		.where("TournamentTeamMember.userId", "=", userId)
 		.where("TournamentTeam.tournamentId", "=", tournamentId)
 		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.$if(onlyCheckedInTeams, (qb) =>
+			qb.where(({ exists, selectFrom }) =>
+				exists(
+					selectFrom("TournamentTeamCheckIn")
+						.select("TournamentTeamCheckIn.tournamentTeamId")
+						.whereRef(
+							"TournamentTeamCheckIn.tournamentTeamId",
+							"=",
+							"TournamentTeam.id",
+						),
+				),
+			),
+		)
 		.executeTakeFirst();
 
 	return Boolean(membership);
@@ -824,6 +841,7 @@ export function join({
 	userId,
 	isOrganizerAdded = false,
 	allowOtherTeamMembership = false,
+	ignoreNotCheckedInTeams = false,
 }: {
 	/** Team to delete as the user joins, e.g. a solo team they leave behind. */
 	previousTeamIdToDelete?: number;
@@ -833,6 +851,8 @@ export function join({
 	isOrganizerAdded?: boolean;
 	/** Lets the user stay on their other team of the tournament too, e.g. subbing in after the start. */
 	allowOtherTeamMembership?: boolean;
+	/** Only checked-in teams count as another team, e.g. after the start when the rest are out of the bracket. */
+	ignoreNotCheckedInTeams?: boolean;
 }): Promise<number[] | null> {
 	return db.transaction().execute(async (trx) => {
 		const roomsChangedUserIds: number[] = [];
@@ -863,7 +883,11 @@ export function join({
 
 		if (
 			!allowOtherTeamMembership &&
-			(await isOnTournamentTeam(trx, { userId, tournamentId }))
+			(await isOnTournamentTeam(trx, {
+				userId,
+				tournamentId,
+				onlyCheckedInTeams: ignoreNotCheckedInTeams,
+			}))
 		) {
 			return null;
 		}

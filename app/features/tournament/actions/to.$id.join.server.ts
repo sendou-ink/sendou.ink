@@ -70,6 +70,7 @@ export const action = defineAction(async ({ params, url }) => {
 	const joinedUserIds = await TournamentTeamRepository.join({
 		userId: user.id,
 		newTeamId: teamToJoin.id,
+		ignoreNotCheckedInTeams: tournament.hasStarted,
 	});
 	ChatSystemMessage.notifyRoomsChanged([
 		...leftLfgUserIds,
