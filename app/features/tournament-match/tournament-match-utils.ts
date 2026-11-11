@@ -1,6 +1,4 @@
 import type { TFunction } from "i18next";
-import * as R from "remeda";
-import type { TournamentRoundMaps } from "~/db/tables-json";
 import { CHANNEL_PREFIX } from "~/features/events/events-types";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
@@ -72,24 +70,4 @@ export function pickInfoText({
 
 	logger.error(`Unknown source: ${String(map.source)}`);
 	return "";
-}
-
-export function isSetOverByResults({
-	results,
-	count,
-	countType,
-}: {
-	results: Array<{ winnerTeamId: number }>;
-	count: number;
-	countType: TournamentRoundMaps["type"];
-}) {
-	const winCounts = R.countBy(results, (r) => r.winnerTeamId);
-
-	if (countType === "PLAY_ALL") {
-		return R.sum(Object.values(winCounts)) === count;
-	}
-
-	const maxWins = Math.max(...Object.values(winCounts));
-
-	return maxWins >= Math.ceil(count / 2);
 }

@@ -68,7 +68,7 @@ export function isSetOverByScore({
 	}
 
 	const matchOverAtXWins = Math.ceil(count / 2);
-	return scores[0] === matchOverAtXWins || scores[1] === matchOverAtXWins;
+	return scores[0] >= matchOverAtXWins || scores[1] >= matchOverAtXWins;
 }
 
 /** `undefined` while the set is not over (or a play all set ended in a tie). */

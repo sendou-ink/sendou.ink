@@ -4,7 +4,6 @@ import type {
 	ActionType,
 	WhoSide,
 } from "~/features/tournament-bracket/tournament-bracket-constants";
-import { isSetOverByResults } from "~/features/tournament-match/tournament-match-utils";
 import type {
 	ModeShort,
 	ModeWithStage,
@@ -15,6 +14,7 @@ import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import { assertUnreachable } from "~/utils/types";
+import * as Engine from "./engine";
 
 export const types = [
 	"COUNTERPICK",
@@ -56,9 +56,7 @@ export function turnOf({
 	switch (maps.pickBan) {
 		case "BAN_2": {
 			if (!mapList) return null;
-			if (
-				isSetOverByResults({ count: maps.count, results, countType: maps.type })
-			) {
+			if (isSetOver({ results, maps })) {
 				return null;
 			}
 
@@ -87,9 +85,7 @@ export function turnOf({
 			// match was completed without per-game results (e.g. drop-out)
 			if (results.length === 0) return null;
 
-			if (
-				isSetOverByResults({ count: maps.count, results, countType: maps.type })
-			) {
+			if (isSetOver({ results, maps })) {
 				return null;
 			}
 
@@ -123,9 +119,7 @@ function turnOfCustom({
 	pickBanEventCount?: number;
 	matchId: number;
 }): TurnOfResult | null {
-	if (
-		isSetOverByResults({ count: maps.count, results, countType: maps.type })
-	) {
+	if (isSetOver({ results, maps })) {
 		return null;
 	}
 
@@ -844,4 +838,22 @@ export function validateCustomFlowSection(
 	}
 
 	return errors;
+}
+
+function isSetOver({
+	results,
+	maps,
+}: {
+	results: Array<{ winnerTeamId: number }>;
+	maps: TournamentRoundMaps;
+}) {
+	const [firstWins = 0, secondWins = 0] = Object.values(
+		R.countBy(results, (r) => r.winnerTeamId),
+	);
+
+	return Engine.isSetOverByScore({
+		scores: [firstWins, secondWins],
+		count: maps.count,
+		countType: maps.type,
+	});
 }
