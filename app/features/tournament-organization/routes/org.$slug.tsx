@@ -9,7 +9,7 @@ import {
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Link, useFetcher, useLoaderData } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -36,15 +36,6 @@ import {
 	tournamentOrganizationPage,
 	tournamentOrganizationStatsPage,
 } from "~/features/tournament-organization/tournament-organization-urls";
-import {
-	Trophy,
-	TrophyContextProvider,
-	TrophyGrid,
-} from "~/features/trophies/components/Trophy";
-import { TrophyShowcaseModal } from "~/features/trophies/components/TrophyShowcase";
-import { TrophyTournamentHistory } from "~/features/trophies/components/TrophyTournamentHistory";
-import type { TrophyTournamentsLoaderData } from "~/features/trophies/routes/trophies.$id.tournaments";
-import { useProgressiveRender } from "~/features/trophies/trophies-utils";
 import { SendouForm } from "~/form/SendouForm";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
@@ -57,7 +48,6 @@ import {
 	navIconUrl,
 	smallImageUrl,
 	tournamentPage,
-	trophyTournamentsPage,
 } from "~/utils/urls";
 import { action } from "../actions/org.$slug.server";
 import { EventCalendar } from "../components/EventCalendar";
@@ -69,6 +59,13 @@ import { tournamentOrganizationSearchParams } from "../tournament-organization-s
 import styles from "./org.$slug.module.css";
 
 export { action, loader };
+
+// lazy so the WebGL trophy renderer only loads for the few organizations with trophies
+const OrgTrophyGrid = React.lazy(() =>
+	import("../components/OrgTrophyGrid").then((module) => ({
+		default: module.OrgTrophyGrid,
+	})),
+);
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.loaderData) return [];
@@ -311,7 +308,9 @@ function RewardsPanel({
 					<Divider className="mt-2" smallText>
 						{t("trophies:title")}
 					</Divider>
-					<RewardsTrophyGrid trophies={trophies} />
+					<React.Suspense fallback={null}>
+						<OrgTrophyGrid trophies={trophies} />
+					</React.Suspense>
 				</>
 			) : null}
 			{badges.length > 0 ? (
@@ -728,72 +727,6 @@ function EventLeaderboardRow({
 				<Placement placement={2} /> ×{entry.placements.second}
 				<Placement placement={3} /> ×{entry.placements.third}
 			</div>
-		</div>
-	);
-}
-
-function RewardsTrophyGrid({
-	trophies,
-}: {
-	trophies: SerializeFrom<typeof loader>["trophies"];
-}) {
-	const visibleCount = useProgressiveRender(trophies.length, "");
-	const [openTrophy, setOpenTrophy] = React.useState<
-		SerializeFrom<typeof loader>["trophies"][number] | null
-	>(null);
-
-	return (
-		<TrophyContextProvider>
-			<TrophyGrid>
-				{trophies.map((trophy, i) => (
-					<button
-						key={trophy.id}
-						type="button"
-						onClick={() => setOpenTrophy(trophy)}
-						aria-label={trophy.name}
-					>
-						<Trophy
-							model={trophy.model}
-							tier={trophy.tier}
-							tentativeTier={trophy.tentativeTier}
-							preview
-							deferred={i >= visibleCount}
-						/>
-					</button>
-				))}
-			</TrophyGrid>
-			{openTrophy ? (
-				<TrophyShowcaseModal
-					trophy={openTrophy}
-					onClose={() => setOpenTrophy(null)}
-				>
-					<TrophyModalTournaments
-						key={openTrophy.id}
-						trophyId={openTrophy.id}
-					/>
-				</TrophyShowcaseModal>
-			) : null}
-		</TrophyContextProvider>
-	);
-}
-
-function TrophyModalTournaments({ trophyId }: { trophyId: number }) {
-	const { t } = useTranslation(["trophies"]);
-	const fetcher = useFetcher<TrophyTournamentsLoaderData>();
-
-	const loadedRef = React.useRef(false);
-	React.useEffect(() => {
-		if (loadedRef.current) return;
-		loadedRef.current = true;
-		fetcher.load(trophyTournamentsPage(trophyId));
-	}, [fetcher.load, trophyId]);
-
-	if (!fetcher.data || fetcher.data.tournaments.length === 0) return null;
-
-	return (
-		<div className={styles.trophyModalTournaments}>
-			<Divider smallText>{t("trophies:details.tournamentHistory")}</Divider>
-			<TrophyTournamentHistory tournaments={fetcher.data.tournaments} />
 		</div>
 	);
 }

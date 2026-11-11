@@ -5,7 +5,7 @@ import {
 	Link2 as LinkIcon,
 	SquareArrowOutUpRight,
 } from "lucide-react";
-import type * as React from "react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { BuildCard } from "~/components/BuildCard";
@@ -25,7 +25,6 @@ import { DiscordIcon } from "~/components/icons/Discord";
 import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { LocaleTime } from "~/components/LocaleTime";
-import { Markdown } from "~/components/Markdown";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import { UserLink } from "~/components/UserLink";
@@ -41,7 +40,6 @@ import { DivisionImage } from "~/features/top-search/components/DivisionImage";
 import { topSearchPlayerPage } from "~/features/top-search/top-search-urls";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
-import { TrophyDisplay } from "~/features/trophies/components/TrophyDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
@@ -77,6 +75,18 @@ import * as Countdown from "../core/widgets/countdown";
 import type { LoadedWidget } from "../core/widgets/types";
 import styles from "./Widget.module.css";
 
+// lazy so the markdown parser and WebGL trophy renderer only load for the few profiles showing them
+const Markdown = React.lazy(() =>
+	import("~/components/Markdown").then((module) => ({
+		default: module.Markdown,
+	})),
+);
+const TrophyDisplay = React.lazy(() =>
+	import("~/features/trophies/components/TrophyDisplay").then((module) => ({
+		default: module.TrophyDisplay,
+	})),
+);
+
 export function Widget({
 	widget,
 	user,
@@ -98,12 +108,16 @@ export function Widget({
 			case "bio-md":
 				return widget.data.bio ? (
 					<article className={styles.mdBio}>
-						<Markdown>{widget.data.bio}</Markdown>
+						<React.Suspense fallback={null}>
+							<Markdown>{widget.data.bio}</Markdown>
+						</React.Suspense>
 					</article>
 				) : null;
 			case "trophies-owned":
 				return widget.data.length === 0 ? null : (
-					<TrophyDisplay trophies={widget.data} userId={user.id} />
+					<React.Suspense fallback={null}>
+						<TrophyDisplay trophies={widget.data} userId={user.id} />
+					</React.Suspense>
 				);
 			case "badges-owned":
 				return widget.data.length === 0 ? null : (
@@ -356,7 +370,9 @@ export function Widget({
 			case "markdown":
 				return widget.data.content ? (
 					<article>
-						<Markdown>{widget.data.content}</Markdown>
+						<React.Suspense fallback={null}>
+							<Markdown>{widget.data.content}</Markdown>
+						</React.Suspense>
 					</article>
 				) : null;
 			default:

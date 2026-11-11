@@ -61,15 +61,3 @@
 	gap: var(--s-2);
 	padding-inline-start: var(--s-3);
 }
-
-.trophyModalTournaments {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-2);
-	opacity: 1;
-	transition: opacity 0.2s ease;
-
-	@starting-style {
-		opacity: 0;
-	}
-}

@@ -13,6 +13,7 @@ import {
 	test,
 } from "./helpers/playwright";
 import { NotificationPopover } from "./pages/layout/notification-popover";
+import { OrganizationPage } from "./pages/org/organization-page";
 import { NewTrophyPage } from "./pages/trophies/new-trophy-page";
 import { TrophiesPage } from "./pages/trophies/trophies-page";
 import { UserPage } from "./pages/user/user-page";
@@ -51,6 +52,41 @@ test.describe("Trophies", () => {
 		await expect(page.getByText("View trophy page")).toBeVisible();
 		await expect(
 			page.getByRole("dialog").locator(`a[href^='/to/${tournament.id}']`),
+		).toBeVisible();
+	});
+
+	test("shows an organization's trophies with their tournament history", async ({
+		page,
+		factories,
+	}) => {
+		test.slow();
+
+		const organization = await factories.TournamentOrganizationFactory.create({
+			name: ORGANIZATION_NAME,
+			ownerId: ADMIN_ID,
+		});
+		const trophy = await factories.TrophyFactory.create({
+			name: TROPHY_NAME,
+			organizationId: organization.id,
+		});
+		const tournament = await playTrophyTournament(factories, {
+			trophyId: trophy.id,
+			organizationId: organization.id,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const organizationPage = new OrganizationPage(page);
+		await organizationPage.goto(organization.slug);
+		await organizationPage.openTrophy(TROPHY_NAME);
+
+		await expect(
+			organizationPage.locators.trophyDialog.getByText("View trophy page"),
+		).toBeVisible();
+		await expect(
+			organizationPage.locators.trophyDialog.locator(
+				`a[href^='/to/${tournament.id}']`,
+			),
 		).toBeVisible();
 	});
 

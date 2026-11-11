@@ -28,6 +28,8 @@ export class OrganizationPage {
 			statsButton: page.getByTestId("org-stats-button"),
 			bannedUsersTab: page.getByTestId("banned-users-tab"),
 			adminTab: page.getByRole("tab", { name: "Admin" }),
+			rewardsTab: page.getByRole("tab", { name: "Rewards" }),
+			trophyDialog: page.getByRole("dialog"),
 			newBanButton: page.getByRole("button", { name: "New ban" }),
 			unbanButton: page.getByRole("button", { name: "Unban" }),
 			bannedUsersTable: page.getByRole("table"),
@@ -57,6 +59,11 @@ export class OrganizationPage {
 		await waitForPOSTResponse(this.page, () =>
 			this.isEstablishedForm.check("isEstablished"),
 		);
+	}
+
+	async openTrophy(trophyName: string) {
+		await this.locators.rewardsTab.click();
+		await this.page.getByRole("button", { name: trophyName }).click();
 	}
 
 	async openBannedUsers() {

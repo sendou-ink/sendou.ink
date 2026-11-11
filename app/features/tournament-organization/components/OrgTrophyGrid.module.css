@@ -1,0 +1,11 @@
+.modalTournaments {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	opacity: 1;
+	transition: opacity 0.2s ease;
+
+	@starting-style {
+		opacity: 0;
+	}
+}
