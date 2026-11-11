@@ -1,0 +1,77 @@
+---
+title: "Mutation testing"
+description: "Finding rules the unit tests would not notice breaking, with pnpm mutate."
+---
+
+Passing tests say the code runs, not that a mistake in it would be caught. `pnpm mutate` checks the second: it changes the source one small step at a time (a _mutant_: `<` to `<=`, an `if` forced true, a dropped call) and runs the unit tests against each. A mutant no test notices is a gap, either an unprotected rule or code that does nothing.
+
+It is an on-demand audit for the pure rule modules, not a part of `pnpm run checks`.
+
+```bash
+# one module, the tests are picked for you
+pnpm mutate app/features/tournament-bracket/core/PickBan.ts
+
+# only the mutants of some lines, e.g. the function you just changed
+pnpm mutate app/features/tournament-bracket/core/PickBan.ts --lines 542-620,734
+
+# against the tests you name
+pnpm mutate app/features/mmr/mmr-utils.ts app/features/mmr/mmr-utils.test.ts
+
+# a directory, or everything recommended
+pnpm mutate app/features/scrims/core
+pnpm mutate --recommended
+```
+
+`pnpm mutate --list` prints the recommended targets, kept in [scripts/mutation/targets.ts](https://github.com/sendou-ink/sendou.ink/blob/main/scripts/mutation/targets.ts): the modules whose mistakes show up as a wrong pairing, an illegal map or a skewed rating rather than a crash. Run it on them when a change touches their rules.
+
+## How it works
+
+1. **Mutants** are planned from the AST ([mutants.ts](https://github.com/sendou-ink/sendou.ink/blob/main/scripts/mutation/mutants.ts)): comparison, logical and arithmetic operator swaps, a dropped `!`, `if` and ternary conditions forced `true` and `false`, flipped booleans, numbers plus one and dropped call statements.
+2. **Candidate tests** are the unit test files importing the target, directly or through other modules, unless you list test files yourself. Database-backed tests are included: every test worker builds its own in-memory database, so they run in parallel like the rest.
+3. **The baseline** runs the candidates once against the unchanged source, instrumented to record which test files execute which functions. A candidate failing here is reported and left out.
+4. **Each mutant** gets a Vitest process of its own, run with `--bail 1` against only the test files executing the mutated function, the nearest ones (fewest imports between the test and the target) first. A failing test catches the mutant, and so does a run that takes several times its baseline (a mutant looping forever).
+
+A function of a widely imported module is executed by a hundred or more test files, most of them route and repository tests far from it. A mutant is therefore run against at most the 20 nearest, a survivor that had more is marked in the report. `--max-tests 0` runs them all, `--max-tests 50` moves the limit.
+
+The working tree is never touched: a Vite plugin of [scripts/mutation/vitest.config.ts](https://github.com/sendou-ink/sendou.ink/blob/main/scripts/mutation/vitest.config.ts) serves the changed source of the one target file.
+
+Left alone as noise: type positions, imports, string concatenation, `invariant`, `logger` and `assertUnreachable` calls, thrown errors, the default of a `?? 0` and the numbers of module level constants (tuning values and data tables, their functions are still mutated).
+
+## The report
+
+The terminal lists what was not caught, grouped by function, as the line, the change and the code before and after. The same with every mutant's outcome, the test that caught it and the surrounding lines is written to `scripts/output/mutation/<target>.json` (gitignored).
+
+| Outcome | Meaning |
+| --- | --- |
+| caught | A test failed, or the run timed out |
+| survived | Tests execute the function, all of them still pass |
+| without coverage | No test executes the function at all |
+| ignored | Under a `mutation-ignore` comment |
+
+The score is the share caught of everything not ignored. It is a way to compare a module before and after, not a number to chase.
+
+## What to do with a survivor
+
+Decide which one it is:
+
+1. **A rule a user could notice is unprotected.** Add a test. It qualifies only if you can say in one plain sentence what a player or organizer would see go wrong ("a team that already had a bye gets a second one"), and that sentence is the test's name. Test through the module's public functions with realistic input and assert on the outcome (pairings, legal maps, standings order, the direction of a rating change), never on a private helper, an intermediate value or an exact weight. One test per rule, not per mutant.
+2. **The code is dead or redundant.** Remove it.
+3. **Noise or an equivalent mutant**: the change cannot alter the outcome (`i < length` to `i <= length` reading one `undefined`). Leave it, or ignore it with a reason.
+4. **Catching it would mean testing an implementation detail**: a tuning constant, the exact formula of a heuristic. Leave it. If the heuristic matters, test the property it exists for.
+
+If the surviving mutant looks like the correct behaviour and the code like the bug, do not write a test locking the code in.
+
+## Ignoring mutants
+
+A `mutation-ignore` comment with a reason takes the mutants of the statement, declaration or property right below it out of the run and the score:
+
+```ts
+// mutation-ignore: weights are tuning, the pairing tests assert the properties they exist for
+const weight = 75 - 75 / (scoreGroupIndex + 2);
+```
+
+Above a function it covers the whole function. Keep them rare, a survivor left in the report costs nothing.
+
+## Runtime
+
+On an 18 core machine a mutant takes about 0.4 seconds of wall time on average with the default concurrency (cores - 2), a module of 350 mutants about two minutes. Survivors are the expensive ones as every test file executing the function runs to the end. Use `--lines` while working on one function.

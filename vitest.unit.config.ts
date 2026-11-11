@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { configDefaults, defineConfig } from "vitest/config";
 
-const UNIT_TEST_GLOB = "**/*.test.{ts,tsx}";
+export const UNIT_TEST_GLOB = "**/*.test.{ts,tsx}";
 
 const UNIT_TEST_EXCLUDE = [
 	...configDefaults.exclude,

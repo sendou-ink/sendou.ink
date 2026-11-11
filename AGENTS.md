@@ -17,6 +17,7 @@
 - `pnpm run typecheck` runs TypeScript type checking
 - `pnpm run biome:fix` runs Biome code formatter and linter
 - `pnpm run test:unit:browser` runs all unit tests and browser tests
+- `pnpm mutate <source file> [test files...]` is on-demand mutation testing for the pure rule modules (`pnpm mutate --list`): it breaks the source one small step at a time and lists the breakages no unit test notices, see [mutation-testing.mdx](./docs/site/src/content/docs/dev/mutation-testing.mdx). Not part of `checks`
 - `pnpm run test:e2e` runs all e2e tests
 - `pnpm run test:e2e:flaky-detect` runs all e2e tests and repeats each 10 times
 - `pnpm run i18n:sync` syncs translation jsons with English
