@@ -158,43 +158,6 @@ export const BROADCAST_REHEARSE_MESSAGE = "broadcast:rehearse";
 /** Overlay canvas size, OBS browser sources are set to this. */
 export const BROADCAST_CANVAS = { width: 1920, height: 1080 } as const;
 
-// xxx: maybe some sort of grid system in the theming so people can also move elements around
-/** CSS custom properties the overlays are themed with, overridable from the custom CSS on `[data-broadcast]`. */
-export const BROADCAST_THEME_TOKENS = [
-	"--bc-bg",
-	"--bc-surface",
-	"--bc-surface-high",
-	"--bc-border",
-	"--bc-text",
-	"--bc-text-muted",
-	"--bc-accent",
-	"--bc-accent-text",
-	"--bc-alert",
-	"--bc-team-a",
-	"--bc-team-b",
-	"--bc-team-a-text",
-	"--bc-team-b-text",
-	"--bc-font-display",
-	"--bc-font-body",
-	"--bc-weight-semibold",
-	"--bc-weight-bold",
-	"--bc-weight-heavy",
-	"--bc-radius",
-	"--bc-radius-small",
-	"--bc-border-width",
-	"--bc-ease",
-	"--bc-ease-in",
-	"--bc-stinger-ease",
-	"--bc-enter-duration",
-	"--bc-enter-distance",
-	"--bc-stagger",
-	"--bc-transition-duration",
-	"--bc-stinger-duration",
-	"--bc-stinger-covered-at",
-	"--bc-stinger-reveal-at",
-	"--bc-stinger-entrance-at",
-] as const;
-
 /** Posted by the designer to its canvas with the state to render, see `BroadcastDesignMessage`. */
 export const BROADCAST_DESIGN_MESSAGE = "broadcast:design";
 
