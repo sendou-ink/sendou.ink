@@ -5,6 +5,7 @@ import type { ScanEvent } from "../../components/session-data";
 import type { ExportClip } from "../../core/csv/matches";
 import type { DeathData } from "../../core/detectors/death/index";
 import type { ScoreboardData } from "../../core/detectors/scoreboard/index";
+import * as EventVersion from "../../core/event-version";
 import { buildScannerMatches } from "../../core/match-builder";
 
 const WEBP_BYTES = new Uint8Array([1, 2, 3, 4]);
@@ -102,6 +103,9 @@ describe("matchZip", () => {
 			["Death", "frames/002-Death-1m02s"],
 			["Scoreboard", "frames/003-Scoreboard-5m00s"],
 		]);
+		expect(events.map((event: { v: number }) => event.v)).toEqual(
+			events.map(() => EventVersion.CURRENT),
+		);
 	});
 
 	test("includes the built match", async () => {

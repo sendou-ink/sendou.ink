@@ -4,13 +4,16 @@
  * (`pnpm scanner:tape`). They hold no images, so everything downstream of the
  * detectors can be tested against real footage in the unit project.
  *
- * A tape is a JSON Lines file under `tests/tapes/`: a header line, then one
- * event per line in the order the timeline held them. Fractions are rounded to
+ * A tape is a JSON Lines file under `tests/tapes/`: a header line (`events` is
+ * the `core/event-version.ts` version its events were recorded at; they are
+ * upgraded as the tape is read), then one event per line in the order the
+ * timeline held them. Fractions are rounded to
  * four decimals and only the fields the builders read are kept.
  */
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { DetectedEvent } from "../core/detectors/types";
+import * as EventVersion from "../core/event-version";
 
 const TAPE_VERSION = 1;
 const TAPE_EXTENSION = ".tape.jsonl";
@@ -40,7 +43,12 @@ export function serialize({
 	events,
 }: Omit<Tape, "name">): string {
 	const lines = [
-		JSON.stringify({ tape: TAPE_VERSION, description, source }),
+		JSON.stringify({
+			tape: TAPE_VERSION,
+			events: EventVersion.CURRENT,
+			description,
+			source,
+		}),
 		...events.map(({ type, t, detectedAt, confidence, data }) =>
 			JSON.stringify({ type, t, detectedAt, confidence, data }, roundFraction),
 		),
@@ -56,12 +64,13 @@ export function parse(name: string, text: string): Tape {
 	if (!isHeader(header)) {
 		throw new Error(`tape ${name} has no version ${TAPE_VERSION} header`);
 	}
-	const events = eventLines.map((line, index) => {
+	const events = eventLines.flatMap((line, index) => {
 		const event: unknown = JSON.parse(line);
 		if (!isEvent(event)) {
 			throw new Error(`tape ${name} line ${index + 2} is not an event`);
 		}
-		return event;
+		const upgraded = EventVersion.upgradedFrom(header.events, event);
+		return upgraded ? [upgraded] : [];
 	});
 	return {
 		name,
@@ -107,10 +116,11 @@ function roundFraction(_key: string, value: unknown): unknown {
 
 function isHeader(
 	value: unknown,
-): value is { description: string; source: string } {
+): value is { events?: number; description: string; source: string } {
 	return (
 		isRecord(value) &&
 		value.tape === TAPE_VERSION &&
+		(value.events === undefined || Number.isSafeInteger(value.events)) &&
 		typeof value.description === "string" &&
 		typeof value.source === "string"
 	);

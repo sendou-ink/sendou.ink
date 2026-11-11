@@ -8,6 +8,7 @@
  */
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
 import type { DetectedEvent } from "../core/detectors/types";
+import * as EventVersion from "../core/event-version";
 import { expiredSessionEventIds } from "../core/sessions";
 import { EVENTS_STORE, FRAMES_STORE, readwrite, tx } from "./db";
 import { trimFrames } from "./frames";
@@ -31,6 +32,8 @@ export interface SendStatus {
 
 export interface StoredEvent {
 	id?: number;
+	/** `core/event-version.ts` version `type` and `data` were written at; absent on events stored before the stamp */
+	v?: number;
 	type: string;
 	/** seconds — wall-clock seconds for live captures, seconds into the file for VoDs */
 	t: number;
@@ -56,6 +59,7 @@ export async function saveEvent(
 ): Promise<number> {
 	const record: StoredEvent = {
 		...(reuseId !== undefined ? { id: reuseId } : null),
+		v: EventVersion.CURRENT,
 		type: event.type,
 		t: event.t,
 		detectedAt: Date.now(),
@@ -155,9 +159,12 @@ export async function deleteEvents(ids: number[]): Promise<void> {
 	});
 }
 
-/** Events detected at or after `since` (wall-clock ms), every event by default. */
-export function listEvents(since = 0): Promise<StoredEvent[]> {
-	return tx(
+/**
+ * Events detected at or after `since` (wall-clock ms), every event by default,
+ * in the current event shapes (`EventVersion.readable`).
+ */
+export async function listEvents(since = 0): Promise<StoredEvent[]> {
+	const events = await tx(
 		EVENTS_STORE,
 		"readonly",
 		(store) =>
@@ -165,9 +172,10 @@ export function listEvents(since = 0): Promise<StoredEvent[]> {
 				.index("detectedAt")
 				.getAll(IDBKeyRange.lowerBound(since)) as IDBRequest<StoredEvent[]>,
 	);
+	return EventVersion.readable(events);
 }
 
-/** The stored events among `ids`, read over their id range; ids no longer stored are left out. */
+/** The stored events among `ids`, read over their id range like `listEvents` reads; ids no longer stored are left out. */
 export async function getEvents(
 	ids: readonly number[],
 ): Promise<StoredEvent[]> {
@@ -184,7 +192,9 @@ export async function getEvents(
 				),
 			) as IDBRequest<StoredEvent[]>,
 	);
-	return inRange.filter((event) => wanted.has(event.id!));
+	return EventVersion.readable(
+		inRange.filter((event) => wanted.has(event.id!)),
+	);
 }
 
 /** The event's full-res analyzed frame, or undefined when none was stored. */

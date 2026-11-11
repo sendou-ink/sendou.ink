@@ -10,6 +10,7 @@
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
+import * as EventVersion from "../../app/features/scanner/core/event-version.ts";
 import { extractGameDataZip } from "../../app/features/scanner/node/game-data-zip.ts";
 import * as Tape from "../../app/features/scanner/tests/tape.ts";
 
@@ -27,9 +28,11 @@ try {
 		.flatMap((zipPath, index) => {
 			const outDir = join(scratchDir, String(index));
 			extractGameDataZip(zipPath, outDir);
-			return JSON.parse(
-				readFileSync(join(outDir, "events.json"), "utf8"),
-			) as Tape.TapeEvent[];
+			return EventVersion.readable(
+				JSON.parse(
+					readFileSync(join(outDir, "events.json"), "utf8"),
+				) as (Tape.TapeEvent & { v?: number })[],
+			);
 		})
 		.toSorted((a, b) => a.t - b.t);
 	const path = Tape.save({

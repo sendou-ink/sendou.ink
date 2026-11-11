@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import * as EventVersion from "../core/event-version";
 import type { ScannerMatch } from "../core/scanner-match";
 import {
 	type CompactedMatch,
@@ -87,6 +88,20 @@ describe("listCompactedMatches()", () => {
 		expect(
 			(await listCompactedMatches(2_000)).map((match) => match.id),
 		).toEqual([20, 30]);
+	});
+});
+
+describe("listCompactedMatches() event versions", () => {
+	beforeEach(clearAll);
+
+	test("reads sources stored before the version stamp and leaves out a newer version's", async () => {
+		const game = compacted(10, 1_000, 0);
+		game.sources[1]!.v = EventVersion.CURRENT + 1;
+		await compactSessions([game], []);
+
+		const [listed] = await listCompactedMatches();
+
+		expect(listed!.sources.map((source) => source.id)).toEqual([10]);
 	});
 });
 

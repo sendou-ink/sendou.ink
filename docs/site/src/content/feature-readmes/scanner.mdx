@@ -68,6 +68,22 @@ opens it, for anyone, through the same handoff Inspect uses.
   and a match whose events are unchanged objects is reused rather than
   rebuilt (`MatchBuildCache`); live sends take their matches from the feed.
   So neither the store's size nor a long session costs much per saved event.
+- **Event versions** (`core/event-version.ts`): stored events outlive the
+  code that wrote them and are rebuilt into matches by whatever is deployed
+  now, so every record (`events`, `vod-events`, a compacted game's sources,
+  a Game data zip's `events.json`, a tape's header) carries the version `v`
+  its `type`/`data` were written at; a record without one is version 1. The
+  store reads (`listEvents`, `getEvents`, `loadVodEvents`,
+  `listCompactedMatches`) and the tape loader hand back
+  `EventVersion.readable` events: older ones run through the upgrade steps
+  in memory (nothing is rewritten in the store), ones a step drops or that
+  newer code wrote (another tab after a deploy) are left out and stay
+  stored until retention takes them. **Changing an event's shape so that a
+  reader of the old shape breaks (renamed, removed or retyped field, renamed
+  type) means bumping `CURRENT` and adding the step from the previous
+  version**; an added optional field needs neither, and IndexedDB's
+  `DB_VERSION` is only for the stores themselves. A compacted game's `match`
+  is frozen as built and not upgraded.
 - **Compaction** (`events-feed.ts` on refresh, `store/compacted-matches.ts`):
   72 h after a session ends its games are frozen as built, one record each,
   keeping every source event except the per-second Objective/PlayerStatus/
@@ -934,8 +950,9 @@ a diff to read.
 - Running the test writes a new tape's golden file. After a builder change
   that is meant to move the output, rerun it with `-u` and review the diff.
 - A detector change does not touch the tapes: they keep the events as they
-  were read back then. Record a tape again only when its events no longer
-  resemble what the detectors emit (a changed event shape).
+  were read back then. A changed event shape does not either: the header's
+  `events` is the event version the tape was recorded at (absent = 1) and
+  `Tape.parse` upgrades the events through `core/event-version.ts`.
 
 ## Fixtures
 
