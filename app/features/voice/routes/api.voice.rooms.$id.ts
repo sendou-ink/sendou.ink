@@ -2,13 +2,13 @@ import { addMinutes, subHours } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
-import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import * as ChatRoomResolver from "~/features/chat/ChatRoomResolver.server";
 import { defineAction } from "~/form/define-action.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import {
+	badRequest,
 	badRequestIfFalsy,
 	forbidden,
 	notFoundIfNullish,
@@ -18,6 +18,7 @@ import { idObject } from "~/utils/schema";
 import * as Daily from "../core/Daily.server";
 import * as VoiceAccess from "../core/VoiceAccess";
 import * as VoiceAvailability from "../core/VoiceAvailability.server";
+import * as VoiceJoin from "../core/VoiceJoin.server";
 import * as VoicePresence from "../core/VoicePresence.server";
 import * as VoiceRepository from "../VoiceRepository.server";
 import {
@@ -43,10 +44,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return {
 		available,
-		canJoin:
-			available &&
-			VoiceAccess.canJoin(room, user.id) &&
-			!(await VoiceRepository.hasBeenKicked({ roomId, userId: user.id })),
+		canJoin: available && (await VoiceJoin.joinBlock(room, user.id)) === null,
 		canKick: available && VoiceAccess.canKick(room, user.id),
 		userIds,
 		memberUserIds: room.participantUserIds,
@@ -69,15 +67,10 @@ export const action = defineAction(
 
 		switch (data._action) {
 			case "JOIN": {
-				if (
-					!VoiceAccess.canJoin(room, user.id) ||
-					userIsBanned(user.id) ||
-					(await VoiceRepository.hasBeenKicked({ roomId, userId: user.id }))
-				) {
-					forbidden();
-				}
+				const block = await VoiceJoin.joinBlock(room, user.id);
+				if (block === "UNAVAILABLE") badRequest();
+				if (block) forbidden();
 				const feature = badRequestIfFalsy(VoiceAccess.featureOf(room));
-				badRequestIfFalsy(await VoiceAvailability.isAvailable(feature));
 
 				const tokenExpiresAt = Math.min(
 					dateToDatabaseTimestamp(
@@ -133,10 +126,12 @@ export const action = defineAction(
 				const session = notFoundIfNullish(
 					await VoiceRepository.findOwnSessionById(data.voiceSessionId),
 				);
+				const block = await VoiceJoin.joinBlock(room, user.id);
 				if (
 					session.roomId !== roomId ||
 					session.leftAt !== null ||
-					!VoiceAccess.canJoin(room, user.id)
+					// already in the call, so voice turning unavailable meanwhile doesn't undo the join
+					(block !== null && block !== "UNAVAILABLE")
 				) {
 					forbidden();
 				}
