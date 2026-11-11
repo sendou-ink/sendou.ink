@@ -13,14 +13,13 @@ import {
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { invariant } from "~/utils/invariant";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { tournamentPage, tournamentRegisterPage } from "~/utils/urls";
+import * as TeamEligibility from "../core/TeamEligibility.server";
 import { tournamentJoinSearchParams } from "../tournament-search-params";
 import { validateCanJoinTeam } from "../tournament-utils";
-import { requireNotBannedByOrganization } from "../tournament-utils.server";
 
 export const action = defineAction(async ({ params, url }) => {
 	const { tournament, tournamentId, user } = await tournamentFromParams(
@@ -34,10 +33,7 @@ export const action = defineAction(async ({ params, url }) => {
 		await TournamentTeamRepository.findByInviteCode(inviteCode),
 	);
 
-	await requireNotBannedByOrganization({
-		tournament,
-		user,
-	});
+	await TeamEligibility.requireEligible({ tournament, userId: user.id });
 
 	const teamToJoin = tournament.ctx.teams.find(
 		(team) => team.id === leanTeam.id,
@@ -65,10 +61,6 @@ export const action = defineAction(async ({ params, url }) => {
 			maxTeamSize: tournament.maxMembersPerTeam,
 		}) === "VALID",
 		"Cannot join this team or invite code is invalid",
-	);
-	errorToastIfFalsy(
-		(await UserRepository.findLeanById(user.id))?.friendCode,
-		"No friend code",
 	);
 
 	const leftLfgUserIds = await TournamentLFGRepository.leaveLfg({

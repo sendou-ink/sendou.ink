@@ -2,8 +2,8 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
+import * as TeamEligibility from "~/features/tournament/core/TeamEligibility.server";
 import { requireNotBannedByOrganization } from "~/features/tournament/tournament-utils.server";
-import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
 	requireTournamentOrganizer,
@@ -14,7 +14,6 @@ import {
 	tournamentChannel,
 	tournamentTeamChannel,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
@@ -195,10 +194,15 @@ export const action = defineAction(
 					!tournament.teamById(otherGroup.id)?.checkIns.length,
 					"A team that has checked in can't be merged into another team",
 				);
-				await requireMembersCanJoinTeam({
-					tournament,
-					members: [...ownGroup.members, ...theirGroup.members],
-				});
+				for (const member of [...ownGroup.members, ...theirGroup.members]) {
+					await TeamEligibility.requireEligible({
+						tournament,
+						userId: member.id,
+						username: member.username,
+						// a site ban doesn't remove anyone from their team, so it doesn't block merging either
+						skip: ["SITE_BANNED"],
+					});
+				}
 
 				const roomsChangedUserIds = await TournamentLFGRepository.mergeTeams({
 					survivingTeamId: surviving,
@@ -423,23 +427,3 @@ export const action = defineAction(
 		return null;
 	},
 );
-
-async function requireMembersCanJoinTeam({
-	tournament,
-	members,
-}: {
-	tournament: Tournament;
-	members: Array<{ id: number; username: string }>;
-}) {
-	for (const member of members) {
-		const memberUser = await UserRepository.findLeanById(member.id);
-		errorToastIfFalsy(
-			memberUser?.friendCode,
-			`${member.username} has no friend code set`,
-		);
-		errorToastIfFalsy(
-			!tournament.ctx.settings.requireInGameNames || memberUser.inGameName,
-			`${member.username} has no in-game name set`,
-		);
-	}
-}

@@ -1,13 +1,13 @@
 import * as v from "valibot";
-import { userIsBanned } from "~/features/ban/core/banned.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import * as TeamEligibility from "~/features/tournament/core/TeamEligibility.server";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { tournamentTeamNameTaken } from "~/features/tournament/tournament-utils.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { superRefineAsync } from "~/utils/schema";
+import { assertUnreachable } from "~/utils/types";
 import {
 	ADMIN_REGISTRATION_MAX_MEMBERS,
 	adminRegistrationFormSchema,
@@ -123,42 +123,23 @@ export function adminRegistrationFormSchemaServer({
 			for (const [index, member] of data.members.entries()) {
 				const path = ["members", index, "userId"];
 
-				const memberUser = await UserRepository.findLeanById(member.userId);
-				if (!memberUser) {
-					ctx.addIssue({
-						message: "forms:errors.regMemberInvalid",
-						path,
-					});
-					continue;
-				}
+				const isCurrentMember = currentMemberIds.includes(member.userId);
 
-				if (!memberUser.friendCode) {
-					ctx.addIssue({
-						message: "forms:errors.regMemberNoFriendCode",
-						path,
-					});
+				const reason = await TeamEligibility.ineligibleReason({
+					tournament,
+					userId: member.userId,
+					skip: [
+						"ORG_BANNED",
+						// only members not already on the team are subject to the ban check
+						...(isCurrentMember ? (["SITE_BANNED"] as const) : []),
+						// the in-game name given in the form is registered instead of the profile's
+						...(member.inGameName ? (["NO_IN_GAME_NAME"] as const) : []),
+					],
+				});
+				if (reason) {
+					ctx.addIssue({ message: reasonErrorKey(reason), path });
 				}
-
-				if (
-					tournament.ctx.settings.requireInGameNames &&
-					!member.inGameName &&
-					!memberUser.inGameName
-				) {
-					ctx.addIssue({
-						message: "forms:errors.regMemberNoInGameName",
-						path,
-					});
-				}
-
-				// only members not already on the team are subject to ban / other-team checks
-				if (currentMemberIds.includes(member.userId)) continue;
-
-				if (userIsBanned(member.userId)) {
-					ctx.addIssue({
-						message: "forms:errors.regMemberBanned",
-						path,
-					});
-				}
+				if (reason === "USER_NOT_FOUND" || isCurrentMember) continue;
 
 				const previousTeam = tournament.teamMemberOfByUser({
 					id: member.userId,
@@ -176,4 +157,20 @@ export function adminRegistrationFormSchemaServer({
 			}
 		}),
 	);
+}
+
+function reasonErrorKey(reason: TeamEligibility.IneligibleReason) {
+	switch (reason) {
+		case "USER_NOT_FOUND":
+			return "forms:errors.regMemberInvalid";
+		case "SITE_BANNED":
+		case "ORG_BANNED":
+			return "forms:errors.regMemberBanned";
+		case "NO_FRIEND_CODE":
+			return "forms:errors.regMemberNoFriendCode";
+		case "NO_IN_GAME_NAME":
+			return "forms:errors.regMemberNoInGameName";
+		default:
+			assertUnreachable(reason);
+	}
 }

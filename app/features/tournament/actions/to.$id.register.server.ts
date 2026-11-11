@@ -23,18 +23,14 @@ import {
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { logger } from "~/utils/logger";
 import { errorToastIfFalsy, successToast } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
+import * as TeamEligibility from "../core/TeamEligibility.server";
 import * as TeamPick from "../core/TeamPick";
 import { registerSchema } from "../tournament-schemas.server";
-import {
-	isBannedByOrganization,
-	requireNotBannedByOrganization,
-} from "../tournament-utils.server";
 
 export const action = defineAction(
 	{
@@ -91,16 +87,12 @@ export const action = defineAction(
 						"Can't change team name after registration has closed",
 					);
 				} else {
-					await requireNotBannedByOrganization({
+					await TeamEligibility.requireEligible({
 						tournament,
-						user,
+						userId: user.id,
 					});
 
 					errorToastIfFalsy(!tournament.isInvitational, "Event is invite only");
-					errorToastIfFalsy(
-						(await UserRepository.findLeanById(user.id))?.friendCode,
-						"No friend code",
-					);
 					errorToastIfFalsy(
 						!tournament.teamMemberOfByUser(user),
 						"You are already in a team that you aren't captain of",
@@ -314,30 +306,19 @@ export const action = defineAction(
 					ownTeam.memberUserIds.length < tournament.maxMembersPerTeam,
 					"Team is already at max capacity",
 				);
-				errorToastIfFalsy(
-					(
-						await SQGroupRepository.findFriendsAndTeammates(user.id)
-					).friends.some((friendPlayer) => friendPlayer.id === data.userId),
-					"Not a friend",
-				);
-				const userToAdd = await UserRepository.findLeanById(data.userId);
-				errorToastIfFalsy(
-					userToAdd?.friendCode,
-					"User you are trying to add has no friend code set",
-				);
-				errorToastIfFalsy(
-					!tournament.ctx.settings.requireInGameNames || userToAdd.inGameName,
-					"User you are trying to add has no in-game name set",
-				);
+				const friendToAdd = (
+					await SQGroupRepository.findFriendsAndTeammates(user.id)
+				).friends.find((friendPlayer) => friendPlayer.id === data.userId);
+				errorToastIfFalsy(friendToAdd, "Not a friend");
 				errorToastIfFalsy(
 					tournament.registrationOpen,
 					"Registration is closed",
 				);
 
-				await requireNotBannedByOrganization({
+				await TeamEligibility.requireEligible({
 					tournament,
-					user: { id: data.userId },
-					message: "The user is banned from events hosted by this organization",
+					userId: data.userId,
+					username: friendToAdd.username,
 				});
 
 				errorToastIfFalsy(
@@ -387,16 +368,16 @@ export const action = defineAction(
 				errorToastIfFalsy(spotsLeft > 0, "Team is already at max capacity");
 
 				let addedCount = 0;
-				const skippedReasons: Array<IneligibleReason> = [];
+				const skippedReasons: Array<string> = [];
 				for (const candidate of candidates) {
 					if (addedCount >= spotsLeft) break;
 
-					const reason = await ineligibleReason({
+					const reason = await TeamEligibility.ineligibleReason({
 						tournament,
 						userId: candidate.id,
 					});
 					if (reason) {
-						skippedReasons.push(reason);
+						skippedReasons.push(skippedReasonText(reason));
 						continue;
 					}
 
@@ -492,31 +473,25 @@ export const action = defineAction(
 	},
 );
 
-type IneligibleReason =
-	| "no friend code"
-	| "banned by the organization"
-	| "already in a team";
-
-/** Why the "add all" bulk add has to pass a candidate over, or `null` if they can be added. */
-async function ineligibleReason({
-	tournament,
-	userId,
-}: {
-	tournament: Tournament;
-	userId: number;
-}): Promise<IneligibleReason | null> {
-	if (!(await UserRepository.findLeanById(userId))?.friendCode) {
-		return "no friend code";
+function skippedReasonText(reason: TeamEligibility.IneligibleReason) {
+	switch (reason) {
+		case "USER_NOT_FOUND":
+			return "user not found";
+		case "SITE_BANNED":
+			return "banned from sendou.ink";
+		case "ORG_BANNED":
+			return "banned by the organization";
+		case "NO_FRIEND_CODE":
+			return "no friend code";
+		case "NO_IN_GAME_NAME":
+			return "no in-game name";
+		default:
+			assertUnreachable(reason);
 	}
-	if (await isBannedByOrganization({ tournament, userId })) {
-		return "banned by the organization";
-	}
-
-	return null;
 }
 
 // names are left out on purpose: the message travels in a redirect's query string
-function skippedSummary(reasons: Array<IneligibleReason>) {
+function skippedSummary(reasons: Array<string>) {
 	if (reasons.length === 0) return "";
 
 	const counts = R.countBy(reasons, (reason) => reason);

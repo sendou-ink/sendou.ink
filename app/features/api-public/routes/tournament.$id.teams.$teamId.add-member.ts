@@ -1,9 +1,9 @@
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
-import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import * as TeamEligibility from "~/features/tournament/core/TeamEligibility.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
@@ -16,7 +16,6 @@ import {
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { id } from "~/utils/schema";
@@ -54,21 +53,12 @@ export const action = defineAction(
 				"User is already in a team",
 			);
 
-			errorToastIfFalsy(
-				!userIsBanned(userId),
-				"User trying to be added currently has an active ban from sendou.ink",
-			);
-
-			const addMemberUser = await UserRepository.findLeanById(userId);
-			errorToastIfFalsy(
-				addMemberUser?.friendCode,
-				"User has no friend code set",
-			);
-			errorToastIfFalsy(
-				!tournament.ctx.settings.requireInGameNames ||
-					addMemberUser?.inGameName,
-				"User has no in-game name set",
-			);
+			await TeamEligibility.requireEligible({
+				tournament,
+				userId,
+				username: "User",
+				skip: ["ORG_BANNED"],
+			});
 
 			const leftLfgUserIds = await TournamentLFGRepository.leaveLfg({
 				userId,

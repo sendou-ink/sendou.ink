@@ -21,6 +21,8 @@ type Options = {
 	series?: UpdateArgs["series"];
 	/** Filename of the logo; one seeded to the local image storage renders in dev. */
 	avatarFileName?: string;
+	/** Users banned from the organization's events, without an expiry. */
+	bannedUserIds?: number[];
 };
 
 /** `ownerId` is added as admin by the repository. Slug follows from the name. */
@@ -41,8 +43,18 @@ export const { create, createMany } = defineFactory({
 			socials,
 			series,
 			avatarFileName,
+			bannedUserIds,
 		}: Options,
 	) => {
+		for (const userId of bannedUserIds ?? []) {
+			await TournamentOrganizationRepository.upsertBannedUser({
+				organizationId: org.id,
+				userId,
+				privateNote: null,
+				expiresAt: null,
+			});
+		}
+
 		if (isEstablished) {
 			await TournamentOrganizationRepository.updateIsEstablished(org.id, true);
 		}
