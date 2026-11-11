@@ -41,6 +41,8 @@
 	"dashboard.rehearse": "Preview",
 	"dashboard.rehearseHint": "Plays the transition on the Next preview, nothing goes on air",
 	"dashboard.featuredMatch": "Featured match",
+	"dashboard.needsMatch": "Needs a match cast on this channel",
+	"dashboard.matchScenesOff": "Rosters, maps and results need a match cast on this channel.",
 	"dashboard.noFeaturedMatch": "No match is cast on this channel. Mark one as casted (or lock one for it) from the match page.",
 	"dashboard.setFinished": "Set finished",
 	"dashboard.resultsNotOnAir_one": "{{count}} result not on air yet: live shows {{live}}, the set is at {{next}}. The next Take puts it on air.",

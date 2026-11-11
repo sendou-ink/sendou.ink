@@ -1,6 +1,7 @@
 import type { ObjectiveTimelineEvent } from "~/components/ObjectiveTimeline";
 import type { Pronouns } from "~/db/tables-json";
 import type { BROADCAST_SCENE_PARTS } from "./broadcast-cast-constants";
+import type { CastProducerState, CastScene } from "./broadcast-cast-types";
 
 /** Builds the scene's `data-part` attributes, only allowing the parts documented in {@link BROADCAST_SCENE_PARTS}. */
 export const scenePart =
@@ -34,4 +35,19 @@ export function controlShares(
 	}
 
 	return [held[0] / duration, held[1] / duration];
+}
+
+/**
+ * Whether the scene shows the featured match's teams (rosters, maps and results), having nothing to show without a
+ * match cast on the channel. The team scene does only when it follows one of the match's sides (`teamPick`), any other team it shows on its own.
+ */
+export function needsFeaturedMatch(
+	scene: CastScene,
+	teamPick?: CastProducerState["teamPick"],
+) {
+	if (scene === "team") {
+		return teamPick === "left" || teamPick === "right";
+	}
+
+	return scene === "rosters" || scene === "maps" || scene === "results";
 }

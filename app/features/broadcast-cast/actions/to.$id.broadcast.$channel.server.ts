@@ -21,6 +21,8 @@ const STALE_TAKE_MESSAGE =
 	"Someone else already pressed Take. Check what is live now.";
 const STALE_ITEM_MESSAGE =
 	"That scene isn't staged anymore. Check what is live and queued now.";
+const NO_MATCH_MESSAGE =
+	"That scene shows the match's teams, but no match is cast on this channel. Pick another scene.";
 
 export const action = defineAction(
 	{ params: broadcastParamsSchema, body: broadcastActionSchema },
@@ -37,6 +39,11 @@ export const action = defineAction(
 			channel,
 			rules: CAST_PRODUCER_RULES,
 		};
+		const hasMatch =
+			CastChannel.featuredMatchId({
+				castedMatchesInfo: tournament.ctx.castedMatchesInfo,
+				channel,
+			}) !== null;
 
 		const updateProducer = async (
 			change: (
@@ -113,7 +120,7 @@ export const action = defineAction(
 			}
 			case "ADD_TO_QUEUE": {
 				await updateProducer((state) =>
-					Producer.enqueue(CAST_PRODUCER_RULES, state),
+					Producer.enqueue(CAST_PRODUCER_RULES, state, { hasMatch }),
 				);
 				break;
 			}
@@ -134,15 +141,26 @@ export const action = defineAction(
 					body.matchId !== undefined && body.resultCount !== undefined
 						? { matchId: body.matchId, count: body.resultCount }
 						: null;
-				await updateProducer(
-					(state) =>
-						state.takeId === body.takeId
-							? Producer.take(CAST_PRODUCER_RULES, state, {
-									liveResults,
-									now: Date.now(),
-								})
-							: null,
-					STALE_TAKE_MESSAGE,
+				let isMissingMatch = false;
+				const isTaken = await BroadcastRepository.updateProducer({
+					...key,
+					change: (state) => {
+						if (state.takeId !== body.takeId) return null;
+						if (!Producer.canTake(CAST_PRODUCER_RULES, state, { hasMatch })) {
+							isMissingMatch = true;
+							return null;
+						}
+
+						return Producer.take(CAST_PRODUCER_RULES, state, {
+							liveResults,
+							now: Date.now(),
+							hasMatch,
+						});
+					},
+				});
+				errorToastIfFalsy(
+					isTaken,
+					isMissingMatch ? NO_MATCH_MESSAGE : STALE_TAKE_MESSAGE,
 				);
 				break;
 			}

@@ -348,7 +348,9 @@ function scheduleAutoTake(hub: Hub) {
 
 	const snapshot = hub.snapshot;
 	const takeAt = snapshot
-		? Producer.autoTakeAt(hub.layout.producer, snapshot)
+		? Producer.autoTakeAt(hub.layout.producer, snapshot, {
+				hasMatch: snapshot.match !== null,
+			})
 		: null;
 	if (!snapshot || takeAt === null || hub.stop.signal.aborted) return;
 
@@ -377,7 +379,9 @@ async function autoTake(hub: Hub, takeId: number) {
 		channel: built.channel,
 		rules: hub.layout.producer,
 		change: (state) => {
-			const takeAt = Producer.autoTakeAt(hub.layout.producer, state);
+			const takeAt = Producer.autoTakeAt(hub.layout.producer, state, {
+				hasMatch: built.snapshot.match !== null,
+			});
 			const now = Date.now();
 			if (
 				state.takeId !== takeId ||
@@ -387,7 +391,11 @@ async function autoTake(hub: Hub, takeId: number) {
 				return null;
 			}
 
-			return Producer.take(hub.layout.producer, state, { liveResults, now });
+			return Producer.take(hub.layout.producer, state, {
+				liveResults,
+				now,
+				hasMatch: built.snapshot.match !== null,
+			});
 		},
 	});
 

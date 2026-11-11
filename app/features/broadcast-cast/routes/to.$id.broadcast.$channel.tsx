@@ -101,7 +101,9 @@ import { broadcastDashboardSearchParams } from "../broadcast-cast-search-params"
 import type {
 	CastBroadcastState,
 	CastProducerState,
+	CastScene,
 } from "../broadcast-cast-types";
+import { needsFeaturedMatch } from "../broadcast-cast-utils";
 import {
 	SCENE_ICONS,
 	ScenePicker,
@@ -163,7 +165,11 @@ export default function BroadcastDashboardPage() {
 	// an item gone on air leaves the staged one selected
 	const selected =
 		staged.find((item) => item.id === selectedItemId) ?? state.next;
-	const autoTakeAt = Producer.autoTakeAt(CAST_PRODUCER_RULES, state);
+	const hasMatch = state.match !== null;
+	const canTake = Producer.canTake(CAST_PRODUCER_RULES, state, { hasMatch });
+	const autoTakeAt = Producer.autoTakeAt(CAST_PRODUCER_RULES, state, {
+		hasMatch,
+	});
 	const isAutoTakeImminent =
 		autoTakeAt !== null &&
 		now !== null &&
@@ -172,6 +178,7 @@ export default function BroadcastDashboardPage() {
 	const { submit: submitScene } = useActionSubmit(broadcastActionSchema);
 	useSceneHotkeys({
 		selected: selected.scene,
+		isDisabled: (scene) => isSceneMissingMatch(state, scene),
 		onSelect: (scene) =>
 			submitScene("SET_SCENE", { itemId: selected.id, scene }),
 	});
@@ -237,6 +244,7 @@ export default function BroadcastDashboardPage() {
 						}}
 						size="big"
 						icon={<ChevronsLeft />}
+						isDisabled={!canTake}
 						className={styles.take}
 						formClassName={styles.takeForm}
 						testId="broadcast-take-button"
@@ -245,6 +253,7 @@ export default function BroadcastDashboardPage() {
 					</ActionButton>
 					<AutoTake
 						state={state}
+						canTake={canTake}
 						remainingMs={
 							autoTakeAt !== null && now !== null ? autoTakeAt - now : null
 						}
@@ -657,7 +666,9 @@ function LiveTimer({
 		startedAt === null ||
 		endsAt === null ||
 		now === null ||
-		Producer.autoTakeAt(CAST_PRODUCER_RULES, state) === null
+		Producer.autoTakeAt(CAST_PRODUCER_RULES, state, {
+			hasMatch: state.match !== null,
+		}) === null
 	) {
 		return null;
 	}
@@ -686,13 +697,26 @@ function LiveTimer({
 
 function AutoTake({
 	state,
+	canTake,
 	remainingMs,
 }: {
 	state: CastBroadcastState;
+	canTake: boolean;
 	/** `null` when next isn't timed. */
 	remainingMs: number | null;
 }) {
 	const { t } = useTranslation(["broadcast"]);
+
+	if (!canTake) {
+		return (
+			<div className={styles.autoTake}>
+				<span className={styles.autoTakeBlocked}>
+					{t("broadcast:dashboard.needsMatch")}
+				</span>
+			</div>
+		);
+	}
+
 	const gameCue =
 		Producer.effectiveAdvance(CAST_PRODUCER_RULES, state.live, state.next) ===
 		"game"
@@ -758,10 +782,13 @@ function Queue({
 			{staged.map((item, idx) => {
 				const Icon = SCENE_ICONS[item.scene];
 				const isSelected = item.id === selected.id;
-				const isClipMissing =
-					item.scene === "replays" &&
-					item.clipId !== null &&
-					!areClipsOnSources;
+				const warning = isItemMissingMatch(state, item)
+					? t("broadcast:dashboard.needsMatch")
+					: item.scene === "replays" &&
+							item.clipId !== null &&
+							!areClipsOnSources
+						? t("broadcast:dashboard.queue.clipMissing")
+						: null;
 				const detail = itemDetail(
 					item,
 					item.scene === "team"
@@ -794,12 +821,12 @@ function Queue({
 								{detail ? (
 									<span className="text-xs text-lighter">{detail}</span>
 								) : null}
-								{isClipMissing ? (
+								{warning ? (
 									<span
 										role="img"
 										className={styles.queueWarning}
-										title={t("broadcast:dashboard.queue.clipMissing")}
-										aria-label={t("broadcast:dashboard.queue.clipMissing")}
+										title={warning}
+										aria-label={warning}
 									>
 										<TriangleAlert size={14} />
 									</span>
@@ -970,23 +997,39 @@ function SceneEditor({
 	state: CastBroadcastState;
 	selected: CastProducerState;
 }) {
+	const { t } = useTranslation(["broadcast"]);
+
 	return (
 		<div className={styles.editor}>
-			<ScenePicker
-				selected={selected.scene}
-				liveScene={state.live.scene}
-				renderTile={(scene, tile) => (
-					<ActionButton
-						schema={broadcastActionSchema}
-						action="SET_SCENE"
-						fields={{ itemId: selected.id, scene }}
-						className={tile.className}
-						testId={`broadcast-scene-${scene}`}
-					>
-						{tile.children}
-					</ActionButton>
+			<div className="stack sm">
+				<ScenePicker
+					selected={selected.scene}
+					liveScene={state.live.scene}
+					isDisabled={(scene) => isSceneMissingMatch(state, scene)}
+					renderTile={(scene, tile) => (
+						<ActionButton
+							schema={broadcastActionSchema}
+							action="SET_SCENE"
+							fields={{ itemId: selected.id, scene }}
+							className={tile.className}
+							isDisabled={tile.isDisabled}
+							title={
+								tile.isDisabled
+									? t("broadcast:dashboard.needsMatch")
+									: undefined
+							}
+							testId={`broadcast-scene-${scene}`}
+						>
+							{tile.children}
+						</ActionButton>
+					)}
+				/>
+				{state.match ? null : (
+					<span className="text-xs text-lighter">
+						{t("broadcast:dashboard.matchScenesOff")}
+					</span>
 				)}
-			/>
+			</div>
 			<div className={styles.properties}>
 				<TransitionProperty selected={selected} />
 				{state.match ? (
@@ -1222,8 +1265,9 @@ function TeamProperty({
 		}`,
 	});
 	const items = [
-		featuredItem("left", 0),
-		featuredItem("right", 1),
+		...(featuredSides
+			? [featuredItem("left", 0), featuredItem("right", 1)]
+			: []),
 		...tournament.ctx.teams.map((team) => ({ id: team.id, name: team.name })),
 	];
 
@@ -1555,4 +1599,17 @@ function itemDetail(item: CastProducerState, teamName?: string) {
 	return [clip?.name, teamName, length !== null ? formatClock(length) : null]
 		.filter(Boolean)
 		.join(" · ");
+}
+
+/** The scene shows the featured match's teams while no match is cast, see `needsFeaturedMatch`. */
+function isSceneMissingMatch(state: CastBroadcastState, scene: CastScene) {
+	return !state.match && needsFeaturedMatch(scene);
+}
+
+/** Like {@link isSceneMissingMatch}, the team scene also when it follows one of the match's sides. */
+function isItemMissingMatch(
+	state: CastBroadcastState,
+	item: CastProducerState,
+) {
+	return !state.match && needsFeaturedMatch(item.scene, item.teamPick);
 }

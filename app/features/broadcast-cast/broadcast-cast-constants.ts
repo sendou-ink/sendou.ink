@@ -6,6 +6,7 @@ import type {
 	CastProducerState,
 	CastScene,
 } from "./broadcast-cast-types";
+import { needsFeaturedMatch } from "./broadcast-cast-utils";
 
 /** Scenes the cast overlay can show. */
 export const BROADCAST_SCENES = [
@@ -487,7 +488,8 @@ const DEFAULT_CAST_ITEM: Omit<CastProducerState, "id"> = {
 
 /**
  * How the cast's producer moves between its scenes: rosters on air and game staged for when it starts on a new
- * broadcast, both with a stinger. The replays scene playing a clip lasts as long as the clip.
+ * broadcast, both with a stinger. The replays scene playing a clip lasts as long as the clip. The scenes showing the
+ * featured match's teams don't go on air without one, starting soon is staged in their place.
  */
 export const CAST_PRODUCER_RULES: Producer.Rules<CastProducerState> = {
 	initial: {
@@ -522,4 +524,6 @@ export const CAST_PRODUCER_RULES: Producer.Rules<CastProducerState> = {
 		return item.durationMs;
 	},
 	followedBy: (item) => ({ ...item, clipId: null }),
+	needsMatch: (item) => needsFeaturedMatch(item.scene, item.teamPick),
+	sceneWithoutMatch: "starting",
 };

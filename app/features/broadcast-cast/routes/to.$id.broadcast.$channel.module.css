@@ -163,6 +163,13 @@
 	font-variant-numeric: tabular-nums;
 }
 
+.autoTakeBlocked {
+	max-width: 8rem;
+	color: var(--color-warning);
+	font-size: var(--font-xs);
+	text-align: center;
+}
+
 .autoTakeCue {
 	display: inline-flex;
 	align-items: center;

@@ -47,12 +47,12 @@ describe("BroadcastRepository.updateProducer", () => {
 		const key = await createBroadcastKey();
 		await BroadcastRepository.updateProducer({
 			...key,
-			change: (state) => Producer.enqueue(rules, state),
+			change: (state) => Producer.enqueue(rules, state, { hasMatch: true }),
 		});
 
 		await BroadcastRepository.updateProducer({
 			...key,
-			change: (state) => Producer.enqueue(rules, state),
+			change: (state) => Producer.enqueue(rules, state, { hasMatch: true }),
 		});
 
 		const broadcast = await BroadcastRepository.findByChannel(key);
@@ -63,7 +63,7 @@ describe("BroadcastRepository.updateProducer", () => {
 		const key = await createBroadcastKey();
 		await BroadcastRepository.updateProducer({
 			...key,
-			change: (state) => Producer.enqueue(rules, state),
+			change: (state) => Producer.enqueue(rules, state, { hasMatch: true }),
 		});
 
 		const isUpdated = await BroadcastRepository.updateProducer({
