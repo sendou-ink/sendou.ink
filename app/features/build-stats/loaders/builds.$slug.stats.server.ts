@@ -1,28 +1,20 @@
 import { cachified } from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
-import { cachedPublicBuildCounts } from "~/features/builds/core/public-build-counts.server";
-import { getServerTFunction } from "~/modules/i18n/i18next.server";
+import { weaponBuildsLayoutData } from "~/features/builds/core/weapon-builds-layout.server";
 import {
 	weaponCategories,
 	weaponIdToCategory,
-	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
 import { cache, ttl } from "~/utils/cache.server";
 import { invariant } from "~/utils/invariant";
-import { notFound, notFoundIfNullish } from "~/utils/remix.server";
-import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { ANY_TIME, DEFAULT_UPDATED_SINCE } from "../build-stats-constants";
 import { buildStatsSearchParams } from "../build-stats-search-params";
 import { abilityStats } from "../build-stats-utils";
 
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
-	const t = getServerTFunction(["weapons"]);
-	const weaponId = notFoundIfNullish(weaponNameSlugToId(params.slug));
-
-	if (weaponIdToType(weaponId) === "ALT_SKIN") {
-		notFound();
-	}
+	const layout = await weaponBuildsLayoutData(params.slug);
+	const { weaponId } = layout;
 
 	const category = weaponIdToCategory(weaponId);
 	const { date: selectedDate } = buildStatsSearchParams.parse(url);
@@ -72,10 +64,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	return {
 		stats,
 		date: resolvedDate,
-		weaponId,
-		weaponName: t(`weapons:MAIN_${weaponId}`),
+		...layout,
 		weaponCategory: category,
-		slug: params.slug!,
-		buildsCount: (await cachedPublicBuildCounts()).get(weaponId) ?? 0,
 	};
 };
