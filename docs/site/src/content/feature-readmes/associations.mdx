@@ -1,0 +1,30 @@
+import Mermaid from "../../components/Mermaid.astro";
+
+An association is a group of users to look for practice in: a team's regular scrim opponents, a LUTI division, a friend group. Scrim posts and lobbies can be limited to one, so only its members see them. Associations are managed on `/associations`, linked from the scrims page.
+
+## Vocabulary
+
+- **Association** (`Association`): a named group with an invite code. Its members (`AssociationMember`) each have a role: one **admin** (`ADMIN`, its creator to begin with), **starred members** (`MANAGER`) and regular members (`MEMBER`).
+- **Invite link**: `/associations?inviteCode=…`, opening a prompt to join. Only the admin and starred members see it, and resetting it gives the association a new code.
+- **Audience**: who a scrim post or lobby is shown to. Besides public and an association, it can be one of the **virtual associations**: the creator's friends (`FRIENDS`) or a Plus Server tier and the ones above it (`+1`, `+2`, `+3`), offered to Plus members of that tier or a higher one. Lobbies can also be link only.
+- **"Not found" step**: an optional second audience coming into effect at a set time, when the first didn't find anyone to play with ("if not found by 18:00, show to everyone").
+
+The rules (limits, who can do what) are listed under Behaviour below, each with the tests that establish it.
+
+## Visibility schedule
+
+The audience is stored per post or lobby as `ContentVisibility` rows, one per step of the schedule, each with the time it comes into effect (`visibleFrom`) and exactly one audience. A viewer sees the content when any row in effect matches them, so a later step widens the audience rather than replacing it. Public content is a single public row, link only lobbies have none.
+
+<Mermaid code={`flowchart LR
+	form["Visibility form fields"] -- "Visibility.fromForm" --> stored["AssociationVisibility"]
+	stored -- "Visibility.toRows" --> rows[("ContentVisibility rows")]
+	rows -- "visibleTo() in SQL" --> listed["Listed to matching viewers"]
+	rows -- "Visibility.toForm" --> form`} />
+
+Deleting an association deletes its rows too: content limited only to it is then seen by nobody but its own participants.
+
+## Where to start reading
+
+`routes/associations.tsx` is the management page, its actions in `actions/associations.server.ts`. `AssociationRepository.server.ts` reads the associations and computes their permissions from the members' roles, `core/Association.ts` holds the membership rules (limits, the Plus tier audiences, who takes over from a leaving admin).
+
+The audience side is shared with the scrims and lobbies features: the form fields are `baseVisibilityField` and `notFoundVisibilityField` of `associations-schemas.ts` rendered by `components/VisibilityFormFields.tsx`, `core/Visibility.ts` maps them to the stored rows and back and checks them against the start time, and the SQL deciding who sees what is `visibleTo()` in `app/utils/kysely.server.ts`.

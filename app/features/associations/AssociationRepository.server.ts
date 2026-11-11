@@ -1,18 +1,23 @@
+/**
+ * Associations and their members. Finding one computes its per-object permissions from the members' roles:
+ * the admin manages it, the admin and starred members (`MANAGER`) share its invite link and each member lists
+ * who can remove them.
+ */
 import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
-import type { AssociationVirtualIdentifier } from "~/features/associations/associations-constants";
-import { ASSOCIATION } from "~/features/associations/associations-constants";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { LimitReachedError } from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
 import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
-import { logger } from "~/utils/logger";
+import * as Association from "./core/Association";
 
 interface FindOptions {
+	/** Include `members`, without which the permissions are computed from no members (empty). */
 	withMembers: boolean;
 }
 
+/** The association by its id, `null` if there is none. */
 export async function findById(
 	associationId: number,
 	options: FindOptions = { withMembers: false },
@@ -22,6 +27,10 @@ export async function findById(
 	return result.at(0) ?? null;
 }
 
+/**
+ * Everything the user can limit content to: the associations they are a member of (`actual`), the audiences
+ * that come without joining one (`virtual`, see `Association.virtualIdentifiersOf`) and their friends' ids.
+ */
 export async function findByMemberUserId(
 	userId: number,
 	options: FindOptions = { withMembers: false },
@@ -33,6 +42,7 @@ export async function findByMemberUserId(
 	};
 }
 
+/** The association whose invite link has the code, `undefined` if the code is unknown or was reset. */
 export async function findByInviteCode(
 	inviteCode: string,
 	options: FindOptions = { withMembers: false },
@@ -139,35 +149,21 @@ function memberRemoverIds({
 	return removerIds.filter((id) => id !== member.id);
 }
 
-const DEFAULT_VIRTUAL_ASSOCIATIONS: Array<AssociationVirtualIdentifier> = [
-	"FRIENDS",
-];
+async function virtualAssociationsByUserId(userId: number) {
+	const row = await db
+		.selectFrom("PlusTier")
+		.select("PlusTier.tier")
+		.where("userId", "=", userId)
+		.executeTakeFirst();
 
-async function virtualAssociationsByUserId(
-	userId: number,
-): Promise<Array<AssociationVirtualIdentifier>> {
-	const { plusTier } =
-		(await db
-			.selectFrom("PlusTier")
-			.select(["PlusTier.tier as plusTier"])
-			.where("userId", "=", userId)
-			.executeTakeFirst()) ?? {};
-	if (!plusTier) return [...DEFAULT_VIRTUAL_ASSOCIATIONS];
-
-	if (plusTier === 1)
-		return [...DEFAULT_VIRTUAL_ASSOCIATIONS, "+1", "+2", "+3"] as const;
-	if (plusTier === 2)
-		return [...DEFAULT_VIRTUAL_ASSOCIATIONS, "+2", "+3"] as const;
-	if (plusTier === 3) return [...DEFAULT_VIRTUAL_ASSOCIATIONS, "+3"] as const;
-
-	logger.error("Invalid plusTier", { plusTier });
-	return [...DEFAULT_VIRTUAL_ASSOCIATIONS];
+	return Association.virtualIdentifiersOf(row?.tier ?? null);
 }
 
 type InsertArgs = Omit<TablesInsertable["Association"], "inviteCode"> & {
 	userId: number;
 };
 
+/** The code of the association's invite link, kept out of `findById` & co. as only some members may see it. */
 export async function findInviteCodeById(associationId: number) {
 	const row = await db
 		.selectFrom("Association")
@@ -178,6 +174,10 @@ export async function findInviteCodeById(associationId: number) {
 	return row.inviteCode;
 }
 
+/**
+ * Makes an association with its creator as the admin and a fresh invite code. Throws `LimitReachedError`
+ * (and makes nothing) if the creator would be in more associations than `Association.maxMembershipCount`.
+ */
 export function insert({ userId, ...associationArgs }: InsertArgs) {
 	return db.transaction().execute(async (trx) => {
 		const association = await trx
@@ -198,11 +198,12 @@ export function insert({ userId, ...associationArgs }: InsertArgs) {
 			.where("AssociationMember.userId", "=", userId)
 			.executeTakeFirstOrThrow();
 
-		const maxCount = isSupporter({ patronTier })
-			? ASSOCIATION.MAX_COUNT_SUPPORTER
-			: ASSOCIATION.MAX_COUNT_REGULAR_USER;
-
-		if (count > maxCount) {
+		if (
+			count >
+			Association.maxMembershipCount({
+				isSupporter: isSupporter({ patronTier }),
+			})
+		) {
 			throw new LimitReachedError("Max amount of associations reached");
 		}
 
@@ -210,6 +211,7 @@ export function insert({ userId, ...associationArgs }: InsertArgs) {
 	});
 }
 
+/** Replaces the invite code, so links shared with the old one stop working. */
 export function refreshInviteCode(associationId: number) {
 	return db
 		.updateTable("Association")
@@ -218,6 +220,7 @@ export function refreshInviteCode(associationId: number) {
 		.execute();
 }
 
+/** Adds the user as a regular member. Limits are checked by the caller. */
 export function insertMember({
 	associationId,
 	userId,
@@ -231,6 +234,7 @@ export function insertMember({
 		.execute();
 }
 
+/** Stars (`MANAGER`) or unstars (`MEMBER`) a member, or makes them the admin. */
 export function updateMemberRole({
 	associationId,
 	userId,
@@ -248,22 +252,11 @@ export function updateMemberRole({
 		.execute();
 }
 
+/**
+ * Removes the user from the association, whether removed by someone else or leaving. When the admin leaves,
+ * `newAdminUserId` (see `Association.resolveNewAdmin`) is promoted in their place.
+ */
 export function deleteMember({
-	associationId,
-	userId,
-}: {
-	associationId: number;
-	userId: number;
-}) {
-	return db
-		.deleteFrom("AssociationMember")
-		.where("associationId", "=", associationId)
-		.where("userId", "=", userId)
-		.execute();
-}
-
-/** Removes the member and, when they were the admin, promotes `newAdminUserId` in their place. */
-export function handleMemberLeaving({
 	associationId,
 	userId,
 	newAdminUserId,
@@ -290,6 +283,10 @@ export function handleMemberLeaving({
 	});
 }
 
+/**
+ * Deletes the association and its memberships. Its `ContentVisibility` rows go with it, so content limited
+ * only to it is then seen by nobody but its own participants.
+ */
 export function deleteById(associationId: number) {
 	return db.deleteFrom("Association").where("id", "=", associationId).execute();
 }

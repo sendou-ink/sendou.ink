@@ -125,6 +125,65 @@ export function toForm(rows: VisibilityRow[]): {
 }
 
 /**
+ * Issues of the visibility form fields compared to each other and to when the content starts: the "not found"
+ * audience has to differ from the base one, can't be set for public (or link only) content and has to come into
+ * effect before the start. Content being made can't have one if it starts right away, content being edited
+ * (`isEdit`) can as its "not found" audience may already be in effect. `messages` are the translation keys of the
+ * last two, worded for scrim posts by default.
+ */
+export function formIssues(
+	values: {
+		baseVisibility: FormAssociationIdentifier | "LINK_ONLY";
+		notFoundVisibility: {
+			at?: Date | null;
+			forAssociation: FormAssociationIdentifier;
+		};
+	},
+	{
+		startsAt,
+		isEdit = false,
+		messages = {
+			afterStart: "forms:errors.dateAfterScrimDate",
+			startingNow: "forms:errors.canNotSetIfLookingNow",
+		},
+	}: {
+		startsAt: Date;
+		isEdit?: boolean;
+		messages?: { afterStart: string; startingNow: string };
+	},
+): Array<{ path: ["notFoundVisibility"]; message: string }> {
+	const issue = (message: string) => ({
+		path: ["notFoundVisibility"] as ["notFoundVisibility"],
+		message,
+	});
+	const issues: Array<ReturnType<typeof issue>> = [];
+
+	const { at, forAssociation } = values.notFoundVisibility;
+
+	if (at && forAssociation === values.baseVisibility) {
+		issues.push(issue("forms:errors.visibilityMustBeDifferent"));
+	}
+
+	if (
+		(values.baseVisibility === "PUBLIC" ||
+			values.baseVisibility === "LINK_ONLY") &&
+		at
+	) {
+		issues.push(issue("forms:errors.visibilityNotAllowedWhenPublic"));
+	}
+
+	if (at && at > startsAt) {
+		issues.push(issue(messages.afterStart));
+	}
+
+	if (at && !isEdit && startsAt < new Date()) {
+		issues.push(issue(messages.startingNow));
+	}
+
+	return issues;
+}
+
+/**
  * The associations the user can limit content to plus the ones its rows already limit it to, so a form editing
  * them shows the current audience even if the user isn't (anymore) a member of it.
  */

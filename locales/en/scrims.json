@@ -64,6 +64,7 @@
 	"associations.manager.add": "Star {{username}}",
 	"associations.manager.remove": "Unstar {{username}}",
 	"associations.removeMember.title": "Remove {{username}} from the association?",
+	"associations.removeMember.label": "Remove {{username}}",
 	"associations.forms.title": "Creating a new association",
 	"banner.canceled.header": "Canceled by {{user}}",
 	"banner.canceled.subtitle": "Reason: {{reason}}",
