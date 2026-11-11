@@ -10,7 +10,7 @@ import { showsOneGroupAtATime } from "../../tournament-bracket-utils";
 import * as AbDivisions from "../AbDivisions";
 import * as Engine from "../engine";
 import * as Progression from "../Progression";
-import type { OptionalIdObject, Tournament } from "../Tournament";
+import type { Tournament } from "../Tournament";
 import type { TournamentDataTeam } from "../Tournament.server";
 import type { BracketMapCounts } from "../toMapList";
 import type * as Tiebreakers from "./Tiebreakers";
@@ -689,10 +689,6 @@ export abstract class Bracket {
 			this.participantTournamentTeamIds.length >=
 			TOURNAMENT.ENOUGH_TEAMS_TO_START
 		);
-	}
-
-	canCheckIn(user: OptionalIdObject) {
-		return this.tournament.canCheckInToBracket(this.idx, user);
 	}
 
 	abstract source(options: {

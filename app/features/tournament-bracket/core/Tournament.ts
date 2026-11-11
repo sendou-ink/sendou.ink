@@ -27,7 +27,10 @@ import {
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
-import { groupNumberToLetters } from "../tournament-bracket-utils";
+import {
+	groupNumberToLetters,
+	isEliminationType,
+} from "../tournament-bracket-utils";
 import { type Bracket, createBracket } from "./Bracket";
 import * as CheckIn from "./CheckIn";
 import { eliminationGroupCount } from "./engine/create/settings";
@@ -1067,12 +1070,10 @@ export class Tournament {
 
 	/** Many first brackets whose progressions advance independently (so not all teams can meet). */
 	get isMultiStartingBracket() {
-		let count = 0;
-		for (const bracket of this.ctx.settings.bracketProgression) {
-			if (!bracket.sources) count++;
-		}
-
-		return count > 1;
+		return (
+			Progression.startingBrackets(this.ctx.settings.bracketProgression)
+				.length > 1
+		);
 	}
 
 	/** When check-in opens for a follow-up bracket that has its own start time, null if it has none. */
@@ -1138,10 +1139,7 @@ export class Tournament {
 							: `Group ${group?.number ? groupNumberToLetters(group.number) : ""} `;
 
 						roundName = `Swiss ${groupPrefix}${round?.number ?? ""}.${match.number}`;
-					} else if (
-						bracket.type === "single_elimination" ||
-						bracket.type === "double_elimination"
-					) {
+					} else if (isEliminationType(bracket.type)) {
 						const roundsArgs = {
 							bracketData: bracket.data,
 							groupId: match.groupId,

@@ -27,7 +27,10 @@ import {
 	tournamentFromParams,
 } from "../core/Tournament.server";
 import { bracketSchema } from "../tournament-bracket-schemas";
-import { tournamentChannel } from "../tournament-bracket-utils";
+import {
+	isEliminationType,
+	tournamentChannel,
+} from "../tournament-bracket-utils";
 
 export const action = defineAction(
 	{ body: bracketSchema },
@@ -129,14 +132,12 @@ export const action = defineAction(
 						tournamentId,
 						maps: {
 							maps,
-							eliminationTeamCount:
-								bracket.type === "single_elimination" ||
-								bracket.type === "double_elimination"
-									? PreparedMapsUtils.eliminationTeamCountOptions({
-											type: bracket.type,
-											currentCount: seeding.length,
-										})[0].max
-									: undefined,
+							eliminationTeamCount: isEliminationType(bracket.type)
+								? PreparedMapsUtils.eliminationTeamCountOptions({
+										type: bracket.type,
+										currentCount: seeding.length,
+									})[0].max
+								: undefined,
 						},
 					});
 				}
@@ -314,7 +315,10 @@ export const action = defineAction(
 				const teamMemberOf = tournament.teamMemberOfByUser(user);
 				invariant(teamMemberOf, "User is not in a team");
 
-				errorToastIfFalsy(bracket.canCheckIn(user), "Not an organizer");
+				errorToastIfFalsy(
+					tournament.canCheckInToBracket(bracket.idx, user),
+					"Can't check in to the bracket",
+				);
 
 				logger.info(
 					`Checking in (bracket try): tournament team id: ${teamMemberOf.id} - user id: ${user.id} - tournament id: ${tournament.ctx.id} - bracket idx: ${body.bracketIdx}`,

@@ -446,7 +446,7 @@ export async function tournamentTeamsFullCached({
 	user?: { id: number };
 	tournamentId: number;
 }) {
-	const ctx = notFoundIfNullish(await tournamentDataCached(tournamentId));
+	const ctx = await tournamentDataCached(tournamentId);
 
 	const revealInfo = isTournamentTeamInfoRevealed({ tournament: ctx, user });
 

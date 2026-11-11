@@ -55,6 +55,7 @@ import {
 	type TournamentRoundMapList,
 } from "../core/toMapList";
 import { bracketSchema } from "../tournament-bracket-schemas";
+import { isEliminationType } from "../tournament-bracket-utils";
 import styles from "./BracketMapListDialog.module.css";
 import { CustomFlowBuilder } from "./CustomFlowBuilder";
 
@@ -79,9 +80,7 @@ export function BracketMapListDialog({
 	const bracketTeamsCount = bracket.participantTournamentTeamIds.length;
 
 	const preparedMaps =
-		!isPreparing &&
-		(bracket.type === "single_elimination" ||
-			bracket.type === "double_elimination")
+		!isPreparing && isEliminationType(bracket.type)
 			? // we are about to start bracket, "trim" prepared map for actual
 				PreparedMaps.trimPreparedEliminationMaps({
 					preparedMaps: untrimmedPreparedMaps,
@@ -327,9 +326,7 @@ export function BracketMapListDialog({
 		bracket.type === "round_robin" || bracket.type === "swiss";
 
 	const needsToPickEliminationTeamCount =
-		(bracket.type === "single_elimination" ||
-			bracket.type === "double_elimination") &&
-		!eliminationTeamCount;
+		isEliminationType(bracket.type) && !eliminationTeamCount;
 
 	const roundMapsInput = Array.from(maps.entries()).map(([key, value]) => ({
 		...value,
@@ -364,9 +361,7 @@ export function BracketMapListDialog({
 					name="maps"
 					value={JSON.stringify(roundMapsInput)}
 				/>
-				{isPreparing &&
-				(bracket.type === "single_elimination" ||
-					bracket.type === "double_elimination") ? (
+				{isPreparing && isEliminationType(bracket.type) ? (
 					<input
 						type="hidden"
 						name="eliminationTeamCount"
@@ -404,9 +399,7 @@ export function BracketMapListDialog({
 					<>
 						<div className="stack horizontal items-center justify-between">
 							<div className="stack horizontal lg flex-wrap">
-								{isPreparing &&
-								(bracket.type === "single_elimination" ||
-									bracket.type === "double_elimination") ? (
+								{isPreparing && isEliminationType(bracket.type) ? (
 									<EliminationTeamCountSelect
 										type={bracket.type}
 										count={eliminationTeamCount}

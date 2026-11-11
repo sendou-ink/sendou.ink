@@ -11,7 +11,11 @@ import * as Series from "~/features/tournament-organization/core/Series";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
-import { forbidden, notFound, parseParams } from "~/utils/remix.server";
+import {
+	forbidden,
+	notFoundIfNullish,
+	parseParams,
+} from "~/utils/remix.server";
 
 export type TournamentTeamCompsLoaderData = SerializeFrom<typeof loader>;
 
@@ -23,12 +27,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	});
 
 	const tournament = await tournamentDataCached(tournamentId);
-	const team = tournament?.ctx.teams.find(
-		(candidate) => candidate.id === tournamentTeamId,
+	const team = notFoundIfNullish(
+		tournament.ctx.teams.find((candidate) => candidate.id === tournamentTeamId),
 	);
-	if (!tournament || !team) {
-		notFound();
-	}
 
 	if (!team.memberUserIds.includes(user.id)) {
 		forbidden();
