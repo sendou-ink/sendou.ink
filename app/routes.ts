@@ -236,6 +236,10 @@ export default [
 				"brackets",
 				"features/tournament-admin/routes/to.$id.admin.brackets.tsx",
 			),
+			route(
+				"stations",
+				"features/tournament-admin/routes/to.$id.admin.stations.tsx",
+			),
 			route("audit", "features/tournament-admin/routes/to.$id.admin.audit.tsx"),
 		]),
 		route("results", "features/tournament/routes/to.$id.results.tsx"),

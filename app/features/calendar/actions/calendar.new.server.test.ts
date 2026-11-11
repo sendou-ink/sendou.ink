@@ -9,6 +9,7 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
 import * as XpTrophy from "~/features/trophies/core/XpTrophy";
 import { invariant } from "~/utils/invariant";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
@@ -563,6 +564,32 @@ describe("calendar new action: venue", () => {
 		expect(
 			(await CalendarRepository.findById(createdEventId(res)))?.venue,
 		).toBeNull();
+	});
+
+	test("editing keeps auto-assign stations turned off", async () => {
+		const eventId = createdEventId(
+			await editAction(calendarNewFormValues(lanFields), { user: "regular" }),
+		);
+		const created = await CalendarRepository.findById(eventId);
+		invariant(created?.tournamentId, "expected a tournament");
+		await TournamentStationRepository.setStations({
+			tournamentId: created.tournamentId,
+			stations: [],
+			autoAssign: false,
+		});
+
+		await editAction(
+			calendarNewFormValues({
+				...lanFields,
+				name: "Renamed",
+				eventToEditId: eventId,
+			}),
+			{ user: "regular" },
+		);
+
+		expect(
+			(await tournamentFromDB(created.tournamentId)).autoAssignsStations,
+		).toBe(false);
 	});
 
 	test("turning LAN off on edit removes the venue", async () => {

@@ -28,6 +28,43 @@ export async function up(db: Kysely<any>): Promise<void> {
 				)
 				.execute();
 
+			await trx.schema
+				.createTable("TournamentStation")
+				.addColumn("id", "integer", (col) => col.primaryKey().autoIncrement())
+				.addColumn("tournamentId", "integer", (col) =>
+					col.notNull().references("Tournament.id").onDelete("cascade"),
+				)
+				.addColumn("name", "text", (col) => col.notNull())
+				.addColumn("locationNote", "text")
+				.addColumn("castAccount", "text")
+				.addColumn("position", "integer", (col) => col.notNull())
+				.modifyEnd(sql`strict`)
+				.execute();
+
+			await trx.schema
+				.createIndex("tournament_station_tournament_id_position")
+				.on("TournamentStation")
+				.columns(["tournamentId", "position"])
+				.execute();
+
+			await trx.schema
+				.createTable("TournamentMatchStation")
+				.addColumn("matchId", "integer", (col) =>
+					col.primaryKey().references("TournamentMatch.id").onDelete("cascade"),
+				)
+				.addColumn("stationId", "integer", (col) =>
+					col.notNull().references("TournamentStation.id").onDelete("cascade"),
+				)
+				.addColumn("position", "integer", (col) => col.notNull())
+				.modifyEnd(sql`strict`)
+				.execute();
+
+			await trx.schema
+				.createIndex("tournament_match_station_station_id")
+				.on("TournamentMatchStation")
+				.column("stationId")
+				.execute();
+
 			await makeUserDiscordIdNullable(trx);
 			// also holds the name an organizer typed for a placeholder player, not only Discord's
 			await sql`alter table "User" rename column "discordName" to "defaultName"`.execute(

@@ -803,6 +803,8 @@ async function updateTournamentTables(
 	const settings = buildTournamentSettings(args, {
 		// not editable after creation
 		isTest: existingSettings.isTest,
+		// set on the admin stations page
+		autoAssignStations: existingSettings.autoAssignStations,
 	});
 
 	const changedFormat = Progression.changedBracketProgressionFormat(
@@ -901,7 +903,10 @@ async function resetTeamMapPicks(
 
 function buildTournamentSettings(
 	args: Omit<CreateArgs, "isFullTournament">,
-	{ isTest }: { isTest: boolean | undefined },
+	{
+		isTest,
+		autoAssignStations,
+	}: Pick<Tables["Tournament"]["settings"], "isTest" | "autoAssignStations">,
 ): Tables["Tournament"]["settings"] {
 	invariant(args.bracketProgression, "Expected bracketProgression");
 
@@ -909,6 +914,7 @@ function buildTournamentSettings(
 		bracketProgression: args.bracketProgression,
 		isRanked: args.isRanked,
 		isTest,
+		autoAssignStations,
 		isLeague: args.isLeague,
 		isDraft: args.isDraft,
 		isInvitational: args.isInvitational,

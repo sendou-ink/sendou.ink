@@ -67,6 +67,7 @@ import {
 	LUTI_NAME_PREFIX,
 	LUTI_ORGANIZATION_ID,
 } from "~/features/tournament-organization/tournament-organization-constants";
+import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -2290,6 +2291,13 @@ export function buildCases(fx: Fixtures): {
 				tournamentTeamId,
 				userId: user.id,
 			}),
+	);
+
+	add(
+		"TournamentStationRepository.findAllByTournamentId",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentStationRepository.findAllByTournamentId(tournamentId),
 	);
 
 	addStatic("TrophyRepository.all", () => TrophyRepository.all());

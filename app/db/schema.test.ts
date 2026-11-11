@@ -7,6 +7,7 @@ const NATURAL_PRIMARY_KEYS = [
 	"PlusTier",
 	"UserDiscordToken",
 	"CalendarEventVenue",
+	"TournamentMatchStation",
 ];
 
 /** Integer `...Id` columns that intentionally have no foreign key. Game data ids ending in `SplId` are always exempt. */

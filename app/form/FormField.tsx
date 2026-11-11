@@ -78,7 +78,7 @@ const EMPTY_ITEM_VALUES: Record<string, unknown> = {};
 interface FormFieldProps {
 	name: string;
 	label?: string;
-	/** Extra element rendered next to the label, e.g. an `<InfoPopover />` explaining the field's syntax. Only `text-field` supports it. */
+	/** Extra element rendered next to the label, e.g. an `<InfoPopover />` explaining the field's syntax. Only `text-field` and `switch` support it. */
 	labelPopover?: React.ReactNode;
 	disabled?: boolean;
 	/** Focuses the field on mount. Only `text-field` and `text-area` support it. */
@@ -226,6 +226,7 @@ export function FormField({
 				{...commonProps}
 				{...formField}
 				isDisabled={isDisabled}
+				labelPopover={labelPopover}
 				checked={value as boolean}
 				onChange={handleChange as (v: boolean) => void}
 			/>
