@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as EventVersion from "../core/event-version";
+import { stubEvent } from "../tests/stub-event";
 import { EVENTS_STORE, tx } from "./db";
 import {
 	deleteEvents,
@@ -10,7 +11,12 @@ import {
 	updateEventsSend,
 } from "./events";
 
-const DEATH = { type: "Death", t: 1, confidence: 1, data: { name: "a" } };
+const DEATH = stubEvent({
+	type: "Death",
+	t: 1,
+	confidence: 1,
+	data: { name: "a" },
+});
 
 /** A record as some other version of the code left it in the store. */
 function putRaw(record: StoredEvent): Promise<number> {

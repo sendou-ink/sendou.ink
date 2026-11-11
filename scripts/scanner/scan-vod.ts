@@ -21,17 +21,10 @@
 import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { basename } from "node:path";
-import {
-	type CsvEvent,
-	eventsToCsv,
-} from "../../app/features/scanner/core/csv/events";
+import { eventsToCsv } from "../../app/features/scanner/core/csv/events";
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import { runDetectorPass } from "../../app/features/scanner/core/detectors/frame-pass";
-import { MAP_START_EVENT_TYPE } from "../../app/features/scanner/core/detectors/map-start/index";
-import {
-	createAllDetectors,
-	SCOREBOARD_EVENT_TYPES,
-} from "../../app/features/scanner/core/detectors/registry";
+import { createAllDetectors } from "../../app/features/scanner/core/detectors/registry";
 import { DetectorScheduler } from "../../app/features/scanner/core/detectors/scheduler";
 import { createScanTelemetry } from "../../app/features/scanner/core/detectors/telemetry";
 import { normalizeFrame, toMat } from "../../app/features/scanner/core/image";
@@ -80,10 +73,7 @@ const recorder = recordDir
 	: null;
 const runSteps = recorder?.run ?? matcher?.run;
 const detectors = createAllDetectors(await loadScoreboardResources());
-const scheduler = new DetectorScheduler(detectors, {
-	matchOpeningTypes: [MAP_START_EVENT_TYPE],
-	matchClosingTypes: SCOREBOARD_EVENT_TYPES,
-});
+const scheduler = new DetectorScheduler(detectors);
 scheduler.reset(start);
 const timeline = new TimelineBuilder();
 const telemetry = collectTelemetry ? createScanTelemetry() : null;
@@ -147,7 +137,7 @@ if (exitCode !== 0) {
 	process.exit(1);
 }
 
-const csv = eventsToCsv(timeline.events as CsvEvent[]);
+const csv = eventsToCsv(timeline.events);
 writeFileSync(outPath, csv);
 const tapePath =
 	tapeName === undefined

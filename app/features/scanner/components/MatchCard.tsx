@@ -37,10 +37,7 @@ import {
 	SENDOU_INK_DISCORD_URL,
 } from "~/utils/urls";
 import { clipCovers } from "../core/clips/scoring";
-import {
-	DEATH_EVENT_TYPE,
-	type DeathData,
-} from "../core/detectors/death/index";
+import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import { formatClock, formatPosition } from "../core/format";
 import { lobbyLabel, modeLabel, stageLabel, weaponLabel } from "../core/labels";
 import type { BuiltMatch } from "../core/match-builder";
@@ -489,7 +486,7 @@ function DeathsAndKills({
 	const deaths: DeathRow[] = built.sources
 		.filter((event) => event.type === DEATH_EVENT_TYPE)
 		.map((event) => {
-			const data = event.data as DeathData;
+			const { data } = event;
 			return {
 				t: event.t,
 				timeLeft: matchClockAt(match, event.t),

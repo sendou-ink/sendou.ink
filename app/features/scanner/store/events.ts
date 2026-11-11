@@ -7,8 +7,8 @@
  * frames past `frames.ts`'s age and size budget (the events stay, marked frameless).
  */
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
-import type { DetectedEvent } from "../core/detectors/types";
 import * as EventVersion from "../core/event-version";
+import { type DetectedEvent, detectionOf } from "../core/events";
 import { expiredSessionEventIds } from "../core/sessions";
 import { EVENTS_STORE, FRAMES_STORE, readwrite, tx } from "./db";
 import { trimFrames } from "./frames";
@@ -30,21 +30,17 @@ export interface SendStatus {
 	attempts?: number;
 }
 
-export interface StoredEvent {
+/** A persisted detection; `t` is wall-clock seconds for live captures, seconds into the file for VoDs. */
+export type StoredEvent = DetectedEvent & {
 	id?: number;
 	/** `core/event-version.ts` version `type` and `data` were written at; absent on events stored before the stamp */
 	v?: number;
-	type: string;
-	/** seconds — wall-clock seconds for live captures, seconds into the file for VoDs */
-	t: number;
 	/** wall-clock time of detection */
 	detectedAt: number;
-	confidence: number;
-	data: unknown;
 	/** whether a full-res frame exists in the `frames` store under this id */
 	hasFrame?: boolean;
 	send?: SendStatus;
-}
+};
 
 let lastRetentionAt = 0;
 
@@ -59,12 +55,9 @@ export async function saveEvent(
 ): Promise<number> {
 	const record: StoredEvent = {
 		...(reuseId !== undefined ? { id: reuseId } : null),
+		...detectionOf(event),
 		v: EventVersion.CURRENT,
-		type: event.type,
-		t: event.t,
 		detectedAt: Date.now(),
-		confidence: event.confidence,
-		data: event.data,
 		hasFrame: frame !== undefined,
 	};
 	let id = 0;

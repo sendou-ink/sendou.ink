@@ -40,7 +40,7 @@
 			}
 		},
 		{
-			"sources": "2-528 530-531 539-542",
+			"sources": "2-531 539-542",
 			"match": {
 				"startsAt": 1032,
 				"endsAt": 1380,
@@ -1704,7 +1704,15 @@
 							{"name":"mo","weaponId":210,"paint":1067,"ka":26,"d":12,"s":4,"abilities":[["CB"],["QR"],["SJ"]]},
 							{"name":"seek lifer","weaponId":60,"paint":1493,"ka":23,"d":4,"s":6,"abilities":[["SCU"],["RSU"],["SJ"]]},
 							{"name":"あしゅ","weaponId":251,"paint":1014,"ka":19,"d":4,"s":5,"abilities":[["SSU"],["IA"],["SJ"]]},
-							{"name":"ヒニチ","weaponId":5010,"paint":1410,"ka":18,"d":13,"s":5,"abilities":[["CB"],["QR"],["SJ"]]}
+							{
+								"name": "ヒニチ",
+								"weaponId": 5010,
+								"paint": 1410,
+								"ka": 18,
+								"d": 13,
+								"s": 5,
+								"abilities": [["CB","SSU","QSJ","SSU"],["QR","QR","SS","IA"],["SJ","QSJ","SRU","RES"]]
+							}
 						]
 					},
 					{
@@ -1973,7 +1981,7 @@
 			}
 		},
 		{
-			"sources": "543-1072 1074-1076",
+			"sources": "543-1076",
 			"match": {
 				"startsAt": 1471,
 				"endsAt": 1862,
@@ -3611,7 +3619,15 @@
 					{
 						"players": [
 							{"name":"Short Trim","weaponId":251,"paint":1375,"ka":24,"d":7,"s":5,"abilities":[["OG"],["IA"],["SSU"]]},
-							{"name":"Bisk","weaponId":5010,"paint":1527,"ka":20,"d":11,"s":4,"abilities":[["CB"],["QR"],["SJ"]]},
+							{
+								"name": "Bisk",
+								"weaponId": 5010,
+								"paint": 1527,
+								"ka": 20,
+								"d": 11,
+								"s": 4,
+								"abilities": [["CB","SSU","QSJ","SSU"],["QR","QR","SS","IA"],["SJ","QSJ","SRU","RES"]]
+							},
 							{"name":"Mesh Cap","weaponId":6011,"paint":1504,"ka":13,"d":8,"s":6,"abilities":[["CB"],["SSU"],["SJ"]]},
 							{"name":"Headtand","weaponId":211,"paint":1023,"ka":19,"d":12,"s":3,"abilities":[["CB"],["QR"],["SJ"]]}
 						]

@@ -10,18 +10,19 @@
  * one detector at a time.
  */
 import type { Mat } from "../cv";
+import type { DetectedEvent } from "../events";
 import { all, type MatchScores, type MatchSteps } from "../match-steps";
 import type { DetectorScheduler } from "./scheduler";
 import { detectorTelemetry, type ScanTelemetry } from "./telemetry";
-import type { DetectedEvent, Detector, GateResult } from "./types";
+import type { Detector, GateResult } from "./types";
 
 export interface DetectorOutcome {
-	detector: Detector<unknown>;
+	detector: Detector<DetectedEvent>;
 	gate: GateResult;
 	/** the gate passed and the scheduler let the parse run */
 	parsed: boolean;
 	/** empty when the gate failed or the scheduler suppressed the parse */
-	events: DetectedEvent<unknown>[];
+	events: DetectedEvent[];
 }
 
 /** Runs match steps to completion, answering requests in batches (a GPU driver's `run`). */
@@ -41,7 +42,7 @@ export async function runDetectorPass({
 }: {
 	frame: Mat;
 	t: number;
-	detectors: readonly Detector<unknown>[];
+	detectors: readonly Detector<DetectedEvent>[];
 	due: readonly string[];
 	scheduler: DetectorScheduler;
 	telemetry: ScanTelemetry | null;
@@ -73,7 +74,7 @@ export async function runDetectorPass({
 
 	const parsing = gated.filter((outcome) => outcome.parsed);
 	onGated?.(parsing.map((outcome) => outcome.detector.id));
-	const addParseMs = (detector: Detector<unknown>, ms: number) => {
+	const addParseMs = (detector: Detector<DetectedEvent>, ms: number) => {
 		if (telemetry) detectorTelemetry(telemetry, detector.id).parseMs += ms;
 	};
 	if (runSteps && parsing.length > 0) {

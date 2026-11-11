@@ -11,10 +11,9 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type {
-	DetectedEvent,
 	Detector,
+	EventRecord,
 	GateResult,
 } from "../core/detectors/types";
 import { normalizeFrame, toMat } from "../core/image";
@@ -224,16 +223,16 @@ export function fieldTestOptions(
 	return misread ? { expectFailure: `misreadFields "${misread}"` } : {};
 }
 
-export interface FixtureRun<TData = ScoreboardData> {
+export interface FixtureRun<TEvent extends EventRecord> {
 	gate: GateResult;
-	events: DetectedEvent<TData>[];
+	events: TEvent[];
 }
 
 /** Run gate+parse the way the live pipeline would. Caller must have loaded OpenCV. */
-export async function runDetectorOnFixture<TData = ScoreboardData>(
-	detector: Detector<TData>,
+export async function runDetectorOnFixture<TEvent extends EventRecord>(
+	detector: Detector<TEvent>,
 	fixture: Fixture,
-): Promise<FixtureRun<TData>> {
+): Promise<FixtureRun<TEvent>> {
 	const src = toMat(await readImage(fixture.framePath));
 	const frame = normalizeFrame(src);
 	src.delete();

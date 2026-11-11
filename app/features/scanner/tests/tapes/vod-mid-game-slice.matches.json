@@ -2,7 +2,7 @@
 	"invalidObjectiveEvents": "",
 	"matches": [
 		{
-			"sources": "0-162 164",
+			"sources": "0-164",
 			"match": {
 				"startsAt": 150,
 				"endsAt": 276,
@@ -561,7 +561,15 @@
 					{
 						"players": [
 							{"name":"y0s","weaponId":2070,"paint":1742,"ka":20,"d":0,"s":6},
-							{"name":"kera","weaponId":400,"paint":808,"ka":16,"d":8,"s":2},
+							{
+								"name": "kera",
+								"weaponId": 400,
+								"paint": 808,
+								"ka": 16,
+								"d": 8,
+								"s": 2,
+								"abilities": [["LDE","QSJ","RES","RSU"],["RSU","ISM","RES","RES"],["SJ","SRU","RSU","RSU"]]
+							},
 							{"name":"Mongering","weaponId":261,"paint":661,"ka":9,"d":9,"s":1},
 							{"name":"fuzzy","weaponId":20,"paint":1142,"ka":5,"d":7,"s":4}
 						]
@@ -596,7 +604,7 @@
 			}
 		},
 		{
-			"sources": "165-645 647",
+			"sources": "165-647",
 			"match": {
 				"startsAt": 283,
 				"endsAt": 628,
@@ -2138,7 +2146,15 @@
 							{"name":"Mongering","weaponId":261,"paint":1312,"ka":23,"d":8,"s":6},
 							{"name":"y0s","weaponId":4050,"paint":1460,"ka":18,"d":6,"s":5},
 							{"name":"fuzzy","weaponId":20,"paint":1525,"ka":13,"d":10,"s":5},
-							{"name":"kera","weaponId":400,"paint":953,"ka":15,"d":8,"s":2}
+							{
+								"name": "kera",
+								"weaponId": 400,
+								"paint": 953,
+								"ka": 15,
+								"d": 8,
+								"s": 2,
+								"abilities": [["LDE","QSJ","RES","RSU"],["RSU","ISM","RES","RES"],["SJ","SRU","RSU","RSU"]]
+							}
 						]
 					},
 					{

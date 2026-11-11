@@ -23,10 +23,10 @@ import type { ScoreboardData } from "../../core/detectors/scoreboard/index";
 import type { ScoreboardBattleLogData } from "../../core/detectors/scoreboard-battle-log/index";
 import type { ScoreboardBattleLogReplayData } from "../../core/detectors/scoreboard-battle-log-replay/index";
 import type { ScoreboardOwnData } from "../../core/detectors/scoreboard-own/index";
-import type { DetectedEvent } from "../../core/detectors/types";
 import type { XRankPositionData } from "../../core/detectors/x-rank/position";
 import type { XSetCountData } from "../../core/detectors/x-rank/set-count";
 import type { XSetResultData } from "../../core/detectors/x-rank/set-result";
+import type { DetectedEvent, EventOfType } from "../../core/events";
 import {
 	buildScannerMatches,
 	ingestSkipReasons,
@@ -36,6 +36,7 @@ import {
 } from "../../core/match-builder";
 import { xBattleCards } from "../../core/x-battle";
 import type { ScannerLobby } from "../../scanner-types";
+import { stubEvent } from "../stub-event";
 
 const NAMES = ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"];
 const ALPHA: MainWeaponId[] = [40, 1001, 2010, 3030];
@@ -121,7 +122,7 @@ function scoreboard(
 		names = NAMES,
 		noContest = false,
 	} = {},
-): DetectedEvent {
+): EventOfType<"Scoreboard"> {
 	const data: ScoreboardData = {
 		lobby,
 		mode,
@@ -150,8 +151,8 @@ function replayScoreboard(
 		mode = "SZ" as ModeShort | null,
 		paints = [] as (number | null)[],
 	} = {},
-): DetectedEvent & { detectedAt?: number } {
-	const base = scoreboard(t, { stage, mode, paints }).data as ScoreboardData;
+): EventOfType<"ScoreboardBattleLogReplay"> & { detectedAt?: number } {
+	const base = scoreboard(t, { stage, mode, paints }).data;
 	const data: ScoreboardBattleLogReplayData = {
 		...base,
 		timestamp,
@@ -171,9 +172,8 @@ function battleLogScoreboard(
 		names = NAMES,
 		ka = 10 as number | null,
 	} = {},
-): DetectedEvent & { detectedAt?: number } {
-	const base = scoreboard(t, { paints, stage, mode, names })
-		.data as ScoreboardData;
+): EventOfType<"ScoreboardBattleLog"> & { detectedAt?: number } {
+	const base = scoreboard(t, { paints, stage, mode, names }).data;
 	const data: ScoreboardBattleLogData = {
 		...base,
 		players: base.players.map((player) => ({ ...player, ka })),
@@ -797,7 +797,7 @@ function xCard(
 		XSetResult: SET_RESULT,
 		XRankPosition: RANK_POSITION,
 	}[type];
-	return { type, t, confidence: 0.95, data };
+	return stubEvent({ type, t, confidence: 0.95, data });
 }
 
 test("an X Battle set count shown before the results screen joins that game", () => {
@@ -1174,7 +1174,7 @@ test("a battle log scoreboard closes a match and supplies the recording time wit
 });
 
 test("without a replay timestamp, playedAt falls back to the scoreboard's detection time", () => {
-	const event = scoreboard(300) as DetectedEvent & { detectedAt?: number };
+	const event: DetectedEvent & { detectedAt?: number } = scoreboard(300);
 	event.detectedAt = 1_700_000_000_000;
 	const built = buildScannerMatches([event]);
 	assert.equal(built[0]!.match.playedAt, 1_700_000_000_000);
@@ -1185,9 +1185,9 @@ const OTHER_GAME_PAINTS = [1188, 1003, 1421, 901, 1250, 612, 1377, 745];
 const PLAYED_AT = new Date(2025, 11, 25, 21, 34).getTime();
 
 function playedGame(): DetectedEvent[] {
-	const results = scoreboard(300, { paints: GAME_PAINTS }) as DetectedEvent & {
-		detectedAt?: number;
-	};
+	const results: DetectedEvent & { detectedAt?: number } = scoreboard(300, {
+		paints: GAME_PAINTS,
+	});
 	results.detectedAt = PLAYED_AT;
 	return [mapStart(0), death(100, "l1"), results];
 }
@@ -1461,9 +1461,12 @@ test.each([
 			timestamp: "25.12.2025 21:30",
 			paints: OTHER_GAME_PAINTS,
 		});
-		const reads = [...intro, death(100, "l1")];
+		const reads: (DetectedEvent & { detectedAt?: number })[] = [
+			...intro,
+			death(100, "l1"),
+		];
 		for (const read of reads) {
-			(read as DetectedEvent & { detectedAt?: number }).detectedAt = PLAYED_AT;
+			read.detectedAt = PLAYED_AT;
 		}
 		const built = buildScannerMatches([...reads, view]);
 		assert.equal(built.length, 1);
@@ -1480,7 +1483,7 @@ test.each([
 		why: "of another mode",
 		view: () => {
 			const view = battleLogScoreboard(200);
-			(view.data as ScoreboardData).mode = "CB";
+			view.data.mode = "CB";
 			return view;
 		},
 	},
@@ -1491,7 +1494,7 @@ test.each([
 ])(
 	"a battle log view $why leaves the match being gathered open",
 	({ view: makeView }) => {
-		const start = mapStart(0) as DetectedEvent & { detectedAt?: number };
+		const start: DetectedEvent & { detectedAt?: number } = mapStart(0);
 		start.detectedAt = PLAYED_AT;
 		const view = makeView();
 		const built = buildScannerMatches([
@@ -1641,7 +1644,7 @@ test("with a cache, an earlier match completed from the battle log keeps its ide
 });
 
 test("a battle log view recorded long before the orphan reads leaves them unclaimed", () => {
-	const read = death(100, "l1") as DetectedEvent & { detectedAt?: number };
+	const read: DetectedEvent & { detectedAt?: number } = death(100, "l1");
 	read.detectedAt = PLAYED_AT;
 	const view = battleLogScoreboard(200, { timestamp: "25.12.2025 19:30" });
 	const built = buildScannerMatches([read, view, scoreboard(300)]);
@@ -1913,7 +1916,7 @@ function stripWeaponsEvent(
 	t: number,
 	slots: [(MainWeaponId | null)[], (MainWeaponId | null)[]],
 	{ score = 0.9, time = (300 - Math.round(t)) as number | null } = {},
-): DetectedEvent {
+): EventOfType<"StripWeapons"> {
 	const data: StripWeaponsData = {
 		time,
 		slots: slots.map((side) =>
@@ -2392,7 +2395,7 @@ test("a named card's state tells apart two rows sharing a weapon", () => {
 				enemies: [],
 				teamColors: [null, null],
 			},
-		} as DetectedEvent,
+		},
 		stripRead(150, { special: [[0, 0]] }),
 		scoreboard(300, { weapons: [40, 40, 2010, 3030, ...BRAVO] }),
 	]);
@@ -2445,7 +2448,7 @@ test("pov diamond cards map to scoreboard rows by name", () => {
 	};
 	const built = buildScannerMatches([
 		mapStart(0),
-		{ type: "Minimap", t: 90, confidence: 0.8, data } as DetectedEvent,
+		{ type: "Minimap", t: 90, confidence: 0.8, data },
 		scoreboard(300),
 	]);
 	const sample = built[0]!.match.playerStatus!.samples[0]!;
@@ -2778,7 +2781,7 @@ function kitTieStripRead(
 	runnerUp: MainWeaponId,
 ): DetectedEvent {
 	const event = stripWeaponsEvent(t, STRIP_SEATING);
-	const data = event.data as StripWeaponsData;
+	const { data } = event;
 	data.slots[0][0] = [
 		{ weaponId: leader, score: 0.9 },
 		{ weaponId: runnerUp, score: 0.85 },

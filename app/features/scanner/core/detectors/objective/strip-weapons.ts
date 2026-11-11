@@ -19,7 +19,7 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import { copyRoi, type FrameData } from "../../image";
-import type { DetectedEvent } from "../types";
+import type { EventKind, EventOf } from "../types";
 import type { PlayerStatusData, StripFit } from "./player-status";
 import {
 	STATUS_ICON_CENTER_Y,
@@ -38,6 +38,18 @@ import {
 } from "./rois";
 
 export const STRIP_WEAPONS_EVENT_TYPE = "StripWeapons";
+
+/** Sampled every ~5s, each distinct evidence; scored on raw NCC peaks, so no confidence floor. */
+export const STRIP_WEAPONS_EVENT: EventKind<
+	typeof STRIP_WEAPONS_EVENT_TYPE,
+	StripWeaponsData
+> = {
+	type: STRIP_WEAPONS_EVENT_TYPE,
+	mergeWindowS: 2,
+	minConfidence: 0,
+};
+
+export type StripWeaponsEvent = EventOf<typeof STRIP_WEAPONS_EVENT>;
 
 interface StripWeaponCandidate {
 	weaponId: MainWeaponId;
@@ -128,7 +140,7 @@ export function parseStripWeapons(
 	status: PlayerStatusData,
 	fit: StripFit,
 	templates: StripWeaponTemplate[],
-): DetectedEvent<StripWeaponsData> {
+): StripWeaponsEvent {
 	const scores: number[] = [];
 	const slots = fit.map((sideFit, side) =>
 		sideFit.centers.map((cx, slot) => {

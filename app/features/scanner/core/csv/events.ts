@@ -6,20 +6,14 @@
  */
 
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { DEATH_EVENT_TYPE, type DeathData } from "../detectors/death/index";
-import { KILL_EVENT_TYPE, type KillData } from "../detectors/kill/index";
-import {
-	MAP_START_EVENT_TYPE,
-	type MapStartData,
-} from "../detectors/map-start/index";
+import { DEATH_EVENT_TYPE } from "../detectors/death/index";
+import { KILL_EVENT_TYPE } from "../detectors/kill/index";
+import { MAP_START_EVENT_TYPE } from "../detectors/map-start/index";
 import {
 	MINIMAP_EVENT_TYPE,
 	type MinimapData,
 } from "../detectors/minimap/index";
-import {
-	OBJECTIVE_EVENT_TYPE,
-	type ObjectiveData,
-} from "../detectors/objective/index";
+import { OBJECTIVE_EVENT_TYPE } from "../detectors/objective/index";
 import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
@@ -38,22 +32,11 @@ import {
 	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
 	type ScoreboardBattleLogReplayData,
 } from "../detectors/scoreboard-battle-log-replay/index";
-import {
-	SCOREBOARD_OWN_EVENT_TYPE,
-	type ScoreboardOwnData,
-} from "../detectors/scoreboard-own/index";
-import {
-	X_RANK_POSITION_EVENT_TYPE,
-	type XRankPositionData,
-} from "../detectors/x-rank/position";
-import {
-	X_SET_COUNT_EVENT_TYPE,
-	type XSetCountData,
-} from "../detectors/x-rank/set-count";
-import {
-	X_SET_RESULT_EVENT_TYPE,
-	type XSetResultData,
-} from "../detectors/x-rank/set-result";
+import { SCOREBOARD_OWN_EVENT_TYPE } from "../detectors/scoreboard-own/index";
+import { X_RANK_POSITION_EVENT_TYPE } from "../detectors/x-rank/position";
+import { X_SET_COUNT_EVENT_TYPE } from "../detectors/x-rank/set-count";
+import { X_SET_RESULT_EVENT_TYPE } from "../detectors/x-rank/set-result";
+import type { DetectedEvent, XBattleCardEvent } from "../events";
 import { formatClock, formatTime } from "../format";
 import {
 	lobbyLabel,
@@ -67,15 +50,11 @@ import {
 } from "../labels";
 import { type CsvCell, toCsv } from "./csv";
 
-export interface CsvEvent {
-	type: string;
-	/** video/stream time in seconds */
-	t: number;
+/** `t` is video/stream time in seconds. */
+export type CsvEvent = DetectedEvent & {
 	/** wall-clock time of detection (live capture only) */
 	detectedAt?: number;
-	confidence: number;
-	data: unknown;
-}
+};
 
 const HEADER = [
 	"type",
@@ -161,17 +140,14 @@ function formatPlayers(data: ScoreboardData): string {
 		.join("; ");
 }
 
-function xRankLabel(
-	type: string,
-	data: XSetCountData | XSetResultData | XRankPositionData,
-): string {
-	if (type === X_SET_COUNT_EVENT_TYPE) {
-		return `set ${xSetCountLabel(data as XSetCountData)}`;
+function xRankLabel(event: XBattleCardEvent): string {
+	if (event.type === X_SET_COUNT_EVENT_TYPE) {
+		return `set ${xSetCountLabel(event.data)}`;
 	}
-	if (type === X_SET_RESULT_EVENT_TYPE) {
-		return `set over ${xSetResultLabel(data as XSetResultData)}`;
+	if (event.type === X_SET_RESULT_EVENT_TYPE) {
+		return `set over ${xSetResultLabel(event.data)}`;
 	}
-	return `position ${xRankPositionLabel(data as XRankPositionData)}`;
+	return `position ${xRankPositionLabel(event.data)}`;
 }
 
 function eventCells(event: CsvEvent, originT: number): CsvCell[] {
@@ -187,7 +163,7 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 	];
 	switch (event.type) {
 		case DEATH_EVENT_TYPE: {
-			const d = event.data as DeathData;
+			const d = event.data;
 			return [
 				...base,
 				"",
@@ -205,7 +181,7 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 			];
 		}
 		case MAP_START_EVENT_TYPE: {
-			const d = event.data as MapStartData;
+			const d = event.data;
 			return [
 				...base,
 				"",
@@ -223,7 +199,7 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 			];
 		}
 		case SCOREBOARD_OWN_EVENT_TYPE: {
-			const d = event.data as ScoreboardOwnData;
+			const d = event.data;
 			return [
 				...base,
 				lobbyLabel(d.lobby),
@@ -241,7 +217,7 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 			];
 		}
 		case KILL_EVENT_TYPE: {
-			const d = event.data as KillData;
+			const d = event.data;
 			const clock = d.time === null ? "" : `${formatClock(d.time)} · `;
 			return [
 				...base,
@@ -264,7 +240,7 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 			];
 		}
 		case OBJECTIVE_EVENT_TYPE: {
-			const d = event.data as ObjectiveData;
+			const d = event.data;
 			const sideText = (side: 0 | 1) =>
 				`${d.score[side] ?? "?"}${d.mode === "SZ" && d.penalty[side] !== null ? ` (+${d.penalty[side]})` : ""}${d.control === side ? " ctrl" : ""}`;
 			const clock = d.time === null ? "" : `${formatClock(d.time)} · `;
@@ -287,7 +263,7 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 			];
 		}
 		case MINIMAP_EVENT_TYPE: {
-			const d = event.data as MinimapData;
+			const d = event.data;
 			const self = d.teammates.find((p) => p.self);
 			return [
 				...base,
@@ -306,7 +282,7 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 			];
 		}
 		case PLAYER_STATUS_EVENT_TYPE: {
-			const d = event.data as PlayerStatusData;
+			const d = event.data;
 			const clock = d.time === null ? "" : `${formatClock(d.time)} · `;
 			return [
 				...base,
@@ -325,7 +301,7 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 			];
 		}
 		case STRIP_WEAPONS_EVENT_TYPE: {
-			const d = event.data as StripWeaponsData;
+			const d = event.data;
 			const clock = d.time === null ? "" : `${formatClock(d.time)} · `;
 			return [
 				...base,
@@ -346,10 +322,7 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 		case X_SET_COUNT_EVENT_TYPE:
 		case X_SET_RESULT_EVENT_TYPE:
 		case X_RANK_POSITION_EVENT_TYPE: {
-			const d = event.data as
-				| XSetCountData
-				| XSetResultData
-				| XRankPositionData;
+			const d = event.data;
 			return [
 				...base,
 				"",
@@ -361,7 +334,7 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 				"",
 				"",
 				"",
-				xRankLabel(event.type, d),
+				xRankLabel(event),
 				"",
 				"",
 			];
@@ -371,8 +344,10 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 		case QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE:
 		case SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE: {
 			// the scoreboard reads share the base shape
-			const d = event.data as ScoreboardData &
-				Partial<ScoreboardBattleLogReplayData>;
+			const d: ScoreboardData &
+				Partial<
+					Pick<ScoreboardBattleLogReplayData, "timestamp" | "replayCode">
+				> = event.data;
 			return [
 				...base,
 				lobbyLabel(d.lobby),

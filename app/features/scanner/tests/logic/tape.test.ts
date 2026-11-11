@@ -1,21 +1,22 @@
 import { describe, expect, test } from "vitest";
 import * as EventVersion from "../../core/event-version";
+import { stubEvent } from "../stub-event";
 import * as Tape from "../tape";
 
 const EVENTS: Tape.TapeEvent[] = [
-	{
+	stubEvent({
 		type: "MapStart",
 		t: 10.125,
 		confidence: 0.8132,
 		data: { mode: "SZ", stage: 18 },
-	},
-	{
+	}),
+	stubEvent({
 		type: "Scoreboard",
 		t: 310.5,
 		detectedAt: 1_792_268_464_123,
 		confidence: 0.9,
 		data: { lobby: "PRIVATE", matchScores: [100, 0] },
-	},
+	}),
 ];
 
 function tapeText(events: readonly Tape.TapeEvent[]) {
@@ -44,13 +45,13 @@ describe("Tape.serialize", () => {
 		const [event] = Tape.parse(
 			"rounded",
 			tapeText([
-				{
+				stubEvent({
 					type: "Objective",
 					t: 12.3456789,
 					detectedAt: 1_792_268_464_123,
 					confidence: 0.771126010329,
 					data: { score: [0.123456, 95] },
-				},
+				}),
 			]),
 		).events;
 

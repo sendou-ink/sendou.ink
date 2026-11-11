@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { DetectedEvent } from "~/features/scanner/core/detectors/types";
+import type { DetectedEvent } from "~/features/scanner/core/events";
 import { expect, test } from "./helpers/playwright";
 import { ScannerCoachPage } from "./pages/scanner/scanner-coach-page";
 import { ScannerPage } from "./pages/scanner/scanner-page";

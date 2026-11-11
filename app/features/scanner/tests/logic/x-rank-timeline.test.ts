@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-import type { DetectedEvent } from "../../core/detectors/types";
 import {
 	X_RANK_POSITION_EVENT_TYPE,
 	type XRankPositionData,
@@ -12,6 +11,7 @@ import {
 	X_SET_RESULT_EVENT_TYPE,
 	type XSetResultData,
 } from "../../core/detectors/x-rank/set-result";
+import type { DetectedEvent } from "../../core/events";
 import { TimelineBuilder } from "../../core/timeline/index";
 
 const SET_RESULTS: XSetResultData["results"] = [

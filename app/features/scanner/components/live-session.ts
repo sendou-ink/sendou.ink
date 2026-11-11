@@ -28,13 +28,9 @@ import {
 	scoreWindows,
 	windowClosed,
 } from "../core/clips/scoring";
-import {
-	MAP_START_EVENT_TYPE,
-	type MapStartData,
-} from "../core/detectors/map-start/index";
+import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
-import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
-import type { DetectedEvent } from "../core/detectors/types";
+import { type DetectedEvent, isScoreboardEvent } from "../core/events";
 import type { ScannerMatch } from "../core/scanner-match";
 import { TimelineBuilder } from "../core/timeline/index";
 import { publishCaptureStatus } from "../scanner-activity";
@@ -56,7 +52,7 @@ import {
 	refreshFeed,
 	subscribeFeed,
 } from "./events-feed";
-import { type FixtureData, saveFrame } from "./fixture-export";
+import { saveFrame } from "./fixture-export";
 import {
 	matchContaining,
 	retryDueMatches,
@@ -517,14 +513,13 @@ function onResult(
 	result: Parameters<ConstructorParameters<typeof AnalyzerClient>[0]>[0],
 ): void {
 	if (!result.gate.pass) return;
-	for (const event of result.events as DetectedEvent<FixtureData>[]) {
+	for (const event of result.events) {
 		if (event.type === OBJECTIVE_EVENT_TYPE && objectiveBlocked) continue;
 		const action = timeline.push(event);
 		if (action.action === "merged" || action.action === "dropped") continue;
 		if (event.type === MAP_START_EVENT_TYPE) {
-			const mode = (event.data as MapStartData).mode;
-			objectiveBlocked = mode === "TW";
-		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+			objectiveBlocked = event.data.mode === "TW";
+		} else if (isScoreboardEvent(event)) {
 			objectiveBlocked = false;
 		}
 		const stale =
@@ -547,7 +542,7 @@ async function persist(
 		// repeat detections don't remount the cards
 		const id = await saveEvent(event, frame, stale);
 		storedIds.set(event, id);
-		if (uploadEnabled() && SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+		if (uploadEnabled() && isScoreboardEvent(event)) {
 			// a scoreboard closes its match — send it, again if it went out
 			// without one; a better read of an already sent scoreboard is not resent
 			const unsent =

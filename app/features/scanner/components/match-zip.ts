@@ -8,7 +8,7 @@ import { strToU8, type Zippable, zipSync } from "fflate";
 import type { ExportClip } from "../core/csv/matches";
 import * as EventVersion from "../core/event-version";
 import type { BuiltMatch } from "../core/match-builder";
-import { buildExpectedJson, type FixtureData } from "./fixture-export";
+import { buildExpectedJson } from "./fixture-export";
 import type { GetFrame, ScanEvent } from "./session-data";
 
 const FRAME_EXTENSIONS: Record<string, string> = {
@@ -35,9 +35,7 @@ export async function matchZip(
 					new Uint8Array(await frame.arrayBuffer()),
 					{ level: 0 },
 				];
-				files[`${folder}/expected.json`] = strToU8(
-					buildExpectedJson(event.data as FixtureData, event.type),
-				);
+				files[`${folder}/expected.json`] = strToU8(buildExpectedJson(event));
 			}
 			return {
 				v: EventVersion.CURRENT,

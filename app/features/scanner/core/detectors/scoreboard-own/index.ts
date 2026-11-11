@@ -35,7 +35,7 @@ import { ALL_WEAPON_ENTRIES, type WeaponEntry } from "../death/weapon-names";
 import { parseHeaderSteps } from "../scoreboard/header";
 import type { ScoreboardResources } from "../scoreboard/index";
 import { matchWeaponSteps, type WeaponMatch } from "../scoreboard/weapons";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	GATE_PANEL_MAX_MEAN,
 	GATE_PANEL_PROBES,
@@ -65,6 +65,15 @@ export interface ScoreboardOwnData {
 }
 
 export const SCOREBOARD_OWN_EVENT_TYPE = "ScoreboardOwn";
+
+export const SCOREBOARD_OWN_EVENT: EventKind<
+	typeof SCOREBOARD_OWN_EVENT_TYPE,
+	ScoreboardOwnData
+> = {
+	type: SCOREBOARD_OWN_EVENT_TYPE,
+};
+
+type ScoreboardOwnEvent = EventOf<typeof SCOREBOARD_OWN_EVENT>;
 
 /** Snapped weapon reading below this is reported as null (kept in debug). */
 const WEAPON_MIN_SCORE = 0.55;
@@ -103,7 +112,7 @@ function mainWeaponCandidates(): WeaponCandidate[] {
 
 export function createScoreboardOwnDetector(
 	resources: ScoreboardResources,
-): Detector<ScoreboardOwnData> {
+): Detector<ScoreboardOwnEvent> {
 	const titleGlyphs: GlyphSet | null = resources.deathWeaponGlyphs
 		? scaleGlyphSet(
 				resources.deathWeaponGlyphs,
@@ -174,7 +183,7 @@ export function createScoreboardOwnDetector(
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<ScoreboardOwnData>[]> {
+	): MatchSteps<ScoreboardOwnEvent[]> {
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
 

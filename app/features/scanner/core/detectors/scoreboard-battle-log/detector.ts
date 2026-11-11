@@ -33,6 +33,7 @@ import { RESULT_TAG_ENTRIES } from "../../localized";
 import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import { homographyFromQuad, type PerspectiveQuad } from "../../rectify";
 import { closestBy } from "../../text";
+import { sameScoreboardMatch } from "../../timeline/same-scoreboard";
 import {
 	type BannerScoreRead,
 	FULL_COUNT_TEAM_SCORE,
@@ -49,7 +50,7 @@ import type {
 import { findPovIndex } from "../scoreboard/pov";
 import { parseScoreboardRowSteps, type RowRois } from "../scoreboard/row";
 import { parseReplayHeaderSteps } from "../scoreboard-battle-log-replay/header";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventRecord, GateResult } from "../types";
 
 export interface ScoreboardBattleLogData extends ScoreboardData {
 	/** recording timestamp as shown, e.g. "5/8/2026 19:16" or "9/11/2026 7:52 PM"; locale-formatted */
@@ -93,11 +94,18 @@ export interface BattleLogRois {
 	RESULT_TAG_TEXT_HEIGHT: number;
 }
 
-export interface BattleLogLayout {
+export interface BattleLogLayout<TType extends string> {
 	id: string;
-	eventType: string;
+	eventType: TType;
 	rois: BattleLogRois;
 }
+
+/**
+ * Confidence floor of the history screens: clean reads score 0.81+, and a read
+ * under the floor would form a card of its own when its fingerprint can't
+ * match the game.
+ */
+export const HISTORY_SCREEN_MIN_CONFIDENCE = 0.75;
 
 /** White team totals on the color band: a yellow band grays at ~190, digit cores ~250. */
 const TEAM_SCORE_BIN_THRESHOLD = 205;
@@ -126,10 +134,22 @@ interface PanelParse {
 	confidences: number[];
 }
 
-export function createBattleLogDetector(
+/** The event kind of a battle log layout's reads. */
+export function battleLogEventKind<TType extends string>(
+	type: TType,
+): EventKind<TType, ScoreboardBattleLogData> {
+	return {
+		type,
+		sameData: sameScoreboardMatch,
+		minConfidence: HISTORY_SCREEN_MIN_CONFIDENCE,
+		match: "closes",
+	};
+}
+
+export function createBattleLogDetector<TType extends string>(
 	resources: ScoreboardResources,
-	layout: BattleLogLayout,
-): Detector<ScoreboardBattleLogData> {
+	layout: BattleLogLayout<TType>,
+): Detector<EventRecord<TType, ScoreboardBattleLogData>> {
 	const cv = getCV();
 	const { rois } = layout;
 	const homography = rois.RECTIFY ? homographyFromQuad(rois.RECTIFY) : null;
@@ -425,7 +445,7 @@ export function createBattleLogDetector(
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<ScoreboardBattleLogData>[]> {
+	): MatchSteps<EventRecord<TType, ScoreboardBattleLogData>[]> {
 		const flat = rectifiedView(frame, FULL_FRAME);
 		const gray = flat.gray();
 		const rgb = flat.rgb();

@@ -18,8 +18,9 @@
  * State keys to the scan's clock; `t` jumping backwards resets everything.
  */
 
+import { kindOf } from "../events";
 import type { CheckPlan } from "./check-plan";
-import type { DetectedEvent } from "./types";
+import type { EventRecord } from "./types";
 
 export interface SchedulingInfo {
 	id: string;
@@ -53,10 +54,6 @@ export interface SchedulerOptions {
 	quietAfterS: number;
 	/** a match opened this long ago without closing is assumed abandoned */
 	matchOpenMaxS: number;
-	/** event types that open a match (map-start) */
-	matchOpeningTypes: readonly string[];
-	/** event types that close a match (the scoreboard family) */
-	matchClosingTypes: readonly string[];
 }
 
 const DEFAULT_SCHEDULER_OPTIONS: SchedulerOptions = {
@@ -70,8 +67,6 @@ const DEFAULT_SCHEDULER_OPTIONS: SchedulerOptions = {
 	signatureTolerance: 12,
 	quietAfterS: 15,
 	matchOpenMaxS: 8 * 60,
-	matchOpeningTypes: [],
-	matchClosingTypes: [],
 };
 
 /** events below this are too dubious to drive match-open/close state */
@@ -313,7 +308,7 @@ export class DetectorScheduler {
 	recordParse(
 		id: string,
 		t: number,
-		events: readonly Pick<DetectedEvent, "type" | "confidence">[],
+		events: readonly Pick<EventRecord, "type" | "confidence">[],
 	): void {
 		this.#recordMatchState(t, events);
 		const state = this.#states.get(id);
@@ -400,16 +395,17 @@ export class DetectorScheduler {
 
 	#recordMatchState(
 		t: number,
-		events: readonly Pick<DetectedEvent, "type" | "confidence">[],
+		events: readonly Pick<EventRecord, "type" | "confidence">[],
 	): void {
 		for (const event of events) {
 			if (event.confidence < MATCH_STATE_MIN_CONFIDENCE) continue;
-			if (this.#options.matchOpeningTypes.includes(event.type)) {
+			const role = kindOf(event.type)?.match;
+			if (role === "opens") {
 				this.#matchOpenUntilT = Math.max(
 					this.#matchOpenUntilT,
 					t + this.#options.matchOpenMaxS,
 				);
-			} else if (this.#options.matchClosingTypes.includes(event.type)) {
+			} else if (role === "closes") {
 				this.#matchOpenUntilT = Math.min(this.#matchOpenUntilT, t);
 			}
 		}

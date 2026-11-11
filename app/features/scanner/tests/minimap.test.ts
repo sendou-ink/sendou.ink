@@ -7,10 +7,7 @@ import assert from "node:assert/strict";
 import { loadOpenCV } from "../core/cv";
 import { createDeathDetector } from "../core/detectors/death/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
-import {
-	createMinimapDetector,
-	type MinimapData,
-} from "../core/detectors/minimap/index";
+import { createMinimapDetector } from "../core/detectors/minimap/index";
 import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
@@ -35,10 +32,7 @@ test("minimap fixtures exist", () => {
 
 for (const fixture of fixtures) {
 	test(`minimap/${fixture.name}`, async (t) => {
-		const { gate, events } = await runDetectorOnFixture<MinimapData>(
-			detector,
-			fixture,
-		);
+		const { gate, events } = await runDetectorOnFixture(detector, fixture);
 		const expectPositive = fixture.expected.event === "Minimap";
 
 		await t.test("gate", () => {
@@ -215,10 +209,7 @@ for (const fixture of fixtures) {
 test("spectator sub tiles read the two team ink colors", async () => {
 	const fixture = fixtures.find((f) => f.name === "spectator-sws26-swiss");
 	assert.ok(fixture, "spectator-sws26-swiss fixture missing");
-	const { events } = await runDetectorOnFixture<MinimapData>(
-		detector,
-		fixture!,
-	);
+	const { events } = await runDetectorOnFixture(detector, fixture!);
 	const teamColors = events[0]?.data.teamColors;
 	assert.ok(teamColors?.[0] && teamColors[1], "column ink color unreadable");
 	const [alpha, bravo] = teamColors;
@@ -268,12 +259,12 @@ for (const fixture of loadFixtures("negative")) {
 	});
 }
 
-const otherDetectors: Detector<unknown>[] = [
-	createScoreboardDetector(resources) as Detector<unknown>,
-	createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
-	createScoreboardOwnDetector(resources) as Detector<unknown>,
-	createDeathDetector(resources) as Detector<unknown>,
-	createMapStartDetector(resources) as Detector<unknown>,
+const otherDetectors: Detector[] = [
+	createScoreboardDetector(resources) as Detector,
+	createScoreboardBattleLogReplayDetector(resources) as Detector,
+	createScoreboardOwnDetector(resources) as Detector,
+	createDeathDetector(resources) as Detector,
+	createMapStartDetector(resources) as Detector,
 ];
 for (const fixture of fixtures.filter((f) => f.expected.event === "Minimap")) {
 	test(`other gates stay quiet on minimap/${fixture.name}`, async () => {

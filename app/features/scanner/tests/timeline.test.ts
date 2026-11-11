@@ -1,16 +1,17 @@
 import assert from "node:assert/strict";
 import type { PlayerStatusData } from "../core/detectors/objective/player-status";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
-import type { DetectedEvent } from "../core/detectors/types";
+import type { DetectedEvent, EventType } from "../core/events";
 import { TimelineBuilder } from "../core/timeline/index";
 import { test } from "./node-test-compat";
+import { stubEvent } from "./stub-event";
 
 function event(
 	t: number,
 	confidence: number,
-	type = "Scoreboard",
+	type: EventType = "Scoreboard",
 ): DetectedEvent {
-	return { type, t, confidence, data: { t } };
+	return stubEvent({ type, t, confidence, data: { t, players: [] } });
 }
 
 /** A ScoreboardBattleLogReplay event with just the identity-relevant data fields. */
@@ -22,7 +23,7 @@ function replay(
 		replayCode?: string | null;
 	},
 ): DetectedEvent {
-	return {
+	return stubEvent({
 		type: "ScoreboardBattleLogReplay",
 		t,
 		confidence,
@@ -37,7 +38,7 @@ function replay(
 			povIndex: null,
 			...data,
 		},
-	};
+	});
 }
 
 function players(paints: (number | null)[]): ScoreboardData["players"] {
@@ -281,7 +282,8 @@ test("a one-read blip stays flanked by the reads either side of it", () => {
 	assert.equal(tl.push(status(106)).action, "extended");
 	assert.deepEqual(
 		tl.events.map(
-			(e) => `${e.t}${(e.data as PlayerStatusData).dead[0][0] ? "x" : ""}`,
+			(e) =>
+				`${e.t}${e.type === "PlayerStatus" && e.data.dead[0][0] ? "x" : ""}`,
 		),
 		["100", "102", "103x", "104", "106"],
 	);

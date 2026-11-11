@@ -25,7 +25,7 @@ import { CANONICAL_WIDTH } from "../../canonical";
 import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import { copyRoi, type Roi } from "../../image";
-import type { DetectedEvent } from "../types";
+import type { EventKind, EventOf } from "../types";
 import {
 	STATUS_ALIVE_MIN_INK,
 	STATUS_APEX_RISE,
@@ -64,6 +64,22 @@ import {
 } from "./rois";
 
 export const PLAYER_STATUS_EVENT_TYPE = "PlayerStatus";
+
+/**
+ * Sampled: the window is how often a standing state is re-confirmed, under the
+ * renderer's 15s unknown-gap rule.
+ */
+export const PLAYER_STATUS_EVENT: EventKind<
+	typeof PLAYER_STATUS_EVENT_TYPE,
+	PlayerStatusData
+> = {
+	type: PLAYER_STATUS_EVENT_TYPE,
+	mergeWindowS: 5,
+	sameData: samePlayerStatusData,
+	keep: "sampled",
+};
+
+export type PlayerStatusEvent = EventOf<typeof PLAYER_STATUS_EVENT>;
 
 const BADGE_ROWS = [
 	STATUS_DPAD_PROBES_NARROW_RIGHT,
@@ -185,13 +201,14 @@ export type StripFit = [StripSideFit, StripSideFit];
  * Timeline content guard: reads merge only while every slot state matches.
  * `time` (ticks every second) is not compared.
  */
-export function samePlayerStatusData(a: unknown, b: unknown): boolean {
-	const da = a as PlayerStatusData;
-	const db = b as PlayerStatusData;
+function samePlayerStatusData(
+	a: PlayerStatusData,
+	b: PlayerStatusData,
+): boolean {
 	for (const side of [0, 1] as const) {
 		for (let slot = 0; slot < 4; slot++) {
-			if (da.special[side][slot] !== db.special[side][slot]) return false;
-			if (da.dead[side][slot] !== db.dead[side][slot]) return false;
+			if (a.special[side][slot] !== b.special[side][slot]) return false;
+			if (a.dead[side][slot] !== b.dead[side][slot]) return false;
 		}
 	}
 	return true;
@@ -210,7 +227,7 @@ export function parsePlayerStatus(
 	t: number,
 	time: number | null,
 	prevFit?: StripFit,
-): { event: DetectedEvent<PlayerStatusData>; fit: StripFit } {
+): { event: PlayerStatusEvent; fit: StripFit } {
 	const band = readBand(frame);
 	const fit = [0, 1].map((side) =>
 		fitSide(band, side as 0 | 1, prevFit?.[side]),

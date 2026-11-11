@@ -1,5 +1,6 @@
 import type { ScanTelemetry } from "../core/detectors/telemetry";
-import type { DetectedEvent, GateResult } from "../core/detectors/types";
+import type { GateResult } from "../core/detectors/types";
+import type { DetectedEvent } from "../core/events";
 
 export interface InitRequest {
 	kind: "init";
@@ -64,7 +65,7 @@ export type WorkerResponse =
 			detector: string;
 			t: number;
 			gate: GateResult;
-			events: DetectedEvent<unknown>[];
+			events: DetectedEvent[];
 			/** lossless image of the exact frame that was analyzed; present when events fired */
 			frame?: Blob;
 			/** downscaled image of the frame, on every minimap gate pass of an open a read of it was kept from (`snapshotMinimaps`) */

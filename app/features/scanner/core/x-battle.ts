@@ -3,7 +3,7 @@
  * hands each card to the game it follows, so an undecided game holds its set
  * count and the deciding game the set's result and X Rank position.
  */
-import type { DetectedEvent } from "./detectors/types";
+
 import {
 	X_RANK_POSITION_EVENT_TYPE,
 	type XRankPositionData,
@@ -16,12 +16,7 @@ import {
 	X_SET_RESULT_EVENT_TYPE,
 	type XSetResultData,
 } from "./detectors/x-rank/set-result";
-
-export const X_BATTLE_CARD_EVENT_TYPES: readonly string[] = [
-	X_SET_COUNT_EVENT_TYPE,
-	X_SET_RESULT_EVENT_TYPE,
-	X_RANK_POSITION_EVENT_TYPE,
-];
+import type { DetectedEvent } from "./events";
 
 export interface XBattleCards {
 	count: XSetCountData | null;
@@ -31,12 +26,15 @@ export interface XBattleCards {
 
 /** The latest read of each X Battle card among a match's source events. */
 export function xBattleCards(sources: readonly DetectedEvent[]): XBattleCards {
-	const latest = <T>(type: string): T | null =>
-		(sources.findLast((event) => event.type === type)?.data as T | undefined) ??
-		null;
 	return {
-		count: latest<XSetCountData>(X_SET_COUNT_EVENT_TYPE),
-		result: latest<XSetResultData>(X_SET_RESULT_EVENT_TYPE),
-		position: latest<XRankPositionData>(X_RANK_POSITION_EVENT_TYPE),
+		count:
+			sources.findLast((event) => event.type === X_SET_COUNT_EVENT_TYPE)
+				?.data ?? null,
+		result:
+			sources.findLast((event) => event.type === X_SET_RESULT_EVENT_TYPE)
+				?.data ?? null,
+		position:
+			sources.findLast((event) => event.type === X_RANK_POSITION_EVENT_TYPE)
+				?.data ?? null,
 	};
 }

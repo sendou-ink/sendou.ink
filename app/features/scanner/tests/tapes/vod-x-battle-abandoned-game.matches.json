@@ -145,7 +145,7 @@
 			}
 		},
 		{
-			"sources": "100-603 605-607",
+			"sources": "100-607",
 			"match": {
 				"startsAt": 4399,
 				"endsAt": 4746,
@@ -1738,7 +1738,15 @@
 							{"name":"Bream","weaponId":40,"paint":1585,"ka":12,"d":3,"s":9,"abilities":[["SCU"],["SCU"],["OS"]]},
 							{"name":"Fox","weaponId":5030,"paint":1360,"ka":12,"d":6,"s":5,"abilities":[["OG"],["QR"],["SJ"]]},
 							{"name":"Jungle","weaponId":260,"paint":947,"ka":8,"d":10,"s":3,"abilities":[["CB"],["SPU"],["SJ"]]},
-							{"name":"Bisk","weaponId":5010,"paint":1251,"ka":8,"d":13,"s":5,"abilities":[["CB"],["QR"],["SJ"]]}
+							{
+								"name": "Bisk",
+								"weaponId": 5010,
+								"paint": 1251,
+								"ka": 8,
+								"d": 13,
+								"s": 5,
+								"abilities": [["CB","SSU","QSJ","SSU"],["QR","QR","SS","IA"],["SJ","QSJ","SRU","RES"]]
+							}
 						]
 					}
 				],

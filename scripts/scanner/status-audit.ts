@@ -55,7 +55,7 @@ import {
 } from "../../app/features/scanner/core/detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/index";
-import type { DetectedEvent } from "../../app/features/scanner/core/detectors/types";
+import type { DetectedEvent } from "../../app/features/scanner/core/events";
 import { formatTime } from "../../app/features/scanner/core/format";
 import {
 	lobbyLabel,
@@ -256,7 +256,8 @@ function eventFromRow(type: string, row: string[]): DetectedEvent | null {
 		return { type, ...base, data: parseDeathRow(row) };
 	}
 	if (SCOREBOARD_TYPES.has(type)) {
-		return { type, ...base, data: parseScoreboardRow(row) };
+		// one of the scoreboard types, read off a CSV cell
+		return { type, ...base, data: parseScoreboardRow(row) } as DetectedEvent;
 	}
 	return null;
 }

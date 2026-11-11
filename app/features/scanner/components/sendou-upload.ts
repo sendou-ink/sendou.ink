@@ -13,7 +13,7 @@ import type {
 import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
 import { newVodPage } from "~/features/vods/vods-urls";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import type { DetectedEvent } from "../core/detectors/types";
+import type { DetectedEvent } from "../core/events";
 import { buildScannerMatches } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";
 

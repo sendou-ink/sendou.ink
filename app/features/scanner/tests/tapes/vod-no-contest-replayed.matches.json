@@ -2,12 +2,12 @@
 	"invalidObjectiveEvents": "",
 	"matches": [
 		{
-			"sources": "0-404",
+			"sources": "0-405",
 			"match": {
 				"startsAt": 4401,
-				"endsAt": 4660,
+				"endsAt": 4686,
 				"playedAt": null,
-				"lobby": null,
+				"lobby": "PRIVATE",
 				"mode": "SZ",
 				"stage": 21,
 				"matchScores": null,
@@ -1273,7 +1273,15 @@
 							{"name":"でんさく","weaponId":3000,"paint":null,"ka":null,"d":null,"s":null,"abilities":[["CB"],["SSU"],["SJ"]]},
 							{"name":"いちごシロップ","weaponId":2030,"paint":null,"ka":null,"d":null,"s":null,"abilities":[["SSU"],["RP"],["OS"]]},
 							{"name":"でんさく","weaponId":60,"paint":null,"ka":null,"d":null,"s":null,"abilities":[["LDE"],["SCU"],["SJ"]]},
-							{"name":"R.0.B.O.T","weaponId":211,"paint":null,"ka":null,"d":null,"s":null,"abilities":[["CB"],["QR"],["SJ"]]}
+							{
+								"name": "R.0.B.O.T",
+								"weaponId": 211,
+								"paint": null,
+								"ka": null,
+								"d": null,
+								"s": null,
+								"abilities": [["CB","QSJ","RES","SRU"],["QR","SSU","QSJ","QR"],["SJ","SSU","SSU","IA"]]
+							}
 						]
 					},
 					{
@@ -1322,7 +1330,7 @@
 			}
 		},
 		{
-			"sources": "415-936 938-939",
+			"sources": "415-939",
 			"match": {
 				"startsAt": 5208,
 				"endsAt": 5568,
@@ -2986,7 +2994,15 @@
 							{"name":"でんさく","weaponId":3000,"paint":1479,"ka":22,"d":10,"s":4,"abilities":[["CB"],["SSU"],["SJ"]]},
 							{"name":"でんさく","weaponId":60,"paint":1739,"ka":18,"d":10,"s":6,"abilities":[["LDE"],["SCU"],["SJ"]]},
 							{"name":"いちごシロップ","weaponId":2030,"paint":1211,"ka":17,"d":3,"s":5,"abilities":[["SSU"],["RP"],["OS"]]},
-							{"name":"R.O.B.O.T","weaponId":211,"paint":1163,"ka":19,"d":11,"s":3,"abilities":[["CB"],["QR"],["SJ"]]}
+							{
+								"name": "R.O.B.O.T",
+								"weaponId": 211,
+								"paint": 1163,
+								"ka": 19,
+								"d": 11,
+								"s": 3,
+								"abilities": [["CB","QSJ","RES","SRU"],["QR","SSU","QSJ","QR"],["SJ","SSU","SSU","IA"]]
+							}
 						]
 					},
 					{

@@ -21,6 +21,7 @@ import {
 import { RESULT_TAG_ENTRIES } from "../../localized";
 import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import { closestBy } from "../../text";
+import { sameScoreboardMatch } from "../../timeline/same-scoreboard";
 import {
 	FULL_COUNT_TEAM_SCORE,
 	KO_MATCH_SCORE,
@@ -35,7 +36,8 @@ import type {
 } from "../scoreboard/index";
 import { findPovIndex } from "../scoreboard/pov";
 import { parseScoreboardRowSteps, type RowRois } from "../scoreboard/row";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import { HISTORY_SCREEN_MIN_CONFIDENCE } from "../scoreboard-battle-log/detector";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import { codeCharsetOf, parseReplayCodeSteps } from "./code";
 import { parseReplayHeaderSteps } from "./header";
 import {
@@ -82,6 +84,20 @@ export interface ScoreboardBattleLogReplayData extends ScoreboardData {
 
 export const SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE =
 	"ScoreboardBattleLogReplay";
+
+export const SCOREBOARD_BATTLE_LOG_REPLAY_EVENT: EventKind<
+	typeof SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
+	ScoreboardBattleLogReplayData
+> = {
+	type: SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
+	sameData: sameScoreboardMatch,
+	minConfidence: HISTORY_SCREEN_MIN_CONFIDENCE,
+	match: "closes",
+};
+
+type ScoreboardBattleLogReplayEvent = EventOf<
+	typeof SCOREBOARD_BATTLE_LOG_REPLAY_EVENT
+>;
 
 /** Replay pills are mid-gray (~61), not near-black; see matchWeapon docs. */
 const REPLAY_INK_THRESHOLD = 90;
@@ -132,7 +148,7 @@ function greenFraction(frame: Mat, roi: Roi): number {
 
 export function createScoreboardBattleLogReplayDetector(
 	resources: ScoreboardResources,
-): Detector<ScoreboardBattleLogReplayData> {
+): Detector<ScoreboardBattleLogReplayEvent> {
 	const scaled = (set: GlyphSet | null, height: number): GlyphSet | null =>
 		set ? scaleGlyphSet(set, height / set.height) : null;
 
@@ -403,7 +419,7 @@ export function createScoreboardBattleLogReplayDetector(
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<ScoreboardBattleLogReplayData>[]> {
+	): MatchSteps<ScoreboardBattleLogReplayEvent[]> {
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
 

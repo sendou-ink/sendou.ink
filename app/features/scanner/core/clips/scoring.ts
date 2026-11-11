@@ -8,11 +8,8 @@
  * scored by streak length first and density second.
  */
 import { DEATH_EVENT_TYPE } from "../detectors/death/index";
-import {
-	MINIMAP_EVENT_TYPE,
-	type MinimapData,
-} from "../detectors/minimap/index";
-import type { DetectedEvent } from "../detectors/types";
+import { MINIMAP_EVENT_TYPE } from "../detectors/minimap/index";
+import type { DetectedEvent } from "../events";
 import type { ScannerMatch, ScannerMatchKill } from "../scanner-match";
 
 /** the default; the settings popover lets the player pick 3, 4 or 5 */
@@ -85,7 +82,7 @@ export function povDeathTimes(events: readonly DetectedEvent[]): number[] {
 			(event) =>
 				event.type === DEATH_EVENT_TYPE ||
 				(event.type === MINIMAP_EVENT_TYPE &&
-					(event.data as MinimapData).teammates.some(
+					event.data.teammates.some(
 						(teammate) => teammate.self && teammate.dead,
 					)),
 		)

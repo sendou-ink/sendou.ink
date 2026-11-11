@@ -103,7 +103,7 @@
 			}
 		},
 		{
-			"sources": "24-216 218-219",
+			"sources": "24-219",
 			"match": {
 				"startsAt": 10776,
 				"endsAt": 10938,
@@ -670,7 +670,15 @@
 						"players": [
 							{"name":"くらうに ★～","weaponId":2070,"paint":798,"ka":7,"d":1,"s":3,"abilities":[["LDE"],["SCU"],["ISM"]]},
 							{"name":"Bocchi","weaponId":4010,"paint":913,"ka":3,"d":0,"s":3,"abilities":[["RSU"],["RSU"],["RES"]]},
-							{"name":"have faith","weaponId":50,"paint":401,"ka":5,"d":3,"s":1},
+							{
+								"name": "have faith",
+								"weaponId": 50,
+								"paint": 401,
+								"ka": 5,
+								"d": 3,
+								"s": 1,
+								"abilities": [["SSU","RES","SSU","SSU"],["SSU","SSU","QSJ","SSU"],["SJ","IA","QSJ","IA"]]
+							},
 							{"name":"Florescent","weaponId":211,"paint":347,"ka":4,"d":3,"s":1,"abilities":[["OG"],["SSU"],["SJ"]]}
 						]
 					},

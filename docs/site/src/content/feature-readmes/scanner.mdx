@@ -742,7 +742,21 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
 - New event types implement `Detector` (`core/detectors/types.ts`): a cheap
   `gate(mat)` at sample rate plus `parseSteps` (match steps, see "WebGPU")
   when the gate fires, `parse` being `runSync` of it. Register in
-  `core/detectors/registry.ts`. Gates and parses read the frame's gray/RGB/HSV
+  `core/detectors/registry.ts`.
+- Every event type is declared once, next to its detector, as an `EventKind`
+  (`core/detectors/types.ts`): the type, the shape of `data` and how the
+  timeline and scheduler treat its reads (merge window, content guard,
+  confidence floor, which read of a run stays, animation order and carry-over,
+  whether it opens or closes a match). `core/events.ts` lists the kinds: that
+  list is the `DetectedEvent` union (`type` discriminates `data`, so readers
+  narrow instead of casting), the policy `TimelineBuilder` looks up per event
+  and the match open/close roles the scheduler's calm state follows. The type
+  guards for the scoreboard family, the history screens and the X Battle cards
+  live there too; on an event of a generic record type (`E extends
+  DetectedEvent`) narrow with `isEventOfType`, since `event.type === ...` does
+  not narrow a type parameter. Stored records (`StoredEvent`, `StoredVodEvent`,
+  `ScanEvent`, tape events) are the union intersected with their own fields.
+- Gates and parses read the frame's gray/RGB/HSV
   through `frameGray`/`frameRgb`/`frameHsv` (`core/image.ts`), converted once
   per frame and shared: never delete or write them, and never pass them a
   derived mat. Gray and RGB come from WebAssembly SIMD kernels
@@ -1031,12 +1045,12 @@ then flips the digits (~0.5s before fading); the set result counts the old
 X Power to the new one in ~0.3s; the position counts in the arrow's
 direction. So no detector sets `sufficientConfidence` (the first clean read
 is the stale one), each gate returns a `signature` over its numbers, and the
-timeline orders same-type reads by `animationProgressByType` instead of
+timeline orders same-type reads by the kind's `progress` instead of
 confidence: a further-along read replaces the kept one, an earlier one
 merges into it. The count's end can fall between two sampled frames (a 2 fps
 live capture), so a set result read after the change lands takes its power
 from the power before it plus the change whenever an earlier read showed the
-old value (`carryOverByType`); the old value holds ~1.5s, the final one ~1s. A count read whose digits disagree with its slots, or a set
+old value (the kind's `carryOver`); the old value holds ~1.5s, the final one ~1s. A count read whose digits disagree with its slots, or a set
 result whose header doesn't describe a decided set of tiles (tiles still
 popping in), scores under the timeline floor. The result tiles center on
 the card (five games three over two, four two over two, three in one row

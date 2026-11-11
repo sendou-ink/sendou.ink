@@ -98,10 +98,7 @@ function simulate({
 		times.push(Math.round(t * 1000) / 1000);
 		t += (1 / fps) * (jitter ? 0.5 + random() : 1);
 	}
-	const scheduler = new DetectorScheduler(DETECTORS, {
-		matchOpeningTypes: ["MapStart"],
-		matchClosingTypes: ["Scoreboard"],
-	});
+	const scheduler = new DetectorScheduler(DETECTORS, {});
 	const tracker = createCheckTracker();
 	const stepped = new Map<number, boolean>();
 	let ahead = 0;

@@ -32,9 +32,9 @@ import {
 	trailingDigitRun,
 } from "../scoreboard/banner";
 import type { ScoreboardResources } from "../scoreboard/index";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
-	type PlayerStatusData,
+	type PlayerStatusEvent,
 	parsePlayerStatus,
 	type StripFit,
 } from "./player-status";
@@ -59,7 +59,7 @@ import {
 	STRIP_WEAPON_SAMPLE_INTERVAL,
 	TRACK_PLATE_TEXT_HEIGHTS,
 } from "./rois";
-import { parseStripWeapons, type StripWeaponsData } from "./strip-weapons";
+import { parseStripWeapons, type StripWeaponsEvent } from "./strip-weapons";
 import {
 	readMatchTimerSteps,
 	timerBoxChecks,
@@ -120,6 +120,18 @@ export interface TrackObjectiveData {
 
 export const OBJECTIVE_EVENT_TYPE = "Objective";
 
+/** Reads repeat every second; the content guard keeps every change while static stretches collapse. */
+export const OBJECTIVE_EVENT: EventKind<
+	typeof OBJECTIVE_EVENT_TYPE,
+	ObjectiveData
+> = {
+	type: OBJECTIVE_EVENT_TYPE,
+	mergeWindowS: 10,
+	sameData: sameObjectiveData,
+};
+
+type ObjectiveEvent = EventOf<typeof OBJECTIVE_EVENT>;
+
 /** Gate variants: which overlay the parse reads. */
 const ZONES_VARIANT = "zones";
 const TRACK_VARIANT = "track";
@@ -135,25 +147,23 @@ const CHECK_INTERVAL_SECONDS = 1;
  * second), `teamColor` (pixel means jitter) and a track read's marker `mode`
  * (markers come and go as checkpoints fall) are deliberately not compared.
  */
-export function sameObjectiveData(a: unknown, b: unknown): boolean {
-	const da = a as ObjectiveData;
-	const db = b as ObjectiveData;
+function sameObjectiveData(a: ObjectiveData, b: ObjectiveData): boolean {
 	if (
-		da.score[0] !== db.score[0] ||
-		da.score[1] !== db.score[1] ||
-		da.control !== db.control
+		a.score[0] !== b.score[0] ||
+		a.score[1] !== b.score[1] ||
+		a.control !== b.control
 	) {
 		return false;
 	}
-	if (da.mode === "SZ" || db.mode === "SZ") {
+	if (a.mode === "SZ" || b.mode === "SZ") {
 		return (
-			da.mode === "SZ" &&
-			db.mode === "SZ" &&
-			da.penalty[0] === db.penalty[0] &&
-			da.penalty[1] === db.penalty[1]
+			a.mode === "SZ" &&
+			b.mode === "SZ" &&
+			a.penalty[0] === b.penalty[0] &&
+			a.penalty[1] === b.penalty[1]
 		);
 	}
-	return da.position === db.position;
+	return a.position === b.position;
 }
 
 interface SideRead {
@@ -166,7 +176,7 @@ interface SideRead {
 
 export function createObjectiveDetector(
 	resources: ScoreboardResources,
-): Detector<ObjectiveData | PlayerStatusData | StripWeaponsData> {
+): Detector<ObjectiveEvent | PlayerStatusEvent | StripWeaponsEvent> {
 	let lastStatus: { fit: StripFit; t: number } | undefined;
 	// primed so the very first read samples (short matches, single-frame fixtures)
 	let readsSinceWeaponSample = STRIP_WEAPON_SAMPLE_INTERVAL;
@@ -396,9 +406,7 @@ export function createObjectiveDetector(
 		t: number,
 		gateResult: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<
-		DetectedEvent<ObjectiveData | PlayerStatusData | StripWeaponsData>[]
-	> {
+	): MatchSteps<(ObjectiveEvent | PlayerStatusEvent | StripWeaponsEvent)[]> {
 		const variant = (gateResult ?? gate(frame)).variant;
 		const counter =
 			variant === TRACK_VARIANT
@@ -426,7 +434,7 @@ export function createObjectiveDetector(
 
 		// sampled slot-identity evidence for the strip → scoreboard-row assignment;
 		// identities are fixed so every read would re-measure at full sweep cost
-		let stripWeapons: DetectedEvent<StripWeaponsData> | null = null;
+		let stripWeapons: StripWeaponsEvent | null = null;
 		readsSinceWeaponSample++;
 		if (
 			resources.stripWeapons &&
@@ -455,7 +463,7 @@ export function createObjectiveDetector(
 	function* parseZonesSteps(
 		frame: Mat,
 		speculative: boolean,
-	): MatchSteps<{ event: DetectedEvent<ZonesObjectiveData> } | null> {
+	): MatchSteps<{ event: ObjectiveEvent } | null> {
 		const gray = frameGray(frame);
 
 		const [scoreL, scoreR, penaltyL, penaltyR, timer] = yield* all([
@@ -534,7 +542,7 @@ export function createObjectiveDetector(
 	function* parseTrackSteps(
 		frame: Mat,
 		speculative: boolean,
-	): MatchSteps<{ event: DetectedEvent<TrackObjectiveData> } | null> {
+	): MatchSteps<{ event: ObjectiveEvent } | null> {
 		const gray = frameGray(frame);
 		const [track, timer] = yield* all([
 			readTrackSteps(frame, trackSets, speculative),

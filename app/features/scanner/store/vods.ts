@@ -8,6 +8,7 @@
  */
 
 import * as EventVersion from "../core/event-version";
+import type { DetectedEvent } from "../core/events";
 import type { SessionSummary } from "../core/sessions";
 import {
 	readwrite,
@@ -31,25 +32,18 @@ export interface VodSummary {
 	summary: SessionSummary;
 }
 
-export interface StoredVodEvent {
+export type StoredVodEvent = DetectedEvent & {
 	id?: number;
 	/** owning VoD name (indexed) */
 	vod: string;
 	/** `core/event-version.ts` version `type` and `data` were written at; absent on events stored before the stamp */
 	v?: number;
-	type: string;
-	t: number;
-	confidence: number;
-	data: unknown;
 	/** whether a full-res frame exists in `vod-frames` under this id */
 	hasFrame?: boolean;
-}
+};
 
 /** A vod-event to persist, with its (separately stored) frame attached. */
-export type VodEventToSave = Omit<
-	StoredVodEvent,
-	"id" | "vod" | "v" | "hasFrame"
-> & {
+export type VodEventToSave = DetectedEvent & {
 	frame?: Blob;
 };
 

@@ -16,7 +16,7 @@ import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import { frameGray, frameRgb, type Roi, roiSignature } from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
 import type { ScoreboardResources } from "../scoreboard/index";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	CARD_DARK_MAX_MEAN,
 	CARD_ICON_ROI,
@@ -46,6 +46,16 @@ import {
 
 export const X_SET_COUNT_EVENT_TYPE = "XSetCount";
 
+export const X_SET_COUNT_EVENT: EventKind<
+	typeof X_SET_COUNT_EVENT_TYPE,
+	XSetCountData
+> = {
+	type: X_SET_COUNT_EVENT_TYPE,
+	progress: xSetCountProgress,
+};
+
+type XSetCountEvent = EventOf<typeof X_SET_COUNT_EVENT>;
+
 export interface XSetCountData {
 	mode: RankedModeShort | null;
 	/** 0-2: the card never shows a decided set */
@@ -71,15 +81,15 @@ const SET_GAMES = 3;
  * Timeline animation order of two reads of one card: positive when `b` has
  * more games counted (the digits only ever count up while the card shows).
  */
-export function xSetCountProgress(a: unknown, b: unknown): number {
+function xSetCountProgress(a: XSetCountData, b: XSetCountData): number {
 	const games = (data: XSetCountData) =>
 		data.wins === null || data.losses === null ? -1 : data.wins + data.losses;
-	return games(b as XSetCountData) - games(a as XSetCountData);
+	return games(b) - games(a);
 }
 
 export function createXSetCountDetector(
 	resources: ScoreboardResources,
-): Detector<XSetCountData> {
+): Detector<XSetCountEvent> {
 	let digits: GlyphSet | null | undefined;
 	const digitGlyphs = () => {
 		digits ??= resources.teamDigits
@@ -148,7 +158,7 @@ export function createXSetCountDetector(
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<XSetCountData>[]> {
+	): MatchSteps<XSetCountEvent[]> {
 		const set = digitGlyphs();
 		if (!set) return [];
 		const gray = frameGray(frame);
