@@ -40,6 +40,8 @@ interface ResolveCurrentMapListArgs {
 	}>;
 	/** Each team's distinct recently played maps, most recent first. */
 	recentlyPlayedMaps?: TournamentMaplistInput["recentlyPlayedMaps"];
+	/** Round robin match whose teams are still to finish the previous round, see `Tournament.matchStatusById`. */
+	isWaitingForPreviousRound: boolean;
 }
 
 export function resolveMapList(
@@ -52,19 +54,22 @@ export function resolveMapList(
 	const baseMaps =
 		args.mapPickingStyle === "TO"
 			? args.maps!.list?.map((m) => ({ ...m, source: "TO" as const }))
-			: // include team ids in the key to handle a case where match was reopened causing one of the teams to change
-				syncCached(
-					`${args.matchId}-${args.teams[0]}-${args.teams[1]}-${args.maps?.count}-${args.maps?.pickBan}`,
-					() =>
-						resolveFreshTeamPickedMapList(
-							args as ResolveCurrentMapListArgs & {
-								mapPickingStyle: Exclude<
-									Tables["Tournament"]["mapPickingStyle"],
-									"TO"
-								>;
-							},
-						),
-				);
+			: // generated from the recently played maps, which the previous round still changes
+				args.isWaitingForPreviousRound
+				? []
+				: // include team ids in the key to handle a case where match was reopened causing one of the teams to change
+					syncCached(
+						`${args.matchId}-${args.teams[0]}-${args.teams[1]}-${args.maps?.count}-${args.maps?.pickBan}`,
+						() =>
+							resolveFreshTeamPickedMapList(
+								args as ResolveCurrentMapListArgs & {
+									mapPickingStyle: Exclude<
+										Tables["Tournament"]["mapPickingStyle"],
+										"TO"
+									>;
+								},
+							),
+					);
 
 	if (!baseMaps) return [];
 
@@ -139,6 +144,8 @@ export async function resolveMatchMapList({
 		modesIncluded: tournament.modesIncluded,
 		pickBanEvents,
 		recentlyPlayedMaps,
+		isWaitingForPreviousRound:
+			tournament.matchStatusById(match.id) === "PENDING",
 	});
 }
 

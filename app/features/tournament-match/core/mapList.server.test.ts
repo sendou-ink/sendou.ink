@@ -56,6 +56,7 @@ const resolve = ({
 		pool: SENDOUQ_MAP_POOL,
 		modesIncluded: [...rankedModesShort],
 		pickBanEvents: [],
+		isWaitingForPreviousRound: false,
 		...overrides,
 	});
 

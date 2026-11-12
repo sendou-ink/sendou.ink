@@ -154,6 +154,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 										return undefined;
 									})
 								: undefined,
+						isWaitingForPreviousRound:
+							tournament.matchStatusById(matchId) === "PENDING",
 					})
 			: null;
 

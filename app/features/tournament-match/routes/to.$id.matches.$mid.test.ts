@@ -4,8 +4,13 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import type { TournamentSettings } from "~/db/tables-json";
 import { action as removeMemberApiAction } from "~/features/api-public/routes/tournament.$id.teams.$teamId.remove-member";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import type { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import { cache } from "~/utils/cache.server";
 import type { SerializeFrom } from "~/utils/remix";
 import {
 	assertResponseErrored,
@@ -598,5 +603,119 @@ describe("Tournament match page", () => {
 				{ type: "TOURNAMENT_TEAM", autoOpen: false, label: "Opponent" },
 			]);
 		});
+	});
+});
+
+describe("Round robin match page with team picked maps", () => {
+	const TEAM_COUNT = 4;
+
+	const ONE_POOL: TournamentSettings["bracketProgression"] = [
+		{
+			name: "Pool",
+			type: "round_robin",
+			requiresCheckIn: false,
+			settings: { teamsPerGroup: TEAM_COUNT },
+		},
+	];
+
+	/** Every team picked the same maps, so each match has more shared picks than it has games. */
+	const TEAM_PICKS = new MapPool([
+		{ mode: "SZ", stageId: 1 },
+		{ mode: "SZ", stageId: 2 },
+		{ mode: "TC", stageId: 3 },
+		{ mode: "TC", stageId: 4 },
+		{ mode: "RM", stageId: 5 },
+		{ mode: "RM", stageId: 6 },
+		{ mode: "CB", stageId: 7 },
+		{ mode: "CB", stageId: 8 },
+	]);
+
+	let secondRoundMatch: { id: number; teamIds: [number, number] };
+
+	const loadMapList = async () => {
+		const data = await tournamentMatchLoader({
+			params: { id: String(tournamentId), mid: String(secondRoundMatch.id) },
+		});
+
+		return data.mapList?.map((map) => `${map.mode} ${map.stageId}`);
+	};
+
+	/** A deploy or the shared LRU cache evicting the entry. */
+	const loseServerCache = () => cache.clear();
+
+	const recentlyPlayedCount = async (mapList: string[] | undefined) => {
+		const recentlyPlayed = (
+			await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
+				teamIds: secondRoundMatch.teamIds,
+				excludeMatchId: secondRoundMatch.id,
+			})
+		).flatMap((maps) => maps.map((map) => `${map.mode} ${map.stageId}`));
+
+		return (mapList ?? []).filter((map) => recentlyPlayed.includes(map)).length;
+	};
+
+	beforeEach(async () => {
+		await users.create(TEAM_COUNT + 1);
+		const [organizer, ...teamUserIds] = users.ids(TEAM_COUNT + 1);
+
+		const tournament = await TournamentFactory.create({
+			authorId: organizer,
+			bracketProgression: ONE_POOL,
+			mapPickingStyle: "AUTO",
+			minMembersPerTeam: 1,
+		});
+		tournamentId = tournament.id;
+
+		for (const userId of teamUserIds) {
+			await TournamentTeamFactory.create(
+				{ tournamentId, memberUserIds: [userId], mapPool: TEAM_PICKS },
+				{ isCheckedIn: true },
+			);
+		}
+
+		await TournamentFactory.startBracket(tournamentId);
+
+		const bracket = (await tournamentFromDB(tournamentId)).bracketByIdx(0)!;
+		const secondRound = bracket.data.round.find((round) => round.number === 2)!;
+		const match = bracket.data.match.find(
+			(candidate) => candidate.roundId === secondRound.id,
+		)!;
+		secondRoundMatch = {
+			id: match.id,
+			teamIds: [match.opponent1!.id!, match.opponent2!.id!],
+		};
+	});
+
+	test("map list is empty while the teams are still to finish the previous round", async () => {
+		expect(await loadMapList()).toEqual([]);
+	});
+
+	test("map list opened before the teams' earlier round stays the same when the server cache is lost mid-set", async () => {
+		await loadMapList();
+
+		await TournamentFactory.playMatches(tournamentId, { roundNumbers: [1] });
+		await TournamentFactory.playMatches(tournamentId, {
+			matchIds: [secondRoundMatch.id],
+			mapCount: 1,
+		});
+
+		const shownAfterGameOne = await loadMapList();
+		loseServerCache();
+		const shownAfterTheCacheIsLost = await loadMapList();
+
+		expect(shownAfterTheCacheIsLost).toEqual(shownAfterGameOne);
+	});
+
+	test("map list opened before the teams' earlier round avoids the maps they played there", async () => {
+		await loadMapList();
+		await TournamentFactory.playMatches(tournamentId, { roundNumbers: [1] });
+		const openedBeforeRoundOne = await loadMapList();
+
+		loseServerCache();
+		const openedAfterRoundOne = await loadMapList();
+
+		expect(await recentlyPlayedCount(openedBeforeRoundOne)).toBe(
+			await recentlyPlayedCount(openedAfterRoundOne),
+		);
 	});
 });
