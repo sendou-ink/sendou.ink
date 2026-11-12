@@ -1,8 +1,12 @@
+import * as R from "remeda";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentMatchStationFactory from "~/db/seed/factories/TournamentMatchStationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as TournamentAuditLogRepository from "~/features/tournament/TournamentAuditLogRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentStationRepository from "./TournamentStationRepository.server";
+import { createStartedLanTournament } from "./tests/fixtures";
 
 const users = UserFactory.pool();
 
@@ -123,5 +127,136 @@ describe("TournamentStationRepository.setStations", () => {
 			...before?.settings,
 			autoAssignStations: false,
 		});
+	});
+});
+
+describe("TournamentStationRepository.moveMatch", () => {
+	beforeEach(async () => {
+		await users.create(17);
+	});
+
+	const createTournament = () =>
+		createStartedLanTournament({
+			authorId: users.id(1),
+			teamRosters: R.chunk(users.ids().slice(1), 4),
+		});
+
+	const queueOf = async (tournamentId: number, stationId: number) =>
+		(
+			await TournamentStationRepository.findQueuedMatchesByTournamentId(
+				tournamentId,
+			)
+		)
+			.filter((row) => row.stationId === stationId)
+			.map((row) => row.matchId);
+
+	test("puts the match in the station's queue at the index", async () => {
+		const {
+			tournamentId,
+			stationIds: [stationId],
+			semifinalIds: [first, second],
+			finalId,
+		} = await createTournament();
+		await TournamentMatchStationFactory.create({ matchId: first, stationId });
+		await TournamentMatchStationFactory.create({ matchId: finalId, stationId });
+
+		await TournamentStationRepository.moveMatch({
+			matchId: second,
+			stationId,
+			index: 1,
+		});
+
+		expect(await queueOf(tournamentId, stationId)).toEqual([
+			first,
+			second,
+			finalId,
+		]);
+	});
+
+	test("takes the match off its previous station", async () => {
+		const {
+			tournamentId,
+			stationIds: [fromStationId, toStationId],
+			semifinalIds: [matchId],
+		} = await createTournament();
+		await TournamentMatchStationFactory.create({
+			matchId,
+			stationId: fromStationId,
+		});
+
+		await TournamentStationRepository.moveMatch({
+			matchId,
+			stationId: toStationId,
+			index: 0,
+		});
+
+		expect(await queueOf(tournamentId, fromStationId)).toEqual([]);
+		expect(await queueOf(tournamentId, toStationId)).toEqual([matchId]);
+	});
+
+	test("leaves the match on no station when moved to none", async () => {
+		const {
+			tournamentId,
+			stationIds: [stationId],
+			semifinalIds: [matchId],
+		} = await createTournament();
+		await TournamentMatchStationFactory.create({ matchId, stationId });
+
+		await TournamentStationRepository.moveMatch({
+			matchId,
+			stationId: null,
+			index: 0,
+		});
+
+		expect(
+			await TournamentStationRepository.findQueuedMatchesByTournamentId(
+				tournamentId,
+			),
+		).toEqual([]);
+	});
+
+	test("logs nothing to the audit log without `audit`", async () => {
+		const {
+			tournamentId,
+			stationIds: [stationId],
+			semifinalIds: [matchId],
+		} = await createTournament();
+
+		await TournamentStationRepository.moveMatch({
+			matchId,
+			stationId,
+			index: 0,
+		});
+
+		expect(
+			await TournamentAuditLogRepository.countByTournamentId({
+				tournamentId,
+				type: "MATCH_STATION_CHANGED",
+			}),
+		).toBe(0);
+	});
+
+	test("counts the index among unfinished matches, keeping finished ones first", async () => {
+		const {
+			tournamentId,
+			stationIds: [stationId],
+			semifinalIds: [first, second],
+			finalId,
+		} = await createTournament();
+		await TournamentMatchStationFactory.create({ matchId: first, stationId });
+		await TournamentFactory.playMatches(tournamentId, { matchIds: [first] });
+		await TournamentMatchStationFactory.create({ matchId: finalId, stationId });
+
+		await TournamentStationRepository.moveMatch({
+			matchId: second,
+			stationId,
+			index: 0,
+		});
+
+		expect(await queueOf(tournamentId, stationId)).toEqual([
+			first,
+			second,
+			finalId,
+		]);
 	});
 });

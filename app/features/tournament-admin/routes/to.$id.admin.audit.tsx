@@ -83,13 +83,20 @@ function AuditLogRow({ event }: { event: AuditLogEvent }) {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 
+	const waiting = t("tournament:stations.board.waiting");
 	const detail =
 		typeof event.metadata?.bracketIdx === "number"
 			? tournament.bracketsMeta[event.metadata.bracketIdx]?.name
 			: event.type === "UPDATE_TOURNAMENT_NAME"
 				? (event.metadata?.tournamentName ??
 					t("tournament:admin.audit.detail.tournamentNameCleared"))
-				: event.metadata?.inGameName;
+				: event.type === "MATCH_STATION_CHANGED"
+					? t("tournament:admin.audit.detail.stationChange", {
+							match: event.metadata?.matchName,
+							from: event.metadata?.fromStationName ?? waiting,
+							to: event.metadata?.toStationName ?? waiting,
+						})
+					: event.metadata?.inGameName;
 
 	return (
 		<tr>
