@@ -19,6 +19,7 @@ import {
 import { LUTI_S16_DIV_1 } from "./tests/mocks-luti";
 import { SWIM_OR_SINK_167 } from "./tests/mocks-sos";
 import {
+	mergeStages,
 	progressions,
 	testTournament,
 	tournamentCtxTeam,
@@ -1005,3 +1006,113 @@ function appendGeneratedRound(data: BracketData, round: GeneratedRound) {
 		});
 	}
 }
+
+describe("matchCanBeReopened", () => {
+	const semifinalsPlayed = () => {
+		let data = Engine.create({
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4],
+			settings: null,
+		});
+		data = {
+			...data,
+			round: data.round.map((round) => ({
+				...round,
+				maps: { count: 1, type: "BEST_OF" as const },
+			})),
+		};
+		// semifinals 1 vs 4 and 2 vs 3
+		for (const winnerTeamId of [1, 2]) {
+			data = Engine.reportGameResult(data, {
+				matchId: matchOfTeams(data, winnerTeamId, 5 - winnerTeamId).id,
+				winnerTeamId,
+			}).data;
+		}
+
+		return data;
+	};
+
+	const matchOfTeams = (data: BracketData, oneId: number, twoId: number) =>
+		data.match.find((match) => {
+			const ids = [match.opponent1?.id, match.opponent2?.id];
+			return ids.includes(oneId) && ids.includes(twoId);
+		})!;
+
+	const canReopenSemifinal = (data: BracketData) =>
+		testTournament({
+			data,
+			ctx: {
+				settings: { bracketProgression: progressions.singleElimination },
+			},
+		}).matchCanBeReopened(matchOfTeams(data, 1, 4).id);
+
+	test("true while the final has not been started", () => {
+		expect(canReopenSemifinal(semifinalsPlayed())).toBe(true);
+	});
+
+	test("false once the final was ended without games", () => {
+		const data = semifinalsPlayed();
+
+		expect(
+			canReopenSemifinal(
+				Engine.endSet(data, {
+					matchId: matchOfTeams(data, 1, 2).id,
+					winnerTeamId: 2,
+				}).data,
+			),
+		).toBe(false);
+	});
+});
+
+describe("Follow-up bracket teams after a drop out moved the standings", () => {
+	// groups -> Redemption (3rd & 4th) -> Top Cut (top 2 of the groups and of Redemption)
+	const redemptionPlayedThenRunnerUpDropped = () => {
+		let groups = Engine.create({
+			type: "round_robin",
+			seeding: [1, 2, 3, 4],
+			settings: { teamsPerGroup: 4 },
+		});
+		for (const match of groups.match) {
+			groups = Engine.reportResult(groups, {
+				matchId: match.id,
+				scores: match.opponent1!.id! < match.opponent2!.id! ? [2, 0] : [0, 2],
+				winnerSide:
+					match.opponent1!.id! < match.opponent2!.id!
+						? "opponent1"
+						: "opponent2",
+			}).data;
+		}
+
+		const redemption = Engine.create({
+			type: "single_elimination",
+			seeding: [3, 4],
+			settings: null,
+		});
+
+		return testTournament({
+			data: mergeStages(
+				groups,
+				Engine.reportResult(redemption, {
+					matchId: redemption.match[0].id,
+					scores: [2, 0],
+					winnerSide: "opponent1",
+				}).data,
+			),
+			ctx: {
+				settings: { bracketProgression: progressions.multiSourceTopCut },
+				teams: [1, 2, 3, 4].map((teamId) =>
+					tournamentCtxTeam(teamId, {
+						seed: teamId,
+						droppedOut: toDBBoolean(teamId === 2),
+					}),
+				),
+			},
+		});
+	};
+
+	test("a team playing Redemption is not also taken straight from the groups", () => {
+		const topCut = redemptionPlayedThenRunnerUpDropped().bracketByIdx(2)!;
+
+		expect(topCut.previewSeeding?.toSorted()).toEqual([1, 3, 4]);
+	});
+});

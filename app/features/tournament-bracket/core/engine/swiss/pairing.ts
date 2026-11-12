@@ -59,6 +59,15 @@ export function generateRound(
 		return err("Not all matches are over");
 	}
 
+	const newRoundId = data.round
+		.slice()
+		.sort((a, b) => a.id - b.id)
+		.filter((r) => r.groupId === args.groupId)
+		.find(
+			(r) => r.id > Math.max(...groupsMatches.map((match) => match.roundId)),
+		)?.id;
+	if (newRoundId === undefined) return err("Every round has been played");
+
 	const activeStandings = activeTeamStandings(data, args);
 
 	if (activeStandings.length === 0) {
@@ -89,14 +98,6 @@ export function generateRound(
 	);
 
 	let matchNumber = 1;
-	const newRoundId = data.round
-		.slice()
-		.sort((a, b) => a.id - b.id)
-		.filter((r) => r.groupId === args.groupId)
-		.find(
-			(r) => r.id > Math.max(...groupsMatches.map((match) => match.roundId)),
-		)?.id;
-	invariant(newRoundId, "newRoundId not found");
 
 	return ok({
 		groupId: args.groupId,

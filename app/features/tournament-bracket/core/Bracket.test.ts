@@ -2420,3 +2420,107 @@ function playedSwissMatches(
 		})),
 	);
 }
+
+describe("group stage standings - team dropping out after it advanced", () => {
+	const SOURCE_PLACEMENTS = [1, 2];
+
+	const groupStageToTopCut = ({
+		type,
+		topCutStarted,
+		setsEndedWithoutGames = false,
+	}: {
+		type: "round_robin" | "swiss";
+		topCutStarted: boolean;
+		setsEndedWithoutGames?: boolean;
+	}) => {
+		let groupStage = createResolved({
+			type,
+			seeding: [1, 2, 3, 4],
+			settings: { groupCount: 1, roundCount: 1 },
+		});
+		// the better seed wins every set
+		for (const match of groupStage.match) {
+			groupStage = Engine.reportResult(groupStage, {
+				matchId: match.id,
+				scores: setsEndedWithoutGames
+					? undefined
+					: match.opponent1!.id! < match.opponent2!.id!
+						? [2, 0]
+						: [0, 2],
+				winnerSide:
+					match.opponent1!.id! < match.opponent2!.id!
+						? "opponent1"
+						: "opponent2",
+			}).data;
+		}
+
+		const topCut = createResolved({
+			type: "single_elimination",
+			seeding: SOURCE_PLACEMENTS,
+			settings: {},
+		});
+
+		return testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type,
+							name: "Groups",
+							requiresCheckIn: false,
+							settings: { roundCount: 1 },
+						},
+						{
+							type: "single_elimination",
+							name: "Top cut",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [{ bracketIdx: 0, placements: SOURCE_PLACEMENTS }],
+						},
+					],
+				},
+				teams: [1, 2, 3, 4].map((teamId) =>
+					tournamentCtxTeam(teamId, {
+						seed: teamId,
+						droppedOut: toDBBoolean(teamId === 2),
+					}),
+				),
+			},
+			data: topCutStarted ? mergeStages(groupStage, topCut) : groupStage,
+		});
+	};
+
+	const placements = (tournament: Tournament) =>
+		tournament.bracketByIdx(0)!.standings.map((standing) => standing.team.id);
+
+	test.each([{ type: "round_robin" }, { type: "swiss" }] as const)(
+		"$type: keeps its placement once it has played on in the bracket it advanced to",
+		({ type }) => {
+			expect(
+				placements(groupStageToTopCut({ type, topCutStarted: true })),
+			).toEqual([1, 2, 3, 4]);
+		},
+	);
+
+	test("round robin: keeps its placement when its sets were ended without games", () => {
+		expect(
+			placements(
+				groupStageToTopCut({
+					type: "round_robin",
+					topCutStarted: true,
+					setsEndedWithoutGames: true,
+				}),
+			),
+		).toEqual([1, 2, 3, 4]);
+	});
+
+	test.each([{ type: "round_robin" }, { type: "swiss" }] as const)(
+		"$type: is placed last while the bracket it would advance to has not started, letting the next team in",
+		({ type }) => {
+			const tournament = groupStageToTopCut({ type, topCutStarted: false });
+
+			expect(placements(tournament)).toEqual([1, 3, 4, 2]);
+			expect(tournament.bracketByIdx(1)!.previewSeeding).toEqual([1, 3]);
+		},
+	);
+});

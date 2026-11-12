@@ -32,7 +32,10 @@ export function matchStatus(data: BracketData, matchId: number): MatchStatus {
 	return resolveStatus(match, bracketContext(data));
 }
 
-/** Whether at least one game has been reported. */
+/**
+ * Whether at least one game has been reported.
+ * @internal
+ */
 export function isMatchStarted(match: MatchResults): boolean {
 	return (
 		match.opponent1?.score !== undefined || match.opponent2?.score !== undefined

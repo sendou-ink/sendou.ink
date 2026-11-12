@@ -7,6 +7,7 @@ export {
 	swissRoundCount,
 	thirdPlaceMatchLinkable,
 } from "./create/settings";
+export { matchHasResultDownstream } from "./propagation/downstream-result";
 export { endDroppedTeamMatches } from "./propagation/dropped-teams";
 export { reportResult } from "./propagation/report-result";
 /** @internal */

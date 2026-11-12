@@ -99,7 +99,70 @@ describe("endDroppedTeamMatches", () => {
 		expect(result.endedMatchIds).toEqual([]);
 		expect(matchById(result.data, FINAL_ID).winnerSide).toBeNull();
 	});
+
+	test("also ends the match the dropped team is moved to by losing", () => {
+		// 1 vs 4 and 2 vs 3, the losers meet in the losers bracket
+		let data = create({
+			type: "double_elimination",
+			seeding: [1, 2, 3, 4],
+			settings: null,
+		});
+		data = Engine.reportResult(data, {
+			matchId: data.match.find((match) => match.opponent1?.id === 2)!.id,
+			winnerSide: "opponent1",
+		}).data;
+
+		const ended = Engine.endDroppedTeamMatches(data, [4]);
+
+		expect(openMatchesOf(ended.data, 4)).toEqual([]);
+		expect(ended.endedMatchIds).toHaveLength(2);
+	});
+
+	test("also ends the match two dropped teams meet in after winning theirs", () => {
+		// 1 vs 4 and 2 vs 3, both sets ended for the dropped team
+		let data = create({
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4],
+			settings: { skippedRounds: ["THIRD_PLACE_MATCH"] },
+		});
+		for (const match of data.match.filter(
+			(candidate) => candidate.opponent1?.id,
+		)) {
+			data = Engine.reportResult(data, {
+				matchId: match.id,
+				winnerSide: "opponent1",
+			}).data;
+		}
+		data = Engine.reopenMatch(
+			{
+				...data,
+				round: data.round.map((round) => ({
+					...round,
+					maps: { count: 1, type: "BEST_OF" as const },
+				})),
+			},
+			{
+				matchId: data.match.find((match) => match.opponent1?.id === 2)!.id,
+				lastGameWinnerTeamId: null,
+			},
+		).data;
+
+		// 1 already waits in the final, 2 gets there as its semifinal is ended against the dropped 3
+		const ended = Engine.endDroppedTeamMatches(data, [1, 2, 3]);
+
+		expect(openMatchesOf(ended.data, 1)).toEqual([]);
+	});
 });
+
+function openMatchesOf(data: BracketData, teamId: number) {
+	return data.match.filter(
+		(match) =>
+			!match.winnerSide &&
+			match.opponent1?.id &&
+			match.opponent2?.id &&
+			hasTeam(match, teamId),
+	);
+}
 
 function roundRobinOfFour(): BracketData {
 	return create({ type: "round_robin", seeding: [1, 2, 3, 4], settings: null });

@@ -22,6 +22,7 @@
 - `pnpm run test:e2e:flaky-detect` runs all e2e tests and repeats each 10 times
 - `pnpm run i18n:sync` syncs translation jsons with English
 - `pnpm run dev` starts the dev server (also runs migrations and setup first); `pnpm run seed` rebuilds the dev dataset. The dev admin user ("Sendou") has id 274 (`ADMIN_ID`)
+- `pnpm run replay:brackets` ([scripts/replay-brackets.ts](./scripts/replay-brackets.ts)) replays every finalized tournament of `db-sandbox.sqlite3` through the bracket engine and reports where the replay and the stored data disagree, grouped by class with a verdict each (`scripts/replay-brackets/triage.ts`); `--id=<tournament id>` for one tournament, `--sample=<n>`, `--fresh` to start over. The same rebuild is an invariant of the random sequence suite `app/features/tournament-bracket/core/engine/fuzz.test.ts` (`FUZZ_SEEDS=2000` widens it, `FUZZ_SEED=<seed>` replays one)
 - `pnpm run dev:tools` talks to a running dev server: `scenario <id> [--param=value]` builds a ready state (e.g. a tournament match to play) and prints a link that logs in as its user, `requests` lists recent requests with their SQL queries, `routine`/`switch` control the server, see [dev-tools.md](./docs/dev/dev-tools.md)
 
 ## Typescript

@@ -119,11 +119,11 @@ export class RoundRobinBracket extends Bracket {
 
 			if (!groupIsFinished && !includeUnfinishedGroups) continue;
 
+			const placedLastTeamIds = this.droppedOutTeamIdsPlacedLast();
 			const droppedOutWithIncompleteMatches = new Set<number>();
-			for (const team of this.tournament.ctx.teams) {
-				if (!team.droppedOut) continue;
+			for (const teamId of placedLastTeamIds) {
 				const teamMatches = matches.filter(
-					(m) => m.opponent1?.id === team.id || m.opponent2?.id === team.id,
+					(m) => m.opponent1?.id === teamId || m.opponent2?.id === teamId,
 				);
 				if (teamMatches.length === 0) continue;
 				const allPlayed = teamMatches.every(
@@ -133,7 +133,7 @@ export class RoundRobinBracket extends Bracket {
 						typeof m.opponent1?.score === "number" ||
 						typeof m.opponent2?.score === "number",
 				);
-				if (!allPlayed) droppedOutWithIncompleteMatches.add(team.id);
+				if (!allPlayed) droppedOutWithIncompleteMatches.add(teamId);
 			}
 
 			const teams: {
@@ -274,10 +274,6 @@ export class RoundRobinBracket extends Bracket {
 				});
 			}
 
-			const droppedOutTeams = this.tournament.ctx.teams
-				.filter((t) => t.droppedOut)
-				.map((t) => t.id);
-
 			placements.push(
 				...teams
 					// client-side the layout's teams can lag behind freshly loaded match data, mostly preview tournaments (prevent crash)
@@ -294,9 +290,9 @@ export class RoundRobinBracket extends Bracket {
 						},
 					}))
 					.sort((a, b) => {
-						// TIEBREAKER 0) dropped out teams are always last
-						const aDroppedOut = droppedOutTeams.includes(a.id);
-						const bDroppedOut = droppedOutTeams.includes(b.id);
+						// TIEBREAKER 0) dropped out teams are last
+						const aDroppedOut = placedLastTeamIds.has(a.id);
+						const bDroppedOut = placedLastTeamIds.has(b.id);
 
 						if (aDroppedOut && !bDroppedOut) return 1;
 						if (!aDroppedOut && bDroppedOut) return -1;

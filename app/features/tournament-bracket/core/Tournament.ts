@@ -33,6 +33,7 @@ import {
 } from "../tournament-bracket-utils";
 import { type Bracket, createBracket } from "./Bracket";
 import * as CheckIn from "./CheckIn";
+import * as Engine from "./engine";
 import { eliminationGroupCount } from "./engine/create/settings";
 import { calculateTeamStatus } from "./engine/swiss/team-status";
 import { getRounds } from "./rounds";
@@ -134,6 +135,10 @@ export class Tournament {
 	private _derivedMeta: BracketDerivedMeta[] | undefined;
 	private _bracketsMeta: BracketMeta[] | undefined;
 	private readonly bracketIdxsBeingBuilt = new Set<number>();
+	private readonly followUpParticipantsByBracketIdx = new Map<
+		number,
+		Set<number>
+	>();
 	private readonly teamsById: Map<
 		number,
 		TournamentData["ctx"]["teams"][number]
@@ -487,7 +492,13 @@ export class Tournament {
 					),
 			);
 
-			teams.push(...withOverriddenTeamsExcluded);
+			// a drop out moves the teams below it up, possibly to a placement of this bracket
+			// while they already play the bracket they advanced to
+			teams.push(
+				...withOverriddenTeamsExcluded.filter(
+					(teamId) => !this.teamPlaysFollowUpOf(source.bracketIdx, teamId),
+				),
+			);
 		}
 
 		const teamsFromOverride: { id: number; sourceBracketIdx: number }[] = [];
@@ -538,6 +549,63 @@ export class Tournament {
 			teams: activeTeams,
 			relevantMatchesFinished: allRelevantMatchesFinished,
 		};
+	}
+
+	/**
+	 * Whether the team is a participant of a started bracket that takes its teams from the given one.
+	 * Read off the match data (or the shipped meta) and not the built brackets: building a preview
+	 * bracket asks its sources for standings, which is where this gets called from.
+	 */
+	teamPlaysFollowUpOf(bracketIdx: number, tournamentTeamId: number) {
+		if (!this.followUpParticipantsByBracketIdx.has(bracketIdx)) {
+			this.followUpParticipantsByBracketIdx.set(
+				bracketIdx,
+				this.followUpParticipants(bracketIdx),
+			);
+		}
+
+		return this.followUpParticipantsByBracketIdx
+			.get(bracketIdx)!
+			.has(tournamentTeamId);
+	}
+
+	private followUpParticipants(bracketIdx: number) {
+		const result = new Set<number>();
+
+		for (const [
+			idx,
+			bracket,
+		] of this.ctx.settings.bracketProgression.entries()) {
+			if (
+				!bracket.sources?.some((source) => source.bracketIdx === bracketIdx)
+			) {
+				continue;
+			}
+
+			if (!this.data) {
+				const meta = this._derivedMeta?.[idx];
+				if (!meta || meta.preview) continue;
+
+				for (const teamId of meta.participantTournamentTeamIds) {
+					result.add(teamId);
+				}
+				continue;
+			}
+
+			const stage = this.data.stage.find(
+				(candidate) => candidate.name === bracket.name,
+			);
+			if (!stage) continue;
+
+			for (const match of this.data.match) {
+				if (match.stageId !== stage.id) continue;
+
+				if (match.opponent1?.id) result.add(match.opponent1.id);
+				if (match.opponent2?.id) result.add(match.opponent2.id);
+			}
+		}
+
+		return result;
 	}
 
 	private resolveTeamsFromSignups(bracketIdx: number) {
@@ -1410,7 +1478,7 @@ export class Tournament {
 		return { type: "THANKS_FOR_PLAYING" } as const;
 	}
 
-	/** For fixing wrongly reported scores. A match can be reopened as long as no match following it has started. */
+	/** For fixing wrongly reported scores. A match can be reopened as long as no match following it has started or been ended. */
 	matchCanBeReopened(matchId: number) {
 		if (this.ctx.isFinalized) return false;
 
@@ -1452,16 +1520,12 @@ export class Tournament {
 			return true;
 		}
 
-		const anotherMatchBlocking = this.followingMatches(matchId).some(
-			(followingMatch) =>
-				// swiss rounds are generated one by one so a following match blocks even if not started
-				bracket.type === "swiss" ||
-				(followingMatch.opponent1?.score &&
-					followingMatch.opponent1.score > 0) ||
-				(followingMatch.opponent2?.score && followingMatch.opponent2.score > 0),
-		);
+		// swiss rounds are generated one by one so a following match blocks even if not started
+		if (bracket.type === "swiss") {
+			return this.followingMatches(matchId).length === 0;
+		}
 
-		return !anotherMatchBlocking;
+		return !Engine.matchHasResultDownstream(bracket.data, matchId);
 	}
 
 	private matchAffectsAnotherBracket({

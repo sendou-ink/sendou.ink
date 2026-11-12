@@ -152,6 +152,27 @@ describe("Set results in a bracket with map info", () => {
 		expect(matchById(data, 0).opponent1?.score).toBe(1);
 	});
 
+	test.each([
+		{ why: "its only game is removed", games: 1 },
+		{ why: "it was ended without games", games: 0 },
+	])("is back to not started when reopened and $why", ({ games }) => {
+		data = bracketWithMaps({ count: 1, type: "BEST_OF" });
+		const notStarted = matchById(data, 0);
+
+		data =
+			games === 1
+				? Engine.reportGameResult(data, { matchId: 0, winnerTeamId: TEAM_ONE })
+						.data
+				: Engine.endSet(data, { matchId: 0, winnerTeamId: TEAM_ONE }).data;
+		data = Engine.reopenMatch(data, {
+			matchId: 0,
+			lastGameWinnerTeamId: games === 1 ? TEAM_ONE : null,
+		}).data;
+
+		expect(Engine.isMatchStarted(matchById(data, 0))).toBe(false);
+		expect(matchById(data, 0)).toEqual(notStarted);
+	});
+
 	test("removes the last game's score when the set loser won it in a play all set", () => {
 		data = bracketWithMaps({ count: 3, type: "PLAY_ALL" });
 		for (const winnerTeamId of [TEAM_ONE, TEAM_ONE, TEAM_TWO]) {
@@ -170,15 +191,130 @@ describe("Set results in a bracket with map info", () => {
 	});
 });
 
+describe("reopenMatch", () => {
+	const matchBetween = (data: BracketData, oneId: number, twoId: number) => {
+		const matches = data.match.filter((candidate) => {
+			const ids = [candidate.opponent1?.id, candidate.opponent2?.id];
+			return ids.includes(oneId) && ids.includes(twoId);
+		});
+		// the teams can meet again in the losers bracket: the one still to be played first
+		const match =
+			matches.find((candidate) => !candidate.winnerSide) ?? matches[0];
+		if (!match) throw new Error(`No match between ${oneId} and ${twoId}`);
+
+		return match;
+	};
+	const winSet = (
+		data: BracketData,
+		winnerTeamId: number,
+		loserTeamId: number,
+	) =>
+		Engine.reportGameResult(data, {
+			matchId: matchBetween(data, winnerTeamId, loserTeamId).id,
+			winnerTeamId,
+		}).data;
+
+	test.each([
+		{
+			why: "the set its winner advanced to was ended without games",
+			playOn: (data: BracketData) =>
+				Engine.endSet(data, {
+					matchId: matchBetween(data, 1, 2).id,
+					winnerTeamId: 2,
+				}).data,
+		},
+		{
+			why: "the set its winner advanced to has a game played",
+			playOn: (data: BracketData) =>
+				Engine.reportGameResult(
+					bestOfThree(data, matchBetween(data, 1, 2).roundId),
+					{ matchId: matchBetween(data, 1, 2).id, winnerTeamId: 1 },
+				).data,
+		},
+	])("refuses once $why", ({ playOn }) => {
+		// semifinals 1 vs 4 and 2 vs 3
+		let data = bracketWithMaps({ count: 1, type: "BEST_OF" }, [1, 2, 3, 4]);
+		data = winSet(data, 1, 4);
+		data = winSet(data, 2, 3);
+		data = playOn(data);
+
+		expect(() =>
+			Engine.reopenMatch(data, {
+				matchId: matchBetween(data, 1, 4).id,
+				lastGameWinnerTeamId: 1,
+			}),
+		).toThrow("The match is locked.");
+	});
+
+	test("refuses once its loser played on after a BYE in the losers bracket", () => {
+		// 3 teams: 1 has a BYE, the loser of 2 vs 3 passes a losers bracket BYE to meet the loser of 1 vs 2
+		let data = bracketWithMaps(
+			{ count: 1, type: "BEST_OF" },
+			[1, 2, 3],
+			"double_elimination",
+		);
+		data = winSet(data, 2, 3);
+		data = winSet(data, 1, 2);
+		data = winSet(data, 3, 2);
+
+		expect(() =>
+			Engine.reopenMatch(data, {
+				matchId: data.match.find(
+					(match) => match.opponent1?.id === 2 && match.opponent2?.id === 3,
+				)!.id,
+				lastGameWinnerTeamId: 2,
+			}),
+		).toThrow("The match is locked.");
+	});
+
+	test("reopens while the sets its teams advanced to are not started", () => {
+		let data = bracketWithMaps({ count: 1, type: "BEST_OF" }, [1, 2, 3, 4]);
+		data = winSet(data, 1, 4);
+		data = winSet(data, 2, 3);
+
+		data = Engine.reopenMatch(data, {
+			matchId: matchBetween(data, 1, 4).id,
+			lastGameWinnerTeamId: 1,
+		}).data;
+
+		expect(matchBetween(data, 1, 4).winnerSide).toBeFalsy();
+	});
+
+	test("reopens when the set its winner advanced to only holds the 0-0 score reopening used to leave", () => {
+		let data = bracketWithMaps({ count: 1, type: "BEST_OF" }, [1, 2, 3, 4]);
+		data = winSet(data, 1, 4);
+		data = winSet(data, 2, 3);
+		data = Engine.reportResult(data, {
+			matchId: matchBetween(data, 1, 2).id,
+			scores: [0, 0],
+		}).data;
+
+		data = Engine.reopenMatch(data, {
+			matchId: matchBetween(data, 1, 4).id,
+			lastGameWinnerTeamId: 1,
+		}).data;
+
+		expect(matchBetween(data, 1, 4).winnerSide).toBeFalsy();
+	});
+});
+
+function bestOfThree(data: BracketData, roundId: number): BracketData {
+	return {
+		...data,
+		round: data.round.map((round) =>
+			round.id === roundId
+				? { ...round, maps: { ...round.maps!, count: 3 } }
+				: round,
+		),
+	};
+}
+
 function bracketWithMaps(
 	maps: Pick<TournamentRoundMaps, "count" | "type">,
 	seeding = [TEAM_ONE, TEAM_TWO],
+	type: "single_elimination" | "double_elimination" = "single_elimination",
 ) {
-	const input = {
-		type: "single_elimination" as const,
-		seeding,
-		settings: null,
-	};
+	const input = { type, seeding, settings: null };
 
 	return create({
 		...input,

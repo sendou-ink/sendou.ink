@@ -567,6 +567,22 @@ export abstract class Bracket {
 		};
 	}
 
+	/**
+	 * Dropped out teams are placed last so the teams below move up and advance in their place. Not once
+	 * the team plays the bracket it advanced to: its spot is taken, so the group stage standings stay as played.
+	 */
+	protected droppedOutTeamIdsPlacedLast() {
+		return new Set(
+			this.tournament.ctx.teams
+				.filter(
+					(team) =>
+						team.droppedOut &&
+						!this.tournament.teamPlaysFollowUpOf(this.idx, team.id),
+				)
+				.map((team) => team.id),
+		);
+	}
+
 	protected standingsWithoutNonParticipants(standings: Standing[]): Standing[] {
 		const participatedUserIds = this.tournament.participatedUserIds;
 		// views that did not load participated user ids show full rosters

@@ -316,16 +316,14 @@ export class SwissBracket extends Bracket {
 				});
 			}
 
-			const droppedOutTeams = this.tournament.ctx.teams
-				.filter((t) => t.droppedOut)
-				.map((t) => t.id);
+			const placedLastTeamIds = this.droppedOutTeamIdsPlacedLast();
 
 			// teams that finished their run keep counting so dropping them only moves the teams below up
 			const droppedOutMidRunTeamIds = new Set(
 				teams
 					.filter(
 						(team) =>
-							droppedOutTeams.includes(team.id) && !this.runIsComplete(team),
+							placedLastTeamIds.has(team.id) && !this.runIsComplete(team),
 					)
 					.map((team) => team.id),
 			);
@@ -397,9 +395,9 @@ export class SwissBracket extends Bracket {
 						},
 					}))
 					.sort((a, b) => {
-						// TIEBREAKER 0) dropped out teams are always last
-						const aDroppedOut = droppedOutTeams.includes(a.id);
-						const bDroppedOut = droppedOutTeams.includes(b.id);
+						// TIEBREAKER 0) dropped out teams are last
+						const aDroppedOut = placedLastTeamIds.has(a.id);
+						const bDroppedOut = placedLastTeamIds.has(b.id);
 
 						if (aDroppedOut && !bDroppedOut) return 1;
 						if (!aDroppedOut && bDroppedOut) return -1;

@@ -267,6 +267,24 @@ describe("Swiss", () => {
 	});
 
 	describe("generateRound()", () => {
+		test("generates no round once every round has been played", () => {
+			const round = Engine.generateRound(
+				bracketWithFinishedRound({ seeding: [1, 2, 3, 4], roundCount: 1 }),
+				{
+					groupId: 0,
+					standings: standingsOf([
+						{ id: 1, setWins: 1, setLosses: 0 },
+						{ id: 2, setWins: 1, setLosses: 0 },
+						{ id: 3, setWins: 0, setLosses: 1 },
+						{ id: 4, setWins: 0, setLosses: 1 },
+					]),
+					settings: null,
+				},
+			);
+
+			expect(round.ok).toBe(false);
+		});
+
 		test("does not generate a new round while a match is still being played", () => {
 			const data = bracketWithFinishedRound({
 				seeding: [1, 2, 3, 4, 5],

@@ -4,7 +4,7 @@ import { Propagator } from "./traversal";
 
 /**
  * Ends unfinished matches of dropped teams by awarding wins to their opponents (random winner when both
- * dropped). Matches that gain a dropped opponent through this call's propagation are left for the next call.
+ * dropped). Repeats for the matches the ended ones move a dropped team to, until none is left to play.
  */
 export function endDroppedTeamMatches(
 	data: BracketData,
@@ -16,34 +16,30 @@ export function endDroppedTeamMatches(
 
 	const endedMatchIds: number[] = [];
 
-	for (const match of data.match) {
-		if (!match.opponent1?.id || !match.opponent2?.id) continue;
-		if (match.winnerSide) continue;
+	let endedOnThisPass = true;
+	while (endedOnThisPass) {
+		endedOnThisPass = false;
 
-		const team1Dropped = droppedTeamIdsSet.has(match.opponent1.id);
-		const team2Dropped = droppedTeamIdsSet.has(match.opponent2.id);
+		for (const match of store.data.match) {
+			if (!match.opponent1?.id || !match.opponent2?.id) continue;
+			if (match.winnerSide) continue;
 
-		if (!team1Dropped && !team2Dropped) continue;
+			const team1Dropped = droppedTeamIdsSet.has(match.opponent1.id);
+			const team2Dropped = droppedTeamIdsSet.has(match.opponent2.id);
 
-		const winnerTeamId = (() => {
-			if (team1Dropped && !team2Dropped) return match.opponent2.id;
-			if (!team1Dropped && team2Dropped) return match.opponent1.id;
-			return Math.random() < 0.5 ? match.opponent1.id : match.opponent2.id;
-		})();
+			if (!team1Dropped && !team2Dropped) continue;
 
-		const stored = store.matchById(match.id);
-		if (!stored) throw new Error("Match not found.");
+			const winnerSide = (() => {
+				if (team1Dropped && !team2Dropped) return "opponent2";
+				if (!team1Dropped && team2Dropped) return "opponent1";
+				return Math.random() < 0.5 ? "opponent1" : "opponent2";
+			})();
 
-		propagator.updateMatch(
-			stored,
-			{
-				winnerSide:
-					winnerTeamId === match.opponent1.id ? "opponent1" : "opponent2",
-			},
-			true,
-		);
+			propagator.updateMatch(match, { winnerSide }, true);
 
-		endedMatchIds.push(match.id);
+			endedMatchIds.push(match.id);
+			endedOnThisPass = true;
+		}
 	}
 
 	return {
