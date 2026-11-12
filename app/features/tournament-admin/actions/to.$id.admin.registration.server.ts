@@ -125,6 +125,16 @@ async function upsertRegistration(
 			? new MapPool(data.mapPool)
 			: undefined;
 
+	// before joining, otherwise the user's first looking group could be the team they join
+	for (const addId of membersToAdd) {
+		ChatSystemMessage.notifyRoomsChanged(
+			await TournamentLFGRepository.leaveLfg({
+				userId: addId,
+				tournamentId,
+			}),
+		);
+	}
+
 	const { appliedTournamentNameChanges, roomsChangedUserIds } =
 		await TournamentTeamRepository.upsertRegistration({
 			tournamentTeamId: team?.id,
@@ -150,12 +160,6 @@ async function upsertRegistration(
 	}
 
 	for (const addId of membersToAdd) {
-		ChatSystemMessage.notifyRoomsChanged(
-			await TournamentLFGRepository.leaveLfg({
-				userId: addId,
-				tournamentId,
-			}),
-		);
 		ShowcaseTournaments.addToCached({
 			tournamentId,
 			type: "participant",
