@@ -107,6 +107,7 @@ export const broadcastActionSchema = v.union([
 		advance: v.picklist(BROADCAST_ADVANCES),
 	}),
 	v.object({ _action: _action("ADD_TO_QUEUE") }),
+	v.object({ _action: _action("GENERATE_PROGRAM_KEY") }),
 	v.object({ _action: _action("REMOVE_FROM_QUEUE"), itemId: id }),
 	v.object({
 		_action: _action("MOVE_IN_QUEUE"),

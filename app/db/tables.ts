@@ -1236,6 +1236,8 @@ interface TournamentBroadcast {
 	settings: JSONColumnType<BroadcastSettings>;
 	/** Chat of the tournament's organizers and streamers producing the broadcast, created once the cast account is set */
 	chatRoomId: number | null;
+	/** Secret of the program URL OBS shows the overlay from, `null` until the producer generates one */
+	programKey: string | null;
 	createdAt: Generated<number>;
 }
 

@@ -1,6 +1,7 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac } from "node:crypto";
 import * as v from "valibot";
 import { ServerConfig } from "~/config.server";
+import { isSameSecret } from "~/utils/crypto.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
 import * as FakeDaily from "./FakeDaily.server";
@@ -172,9 +173,7 @@ export function isValidWebhookSignature({
 		.digest();
 	const received = Buffer.from(signature, "base64");
 
-	return (
-		received.length === expected.length && timingSafeEqual(received, expected)
-	);
+	return isSameSecret(received, expected);
 }
 
 async function request(

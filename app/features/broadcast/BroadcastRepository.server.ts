@@ -1,5 +1,6 @@
 import type { NotNull, Transaction } from "kysely";
 import { sql } from "kysely";
+import { nanoid } from "nanoid";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
@@ -31,7 +32,7 @@ interface WriteArgs<Item extends ProducerState = ProducerState>
 	rules: Producer.Rules<Item>;
 }
 
-/** Producer state, settings and chat room of the channel's broadcast, `undefined` before anything was written to it. */
+/** Producer state, settings, chat room and program key of the channel's broadcast, `undefined` before anything was written to it. */
 export function findByChannel({ tournamentId, channel }: BroadcastKey) {
 	return db
 		.selectFrom("TournamentBroadcast")
@@ -39,6 +40,7 @@ export function findByChannel({ tournamentId, channel }: BroadcastKey) {
 			"TournamentBroadcast.state",
 			"TournamentBroadcast.settings",
 			"TournamentBroadcast.chatRoomId",
+			"TournamentBroadcast.programKey",
 		])
 		.where("TournamentBroadcast.tournamentId", "=", tournamentId)
 		.where("TournamentBroadcast.platform", "=", channel.platform)
@@ -190,6 +192,23 @@ export async function updateSettings<
 		.where("TournamentBroadcast.platform", "=", key.channel.platform)
 		.where("TournamentBroadcast.account", "=", key.channel.account)
 		.execute();
+}
+
+/** Gives the channel's broadcast a new random program key, replacing the one it had. Returns the new key. */
+export async function refreshProgramKey(key: WriteArgs) {
+	const programKey = nanoid();
+
+	await insertIfMissing(key);
+
+	await db
+		.updateTable("TournamentBroadcast")
+		.set({ programKey })
+		.where("TournamentBroadcast.tournamentId", "=", key.tournamentId)
+		.where("TournamentBroadcast.platform", "=", key.channel.platform)
+		.where("TournamentBroadcast.account", "=", key.channel.account)
+		.execute();
+
+	return programKey;
 }
 
 /**

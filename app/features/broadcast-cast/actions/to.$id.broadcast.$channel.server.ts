@@ -2,7 +2,10 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.server";
 import { broadcastParamsSchema } from "~/features/broadcast/broadcast-schemas";
 import type { BroadcastStoredState } from "~/features/broadcast/broadcast-types";
-import { requireBroadcastProducer } from "~/features/broadcast/broadcast-utils.server";
+import {
+	regenerateProgramKey,
+	requireBroadcastProducer,
+} from "~/features/broadcast/broadcast-utils.server";
 import * as BroadcastHub from "~/features/broadcast/core/BroadcastHub.server";
 import * as Producer from "~/features/broadcast/core/Producer";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
@@ -185,6 +188,10 @@ export const action = defineAction(
 					...key,
 					patch: { headline: body.headline ?? "" },
 				});
+				break;
+			}
+			case "GENERATE_PROGRAM_KEY": {
+				await regenerateProgramKey(key);
 				break;
 			}
 			case "UPDATE_CASTERS": {

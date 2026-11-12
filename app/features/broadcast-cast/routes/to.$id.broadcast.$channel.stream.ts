@@ -4,6 +4,7 @@ import { broadcastParamsSchema } from "~/features/broadcast/broadcast-schemas";
 import { broadcastStreamSearchParams } from "~/features/broadcast/broadcast-search-params";
 import { broadcastStreamResponse } from "~/features/broadcast/broadcast-stream.server";
 import {
+	canWatchProgram,
 	isBroadcastEnabled,
 	isBroadcastProducer,
 } from "~/features/broadcast/broadcast-utils.server";
@@ -12,7 +13,7 @@ import { notFound, notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { CAST_LAYOUT } from "../broadcast-cast-layout.server";
 import * as CastChannel from "../core/CastChannel";
 
-/** Public SSE stream of a cast broadcast's state, see `BroadcastHub`. */
+/** SSE stream of a cast broadcast's state for its producers and the program key's holders, see `BroadcastHub`. */
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const { tournament, tournamentId } = await tournamentFromParams(params, {
 		for: "view",
@@ -22,9 +23,15 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		params,
 		schema: broadcastParamsSchema,
 	});
-	notFoundIfNullish(CastChannel.findBySlug(tournament.ctx.castAccounts, slug));
-	const { role } = broadcastStreamSearchParams.parse(request);
-	const isProducer = isBroadcastProducer(tournament, getUser());
+	const channel = notFoundIfNullish(
+		CastChannel.findBySlug(tournament.ctx.castAccounts, slug),
+	);
+	const { role, key: programKey } = broadcastStreamSearchParams.parse(request);
+	const user = getUser();
+	if (!(await canWatchProgram({ tournament, user, channel, programKey }))) {
+		notFound();
+	}
+	const isProducer = isBroadcastProducer(tournament, user);
 	const isClipSender = role === "dashboard" && isProducer;
 	// a scanner is counted as putting scenes on air, which only a producer's can
 	if (role === "scanner" && !isProducer) notFound();
@@ -36,5 +43,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		layout: CAST_LAYOUT,
 		role,
 		isClipSender,
+		programKey: isProducer ? null : programKey,
 	});
 };

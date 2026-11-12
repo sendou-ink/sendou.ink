@@ -3,7 +3,6 @@ import * as EventBus from "~/features/events/core/EventBus.server";
 import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { logger } from "~/utils/logger";
 import * as BroadcastRepository from "../BroadcastRepository.server";
-import { BROADCAST_MAX_CONNECTIONS } from "../broadcast-constants";
 import type {
 	BroadcastGameSignal,
 	BroadcastHealth,
@@ -42,6 +41,10 @@ interface Client {
 	role: BroadcastStreamRole;
 	/** Gets a serialized {@link BroadcastStreamMessage}. */
 	send: (message: string) => void;
+	/** Ends the client's connection. */
+	close: () => void;
+	/** The program key it was let in with, `null` for a producer. */
+	programKey: string | null;
 	peerId: string;
 	token: string;
 	/** A producer's dashboard, which sends the overlays replay clips over WebRTC. Peers signal only to the other kind. */
@@ -94,15 +97,19 @@ export function connect<State extends BroadcastState>({
 	layout,
 	role,
 	send,
+	close,
 	signal,
 	isClipSender,
+	programKey,
 	...key
 }: HubKey & {
 	layout: Layout<State>;
 	role: BroadcastStreamRole;
 	send: Client["send"];
+	close: Client["close"];
 	signal: AbortSignal;
 	isClipSender: boolean;
+	programKey: Client["programKey"];
 }) {
 	if (signal.aborted) return;
 
@@ -117,6 +124,8 @@ export function connect<State extends BroadcastState>({
 	const client: Client = {
 		role,
 		send,
+		close,
+		programKey,
 		peerId: crypto.randomUUID(),
 		token: crypto.randomUUID(),
 		isClipSender,
@@ -174,9 +183,19 @@ export function relaySignal({
 	return true;
 }
 
-/** Whether the broadcast has as many clients as it takes, its URLs being public. */
-export function isAtCapacity(key: HubKey) {
-	return (hubs.get(hubId(key))?.clients.size ?? 0) >= BROADCAST_MAX_CONNECTIONS;
+/** Closes the connections let in with a program key other than the broadcast's current one, e.g. after it was regenerated. */
+export function disconnectStaleKeys({
+	programKey,
+	...key
+}: HubKey & { programKey: string }) {
+	const hub = hubs.get(hubId(key));
+	if (!hub) return;
+
+	for (const client of hub.clients) {
+		if (client.programKey !== null && client.programKey !== programKey) {
+			client.close();
+		}
+	}
 }
 
 /** Rebuilds the broadcast's state for its clients, e.g. after the producer changed it. */

@@ -8,21 +8,17 @@ const HEARTBEAT_MESSAGE = JSON.stringify({
 
 /**
  * Server-sent events response of a broadcast's stream: the client connected to the broadcast's hub until it goes away,
- * heartbeats keeping the connection alive. 429 when the broadcast has as many clients as it takes.
+ * heartbeats keeping the connection alive.
  */
 export function broadcastStreamResponse<State extends BroadcastState>({
 	request,
 	...args
 }: Omit<
 	Parameters<typeof BroadcastHub.connect<State>>[0],
-	"send" | "signal"
+	"send" | "close" | "signal"
 > & {
 	request: Request;
 }) {
-	if (BroadcastHub.isAtCapacity(args)) {
-		return new Response(null, { status: 429 });
-	}
-
 	let close = () => {};
 
 	const stream = new ReadableStream<Uint8Array>({
@@ -65,6 +61,7 @@ export function broadcastStreamResponse<State extends BroadcastState>({
 			BroadcastHub.connect({
 				...args,
 				send: write,
+				close,
 				signal: disconnect.signal,
 			});
 		},

@@ -25,9 +25,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { state, channel } = notFoundIfNullish(
 		await BroadcastHub.buildState({ tournamentId, slug, layout: CAST_LAYOUT }),
 	);
-	const broadcastChatRoomId = (
-		await BroadcastRepository.findByChannel({ tournamentId, channel })
-	)?.chatRoomId;
+	const broadcast = await BroadcastRepository.findByChannel({
+		tournamentId,
+		channel,
+	});
+	const broadcastChatRoomId = broadcast?.chatRoomId;
 	const featuredMatchId = state.match?.id ?? null;
 	const featuredMatch = featuredMatchId
 		? await TournamentMatchRepository.findMatchById(featuredMatchId)
@@ -36,6 +38,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		state,
 		channel,
+		programKey: broadcast?.programKey ?? null,
 		featuredMatchId,
 		joinInfo: featuredMatch
 			? featuredMatchJoinInfo({ tournament, match: featuredMatch })
