@@ -66,6 +66,8 @@ export type WorkerResponse =
 			detector: string;
 			t: number;
 			gate: GateResult;
+			/** the gate passed and the scheduler let the parse run */
+			parsed: boolean;
 			/** every read of the frame, as parsed */
 			events: DetectedEvent[];
 			/**

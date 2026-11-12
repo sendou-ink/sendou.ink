@@ -306,7 +306,7 @@ async function analyzePrepared(
 			runSteps: gpuRunner(),
 			onGated,
 		});
-		for (const { detector, gate, events, actions } of outcomes) {
+		for (const { detector, gate, parsed, events, actions } of outcomes) {
 			const listed = actions.some(
 				({ action }) => action === "added" || action === "replaced",
 			);
@@ -316,6 +316,7 @@ async function analyzePrepared(
 				detector: detector.id,
 				t,
 				gate,
+				parsed,
 				events,
 				changes: actions.flatMap((action) => changeOf(action) ?? []),
 			};

@@ -30,6 +30,11 @@ try {
 			`  ${frame.frameFile} → tests/fixtures/${frame.fixtureDir}/  ${frame.width}x${frame.height}  t=${frame.t}  conf=${frame.confidence.toFixed(3)}`,
 		);
 	}
+	if (summary.scanLog) {
+		console.info(
+			`scan log: ${summary.scanLog.frames} analyzed frames in ${summary.scanLog.lanes} lane(s); with the video, replay the scan: pnpm scanner:scan-vod <video> --replay ${summary.outDir}/scan-log.json`,
+		);
+	}
 } catch (error) {
 	console.error(error instanceof Error ? error.message : String(error));
 	process.exit(1);

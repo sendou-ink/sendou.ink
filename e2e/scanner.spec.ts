@@ -104,8 +104,7 @@ test.describe("Scanner", () => {
 		await scanVod(scanner);
 		await scanner.locators.showDetailsButton.click();
 
-		const download = await scanner.downloadGameData();
-		const files = unzipSync(await fs.readFile(await download.path()));
+		const files = await gameDataFiles(scanner);
 		const names = Object.keys(files);
 		const events = JSON.parse(strFromU8(files["events.json"]!));
 
@@ -122,6 +121,35 @@ test.describe("Scanner", () => {
 					files[`${event.frame}/expected.json`] !== undefined,
 			),
 		).toBe(true);
+	});
+
+	test("puts the scan's log into a game's zip, also once the scan is reopened", async ({
+		page,
+	}) => {
+		const scanner = new ScannerPage(page);
+		await scanVod(scanner);
+		await scanner.locators.showDetailsButton.click();
+
+		const scanned = await gameDataFiles(scanner);
+		const loggedTimes = new Set(
+			JSON.parse(strFromU8(scanned["scan-log.json"]!)).lanes.flatMap(
+				(lane: { frames: [number][] }) => lane.frames.map(([t]) => t),
+			),
+		);
+		const events: { t: number }[] = JSON.parse(
+			strFromU8(scanned["events.json"]!),
+		);
+
+		expect(events.length).toBeGreaterThan(0);
+		expect(events.every((event) => loggedTimes.has(event.t))).toBe(true);
+
+		await scanner.reload();
+		await scanner.locators.showDetailsButton.click();
+		const reopened = await gameDataFiles(scanner);
+
+		expect(strFromU8(reopened["scan-log.json"]!)).toBe(
+			strFromU8(scanned["scan-log.json"]!),
+		);
 	});
 
 	test("prefills a new VoD from a scanned file", async ({
@@ -176,6 +204,11 @@ test.describe("Scanner", () => {
 async function scanVod(scanner: ScannerPage) {
 	await scanner.goto();
 	await scanner.scanFile(VOD_PATH);
+}
+
+async function gameDataFiles(scanner: ScannerPage) {
+	const download = await scanner.downloadGameData();
+	return unzipSync(await fs.readFile(await download.path()));
 }
 
 async function expectScannedGame(scanner: ScannerPage) {

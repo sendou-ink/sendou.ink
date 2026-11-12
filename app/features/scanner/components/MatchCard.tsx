@@ -57,7 +57,12 @@ import {
 } from "./game-timeline-view";
 import styles from "./MatchCard.module.css";
 import { matchZip } from "./match-zip";
-import type { GetFrame, ScanEvent, SessionKind } from "./session-data";
+import type {
+	GetFrame,
+	GetScanLog,
+	ScanEvent,
+	SessionKind,
+} from "./session-data";
 import { type UploadState, UploadStatusButton } from "./UploadStatus";
 
 /** the game score a knockout wins at */
@@ -100,6 +105,7 @@ export function MatchCard({
 	coachHref,
 	onPlayClip,
 	getFrame,
+	getScanLog,
 }: {
 	built: BuiltMatch<ScanEvent>;
 	/** 1-based position in the session, oldest first */
@@ -119,6 +125,8 @@ export function MatchCard({
 	coachHref: string | null;
 	onPlayClip: (clip: ScannerClip) => void;
 	getFrame: (event: ScanEvent) => GetFrame | undefined;
+	/** the log of the scan the game came from, for its Game data; absent where scans keep none (live) */
+	getScanLog?: GetScanLog;
 }) {
 	const { match } = built;
 	const [expanded, setExpanded] = useState(false);
@@ -266,6 +274,7 @@ export function MatchCard({
 				built={built}
 				clips={clips}
 				getFrame={getFrame}
+				getScanLog={getScanLog}
 				fileName={`scanner-${scannedAt !== undefined ? new Date(scannedAt).toISOString().slice(0, 10) : kind}-game-${number}.zip`}
 			/>
 		</div>
@@ -680,18 +689,23 @@ function ReportData({
 	built,
 	clips,
 	getFrame,
+	getScanLog,
 	fileName,
 }: {
 	built: BuiltMatch<ScanEvent>;
 	clips: readonly ScannerClip[];
 	getFrame: (event: ScanEvent) => GetFrame | undefined;
+	getScanLog?: GetScanLog;
 	fileName: string;
 }) {
 	const [zipping, setZipping] = useState(false);
 
 	const download = async () => {
 		setZipping(true);
-		await matchZip(built, getFrame, clips)
+		// the frames and reads are worth sending without the log
+		await (getScanLog?.() ?? Promise.resolve(undefined))
+			.catch(() => undefined)
+			.then((scanLog) => matchZip(built, getFrame, clips, scanLog))
 			.then((zip) =>
 				downloadBlob(
 					fileName,

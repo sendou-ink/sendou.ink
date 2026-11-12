@@ -23,8 +23,9 @@ pnpm scanner:unpack-zip <path/to/zip> <scratchpad>/game-data-<zip-basename>
 
 The output directory must not exist yet. The script
 (`app/features/scanner/node/game-data-zip.ts`) parses the archive by hand and
-accepts only the exact shape `matchZip` writes: `match.json`, `events.json`
-and `frames/<n>-<Type>-<m>m<ss>s/{frame.webp|png|jpg, expected.json}`. It
+accepts only the exact shape `matchZip` writes: `match.json`, `events.json`,
+`frames/<n>-<Type>-<m>m<ss>s/{frame.webp|png|jpg, expected.json}` and, for a
+VoD's game, `scan-log.json`. It
 bounds every size before inflating (zip bombs), refuses traversal, symlinks,
 encryption, overlapping or duplicate entries, trailing/prepended data, unknown
 event types, images whose header is not a capture-sized webp/png/jpg, and
@@ -63,6 +64,12 @@ detector's output — it is what the scanner read, not the truth.**
   detector. Reproduce it as a `tests/logic/` test from the relevant
   `events.json` entries (see `tests/logic/match-builder.test.ts`) instead of a
   frame fixture.
+- **The misread is not in any frame of the zip** (an event missing, a read
+  that depends on earlier frames: a memoized name, the strip's sticky fit)
+  and the zip has a `scan-log.json`: with the video file,
+  `pnpm scanner:scan-vod <video> --replay <unpacked>/scan-log.json` runs the
+  user's scan again as it ran (README → Scan log and replay). Ask for the
+  video if it is not at hand.
 - **Nothing is misread** → stop and tell the user what you checked; do not
   invent a fixture.
 
