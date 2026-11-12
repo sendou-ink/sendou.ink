@@ -13,6 +13,7 @@ describe("broadcastOverlaySearchParams", () => {
 		assertRoundTrips(broadcastOverlaySearchParams, {
 			view: ["live", "next"],
 			preview: [false, true],
+			key: [null, "V1StGXR8_Z5jdHi6B-myT"],
 		});
 	});
 
@@ -25,6 +26,7 @@ describe("broadcastStreamSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(broadcastStreamSearchParams, {
 			role: ["source", "preview", "dashboard", "scanner"],
+			key: [null, "V1StGXR8_Z5jdHi6B-myT"],
 		});
 	});
 

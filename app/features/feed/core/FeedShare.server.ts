@@ -1,5 +1,6 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac } from "node:crypto";
 import { ServerConfig } from "~/config.server";
+import { isSameSecret } from "~/utils/crypto.server";
 
 /** Signs a share link of the post, letting anyone who opens it see the post as the sharer does. */
 export function token({
@@ -25,8 +26,5 @@ export function isValid({
 	sharerId: number;
 	token: string;
 }) {
-	const expected = Buffer.from(token({ itemId, sharerId }));
-	const actual = Buffer.from(given);
-
-	return expected.length === actual.length && timingSafeEqual(expected, actual);
+	return isSameSecret(token({ itemId, sharerId }), given);
 }

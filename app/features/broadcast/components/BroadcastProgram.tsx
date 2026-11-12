@@ -10,8 +10,8 @@ import { broadcastSignalUrl, broadcastStreamUrl } from "../broadcast-urls";
 import { BroadcastOverlay, type BroadcastSceneSet } from "./BroadcastOverlay";
 
 /**
- * The program page's overlay: the scene set drawing the broadcast's state as its stream pushes it, the view and
- * whether it is the dashboard's preview (not counted as an OBS source) taken from the search params.
+ * The program page's overlay: the scene set drawing the broadcast's state as its stream pushes it, the view,
+ * whether it is the dashboard's preview (not counted as an OBS source) and the program key taken from the search params.
  */
 export function BroadcastProgram<State extends BroadcastState>({
 	sceneSet,
@@ -24,7 +24,7 @@ export function BroadcastProgram<State extends BroadcastState>({
 	slug: string;
 	initialState: State;
 }) {
-	const [{ view, preview }] = useSearchParamsTyped(
+	const [{ view, preview, key: programKey }] = useSearchParamsTyped(
 		broadcastOverlaySearchParams,
 	);
 	const pageArgs = { tournamentId, slug };
@@ -33,6 +33,7 @@ export function BroadcastProgram<State extends BroadcastState>({
 		url: broadcastStreamUrl({
 			...pageArgs,
 			role: preview ? "preview" : "source",
+			programKey,
 		}),
 		initialState,
 		onMessage: clips.onMessage,

@@ -28,26 +28,37 @@ export const broadcastDesignPage = (args: BroadcastPageArgs) =>
 export const broadcastDesignCanvasPage = (args: BroadcastPageArgs) =>
 	`${broadcastDesignPage(args)}/canvas`;
 
-/** The overlay OBS shows as a browser source, switching scenes on its own. */
+/**
+ * The overlay OBS shows as a browser source, switching scenes on its own. Only producers see it without the
+ * broadcast's program key.
+ */
 export const broadcastOverlayPage = ({
 	view = "live",
 	preview = false,
+	programKey = null,
 	...args
 }: BroadcastPageArgs & {
 	view?: BroadcastView;
 	preview?: boolean;
+	programKey?: string | null;
 }) =>
 	broadcastOverlaySearchParams.href(`${broadcastDashboardPage(args)}/program`, {
 		view,
 		preview,
+		key: programKey,
 	});
 
 export const broadcastStreamUrl = ({
 	role,
+	programKey = null,
 	...args
-}: BroadcastPageArgs & { role: BroadcastStreamRole }) =>
+}: BroadcastPageArgs & {
+	role: BroadcastStreamRole;
+	programKey?: string | null;
+}) =>
 	broadcastStreamSearchParams.href(`${broadcastDashboardPage(args)}/stream`, {
 		role,
+		key: programKey,
 	});
 
 /** Where the dashboard and overlays post their WebRTC session descriptions to each other. */

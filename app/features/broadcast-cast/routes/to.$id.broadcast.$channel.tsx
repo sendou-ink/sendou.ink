@@ -9,12 +9,14 @@ import {
 	CircleCheck,
 	CircleDashed,
 	Hand,
+	KeyRound,
 	Link2,
 	type LucideIcon,
 	Palette,
 	Pause,
 	Play,
 	Plus,
+	RefreshCw,
 	ScanEye,
 	TriangleAlert,
 	Unlink,
@@ -324,7 +326,11 @@ export default function BroadcastDashboardPage() {
 					<SendouTabPanel id="setup">
 						<Setup
 							state={state}
-							programUrl={`${Config.siteDomain}${broadcastOverlayPage(pageArgs)}`}
+							programUrl={
+								data.programKey
+									? `${Config.siteDomain}${broadcastOverlayPage({ ...pageArgs, programKey: data.programKey })}`
+									: null
+							}
 							scannerLink={pageArgs}
 							statuses={clipSender.statuses}
 							areClipsOnSources={areClipsOnSources}
@@ -1376,7 +1382,8 @@ function Setup({
 	areClipsOnSources,
 }: {
 	state: CastBroadcastState;
-	programUrl: string;
+	/** `null` until the program key is generated. */
+	programUrl: string | null;
 	scannerLink: { tournamentId: number; slug: string };
 	statuses: ClipTransfer.ClipPeerStatus[];
 	areClipsOnSources: boolean;
@@ -1399,10 +1406,50 @@ function Setup({
 						{t("broadcast:dashboard.setup.program")}
 					</InfoPopover>
 				</div>
-				<InviteLinkInput
-					label={t("broadcast:dashboard.setup.programLabel")}
-					link={programUrl}
-				/>
+				{programUrl ? (
+					<div className="stack sm">
+						<InviteLinkInput
+							label={t("broadcast:dashboard.setup.programLabel")}
+							link={programUrl}
+						/>
+						<ActionButton
+							schema={broadcastActionSchema}
+							action="GENERATE_PROGRAM_KEY"
+							size="small"
+							variant="minimal-destructive"
+							icon={<RefreshCw />}
+							className="self-start"
+							confirm={{
+								dialogHeading: t(
+									"broadcast:dashboard.setup.regenerateKeyHeading",
+								),
+								description: t(
+									"broadcast:dashboard.setup.regenerateKeyDescription",
+								),
+								submitButtonText: t("broadcast:dashboard.setup.regenerateKey"),
+								submitButtonVariant: "destructive",
+							}}
+							testId="broadcast-regenerate-key-button"
+						>
+							{t("broadcast:dashboard.setup.regenerateKey")}
+						</ActionButton>
+					</div>
+				) : (
+					<div className="stack sm items-start">
+						<p className="text-sm text-lighter">
+							{t("broadcast:dashboard.setup.noProgramKey")}
+						</p>
+						<ActionButton
+							schema={broadcastActionSchema}
+							action="GENERATE_PROGRAM_KEY"
+							size="small"
+							icon={<KeyRound />}
+							testId="broadcast-generate-key-button"
+						>
+							{t("broadcast:dashboard.setup.generateKey")}
+						</ActionButton>
+					</div>
+				)}
 				<ul className={styles.checklist}>
 					<SetupCheck isDone={sourceCount > 0}>
 						{t("broadcast:dashboard.health.sources", { count: sourceCount })}
