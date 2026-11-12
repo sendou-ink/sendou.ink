@@ -7,14 +7,14 @@ const EVENTS: Tape.TapeEvent[] = [
 	stubEvent({
 		type: "MapStart",
 		t: 10.125,
-		confidence: 0.8132,
+		scores: { read: 0.8132 },
 		data: { mode: "SZ", stage: 18 },
 	}),
 	stubEvent({
 		type: "Scoreboard",
 		t: 310.5,
 		detectedAt: 1_792_268_464_123,
-		confidence: 0.9,
+		scores: { read: 0.9 },
 		data: { lobby: "PRIVATE", matchScores: [100, 0] },
 	}),
 ];
@@ -49,7 +49,7 @@ describe("Tape.serialize", () => {
 					type: "Objective",
 					t: 12.3456789,
 					detectedAt: 1_792_268_464_123,
-					confidence: 0.771126010329,
+					scores: { read: 0.771126010329 },
 					data: { score: [0.123456, 95] },
 				}),
 			]),
@@ -59,7 +59,7 @@ describe("Tape.serialize", () => {
 			type: "Objective",
 			t: 12.3457,
 			detectedAt: 1_792_268_464_123,
-			confidence: 0.7711,
+			scores: { read: 0.7711 },
 			data: { score: [0.1235, 95] },
 		});
 	});
@@ -75,13 +75,25 @@ describe("Tape.serialize", () => {
 });
 
 describe("Tape.parse", () => {
-	test("reads a tape recorded before the event version stamp", () => {
+	test("reads a tape recorded before the event version stamp, scoring each read as a whole", () => {
 		const text = [
 			JSON.stringify({ tape: 1, description: "one game", source: "video.mkv" }),
-			...EVENTS.map((event) => JSON.stringify(event)),
+			JSON.stringify({
+				type: "MapStart",
+				t: 10.125,
+				confidence: 0.8132,
+				data: { mode: "SZ", stage: 18 },
+			}),
 		].join("\n");
 
-		expect(Tape.parse("unstamped", text).events).toEqual(EVENTS);
+		expect(Tape.parse("unstamped", text).events).toEqual([
+			{
+				type: "MapStart",
+				t: 10.125,
+				scores: { "*": 0.8132 },
+				data: { mode: "SZ", stage: 18 },
+			},
+		]);
 	});
 
 	test("leaves out the events of a tape recorded at a newer event version", () => {

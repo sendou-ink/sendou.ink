@@ -47,7 +47,12 @@ import { X_RANK_POSITION_EVENT_TYPE } from "../core/detectors/x-rank/position";
 import * as xRank from "../core/detectors/x-rank/rois";
 import { X_SET_COUNT_EVENT_TYPE } from "../core/detectors/x-rank/set-count";
 import { X_SET_RESULT_EVENT_TYPE } from "../core/detectors/x-rank/set-result";
-import { isScoreboardEvent } from "../core/events";
+import {
+	type DetectedEvent,
+	isComplete,
+	isScoreboardEvent,
+} from "../core/events";
+import * as FieldScores from "../core/field-scores";
 import {
 	lobbyLabel,
 	mainWeaponLabel,
@@ -235,7 +240,7 @@ function formatTimer(time: number | null) {
 function gateSummary(result: Result): string | null {
 	const event = result.events[0];
 	if (!event) return null;
-	const confidence = `${((event.confidence ?? 0) * 100).toFixed(1)}% conf`;
+	const confidence = scoreSummary(event);
 	switch (event.type) {
 		case DEATH_EVENT_TYPE: {
 			const { data } = event;
@@ -284,6 +289,18 @@ function gateSummary(result: Result): string | null {
 			return `${confidence} · scores ${JSON.stringify(data.matchScores)} · ${[lobbyLabel(data.lobby), modeLabel(data.mode), stageLabel(data.stage)].map((v) => v ?? "?").join(" · ")}`;
 		}
 	}
+}
+
+/** Mean field score, and the weakest field of a read its kind does not count complete. */
+function scoreSummary(event: DetectedEvent): string {
+	const mean = `${(FieldScores.mean(event.scores) * 100).toFixed(1)}% mean`;
+	if (isComplete(event)) return `${mean} · complete`;
+	const weakest = Object.entries(event.scores).toSorted(
+		([, a], [, b]) => a - b,
+	)[0];
+	return weakest
+		? `${mean} · weakest ${weakest[0]} ${(weakest[1] * 100).toFixed(1)}%`
+		: mean;
 }
 
 function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {

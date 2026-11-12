@@ -35,13 +35,7 @@ import { createLineSumsKernel } from "../../app/features/scanner/worker/gpu-line
 import { createGpuMatcher } from "../../app/features/scanner/worker/gpu-matcher";
 
 /** Fields that carry raw match scores; everything else is a decision. */
-const SCORE_FIELDS = new Set([
-	"confidence",
-	"score",
-	"ncc",
-	"teamColor",
-	"debug",
-]);
+const SCORE_FIELDS = new Set(["scores", "score", "ncc", "teamColor", "debug"]);
 /** GPUBufferUsage / GPUMapMode flags (spec values; the globals are missing from the TS DOM lib) */
 const BUFFER_COPY_DST = 0x0008;
 const BUFFER_STORAGE = 0x0080;

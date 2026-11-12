@@ -66,6 +66,7 @@ import {
 	type ScoreboardFamilyEvent,
 	type XBattleCardEvent,
 } from "./events";
+import * as FieldScores from "./field-scores";
 import { hueDistance, hueOf, type InkRgb } from "./ink-color";
 import { parseReplayTimestamp } from "./replay-time";
 import {
@@ -988,7 +989,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 	const minimapTeams = board
 		? null
 		: withOwnBuildOn(
-				teamsFromMinimaps(mostConfidentFirst(open.minimaps), deaths),
+				teamsFromMinimaps(bestScoredFirst(open.minimaps), deaths),
 				selfIndex === null ? null : { team: 0, index: selfIndex },
 				own,
 			);
@@ -2500,11 +2501,12 @@ function withRowWeapons(
 	})) as [ScannerMatchTeam, ScannerMatchTeam];
 }
 
-function mostConfidentFirst(
+/** The reads' data, the read whose fields scored best on average first. */
+function bestScoredFirst(
 	events: readonly EventOfType<typeof MINIMAP_EVENT_TYPE>[],
 ): MinimapData[] {
 	return [...events]
-		.sort((a, b) => b.confidence - a.confidence)
+		.sort((a, b) => FieldScores.mean(b.scores) - FieldScores.mean(a.scores))
 		.map((event) => event.data);
 }
 

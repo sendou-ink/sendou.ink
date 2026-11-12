@@ -195,7 +195,7 @@ test("row reads are memoized across advancing frames only", async () => {
 		assert.deepEqual(memoizedRows(repeat), [true, true]);
 		assert.deepEqual(memoizedRows(rewound), [false, false]);
 		assert.deepEqual(repeat.data, first.data);
-		assert.equal(repeat.confidence, first.confidence);
+		assert.deepEqual(repeat.scores, first.scores);
 	} finally {
 		frame.delete();
 	}

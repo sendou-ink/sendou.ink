@@ -201,7 +201,7 @@ function event(
 	send: SendStatus | undefined,
 	type: EventType = "Scoreboard",
 ): ScanEvent {
-	return stubEvent({ type, t: 0, confidence: 1, data: null, send });
+	return stubEvent({ type, t: 0, scores: { read: 1 }, data: null, send });
 }
 
 const PLAYER: ScannerMatchPlayer = {

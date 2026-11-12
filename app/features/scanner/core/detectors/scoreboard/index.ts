@@ -25,6 +25,7 @@ import type { StripWeaponTemplate } from "../objective/strip-weapons";
 import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	FULL_COUNT_TEAM_SCORE,
+	matchScoreFieldScores,
 	parseBannerScoreSteps,
 	resolveMatchScores,
 } from "./banner";
@@ -55,7 +56,12 @@ import {
 	TEAM_SCORE_ROIS,
 	weaponRoi,
 } from "./rois";
-import { parseScoreboardRowSteps, type RowRois } from "./row";
+import {
+	parseScoreboardRowSteps,
+	playerScores,
+	type RowRois,
+	rowsComplete,
+} from "./row";
 import type { SpecialMatch, SpecialTemplate } from "./specials";
 import type { WeaponMatch, WeaponTemplate } from "./weapons";
 
@@ -187,6 +193,14 @@ export const SCOREBOARD_EVENT: EventKind<
 > = {
 	type: SCOREBOARD_EVENT_TYPE,
 	sameData: sameScoreboardMatch,
+	// a no-contest game shows no score
+	complete: ({ data, scores }) =>
+		rowsComplete(data.players, scores) &&
+		data.lobby !== null &&
+		data.mode !== null &&
+		data.stage !== null &&
+		(data.noContest === true ||
+			data.matchScores.every((score) => score !== null)),
 	match: "closes",
 };
 
@@ -328,10 +342,7 @@ export function createScoreboardDetector(
 
 		const players = rows.map((row) => row.player);
 		const rowDebug = rows.map((row) => row.debug);
-		const confidences = rows.flatMap((row) => row.confidences);
 		const povIndex = findPovIndex(rowDebug.map((r) => r.povFraction));
-
-		if (header) confidences.push(header.confidence);
 
 		// the winner's total is read only to recognize a knockout: only a full 100
 		// count reaches 500, and the banner value is hidden under the KNOCKOUT! burst
@@ -343,20 +354,25 @@ export function createScoreboardDetector(
 		if (banners) {
 			const [left, right] = banners;
 			matchScores = resolveMatchScores({ left, right, knockout });
-			confidences.push(left.confidence, right.confidence);
 			bannerDebug = { left, right, knockout, winnerTotalConf };
 		}
-
-		const confidence =
-			confidences.length > 0
-				? confidences.reduce((a, b) => a + b, 0) / confidences.length
-				: 0;
 
 		return [
 			{
 				type: SCOREBOARD_EVENT_TYPE,
 				t,
-				confidence,
+				scores: {
+					...playerScores(rows),
+					...header?.scores,
+					...(banners
+						? matchScoreFieldScores({
+								left: banners[0],
+								right: banners[1],
+								knockout,
+								knockoutScore: winnerTotalConf,
+							})
+						: null),
+				},
 				data: {
 					lobby: header?.lobby ?? null,
 					mode: header?.mode ?? null,
@@ -375,10 +391,8 @@ export function createScoreboardDetector(
 		];
 	}
 
-	// just under the clean-read floor (fixtures 0.865-0.899, scan events down to 0.799)
 	return {
 		id: "scoreboard",
-		sufficientConfidence: 0.79,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

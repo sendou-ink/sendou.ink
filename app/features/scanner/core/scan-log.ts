@@ -26,14 +26,17 @@ const MAX_LANES = 64;
 const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const EVENT_TYPE_PATTERN = /^[A-Za-z]+$/;
 const MAX_NAME_LENGTH = 64;
+/** scored fields of one read; a scoreboard scores 53 */
+const MAX_READ_SCORES = 256;
 
 /**
  * What a parse read, as far as the log keeps it: enough to tell whether a
- * replay read the same, and the confidence the scan's timeline decided on.
+ * replay read the same, and the field scores the scan's timeline decided on
+ * (in the read's own field order; the fields themselves are the replay's).
  */
 export interface ScanLogRead {
 	type: string;
-	confidence: number;
+	scores: readonly number[];
 }
 
 /** One due detector on one analyzed frame. */
@@ -58,7 +61,7 @@ export interface ScanLogFrame {
  * `[t, due, pass, parsed, ...details]`: each mask holds a detector at its
  * index in `ScanLog.detectors`. A passing gate that named a variant or whose
  * parse read something adds a detail,
- * `[detector index, variant, ...(event type index, confidence) per read]`.
+ * `[detector index, variant, ...(event type index, score count, ...scores) per read]`.
  */
 type PackedFrame = [number, number, number, number, ...PackedDetail[]];
 type PackedDetail = [number, string | null, ...number[]];
@@ -123,9 +126,10 @@ export function record(
 	frame.push([
 		detector,
 		check.variant ?? null,
-		...reads.flatMap(({ type, confidence }) => [
+		...reads.flatMap(({ type, scores }) => [
 			indexIn(log.types, type),
-			confidence,
+			scores.length,
+			...scores,
 		]),
 	]);
 }
@@ -144,7 +148,7 @@ export function frames(log: ScanLog, lane: ScanLogLane): ScanLogFrame[] {
 				pass: (pass & bit) !== 0,
 				...(variant === null ? null : { variant }),
 				parsed: (parsed & bit) !== 0,
-				reads: readPairs(log, reads),
+				reads: unpackedReads(log, reads),
 			});
 		}
 		return { t, checks };
@@ -153,9 +157,12 @@ export function frames(log: ScanLog, lane: ScanLogLane): ScanLogFrame[] {
 
 /** A parse's events as the log keeps them. */
 export function readsOf(
-	events: readonly { type: string; confidence: number }[],
+	events: readonly { type: string; scores: Readonly<Record<string, number>> }[],
 ): ScanLogRead[] {
-	return events.map(({ type, confidence }) => ({ type, confidence }));
+	return events.map(({ type, scores }) => ({
+		type,
+		scores: Object.values(scores),
+	}));
 }
 
 /** How many frames the log holds. */
@@ -237,7 +244,7 @@ function parseFrame(
 	}
 	let detailed = 0;
 	const parsedDetails = details.map((detail): PackedDetail => {
-		if (!Array.isArray(detail) || detail.length < 2 || detail.length % 2) {
+		if (!Array.isArray(detail) || detail.length < 2) {
 			fail(`${where} has a malformed detail`);
 		}
 		const [detector, variant, ...reads] = detail as unknown[];
@@ -252,12 +259,17 @@ function parseFrame(
 		if (reads.length > 0 && !(parsed & (1 << detector))) {
 			fail(`${where} has reads of a parse that did not run`);
 		}
-		for (const [index, read] of reads.entries()) {
-			const valid =
-				index % 2 === 0
-					? isIndex(read, typeCount)
-					: typeof read === "number" && Number.isFinite(read);
-			if (!valid) fail(`${where} has a malformed read`);
+		for (let at = 0; at < reads.length; ) {
+			const count = reads[at + 1];
+			if (
+				!isIndex(reads[at], typeCount) ||
+				!isIndex(count, MAX_READ_SCORES + 1) ||
+				at + 2 + count > reads.length ||
+				!reads.slice(at + 2, at + 2 + count).every(isScore)
+			) {
+				fail(`${where} has a malformed read`);
+			}
+			at += 2 + count;
 		}
 		return [detector, variant, ...(reads as number[])];
 	});
@@ -293,6 +305,10 @@ function isTime(value: unknown): value is number {
 	return typeof value === "number" && Number.isFinite(value) && value >= 0;
 }
 
+function isScore(value: unknown): boolean {
+	return typeof value === "number" && value >= 0 && value <= 1;
+}
+
 function isIndex(value: unknown, count: number): value is number {
 	return (
 		typeof value === "number" &&
@@ -310,10 +326,15 @@ function fail(reason: string): never {
 	throw new Error(`not a scan log: ${reason}`);
 }
 
-function readPairs(log: ScanLog, pairs: readonly number[]): ScanLogRead[] {
+function unpackedReads(log: ScanLog, packed: readonly number[]): ScanLogRead[] {
 	const reads: ScanLogRead[] = [];
-	for (let i = 0; i + 1 < pairs.length; i += 2) {
-		reads.push({ type: log.types[pairs[i]!]!, confidence: pairs[i + 1]! });
+	for (let at = 0; at + 1 < packed.length; ) {
+		const count = packed[at + 1]!;
+		reads.push({
+			type: log.types[packed[at]!]!,
+			scores: packed.slice(at + 2, at + 2 + count),
+		});
+		at += 2 + count;
 	}
 	return reads;
 }

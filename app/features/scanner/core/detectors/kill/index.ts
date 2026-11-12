@@ -12,6 +12,7 @@
  */
 import { getCV, type Mat } from "../../cv";
 import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import {
 	copyRoi,
@@ -290,7 +291,7 @@ export function createKillDetector(
 		}
 
 		const names: (string | null)[] = [];
-		const confidences: number[] = [];
+		const scores: Record<string, number> = {};
 		const rows: Record<string, unknown>[] = [];
 		for (const [row, signature] of signatures.entries()) {
 			const memoized = rowMemoLookup(signature);
@@ -318,8 +319,8 @@ export function createKillDetector(
 				)
 			)
 				break;
+			scores[`names.${names.length}`] = (message.score + parsed.confidence) / 2;
 			names.push(message.name);
-			confidences.push((message.score + parsed.confidence) / 2);
 		}
 		if (names.length === 0) {
 			return [];
@@ -335,8 +336,7 @@ export function createKillDetector(
 			{
 				type: KILL_EVENT_TYPE,
 				t,
-				confidence:
-					confidences.reduce((sum, c) => sum + c, 0) / confidences.length,
+				scores: FieldScores.of(scores),
 				data: { time: timer.value, names },
 				debug: { rows, timerRaw: timer.reading },
 			},

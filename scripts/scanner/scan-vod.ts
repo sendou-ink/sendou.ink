@@ -47,6 +47,7 @@ import {
 import { DetectorScheduler } from "../../app/features/scanner/core/detectors/scheduler";
 import { createScanTelemetry } from "../../app/features/scanner/core/detectors/telemetry";
 import type { DetectedEvent } from "../../app/features/scanner/core/events";
+import * as FieldScores from "../../app/features/scanner/core/field-scores";
 import { normalizeFrame, toMat } from "../../app/features/scanner/core/image";
 import { withoutInvalidObjectives } from "../../app/features/scanner/core/match-builder";
 import { runSync } from "../../app/features/scanner/core/match-steps";
@@ -74,7 +75,7 @@ const REPLAY_SEEK_MARGIN_S = 2;
 const REPLAY_FRAME_EPSILON_S = 0.0005;
 /** How long after the video's last frame a logged time still shows that frame. */
 const REPLAY_END_GRACE_S = 1;
-/** Reads this close in confidence came from the same picture decoded by another decoder. */
+/** Reads with every field score this close came from the same picture decoded by another decoder. */
 const REPLAY_READ_TOLERANCE = 0.02;
 const USAGE =
 	"usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir] [--tape name [--description text]] [--replay scan-log.json]";
@@ -474,7 +475,7 @@ async function replayScan(
 		`  gates: ${tally.checks - tally.gatesDiffering} of ${tally.checks} as logged`,
 	);
 	console.error(
-		`  parses: ${tally.parses - tally.readsClose - tally.readsDiffering} of ${tally.parses} read as logged, ${tally.readsClose} within ${REPLAY_READ_TOLERANCE} confidence, ${tally.readsDiffering} differently`,
+		`  parses: ${tally.parses - tally.readsClose - tally.readsDiffering} of ${tally.parses} read as logged, ${tally.readsClose} with every field score within ${REPLAY_READ_TOLERANCE}, ${tally.readsDiffering} differently`,
 	);
 
 	return withoutInvalidObjectives(
@@ -487,7 +488,7 @@ async function replayScan(
 	);
 }
 
-/** Same event types in the same order, no confidence further off than another decoder's pixels put it. */
+/** Same event types in the same order scoring as many fields, no score further off than another decoder's pixels put it. */
 function readsClose({
 	logged,
 	replayed,
@@ -497,10 +498,17 @@ function readsClose({
 		logged.every(
 			(read, i) =>
 				read.type === replayed[i]!.type &&
-				Math.abs(read.confidence - replayed[i]!.confidence) <=
-					REPLAY_READ_TOLERANCE,
+				read.scores.length === replayed[i]!.scores.length &&
+				read.scores.every(
+					(score, at) =>
+						Math.abs(score - replayed[i]!.scores[at]!) <= REPLAY_READ_TOLERANCE,
+				),
 		)
 	);
+}
+
+function meanOf(scores: readonly number[]): number {
+	return scores.reduce((sum, score) => sum + score, 0) / (scores.length || 1);
 }
 
 function describeDivergence(
@@ -513,7 +521,10 @@ function describeDivergence(
 	}
 	const reads = (list: readonly ScanLog.ScanLogRead[]) =>
 		list
-			.map((read) => `${read.type}@${read.confidence.toFixed(4)}`)
+			.map(
+				(read) =>
+					`${read.type}@${meanOf(read.scores).toFixed(4)} (${read.scores.length} fields)`,
+			)
 			.join(", ") || "nothing";
 	return `${divergence.detector} read: scan ${reads(divergence.logged)}, replay ${reads(divergence.replayed)}`;
 }
@@ -731,7 +742,7 @@ async function analyze<T extends { outcomes: DetectorOutcome[] }>(
 				if (action.action === "added" || action.action === "replaced") {
 					const { event } = action;
 					console.error(
-						`  event t=${event.t.toFixed(2)} ${event.type} conf=${event.confidence.toFixed(3)}`,
+						`  event t=${event.t.toFixed(2)} ${event.type} score=${FieldScores.mean(event.scores).toFixed(3)}`,
 					);
 				}
 			}

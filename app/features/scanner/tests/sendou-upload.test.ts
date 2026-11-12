@@ -26,7 +26,7 @@ function scoreboard(t: number, povIndex: number | null): DetectedEvent {
 		})),
 		povIndex,
 	};
-	return { type: "Scoreboard", t, confidence: 0.9, data };
+	return { type: "Scoreboard", t, scores: { read: 0.9 }, data };
 }
 
 function prefilledMatches(events: DetectedEvent[]) {
@@ -73,7 +73,7 @@ test("weapons are padded to 4 slots per team so uneven rosters keep the team spl
 		teamColors: [null, null],
 	};
 	const matches = prefilledMatches([
-		{ type: "Minimap", t: 300, confidence: 0.9, data },
+		{ type: "Minimap", t: 300, scores: { read: 0.9 }, data },
 	]);
 
 	assert.deepEqual(matches[0]!.weapons, [...ALPHA.slice(0, 3), null, ...BRAVO]);

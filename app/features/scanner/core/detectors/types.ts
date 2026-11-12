@@ -1,4 +1,5 @@
 import type { Mat } from "../cv";
+import type { FieldScores } from "../field-scores";
 import type { MatchSteps } from "../match-steps";
 
 /** One read of an event kind; `DetectedEvent` (core/events.ts) is the union over every kind. */
@@ -6,10 +7,10 @@ export interface EventRecord<TType extends string = string, TData = unknown> {
 	type: TType;
 	/** seconds into the stream/video */
 	t: number;
-	/** 0..1 aggregate confidence; TimelineBuilder drops events below the kind's floor */
-	confidence: number;
+	/** 0..1 per field of `data` the read vouches for, keyed by the field's path (core/field-scores.ts) */
+	scores: FieldScores;
 	data: TData;
-	/** per-field match scores etc. for the harness/debugging; not persisted upstream */
+	/** match internals for the harness/debugging; not persisted upstream */
 	debug?: Record<string, unknown>;
 }
 
@@ -33,32 +34,44 @@ export interface EventKind<TType extends string = string, TData = unknown> {
 	 */
 	sameData?(a: TData, b: TData): boolean;
 	/**
-	 * Reads below this confidence are dropped; unset = the timeline default.
-	 * Evidence scored on a different scale (raw NCC peaks) opts out with 0,
-	 * history screens raise it.
+	 * A read whose field scores average under this is not a read of the screen
+	 * and is dropped; unset = the timeline default. Evidence scored on a
+	 * different scale (raw NCC peaks) opts out with 0, history screens raise it.
 	 */
-	minConfidence?: number;
+	minMeanScore?: number;
 	/**
-	 * Which read of a merged run stays; unset = "mostConfident".
+	 * The invariants of a complete read: every field the screen shows is read,
+	 * each as well as a clean frame reads it, so no later frame has anything to
+	 * add and the scheduler stops reading the screen. Unset = never complete
+	 * (screens that keep changing, or animate toward their final value).
+	 */
+	complete?(read: { data: TData; scores: FieldScores }): boolean;
+	/**
+	 * How the reads of a merged run become the one kept; unset = "voted".
 	 *
-	 * "first": the content guard only merges identical repeats, so a more
-	 * confident one carries nothing new except a later `t`.
+	 * "voted": each scored field takes the value its reads back with the most
+	 * score in total, so a field one frame misread is outvoted by the frames
+	 * that read it, whatever else those frames got wrong. `t` and the unscored
+	 * data are the read's that agrees with the outcome on the most fields.
+	 *
+	 * "first": the content guard only merges identical repeats, so a later
+	 * one carries nothing new except a later `t`.
 	 *
 	 * "sampled": per-frame state samples, where every read carries state at its
 	 * instant and a run of same-state reads is a series rather than one repeated
 	 * screen. The timeline keeps the run's first read, the latest read
 	 * (re-placed as the run grows, `extended`) and one read per merge window in
 	 * between, so the run's ends are exact and a lone misread stays flanked by
-	 * the reads either side of it for the match builder's smoothing. Confidence
-	 * never moves a sample.
+	 * the reads either side of it for the match builder's smoothing. Scores
+	 * never move a sample.
 	 */
-	keep?: "mostConfident" | "first" | "sampled";
+	keep?: "voted" | "first" | "sampled";
 	/**
 	 * Animation order for screens that count toward their final value (X Battle
 	 * cards): positive when `b` is further along than `a`. Every frame of the
-	 * count reads equally well, so instead of confidence a further-along read
-	 * replaces the kept one and an earlier one merges into it; only reads level
-	 * on the animation fall back to confidence.
+	 * count reads equally well, so a further-along read replaces the kept one
+	 * and an earlier one merges into it; only reads level on the animation are
+	 * voted.
 	 */
 	progress?(a: TData, b: TData): number;
 	/**
@@ -66,7 +79,7 @@ export interface EventKind<TType extends string = string, TData = unknown> {
 	 * earlier frame of the animation can show what the later one has moved past.
 	 */
 	carryOver?(kept: TData, further: TData): TData;
-	/** a confident read opens a match (the intro) or closes it (a scoreboard) for the scheduler's calm state */
+	/** a read the timeline kept opens a match (the intro) or closes it (a scoreboard) for the scheduler's calm state */
 	match?: "opens" | "closes";
 }
 
@@ -115,17 +128,16 @@ export interface Detector<TEvent extends EventRecord = EventRecord> {
 	 * several times.
 	 */
 	refineIntervalS?: number;
-	/** Non-improving parses tolerated before suppression; unset = default (6). Lower for expensive parses. */
+	/** Parses changing nothing in the timeline tolerated before suppression; unset = default (6). Lower for expensive parses. */
 	maxStagnantParses?: number;
 	/**
-	 * A parse at this confidence ends refinement immediately. Set just under the
-	 * detector's measured clean-read floor (fixtures + confirmed scan events) so
-	 * the first full read suppresses the rest; degraded reads fall back to
-	 * stagnation suppression.
+	 * Seconds without such a change that must also pass before suppression;
+	 * unset = scheduler default (3s, a screen's entry animation). Lower only
+	 * for a screen that opens faster and is expensive to parse.
 	 */
-	sufficientConfidence?: number;
+	stagnantAfterS?: number;
 	/**
-	 * After a sufficient read, skip parses this long even across gate drops
+	 * After a complete read, skip parses this long even across gate drops
 	 * (death: animated background flickers the gate). Only safe when the
 	 * timeline merge is purely time-based and the cooldown fits inside the merge
 	 * window.

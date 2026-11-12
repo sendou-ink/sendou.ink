@@ -15,7 +15,7 @@ function mapStart(t: number): DetectedEvent {
 	return {
 		type: "MapStart",
 		t,
-		confidence: 0.9,
+		scores: { read: 0.9 },
 		data: { mode: "SZ", stage: 0 },
 	};
 }
@@ -24,7 +24,7 @@ function scoreboard(t: number): DetectedEvent {
 	return stubEvent({
 		type: "Scoreboard",
 		t,
-		confidence: 0.9,
+		scores: { read: 0.9 },
 		data: {
 			lobby: "PRIVATE",
 			mode: "SZ",

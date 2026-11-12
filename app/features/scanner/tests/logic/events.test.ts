@@ -10,7 +10,7 @@ import {
 import { stubEvent } from "../stub-event";
 
 const read = (type: Parameters<typeof stubEvent>[0]["type"]) =>
-	stubEvent({ type, t: 1, confidence: 0.9, data: {} });
+	stubEvent({ type, t: 1, scores: { read: 0.9 }, data: {} });
 
 describe("kindOf", () => {
 	test.each([
@@ -64,7 +64,7 @@ describe("detectionOf", () => {
 			id: 7,
 			type: "Death",
 			t: 12,
-			confidence: 0.8,
+			scores: { read: 0.8 },
 			data: { name: "a" },
 			debug: { raw: "a" },
 		});
@@ -72,7 +72,7 @@ describe("detectionOf", () => {
 		expect(detectionOf(record)).toEqual({
 			type: "Death",
 			t: 12,
-			confidence: 0.8,
+			scores: { read: 0.8 },
 			data: { name: "a" },
 		});
 	});

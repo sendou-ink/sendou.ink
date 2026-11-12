@@ -72,7 +72,10 @@ opens it, for anyone, through the same handoff Inspect uses.
   code that wrote them and are rebuilt into matches by whatever is deployed
   now, so every record (`events`, `vod-events`, a compacted game's sources,
   a Game data zip's `events.json`, a tape's header) carries the version `v`
-  its `type`/`data` were written at; a record without one is version 1. The
+  its `type`/`data`/`scores` were written at; a record without one is version 1
+  (version 2 replaced a read's one `confidence` with `scores` per field; an
+  older read is brought up with its confidence as the one score of the whole
+  read, under `*`). The
   store reads (`listEvents`, `getEvents`, `loadVodEvents`,
   `listCompactedMatches`) and the tape loader hand back
   `EventVersion.readable` events: older ones run through the upgrade steps
@@ -439,8 +442,8 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   back: the entry's match reopens with the intro, its gameplay joins it, and
   the entry shown again after the replay closes it. A history screen with its stage unread
   (typically a frame caught mid-transition) forms no match of its own; the
-  timeline also holds history screens to a 0.75 confidence floor (clean
-  reads score 0.81+). Likewise a results screen read again with no
+  timeline also holds history screens to a 0.75 mean score floor (clean
+  reads average 0.81+). Likewise a results screen read again with no
   match opened since (a lost-connection dialog hid it and the detector
   re-armed) joins the last match. A no-contest results screen (the host
   ended the game or a disconnect did early: DRAW tags on both team boxes,
@@ -631,13 +634,14 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   re-checked every `searchIntervalS` (0.25s — produced VoDs cut screens to
   ~1s, and gates are ~ms-cheap); a passing gate drops to the dense refine
   cadence (`refineIntervalS` overrides for expensive parses). Suppression
-  ends a refinement streak on parse-count stagnation AND ~3s elapsed (the
-  floor spans entry animations), or immediately at `sufficientConfidence`
-  (set just under each detector's measured clean-read floor); death adds
-  `rearmCooldownS`. A spectator map read with any card's weapon unread
-  (the screen's opening wipe still crossing it) is capped under the minimap's
-  `sufficientConfidence`, so the open is read on until settled; a cast
-  match's players merge from its most confident minimap read first. Battle-log/replay gates return a content `signature` so
+  ends a refinement streak as soon as the read the timeline keeps of the
+  screen is complete (the kind's declared invariants, see "Field scores"), or
+  on stagnation: `maxStagnantParses` parses that changed nothing the timeline
+  holds AND ~3s elapsed (the floor spans entry animations; death and the
+  minimap, expensive parses of overlays that open fast, set a shorter
+  `stagnantAfterS`); death and the minimap add `rearmCooldownS` after a
+  complete read. A cast
+  match's players merge from its best-scored minimap read first. Battle-log/replay gates return a content `signature` so
   browsing distinct entries re-parses once per battle instead of dropping
   the gate. `checkIntervalS` hard-caps both phases; `attachFrame: false`
   keeps continuously-firing events from storing a frame PNG each, and the
@@ -734,14 +738,15 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   the picture's corners, over parts some screens are read by. On the
   XHXYlzu4Zt8 VoD (avatar bottom-left, chat box bottom-right, a name pill
   top-left that comes and goes) every Anarchy Series game was lost to them,
-  so: an intro whose stage line is covered scores its mode read alone, in
-  0.6-0.7 (every snapped mode clears the timeline floor, and a frame that
-  reads the stage too outranks it; a bright stage leaks into the title, so
-  even a clear intro can snap at 0.7-0.8); the minimap gate
+  so: an intro whose stage line is covered scores its mode alone (a line that
+  does not snap is left unscored, every snapped mode clears the timeline
+  floor, and a frame that reads the stage too fills it in; a bright stage
+  leaks into the title, so even a clear intro can snap at 0.7-0.8); the
+  minimap gate
   lets the close button's top gap and the ring probe above it be covered
   together; the personal results' bottom panel probe sits under the clothes
   card, and its covered ability badges (~0.2, clean ones 0.45+) read
-  UNKNOWN and stay out of its confidence.
+  UNKNOWN and are left unscored.
 - New event types implement `Detector` (`core/detectors/types.ts`): a cheap
   `gate(mat)` at sample rate plus `parseSteps` (match steps, see "WebGPU")
   when the gate fires, `parse` being `runSync` of it. Register in
@@ -749,8 +754,9 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
 - Every event type is declared once, next to its detector, as an `EventKind`
   (`core/detectors/types.ts`): the type, the shape of `data` and how the
   timeline and scheduler treat its reads (merge window, content guard,
-  confidence floor, which read of a run stays, animation order and carry-over,
-  whether it opens or closes a match). `core/events.ts` lists the kinds: that
+  mean score floor, the invariants of a complete read, how a run's reads
+  become the one kept, animation order and carry-over, whether it opens or
+  closes a match). `core/events.ts` lists the kinds: that
   list is the `DetectedEvent` union (`type` discriminates `data`, so readers
   narrow instead of casting), the policy `TimelineBuilder` looks up per event
   and the match open/close roles the scheduler's calm state follows. The type
@@ -764,15 +770,59 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   `scan-vod` both run. The worker makes a new timeline per chunk scan and per
   per-frame stream; its results carry the raw reads (`events`, what the
   screenshot page shows) and the `changes` the timeline made of them
-  (`added` / `replaced` / `extended`, each with the `key` of the slot it
-  holds). The page never merges reads itself: `live-session.ts` keeps the
-  stored event id per key and saves a replaced or extended slot over it,
-  `vod-scan.ts` keeps each lane's events by key. A VoD's lanes are scanned by
+  (`added` / `replaced` / `extended` / `amended`, each with the `key` of the
+  slot it holds). The page never merges reads itself: `live-session.ts` keeps
+  the stored event id per key and saves a replaced, extended or amended slot
+  over it, `vod-scan.ts` keeps each lane's events by key. Only an added or
+  replaced read brings a frame; an amended one (fields outvoted, same `t`)
+  keeps the frame its slot has. A VoD's lanes are scanned by
   separate workers, so a screen standing across a seam is read on both
   sides; when the scan ends `stitchLanes` (`core/timeline/index.ts`) pushes
   the reads a lane kept within their merge window of the next lane's start
   into that lane's timeline, the one merge that happens outside a worker
   (until then the scanning view can show such a read twice).
+- Field scores (`core/field-scores.ts`): an event carries no overall
+  confidence but `scores`, 0..1 per field of `data` its read vouches for,
+  keyed by the field's path (`players.3.name`, `stage`; fields read as one
+  unit share a key naming each, `mode,stage`, and are never taken from
+  different reads). They are rounded to four decimals where the event is
+  made, so a store, a tape and a scan log hold the same numbers. Three jobs
+  that one mean used to do are separate:
+  - **Floor.** The timeline drops a read whose scores average under the
+    kind's `minMeanScore` (default 0.6): it is not a read of the screen at
+    all. A read scoring no field is dropped too, which is how a detector
+    says a cross-check failed (an X Battle card mid-animation).
+  - **Vote.** Reads of one run (same type, merge window, content guard) are
+    one kept read whose every scored field takes the value its reads back
+    with the most score in total; an unread value (null, empty) casts no
+    vote. A name one frame misread is outvoted by the frames that read it,
+    whatever else those frames got wrong. `t`, the frame and the unscored
+    data are the read's that agrees with the outcome on the most fields
+    (the earliest on a tie). A read that changes no field's value is merged
+    (reported as no change) unless it completes the kept read; one that
+    changes values under the same base is `amended`. Kinds with `progress`
+    (X Battle cards) vote only among reads level on the animation, and
+    `first` / `sampled` kinds not at all.
+  - **Stop.** A kind's `complete` says when a read holds everything its
+    screen shows, each field as well as a clean frame reads it; the scheduler
+    stops parsing the screen once the kept read is complete (`isComplete` in
+    `core/events.ts`). The floors in those invariants sit just under the
+    lowest clean fixture read of their field. A board: every row's weapon,
+    name (0.6), paint (0.6) and stats (0.75), the header and both scores
+    (none on a no-contest); personal results: header, weapon and all twelve
+    badges; death: weapon, name (0.7) and every badge (0.65); intro: mode
+    and stage (0.7); minimap: every live card's name (0.7), on the spectator
+    screen also every card whole. Kinds without `complete` (the counter, the
+    kill feed, the X Battle cards) never stop on a read. A name's score does
+    not catch a glyph twin (a "p" read as "P" scores 0.92), and a field that
+    never reads (a streamer's overlay over it, a name of unknown glyphs)
+    costs the stagnation fallback on every showing of its screen.
+  The events CSV lists a read's `mean_score` and whether it is `complete`.
+  Every fixture of a kind that declares a complete read must come out
+  complete in its suite (`assertCompleteness`), unless its `expected.json`
+  says `options.incomplete`: a frame caught mid-animation, or a screen with a
+  field that never reads; `tests/logic/complete-reads.test.ts` holds each
+  kind's read one field short.
 - A VoD scan writes a log of every frame it analyzed (`core/scan-log.ts`,
   per lane: which detectors were due, each gate's verdict, whether the parse
   ran and what it read), saved with the VoD (`vod-scan-logs`) and put into
@@ -974,13 +1024,14 @@ identical counterpart in a plain `scan-vod` run.
 
 So a VoD scan keeps a log (`core/scan-log.ts`): per lane, every analyzed
 frame's timestamp and, for each detector that was due, the gate's verdict and
-variant, whether the parse ran, and the type and confidence of each event it
-read. It is built on the page from the worker's `result` messages
+variant, whether the parse ran, and the type and field scores of each event
+it read. It is built on the page from the worker's `result` messages
 (`vod-scan.ts`), saved with the VoD (`vod-scan-logs`) and put into every Game
 data zip of that VoD as `scan-log.json` (the whole scan's, not just the
 game's: a detector's state starts at its lane's start). The log is its own
 JSON form, three bit masks per frame over a table of detector ids, around
-30 bytes per frame (some 4 frames a second while the scan is not skimming).
+30 bytes per frame plus the scores of the reads it holds (some 4 frames a
+second while the scan is not skimming).
 
 `pnpm scanner:scan-vod <video> --replay <scan-log.json>` runs that scan again
 (`core/detectors/replay-pass.ts`):
@@ -992,19 +1043,21 @@ JSON form, three bit masks per frame over a table of detector ids, around
   summary says).
 - No scheduler runs. The logged detectors are due, a gate takes the logged
   verdict, a parse runs where it ran, and a parse that reads the logged event
-  types takes their logged confidences, so the timeline keeps the reads the
-  scan's kept. Only the events' `data` comes from the replay's own pixels.
+  types, each scoring as many fields, takes their logged scores, so the
+  timeline keeps the reads the scan's kept and votes their fields as it did.
+  Only the events' `data` comes from the replay's own pixels.
 - The lanes are stitched and finished as the page does it
   (`stitchLanes`, `withoutInvalidObjectives`), so the CSV is the one the VoD's
   `Raw detections` export gives.
 - Every gate the replay's pixels decide differently and every parse that
-  reads other events, or the same ones more than 0.02 off in confidence, is
-  printed; the summary counts them. ffmpeg decodes the same frames as the
-  browser but converts them to RGB a little differently, so confidences
+  reads other events, or the same ones with a field score more than 0.02
+  off, is printed; the summary counts them. ffmpeg decodes the same frames as
+  the browser but converts them to RGB a little differently, so scores
   drift by a few thousandths while the reads stay the same. On the Rainmaker
-  slice (VP9, four lanes, scanned in Chromium): all 600 frames found at their
-  timestamps, all 7,051 gate checks as logged, 165 of 166 parses within 0.02,
-  and an events CSV identical to the browser's.
+  slice (VP9, four lanes, scanned in Chromium, measured when a read still
+  had one confidence): all 600 frames found at their timestamps, all 7,051
+  gate checks as logged, 165 of 166 parses within 0.02, and an events CSV
+  identical to the browser's.
 - `--start T --duration S` pick the stretch to reproduce: each lane reaching
   into it is replayed from the lane's start, where its detectors' state began.
 
@@ -1127,16 +1180,16 @@ All three animate toward their final value and hold it only briefly: the
 count card opens on the score before the game, fills the new slot and only
 then flips the digits (~0.5s before fading); the set result counts the old
 X Power to the new one in ~0.3s; the position counts in the arrow's
-direction. So no detector sets `sufficientConfidence` (the first clean read
+direction. So no card kind declares a `complete` read (the first clean read
 is the stale one), each gate returns a `signature` over its numbers, and the
-timeline orders same-type reads by the kind's `progress` instead of
-confidence: a further-along read replaces the kept one, an earlier one
+timeline orders same-type reads by the kind's `progress` before any vote:
+a further-along read replaces the kept one, an earlier one
 merges into it. The count's end can fall between two sampled frames (a 2 fps
 live capture), so a set result read after the change lands takes its power
 from the power before it plus the change whenever an earlier read showed the
 old value (the kind's `carryOver`); the old value holds ~1.5s, the final one ~1s. A count read whose digits disagree with its slots, or a set
 result whose header doesn't describe a decided set of tiles (tiles still
-popping in), scores under the timeline floor. The result tiles center on
+popping in), scores no field, so the timeline drops it. The result tiles center on
 the card (five games three over two, four two over two, three in one row
 midway between), so each row is found as a band of VICTORY yellow / DEFEAT
 purple text and each tile as a run of its columns rather than at a fixed

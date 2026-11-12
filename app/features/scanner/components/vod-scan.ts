@@ -28,7 +28,7 @@ import {
 } from "../core/match-builder";
 import * as ScanLog from "../core/scan-log";
 import { sessionSummary } from "../core/sessions";
-import { stitchLanes } from "../core/timeline/index";
+import { bringsFrame, stitchLanes } from "../core/timeline/index";
 import {
 	loadVodEventFrame,
 	loadVodEvents,
@@ -292,7 +292,7 @@ export async function startVodScan(
 							pass: result.gate.pass,
 							variant: result.gate.variant,
 							parsed: result.parsed,
-							reads: result.events,
+							reads: ScanLog.readsOf(result.events),
 						});
 					}
 					if (!result.gate.pass) return;
@@ -300,7 +300,13 @@ export async function startVodScan(
 						minimaps.push({ t: result.t, image: result.minimapSnapshot });
 					}
 					for (const { action, key, event } of result.changes) {
-						const frame = action === "extended" ? undefined : result.frame;
+						const held = lane.events.get(key);
+						// an amended read keeps its slot's frame; an extended run's trailing read has none of its own
+						const frame = bringsFrame(action)
+							? result.frame
+							: action === "amended" && held
+								? frames.get(held)
+								: undefined;
 						const scanEvent: ScanEvent = {
 							...event,
 							hasFrame: frame !== undefined,

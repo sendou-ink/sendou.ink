@@ -78,7 +78,7 @@ function match(
 function built(
 	game: ScannerMatch,
 	sources: DetectedEvent[] = [
-		stubEvent({ type: "Scoreboard", t: 300, confidence: 0.9, data: {} }),
+		stubEvent({ type: "Scoreboard", t: 300, scores: { read: 0.9 }, data: {} }),
 	],
 ) {
 	return { match: game, sources };
@@ -101,7 +101,7 @@ function setResult(results: XSetResultData["results"]): DetectedEvent {
 	return {
 		type: "XSetResult",
 		t: 310,
-		confidence: 0.95,
+		scores: { read: 0.95 },
 		data: { mode: "TC", results, powerChange: 15, power: 2500 },
 	};
 }
@@ -168,7 +168,7 @@ test("the summary leaves out games only seen in the battle log", () => {
 			stubEvent({
 				type: "ScoreboardBattleLog",
 				t: 900,
-				confidence: 0.9,
+				scores: { read: 0.9 },
 				data: {},
 			}),
 		]),

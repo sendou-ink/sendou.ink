@@ -24,6 +24,7 @@
 import { CANONICAL_WIDTH } from "../../canonical";
 import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { copyRoi, type Roi } from "../../image";
 import type { EventKind, EventOf } from "../types";
 import {
@@ -241,8 +242,16 @@ export function parsePlayerStatus(
 		event: {
 			type: PLAYER_STATUS_EVENT_TYPE,
 			t,
-			confidence:
-				reads.flat().reduce((sum, read) => sum + read.confidence, 0) / 8,
+			scores: FieldScores.of(
+				Object.fromEntries(
+					reads.flatMap((side, sideIndex) =>
+						side.map((read, slot) => [
+							`special.${sideIndex}.${slot},dead.${sideIndex}.${slot}`,
+							read.confidence,
+						]),
+					),
+				),
+			),
 			data: {
 				time,
 				special: reads.map((side) =>

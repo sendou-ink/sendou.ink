@@ -6,18 +6,24 @@ import { TimelineBuilder } from "../core/timeline/index";
 import { test } from "./node-test-compat";
 import { stubEvent } from "./stub-event";
 
+/** An event scored as a whole (under `read`, no field of its data), so repeats merge without a vote. */
 function event(
 	t: number,
-	confidence: number,
+	score: number,
 	type: EventType = "Scoreboard",
 ): DetectedEvent {
-	return stubEvent({ type, t, confidence, data: { t, players: [] } });
+	return stubEvent({
+		type,
+		t,
+		scores: { read: score },
+		data: { t, players: [] },
+	});
 }
 
 /** A ScoreboardBattleLogReplay event with just the identity-relevant data fields. */
 function replay(
 	t: number,
-	confidence: number,
+	score: number,
 	data: Partial<ScoreboardData> & {
 		timestamp?: string | null;
 		replayCode?: string | null;
@@ -26,7 +32,7 @@ function replay(
 	return stubEvent({
 		type: "ScoreboardBattleLogReplay",
 		t,
-		confidence,
+		scores: { read: score },
 		data: {
 			lobby: null,
 			mode: null,
@@ -52,14 +58,14 @@ function players(paints: (number | null)[]): ScoreboardData["players"] {
 	}));
 }
 
-test("timeline drops low-confidence events", () => {
-	const tl = new TimelineBuilder({ minConfidence: 0.6 });
+test("timeline drops events whose scores average under the floor", () => {
+	const tl = new TimelineBuilder({ minMeanScore: 0.6 });
 	assert.equal(tl.push(event(0, 0.5)).action, "dropped");
 	assert.equal(tl.events.length, 0);
 });
 
-test("history screens keep a stricter confidence floor than the shared one", () => {
-	const tl = new TimelineBuilder({ minConfidence: 0.6 });
+test("history screens keep a stricter score floor than the shared one", () => {
+	const tl = new TimelineBuilder({ minMeanScore: 0.6 });
 	assert.equal(tl.push(replay(100, 0.7, {})).action, "dropped");
 	assert.equal(
 		tl.push(event(100, 0.7, "QuickScoreboardBattleLog")).action,
@@ -69,37 +75,58 @@ test("history screens keep a stricter confidence floor than the shared one", () 
 });
 
 test("timeline merges same-type events inside the window", () => {
-	const tl = new TimelineBuilder({ mergeWindow: 30, minConfidence: 0 });
+	const tl = new TimelineBuilder({ mergeWindow: 30, minMeanScore: 0 });
 	assert.equal(tl.push(event(100, 0.8)).action, "added");
 	assert.equal(tl.push(event(110, 0.7)).action, "merged");
 	assert.equal(tl.events.length, 1);
-	assert.equal(tl.events[0]!.confidence, 0.8);
+	assert.deepEqual(tl.events[0]!.scores, { read: 0.8 });
 });
 
-test("timeline keeps the highest-confidence version", () => {
-	const tl = new TimelineBuilder({ mergeWindow: 30, minConfidence: 0 });
-	tl.push(event(100, 0.7));
-	const result = tl.push(event(105, 0.9));
+test("a read scoring no field is dropped", () => {
+	const tl = new TimelineBuilder();
+	const unread = stubEvent({
+		type: "XSetCount",
+		t: 100,
+		scores: {},
+		data: { mode: "TC", wins: 1, losses: 2 },
+	});
+	assert.equal(tl.push(unread).action, "dropped");
+});
+
+test("timeline replaces the kept read with one that reads more of the screen", () => {
+	const tl = new TimelineBuilder();
+	tl.push({
+		type: "MapStart",
+		t: 100,
+		scores: { mode: 0.8 },
+		data: { mode: "SZ", stage: null },
+	});
+	const result = tl.push({
+		type: "MapStart",
+		t: 105,
+		scores: { mode: 0.8, stage: 0.9 },
+		data: { mode: "SZ", stage: 3 },
+	});
 	assert.equal(result.action, "replaced");
-	assert.equal(tl.events[0]!.confidence, 0.9);
+	assert.equal(tl.events[0]!.t, 105);
 });
 
 test("timeline keeps separate events outside the window", () => {
-	const tl = new TimelineBuilder({ mergeWindow: 30, minConfidence: 0 });
+	const tl = new TimelineBuilder({ mergeWindow: 30, minMeanScore: 0 });
 	tl.push(event(100, 0.8));
 	assert.equal(tl.push(event(200, 0.8)).action, "added");
 	assert.equal(tl.events.length, 2);
 });
 
 test("different event types never merge", () => {
-	const tl = new TimelineBuilder({ mergeWindow: 30, minConfidence: 0 });
+	const tl = new TimelineBuilder({ mergeWindow: 30, minMeanScore: 0 });
 	tl.push(event(100, 0.8, "Scoreboard"));
 	assert.equal(tl.push(event(105, 0.8, "Death")).action, "added");
 	assert.equal(tl.events.length, 2);
 });
 
 test("scoreboards with different stages stay separate inside the window", () => {
-	const tl = new TimelineBuilder({ minConfidence: 0 });
+	const tl = new TimelineBuilder({ minMeanScore: 0 });
 	assert.equal(tl.push(replay(100, 0.9, { stage: 21 })).action, "added");
 	assert.equal(tl.push(replay(104, 0.9, { stage: 2 })).action, "added");
 	assert.equal(tl.push(replay(108, 0.9, { stage: 17 })).action, "added");
@@ -110,13 +137,13 @@ test("scoreboards with different stages stay separate inside the window", () => 
 });
 
 test("a null stage read never splits", () => {
-	const tl = new TimelineBuilder({ minConfidence: 0 });
+	const tl = new TimelineBuilder({ minMeanScore: 0 });
 	tl.push(replay(100, 0.9, { stage: 21 }));
 	assert.equal(tl.push(replay(104, 0.8, { stage: null })).action, "merged");
 });
 
 test("different recording timestamps split, equal ones merge", () => {
-	const tl = new TimelineBuilder({ minConfidence: 0 });
+	const tl = new TimelineBuilder({ minMeanScore: 0 });
 	tl.push(replay(100, 0.9, { timestamp: "3/7/2026 21:15" }));
 	assert.equal(
 		tl.push(replay(104, 0.9, { timestamp: "3/7/2026 21:22" })).action,
@@ -129,7 +156,7 @@ test("different recording timestamps split, equal ones merge", () => {
 });
 
 test("replay codes tolerate misread glyphs but split on real differences", () => {
-	const tl = new TimelineBuilder({ minConfidence: 0 });
+	const tl = new TimelineBuilder({ minMeanScore: 0 });
 	tl.push(replay(100, 0.9, { replayCode: "R797-V51Y-945W-C4JJ" }));
 	// same replay, three glyphs misread on a low-fidelity capture
 	assert.equal(
@@ -143,7 +170,7 @@ test("replay codes tolerate misread glyphs but split on real differences", () =>
 });
 
 test("disjoint paint totals split when stage and code are unreadable", () => {
-	const tl = new TimelineBuilder({ minConfidence: 0 });
+	const tl = new TimelineBuilder({ minMeanScore: 0 });
 	tl.push(
 		replay(100, 0.9, {
 			players: players([327, 408, 270, 354, 381, 613, 456, 287]),
@@ -162,7 +189,7 @@ test("disjoint paint totals split when stage and code are unreadable", () => {
 });
 
 test("a battle log revealing real names stays apart from the alias read of the same board", () => {
-	const tl = new TimelineBuilder({ minConfidence: 0 });
+	const tl = new TimelineBuilder({ minMeanScore: 0 });
 	const board = (names: string[]): ScoreboardData["players"] =>
 		[327, 408, 270, 354, 381, 613, 456, 287].map((paint, i) => ({
 			name: names[i]!,
@@ -183,7 +210,7 @@ test("a battle log revealing real names stays apart from the alias read of the s
 });
 
 test("too few readable paints never split", () => {
-	const tl = new TimelineBuilder({ minConfidence: 0 });
+	const tl = new TimelineBuilder({ minMeanScore: 0 });
 	tl.push(
 		replay(100, 0.9, {
 			players: players([327, 408, 270, null, null, null, null, null]),
@@ -196,7 +223,7 @@ test("too few readable paints never split", () => {
 });
 
 test("per-type merge window: repeat death frames merge, consecutive deaths do not", () => {
-	const tl = new TimelineBuilder({ minConfidence: 0 });
+	const tl = new TimelineBuilder({ minMeanScore: 0 });
 	assert.equal(tl.push(event(100, 0.8, "Death")).action, "added");
 	// same death, sampled again 3s later
 	assert.equal(tl.push(event(103, 0.7, "Death")).action, "merged");
@@ -212,7 +239,12 @@ test("per-type merge window: repeat death frames merge, consecutive deaths do no
 test("kill stacks merge while unchanged and split when a row enters", () => {
 	const tl = new TimelineBuilder();
 	const kill = (t: number, names: string[]) =>
-		tl.push({ type: "Kill", t, confidence: 0.8, data: { time: null, names } });
+		tl.push({
+			type: "Kill",
+			t,
+			scores: { read: 0.8 },
+			data: { time: null, names },
+		});
 	assert.equal(kill(100, ["24K"]).action, "added");
 	assert.equal(kill(100.5, ["24K"]).action, "merged");
 	assert.equal(kill(101, ["datkid", "24K"]).action, "added");
@@ -226,13 +258,13 @@ test("a kill stack stays at its first read when a repeat reads more confidently"
 	tl.push({
 		type: "Kill",
 		t: 11077.3,
-		confidence: 0.92,
+		scores: { read: 0.92 },
 		data: { time: 261, names: ["Jrod_14"] },
 	});
 	tl.push({
 		type: "Kill",
 		t: 11082.3,
-		confidence: 0.937,
+		scores: { read: 0.937 },
 		data: { time: 256, names: ["Jrod_14"] },
 	});
 	assert.equal(tl.events.length, 1);
@@ -246,7 +278,7 @@ const NO_FLAGS: PlayerStatusData["dead"] = [
 ];
 
 /** A PlayerStatus read; `dead` flags slot 0 of the left team. */
-function status(t: number, confidence = 0.8, dead = false): DetectedEvent {
+function status(t: number, score = 0.8, dead = false): DetectedEvent {
 	const data: PlayerStatusData = {
 		time: null,
 		special: NO_FLAGS,
@@ -256,7 +288,7 @@ function status(t: number, confidence = 0.8, dead = false): DetectedEvent {
 		],
 		cast: null,
 	};
-	return { type: "PlayerStatus", t, confidence, data };
+	return { type: "PlayerStatus", t, scores: { read: score }, data };
 }
 
 test("status reads keep a run's first read and trailing read, re-confirmed every window", () => {
@@ -289,7 +321,7 @@ test("a one-read blip stays flanked by the reads either side of it", () => {
 	);
 });
 
-test("a higher-confidence repeat never moves a sample", () => {
+test("a higher-scoring repeat never moves a sample", () => {
 	const tl = new TimelineBuilder();
 	tl.push(status(100, 0.7));
 	assert.equal(tl.push(status(101, 0.95)).action, "added");

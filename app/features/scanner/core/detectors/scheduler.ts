@@ -6,12 +6,14 @@
  *   screens to ~1s, below raw-gameplay lifetimes), dense `refineIntervalS`
  *   once it passes, `checkIntervalS` as a hard cap exempt from suppression.
  *   `nextDueT()` lets the caller skip a frame's readback when nothing's due.
- * - Suppression: stops paying once a streak stagnates (`maxStagnantParses`
- *   + a time floor, since a gate can fire during a screen's entry animation
- *   before it's readable). `sufficientConfidence` suppresses immediately; a
- *   gate `signature` moving past `signatureTolerance` ends the streak
- *   (distinct browsed entries never drop those gates); `rearmCooldownS`
- *   adds a cooldown on top (death: animated-background flicker).
+ * - Suppression: stops paying once the read the timeline keeps of the screen
+ *   is complete (the kind's declared invariants), or once a streak stagnates:
+ *   `maxStagnantParses` parses that changed nothing the timeline holds, plus
+ *   a time floor, since a gate can fire during a screen's entry animation
+ *   before it's readable. A gate `signature` moving past `signatureTolerance`
+ *   ends the streak (distinct browsed entries never drop those gates);
+ *   `rearmCooldownS` adds a cooldown on top of a complete read (death:
+ *   animated-background flicker).
  * - Activity: tracks last gate pass + open-match state for the VoD scanner
  *   to skip dead air.
  *
@@ -20,16 +22,26 @@
 
 import { kindOf } from "../events";
 import type { CheckPlan } from "./check-plan";
-import type { EventRecord } from "./types";
 
 export interface SchedulingInfo {
 	id: string;
 	checkIntervalS?: number;
 	searchIntervalS?: number;
 	refineIntervalS?: number;
-	sufficientConfidence?: number;
 	rearmCooldownS?: number;
 	maxStagnantParses?: number;
+	stagnantAfterS?: number;
+}
+
+/** What became of one event a parse read, once the timeline took it. */
+export interface ParsedRead {
+	type: string;
+	/** the timeline kept it rather than dropping it under the kind's floor */
+	kept: boolean;
+	/** it changed what the timeline holds: a new read, or a field of a kept one */
+	changed: boolean;
+	/** the kept read it belongs to holds the kind's invariants of a complete read */
+	complete: boolean;
 }
 
 export interface SchedulerOptions {
@@ -39,12 +51,10 @@ export interface SchedulerOptions {
 	refineIntervalS: number;
 	/** check cadence while a gate is failing (per-detector searchIntervalS overrides) */
 	searchIntervalS: number;
-	/** non-improving parses tolerated before suppression (per-detector maxStagnantParses overrides) */
+	/** parses changing nothing in the timeline tolerated before suppression (per-detector maxStagnantParses overrides) */
 	maxStagnantParses: number;
-	/** seconds without improvement tolerated before suppression */
+	/** seconds without such a change tolerated before suppression (per-detector stagnantAfterS overrides) */
 	stagnantAfterS: number;
-	/** minimum confidence gain that counts as an improvement */
-	minImprovement: number;
 	/**
 	 * a signature cell moving more than this since the streak's last parse
 	 * resets the streak (battle log browsing: static noise ≤2 per cell, entry flips ≥57)
@@ -63,14 +73,10 @@ const DEFAULT_SCHEDULER_OPTIONS: SchedulerOptions = {
 	maxStagnantParses: 6,
 	// ~3s for a screen to animate in and produce its best read, whatever the cadence
 	stagnantAfterS: 3,
-	minImprovement: 0.001,
 	signatureTolerance: 12,
 	quietAfterS: 15,
 	matchOpenMaxS: 8 * 60,
 };
-
-/** events below this are too dubious to drive match-open/close state */
-const MATCH_STATE_MIN_CONFIDENCE = 0.6;
 
 /** tolerated backwards jitter in t before the session counts as restarted */
 const RESET_TOLERANCE_S = 5;
@@ -78,7 +84,6 @@ const RESET_TOLERANCE_S = 5;
 const INTERVAL_EPSILON_S = 1e-6;
 
 interface StreakState {
-	best: number;
 	stagnant: number;
 	lastImprovementT: number;
 	suppressed: boolean;
@@ -93,7 +98,7 @@ interface DetectorState {
 	streak: StreakState | null;
 	/** signature reported by the latest passing gate */
 	lastGateSignature: readonly number[] | undefined;
-	/** parses skipped until this t after a sufficient read (rearmCooldownS) */
+	/** parses skipped until this t after a complete read (rearmCooldownS) */
 	parseHoldUntilT: number;
 }
 
@@ -304,32 +309,22 @@ export class DetectorScheduler {
 		return !state.streak?.suppressed;
 	}
 
-	/** Report the outcome of a parse this scheduler approved. */
-	recordParse(
-		id: string,
-		t: number,
-		events: readonly Pick<EventRecord, "type" | "confidence">[],
-	): void {
-		this.#recordMatchState(t, events);
+	/**
+	 * Report the outcome of a parse this scheduler approved: what the timeline
+	 * made of each event it read (none for a parse that read nothing).
+	 */
+	recordParse(id: string, t: number, reads: readonly ParsedRead[]): void {
+		this.#recordMatchState(t, reads);
 		const state = this.#states.get(id);
 		if (!state || state.info.checkIntervalS !== undefined) return;
-		// no events counts as confidence 0 so a false-firing gate on a static screen stagnates too
-		const confidence = events.reduce(
-			(max, e) => Math.max(max, e.confidence),
-			0,
-		);
-		const { sufficientConfidence, rearmCooldownS } = state.info;
-		if (
-			sufficientConfidence !== undefined &&
-			confidence >= sufficientConfidence
-		) {
+		if (reads.some((read) => read.complete)) {
 			state.streak = {
-				best: confidence,
 				stagnant: 0,
 				lastImprovementT: t,
 				suppressed: true,
 				signature: state.lastGateSignature,
 			};
+			const { rearmCooldownS } = state.info;
 			if (rearmCooldownS !== undefined) {
 				state.parseHoldUntilT = t + rearmCooldownS;
 			}
@@ -337,7 +332,6 @@ export class DetectorScheduler {
 		}
 		if (!state.streak) {
 			state.streak = {
-				best: confidence,
 				stagnant: 0,
 				lastImprovementT: t,
 				suppressed: false,
@@ -347,8 +341,8 @@ export class DetectorScheduler {
 		}
 		const streak = state.streak;
 		streak.signature = state.lastGateSignature;
-		if (confidence > streak.best + this.#options.minImprovement) {
-			streak.best = confidence;
+		// a parse reading nothing, or only what is dropped, changes nothing either: a false-firing gate on a static screen stagnates too
+		if (reads.some((read) => read.changed)) {
 			streak.stagnant = 0;
 			streak.lastImprovementT = t;
 			return;
@@ -356,9 +350,11 @@ export class DetectorScheduler {
 		streak.stagnant += 1;
 		const maxStagnant =
 			state.info.maxStagnantParses ?? this.#options.maxStagnantParses;
+		const stagnantAfterS =
+			state.info.stagnantAfterS ?? this.#options.stagnantAfterS;
 		if (
 			streak.stagnant >= maxStagnant &&
-			t - streak.lastImprovementT >= this.#options.stagnantAfterS
+			t - streak.lastImprovementT >= stagnantAfterS - INTERVAL_EPSILON_S
 		) {
 			streak.suppressed = true;
 		}
@@ -393,13 +389,11 @@ export class DetectorScheduler {
 		];
 	}
 
-	#recordMatchState(
-		t: number,
-		events: readonly Pick<EventRecord, "type" | "confidence">[],
-	): void {
-		for (const event of events) {
-			if (event.confidence < MATCH_STATE_MIN_CONFIDENCE) continue;
-			const role = kindOf(event.type)?.match;
+	#recordMatchState(t: number, reads: readonly ParsedRead[]): void {
+		for (const read of reads) {
+			// a read under its kind's floor is too dubious to open or close a match
+			if (!read.kept) continue;
+			const role = kindOf(read.type)?.match;
 			if (role === "opens") {
 				this.#matchOpenUntilT = Math.max(
 					this.#matchOpenUntilT,

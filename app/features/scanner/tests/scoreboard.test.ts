@@ -12,6 +12,7 @@ import {
 	type ScoreboardRowDebug,
 } from "../core/detectors/scoreboard/index";
 import {
+	assertCompleteness,
 	fieldTestOptions,
 	loadFixtures,
 	loadScoreboardLookalikes,
@@ -46,6 +47,10 @@ for (const fixture of fixtures) {
 		assert.ok(event, "gate passed but no event parsed");
 		const rows = (event.debug?.rows ?? []) as ScoreboardRowDebug[];
 		const expected = fixture.expected.data ?? {};
+
+		await t.test("completeness", () => {
+			assertCompleteness(fixture, event);
+		});
 
 		await t.test(
 			"matchScores",

@@ -16,6 +16,7 @@
  */
 import { type Mat, minMaxLoc } from "../../cv";
 import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
 	copyRoi,
@@ -501,15 +502,18 @@ export function createObjectiveDetector(
 
 		if (sides.every((side) => side.score.value === null)) return null;
 
-		const confidences = sides.flatMap((side) => [
-			...(side.score.value !== null ? [side.score.confidence] : []),
-			...(side.penalty?.value != null ? [side.penalty.confidence] : []),
-		]);
+		const scoreOf = (read: BannerScoreRead | null) =>
+			read?.value != null ? read.confidence : null;
 		return {
 			event: {
 				type: OBJECTIVE_EVENT_TYPE,
 				t: 0,
-				confidence: confidences.reduce((a, b) => a + b, 0) / confidences.length,
+				scores: FieldScores.of({
+					"score.0": scoreOf(sides[0].score),
+					"penalty.0": scoreOf(sides[0].penalty),
+					"score.1": scoreOf(sides[1].score),
+					"penalty.1": scoreOf(sides[1].penalty),
+				}),
 				data: {
 					mode: "SZ",
 					time: timer.value,
@@ -551,15 +555,17 @@ export function createObjectiveDetector(
 		const plates = track.score.filter((read) => read.value !== null);
 		if (track.position === null && plates.length === 0) return null;
 
-		const confidences = [
-			...(track.iconScore !== null ? [track.iconScore] : []),
-			...plates.map((read) => read.confidence),
-		];
 		return {
 			event: {
 				type: OBJECTIVE_EVENT_TYPE,
 				t: 0,
-				confidence: confidences.reduce((a, b) => a + b, 0) / confidences.length,
+				scores: FieldScores.of({
+					position: track.iconScore,
+					"score.0":
+						track.score[0].value === null ? null : track.score[0].confidence,
+					"score.1":
+						track.score[1].value === null ? null : track.score[1].confidence,
+				}),
 				data: {
 					mode: track.mode,
 					time: timer.value,

@@ -48,7 +48,7 @@ function mapStart(
 	t: number,
 	{ mode = "SZ" as ModeShort | null, stage = 0 as StageId | null } = {},
 ): DetectedEvent {
-	return { type: "MapStart", t, confidence: 0.9, data: { mode, stage } };
+	return { type: "MapStart", t, scores: { read: 0.9 }, data: { mode, stage } };
 }
 
 function death(
@@ -62,7 +62,7 @@ function death(
 		abilities,
 		name,
 	};
-	return { type: "Death", t, confidence: 0.9, data };
+	return { type: "Death", t, scores: { read: 0.9 }, data };
 }
 
 // default timer stays consistent with t (clock zero projected at 300s of
@@ -85,7 +85,7 @@ function objective(
 		control,
 		teamColor,
 	};
-	return { type: "Objective", t, confidence: 0.9, data };
+	return { type: "Objective", t, scores: { read: 0.9 }, data };
 }
 
 function trackObjective(
@@ -107,7 +107,7 @@ function trackObjective(
 		position,
 		teamColor,
 	};
-	return { type: "Objective", t, confidence: 0.9, data };
+	return { type: "Objective", t, scores: { read: 0.9 }, data };
 }
 
 function scoreboard(
@@ -140,7 +140,7 @@ function scoreboard(
 		})),
 		povIndex,
 	};
-	return { type: "Scoreboard", t, confidence: 0.9, data };
+	return { type: "Scoreboard", t, scores: { read: 0.9 }, data };
 }
 
 function replayScoreboard(
@@ -160,7 +160,7 @@ function replayScoreboard(
 		replayCode,
 		matchScores: [88, 71],
 	};
-	return { type: "ScoreboardBattleLogReplay", t, confidence: 0.9, data };
+	return { type: "ScoreboardBattleLogReplay", t, scores: { read: 0.9 }, data };
 }
 
 function battleLogScoreboard(
@@ -181,7 +181,7 @@ function battleLogScoreboard(
 		timestamp,
 		matchScores: [100, 0],
 	};
-	return { type: "ScoreboardBattleLog", t, confidence: 0.9, data };
+	return { type: "ScoreboardBattleLog", t, scores: { read: 0.9 }, data };
 }
 
 function teammate(weaponId: MainWeaponId | null): MinimapTeammate {
@@ -215,7 +215,7 @@ function minimap(
 		teamColors = [null, null] as MinimapData["teamColors"],
 		dead = [[], []] as [number[], number[]],
 		specialReady = [[], []] as [number[], number[]],
-		confidence = 0.8,
+		scores = { read: 0.8 },
 	} = {},
 ): DetectedEvent {
 	const data: MinimapData = {
@@ -233,7 +233,7 @@ function minimap(
 		})),
 		teamColors,
 	};
-	return { type: "Minimap", t, confidence, data };
+	return { type: "Minimap", t, scores, data };
 }
 
 function weapons(match: {
@@ -722,7 +722,7 @@ function ownResults(
 		weaponId,
 		abilities: OWN_BUILD,
 	};
-	return { type: "ScoreboardOwn", t, confidence: 0.9, data };
+	return { type: "ScoreboardOwn", t, scores: { read: 0.9 }, data };
 }
 
 test("the personal results screen completes the POV player's build", () => {
@@ -813,7 +813,7 @@ function xCard(
 		XSetResult: SET_RESULT,
 		XRankPosition: RANK_POSITION,
 	}[type];
-	return stubEvent({ type, t, confidence: 0.95, data });
+	return stubEvent({ type, t, scores: { read: 0.95 }, data });
 }
 
 test("an X Battle set count shown before the results screen joins that game", () => {
@@ -1152,7 +1152,7 @@ test("event types that identify no match are ignored", () => {
 	const own: DetectedEvent = {
 		type: "ScoreboardOwn",
 		t: 310,
-		confidence: 0.9,
+		scores: { read: 0.9 },
 		data: {
 			lobby: "PRIVATE",
 			mode: null,
@@ -1719,8 +1719,8 @@ test("a spectator map's minimaps become one cast match: weapons + stage from the
 test("a cast match's players come from its most confident minimap read first", () => {
 	const midWipe = [3010, ...ALPHA.slice(1)] as MainWeaponId[];
 	const built = buildScannerMatches([
-		minimap(70, { alpha: midWipe, confidence: 0.65 }),
-		minimap(71, { confidence: 0.78 }),
+		minimap(70, { alpha: midWipe, scores: { read: 0.65 } }),
+		minimap(71, { scores: { read: 0.78 } }),
 	]);
 	assert.deepEqual(weapons(built[0]!.match), ALL);
 });
@@ -1922,7 +1922,7 @@ function playerStatus(
 	} = {},
 ): DetectedEvent {
 	const data: PlayerStatusData = { time, special, dead, cast };
-	return { type: "PlayerStatus", t, confidence: 0.9, data };
+	return { type: "PlayerStatus", t, scores: { read: 0.9 }, data };
 }
 
 /** Each read slot ranks its weapon at `score` over a runner-up no row plays at FLOOR_SCORE. */
@@ -1946,7 +1946,7 @@ function stripWeaponsEvent(
 			),
 		) as StripWeaponsData["slots"],
 	};
-	return { type: "StripWeapons", t, confidence: score, data };
+	return { type: "StripWeapons", t, scores: { read: score }, data };
 }
 
 test("player-status reads become teams-order samples on the match", () => {
@@ -2403,7 +2403,7 @@ test("a named card's state tells apart two rows sharing a weapon", () => {
 		{
 			type: "Minimap",
 			t: 100,
-			confidence: 0.8,
+			scores: { read: 0.8 },
 			data: {
 				stage: 0 as StageId,
 				spectator: false,
@@ -2464,7 +2464,7 @@ test("pov diamond cards map to scoreboard rows by name", () => {
 	};
 	const built = buildScannerMatches([
 		mapStart(0),
-		{ type: "Minimap", t: 90, confidence: 0.8, data },
+		{ type: "Minimap", t: 90, scores: { read: 0.8 }, data },
 		scoreboard(300),
 	]);
 	const sample = built[0]!.match.playerStatus!.samples[0]!;
@@ -2504,7 +2504,7 @@ test("pov diamond cards match OCR-garbled names to their scoreboard rows", () =>
 			enemies: BRAVO.map((id) => enemy(id)),
 			teamColors: [null, null],
 		};
-		return { type: "Minimap", t, confidence: 0.8, data };
+		return { type: "Minimap", t, scores: { read: 0.8 }, data };
 	};
 	const built = buildScannerMatches([
 		mapStart(0),
@@ -2543,7 +2543,7 @@ function povMinimapWithHiddenCards(t: number): DetectedEvent {
 		enemies: BRAVO.map((id) => enemy(id)),
 		teamColors: [null, null],
 	};
-	return { type: "Minimap", t, confidence: 0.8, data };
+	return { type: "Minimap", t, scores: { read: 0.8 }, data };
 }
 
 // the strip seats the hidden ally (1001) first and the POV (3030) last
@@ -2586,7 +2586,7 @@ function kill(
 	{ time = (300 - Math.round(t)) as number | null } = {},
 ): DetectedEvent {
 	const data: KillData = { time, names };
-	return { type: "Kill", t, confidence: 0.9, data };
+	return { type: "Kill", t, scores: { read: 0.9 }, data };
 }
 
 test("kill reads become one kill per row entering the stack", () => {

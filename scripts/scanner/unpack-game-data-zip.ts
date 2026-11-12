@@ -24,10 +24,10 @@ try {
 			.map(([type, count]) => `${type} ${count}`)
 			.join(", ")} (${summary.eventsWithoutFrame} without a frame)`,
 	);
-	console.info("frames (folder → fixture dir, resolution, t, confidence):");
+	console.info("frames (folder → fixture dir, resolution, t, mean score):");
 	for (const frame of summary.frames) {
 		console.info(
-			`  ${frame.frameFile} → tests/fixtures/${frame.fixtureDir}/  ${frame.width}x${frame.height}  t=${frame.t}  conf=${frame.confidence.toFixed(3)}`,
+			`  ${frame.frameFile} → tests/fixtures/${frame.fixtureDir}/  ${frame.width}x${frame.height}  t=${frame.t}  score=${frame.meanScore.toFixed(3)}`,
 		);
 	}
 	if (summary.scanLog) {

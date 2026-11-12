@@ -6,6 +6,7 @@
 import assert from "node:assert/strict";
 import {
 	DetectorScheduler,
+	type ParsedRead,
 	type SchedulingInfo,
 } from "../../core/detectors/scheduler";
 import { test } from "../node-test-compat";
@@ -15,7 +16,6 @@ const OPTS = {
 	searchIntervalS: 0.1,
 	maxStagnantParses: 3,
 	stagnantAfterS: 0.25,
-	minImprovement: 0.001,
 	quietAfterS: 10,
 	matchOpenMaxS: 60,
 };
@@ -27,12 +27,29 @@ function make(detector: Partial<SchedulingInfo>, options = {}) {
 	});
 }
 
+/**
+ * What the timeline made of a parse's read: "new" changed what it holds,
+ * "same" merged into a kept read, "complete" merged into a complete one,
+ * "dropped" fell under the kind's floor.
+ */
+type Read = "new" | "same" | "complete" | "dropped";
+
+function parsedRead(read: Read, type = "Event"): ParsedRead {
+	return {
+		type,
+		kept: read !== "dropped",
+		changed: read === "new",
+		complete: read === "complete",
+	};
+}
+
 function feed(
 	s: DetectorScheduler,
 	t: number,
 	options: {
 		pass: boolean;
-		confidence?: number;
+		/** omitted = the parse read nothing */
+		read?: Read;
 		type?: string;
 		signature?: number[];
 	},
@@ -43,9 +60,7 @@ function feed(
 	s.recordParse(
 		"d",
 		t,
-		options.confidence === undefined
-			? []
-			: [{ type: options.type ?? "Event", confidence: options.confidence }],
+		options.read === undefined ? [] : [parsedRead(options.read, options.type)],
 	);
 	return "parsed";
 }
@@ -60,56 +75,73 @@ test("a failing gate is only re-checked at the search cadence", () => {
 
 test("a passing gate drops to the dense refine cadence", () => {
 	const s = make({ searchIntervalS: 1 });
-	assert.equal(feed(s, 0, { pass: true, confidence: 0.7 }), "parsed");
-	assert.equal(feed(s, 0.05, { pass: true, confidence: 0.7 }), "skipped");
-	assert.equal(feed(s, 0.1, { pass: true, confidence: 0.7 }), "parsed");
-	assert.equal(feed(s, 0.2, { pass: true, confidence: 0.7 }), "parsed");
+	assert.equal(feed(s, 0, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.05, { pass: true, read: "same" }), "skipped");
+	assert.equal(feed(s, 0.1, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.2, { pass: true, read: "same" }), "parsed");
 });
 
 test("a per-detector refine interval overrides the dense default", () => {
 	const s = make({ refineIntervalS: 0.5 });
-	assert.equal(feed(s, 0, { pass: true, confidence: 0.7 }), "parsed");
-	assert.equal(feed(s, 0.1, { pass: true, confidence: 0.7 }), "skipped");
-	assert.equal(feed(s, 0.4, { pass: true, confidence: 0.7 }), "skipped");
-	assert.equal(feed(s, 0.5, { pass: true, confidence: 0.7 }), "parsed");
+	assert.equal(feed(s, 0, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.1, { pass: true, read: "same" }), "skipped");
+	assert.equal(feed(s, 0.4, { pass: true, read: "same" }), "skipped");
+	assert.equal(feed(s, 0.5, { pass: true, read: "same" }), "parsed");
 });
 
 test("a per-detector stagnation budget suppresses sooner", () => {
 	const s = make({ maxStagnantParses: 2 }, { stagnantAfterS: 0.1 });
-	assert.equal(feed(s, 0.0, { pass: true, confidence: 0.9 }), "parsed");
-	assert.equal(feed(s, 0.1, { pass: true, confidence: 0.9 }), "parsed");
-	assert.equal(feed(s, 0.2, { pass: true, confidence: 0.9 }), "parsed");
-	assert.equal(feed(s, 0.3, { pass: true, confidence: 0.9 }), "gated");
+	assert.equal(feed(s, 0.0, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.1, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.2, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.3, { pass: true, read: "same" }), "gated");
 });
 
 test("suppresses after stagnant parses on a static screen", () => {
 	const s = make({});
-	assert.equal(feed(s, 0.0, { pass: true, confidence: 0.9 }), "parsed");
-	assert.equal(feed(s, 0.1, { pass: true, confidence: 0.9 }), "parsed");
-	assert.equal(feed(s, 0.2, { pass: true, confidence: 0.9 }), "parsed");
-	assert.equal(feed(s, 0.3, { pass: true, confidence: 0.9 }), "parsed");
-	assert.equal(feed(s, 0.4, { pass: true, confidence: 0.9 }), "gated");
-	assert.equal(feed(s, 0.5, { pass: true, confidence: 0.9 }), "gated");
+	assert.equal(feed(s, 0.0, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.1, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.2, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.3, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.4, { pass: true, read: "same" }), "gated");
+	assert.equal(feed(s, 0.5, { pass: true, read: "same" }), "gated");
 });
 
-test("an improving read resets the stagnation counter", () => {
+test("a read that changes the timeline resets the stagnation counter", () => {
 	const s = make({});
-	feed(s, 0.0, { pass: true, confidence: 0.7 });
-	feed(s, 0.1, { pass: true, confidence: 0.7 });
-	feed(s, 0.2, { pass: true, confidence: 0.7 });
-	assert.equal(feed(s, 0.3, { pass: true, confidence: 0.85 }), "parsed");
-	assert.equal(feed(s, 0.4, { pass: true, confidence: 0.85 }), "parsed");
-	assert.equal(feed(s, 0.5, { pass: true, confidence: 0.85 }), "parsed");
-	assert.equal(feed(s, 0.6, { pass: true, confidence: 0.85 }), "parsed");
-	assert.equal(feed(s, 0.7, { pass: true, confidence: 0.85 }), "gated");
+	feed(s, 0.0, { pass: true, read: "new" });
+	feed(s, 0.1, { pass: true, read: "same" });
+	feed(s, 0.2, { pass: true, read: "same" });
+	assert.equal(feed(s, 0.3, { pass: true, read: "new" }), "parsed");
+	assert.equal(feed(s, 0.4, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.5, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.6, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.7, { pass: true, read: "same" }), "gated");
+});
+
+test("reads the timeline drops stagnate like a parse that read nothing", () => {
+	const s = make({});
+	for (let i = 0; i < 4; i++) {
+		assert.equal(feed(s, i * 0.1, { pass: true, read: "dropped" }), "parsed");
+	}
+	assert.equal(feed(s, 0.4, { pass: true, read: "dropped" }), "gated");
+});
+
+test("a per-detector stagnation time overrides the shared one", () => {
+	const s = make({ stagnantAfterS: 0.5 });
+	for (let i = 0; i < 5; i++) {
+		assert.equal(feed(s, i * 0.1, { pass: true, read: "same" }), "parsed");
+	}
+	assert.equal(feed(s, 0.5, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.6, { pass: true, read: "same" }), "gated");
 });
 
 test("a gate drop ends the streak and re-enables parsing", () => {
 	const s = make({});
-	for (let i = 0; i < 5; i++) feed(s, i * 0.1, { pass: true, confidence: 0.9 });
-	assert.equal(feed(s, 0.5, { pass: true, confidence: 0.9 }), "gated");
+	for (let i = 0; i < 5; i++) feed(s, i * 0.1, { pass: true, read: "same" });
+	assert.equal(feed(s, 0.5, { pass: true, read: "same" }), "gated");
 	assert.equal(feed(s, 0.6, { pass: false }), "gated");
-	assert.equal(feed(s, 0.7, { pass: true, confidence: 0.9 }), "parsed");
+	assert.equal(feed(s, 0.7, { pass: true, read: "same" }), "parsed");
 });
 
 test("gate firing without events stagnates too", () => {
@@ -128,90 +160,95 @@ test("dense no-read parses during an entry animation respect the time floor", ()
 		assert.equal(feed(s, i * 0.15, { pass: true }), "parsed");
 	}
 	// the screen becomes readable and the read still lands
-	assert.equal(feed(s, 1.35, { pass: true, confidence: 0.88 }), "parsed");
+	assert.equal(feed(s, 1.35, { pass: true, read: "new" }), "parsed");
 	// once truly static past the time floor, suppression still kicks in
 	for (let i = 0; i < 25; i++) {
-		feed(s, 1.5 + i * 0.15, { pass: true, confidence: 0.88 });
+		feed(s, 1.5 + i * 0.15, { pass: true, read: "same" });
 	}
-	assert.equal(feed(s, 5.4, { pass: true, confidence: 0.88 }), "gated");
+	assert.equal(feed(s, 5.4, { pass: true, read: "same" }), "gated");
 });
 
-test("a sufficient read suppresses immediately", () => {
-	const s = make({ sufficientConfidence: 0.95 });
-	assert.equal(feed(s, 0.0, { pass: true, confidence: 0.96 }), "parsed");
-	assert.equal(feed(s, 0.1, { pass: true, confidence: 0.99 }), "gated");
+test("a complete read suppresses immediately", () => {
+	const s = make({});
+	assert.equal(feed(s, 0.0, { pass: true, read: "complete" }), "parsed");
+	assert.equal(feed(s, 0.1, { pass: true, read: "complete" }), "gated");
 	// gate drop = screen changed = fresh streak parses again
 	feed(s, 0.2, { pass: false });
-	assert.equal(feed(s, 0.3, { pass: true, confidence: 0.7 }), "parsed");
+	assert.equal(feed(s, 0.3, { pass: true, read: "new" }), "parsed");
+});
+
+test("a read completing the kept one after earlier parses suppresses too", () => {
+	const s = make({});
+	assert.equal(feed(s, 0.0, { pass: true, read: "new" }), "parsed");
+	assert.equal(feed(s, 0.1, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.2, { pass: true, read: "complete" }), "parsed");
+	assert.equal(feed(s, 0.3, { pass: true, read: "complete" }), "gated");
 });
 
 test("a changed gate signature re-arms a suppressed streak", () => {
-	const s = make({ sufficientConfidence: 0.8 });
+	const s = make({});
 	const entryA = [20, 200];
 	const entryB = [200, 20];
 	assert.equal(
-		feed(s, 0, { pass: true, confidence: 0.9, signature: entryA }),
+		feed(s, 0, { pass: true, read: "complete", signature: entryA }),
 		"parsed",
 	);
 	assert.equal(
-		feed(s, 0.1, { pass: true, confidence: 0.9, signature: entryA }),
+		feed(s, 0.1, { pass: true, read: "complete", signature: entryA }),
 		"gated",
 	);
 	// codec noise within tolerance is still the same screen
 	assert.equal(
-		feed(s, 0.2, { pass: true, confidence: 0.9, signature: [22, 198] }),
+		feed(s, 0.2, { pass: true, read: "complete", signature: [22, 198] }),
 		"gated",
 	);
 	// the next browsed entry keeps the gate passing but moves the content
 	assert.equal(
-		feed(s, 0.3, { pass: true, confidence: 0.9, signature: entryB }),
+		feed(s, 0.3, { pass: true, read: "complete", signature: entryB }),
 		"parsed",
 	);
 	assert.equal(
-		feed(s, 0.4, { pass: true, confidence: 0.9, signature: entryB }),
+		feed(s, 0.4, { pass: true, read: "complete", signature: entryB }),
 		"gated",
 	);
 });
 
-test("a signature change mid-streak starts a fresh best", () => {
+test("a signature change mid-streak starts a fresh streak", () => {
 	const s = make({});
-	feed(s, 0.0, { pass: true, confidence: 0.9, signature: [0] });
-	feed(s, 0.1, { pass: true, confidence: 0.9, signature: [0] });
-	// the next entry reads worse than the old best — with the old streak's
-	// best carried over these would count stagnant and suppress at t=0.4
-	feed(s, 0.2, { pass: true, confidence: 0.7, signature: [255] });
-	feed(s, 0.3, { pass: true, confidence: 0.7, signature: [255] });
+	feed(s, 0.0, { pass: true, read: "new", signature: [0] });
+	feed(s, 0.1, { pass: true, read: "same", signature: [0] });
+	// the next entry merges into a read the timeline already holds — with the
+	// old streak carried over these would count stagnant and suppress at t=0.4
+	feed(s, 0.2, { pass: true, read: "same", signature: [255] });
+	feed(s, 0.3, { pass: true, read: "same", signature: [255] });
 	assert.equal(
-		feed(s, 0.4, { pass: true, confidence: 0.7, signature: [255] }),
+		feed(s, 0.4, { pass: true, read: "same", signature: [255] }),
 		"parsed",
 	);
 });
 
 test("rearm cooldown skips parses across gate flicker", () => {
-	const s = make({ sufficientConfidence: 0.95, rearmCooldownS: 4 });
-	assert.equal(feed(s, 1.0, { pass: true, confidence: 0.96 }), "parsed");
+	const s = make({ rearmCooldownS: 4 });
+	assert.equal(feed(s, 1.0, { pass: true, read: "complete" }), "parsed");
 	feed(s, 1.5, { pass: false });
-	assert.equal(feed(s, 2.0, { pass: true, confidence: 0.9 }), "gated");
-	assert.equal(feed(s, 4.9, { pass: true, confidence: 0.9 }), "gated");
-	assert.equal(feed(s, 5.1, { pass: true, confidence: 0.9 }), "parsed");
+	assert.equal(feed(s, 2.0, { pass: true, read: "same" }), "gated");
+	assert.equal(feed(s, 4.9, { pass: true, read: "same" }), "gated");
+	assert.equal(feed(s, 5.1, { pass: true, read: "same" }), "parsed");
 });
 
 test("checkIntervalS caps both phases and exempts from suppression", () => {
 	const s = make({ checkIntervalS: 1 });
-	assert.equal(feed(s, 0.0, { pass: true, confidence: 0.9 }), "parsed");
-	assert.equal(feed(s, 0.5, { pass: true, confidence: 0.9 }), "skipped");
+	assert.equal(feed(s, 0.0, { pass: true, read: "same" }), "parsed");
+	assert.equal(feed(s, 0.5, { pass: true, read: "same" }), "skipped");
 	for (let t = 1; t < 10; t++) {
-		assert.equal(feed(s, t, { pass: true, confidence: 0.9 }), "parsed");
+		assert.equal(feed(s, t, { pass: true, read: "same" }), "parsed");
 	}
 });
 
 test("suppressSteadyFrames=false checks and parses every frame", () => {
-	const s = make(
-		{ searchIntervalS: 1, sufficientConfidence: 0.5 },
-		{ suppressSteadyFrames: false },
-	);
+	const s = make({ searchIntervalS: 1 }, { suppressSteadyFrames: false });
 	for (let i = 0; i < 10; i++) {
-		assert.equal(feed(s, 0, { pass: true, confidence: 0.9 }), "parsed");
+		assert.equal(feed(s, 0, { pass: true, read: "complete" }), "parsed");
 	}
 	assert.equal(s.calm(1000), false);
 });
@@ -222,20 +259,29 @@ test("calm needs a quiet period and no open match", () => {
 	assert.equal(s.calm(5), false);
 	assert.equal(s.calm(10), true);
 	// a gate pass resets the quiet clock
-	feed(s, 10, { pass: true, confidence: 0.9 });
+	feed(s, 10, { pass: true, read: "same" });
 	assert.equal(s.calm(15), false);
 	assert.equal(s.calm(20), true);
-	// a confident map-start keeps the scan active for matchOpenMaxS
-	feed(s, 21, { pass: true, confidence: 0.9, type: "MapStart" });
+	// a map-start the timeline kept keeps the scan active for matchOpenMaxS
+	feed(s, 21, { pass: true, read: "new", type: "MapStart" });
 	assert.equal(s.calm(50), false);
 	assert.equal(s.calm(21 + 60), true);
 });
 
+test("a read the timeline dropped neither opens nor closes a match", () => {
+	const s = make({});
+	feed(s, 0, { pass: true, read: "dropped", type: "MapStart" });
+	assert.equal(s.calm(10), true);
+	feed(s, 20, { pass: true, read: "new", type: "MapStart" });
+	feed(s, 30, { pass: true, read: "dropped", type: "Scoreboard" });
+	assert.equal(s.calm(45), false);
+});
+
 test("a scoreboard closes the match early", () => {
 	const s = make({});
-	feed(s, 0, { pass: true, confidence: 0.9, type: "MapStart" });
+	feed(s, 0, { pass: true, read: "new", type: "MapStart" });
 	assert.equal(s.calm(30), false);
-	feed(s, 31, { pass: true, confidence: 0.9, type: "Scoreboard" });
+	feed(s, 31, { pass: true, read: "new", type: "Scoreboard" });
 	// quiet period still applies after the closing read
 	assert.equal(s.calm(35), false);
 	assert.equal(s.calm(41), true);
@@ -246,7 +292,7 @@ test("a chunk starting mid-stream counts as an open match until a scoreboard", (
 	s.reset(100, { midStream: true });
 	feed(s, 100, { pass: false });
 	assert.equal(s.calm(130), false);
-	feed(s, 131, { pass: true, confidence: 0.9, type: "Scoreboard" });
+	feed(s, 131, { pass: true, read: "new", type: "Scoreboard" });
 	assert.equal(s.calm(141), true);
 });
 
@@ -293,19 +339,11 @@ test("nextDueT lets frames skip analysis entirely", () => {
 });
 
 test("nextDueLowerBound never exceeds nextDueT, whatever pending gates and parses report", () => {
-	for (const { refineIntervalS, sufficientConfidence } of [
-		{ refineIntervalS: 0.5, sufficientConfidence: undefined },
-		{ refineIntervalS: 2, sufficientConfidence: 0.9 },
-	]) {
-		for (const confidence of [0.1, 0.95]) {
+	for (const refineIntervalS of [0.5, 2]) {
+		for (const read of ["dropped", "new", "complete"] as const) {
 			const s = new DetectorScheduler(
 				[
-					{
-						id: "a",
-						searchIntervalS: 1,
-						refineIntervalS,
-						sufficientConfidence,
-					},
+					{ id: "a", searchIntervalS: 1, refineIntervalS },
 					{ id: "b", searchIntervalS: 3 },
 				],
 				OPTS,
@@ -315,14 +353,14 @@ test("nextDueLowerBound never exceeds nextDueT, whatever pending gates and parse
 			s.recordGate("a", 0, true);
 			s.recordGate("b", 0, false);
 			const bound = s.nextDueLowerBound(0, ["a"]);
-			s.recordParse("a", 0, [{ type: "Event", confidence }]);
+			s.recordParse("a", 0, [parsedRead(read)]);
 			assert.ok(
 				beforeGates <= bound,
 				`gates tightened ${beforeGates} to ${bound}`,
 			);
 			assert.ok(
 				bound <= s.nextDueT(),
-				`bound ${bound} > next ${s.nextDueT()} (refine ${refineIntervalS}, confidence ${confidence})`,
+				`bound ${bound} > next ${s.nextDueT()} (refine ${refineIntervalS}, a ${read} read)`,
 			);
 		}
 	}
@@ -345,16 +383,11 @@ test("nextDueLowerBound is exact for detectors without a pending parse", () => {
 
 test("nextDueCandidates holds every value nextDueT can take, whatever the pending checks report", () => {
 	for (const pass of [false, true]) {
-		for (const confidence of [0.1, 0.95]) {
+		for (const read of ["dropped", "new", "complete"] as const) {
 			const s = new DetectorScheduler(
 				[
 					{ id: "a", searchIntervalS: 1, refineIntervalS: 0.25 },
-					{
-						id: "b",
-						searchIntervalS: 0.5,
-						refineIntervalS: 0.2,
-						sufficientConfidence: 0.9,
-					},
+					{ id: "b", searchIntervalS: 0.5, refineIntervalS: 0.2 },
 					{ id: "c", searchIntervalS: 0.75 },
 				],
 				OPTS,
@@ -364,10 +397,10 @@ test("nextDueCandidates holds every value nextDueT can take, whatever the pendin
 			s.dueDetectors(0.5);
 			const candidates = s.nextDueCandidates(0.5, ["b"]);
 			s.recordGate("b", 0.5, pass);
-			if (pass) s.recordParse("b", 0.5, [{ type: "Event", confidence }]);
+			if (pass) s.recordParse("b", 0.5, [parsedRead(read)]);
 			assert.ok(
 				candidates.includes(s.nextDueT()),
-				`${s.nextDueT()} not in ${candidates} (pass ${pass}, confidence ${confidence})`,
+				`${s.nextDueT()} not in ${candidates} (pass ${pass}, a ${read} read)`,
 			);
 			assert.equal(candidates[0], s.nextDueLowerBound(0.5, ["b"]));
 		}

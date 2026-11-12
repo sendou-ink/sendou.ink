@@ -9,6 +9,7 @@
  */
 import { getCV, type Mat } from "../../cv";
 import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import {
 	type GlyphSet,
 	type RecognizedChar,
@@ -139,7 +140,36 @@ export function* parseBannerScoreSteps(
  * loser = the more confident read. Otherwise ranked scores never tie so the
  * higher value is the winner's; one unreadable side reports nothing.
  */
-export function resolveMatchScores({
+export function resolveMatchScores(sides: {
+	left: BannerScoreRead;
+	right: BannerScoreRead;
+	knockout: boolean;
+}): [number | null, number | null] {
+	const [winner, loser] = winnerFirst(sides);
+	if (sides.knockout) return [KO_MATCH_SCORE, loser.value];
+	if (winner.value === null || loser.value === null) return [null, null];
+	return [winner.value, loser.value];
+}
+
+/**
+ * The scores of `resolveMatchScores`' pair: each side's own read, a
+ * knockout's winner the team total that told it (`knockoutScore`).
+ */
+export function matchScoreFieldScores(sides: {
+	left: BannerScoreRead;
+	right: BannerScoreRead;
+	knockout: boolean;
+	knockoutScore: number;
+}): FieldScores.FieldScores {
+	const [winner, loser] = winnerFirst(sides);
+	return FieldScores.of({
+		"matchScores.0": sides.knockout ? sides.knockoutScore : winner.confidence,
+		"matchScores.1": loser.confidence,
+	});
+}
+
+/** The two reads winner first; a knockout's winner is hidden, so its loser is the read worth more. */
+function winnerFirst({
 	left,
 	right,
 	knockout,
@@ -147,24 +177,15 @@ export function resolveMatchScores({
 	left: BannerScoreRead;
 	right: BannerScoreRead;
 	knockout: boolean;
-}): [number | null, number | null] {
+}): [BannerScoreRead, BannerScoreRead] {
+	const bothRead = left.value !== null && right.value !== null;
 	if (knockout) {
-		const loser =
-			left.value !== null && right.value !== null
-				? left.confidence >= right.confidence
-					? left
-					: right
-				: left.value !== null
-					? left
-					: right;
-		return [KO_MATCH_SCORE, loser.value];
+		const leftLoses = bothRead
+			? left.confidence >= right.confidence
+			: left.value !== null;
+		return leftLoses ? [right, left] : [left, right];
 	}
-	if (left.value !== null && right.value !== null) {
-		return left.value >= right.value
-			? [left.value, right.value]
-			: [right.value, left.value];
-	}
-	return [null, null];
+	return bothRead && right.value! > left.value! ? [right, left] : [left, right];
 }
 
 /** Zero out ink components shorter than any digit (see MIN_COMPONENT_HEIGHT). */

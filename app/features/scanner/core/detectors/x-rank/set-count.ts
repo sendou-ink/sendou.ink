@@ -12,6 +12,7 @@
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import { frameGray, frameRgb, type Roi, roiSignature } from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
@@ -73,8 +74,6 @@ const SERIES_SLOT_MAX_FRACTION = 0.01;
 const WIN_SLOT_MIN_INK = 0.3;
 /** A lost squid's white X; the live squid is saturated orange, the empty card black. */
 const LOSS_SLOT_MIN_CROSS = 0.04;
-/** Confidence of a read whose digits disagree with its slots (mid-animation): under the timeline floor. */
-const INCONSISTENT_CONFIDENCE = 0.3;
 const SET_GAMES = 3;
 
 /**
@@ -213,9 +212,13 @@ export function createXSetCountDetector(
 			{
 				type: X_SET_COUNT_EVENT_TYPE,
 				t,
-				confidence: consistent
-					? digitScore
-					: Math.min(digitScore, INCONSISTENT_CONFIDENCE),
+				// digits disagreeing with the slots are mid-flip: the read scores nothing, so the timeline drops it
+				scores: consistent
+					? FieldScores.of({
+							wins: minScore(winsRead.digitScores),
+							losses: minScore(lossesRead.digitScores),
+						})
+					: {},
 				data: { mode: icon.mode, wins, losses },
 				debug: {
 					winsReading: winsRead.text,

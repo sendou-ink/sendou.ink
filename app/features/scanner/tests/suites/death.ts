@@ -13,6 +13,7 @@ import { createScoreboardDetector } from "../../core/detectors/scoreboard/index"
 import { createScoreboardBattleLogReplayDetector } from "../../core/detectors/scoreboard-battle-log-replay/index";
 import { type FrameData, normalizeFrame, toMat } from "../../core/image";
 import {
+	assertCompleteness,
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
@@ -55,6 +56,10 @@ export async function runDeathSuite(
 			const event = events[0];
 			assert.ok(event, "gate passed but no event parsed");
 			const expected = fixture.expected.data ?? {};
+
+			await t.test("completeness", () => {
+				assertCompleteness(fixture, event);
+			});
 
 			await t.test(
 				"weapon",

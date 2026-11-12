@@ -36,7 +36,12 @@ import { SCOREBOARD_OWN_EVENT_TYPE } from "../detectors/scoreboard-own/index";
 import { X_RANK_POSITION_EVENT_TYPE } from "../detectors/x-rank/position";
 import { X_SET_COUNT_EVENT_TYPE } from "../detectors/x-rank/set-count";
 import { X_SET_RESULT_EVENT_TYPE } from "../detectors/x-rank/set-result";
-import type { DetectedEvent, XBattleCardEvent } from "../events";
+import {
+	type DetectedEvent,
+	isComplete,
+	type XBattleCardEvent,
+} from "../events";
+import * as FieldScores from "../field-scores";
 import { formatClock, formatTime } from "../format";
 import {
 	lobbyLabel,
@@ -61,7 +66,8 @@ const HEADER = [
 	"time",
 	"t_seconds",
 	"detected_at",
-	"confidence",
+	"mean_score",
+	"complete",
 	"lobby",
 	"mode",
 	"stage",
@@ -159,7 +165,8 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 		event.detectedAt === undefined
 			? ""
 			: new Date(event.detectedAt).toISOString(),
-		Math.round(event.confidence * 1000) / 1000,
+		Math.round(FieldScores.mean(event.scores) * 1000) / 1000,
+		isComplete(event) ? "yes" : "no",
 	];
 	switch (event.type) {
 		case DEATH_EVENT_TYPE: {

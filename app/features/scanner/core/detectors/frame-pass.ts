@@ -4,18 +4,25 @@
  * every approved parse runs — sequentially on the calling thread, or, given a
  * batching driver (worker/gpu-matcher.ts), as one lockstep of every parse's
  * match steps so the frame costs one chain of round trips instead of one per
- * detector. Parse results are recorded with the scheduler in registry order
- * afterwards; scheduler decisions within a frame depend only on each
- * detector's own state, so this ordering is equivalent to gating and parsing
- * one detector at a time. The pass also owns the scan's timeline: every
- * parsed event is pushed here and nowhere else, and the outcome says what the
- * push did.
+ * detector. The pass also owns the scan's timeline: every parsed event is
+ * pushed here and nowhere else, and the outcome says what the push did. The
+ * scheduler is told what the timeline made of each parse (kept, changed,
+ * complete) in registry order afterwards; its decisions within a frame depend
+ * only on each detector's own state and reads, and a detector's reads only
+ * meet reads of their own types in the timeline, so this ordering is
+ * equivalent to gating and parsing one detector at a time.
  */
 import type { Mat } from "../cv";
 import type { DetectedEvent } from "../events";
+import { isComplete } from "../events";
 import { all, type MatchScores, type MatchSteps } from "../match-steps";
-import type { TimelineAction, TimelineBuilder } from "../timeline/index";
-import type { DetectorScheduler } from "./scheduler";
+import {
+	changeOf,
+	standingOf,
+	type TimelineAction,
+	type TimelineBuilder,
+} from "../timeline/index";
+import type { DetectorScheduler, ParsedRead } from "./scheduler";
 import { detectorTelemetry, type ScanTelemetry } from "./telemetry";
 import type { Detector, GateResult } from "./types";
 
@@ -115,10 +122,24 @@ export async function runDetectorPass({
 	for (const outcome of parsing) {
 		const { detector, events } = outcome;
 		if (telemetry) detectorTelemetry(telemetry, detector.id).parses++;
-		scheduler.recordParse(detector.id, t, events);
 		outcome.actions = events.map((event) => timeline.push(event));
+		scheduler.recordParse(
+			detector.id,
+			t,
+			outcome.actions.map((action, i) => parsedRead(events[i]!, action)),
+		);
 	}
 	return gated;
+}
+
+function parsedRead(event: DetectedEvent, action: TimelineAction): ParsedRead {
+	const standing = standingOf(action);
+	return {
+		type: event.type,
+		kept: standing !== null,
+		changed: changeOf(action) !== null,
+		complete: standing !== null && isComplete(standing),
+	};
 }
 
 /** `steps` with the time spent inside its own resumptions reported (the parse's CPU share; batched matching is not attributed). */

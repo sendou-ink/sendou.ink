@@ -15,6 +15,8 @@ import { join } from "node:path";
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import { createAllDetectors } from "../../app/features/scanner/core/detectors/registry";
 import { DetectorScheduler } from "../../app/features/scanner/core/detectors/scheduler";
+import { isComplete } from "../../app/features/scanner/core/events";
+import * as FieldScores from "../../app/features/scanner/core/field-scores";
 import { normalizeFrame, toMat } from "../../app/features/scanner/core/image";
 import { readImage } from "../../app/features/scanner/node/image-io";
 import { loadScoreboardResources } from "../../app/features/scanner/node/resources";
@@ -63,10 +65,20 @@ for (const [i, file] of files.entries()) {
 			continue;
 		}
 		const events = detector.parse(frame, t, gate);
-		scheduler.recordParse(detector.id, t, events);
+		// no timeline here: every read counts as new, so only completeness suppresses
+		scheduler.recordParse(
+			detector.id,
+			t,
+			events.map((event) => ({
+				type: event.type,
+				kept: true,
+				changed: true,
+				complete: isComplete(event),
+			})),
+		);
 		console.log(
 			`${t.toFixed(2)} ${file} ${detector.id} gate=${gate.score.toFixed(3)} events=[${events
-				.map((e) => `${e.type}@${e.confidence.toFixed(3)}`)
+				.map((e) => `${e.type}@${FieldScores.mean(e.scores).toFixed(3)}`)
 				.join(", ")}]`,
 		);
 	}

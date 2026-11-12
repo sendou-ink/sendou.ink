@@ -1,6 +1,6 @@
 /**
- * Version of the event shapes (`type` + `data`) the detectors emit and the
- * builders read. Events outlive the code that wrote them (IndexedDB, Game data
+ * Version of the event shapes (`type`, `data` and `scores`) the detectors emit
+ * and the builders read. Events outlive the code that wrote them (IndexedDB, Game data
  * zips, event tapes) and are rebuilt into matches by whatever code runs now,
  * so every stored event is stamped with the version it was written at and
  * brought up to `CURRENT` when read.
@@ -12,17 +12,24 @@
  */
 
 /** The version events are written at. */
-export const CURRENT = 1;
+export const CURRENT = 2;
 
 /** Events stored before they were stamped. */
 const UNSTAMPED = 1;
 
-interface EventShape {
+/** The key a version 1 read's one score goes under: no field of any `data`, so it takes part in no vote. */
+const WHOLE_READ = "*";
+
+/** A stored event as a step sees it: the detection among whatever else its record holds. */
+type EventShape = Record<string, unknown> & {
 	type: string;
 	data: unknown;
-}
+};
 
-/** Brings an event from the keyed version to the next; null = it has no equivalent there and is dropped. */
+/**
+ * Brings an event from the keyed version to the next, keeping the fields it
+ * does not change; null = it has no equivalent there and is dropped.
+ */
 type Step = (event: EventShape) => EventShape | null;
 
 interface Schema {
@@ -30,7 +37,13 @@ interface Schema {
 	steps: Readonly<Record<number, Step>>;
 }
 
-const STEPS: Readonly<Record<number, Step>> = {};
+const STEPS: Readonly<Record<number, Step>> = {
+	// the one `confidence` of a read became `scores` per field (core/field-scores.ts)
+	1: ({ confidence, ...event }) => ({
+		...event,
+		scores: { [WHOLE_READ]: typeof confidence === "number" ? confidence : 0 },
+	}),
+};
 
 const SCHEMA: Schema = { current: CURRENT, steps: STEPS };
 
@@ -41,7 +54,7 @@ const SCHEMA: Schema = { current: CURRENT, steps: STEPS };
  * written by newer code than this (another tab after a deploy).
  * @internal
  */
-export function upgradedFrom<T extends EventShape>(
+export function upgradedFrom<T extends { type: string; data: unknown }>(
 	version: number | undefined,
 	event: T,
 	schema: Schema = SCHEMA,
@@ -50,13 +63,14 @@ export function upgradedFrom<T extends EventShape>(
 	if (from === schema.current) return event;
 	if (from > schema.current) return null;
 
-	let shape: EventShape = { type: event.type, data: event.data };
+	let shape: EventShape = event as EventShape;
 	for (let at = from; at < schema.current; at++) {
 		const next = schema.steps[at]?.(shape) ?? null;
 		if (!next) return null;
 		shape = next;
 	}
-	return { ...event, type: shape.type, data: shape.data };
+	// typed as the current shape the steps brought it to
+	return shape as T;
 }
 
 /**
@@ -64,7 +78,7 @@ export function upgradedFrom<T extends EventShape>(
  * stamp and restamped, the unreadable ones left out. Records already current
  * stay the same objects.
  */
-export function readable<T extends EventShape & { v?: number }>(
+export function readable<T extends { type: string; data: unknown; v?: number }>(
 	records: readonly T[],
 	schema: Schema = SCHEMA,
 ): T[] {

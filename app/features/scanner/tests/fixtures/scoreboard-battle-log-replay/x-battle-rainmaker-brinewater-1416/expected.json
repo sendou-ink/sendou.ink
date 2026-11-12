@@ -79,6 +79,7 @@
     "stageLabel": "Brinewater Springs"
   },
   "options": {
+    "incomplete": true,
     "notes": "Heavily compressed stream capture. Code hand-verified from the zoomed frame; a prior parse misread U>D, N>H, F>E, 5>6. めがねがし and むぎ once read without dakuten (see the 1411 case)."
   }
 }

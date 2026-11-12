@@ -49,8 +49,8 @@ export function serialize({
 			description,
 			source,
 		}),
-		...events.map(({ type, t, detectedAt, confidence, data }) =>
-			JSON.stringify({ type, t, detectedAt, confidence, data }, roundFraction),
+		...events.map(({ type, t, detectedAt, scores, data }) =>
+			JSON.stringify({ type, t, detectedAt, scores, data }, roundFraction),
 		),
 	];
 	return `${lines.join("\n")}\n`;
@@ -65,12 +65,15 @@ export function parse(name: string, text: string): Tape {
 		throw new Error(`tape ${name} has no version ${TAPE_VERSION} header`);
 	}
 	const events = eventLines.flatMap((line, index) => {
-		const event: unknown = JSON.parse(line);
+		const lineEvent: unknown = JSON.parse(line);
+		const event = isStoredEvent(lineEvent)
+			? EventVersion.upgradedFrom(header.events, lineEvent)
+			: lineEvent;
+		if (event === null) return [];
 		if (!isEvent(event)) {
 			throw new Error(`tape ${name} line ${index + 2} is not an event`);
 		}
-		const upgraded = EventVersion.upgradedFrom(header.events, event);
-		return upgraded ? [upgraded] : [];
+		return [event];
 	});
 	return {
 		name,
@@ -126,12 +129,20 @@ function isHeader(
 	);
 }
 
+/** An event of any version, as far as the upgrade steps need it. */
+function isStoredEvent(
+	value: unknown,
+): value is { type: string; data: unknown } {
+	return isRecord(value) && typeof value.type === "string" && "data" in value;
+}
+
 function isEvent(value: unknown): value is TapeEvent {
 	return (
 		isRecord(value) &&
 		typeof value.type === "string" &&
 		typeof value.t === "number" &&
-		typeof value.confidence === "number" &&
+		isRecord(value.scores) &&
+		Object.values(value.scores).every((score) => typeof score === "number") &&
 		(value.detectedAt === undefined || typeof value.detectedAt === "number") &&
 		isRecord(value.data)
 	);

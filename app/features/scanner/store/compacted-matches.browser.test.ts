@@ -29,7 +29,7 @@ function compacted(
 				type: "MapStart",
 				t: 0,
 				detectedAt: sessionKey,
-				confidence: 1,
+				scores: { read: 1 },
 				data: null,
 			}),
 			stubEvent({
@@ -37,7 +37,7 @@ function compacted(
 				type: "Death",
 				t: 1,
 				detectedAt: sessionKey,
-				confidence: 1,
+				scores: { read: 1 },
 				data: null,
 			}),
 		],
@@ -55,7 +55,7 @@ describe("compactSessions()", () => {
 
 	test("stores the games and deletes the raw events they replace", async () => {
 		const id = await saveEvent(
-			stubEvent({ type: "Objective", t: 0, confidence: 1, data: null }),
+			stubEvent({ type: "Objective", t: 0, scores: { read: 1 }, data: null }),
 		);
 
 		await compactSessions([compacted(10, 1_000, 0)], [id]);

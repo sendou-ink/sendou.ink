@@ -128,7 +128,8 @@ const col = (name: string) => header.indexOf(name);
 const columns = {
 	type: col("type"),
 	t: col("t_seconds"),
-	confidence: col("confidence"),
+	// exports from before reads were scored per field name the column "confidence"
+	meanScore: Math.max(col("mean_score"), col("confidence")),
 	lobby: col("lobby"),
 	mode: col("mode"),
 	stage: col("stage"),
@@ -217,7 +218,8 @@ function parseCsv(text: string): string[][] {
 function eventFromRow(type: string, row: string[]): DetectedEvent | null {
 	const base = {
 		t: Number(row[columns.t]),
-		confidence: Number(row[columns.confidence] || 0),
+		// the CSV holds only the mean of a read's field scores
+		scores: { "*": Number(row[columns.meanScore] || 0) },
 	};
 	if (Number.isNaN(base.t)) throw new Error("unparseable t_seconds");
 	const players = row[columns.players] ?? "";
