@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
-import * as RegistrationAvailability from "~/features/availability/core/RegistrationAvailability.server";
+import * as ScheduleViews from "~/features/availability/core/ScheduleViews.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
@@ -78,7 +78,7 @@ function rosterAvailability({
 	const startsAt = dateToDatabaseTimestamp(tournament.ctx.startsAt);
 	if (tournament.ctx.startsAt <= new Date()) return null;
 
-	return RegistrationAvailability.registrationAvailability({
+	return ScheduleViews.registrationAvailability({
 		tournament: {
 			id: tournament.ctx.id,
 			name: tournament.ctx.name,

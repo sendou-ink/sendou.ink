@@ -16,7 +16,7 @@ import type {
 	DayTimeRange,
 	EditorCommitment,
 } from "../availability-types";
-import * as Availability from "../core/Availability";
+import * as DayTrack from "../core/DayTrack";
 import {
 	ClockAxis,
 	TrackCommitment,
@@ -255,7 +255,7 @@ export function WeekAvailabilityEditor({
 			case "paint": {
 				applyGesture({
 					...current,
-					range: Availability.paintedRange({
+					range: DayTrack.paintedRange({
 						anchor: current.anchor,
 						cursor: minutesAt(current.dayIndex, event.clientX),
 						walls: wallsOf(value[current.dayIndex].date),
@@ -273,7 +273,7 @@ export function WeekAvailabilityEditor({
 				applyGesture({
 					...current,
 					moved,
-					range: Availability.movedRange({
+					range: DayTrack.movedRange({
 						range: current.original,
 						delta: pxToMinutes(
 							current.dayIndex,
@@ -287,7 +287,7 @@ export function WeekAvailabilityEditor({
 			case "resize": {
 				applyGesture({
 					...current,
-					range: Availability.resizedRange({
+					range: DayTrack.resizedRange({
 						range: current.original,
 						edge: current.edge,
 						cursor: minutesAt(current.dayIndex, event.clientX),
@@ -311,10 +311,7 @@ export function WeekAvailabilityEditor({
 			const painted = current.range;
 			replaceDayRanges(
 				current.dayIndex,
-				Availability.mergedDayRanges([
-					...value[current.dayIndex].ranges,
-					painted,
-				]),
+				DayTrack.mergedDayRanges([...value[current.dayIndex].ranges, painted]),
 			);
 		} else if (
 			(current.type === "move" && current.moved) ||
@@ -322,7 +319,7 @@ export function WeekAvailabilityEditor({
 		) {
 			replaceDayRanges(
 				current.dayIndex,
-				Availability.mergedDayRanges([
+				DayTrack.mergedDayRanges([
 					...value[current.dayIndex].ranges.filter(
 						(range) => !sameRange(range, current.original),
 					),
@@ -341,10 +338,7 @@ export function WeekAvailabilityEditor({
 
 					return {
 						...day,
-						ranges: Availability.mergedDayRanges([
-							...day.ranges,
-							current.range,
-						]),
+						ranges: DayTrack.mergedDayRanges([...day.ranges, current.range]),
 					};
 				}),
 			);
@@ -365,10 +359,10 @@ export function WeekAvailabilityEditor({
 
 	const dayFromDraft = (day: AvailabilityEditorDay, draft: DayDraft) => ({
 		...day,
-		ranges: Availability.mergedDayRanges(
+		ranges: DayTrack.mergedDayRanges(
 			draft.ranges
 				.filter((range) => range.start && range.end)
-				.map((range) => Availability.dayRangeFromTimes(range.start, range.end)),
+				.map((range) => DayTrack.dayRangeFromTimes(range.start, range.end)),
 		),
 		note: draft.note.trim(),
 	});
@@ -693,8 +687,8 @@ function DayEditor({
 	const [ranges, setRanges] = React.useState<Array<DraftRange>>(() => {
 		const existing = day.ranges.map((range, index) => ({
 			id: index,
-			start: Availability.minutesToTime(range.start),
-			end: Availability.minutesToTime(range.end),
+			start: DayTrack.minutesToTime(range.start),
+			end: DayTrack.minutesToTime(range.end),
 		}));
 
 		return startWithNewRow || existing.length === 0

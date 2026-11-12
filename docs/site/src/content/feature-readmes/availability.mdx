@@ -1,0 +1,48 @@
+import Mermaid from "../../components/Mermaid.astro";
+
+Players fill in when they can play this week and the next, and the rest of the site reads it to answer "when can we play?". The schedule is filled in under "My availability" on the events page (`/events`) and shown on the team schedule (`/t/:customUrl/schedule`), the friends page, a tournament's registration page, scrim posts and requests and when scheduling a league set.
+
+## Vocabulary
+
+- **Reported week** (`AvailabilityWeek`): one user's week, saved as a whole. Its **slots** (`AvailabilitySlot`) are the times they are free and its **day notes** (`AvailabilityDayNote`) a short note per day ("Leaving early"). A week saved without any slots means they can't play that week, while for a week never saved their availability shows as unknown.
+- **Reportable weeks**: the current week and the next, nothing further ahead can be filled in. Weeks are kept for three months.
+- **Commitment** (`BusyBlock`): time a user is known to be busy: a tournament they are registered to (start plus an estimated length, see `core/TournamentDuration.server.ts`), an accepted scrim, a league set or a **team event** (`TeamEvent`, e.g. a VoD review), added on the team schedule for the whole team or chosen members.
+- **Effective availability**: the reported slots with the commitments cut out, what every "when can they play" view shows. A commitment always wins over what was reported.
+- **Playable window**: an hour or more with enough of a roster free throughout, four players or every player of a smaller roster (`FULL`), or one short of that (`ONE_SHORT`, "with a sub").
+- **Schedule visibility**: who sees a user's schedule. Everyone until limited, then an allow-list of their friends and teams. Someone outside it sees the user as if they never filled the week in.
+- **Day track**: one day's row in the editor and the grid, 14:00 to 02:00 the next night by default and expandable from 06:00 to 06:00. A range belongs to the day it starts on.
+
+## From reported to shown
+
+<Mermaid code={`flowchart LR
+	editor["My availability on /events"] --> weeks[("Reported weeks")]
+	tournaments["Tournament registrations"] --> busy["Commitments"]
+	scrims["Accepted scrims"] --> busy
+	league["League sets"] --> busy
+	teamEvents[("Team events")] --> busy
+	weeks --> visible{"Shared with the viewer?"}
+	busy --> visible
+	visible -- "yes" --> effective["Effective availability"]
+	effective --> team["Team schedule: heatmap, grid, playable windows"]
+	effective --> friends["Friends' weeks"]
+	effective --> registration["Tournament registration"]
+	effective --> scrimPosts["Scrim posts and requests"]
+	effective --> leagueSets["League set scheduling"]`} />
+
+Slots are stored as timestamps together with the author's timezone, and every view lays them out on the viewer's own days: a late evening in Europe is a morning in America, and a slot past midnight lands on the next day for one of them. The editor's commitments are shown there too, as locked blocks.
+
+Two nudges keep the weeks filled in: on Sundays the sidebar asks to fill in the next week until it is done or dismissed, and on Mondays users whose teammates reported the week while they didn't get a notification (`NotifyScheduleTeamReminder` routine).
+
+## Where to start reading
+
+The modules split into pure time logic and the server side reading it:
+
+- `core/Availability.ts`: weeks as a timezone sees them, the range arithmetic taking commitments out, how one person fits a window and the playable windows.
+- `core/DayTrack.ts`: a day's ranges as minutes from its midnight, and the ranges the editor's painting, moving and resizing produce.
+- `core/ScheduleWeek.ts`: a week laid out on the viewer's days for the read-only views.
+- `core/ScheduleVisibility.ts`: who sees a user's schedule.
+- `core/Schedules.server.ts`: the reported weeks and commitments of users. Other users' schedules are only ever read through its `findVisibleByUserIds`, which applies the visibility.
+- `core/ScheduleViews.server.ts`: the data of each page showing schedules (the editor, the friends page, tournament registration, scrims), read through `Schedules`.
+- `core/TournamentDuration.server.ts`: how long a tournament is expected to last.
+
+The editor is `components/MySchedule.tsx` with `components/WeekAvailabilityEditor.tsx`, its saves in `actions/events.server.ts` (the `/events` route itself lives in the calendar feature). The team schedule is `routes/t.$customUrl.schedule.tsx`, its loader and action next to it.

@@ -13,8 +13,8 @@ import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import { AVAILABILITY } from "../availability-constants";
 import type { BusyBlock, TimeRange } from "../availability-types";
 import * as Availability from "../core/Availability";
+import * as Schedules from "../core/Schedules.server";
 import * as ScheduleWeek from "../core/ScheduleWeek";
-import * as VisibleSchedules from "../core/VisibleSchedules.server";
 
 export type TeamScheduleLoaderData = SerializeFrom<typeof loader>;
 
@@ -47,7 +47,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			timezone,
 		).endsAt,
 	};
-	const { reportedWeeks, busyByUserId } = await VisibleSchedules.findByUserIds({
+	const { reportedWeeks, busyByUserId } = await Schedules.findVisibleByUserIds({
 		userIds: members.map((member) => member.id),
 		viewerId: user.id,
 		...horizon,

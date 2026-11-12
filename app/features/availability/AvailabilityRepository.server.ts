@@ -1,3 +1,7 @@
+/**
+ * Reported weeks (slots and day notes) and team events, who may see a user's schedule, and the
+ * reminders and clean-up around them.
+ */
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { TablesInsertable } from "~/db/tables";
@@ -9,7 +13,7 @@ import {
 } from "~/utils/kysely.server";
 import { AVAILABILITY } from "./availability-constants";
 import type { TimeRange } from "./availability-types";
-import { sharesScheduleWith } from "./availability-utils";
+import * as ScheduleVisibility from "./core/ScheduleVisibility";
 
 /** Longest week (DST included). Weeks are indexed by start, so overlapping a window means looking this far back. */
 const WEEK_MAX_SECONDS = 169 * 60 * 60;
@@ -73,7 +77,7 @@ export async function findScheduleVisibleUserIds({
 			.filter(
 				(row) =>
 					row.id === viewerId ||
-					sharesScheduleWith({
+					ScheduleVisibility.sharesWith({
 						visibility: row.preferences?.scheduleVisibility,
 						isFriend: Boolean(row.isFriend),
 						sharedTeamIds: row.sharedTeams.map((team) => team.teamId),
@@ -345,6 +349,7 @@ export function findAllUpcomingTeamEventsByUserId({
 		.execute();
 }
 
+/** The team event with the team it belongs to, for checking an edit or delete targets the right team. */
 export function findTeamEventById(id: number) {
 	return db
 		.selectFrom("TeamEvent")
@@ -530,6 +535,7 @@ export function updateTeamEvent({
 	});
 }
 
+/** Deletes a team event, its participants cascading. */
 export function deleteTeamEvent(id: number) {
 	return db.deleteFrom("TeamEvent").where("TeamEvent.id", "=", id).execute();
 }

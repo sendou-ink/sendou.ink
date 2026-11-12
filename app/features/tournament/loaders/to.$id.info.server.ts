@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { estimatedEndsAt } from "~/features/availability/core/TournamentDuration.server";
+import * as TournamentDuration from "~/features/availability/core/TournamentDuration.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -45,7 +45,7 @@ function estimatedEnd(tournament: Tournament) {
 	);
 	if (isMultiSession) return null;
 
-	return estimatedEndsAt({
+	return TournamentDuration.estimatedEndsAt({
 		name: tournament.ctx.name,
 		organizationId: tournament.ctx.organization?.id ?? null,
 		startsAt: dateToDatabaseTimestamp(tournament.ctx.startsAt),
