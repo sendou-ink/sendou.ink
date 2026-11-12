@@ -331,7 +331,7 @@ test.describe("Tournament admin bracket progression editing", () => {
 });
 
 test.describe("Tournament admin LAN stations", () => {
-	test("adds stations incl. a stream station and removes one", async ({
+	test("adds stations incl. a stream station, removes them down to one and then none", async ({
 		page,
 		factories,
 	}) => {
@@ -361,10 +361,12 @@ test.describe("Tournament admin LAN stations", () => {
 		});
 		await stations.addStation();
 		await stations.fillStation(1, { name: "Station 1" });
+		await stations.addStation();
+		await stations.fillStation(2, { name: "Station 2" });
 		await stations.save();
 
 		await stations.goto(tournament.id);
-		await expect(stations.locators.nameInputs).toHaveCount(2);
+		await expect(stations.locators.nameInputs).toHaveCount(3);
 		await expect(stations.locators.nameInputs.nth(0)).toHaveValue("Stream");
 		await expect(stations.locators.locationNoteInputs.nth(0)).toHaveValue(
 			"On stage",
@@ -378,8 +380,22 @@ test.describe("Tournament admin LAN stations", () => {
 		await stations.save();
 
 		await stations.goto(tournament.id);
-		await expect(stations.locators.nameInputs).toHaveCount(1);
+		await expect(stations.locators.nameInputs).toHaveCount(2);
 		await expect(stations.locators.nameInputs.nth(0)).toHaveValue("Station 1");
+
+		await stations.removeStation(0);
+		await stations.save();
+
+		await stations.goto(tournament.id);
+		await expect(stations.locators.nameInputs).toHaveCount(1);
+		await expect(stations.locators.nameInputs.nth(0)).toHaveValue("Station 2");
+
+		await stations.removeStation(0);
+		await stations.save();
+
+		await stations.goto(tournament.id);
+		await expect(stations.locators.nameInputs).toHaveCount(1);
+		await expect(stations.locators.nameInputs.nth(0)).toHaveValue("");
 	});
 
 	test("moves matches on the stations board, read-only for a pool captain", async ({

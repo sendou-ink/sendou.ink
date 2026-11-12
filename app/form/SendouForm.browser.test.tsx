@@ -900,6 +900,23 @@ describe("SendouForm", () => {
 			const fallbackError = screen.getByTestId("fallback-form-error");
 			await expect.element(fallbackError).not.toBeInTheDocument();
 		});
+
+		test("does not show fallback error for an error of an array as a whole", async () => {
+			mockFetcherData = {
+				fieldErrors: { members: "forms:errors.required" },
+			};
+
+			const screen = await renderForm(FIELDSET_ARRAY, {
+				defaultValues: { members: [{ name: "Alice" }] },
+			});
+
+			await expect
+				.element(screen.getByText("This field is required"))
+				.toBeVisible();
+			await expect
+				.element(screen.getByTestId("fallback-form-error"))
+				.not.toBeInTheDocument();
+		});
 	});
 
 	describe("time range field", () => {
