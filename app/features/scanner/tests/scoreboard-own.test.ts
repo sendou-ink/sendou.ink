@@ -12,6 +12,7 @@ import { createScoreboardBattleLogReplayDetector } from "../core/detectors/score
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
 import type { Detector } from "../core/detectors/types";
 import {
+	assertCompleteness,
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
@@ -45,6 +46,10 @@ for (const fixture of fixtures) {
 		const event = events[0];
 		assert.ok(event, "gate passed but no event parsed");
 		const expected = fixture.expected.data ?? {};
+
+		await t.test("completeness", () => {
+			assertCompleteness(fixture, event);
+		});
 
 		for (const field of ["lobby", "mode", "stage"] as const) {
 			await t.test(

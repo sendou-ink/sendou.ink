@@ -2,16 +2,21 @@ import { describe, expect, test } from "vitest";
 import * as EventVersion from "../../core/event-version";
 
 /** v1 `Death.killer` became `name` in v2; v2 `Ping` has no v3 equivalent; v3 renamed `Death` to `Splat`. */
+type Event = Record<string, unknown> & { type: string; data: unknown };
+
 const SCHEMA = {
 	current: 3,
 	steps: {
-		1: ({ type, data }: { type: string; data: unknown }) =>
-			type === "Death"
-				? { type, data: { name: (data as { killer: string }).killer } }
-				: { type, data },
-		2: ({ type, data }: { type: string; data: unknown }) => {
-			if (type === "Ping") return null;
-			return { type: type === "Death" ? "Splat" : type, data };
+		1: (event: Event) =>
+			event.type === "Death"
+				? {
+						...event,
+						data: { name: (event.data as { killer: string }).killer },
+					}
+				: event,
+		2: (event: Event) => {
+			if (event.type === "Ping") return null;
+			return { ...event, type: event.type === "Death" ? "Splat" : event.type };
 		},
 	},
 };
@@ -75,10 +80,27 @@ describe("EventVersion.upgradedFrom", () => {
 		});
 	});
 
-	test("reads an unstamped event as current while no step exists", () => {
-		const event = { type: "Death", data: { name: "a" } };
+	test("scores a read from before per-field scores as a whole, at its confidence", () => {
+		const event = {
+			id: 7,
+			type: "Death",
+			t: 12,
+			confidence: 0.81,
+			data: { name: "a" },
+		};
 
-		expect(EventVersion.upgradedFrom(undefined, event)).toBe(event);
+		expect(EventVersion.upgradedFrom(undefined, event)).toEqual({
+			id: 7,
+			type: "Death",
+			t: 12,
+			scores: { "*": 0.81 },
+			data: { name: "a" },
+		});
+	});
+
+	test("returns an event stamped current as the same object", () => {
+		const event = { type: "Death", scores: { name: 0.8 }, data: { name: "a" } };
+
 		expect(EventVersion.upgradedFrom(EventVersion.CURRENT, event)).toBe(event);
 	});
 });

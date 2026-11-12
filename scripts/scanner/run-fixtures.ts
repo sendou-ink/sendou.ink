@@ -10,6 +10,8 @@ import {
 	createScoreboardDetector,
 	type ScoreboardRowDebug,
 } from "../../app/features/scanner/core/detectors/scoreboard/index";
+import { isComplete } from "../../app/features/scanner/core/events";
+import * as FieldScores from "../../app/features/scanner/core/field-scores";
 import {
 	loadFixtures,
 	runDetectorOnFixture,
@@ -34,7 +36,9 @@ for (const fixture of fixtures) {
 	console.info(`\n=== ${fixture.name}`);
 	console.info(`gate: pass=${gate.pass} score=${gate.score.toFixed(3)}`);
 	for (const event of events) {
-		console.info(`event confidence=${event.confidence.toFixed(3)}`);
+		console.info(
+			`event mean score=${FieldScores.mean(event.scores).toFixed(3)} complete=${isComplete(event)}`,
+		);
 		console.info(`matchScores: ${JSON.stringify(event.data.matchScores)}`);
 		const rows = (event.debug?.rows ?? []) as ScoreboardRowDebug[];
 		event.data.players.forEach((p, i) => {

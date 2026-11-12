@@ -40,7 +40,7 @@ function logWithFrameAt(t: number): ScanLog.ScanLog {
 		pass: true,
 		variant: "zones",
 		parsed: true,
-		reads: [{ type: "Objective", confidence: 0.9 }],
+		reads: [{ type: "Objective", scores: [0.9] }],
 	});
 	return log;
 }
@@ -61,7 +61,7 @@ async function minimapTimes(name: string): Promise<number[]> {
 const DEATH = stubEvent({
 	type: "Death",
 	t: 1,
-	confidence: 1,
+	scores: { read: 1 },
 	data: { name: "a" },
 });
 
@@ -92,10 +92,27 @@ describe("loadVodEvents", () => {
 	});
 
 	test("reads events stored before the version stamp and leaves out a newer version's", async () => {
-		const id = await putRawEvent({ ...DEATH, vod: NAME });
+		const unstamped = {
+			type: "Death",
+			t: 1,
+			confidence: 0.8,
+			data: { name: "a" },
+			vod: NAME,
+		} as unknown as StoredVodEvent;
+		const id = await putRawEvent(unstamped);
 		await putRawEvent({ ...DEATH, vod: NAME, v: EventVersion.CURRENT + 1 });
 
-		expect(await loadVodEvents(NAME)).toEqual([{ ...DEATH, vod: NAME, id }]);
+		expect(await loadVodEvents(NAME)).toEqual([
+			{
+				type: "Death",
+				t: 1,
+				scores: { "*": 0.8 },
+				data: { name: "a" },
+				vod: NAME,
+				v: EventVersion.CURRENT,
+				id,
+			},
+		]);
 	});
 });
 

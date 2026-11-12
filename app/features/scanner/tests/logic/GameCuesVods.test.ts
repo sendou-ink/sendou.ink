@@ -138,5 +138,5 @@ function toInput(row: Row): GameCues.GameCuesInput {
 
 /** An event with only the data GameCues reads. */
 function event(type: string, t: number, data: object): DetectedEvent {
-	return { type, t, confidence: 1, data } as DetectedEvent;
+	return { type, t, scores: { read: 1 }, data } as DetectedEvent;
 }

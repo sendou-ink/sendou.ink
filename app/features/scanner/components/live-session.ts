@@ -33,6 +33,7 @@ import { MINIMAP_DETECTOR_ID } from "../core/detectors/minimap/index";
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
 import { type DetectedEvent, isScoreboardEvent } from "../core/events";
 import type { ScannerMatch } from "../core/scanner-match";
+import { bringsFrame } from "../core/timeline/index";
 import { publishCaptureStatus } from "../scanner-activity";
 import {
 	deleteClip,
@@ -534,8 +535,12 @@ function onResult(
 		} else if (isScoreboardEvent(event)) {
 			objectiveBlocked = false;
 		}
-		// a run's trailing read only moves its time; the run's first read keeps the frame
-		const frame = action === "extended" ? undefined : result.frame;
+		// an amended read keeps its slot's frame; a run's trailing read only moves its time, the run's first read keeps the frame
+		const frame = bringsFrame(action)
+			? result.frame
+			: action === "amended"
+				? "kept"
+				: undefined;
 		const saving = persist(event, frame, storedIds.get(key));
 		storedIds.set(key, saving);
 		persisting.add(saving);
@@ -546,7 +551,7 @@ function onResult(
 /** Saves the event over the one its slot held (`replacing`, once that is saved); resolves to the stored id. */
 async function persist(
 	event: DetectedEvent,
-	frame: Blob | undefined,
+	frame: Blob | "kept" | undefined,
 	replacing: Promise<number | undefined> | undefined,
 ): Promise<number | undefined> {
 	const stale = await replacing;

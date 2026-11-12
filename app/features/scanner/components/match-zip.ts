@@ -46,7 +46,7 @@ export async function matchZip(
 				type: event.type,
 				t: event.t,
 				detectedAt: event.detectedAt,
-				confidence: event.confidence,
+				scores: event.scores,
 				data: event.data,
 				frame: folder,
 			};

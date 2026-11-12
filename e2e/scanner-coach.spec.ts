@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import * as EventVersion from "~/features/scanner/core/event-version";
 import type { DetectedEvent } from "~/features/scanner/core/events";
 import { expect, test } from "./helpers/playwright";
 import { ScannerCoachPage } from "./pages/scanner/scanner-coach-page";
@@ -16,12 +17,15 @@ const INTRO_SECONDS = { from: 3, to: 9 };
  * Two games' events off real scans' game data zips, shifted onto one
  * timeline: a Splat Zones game played from the POV (0:05–3:23), then a cast
  * Rainmaker game (3:35–5:06). Seeded as the scan of a blank video as long, so
- * these tests read coach mode, not the detectors.
+ * these tests read coach mode, not the detectors. The file holds them as
+ * event version 1 wrote them.
  */
-const COACH_EVENTS: DetectedEvent[] = JSON.parse(
-	fs.readFileSync(
-		path.join(__dirname, "fixtures", "scanner-coach-events.json"),
-		"utf-8",
+const COACH_EVENTS: DetectedEvent[] = EventVersion.readable(
+	JSON.parse(
+		fs.readFileSync(
+			path.join(__dirname, "fixtures", "scanner-coach-events.json"),
+			"utf-8",
+		),
 	),
 );
 const COACH_VOD_NAME = "scanner-coach-vod.webm";

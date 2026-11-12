@@ -11,6 +11,7 @@
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import { copyRoi, frameGray, frameRgb, roiSignature } from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
@@ -56,8 +57,6 @@ export interface XRankPositionData {
 	direction: XRankPositionDirection | null;
 }
 
-/** Confidence of a read whose number didn't parse: under the timeline floor. */
-const UNREAD_CONFIDENCE = 0.3;
 /** The arrow is ~155px long; a shorter run of ink is something else. */
 const ARROW_MIN_LENGTH = 90;
 /** Columns with fewer ink pixels are speckle. */
@@ -161,10 +160,10 @@ export function createXRankPositionDetector(
 			{
 				type: X_RANK_POSITION_EVENT_TYPE,
 				t,
-				confidence:
-					position === null
-						? Math.min(numberScore, UNREAD_CONFIDENCE)
-						: numberScore,
+				// a number that didn't parse scores nothing, so the timeline drops the read
+				scores: FieldScores.of({
+					position: position === null ? null : numberScore,
+				}),
 				data: { mode: icon.mode, position, direction: arrowDirection(rgb) },
 				debug: {
 					numberReading: number.text,

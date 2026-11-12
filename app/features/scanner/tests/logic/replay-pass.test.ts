@@ -17,11 +17,12 @@ import { stubEvent } from "../stub-event";
 interface Picture {
 	/** the gate passes */
 	lit: boolean;
-	confidence: number;
+	/** how well the one field of the read scores */
+	score: number;
 }
 
-const LIT: Picture = { lit: true, confidence: 0.8 };
-const DARK: Picture = { lit: false, confidence: 0.8 };
+const LIT: Picture = { lit: true, score: 0.8 };
+const DARK: Picture = { lit: false, score: 0.8 };
 
 function frameOf(picture: Picture): Mat {
 	return picture as unknown as Mat;
@@ -29,21 +30,35 @@ function frameOf(picture: Picture): Mat {
 
 /**
  * A detector with state across frames, as the real ones have (memos, sticky
- * fits): each read says how many parses its instance has run.
+ * fits): each read says how many parses its instance has run. Its kill feed
+ * is one standing row (the timeline merges its repeats), its deaths name a
+ * new killer every parse.
  */
 function countingDetector(type: "Kill" | "Death" = "Kill") {
 	let gates = 0;
 	let parses = 0;
 	const parse = (frame: Mat, t: number): DetectedEvent[] => {
 		parses++;
-		const read = `read ${parses}`;
+		const { score } = frame as unknown as Picture;
 		return [
-			stubEvent({
-				type,
-				t,
-				confidence: (frame as unknown as Picture).confidence,
-				data: type === "Kill" ? { time: null, names: [read] } : { name: read },
-			}),
+			type === "Kill"
+				? stubEvent({
+						type,
+						t,
+						scores: { "names.0": score },
+						data: { time: parses, names: ["still"] },
+					})
+				: stubEvent({
+						type,
+						t,
+						scores: { name: score },
+						data: {
+							weaponId: null,
+							weaponType: null,
+							abilities: [],
+							name: `read ${parses}`,
+						},
+					}),
 		];
 	};
 	const detector: Detector<DetectedEvent> = {
@@ -65,7 +80,7 @@ function check(
 		detector: "counting",
 		pass: true,
 		parsed: true,
-		reads: [{ type: "Kill", confidence: 0.8 }],
+		reads: [{ type: "Kill", scores: [0.8] }],
 		...overrides,
 	};
 }
@@ -118,7 +133,7 @@ async function scanInLanes() {
 					detector: detector.id,
 					pass: gate.pass,
 					parsed,
-					reads: events,
+					reads: ScanLog.readsOf(events),
 				});
 			}
 		}
@@ -204,66 +219,81 @@ describe("replayDetectorPass", () => {
 		expect(counting.counts()).toEqual({ gates: 0, parses: 0 });
 	});
 
-	test("gives a read of the logged events their logged confidences and reports its own", async () => {
-		const { outcomes, divergences } = await replay(
-			{ lit: true, confidence: 0.7 },
-			[check({ reads: [{ type: "Kill", confidence: 0.9 }] })],
-		);
+	test("gives a read of the logged events their logged scores and reports its own", async () => {
+		const { outcomes, divergences } = await replay({ lit: true, score: 0.7 }, [
+			check({ reads: [{ type: "Kill", scores: [0.9] }] }),
+		]);
 
-		expect(outcomes[0]!.events.map((event) => event.confidence)).toEqual([0.9]);
+		expect(outcomes[0]!.events.map((event) => event.scores)).toEqual([
+			{ "names.0": 0.9 },
+		]);
 		expect(divergences).toEqual([
 			{
 				kind: "reads",
 				detector: "counting",
-				logged: [{ type: "Kill", confidence: 0.9 }],
-				replayed: [{ type: "Kill", confidence: 0.7 }],
+				logged: [{ type: "Kill", scores: [0.9] }],
+				replayed: [{ type: "Kill", scores: [0.7] }],
 			},
 		]);
 	});
 
-	test("keeps the read the scan's timeline kept when the replay's own confidences rank the reads the other way", async () => {
+	test("votes a field as the scan's timeline did when the replay's own scores back the other read", async () => {
 		const counting = countingDetector("Death");
 		const timeline = new TimelineBuilder();
-		const logged = (confidence: number) => [
-			check({ reads: [{ type: "Death", confidence }] }),
+		const logged = (score: number) => [
+			check({ reads: [{ type: "Death", scores: [score] }] }),
 		];
 
 		await replay(
-			{ lit: true, confidence: 0.82 },
+			{ lit: true, score: 0.82 },
 			logged(0.8),
 			counting,
 			timeline,
 			10,
 		);
 		await replay(
-			{ lit: true, confidence: 0.79 },
+			{ lit: true, score: 0.79 },
 			logged(0.81),
 			counting,
 			timeline,
 			11,
 		);
 
-		expect(timeline.events.map((event) => event.t)).toEqual([11]);
+		expect(timeline.events.map((event) => event.data)).toMatchObject([
+			{ name: "read 2" },
+		]);
 	});
 
-	test("keeps a read's own confidences when it holds other events than the scan's", async () => {
-		const { outcomes, divergences } = await replay(
-			{ lit: true, confidence: 0.7 },
-			[check({ reads: [{ type: "Death", confidence: 0.9 }] })],
-		);
+	test("keeps a read's own scores when it holds other events than the scan's", async () => {
+		const { outcomes, divergences } = await replay({ lit: true, score: 0.7 }, [
+			check({ reads: [{ type: "Death", scores: [0.9] }] }),
+		]);
 
-		expect(outcomes[0]!.events.map((event) => event.confidence)).toEqual([0.7]);
+		expect(outcomes[0]!.events.map((event) => event.scores)).toEqual([
+			{ "names.0": 0.7 },
+		]);
 		expect(divergences.map((divergence) => divergence.kind)).toEqual(["reads"]);
 	});
 
-	test("takes the logged confidences on the batched path too", async () => {
+	test("keeps a read's own scores when it scores another number of fields than the scan's", async () => {
+		const { outcomes, divergences } = await replay({ lit: true, score: 0.7 }, [
+			check({ reads: [{ type: "Kill", scores: [0.9, 0.9] }] }),
+		]);
+
+		expect(outcomes[0]!.events.map((event) => event.scores)).toEqual([
+			{ "names.0": 0.7 },
+		]);
+		expect(divergences.map((divergence) => divergence.kind)).toEqual(["reads"]);
+	});
+
+	test("takes the logged scores on the batched path too", async () => {
 		const { detector } = countingDetector();
 
 		const { outcomes } = await replayDetectorPass({
-			frame: frameOf({ lit: true, confidence: 0.7 }),
+			frame: frameOf({ lit: true, score: 0.7 }),
 			logged: {
 				t: 10,
-				checks: [check({ reads: [{ type: "Kill", confidence: 0.9 }] })],
+				checks: [check({ reads: [{ type: "Kill", scores: [0.9] }] })],
 			},
 			detectors: [detector],
 			timeline: new TimelineBuilder(),
@@ -271,7 +301,9 @@ describe("replayDetectorPass", () => {
 			runSteps: async (steps) => runSync(steps),
 		});
 
-		expect(outcomes[0]!.events.map((event) => event.confidence)).toEqual([0.9]);
+		expect(outcomes[0]!.events.map((event) => event.scores)).toEqual([
+			{ "names.0": 0.9 },
+		]);
 	});
 
 	test("reports a detector of the scan this build does not have", async () => {

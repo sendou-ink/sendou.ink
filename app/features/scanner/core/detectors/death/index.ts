@@ -16,6 +16,7 @@ import type {
 import { toAbilityWithUnknown } from "../../../scanner-types";
 import { getCV, type Mat, minMaxLoc } from "../../cv";
 import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import {
 	type GlyphSet,
 	type RecognizedText,
@@ -93,7 +94,29 @@ export const DEATH_EVENT_TYPE = "Death";
 export const DEATH_EVENT: EventKind<typeof DEATH_EVENT_TYPE, DeathData> = {
 	type: DEATH_EVENT_TYPE,
 	mergeWindowS: 8,
+	complete: ({ data, scores }) =>
+		data.weaponId !== null &&
+		data.name !== null &&
+		FieldScores.reach(scores, ["name"], COMPLETE_NAME_MIN_SCORE) &&
+		data.abilities.length === GEAR_ROWS &&
+		data.abilities.every((row, gear) =>
+			FieldScores.reach(
+				scores,
+				row.map((_, slot) => `abilities.${gear}.${slot}`),
+				COMPLETE_ABILITY_MIN_SCORE,
+			),
+		),
 };
+
+/**
+ * The scores a clean frame reads the killer's name and gear at, just under
+ * the lowest of the fixtures (names 0.736+, badges 0.667+): the overlay
+ * still animating in reads under them.
+ */
+const COMPLETE_NAME_MIN_SCORE = 0.7;
+const COMPLETE_ABILITY_MIN_SCORE = 0.65;
+/** head, clothes, shoes */
+const GEAR_ROWS = 3;
 
 type DeathEvent = EventOf<typeof DEATH_EVENT>;
 
@@ -783,8 +806,6 @@ export function createDeathDetector(
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
 
-		const confidences: number[] = [];
-
 		// 1. read both burst lines and find the language template whose constant
 		// line reads best; a gate hit matching none is a lookalike. Latin and JA
 		// templates use separate boxes (rois.ts) and atlases so the scripts never compete.
@@ -996,17 +1017,16 @@ export function createDeathDetector(
 				if (supported) accept(entry, burstIcon.score);
 			}
 		}
-		if (weaponGlyphs && template) confidences.push(weaponScore);
-
 		const abilityRows: AbilityWithUnknown[][] = [];
 		const abilityDebug: (WeaponMatch | null)[][] = [];
-		for (const matches of abilityMatches ?? []) {
+		const abilityScores: Record<string, number> = {};
+		for (const [row, matches] of (abilityMatches ?? []).entries()) {
 			const ids: AbilityWithUnknown[] = [];
 			const debug: (WeaponMatch | null)[] = [];
-			for (const match of matches) {
+			for (const [slot, match] of matches.entries()) {
 				ids.push(toAbilityWithUnknown(match.id) ?? "UNKNOWN");
 				debug.push(match);
-				confidences.push(Math.max(0, match.score));
+				abilityScores[`abilities.${row}.${slot}`] = match.score;
 			}
 			abilityRows.push(ids);
 			abilityDebug.push(debug);
@@ -1025,19 +1045,17 @@ export function createDeathDetector(
 			nameRaw = tag.read.raw;
 			name = tag.read.name;
 			nameConfidence = tag.read.confidence;
-			confidences.push(nameConfidence);
 		}
-
-		const confidence =
-			confidences.length > 0
-				? confidences.reduce((a, b) => a + b, 0) / confidences.length
-				: 0;
 
 		return [
 			{
 				type: DEATH_EVENT_TYPE,
 				t,
-				confidence,
+				scores: FieldScores.of({
+					"weaponId,weaponType": weaponGlyphs && template ? weaponScore : null,
+					...abilityScores,
+					name: tag ? nameConfidence : null,
+				}),
 				data: { weaponId, weaponType, abilities: abilityRows, name },
 				debug: {
 					weaponName: weapon,
@@ -1074,15 +1092,15 @@ export function createDeathDetector(
 
 	// the animated background flickers the gate; the 4s rearm hold stays inside
 	// the timeline's 8s Death merge window so every skipped parse would merge anyway.
-	// sufficientConfidence sits just under the clean-read floor (fixtures
-	// 0.750-0.825, scan events 0.751+); refine/stagnation overrides cap the cost
-	// of a dirty read that never reaches it
+	// The refine/stagnation overrides cap the cost of a read that never comes
+	// out complete (a name of unknown glyphs: 3 of 4 deaths on the XHXYlzu4Zt8
+	// VoD) at two more looks within a second
 	return {
 		id: "death",
 		refineIntervalS: 0.5,
-		sufficientConfidence: 0.74,
 		rearmCooldownS: 4,
-		maxStagnantParses: 3,
+		maxStagnantParses: 2,
+		stagnantAfterS: 1,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

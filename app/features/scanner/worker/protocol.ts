@@ -8,8 +8,8 @@ export interface InitRequest {
 	/** static assets CDN root (`Config.staticAssetsUrl`), passed in so the worker bundle stays free of the app config graph */
 	assetsBaseUrl: string;
 	/**
-	 * skip parse() for a detector whose gate keeps firing without confidence
-	 * improving and let the scheduler thin out checks; default true — one-shot
+	 * skip parse() for a detector whose gate keeps firing without its reads
+	 * changing the timeline and let the scheduler thin out checks; default true — one-shot
 	 * consumers like the screenshot harness turn it off
 	 */
 	suppressSteadyFrames?: boolean;

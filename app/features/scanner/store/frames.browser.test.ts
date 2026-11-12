@@ -17,7 +17,7 @@ const HOUR = 60 * 60 * 1000;
 const mapStart: DetectedEvent = {
 	type: "MapStart",
 	t: 0,
-	confidence: 0.9,
+	scores: { read: 0.9 },
 	data: { mode: "SZ", stage: 0 },
 };
 

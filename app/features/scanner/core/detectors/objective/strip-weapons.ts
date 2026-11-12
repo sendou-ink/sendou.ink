@@ -18,6 +18,7 @@
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat } from "../../cv";
 import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { copyRoi, type FrameData } from "../../image";
 import type { EventKind, EventOf } from "../types";
 import type { PlayerStatusData, StripFit } from "./player-status";
@@ -39,14 +40,14 @@ import {
 
 export const STRIP_WEAPONS_EVENT_TYPE = "StripWeapons";
 
-/** Sampled every ~5s, each distinct evidence; scored on raw NCC peaks, so no confidence floor. */
+/** Sampled every ~5s, each distinct evidence; scored on raw NCC peaks, so no score floor. */
 export const STRIP_WEAPONS_EVENT: EventKind<
 	typeof STRIP_WEAPONS_EVENT_TYPE,
 	StripWeaponsData
 > = {
 	type: STRIP_WEAPONS_EVENT_TYPE,
 	mergeWindowS: 2,
-	minConfidence: 0,
+	minMeanScore: 0,
 };
 
 export type StripWeaponsEvent = EventOf<typeof STRIP_WEAPONS_EVENT>;
@@ -141,12 +142,12 @@ export function parseStripWeapons(
 	fit: StripFit,
 	templates: StripWeaponTemplate[],
 ): StripWeaponsEvent {
-	const scores: number[] = [];
+	const scores: Record<string, number> = {};
 	const slots = fit.map((sideFit, side) =>
 		sideFit.centers.map((cx, slot) => {
 			if (status.dead[side as 0 | 1][slot]) return null;
 			const candidates = matchSlot(frame, cx, sideFit.pitch, templates);
-			if (candidates) scores.push(candidates[0]!.score);
+			if (candidates) scores[`slots.${side}.${slot}`] = candidates[0]!.score;
 			return candidates;
 		}),
 	) as StripWeaponsData["slots"];
@@ -154,7 +155,7 @@ export function parseStripWeapons(
 	return {
 		type: STRIP_WEAPONS_EVENT_TYPE,
 		t,
-		confidence: scores.length > 0 ? Math.max(...scores) : 0,
+		scores: FieldScores.of(scores),
 		data: {
 			time: status.time,
 			slots,

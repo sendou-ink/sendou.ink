@@ -3,6 +3,7 @@
  * directory under tests/fixtures/<detector>/<case-name>/ holding frame.png,
  * .webp or .jpg (raw capture, any resolution) and expected.json.
  */
+import assert from "node:assert/strict";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type {
@@ -16,6 +17,7 @@ import type {
 	EventRecord,
 	GateResult,
 } from "../core/detectors/types";
+import { type DetectedEvent, isComplete } from "../core/events";
 import { normalizeFrame, toMat } from "../core/image";
 import type { ScannerLobby } from "../scanner-types";
 import { readImage } from "./image-io";
@@ -151,10 +153,15 @@ interface ExpectedScoreboard {
 		misreadFields?: string[];
 		/** free-form context for humans (why fields are skipped, capture quirks) */
 		notes?: string;
-		/** X Battle cards: a mid-animation frame whose read must score under the timeline floor */
+		/** X Battle cards: a mid-animation frame whose read the timeline must drop (it scores no field) */
 		untrusted?: boolean;
-		/** Minimap only: a frame caught mid-animation whose read must score under the detector's sufficientConfidence, so the scheduler keeps reading */
-		unsettled?: boolean;
+		/**
+		 * The read must not come out complete (`EventKind.complete`), so the
+		 * scheduler reads on: a frame caught mid-animation, or a screen with a
+		 * field that never reads (covered, unsupported). Every other fixture of a
+		 * kind that declares a complete read must come out complete.
+		 */
+		incomplete?: boolean;
 	};
 }
 
@@ -221,6 +228,19 @@ export function fieldTestOptions(
 	if (matchingFieldPattern(skipFields, field)) return { skip: "skipFields" };
 	const misread = matchingFieldPattern(misreadFields, field);
 	return misread ? { expectFailure: `misreadFields "${misread}"` } : {};
+}
+
+/**
+ * Asserts the read is complete exactly when its fixture says so (`options.incomplete`).
+ * @internal
+ */
+export function assertCompleteness(fixture: Fixture, event: EventRecord): void {
+	assert.equal(
+		// a detector's event is one member of the union
+		isComplete(event as DetectedEvent),
+		fixture.expected.options?.incomplete !== true,
+		`scores ${JSON.stringify(event.scores)}`,
+	);
 }
 
 export interface FixtureRun<TEvent extends EventRecord> {

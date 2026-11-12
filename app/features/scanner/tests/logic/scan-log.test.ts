@@ -42,8 +42,8 @@ function recordedLog(): ScanLog.ScanLog {
 		parsed(
 			"objective",
 			[
-				{ type: "Objective", confidence: 0.8934876368975153 },
-				{ type: "PlayerStatus", confidence: 1 },
+				{ type: "Objective", scores: [0.8935, 0.91] },
+				{ type: "PlayerStatus", scores: [1, 1, 0.573] },
 			],
 			"zones",
 		),
@@ -71,8 +71,8 @@ describe("ScanLog.record", () => {
 					parsed(
 						"objective",
 						[
-							{ type: "Objective", confidence: 0.8934876368975153 },
-							{ type: "PlayerStatus", confidence: 1 },
+							{ type: "Objective", scores: [0.8935, 0.91] },
+							{ type: "PlayerStatus", scores: [1, 1, 0.573] },
 						],
 						"zones",
 					),
@@ -190,14 +190,28 @@ describe("ScanLog.parse", () => {
 		{
 			why: "reads of a parse that did not run",
 			change: (log) => {
-				log.lanes[1]!.frames[0] = [30.25, 8, 8, 0, [3, null, 0, 0.9]];
+				log.lanes[1]!.frames[0] = [30.25, 8, 8, 0, [3, null, 0, 1, 0.9]];
 			},
 			reason: "reads of a parse that did not run",
 		},
 		{
 			why: "a read naming an event type the log does not list",
 			change: (log) => {
-				log.lanes[1]!.frames[0] = [30.25, 8, 8, 8, [3, null, 7, 0.9]];
+				log.lanes[1]!.frames[0] = [30.25, 8, 8, 8, [3, null, 7, 1, 0.9]];
+			},
+			reason: "malformed read",
+		},
+		{
+			why: "a read holding fewer scores than it counts",
+			change: (log) => {
+				log.lanes[1]!.frames[0] = [30.25, 8, 8, 8, [3, null, 0, 2, 0.9]];
+			},
+			reason: "malformed read",
+		},
+		{
+			why: "a score outside 0..1",
+			change: (log) => {
+				log.lanes[1]!.frames[0] = [30.25, 8, 8, 8, [3, null, 0, 1, 1.5]];
 			},
 			reason: "malformed read",
 		},

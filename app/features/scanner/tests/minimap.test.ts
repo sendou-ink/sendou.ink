@@ -14,6 +14,7 @@ import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/in
 import type { Detector } from "../core/detectors/types";
 import { hueDistance, hueOf } from "../core/ink-color";
 import {
+	assertCompleteness,
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
@@ -56,14 +57,9 @@ for (const fixture of fixtures) {
 			},
 		);
 
-		if (fixture.expected.options?.unsettled) {
-			await t.test("confidence stays under sufficientConfidence", () => {
-				assert.ok(
-					event.confidence < detector.sufficientConfidence!,
-					`confidence ${event.confidence.toFixed(3)} would end the refinement`,
-				);
-			});
-		}
+		await t.test("completeness", () => {
+			assertCompleteness(fixture, event);
+		});
 
 		await t.test(
 			"stage",

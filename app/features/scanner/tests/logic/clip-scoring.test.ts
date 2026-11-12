@@ -123,7 +123,7 @@ function minimapRead(t: number, cards: { self: boolean; dead: boolean }[]) {
 	return stubEvent({
 		type: MINIMAP_EVENT_TYPE,
 		t,
-		confidence: 1,
+		scores: { read: 1 },
 		data: {
 			teammates: cards.map((card) => ({ ...card, specialReady: false })),
 		},
@@ -132,7 +132,7 @@ function minimapRead(t: number, cards: { self: boolean; dead: boolean }[]) {
 
 test("a minimap read striking out the POV card is a POV death", () => {
 	const events = [
-		stubEvent({ type: DEATH_EVENT_TYPE, t: 50, confidence: 1, data: {} }),
+		stubEvent({ type: DEATH_EVENT_TYPE, t: 50, scores: { read: 1 }, data: {} }),
 		minimapRead(107, [
 			{ self: true, dead: true },
 			{ self: false, dead: false },

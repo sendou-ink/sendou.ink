@@ -90,9 +90,16 @@ export function kindOf(type: string): EventKind | undefined {
 
 /** The detection alone, without whatever a record carries beside it (store ids, debug). */
 export function detectionOf(event: DetectedEvent): DetectedEvent {
-	const { type, t, confidence, data } = event;
+	const { type, t, scores, data } = event;
 	// `type` and `data` come from one member of the union
-	return { type, t, confidence, data } as DetectedEvent;
+	return { type, t, scores, data } as DetectedEvent;
+}
+
+/** Whether the read holds every invariant its kind declares for a complete one. */
+export function isComplete(
+	event: Pick<DetectedEvent, "type" | "data" | "scores">,
+): boolean {
+	return kindOf(event.type)?.complete?.(event) ?? false;
 }
 
 /** Narrows an event to a type, also where `event.type === type` can't: on an event of a generic record type. */

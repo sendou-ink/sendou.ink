@@ -19,6 +19,7 @@ import {
 } from "../../../scanner-types";
 import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
 	copyRoi,
@@ -71,6 +72,15 @@ export const SCOREBOARD_OWN_EVENT: EventKind<
 	ScoreboardOwnData
 > = {
 	type: SCOREBOARD_OWN_EVENT_TYPE,
+	// a covered badge has no score
+	complete: ({ data, scores }) =>
+		data.lobby !== null &&
+		data.mode !== null &&
+		data.stage !== null &&
+		data.weaponId !== null &&
+		data.abilities.every((row, gear) =>
+			row.every((_, slot) => `abilities.${gear}.${slot}` in scores),
+		),
 };
 
 type ScoreboardOwnEvent = EventOf<typeof SCOREBOARD_OWN_EVENT>;
@@ -79,8 +89,8 @@ type ScoreboardOwnEvent = EventOf<typeof SCOREBOARD_OWN_EVENT>;
 const WEAPON_MIN_SCORE = 0.55;
 /**
  * A badge scoring under this is covered (a streamer's chat box over the gear
- * cards reads ~0.2, clean badges 0.45+): it reads UNKNOWN and is left out of
- * the confidence, so the header still carries the read.
+ * cards reads ~0.2, clean badges 0.45+): it reads UNKNOWN and is left
+ * unscored, so the header still carries the read.
  */
 const ABILITY_MIN_SCORE = 0.35;
 
@@ -242,9 +252,6 @@ export function createScoreboardOwnDetector(
 		band?.delete();
 		for (const crop of abilityCrops.flat()) crop.delete();
 
-		const confidences: number[] = [];
-		if (header) confidences.push(header.confidence);
-
 		let weapon: string | null = null;
 		let weaponId: MainWeaponId | null = null;
 		let weaponScore = 0;
@@ -267,37 +274,38 @@ export function createScoreboardOwnDetector(
 					weaponId = toMainWeaponId(match.entry.entry.id);
 				}
 			}
-			confidences.push(weaponScore);
 		}
 
 		const abilityRows: AbilityWithUnknown[][] = [];
 		const abilityDebug: (WeaponMatch | null)[][] = [];
-		for (const matches of abilityMatches) {
+		const abilityScores: Record<string, number> = {};
+		for (const [row, matches] of abilityMatches.entries()) {
 			const ids: AbilityWithUnknown[] = [];
 			const debug: (WeaponMatch | null)[] = [];
-			for (const match of matches) {
+			for (const [slot, match] of matches.entries()) {
 				debug.push(match);
 				if (match.score < ABILITY_MIN_SCORE) {
 					ids.push("UNKNOWN");
 					continue;
 				}
 				ids.push(toAbilityWithUnknown(match.id) ?? "UNKNOWN");
-				confidences.push(match.score);
+				abilityScores[`abilities.${row}.${slot}`] = match.score;
 			}
 			abilityRows.push(ids);
 			abilityDebug.push(debug);
 		}
 
-		const confidence =
-			confidences.length > 0
-				? confidences.reduce((a, b) => a + b, 0) / confidences.length
-				: 0;
-
 		return [
 			{
 				type: SCOREBOARD_OWN_EVENT_TYPE,
 				t,
-				confidence,
+				scores: {
+					...header?.scores,
+					...FieldScores.of({
+						weaponId: title ? weaponScore : null,
+						...abilityScores,
+					}),
+				},
 				data: {
 					lobby: header?.lobby ?? null,
 					mode: header?.mode ?? null,
@@ -318,11 +326,8 @@ export function createScoreboardOwnDetector(
 		];
 	}
 
-	// just under the clean-read floor (fixtures 0.562-0.669, scan events
-	// 0.612-0.635; the ability-grid scores keep the mean low even on perfect reads)
 	return {
 		id: "scoreboard-own",
-		sufficientConfidence: 0.55,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

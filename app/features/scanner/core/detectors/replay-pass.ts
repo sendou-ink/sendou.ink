@@ -5,9 +5,10 @@
  * build the same state. The replay's pixels can differ from the scan's
  * (another decoder or color conversion). Every decision therefore follows the
  * log: a gate the replay's pixels decide differently takes the logged verdict,
- * and a parse reading the same events takes their logged confidences, so the
- * timeline keeps the reads the scan's kept. Only the events' data is the
- * replay's own. Each gate and read that came out differently is reported.
+ * and a parse reading the same events, each scoring as many fields, takes
+ * their logged scores, so the timeline keeps the reads the scan's kept and
+ * votes their fields as it did. Only the events' data is the replay's own.
+ * Each gate and read that came out differently is reported.
  */
 import type { Mat } from "../cv";
 import type { DetectedEvent } from "../events";
@@ -64,7 +65,7 @@ export async function replayDetectorPass({
 			divergences.push({ kind: "detector", detector });
 		}
 	}
-	/** per detector, what its parse read before taking the logged confidences */
+	/** per detector, what its parse read before taking the logged scores */
 	const ownReads = new Map<string, ScanLog.ScanLogRead[]>();
 
 	const outcomes = await runDetectorPass({
@@ -96,7 +97,7 @@ export async function replayDetectorPass({
 	return { outcomes, divergences };
 }
 
-/** `detector` reporting the logged gate verdict wherever its own differs, and its reads at their logged confidences. */
+/** `detector` reporting the logged gate verdict wherever its own differs, and its reads at their logged scores. */
 function followingLog(
 	detector: Detector<DetectedEvent>,
 	check: ScanLog.ScanLogCheck,
@@ -107,11 +108,22 @@ function followingLog(
 		ownReads.set(detector.id, ScanLog.readsOf(events));
 		const sameEvents =
 			events.length === check.reads.length &&
-			events.every((event, i) => event.type === check.reads[i]!.type);
+			events.every((event, i) => {
+				const logged = check.reads[i]!;
+				return (
+					event.type === logged.type &&
+					Object.keys(event.scores).length === logged.scores.length
+				);
+			});
 		return sameEvents
 			? events.map((event, i) => ({
 					...event,
-					confidence: check.reads[i]!.confidence,
+					scores: Object.fromEntries(
+						Object.keys(event.scores).map((field, at) => [
+							field,
+							check.reads[i]!.scores[at]!,
+						]),
+					),
 				}))
 			: events;
 	};
@@ -150,7 +162,9 @@ function sameReads(
 		a.length === b.length &&
 		a.every(
 			(read, i) =>
-				read.type === b[i]!.type && read.confidence === b[i]!.confidence,
+				read.type === b[i]!.type &&
+				read.scores.length === b[i]!.scores.length &&
+				read.scores.every((score, at) => score === b[i]!.scores[at]),
 		)
 	);
 }

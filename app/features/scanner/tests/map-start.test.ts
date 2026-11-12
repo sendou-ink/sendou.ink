@@ -11,6 +11,7 @@ import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { TimelineBuilder } from "../core/timeline/index";
 import {
+	assertCompleteness,
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
@@ -50,12 +51,16 @@ for (const fixture of fixtures) {
 		);
 		const expected = fixture.expected.data ?? {};
 
-		await t.test("clears the timeline's confidence floor", () => {
+		await t.test("completeness", () => {
+			assertCompleteness(fixture, event);
+		});
+
+		await t.test("clears the timeline's score floor", () => {
 			const { action } = new TimelineBuilder().push(event);
 			assert.notEqual(
 				action,
 				"dropped",
-				`confidence ${event.confidence.toFixed(3)} is under the floor`,
+				`scores ${JSON.stringify(event.scores)} average under the floor`,
 			);
 		});
 

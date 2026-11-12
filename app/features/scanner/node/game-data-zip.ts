@@ -58,6 +58,7 @@ const EVENT_KEYS = new Set([
 	"t",
 	"detectedAt",
 	"confidence",
+	"scores",
 	"data",
 	"frame",
 ]);
@@ -68,7 +69,8 @@ const FRAME_FOLDER_PATTERN =
 const SCAN_LOG_ENTRY = "scan-log.json";
 const ENTRY_NAME_PATTERN =
 	/^(?:match\.json|events\.json|scan-log\.json|(frames\/\d{3,5}-[A-Za-z]{1,40}-\d{1,4}m\d{2}s)\/(frame\.(?:webp|png|jpg)|expected\.json))$/;
-const JSON_KEY_PATTERN = /^[A-Za-z0-9_$-]{1,64}$/;
+/** identifiers, and the field paths event scores are keyed by ("players.3.name", "mode,stage", "*") */
+const JSON_KEY_PATTERN = /^[A-Za-z0-9_$.,*-]{1,64}$/;
 
 const SIG_LOCAL_HEADER = 0x04034b50;
 const SIG_CENTRAL_HEADER = 0x02014b50;
@@ -95,7 +97,8 @@ interface GameDataFrame {
 	height: number;
 	/** seconds on the source timeline (wall clock live, file position on a VoD) */
 	t: number;
-	confidence: number;
+	/** mean of the read's field scores */
+	meanScore: number;
 }
 
 export interface GameDataZipSummary {
@@ -567,10 +570,18 @@ function summarize(
 			if (!EVENT_KEYS.has(key))
 				fail(`events.json[${index}] has an unexpected key ${key}`);
 		}
-		const { v, type, t, confidence, detectedAt, data, frame } = event;
+		const { v, type, t, confidence, scores, detectedAt, data, frame } = event;
 		if (!isEventType(type)) fail(`events.json[${index}] has an unknown type`);
-		if (typeof t !== "number" || typeof confidence !== "number") {
-			fail(`events.json[${index}] lacks a numeric t/confidence`);
+		if (typeof t !== "number") fail(`events.json[${index}] lacks a numeric t`);
+		// a zip written before reads were scored per field holds one `confidence`
+		const fieldScores =
+			scores === undefined && typeof confidence === "number"
+				? [confidence]
+				: isRecord(scores)
+					? Object.values(scores)
+					: fail(`events.json[${index}] lacks scores`);
+		if (!fieldScores.every((score) => typeof score === "number")) {
+			fail(`events.json[${index}] has a non-numeric score`);
 		}
 		if (v !== undefined && !Number.isSafeInteger(v)) {
 			fail(`events.json[${index}] has a non-integer v`);
@@ -614,7 +625,9 @@ function summarize(
 			width: frameFile.width,
 			height: frameFile.height,
 			t,
-			confidence,
+			meanScore:
+				fieldScores.reduce((sum, score) => sum + score, 0) /
+				Math.max(1, fieldScores.length),
 		});
 	}
 	for (const folder of frameFiles.keys()) {

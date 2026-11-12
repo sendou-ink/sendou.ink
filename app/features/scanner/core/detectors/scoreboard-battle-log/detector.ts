@@ -17,6 +17,7 @@ import {
 } from "../../canonical";
 import { getCV, type Mat } from "../../cv";
 import * as Decisions from "../../decisions";
+import type * as FieldScores from "../../field-scores";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
 	createProbeWarp,
@@ -37,6 +38,7 @@ import { sameScoreboardMatch } from "../../timeline/same-scoreboard";
 import {
 	type BannerScoreRead,
 	FULL_COUNT_TEAM_SCORE,
+	matchScoreFieldScores,
 	parseBannerScoreSteps,
 	resolveMatchScores,
 } from "../scoreboard/banner";
@@ -48,7 +50,12 @@ import type {
 	ScoreboardRowDebug,
 } from "../scoreboard/index";
 import { findPovIndex } from "../scoreboard/pov";
-import { parseScoreboardRowSteps, type RowRois } from "../scoreboard/row";
+import {
+	parseScoreboardRowSteps,
+	playerScores,
+	type RowRois,
+	rowsComplete,
+} from "../scoreboard/row";
 import { parseReplayHeaderSteps } from "../scoreboard-battle-log-replay/header";
 import type { Detector, EventKind, EventRecord, GateResult } from "../types";
 
@@ -101,11 +108,11 @@ export interface BattleLogLayout<TType extends string> {
 }
 
 /**
- * Confidence floor of the history screens: clean reads score 0.81+, and a read
- * under the floor would form a card of its own when its fingerprint can't
- * match the game.
+ * Mean score floor of the history screens: clean reads average 0.81+, and a
+ * read under the floor would form a card of its own when its fingerprint
+ * can't match the game.
  */
-export const HISTORY_SCREEN_MIN_CONFIDENCE = 0.75;
+export const HISTORY_SCREEN_MIN_MEAN_SCORE = 0.75;
 
 /** White team totals on the color band: a yellow band grays at ~190, digit cores ~250. */
 const TEAM_SCORE_BIN_THRESHOLD = 205;
@@ -131,7 +138,8 @@ interface PanelParse {
 	result: PanelResult | null;
 	resultReading: string;
 	resultScore: number;
-	confidences: number[];
+	/** per row, keyed by the row's own fields */
+	rowScores: { scores: FieldScores.FieldScores }[];
 }
 
 /** The event kind of a battle log layout's reads. */
@@ -141,7 +149,14 @@ export function battleLogEventKind<TType extends string>(
 	return {
 		type,
 		sameData: sameScoreboardMatch,
-		minConfidence: HISTORY_SCREEN_MIN_CONFIDENCE,
+		minMeanScore: HISTORY_SCREEN_MIN_MEAN_SCORE,
+		complete: ({ data, scores }) =>
+			rowsComplete(data.players, scores) &&
+			data.lobby !== null &&
+			data.mode !== null &&
+			data.stage !== null &&
+			data.timestamp !== null &&
+			data.matchScores.every((score) => score !== null),
 		match: "closes",
 	};
 }
@@ -401,9 +416,6 @@ export function createBattleLogDetector<TType extends string>(
 		teamCrop?.delete();
 		bright?.delete();
 
-		const confidences = rowReads.flatMap((row) => row.confidences);
-		if (teamScore) confidences.push(teamScore.confidence);
-
 		let result: PanelParse["result"] = null;
 		let resultReading = "";
 		let resultScore = 0;
@@ -436,7 +448,7 @@ export function createBattleLogDetector<TType extends string>(
 			result,
 			resultReading,
 			resultScore,
-			confidences,
+			rowScores: rowReads,
 		};
 	}
 
@@ -499,27 +511,27 @@ export function createBattleLogDetector<TType extends string>(
 		let bannerDebug: object | undefined;
 		if (left && right) {
 			matchScores = resolveMatchScores({ left, right, knockout });
-			winner.confidences.push(left.confidence, right.confidence);
 			bannerDebug = { left, right, knockout };
 		}
 
 		flat.release();
 
-		const confidences = [
-			...winner.confidences,
-			...loser.confidences,
-			...(header ? [header.confidence] : []),
-		];
-		const confidence =
-			confidences.length > 0
-				? confidences.reduce((a, b) => a + b, 0) / confidences.length
-				: 0;
-
 		return [
 			{
 				type: layout.eventType,
 				t,
-				confidence,
+				scores: {
+					...playerScores([...winner.rowScores, ...loser.rowScores]),
+					...header?.scores,
+					...(left && right
+						? matchScoreFieldScores({
+								left,
+								right,
+								knockout,
+								knockoutScore: winner.teamScore?.confidence ?? 0,
+							})
+						: null),
+				},
 				data: {
 					lobby: header?.lobby ?? null,
 					mode: header?.mode ?? null,
@@ -559,7 +571,6 @@ export function createBattleLogDetector<TType extends string>(
 	// the timeline merges via sameScoreboardMatch
 	return {
 		id: layout.id,
-		sufficientConfidence: 0.8,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

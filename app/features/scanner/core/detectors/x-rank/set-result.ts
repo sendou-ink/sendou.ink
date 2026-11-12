@@ -12,6 +12,7 @@
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import { copyRoi, frameGray, frameRgb, roiSignature } from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
@@ -64,7 +65,7 @@ type XSetGameResult = "WIN" | "LOSE";
 
 export interface XSetResultData {
 	mode: RankedModeShort | null;
-	/** play order (row-major tiles), 3-5 entries; the "2 - 3" header is derived and only cross-checks confidence */
+	/** play order (row-major tiles), 3-5 entries; the "2 - 3" header is derived and only cross-checks them */
 	results: XSetGameResult[];
 	/** signed, e.g. -29.2; null while the splat hasn't appeared */
 	powerChange: number | null;
@@ -79,8 +80,6 @@ const NUMBER_MIN_SCORE = 0.5;
 const SET_WINS_NEEDED = 3;
 const VICTORY_INK = 1;
 const DEFEAT_INK = 2;
-/** Confidence of a read whose header and tiles don't describe one decided set (tiles still popping in): under the timeline floor. */
-const UNDECIDED_CONFIDENCE = 0.3;
 /** X Power has one decimal; float noise in differences stays under this. */
 const POWER_EPSILON = 0.05;
 /** Lower power reads are misreads (e.g. a dropped leading digit). */
@@ -249,9 +248,8 @@ export function createXSetResultDetector(
 			{
 				type: X_SET_RESULT_EVENT_TYPE,
 				t,
-				confidence: decided
-					? headerScore
-					: Math.min(headerScore, UNDECIDED_CONFIDENCE),
+				// a header and tiles not describing one decided set (tiles still popping in) score nothing, so the timeline drops the read
+				scores: FieldScores.of({ results: decided ? headerScore : null }),
 				data: {
 					mode: icon.mode,
 					results,

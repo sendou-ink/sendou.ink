@@ -20,6 +20,7 @@
 		]
 	},
 	"options": {
+		"incomplete": true,
 		"notes": "gacha-tournament VoD, t=4149.5 (1:09:09). The host ended the battle ~10s in (\"Mini Kagu has ended the battle.\"), so the results screen is a no contest: \"No contest.\" where the Score: banner goes and both team boxes flat grey with DRAW tags instead of team ink and VICTORY/DEFEAT, no team totals. The game was then replayed on the same map and built as a duplicate card. Row 7's stats show \"x --\" (unread by the game). Weapons other than the POV's and the decorated names are left unlabeled."
 	}
 }

@@ -24,14 +24,14 @@ const SCOREBOARD_FRAME = pngBytes(1280, 720);
 const mapStart: ScanEvent = {
 	type: "MapStart",
 	t: 100,
-	confidence: 0.9,
+	scores: { read: 0.9 },
 	data: { mode: "SZ", stage: 0 },
 };
 
 const death: ScanEvent = {
 	type: "Death",
 	t: 162,
-	confidence: 0.9,
+	scores: { read: 0.9 },
 	data: {
 		weaponId: 40,
 		weaponType: "MAIN",
@@ -43,7 +43,7 @@ const death: ScanEvent = {
 const scoreboard: ScanEvent = {
 	type: "Scoreboard",
 	t: 400,
-	confidence: 0.95,
+	scores: { read: 0.95 },
 	data: {
 		lobby: "PRIVATE",
 		mode: "SZ",
@@ -86,7 +86,7 @@ describe("extractGameDataZip", () => {
 				width: 1920,
 				height: 1080,
 				t: 162,
-				confidence: 0.9,
+				meanScore: 0.9,
 			},
 			{
 				folder: "frames/003-Scoreboard-5m00s",
@@ -96,7 +96,7 @@ describe("extractGameDataZip", () => {
 				width: 1280,
 				height: 720,
 				t: 400,
-				confidence: 0.95,
+				meanScore: 0.95,
 			},
 		]);
 		expect(summary.eventCounts).toEqual({
@@ -109,6 +109,16 @@ describe("extractGameDataZip", () => {
 		expect(readFileSync(join(outDir(), FOLDER, "frame.webp"))).toEqual(
 			Buffer.from(DEATH_FRAME),
 		);
+	});
+
+	test("reads a zip written before reads were scored per field", () => {
+		const { v: _v, scores: _scores, ...event } = validEvent();
+		const zip = zipSync({
+			...validFiles(),
+			"events.json": json([{ ...event, confidence: 0.8 }]),
+		});
+
+		expect(extract(zip).frames.map((frame) => frame.meanScore)).toEqual([0.8]);
 	});
 
 	test("unpacks the scan log of a VoD's game and counts its lanes and frames", async () => {
@@ -222,7 +232,7 @@ describe("extractGameDataZip", () => {
 			files: () => ({
 				...validFiles(),
 				"events.json": json([
-					{ type: "Shell", t: 0, confidence: 1, data: null },
+					{ type: "Shell", t: 0, scores: { read: 1 }, data: null },
 					validEvent(),
 				]),
 			}),
@@ -343,7 +353,7 @@ function validEvent() {
 		v: 1,
 		type: "Death",
 		t: 162,
-		confidence: 0.9,
+		scores: { read: 0.9 },
 		data: {},
 		frame: FOLDER,
 	};

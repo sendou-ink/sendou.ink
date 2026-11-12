@@ -15,14 +15,14 @@ const PNG_BYTES = new Uint8Array([5, 6, 7]);
 const mapStart: ScanEvent = {
 	type: "MapStart",
 	t: 100,
-	confidence: 0.9,
+	scores: { read: 0.9 },
 	data: { mode: "SZ", stage: 0 },
 };
 
 const death: ScanEvent = {
 	type: "Death",
 	t: 162,
-	confidence: 0.9,
+	scores: { read: 0.9 },
 	data: {
 		weaponId: 40,
 		weaponType: "MAIN",
@@ -34,7 +34,7 @@ const death: ScanEvent = {
 const scoreboard: ScanEvent = {
 	type: "Scoreboard",
 	t: 400,
-	confidence: 0.9,
+	scores: { read: 0.9 },
 	data: {
 		lobby: "PRIVATE",
 		mode: "SZ",
@@ -139,7 +139,7 @@ describe("matchZip", () => {
 			detector: "map-start",
 			pass: true,
 			parsed: true,
-			reads: [mapStart],
+			reads: ScanLog.readsOf([mapStart]),
 		});
 
 		const files = await unzipMatch([], scanLog);

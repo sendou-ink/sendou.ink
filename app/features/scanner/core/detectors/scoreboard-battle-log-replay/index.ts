@@ -7,6 +7,7 @@
  */
 import { getCV, type Mat } from "../../cv";
 import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
 	cropRoi,
@@ -35,8 +36,13 @@ import type {
 	ScoreboardRowDebug,
 } from "../scoreboard/index";
 import { findPovIndex } from "../scoreboard/pov";
-import { parseScoreboardRowSteps, type RowRois } from "../scoreboard/row";
-import { HISTORY_SCREEN_MIN_CONFIDENCE } from "../scoreboard-battle-log/detector";
+import {
+	parseScoreboardRowSteps,
+	playerScores,
+	type RowRois,
+	rowsComplete,
+} from "../scoreboard/row";
+import { HISTORY_SCREEN_MIN_MEAN_SCORE } from "../scoreboard-battle-log/detector";
 import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import { codeCharsetOf, parseReplayCodeSteps } from "./code";
 import { parseReplayHeaderSteps } from "./header";
@@ -91,7 +97,15 @@ export const SCOREBOARD_BATTLE_LOG_REPLAY_EVENT: EventKind<
 > = {
 	type: SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
 	sameData: sameScoreboardMatch,
-	minConfidence: HISTORY_SCREEN_MIN_CONFIDENCE,
+	minMeanScore: HISTORY_SCREEN_MIN_MEAN_SCORE,
+	complete: ({ data, scores }) =>
+		rowsComplete(data.players, scores) &&
+		data.lobby !== null &&
+		data.mode !== null &&
+		data.stage !== null &&
+		data.timestamp !== null &&
+		data.replayCode !== null &&
+		data.matchScores.every((score) => score !== null),
 	match: "closes",
 };
 
@@ -122,7 +136,8 @@ interface PanelParse {
 	result: PanelResult | null;
 	resultReading: string;
 	resultScore: number;
-	confidences: number[];
+	/** per row, keyed by the row's own fields */
+	rowScores: { scores: FieldScores.FieldScores }[];
 }
 
 /** Fraction of ROI pixels matching the replay code's green (RGBA frame). */
@@ -351,9 +366,6 @@ export function createScoreboardBattleLogReplayDetector(
 		matchCrop?.delete();
 		bright?.delete();
 
-		const confidences = rowReads.flatMap((row) => row.confidences);
-		if (teamScore) confidences.push(teamScore.confidence);
-
 		let matchScore: ParsedNumber | null = matchRead;
 		if (matchScore) {
 			if (
@@ -366,7 +378,6 @@ export function createScoreboardBattleLogReplayDetector(
 			) {
 				matchScore = { ...matchScore, value: null };
 			}
-			confidences.push(matchScore.confidence);
 			// no number + a full team count = the KNOCKOUT! burst sits where the score
 			// would be; an unreadable banner on a lesser total stays null
 			if (
@@ -410,7 +421,7 @@ export function createScoreboardBattleLogReplayDetector(
 			result,
 			resultReading,
 			resultScore,
-			confidences,
+			rowScores: rowReads,
 		};
 	}
 
@@ -457,22 +468,19 @@ export function createScoreboardBattleLogReplayDetector(
 			[...winner.rows, ...loser.rows].map((r) => r.povFraction),
 		);
 
-		const confidences = [
-			...winner.confidences,
-			...loser.confidences,
-			...(header ? [header.confidence] : []),
-			...(code ? [code.confidence] : []),
-		];
-		const confidence =
-			confidences.length > 0
-				? confidences.reduce((a, b) => a + b, 0) / confidences.length
-				: 0;
-
 		return [
 			{
 				type: SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
 				t,
-				confidence,
+				scores: {
+					...playerScores([...winner.rowScores, ...loser.rowScores]),
+					...header?.scores,
+					...FieldScores.of({
+						replayCode: code?.confidence,
+						"matchScores.0": winner.matchScore?.confidence,
+						"matchScores.1": loser.matchScore?.confidence,
+					}),
+				},
 				data: {
 					lobby: header?.lobby ?? null,
 					mode: header?.mode ?? null,
@@ -516,11 +524,9 @@ export function createScoreboardBattleLogReplayDetector(
 		];
 	}
 
-	// no rearm cooldown: browsed replays are told apart by content signature.
-	// sufficientConfidence just under the clean-read floor (fixtures 0.808-0.890)
+	// no rearm cooldown: browsed replays are told apart by content signature
 	return {
 		id: "scoreboard-battle-log-replay",
-		sufficientConfidence: 0.8,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

@@ -6,6 +6,7 @@
 import { toMainWeaponId } from "../../../scanner-types";
 import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import type { GlyphSet } from "../../glyphs";
 import { cropRoi, type Roi } from "../../image";
 import { all, type MatchSteps } from "../../match-steps";
@@ -32,6 +33,17 @@ import {
  * so the floor only drops the clearest non-matches.
  */
 const WEAPON_MIN_SCORE = 0.5;
+
+/**
+ * The scores a clean frame reads a row's text at, just under the lowest of
+ * the fixtures' rows (names 0.618+, paint totals 0.640+ on a low-res replay
+ * and 0.80+ otherwise, stat counters 0.776+). A field under its floor is one
+ * a later frame may still read better, so the board is not complete. A name
+ * score does not tell a glyph twin apart (a misread "p" for "P" scores 0.92).
+ */
+const COMPLETE_NAME_MIN_SCORE = 0.6;
+const COMPLETE_PAINT_MIN_SCORE = 0.6;
+const COMPLETE_STAT_MIN_SCORE = 0.75;
 
 /** Per-row ROI geometry; the replay detector closes these over its panel dx. */
 export interface RowRois {
@@ -61,9 +73,8 @@ export interface RowOptions {
 }
 
 /**
- * Parses one player row; its per-field confidences come back in field order
- * (weapon, paint, name, stats). Weapon, paint→name and the stats read in one
- * lockstep.
+ * Parses one player row; `scores` are keyed by the row's own fields. Weapon,
+ * paint→name and the stats read in one lockstep.
  */
 export function* parseScoreboardRowSteps(
 	gray: Mat,
@@ -76,7 +87,7 @@ export function* parseScoreboardRowSteps(
 ): MatchSteps<{
 	player: ScoreboardPlayer;
 	debug: ScoreboardRowDebug;
-	confidences: number[];
+	scores: FieldScores.FieldScores;
 }> {
 	const [weaponRead, { paint, name }, stats] = yield* all([
 		readWeapon(rgb, cy, rois, resources, options),
@@ -85,16 +96,11 @@ export function* parseScoreboardRowSteps(
 	]);
 	const { weapon, special } = weaponRead ?? { weapon: null };
 
-	const confidences: number[] = [];
-	if (weapon) confidences.push(Math.max(0, weapon.score));
-	if (paint) confidences.push(paint.confidence);
-	if (name) confidences.push(name.confidence);
 	const statValues: (number | null)[] = [null, null, null];
 	const statScores: [number, number, number] = [0, 0, 0];
 	for (const [i, parsed] of (stats ?? []).entries()) {
 		statValues[i] = parsed.value;
 		statScores[i] = parsed.confidence;
-		confidences.push(parsed.confidence);
 	}
 
 	return {
@@ -122,8 +128,54 @@ export function* parseScoreboardRowSteps(
 			statScores,
 			povFraction: povYellowFraction(rgb, rois.povArrow(cy)),
 		},
-		confidences,
+		scores: FieldScores.of({
+			weaponId: weapon?.score,
+			paint: paint?.confidence,
+			name: name?.confidence,
+			ka: stats?.[0]?.confidence,
+			d: stats?.[1]?.confidence,
+			s: stats?.[2]?.confidence,
+		}),
 	};
+}
+
+/**
+ * Whether a board's rows are read whole: every weapon, name, paint total and
+ * stat counter there, the text at the scores a clean frame reads it at.
+ */
+export function rowsComplete(
+	players: readonly ScoreboardPlayer[],
+	scores: FieldScores.FieldScores,
+): boolean {
+	if (players.length === 0) return false;
+	return players.every((player, i) => {
+		const row = `players.${i}`;
+		return (
+			player.weaponId !== null &&
+			player.name !== "" &&
+			player.paint !== null &&
+			player.ka !== null &&
+			player.d !== null &&
+			player.s !== null &&
+			FieldScores.reach(scores, [`${row}.name`], COMPLETE_NAME_MIN_SCORE) &&
+			FieldScores.reach(scores, [`${row}.paint`], COMPLETE_PAINT_MIN_SCORE) &&
+			FieldScores.reach(
+				scores,
+				[`${row}.ka`, `${row}.d`, `${row}.s`],
+				COMPLETE_STAT_MIN_SCORE,
+			)
+		);
+	});
+}
+
+/** Rows' scores under their players' paths in a board's `data`, in `players` order. */
+export function playerScores(
+	rows: readonly { scores: FieldScores.FieldScores }[],
+): FieldScores.FieldScores {
+	return Object.assign(
+		{},
+		...rows.map((row, i) => FieldScores.under(`players.${i}`, row.scores)),
+	);
 }
 
 function* readWeapon(

@@ -25,7 +25,7 @@ type ZonesObjectiveData = Exclude<ObjectiveData, TrackObjectiveData>;
 const mapStart = (t: number): DetectedEvent => ({
 	type: MAP_START_EVENT_TYPE,
 	t,
-	confidence: 1,
+	scores: { read: 1 },
 	data: { mode: "SZ", stage: 1 },
 });
 
@@ -45,7 +45,7 @@ const hud = (
 	{
 		type: OBJECTIVE_EVENT_TYPE,
 		t,
-		confidence: 1,
+		scores: { read: 1 },
 		data: {
 			mode: "SZ",
 			time,
@@ -58,7 +58,7 @@ const hud = (
 	{
 		type: PLAYER_STATUS_EVENT_TYPE,
 		t,
-		confidence: 1,
+		scores: { read: 1 },
 		data: {
 			time,
 			special: [[...NO_FLAGS], [...NO_FLAGS]],

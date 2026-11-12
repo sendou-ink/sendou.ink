@@ -45,12 +45,14 @@ export type StoredEvent = DetectedEvent & {
 let lastRetentionAt = 0;
 
 /**
- * Persists a detection; resolves to its store id. `reuseId` overwrites that row
- * (and its frame) so an event a better read replaces keeps a stable id.
+ * Persists a detection; resolves to its store id. `reuseId` overwrites that
+ * row so an event a later read replaces keeps a stable id. Its frame goes
+ * with it: `frame` takes its place, "kept" leaves the stored one (the read
+ * only amended fields of the one the frame shows), none removes it.
  */
 export async function saveEvent(
 	event: DetectedEvent,
-	frame?: Blob,
+	frame?: Blob | "kept",
 	reuseId?: number,
 ): Promise<number> {
 	const record: StoredEvent = {
@@ -58,25 +60,34 @@ export async function saveEvent(
 		...detectionOf(event),
 		v: EventVersion.CURRENT,
 		detectedAt: Date.now(),
-		hasFrame: frame !== undefined,
 	};
+	const keepsFrame = frame === "kept" && reuseId !== undefined;
+	const newFrame = frame instanceof Blob ? frame : undefined;
 	let id = 0;
 	let retained = false;
 	await readwrite([EVENTS_STORE, FRAMES_STORE], (transaction) => {
 		const events = transaction.objectStore(EVENTS_STORE);
 		const frames = transaction.objectStore(FRAMES_STORE);
-		const add = events.put(record) as IDBRequest<number>;
-		add.onsuccess = () => {
-			id = add.result;
-			if (frame) frames.put(frame, id);
-			else if (reuseId !== undefined) frames.delete(id);
-			const now = Date.now();
-			if (now - lastRetentionAt >= RETENTION_INTERVAL_MS) {
-				lastRetentionAt = now;
-				retainSessions(events, frames, now);
-				retained = true;
-			}
+		const put = (hasFrame: boolean) => {
+			const add = events.put({ ...record, hasFrame }) as IDBRequest<number>;
+			add.onsuccess = () => {
+				id = add.result;
+				if (newFrame) frames.put(newFrame, id);
+				else if (reuseId !== undefined && !keepsFrame) frames.delete(id);
+				const now = Date.now();
+				if (now - lastRetentionAt >= RETENTION_INTERVAL_MS) {
+					lastRetentionAt = now;
+					retainSessions(events, frames, now);
+					retained = true;
+				}
+			};
 		};
+		if (keepsFrame) {
+			const held = events.get(reuseId) as IDBRequest<StoredEvent | undefined>;
+			held.onsuccess = () => put(held.result?.hasFrame === true);
+		} else {
+			put(newFrame !== undefined);
+		}
 	});
 	if (retained) void trimFrames().catch(() => {});
 	return id;
