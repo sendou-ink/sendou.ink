@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import * as AssociationsRepository from "~/features/associations/AssociationRepository.server";
 import { getUser } from "~/features/auth/core/user.server";
-import * as RosterSchedule from "~/features/availability/core/RosterSchedule.server";
+import * as ScheduleViews from "~/features/availability/core/ScheduleViews.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import * as TeamRepository from "../../team/TeamRepository.server";
@@ -106,7 +106,7 @@ async function rosterAvailability({
 	return {
 		/** Server clock, so that the shown fit does not change on hydration. */
 		now,
-		windows: await RosterSchedule.windowSchedules({
+		windows: await ScheduleViews.windowSchedules({
 			windows: posts.map((post) => ({
 				id: post.id,
 				...postSpan({ post, now }),

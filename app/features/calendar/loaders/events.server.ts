@@ -1,5 +1,5 @@
 import { requireUser } from "~/features/auth/core/user.server";
-import { myScheduleData } from "~/features/availability/core/MySchedule.server";
+import * as ScheduleViews from "~/features/availability/core/ScheduleViews.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import {
@@ -30,7 +30,7 @@ export const loader = async () => {
 	const userOrganizations = await TournamentOrganizationRepository.findByUserId(
 		user.id,
 	);
-	const mySchedule = await myScheduleData(user.id);
+	const mySchedule = await ScheduleViews.myScheduleData(user.id);
 	const teamEvents = await findUpcomingTeamEvents(user.id);
 	const leagueMatches = await findUpcomingLeagueMatches(user.id);
 	const lobbies = await findUpcomingLobbies(user.id);

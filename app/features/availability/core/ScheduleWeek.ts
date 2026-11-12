@@ -1,3 +1,8 @@
+/**
+ * A week of schedules laid out on the viewer's days, as the read-only views (team schedule,
+ * scrim and tournament rosters) render it: each member's free time per day and the team's
+ * playable windows.
+ */
 import * as R from "remeda";
 import { AVAILABILITY } from "../availability-constants";
 import type {
@@ -6,6 +11,7 @@ import type {
 	TimeRange,
 } from "../availability-types";
 import * as Availability from "./Availability";
+import * as DayTrack from "./DayTrack";
 
 const DAY_SECONDS = 24 * 60 * 60;
 
@@ -106,11 +112,11 @@ export function memberRow({
 	const reportedSlots = Availability.normalize(
 		memberWeeks.flatMap((week) => week.slots),
 	);
-	const freeTracks = Availability.splitByDayTracks(
+	const freeTracks = DayTrack.splitByDayTracks(
 		Availability.subtract(reportedSlots, busy),
 		timezone,
 	);
-	const reportedTracks = Availability.splitByDayTracks(reportedSlots, timezone);
+	const reportedTracks = DayTrack.splitByDayTracks(reportedSlots, timezone);
 	const tracksOfDay = (tracks: Array<TimeRange>, day: ScheduleWeekDay) =>
 		tracks.filter(
 			(track) =>

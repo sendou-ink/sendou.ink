@@ -4,8 +4,8 @@ import * as R from "remeda";
 import { Config } from "~/config";
 import * as Articles from "~/features/articles/core/Articles.server";
 import * as Availability from "~/features/availability/core/Availability";
+import * as Schedules from "~/features/availability/core/Schedules.server";
 import * as ScheduleWeek from "~/features/availability/core/ScheduleWeek";
-import * as VisibleSchedules from "~/features/availability/core/VisibleSchedules.server";
 import { allEntries as allChangelogEntries } from "~/features/changelog/core/entries.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
@@ -2156,7 +2156,7 @@ async function buildTeamAvailability(ctx: FeedContext) {
 		timezone,
 	);
 	const memberIds = team.members.map((member) => member.id);
-	const { reportedWeeks, busyByUserId } = await VisibleSchedules.findByUserIds({
+	const { reportedWeeks, busyByUserId } = await Schedules.findVisibleByUserIds({
 		userIds: memberIds,
 		viewerId: ctx.viewerId,
 		bypassVisibility: ctx.mode === "TEST",

@@ -1,6 +1,6 @@
 import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as FriendSchedule from "~/features/availability/core/FriendSchedule.server";
+import * as ScheduleViews from "~/features/availability/core/ScheduleViews.server";
 import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
 import { userPage } from "~/utils/urls";
 import * as FriendRepository from "../FriendRepository.server";
@@ -39,7 +39,7 @@ export const loader = async () => {
 		viewerId: user.id,
 		friendIds: unique.map((f) => f.id),
 	});
-	const schedules = await FriendSchedule.findByUserIds({
+	const schedules = await ScheduleViews.friendWeeks({
 		userIds: unique.map((f) => f.id),
 		timezone: getViewerTimezone() ?? "UTC",
 		viewerId: user.id,

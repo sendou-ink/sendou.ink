@@ -1,11 +1,17 @@
 import { addWeeks } from "date-fns";
 import { describe, expect, test } from "vitest";
-import type { BusyBlock, TimeRange } from "../availability-types";
+import type {
+	BusyBlock,
+	PlayableWindowTier,
+	TimeRange,
+} from "../availability-types";
 import * as Availability from "./Availability";
+import * as DayTrack from "./DayTrack";
 import * as ScheduleWeek from "./ScheduleWeek";
 
 const DAY_SECONDS = 24 * 60 * 60;
 const TIMEZONE = "UTC";
+const HELSINKI = "Europe/Helsinki";
 const FRIDAY = 4;
 const SATURDAY = 5;
 
@@ -108,6 +114,143 @@ describe("ScheduleWeek.memberRow", () => {
 	});
 });
 
+describe("ScheduleWeek.days", () => {
+	test("lays the week out on seven consecutive days, Monday first", () => {
+		const range = Availability.weekRange(
+			new Date("2026-08-26T12:00:00Z"),
+			HELSINKI,
+		);
+
+		expect(ScheduleWeek.days(range, HELSINKI).map((day) => day.date)).toEqual([
+			"2026-08-24",
+			"2026-08-25",
+			"2026-08-26",
+			"2026-08-27",
+			"2026-08-28",
+			"2026-08-29",
+			"2026-08-30",
+		]);
+	});
+});
+
+describe("ScheduleWeek.weekNumber", () => {
+	test("is the ISO number of the week", () => {
+		const range = Availability.weekRange(
+			new Date("2026-08-26T12:00:00Z"),
+			HELSINKI,
+		);
+
+		expect(ScheduleWeek.weekNumber(range, HELSINKI)).toBe(35);
+	});
+});
+
+describe("ScheduleWeek.teamWindows", () => {
+	test("needs four players free when the roster has more", () => {
+		const { range, weekStartsAt, fridayAt } = nextWeek();
+		const evening = { startsAt: fridayAt(18 * 60), endsAt: fridayAt(22 * 60) };
+
+		const { minPlayers, windows } = ScheduleWeek.teamWindows({
+			range,
+			playerIds: [1, 2, 3, 4, 5],
+			reportedWeeks: [1, 2, 3, 4].map((userId) =>
+				reportedWeek({ userId, weekStartsAt, slots: [evening] }),
+			),
+			busyByUserId: new Map(),
+		});
+
+		expect(minPlayers).toBe(4);
+		expect(windows).toMatchObject([{ ...evening, tier: "FULL" }]);
+	});
+
+	test("needs every player of a smaller roster", () => {
+		const { range, weekStartsAt, fridayAt } = nextWeek();
+		const evening = { startsAt: fridayAt(18 * 60), endsAt: fridayAt(22 * 60) };
+
+		const { minPlayers, windows } = ScheduleWeek.teamWindows({
+			range,
+			playerIds: [1, 2],
+			reportedWeeks: [1, 2].map((userId) =>
+				reportedWeek({ userId, weekStartsAt, slots: [evening] }),
+			),
+			busyByUserId: new Map(),
+		});
+
+		expect(minPlayers).toBe(2);
+		expect(windows).toMatchObject([{ tier: "FULL" }]);
+	});
+
+	test("cuts a player's commitments out before looking for windows", () => {
+		const { range, weekStartsAt, fridayAt } = nextWeek();
+		const evening = { startsAt: fridayAt(18 * 60), endsAt: fridayAt(22 * 60) };
+
+		const { windows } = ScheduleWeek.teamWindows({
+			range,
+			playerIds: [1, 2],
+			reportedWeeks: [1, 2].map((userId) =>
+				reportedWeek({ userId, weekStartsAt, slots: [evening] }),
+			),
+			busyByUserId: new Map([
+				[
+					2,
+					[
+						{
+							type: "scrim",
+							name: null,
+							startsAt: fridayAt(20 * 60),
+							endsAt: fridayAt(22 * 60),
+						},
+					],
+				],
+			]),
+		});
+
+		expect(windows).toMatchObject([
+			{ startsAt: fridayAt(18 * 60), endsAt: fridayAt(20 * 60), tier: "FULL" },
+		]);
+	});
+});
+
+describe("ScheduleWeek.bestWindowTierOfDay", () => {
+	const { days, fridayAt } = nextWeek();
+	const window = (tier: PlayableWindowTier) => ({
+		startsAt: fridayAt(18 * 60),
+		endsAt: fridayAt(20 * 60),
+		tier,
+	});
+
+	test.each([
+		{
+			why: "a full window wins over one short",
+			tiers: ["ONE_SHORT", "FULL"],
+			expected: "FULL",
+		},
+		{
+			why: "one short without a full one",
+			tiers: ["ONE_SHORT"],
+			expected: "ONE_SHORT",
+		},
+		{ why: "no windows", tiers: [], expected: null },
+	] as const)("$why", ({ tiers, expected }) => {
+		expect(
+			ScheduleWeek.bestWindowTierOfDay({
+				date: days[FRIDAY].date,
+				windows: tiers.map(window),
+				timezone: TIMEZONE,
+			}),
+		).toBe(expected);
+	});
+
+	test("ignores windows starting on another day", () => {
+		expect(
+			ScheduleWeek.bestWindowTierOfDay({
+				date: days[SATURDAY].date,
+				windows: [window("FULL")],
+				timezone: TIMEZONE,
+			}),
+		).toBeNull();
+	});
+});
+
 function nextWeek() {
 	const weekStartsAt = Availability.weekStartsAt(
 		addWeeks(new Date(), 1),
@@ -124,12 +267,24 @@ function nextWeek() {
 		range,
 		days,
 		fridayAt: (minutes: number) =>
-			Availability.dayMinutesToTimestamp({
+			DayTrack.dayMinutesToTimestamp({
 				date: days[FRIDAY].date,
 				minutes,
 				timezone: TIMEZONE,
 			}),
 	};
+}
+
+function reportedWeek({
+	userId,
+	weekStartsAt,
+	slots,
+}: {
+	userId: number;
+	weekStartsAt: number;
+	slots: Array<TimeRange>;
+}): ScheduleWeek.ReportedWeek {
+	return { userId, weekStartsAt, timezone: TIMEZONE, slots, dayNotes: [] };
 }
 
 function rowWith({

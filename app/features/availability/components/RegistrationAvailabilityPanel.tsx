@@ -14,7 +14,7 @@ import { Avatar } from "~/components/Avatar";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import type { SerializeFrom } from "~/utils/remix";
 import type { TimeRange, WindowAvailabilityEntry } from "../availability-types";
-import type { RegistrationAvailability } from "../core/RegistrationAvailability.server";
+import type { RegistrationAvailability } from "../core/ScheduleViews.server";
 import styles from "./RegistrationAvailabilityPanel.module.css";
 import { useRangeText } from "./ScheduleDayCell";
 

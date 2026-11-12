@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import * as AvailabilityWeekFactory from "~/db/seed/factories/AvailabilityWeekFactory";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as TeamEventFactory from "~/db/seed/factories/TeamEventFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
@@ -10,7 +11,7 @@ import { db } from "~/db/sql";
 import type { TournamentSettings } from "~/db/tables-json";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { withUserId } from "~/utils/Test";
-import * as Commitments from "./Commitments.server";
+import * as Schedules from "./Schedules.server";
 
 const users = UserFactory.pool();
 const memberId = () => users.id(1);
@@ -18,6 +19,7 @@ const teammateId = () => users.id(2);
 const outsiderId = () => users.id(3);
 const opponentId = () => users.id(4);
 const organizerId = () => users.id(5);
+const viewerId = () => users.id(6);
 
 const HOUR = 60 * 60;
 const DAY = 24 * HOUR;
@@ -50,13 +52,78 @@ const DOUBLE_ELIMINATION: TournamentSettings["bracketProgression"] = [
 
 const blocksOf = async (userId: number, window = WINDOW) =>
 	(
-		await Commitments.busyBlocksByUserIds({
+		await Schedules.busyBlocksByUserIds({
 			userIds: [userId, outsiderId()],
 			...window,
 		})
 	).get(userId);
 
-describe("Commitments.busyBlocksByUserIds", () => {
+describe("Schedules.findVisibleByUserIds", () => {
+	beforeEach(async () => {
+		await users.create(6);
+
+		await AvailabilityWeekFactory.create({
+			userId: memberId(),
+			weekStartsAt: WEEK_STARTS_AT,
+			timezone: "UTC",
+			slots: [
+				{
+					startsAt: WEEK_STARTS_AT + DAY + 18 * HOUR,
+					endsAt: WEEK_STARTS_AT + DAY + 22 * HOUR,
+				},
+			],
+		});
+		const team = await TeamFactory.create({ memberUserIds: [memberId()] });
+		await TeamEventFactory.create({
+			teamId: team.id,
+			authorId: memberId(),
+			name: "VoD review",
+			startsAt: WEEK_STARTS_AT + DAY + 20 * HOUR,
+			endsAt: WEEK_STARTS_AT + DAY + 21 * HOUR,
+		});
+	});
+
+	const schedulesSeenByViewer = (bypassVisibility?: boolean) =>
+		Schedules.findVisibleByUserIds({
+			userIds: [memberId()],
+			viewerId: viewerId(),
+			bypassVisibility,
+			...WINDOW,
+		});
+
+	const stopSharing = () =>
+		UserFactory.grant(memberId(), {
+			preferences: { scheduleVisibility: { friends: false, teamIds: [] } },
+		});
+
+	test("returns the reported weeks and the commitments of a user sharing their schedule", async () => {
+		const { reportedWeeks, busyByUserId } = await schedulesSeenByViewer();
+
+		expect(reportedWeeks).toHaveLength(1);
+		expect(busyByUserId.get(memberId())).toMatchObject([
+			{ type: "teamEvent", name: "VoD review" },
+		]);
+	});
+
+	test("leaves out both for a user not sharing their schedule, as if they never filled it in", async () => {
+		await stopSharing();
+
+		const { reportedWeeks, busyByUserId } = await schedulesSeenByViewer();
+
+		expect(reportedWeeks).toEqual([]);
+		expect(busyByUserId.get(memberId())).toBeUndefined();
+	});
+
+	test("reads every schedule when bypassing the visibility", async () => {
+		await stopSharing();
+
+		const { reportedWeeks } = await schedulesSeenByViewer(true);
+
+		expect(reportedWeeks).toHaveLength(1);
+	});
+});
+
+describe("Schedules.busyBlocksByUserIds", () => {
 	beforeEach(async () => {
 		await users.create(5);
 	});
@@ -73,7 +140,7 @@ describe("Commitments.busyBlocksByUserIds", () => {
 			endsAt: WEEK_STARTS_AT + DAY + 2 * HOUR,
 		});
 
-		const byUserId = await Commitments.busyBlocksByUserIds({
+		const byUserId = await Schedules.busyBlocksByUserIds({
 			userIds: [memberId(), teammateId(), outsiderId()],
 			...WINDOW,
 		});
@@ -201,7 +268,7 @@ describe("Commitments.busyBlocksByUserIds", () => {
 		});
 
 		const blocks = (
-			await Commitments.busyBlocksByUserIds({
+			await Schedules.busyBlocksByUserIds({
 				userIds: [memberId()],
 				...WINDOW,
 				excludeTournamentId: excluded.id,
@@ -270,7 +337,7 @@ describe("Commitments.busyBlocksByUserIds", () => {
 
 		expect(
 			(
-				await Commitments.busyBlocksByUserIds({
+				await Schedules.busyBlocksByUserIds({
 					userIds: [memberId()],
 					...WINDOW,
 					excludeTournamentId: league.id,
