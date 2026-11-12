@@ -60,7 +60,7 @@
 	"associations.shareLink.title": "Share link to add members",
 	"associations.shareLink.reset": "Reset link",
 	"associations.manager.label": "Starred member",
-	"associations.manager.explanation": "Starred members can share and reset the invite link and remove unstarred members. With at least one starred member you can leave the association, and the longest-standing starred member will become its new admin.",
+	"associations.manager.explanation": "Starred members can share and reset the invite link and remove unstarred members. With at least one starred member you can leave the association, and the starred member with the oldest sendou.ink account will become its new admin.",
 	"associations.manager.add": "Star {{username}}",
 	"associations.manager.remove": "Unstar {{username}}",
 	"associations.removeMember.title": "Remove {{username}} from the association?",

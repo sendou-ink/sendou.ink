@@ -59,7 +59,6 @@
 	"associations.shareLink.title": "Compartir enlace para añadir miembros",
 	"associations.shareLink.reset": "Restablecer enlace",
 	"associations.manager.label": "Miembro destacado",
-	"associations.manager.explanation": "Los miembros destacados pueden compartir y restablecer el enlace de invitación y quitar a los miembros no destacados. Con al menos un miembro destacado puedes salir de la asociación, y el miembro destacado más antiguo pasará a ser su nuevo administrador.",
 	"associations.manager.add": "Destacar a {{username}}",
 	"associations.manager.remove": "Dejar de destacar a {{username}}",
 	"associations.removeMember.title": "¿Quitar a {{username}} de la asociación?",
