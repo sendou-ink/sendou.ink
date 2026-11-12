@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test } from "vitest";
 import * as ApiTokenFactory from "~/db/seed/factories/ApiTokenFactory";
 import * as BadgeFactory from "~/db/seed/factories/BadgeFactory";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
+import * as PlusSuggestionFactory from "~/db/seed/factories/PlusSuggestionFactory";
+import * as PlusVoteFactory from "~/db/seed/factories/PlusVoteFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as TournamentStreamerFactory from "~/db/seed/factories/TournamentStreamerFactory";
@@ -9,6 +11,12 @@ import * as TrophyFactory from "~/db/seed/factories/TrophyFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as ApiRepository from "~/features/api/ApiRepository.server";
+import { lastCompletedVoting } from "~/features/plus-voting/core/voting-time";
+import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
+import {
+	PLUS_DOWNVOTE,
+	PLUS_UPVOTE,
+} from "~/features/plus-voting/plus-voting-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import * as AdminRepository from "./AdminRepository.server";
@@ -505,7 +513,88 @@ describe("replacePlusTiers", () => {
 	};
 
 	beforeEach(async () => {
-		await createUsers(2);
+		await createUsers(4);
+	});
+
+	const SUGGESTED_TIER = 2;
+	const suggestedId = () => users.id(1);
+	const voterIds = () => users.ids().slice(1);
+
+	const suggest = () =>
+		PlusSuggestionFactory.create({
+			authorId: voterIds()[0],
+			suggestedId: suggestedId(),
+			tier: SUGGESTED_TIER,
+			...lastCompletedVoting(new Date()),
+		});
+
+	const voteOnSuggested = (score: number) =>
+		PlusVoteFactory.createMany(voterIds().length, (index) => ({
+			authorId: voterIds()[index],
+			votedId: suggestedId(),
+			tier: SUGGESTED_TIER,
+			score,
+		}));
+
+	const everyoneInTier = (plusTier: number) =>
+		users.ids().map((userId) => ({ userId, plusTier }));
+
+	const suggestionCount = async () => {
+		const rows = await db.selectFrom("PlusSuggestion").select("id").execute();
+
+		return rows.length;
+	};
+
+	test("deletes the suggestion of a user given the tier before the voting, so failing it demotes them instead of removing them", async () => {
+		await suggest();
+		await AdminRepository.replacePlusTiers(everyoneInTier(SUGGESTED_TIER));
+		await voteOnSuggested(PLUS_DOWNVOTE);
+
+		expect(await suggestionCount()).toBe(0);
+		expect(
+			await PlusVotingRepository.findAllPlusTiersFromLatestVoting(),
+		).toContainEqual({ userId: suggestedId(), plusTier: SUGGESTED_TIER + 1 });
+	});
+
+	test.each([
+		{ why: "above the suggested tier", plusTier: 1, expectedCount: 0 },
+		{ why: "in the suggested tier", plusTier: 2, expectedCount: 0 },
+		{ why: "below the suggested tier", plusTier: 3, expectedCount: 1 },
+		{ why: "without a tier", plusTier: null, expectedCount: 1 },
+	])(
+		"leaves $expectedCount suggestions of a user the new tiers put $why",
+		async ({ plusTier, expectedCount }) => {
+			await suggest();
+			await AdminRepository.replacePlusTiers([
+				...everyoneInTier(SUGGESTED_TIER).filter(
+					({ userId }) => userId !== suggestedId(),
+				),
+				...(plusTier ? [{ userId: suggestedId(), plusTier }] : []),
+			]);
+
+			expect(await suggestionCount()).toBe(expectedCount);
+		},
+	);
+
+	test("deletes the suggestion of a member when only an earlier voting has votes", async () => {
+		await PlusVoteFactory.create({
+			authorId: voterIds()[0],
+			votedId: voterIds()[1],
+			month: 0,
+			year: 2020,
+		});
+		await suggest();
+		await AdminRepository.replacePlusTiers(everyoneInTier(SUGGESTED_TIER));
+
+		expect(await suggestionCount()).toBe(0);
+	});
+
+	test("keeps the suggestion of a user who passed a voting already cast", async () => {
+		await suggest();
+		await voteOnSuggested(PLUS_UPVOTE);
+		await AdminRepository.replacePlusTiers(everyoneInTier(SUGGESTED_TIER));
+
+		expect(await suggestionCount()).toBe(1);
 	});
 
 	test("refreshes the sort values of the builds a new tier applies to", async () => {

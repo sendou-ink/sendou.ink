@@ -1,5 +1,10 @@
 import { formatDistance } from "date-fns";
-import type { ExpressionBuilder, Insertable, NotNull } from "kysely";
+import type {
+	ExpressionBuilder,
+	Insertable,
+	NotNull,
+	Transaction,
+} from "kysely";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import { isVotingActive, type MonthYear } from "~/features/plus-voting/core";
@@ -206,6 +211,35 @@ export function deleteWithCommentsBySuggestedUserId({
 		.where("PlusSuggestion.tier", "=", tier)
 		.where("PlusSuggestion.month", "=", month)
 		.where("PlusSuggestion.year", "=", year)
+		.execute();
+}
+
+/**
+ * Deletes the suggestions of votings no votes have been cast in yet whose suggested user is now in the tier or above,
+ * e.g. someone suggested after the previous voting ended who then got the tier from the leaderboard.
+ * Left in place, the voting results would count them as suggested instead of as members.
+ */
+export function deleteAllOfMembersBeforeVoting(trx?: Transaction<DB>) {
+	return (trx ?? db)
+		.deleteFrom("PlusSuggestion")
+		.where(({ exists, selectFrom }) =>
+			exists(
+				selectFrom("PlusTier")
+					.select("PlusTier.userId")
+					.whereRef("PlusTier.userId", "=", "PlusSuggestion.suggestedId")
+					.whereRef("PlusTier.tier", "<=", "PlusSuggestion.tier"),
+			),
+		)
+		.where(({ not, exists, selectFrom }) =>
+			not(
+				exists(
+					selectFrom("PlusVote")
+						.select("PlusVote.month")
+						.whereRef("PlusVote.year", "=", "PlusSuggestion.year")
+						.whereRef("PlusVote.month", "=", "PlusSuggestion.month"),
+				),
+			),
+		)
 		.execute();
 }
 
