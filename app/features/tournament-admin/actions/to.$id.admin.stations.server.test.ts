@@ -127,6 +127,27 @@ describe("stations action", () => {
 		expect(res.fieldErrors["stations[0].name"]).toBe("Unknown station");
 	});
 
+	test("saving no stations clears them", async () => {
+		const tournament = await createTournament({ isLan: true });
+		await TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 1",
+		});
+		await TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 2",
+		});
+
+		await stationsAction(
+			{ autoAssign: true, stations: [] },
+			{ user: organizerId(), params: { id: String(tournament.id) } },
+		);
+
+		expect(
+			await TournamentStationRepository.findAllByTournamentId(tournament.id),
+		).toEqual([]);
+	});
+
 	test("rejects an online tournament", async () => {
 		const tournament = await createTournament({ isLan: false });
 

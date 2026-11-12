@@ -6,6 +6,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouLabel } from "~/components/elements/Label";
 import { FormMessage } from "~/components/FormMessage";
 import type { FormFieldProps } from "../types";
+import { errorMessageId } from "../utils";
 import styles from "./ArrayFormField.module.css";
 import { useTranslatedTexts } from "./FormFieldWrapper";
 
@@ -164,7 +165,9 @@ export function ArrayFormField({
 						</div>
 					))}
 			{translatedError ? (
-				<FormMessage type="error">{translatedError}</FormMessage>
+				<FormMessage type="error" id={errorMessageId(name)}>
+					{translatedError}
+				</FormMessage>
 			) : null}
 			{translatedBottomText && !translatedError ? (
 				<FormMessage type="info">{translatedBottomText}</FormMessage>
