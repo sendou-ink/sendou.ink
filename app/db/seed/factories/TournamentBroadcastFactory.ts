@@ -17,3 +17,16 @@ export const { create } = defineFactory({
 	insert: (args: InsertArgs) =>
 		BroadcastRepository.insertChatRoomIfMissing(args),
 });
+
+/** Generates the channel's program key like the dashboard's "Generate URL" button, returning the key. */
+export function generateProgramKey(
+	key: Omit<
+		Parameters<typeof BroadcastRepository.refreshProgramKey>[0],
+		"rules"
+	>,
+) {
+	return BroadcastRepository.refreshProgramKey({
+		...key,
+		rules: CAST_PRODUCER_RULES,
+	});
+}
