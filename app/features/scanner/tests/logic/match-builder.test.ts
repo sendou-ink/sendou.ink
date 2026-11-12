@@ -33,6 +33,7 @@ import {
 	invalidObjectiveEvents,
 	isHistoryOnly,
 	type MatchBuildCache,
+	withoutInvalidObjectives,
 } from "../../core/match-builder";
 import { xBattleCards } from "../../core/x-battle";
 import type { ScannerLobby } from "../../scanner-types";
@@ -439,6 +440,21 @@ test("a known TC/RM match drops SZ lookalike reads, and an SZ match track ones",
 	const zonesBuilt = buildScannerMatches(zones);
 	assert.equal(zonesBuilt[0]!.match.objective!.samples[0]!.t, 60);
 	assert.deepEqual(invalidObjectiveEvents(zonesBuilt), [zones[2]]);
+});
+
+test("a finished scan's events lose the reads their match's mode rules out and nothing else", () => {
+	const events = [
+		mapStart(0, { mode: "TC" }),
+		objective(60),
+		trackObjective(61),
+		scoreboard(300, { mode: "TC" }),
+	];
+
+	assert.deepEqual(withoutInvalidObjectives(events), [
+		events[0],
+		events[2],
+		events[3],
+	]);
 });
 
 test("an unknown-mode match builds from its majority overlay and deletes nothing", () => {

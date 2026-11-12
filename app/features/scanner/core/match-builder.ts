@@ -651,6 +651,14 @@ export function invalidObjectiveEvents<E extends DetectedEvent>(
 	});
 }
 
+/** `events` without the objective reads their matches' modes rule out (`invalidObjectiveEvents`): what a finished scan keeps. */
+export function withoutInvalidObjectives<E extends DetectedEvent>(
+	events: E[],
+): E[] {
+	const invalid = new Set(invalidObjectiveEvents(buildScannerMatches(events)));
+	return invalid.size > 0 ? events.filter((e) => !invalid.has(e)) : events;
+}
+
 type CounterKind = "zones" | "track";
 
 /**

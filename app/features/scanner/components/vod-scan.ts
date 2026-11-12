@@ -6,7 +6,9 @@
  * (worker/analyzer.worker.ts); the seek fallback drives a <video> element
  * through a single worker. Each worker keeps the timeline of what it scans
  * and reports its changes; the lanes' timelines are stitched at their seams
- * when the scan ends. The finished scan persists under its file name
+ * when the scan ends. Every analyzed frame's checks go to the scan's log
+ * (core/scan-log.ts), per lane, so the scan can be replayed. The finished scan
+ * persists under its file name
  * (store/vods.ts), then its clips are cut off the file (vod-clip-cutter.ts). Unlike a live session, a VoD's
  * matches never upload: without a wall clock they can't be told apart from
  * someone else's games. A scan is all or nothing: leaving the page cancels it and nothing is saved.
@@ -22,8 +24,9 @@ import { detectionOf } from "../core/events";
 import { formatPosition } from "../core/format";
 import {
 	buildScannerMatches,
-	invalidObjectiveEvents,
+	withoutInvalidObjectives,
 } from "../core/match-builder";
+import * as ScanLog from "../core/scan-log";
 import { sessionSummary } from "../core/sessions";
 import { stitchLanes } from "../core/timeline/index";
 import {
@@ -122,6 +125,8 @@ const progressListeners = new Set<() => void>();
 const laneCanvases = new Map<number, HTMLCanvasElement>();
 /** lossless images of the frames the detectors analyzed this scan, until saved */
 let frames = new WeakMap<ScanEvent, Blob>();
+/** the log of this visit's scan, as far as it has come */
+let scanLog: ScanLog.ScanLog | null = null;
 let abortRef = { aborted: false };
 let abortChunks: (() => void) | null = null;
 /**
@@ -191,6 +196,11 @@ export function vodScanFrame(
 	return undefined;
 }
 
+/** The log of the scan run this visit, still growing while it runs. */
+export function vodScanLog(): ScanLog.ScanLog | undefined {
+	return scanLog ?? undefined;
+}
+
 /** The file named `name` scanned or opened this visit; null when it was scanned in an earlier one. */
 export function visitVodFile(name: string): File | null {
 	return visitFiles.get(name) ?? null;
@@ -225,6 +235,7 @@ export async function startVodScan(
 	const abort = { aborted: false };
 	abortRef = abort;
 	frames = new WeakMap();
+	scanLog = null;
 	visitFiles.set(file.name, file);
 	const own = ++generation;
 	const update = (patch: Partial<VodScanSnapshot>) => {
@@ -248,6 +259,11 @@ export async function startVodScan(
 	/** per worker: where its slice starts and its timeline's events by slot key */
 	const lanes: { tStart: number; events: Map<number, ScanEvent> }[] = [];
 	const minimaps: VodMinimap[] = [];
+	let log: ScanLog.ScanLog | null = null;
+	const startLog = (slices: { tStart: number; tEnd: number }[]) => {
+		log = ScanLog.create(slices);
+		if (own === generation) scanLog = log;
+	};
 	let clients: AnalyzerClient[] = [];
 	let publishTimer: ReturnType<typeof setTimeout> | null = null;
 	const publish = () => {
@@ -265,10 +281,20 @@ export async function startVodScan(
 		const seek: { doneInfo: DoneInfo | null; frameDone: (() => void) | null } =
 			{ doneInfo: null, frameDone: null };
 		clients = Array.from({ length: defaultScanWorkerCount() }, () => {
+			const laneIndex = lanes.length;
 			const lane = { tStart: 0, events: new Map<number, ScanEvent>() };
 			lanes.push(lane);
 			return new AnalyzerClient(
 				(result) => {
+					if (log) {
+						ScanLog.record(log, laneIndex, result.t, {
+							detector: result.detector,
+							pass: result.gate.pass,
+							variant: result.gate.variant,
+							parsed: result.parsed,
+							reads: result.events,
+						});
+					}
 					if (!result.gate.pass) return;
 					if (result.minimapSnapshot) {
 						minimaps.push({ t: result.t, image: result.minimapSnapshot });
@@ -328,6 +354,7 @@ export async function startVodScan(
 				failed: false,
 				telemetry: null as ScanTelemetry | null,
 			}));
+			startLog(chunks);
 			abortChunks = () => {
 				for (const client of clients) client.abortChunk();
 			};
@@ -414,6 +441,7 @@ export async function startVodScan(
 			const strideRef = { current: SEEK_ACTIVE_STRIDE_S };
 			const vod = await openSeekScan(video, () => strideRef.current);
 			if (abort.aborted) return;
+			startLog([{ tStart: 0, tEnd: vod.duration }]);
 			const client = clients[0]!;
 			let lastUiUpdate = Number.NEGATIVE_INFINITY;
 			for await (const { frame, t } of vod.frames) {
@@ -503,6 +531,7 @@ export async function startVodScan(
 				frame: frames.get(event),
 			})),
 			minimaps,
+			log ?? undefined,
 		);
 		events = (await loadVodEvents(file.name)).map(toScanEvent);
 		update({
@@ -513,12 +542,6 @@ export async function startVodScan(
 		void refreshVods();
 		if (clips) await cutVodClips({ name: file.name, file, events });
 	}
-}
-
-/** Objective reads that grouped into a match whose mode rules their overlay out (misreads) are dropped. */
-function withoutInvalidObjectives(events: ScanEvent[]): ScanEvent[] {
-	const invalid = new Set(invalidObjectiveEvents(buildScannerMatches(events)));
-	return invalid.size > 0 ? events.filter((e) => !invalid.has(e)) : events;
 }
 
 function toScanEvent(event: StoredVodEvent): ScanEvent {

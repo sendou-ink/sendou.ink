@@ -2,12 +2,15 @@
  * A game's bundle for reporting a misread: the match as built (with its
  * clips' kill counts and stream/file windows), its source events, and every stored analyzed frame as a fixture-ready folder
  * (`frames/<n>-<type>-<position>/` holding the frame and a prefilled
- * expected.json).
+ * expected.json). A VoD's game also carries the whole scan's log
+ * (`scan-log.json`, core/scan-log.ts): with the video file it replays the scan
+ * that read the game.
  */
 import { strToU8, type Zippable, zipSync } from "fflate";
 import type { ExportClip } from "../core/csv/matches";
 import * as EventVersion from "../core/event-version";
 import type { BuiltMatch } from "../core/match-builder";
+import type { ScanLog } from "../core/scan-log";
 import { buildExpectedJson } from "./fixture-export";
 import type { GetFrame, ScanEvent } from "./session-data";
 
@@ -21,6 +24,7 @@ export async function matchZip(
 	built: BuiltMatch<ScanEvent>,
 	getFrame: (event: ScanEvent) => GetFrame | undefined,
 	clips: readonly ExportClip[] = [],
+	scanLog?: ScanLog,
 ): Promise<Uint8Array> {
 	const originT = built.sources[0]?.t ?? 0;
 	const files: Zippable = {};
@@ -61,6 +65,7 @@ export async function matchZip(
 		),
 	);
 	files["events.json"] = strToU8(JSON.stringify(events, null, 2));
+	if (scanLog) files["scan-log.json"] = strToU8(JSON.stringify(scanLog));
 
 	return zipSync(files);
 }

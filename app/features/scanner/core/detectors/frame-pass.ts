@@ -30,6 +30,12 @@ export interface DetectorOutcome {
 	actions: TimelineAction[];
 }
 
+/** What the pass asks of the scheduler; a replay answers from the scan's log instead (replay-pass.ts). */
+type PassScheduler = Pick<
+	DetectorScheduler,
+	"recordGate" | "shouldParse" | "recordParse"
+>;
+
 /** Runs match steps to completion, answering requests in batches (a GPU driver's `run`). */
 export type StepsRunner = <T>(steps: MatchSteps<T>) => Promise<T>;
 
@@ -50,7 +56,7 @@ export async function runDetectorPass({
 	t: number;
 	detectors: readonly Detector<DetectedEvent>[];
 	due: readonly string[];
-	scheduler: DetectorScheduler;
+	scheduler: PassScheduler;
 	timeline: TimelineBuilder;
 	telemetry: ScanTelemetry | null;
 	/** batching driver; omitted = every parse runs synchronously */

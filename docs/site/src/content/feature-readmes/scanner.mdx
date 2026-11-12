@@ -126,7 +126,9 @@ opens it, for anyone, through the same handoff Inspect uses.
   download, what users report a misread with — `match.json` (the card's
   match plus its clips' kills and stream/file `start`/`end`), `events.json` (every source event, each naming its frame folder)
   and `frames/<n>-<type>-<position>/` with the frame plus a prefilled
-  `expected.json`, fixture-ready.
+  `expected.json`, fixture-ready. A VoD's game also holds `scan-log.json`,
+  the whole scan's log: with the video file the scan can be run again as it
+  ran (see "Scan log and replay").
 - **Debug gate** (`use-debug.ts`: DEV/ADMIN role or `?debug=true`, which
   Settings → Debug → `Enable debug` sets):
   `Save frame as fixture` (Settings → Debug, live only) and
@@ -343,6 +345,7 @@ pnpm scanner:fixtures [name-substring]  # run detectors over matching fixtures, 
 pnpm scanner:replay <dir> <startT> <fps> # replay ffmpeg-extracted frames through the scheduler+detectors
 pnpm scanner:unpack-zip <zip> <new-dir> # validate + unpack a user's Game data zip (refuses anything matchZip doesn't write)
 pnpm scanner:scan-vod <video>           # VoD scan as a CLI (ffmpeg): video in, events CSV out (--gpu, --record, see "WebGPU"; --tape, see "Event tapes")
+pnpm scanner:scan-vod <video> --replay <scan-log.json> # the scan a browser ran on that file, run again from its log, see "Scan log and replay"
 pnpm scanner:tape <name> "<description>" <zip>... # record an event tape from Game data zips
 pnpm scanner:status-audit <events.csv>  # diff the CSV's timeline vs scoreboard D/S, rank fixture candidates
 pnpm scanner:bootstrap-atlas            # harvest labeled fixture crops into the glyph atlases
@@ -770,6 +773,11 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   the reads a lane kept within their merge window of the next lane's start
   into that lane's timeline, the one merge that happens outside a worker
   (until then the scanning view can show such a read twice).
+- A VoD scan writes a log of every frame it analyzed (`core/scan-log.ts`,
+  per lane: which detectors were due, each gate's verdict, whether the parse
+  ran and what it read), saved with the VoD (`vod-scan-logs`) and put into
+  its games' Game data zips. `scan-vod --replay` runs the scan again from it,
+  see "Scan log and replay".
 - Gates and parses read the frame's gray/RGB/HSV
   through `frameGray`/`frameRgb`/`frameHsv` (`core/image.ts`), converted once
   per frame and shared: never delete or write them, and never pass them a
@@ -949,6 +957,68 @@ screens", and thresholds only those reach come last. `pnpm scanner:report
 - New threshold comparisons go through `Decisions`; per-pixel classification
   loops and the glyph prescreen stay plain comparisons (too hot, and a single
   pixel decides nothing).
+
+## Scan log and replay
+
+What a scan reads does not follow from the footage alone. Which frames it
+looks at and in what state it reads them depends on how it ran: a VoD is
+split into one lane per worker (their number follows the machine's cores),
+each lane starts with a scheduler, a timeline and detectors of its own, calm
+stretches are skimmed, and frames come at the file's own timestamps. The
+detectors carry state from frame to frame (the death and kill-feed memos, the
+player-status strip's sticky fit, the strip-weapon sampling counter) and the
+scheduler decides from what earlier frames showed. `scan-vod` on the same file
+runs one lane on ffmpeg's 8 fps grid, so it need not read what the browser
+read: on a 150 s Rainmaker slice, 111 of the browser scan's 189 events had no
+identical counterpart in a plain `scan-vod` run.
+
+So a VoD scan keeps a log (`core/scan-log.ts`): per lane, every analyzed
+frame's timestamp and, for each detector that was due, the gate's verdict and
+variant, whether the parse ran, and the type and confidence of each event it
+read. It is built on the page from the worker's `result` messages
+(`vod-scan.ts`), saved with the VoD (`vod-scan-logs`) and put into every Game
+data zip of that VoD as `scan-log.json` (the whole scan's, not just the
+game's: a detector's state starts at its lane's start). The log is its own
+JSON form, three bit masks per frame over a table of detector ids, around
+30 bytes per frame (some 4 frames a second while the scan is not skimming).
+
+`pnpm scanner:scan-vod <video> --replay <scan-log.json>` runs that scan again
+(`core/detectors/replay-pass.ts`):
+
+- Each lane gets detectors and a timeline of its own and is shown the frames
+  it analyzed, in its order. ffmpeg decodes the video at its own size and
+  timestamps; a logged frame is the frame at that timestamp (or, for another
+  encode or a scan that read by seeking, the last frame before it, which the
+  summary says).
+- No scheduler runs. The logged detectors are due, a gate takes the logged
+  verdict, a parse runs where it ran, and a parse that reads the logged event
+  types takes their logged confidences, so the timeline keeps the reads the
+  scan's kept. Only the events' `data` comes from the replay's own pixels.
+- The lanes are stitched and finished as the page does it
+  (`stitchLanes`, `withoutInvalidObjectives`), so the CSV is the one the VoD's
+  `Raw detections` export gives.
+- Every gate the replay's pixels decide differently and every parse that
+  reads other events, or the same ones more than 0.02 off in confidence, is
+  printed; the summary counts them. ffmpeg decodes the same frames as the
+  browser but converts them to RGB a little differently, so confidences
+  drift by a few thousandths while the reads stay the same. On the Rainmaker
+  slice (VP9, four lanes, scanned in Chromium): all 600 frames found at their
+  timestamps, all 7,051 gate checks as logged, 165 of 166 parses within 0.02,
+  and an events CSV identical to the browser's.
+- `--start T --duration S` pick the stretch to reproduce: each lane reaching
+  into it is replayed from the lane's start, where its detectors' state began.
+
+It needs the file the scan read (same frames at the same timestamps). A
+replay on changed detector code shows what the scan would have read with it:
+the frames, the lanes and the order stay the scan's, so a fix can be checked
+against the scan that showed the misread. Live captures keep no log: there is
+no footage to replay it on. `pnpm scanner:replay` is the older tool for a
+folder of extracted frames, run through a scheduler of its own.
+
+State a detector keeps between frames is reproduced as long as it lives in
+the detector instance and follows from the frames it was shown. State kept
+anywhere else, or a decision that depends on something the log does not hold,
+has to be added to the log (bump its `VERSION`).
 
 ## Event tapes
 

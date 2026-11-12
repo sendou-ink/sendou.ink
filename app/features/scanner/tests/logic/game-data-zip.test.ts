@@ -14,6 +14,7 @@ import type { ScanEvent } from "../../components/session-data";
 import type { DeathData } from "../../core/detectors/death/index";
 import type { ScoreboardData } from "../../core/detectors/scoreboard/index";
 import { buildScannerMatches } from "../../core/match-builder";
+import * as ScanLog from "../../core/scan-log";
 import { extractGameDataZip } from "../../node/game-data-zip";
 
 const FOLDER = "frames/002-Death-1m02s";
@@ -104,9 +105,36 @@ describe("extractGameDataZip", () => {
 			Scoreboard: 1,
 		});
 		expect(summary.eventsWithoutFrame).toBe(1);
+		expect(summary.scanLog).toBeNull();
 		expect(readFileSync(join(outDir(), FOLDER, "frame.webp"))).toEqual(
 			Buffer.from(DEATH_FRAME),
 		);
+	});
+
+	test("unpacks the scan log of a VoD's game and counts its lanes and frames", async () => {
+		const scanLog = ScanLog.create([
+			{ tStart: 0, tEnd: 300 },
+			{ tStart: 300, tEnd: 600 },
+		]);
+		for (const [lane, t] of [
+			[0, 100],
+			[0, 162],
+			[1, 400],
+		] as const) {
+			ScanLog.record(scanLog, lane, t, {
+				detector: "scoreboard",
+				pass: false,
+				parsed: false,
+				reads: [],
+			});
+		}
+
+		const summary = extract(await scannerZip(scanLog));
+
+		expect(summary.scanLog).toEqual({ lanes: 2, frames: 3 });
+		expect(
+			JSON.parse(readFileSync(join(outDir(), "scan-log.json"), "utf8")),
+		).toEqual(scanLog);
 	});
 
 	test.each<{ why: string; files: () => Zippable; reason: RegExp }>([
@@ -209,6 +237,19 @@ describe("extractGameDataZip", () => {
 			reason: /names another event/,
 		},
 		{
+			why: "a scan log the scanner does not write",
+			files: () => ({
+				...validFiles(),
+				"scan-log.json": json({
+					v: 1,
+					detectors: ["../../etc"],
+					types: [],
+					lanes: [],
+				}),
+			}),
+			reason: /scan-log\.json is not a scan log: detectors/,
+		},
+		{
 			why: "frame folder no event names",
 			files: () => ({
 				...validFiles(),
@@ -280,16 +321,21 @@ function extract(zip: Uint8Array, target = outDir()) {
 	return extractGameDataZip(zipPath, target);
 }
 
-async function scannerZip() {
+async function scannerZip(scanLog?: ScanLog.ScanLog) {
 	const frames = new Map<ScanEvent, Blob>([
 		[death, new Blob([DEATH_FRAME], { type: "image/webp" })],
 		[scoreboard, new Blob([SCOREBOARD_FRAME], { type: "image/png" })],
 	]);
 	const [built] = buildScannerMatches([mapStart, death, scoreboard]);
-	return matchZip(built!, (event) => {
-		const frame = frames.get(event);
-		return frame ? () => Promise.resolve(frame) : undefined;
-	});
+	return matchZip(
+		built!,
+		(event) => {
+			const frame = frames.get(event);
+			return frame ? () => Promise.resolve(frame) : undefined;
+		},
+		[],
+		scanLog,
+	);
 }
 
 function validEvent() {

@@ -3,12 +3,15 @@
  * without re-decoding. The summary lives in `vods`, detections in
  * `vod-events` under a `vod` index, full-res frames in `vod-frames` under the event id
  * (loadVodEventFrame), so listing stays cheap. The map opens' downscaled
- * frames live in `vod-minimaps` for coach mode, kept as long as the VoD. Re-scanning the same file name
+ * frames live in `vod-minimaps` for coach mode, kept as long as the VoD, as is
+ * the scan's log in `vod-scan-logs` (what a Game data zip needs for the scan to
+ * be replayed). Re-scanning the same file name
  * overwrites the previous save; the frames age out by `frames.ts`.
  */
 
 import * as EventVersion from "../core/event-version";
 import type { DetectedEvent } from "../core/events";
+import type { ScanLog } from "../core/scan-log";
 import type { SessionSummary } from "../core/sessions";
 import {
 	readwrite,
@@ -16,6 +19,7 @@ import {
 	VOD_EVENTS_STORE,
 	VOD_FRAMES_STORE,
 	VOD_MINIMAPS_STORE,
+	VOD_SCAN_LOGS_STORE,
 	VODS_STORE,
 } from "./db";
 import { trimFrames } from "./frames";
@@ -64,6 +68,7 @@ const VOD_STORES = [
 	VOD_EVENTS_STORE,
 	VOD_FRAMES_STORE,
 	VOD_MINIMAPS_STORE,
+	VOD_SCAN_LOGS_STORE,
 ];
 
 /** Delete every vod-event (and frame) of `name` via the index, then run `next`. */
@@ -99,15 +104,20 @@ function clearVodMinimaps(
 	};
 }
 
+/** Saves a scan over any earlier one of `meta.name`; without a `scanLog` the VoD has none. */
 export async function saveVod(
 	meta: Omit<VodSummary, "eventCount">,
 	events: VodEventToSave[],
 	minimaps: VodMinimap[] = [],
+	scanLog?: ScanLog,
 ): Promise<void> {
 	await readwrite(VOD_STORES, (transaction) => {
 		const eventStore = transaction.objectStore(VOD_EVENTS_STORE);
 		const frameStore = transaction.objectStore(VOD_FRAMES_STORE);
 		const minimapStore = transaction.objectStore(VOD_MINIMAPS_STORE);
+		const scanLogStore = transaction.objectStore(VOD_SCAN_LOGS_STORE);
+		if (scanLog) scanLogStore.put(scanLog, meta.name);
+		else scanLogStore.delete(meta.name);
 		clearVodMinimaps(minimapStore, meta.name, () => {
 			for (const minimap of minimaps) {
 				minimapStore.add({ ...minimap, vod: meta.name });
@@ -176,6 +186,15 @@ export async function loadVodMinimaps(name: string): Promise<VodMinimap[]> {
 		.sort((a, b) => a.t - b.t);
 }
 
+/** The log of the scan the VoD's events came from; undefined for a VoD saved before scans kept one. */
+export function loadVodScanLog(name: string): Promise<ScanLog | undefined> {
+	return tx(
+		VOD_SCAN_LOGS_STORE,
+		"readonly",
+		(store) => store.get(name) as IDBRequest<ScanLog | undefined>,
+	);
+}
+
 /** The vod-event's full-res analyzed frame, or undefined when none was stored. */
 export function loadVodEventFrame(id: number): Promise<Blob | undefined> {
 	return tx(
@@ -188,6 +207,7 @@ export function loadVodEventFrame(id: number): Promise<Blob | undefined> {
 export function deleteVod(name: string): Promise<void> {
 	return readwrite(VOD_STORES, (transaction) => {
 		transaction.objectStore(VODS_STORE).delete(name);
+		transaction.objectStore(VOD_SCAN_LOGS_STORE).delete(name);
 		clearVodEvents(
 			transaction.objectStore(VOD_EVENTS_STORE),
 			transaction.objectStore(VOD_FRAMES_STORE),

@@ -4,6 +4,7 @@
  * detection and an optional frame; live ones also their /ingest send status.
  */
 import type { DetectedEvent } from "../core/events";
+import type { ScanLog } from "../core/scan-log";
 import type { SendStatus } from "../store/events";
 
 export type ScanEvent = DetectedEvent & {
@@ -20,3 +21,6 @@ export type SessionKind = "live" | "session" | "vod";
 
 /** Lazily loads an event's analyzed frame (IndexedDB keeps them out of the listed records). */
 export type GetFrame = () => Promise<Blob | null | undefined>;
+
+/** Loads the log of the scan a session's events came from. */
+export type GetScanLog = () => Promise<ScanLog | undefined>;
