@@ -51,6 +51,37 @@ const getValidatedBracketsFromPlacements = (
 		},
 	]);
 
+const sortedBracketIdxs = (error: Progression.ValidationError) =>
+	"bracketIdxs" in error ? error.bracketIdxs.toSorted((a, b) => a - b) : [];
+
+const parsedBracket = (
+	name: string,
+	type: Progression.ParsedBracket["type"],
+	sources?: Progression.DBSource[],
+	settings: Progression.ParsedBracket["settings"] = {},
+): Progression.ParsedBracket => ({
+	name,
+	type,
+	settings,
+	requiresCheckIn: false,
+	sources,
+});
+
+/** Main bracket's eliminated teams get a second chance in a redemption bracket whose winner joins the finals. */
+const REDEMPTION_FOR_ELIMINATED: Progression.ParsedBracket[] = [
+	parsedBracket("Pools", "round_robin"),
+	parsedBracket("Main", "single_elimination", [
+		{ bracketIdx: 0, placements: [1, 2, 3, 4] },
+	]),
+	parsedBracket("Redemption", "single_elimination", [
+		{ bracketIdx: 1, placements: [-1] },
+	]),
+	parsedBracket("Finals", "single_elimination", [
+		{ bracketIdx: 2, placements: [1] },
+		{ bracketIdx: 1, placements: [1, 2] },
+	]),
+];
+
 describe("bracketsToValidationError - valid formats", () => {
 	test.each([
 		["SE", progressions.singleElimination],
@@ -188,6 +219,11 @@ describe("validatedSources - placements parsing", () => {
 			placements: "-1+",
 			source: DOUBLE_ELIMINATION,
 		},
+		{
+			why: "a reversed range followed by rest",
+			placements: "1-2,5-3+",
+			source: ROUND_ROBIN_OF_8,
+		},
 	];
 
 	test.each(PARSE_ERRORS)(
@@ -280,6 +316,73 @@ describe('validatedSources - rest "N+" syntax', () => {
 			},
 		]) as Progression.ValidationError;
 		expect(error.type).toBe("SAME_PLACEMENT_TO_MULTIPLE_BRACKETS");
+		expect(sortedBracketIdxs(error)).toEqual([1, 2]);
+	});
+
+	test("flags SAME_PLACEMENT_TO_MULTIPLE_BRACKETS when a later bracket's rest starts below an earlier one's", () => {
+		const error = getValidatedBrackets([
+			ROUND_ROBIN_OF_8,
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [{ bracketId: "0", placements: "1-4" }],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [{ bracketId: "0", placements: "6+" }],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [{ bracketId: "0", placements: "5+" }],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("SAME_PLACEMENT_TO_MULTIPLE_BRACKETS");
+		expect(sortedBracketIdxs(error)).toEqual([2, 3]);
+	});
+
+	test("flags SAME_PLACEMENT_TO_MULTIPLE_BRACKETS when rest from the first placement overlaps another bracket", () => {
+		const error = getValidatedBrackets([
+			ROUND_ROBIN_OF_8,
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [{ bracketId: "0", placements: "1+" }],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [{ bracketId: "0", placements: "3" }],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("SAME_PLACEMENT_TO_MULTIPLE_BRACKETS");
+		expect(sortedBracketIdxs(error)).toEqual([1, 2]);
+	});
+
+	test("accepts rest next to a bracket taking the same placement numbers from another bracket", () => {
+		const result = getValidatedBrackets([
+			ROUND_ROBIN_OF_8,
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [{ bracketId: "0", placements: "1-2" }],
+			},
+			{
+				settings: {},
+				type: "round_robin",
+				sources: [{ bracketId: "0", placements: "3+" }],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [{ bracketId: "2", placements: "1-4" }],
+			},
+		]);
+
+		expect(Progression.isBrackets(result)).toBe(true);
 	});
 
 	test("still flags TOO_MANY_PLACEMENTS when rest's explicit max exceeds teamsPerGroup", () => {
@@ -443,6 +546,12 @@ describe("validatedSources - other rules", () => {
 
 		expect(error.type).toBe("TOO_MANY_PLACEMENTS");
 		expect((error as any).bracketIdx).toEqual(1);
+	});
+
+	test("accepts more placements than a round robin group holds from a Swiss bracket", () => {
+		const result = getValidatedBracketsFromPlacements("1-8", SWISS);
+
+		expect(Progression.isBrackets(result)).toBe(true);
 	});
 
 	test("handles PLACEMENT_TOO_HIGH", () => {
@@ -938,6 +1047,29 @@ describe("validatedSources - other rules", () => {
 		expect(error.type).toBe("EMPTY_PLACEMENTS_ON_NON_SWISS");
 	});
 
+	test("handles EMPTY_PLACEMENTS_ON_NON_SWISS (Swiss source without early advance)", () => {
+		const error = Progression.bracketsToValidationError([
+			{
+				name: "Swiss",
+				type: "swiss",
+				settings: {},
+				requiresCheckIn: false,
+			},
+			{
+				name: "Finals",
+				type: "double_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [{ bracketIdx: 0, placements: [] }],
+			},
+		]);
+
+		expect(error).toEqual({
+			type: "EMPTY_PLACEMENTS_ON_NON_SWISS",
+			bracketIdx: 1,
+		});
+	});
+
 	test("allows empty placements when source is Swiss with advanceThreshold", () => {
 		const result = Progression.bracketsToValidationError([
 			{
@@ -991,10 +1123,58 @@ describe("isFinals", () => {
 		expect(Progression.isFinals(3, progressions.manyStartBrackets)).toBe(false);
 	});
 
+	test("follows the group winners when only they advance to the top bracket", () => {
+		const progression = [
+			parsedBracket("Groups", "round_robin"),
+			parsedBracket("Top", "single_elimination", [
+				{ bracketIdx: 0, placements: [1] },
+			]),
+			parsedBracket("Second chance", "single_elimination", [
+				{ bracketIdx: 0, placements: [2, 3] },
+			]),
+		];
+
+		expect(Progression.isFinals(1, progression)).toBe(true);
+		expect(Progression.isFinals(2, progression)).toBe(false);
+	});
+
 	test("throws if given idx is out of bounds", () => {
 		expect(() =>
 			Progression.isFinals(1, progressions.singleElimination),
 		).toThrow();
+	});
+});
+
+describe("Progression.hasAbDivisionsFinals", () => {
+	test.each([
+		{
+			why: "an A/B divisions round robin as the only bracket",
+			progression: [
+				parsedBracket("Groups", "round_robin", undefined, {
+					hasAbDivisions: true,
+				}),
+			],
+			expected: true,
+		},
+		{
+			why: "a round robin without A/B divisions as the only bracket",
+			progression: [parsedBracket("Groups", "round_robin")],
+			expected: false,
+		},
+		{
+			why: "an A/B divisions round robin followed by a top cut",
+			progression: [
+				parsedBracket("Groups", "round_robin", undefined, {
+					hasAbDivisions: true,
+				}),
+				parsedBracket("Top cut", "single_elimination", [
+					{ bracketIdx: 0, placements: [1, 2] },
+				]),
+			],
+			expected: false,
+		},
+	])("is $expected for $why", ({ progression, expected }) => {
+		expect(Progression.hasAbDivisionsFinals(progression)).toBe(expected);
 	});
 });
 
@@ -1063,10 +1243,95 @@ describe("isUnderground", () => {
 		);
 	});
 
+	test("a redemption bracket sending only its winner to the finals is not underground", () => {
+		expect(Progression.isUnderground(2, REDEMPTION_FOR_ELIMINATED)).toBe(false);
+	});
+
+	test("a redemption bracket reaching the finals through another redemption bracket is not underground", () => {
+		const progression = [
+			parsedBracket("Pools", "round_robin", undefined, { teamsPerGroup: 8 }),
+			parsedBracket("Redemption 1", "single_elimination", [
+				{ bracketIdx: 0, placements: [3, 4, 5, 6] },
+			]),
+			parsedBracket("Redemption 2", "single_elimination", [
+				{ bracketIdx: 1, placements: [1, 2] },
+			]),
+			parsedBracket("Finals", "single_elimination", [
+				{ bracketIdx: 0, placements: [1, 2] },
+				{ bracketIdx: 2, placements: [1] },
+			]),
+		];
+
+		expect(Progression.isUnderground(1, progression)).toBe(false);
+		expect(Progression.isUnderground(2, progression)).toBe(false);
+	});
+
+	test("a bracket for eliminated teams whose winners only reach another side bracket is underground", () => {
+		const progression = [
+			parsedBracket("Main", "single_elimination"),
+			parsedBracket("Underground", "single_elimination", [
+				{ bracketIdx: 0, placements: [-1] },
+			]),
+			parsedBracket("Underground finals", "single_elimination", [
+				{ bracketIdx: 1, placements: [1] },
+			]),
+		];
+
+		expect(Progression.isUnderground(1, progression)).toBe(true);
+		expect(Progression.isUnderground(2, progression)).toBe(true);
+	});
+
 	test("throws if given idx is out of bounds", () => {
 		expect(() =>
 			Progression.isUnderground(1, progressions.singleElimination),
 		).toThrow();
+	});
+});
+
+describe("Progression.undergroundBracketIdxs", () => {
+	test("lists only the brackets taking its eliminated teams", () => {
+		expect(
+			Progression.undergroundBracketIdxs(1, REDEMPTION_FOR_ELIMINATED),
+		).toEqual([2]);
+	});
+});
+
+describe("Progression.bracketsReachableFrom", () => {
+	test("lists a bracket reachable by several routes once", () => {
+		expect(
+			Progression.bracketsReachableFrom(0, progressions.multiSourceTopCut),
+		).toEqual([0, 1, 2]);
+	});
+});
+
+describe("Progression.placementsToString", () => {
+	test.each([
+		{ why: "consecutive placements", placements: [1, 2, 3], expected: "1-3" },
+		{
+			why: "placements with gaps",
+			placements: [1, 3, 4, 6, 7],
+			expected: "1,3-4,6-7",
+		},
+		{ why: "placements out of order", placements: [3, 1, 2], expected: "1-3" },
+		{
+			why: "eliminated teams",
+			placements: [-2, -1],
+			expected: "-1,-2",
+		},
+		{
+			why: "eliminated teams out of order",
+			placements: [-1, -3, -2],
+			expected: "-1,-2,-3",
+		},
+		{
+			why: "rest after a single placement",
+			placements: [5, 6],
+			rest: true,
+			expected: "5,6+",
+		},
+		{ why: "no placements", placements: [], expected: "" },
+	])("$why", ({ placements, rest, expected }) => {
+		expect(Progression.placementsToString(placements, rest)).toBe(expected);
 	});
 });
 
@@ -1142,6 +1407,26 @@ describe("changedFormatBracketIdxs", () => {
 		expect(
 			Progression.changedFormatBracketIdxs([D1, D2], newProgression),
 		).toEqual(expected);
+	});
+});
+
+describe("Progression.changedBracketProgressionFormat", () => {
+	test.each([
+		{ why: "nothing changed", newProgression: [D1, D2], expected: false },
+		{
+			why: "only check-in changed",
+			newProgression: [D1, { ...D2, requiresCheckIn: true }],
+			expected: false,
+		},
+		{
+			why: "one bracket's type changed",
+			newProgression: [D1, { ...D2, type: "double_elimination" as const }],
+			expected: true,
+		},
+	])("is $expected when $why", ({ newProgression, expected }) => {
+		expect(
+			Progression.changedBracketProgressionFormat([D1, D2], newProgression),
+		).toBe(expected);
 	});
 });
 
@@ -1239,6 +1524,45 @@ describe("bracketIdxsForStandings", () => {
 			6, // Epsilon Seeding (pools 9-11)
 			0, // Day 1 Pools
 		]);
+	});
+
+	test("ranks a bracket by the best route its teams took when they come by several", () => {
+		const progression = [
+			parsedBracket("Pools", "round_robin", undefined, { teamsPerGroup: 8 }),
+			parsedBracket("Redemption", "single_elimination", [
+				{ bracketIdx: 0, placements: [5, 6, 7, 8] },
+			]),
+			parsedBracket("Mid", "single_elimination", [
+				{ bracketIdx: 0, placements: [3, 4] },
+			]),
+			parsedBracket("Top", "single_elimination", [
+				{ bracketIdx: 0, placements: [1, 2] },
+				{ bracketIdx: 1, placements: [1] },
+			]),
+		];
+
+		expect(Progression.bracketIdxsForStandings(progression)).toEqual([
+			3, 2, 1, 0,
+		]);
+	});
+
+	test("lists every bracket of a cyclic progression instead of hanging", () => {
+		const progression = [
+			parsedBracket("Pools", "round_robin"),
+			parsedBracket("A", "single_elimination", [
+				{ bracketIdx: 0, placements: [1, 2] },
+				{ bracketIdx: 2, placements: [1] },
+			]),
+			parsedBracket("B", "single_elimination", [
+				{ bracketIdx: 1, placements: [1] },
+			]),
+		];
+
+		expect(
+			Progression.bracketIdxsForStandings(progression).toSorted(
+				(a, b) => a - b,
+			),
+		).toEqual([0, 1, 2]);
 	});
 });
 
@@ -1469,6 +1793,35 @@ describe("validatedSources - CYCLIC_PROGRESSION", () => {
 		expect((error as any).bracketIdxs).toEqual([1]);
 	});
 
+	test("flags every bracket of a three bracket loop", () => {
+		const error = getValidatedBrackets([
+			ROUND_ROBIN,
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{ bracketId: "0", placements: "1-2" },
+					{ bracketId: "3", placements: "1" },
+				],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [{ bracketId: "1", placements: "1" }],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [{ bracketId: "2", placements: "1" }],
+			},
+		]);
+
+		expect(error).toEqual({
+			type: "CYCLIC_PROGRESSION",
+			bracketIdxs: [1, 2, 3],
+		});
+	});
+
 	test("accepts a bracket sourcing one that comes later in the list", () => {
 		const result = getValidatedBrackets([
 			{
@@ -1582,6 +1935,17 @@ describe("sortedSourcesForSeeding", () => {
 		);
 
 		expect(sorted.map((source) => source.bracketIdx)).toEqual([0, 1]);
+	});
+
+	test("orders a bracket's advancing teams above those that came through the redemption bracket for its eliminated teams", () => {
+		const finals = REDEMPTION_FOR_ELIMINATED[3];
+
+		const sorted = Progression.sortedSourcesForSeeding(
+			finals.sources!,
+			REDEMPTION_FOR_ELIMINATED,
+		);
+
+		expect(sorted.map((source) => source.bracketIdx)).toEqual([1, 2]);
 	});
 
 	test("keeps the original order when sources share no ancestor bracket", () => {

@@ -8,6 +8,12 @@ import * as Engine from "./engine";
 import { createResolved } from "./engine/create";
 import type { BracketData, MatchData } from "./engine/types";
 import { Tournament } from "./Tournament";
+import {
+	matchById,
+	playedOut,
+	readyMatches,
+	reportLowerIdWinner,
+} from "./tests/bracket-fixtures";
 import { PADDLING_POOL_255 } from "./tests/mocks";
 import { LOW_INK_DECEMBER_2024 } from "./tests/mocks-li";
 import {
@@ -1101,7 +1107,9 @@ describe("single elimination standings - byes in later rounds", () => {
 	// feeds with a single opponent, so that match is won against a bye. The
 	// semifinal won that way produces no loser, leaving only one team for the
 	// third place match, which can therefore never be played.
-	const legacyByeBracketData = (): BracketData => {
+	const legacyByeBracketData = (
+		loneSemifinalLoserSide: "opponent1" | "opponent2" = "opponent1",
+	): BracketData => {
 		const stageId = 0;
 		const thirdPlaceRoundId = 3;
 
@@ -1156,12 +1164,16 @@ describe("single elimination standings - byes in later rounds", () => {
 				match(5, 1, 2, 5, null, "opponent1"),
 				match(6, 2, 1, 1, 5, "opponent1"),
 				// only one semifinal produced a loser
-				match(7, thirdPlaceRoundId, 1, 3, null, null),
+				loneSemifinalLoserSide === "opponent1"
+					? match(7, thirdPlaceRoundId, 1, 3, null, null)
+					: match(7, thirdPlaceRoundId, 1, null, 3, null),
 			],
 		};
 	};
 
-	const legacyByeTournament = () =>
+	const legacyByeTournament = (
+		loneSemifinalLoserSide?: "opponent1" | "opponent2",
+	) =>
 		testTournament({
 			ctx: {
 				settings: {
@@ -1176,7 +1188,7 @@ describe("single elimination standings - byes in later rounds", () => {
 					],
 				},
 			},
-			data: legacyByeBracketData(),
+			data: legacyByeBracketData(loneSemifinalLoserSide),
 		});
 
 	test("places every team when a match is won against a bye", () => {
@@ -1201,6 +1213,18 @@ describe("single elimination standings - byes in later rounds", () => {
 
 		expect(standings.find((s) => s.team.id === 3)?.placement).toBe(3);
 	});
+
+	test.each(["opponent1", "opponent2"] as const)(
+		"sources the final placements without waiting for a third place match that can't be played (lone team as %s)",
+		(loneSemifinalLoserSide) => {
+			const tournament = legacyByeTournament(loneSemifinalLoserSide);
+
+			expect(tournament.bracketByIdx(0)!.source({ placements: [3] })).toEqual({
+				relevantMatchesFinished: true,
+				teams: [3],
+			});
+		},
+	);
 });
 
 describe("single elimination standings - projected ties", () => {
@@ -2270,7 +2294,7 @@ describe("matchExitGroups", () => {
 	);
 
 	test("gives the group of the not yet started grouped destination each leaving team is projected in", () => {
-		expectExitGroupsToMatchDestination(tournamentWith(main));
+		expectExitGroupsToMatchDestination(tournamentWith(main), main);
 	});
 
 	test("gives the group of the started grouped destination each leaving team landed in", () => {
@@ -2282,10 +2306,39 @@ describe("matchExitGroups", () => {
 
 		expectExitGroupsToMatchDestination(
 			tournamentWith(mergeStages(main, redemption)),
+			main,
 		);
 	});
 
-	function expectExitGroupsToMatchDestination(tournament: Tournament) {
+	test("gives the groups of the right teams when the lower seeds win", () => {
+		const mainWithUpsets = playedOut(
+			createResolved({
+				type: "double_elimination",
+				seeding: TEAM_IDS,
+				settings: PROGRESSION[0].settings,
+			}),
+			[3, 4],
+		);
+		const exitMatchIds = [
+			...tournamentWith(mainWithUpsets).bracketByIdx(0)!.matchExitGroups(),
+		].map(([matchId]) => matchId);
+		expect(
+			exitMatchIds.some(
+				(matchId) =>
+					matchById(mainWithUpsets, matchId).winnerSide === "opponent2",
+			),
+		).toBe(true);
+
+		expectExitGroupsToMatchDestination(
+			tournamentWith(mainWithUpsets),
+			mainWithUpsets,
+		);
+	});
+
+	function expectExitGroupsToMatchDestination(
+		tournament: Tournament,
+		mainData: BracketData,
+	) {
 		const redemptionData = tournament.bracketByIdx(1)!.data;
 		const redemptionGroupOf = (teamId: number | null | undefined) =>
 			redemptionData.match.find(
@@ -2293,19 +2346,33 @@ describe("matchExitGroups", () => {
 					match.opponent1?.id === teamId || match.opponent2?.id === teamId,
 			)?.groupId ?? null;
 
-		const exitGroups = [...tournament.bracketByIdx(0)!.matchExitGroups()];
+		const mainBracket = tournament.bracketByIdx(0)!;
+		const exitGroups = [...mainBracket.matchExitGroups()];
+		const REDEMPTION_IDX = 1;
+		const expectedExitGroups = [...mainBracket.matchExitDestinations()].flatMap(
+			([matchId, destinations]) => {
+				const match = matchById(mainData, matchId);
+				const winner =
+					match.winnerSide === "opponent1" ? "opponent1" : "opponent2";
+				const loser = winner === "opponent1" ? "opponent2" : "opponent1";
+				const groups = {
+					winner:
+						destinations.winner === REDEMPTION_IDX
+							? redemptionGroupOf(match[winner]?.id)
+							: null,
+					loser:
+						destinations.loser === REDEMPTION_IDX
+							? redemptionGroupOf(match[loser]?.id)
+							: null,
+				};
 
-		for (const [matchId, groups] of exitGroups) {
-			const match = matchById(main, matchId);
-			const winner =
-				match.winnerSide === "opponent1" ? "opponent1" : "opponent2";
-			const loser = winner === "opponent1" ? "opponent2" : "opponent1";
+				return groups.winner === null && groups.loser === null
+					? []
+					: [[matchId, groups] as const];
+			},
+		);
 
-			expect(groups).toEqual({
-				winner: redemptionGroupOf(match[winner]?.id),
-				loser: redemptionGroupOf(match[loser]?.id),
-			});
-		}
+		expect(exitGroups).toEqual(expectedExitGroups);
 		expect(
 			new Set(
 				exitGroups.flatMap(([, groups]) => [groups.winner, groups.loser]),
@@ -2334,20 +2401,6 @@ describe("participantTournamentTeamIds", () => {
 	});
 });
 
-/** Plays every match of the bracket, the lower team id winning unless the other team is favored. */
-function playedOut(data: BracketData, favoredIds: number[] = []): BracketData {
-	let result = data;
-	let ready = readyMatches(result, () => true);
-	while (ready.length) {
-		for (const match of ready) {
-			result = reportLowerIdWinner(result, match.id, favoredIds);
-		}
-		ready = readyMatches(result, () => true);
-	}
-
-	return result;
-}
-
 function playedSwissMatches(
 	data: BracketData,
 	rounds: Array<Array<[winnerId: number, loserId: number]>>,
@@ -2366,47 +2419,4 @@ function playedSwissMatches(
 			winnerSide: "opponent1",
 		})),
 	);
-}
-
-/** The lower team id wins, unless only the other team is favored. */
-function reportLowerIdWinner(
-	data: BracketData,
-	matchId: number,
-	favoredIds: number[] = [],
-): BracketData {
-	const match = matchById(data, matchId);
-	const opponent1Id = match.opponent1!.id!;
-	const opponent2Id = match.opponent2!.id!;
-	const opponent1Favored = favoredIds.includes(opponent1Id);
-	const opponent2Favored = favoredIds.includes(opponent2Id);
-	const opponent1Wins =
-		opponent1Favored === opponent2Favored
-			? opponent1Id < opponent2Id
-			: opponent1Favored;
-
-	return Engine.reportResult(data, {
-		matchId,
-		scores: [opponent1Wins ? 2 : 0, opponent1Wins ? 0 : 2],
-		winnerSide: opponent1Wins ? "opponent1" : "opponent2",
-	}).data;
-}
-
-function readyMatches(
-	data: BracketData,
-	predicate: (match: MatchData) => boolean,
-) {
-	return data.match.filter(
-		(match) =>
-			predicate(match) &&
-			match.opponent1?.id != null &&
-			match.opponent2?.id != null &&
-			match.winnerSide == null,
-	);
-}
-
-function matchById(data: BracketData, id: number) {
-	const found = data.match.find((match) => match.id === id);
-	if (!found) throw new Error(`Match ${id} not found`);
-
-	return found;
 }

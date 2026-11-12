@@ -86,6 +86,26 @@ describe("Previous and next match update", () => {
 	});
 });
 
+describe("Third place match", () => {
+	test("saves a semifinal loser to the third place match", () => {
+		const data = createResolved({
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4],
+			settings: { consolationFinal: true },
+		});
+
+		const { changedMatches } = Engine.reportResult(data, {
+			matchId: 0,
+			winnerSide: "opponent1",
+		});
+
+		const thirdPlaceMatch = changedMatches.find((match) => match.id === 3);
+		expect(thirdPlaceMatch?.opponent1?.id).toBe(
+			matchById(data, 0).opponent2?.id,
+		);
+	});
+});
+
 describe("Skipped rounds", () => {
 	test("semifinal losers go to the third place match while the finals are skipped", () => {
 		let data = createResolved({

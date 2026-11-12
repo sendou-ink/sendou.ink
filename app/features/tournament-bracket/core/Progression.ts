@@ -167,15 +167,16 @@ export function validatedBracketsToInputFormat(
 }
 
 /** [1, 2, 3] -> "1-3", [5, 6] with rest -> "5,6+" */
-export function placementsToString(placements: number[], rest = false): string {
-	if (placements.length === 0) return "";
-
-	placements.sort((a, b) => a - b);
-
-	if (placements.some((p) => p < 0)) {
-		placements.sort((a, b) => b - a);
-		return placements.join(",");
+export function placementsToString(
+	unsortedPlacements: number[],
+	rest = false,
+): string {
+	if (unsortedPlacements.some((p) => p < 0)) {
+		return unsortedPlacements.toSorted((a, b) => b - a).join(",");
 	}
+
+	const placements = unsortedPlacements.toSorted((a, b) => a - b);
+	if (placements.length === 0) return "";
 
 	const highest = placements[placements.length - 1];
 	const allButHighest = rest ? placements.slice(0, -1) : placements;
@@ -441,8 +442,8 @@ function toOutputBracketFormat(brackets: InputBracket[]): ParsedBracket[] {
 			(bracket) =>
 				!bracket.sources ||
 				bracket.sources.every((source) => source.bracketIdx >= 0),
-			"Bracket source not found",
 		),
+		"Bracket source not found",
 	);
 
 	return result;

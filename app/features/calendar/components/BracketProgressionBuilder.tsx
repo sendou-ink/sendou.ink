@@ -1473,7 +1473,7 @@ function ConnectionLabel({
 
 	const isTopRun =
 		!parsed.rest && placements.every((placement, idx) => placement === idx + 1);
-	const asText = Progression.placementsToString([...placements], parsed.rest);
+	const asText = Progression.placementsToString(placements, parsed.rest);
 
 	if (source.type === "round_robin") {
 		if (isTopRun && placements.length === 1) {

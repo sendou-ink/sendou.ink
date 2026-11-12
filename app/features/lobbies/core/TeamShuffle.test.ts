@@ -149,6 +149,28 @@ describe("TeamShuffle.shuffle", () => {
 		}
 	});
 
+	test("finds the only even split of the room", () => {
+		const mus = [11, 17, 32, 40, 21, 24, 26, 29];
+
+		const result = TeamShuffle.shuffle({
+			players: mus.map((mu, i) => player(i + 1, { rating: rating({ mu }) })),
+			history: NO_HISTORY,
+		});
+
+		expect([...result.alpha].sort((a, b) => a - b)).toEqual([1, 2, 3, 4]);
+	});
+
+	test("picks randomly between equally good splits", () => {
+		const shuffleWith = (randomValue: number) =>
+			TeamShuffle.shuffle({
+				players: players(8),
+				history: NO_HISTORY,
+				random: () => randomValue,
+			});
+
+		expect(shuffleWith(0).alpha).not.toEqual(shuffleWith(0.99).alpha);
+	});
+
 	test("sits out the players over 8", () => {
 		const result = TeamShuffle.shuffle({
 			players: players(10),
@@ -177,8 +199,11 @@ describe("TeamShuffle.pickSitOuts", () => {
 		const others = players(7).map((p) =>
 			player(p.userId + 10, { sitOutCount: 9 }),
 		);
+		const tiedRandom = () => 0;
 
-		expect(TeamShuffle.pickSitOuts([...others, ...given])).toEqual(expected);
+		expect(TeamShuffle.pickSitOuts([...others, ...given], tiedRandom)).toEqual(
+			expected,
+		);
 	});
 
 	test("nobody sits out with 8", () => {
@@ -207,6 +232,12 @@ describe("TeamShuffle.roleStackCost", () => {
 			why: "an odd one out is free",
 			alpha: [["TACTICOOLER"], [], [], []],
 			bravo: [[], [], [], []],
+			expected: 0,
+		},
+		{
+			why: "an odd one out is free on the other team too",
+			alpha: [[], [], [], []],
+			bravo: [["TACTICOOLER"], [], [], []],
 			expected: 0,
 		},
 		{

@@ -1,9 +1,12 @@
 import { subMinutes, subSeconds } from "date-fns";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
+import * as SplatoonFaker from "~/db/seed/core/SplatoonFaker";
+import * as GroupMatchContinueVoteFactory from "~/db/seed/factories/GroupMatchContinueVoteFactory";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
+import * as SQReadyCheckFactory from "~/db/seed/factories/SQReadyCheckFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { UserMapModePreferences } from "~/db/tables-json";
@@ -14,25 +17,44 @@ import {
 	refreshUserSkills,
 } from "~/features/mmr/tiered.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { invariant } from "~/utils/invariant";
+import {
+	SENDOUQ_LOOKING_PAGE,
+	SENDOUQ_PAGE,
+	SENDOUQ_PREPARING_PAGE,
+	SENDOUQ_READY_PAGE,
+	sendouQMatchPage,
+} from "~/utils/urls";
 import * as SQGroupRepository from "../SQGroupRepository.server";
-import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
+import {
+	refreshSendouQInstance,
+	SendouQ,
+	sqRedirectIfNeeded,
+} from "./SendouQ.server";
 
-const { mockSeasonCurrentOrPrevious } = vi.hoisted(() => ({
-	mockSeasonCurrentOrPrevious: vi.fn(() => ({
+const { mockSeasonCurrentOrPrevious, mockSeasonCurrent } = vi.hoisted(() => {
+	const season = {
 		nth: 1,
 		starts: new Date("2023-01-01"),
 		ends: new Date("2030-12-31"),
-	})),
-}));
+	};
+
+	return {
+		mockSeasonCurrentOrPrevious: vi.fn(() => season),
+		mockSeasonCurrent: vi.fn((): typeof season | null => season),
+	};
+});
 
 vi.mock("~/features/mmr/core/Seasons", () => ({
 	currentOrPrevious: mockSeasonCurrentOrPrevious,
+	current: mockSeasonCurrent,
 }));
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	notifyStatusChanged: vi.fn(),
+	send: vi.fn(),
 }));
 
 /** Users are interchangeable here, so tests name them by 1-based position. */
@@ -136,6 +158,16 @@ describe("SendouQ", () => {
 
 			expect(SendouQ.likesReceivedCount(target.id)).toBe(2);
 			expect(SendouQ.likesReceivedCount(likerGroup.id)).toBe(0);
+		});
+
+		test("returns 0 for a group that has left the queue", async () => {
+			const { alphaGroup } = await playOutMatchBetween(
+				[1, 2, 3, 4],
+				[5, 6, 7, 8],
+			);
+			await refreshSendouQInstance();
+
+			expect(SendouQ.likesReceivedCount(alphaGroup.id)).toBe(0);
 		});
 	});
 
@@ -319,6 +351,70 @@ describe("SendouQ", () => {
 			]);
 		});
 
+		test.each([
+			{
+				why: "lists Splat Zones when nobody states a preference",
+				stated: [],
+				expected: ["SZ"],
+			},
+			{
+				why: "leaves out a mode one member prefers and another avoids",
+				stated: [
+					{ position: 1, mode: "TC", preference: "PREFER" },
+					{ position: 2, mode: "TC", preference: "AVOID" },
+				],
+				expected: ["SZ"],
+			},
+			{
+				why: "lists a mode two members prefer even when a third avoids it",
+				stated: [
+					{ position: 1, mode: "TC", preference: "PREFER" },
+					{ position: 2, mode: "TC", preference: "PREFER" },
+					{ position: 3, mode: "TC", preference: "AVOID" },
+				],
+				expected: ["TC"],
+			},
+			{
+				why: "does not count avoiding one mode against another",
+				stated: [
+					{ position: 1, mode: "TC", preference: "PREFER" },
+					{ position: 2, mode: "RM", preference: "AVOID" },
+				],
+				expected: ["TC"],
+			},
+			{
+				why: "lists every mode some member prefers",
+				stated: [
+					{ position: 1, mode: "TC", preference: "PREFER" },
+					{ position: 2, mode: "RM", preference: "PREFER" },
+				],
+				expected: ["TC", "RM"],
+			},
+		] satisfies Array<{
+			why: string;
+			stated: Array<{
+				position: number;
+				mode: ModeShort;
+				preference: "PREFER" | "AVOID";
+			}>;
+			expected: ModeShort[];
+		}>)("$why", async ({ stated, expected }) => {
+			for (const { position, mode, preference } of stated) {
+				await UserFactory.grant(users.id(position), {
+					matchProfile: {
+						mapModePreferences: { modes: [{ mode, preference }], pool: [] },
+					},
+				});
+			}
+
+			await createGroup([1, 2, 3, 4]);
+			await refreshSendouQInstance();
+
+			expect(SendouQ.findOwnGroup(users.id(1))!.modePreferences).toEqual(
+				expected,
+			);
+		});
+
 		test("counts members' own preferences when only some of them share a team", async () => {
 			await prefer(1, "TC");
 			await createTeam([1, 2, 3], "RM");
@@ -410,18 +506,17 @@ describe("SendouQ", () => {
 			expect(fullGroup?.tier).toBeNull();
 			expect(fullGroup?.tierRange).toBeDefined();
 
-			expect(fullGroup?.tierRange?.range[0].name).toBe("IRON");
-			expect(fullGroup?.tierRange?.range[1].name).toBe("LEVIATHAN");
+			expect(fullGroup?.tierRange?.range).toEqual([
+				{ name: "IRON", isPlus: false },
+				{ name: "LEVIATHAN", isPlus: true },
+			]);
+			expect(fullGroup?.tierRange?.diff).toEqual([0, 0]);
 
 			expect(partialGroup?.tier).toBeDefined();
 			expect(partialGroup?.tierRange).toBeNull();
 		});
 
 		describe("tier sorting", () => {
-			beforeEach(async () => {
-				await refreshUserSkills(1);
-			});
-
 			test("sorts full groups by tier when viewer has a tier", async () => {
 				await createSkill(1, 1000);
 				await createSkill(2, 500);
@@ -432,9 +527,10 @@ describe("SendouQ", () => {
 				await createSkill(7, 2000);
 				await createSkill(8, 2000);
 				await createSkill(9, 2000);
+				await refreshUserSkills(1);
 
-				const group1Id = await createGroup([2, 3, 4, 5]);
 				const group2Id = await createGroup([6, 7, 8, 9]);
+				const group1Id = await createGroup([2, 3, 4, 5]);
 				await alignLatestActionAt([group1Id, group2Id]);
 				await refreshSendouQInstance();
 
@@ -450,10 +546,11 @@ describe("SendouQ", () => {
 				await createSkill(2, 500);
 				await createSkill(3, 2000);
 				await createSkill(4, 1050);
+				await refreshUserSkills(1);
 
-				const g4Id = await createGroup([4]);
-				const g2Id = await createGroup([2]);
 				const g3Id = await createGroup([3]);
+				const g2Id = await createGroup([2]);
+				const g4Id = await createGroup([4]);
 				await alignLatestActionAt([g4Id, g2Id, g3Id]);
 				await refreshSendouQInstance();
 
@@ -461,32 +558,43 @@ describe("SendouQ", () => {
 
 				expect(groups).toHaveLength(3);
 				expect(groups[0].members![0].id).toBe(users.id(4));
-				expect(groups[1].members![0].id).toBe(users.id(2));
-				expect(groups[2].members![0].id).toBe(users.id(3));
 			});
 
-			test("full groups are sorted last regardless of tier", async () => {
-				await createSkill(1, 1000);
-				await createSkill(2, 1100);
-				await createSkill(3, 1100);
-				await createSkill(4, 1100);
-				await createSkill(5, 1100);
-				await createSkill(6, 500);
+			test.each([
+				{ why: "the full group joined first", fullGroupJoinsFirst: true },
+				{ why: "the full group joined last", fullGroupJoinsFirst: false },
+			])(
+				"full groups are sorted last regardless of tier: $why",
+				async ({ fullGroupJoinsFirst }) => {
+					await createSkill(1, 1000);
+					await createSkill(2, 1000);
+					await createSkill(3, 1000);
+					await createSkill(4, 1000);
+					await createSkill(5, 1000);
+					await createSkill(6, 500);
+					await refreshUserSkills(1);
 
-				const fullGroupId = await createGroup([2, 3, 4, 5]);
-				const partialGroupId = await createGroup([6]);
-				await refreshSendouQInstance();
+					const [fullGroupId, partialGroupId] = fullGroupJoinsFirst
+						? [await createGroup([2, 3, 4, 5]), await createGroup([6])]
+						: [
+								await createGroup([6]),
+								await createGroup([2, 3, 4, 5]),
+							].reverse();
+					await refreshSendouQInstance();
 
-				const groups = SendouQ.previewGroups(users.id(1));
+					const groups = SendouQ.previewGroups(users.id(1));
 
-				expect(groups).toHaveLength(2);
-				expect(groups[0].id).toBe(partialGroupId);
-				expect(groups[1].id).toBe(fullGroupId);
-			});
+					expect(groups.map((group) => group.id)).toEqual([
+						partialGroupId,
+						fullGroupId,
+					]);
+				},
+			);
 
 			test("handles viewer without skill gracefully", async () => {
 				await createSkill(2, 500);
 				await createSkill(3, 2000);
+				await refreshUserSkills(1);
 
 				await createGroup([2]);
 				await createGroup([3]);
@@ -495,6 +603,30 @@ describe("SendouQ", () => {
 				const groups = SendouQ.previewGroups(users.id(1));
 
 				expect(groups).toHaveLength(2);
+			});
+
+			test("shows a viewer without a tier the most recently active groups first", async () => {
+				await createSkill(2, 1000);
+				await createSkill(3, 2000);
+				await refreshUserSkills(1);
+
+				const olderGroupId = await createGroup([2]);
+				const newerGroupId = await createGroup([3]);
+				const now = new Date();
+				await backdate("Group", olderGroupId, {
+					latestActionAt: subSeconds(now, 100),
+				});
+				await backdate("Group", newerGroupId, {
+					latestActionAt: subSeconds(now, 50),
+				});
+				await refreshSendouQInstance();
+
+				const groups = SendouQ.previewGroups(users.id(1));
+
+				expect(groups.map((group) => group.id)).toEqual([
+					newerGroupId,
+					olderGroupId,
+				]);
 			});
 		});
 	});
@@ -640,6 +772,43 @@ describe("SendouQ", () => {
 				expect(fullGroups.some((g) => g.isReplay)).toBe(true);
 			});
 
+			test("marks a full group as a replay when exactly three of its members were recent opponents", async () => {
+				await playOutMatchBetween([1, 2, 3, 4], [5, 6, 7, 8]);
+
+				await createGroup([1, 2, 3, 4]);
+				const replayGroupId = await createGroup([5, 6, 7, 9]);
+				await refreshSendouQInstance();
+
+				const [group] = SendouQ.lookingGroups(users.id(1));
+
+				expect(group.id).toBe(replayGroupId);
+				expect(group.isReplay).toBe(true);
+			});
+
+			test("marks a replay for a player who was on the bravo side of the match", async () => {
+				await playOutMatchBetween([1, 2, 3, 4], [5, 6, 7, 8]);
+
+				await createGroup([5, 6, 7, 8]);
+				await createGroup([1, 2, 3, 4]);
+				await refreshSendouQInstance();
+
+				const [group] = SendouQ.lookingGroups(users.id(5));
+
+				expect(group.isReplay).toBe(true);
+			});
+
+			test("does not mark a group as a replay over a match the viewer was not in", async () => {
+				await playOutMatchBetween([1, 2, 3, 4], [5, 6, 7, 8]);
+
+				await createGroup([9, 10, 11, 12]);
+				await createGroup([1, 2, 3, 4]);
+				await refreshSendouQInstance();
+
+				const [group] = SendouQ.lookingGroups(users.id(9));
+
+				expect(group.isReplay).toBe(false);
+			});
+
 			test("does not mark as replay when less than 3 members overlap", async () => {
 				await playOutMatchBetween([1, 2, 3, 4], [5, 6, 7, 8]);
 
@@ -713,6 +882,35 @@ describe("SendouQ", () => {
 				expect(partialGroup?.members).toHaveLength(2);
 			});
 
+			test("flags a full group as avoiding Splattercolor Screen when one of its members does", async () => {
+				await UserFactory.grant(users.id(6), {
+					matchProfile: { noScreen: 1 },
+				});
+				await createGroup([1, 2, 3, 4]);
+				await createGroup([5, 6, 7, 8]);
+				await refreshSendouQInstance();
+
+				const [group] = SendouQ.lookingGroups(users.id(1));
+
+				expect(group.noScreen).toBe(true);
+			});
+
+			test("shows a member without enough rated matches as still calculating their tier", async () => {
+				await createSkill(2, 1000);
+				await refreshUserSkills(1);
+				await createGroup([1]);
+				await createGroup([2, 3]);
+				await refreshSendouQInstance();
+
+				const [group] = SendouQ.lookingGroups(users.id(1));
+				const skillOf = (position: number) =>
+					group.members!.find((member) => member.id === users.id(position))!
+						.skill;
+
+				expect(skillOf(2)).toMatchObject({ tier: expect.any(Object) });
+				expect(skillOf(3)).toBe("CALCULATING");
+			});
+
 			test("inviteCode and chatRoomId removed from all groups", async () => {
 				await createGroup([1]);
 				await createGroup([2]);
@@ -730,8 +928,7 @@ describe("SendouQ", () => {
 
 		describe("skill-based sorting", () => {
 			beforeEach(async () => {
-				await refreshUserSkills(1);
-				await users.create(10);
+				await users.create(12);
 			});
 
 			test("groups with closer skill sorted first", async () => {
@@ -739,12 +936,13 @@ describe("SendouQ", () => {
 				await createSkill(2, 1050);
 				await createSkill(3, 500);
 				await createSkill(4, 2000);
+				await refreshUserSkills(1);
 
 				await alignLatestActionAt([
 					await createGroup([1]),
-					await createGroup([2]),
-					await createGroup([3]),
 					await createGroup([4]),
+					await createGroup([3]),
+					await createGroup([2]),
 				]);
 
 				await refreshSendouQInstance();
@@ -759,47 +957,37 @@ describe("SendouQ", () => {
 				await createSkill(2, 1000);
 				await createSkill(3, 1000);
 				await createSkill(4, 1000);
-				await createSkill(5, 1100);
-				await createSkill(6, 1100);
-				await createSkill(7, 1100);
-				await createSkill(8, 1100);
+				await createSkill(5, 1000);
+				await createSkill(6, 1000);
+				await createSkill(7, 1000);
+				await createSkill(8, 1000);
 				await createSkill(9, 500);
 				await createSkill(10, 500);
+				await createSkill(11, 500);
+				await createSkill(12, 500);
+				await refreshUserSkills(1);
 
-				await createGroup([1, 2, 3, 4]);
+				const ownGroup = await createGroup([1, 2, 3, 4]);
+				const fartherGroup = await createGroup([9, 10, 11, 12]);
 				const closerGroup = await createGroup([5, 6, 7, 8]);
-				await createGroup([9, 10]);
+				await alignLatestActionAt([ownGroup, fartherGroup, closerGroup]);
 
 				await refreshSendouQInstance();
 
 				const groups = SendouQ.lookingGroups(users.id(1));
 
-				expect(groups.length).toBeGreaterThan(0);
-				expect(groups[0].id).toBe(closerGroup);
+				expect(groups.map((group) => group.id)).toEqual([
+					closerGroup,
+					fartherGroup,
+				]);
 			});
 
 			test("full group one sub-tier away sorted above full group six sub-tiers away", async () => {
-				const mus = [
-					// own group -> DIAMOND
-					97, 96, 95, 94,
-					// adjacent group -> PLATINUM+ (one sub-tier below own)
-					93, 92, 91, 90,
-					// far group -> SILVER (six sub-tiers below own)
-					76, 75, 74, 73,
-					// rest of the ladder so every sub-tier cutoff lands on a distinct ordinal
-					99,
-					98, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 72, 71, 70,
-					69, 68, 67, 66, 65, 64, 63, 62, 61, 60,
-				];
-				await users.create(mus.length);
-				for (const [i, mu] of mus.entries()) {
-					await createSkill(i + 1, mu);
-				}
-				await refreshUserSkills(1);
+				await rankOnSubTierLadder();
 
 				await createGroup([1, 2, 3, 4]);
-				const adjacentTierGroupId = await createGroup([5, 6, 7, 8]);
 				const farTierGroupId = await createGroup([9, 10, 11, 12]);
+				const adjacentTierGroupId = await createGroup([5, 6, 7, 8]);
 				await alignLatestActionAt([adjacentTierGroupId, farTierGroupId]);
 				await refreshSendouQInstance();
 
@@ -818,6 +1006,36 @@ describe("SendouQ", () => {
 				});
 
 				expect(groups[0].id).toBe(adjacentTierGroupId);
+			});
+
+			test("sorts non-full groups by how close their tier is to the viewer's", async () => {
+				await rankOnSubTierLadder();
+
+				await createGroup([4]);
+				const adjacentTierGroupId = await createGroup([5]);
+				const farTierGroupId = await createGroup([9]);
+				await alignLatestActionAt([adjacentTierGroupId, farTierGroupId]);
+				await refreshSendouQInstance();
+
+				const groups = SendouQ.lookingGroups(users.id(4));
+
+				expect(groups.map((group) => group.id)).toEqual([
+					adjacentTierGroupId,
+					farTierGroupId,
+				]);
+			});
+
+			test("shows a non-full group's exact tier even when it is close to the viewer's", async () => {
+				await rankOnSubTierLadder();
+
+				await createGroup([4]);
+				await createGroup([5]);
+				await refreshSendouQInstance();
+
+				const [group] = SendouQ.lookingGroups(users.id(4));
+
+				expect(group.tier).toMatchObject({ name: "PLATINUM", isPlus: true });
+				expect(group.tierRange).toBeNull();
 			});
 
 			test("newer groups sorted first when skill is equal", async () => {
@@ -908,6 +1126,78 @@ describe("SendouQ", () => {
 			expect(match.groupAlpha.skillDifference?.calculated).toBe(false);
 		});
 
+		test("shows a player their own group's chat but not the other group's", async () => {
+			const match = await unmappedMatch();
+
+			const asAlpha = SendouQ.mapMatch(match, await viewer(2));
+			const asBravo = SendouQ.mapMatch(match, await viewer(5));
+
+			expect(asAlpha.groupAlpha.chatRoomId).toEqual(expect.any(Number));
+			expect(asAlpha.groupBravo.chatRoomId).toBeUndefined();
+			expect(asBravo.groupBravo.chatRoomId).toEqual(expect.any(Number));
+			expect(asBravo.groupAlpha.chatRoomId).toBeUndefined();
+		});
+
+		test("shows the players of a recent match the match chat and each other's friend codes", async () => {
+			const match = SendouQ.mapMatch(await unmappedMatch(), await viewer(2));
+
+			expect(match.chatRoomId).toEqual(expect.any(Number));
+			expect(match.groupBravo.members[0].friendCode).toEqual(
+				expect.any(String),
+			);
+		});
+
+		test("hides the match chat and friend codes from someone outside the match", async () => {
+			const match = SendouQ.mapMatch(await unmappedMatch());
+
+			expect(match.chatRoomId).toBeUndefined();
+			expect(
+				[...match.groupAlpha.members, ...match.groupBravo.members].map(
+					(member) => member.friendCode,
+				),
+			).toEqual(Array(8).fill(undefined));
+		});
+
+		test("shows which players have voted to keep playing after the match", async () => {
+			const { id, alphaGroup } = await playOutMatchBetween(
+				[1, 2, 3, 4],
+				[5, 6, 7, 8],
+			);
+			await GroupMatchContinueVoteFactory.create({
+				userId: users.id(1),
+				groupId: alphaGroup.id,
+			});
+			await refreshSendouQInstance();
+
+			const match = SendouQ.mapMatch((await SQMatchRepository.findById(id))!);
+			const isContinuingOf = (position: number) =>
+				match.groupAlpha.members.find(
+					(member) => member.id === users.id(position),
+				)!.isContinuing;
+
+			expect(isContinuingOf(1)).toBe(true);
+			expect(isContinuingOf(2)).toBeNull();
+		});
+
+		test("has no current map once every map of the list is reported", async () => {
+			const { id } = await SQMatchFactory.create(
+				{
+					alphaUserIds: userIds([1, 2, 3, 4]),
+					bravoUserIds: userIds([5, 6, 7, 8]),
+					mapList: SplatoonFaker.mapList(4).map((map) => ({
+						...map,
+						source: "BOTH" as const,
+					})),
+				},
+				{ isConcluded: true },
+			);
+			await refreshSendouQInstance();
+
+			const match = SendouQ.mapMatch((await SQMatchRepository.findById(id))!);
+
+			expect(match.currentMap).toBeUndefined();
+		});
+
 		test("shows the tiers snapshotted when the match was made", async () => {
 			const match = await mapMatchOn({ mode: "SZ", stageId: 1 });
 
@@ -919,6 +1209,155 @@ describe("SendouQ", () => {
 		});
 	});
 });
+
+describe("sqRedirectIfNeeded", () => {
+	type QueueState =
+		| "NO_GROUP"
+		| "PREPARING"
+		| "LOOKING"
+		| "READY_CHECK"
+		| "MATCH";
+	type Location = Parameters<typeof sqRedirectIfNeeded>[0]["currentLocation"];
+
+	beforeEach(async () => {
+		await users.create(8);
+	});
+
+	/** Puts user 1 in the given state of the queue, returning the id of their match when in one. */
+	const enterQueue = async (state: QueueState) => {
+		let matchId: number | undefined;
+
+		if (state === "PREPARING") {
+			await createGroup([1], { status: "PREPARING" });
+		} else if (state === "LOOKING") {
+			await createGroup([1]);
+		} else if (state === "READY_CHECK") {
+			await SQReadyCheckFactory.create({
+				alphaGroupId: await createGroup([1, 2, 3, 4]),
+				bravoGroupId: await createGroup([5, 6, 7, 8]),
+				confirmedByUserId: users.id(1),
+			});
+		} else if (state === "MATCH") {
+			matchId = (
+				await SQMatchFactory.create({
+					alphaUserIds: userIds([1, 2, 3, 4]),
+					bravoUserIds: userIds([5, 6, 7, 8]),
+				})
+			).id;
+		}
+
+		await refreshSendouQInstance();
+
+		return matchId;
+	};
+
+	/** Where user 1 opening the page gets redirected to, null when they stay. */
+	const redirectFrom = async (currentLocation: Location) => {
+		try {
+			await sqRedirectIfNeeded({
+				ownGroup: SendouQ.findOwnGroup(users.id(1)),
+				currentLocation,
+			});
+			return null;
+		} catch (error) {
+			if (error instanceof Response) return error.headers.get("Location");
+			throw error;
+		}
+	};
+
+	test.each([
+		["NO_GROUP", "default"],
+		["PREPARING", "preparing"],
+		["LOOKING", "looking"],
+		["READY_CHECK", "ready"],
+		["MATCH", "match"],
+	] satisfies Array<[QueueState, Location]>)(
+		"keeps a user in state %s on the %s page",
+		async (state, location) => {
+			await enterQueue(state);
+
+			expect(await redirectFrom(location)).toBeNull();
+		},
+	);
+
+	test.each([
+		["NO_GROUP", "looking", SENDOUQ_PAGE],
+		["NO_GROUP", "preparing", SENDOUQ_PAGE],
+		["NO_GROUP", "ready", SENDOUQ_PAGE],
+		["NO_GROUP", "match", SENDOUQ_PAGE],
+		["LOOKING", "default", SENDOUQ_LOOKING_PAGE],
+		["LOOKING", "preparing", SENDOUQ_LOOKING_PAGE],
+		["LOOKING", "match", SENDOUQ_LOOKING_PAGE],
+		["PREPARING", "looking", SENDOUQ_PREPARING_PAGE],
+		["READY_CHECK", "looking", SENDOUQ_READY_PAGE],
+	] satisfies Array<[QueueState, Location, string]>)(
+		"sends a user in state %s from the %s page to %s",
+		async (state, location, expected) => {
+			await enterQueue(state);
+
+			expect(await redirectFrom(location)).toBe(expected);
+		},
+	);
+
+	test("sends a user in a match from the looking page to the match", async () => {
+		const matchId = await enterQueue("MATCH");
+
+		expect(await redirectFrom("looking")).toBe(sendouQMatchPage(matchId!));
+	});
+
+	describe("after the season has ended", () => {
+		beforeEach(() => {
+			mockSeasonCurrent.mockReturnValue(null);
+		});
+
+		test("takes a group still looking out of the queue and sends its members to the front page", async () => {
+			await enterQueue("LOOKING");
+
+			expect(await redirectFrom("looking")).toBe(SENDOUQ_PAGE);
+			expect(SendouQ.findOwnGroup(users.id(1))).toBeUndefined();
+		});
+
+		test("keeps a group in a match on the match page so the match can still be reported", async () => {
+			await enterQueue("MATCH");
+
+			expect(await redirectFrom("match")).toBeNull();
+		});
+
+		test("calls off a running ready check so the other group goes back to looking", async () => {
+			await enterQueue("READY_CHECK");
+
+			expect(await redirectFrom("ready")).toBe(SENDOUQ_PAGE);
+			expect(SendouQ.findOwnGroup(users.id(5))?.status).toBe("ACTIVE");
+		});
+
+		test("sends a user without a group to the front page", async () => {
+			await enterQueue("NO_GROUP");
+
+			expect(await redirectFrom("looking")).toBe(SENDOUQ_PAGE);
+		});
+	});
+});
+
+/** A fresh match between the first four users and the rest, as the database returns it. */
+const unmappedMatch = async () => {
+	const { id } = await SQMatchFactory.create({
+		alphaUserIds: userIds([1, 2, 3, 4]),
+		bravoUserIds: userIds([5, 6, 7, 8]),
+	});
+	await refreshSendouQInstance();
+
+	const match = await SQMatchRepository.findById(id);
+	invariant(match, "Match not found");
+
+	return match;
+};
+
+const viewer = async (position: number) => {
+	const user = await UserRepository.findLeanById(users.id(position));
+	invariant(user, "User not found");
+
+	return user;
+};
 
 /** The match page's view of a match played on one known map, its first four users against the rest. */
 const mapMatchOn = async (map: { mode: ModeShort; stageId: StageId }) => {
@@ -933,6 +1372,26 @@ const mapMatchOn = async (map: { mode: ModeShort; stageId: StageId }) => {
 	invariant(match, "Match not found");
 
 	return SendouQ.mapMatch(match);
+};
+
+/** Ranks users 1-4 DIAMOND, 5-8 PLATINUM+ (one sub-tier below) and 9-12 SILVER (six sub-tiers below). */
+const rankOnSubTierLadder = async () => {
+	const mus = [
+		// users 1-4 -> DIAMOND
+		97, 96, 95, 94,
+		// users 5-8 -> PLATINUM+ (one sub-tier below)
+		93, 92, 91, 90,
+		// users 9-12 -> SILVER (six sub-tiers below)
+		76, 75, 74, 73,
+		// rest of the ladder so every sub-tier cutoff lands on a distinct ordinal
+		99, 98, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 72, 71, 70, 69,
+		68, 67, 66, 65, 64, 63, 62, 61, 60,
+	];
+	await users.create(mus.length);
+	for (const [i, mu] of mus.entries()) {
+		await createSkill(i + 1, mu);
+	}
+	await refreshUserSkills(1);
 };
 
 /** Leaves both groups inactive with a freshly concluded match between them. */

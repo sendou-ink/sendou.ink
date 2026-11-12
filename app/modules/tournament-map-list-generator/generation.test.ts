@@ -1345,4 +1345,138 @@ describe("starterMap", () => {
 		expect(map.source).toBe("RANDOM");
 		expect(pool.has(map)).toBe(true);
 	});
+
+	test("gives no map when the pool has none of the mode order's mode", () => {
+		const szPool = new MapPool({ ...MapPool.EMPTY.parsed, SZ: [1, 2] });
+
+		expect(
+			starterMap({
+				...args,
+				modesIncluded: ["SZ", "TC"],
+				modeOrder: ["TC"],
+				pool: szPool,
+				teams: [
+					{ id: 1, maps: szPool },
+					{ id: 2, maps: szPool },
+				],
+			}),
+		).toEqual([]);
+	});
+});
+
+describe("generateBalancedMapList", () => {
+	const szOnly = (stageIds: StageId[]) =>
+		new MapPool({ ...MapPool.EMPTY.parsed, SZ: stageIds });
+
+	test("Two mode tournaments alternate between the modes", () => {
+		for (let i = 1; i <= 10; i++) {
+			const mapList = generateMaps({
+				count: 5,
+				seed: String(i),
+				modesIncluded: ["SZ", "TC"],
+				teams: [
+					{
+						id: 1,
+						maps: new MapPool({
+							...MapPool.EMPTY.parsed,
+							SZ: [4, 5],
+							TC: [5, 6],
+						}),
+					},
+					{
+						id: 2,
+						maps: new MapPool({
+							...MapPool.EMPTY.parsed,
+							SZ: [11, 9],
+							TC: [2, 8],
+						}),
+					},
+				],
+			});
+
+			for (let j = 0; j < mapList.length - 1; j++) {
+				expect(mapList[j].mode).not.toBe(mapList[j + 1].mode);
+			}
+		}
+	});
+
+	test("Repeats no stage when the picks allow a list without repeats", () => {
+		for (let i = 1; i <= 10; i++) {
+			const mapList = generateMaps({
+				seed: String(i),
+				teams: [
+					{ id: 1, maps: duplicationPicks },
+					{ id: 2, maps: team2Picks },
+				],
+			});
+
+			expect(new Set(mapList.map((map) => map.stageId)).size).toBe(5);
+		}
+	});
+
+	test("Random map is the one pool map neither team picked", () => {
+		for (let i = 1; i <= 10; i++) {
+			const mapList = generateMaps({
+				count: 3,
+				seed: String(i),
+				modesIncluded: ["SZ"],
+				pool: szOnly([1, 2, 3, 4, 5]),
+				teams: [
+					{ id: 1, maps: szOnly([1, 2]) },
+					{ id: 2, maps: szOnly([3, 4]) },
+				],
+			});
+
+			expect(mapList.filter((map) => map.source === "RANDOM")).toEqual([
+				{ mode: "SZ", stageId: 5, source: "RANDOM" },
+			]);
+		}
+	});
+
+	test("Map both teams picked is played in its mode's slot when the last slot is another mode", () => {
+		for (let i = 1; i <= 10; i++) {
+			const mapList = generateMaps({
+				count: 3,
+				seed: String(i),
+				modesIncluded: ["SZ", "TC", "RM"],
+				modeOrder: ["SZ", "TC", "RM"],
+				teams: [
+					{
+						id: 1,
+						maps: new MapPool({
+							...MapPool.EMPTY.parsed,
+							SZ: [1, 2],
+							TC: [5, 6],
+							RM: [7, 8],
+						}),
+					},
+					{
+						id: 2,
+						maps: new MapPool({
+							...MapPool.EMPTY.parsed,
+							SZ: [3, 4],
+							TC: [5, 9],
+							RM: [10, 11],
+						}),
+					},
+				],
+			});
+
+			expect(mapList[1]).toEqual({ mode: "TC", stageId: 5, source: "BOTH" });
+		}
+	});
+
+	test("Returns an error when no list without back-to-back stage repeats exists", () => {
+		const result = generateMapsResult({
+			count: 2,
+			modesIncluded: ["SZ"],
+			pool: szOnly([1]),
+			teams: [
+				{ id: 1, maps: szOnly([1]) },
+				{ id: 2, maps: szOnly([1]) },
+			],
+		});
+
+		expect(result.ok).toBe(false);
+	});
 });

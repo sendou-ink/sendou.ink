@@ -149,9 +149,6 @@ export function stats(
 		);
 	}
 
-	const filterEmpty = (rows: StatsRow[]) =>
-		rows.filter((r) => r.wins + r.losses > 0);
-
 	const orderedByMode: StatsRow[] = [];
 	for (const mode of modesShort) {
 		const row = byMode.get(mode);
@@ -159,8 +156,8 @@ export function stats(
 	}
 
 	return {
-		byMode: filterEmpty(orderedByMode),
-		byStage: filterEmpty([...byStage.values()]),
-		byStageMode: filterEmpty([...byStageMode.values()]),
+		byMode: orderedByMode,
+		byStage: [...byStage.values()],
+		byStageMode: [...byStageMode.values()],
 	};
 }

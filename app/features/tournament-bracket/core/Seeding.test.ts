@@ -83,6 +83,45 @@ describe("Seeding.forFollowUpBracket()", () => {
 			}
 		});
 
+		test("keeps teams of a group out of the same round 1 match even when they have not played each other", () => {
+			// Swiss groups: not every team of a group faced every other
+			const groups = [
+				[101, 102, 103, 104],
+				[201, 202],
+				[301, 302],
+			];
+			const teams = teamsByTier(groups);
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				sources: [{ ...groupsInput(groups).sources[0], encounters: [] }],
+				groupKeyByTeamId: groupsInput(groups).groupKeyByTeamId,
+			});
+
+			for (const match of firstRoundMatches(result, LINEUP_8)) {
+				expect(groupOf(match[0])).not.toBe(groupOf(match[1]));
+			}
+		});
+
+		test("spreads groups even when every round 1 match would be a rematch", () => {
+			const { teams, input } = groupsOfFour();
+			const everyPair: Array<[number, number]> = teams.flatMap((one) =>
+				teams.flatMap(
+					(two): Array<[number, number]> => (one < two ? [[one, two]] : []),
+				),
+			);
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				sources: [{ ...input.sources[0], encounters: everyPair }],
+				groupKeyByTeamId: input.groupKeyByTeamId,
+			});
+
+			for (const quarter of sections(result, LINEUP_16, 4)) {
+				expect(new Set(quarter.map(groupOf)).size).toBe(4);
+			}
+		});
+
 		test("returns the incoming order when each group sends one team", () => {
 			const groups = [[101], [201], [301], [401], [501], [601], [701], [801]];
 			const teams = [101, 201, 301, 401, 501, 601, 701, 801];
@@ -437,6 +476,129 @@ describe("Seeding.forFollowUpBracket()", () => {
 			}
 		});
 
+		test("single group: avoids a round 1 rematch in a 4 team bracket", () => {
+			const teams = [1, 2, 3, 4];
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				...singleGroupInput(teams, [[1, 4]]),
+			});
+
+			expect(result).toEqual([1, 2, 4, 3]);
+		});
+
+		test("single group: in a bracket with byes avoids only the rematches that are round 1 matches", () => {
+			// 9 teams in a 16 bracket: seeds 8 and 9 play the only round 1 match
+			const teams = Array.from({ length: 9 }, (_, i) => i + 1);
+
+			const withRound1Rematch = Seeding.forFollowUpBracket({
+				teams,
+				...singleGroupInput(teams, [[8, 9]]),
+			});
+			const withByes = Seeding.forFollowUpBracket({
+				teams,
+				...singleGroupInput(teams, [[2, 7]]),
+			});
+
+			for (const [one, two] of engineFirstRoundMatches(withRound1Rematch, 1)) {
+				expect(encounterKey(one, two)).not.toBe(encounterKey(8, 9));
+			}
+			expect(withByes).toEqual(teams);
+		});
+
+		test("single group: avoids a round 1 rematch when the standings also list the teams that did not advance", () => {
+			const teams = [1, 2, 3, 4, 5, 6, 7, 8];
+			const { sources, groupKeyByTeamId } = singleGroupInput(teams, [[1, 8]]);
+			const eliminated = [9, 10, 11, 12].map((tournamentTeamId) => ({
+				tournamentTeamId,
+				placement: tournamentTeamId,
+			}));
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				sources: [
+					{
+						...sources[0],
+						standings: [...sources[0].standings, ...eliminated],
+					},
+				],
+				groupKeyByTeamId,
+			});
+
+			expect(result).toEqual([1, 2, 3, 4, 5, 6, 8, 7]);
+		});
+
+		test("single group: keeps the top half at their seeds even when a rematch is then unavoidable", () => {
+			// seed 3 has played every bottom half team, only moving seed 4 down would avoid a rematch
+			const teams = [1, 2, 3, 4, 5, 6, 7, 8];
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				...singleGroupInput(teams, [
+					[3, 5],
+					[3, 6],
+					[3, 7],
+					[3, 8],
+				]),
+			});
+
+			expect(result).toEqual(teams);
+		});
+
+		test("does not swap seeds between teams of different sources to avoid a rematch", () => {
+			// main bracket's top 4 and a redemption bracket's top 4, all from the same Swiss group
+			const teams = [1, 2, 3, 4, 5, 6, 7, 8];
+			const placements = (teamIds: number[]) =>
+				teamIds.map((tournamentTeamId, i) => ({
+					tournamentTeamId,
+					placement: i + 1,
+				}));
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				sources: [
+					{ standings: placements([1, 2, 3, 4]), encounters: [[1, 8]] },
+					{ standings: placements([5, 6, 7, 8]), encounters: [] },
+				],
+				groupKeyByTeamId: new Map(teams.map((teamId) => [teamId, "swiss"])),
+			});
+
+			expect(result).toEqual(teams);
+		});
+
+		test("keeps a lower placement out of the top half when tied teams straddle the halves", () => {
+			// both 3rd place teams have played both 5th place teams, the rematch can't be avoided without
+			// a 5th place team taking a 3rd place seed
+			const teams = [1, 2, 31, 32, 51, 52];
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				sources: [
+					{
+						standings: [
+							{ tournamentTeamId: 1, placement: 1 },
+							{ tournamentTeamId: 2, placement: 2 },
+							{ tournamentTeamId: 31, placement: 3 },
+							{ tournamentTeamId: 32, placement: 3 },
+							{ tournamentTeamId: 51, placement: 5 },
+							{ tournamentTeamId: 52, placement: 5 },
+						],
+						encounters: [
+							[31, 51],
+							[31, 52],
+							[32, 51],
+							[32, 52],
+						],
+					},
+				],
+				groupKeyByTeamId: new Map(teams.map((teamId) => [teamId, "single"])),
+			});
+
+			expect(result.slice(0, 4).toSorted((a, b) => a - b)).toEqual([
+				1, 2, 31, 32,
+			]);
+		});
+
 		test("single group: returns a complete lineup when the search runs out of nodes", () => {
 			// team 1 has played every team of the bottom half pool, so no arrangement of
 			// it avoids their round 1 rematch and the search exhausts its node budget
@@ -453,6 +615,29 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			expect(result).toEqual(teams);
 		});
+	});
+
+	test("keeps a team without a standing at its incoming seed", () => {
+		const { teams, input } = groupsOfFour();
+		const [source] = input.sources;
+
+		const result = Seeding.forFollowUpBracket({
+			teams,
+			...input,
+			sources: [
+				{
+					...source,
+					standings: source.standings.filter(
+						(standing) => standing.tournamentTeamId !== 404,
+					),
+				},
+			],
+		});
+
+		expect(result.toSorted((a, b) => a - b)).toEqual(
+			teams.toSorted((a, b) => a - b),
+		);
+		expect(result.at(-1)).toBe(404);
 	});
 
 	test("returns the incoming order for fewer than 4 teams", () => {

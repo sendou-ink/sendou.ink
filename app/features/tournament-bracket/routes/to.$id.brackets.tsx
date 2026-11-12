@@ -202,7 +202,7 @@ function TournamentBracketsView() {
 			return t("tournament:bracket.sources.placements", {
 				bracket: sourceBracket.name,
 				placements: Progression.placementsToString(
-					[...source.placements],
+					source.placements,
 					source.rest,
 				),
 			});

@@ -54,17 +54,6 @@ export class DoubleEliminationBracket extends Bracket {
 		return result;
 	}
 
-	override winnersSourceRound(roundNumber: number) {
-		const isMajorRound = roundNumber === 1 || roundNumber % 2 === 0;
-		if (!isMajorRound) return;
-
-		const roundNumberWB = Math.ceil((roundNumber + 1) / 2);
-
-		return this.data.round.find(
-			(round) => round.number === roundNumberWB && round.section === "winners",
-		);
-	}
-
 	protected calculateStandings(): Standing[] {
 		if (!this.enoughTeams) return [];
 

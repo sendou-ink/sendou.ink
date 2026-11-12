@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { createResolved } from "../create";
+import { create, createResolved } from "../create";
 import * as Engine from "../index";
-import type { BracketData } from "../types";
+import type { BracketData, MatchData, Side } from "../types";
 
 describe("Previous and next match update in double elimination stage", () => {
 	test("ends a match and determine next matches", () => {
@@ -330,6 +330,107 @@ describe("Skipped rounds in double elimination", () => {
 		expect(data.match.every((match) => match.winnerSide)).toBe(true);
 	});
 });
+
+describe("Playing out a double elimination bracket", () => {
+	test.each([
+		{ teamCount: 4 },
+		{ teamCount: 5 },
+		{ teamCount: 6 },
+		{ teamCount: 8 },
+		{ teamCount: 12 },
+		{ teamCount: 16 },
+		{ teamCount: 32 },
+		{ teamCount: 64 },
+	])(
+		"every team but the champion is knocked out by its second loss ($teamCount teams)",
+		({ teamCount }) => {
+			const seeding = Array.from({ length: teamCount }, (_, i) => i + 1);
+			const data = playOut(
+				create({ type: "double_elimination", seeding, settings: null }),
+				(match) =>
+					match.opponent1!.id! < match.opponent2!.id!
+						? "opponent1"
+						: "opponent2",
+			);
+
+			const losses = new Map(seeding.map((teamId) => [teamId, 0]));
+			for (const match of data.match) {
+				if (!match.winnerSide || !match.opponent1 || !match.opponent2) continue;
+
+				const loserId =
+					match.winnerSide === "opponent1"
+						? match.opponent2.id!
+						: match.opponent1.id!;
+				losses.set(loserId, losses.get(loserId)! + 1);
+			}
+
+			const champion = 1;
+			expect(losses.get(champion)).toBe(0);
+			for (const teamId of seeding.filter((id) => id !== champion)) {
+				expect(losses.get(teamId), `team ${teamId}`).toBe(2);
+			}
+		},
+	);
+
+	test("leaves the bracket reset empty when the winners bracket team wins the grand final", () => {
+		const data = playOut(
+			create({
+				type: "double_elimination",
+				seeding: [1, 2, 3, 4],
+				settings: null,
+			}),
+			() => "opponent1",
+		);
+
+		const bracketReset = matchById(data, 6);
+		expect(bracketReset.opponent1?.id).toBeNull();
+		expect(bracketReset.opponent2?.id).toBeNull();
+	});
+
+	test("saves both grand finalists to the bracket reset when the losers bracket team wins the grand final", () => {
+		let data = create({
+			type: "double_elimination",
+			seeding: [1, 2, 3, 4],
+			settings: null,
+		});
+		for (const matchId of [0, 1, 2, 3, 4]) {
+			data = Engine.reportResult(data, {
+				matchId,
+				winnerSide: "opponent1",
+			}).data;
+		}
+
+		const { changedMatches } = Engine.reportResult(data, {
+			matchId: 5,
+			winnerSide: "opponent2",
+		});
+
+		const bracketReset = changedMatches.find((match) => match.id === 6);
+		expect(bracketReset?.opponent1?.id).toBe(matchById(data, 5).opponent1?.id);
+		expect(bracketReset?.opponent2?.id).toBe(matchById(data, 5).opponent2?.id);
+	});
+});
+
+/** Reports every match as soon as it can be played until none is left. */
+function playOut(
+	initial: BracketData,
+	pickWinner: (match: MatchData) => Side,
+): BracketData {
+	let data = initial;
+
+	for (;;) {
+		const statuses = Engine.matchStatuses(data);
+		const playable = data.match.find(
+			(match) => statuses.get(match.id) === "STARTED",
+		);
+		if (!playable) return data;
+
+		data = Engine.reportResult(data, {
+			matchId: playable.id,
+			winnerSide: pickWinner(playable),
+		}).data;
+	}
+}
 
 function matchById(data: BracketData, id: number) {
 	const found = data.match.find((match) => match.id === id);
