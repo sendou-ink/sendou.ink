@@ -31,63 +31,62 @@
 .weaponRow {
 	position: relative;
 	display: grid;
-	grid-template-columns: auto 1fr auto;
+	grid-template-columns: auto 1fr;
 	align-items: center;
 	gap: var(--s-3);
-	padding: var(--s-2) var(--s-3) var(--s-2) var(--s-5);
+	padding: var(--s-2) var(--s-3);
 	background-color: var(--graphic-row-bg);
 	border: 1.5px solid var(--graphic-row-border);
 	border-radius: var(--radius-box);
 
-	/* a pill inside the box instead of a left border so the color is not cut by the rounded corners */
+	/* covers the left border and stops before the rounded corners */
 	&::before {
 		content: "";
 		position: absolute;
-		inset-block: var(--s-1-5);
-		left: var(--s-1-5);
+		inset-block: var(--radius-box);
+		left: -1.5px;
 		width: 4px;
 		background-color: var(--slot-color);
-		border-radius: var(--radius-full);
+		border-radius: 0 4px 4px 0;
 	}
 }
 
 .weaponBadge {
 	display: flex;
 	padding: var(--s-0-5);
-	background-color: oklch(0% 0 0 / 0.3);
+	background-color: var(--color-bg);
 	border-radius: 50%;
 }
 
 .weaponInfo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
 	min-width: 0;
-	overflow: hidden;
 }
 
 .weaponName {
-	font-size: var(--font-sm);
+	font-size: var(--font-md);
 	font-weight: var(--weight-extra);
-}
-
-.weaponRoles {
-	display: flex;
-	align-items: center;
-	gap: var(--s-1-5);
-	margin-top: var(--s-0-5);
-	font-size: var(--font-xs);
-	font-weight: var(--weight-semi);
-	color: var(--graphic-text-dim);
-}
-
-.weaponRoleSeparator {
-	opacity: 0.5;
+	line-height: 1.15;
 }
 
 .kit {
 	display: flex;
 	gap: var(--s-1-5);
-	padding: var(--s-1-5);
-	background-color: oklch(0% 0 0 / 0.3);
-	border-radius: var(--radius-field);
+}
+
+.kitRole {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	padding: var(--s-0-5) var(--s-2) var(--s-0-5) var(--s-0-5);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	line-height: 1;
+	color: var(--graphic-text-dim);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-full);
 }
 
 .rangeChart {
@@ -149,7 +148,7 @@
 	white-space: nowrap;
 }
 
-.rangeLethalTick {
+.rangeShorterReachTick {
 	position: absolute;
 	inset-block: 0;
 	z-index: 1;

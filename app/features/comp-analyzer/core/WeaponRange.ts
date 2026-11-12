@@ -416,6 +416,26 @@ export function toggleVariant(
 	return nextKeys;
 }
 
+/**
+ * How far a comp weapon's other way of shooting reaches when only one is shown and the other falls short
+ * of it (a charger's tap shot, a roller's horizontal swing…), `null` otherwise.
+ */
+export function shorterReach(weapon: WeaponWithRange): number | null {
+	if (weapon.variants.length !== 1) return null;
+
+	const [shown] = weapon.variants;
+	const shorterRanges = variantsOf(weapon.weaponId)
+		.filter(
+			(variant) =>
+				variant.key !== shown.key &&
+				variant.rangeType !== "unsupported" &&
+				variant.range < shown.range,
+		)
+		.map((variant) => variant.range);
+
+	return shorterRanges.length > 0 ? Math.max(...shorterRanges) : null;
+}
+
 /** Weapons drawn under every comp's ranges for scale: Splattershot and Snipewriter 5H. */
 export const BENCHMARK_WEAPON_IDS = [40, 2070] satisfies MainWeaponId[];
 

@@ -22,58 +22,61 @@ export const SUB_WEAPON_CATEGORIES: Record<SubWeaponId, SubWeaponCategory> = {
 	1: "LETHAL", // Suction Bomb
 	2: "CHIP", // Burst Bomb
 	3: "TURF", // Sprinkler
-	4: "AREA_DENIAL", // Splash Wall
+	4: "COVER", // Splash Wall
 	5: "CHIP", // Fizzy Bomb
 	6: "MOBILITY", // Curling Bomb
-	7: "SEEKING", // Autobomb
+	7: "HOMING", // Autobomb
 	8: "MOBILITY", // Squid Beakon
-	9: "TRACKING", // Point Sensor
+	9: "MARKING", // Point Sensor
 	10: "AREA_DENIAL", // Ink Mine
 	11: "AREA_DENIAL", // Toxic Mist
-	12: "TRACKING", // Angle Shooter
-	13: "SEEKING", // Torpedo
+	12: "MARKING", // Angle Shooter
+	13: "HOMING", // Torpedo
 };
 
 export const SPECIAL_WEAPON_CATEGORIES: Record<
 	SpecialWeaponId,
 	SpecialWeaponCategory
 > = {
-	1: "RANGED_BURST", // Trizooka
+	1: "RANGED", // Trizooka
 	2: "TEAM_SHIELD", // Big Bubbler
-	3: "MELEE", // Zipcaster
-	4: "GLOBAL_TRACKING", // Tenta Missiles
+	3: "DIVE", // Zipcaster
+	4: "LOCK_ON", // Tenta Missiles
 	5: "AREA_CONTROL", // Ink Storm
-	6: "RANGED_BURST", // Booyah Bomb
+	6: "RANGED", // Booyah Bomb
 	7: "AREA_CONTROL", // Wave Breaker
 	8: "TEAM_SHIELD", // Ink Vac
-	9: "GLOBAL_TRACKING", // Killer Wail 5.1
-	10: "RANGED_BURST", // Inkjet
-	11: "RANGED_BURST", // Ultra Stamp
-	12: "RANGED_BURST", // Crab Tank
-	13: "MELEE", // Reefslider
+	9: "LOCK_ON", // Killer Wail 5.1
+	10: "BRAWL", // Inkjet
+	11: "BRAWL", // Ultra Stamp
+	12: "RANGED", // Crab Tank
+	13: "DIVE", // Reefslider
 	14: "AREA_CONTROL", // Triple Inkstrike
 	15: "TEAM_BUFF", // Tacticooler
-	16: "AREA_CONTROL", // Super Chump
-	17: "MELEE", // Kraken Royale
-	18: "MELEE", // Triple Splashdown
+	16: "DECOY", // Super Chump
+	17: "BRAWL", // Kraken Royale
+	18: "DIVE", // Triple Splashdown
 	19: "AREA_CONTROL", // Splattercolor Screen
 };
 
 export const SUB_CATEGORY_ORDER = [
 	"LETHAL",
 	"CHIP",
-	"SEEKING",
+	"HOMING",
+	"MARKING",
 	"AREA_DENIAL",
+	"COVER",
 	"MOBILITY",
-	"TRACKING",
 	"TURF",
 ] as const;
 
 export const SPECIAL_CATEGORY_ORDER = [
-	"MELEE",
-	"RANGED_BURST",
-	"GLOBAL_TRACKING",
+	"DIVE",
+	"BRAWL",
+	"RANGED",
+	"LOCK_ON",
 	"AREA_CONTROL",
+	"DECOY",
 	"TEAM_SHIELD",
 	"TEAM_BUFF",
 ] as const;

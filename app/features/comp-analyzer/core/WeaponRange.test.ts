@@ -299,3 +299,52 @@ describe("WeaponRange.toggleVariant", () => {
 		expect(WeaponRange.toggleVariant(roller(enabled), key)).toEqual(expected);
 	});
 });
+
+describe("WeaponRange.shorterReach", () => {
+	test.each([
+		{
+			why: "charger shows its tap shot under the charged shot",
+			weaponId: 2010,
+			enabled: [],
+			expected: 9.033,
+		},
+		{
+			why: "roller shows its horizontal swing under the vertical one",
+			weaponId: 1010,
+			enabled: [],
+			expected: 9.27,
+		},
+		{
+			why: "nothing when both ways of shooting are drawn",
+			weaponId: 2010,
+			enabled: ["charged", "tap"],
+			expected: null,
+		},
+		{
+			why: "nothing when the other way of shooting reaches further",
+			weaponId: 1010,
+			enabled: ["horizontal"],
+			expected: null,
+		},
+		{
+			why: "nothing for a weapon with one way of shooting",
+			weaponId: 40,
+			enabled: [],
+			expected: null,
+		},
+	] satisfies Array<{
+		why: string;
+		weaponId: MainWeaponId;
+		enabled: RangeVariantKey[];
+		expected: number | null;
+	}>)("$why", ({ weaponId, enabled, expected }) => {
+		const [weapon] = WeaponRange.ofWeapons([weaponId], () => enabled);
+		const reach = WeaponRange.shorterReach(weapon);
+
+		if (expected === null) {
+			expect(reach).toBeNull();
+		} else {
+			expect(reach).toBeCloseTo(expected, 1);
+		}
+	});
+});

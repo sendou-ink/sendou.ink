@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	Image,
@@ -146,20 +147,35 @@ function WeaponRow({
 				<div className={clsx(styles.weaponName, "truncate")}>
 					{t(`weapons:MAIN_${weaponId}`)}
 				</div>
-				<div className={styles.weaponRoles}>
-					<span>{t(`analyzer:comp.subCategory.${subCategory}`)}</span>
-					<span className={styles.weaponRoleSeparator}>·</span>
-					<span>{t(`analyzer:comp.specialCategory.${specialCategory}`)}</span>
+				<div className={styles.kit}>
+					<KitRole
+						image={
+							<SubWeaponImage subWeaponId={params.subWeaponId} size={20} />
+						}
+						label={t(`analyzer:comp.subCategory.${subCategory}`)}
+					/>
+					<KitRole
+						image={
+							<SpecialWeaponImage
+								specialWeaponId={params.specialWeaponId}
+								size={20}
+							/>
+						}
+						label={t(`analyzer:comp.specialCategory.${specialCategory}`)}
+					/>
 				</div>
 			</div>
-			<div className={styles.kit}>
-				<SubWeaponImage subWeaponId={params.subWeaponId} size={26} />
-				<SpecialWeaponImage
-					specialWeaponId={params.specialWeaponId}
-					size={26}
-				/>
-			</div>
 		</div>
+	);
+}
+
+/** A `span` so the export does not freeze it to its content width */
+function KitRole({ image, label }: { image: ReactNode; label: string }) {
+	return (
+		<span className={styles.kitRole}>
+			{image}
+			{label}
+		</span>
 	);
 }
 
@@ -193,10 +209,10 @@ function RangeChart({
 							slot={weapon.slot}
 							range={variant.range}
 							blastRadius={variant.blastRadius}
-							lethalDistance={variant.lethal?.distance}
+							shorterReach={WeaponRange.shorterReach(weapon) ?? undefined}
 							isAlternate={!variant.isDefault}
 							label={
-								variant.key && weapon.allVariantKeys.length > 0
+								variant.key && weapon.variants.length > 1
 									? t(`analyzer:comp.rangeVariant.${variant.key}`)
 									: undefined
 							}
@@ -227,14 +243,15 @@ function RangeTrack({
 	slot,
 	range,
 	blastRadius,
-	lethalDistance,
+	shorterReach,
 	isAlternate = false,
 	label,
 }: {
 	slot: number;
 	range: number;
 	blastRadius?: number;
-	lethalDistance?: number;
+	/** Where the weapon's other, shorter way of shooting ends */
+	shorterReach?: number;
 	isAlternate?: boolean;
 	label?: string;
 }) {
@@ -260,10 +277,10 @@ function RangeTrack({
 					}}
 				/>
 			) : null}
-			{lethalDistance ? (
+			{shorterReach ? (
 				<div
-					className={styles.rangeLethalTick}
-					style={{ left: rangePercentage(lethalDistance) }}
+					className={styles.rangeShorterReachTick}
+					style={{ left: rangePercentage(shorterReach) }}
 				/>
 			) : null}
 		</div>
