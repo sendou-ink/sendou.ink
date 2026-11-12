@@ -69,7 +69,7 @@
 	"looking.replay": "Rejouer",
 	"looking.sp.calculating": "Calcule...",
 	"looking.rankCalculating": "Moins de {{count}} sets jouer. Le rank est toujours en calcul...",
-	"looking.allTiers": "Tout les ranks",
+	"looking.allTiers": "Tous les ranks",
 	"looking.joinQPrompt": "Rejoindre la queue pour trouvez un groupe",
 	"looking.range.or": "ou",
 	"match.header": "Match #{{number}}",
