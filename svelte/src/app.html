@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="%lang%" dir="ltr" class="%theme%">
+	<head>
+		<meta charset="utf-8" />
+		<style>
+			@layer reset, base, elements, components, features, utilities;
+		</style>
+		<meta
+			name="viewport"
+			content="initial-scale=1, viewport-fit=cover, user-scalable=no"
+		/>
+		<meta name="theme-color" content="#010115" />
+		%sveltekit.head%
+		<script>
+			(() => {
+				const cl = document.documentElement.classList;
+				if (cl.contains("light") || cl.contains("dark")) return;
+
+				cl.add(
+					window.matchMedia("(prefers-color-scheme: light)").matches
+						? "light"
+						: "dark",
+				);
+			})();
+		</script>
+	</head>
+	<body>
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>

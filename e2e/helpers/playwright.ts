@@ -386,7 +386,12 @@ export async function navigate({ page, url }: { page: Page; url: string }) {
 
 /** Whether the page's scripts execute, which a `javaScriptEnabled: false` test has turned off. */
 function scriptsRan(page: Page) {
-	return page.evaluate(() => "__reactRouterContext" in window);
+	return page.evaluate(
+		() =>
+			"__reactRouterContext" in window ||
+			// the SvelteKit slice (E2E_TARGET=svelte)
+			Object.keys(window).some((key) => key.startsWith("__sveltekit_")),
+	);
 }
 
 /**
@@ -589,7 +594,10 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 }
 
 function isDataRequest(url: string) {
-	return new URL(url).pathname.endsWith(".data");
+	const { pathname } = new URL(url);
+
+	// React Router data requests, or remote functions of the SvelteKit slice (E2E_TARGET=svelte)
+	return pathname.endsWith(".data") || pathname.startsWith("/_app/remote/");
 }
 
 /** Records whether the router turns busy: a fast action holds the marker for a frame or two, which a polled wait misses. */

@@ -1,0 +1,8 @@
+node_modules
+/build
+/.svelte-kit
+/messages
+/src/lib/paraglide
+/project.inlang/cache
+/test-results
+/measurements/raw

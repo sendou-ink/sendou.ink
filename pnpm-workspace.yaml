@@ -1,3 +1,5 @@
+packages:
+  - svelte
 allowBuilds:
   aws-sdk: false
   core-js: false

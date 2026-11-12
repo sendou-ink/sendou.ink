@@ -1,0 +1,21 @@
+{
+	"extends": "$app/tsconfig",
+	"compilerOptions": {
+		"allowImportingTsExtensions": true,
+		"erasableSyntaxOnly": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"skipLibCheck": true,
+		// type imports of the shared code under ../app reach its React components
+		"jsx": "preserve",
+		"types": ["$app/types", "vite/client"],
+		// the second pair resolves the React Router route types the shared code under ../app imports
+		"rootDirs": [".", "./.svelte-kit/types", "..", "../.react-router/types"],
+		"paths": {
+			"~/*": ["../app/*"]
+		}
+	},
+	"include": ["src", "scripts", "*.ts", "../types/**/*.d.ts"],
+	"exclude": ["node_modules", "build", ".svelte-kit"]
+}

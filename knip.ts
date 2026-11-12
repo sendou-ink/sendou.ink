@@ -1,6 +1,8 @@
 const config = {
 	tags: ["-lintignore"],
 	ignoreBinaries: ["ffmpeg", "ffprobe", "yt-dlp"],
+	// the SvelteKit slice is its own toolchain (svelte-check), see svelte/README.md
+	ignoreWorkspaces: ["svelte"],
 	astro: {
 		config: ["docs/site/astro.config.ts"],
 		entry: [

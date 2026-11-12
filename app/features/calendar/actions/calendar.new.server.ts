@@ -30,10 +30,10 @@ import {
 	customTeamPickPool,
 	teamPickSettingsFromFormValues,
 } from "../calendar-new-schemas";
+import { findValidOrganizations } from "../calendar-organizations.server";
 import { formValuesToInputBrackets } from "../calendar-progression-form";
 import type { CalendarEventTag } from "../calendar-types";
 import * as CalendarEvent from "../core/CalendarEvent";
-import { findValidOrganizations } from "../loaders/calendar.new.server";
 
 export const action = defineAction(
 	{ body: calendarNewSchema },

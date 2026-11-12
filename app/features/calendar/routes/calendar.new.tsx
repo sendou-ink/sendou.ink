@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { addMilliseconds, roundToNearestHours } from "date-fns";
+import { addMilliseconds } from "date-fns";
 import { SquareArrowOutUpRight, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -27,7 +27,6 @@ import type {
 import { Trophy } from "~/features/trophies/components/Trophy";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { getFormFieldMetadata } from "~/form/fields";
-import { existingImage } from "~/form/image-field";
 import {
 	FormStep,
 	SendouForm,
@@ -36,10 +35,8 @@ import {
 } from "~/form/SendouForm";
 import { errorMessageId } from "~/form/utils";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -49,6 +46,7 @@ import {
 } from "~/utils/urls";
 import { action } from "../actions/calendar.new.server";
 import styles from "../calendar-new.module.css";
+import { calendarNewDefaultValues } from "../calendar-new-defaults";
 import {
 	calendarNewBaseSchema,
 	calendarNewSchema,
@@ -58,14 +56,8 @@ import {
 	teamPickSettingsFromFormValues,
 	tournamentTagsField,
 } from "../calendar-new-schemas";
-import {
-	type BracketFormValue,
-	defaultBracketsFormValues,
-	progressionToFormValues,
-	shiftBracketStartTimes,
-} from "../calendar-progression-form";
+import type { BracketFormValue } from "../calendar-progression-form";
 import { calendarNewSearchParams } from "../calendar-search-params";
-import type { CalendarEventTag } from "../calendar-types";
 import { BracketProgressionBuilder } from "../components/BracketProgressionBuilder";
 import { loader } from "../loaders/calendar.new.server";
 
@@ -174,102 +166,7 @@ export default function CalendarNewEventPage() {
 }
 
 function useDefaultValues() {
-	const data = useLoaderData<typeof loader>();
-	const baseEvent = useBaseEvent();
-	const tournamentCtx = baseEvent?.tournament?.ctx;
-	const settings = tournamentCtx?.settings;
-
-	const mapPickingStyle: TournamentMapPickingStyle =
-		baseEvent?.mapPickingStyle ?? "AUTO";
-	const teamPick =
-		settings?.teamPick ?? TeamPick.defaultSettings([...rankedModesShort]);
-
-	const pool = baseEvent?.mapPool
-		? new MapPool(baseEvent.mapPool).serialized
-		: "";
-
-	const startTime = data.isAddingTournament
-		? data.eventToEdit?.startTimes?.[0]
-			? databaseTimestampToDate(data.eventToEdit.startTimes[0])
-			: roundToNearestHours(new Date(), { roundingMethod: "ceil" })
-		: null;
-
-	const bracketProgressionValues = settings?.bracketProgression
-		? progressionToFormValues(settings.bracketProgression)
-		: data.isAddingTournament
-			? defaultBracketsFormValues()
-			: { brackets: [], progression: [] };
-	// a copy starts at a new time, follow-up brackets and registration closing keep their distance to it
-	const copyOffsetMs =
-		data.eventToCopy && tournamentCtx && startTime
-			? startTime.getTime() -
-				databaseTimestampToDate(tournamentCtx.startsAt).getTime()
-			: 0;
-	const brackets = shiftBracketStartTimes(
-		bracketProgressionValues.brackets,
-		copyOffsetMs,
-	);
-
-	const regClosesAt =
-		settings?.regClosesAt && settings.regClosesAt !== tournamentCtx?.startsAt
-			? addMilliseconds(
-					databaseTimestampToDate(settings.regClosesAt),
-					copyOffsetMs,
-				)
-			: null;
-
-	return {
-		toToolsEnabled: data.isAddingTournament,
-		eventToEditId: data.eventToEdit?.eventId,
-		tournamentToCopyId: data.eventToCopy?.tournamentId ?? undefined,
-		name: data.eventToEdit?.name ?? "",
-		description: baseEvent?.description ?? "",
-		organizationId: baseEvent?.organization?.id
-			? String(baseEvent.organization.id)
-			: null,
-		rules: baseEvent?.rules ?? "",
-		date: data.isAddingTournament
-			? []
-			: (data.eventToEdit?.startTimes?.map((t) =>
-					databaseTimestampToDate(t),
-				) ?? [roundToNearestHours(new Date(), { roundingMethod: "ceil" })]),
-		startTime,
-		// tournaments hide this field, the action coalesces the empty value to the default
-		bracketUrl: data.isAddingTournament
-			? ""
-			: (data.eventToEdit?.bracketUrl ?? ""),
-		discordInviteCode: baseEvent?.discordInviteCode ?? "",
-		tags: (baseEvent?.tags ?? []).filter(isPickableTag),
-		badges: baseEvent?.badgePrizes?.map((b) => b.id) ?? [],
-		trophyId: baseEvent?.trophy?.id ?? null,
-		avatarImgId: existingImage(
-			baseEvent?.avatarImgId,
-			baseEvent?.tournament?.ctx.logoUrl,
-		),
-		regClosesAt,
-		minMembersPerTeam: String(settings?.minMembersPerTeam ?? 4) as
-			| "1"
-			| "2"
-			| "3"
-			| "4",
-		maxMembersPerTeam: settings?.maxMembersPerTeam ?? undefined,
-		mapPickingStyle,
-		teamPickModes: TeamPick.pickedModes(teamPick),
-		teamPickCounts: teamPick.modes,
-		teamPickPool: teamPick.pool,
-		pool,
-		brackets,
-		progression: bracketProgressionValues.progression,
-		isRanked: settings?.isRanked ?? true,
-		enableNoScreenToggle: settings?.enableNoScreenToggle ?? true,
-		enableSubs: settings?.enableSubs ?? true,
-		autonomousSubs: settings?.autonomousSubs ?? true,
-		requireInGameNames: settings?.requireInGameNames ?? false,
-		isInvitational: settings?.isInvitational ?? false,
-		isTest: settings?.isTest ?? false,
-		isLeague: settings?.isLeague ?? false,
-		isDraft: settings?.isDraft ?? false,
-	};
+	return calendarNewDefaultValues(useLoaderData<typeof loader>());
 }
 
 function CopyTournamentPicker() {
@@ -779,12 +676,6 @@ function MemberCountFields() {
 }
 
 /** The league tag is derived from the league setting, so the picker never holds it. */
-function isPickableTag(
-	tag: CalendarEventTag,
-): tag is Exclude<CalendarEventTag, "LEAGUE"> {
-	return tag !== "LEAGUE";
-}
-
 function DraftField() {
 	const data = useLoaderData<typeof loader>();
 

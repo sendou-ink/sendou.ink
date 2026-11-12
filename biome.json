@@ -11,6 +11,7 @@
 			"!translation-usage.json",
 			"!app/db/seed/data/placements.json",
 			"!build/**/*",
+			"!svelte/**/*",
 			"!app/features/scanner/tests/fixtures",
 			"!test-results/**/*",
 			"!playwright-report/**/*",

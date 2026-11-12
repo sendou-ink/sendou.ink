@@ -1,0 +1,23 @@
+.container {
+	flex: 1;
+	min-width: 0;
+}
+
+.header {
+	display: flex;
+	width: 100%;
+	height: var(--layout-nav-height);
+	align-items: center;
+	justify-content: space-between;
+	border-bottom: 1.5px solid var(--color-border);
+	background-color: var(--color-bg-nav);
+	font-weight: var(--weight-extra);
+	padding-inline: var(--s-4);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+
+.siteName {
+	color: var(--color-text);
+}

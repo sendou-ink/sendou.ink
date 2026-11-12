@@ -1,6 +1,6 @@
 {
 	"include": ["**/*.ts", "**/*.tsx", ".react-router/types/**/*"],
-	"exclude": ["docs/**/*"],
+	"exclude": ["docs/**/*", "svelte/**/*"],
 	"compilerOptions": {
 		"types": ["@react-router/node", "vite/client"],
 		"rootDirs": [".", "./.react-router/types"],

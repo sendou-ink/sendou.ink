@@ -1,16 +1,15 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
-import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as Badges from "~/features/badges/core/Badges.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
-import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { hasPermission } from "~/modules/permissions/utils";
+import { findValidOrganizations } from "../calendar-organizations.server";
 import { calendarNewSearchParams } from "../calendar-search-params";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
@@ -137,25 +136,3 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		trophies,
 	};
 };
-
-export async function findValidOrganizations(
-	userId: number,
-	isTournamentAdder: boolean,
-) {
-	const orgs = await TournamentOrganizationRepository.findByUserId(userId, {
-		roles: ["ADMIN", "ORGANIZER"],
-	});
-
-	if (isTournamentAdder) {
-		return [
-			"NO_ORG",
-			...orgs.map((org) =>
-				R.omit(org, ["isEstablished", "role", "roleDisplayName"]),
-			),
-		];
-	}
-
-	return orgs
-		.filter((org) => org.isEstablished)
-		.map((org) => R.omit(org, ["isEstablished", "role", "roleDisplayName"]));
-}

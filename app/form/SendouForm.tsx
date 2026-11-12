@@ -5,8 +5,7 @@ import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import type { FetcherWithComponents } from "react-router";
 import { useFetcher, useLocation } from "react-router";
-import { isPlainObject } from "remeda";
-import * as v from "valibot";
+import type * as v from "valibot";
 import {
 	SendouButton,
 	type SendouButtonProps,
@@ -18,7 +17,6 @@ import { useLatestRef } from "~/hooks/useLatestRef";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { FormField as FormFieldComponent } from "./FormField";
-import { getFormFieldMetadata } from "./fields";
 import { formSearchParams } from "./form-search-params";
 import styles from "./SendouForm.module.css";
 import type {
@@ -31,14 +29,14 @@ import {
 	useUnsavedChangesChecker,
 } from "./UnsavedChangesGuard";
 import {
-	buildFieldPath,
+	buildInitialValues,
+	computeFieldErrors,
+	computeTopLevelFieldErrors,
 	errorMessageId,
 	getNestedValue,
-	issuePathKeys,
 	RENDERS_FIELD_ERRORS_KEY,
 	seedArrayItemDefaults,
 	setNestedValue,
-	validateField,
 } from "./utils";
 
 type RequiredDefaultKeys<T extends v.ObjectEntries> = {
@@ -1063,43 +1061,6 @@ function firstErrorFieldName(
 	})[0];
 }
 
-/**
- * One full-schema parse; each issue is keyed both by its top-level field (single-control composites
- * like weapon-pool read errors by their own name) and its full nested path (array/fieldset children).
- */
-function computeFieldErrors(
-	schema: FormObjectSchema,
-	values: Record<string, unknown>,
-): Record<string, string> {
-	const newErrors: Record<string, string> = {};
-
-	const fullValidation = v.safeParse(schema, values);
-	if (fullValidation.success) return newErrors;
-
-	for (const issue of fullValidation.issues) {
-		const issuePath = issuePathKeys(issue);
-		const topLevelKey =
-			typeof issuePath[0] === "string" ? issuePath[0] : undefined;
-		if (topLevelKey && newErrors[topLevelKey] === undefined) {
-			const topLevelError = validateField(
-				schema,
-				topLevelKey,
-				values[topLevelKey],
-			);
-			if (topLevelError) newErrors[topLevelKey] = topLevelError;
-		}
-
-		const fieldName = buildFieldPath(issuePath);
-		if (fieldName && newErrors[fieldName] === undefined) {
-			const value = getNestedValue(values, fieldName);
-			newErrors[fieldName] =
-				validateField(schema, fieldName, value) ?? issue.message;
-		}
-	}
-
-	return newErrors;
-}
-
 // a change only updates errors already shown, new ones surface on blur
 function errorsAlreadyShown(
 	errors: Record<string, string>,
@@ -1108,50 +1069,6 @@ function errorsAlreadyShown(
 	return Object.fromEntries(
 		Object.entries(errors).filter(([name]) => name in previousErrors),
 	);
-}
-
-function computeTopLevelFieldErrors(
-	schema: FormObjectSchema,
-	values: Record<string, unknown>,
-): Record<string, string> {
-	const errors: Record<string, string> = {};
-	for (const key of Object.keys(schema.entries)) {
-		const error = validateField(schema, key, values[key]);
-		if (error) errors[key] = error;
-	}
-	return errors;
-}
-
-function buildInitialValues<T extends v.ObjectEntries>(
-	schema: FormObjectSchema<T>,
-	defaultValues?: Partial<v.InferInput<v.ObjectSchema<T, undefined>>> | null,
-): Record<string, unknown> {
-	const result: Record<string, unknown> = {};
-
-	for (const [key, fieldSchema] of Object.entries(schema.entries)) {
-		const formField = getFormFieldMetadata(fieldSchema);
-
-		const defaultValue = defaultValues?.[key as keyof typeof defaultValues];
-		if (defaultValue !== undefined) {
-			if (formField?.type === "array" && Array.isArray(defaultValue)) {
-				// only fieldset items get a `_key`; spreading would collapse e.g. `Date` into `{}`
-				result[key] = (defaultValue as unknown[]).map((item) =>
-					isPlainObject(item)
-						? {
-								...item,
-								_key: crypto.randomUUID(),
-							}
-						: item,
-				);
-			} else {
-				result[key] = defaultValue;
-			}
-		} else if (formField) {
-			result[key] = formField.initialValue;
-		}
-	}
-
-	return result;
 }
 
 export function useFormFieldContext(): FormContextValue {

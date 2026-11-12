@@ -3,6 +3,7 @@ import path from "node:path";
 import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig, loadEnv, type Plugin } from "vite";
 import babel from "vite-plugin-babel";
+import { reactStandInShell } from "./svelte/scripts/react-stand-in-shell/plugin.ts";
 import {
 	cssModulesLayer,
 	hoverOnlyOnHoverDevices,
@@ -41,6 +42,9 @@ export default defineConfig((config) => {
 				},
 			},
 			cssModulesLayer(),
+			...(process.env.MEASURE_STAND_IN_SHELL === "true"
+				? [reactStandInShell()]
+				: []),
 			reactRouter(),
 			eagerlyCompileSharedChunks(),
 			// React Compiler is skipped in dev, its transform cost outweighs its value there

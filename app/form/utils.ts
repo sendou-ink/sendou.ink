@@ -1,3 +1,4 @@
+import { isPlainObject } from "remeda";
 import * as v from "valibot";
 import type { AnySyncSchema } from "~/utils/schema";
 import { getFormFieldMetadata } from "./fields";
@@ -275,4 +276,86 @@ export function ariaAttributes({
 		"aria-errormessage": error && name ? errorMessageId(name) : undefined,
 		"aria-required": required ? ("true" as const) : undefined,
 	};
+}
+/**
+ * One full-schema parse; each issue is keyed both by its top-level field (single-control composites
+ * like weapon-pool read errors by their own name) and its full nested path (array/fieldset children).
+ */
+export function computeFieldErrors(
+	schema: FormObjectSchema,
+	values: Record<string, unknown>,
+): Record<string, string> {
+	const newErrors: Record<string, string> = {};
+
+	const fullValidation = v.safeParse(schema, values);
+	if (fullValidation.success) return newErrors;
+
+	for (const issue of fullValidation.issues) {
+		const issuePath = issuePathKeys(issue);
+		const topLevelKey =
+			typeof issuePath[0] === "string" ? issuePath[0] : undefined;
+		if (topLevelKey && newErrors[topLevelKey] === undefined) {
+			const topLevelError = validateField(
+				schema,
+				topLevelKey,
+				values[topLevelKey],
+			);
+			if (topLevelError) newErrors[topLevelKey] = topLevelError;
+		}
+
+		const fieldName = buildFieldPath(issuePath);
+		if (fieldName && newErrors[fieldName] === undefined) {
+			const value = getNestedValue(values, fieldName);
+			newErrors[fieldName] =
+				validateField(schema, fieldName, value) ?? issue.message;
+		}
+	}
+
+	return newErrors;
+}
+
+/** Errors of every top-level field validated on its own, without the schema's cross-field rules. */
+export function computeTopLevelFieldErrors(
+	schema: FormObjectSchema,
+	values: Record<string, unknown>,
+): Record<string, string> {
+	const errors: Record<string, string> = {};
+	for (const key of Object.keys(schema.entries)) {
+		const error = validateField(schema, key, values[key]);
+		if (error) errors[key] = error;
+	}
+	return errors;
+}
+
+/** A form's starting values: each field's default value, else its schema's initial value. Fieldset array items get a `_key`. */
+export function buildInitialValues<T extends v.ObjectEntries>(
+	schema: FormObjectSchema<T>,
+	defaultValues?: Partial<v.InferInput<v.ObjectSchema<T, undefined>>> | null,
+): Record<string, unknown> {
+	const result: Record<string, unknown> = {};
+
+	for (const [key, fieldSchema] of Object.entries(schema.entries)) {
+		const formField = getFormFieldMetadata(fieldSchema);
+
+		const defaultValue = defaultValues?.[key as keyof typeof defaultValues];
+		if (defaultValue !== undefined) {
+			if (formField?.type === "array" && Array.isArray(defaultValue)) {
+				// only fieldset items get a `_key`; spreading would collapse e.g. `Date` into `{}`
+				result[key] = (defaultValue as unknown[]).map((item) =>
+					isPlainObject(item)
+						? {
+								...item,
+								_key: crypto.randomUUID(),
+							}
+						: item,
+				);
+			} else {
+				result[key] = defaultValue;
+			}
+		} else if (formField) {
+			result[key] = formField.initialValue;
+		}
+	}
+
+	return result;
 }

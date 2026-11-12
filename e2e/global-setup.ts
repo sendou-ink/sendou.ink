@@ -15,6 +15,8 @@ const STORAGE_BUCKET = "sendou";
 /** Marker object the container writes once the bucket exists; reading it back proves object reads work. */
 const SEAWEEDFS_READY_URL = `http://127.0.0.1:9000/${STORAGE_BUCKET}/.ready`;
 const BUILD_MARKER_FILE = ".e2e-build-marker";
+/** `E2E_TARGET=svelte` serves the SvelteKit slice (`svelte/`) to the specs of `e2e/svelte/`. */
+const IS_SVELTE_TARGET = process.env.E2E_TARGET === "svelte";
 const BUILD_INPUTS = [
 	"app",
 	"public",
@@ -151,9 +153,28 @@ async function globalSetup(config: FullConfig) {
 	// biome-ignore lint/suspicious/noConsole: CLI script output
 	console.log(`\nStarting e2e test setup with ${workerCount} workers...`);
 
-	await ensureSeaweedfsRunning();
+	if (IS_SVELTE_TARGET) {
+		// its build imports the server modules, which open the database
+		ensureMigratedDb("db-test-e2e-0.sqlite3");
 
-	if (isBuildFresh()) {
+		// biome-ignore lint/suspicious/noConsole: CLI script output
+		console.log("Building the SvelteKit slice...");
+		execSync("pnpm --filter @sendou/web-svelte run build", {
+			stdio: "inherit",
+			env: {
+				...process.env,
+				VITE_E2E_TEST_RUN: "true",
+				VITE_SITE_DOMAIN: `http://localhost:${E2E_BASE_PORT}`,
+				SVELTE_BUILD_DB_PATH: "../db-test-e2e-0.sqlite3",
+			},
+		});
+	} else {
+		await ensureSeaweedfsRunning();
+	}
+
+	if (IS_SVELTE_TARGET) {
+		// built above, the slice has no build reuse
+	} else if (isBuildFresh()) {
 		// biome-ignore lint/suspicious/noConsole: CLI script output
 		console.log(
 			"Reusing existing build (no source changes since last e2e build)",
@@ -205,13 +226,20 @@ async function globalSetup(config: FullConfig) {
 		// above already migrated, making the script's `migrate up` step redundant
 		const serverProcess = spawn(
 			process.execPath,
-			["./node_modules/@react-router/serve/bin.cjs", "./build/server/index.js"],
+			IS_SVELTE_TARGET
+				? ["./svelte/build/index.js"]
+				: [
+						"./node_modules/@react-router/serve/bin.cjs",
+						"./build/server/index.js",
+					],
 			{
 				env: {
 					...process.env,
 					NODE_ENV: "production",
 					DB_PATH: dbPath,
 					PORT: String(port),
+					// SvelteKit's adapter-node: what the CSRF check of remote functions compares against
+					ORIGIN: `http://localhost:${port}`,
 					DISCORD_CLIENT_ID: "123",
 					DISCORD_CLIENT_SECRET: "secret",
 					SESSION_SECRET: "secret",

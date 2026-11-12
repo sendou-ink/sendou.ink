@@ -1,0 +1,3530 @@
+{
+	"measuredAt": "2026-11-12T17:42:33.799Z",
+	"node": "v26.7.0",
+	"cpu": "Apple M5 Pro",
+	"provenance": {
+		"gitCommit": "7b4fd23ff47fd1932fad9ec8cf987cd94bcc3853",
+		"gitBranch": "svelte-vertical-slice",
+		"gitChanges": [
+			"M app/features/calendar/actions/calendar.new.server.ts",
+			" M app/features/calendar/loaders/calendar.new.server.ts",
+			" M app/features/calendar/routes/calendar.new.tsx",
+			" M app/form/SendouForm.tsx",
+			" M app/form/utils.ts",
+			" M biome.json",
+			" M e2e/global-setup.ts",
+			" M e2e/helpers/playwright.ts",
+			" M knip.ts",
+			" M playwright.config.ts",
+			" M pnpm-lock.yaml",
+			" M pnpm-workspace.yaml",
+			" M tsconfig.json",
+			" M vite.config.ts",
+			"?? app/features/calendar/calendar-new-defaults.ts",
+			"?? app/features/calendar/calendar-organizations.server.ts",
+			"?? e2e/svelte/",
+			"?? svelte/"
+		],
+		"builds": {
+			"react": {
+				"e2eBuild": false,
+				"standInShell": true
+			},
+			"svelte": {
+				"e2eBuild": false,
+				"standInShell": true
+			}
+		}
+	},
+	"loadAverage": {
+		"threshold": 4.5,
+		"atStart": 2.78,
+		"peak": 9.22,
+		"atEnd": 2.25
+	},
+	"warnings": [
+		"Load average peaked at 9.22, more than the measurement itself explains: something else ran meanwhile."
+	],
+	"caveats": [
+		"associationsNew (the /associations/new page) is port scope, not framework: React's SendouForm statically imports every field type (selects, dnd-kit, map pool and weapon pickers, ...), the slice ports only the text input. Compare frameworks on associations.",
+		"The React app fetches its translations as JSON and preloads every namespace once idle, the slice compiles its messages into the scripts: browser transfer splits them out as 'translations (fetched json)'.",
+		"interactions: the stack as it would ship, not React vs Svelte alone. Each side runs its own form store (the Svelte one ports the React rules and calls the same shared validation), its own field components and its own router. The fields of /calendar/new are hand-rolled on both sides (no React Aria on that page), so markup is the same: compare interactions.pages.*.domNodes.main. typeName (keystrokes into a plain <input>) is the cleanest framework comparison.",
+		"interactions: domNodes.document differs mostly by <head>: React Router renders a modulepreload <link> per chunk and the app preloads its translations, ~250 <link>s on /calendar/new against ~30 in the slice; domNodes.main counts the page itself.",
+		"interactions: the Svelte /calendar/new ports the calendar event variant only (not the tournament one) and does not submit to the server; the React page's searchable select, image, trophy and SendouQ map pool filter field types are not ported. The scenarios touch none of those.",
+		"interactions: soft navigation is started by React Router's own navigate() (what <Link> calls) and by a click on an anchor for SvelteKit, which handles every anchor of the app itself; time to paint includes fetching the destination's data from the local server.",
+		"interactions: the Svelte /to/:id/brackets ports the tournament layout and an elimination bracket read only, from the React loaders' own data: not ported are check-in, finalizing, starting brackets, preparing maps, spoiler-free mode, group tabs, round robin and swiss brackets, dragging the bracket to scroll and remembering its scroll position, the nav's overflow menu (every item fits at 1280px), and the popovers of a match's CAST/LIVE/VOD buttons (the dev tournament shows none). domNodes.main is equal on both sides.",
+		"interactions: the React brackets page keeps a server-sent events stream open for live updates (useTopicRevalidation), the slice has none: its work while open counts against React.",
+		"interactions: revalidation runs against a second pair of servers started with DISABLE_CACHE=true, so a score written to the database shows on the next revalidation; it is timed in the page from React Router's revalidate() / SvelteKit's refreshAll() to the painted frame showing the score, server time included. React Router refetches the root, layout and page loaders in one request; SvelteKit refreshes the page's two remote queries.",
+		"interactions: latency is from an interaction's first input event to the end of the next main thread Paint trace event (raster and compositor excluded), per interaction the longest of its events like INP."
+	],
+	"userId": 274,
+	"staticBundle": {
+		"react": {
+			"framework": {
+				"js": {
+					"files": 14,
+					"raw": 434823,
+					"gzip": 137211,
+					"brotli": 120456
+				},
+				"css": {
+					"files": 0,
+					"raw": 0,
+					"gzip": 0,
+					"brotli": 0
+				},
+				"jsByOrigin": {
+					"unmapped (bundler glue; in the slice also the compiled translations)": 5699,
+					"framework runtime (rendering, router, i18n runtime)": 402921,
+					"shared app code (schemas, urls, search params, game data)": 2161,
+					"UI layer (components, routes, hooks, icons)": 1238,
+					"shared libraries (valibot, remeda, date-fns, ...)": 22264
+				},
+				"largestModules": [
+					{
+						"source": "node_modules/.pnpm/react-dom@19.3.1_react@19.3.1/node_modules/react-dom/cjs/react-dom-client.production.js",
+						"bytes": 203386
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/router/router.js",
+						"bytes": 46930
+					},
+					{
+						"source": "node_modules/.pnpm/i18next@26.3.6_patch_hash=34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a_typescript@7.0.2/node_modules/i18next/dist/esm/i18next.js",
+						"bytes": 43175
+					},
+					{
+						"source": "app/modules/i18n/locale-files.ts",
+						"bytes": 13304
+					},
+					{
+						"source": "node_modules/.pnpm/valibot@1.5.0_typescript@7.0.2/node_modules/valibot/dist/index.mjs",
+						"bytes": 12131
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/hooks.js",
+						"bytes": 9923
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/router/utils.js",
+						"bytes": 9732
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/components.js",
+						"bytes": 8195
+					},
+					{
+						"source": "node_modules/.pnpm/react@19.3.1/node_modules/react/cjs/react.production.js",
+						"bytes": 7774
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/route-discovery.js",
+						"bytes": 7542
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/components.js",
+						"bytes": 6597
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/single-fetch.js",
+						"bytes": 6024
+					},
+					{
+						"source": "(unmapped)",
+						"bytes": 5699
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/routes.js",
+						"bytes": 5198
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom-export/hydrated-router.js",
+						"bytes": 4100
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/router/instrumentation.js",
+						"bytes": 4097
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/fog-of-war.js",
+						"bytes": 3805
+					},
+					{
+						"source": "node_modules/.pnpm/react-dom@19.3.1_react@19.3.1/node_modules/react-dom/cjs/react-dom.production.js",
+						"bytes": 3553
+					},
+					{
+						"source": "node_modules/.pnpm/scheduler@0.28.0/node_modules/scheduler/cjs/scheduler.production.js",
+						"bytes": 3495
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/links.js",
+						"bytes": 2968
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/router/history.js",
+						"bytes": 2761
+					},
+					{
+						"source": "node_modules/.pnpm/date-fns@4.4.0/node_modules/date-fns/locale/en-US/_lib/localize.js",
+						"bytes": 1946
+					},
+					{
+						"source": "node_modules/.pnpm/date-fns@4.4.0/node_modules/date-fns/locale/en-US/_lib/match.js",
+						"bytes": 1778
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/errorBoundaries.js",
+						"bytes": 1670
+					},
+					{
+						"source": "app/modules/i18n/config.ts",
+						"bytes": 1469
+					},
+					{
+						"source": "app/utils/dates.ts",
+						"bytes": 1281
+					},
+					{
+						"source": "app/entry.client.tsx",
+						"bytes": 1238
+					},
+					{
+						"source": "node_modules/.pnpm/date-fns@4.4.0/node_modules/date-fns/formatDistance.js",
+						"bytes": 1237
+					},
+					{
+						"source": "node_modules/.pnpm/date-fns@4.4.0/node_modules/date-fns/locale/en-US/_lib/formatDistance.js",
+						"bytes": 1082
+					},
+					{
+						"source": "app/modules/i18n/loader.ts",
+						"bytes": 875
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/context.js",
+						"bytes": 864
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/router/navigation.js",
+						"bytes": 708
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/router/matcher.js",
+						"bytes": 678
+					},
+					{
+						"source": "node_modules/.pnpm/nanoid@6.0.2/node_modules/nanoid/index.browser.js",
+						"bytes": 563
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/errors.js",
+						"bytes": 560
+					},
+					{
+						"source": "node_modules/.pnpm/date-fns@4.4.0/node_modules/date-fns/locale/_lib/buildMatchFn.js",
+						"bytes": 551
+					},
+					{
+						"source": "app/features/timezone/timezone-cookie.ts",
+						"bytes": 501
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/data.js",
+						"bytes": 429
+					},
+					{
+						"source": "node_modules/.pnpm/date-fns@4.4.0/node_modules/date-fns/locale/en-US/_lib/formatLong.js",
+						"bytes": 401
+					},
+					{
+						"source": "node_modules/.pnpm/date-fns@4.4.0/node_modules/date-fns/locale/_lib/buildLocalizeFn.js",
+						"bytes": 399
+					}
+				]
+			},
+			"shell": {
+				"js": {
+					"files": 41,
+					"raw": 146665,
+					"gzip": 63227,
+					"brotli": 54360
+				},
+				"css": {
+					"files": 7,
+					"raw": 70245,
+					"gzip": 12727,
+					"brotli": 10174
+				},
+				"jsByOrigin": {
+					"unmapped (bundler glue; in the slice also the compiled translations)": 13690,
+					"shared libraries (valibot, remeda, date-fns, ...)": 27955,
+					"shared app code (schemas, urls, search params, game data)": 25249,
+					"framework runtime (rendering, router, i18n runtime)": 17193,
+					"UI layer (components, routes, hooks, icons)": 60465
+				},
+				"largestModules": [
+					{
+						"source": "app/root.tsx",
+						"bytes": 21055
+					},
+					{
+						"source": "node_modules/.pnpm/fflate@0.8.3/node_modules/fflate/esm/browser.js",
+						"bytes": 13020
+					},
+					{
+						"source": "(unmapped)",
+						"bytes": 12754
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/lib.js",
+						"bytes": 10395
+					},
+					{
+						"source": "app/components/Image.tsx",
+						"bytes": 7783
+					},
+					{
+						"source": "node_modules/.pnpm/slugify@1.6.9/node_modules/slugify/slugify.js",
+						"bytes": 7346
+					},
+					{
+						"source": "app/modules/search-params/search-params.ts",
+						"bytes": 5941
+					},
+					{
+						"source": "app/components/Catcher.tsx",
+						"bytes": 5720
+					},
+					{
+						"source": "app/utils/urls.ts",
+						"bytes": 5702
+					},
+					{
+						"source": "app/components/elements/Dialog.tsx",
+						"bytes": 5490
+					},
+					{
+						"source": "node_modules/.pnpm/nprogress@0.2.0/node_modules/nprogress/nprogress.js",
+						"bytes": 4089
+					},
+					{
+						"source": "app/components/elements/Button.tsx",
+						"bytes": 3823
+					},
+					{
+						"source": "node_modules/.pnpm/react-i18next@17.0.11_patch_hash=1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158_f6c57be155ab029488ce7781905f502f/node_modules/react-i18next/dist/es/useTranslation.js",
+						"bytes": 2957
+					},
+					{
+						"source": "app/components/elements/Toast.tsx",
+						"bytes": 2371
+					},
+					{
+						"source": "app/modules/persisted-state/persisted-state.ts",
+						"bytes": 2294
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/dom.js",
+						"bytes": 2058
+					},
+					{
+						"source": "app/form/UnsavedChangesGuard.tsx",
+						"bytes": 1985
+					},
+					{
+						"source": "app/modules/search-params/hooks.ts",
+						"bytes": 1779
+					},
+					{
+						"source": "app/features/theme/core/provider.tsx",
+						"bytes": 1692
+					},
+					{
+						"source": "app/utils/flip.ts",
+						"bytes": 1620
+					},
+					{
+						"source": "app/components/Avatar.tsx",
+						"bytes": 1423
+					},
+					{
+						"source": "node_modules/.pnpm/react-error-boundary@6.1.6_@types+react@19.3.0_react@19.3.1/node_modules/react-error-boundary/dist/react-error-boundary.js",
+						"bytes": 1289
+					},
+					{
+						"source": "app/utils/strings.ts",
+						"bytes": 1269
+					},
+					{
+						"source": "app/utils/identicon.ts",
+						"bytes": 1222
+					},
+					{
+						"source": "node_modules/.pnpm/lucide-react@1.65.0_@types+react@19.3.0_react@19.3.1/node_modules/lucide-react/dist/esm/shared/src/build/buildLucideIconNode.mjs",
+						"bytes": 1127
+					},
+					{
+						"source": "node_modules/.pnpm/react-i18next@17.0.11_patch_hash=1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158_f6c57be155ab029488ce7781905f502f/node_modules/react-i18next/dist/es/utils.js",
+						"bytes": 1093
+					},
+					{
+						"source": "app/utils/remix.ts",
+						"bytes": 1047
+					},
+					{
+						"source": "node_modules/.pnpm/remeda@2.57.0/node_modules/remeda/dist/isDeepEqual.js",
+						"bytes": 1029
+					},
+					{
+						"source": "app/utils/i18n.ts",
+						"bytes": 1007
+					},
+					{
+						"source": "app/components/elements/Spinner.tsx",
+						"bytes": 994
+					},
+					{
+						"source": "app/modules/redirects/core/Redirect.ts",
+						"bytes": 977
+					},
+					{
+						"source": "app/config.ts",
+						"bytes": 847
+					},
+					{
+						"source": "svelte/scripts/react-stand-in-shell/StandInLayout.tsx",
+						"bytes": 812
+					},
+					{
+						"source": "app/modules/scroll-lock/scroll-lock.ts",
+						"bytes": 753
+					},
+					{
+						"source": "node_modules/.pnpm/use-sync-external-store@1.6.0_react@19.3.1/node_modules/use-sync-external-store/cjs/use-sync-external-store-shim.production.js",
+						"bytes": 711
+					},
+					{
+						"source": "app/config-helpers.ts",
+						"bytes": 698
+					},
+					{
+						"source": "app/utils/compression.ts",
+						"bytes": 627
+					},
+					{
+						"source": "node_modules/.pnpm/lucide-react@1.65.0_@types+react@19.3.0_react@19.3.1/node_modules/lucide-react/dist/esm/Icon.mjs",
+						"bytes": 612
+					},
+					{
+						"source": "app/features/chat/revalidation-scope.ts",
+						"bytes": 579
+					},
+					{
+						"source": "app/components/Main.tsx",
+						"bytes": 489
+					}
+				]
+			},
+			"associations": {
+				"js": {
+					"files": 70,
+					"raw": 571184,
+					"gzip": 199684,
+					"brotli": 174274
+				},
+				"css": {
+					"files": 7,
+					"raw": 7693,
+					"gzip": 2971,
+					"brotli": 2341
+				},
+				"jsByOrigin": {
+					"unmapped (bundler glue; in the slice also the compiled translations)": 19926,
+					"framework runtime (rendering, router, i18n runtime)": 419554,
+					"shared app code (schemas, urls, search params, game data)": 47675,
+					"UI layer (components, routes, hooks, icons)": 34603,
+					"shared libraries (valibot, remeda, date-fns, ...)": 46464
+				},
+				"largestModules": [
+					{
+						"source": "node_modules/.pnpm/react-dom@19.3.1_react@19.3.1/node_modules/react-dom/cjs/react-dom-client.production.js",
+						"bytes": 203386
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/router/router.js",
+						"bytes": 46930
+					},
+					{
+						"source": "node_modules/.pnpm/i18next@26.3.6_patch_hash=34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a_typescript@7.0.2/node_modules/i18next/dist/esm/i18next.js",
+						"bytes": 43175
+					},
+					{
+						"source": "(unmapped)",
+						"bytes": 19926
+					},
+					{
+						"source": "app/modules/i18n/locale-files.ts",
+						"bytes": 13304
+					},
+					{
+						"source": "node_modules/.pnpm/fflate@0.8.3/node_modules/fflate/esm/browser.js",
+						"bytes": 13020
+					},
+					{
+						"source": "node_modules/.pnpm/valibot@1.5.0_typescript@7.0.2/node_modules/valibot/dist/index.mjs",
+						"bytes": 12131
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/lib.js",
+						"bytes": 10395
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/hooks.js",
+						"bytes": 9923
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/router/utils.js",
+						"bytes": 9732
+					},
+					{
+						"source": "app/features/associations/routes/associations.tsx",
+						"bytes": 8480
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/components.js",
+						"bytes": 8195
+					},
+					{
+						"source": "node_modules/.pnpm/react@19.3.1/node_modules/react/cjs/react.production.js",
+						"bytes": 7774
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/route-discovery.js",
+						"bytes": 7542
+					},
+					{
+						"source": "node_modules/.pnpm/slugify@1.6.9/node_modules/slugify/slugify.js",
+						"bytes": 7346
+					},
+					{
+						"source": "app/form/fields.ts",
+						"bytes": 6966
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/components.js",
+						"bytes": 6597
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/single-fetch.js",
+						"bytes": 6024
+					},
+					{
+						"source": "app/modules/search-params/search-params.ts",
+						"bytes": 5941
+					},
+					{
+						"source": "app/utils/urls.ts",
+						"bytes": 5702
+					},
+					{
+						"source": "app/components/elements/Dialog.tsx",
+						"bytes": 5490
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/routes.js",
+						"bytes": 5198
+					},
+					{
+						"source": "app/utils/schema.ts",
+						"bytes": 4543
+					},
+					{
+						"source": "app/features/scrims/scrims-schemas.ts",
+						"bytes": 4353
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom-export/hydrated-router.js",
+						"bytes": 4100
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/router/instrumentation.js",
+						"bytes": 4097
+					},
+					{
+						"source": "app/components/elements/Button.tsx",
+						"bytes": 3823
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/fog-of-war.js",
+						"bytes": 3805
+					},
+					{
+						"source": "node_modules/.pnpm/react-dom@19.3.1_react@19.3.1/node_modules/react-dom/cjs/react-dom.production.js",
+						"bytes": 3553
+					},
+					{
+						"source": "node_modules/.pnpm/scheduler@0.28.0/node_modules/scheduler/cjs/scheduler.production.js",
+						"bytes": 3495
+					},
+					{
+						"source": "app/features/user-page/in-game-name.ts",
+						"bytes": 3188
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/links.js",
+						"bytes": 2968
+					},
+					{
+						"source": "node_modules/.pnpm/react-i18next@17.0.11_patch_hash=1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158_f6c57be155ab029488ce7781905f502f/node_modules/react-i18next/dist/es/useTranslation.js",
+						"bytes": 2957
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/router/history.js",
+						"bytes": 2761
+					},
+					{
+						"source": "app/modules/in-game-lists/weapon-ids.ts",
+						"bytes": 2307
+					},
+					{
+						"source": "app/components/FormWithConfirm.tsx",
+						"bytes": 2212
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/dom.js",
+						"bytes": 2058
+					},
+					{
+						"source": "node_modules/.pnpm/date-fns@4.4.0/node_modules/date-fns/locale/en-US/_lib/localize.js",
+						"bytes": 1946
+					},
+					{
+						"source": "app/modules/in-game-lists/abilities.ts",
+						"bytes": 1852
+					},
+					{
+						"source": "node_modules/.pnpm/date-fns@4.4.0/node_modules/date-fns/locale/en-US/_lib/match.js",
+						"bytes": 1778
+					}
+				]
+			},
+			"associationsNew": {
+				"js": {
+					"files": 121,
+					"raw": 851221,
+					"gzip": 305446,
+					"brotli": 266393
+				},
+				"css": {
+					"files": 20,
+					"raw": 35490,
+					"gzip": 12385,
+					"brotli": 9983
+				},
+				"jsByOrigin": {
+					"unmapped (bundler glue; in the slice also the compiled translations)": 41813,
+					"framework runtime (rendering, router, i18n runtime)": 426222,
+					"shared app code (schemas, urls, search params, game data)": 63256,
+					"UI layer (components, routes, hooks, icons)": 186069,
+					"shared libraries (valibot, remeda, date-fns, ...)": 130705
+				},
+				"largestModules": [
+					{
+						"source": "node_modules/.pnpm/react-dom@19.3.1_react@19.3.1/node_modules/react-dom/cjs/react-dom-client.production.js",
+						"bytes": 203386
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/router/router.js",
+						"bytes": 46930
+					},
+					{
+						"source": "node_modules/.pnpm/i18next@26.3.6_patch_hash=34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a_typescript@7.0.2/node_modules/i18next/dist/esm/i18next.js",
+						"bytes": 43175
+					},
+					{
+						"source": "(unmapped)",
+						"bytes": 41813
+					},
+					{
+						"source": "node_modules/.pnpm/@dnd-kit+core@6.3.1_react-dom@19.3.1_react@19.3.1__react@19.3.1/node_modules/@dnd-kit/core/dist/core.esm.js",
+						"bytes": 38478
+					},
+					{
+						"source": "app/form/SendouForm.tsx",
+						"bytes": 16736
+					},
+					{
+						"source": "app/components/elements/Select.tsx",
+						"bytes": 13941
+					},
+					{
+						"source": "app/modules/i18n/locale-files.ts",
+						"bytes": 13304
+					},
+					{
+						"source": "node_modules/.pnpm/fflate@0.8.3/node_modules/fflate/esm/browser.js",
+						"bytes": 13020
+					},
+					{
+						"source": "node_modules/.pnpm/valibot@1.5.0_typescript@7.0.2/node_modules/valibot/dist/index.mjs",
+						"bytes": 12131
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/lib.js",
+						"bytes": 10395
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/hooks.js",
+						"bytes": 9923
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/router/utils.js",
+						"bytes": 9732
+					},
+					{
+						"source": "app/form/FormField.tsx",
+						"bytes": 9139
+					},
+					{
+						"source": "app/features/associations/routes/associations.tsx",
+						"bytes": 8480
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/components.js",
+						"bytes": 8195
+					},
+					{
+						"source": "app/components/Image.tsx",
+						"bytes": 7783
+					},
+					{
+						"source": "node_modules/.pnpm/react@19.3.1/node_modules/react/cjs/react.production.js",
+						"bytes": 7774
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/route-discovery.js",
+						"bytes": 7542
+					},
+					{
+						"source": "node_modules/.pnpm/slugify@1.6.9/node_modules/slugify/slugify.js",
+						"bytes": 7346
+					},
+					{
+						"source": "app/components/MapPoolPicker.tsx",
+						"bytes": 7316
+					},
+					{
+						"source": "app/form/fields.ts",
+						"bytes": 6966
+					},
+					{
+						"source": "node_modules/.pnpm/date-fns@4.4.0/node_modules/date-fns/_lib/format/formatters.js",
+						"bytes": 6878
+					},
+					{
+						"source": "app/form/fields/WeaponPoolFormField.tsx",
+						"bytes": 6678
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/components.js",
+						"bytes": 6597
+					},
+					{
+						"source": "node_modules/.pnpm/@dnd-kit+sortable@10.0.0_@dnd-kit+core@6.3.1_react-dom@19.3.1_react@19.3.1__react@19.3.1__react@19.3.1/node_modules/@dnd-kit/sortable/dist/sortable.esm.js",
+						"bytes": 6312
+					},
+					{
+						"source": "node_modules/.pnpm/react-i18next@17.0.11_patch_hash=1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158_f6c57be155ab029488ce7781905f502f/node_modules/react-i18next/dist/es/TransWithoutContext.js",
+						"bytes": 6268
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/single-fetch.js",
+						"bytes": 6024
+					},
+					{
+						"source": "app/modules/search-params/search-params.ts",
+						"bytes": 5941
+					},
+					{
+						"source": "app/components/elements/Tabs.tsx",
+						"bytes": 5882
+					},
+					{
+						"source": "app/utils/urls.ts",
+						"bytes": 5702
+					},
+					{
+						"source": "app/components/elements/Dialog.tsx",
+						"bytes": 5490
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom/ssr/routes.js",
+						"bytes": 5198
+					},
+					{
+						"source": "app/form/fields/ArrayFormField.tsx",
+						"bytes": 4966
+					},
+					{
+						"source": "app/components/WeaponSelect.tsx",
+						"bytes": 4765
+					},
+					{
+						"source": "app/utils/schema.ts",
+						"bytes": 4543
+					},
+					{
+						"source": "app/form/fields/SelectFormField.tsx",
+						"bytes": 4437
+					},
+					{
+						"source": "app/features/scrims/scrims-schemas.ts",
+						"bytes": 4353
+					},
+					{
+						"source": "app/form/image-crop/ImageCropDialog.tsx",
+						"bytes": 4333
+					},
+					{
+						"source": "node_modules/.pnpm/react-router@8.5.0_patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e3_bbabd81cfb7ef1b2f1b306746c5b904f/node_modules/react-router/dist/production/lib/dom-export/hydrated-router.js",
+						"bytes": 4100
+					}
+				]
+			}
+		},
+		"svelte": {
+			"framework": {
+				"js": {
+					"files": 9,
+					"raw": 115062,
+					"gzip": 43727,
+					"brotli": 39519
+				},
+				"css": {
+					"files": 0,
+					"raw": 0,
+					"gzip": 0,
+					"brotli": 0
+				},
+				"jsByOrigin": {
+					"unmapped (bundler glue; in the slice also the compiled translations)": 6322,
+					"framework runtime (rendering, router, i18n runtime)": 108331,
+					"shared libraries (valibot, remeda, date-fns, ...)": 363,
+					"UI layer (components, routes, hooks, icons)": 37
+				},
+				"largestModules": [
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/client.js",
+						"bytes": 21579
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/reactivity/batch.js",
+						"bytes": 6518
+					},
+					{
+						"source": "(unmapped)",
+						"bytes": 6322
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/blocks/each.js",
+						"bytes": 3908
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/runtime.js",
+						"bytes": 3716
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/elements/attributes.js",
+						"bytes": 3713
+					},
+					{
+						"source": "node_modules/.pnpm/devalue@5.9.4/node_modules/devalue/src/stringify.js",
+						"bytes": 3656
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/reactivity/effects.js",
+						"bytes": 3298
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/blocks/boundary.js",
+						"bytes": 3254
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/elements/transitions.js",
+						"bytes": 3173
+					},
+					{
+						"source": "node_modules/.pnpm/devalue@5.9.4/node_modules/devalue/src/parse.js",
+						"bytes": 3020
+					},
+					{
+						"source": "svelte/src/lib/paraglide/runtime.js",
+						"bytes": 2428
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/proxy.js",
+						"bytes": 2073
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/utils/routing.js",
+						"bytes": 1976
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/reactivity/props.js",
+						"bytes": 1914
+					},
+					{
+						"source": "node_modules/.pnpm/devalue@5.9.4/node_modules/devalue/src/operations.js",
+						"bytes": 1804
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/utils.js",
+						"bytes": 1704
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/reactivity/deriveds.js",
+						"bytes": 1672
+					},
+					{
+						"source": "node_modules/.pnpm/devalue@5.9.4/node_modules/devalue/src/utils.js",
+						"bytes": 1574
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/elements/events.js",
+						"bytes": 1529
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/render.js",
+						"bytes": 1490
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/shared.js",
+						"bytes": 1481
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/operations.js",
+						"bytes": 1472
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/app/state/client.svelte.js",
+						"bytes": 1393
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/blocks/branches.js",
+						"bytes": 1377
+					},
+					{
+						"source": "svelte/.svelte-kit/generated/build/client-optimized/app.js",
+						"bytes": 1337
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/shared/attributes.js",
+						"bytes": 1302
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/elements/bindings/select.js",
+						"bytes": 1285
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/utils.js",
+						"bytes": 1273
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/reactivity/sources.js",
+						"bytes": 1272
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/template.js",
+						"bytes": 1259
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/reactivity/async.js",
+						"bytes": 1253
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/fetcher.js",
+						"bytes": 1126
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/messages/shared-errors.js",
+						"bytes": 929
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/focus.js",
+						"bytes": 911
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/messages/client-errors.js",
+						"bytes": 897
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/errors.js",
+						"bytes": 871
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/shared/utils.js",
+						"bytes": 695
+					},
+					{
+						"source": "node_modules/.pnpm/devalue@5.9.4/node_modules/devalue/src/base64.js",
+						"bytes": 650
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/components/root.svelte",
+						"bytes": 566
+					}
+				]
+			},
+			"shell": {
+				"js": {
+					"files": 9,
+					"raw": 55160,
+					"gzip": 22090,
+					"brotli": 18758
+				},
+				"css": {
+					"files": 3,
+					"raw": 37694,
+					"gzip": 8511,
+					"brotli": 7321
+				},
+				"jsByOrigin": {
+					"unmapped (bundler glue; in the slice also the compiled translations)": 7703,
+					"UI layer (components, routes, hooks, icons)": 7172,
+					"framework runtime (rendering, router, i18n runtime)": 18129,
+					"shared app code (schemas, urls, search params, game data)": 4223,
+					"shared libraries (valibot, remeda, date-fns, ...)": 16995
+				},
+				"largestModules": [
+					{
+						"source": "node_modules/.pnpm/valibot@1.5.0_typescript@7.0.2/node_modules/valibot/dist/index.mjs",
+						"bytes": 9649
+					},
+					{
+						"source": "(unmapped)",
+						"bytes": 7703
+					},
+					{
+						"source": "node_modules/.pnpm/slugify@1.6.9/node_modules/slugify/slugify.js",
+						"bytes": 7346
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/remote-functions/form.svelte.js",
+						"bytes": 5597
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/form-utils.js",
+						"bytes": 5181
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/remote-functions/query/instance.svelte.js",
+						"bytes": 2146
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/remote-functions/shared.svelte.js",
+						"bytes": 1657
+					},
+					{
+						"source": "app/utils/identicon.ts",
+						"bytes": 1222
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/remote-functions/query/proxy.js",
+						"bytes": 1201
+					},
+					{
+						"source": "node_modules/.pnpm/@lucide+svelte@1.65.0_svelte@5.57.3/node_modules/@lucide/svelte/dist/utils/buildLucideIconNode.js",
+						"bytes": 1134
+					},
+					{
+						"source": "app/utils/urls.ts",
+						"bytes": 985
+					},
+					{
+						"source": "svelte/src/lib/components/Button.svelte",
+						"bytes": 968
+					},
+					{
+						"source": "svelte/src/lib/components/ToastRegion.svelte",
+						"bytes": 944
+					},
+					{
+						"source": "node_modules/.pnpm/@lucide+svelte@1.65.0_svelte@5.57.3/node_modules/@lucide/svelte/dist/Icon.svelte",
+						"bytes": 874
+					},
+					{
+						"source": "app/config.ts",
+						"bytes": 861
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/animate/index.js",
+						"bytes": 750
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/remote-functions/cache.svelte.js",
+						"bytes": 720
+					},
+					{
+						"source": "app/config-helpers.ts",
+						"bytes": 709
+					},
+					{
+						"source": "svelte/src/lib/components/Avatar.svelte",
+						"bytes": 670
+					},
+					{
+						"source": "node_modules/.pnpm/@lucide+svelte@1.65.0_svelte@5.57.3/node_modules/@lucide/svelte/dist/icons/octagon-alert.svelte",
+						"bytes": 431
+					},
+					{
+						"source": "app/modules/cache/index.ts",
+						"bytes": 393
+					},
+					{
+						"source": "svelte/src/lib/components/toast-queue.svelte.ts",
+						"bytes": 355
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/remote-functions/prerender.svelte.js",
+						"bytes": 351
+					},
+					{
+						"source": "svelte/src/lib/components/HydrationTestIndicator.svelte",
+						"bytes": 310
+					},
+					{
+						"source": "svelte/src/routes/+layout.svelte",
+						"bytes": 279
+					},
+					{
+						"source": "node_modules/.pnpm/@lucide+svelte@1.65.0_svelte@5.57.3/node_modules/@lucide/svelte/dist/icons/circle-alert.svelte",
+						"bytes": 250
+					},
+					{
+						"source": "svelte/src/lib/components/Spinner.svelte",
+						"bytes": 197
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/remote-functions/query/index.js",
+						"bytes": 192
+					},
+					{
+						"source": "node_modules/.pnpm/@lucide+svelte@1.65.0_svelte@5.57.3/node_modules/@lucide/svelte/dist/utils/defaultAttributes.js",
+						"bytes": 184
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/transition/index.js",
+						"bytes": 165
+					},
+					{
+						"source": "node_modules/.pnpm/@lucide+svelte@1.65.0_svelte@5.57.3/node_modules/@lucide/svelte/dist/icons/x.svelte",
+						"bytes": 142
+					},
+					{
+						"source": "node_modules/.pnpm/@lucide+svelte@1.65.0_svelte@5.57.3/node_modules/@lucide/svelte/dist/icons/check.svelte",
+						"bytes": 125
+					},
+					{
+						"source": "node_modules/.pnpm/@lucide+svelte@1.65.0_svelte@5.57.3/node_modules/@lucide/svelte/dist/utils/hasA11yProp.js",
+						"bytes": 95
+					},
+					{
+						"source": "svelte/src/lib/pending-mutations.svelte.ts",
+						"bytes": 89
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/utils/promise.js",
+						"bytes": 87
+					},
+					{
+						"source": "node_modules/.pnpm/@lucide+svelte@1.65.0_svelte@5.57.3/node_modules/@lucide/svelte/dist/utils/mergeClasses.js",
+						"bytes": 84
+					},
+					{
+						"source": "app/utils/e2e.ts",
+						"bytes": 53
+					},
+					{
+						"source": "node_modules/.pnpm/@lucide+svelte@1.65.0_svelte@5.57.3/node_modules/@lucide/svelte/dist/context.js",
+						"bytes": 41
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/easing/index.js",
+						"bytes": 40
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/remote-functions/query-live/cache.js",
+						"bytes": 26
+					}
+				]
+			},
+			"associations": {
+				"js": {
+					"files": 25,
+					"raw": 227081,
+					"gzip": 88021,
+					"brotli": 77576
+				},
+				"css": {
+					"files": 5,
+					"raw": 7123,
+					"gzip": 2303,
+					"brotli": 1849
+				},
+				"jsByOrigin": {
+					"unmapped (bundler glue; in the slice also the compiled translations)": 28213,
+					"framework runtime (rendering, router, i18n runtime)": 125581,
+					"shared libraries (valibot, remeda, date-fns, ...)": 29106,
+					"UI layer (components, routes, hooks, icons)": 12394,
+					"shared app code (schemas, urls, search params, game data)": 30611
+				},
+				"largestModules": [
+					{
+						"source": "(unmapped)",
+						"bytes": 28213
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/client.js",
+						"bytes": 21579
+					},
+					{
+						"source": "node_modules/.pnpm/valibot@1.5.0_typescript@7.0.2/node_modules/valibot/dist/index.mjs",
+						"bytes": 9649
+					},
+					{
+						"source": "node_modules/.pnpm/fflate@0.8.3/node_modules/fflate/esm/browser.js",
+						"bytes": 9189
+					},
+					{
+						"source": "node_modules/.pnpm/slugify@1.6.9/node_modules/slugify/slugify.js",
+						"bytes": 7346
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/reactivity/batch.js",
+						"bytes": 6518
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/remote-functions/form.svelte.js",
+						"bytes": 5597
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/form-utils.js",
+						"bytes": 5181
+					},
+					{
+						"source": "app/form/fields.ts",
+						"bytes": 5143
+					},
+					{
+						"source": "app/modules/search-params/search-params.ts",
+						"bytes": 5101
+					},
+					{
+						"source": "app/features/scrims/scrims-schemas.ts",
+						"bytes": 4420
+					},
+					{
+						"source": "app/utils/schema.ts",
+						"bytes": 4123
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/blocks/each.js",
+						"bytes": 3908
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/runtime.js",
+						"bytes": 3716
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/elements/attributes.js",
+						"bytes": 3713
+					},
+					{
+						"source": "node_modules/.pnpm/devalue@5.9.4/node_modules/devalue/src/stringify.js",
+						"bytes": 3656
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/reactivity/effects.js",
+						"bytes": 3298
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/blocks/boundary.js",
+						"bytes": 3254
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/elements/transitions.js",
+						"bytes": 3173
+					},
+					{
+						"source": "node_modules/.pnpm/devalue@5.9.4/node_modules/devalue/src/parse.js",
+						"bytes": 3020
+					},
+					{
+						"source": "svelte/src/lib/paraglide/runtime.js",
+						"bytes": 2428
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/remote-functions/query/instance.svelte.js",
+						"bytes": 2146
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/proxy.js",
+						"bytes": 2073
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/utils/routing.js",
+						"bytes": 1976
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/reactivity/props.js",
+						"bytes": 1914
+					},
+					{
+						"source": "app/modules/in-game-lists/abilities.ts",
+						"bytes": 1846
+					},
+					{
+						"source": "node_modules/.pnpm/devalue@5.9.4/node_modules/devalue/src/operations.js",
+						"bytes": 1804
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/utils.js",
+						"bytes": 1704
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/reactivity/deriveds.js",
+						"bytes": 1672
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/remote-functions/shared.svelte.js",
+						"bytes": 1657
+					},
+					{
+						"source": "node_modules/.pnpm/devalue@5.9.4/node_modules/devalue/src/utils.js",
+						"bytes": 1574
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/elements/events.js",
+						"bytes": 1529
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/render.js",
+						"bytes": 1490
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/shared.js",
+						"bytes": 1481
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/operations.js",
+						"bytes": 1472
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/app/state/client.svelte.js",
+						"bytes": 1393
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/blocks/branches.js",
+						"bytes": 1377
+					},
+					{
+						"source": "svelte/.svelte-kit/generated/build/client-optimized/app.js",
+						"bytes": 1337
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/shared/attributes.js",
+						"bytes": 1302
+					},
+					{
+						"source": "app/features/associations/associations-schemas.ts",
+						"bytes": 1287
+					}
+				]
+			},
+			"associationsNew": {
+				"js": {
+					"files": 28,
+					"raw": 325279,
+					"gzip": 118527,
+					"brotli": 103744
+				},
+				"css": {
+					"files": 8,
+					"raw": 16306,
+					"gzip": 4947,
+					"brotli": 4095
+				},
+				"jsByOrigin": {
+					"unmapped (bundler glue; in the slice also the compiled translations)": 58751,
+					"framework runtime (rendering, router, i18n runtime)": 125581,
+					"shared libraries (valibot, remeda, date-fns, ...)": 68665,
+					"UI layer (components, routes, hooks, icons)": 32532,
+					"shared app code (schemas, urls, search params, game data)": 36664
+				},
+				"largestModules": [
+					{
+						"source": "(unmapped)",
+						"bytes": 58751
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/client.js",
+						"bytes": 21579
+					},
+					{
+						"source": "node_modules/.pnpm/valibot@1.5.0_typescript@7.0.2/node_modules/valibot/dist/index.mjs",
+						"bytes": 9649
+					},
+					{
+						"source": "node_modules/.pnpm/fflate@0.8.3/node_modules/fflate/esm/browser.js",
+						"bytes": 9189
+					},
+					{
+						"source": "node_modules/.pnpm/slugify@1.6.9/node_modules/slugify/slugify.js",
+						"bytes": 7346
+					},
+					{
+						"source": "node_modules/.pnpm/date-fns@4.4.0/node_modules/date-fns/_lib/format/formatters.js",
+						"bytes": 6870
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/reactivity/batch.js",
+						"bytes": 6518
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/remote-functions/form.svelte.js",
+						"bytes": 5597
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/form-utils.js",
+						"bytes": 5181
+					},
+					{
+						"source": "app/form/fields.ts",
+						"bytes": 5143
+					},
+					{
+						"source": "app/modules/search-params/search-params.ts",
+						"bytes": 5101
+					},
+					{
+						"source": "app/features/scrims/scrims-schemas.ts",
+						"bytes": 4420
+					},
+					{
+						"source": "app/utils/schema.ts",
+						"bytes": 4123
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/blocks/each.js",
+						"bytes": 3908
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/runtime.js",
+						"bytes": 3716
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/elements/attributes.js",
+						"bytes": 3713
+					},
+					{
+						"source": "node_modules/.pnpm/devalue@5.9.4/node_modules/devalue/src/stringify.js",
+						"bytes": 3656
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/reactivity/effects.js",
+						"bytes": 3298
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/blocks/boundary.js",
+						"bytes": 3254
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/elements/transitions.js",
+						"bytes": 3173
+					},
+					{
+						"source": "node_modules/.pnpm/devalue@5.9.4/node_modules/devalue/src/parse.js",
+						"bytes": 3020
+					},
+					{
+						"source": "app/form/utils.ts",
+						"bytes": 2850
+					},
+					{
+						"source": "svelte/src/lib/paraglide/runtime.js",
+						"bytes": 2428
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/remote-functions/query/instance.svelte.js",
+						"bytes": 2146
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/proxy.js",
+						"bytes": 2073
+					},
+					{
+						"source": "app/features/map-list-generator/core/map-pool.ts",
+						"bytes": 2024
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/utils/routing.js",
+						"bytes": 1976
+					},
+					{
+						"source": "node_modules/.pnpm/date-fns@4.4.0/node_modules/date-fns/locale/en-US/_lib/localize.js",
+						"bytes": 1952
+					},
+					{
+						"source": "node_modules/.pnpm/date-fns@4.4.0/node_modules/date-fns/parse.js",
+						"bytes": 1921
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/reactivity/props.js",
+						"bytes": 1914
+					},
+					{
+						"source": "app/modules/in-game-lists/abilities.ts",
+						"bytes": 1846
+					},
+					{
+						"source": "node_modules/.pnpm/devalue@5.9.4/node_modules/devalue/src/operations.js",
+						"bytes": 1804
+					},
+					{
+						"source": "node_modules/.pnpm/date-fns@4.4.0/node_modules/date-fns/locale/en-US/_lib/match.js",
+						"bytes": 1784
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/utils.js",
+						"bytes": 1704
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/reactivity/deriveds.js",
+						"bytes": 1672
+					},
+					{
+						"source": "node_modules/.pnpm/@sveltejs+kit@3.2.0_@sveltejs+vite-plugin-svelte@7.3.1_svelte@5.57.3_vite@8.3.5_@types+_b8447a7c519e0df5a983cbc77b3fd16f/node_modules/@sveltejs/kit/src/runtime/client/remote-functions/shared.svelte.js",
+						"bytes": 1657
+					},
+					{
+						"source": "node_modules/.pnpm/devalue@5.9.4/node_modules/devalue/src/utils.js",
+						"bytes": 1574
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/dom/elements/events.js",
+						"bytes": 1529
+					},
+					{
+						"source": "svelte/src/lib/form/fields/SelectFormField.svelte",
+						"bytes": 1508
+					},
+					{
+						"source": "node_modules/.pnpm/svelte@5.57.3/node_modules/svelte/src/internal/client/render.js",
+						"bytes": 1490
+					}
+				]
+			}
+		}
+	},
+	"http": {
+		"reactDocument": {
+			"samples": 2000,
+			"meanMs": 3,
+			"p50Ms": 2.88,
+			"p95Ms": 3.68,
+			"bestRoundP50Ms": 2.78,
+			"responseBytes": 173191
+		},
+		"svelteDocument": {
+			"samples": 2000,
+			"meanMs": 2.36,
+			"p50Ms": 2.25,
+			"p95Ms": 3,
+			"bestRoundP50Ms": 2.17,
+			"responseBytes": 156433
+		},
+		"reactRouteData": {
+			"samples": 2000,
+			"meanMs": 0.41,
+			"p50Ms": 0.34,
+			"p95Ms": 0.82,
+			"bestRoundP50Ms": 0.31,
+			"responseBytes": 5913
+		},
+		"svelteRouteData": {
+			"samples": 2000,
+			"meanMs": 0.42,
+			"p50Ms": 0.37,
+			"p95Ms": 0.73,
+			"bestRoundP50Ms": 0.33,
+			"responseBytes": 6986
+		}
+	},
+	"renderOnly": {
+		"react": {
+			"iterationsPerRound": 1000,
+			"rounds": 10,
+			"medianMicroseconds": 1381.58,
+			"bestMicroseconds": 1340.87,
+			"htmlBytes": 128595
+		},
+		"svelte": {
+			"iterationsPerRound": 1000,
+			"rounds": 10,
+			"medianMicroseconds": 953.42,
+			"bestMicroseconds": 936.89,
+			"htmlBytes": 146846
+		}
+	},
+	"browser": {
+		"react": {
+			"/associations": {
+				"transfer": {
+					"document": {
+						"files": 1,
+						"raw": 173191,
+						"gzip": 13893,
+						"brotli": 9475
+					},
+					"stylesheet": {
+						"files": 10,
+						"raw": 71270,
+						"gzip": 13350,
+						"brotli": 10655
+					},
+					"font": {
+						"files": 1,
+						"raw": 39692,
+						"gzip": 39725,
+						"brotli": 39696
+					},
+					"other": {
+						"files": 6,
+						"raw": 78540,
+						"gzip": 24301,
+						"brotli": 20747
+					},
+					"script": {
+						"files": 87,
+						"raw": 635536,
+						"gzip": 225039,
+						"brotli": 196051
+					},
+					"translations (fetched json)": {
+						"files": 24,
+						"raw": 251411,
+						"gzip": 57054,
+						"brotli": 46601
+					},
+					"fetch": {
+						"files": 1,
+						"raw": 20522,
+						"gzip": 4849,
+						"brotli": 4403
+					}
+				},
+				"scriptMs": 119.84,
+				"taskMs": 356.32,
+				"domNodes": 1304
+			},
+			"/associations/new": {
+				"transfer": {
+					"document": {
+						"files": 1,
+						"raw": 183553,
+						"gzip": 15529,
+						"brotli": 10399
+					},
+					"stylesheet": {
+						"files": 22,
+						"raw": 97200,
+						"gzip": 22306,
+						"brotli": 17922
+					},
+					"font": {
+						"files": 1,
+						"raw": 39692,
+						"gzip": 39725,
+						"brotli": 39696
+					},
+					"other": {
+						"files": 6,
+						"raw": 78540,
+						"gzip": 24301,
+						"brotli": 20747
+					},
+					"script": {
+						"files": 132,
+						"raw": 901004,
+						"gzip": 324036,
+						"brotli": 282553
+					},
+					"translations (fetched json)": {
+						"files": 24,
+						"raw": 251411,
+						"gzip": 57054,
+						"brotli": 46601
+					},
+					"fetch": {
+						"files": 1,
+						"raw": 20522,
+						"gzip": 4849,
+						"brotli": 4403
+					}
+				},
+				"scriptMs": 132.63,
+				"taskMs": 422.9,
+				"domNodes": 1391
+			},
+			"/calendar/new": {
+				"transfer": {
+					"document": {
+						"files": 1,
+						"raw": 132257,
+						"gzip": 53510,
+						"brotli": 32720
+					},
+					"stylesheet": {
+						"files": 29,
+						"raw": 115730,
+						"gzip": 28110,
+						"brotli": 22687
+					},
+					"font": {
+						"files": 1,
+						"raw": 39692,
+						"gzip": 39725,
+						"brotli": 39696
+					},
+					"other": {
+						"files": 6,
+						"raw": 78540,
+						"gzip": 24301,
+						"brotli": 20747
+					},
+					"script": {
+						"files": 151,
+						"raw": 1298411,
+						"gzip": 443927,
+						"brotli": 379192
+					},
+					"translations (fetched json)": {
+						"files": 24,
+						"raw": 251411,
+						"gzip": 57054,
+						"brotli": 46601
+					}
+				},
+				"scriptMs": 123.01,
+				"taskMs": 359.31,
+				"domNodes": 514
+			}
+		},
+		"svelte": {
+			"/associations": {
+				"transfer": {
+					"document": {
+						"files": 1,
+						"raw": 156433,
+						"gzip": 8378,
+						"brotli": 4996
+					},
+					"stylesheet": {
+						"files": 6,
+						"raw": 40233,
+						"gzip": 9653,
+						"brotli": 8228
+					},
+					"script": {
+						"files": 27,
+						"raw": 233751,
+						"gzip": 91164,
+						"brotli": 80329
+					},
+					"font": {
+						"files": 1,
+						"raw": 39692,
+						"gzip": 39725,
+						"brotli": 39696
+					}
+				},
+				"scriptMs": 27.69,
+				"taskMs": 266.78,
+				"domNodes": 979
+			},
+			"/associations/new": {
+				"transfer": {
+					"document": {
+						"files": 1,
+						"raw": 156877,
+						"gzip": 8443,
+						"brotli": 5097
+					},
+					"stylesheet": {
+						"files": 9,
+						"raw": 49416,
+						"gzip": 12297,
+						"brotli": 10474
+					},
+					"script": {
+						"files": 30,
+						"raw": 361361,
+						"gzip": 131351,
+						"brotli": 114724
+					},
+					"font": {
+						"files": 1,
+						"raw": 39692,
+						"gzip": 39725,
+						"brotli": 39696
+					}
+				},
+				"scriptMs": 38.13,
+				"taskMs": 304.98,
+				"domNodes": 1002
+			},
+			"/calendar/new": {
+				"transfer": {
+					"document": {
+						"files": 1,
+						"raw": 26511,
+						"gzip": 4798,
+						"brotli": 4037
+					},
+					"stylesheet": {
+						"files": 8,
+						"raw": 49344,
+						"gzip": 12188,
+						"brotli": 10380
+					},
+					"script": {
+						"files": 27,
+						"raw": 354350,
+						"gzip": 126194,
+						"brotli": 110555
+					},
+					"font": {
+						"files": 1,
+						"raw": 39692,
+						"gzip": 39725,
+						"brotli": 39696
+					}
+				},
+				"scriptMs": 25.71,
+				"taskMs": 215.6,
+				"domNodes": 281
+			}
+		}
+	},
+	"interactions": {
+		"reactCompiler": {
+			"checkedFiles": 273,
+			"compiledFunctions": 356,
+			"bailouts": []
+		},
+		"config": {
+			"runs": 7,
+			"discardedRuns": 1,
+			"cpuThrottleRate": 4,
+			"interactionGapMs": 80,
+			"viewport": {
+				"width": 1280,
+				"height": 3000
+			},
+			"softNavigationRoundTrips": 20,
+			"warmLoad": "load #4 of the page in one browser context"
+		},
+		"pages": {
+			"calendarNew": {
+				"path": "/calendar/new",
+				"scenarioDescriptions": {
+					"typeName": "100 keystrokes into the name field (typing 10 letters, erasing them): a plain <input> on both sides, the cleanest framework comparison",
+					"addRemoveDate": "20 cycles of adding a row to the dates array field and removing it",
+					"switchMapPoolTab": "40 switches between two mode tabs of the map pool picker, each unmounting one panel of 25 stage checkboxes and mounting another",
+					"validationErrors": "10 cycles of submitting with the name and bracket URL empty (the name's error shown and focused), filling the name (its error cleared, the bracket URL's shown: that cross-field rule runs once the fields pass), filling the bracket URL (no errors) and emptying both again (errors back). After a submit every change revalidates the whole form"
+				},
+				"domNodes": {
+					"svelte": {
+						"document": 281,
+						"main": 228
+					},
+					"react": {
+						"document": 514,
+						"main": 228
+					}
+				},
+				"scenarios": {
+					"typeName": {
+						"svelte": {
+							"scriptMsPerInteraction": {
+								"samples": [
+									0.52,
+									0.5,
+									0.42,
+									0.43,
+									0.48,
+									0.47
+								],
+								"median": 0.48,
+								"best": 0.42,
+								"spreadPct": 20
+							},
+							"styleLayoutMsPerInteraction": {
+								"samples": [
+									0.3,
+									0.35,
+									0.33,
+									0.32,
+									0.26,
+									0.3
+								],
+								"median": 0.32,
+								"best": 0.26,
+								"spreadPct": 29
+							},
+							"taskMsPerInteraction": {
+								"samples": [
+									3.39,
+									3.62,
+									3.35,
+									3.27,
+									3.32,
+									3.25
+								],
+								"median": 3.35,
+								"best": 3.25,
+								"spreadPct": 11
+							},
+							"latencyP50Ms": {
+								"samples": [
+									2.64,
+									2.71,
+									2.63,
+									2.62,
+									2.61,
+									2.55
+								],
+								"median": 2.63,
+								"best": 2.55,
+								"spreadPct": 6
+							},
+							"latencyP95Ms": {
+								"samples": [
+									3.59,
+									3.65,
+									3.51,
+									3.37,
+									3.12,
+									3.17
+								],
+								"median": 3.51,
+								"best": 3.12,
+								"spreadPct": 15
+							}
+						},
+						"react": {
+							"scriptMsPerInteraction": {
+								"samples": [
+									0.83,
+									1.07,
+									0.85,
+									0.84,
+									0.98,
+									0.93
+								],
+								"median": 0.93,
+								"best": 0.83,
+								"spreadPct": 25
+							},
+							"styleLayoutMsPerInteraction": {
+								"samples": [
+									0.45,
+									0.46,
+									0.47,
+									0.42,
+									0.41,
+									0.4
+								],
+								"median": 0.45,
+								"best": 0.4,
+								"spreadPct": 16
+							},
+							"taskMsPerInteraction": {
+								"samples": [
+									4.1,
+									4.41,
+									3.94,
+									3.96,
+									3.99,
+									4.03
+								],
+								"median": 4.03,
+								"best": 3.94,
+								"spreadPct": 12
+							},
+							"latencyP50Ms": {
+								"samples": [
+									3.28,
+									3.49,
+									3.31,
+									3.23,
+									3.16,
+									3.18
+								],
+								"median": 3.28,
+								"best": 3.16,
+								"spreadPct": 10
+							},
+							"latencyP95Ms": {
+								"samples": [
+									4.03,
+									4.24,
+									4.29,
+									4.34,
+									3.83,
+									3.83
+								],
+								"median": 4.24,
+								"best": 3.83,
+								"spreadPct": 12
+							}
+						}
+					},
+					"addRemoveDate": {
+						"svelte": {
+							"scriptMsPerInteraction": {
+								"samples": [
+									1.79,
+									1.8,
+									1.77,
+									2,
+									1.95,
+									1.86
+								],
+								"median": 1.86,
+								"best": 1.77,
+								"spreadPct": 13
+							},
+							"styleLayoutMsPerInteraction": {
+								"samples": [
+									1.84,
+									1.75,
+									1.84,
+									2.03,
+									1.77,
+									1.78
+								],
+								"median": 1.84,
+								"best": 1.75,
+								"spreadPct": 15
+							},
+							"taskMsPerInteraction": {
+								"samples": [
+									8.09,
+									8.24,
+									8.12,
+									9.24,
+									8.09,
+									8.08
+								],
+								"median": 8.12,
+								"best": 8.08,
+								"spreadPct": 14
+							},
+							"latencyP50Ms": {
+								"samples": [
+									6.4,
+									6.52,
+									6.51,
+									7.31,
+									6.66,
+									6.62
+								],
+								"median": 6.62,
+								"best": 6.4,
+								"spreadPct": 14
+							},
+							"latencyP95Ms": {
+								"samples": [
+									8.78,
+									9.5,
+									8.36,
+									11.97,
+									8.21,
+									8.3
+								],
+								"median": 8.78,
+								"best": 8.21,
+								"spreadPct": 43
+							}
+						},
+						"react": {
+							"scriptMsPerInteraction": {
+								"samples": [
+									2.71,
+									2.66,
+									2.55,
+									2.64,
+									2.69,
+									2.6
+								],
+								"median": 2.66,
+								"best": 2.55,
+								"spreadPct": 6
+							},
+							"styleLayoutMsPerInteraction": {
+								"samples": [
+									2.06,
+									1.9,
+									1.81,
+									2.06,
+									1.96,
+									2.01
+								],
+								"median": 2.01,
+								"best": 1.81,
+								"spreadPct": 13
+							},
+							"taskMsPerInteraction": {
+								"samples": [
+									9.44,
+									9.38,
+									9.35,
+									9.46,
+									9.37,
+									9.34
+								],
+								"median": 9.38,
+								"best": 9.34,
+								"spreadPct": 1
+							},
+							"latencyP50Ms": {
+								"samples": [
+									7.4,
+									7.96,
+									6.82,
+									7.32,
+									7.53,
+									7.11
+								],
+								"median": 7.4,
+								"best": 6.82,
+								"spreadPct": 15
+							},
+							"latencyP95Ms": {
+								"samples": [
+									9.46,
+									11.52,
+									9.45,
+									9.18,
+									9.78,
+									8.8
+								],
+								"median": 9.46,
+								"best": 8.8,
+								"spreadPct": 29
+							}
+						}
+					},
+					"switchMapPoolTab": {
+						"svelte": {
+							"scriptMsPerInteraction": {
+								"samples": [
+									1.62,
+									1.84,
+									1.79,
+									1.95,
+									1.69,
+									1.65
+								],
+								"median": 1.79,
+								"best": 1.62,
+								"spreadPct": 19
+							},
+							"styleLayoutMsPerInteraction": {
+								"samples": [
+									4.65,
+									4.64,
+									4.52,
+									5.28,
+									4.37,
+									4.47
+								],
+								"median": 4.64,
+								"best": 4.37,
+								"spreadPct": 20
+							},
+							"taskMsPerInteraction": {
+								"samples": [
+									13,
+									13.43,
+									12.79,
+									14.52,
+									12.61,
+									12.52
+								],
+								"median": 13,
+								"best": 12.52,
+								"spreadPct": 15
+							},
+							"latencyP50Ms": {
+								"samples": [
+									8.7,
+									9.36,
+									7.81,
+									9.77,
+									8.54,
+									8.62
+								],
+								"median": 8.7,
+								"best": 7.81,
+								"spreadPct": 23
+							},
+							"latencyP95Ms": {
+								"samples": [
+									15.34,
+									15.67,
+									15.51,
+									15.83,
+									15.4,
+									16.82
+								],
+								"median": 15.67,
+								"best": 15.34,
+								"spreadPct": 9
+							}
+						},
+						"react": {
+							"scriptMsPerInteraction": {
+								"samples": [
+									2.35,
+									2.33,
+									2.31,
+									2.41,
+									2.39,
+									2.41
+								],
+								"median": 2.39,
+								"best": 2.31,
+								"spreadPct": 4
+							},
+							"styleLayoutMsPerInteraction": {
+								"samples": [
+									4.43,
+									4.55,
+									4.56,
+									4.38,
+									4.39,
+									4.6
+								],
+								"median": 4.55,
+								"best": 4.38,
+								"spreadPct": 5
+							},
+							"taskMsPerInteraction": {
+								"samples": [
+									13.57,
+									13.53,
+									13.68,
+									13.55,
+									13.54,
+									13.75
+								],
+								"median": 13.57,
+								"best": 13.53,
+								"spreadPct": 2
+							},
+							"latencyP50Ms": {
+								"samples": [
+									7.52,
+									8.05,
+									9.53,
+									8.16,
+									8.13,
+									9.38
+								],
+								"median": 8.16,
+								"best": 7.52,
+								"spreadPct": 25
+							},
+							"latencyP95Ms": {
+								"samples": [
+									16.08,
+									16.05,
+									16.41,
+									14.71,
+									16.03,
+									15.11
+								],
+								"median": 16.05,
+								"best": 14.71,
+								"spreadPct": 11
+							}
+						}
+					},
+					"validationErrors": {
+						"svelte": {
+							"scriptMsPerInteraction": {
+								"samples": [
+									0.81,
+									0.84,
+									0.78,
+									0.81,
+									0.78,
+									0.72
+								],
+								"median": 0.81,
+								"best": 0.72,
+								"spreadPct": 14
+							},
+							"styleLayoutMsPerInteraction": {
+								"samples": [
+									0.55,
+									0.65,
+									0.6,
+									0.68,
+									0.62,
+									0.56
+								],
+								"median": 0.62,
+								"best": 0.55,
+								"spreadPct": 20
+							},
+							"taskMsPerInteraction": {
+								"samples": [
+									4.93,
+									5.22,
+									5.06,
+									5.09,
+									4.95,
+									4.94
+								],
+								"median": 5.06,
+								"best": 4.93,
+								"spreadPct": 6
+							},
+							"latencyP50Ms": {
+								"samples": [
+									4.47,
+									4.54,
+									4.55,
+									4.88,
+									4.7,
+									4.53
+								],
+								"median": 4.55,
+								"best": 4.47,
+								"spreadPct": 9
+							},
+							"latencyP95Ms": {
+								"samples": [
+									15.74,
+									12.88,
+									14.2,
+									13.84,
+									13.12,
+									14.89
+								],
+								"median": 14.2,
+								"best": 12.88,
+								"spreadPct": 20
+							}
+						},
+						"react": {
+							"scriptMsPerInteraction": {
+								"samples": [
+									1.43,
+									1.44,
+									1.4,
+									1.53,
+									1.43,
+									1.34
+								],
+								"median": 1.43,
+								"best": 1.34,
+								"spreadPct": 13
+							},
+							"styleLayoutMsPerInteraction": {
+								"samples": [
+									0.74,
+									0.73,
+									0.75,
+									0.72,
+									0.78,
+									0.77
+								],
+								"median": 0.75,
+								"best": 0.72,
+								"spreadPct": 8
+							},
+							"taskMsPerInteraction": {
+								"samples": [
+									5.8,
+									5.87,
+									5.7,
+									6.1,
+									5.73,
+									5.65
+								],
+								"median": 5.8,
+								"best": 5.65,
+								"spreadPct": 8
+							},
+							"latencyP50Ms": {
+								"samples": [
+									5.27,
+									5.91,
+									5.56,
+									5.63,
+									5.66,
+									5.36
+								],
+								"median": 5.63,
+								"best": 5.27,
+								"spreadPct": 11
+							},
+							"latencyP95Ms": {
+								"samples": [
+									16.29,
+									16.1,
+									15.79,
+									15.27,
+									15.88,
+									15.37
+								],
+								"median": 15.88,
+								"best": 15.27,
+								"spreadPct": 6
+							}
+						}
+					}
+				},
+				"hydration": {
+					"cold": {
+						"svelte": {
+							"scriptMs": {
+								"samples": [
+									27.51,
+									26.46,
+									26.01,
+									25.89,
+									25.46,
+									26.93
+								],
+								"median": 26.46,
+								"best": 25.46,
+								"spreadPct": 8
+							},
+							"taskMs": {
+								"samples": [
+									191.21,
+									187.69,
+									187.78,
+									182.37,
+									175.91,
+									184.02
+								],
+								"median": 187.69,
+								"best": 175.91,
+								"spreadPct": 8
+							},
+							"longTaskMs": {
+								"samples": [
+									54,
+									54,
+									55,
+									54,
+									53,
+									56
+								],
+								"median": 54,
+								"best": 53,
+								"spreadPct": 6
+							},
+							"hydratedAtMs": {
+								"samples": [
+									194.8,
+									194.9,
+									190.8,
+									188.7,
+									182.2,
+									190.3
+								],
+								"median": 190.8,
+								"best": 182.2,
+								"spreadPct": 7
+							}
+						},
+						"react": {
+							"scriptMs": {
+								"samples": [
+									115.87,
+									115.51,
+									116.53,
+									119.58,
+									113.68,
+									116.56
+								],
+								"median": 116.53,
+								"best": 113.68,
+								"spreadPct": 5
+							},
+							"taskMs": {
+								"samples": [
+									240.06,
+									245.4,
+									247.68,
+									246.17,
+									239.97,
+									244.37
+								],
+								"median": 245.4,
+								"best": 239.97,
+								"spreadPct": 3
+							},
+							"longTaskMs": {
+								"samples": [
+									0,
+									0,
+									0,
+									0,
+									0,
+									0
+								],
+								"median": 0,
+								"best": 0,
+								"spreadPct": 0
+							},
+							"hydratedAtMs": {
+								"samples": [
+									257.4,
+									261.6,
+									263.4,
+									258.9,
+									257,
+									261.9
+								],
+								"median": 261.6,
+								"best": 257,
+								"spreadPct": 2
+							}
+						}
+					},
+					"warm": {
+						"svelte": {
+							"scriptMs": {
+								"samples": [
+									24.83,
+									23.15,
+									25.77,
+									24.65,
+									24.4,
+									24.99
+								],
+								"median": 24.83,
+								"best": 23.15,
+								"spreadPct": 11
+							},
+							"taskMs": {
+								"samples": [
+									185.23,
+									185.44,
+									186.11,
+									184.04,
+									191.12,
+									178.23
+								],
+								"median": 185.44,
+								"best": 178.23,
+								"spreadPct": 7
+							},
+							"longTaskMs": {
+								"samples": [
+									62,
+									61,
+									60,
+									60,
+									65,
+									60
+								],
+								"median": 61,
+								"best": 60,
+								"spreadPct": 8
+							},
+							"hydratedAtMs": {
+								"samples": [
+									190.7,
+									190.9,
+									190.2,
+									189.8,
+									196,
+									186.2
+								],
+								"median": 190.7,
+								"best": 186.2,
+								"spreadPct": 5
+							}
+						},
+						"react": {
+							"scriptMs": {
+								"samples": [
+									115.01,
+									119.92,
+									114.17,
+									117.1,
+									116.23,
+									115.92
+								],
+								"median": 116.23,
+								"best": 114.17,
+								"spreadPct": 5
+							},
+							"taskMs": {
+								"samples": [
+									240.62,
+									246.15,
+									241.69,
+									243.66,
+									241.04,
+									239.51
+								],
+								"median": 241.69,
+								"best": 239.51,
+								"spreadPct": 3
+							},
+							"longTaskMs": {
+								"samples": [
+									0,
+									0,
+									0,
+									0,
+									0,
+									0
+								],
+								"median": 0,
+								"best": 0,
+								"spreadPct": 0
+							},
+							"hydratedAtMs": {
+								"samples": [
+									255.3,
+									259.3,
+									255.7,
+									260.5,
+									254.1,
+									254.9
+								],
+								"median": 255.7,
+								"best": 254.1,
+								"spreadPct": 3
+							}
+						}
+					}
+				},
+				"softNavigation": {
+					"svelte": {
+						"firstScriptMs": {
+							"samples": [
+								19.94,
+								20.5,
+								20.99,
+								17.23,
+								19.96,
+								20.23
+							],
+							"median": 20.23,
+							"best": 17.23,
+							"spreadPct": 19
+						},
+						"firstTimeToPaintMs": {
+							"samples": [
+								106.2,
+								112.9,
+								113.4,
+								104.3,
+								111.3,
+								108.4
+							],
+							"median": 111.3,
+							"best": 104.3,
+							"spreadPct": 8
+						},
+						"repeatedScriptMs": {
+							"samples": [
+								6,
+								6.1,
+								6,
+								6.24,
+								5.97,
+								6.03
+							],
+							"median": 6.03,
+							"best": 5.97,
+							"spreadPct": 5
+						},
+						"repeatedTimeToPaintMs": {
+							"samples": [
+								34.9,
+								35.3,
+								34.4,
+								33.2,
+								34.9,
+								34
+							],
+							"median": 34.9,
+							"best": 33.2,
+							"spreadPct": 6
+						},
+						"heapAfterLoadMb": {
+							"samples": [
+								3.26,
+								3.26,
+								3.26,
+								3.26,
+								3.26,
+								3.26
+							],
+							"median": 3.26,
+							"best": 3.26,
+							"spreadPct": 0
+						},
+						"heapAfterNavigationsMb": {
+							"samples": [
+								5.26,
+								5.26,
+								5.26,
+								5.26,
+								5.26,
+								5.26
+							],
+							"median": 5.26,
+							"best": 5.26,
+							"spreadPct": 0
+						}
+					},
+					"react": {
+						"firstScriptMs": {
+							"samples": [
+								78.47,
+								76.67,
+								81.7,
+								78.73,
+								78.59,
+								77.93
+							],
+							"median": 78.59,
+							"best": 76.67,
+							"spreadPct": 6
+						},
+						"firstTimeToPaintMs": {
+							"samples": [
+								183.6,
+								185.4,
+								195.4,
+								188.1,
+								193.6,
+								185.4
+							],
+							"median": 188.1,
+							"best": 183.6,
+							"spreadPct": 6
+						},
+						"repeatedScriptMs": {
+							"samples": [
+								19.95,
+								19.86,
+								21.94,
+								20.66,
+								20.15,
+								22.48
+							],
+							"median": 20.66,
+							"best": 19.86,
+							"spreadPct": 13
+						},
+						"repeatedTimeToPaintMs": {
+							"samples": [
+								45.2,
+								44.4,
+								46.9,
+								46.3,
+								45,
+								47.4
+							],
+							"median": 46.3,
+							"best": 44.4,
+							"spreadPct": 6
+						},
+						"heapAfterLoadMb": {
+							"samples": [
+								6.63,
+								6.63,
+								6.63,
+								6.63,
+								6.63,
+								6.63
+							],
+							"median": 6.63,
+							"best": 6.63,
+							"spreadPct": 0
+						},
+						"heapAfterNavigationsMb": {
+							"samples": [
+								9.18,
+								9.18,
+								9.16,
+								9.16,
+								9.18,
+								9.16
+							],
+							"median": 9.18,
+							"best": 9.16,
+							"spreadPct": 0
+						}
+					}
+				},
+				"pooledLatency": {
+					"scenarios.addRemoveDate.svelte": {
+						"interactions": 240,
+						"p50Ms": 6.51,
+						"p95Ms": 9
+					},
+					"scenarios.addRemoveDate.react": {
+						"interactions": 240,
+						"p50Ms": 7.41,
+						"p95Ms": 9.97
+					},
+					"scenarios.switchMapPoolTab.svelte": {
+						"interactions": 240,
+						"p50Ms": 8.6,
+						"p95Ms": 15.66
+					},
+					"scenarios.switchMapPoolTab.react": {
+						"interactions": 240,
+						"p50Ms": 8.42,
+						"p95Ms": 15.67
+					},
+					"scenarios.validationErrors.svelte": {
+						"interactions": 540,
+						"p50Ms": 4.57,
+						"p95Ms": 14.19
+					},
+					"scenarios.validationErrors.react": {
+						"interactions": 540,
+						"p50Ms": 5.54,
+						"p95Ms": 15.88
+					},
+					"scenarios.typeName.svelte": {
+						"interactions": 600,
+						"p50Ms": 2.63,
+						"p95Ms": 3.29
+					},
+					"scenarios.typeName.react": {
+						"interactions": 600,
+						"p50Ms": 3.27,
+						"p95Ms": 4.06
+					}
+				}
+			},
+			"tournamentBracket": {
+				"path": "/to/2/brackets?idx=0",
+				"scenarioDescriptions": {
+					"toggleCompactify": "40 toggles of Compactify, hiding and showing again the rounds without ongoing matches: a client-side change to a big part of the bracket"
+				},
+				"revalidationDescription": "20 revalidations of the page's data, each after the score of match 2 changed in the database (one score text in the bracket changes, every match object is new)",
+				"domNodes": {
+					"svelte": {
+						"document": 607,
+						"main": 556
+					},
+					"react": {
+						"document": 874,
+						"main": 556
+					}
+				},
+				"scenarios": {
+					"toggleCompactify": {
+						"svelte": {
+							"scriptMsPerInteraction": {
+								"samples": [
+									2.56,
+									2.61,
+									2.64,
+									2.62,
+									2.71,
+									2.73
+								],
+								"median": 2.64,
+								"best": 2.56,
+								"spreadPct": 6
+							},
+							"styleLayoutMsPerInteraction": {
+								"samples": [
+									1.12,
+									1.11,
+									1.17,
+									1.02,
+									0.99,
+									1.11
+								],
+								"median": 1.11,
+								"best": 0.99,
+								"spreadPct": 17
+							},
+							"taskMsPerInteraction": {
+								"samples": [
+									6.73,
+									6.99,
+									6.95,
+									6.82,
+									6.86,
+									7
+								],
+								"median": 6.95,
+								"best": 6.73,
+								"spreadPct": 4
+							},
+							"latencyP50Ms": {
+								"samples": [
+									5.67,
+									5.77,
+									5.98,
+									5.73,
+									5.64,
+									5.73
+								],
+								"median": 5.73,
+								"best": 5.64,
+								"spreadPct": 6
+							},
+							"latencyP95Ms": {
+								"samples": [
+									6.51,
+									6.64,
+									15.23,
+									6.62,
+									6.63,
+									6.69
+								],
+								"median": 6.64,
+								"best": 6.51,
+								"spreadPct": 131
+							}
+						},
+						"react": {
+							"scriptMsPerInteraction": {
+								"samples": [
+									3.51,
+									3.54,
+									3.51,
+									3.57,
+									3.72,
+									3.59
+								],
+								"median": 3.57,
+								"best": 3.51,
+								"spreadPct": 6
+							},
+							"styleLayoutMsPerInteraction": {
+								"samples": [
+									1.07,
+									1.09,
+									1.13,
+									1.09,
+									1.08,
+									1.08
+								],
+								"median": 1.09,
+								"best": 1.07,
+								"spreadPct": 5
+							},
+							"taskMsPerInteraction": {
+								"samples": [
+									7.91,
+									8.02,
+									7.85,
+									8.02,
+									8.38,
+									8.05
+								],
+								"median": 8.02,
+								"best": 7.85,
+								"spreadPct": 7
+							},
+							"latencyP50Ms": {
+								"samples": [
+									6.68,
+									6.59,
+									6.79,
+									6.74,
+									7.04,
+									6.56
+								],
+								"median": 6.74,
+								"best": 6.56,
+								"spreadPct": 7
+							},
+							"latencyP95Ms": {
+								"samples": [
+									12.79,
+									8.19,
+									7.88,
+									14.45,
+									14.88,
+									7.91
+								],
+								"median": 12.79,
+								"best": 7.88,
+								"spreadPct": 55
+							}
+						}
+					}
+				},
+				"revalidation": {
+					"svelte": {
+						"scriptMsPerUpdate": {
+							"samples": [
+								8.33,
+								8.75,
+								8.9,
+								8.7,
+								8.65,
+								8.5
+							],
+							"median": 8.7,
+							"best": 8.33,
+							"spreadPct": 7
+						},
+						"styleLayoutMsPerUpdate": {
+							"samples": [
+								0.37,
+								0.4,
+								0.3,
+								0.34,
+								0.34,
+								0.37
+							],
+							"median": 0.37,
+							"best": 0.3,
+							"spreadPct": 28
+						},
+						"taskMsPerUpdate": {
+							"samples": [
+								15.77,
+								16.66,
+								15.85,
+								15.79,
+								16.35,
+								15.98
+							],
+							"median": 15.98,
+							"best": 15.77,
+							"spreadPct": 6
+						},
+						"updateToPaintP50Ms": {
+							"samples": [
+								18.2,
+								17.5,
+								18,
+								17.9,
+								17.7,
+								18
+							],
+							"median": 18,
+							"best": 17.5,
+							"spreadPct": 4
+						},
+						"updateToPaintP95Ms": {
+							"samples": [
+								23.1,
+								19.6,
+								24.6,
+								19.4,
+								19.1,
+								19.4
+							],
+							"median": 19.6,
+							"best": 19.1,
+							"spreadPct": 28
+						}
+					},
+					"react": {
+						"scriptMsPerUpdate": {
+							"samples": [
+								12.16,
+								12.24,
+								12.08,
+								12.15,
+								12.34,
+								12.12
+							],
+							"median": 12.16,
+							"best": 12.08,
+							"spreadPct": 2
+						},
+						"styleLayoutMsPerUpdate": {
+							"samples": [
+								0.44,
+								0.47,
+								0.45,
+								0.43,
+								0.41,
+								0.46
+							],
+							"median": 0.45,
+							"best": 0.41,
+							"spreadPct": 14
+						},
+						"taskMsPerUpdate": {
+							"samples": [
+								18.23,
+								18.12,
+								18.02,
+								18.03,
+								18.33,
+								18.39
+							],
+							"median": 18.23,
+							"best": 18.02,
+							"spreadPct": 2
+						},
+						"updateToPaintP50Ms": {
+							"samples": [
+								20.6,
+								19.5,
+								19.2,
+								20,
+								20,
+								19.6
+							],
+							"median": 20,
+							"best": 19.2,
+							"spreadPct": 7
+						},
+						"updateToPaintP95Ms": {
+							"samples": [
+								34.8,
+								36,
+								34.8,
+								33.4,
+								33,
+								34.2
+							],
+							"median": 34.8,
+							"best": 33,
+							"spreadPct": 9
+						}
+					}
+				},
+				"hydration": {
+					"cold": {
+						"svelte": {
+							"scriptMs": {
+								"samples": [
+									21.97,
+									23.39,
+									20.52,
+									20.25,
+									22.21,
+									20.44
+								],
+								"median": 21.97,
+								"best": 20.25,
+								"spreadPct": 14
+							},
+							"taskMs": {
+								"samples": [
+									239.46,
+									257.46,
+									239.61,
+									238.44,
+									240.27,
+									234.72
+								],
+								"median": 239.61,
+								"best": 234.72,
+								"spreadPct": 9
+							},
+							"longTaskMs": {
+								"samples": [
+									73,
+									86,
+									73,
+									78,
+									75,
+									79
+								],
+								"median": 78,
+								"best": 73,
+								"spreadPct": 17
+							},
+							"hydratedAtMs": {
+								"samples": [
+									243.9,
+									262.4,
+									243.5,
+									242.4,
+									245.9,
+									245.2
+								],
+								"median": 245.2,
+								"best": 242.4,
+								"spreadPct": 8
+							}
+						},
+						"react": {
+							"scriptMs": {
+								"samples": [
+									107.55,
+									112.35,
+									105.74,
+									108.83,
+									109.12,
+									105.59
+								],
+								"median": 108.83,
+								"best": 105.59,
+								"spreadPct": 6
+							},
+							"taskMs": {
+								"samples": [
+									307.09,
+									323.62,
+									304.61,
+									296.17,
+									301.61,
+									299.94
+								],
+								"median": 304.61,
+								"best": 296.17,
+								"spreadPct": 9
+							},
+							"longTaskMs": {
+								"samples": [
+									146,
+									153,
+									143,
+									137,
+									137,
+									137
+								],
+								"median": 143,
+								"best": 137,
+								"spreadPct": 11
+							},
+							"hydratedAtMs": {
+								"samples": [
+									327.6,
+									346.9,
+									326.3,
+									318,
+									324.8,
+									318.7
+								],
+								"median": 326.3,
+								"best": 318,
+								"spreadPct": 9
+							}
+						}
+					},
+					"warm": {
+						"svelte": {
+							"scriptMs": {
+								"samples": [
+									20.37,
+									22.24,
+									18.78,
+									19.91,
+									22.28,
+									20.72
+								],
+								"median": 20.72,
+								"best": 18.78,
+								"spreadPct": 17
+							},
+							"taskMs": {
+								"samples": [
+									226.93,
+									246.53,
+									231.3,
+									220.96,
+									246.86,
+									226.25
+								],
+								"median": 231.3,
+								"best": 220.96,
+								"spreadPct": 11
+							},
+							"longTaskMs": {
+								"samples": [
+									86,
+									77,
+									84,
+									71,
+									81,
+									84
+								],
+								"median": 84,
+								"best": 71,
+								"spreadPct": 18
+							},
+							"hydratedAtMs": {
+								"samples": [
+									233,
+									251.7,
+									235.3,
+									228.8,
+									252,
+									230.1
+								],
+								"median": 235.3,
+								"best": 228.8,
+								"spreadPct": 10
+							}
+						},
+						"react": {
+							"scriptMs": {
+								"samples": [
+									108.87,
+									106.66,
+									108.3,
+									112.69,
+									110.2,
+									107.89
+								],
+								"median": 108.87,
+								"best": 106.66,
+								"spreadPct": 6
+							},
+							"taskMs": {
+								"samples": [
+									300.47,
+									289.02,
+									304.42,
+									302.86,
+									309.85,
+									291.41
+								],
+								"median": 302.86,
+								"best": 289.02,
+								"spreadPct": 7
+							},
+							"longTaskMs": {
+								"samples": [
+									141,
+									137,
+									94,
+									144,
+									145,
+									137
+								],
+								"median": 141,
+								"best": 94,
+								"spreadPct": 36
+							},
+							"hydratedAtMs": {
+								"samples": [
+									317.1,
+									310.3,
+									321.2,
+									322.7,
+									328.5,
+									313.1
+								],
+								"median": 321.2,
+								"best": 310.3,
+								"spreadPct": 6
+							}
+						}
+					}
+				},
+				"softNavigation": {
+					"svelte": {
+						"firstScriptMs": {
+							"samples": [
+								15.3,
+								15.4,
+								13.65,
+								15.78,
+								14.17,
+								14.86
+							],
+							"median": 15.3,
+							"best": 13.65,
+							"spreadPct": 14
+						},
+						"firstTimeToPaintMs": {
+							"samples": [
+								142.1,
+								134.4,
+								138.7,
+								138.1,
+								144.2,
+								142.2
+							],
+							"median": 142.1,
+							"best": 134.4,
+							"spreadPct": 7
+						},
+						"repeatedScriptMs": {
+							"samples": [
+								5.64,
+								5.21,
+								5.63,
+								5.43,
+								5.39,
+								5.56
+							],
+							"median": 5.56,
+							"best": 5.21,
+							"spreadPct": 8
+						},
+						"repeatedTimeToPaintMs": {
+							"samples": [
+								48.7,
+								49,
+								50.2,
+								47.7,
+								50.6,
+								48.1
+							],
+							"median": 49,
+							"best": 47.7,
+							"spreadPct": 6
+						},
+						"heapAfterLoadMb": {
+							"samples": [
+								3.47,
+								3.47,
+								3.47,
+								3.47,
+								3.47,
+								3.47
+							],
+							"median": 3.47,
+							"best": 3.47,
+							"spreadPct": 0
+						},
+						"heapAfterNavigationsMb": {
+							"samples": [
+								5.61,
+								5.61,
+								5.69,
+								5.75,
+								5.59,
+								5.87
+							],
+							"median": 5.69,
+							"best": 5.59,
+							"spreadPct": 5
+						}
+					},
+					"react": {
+						"firstScriptMs": {
+							"samples": [
+								72.68,
+								71.73,
+								70.93,
+								75.1,
+								80.43,
+								66.82
+							],
+							"median": 72.68,
+							"best": 66.82,
+							"spreadPct": 19
+						},
+						"firstTimeToPaintMs": {
+							"samples": [
+								223.8,
+								221.7,
+								227.3,
+								232.4,
+								253.2,
+								198.1
+							],
+							"median": 227.3,
+							"best": 198.1,
+							"spreadPct": 24
+						},
+						"repeatedScriptMs": {
+							"samples": [
+								28.97,
+								26.94,
+								27.17,
+								28.55,
+								27.52,
+								28.53
+							],
+							"median": 28.53,
+							"best": 26.94,
+							"spreadPct": 7
+						},
+						"repeatedTimeToPaintMs": {
+							"samples": [
+								60.7,
+								59.6,
+								58.9,
+								60.8,
+								59.2,
+								59.5
+							],
+							"median": 59.6,
+							"best": 58.9,
+							"spreadPct": 3
+						},
+						"heapAfterLoadMb": {
+							"samples": [
+								6.9,
+								6.89,
+								6.89,
+								6.89,
+								6.89,
+								6.94
+							],
+							"median": 6.89,
+							"best": 6.89,
+							"spreadPct": 1
+						},
+						"heapAfterNavigationsMb": {
+							"samples": [
+								9.41,
+								9.41,
+								9.35,
+								9.41,
+								9.38,
+								9.39
+							],
+							"median": 9.41,
+							"best": 9.35,
+							"spreadPct": 1
+						}
+					}
+				},
+				"pooledLatency": {
+					"scenarios.toggleCompactify.svelte": {
+						"interactions": 240,
+						"p50Ms": 5.75,
+						"p95Ms": 6.85
+					},
+					"scenarios.toggleCompactify.react": {
+						"interactions": 240,
+						"p50Ms": 6.66,
+						"p95Ms": 11.52
+					}
+				}
+			}
+		},
+		"reruns": [
+			{
+				"scenario": "calendarNew.typeName",
+				"measuredAt": "2026-11-12T17:51:41.641Z",
+				"loadAverage": {
+					"atStart": 2.94,
+					"peak": 3.82,
+					"atEnd": 3.11
+				}
+			}
+		]
+	}
+}

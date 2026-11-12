@@ -6,6 +6,9 @@ import { devices } from "@playwright/test";
 // this flag at import time. Workers inherit it from this process.
 process.env.VITE_E2E_TEST_RUN = "true";
 
+/** `E2E_TARGET=svelte` runs the specs of the SvelteKit slice (`svelte/`) against its own build instead. */
+const IS_SVELTE_TARGET = process.env.E2E_TARGET === "svelte";
+
 const WORKER_COUNT =
 	Number(process.env.E2E_WORKERS) ||
 	Math.min(8, Math.max(4, os.cpus().length - 2));
@@ -18,7 +21,8 @@ const BLOCKED_HOSTS = [
 ];
 
 const config: PlaywrightTestConfig = {
-	testDir: "./e2e",
+	testDir: IS_SVELTE_TARGET ? "./e2e/svelte" : "./e2e",
+	testIgnore: IS_SVELTE_TARGET ? undefined : "**/e2e/svelte/**",
 	timeout: 30 * 1000,
 	expect: {
 		timeout: 5000,
