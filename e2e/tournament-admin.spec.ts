@@ -12,6 +12,7 @@ import {
 	teamSeeds,
 } from "./helpers/tournament";
 import { TournamentAdminAuditPage } from "./pages/tournament/tournament-admin-audit-page";
+import { TournamentAdminBoardPage } from "./pages/tournament/tournament-admin-board-page";
 import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";
 import { TournamentAdminRegistrationPage } from "./pages/tournament/tournament-admin-registration-page";
 import { TournamentTeamPage } from "./pages/tournament/tournament-team-page";
@@ -379,6 +380,85 @@ test.describe("Tournament admin LAN stations", () => {
 		await stations.goto(tournament.id);
 		await expect(stations.locators.nameInputs).toHaveCount(1);
 		await expect(stations.locators.nameInputs.nth(0)).toHaveValue("Station 1");
+	});
+
+	test("moves matches on the stations board, read-only for a pool captain", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+		});
+		await factories.CalendarEventVenueFactory.create({
+			eventId: tournament.eventId,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(4));
+		const station1 = await factories.TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 1",
+		});
+		const station2 = await factories.TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 2",
+		});
+		const [first, second, final] =
+			await factories.TournamentFactory.startBracket(tournament.id);
+		await factories.TournamentMatchStationFactory.create({
+			matchId: first.id,
+			stationId: station1.id,
+		});
+		await factories.TournamentMatchStationFactory.create({
+			matchId: final.id,
+			stationId: station1.id,
+		});
+		const poolCaptain = await factories.UserFactory.create();
+		await factories.TournamentStaffFactory.create({
+			tournamentId: tournament.id,
+			userId: poolCaptain.id,
+			role: "POOL_CAPTAIN",
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		const board = new TournamentAdminBoardPage(page);
+		await board.goto(tournament.id);
+
+		await expect(
+			board.lane(station1.id).getByTestId(`board-match-${first.id}`),
+		).toContainText("Now");
+		await expect(
+			board.lane(station1.id).getByTestId(`board-match-${final.id}`),
+		).toContainText("Next");
+		await expect(
+			board.lane(null).getByTestId(`board-match-${second.id}`),
+		).toBeVisible();
+
+		await board.dragMatch(second.id, station2.id);
+		await board.moveMatch(first.id, null);
+
+		await board.goto(tournament.id);
+		await expect(
+			board.lane(station2.id).getByTestId(`board-match-${second.id}`),
+		).toContainText("Now");
+		await expect(
+			board.lane(null).getByTestId(`board-match-${first.id}`),
+		).toBeVisible();
+		// teams still unknown, so not Now but Next
+		await expect(
+			board.lane(station1.id).getByTestId(`board-match-${final.id}`),
+		).toContainText("Next");
+		await expect(board.lane(station2.id)).not.toContainText("Next");
+
+		const audit = new TournamentAdminAuditPage(page);
+		await audit.goto(tournament.id);
+		await expect(audit.eventCell("Semis 2: Waiting → Station 2")).toBeVisible();
+		await expect(audit.eventCell("Semis 1: Station 1 → Waiting")).toBeVisible();
+
+		await impersonate(page, poolCaptain.id);
+		await board.goto(tournament.id);
+
+		await expect(board.locators.readOnlyNotice).toBeVisible();
+		await expect(board.match(second.id)).toBeVisible();
+		await expect(board.locators.moveButtons).toHaveCount(0);
 	});
 
 	test("hides the Stations tab of an online tournament", async ({

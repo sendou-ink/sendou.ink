@@ -8,7 +8,7 @@ import {
 	textFieldOptional,
 	toggle,
 } from "~/form/fields";
-import { superRefine } from "~/utils/schema";
+import { _action, coerceNumber, id, superRefine } from "~/utils/schema";
 import { TOURNAMENT_STATIONS } from "./tournament-stations-constants";
 
 export const stationsFormSchema = v.pipe(
@@ -68,3 +68,12 @@ export const stationsFormSchema = v.pipe(
 		}
 	}),
 );
+
+export const stationsBoardActionSchema = v.object({
+	_action: _action("MOVE_MATCH"),
+	matchId: id,
+	/** Omitted = back to the Waiting lane. */
+	stationId: v.optional(id),
+	/** Position in the station's queue of unfinished matches, 0 first. */
+	index: v.pipe(coerceNumber(), v.integer(), v.minValue(0)),
+});

@@ -1633,6 +1633,11 @@ export class Tournament {
 		return hasPermission(this.ctx, "REPORT_SCORES", user);
 	}
 
+	/** LAN: viewing the stations board. Moving matches on it is for {@link isOrganizerOrStreamer}. */
+	canSeeStationsBoard(user: OptionalIdObject) {
+		return this.isOrganizerOrStreamer(user) || this.canReportAnyScore(user);
+	}
+
 	/** Live streams of the tournament, empty in the views whose loader did not ship them. */
 	get streams(): TournamentStream[] {
 		return this.args.streams ?? [];

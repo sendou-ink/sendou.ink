@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import {
+	Columns3,
 	Gamepad2,
 	History,
 	ListOrdered,
@@ -42,6 +43,7 @@ type AdminTab =
 	| "staff"
 	| "stream"
 	| "stations"
+	| "board"
 	| "brackets"
 	| "audit";
 
@@ -52,20 +54,20 @@ export default function TournamentAdminLayout() {
 	const user = useUser();
 	const location = useLocation();
 
+	const isOrganizer = tournament.isOrganizer(user);
 	const showReopen = Boolean(
 		DANGEROUS_CAN_ACCESS_DEV_CONTROLS &&
 			tournament.ctx.isFinalized &&
 			tournament.isAdmin(user),
 	);
 	const showStaffTab = tournament.isAdmin(user);
-	const showBracketsTab = tournament.ctx.isFinalized ? showReopen : true;
-	const showStreamTab = !tournament.ctx.isFinalized;
-	const showStationsTab = tournament.isLan && !tournament.ctx.isFinalized;
-	const showSeedsTab = !tournament.hasStarted;
-
-	if (!tournament.isOrganizer(user)) {
-		return <Redirect to={tournamentPage(tournament.ctx.id)} />;
-	}
+	const showBracketsTab =
+		isOrganizer && (tournament.ctx.isFinalized ? showReopen : true);
+	const showStreamTab = isOrganizer && !tournament.ctx.isFinalized;
+	const isOngoingLan = tournament.isLan && !tournament.ctx.isFinalized;
+	const showStationsTab = isOrganizer && isOngoingLan;
+	const showBoardTab = isOngoingLan && tournament.canSeeStationsBoard(user);
+	const showSeedsTab = isOrganizer && !tournament.hasStarted;
 
 	const adminPage = tournamentAdminPage(tournament.ctx.id);
 	const subPath = location.pathname.slice(adminPage.length).replace(/^\//, "");
@@ -73,6 +75,11 @@ export default function TournamentAdminLayout() {
 		subPath === "" || subPath.startsWith("registration")
 			? "teams"
 			: (subPath as AdminTab);
+
+	// streamers and pool captains only get the stations board
+	if (!isOrganizer && !(showBoardTab && currentTab === "board")) {
+		return <Redirect to={tournamentPage(tournament.ctx.id)} />;
+	}
 
 	return (
 		<div className={clsx("stack lg", containerClassName("wide"))}>
@@ -111,9 +118,11 @@ export default function TournamentAdminLayout() {
 				selectedKey={currentTab}
 			>
 				<SendouTabList>
-					<SendouTab id="teams" href={adminPage} icon={<Users />}>
-						{t("tournament:admin.tab.teams")}
-					</SendouTab>
+					{isOrganizer ? (
+						<SendouTab id="teams" href={adminPage} icon={<Users />}>
+							{t("tournament:admin.tab.teams")}
+						</SendouTab>
+					) : null}
 					{showSeedsTab ? (
 						<SendouTab
 							id="seeds"
@@ -137,6 +146,15 @@ export default function TournamentAdminLayout() {
 							{t("tournament:admin.tab.stream")}
 						</SendouTab>
 					) : null}
+					{showBoardTab ? (
+						<SendouTab
+							id="board"
+							href={`${adminPage}/board`}
+							icon={<Columns3 />}
+						>
+							{t("tournament:admin.tab.board")}
+						</SendouTab>
+					) : null}
 					{showStationsTab ? (
 						<SendouTab
 							id="stations"
@@ -155,9 +173,15 @@ export default function TournamentAdminLayout() {
 							{t("tournament:admin.tab.brackets")}
 						</SendouTab>
 					) : null}
-					<SendouTab id="audit" href={`${adminPage}/audit`} icon={<History />}>
-						{t("tournament:admin.tab.audit")}
-					</SendouTab>
+					{isOrganizer ? (
+						<SendouTab
+							id="audit"
+							href={`${adminPage}/audit`}
+							icon={<History />}
+						>
+							{t("tournament:admin.tab.audit")}
+						</SendouTab>
+					) : null}
 				</SendouTabList>
 				<SendouTabPanel id={currentTab} className={styles.panel}>
 					<Outlet context={outletContext} />

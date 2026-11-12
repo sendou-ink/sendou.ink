@@ -240,6 +240,7 @@ export default [
 				"stations",
 				"features/tournament-admin/routes/to.$id.admin.stations.tsx",
 			),
+			route("board", "features/tournament-admin/routes/to.$id.admin.board.tsx"),
 			route("audit", "features/tournament-admin/routes/to.$id.admin.audit.tsx"),
 		]),
 		route("results", "features/tournament/routes/to.$id.results.tsx"),

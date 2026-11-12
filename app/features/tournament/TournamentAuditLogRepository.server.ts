@@ -59,6 +59,28 @@ export async function insert(args: InsertArgs, trx: Transaction<DB>) {
 		.execute();
 }
 
+/** Inserts an audit log event concerning no team (e.g. a match) in the caller's transaction, actor from `actorId()`. */
+export async function insertTournamentEvent(
+	args: {
+		tournamentId: number;
+		type: TournamentAuditLogType;
+		metadata: TournamentAuditLogMetadata;
+	},
+	trx: Transaction<DB>,
+) {
+	await trx
+		.insertInto("TournamentAuditLog")
+		.values({
+			tournamentId: args.tournamentId,
+			type: args.type,
+			actorUserId: actorId(),
+			subjectUserId: null,
+			tournamentTeamHistoryId: null,
+			metadata: JSON.stringify(args.metadata),
+		})
+		.execute();
+}
+
 /**
  * Fresh history row linked from the team, so a `TournamentTeam.id` SQLite reuses after a
  * hard-deletion never inherits the deleted team's identity. Returns the history id.
