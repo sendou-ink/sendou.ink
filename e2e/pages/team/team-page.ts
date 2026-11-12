@@ -26,6 +26,11 @@ export class TeamPage {
 			makeMainTeamButton: page.getByTestId("make-main-team-button"),
 			leaveTeamButton: page.getByTestId("leave-team-button"),
 			deleteTeamButton: page.getByTestId("delete-team-button"),
+			transferOwnershipButton: page.getByTestId("transfer-ownership-button"),
+			newOwnerSelect: page.getByTestId("new-owner-select"),
+			confirmTransferOwnershipButton: page.getByTestId(
+				"confirm-transfer-ownership-button",
+			),
 			scheduleButton: page.getByTestId("team-schedule-button"),
 			otherRolesTab: page.getByRole("tab", { name: /Other/ }),
 			confirmDialog: page.getByRole("dialog"),
@@ -43,6 +48,11 @@ export class TeamPage {
 
 	ownerBadge(userId: number) {
 		return this.page.getByTestId(`member-owner-${userId}`);
+	}
+
+	/** Opens the popover explaining what the owner can do when clicked. */
+	ownerCrown(userId: number) {
+		return this.ownerBadge(userId).getByTestId("owner-crown-button");
 	}
 
 	customRole(name: string) {
@@ -93,6 +103,18 @@ export class TeamPage {
 	async leave() {
 		await this.startLeaving();
 		await this.confirmLeaving();
+	}
+
+	/** Requires the actions menu to be open. */
+	async transferOwnership(newOwnerUsername: string) {
+		await this.locators.transferOwnershipButton.click();
+		await this.locators.newOwnerSelect.click();
+		await this.page
+			.getByRole("option", { name: newOwnerUsername, exact: true })
+			.click();
+		await waitForPOSTResponse(this.page, () =>
+			this.locators.confirmTransferOwnershipButton.click(),
+		);
 	}
 
 	/** Requires the actions menu to be open. */

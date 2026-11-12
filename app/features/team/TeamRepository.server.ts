@@ -639,6 +639,48 @@ export function handleMemberLeaving({
 		.execute((trx) => memberLeave(trx, { userId, teamId, newOwnerUserId }));
 }
 
+/** Makes `newOwnerUserId` the owner of the team, the old owner stays on as a manager. */
+export function transferOwnership({
+	teamId,
+	oldOwnerUserId,
+	newOwnerUserId,
+}: {
+	teamId: number;
+	oldOwnerUserId: number;
+	newOwnerUserId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		const members = await trx
+			.selectFrom("TeamMemberWithSecondary")
+			.select(["userId", "isOwner"])
+			.where("teamId", "=", teamId)
+			.where("userId", "in", [oldOwnerUserId, newOwnerUserId])
+			.execute();
+
+		const oldOwner = members.find((m) => m.userId === oldOwnerUserId);
+		const newOwner = members.find((m) => m.userId === newOwnerUserId);
+		invariant(oldOwner?.isOwner, "Old owner is not the owner of this team");
+		invariant(
+			newOwner && !newOwner.isOwner,
+			"New owner is not a non-owner member of this team",
+		);
+
+		await trx
+			.updateTable("AllTeamMember")
+			.set({ isOwner: 0, isManager: 1 })
+			.where("teamId", "=", teamId)
+			.where("userId", "=", oldOwnerUserId)
+			.execute();
+
+		await trx
+			.updateTable("AllTeamMember")
+			.set({ isOwner: 1, isManager: 0 })
+			.where("teamId", "=", teamId)
+			.where("userId", "=", newOwnerUserId)
+			.execute();
+	});
+}
+
 /** In one transaction: updates kept members' role & editor status and kicks `kickedUserIds`. */
 export function updateRoster({
 	teamId,

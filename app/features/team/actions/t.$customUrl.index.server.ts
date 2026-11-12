@@ -51,6 +51,25 @@ export const action = defineAction(
 				await TeamRepository.deleteById(team.id);
 				throw redirect("/");
 			}
+			case "TRANSFER_OWNERSHIP": {
+				errorToastIfFalsy(
+					isTeamOwner({ user, team }),
+					"Only the owner can transfer ownership",
+				);
+				errorToastIfFalsy(
+					body.newOwnerUserId !== user.id &&
+						isTeamMember({ user: { id: body.newOwnerUserId }, team }),
+					"New owner must be another member of the team",
+				);
+
+				await TeamRepository.transferOwnership({
+					teamId: team.id,
+					oldOwnerUserId: user.id,
+					newOwnerUserId: body.newOwnerUserId,
+				});
+
+				break;
+			}
 			default: {
 				assertUnreachable(body);
 			}

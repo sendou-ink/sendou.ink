@@ -65,6 +65,9 @@
 }
 
 .memberRole {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
 	margin-left: auto;
 	font-size: var(--font-sm);
 	color: var(--color-text-high);
@@ -73,7 +76,10 @@
 }
 
 .memberRoleMobile {
-	text-align: center;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--s-1);
 	color: var(--color-text-high);
 	font-weight: var(--weight-bold);
 }

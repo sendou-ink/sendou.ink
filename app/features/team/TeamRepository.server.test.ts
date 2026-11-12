@@ -8,8 +8,10 @@ import { db } from "~/db/sql";
 import * as FeedRepository from "~/features/feed/FeedRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
+import { invariant } from "~/utils/invariant";
 import * as TeamRepository from "./TeamRepository.server";
 import { TEAM } from "./team-constants";
+import { resolveNewOwner } from "./team-utils";
 
 describe("findResultsById", () => {
 	const seedTeamResult = async ({ div }: { div: string | null }) => {
@@ -170,5 +172,109 @@ describe("findAllByMemberUserId", () => {
 			"Main team",
 			"Secondary team",
 		]);
+	});
+});
+
+describe("transferOwnership", () => {
+	const users = UserFactory.pool();
+	const ownerId = () => users.id(1);
+	const newOwnerId = () => users.id(2);
+	const otherMemberId = () => users.id(3);
+	const outsiderId = () => users.id(4);
+
+	beforeEach(async () => {
+		await users.create(4);
+	});
+
+	const createTeam = () =>
+		TeamFactory.create(
+			{ memberUserIds: [ownerId(), newOwnerId(), otherMemberId()] },
+			{ managerUserIds: [newOwnerId()] },
+		);
+
+	const membersOf = async (customUrl: string) => {
+		const team = await TeamRepository.findByCustomUrl(customUrl);
+		invariant(team, `No team with the custom url ${customUrl}`);
+
+		return team.members;
+	};
+
+	const flagsOf = (
+		members: Awaited<ReturnType<typeof membersOf>>,
+		userId: number,
+	) => {
+		const member = members.find((m) => m.id === userId);
+		invariant(member, `User ${userId} is not a member`);
+
+		return { isOwner: member.isOwner, isManager: member.isManager };
+	};
+
+	test("makes the new owner owner and keeps the old owner on as a manager", async () => {
+		const team = await createTeam();
+
+		await TeamRepository.transferOwnership({
+			teamId: team.id,
+			oldOwnerUserId: ownerId(),
+			newOwnerUserId: newOwnerId(),
+		});
+
+		const members = await membersOf(team.customUrl);
+		expect(members).toHaveLength(3);
+		expect(flagsOf(members, newOwnerId())).toEqual({
+			isOwner: 1,
+			isManager: 0,
+		});
+		expect(flagsOf(members, ownerId())).toEqual({ isOwner: 0, isManager: 1 });
+		expect(flagsOf(members, otherMemberId())).toEqual({
+			isOwner: 0,
+			isManager: 0,
+		});
+	});
+
+	test("does not touch the user's memberships of other teams", async () => {
+		const team = await createTeam();
+		const otherTeam = await TeamFactory.create({
+			name: "Other team",
+			isMainTeam: false,
+			memberUserIds: [ownerId(), newOwnerId()],
+		});
+
+		await TeamRepository.transferOwnership({
+			teamId: team.id,
+			oldOwnerUserId: ownerId(),
+			newOwnerUserId: newOwnerId(),
+		});
+
+		const otherTeamMembers = await membersOf(otherTeam.customUrl);
+		expect(flagsOf(otherTeamMembers, ownerId()).isOwner).toBe(1);
+		expect(flagsOf(otherTeamMembers, newOwnerId()).isOwner).toBe(0);
+	});
+
+	test("rejects a new owner who is not a member", async () => {
+		const team = await createTeam();
+
+		await expect(
+			TeamRepository.transferOwnership({
+				teamId: team.id,
+				oldOwnerUserId: ownerId(),
+				newOwnerUserId: outsiderId(),
+			}),
+		).rejects.toThrow();
+
+		const members = await membersOf(team.customUrl);
+		expect(flagsOf(members, ownerId()).isOwner).toBe(1);
+	});
+
+	test("the new owner is the one who is replaced when they leave", async () => {
+		const team = await createTeam();
+
+		await TeamRepository.transferOwnership({
+			teamId: team.id,
+			oldOwnerUserId: ownerId(),
+			newOwnerUserId: newOwnerId(),
+		});
+		const successor = resolveNewOwner(await membersOf(team.customUrl));
+
+		expect(successor?.id).toBe(ownerId());
 	});
 });

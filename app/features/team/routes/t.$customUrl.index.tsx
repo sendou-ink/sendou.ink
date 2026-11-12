@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import {
 	CalendarDays,
+	Crown,
 	LogOut,
 	Menu,
 	SquarePen,
@@ -13,10 +14,13 @@ import {
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useMatches } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import { SendouPopover } from "~/components/elements/Popover";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import {
 	SendouTab,
 	SendouTabList,
@@ -188,9 +192,9 @@ function TeamActionsMenu({ team }: { team: TeamLoaderData["team"] }) {
 	const { t } = useTranslation(["common", "team"]);
 	const user = useUser();
 	const { submit } = useActionSubmit(teamProfilePageActionSchema);
-	const [confirming, setConfirming] = React.useState<"LEAVE" | "DELETE" | null>(
-		null,
-	);
+	const [confirming, setConfirming] = React.useState<
+		"LEAVE" | "DELETE" | "TRANSFER" | null
+	>(null);
 
 	const isMainTeam = team.members.some(
 		(member) => user?.id === member.id && member.isMainTeam,
@@ -198,6 +202,8 @@ function TeamActionsMenu({ team }: { team: TeamLoaderData["team"] }) {
 	const showMainTeamIndicator = isTeamMember({ user, team }) && isMainTeam;
 	const canMakeMainTeam = isTeamMember({ user, team }) && !isMainTeam;
 	const canLeaveTeam = isTeamMember({ user, team }) && team.members.length > 1;
+	const canTransferOwnership =
+		isTeamOwner({ user, team }) && team.members.length > 1;
 	const canDeleteTeam = useHasPermission(team, "DELETE");
 
 	if (
@@ -257,6 +263,15 @@ function TeamActionsMenu({ team }: { team: TeamLoaderData["team"] }) {
 						{t("team:actionButtons.leaveTeam")}
 					</SendouMenuItem>
 				) : null}
+				{canTransferOwnership ? (
+					<SendouMenuItem
+						icon={<Crown />}
+						onAction={() => setConfirming("TRANSFER")}
+						data-testid="transfer-ownership-button"
+					>
+						{t("team:actionButtons.transferOwnership")}
+					</SendouMenuItem>
+				) : null}
 				{canDeleteTeam ? (
 					<SendouMenuItem
 						icon={<Trash2 />}
@@ -300,6 +315,16 @@ function TeamActionsMenu({ team }: { team: TeamLoaderData["team"] }) {
 					onConfirm={() => submitAction("DELETE_TEAM")}
 				/>
 			</SendouDialog>
+			{canTransferOwnership ? (
+				<SendouDialog
+					isOpen={confirming === "TRANSFER"}
+					onClose={() => setConfirming(null)}
+					onOpenChange={() => setConfirming(null)}
+					isDismissable
+				>
+					<TransferOwnershipContent team={team} />
+				</SendouDialog>
+			) : null}
 		</>
 	);
 }
@@ -324,6 +349,57 @@ function ConfirmActionContent({
 				>
 					{buttonText}
 				</SendouButton>
+			</div>
+		</div>
+	);
+}
+
+function TransferOwnershipContent({ team }: { team: TeamLoaderData["team"] }) {
+	const { t } = useTranslation(["team"]);
+	const candidates = team.members.filter((member) => !member.isOwner);
+	const defaultNewOwner = resolveNewOwner(team.members);
+	invariant(defaultNewOwner, "Team has no member to transfer ownership to");
+	const [newOwnerUserId, setNewOwnerUserId] = React.useState(
+		defaultNewOwner.id,
+	);
+
+	return (
+		<div className="stack md">
+			<h2 className="text-md text-center">
+				{t("team:transferOwnership.header", { teamName: team.name })}
+			</h2>
+			<p className="text-sm text-lighter">
+				{t("team:transferOwnership.explanation")}
+			</p>
+			<SendouSelect
+				label={t("team:transferOwnership.newOwner")}
+				selectedKey={newOwnerUserId}
+				onSelectionChange={(key) => {
+					if (key !== null) setNewOwnerUserId(Number(key));
+				}}
+				items={candidates}
+				data-testid="new-owner-select"
+			>
+				{(member) => (
+					<SendouSelectItem
+						key={member.id}
+						id={member.id}
+						textValue={member.username}
+					>
+						{member.username}
+					</SendouSelectItem>
+				)}
+			</SendouSelect>
+			<div className="stack horizontal md justify-center mt-2">
+				<ActionButton
+					schema={teamProfilePageActionSchema}
+					action="TRANSFER_OWNERSHIP"
+					fields={{ newOwnerUserId }}
+					variant="destructive"
+					testId="confirm-transfer-ownership-button"
+				>
+					{t("team:transferOwnership.confirm")}
+				</ActionButton>
 			</div>
 		</div>
 	);
@@ -363,7 +439,6 @@ function MemberRow({
 	member: TeamRepository.findByCustomUrl["members"][number];
 	number: number;
 }) {
-	const { t } = useTranslation(["team"]);
 	const cardData = useUserCardData(member.id);
 
 	return (
@@ -371,21 +446,11 @@ function MemberRow({
 			className={styles.member}
 			data-testid={member.isOwner ? `member-owner-${member.id}` : undefined}
 		>
-			{member.customRole ? (
-				<span
-					className={styles.memberRole}
-					data-testid={`member-row-role-${number}`}
-				>
-					{member.customRole}
-				</span>
-			) : member.role ? (
-				<span
-					className={styles.memberRole}
-					data-testid={`member-row-role-${number}`}
-				>
-					{t(`team:roles.${member.role}`)}
-				</span>
-			) : null}
+			<MemberRoleLine
+				member={member}
+				className={styles.memberRole}
+				roleTestId={`member-row-role-${number}`}
+			/>
 			<div className={styles.memberSection}>
 				<UserCard userId={member.id}>
 					<span className={styles.memberAvatarNameContainer}>
@@ -417,7 +482,6 @@ function MobileMemberCard({
 }: {
 	member: TeamRepository.findByCustomUrl["members"][number];
 }) {
-	const { t } = useTranslation(["team"]);
 	const cardData = useUserCardData(member.id);
 
 	return (
@@ -444,13 +508,45 @@ function MobileMemberCard({
 					</div>
 				) : null}
 			</div>
-			{member.customRole ? (
-				<span className={styles.memberRoleMobile}>{member.customRole}</span>
-			) : member.role ? (
-				<span className={styles.memberRoleMobile}>
-					{t(`team:roles.${member.role}`)}
-				</span>
-			) : null}
+			<MemberRoleLine member={member} className={styles.memberRoleMobile} />
 		</div>
+	);
+}
+
+function MemberRoleLine({
+	member,
+	className,
+	roleTestId,
+}: {
+	member: TeamRepository.findByCustomUrl["members"][number];
+	className: string;
+	roleTestId?: string;
+}) {
+	const { t } = useTranslation(["team"]);
+
+	const roleText =
+		member.customRole || (member.role ? t(`team:roles.${member.role}`) : null);
+
+	if (!member.isOwner && !roleText) return null;
+
+	return (
+		<span className={className}>
+			{member.isOwner ? (
+				<SendouPopover
+					trigger={
+						<SendouButton
+							size="miniscule"
+							variant="minimal"
+							icon={<Crown className="text-theme" />}
+							aria-label={t("team:owner")}
+							testId="owner-crown-button"
+						/>
+					}
+				>
+					<span className="text-xs">{t("team:owner.explanation")}</span>
+				</SendouPopover>
+			) : null}
+			{roleText ? <span data-testid={roleTestId}>{roleText}</span> : null}
+		</span>
 	);
 }

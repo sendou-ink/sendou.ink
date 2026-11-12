@@ -407,6 +407,34 @@ test.describe("Team page", () => {
 		await expect(team.ownerBadge(NZAP_TEST_ID)).toBeVisible();
 		await isNotVisible(team.locators.actionsMenuButton);
 	});
+
+	test("transfers ownership to another member, the old owner staying on as an editor", async ({
+		page,
+		factories,
+	}) => {
+		const otherMember = await factories.UserFactory.create();
+		const { customUrl } = await factories.TeamFactory.create({
+			name: TEAM_NAME,
+			memberUserIds: [ADMIN_ID, otherMember.id, NZAP_TEST_ID],
+		});
+
+		await impersonate(page, ADMIN_ID);
+
+		const team = new TeamPage(page);
+		await team.goto(customUrl);
+
+		await team.openActionsMenu();
+		await team.transferOwnership("N-ZAP");
+
+		await team.ownerCrown(NZAP_TEST_ID).click();
+		await expect(page.getByText("Owner of the team")).toBeVisible();
+		await isNotVisible(team.ownerBadge(ADMIN_ID));
+		await expect(team.locators.editTeamButton).toBeVisible();
+
+		await team.openActionsMenu();
+		await isNotVisible(team.locators.transferOwnershipButton);
+		await isNotVisible(team.locators.deleteTeamButton);
+	});
 });
 
 /** A team of the admin and three others, the admin its owner and first member. */

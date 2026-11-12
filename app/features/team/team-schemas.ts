@@ -44,6 +44,10 @@ export const teamProfilePageActionSchema = v.union([
 	v.object({
 		_action: _action("DELETE_TEAM"),
 	}),
+	v.object({
+		_action: _action("TRANSFER_OWNERSHIP"),
+		newOwnerUserId: id,
+	}),
 ]);
 
 const teamNameValidate = {
