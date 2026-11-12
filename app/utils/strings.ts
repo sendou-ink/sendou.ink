@@ -86,6 +86,11 @@ const NAMED_HTML_ENTITIES: Record<string, string> = {
 	apos: "'",
 };
 
+/** Strips diacritics, so "Café" becomes "Cafe". */
+export function removeDiacritics(value: string) {
+	return value.normalize("NFD").replace(/\p{M}/gu, "");
+}
+
 export function removeMarkdown(value: string) {
 	const htmlReplaceRegex = /<[^>]*>/g;
 	return (

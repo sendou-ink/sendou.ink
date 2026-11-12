@@ -6,6 +6,7 @@ import { format } from "sql-formatter";
 import { ServerConfig } from "~/config.server";
 import { devToolsServerHooks } from "~/features/dev-tools/dev-tools-server-hooks.server";
 import { logger } from "~/utils/logger";
+import { removeDiacritics } from "~/utils/strings";
 import { EmptyValuesNoopPlugin } from "./empty-values-noop-plugin";
 import { JSON_COLUMNS } from "./json-columns";
 import { computedJsonColumns } from "./json-selections";
@@ -36,11 +37,14 @@ sql.exec("PRAGMA mmap_size = 3221225472");
 // https://sqlite.org/pragma.html#pragma_optimize, paired with the periodic OptimizeDatabase routine
 sql.exec("PRAGMA optimize = 0x10002");
 
-// strips diacritics ("cafe" matches "Café"); with LIKE's ASCII case-insensitivity this also folds case
+// strips diacritics ("cafe" matches "Café")
 sql.function("unaccent", { deterministic: true }, (value) =>
-	typeof value === "string"
-		? value.normalize("NFD").replace(/\p{M}/gu, "")
-		: value,
+	typeof value === "string" ? removeDiacritics(value) : value,
+);
+
+// SQLite's lower() and LIKE fold ASCII only, this lower-cases like JS does ("É" → "é")
+sql.function("unicode_lower", { deterministic: true }, (value) =>
+	typeof value === "string" ? value.toLowerCase() : value,
 );
 
 export const db = new Kysely<DB>({

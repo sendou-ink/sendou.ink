@@ -182,6 +182,99 @@ describe("findPaginatedEventsBySeries", () => {
 	});
 });
 
+describe("searchByName", () => {
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test.each([
+		{ orgName: "Café", query: "cafe", expected: true, why: "unaccented" },
+		{ orgName: "Café", query: "CAFÉ", expected: true, why: "accented capital" },
+		{ orgName: "Кубок", query: "кубок", expected: true, why: "Cyrillic" },
+		{
+			orgName: "100 Percent",
+			query: "100%",
+			expected: false,
+			why: "% literal",
+		},
+	])(
+		"matches '$query' to '$orgName' is $expected ($why)",
+		async ({ orgName, query, expected }) => {
+			await TournamentOrganizationFactory.create({
+				name: orgName,
+				ownerId: users.id(1),
+			});
+
+			const orgs = await TournamentOrganizationRepository.searchByName({
+				query,
+				limit: 10,
+			});
+
+			expect(orgs.map((org) => org.name)).toEqual(expected ? [orgName] : []);
+		},
+	);
+});
+
+describe("findAllEventsBySeries", () => {
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test.each([
+		{ seriesName: "Low Ink", eventName: "LOW INK #1", why: "ASCII" },
+		{ seriesName: "Été Cup", eventName: "Été Cup #1", why: "French É" },
+		{ seriesName: "Über Cup", eventName: "ÜBER CUP #1", why: "German Ü" },
+		{ seriesName: "Кубок", eventName: "Кубок #1", why: "Cyrillic" },
+	])(
+		"matches the event the way Series.matchesEventName does ($why)",
+		async ({ seriesName, eventName }) => {
+			const org = await TournamentOrganizationFactory.create(
+				{ ownerId: users.id(1) },
+				{
+					series: [
+						{ name: seriesName, description: null, showLeaderboard: true },
+					],
+				},
+			);
+			await CalendarEventFactory.create({
+				authorId: users.id(1),
+				organizationId: org.id,
+				name: eventName,
+				startTimes: [1_700_000_000],
+			});
+			const organization = await TournamentOrganizationRepository.findBySlug(
+				org.slug,
+			);
+
+			const events =
+				await TournamentOrganizationRepository.findAllEventsBySeries({
+					organizationId: org.id,
+					substringMatches: organization!.series[0].substringMatches,
+				});
+
+			expect(events).toHaveLength(1);
+		},
+	);
+
+	test("treats LIKE wildcards in the series name literally", async () => {
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
+		await CalendarEventFactory.create({
+			authorId: users.id(1),
+			organizationId: org.id,
+			name: "100 Percent Cup",
+			startTimes: [1_700_000_000],
+		});
+
+		const events = await TournamentOrganizationRepository.findAllEventsBySeries(
+			{ organizationId: org.id, substringMatches: ["100% cup"] },
+		);
+
+		expect(events).toEqual([]);
+	});
+});
+
 describe("countActiveParticipants", () => {
 	const WINDOW_START = 1_700_000_000;
 	const WINDOW_END = WINDOW_START + 60 * 60 * 24 * 31;

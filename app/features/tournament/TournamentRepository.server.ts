@@ -36,6 +36,7 @@ import {
 	calendarEventStartTime,
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	containsIgnoringCase,
 	isCastLiveStreamOf,
 	isLiveStreamOf,
 	jsonArrayFrom,
@@ -1859,7 +1860,7 @@ export async function searchByName({
 			"CalendarEventDate.startsAt",
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 		])
-		.where("CalendarEvent.name", "like", `%${query}%`)
+		.where(({ ref }) => containsIgnoringCase(ref("CalendarEvent.name"), query))
 		.where("CalendarEvent.hidden", "=", 0)
 		.orderBy(
 			sql`case

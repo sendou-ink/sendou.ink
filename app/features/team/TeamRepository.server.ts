@@ -13,6 +13,7 @@ import { invariant } from "~/utils/invariant";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	containsIgnoringCase,
 	jsonArrayFrom,
 	matchProfileWeapons,
 	tournamentLogoOrNull,
@@ -62,7 +63,7 @@ export function searchByName({
 					.orderBy("TeamMemberWithSecondary.order", "asc"),
 			).as("members"),
 		])
-		.where("Team.name", "like", `%${query}%`)
+		.where(({ ref }) => containsIgnoringCase(ref("Team.name"), query))
 		.orderBy("Team.name", "asc")
 		.limit(limit)
 		.execute();

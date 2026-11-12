@@ -27,6 +27,8 @@ import { invariant } from "~/utils/invariant";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	containsIgnoringCase,
+	equalsIgnoringCase,
 	jsonArrayFrom,
 	jsonObjectFrom,
 	supporterCustomTheme,
@@ -614,14 +616,16 @@ const baseCalendarEventResultsQuery = (
 	}
 
 	if (filters.tournamentName) {
-		query = query.where(
-			nameLikeExpr("CalendarEvent.name", filters.tournamentName),
+		const tournamentName = filters.tournamentName;
+		query = query.where((eb) =>
+			containsIgnoringCase(eb.ref("CalendarEvent.name"), tournamentName),
 		);
 	}
 
 	if (filters.teamName) {
-		query = query.where(
-			nameLikeExpr("CalendarEventResultTeam.name", filters.teamName),
+		const teamName = filters.teamName;
+		query = query.where((eb) =>
+			containsIgnoringCase(eb.ref("CalendarEventResultTeam.name"), teamName),
 		);
 	}
 
@@ -709,13 +713,17 @@ const baseTournamentResultsQuery = (
 	}
 
 	if (filters.tournamentName) {
-		query = query.where(
-			nameLikeExpr("CalendarEvent.name", filters.tournamentName),
+		const tournamentName = filters.tournamentName;
+		query = query.where((eb) =>
+			containsIgnoringCase(eb.ref("CalendarEvent.name"), tournamentName),
 		);
 	}
 
 	if (filters.teamName) {
-		query = query.where(nameLikeExpr("TournamentTeam.name", filters.teamName));
+		const teamName = filters.teamName;
+		query = query.where((eb) =>
+			containsIgnoringCase(eb.ref("TournamentTeam.name"), teamName),
+		);
 	}
 
 	if (filters.mateUserId) {
@@ -766,14 +774,6 @@ const baseTournamentResultsQuery = (
 	}
 
 	return query;
-};
-
-const escapeLikePattern = (value: string) =>
-	value.replace(/[\\%_]/g, (char) => `\\${char}`);
-
-const nameLikeExpr = (column: string, name: string) => {
-	const pattern = `%${escapeLikePattern(name)}%`;
-	return sql<boolean>`${sql.ref(column)} like ${pattern} escape '\\'`;
 };
 
 export async function findResultsByUserId(
@@ -1012,24 +1012,22 @@ export async function search({
 }) {
 	// one scan over User with exact matches ranked first instead of an exact pass + a fuzzy pass
 	const exactConditions = (eb: ExpressionBuilder<DB, "User">) => [
-		eb("User.username", "like", query),
-		eb("User.inGameName", "like", query),
-		eb("User.discordUniqueName", "like", query),
-		eb("User.customUrl", "like", query),
+		equalsIgnoringCase(eb.ref("User.username"), query),
+		equalsIgnoringCase(eb.ref("User.inGameName"), query),
+		equalsIgnoringCase(eb.ref("User.discordUniqueName"), query),
+		equalsIgnoringCase(eb.ref("User.customUrl"), query),
 	];
 
-	const fuzzyQuery = `%${query}%`;
 	const fuzzyConditions = (eb: ExpressionBuilder<DB, "User">) => [
-		eb("User.username", "like", fuzzyQuery),
-		eb("User.inGameName", "like", fuzzyQuery),
-		eb("User.discordUniqueName", "like", fuzzyQuery),
+		containsIgnoringCase(eb.ref("User.username"), query),
+		containsIgnoringCase(eb.ref("User.inGameName"), query),
+		containsIgnoringCase(eb.ref("User.discordUniqueName"), query),
 	];
 
 	const includeExactMatches = query.length > 1;
 
-	// the trigram index needs 3+ characters and can't do LIKE wildcards; those queries scan User
-	const canUseSearchIndex =
-		query.length >= 3 && !query.includes("%") && !query.includes("_");
+	// the trigram index needs 3+ characters; shorter queries scan User
+	const canUseSearchIndex = query.length >= 3;
 
 	let dbQuery = db
 		.selectFrom("User")

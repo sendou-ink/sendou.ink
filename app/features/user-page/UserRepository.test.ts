@@ -288,6 +288,38 @@ describe("UserRepository", () => {
 			expect(results[0].eventName).toBe("Alpha Invitational");
 		});
 
+		test.each([
+			{ filters: { tournamentName: "кубок" }, why: "tournament name" },
+			{ filters: { teamName: "équipe" }, why: "team name" },
+		])(
+			"filters by $why ignoring case of non-ASCII letters",
+			async ({ filters }) => {
+				const user = await UserFactory.create();
+				const event = await CalendarEventFactory.create({
+					name: "Кубок Open",
+					authorId: user.id,
+					startTimes: [startTimeOf(2024)],
+				});
+				await CalendarEventResultFactory.create({
+					eventId: event.id,
+					participantCount: 8,
+					results: [
+						{
+							teamName: "Équipe Kubok",
+							placement: 1,
+							players: [{ userId: user.id, name: null }],
+						},
+					],
+				});
+
+				const results = await filteredResults(user.id, filters);
+
+				expect(results.map((result) => result.eventName)).toEqual([
+					"Кубок Open",
+				]);
+			},
+		);
+
 		describe("of a tournament with many divisions", () => {
 			const TOP_DIVISION_TIER = 2;
 			const LOW_DIVISION_TIER = 7;
@@ -829,6 +861,31 @@ describe("UserRepository", () => {
 				patronExpiresAt: null,
 			});
 		});
+	});
+
+	describe("UserRepository.search", () => {
+		beforeEach(async () => {
+			await UserFactory.create({ discordName: "Братислава" });
+			await UserFactory.create({ discordName: "Ángel_2" });
+		});
+
+		const searchUsernames = async (query: string) =>
+			(await UserRepository.search({ query, limit: 10 })).map(
+				(user) => user.username,
+			);
+
+		test.each([
+			{ query: "братислава", expected: ["Братислава"], why: "indexed" },
+			{ query: "бр", expected: ["Братислава"], why: "short, unindexed" },
+			{ query: "ángel", expected: ["Ángel_2"], why: "accented capital" },
+			{ query: "l_2", expected: ["Ángel_2"], why: "_ literal" },
+			{ query: "l%2", expected: [], why: "% literal" },
+		])(
+			"finds users ignoring case of any letter ($why)",
+			async ({ query, expected }) => {
+				expect(await searchUsernames(query)).toEqual(expected);
+			},
+		);
 	});
 });
 

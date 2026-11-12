@@ -18,11 +18,13 @@ import {
 	calendarEventNameMatchesSeries,
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	containsIgnoringCase,
 	jsonArrayFrom,
 	tournamentLogoWithDefault,
 	tournamentRegisteredTeamCount,
 } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
+import { removeDiacritics } from "~/utils/strings";
 import { mySlugify } from "~/utils/urls";
 import * as Series from "./core/Series";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "./tournament-organization-constants";
@@ -204,11 +206,10 @@ export function searchByName({
 				"avatarUrl",
 			),
 		])
-		.where(({ eb, ref }) =>
-			eb(
+		.where(({ ref }) =>
+			containsIgnoringCase(
 				sql`unaccent(${ref("TournamentOrganization.name")})`,
-				"like",
-				sql`unaccent(${`%${query}%`})`,
+				removeDiacritics(query),
 			),
 		)
 		.orderBy("TournamentOrganization.name", "asc")

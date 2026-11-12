@@ -27,6 +27,9 @@ import { dateToDatabaseTimestamp } from "./dates";
 import { safeNumberParse } from "./number";
 import { USER_SUBMITTED_IMAGE_ROOT } from "./urls";
 
+// LIKE folds ASCII case only, but it's much cheaper than calling `unicode_lower` for every row
+const NON_ASCII_CASED_LETTER_REGEX = /(?=\P{ASCII})\p{Cased}/u;
+
 /** Base query selecting the user by URL identifier (user id, Discord id or custom URL). */
 export function userByIdentifierQuery(identifier: string) {
 	return db
@@ -260,13 +263,41 @@ export function calendarEventStartTime(
 		.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id");
 }
 
+/** SQL counterpart of `Series.matchesEventName`: the event's name contains one of the substrings, ignoring case. */
 export function calendarEventNameMatchesSeries(substringMatches: string[]) {
 	return (eb: ExpressionBuilder<Tables, "CalendarEvent">) =>
 		eb.or(
 			substringMatches.map((match) =>
-				eb("CalendarEvent.name", "like", `%${match}%`),
+				containsIgnoringCase(eb.ref("CalendarEvent.name"), match),
 			),
 		);
+}
+
+/**
+ * Whether the text contains the substring, ignoring case the way JS `toLowerCase` does (so "É" matches "é").
+ * `%` and `_` are matched literally.
+ */
+export function containsIgnoringCase(
+	text: Expression<string | null>,
+	substring: string,
+) {
+	if (NON_ASCII_CASED_LETTER_REGEX.test(substring)) {
+		return sql<SqlBool>`instr(unicode_lower(${text}), ${substring.toLowerCase()}) > 0`;
+	}
+
+	return sql<SqlBool>`${text} like ${`%${escapeLikeWildcards(substring)}%`} escape '\\'`;
+}
+
+/** Whether the text equals the value, ignoring case the way JS `toLowerCase` does (so "É" matches "é"). */
+export function equalsIgnoringCase(
+	text: Expression<string | null>,
+	value: string,
+) {
+	if (NON_ASCII_CASED_LETTER_REGEX.test(value)) {
+		return sql<SqlBool>`unicode_lower(${text}) = ${value.toLowerCase()}`;
+	}
+
+	return sql<SqlBool>`${text} like ${escapeLikeWildcards(value)} escape '\\'`;
 }
 
 /** Subquery counting all of a tournament's non-placeholder teams, checked in or not (see {@link tournamentActiveTeamCount}). Correlates on `"Tournament"."id"`. */
@@ -658,4 +689,8 @@ function jsonObjectArgs(
 	}
 
 	return args;
+}
+
+function escapeLikeWildcards(value: string) {
+	return value.replace(/[\\%_]/g, (character) => `\\${character}`);
 }
