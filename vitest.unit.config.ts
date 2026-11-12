@@ -3,7 +3,7 @@ import { configDefaults, defineConfig } from "vitest/config";
 
 export const UNIT_TEST_GLOB = "**/*.test.{ts,tsx}";
 
-const UNIT_TEST_EXCLUDE = [
+export const UNIT_TEST_EXCLUDE = [
 	...configDefaults.exclude,
 	"e2e/**",
 	"**/*.browser.test.{ts,tsx}",

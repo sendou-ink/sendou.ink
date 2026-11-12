@@ -532,6 +532,7 @@ function commentMask(source: string, comments: Comment[]) {
 
 function propertyKeyName(key: Node) {
 	if (key.type === "Identifier") return key.name;
+	if (key.type === "PrivateIdentifier") return `#${key.name}`;
 	if (key.type === "Literal" && typeof key.value === "string") return key.value;
 
 	return null;

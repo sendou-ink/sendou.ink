@@ -191,6 +191,36 @@ describe("Tournament match page", () => {
 		});
 	});
 
+	describe("undoing a reported score", () => {
+		const undoScoreAction = (position: number) =>
+			tournamentMatchAction(
+				{ _action: "UNDO_REPORT_SCORE", position },
+				{ user: "admin", params: matchParams() },
+			);
+
+		test("removes the last game of a set still being played", async () => {
+			await setActiveRosterAction();
+			await reportScoreAction({ position: 0 });
+
+			await undoScoreAction(0);
+
+			expect((await loadMatchData()).results).toHaveLength(0);
+		});
+
+		test("returns error once the set is over", async () => {
+			await setActiveRosterAction();
+			await reportScoreAction({ position: 0 });
+			await reportScoreAction({ position: 1 });
+
+			const res = await undoScoreAction(1);
+
+			assertResponseErrored(res);
+			const data = await loadMatchData();
+			expect(data.results).toHaveLength(2);
+			expect(data.matchIsOver).toBe(true);
+		});
+	});
+
 	describe("active roster", () => {
 		test("returns error if submitted active roster contains user id not in the team", async () => {
 			const res = await setActiveRosterAction(teamOne.id, [

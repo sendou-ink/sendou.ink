@@ -63,8 +63,6 @@ export async function seasonRatings({
 			(userId) => user(userId).rating,
 		);
 
-		if (playerRatings.length === 0) return rating();
-
 		return {
 			mu:
 				playerRatings.reduce((acc, cur) => acc + cur.mu, 0) /

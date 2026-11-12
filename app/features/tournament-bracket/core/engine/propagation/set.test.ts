@@ -76,6 +76,45 @@ describe("Set results in a bracket with map info", () => {
 		expect(matchById(data, 0).opponent1?.score).toBe(1);
 	});
 
+	test("refuses a game reported for a team not in the match", () => {
+		expect(() =>
+			Engine.reportGameResult(data, { matchId: 0, winnerTeamId: 3 }),
+		).toThrow();
+	});
+
+	test("undoing the only reported game leaves the match not started", () => {
+		data = Engine.reportGameResult(data, {
+			matchId: 0,
+			winnerTeamId: TEAM_TWO,
+		}).data;
+
+		data = Engine.undoGameResult(data, {
+			matchId: 0,
+			lastGameWinnerTeamId: TEAM_TWO,
+		}).data;
+
+		expect(Engine.isMatchStarted(matchById(data, 0))).toBe(false);
+	});
+
+	test("reopening a finished match takes its winner back out of the next match", () => {
+		data = bracketWithMaps({ count: 3, type: "BEST_OF" }, [1, 2, 3, 4]);
+		const finalId = 2;
+		for (const _ of [1, 2]) {
+			data = Engine.reportGameResult(data, {
+				matchId: 0,
+				winnerTeamId: TEAM_ONE,
+			}).data;
+		}
+		expect(matchById(data, finalId).opponent1?.id).toBe(TEAM_ONE);
+
+		data = Engine.reopenMatch(data, {
+			matchId: 0,
+			lastGameWinnerTeamId: TEAM_ONE,
+		}).data;
+
+		expect(matchById(data, finalId).opponent1?.id).toBeNull();
+	});
+
 	test("clears the winner when the match is reopened", () => {
 		for (const _ of [1, 2]) {
 			data = Engine.reportGameResult(data, {
@@ -131,10 +170,13 @@ describe("Set results in a bracket with map info", () => {
 	});
 });
 
-function bracketWithMaps(maps: Pick<TournamentRoundMaps, "count" | "type">) {
+function bracketWithMaps(
+	maps: Pick<TournamentRoundMaps, "count" | "type">,
+	seeding = [TEAM_ONE, TEAM_TWO],
+) {
 	const input = {
 		type: "single_elimination" as const,
-		seeding: [TEAM_ONE, TEAM_TWO],
+		seeding,
 		settings: null,
 	};
 

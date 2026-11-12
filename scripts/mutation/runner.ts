@@ -69,6 +69,13 @@ interface Baseline {
 	wallMs: number;
 }
 
+const EMPTY_BASELINE: Baseline = {
+	coverage: new Map(),
+	durations: new Map(),
+	failingTestFiles: [],
+	wallMs: 0,
+};
+
 interface VitestJson {
 	testResults: Array<{
 		name: string;
@@ -122,12 +129,15 @@ export async function runAudit({
 				targets.flatMap((target) => target.candidates.map((c) => c.file)),
 			),
 		];
-		const baseline = await runBaseline({
-			targets,
-			testFiles: candidateFiles,
-			workDir,
-			children,
-		});
+		const baseline =
+			candidateFiles.length > 0
+				? await runBaseline({
+						targets,
+						testFiles: candidateFiles,
+						workDir,
+						children,
+					})
+				: EMPTY_BASELINE;
 		onBaselineDone(candidateFiles.length, baseline.wallMs);
 
 		const mutantsStartedAt = performance.now();

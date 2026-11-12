@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseSync } from "oxc-parser";
+import { UNIT_TEST_EXCLUDE, UNIT_TEST_GLOB } from "../../vitest.unit.config.ts";
 import { ROOT } from "../living-docs/ast.ts";
 import { allSourceFiles, resolveImport } from "../living-docs/source-index.ts";
 
@@ -59,10 +60,8 @@ export function importerGraph(): ImporterGraph {
 /** Whether the unit projects of `vitest.unit.config.ts` run the file. */
 export function isUnitTestFile(file: string) {
 	return (
-		/\.test\.tsx?$/.test(file) &&
-		!file.includes(".browser.test.") &&
-		!file.startsWith("e2e/") &&
-		!/^app\/features\/scanner\/tests\/[^/]+$/.test(file)
+		path.matchesGlob(file, UNIT_TEST_GLOB) &&
+		!UNIT_TEST_EXCLUDE.some((pattern) => path.matchesGlob(file, pattern))
 	);
 }
 

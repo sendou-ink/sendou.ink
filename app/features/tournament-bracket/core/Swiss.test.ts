@@ -109,6 +109,55 @@ describe("Swiss", () => {
 
 			expect(data.match).toHaveLength(0);
 		});
+
+		describe("with two groups", () => {
+			const data = () =>
+				Swiss.create(
+					createArgsWithDefaults({
+						seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+						settings: { groupCount: 2, roundCount: 3 },
+					}),
+				);
+
+			test("splits the teams between the groups without adding any", () => {
+				const teamsByGroup = [0, 1].map((groupId) =>
+					data()
+						.match.filter((match) => match.groupId === groupId)
+						.flatMap((match) => [match.opponent1?.id, match.opponent2?.id])
+						.filter((id) => id !== undefined)
+						.sort((a, b) => a! - b!),
+				);
+
+				expect(teamsByGroup).toEqual([
+					[1, 3, 5, 7, 9],
+					[2, 4, 6, 8, 10],
+				]);
+			});
+
+			test("puts every first round match in the first round of its own group", () => {
+				const bracket = data();
+
+				for (const match of bracket.match) {
+					const round = bracket.round.find((r) => r.id === match.roundId);
+
+					expect(round?.groupId).toBe(match.groupId);
+					expect(round?.number).toBe(1);
+				}
+			});
+
+			test("numbers the first round matches of every group from 1, the bye last", () => {
+				const bracket = data();
+
+				for (const groupId of [0, 1]) {
+					const matches = bracket.match.filter(
+						(match) => match.groupId === groupId,
+					);
+
+					expect(matches.map((match) => match.number)).toEqual([1, 2, 3]);
+					expect(matches.at(-1)?.opponent2).toBeNull();
+				}
+			});
+		});
 	});
 
 	describe("generateMatchUps()", () => {
@@ -217,6 +266,138 @@ describe("Swiss", () => {
 		});
 	});
 
+	describe("generateRound()", () => {
+		test("does not generate a new round while a match is still being played", () => {
+			const data = bracketWithFinishedRound({
+				seeding: [1, 2, 3, 4, 5],
+				roundCount: 3,
+			});
+			data.match[1].winnerSide = null;
+
+			const round = Engine.generateRound(data, {
+				groupId: 0,
+				standings: standingsOf([
+					{ id: 1, setWins: 1, setLosses: 0 },
+					{ id: 2, setWins: 0, setLosses: 0 },
+					{ id: 3, setWins: 0, setLosses: 1 },
+					{ id: 4, setWins: 0, setLosses: 0 },
+					{ id: 5, setWins: 1, setLosses: 0 },
+				]),
+				settings: null,
+			});
+
+			expect(round.ok).toBe(false);
+		});
+
+		test("puts the new matches in the round right after the last played one", () => {
+			const data = bracketWithFinishedRound({
+				seeding: [1, 2, 3, 4],
+				roundCount: 4,
+			});
+
+			const round = unwrap(
+				Engine.generateRound(data, {
+					groupId: 0,
+					standings: standingsOf([
+						{ id: 1, setWins: 1, setLosses: 0 },
+						{ id: 2, setWins: 1, setLosses: 0 },
+						{ id: 3, setWins: 0, setLosses: 1 },
+						{ id: 4, setWins: 0, setLosses: 1 },
+					]),
+					settings: null,
+				}),
+			);
+
+			expect(data.round.find((r) => r.id === round.roundId)?.number).toBe(2);
+		});
+
+		test("does not give a second bye to a team that already had one", () => {
+			// round 1: 1-3, 2-4, 5 bye, round 2: 1-2, 3-5, 4 bye
+			// teams 4 and 5 are at the bottom of the standings but both already had their bye
+			const data = bracketWithFinishedRound({
+				seeding: [1, 2, 3, 4, 5],
+				roundCount: 4,
+			});
+			data.match.push(
+				...finishedRound(1, [
+					[1, 2],
+					[3, 5],
+					[4, null],
+				]),
+			);
+			const standings = standingsOf([
+				{ id: 1, setWins: 2, setLosses: 0 },
+				{ id: 2, setWins: 1, setLosses: 1 },
+				{ id: 3, setWins: 1, setLosses: 1 },
+				{ id: 4, setWins: 0, setLosses: 1 },
+				{ id: 5, setWins: 0, setLosses: 1 },
+			]);
+
+			for (let i = 0; i < 20; i++) {
+				const round = unwrap(
+					Engine.generateRound(data, { groupId: 0, standings, settings: null }),
+				);
+
+				const bye = round.matches.find((match) => match.opponent2 === null);
+
+				expect([2, 3]).toContain(bye?.opponent1?.id);
+			}
+		});
+
+		test("pairs only the teams of the group the round is for", () => {
+			const data = Swiss.create({
+				seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+				settings: { groupCount: 2, roundCount: 3 },
+			});
+			for (const match of data.match) {
+				match.winnerSide = "opponent1";
+			}
+
+			const round = unwrap(
+				Engine.generateRound(data, {
+					groupId: 0,
+					standings: standingsOf(
+						[1, 2, 3, 4, 5, 6, 7, 8].map((id) => ({
+							id,
+							setWins: id <= 4 ? 1 : 0,
+							setLosses: id <= 4 ? 0 : 1,
+						})),
+					),
+					settings: null,
+				}),
+			);
+
+			const pairedTeams = round.matches
+				.flatMap((match) => [match.opponent1?.id, match.opponent2?.id])
+				.sort((a, b) => a! - b!);
+
+			expect(pairedTeams).toEqual([1, 3, 5, 7]);
+		});
+	});
+
+	describe("groupHasActiveTeams()", () => {
+		const data = () =>
+			bracketWithFinishedRound({ seeding: [1, 2, 3, 4], roundCount: 3 });
+
+		test.each([
+			{ droppedOut: [1, 2, 3, 4], expected: false, why: "everyone dropped" },
+			{ droppedOut: [1, 2, 3], expected: true, why: "one team left" },
+		])("$why", ({ droppedOut, expected }) => {
+			const standings = [1, 2, 3, 4].map((id) => ({
+				team: { id, droppedOut: droppedOut.includes(id) },
+				stats: { setWins: 0, setLosses: 0 },
+			}));
+
+			expect(
+				Engine.groupHasActiveTeams(data(), {
+					groupId: 0,
+					standings,
+					settings: null,
+				}),
+			).toBe(expected);
+		});
+	});
+
 	describe("generateRound() floats", () => {
 		// round 1: 1-4, 2-5, 3-6, round 2: 5-1, 2-3, 4-6 (opponent1 always wins)
 		// leaves 2 alone at two wins and 6 alone at zero wins, 1 and 5 having floated in round 2
@@ -308,6 +489,42 @@ describe("Swiss", () => {
 				...finishedRound(1, [
 					[1, 3],
 					[2, null],
+				]),
+			]);
+
+			expect(floats).toEqual(new Map());
+		});
+
+		test("does not count a bye given to a team that is ahead as a float", () => {
+			const floats = Swiss.countFloats([
+				...finishedRound(0, [
+					[1, 2],
+					[3, 4],
+					[5, null],
+				]),
+				...finishedRound(1, [
+					[1, 3],
+					[2, 4],
+					[5, null],
+				]),
+			]);
+
+			expect(floats).toEqual(new Map());
+		});
+
+		test("counts a win of the second team toward its score", () => {
+			const roundOne = finishedRound(0, [
+				[1, 2],
+				[3, 4],
+			]);
+			roundOne[0].winnerSide = "opponent2";
+
+			// 2 and 3 both won their first match, so they meet as equals
+			const floats = Swiss.countFloats([
+				...roundOne,
+				...finishedRound(1, [
+					[2, 3],
+					[1, 4],
 				]),
 			]);
 
@@ -412,6 +629,34 @@ describe("Swiss", () => {
 			expect(Swiss.pairUp([{ id: 1, score: 2, avoid: [] }])).toEqual([
 				{ opponentOne: 1, opponentTwo: null },
 			]);
+		});
+
+		test("pairs two teams against each other", () => {
+			expect(
+				Swiss.pairUp([
+					{ id: 1, score: 1, avoid: [] },
+					{ id: 2, score: 1, avoid: [] },
+				]),
+			).toEqual([{ opponentOne: 1, opponentTwo: 2 }]);
+		});
+
+		test("pairs two of three teams and gives the third a bye", () => {
+			const result = Swiss.pairUp([
+				{ id: 1, score: 1, avoid: [] },
+				{ id: 2, score: 1, avoid: [] },
+				{ id: 3, score: 0, avoid: [] },
+			]);
+
+			expect(result).toHaveLength(2);
+			expect(
+				result
+					.flatMap((match) => [match.opponentOne, match.opponentTwo])
+					.filter((id) => id !== null)
+					.sort((a, b) => a! - b!),
+			).toEqual([1, 2, 3]);
+			expect(result.filter((match) => match.opponentTwo === null)).toHaveLength(
+				1,
+			);
 		});
 
 		test("replays if a rematch free pairing does not exist for every team", () => {

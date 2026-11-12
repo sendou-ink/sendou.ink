@@ -63,7 +63,7 @@ export async function finalizeTournament({
 		results,
 		calculateSeasonalStats,
 		queryCurrentTeamRating: (identifier) => ratings!.team(identifier).rating,
-		queryCurrentUserRating: (userId) => ratings!.user(userId),
+		queryCurrentUserRating: (userId) => ratings!.user(userId).rating,
 		queryTeamPlayerRatingAverage: (identifier) =>
 			ratings!.teamPlayerAverage(identifier),
 		queryCurrentSeedingRating: (userId) => seedingRating!(userId),

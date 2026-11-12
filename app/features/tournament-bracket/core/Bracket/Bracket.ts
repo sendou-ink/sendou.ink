@@ -3,10 +3,7 @@ import type { Tables } from "~/db/tables";
 import type { TournamentStageSettings } from "~/db/tables-json";
 import * as Standings from "~/features/tournament/core/Standings";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import type {
-	BracketData,
-	RoundData,
-} from "~/features/tournament-bracket/core/engine/types";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { showsOneGroupAtATime } from "../../tournament-bracket-utils";
@@ -338,10 +335,6 @@ export abstract class Bracket {
 
 	protected calculateLiveStandings(): Standing[] {
 		return this.standings;
-	}
-
-	winnersSourceRound(_roundNumber: number): RoundData | undefined {
-		return;
 	}
 
 	protected matchesOfRound(roundId: number) {
@@ -739,20 +732,6 @@ export abstract class Bracket {
 		};
 	}
 
-	teamsWithNames(teams: { id: number }[]) {
-		return teams.map((team) => {
-			const name = this.tournament.ctx.teams.find(
-				(participant) => participant.id === team.id,
-			)?.name;
-			invariant(name, `Team name not found for id: ${team.id}`);
-
-			return {
-				id: team.id,
-				name,
-			};
-		});
-	}
-
 	/** Statuses of every match of the bracket, keyed by match id. */
 	matchStatuses() {
 		if (!this._matchStatuses) {
@@ -768,35 +747,6 @@ export abstract class Bracket {
 		invariant(status, `Match not found: ${matchId}`);
 
 		return status;
-	}
-
-	/** Matches with both teams defined, not completed and neither team busy in an earlier (lower number) match. */
-	ongoingMatches(): number[] {
-		const ongoingMatchIds: number[] = [];
-
-		const teamsWithOngoingMatches = new Set<number>();
-
-		for (const match of this.data.match.toSorted(
-			(a, b) => a.number - b.number,
-		)) {
-			if (!match.opponent1?.id || !match.opponent2?.id) continue;
-			if (match.winnerSide) {
-				continue;
-			}
-
-			if (
-				teamsWithOngoingMatches.has(match.opponent1.id) ||
-				teamsWithOngoingMatches.has(match.opponent2.id)
-			) {
-				continue;
-			}
-
-			ongoingMatchIds.push(match.id);
-			teamsWithOngoingMatches.add(match.opponent1.id);
-			teamsWithOngoingMatches.add(match.opponent2.id);
-		}
-
-		return ongoingMatchIds;
 	}
 
 	abstract defaultRoundBestOfs(data: BracketData): BracketMapCounts;

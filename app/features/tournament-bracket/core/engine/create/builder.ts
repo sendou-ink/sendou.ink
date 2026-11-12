@@ -264,15 +264,6 @@ export class StageCreator {
 		this.groupSkippedRounds = skipped;
 	}
 
-	/** Whether the round of the section is created, see {@link skippedRoundNumbers}. */
-	isRoundCreated(
-		section: RoundSection,
-		roundNumber: number,
-		roundCount: number,
-	): boolean {
-		return !this.skippedRoundNumbers(section, roundCount).has(roundNumber);
-	}
-
 	private skippedRoundNumbers(section: RoundSection, roundCount: number) {
 		if (
 			this.input.type !== "single_elimination" &&

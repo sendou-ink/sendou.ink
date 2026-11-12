@@ -41,11 +41,14 @@ const roundsOf = (
 	return rounds;
 };
 
-const mapCountsOf = (rounds: RoundData[]): BracketMapCounts => {
+const mapCountsOf = (
+	rounds: RoundData[],
+	countOf: (round: RoundData) => number = () => MAPS_PER_ROUND,
+): BracketMapCounts => {
 	const counts: BracketMapCounts = new Map();
 	for (const round of rounds) {
 		const roundSet = counts.get(roundSetKey(round)) ?? new Map();
-		roundSet.set(round.number, { count: MAPS_PER_ROUND, type: "BEST_OF" });
+		roundSet.set(round.number, { count: countOf(round), type: "BEST_OF" });
 		counts.set(roundSetKey(round), roundSet);
 	}
 
@@ -160,6 +163,7 @@ describe("generateTournamentRoundMaplist", () => {
 	test("organizer picked rounds get a map list from the pool and no mode order", () => {
 		const result = generate({ teamsPickMaps: false });
 
+		expect(result.size).toBe(singleGroupRounds.length);
 		for (const round of result.values()) {
 			expect(round.modes).toBeUndefined();
 			expect(round.list).toHaveLength(MAPS_PER_ROUND);
@@ -189,5 +193,117 @@ describe("generateTournamentRoundMaplist", () => {
 
 		expect(modes).toHaveLength(singleGroupRounds.length * MAPS_PER_ROUND);
 		expect(modes.every((mode: ModeShort) => mode === "SZ")).toBe(true);
+	});
+
+	test("organizer picked rounds keep the pick/ban style only on the rounds that have it", () => {
+		const [banRound, plainRound] = singleGroupRounds;
+
+		const result = generate({
+			teamsPickMaps: false,
+			roundsWithPickBan: new Set([banRound.id]),
+			pickBanStyle: "BAN_2",
+		});
+
+		expect(result.get(banRound.id)?.pickBan).toBe("BAN_2");
+		expect(result.get(banRound.id)?.list).toHaveLength(MAPS_PER_ROUND + 2);
+		expect(result.get(plainRound.id)?.pickBan).toBeUndefined();
+		expect(result.get(plainRound.id)?.list).toHaveLength(MAPS_PER_ROUND);
+	});
+
+	test("organizer picked rounds have no map list when the tournament has no map pool", () => {
+		const result = generate({ teamsPickMaps: false, pool: [] });
+
+		expect(result.size).toBe(singleGroupRounds.length);
+		for (const round of result.values()) {
+			expect(round.list).toBeNull();
+		}
+	});
+
+	test.each([
+		{ why: "organizer picked", teamsPickMaps: false },
+		{ why: "team picked", teamsPickMaps: true },
+	])(
+		"a CUSTOM pick/ban round gets no maps ahead of the pick/ban ($why)",
+		({ teamsPickMaps }) => {
+			const round = singleGroupRounds[0];
+
+			const result = generate({
+				teamsPickMaps,
+				roundsWithPickBan: new Set([round.id]),
+				pickBanStyle: "CUSTOM",
+			});
+
+			const generated = result.get(round.id);
+			expect(generated?.pickBan).toBe("CUSTOM");
+			expect(teamsPickMaps ? generated?.modes : generated?.list).toEqual([]);
+		},
+	);
+
+	test.each([
+		{
+			type: "double_elimination",
+			playOrder: roundsOf([
+				{ groupId: 0, roundCount: 3, section: "winners" },
+				{ groupId: 2, roundCount: 2, section: "finals" },
+				{ groupId: 1, roundCount: 4, section: "losers" },
+			]),
+		},
+		{
+			type: "single_elimination",
+			playOrder: roundsOf([
+				{ groupId: 0, roundCount: 2, section: "winners" },
+				{ groupId: 0, roundCount: 1, section: "finals" },
+			]),
+		},
+	] as const)(
+		"$type rounds continue the mode rotation in play order: winners, finals, then losers",
+		({ type, playOrder }) => {
+			const result = generate({ rounds: playOrder.toReversed(), type });
+
+			expect(result.size).toBe(playOrder.length);
+			const modes = playOrder.flatMap((round) => result.get(round.id)?.modes);
+			const cycle = modes.slice(0, rankedModesShort.length);
+			expect(new Set(cycle).size).toBe(rankedModesShort.length);
+			for (const [i, mode] of modes.entries()) {
+				expect(mode).toBe(cycle[i % cycle.length]);
+			}
+		},
+	);
+
+	test("elimination sections keep their own map counts", () => {
+		const rounds = [
+			...roundsOf([{ groupId: 0, roundCount: 3, section: "winners" }]),
+			{ id: 4, stageId: 1, groupId: 0, section: "finals", number: 1 },
+		] satisfies RoundData[];
+
+		const result = generate({
+			rounds,
+			mapCounts: mapCountsOf(rounds, (round) =>
+				round.section === "finals" ? 7 : MAPS_PER_ROUND,
+			),
+		});
+
+		expect(rounds.map((round) => result.get(round.id)?.count)).toEqual([
+			MAPS_PER_ROUND,
+			MAPS_PER_ROUND,
+			MAPS_PER_ROUND,
+			7,
+		]);
+	});
+
+	test("every round robin round gets its map count when the group with the most rounds is in the middle", () => {
+		const rounds = roundsOf([
+			{ groupId: 0, roundCount: 2 },
+			{ groupId: 1, roundCount: 3 },
+			{ groupId: 2, roundCount: 2 },
+		]);
+
+		const result = generate({ rounds, type: "round_robin" });
+
+		expect(result.size).toBe(3);
+		for (const round of result.values()) {
+			expect(round.count).toBe(MAPS_PER_ROUND);
+			expect(round.modes).toHaveLength(MAPS_PER_ROUND);
+		}
 	});
 });

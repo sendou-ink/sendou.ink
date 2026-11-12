@@ -117,6 +117,17 @@ describe("Scrim.sideDisplayName", () => {
 		});
 		expect(result).toBe("sendou's pickup");
 	});
+
+	test("names a pickup after its first member when nobody is marked as owner", () => {
+		const result = sideDisplayName({
+			team: null,
+			users: [
+				{ username: "alice", isOwner: false },
+				{ username: "sendou", isOwner: false },
+			],
+		});
+		expect(result).toBe("alice's pickup");
+	});
 });
 
 describe("Scrim.applyFilters", () => {
@@ -295,9 +306,64 @@ describe("Scrim.applyFilters", () => {
 
 			expect(applyFilters(post, filters)).toBe(false);
 		});
+
+		test.each([
+			{
+				why: "post's lowest div is the filter's highest",
+				postDivs: { min: "3", max: "1" },
+				filterDivs: { min: "5", max: "3" },
+			},
+			{
+				why: "post's highest div is the filter's lowest",
+				postDivs: { min: "7", max: "5" },
+				filterDivs: { min: "5", max: "3" },
+			},
+			{
+				why: "post's highest div is the filter's only min",
+				postDivs: { min: "7", max: "5" },
+				filterDivs: { min: "5", max: null },
+			},
+			{
+				why: "post's lowest div is the filter's only max",
+				postDivs: { min: "5", max: "3" },
+				filterDivs: { min: null, max: "5" },
+			},
+		] satisfies Array<{
+			why: string;
+			postDivs: { min: string; max: string };
+			filterDivs: ScrimFilters["divs"];
+		}>)(
+			"keeps a post whose divs touch the filter's at the edge: $why",
+			({ postDivs, filterDivs }) => {
+				const post = createPostForFilters(
+					new Date("2025-01-15T14:00:00"),
+					undefined,
+					postDivs,
+				);
+
+				expect(
+					applyFilters(post, {
+						divs: filterDivs,
+						weekdayTimes: null,
+						weekendTimes: null,
+					}),
+				).toBe(true);
+			},
+		);
 	});
 
 	describe("weekday time filters", () => {
+		test("returns true when the post starts exactly when the filter's time ends", () => {
+			const post = createPostForFilters(new Date("2025-01-15T16:00:00"));
+			const filters: ScrimFilters = {
+				divs: null,
+				weekdayTimes: { start: "10:00", end: "16:00" },
+				weekendTimes: null,
+			};
+
+			expect(applyFilters(post, filters)).toBe(true);
+		});
+
 		test("returns true when post time overlaps with weekday time filter", () => {
 			const post = createPostForFilters(new Date("2025-01-15T14:00:00"));
 			const filters: ScrimFilters = {
@@ -619,6 +685,25 @@ describe("Scrim.isTrackingLocked", () => {
 			isTrackingLocked({ startTime, mapLists: [{ updatedAt }], now }),
 		).toBe(false);
 	});
+
+	test("returns false when no map list was ever submitted for a scrim that started long ago", () => {
+		expect(
+			isTrackingLocked({ startTime: secondsAgo(lockWindowMs * 10), now }),
+		).toBe(false);
+	});
+
+	test("locks seconds after the auto-lock window has elapsed", () => {
+		const realNow = new Date("2025-06-01T20:00:00Z").getTime();
+		const startTime = (realNow - lockWindowMs - 10_000) / 1000;
+
+		expect(
+			isTrackingLocked({
+				startTime,
+				mapLists: [{ updatedAt: startTime }],
+				now: realNow,
+			}),
+		).toBe(true);
+	});
 });
 
 const freeFrom = (userId: number, startsAt: number, endsAt: number) => ({
@@ -715,6 +800,63 @@ describe("Scrim.pickableSlots", () => {
 			userIds: [1, 2, 3, 4],
 		});
 		expect(slot.pick.startsAt).toBe(evening(20));
+	});
+
+	test("prefers the longer whole-team span over a later shorter one", () => {
+		const members = [
+			freeFrom(1, evening(18), evening(23)),
+			freeFrom(2, evening(18), evening(23)),
+			freeFrom(3, evening(18), evening(23)),
+			{
+				userId: 4,
+				ranges: [
+					{ startsAt: evening(18), endsAt: evening(21) },
+					{ startsAt: evening(22), endsAt: evening(23) },
+				],
+			},
+		];
+
+		const [slot] = pickableSlots({ members, minPlayers: 4 });
+
+		expect(slot.fullSpan).toMatchObject({
+			startsAt: evening(18),
+			endsAt: evening(21),
+		});
+	});
+
+	test("shows each slot the whole-team span inside it, not another slot's", () => {
+		const twoBlocks = [
+			{ startsAt: evening(12), endsAt: evening(15) },
+			{ startsAt: evening(18), endsAt: evening(23) },
+		];
+		const members = [
+			...[1, 2, 3].map((userId) => ({ userId, ranges: twoBlocks })),
+			{
+				userId: 4,
+				ranges: [
+					{ startsAt: evening(13), endsAt: evening(15) },
+					{ startsAt: evening(18), endsAt: evening(19) },
+				],
+			},
+		];
+
+		const slots = pickableSlots({ members, minPlayers: 4 });
+
+		expect(slots.map((slot) => slot.fullSpan)).toMatchObject([
+			{ startsAt: evening(13), endsAt: evening(15) },
+			{ startsAt: evening(18), endsAt: evening(19) },
+		]);
+	});
+
+	test("offers a pair a slot where only one of them is free", () => {
+		const members = [
+			freeFrom(1, evening(18), evening(21)),
+			freeFrom(2, evening(19), evening(20)),
+		];
+
+		expect(pickableSlots({ members, minPlayers: 2 })).toMatchObject([
+			{ startsAt: evening(18), endsAt: evening(21), tier: "ONE_SHORT" },
+		]);
 	});
 
 	test("has no slots when the team is more than one player short", () => {

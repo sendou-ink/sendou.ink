@@ -121,6 +121,9 @@ describe("planMutations", () => {
 			"	isOver() {",
 			"		return !c;",
 			"	}",
+			"	#reset() {",
+			"		return !d;",
+			"	}",
 			"}",
 		].join("\n");
 
@@ -135,6 +138,7 @@ describe("planMutations", () => {
 			["outer", 2, 3],
 			["helper", 5, 5],
 			["Bracket.isOver", 7, 8],
+			["Bracket.#reset", 10, 11],
 		]);
 	});
 

@@ -206,8 +206,6 @@ function resolveConsecutiveStepInfo({
 		return { current: eventCount - start + 1, total: end - start + 1 };
 	}
 
-	if (postGame.length === 0) return { current: 1, total: 1 };
-
 	const stepIndex = (eventCount - preSet.length) % postGame.length;
 	const currentStep = postGame[stepIndex]!;
 
@@ -259,10 +257,7 @@ export function resolveCurrentStep({
 	});
 
 	// waiting for game result
-	if (completedPostGameCycles > resultsCount) return null;
-	if (completedPostGameCycles === resultsCount && stepInPostGame === 0) {
-		return null;
-	}
+	if (completedPostGameCycles >= resultsCount) return null;
 
 	return postGame[stepInPostGame]!;
 }

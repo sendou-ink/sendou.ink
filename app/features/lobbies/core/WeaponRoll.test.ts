@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import { describe, expect, test } from "vitest";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
@@ -21,6 +22,42 @@ const seeded = (seed: string) => {
 	const { random } = seededRandom(seed);
 	return () => random();
 };
+
+const NO_BALANCING: WeaponRoll.WeaponRollOptions = {
+	...WeaponRoll.DEFAULT_WEAPON_ROLL_OPTIONS,
+	candidates: 1,
+	strengthWeight: 0,
+	shapeWeight: 0,
+	shapeMismatchWeight: 0,
+	specialStackWeight: 0,
+};
+
+const hasScreen = (weapons: MainWeaponId[]) =>
+	weapons.some(
+		(weaponId) => WeaponRoll.specialOf(weaponId) === SPLATTERCOLOR_SCREEN_ID,
+	);
+
+/** Every 4v4 split of the 8 weapons. */
+const splitsOf = (weapons: MainWeaponId[]) => {
+	const [first, ...rest] = weapons;
+	const result: Array<{ alpha: MainWeaponId[]; bravo: MainWeaponId[] }> = [];
+	for (let a = 0; a < rest.length; a++) {
+		for (let b = a + 1; b < rest.length; b++) {
+			for (let c = b + 1; c < rest.length; c++) {
+				const alpha = [first, rest[a], rest[b], rest[c]];
+				result.push({
+					alpha,
+					bravo: weapons.filter((weaponId) => !alpha.includes(weaponId)),
+				});
+			}
+		}
+	}
+
+	return result;
+};
+
+const strengthById = (weaponId: MainWeaponId) =>
+	WeaponRoll.WEAPON_ROLL_DATA.weapons[weaponId].strength;
 
 describe("WeaponRoll.roll", () => {
 	test.each(["a", "b", "c"])(
@@ -77,6 +114,100 @@ describe("WeaponRoll.roll", () => {
 		}
 	});
 
+	test.each([
+		{
+			why: "strength",
+			weight: "strengthWeight",
+			measure: (alpha: MainWeaponId[], bravo: MainWeaponId[]) =>
+				Math.abs(WeaponRoll.winProbability(alpha, bravo, null) - 0.5),
+		},
+		{
+			why: "how rare the team shapes are",
+			weight: "shapeWeight",
+			measure: (alpha: MainWeaponId[], bravo: MainWeaponId[]) =>
+				-Math.log(
+					WeaponRoll.shapeShare(WeaponRoll.shapeKey(alpha)) *
+						WeaponRoll.shapeShare(WeaponRoll.shapeKey(bravo)),
+				),
+		},
+		{
+			why: "how differently the teams are shaped",
+			weight: "shapeMismatchWeight",
+			measure: WeaponRoll.shapeMismatchCost,
+		},
+		{
+			why: "shared specials",
+			weight: "specialStackWeight",
+			measure: (alpha: MainWeaponId[], bravo: MainWeaponId[]) =>
+				WeaponRoll.specialStackCost(alpha) + WeaponRoll.specialStackCost(bravo),
+		},
+	] as const)(
+		"weighing only $why, the 8 rolled weapons are split the best way for it",
+		({ weight, measure }) => {
+			for (let i = 0; i < 10; i++) {
+				const result = WeaponRoll.roll(
+					{ ...NO_BALANCING, [weight]: 1 },
+					{ random: seeded(`${weight}-${i}`) },
+				);
+				const best = Math.min(
+					...splitsOf([...result.alpha, ...result.bravo]).map((split) =>
+						measure(split.alpha, split.bravo),
+					),
+				);
+
+				expect(measure(result.alpha, result.bravo)).toBeLessThanOrEqual(
+					best + 1e-9,
+				);
+			}
+		},
+	);
+
+	test("with popularity weighed fully, popular weapons are rolled more often than rare ones", () => {
+		const byUsage = R.sortBy(WeaponRoll.ROLLABLE_WEAPON_IDS, (weaponId) =>
+			WeaponRoll.usageOf(weaponId),
+		);
+		const rare = byUsage.slice(0, 10);
+		const popular = byUsage.slice(-10);
+
+		let rareCount = 0;
+		let popularCount = 0;
+		for (let i = 0; i < 100; i++) {
+			const result = WeaponRoll.roll(
+				{ ...NO_BALANCING, popularityExponent: 1 },
+				{ random: seeded(`popularity-${i}`) },
+			);
+			for (const weaponId of [...result.alpha, ...result.bravo]) {
+				if (rare.includes(weaponId)) rareCount++;
+				if (popular.includes(weaponId)) popularCount++;
+			}
+		}
+
+		expect(popularCount).toBeGreaterThan(rareCount);
+	});
+
+	test("weapons of sets older than the repeat penalty lasts don't affect the roll", () => {
+		const options = { ...NO_BALANCING, repeatWeight: 0, repeatFadeSets: 1 };
+
+		const withOldSet = WeaponRoll.roll(options, {
+			recentRolls: [[], WeaponRoll.ROLLABLE_WEAPON_IDS],
+			random: seeded("old"),
+		});
+		const withoutHistory = WeaponRoll.roll(options, { random: seeded("old") });
+
+		expect(withOldSet.alpha).toEqual(withoutHistory.alpha);
+		expect(withOldSet.bravo).toEqual(withoutHistory.bravo);
+	});
+
+	test("rolls weapons with Splattercolor Screen when nobody avoids it", () => {
+		const rolls = Array.from({ length: 20 }, (_, i) =>
+			WeaponRoll.roll(NO_BALANCING, { random: seeded(`screen-${i}`) }),
+		);
+
+		expect(
+			rolls.some((result) => hasScreen([...result.alpha, ...result.bravo])),
+		).toBe(true);
+	});
+
 	test("never rolls a weapon with Splattercolor Screen when avoiding it", () => {
 		for (let i = 0; i < 50; i++) {
 			const result = WeaponRoll.roll(WeaponRoll.DEFAULT_WEAPON_ROLL_OPTIONS, {
@@ -99,6 +230,7 @@ describe("WeaponRoll.repeatFactor", () => {
 		{ setsAgo: 2, expected: 0.5 },
 		{ setsAgo: 3, expected: 0.75 },
 		{ setsAgo: 4, expected: 1 },
+		{ setsAgo: 10, expected: 1 },
 	])("$setsAgo sets ago is $expected", ({ setsAgo, expected }) => {
 		expect(
 			WeaponRoll.repeatFactor(
@@ -118,6 +250,16 @@ describe("WeaponRoll.rollForSet", () => {
 				new Set([...ALPHA, ...BRAVO].map(weaponIdToBaseWeaponId)).size,
 			).toBe(8);
 		}
+	});
+
+	test("rolls weapons with Splattercolor Screen when no player avoids it", () => {
+		const rolls = Array.from({ length: 100 }, () =>
+			WeaponRoll.rollForSet("CHAOTIC"),
+		);
+
+		expect(
+			rolls.some(({ ALPHA, BRAVO }) => hasScreen([...ALPHA, ...BRAVO])),
+		).toBe(true);
 	});
 
 	test("never rolls a weapon with Splattercolor Screen when a player avoids it", () => {
@@ -157,6 +299,19 @@ describe("WeaponRoll.tierOf", () => {
 		},
 	] as const)("$why", ({ weaponId, tier }) => {
 		expect(WeaponRoll.tierOf(weaponId)).toBe(tier);
+	});
+});
+
+describe("WeaponRoll.shapeKey", () => {
+	test("is the team's frontline, midline and backline counts", () => {
+		expect(
+			WeaponRoll.shapeKey([
+				SPLATTERSHOT,
+				SPLAT_ROLLER,
+				SPLATTERSHOT_PRO,
+				SPLAT_CHARGER,
+			]),
+		).toBe("2-1-1");
 	});
 });
 
@@ -209,6 +364,36 @@ describe("WeaponRoll.winProbability", () => {
 
 	test("is even for identical teams", () => {
 		expect(WeaponRoll.winProbability(alpha, alpha, "SZ")).toBe(0.5);
+	});
+
+	test("a team of stronger weapons is favoured", () => {
+		const byStrength = R.sortBy(WeaponRoll.ROLLABLE_WEAPON_IDS, strengthById);
+
+		expect(
+			WeaponRoll.winProbability(
+				byStrength.slice(-4),
+				byStrength.slice(0, 4),
+				null,
+			),
+		).toBeGreaterThan(0.5);
+	});
+
+	test("uses the mode's own weapon strengths", () => {
+		const splatZonesEdge = (weaponId: MainWeaponId) =>
+			(WeaponRoll.WEAPON_ROLL_DATA.weapons[weaponId].byMode.SZ?.strength ??
+				strengthById(weaponId)) - strengthById(weaponId);
+		const bySplatZonesEdge = R.sortBy(
+			WeaponRoll.ROLLABLE_WEAPON_IDS,
+			splatZonesEdge,
+		);
+		const betterInSplatZones = [bySplatZonesEdge.at(-1)!];
+		const worseInSplatZones = [bySplatZonesEdge[0]];
+
+		expect(
+			WeaponRoll.winProbability(betterInSplatZones, worseInSplatZones, "SZ"),
+		).toBeGreaterThan(
+			WeaponRoll.winProbability(betterInSplatZones, worseInSplatZones, null),
+		);
 	});
 
 	test("is symmetric between the sides", () => {

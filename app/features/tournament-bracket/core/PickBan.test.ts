@@ -1,11 +1,15 @@
 import { describe, expect, test } from "vitest";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import type { WhoSide } from "../tournament-bracket-constants";
 import {
 	CUSTOM_FLOW_VALIDATION_ERRORS,
 	currentTurnSessionStartedAt,
+	isLegal,
 	isModeLegal,
+	isStageLegal,
+	type MapPoolTeam,
 	mapsListWithLegality,
 	type PickBanEvent,
 	type PickBanTeam,
@@ -365,6 +369,12 @@ describe("resolveCurrentStep", () => {
 			resolveCurrentStep({ eventCount: 6, preSet, postGame, resultsCount: 2 }),
 		).toEqual(postGame[1]);
 	});
+
+	test("waits for the result when a post-game cycle started without one", () => {
+		expect(
+			resolveCurrentStep({ eventCount: 4, preSet, postGame, resultsCount: 0 }),
+		).toBeNull();
+	});
 });
 
 describe("resolveTeamFromSide", () => {
@@ -467,6 +477,16 @@ describe("randomWhoTeamIndex", () => {
 
 		expect(cycle0b).toBe(cycle0a);
 		expect(cycle1b).toBe(cycle1a);
+	});
+
+	test("the first post-game step shares its flip with the rest of its cycle", () => {
+		for (let matchId = 1; matchId <= 30; matchId++) {
+			const base = { matchId, preSetLength: 2, postGameLength: 2 };
+
+			expect(randomWhoTeamIndex({ ...base, eventIndex: 2 })).toBe(
+				randomWhoTeamIndex({ ...base, eventIndex: 3 }),
+			);
+		}
 	});
 
 	test("re-flips independently across maps (some match reflips)", () => {
@@ -730,6 +750,32 @@ describe("turnOf — CUSTOM flow", () => {
 
 		expect(result).toBeNull();
 	});
+
+	test("starts the post-game from its first step after a pre-set of a different length", () => {
+		const maps: TournamentRoundMaps = {
+			count: 5,
+			type: "BEST_OF",
+			pickBan: "CUSTOM",
+			customFlow: {
+				preSet: [{ action: "ROLL" }],
+				postGame: [
+					{ action: "MODE_BAN", side: "WINNER" },
+					{ action: "BAN", side: "WINNER" },
+					{ action: "PICK", side: "LOSER" },
+				],
+			},
+		};
+
+		const result = turnOf({
+			matchId: 1,
+			results: [{ winnerTeamId: 200 }],
+			maps,
+			teams,
+			pickBanEventCount: 1,
+		});
+
+		expect(result).toMatchObject({ teamId: 200, action: "MODE_BAN" });
+	});
 });
 
 describe("turnOf — CUSTOM flow stepCurrent/stepTotal", () => {
@@ -896,6 +942,21 @@ describe("turnOf — BAN_2 flow", () => {
 		});
 
 		expect(result).toEqual({ teamId: 200, action: "BAN" });
+	});
+
+	test("after the first team bans, the other team bans next", () => {
+		const result = turnOf({
+			matchId: 1,
+			results: [],
+			maps: ban2Maps,
+			teams,
+			mapList: [
+				{ mode: "SZ", stageId: 1, source: "TO", bannedByTournamentTeamId: 200 },
+				{ mode: "SZ", stageId: 2, source: "TO" },
+			],
+		});
+
+		expect(result).toEqual({ teamId: 100, action: "BAN" });
 	});
 
 	test("returns null when both teams have banned", () => {
@@ -1346,6 +1407,74 @@ describe("turnOf — COUNTERPICK flow", () => {
 	});
 });
 
+describe("turnOf — no turn", () => {
+	const teams: [PickBanTeam, PickBanTeam] = [
+		{ id: 100, seed: 2 },
+		{ id: 200, seed: 1 },
+	];
+	const unbannedMap = (stageId: StageId) => ({
+		mode: "SZ" as const,
+		stageId,
+		source: "TO" as const,
+	});
+
+	test.each<{
+		why: string;
+		args: Omit<Parameters<typeof turnOf>[0], "teams" | "matchId">;
+	}>([
+		{
+			why: "the round has no pick/ban",
+			args: {
+				results: [],
+				maps: { count: 3, type: "BEST_OF" },
+				mapList: [unbannedMap(1)],
+			},
+		},
+		{
+			why: "BAN_2 map list isn't generated yet",
+			args: {
+				results: [],
+				maps: { count: 3, type: "BEST_OF", pickBan: "BAN_2" },
+				mapList: null,
+			},
+		},
+		{
+			why: "BAN_2 set is already decided",
+			args: {
+				results: [{ winnerTeamId: 100 }, { winnerTeamId: 100 }],
+				maps: { count: 3, type: "BEST_OF", pickBan: "BAN_2" },
+				mapList: [unbannedMap(1), unbannedMap(2)],
+			},
+		},
+		{
+			why: "COUNTERPICK map list isn't generated yet",
+			args: {
+				results: [{ winnerTeamId: 100 }],
+				maps: { count: 3, type: "BEST_OF", pickBan: "COUNTERPICK" },
+				mapList: null,
+			},
+		},
+		{
+			why: "COUNTERPICK picked map is still to be played",
+			args: {
+				results: [{ winnerTeamId: 100 }],
+				maps: { count: 3, type: "BEST_OF", pickBan: "COUNTERPICK" },
+				mapList: [unbannedMap(1), unbannedMap(2)],
+			},
+		},
+		{
+			why: "COUNTERPICK set is already decided",
+			args: {
+				results: [{ winnerTeamId: 100 }, { winnerTeamId: 100 }],
+				maps: { count: 3, type: "BEST_OF", pickBan: "COUNTERPICK" },
+				mapList: [unbannedMap(1), unbannedMap(2)],
+			},
+		},
+	])("nobody's turn when $why", ({ args }) => {
+		expect(turnOf({ matchId: 1, teams, ...args })).toBeNull();
+	});
+});
+
 describe("teamOfEvent", () => {
 	const teams: [PickBanTeam, PickBanTeam] = [
 		{ id: 100, seed: 2 },
@@ -1562,6 +1691,109 @@ describe("teamOfEvent", () => {
 				}),
 			).toBeNull();
 		});
+
+		const rollThenLoserPicks: TournamentRoundMaps = {
+			count: 5,
+			type: "BEST_OF",
+			pickBan: "CUSTOM",
+			customFlow: {
+				preSet: [{ action: "ROLL" }],
+				postGame: [{ action: "PICK", side: "LOSER" }],
+			},
+		};
+
+		test("attributes the pick of a single step post-game to the loser", () => {
+			expect(
+				teamOfEvent({
+					matchId: 1,
+					eventIndex: 1,
+					maps: rollThenLoserPicks,
+					teams,
+					results: [{ winnerTeamId: 200 }],
+				}),
+			).toBe(100);
+		});
+
+		test("keeps an earlier game's pick attributed to that game's loser after later results", () => {
+			expect(
+				teamOfEvent({
+					matchId: 1,
+					eventIndex: 1,
+					maps: rollThenLoserPicks,
+					teams,
+					results: [{ winnerTeamId: 200 }, { winnerTeamId: 100 }],
+				}),
+			).toBe(100);
+		});
+
+		test("returns null for a winner/loser step whose game has no result", () => {
+			expect(
+				teamOfEvent({
+					matchId: 1,
+					eventIndex: 1,
+					maps: rollThenLoserPicks,
+					teams,
+					results: [],
+				}),
+			).toBeNull();
+		});
+
+		test("starts the post-game from its first step after a pre-set of a different length", () => {
+			const maps: TournamentRoundMaps = {
+				count: 5,
+				type: "BEST_OF",
+				pickBan: "CUSTOM",
+				customFlow: {
+					preSet: [{ action: "ROLL" }],
+					postGame: [
+						{ action: "MODE_BAN", side: "WINNER" },
+						{ action: "BAN", side: "WINNER" },
+						{ action: "PICK", side: "LOSER" },
+					],
+				},
+			};
+
+			expect(
+				teamOfEvent({
+					matchId: 1,
+					eventIndex: 1,
+					maps,
+					teams,
+					results: [{ winnerTeamId: 200 }],
+				}),
+			).toBe(200);
+		});
+
+		test("seed based sides name different teams when neither team has a seed", () => {
+			const unseededTeams: [PickBanTeam, PickBanTeam] = [
+				{ id: 100, seed: 0 },
+				{ id: 200, seed: 0 },
+			];
+			const seedSideMaps: TournamentRoundMaps = {
+				count: 3,
+				type: "BEST_OF",
+				pickBan: "CUSTOM",
+				customFlow: {
+					preSet: [
+						{ action: "BAN", side: "HIGHER_SEED" },
+						{ action: "PICK", side: "LOWER_SEED" },
+					],
+					postGame: [{ action: "PICK", side: "LOSER" }],
+				},
+			};
+
+			const [higherSeed, lowerSeed] = [0, 1].map((eventIndex) =>
+				teamOfEvent({
+					matchId: 1,
+					eventIndex,
+					maps: seedSideMaps,
+					teams: unseededTeams,
+					results: [],
+				}),
+			);
+
+			expect(new Set([higherSeed, lowerSeed])).toEqual(new Set([100, 200]));
+		});
 	});
 });
 
@@ -1694,5 +1926,320 @@ describe("currentTurnSessionStartedAt", () => {
 		});
 
 		expect(result).toBe(2000);
+	});
+
+	test("CUSTOM: the loser's pick session starts when the winner finishes banning, not at the result", () => {
+		const customMaps: TournamentRoundMaps = {
+			count: 5,
+			type: "BEST_OF",
+			pickBan: "CUSTOM",
+			customFlow: {
+				preSet: [{ action: "ROLL" }],
+				postGame: [
+					{ action: "BAN", side: "WINNER" },
+					{ action: "PICK", side: "LOSER" },
+				],
+			},
+		};
+
+		const result = currentTurnSessionStartedAt({
+			matchId: 1,
+			currentTurn: { teamId: 100, action: "PICK" },
+			events: [{ createdAt: 1100 }, { createdAt: 2500 }],
+			results: [{ createdAt: 2000, winnerTeamId: 200 }],
+			matchStartedAt: 1000,
+			maps: customMaps,
+			teams,
+		});
+
+		expect(result).toBe(2500);
+	});
+});
+
+describe("isLegal / isStageLegal — BAN_2", () => {
+	const ban2Args = {
+		results: [],
+		maps: { count: 3, type: "BEST_OF", pickBan: "BAN_2" } as const,
+		mapList: [
+			{ mode: "SZ", stageId: 1, source: "TO", bannedByTournamentTeamId: 200 },
+			{ mode: "SZ", stageId: 2, source: "TO" },
+			{ mode: "TC", stageId: 3, source: "TO", bannedByTournamentTeamId: 100 },
+			{ mode: "TC", stageId: 4, source: "TO" },
+		] satisfies TournamentMapListMap[],
+		teams: [
+			{ id: 100, mapPool: null },
+			{ id: 200, mapPool: null },
+		] satisfies [MapPoolTeam, MapPoolTeam],
+		pickerTeamId: 100,
+		toSetMapPool: [],
+	};
+
+	test.each([
+		{ why: "unbanned map", map: { mode: "SZ", stageId: 2 }, expected: true },
+		{ why: "banned map", map: { mode: "SZ", stageId: 1 }, expected: false },
+		{
+			why: "stage of the list in a mode it isn't listed in",
+			map: { mode: "TC", stageId: 2 },
+			expected: false,
+		},
+	] satisfies Array<{
+		why: string;
+		map: { mode: ModeShort; stageId: StageId };
+		expected: boolean;
+	}>)("legality of $why is $expected", ({ map, expected }) => {
+		expect(isLegal({ ...ban2Args, map })).toBe(expected);
+	});
+
+	test.each([
+		{ why: "unbanned stage", stageId: 4, expected: true },
+		{ why: "banned stage", stageId: 3, expected: false },
+	] satisfies Array<{ why: string; stageId: StageId; expected: boolean }>)(
+		"stage legality of $why is $expected",
+		({ stageId, expected }) => {
+			expect(isStageLegal({ ...ban2Args, stageId })).toBe(expected);
+		},
+	);
+});
+
+describe("mapsListWithLegality", () => {
+	const SZ = "SZ" as ModeShort;
+	const TC = "TC" as ModeShort;
+	const RM = "RM" as ModeShort;
+
+	const noPoolTeams: [MapPoolTeam, MapPoolTeam] = [
+		{ id: 100, mapPool: null },
+		{ id: 200, mapPool: null },
+	];
+
+	const toSetMapPool = [
+		{ mode: SZ, stageId: 1 as StageId },
+		{ mode: SZ, stageId: 2 as StageId },
+		{ mode: TC, stageId: 3 as StageId },
+		{ mode: TC, stageId: 4 as StageId },
+		{ mode: RM, stageId: 5 as StageId },
+		{ mode: RM, stageId: 6 as StageId },
+	];
+
+	const legalMapKeys = (result: ReturnType<typeof mapsListWithLegality>) =>
+		result.filter((m) => m.isLegal).map((m) => `${m.mode}-${m.stageId}`);
+
+	test.each<{
+		why: string;
+		maps: TournamentRoundMaps | null;
+		mapList: TournamentMapListMap[] | null;
+	}>([
+		{ why: "the round has no maps set", maps: null, mapList: null },
+		{
+			why: "the round has no pick/ban",
+			maps: { count: 3, type: "BEST_OF" },
+			mapList: null,
+		},
+		{
+			why: "the BAN_2 map list isn't generated yet",
+			maps: { count: 3, type: "BEST_OF", pickBan: "BAN_2" },
+			mapList: null,
+		},
+	])("offers no maps when $why", ({ maps, mapList }) => {
+		expect(
+			mapsListWithLegality({
+				results: [],
+				maps,
+				mapList,
+				teams: noPoolTeams,
+				pickerTeamId: 100,
+				toSetMapPool,
+			}),
+		).toEqual([]);
+	});
+
+	describe.each(["COUNTERPICK", "CUSTOM"] as const)("%s", (pickBan) => {
+		const maps: TournamentRoundMaps = {
+			count: 5,
+			type: "BEST_OF",
+			pickBan,
+			customFlow:
+				pickBan === "CUSTOM"
+					? {
+							preSet: [{ action: "PICK", side: "HIGHER_SEED" }],
+							postGame: [{ action: "PICK", side: "LOSER" }],
+						}
+					: undefined,
+		};
+		const teamsWithPools: [MapPoolTeam, MapPoolTeam] = [
+			{
+				id: 100,
+				mapPool: [
+					{ mode: SZ, stageId: 1 as StageId },
+					{ mode: TC, stageId: 2 as StageId },
+				],
+			},
+			{
+				id: 200,
+				mapPool: [
+					{ mode: SZ, stageId: 1 as StageId },
+					{ mode: TC, stageId: 1 as StageId },
+					{ mode: RM, stageId: 3 as StageId },
+				],
+			},
+		];
+
+		test("offers both teams' picks once each when the teams picked the maps", () => {
+			const result = mapsListWithLegality({
+				results: [],
+				maps,
+				mapList: null,
+				teams: teamsWithPools,
+				pickerTeamId: 100,
+				toSetMapPool: [],
+			});
+
+			expect(legalMapKeys(result).toSorted()).toEqual([
+				"RM-3",
+				"SZ-1",
+				"TC-1",
+				"TC-2",
+			]);
+		});
+
+		test("offers the organizer's pool over the teams' picks", () => {
+			const result = mapsListWithLegality({
+				results: [],
+				maps,
+				mapList: null,
+				teams: teamsWithPools,
+				pickerTeamId: 100,
+				toSetMapPool,
+			});
+
+			expect(result.map((m) => `${m.mode}-${m.stageId}`)).toEqual(
+				toSetMapPool.map((m) => `${m.mode}-${m.stageId}`),
+			);
+		});
+	});
+
+	describe("COUNTERPICK modes", () => {
+		// team 100 won SZ and then TC, lost RM and now counterpicks
+		const results = [
+			{ mode: SZ, stageId: 1 as StageId, winnerTeamId: 100 },
+			{ mode: TC, stageId: 3 as StageId, winnerTeamId: 100 },
+			{ mode: RM, stageId: 5 as StageId, winnerTeamId: 200 },
+		];
+
+		test("a team can't counterpick the mode it last won on", () => {
+			const result = mapsListWithLegality({
+				results,
+				maps: { count: 7, type: "BEST_OF", pickBan: "COUNTERPICK" },
+				mapList: null,
+				teams: noPoolTeams,
+				pickerTeamId: 100,
+				toSetMapPool,
+			});
+
+			expect(legalMapKeys(result)).toEqual(["SZ-2", "RM-6"]);
+		});
+
+		test("COUNTERPICK_MODE_REPEAT_OK lets a team counterpick the mode it last won on", () => {
+			const result = mapsListWithLegality({
+				results,
+				maps: {
+					count: 7,
+					type: "BEST_OF",
+					pickBan: "COUNTERPICK_MODE_REPEAT_OK",
+				},
+				mapList: null,
+				teams: noPoolTeams,
+				pickerTeamId: 100,
+				toSetMapPool,
+			});
+
+			expect(legalMapKeys(result)).toEqual(["SZ-2", "TC-4", "RM-6"]);
+		});
+	});
+
+	test("every map becomes pickable again once all of them have been played", () => {
+		const twoMapPool = [
+			{ mode: SZ, stageId: 1 as StageId },
+			{ mode: TC, stageId: 2 as StageId },
+		];
+
+		const result = mapsListWithLegality({
+			results: [
+				{ mode: SZ, stageId: 1 as StageId, winnerTeamId: 100 },
+				{ mode: TC, stageId: 2 as StageId, winnerTeamId: 200 },
+			],
+			maps: { count: 5, type: "BEST_OF", pickBan: "COUNTERPICK" },
+			mapList: null,
+			teams: noPoolTeams,
+			pickerTeamId: 100,
+			toSetMapPool: twoMapPool,
+		});
+
+		expect(legalMapKeys(result)).toEqual(["SZ-1", "TC-2"]);
+	});
+
+	test("banning a stage leaves the other stages of its mode pickable", () => {
+		const result = mapsListWithLegality({
+			results: [{ mode: SZ, stageId: 1 as StageId, winnerTeamId: 200 }],
+			maps: {
+				count: 5,
+				type: "BEST_OF",
+				pickBan: "CUSTOM",
+				customFlow: {
+					preSet: [{ action: "ROLL" }],
+					postGame: [
+						{ action: "BAN", side: "WINNER" },
+						{ action: "PICK", side: "LOSER" },
+					],
+				},
+			},
+			mapList: null,
+			teams: noPoolTeams,
+			pickerTeamId: 100,
+			toSetMapPool,
+			pickBanEvents: [
+				{ type: "ROLL", stageId: 1 as StageId, mode: SZ },
+				{ type: "BAN", stageId: 3 as StageId, mode: TC },
+			],
+		});
+
+		expect(legalMapKeys(result)).toEqual(["SZ-2", "TC-4", "RM-5", "RM-6"]);
+	});
+
+	test("the previous game's mode pick doesn't restrict the next game's mode pick", () => {
+		const result = mapsListWithLegality({
+			results: [
+				{ mode: SZ, stageId: 1 as StageId, winnerTeamId: 200 },
+				{ mode: TC, stageId: 3 as StageId, winnerTeamId: 100 },
+			],
+			maps: {
+				count: 5,
+				type: "BEST_OF",
+				pickBan: "CUSTOM",
+				customFlow: {
+					preSet: [
+						{ action: "MODE_PICK", side: "HIGHER_SEED" },
+						{ action: "PICK", side: "LOWER_SEED" },
+					],
+					postGame: [
+						{ action: "MODE_PICK", side: "WINNER" },
+						{ action: "PICK", side: "LOSER" },
+					],
+				},
+			},
+			mapList: null,
+			teams: noPoolTeams,
+			pickerTeamId: 100,
+			toSetMapPool,
+			pickBanEvents: [
+				{ type: "MODE_PICK", stageId: null, mode: SZ },
+				{ type: "PICK", stageId: 1 as StageId, mode: SZ },
+				{ type: "MODE_PICK", stageId: null, mode: TC },
+				{ type: "PICK", stageId: 3 as StageId, mode: TC },
+			],
+		});
+
+		expect(new Set(result.filter((m) => m.isLegal).map((m) => m.mode))).toEqual(
+			new Set([SZ, TC, RM]),
+		);
 	});
 });

@@ -343,7 +343,7 @@ class SendouQClass {
 					{ name: "IRON", isPlus: false } as TieredSkill["tier"],
 					{ name: "LEVIATHAN", isPlus: true } as TieredSkill["tier"],
 				],
-				diff: 0,
+				diff: [0, 0] as [number, number],
 			},
 			tier: null,
 		};

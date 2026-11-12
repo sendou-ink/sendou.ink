@@ -4,7 +4,7 @@ import type { AllMatchResult } from "~/features/tournament-match/TournamentMatch
 import { invariant } from "~/utils/invariant";
 import type { Tables } from "../../../db/tables";
 import type * as Progression from "./Progression";
-import { tournamentSummary } from "./summarizer.server";
+import { summaryRatingTargets, tournamentSummary } from "./summarizer.server";
 import type { TournamentDataTeam } from "./Tournament.server";
 import { tournamentCtxTeam } from "./tests/test-utils";
 
@@ -21,6 +21,90 @@ const createOpponent = (
 	activeRosterUserIds,
 	memberUserIds,
 });
+
+const TEAM_ONE = [1, 2, 3, 4];
+const TEAM_TWO = [5, 6, 7, 8];
+const STARTING_MU = rating().mu;
+
+const playedMap = ({
+	winnerTeamId,
+	lineups,
+	mode = "SZ",
+	stageId = 1,
+}: {
+	winnerTeamId: number;
+	lineups: Array<[teamId: number, userIds: number[]]>;
+	mode?: AllMatchResult["maps"][number]["mode"];
+	stageId?: AllMatchResult["maps"][number]["stageId"];
+}): AllMatchResult["maps"][number] => ({
+	mode,
+	stageId,
+	winnerTeamId,
+	participants: lineups.flatMap(([tournamentTeamId, userIds]) =>
+		userIds.map((userId) => ({ tournamentTeamId, userId })),
+	),
+});
+
+const playedSet = ({
+	maps,
+	winnerSide = "opponent1",
+	opponentOneId = 1,
+	opponentTwoId = 2,
+}: {
+	maps: AllMatchResult["maps"];
+	winnerSide?: "opponent1" | "opponent2";
+	opponentOneId?: number;
+	opponentTwoId?: number;
+}): AllMatchResult => {
+	const winnerId = winnerSide === "opponent1" ? opponentOneId : opponentTwoId;
+	const winnerScore = maps.filter((m) => m.winnerTeamId === winnerId).length;
+	const loserScore = maps.length - winnerScore;
+
+	return {
+		maps,
+		opponentOne: createOpponent(
+			opponentOneId,
+			winnerSide === "opponent1" ? winnerScore : loserScore,
+		),
+		opponentTwo: createOpponent(
+			opponentTwoId,
+			winnerSide === "opponent2" ? winnerScore : loserScore,
+		),
+		winnerSide,
+		roundMaps: { count: 3, type: "BEST_OF" },
+	};
+};
+
+const sweep = ({
+	winnerSide,
+	opponentOneId = 1,
+	opponentTwoId = 2,
+	opponentOneLineup = TEAM_ONE,
+	opponentTwoLineup = TEAM_TWO,
+}: {
+	winnerSide: "opponent1" | "opponent2";
+	opponentOneId?: number;
+	opponentTwoId?: number;
+	opponentOneLineup?: number[];
+	opponentTwoLineup?: number[];
+}) => {
+	const winnerTeamId =
+		winnerSide === "opponent1" ? opponentOneId : opponentTwoId;
+	const lineups: Array<[number, number[]]> = [
+		[opponentOneId, opponentOneLineup],
+		[opponentTwoId, opponentTwoLineup],
+	];
+
+	return playedSet({
+		winnerSide,
+		opponentOneId,
+		opponentTwoId,
+		maps: [
+			playedMap({ winnerTeamId, lineups, mode: "SZ", stageId: 1 }),
+			playedMap({ winnerTeamId, lineups, mode: "TC", stageId: 2 }),
+		],
+	});
+};
 
 describe("tournamentSummary()", () => {
 	const createTeam = (teamId: number, userIds: number[]) =>
@@ -145,7 +229,7 @@ describe("tournamentSummary()", () => {
 			],
 			teams,
 			queryCurrentTeamRating: () => rating(),
-			queryCurrentUserRating: () => ({ rating: rating(), matchesCount: 0 }),
+			queryCurrentUserRating: () => rating(),
 			queryTeamPlayerRatingAverage: () => rating(),
 			queryCurrentSeedingRating: () => rating(),
 			seedingSkillCountsFor: seedingSkillCountsFor ?? null,
@@ -1109,5 +1193,337 @@ describe("tournamentSummary()", () => {
 		});
 
 		expect(summary.tournamentResults.length).toBe(4 * 4);
+	});
+
+	const playerMu = (summary: ReturnType<typeof summarize>, userId: number) =>
+		summary.skills.find((s) => s.userId === userId)?.mu;
+	const teamMu = (summary: ReturnType<typeof summarize>, identifier: string) =>
+		summary.skills.find((s) => s.identifier === identifier)?.mu;
+
+	const winnerAndLoserOf = (winnerSide: "opponent1" | "opponent2") =>
+		winnerSide === "opponent1"
+			? { winners: TEAM_ONE, losers: TEAM_TWO }
+			: { winners: TEAM_TWO, losers: TEAM_ONE };
+
+	test.each(["opponent1", "opponent2"] as const)(
+		"players of the set winner gain rating and the losers lose it (%s wins)",
+		(winnerSide) => {
+			const summary = summarize({ results: [sweep({ winnerSide })] });
+			const { winners, losers } = winnerAndLoserOf(winnerSide);
+
+			for (const userId of winners) {
+				expect(playerMu(summary, userId)).toBeGreaterThan(STARTING_MU);
+			}
+			for (const userId of losers) {
+				expect(playerMu(summary, userId)).toBeLessThan(STARTING_MU);
+			}
+		},
+	);
+
+	test.each(["opponent1", "opponent2"] as const)(
+		"the winning lineup's team rating goes up and the losing lineup's goes down (%s wins)",
+		(winnerSide) => {
+			const summary = summarize({ results: [sweep({ winnerSide })] });
+			const { winners, losers } = winnerAndLoserOf(winnerSide);
+
+			expect(teamMu(summary, winners.join("-"))).toBeGreaterThan(STARTING_MU);
+			expect(teamMu(summary, losers.join("-"))).toBeLessThan(STARTING_MU);
+		},
+	);
+
+	test.each(["opponent1", "opponent2"] as const)(
+		"in a set a team dropped out of before any map was played, the opponent's players and team gain rating and the dropped team's lose it (%s wins)",
+		(winnerSide) => {
+			const summary = summarize({
+				results: [
+					{
+						maps: [],
+						opponentOne: createOpponent(
+							1,
+							0,
+							winnerSide === "opponent2",
+							TEAM_ONE,
+						),
+						opponentTwo: createOpponent(
+							2,
+							0,
+							winnerSide === "opponent1",
+							TEAM_TWO,
+						),
+						winnerSide,
+						roundMaps: { count: 3, type: "BEST_OF" },
+					},
+				],
+			});
+			const { winners, losers } = winnerAndLoserOf(winnerSide);
+
+			for (const userId of winners) {
+				expect(playerMu(summary, userId)).toBeGreaterThan(STARTING_MU);
+			}
+			for (const userId of losers) {
+				expect(playerMu(summary, userId)).toBeLessThan(STARTING_MU);
+			}
+			expect(teamMu(summary, winners.join("-"))).toBeGreaterThan(STARTING_MU);
+			expect(teamMu(summary, losers.join("-"))).toBeLessThan(STARTING_MU);
+		},
+	);
+
+	test("a team that wins two sets gains more team rating than after winning one", () => {
+		const oneWin = summarize({
+			results: [sweep({ winnerSide: "opponent1" })],
+		});
+		const twoWins = summarize({
+			results: [
+				sweep({ winnerSide: "opponent1" }),
+				sweep({ winnerSide: "opponent1" }),
+			],
+		});
+
+		expect(teamMu(twoWins, "1-2-3-4")).toBeGreaterThan(
+			teamMu(oneWin, "1-2-3-4") ?? Number.POSITIVE_INFINITY,
+		);
+	});
+
+	test("matches count of players and lineups is the number of sets they played", () => {
+		const summary = summarize({
+			results: [
+				sweep({ winnerSide: "opponent1" }),
+				sweep({ winnerSide: "opponent2" }),
+			],
+		});
+
+		for (const userId of [...TEAM_ONE, ...TEAM_TWO]) {
+			expect(
+				summary.skills.find((s) => s.userId === userId)?.matchesCount,
+			).toBe(2);
+		}
+		for (const identifier of ["1-2-3-4", "5-6-7-8"]) {
+			expect(
+				summary.skills.find((s) => s.identifier === identifier)?.matchesCount,
+			).toBe(2);
+		}
+	});
+
+	test("the lineup that played most of the set gets the team rating even when a sub played the first map", () => {
+		const regularLineup: Array<[number, number[]]> = [
+			[1, TEAM_ONE],
+			[2, TEAM_TWO],
+		];
+		const summary = summarize({
+			results: [
+				playedSet({
+					maps: [
+						playedMap({
+							winnerTeamId: 2,
+							lineups: [
+								[1, [1, 20, 3, 4]],
+								[2, TEAM_TWO],
+							],
+						}),
+						playedMap({ winnerTeamId: 1, lineups: regularLineup }),
+						playedMap({ winnerTeamId: 1, lineups: regularLineup }),
+					],
+				}),
+			],
+		});
+
+		expect(teamMu(summary, "1-2-3-4")).toBeDefined();
+		expect(teamMu(summary, "1-3-4-20")).toBeUndefined();
+	});
+
+	test("a lost map is recorded as a loss and not a win on that stage and mode", () => {
+		const lineups: Array<[number, number[]]> = [
+			[1, TEAM_ONE],
+			[2, TEAM_TWO],
+		];
+		const summary = summarize({
+			results: [
+				playedSet({
+					maps: [
+						playedMap({ winnerTeamId: 2, lineups, mode: "SZ", stageId: 1 }),
+						playedMap({ winnerTeamId: 1, lineups, mode: "TC", stageId: 2 }),
+						playedMap({ winnerTeamId: 1, lineups, mode: "RM", stageId: 3 }),
+					],
+				}),
+			],
+		});
+
+		expect(
+			summary.mapResultDeltas.find(
+				(r) => r.userId === 1 && r.mode === "SZ" && r.stageId === 1,
+			),
+		).toMatchObject({ wins: 0, losses: 1 });
+	});
+
+	test("playing the same stage and mode several times adds up into one record", () => {
+		const lineups: Array<[number, number[]]> = [
+			[1, TEAM_ONE],
+			[2, TEAM_TWO],
+		];
+		const summary = summarize({
+			results: [
+				playedSet({
+					winnerSide: "opponent1",
+					maps: [
+						playedMap({ winnerTeamId: 2, lineups }),
+						playedMap({ winnerTeamId: 1, lineups }),
+						playedMap({ winnerTeamId: 1, lineups }),
+					],
+				}),
+				playedSet({
+					winnerSide: "opponent2",
+					maps: [
+						playedMap({ winnerTeamId: 1, lineups }),
+						playedMap({ winnerTeamId: 2, lineups }),
+						playedMap({ winnerTeamId: 2, lineups }),
+					],
+				}),
+			],
+		});
+
+		expect(summary.mapResultDeltas.filter((r) => r.userId === 1)).toMatchObject(
+			[{ mode: "SZ", stageId: 1, wins: 3, losses: 3 }],
+		);
+	});
+
+	test("players never get a teammate or opponent result against themselves", () => {
+		const summary = summarize();
+
+		expect(
+			summary.playerResultDeltas.filter((r) => r.ownerUserId === r.otherUserId),
+		).toEqual([]);
+	});
+
+	test("teams get no A/B division label when the finals are not A/B divisions even if they were assigned one", () => {
+		const summary = summarize({
+			teamsWithAbDivisions: [
+				{ id: 1, abDivision: 0 },
+				{ id: 2, abDivision: 1 },
+				{ id: 3, abDivision: 0 },
+				{ id: 4, abDivision: 1 },
+			],
+		});
+
+		for (const result of summary.tournamentResults) {
+			expect(result.div).toBeNull();
+			expect(result.participantCount).toBe(4);
+		}
+	});
+
+	test("participant count of an A/B division only counts the teams in that division", () => {
+		const summary = summarize({
+			teamsWithAbDivisions: [
+				{ id: 1, abDivision: 0 },
+				{ id: 2, abDivision: 0 },
+				{ id: 3, abDivision: 0 },
+				{ id: 4, abDivision: 1 },
+			],
+			progression: [
+				{
+					name: "Groups stage",
+					type: "round_robin",
+					settings: { hasAbDivisions: true, teamsPerGroup: 4 },
+					requiresCheckIn: false,
+				},
+			],
+		});
+
+		const participantCountOf = (teamId: number) =>
+			summary.tournamentResults.find((r) => r.tournamentTeamId === teamId)
+				?.participantCount;
+
+		expect(participantCountOf(1)).toBe(3);
+		expect(participantCountOf(4)).toBe(1);
+	});
+
+	test("participant count of a starting bracket only counts the teams that started in it", () => {
+		const summary = summarize({
+			teamsWithStartingBrackets: [
+				{ id: 1, startingBracketIdx: 0 },
+				{ id: 2, startingBracketIdx: 0 },
+				{ id: 3, startingBracketIdx: 0 },
+				{ id: 4, startingBracketIdx: 1 },
+			],
+			progression: [
+				{
+					name: "Division 1",
+					type: "single_elimination",
+					settings: {},
+					requiresCheckIn: false,
+				},
+				{
+					name: "Division 2",
+					type: "single_elimination",
+					settings: {},
+					requiresCheckIn: false,
+				},
+			],
+		});
+
+		const participantCountOf = (teamId: number) =>
+			summary.tournamentResults.find((r) => r.tournamentTeamId === teamId)
+				?.participantCount;
+
+		expect(participantCountOf(1)).toBe(3);
+		expect(participantCountOf(4)).toBe(1);
+	});
+
+	test("only members of the two teams in a set get a set result for it", () => {
+		const summary = summarize({
+			results: [
+				sweep({
+					winnerSide: "opponent1",
+					opponentOneId: 3,
+					opponentTwoId: 4,
+					opponentOneLineup: [9, 10, 11, 12],
+					opponentTwoLineup: [13, 14, 15, 16],
+				}),
+			],
+		});
+
+		expect(Array.from(summary.setResults.keys()).sort((a, b) => a - b)).toEqual(
+			[9, 10, 11, 12, 13, 14, 15, 16],
+		);
+	});
+});
+
+describe("summaryRatingTargets", () => {
+	test("targets the rosters of a set a team dropped out of before any map was played", () => {
+		const targets = summaryRatingTargets([
+			{
+				maps: [],
+				opponentOne: createOpponent(1, 0, false, TEAM_ONE),
+				opponentTwo: createOpponent(2, 0, true, TEAM_TWO),
+				winnerSide: "opponent1",
+				roundMaps: { count: 3, type: "BEST_OF" },
+			},
+		]);
+
+		expect(targets.userIds.sort((a, b) => a - b)).toEqual([
+			...TEAM_ONE,
+			...TEAM_TWO,
+		]);
+		expect(targets.identifiers.toSorted((a, b) => a.localeCompare(b))).toEqual([
+			"1-2-3-4",
+			"5-6-7-8",
+		]);
+	});
+
+	test("targets the lineups that played the maps, not the registered roster", () => {
+		const subLineup = [1, 3, 4, 20];
+		const targets = summaryRatingTargets([
+			{
+				...sweep({ winnerSide: "opponent1", opponentOneLineup: subLineup }),
+				opponentOne: createOpponent(1, 2, false, null, [1, 2, 3, 4, 20]),
+			},
+		]);
+
+		expect(targets.userIds.sort((a, b) => a - b)).toEqual([
+			1, 3, 4, 5, 6, 7, 8, 20,
+		]);
+		expect(targets.identifiers.toSorted((a, b) => a.localeCompare(b))).toEqual([
+			"1-3-4-20",
+			"5-6-7-8",
+		]);
 	});
 });

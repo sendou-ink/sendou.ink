@@ -20,8 +20,10 @@ describe("LobbyRating.ratings", () => {
 			setOf({ winners: ["ALPHA", "ALPHA"], confirmed: true }),
 		]);
 
-		expect(ordinalOf(ratings, 1)).toBeGreaterThan(0);
-		expect(ordinalOf(ratings, 5)).toBeLessThan(ordinalOf(ratings, 1));
+		const startingOrdinal = ordinalOf(LobbyRating.ratings([]), 1);
+
+		expect(ordinalOf(ratings, 1)).toBeGreaterThan(startingOrdinal);
+		expect(ordinalOf(ratings, 5)).toBeLessThan(startingOrdinal);
 	});
 
 	test("ignores sets not yet confirmed", () => {

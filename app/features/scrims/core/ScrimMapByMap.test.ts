@@ -244,6 +244,20 @@ describe("ScrimMapByMap.stats", () => {
 		expect(tcMode).toEqual({ key: "TC", wins: 0, losses: 1 });
 	});
 
+	test("counts wins and losses per stage and per stage on each mode", () => {
+		const result = stats(history, "ALPHA");
+
+		expect(result.byStage).toEqual([
+			{ key: String(stagesObj.SCORCH_GORGE), wins: 1, losses: 0 },
+			{ key: String(stagesObj.MAKOMART), wins: 1, losses: 1 },
+		]);
+		expect(result.byStageMode).toEqual([
+			{ key: `${stagesObj.SCORCH_GORGE}-SZ`, wins: 1, losses: 0 },
+			{ key: `${stagesObj.MAKOMART}-SZ`, wins: 0, losses: 1 },
+			{ key: `${stagesObj.MAKOMART}-TC`, wins: 1, losses: 0 },
+		]);
+	});
+
 	test("filters out empty rows", () => {
 		const result = stats(history, "ALPHA");
 		for (const row of result.byMode) {
