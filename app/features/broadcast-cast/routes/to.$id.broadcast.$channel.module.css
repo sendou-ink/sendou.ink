@@ -1,0 +1,417 @@
+.dashboard {
+	container-type: inline-size;
+}
+
+/* the previews share a row the take column starts at, so what's under them (the queue) doesn't move it */
+.switcher {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	grid-template-rows: auto auto 1fr;
+	column-gap: var(--s-4);
+	row-gap: var(--s-2);
+
+	@container (width < 760px) {
+		grid-template-columns: 1fr;
+		grid-template-rows: none;
+		row-gap: var(--s-4);
+	}
+}
+
+.switcherView {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+
+	@container (width >= 760px) {
+		display: grid;
+		grid-row: span 3;
+		grid-template-rows: subgrid;
+		align-items: start;
+		gap: unset;
+	}
+}
+
+.liveView {
+	@container (width >= 760px) {
+		grid-column: 1;
+	}
+}
+
+.nextView {
+	@container (width >= 760px) {
+		grid-column: 3;
+	}
+}
+
+.takeColumn {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: var(--s-3);
+
+	@container (width >= 760px) {
+		grid-row: 2 / span 2;
+		grid-column: 2;
+		align-self: start;
+		/* fixed so the previews don't resize as the labels in it change */
+		width: 10rem;
+	}
+}
+
+.takeForm {
+	display: contents;
+}
+
+.take {
+	@container (width < 760px) {
+		width: 100%;
+	}
+}
+
+.viewHeader {
+	font-size: var(--font-md);
+	text-transform: uppercase;
+
+	&[data-view="live"] {
+		color: var(--color-error);
+	}
+
+	&[data-imminent] {
+		color: var(--color-warning);
+		animation: imminent 1s ease-in-out infinite alternate;
+	}
+}
+
+@keyframes imminent {
+	to {
+		opacity: 0.5;
+	}
+}
+
+/* fixed label column, one sized to the labels shown would move the controls when the scene changes */
+.properties {
+	display: grid;
+	grid-template-columns: 6.5rem minmax(0, 1fr);
+	gap: var(--s-3) var(--s-3);
+	align-items: baseline;
+
+	@container (width < 360px) {
+		grid-template-columns: 1fr;
+		row-gap: var(--s-3);
+	}
+}
+
+.property {
+	display: grid;
+	grid-column: 1 / -1;
+	grid-template-columns: subgrid;
+	align-items: baseline;
+
+	/* long values (team names) wrap or truncate instead of widening the editor */
+	& > * {
+		min-width: 0;
+	}
+
+	@container (width < 360px) {
+		gap: var(--s-1-5);
+	}
+}
+
+.propertyLabel {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+.panelHeader {
+	font-size: var(--font-md);
+}
+
+.liveTimer {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.liveTimerTrack {
+	flex: 1;
+	height: 6px;
+	overflow: hidden;
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg-higher);
+}
+
+.liveTimerBar {
+	height: 100%;
+	background-color: var(--color-error);
+	transition: width 1s linear;
+}
+
+/* the space is kept while nothing goes on air by itself, so the column's height doesn't change */
+.autoTake {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: var(--s-1);
+	min-height: 3.5rem;
+}
+
+.autoTakeCountdown {
+	color: var(--color-warning);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	font-variant-numeric: tabular-nums;
+}
+
+.autoTakeBlocked {
+	max-width: 8rem;
+	color: var(--color-warning);
+	font-size: var(--font-xs);
+	text-align: center;
+}
+
+.autoTakeCue {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+
+	& svg {
+		flex-shrink: 0;
+		color: var(--color-fg-accent);
+	}
+}
+
+/* the queue's items are the tabs of the scene editor under them */
+.staging {
+	display: flex;
+	flex-direction: column;
+}
+
+/* XXX: style the queue tabs (and the advance icons between them) on rows that wrap away from the editor: only the last row is attached to it, the rows above float as open-bottomed tabs and "+" can end up alone on a row of its own */
+.queue {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: var(--s-1) var(--s-0-5);
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.queueEntry {
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.queueItem {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+	padding-inline-end: var(--s-1);
+	border: 2px solid var(--color-border);
+	border-bottom: none;
+	border-radius: var(--radius-field) var(--radius-field) 0 0;
+	background-color: var(--color-bg);
+
+	/* covers the editor's top border, joining the two */
+	&[data-selected] {
+		z-index: 1;
+		margin-block-end: -2px;
+		padding-block-end: 2px;
+		background-color: var(--color-bg-high);
+
+		& .queueSelect {
+			color: var(--color-fg-accent);
+		}
+	}
+}
+
+.queueSelect {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	min-width: 0;
+	padding: var(--s-1-5) var(--s-2);
+	border: none;
+	background: none;
+	color: var(--color-text);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.queuePosition {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+}
+
+.queueIcon {
+	flex-shrink: 0;
+}
+
+.queueWarning {
+	display: inline-flex;
+	color: var(--color-warning);
+}
+
+.queueGap {
+	display: inline-flex;
+	align-items: center;
+	padding-inline: var(--s-1);
+	color: var(--color-text-high);
+}
+
+.queueGapToggle {
+	& svg {
+		width: 14px;
+		height: 14px;
+	}
+}
+
+.queueGapAuto {
+	color: var(--color-success);
+}
+
+.queueAdd {
+	margin-inline-start: var(--s-1);
+}
+
+.editor {
+	container-type: inline-size;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding: var(--s-3);
+	border: 2px solid var(--color-border);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.settings {
+	margin-block-start: var(--s-6);
+	scroll-margin-block-start: var(--s-4);
+}
+
+.alert {
+	margin-inline: 0;
+}
+
+.onAir {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding: var(--s-3);
+	border: 2px solid var(--color-border);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.inkTeams {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-sm);
+}
+
+.inkFlip {
+	grid-column: 2;
+	grid-row: 1;
+}
+
+.checklist {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.check {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	color: var(--color-text-high);
+	font-size: var(--font-sm);
+
+	&[data-done] {
+		color: var(--color-text);
+
+		& svg {
+			color: var(--color-success);
+		}
+	}
+}
+
+.inkSwatches {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+	gap: var(--s-1-5);
+}
+
+.inkSwatchForm {
+	display: contents;
+}
+
+.inkSwatch {
+	display: flex;
+	gap: 0;
+	width: 100%;
+	height: 24px;
+	padding: 0;
+	overflow: hidden;
+	border: 2px solid var(--color-border);
+	border-radius: var(--radius-field);
+
+	& span {
+		flex: 1;
+		align-self: stretch;
+	}
+}
+
+.invisible {
+	visibility: hidden;
+}
+
+.inkClear {
+	align-items: center;
+	justify-content: center;
+	color: var(--color-text-high);
+}
+
+.inkSwatchSelected {
+	border-color: var(--color-fg-accent);
+	outline: 2px solid var(--color-fg-accent);
+	outline-offset: 2px;
+}
+
+.inkTeam {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	min-width: 0;
+	font-weight: var(--weight-semi);
+
+	&[data-side="b"] {
+		grid-column: 3;
+		flex-direction: row-reverse;
+		justify-self: end;
+	}
+}
+
+.inkDot {
+	flex-shrink: 0;
+	width: 14px;
+	height: 14px;
+	border: 2px solid var(--color-border);
+	border-radius: 50%;
+}

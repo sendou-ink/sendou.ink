@@ -106,6 +106,21 @@ export const i18nMiddleware: MiddlewareFunction<Response> = async (
 	return response;
 };
 
+/** Route middleware rendering the whole request (the root loader included) in one language whatever the visitor's preferences, after {@link i18nMiddleware} ran. */
+export function fixedLanguageMiddleware(
+	language: LanguageCode & GameLanguageCode,
+): MiddlewareFunction<Response> {
+	return ({ context }, next) => {
+		const instance = requestInstance(language, language);
+		context.set(i18nextContext, instance);
+
+		return i18nAsyncLocalStorage.run(
+			{ locale: language, gameLanguage: language, instance },
+			() => next(),
+		);
+	};
+}
+
 /** The site's language detected for the current request. */
 export function getLocale(): LanguageCode {
 	return currentStore().locale;

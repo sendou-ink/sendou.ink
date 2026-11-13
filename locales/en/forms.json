@@ -527,5 +527,16 @@
 	"labels.lobbySpectators": "Spectators",
 	"bottomTexts.lobbySpectators": "Players in the room on top of the 8 playing. Spectators rotate in every set, so a different player sits out each time. Everyone else joins the waitlist",
 	"errors.dateAfterLobbyStart": "Date can not be after the lobby's start",
-	"errors.canNotSetIfStartingNow": "Can not be set if starting now"
+	"errors.canNotSetIfStartingNow": "Can not be set if starting now",
+	"labels.broadcastWeaponImages": "Weapon images",
+	"options.broadcastWeaponImages.default": "Default",
+	"options.broadcastWeaponImages.outlined": "Outlined",
+	"labels.broadcastCss": "Custom CSS",
+	"bottomTexts.broadcastCss": "Applied after the default styles. Override the variables on [data-broadcast], redefine the bc-* @keyframes or target parts like [data-scene=\"game\"] [data-part=\"team-name\"].",
+	"labels.broadcastGameDelay": "Game feed delay (ms)",
+	"bottomTexts.broadcastGameDelay": "How much later the game shows in OBS than on the scanner's capture, e.g. a render delay on the capture card source. The cuts to and from the game wait this long so they land as the game starts and ends on stream. Leave at 0 when OBS shows the game as the scanner sees it, or when the whole stream is delayed (that delays the overlay too).",
+	"labels.broadcastHeadline": "Headline",
+	"bottomTexts.broadcastHeadline": "Shown on the full screen scenes, e.g. Starting soon and Break.",
+	"labels.broadcastCasters": "Casters",
+	"bottomTexts.broadcastCasters": "Shown with the pronouns of their profile. The Game scene lists them next to the round, the Casters scene has a camera frame for each (put your camera sources under the browser source in OBS)."
 }

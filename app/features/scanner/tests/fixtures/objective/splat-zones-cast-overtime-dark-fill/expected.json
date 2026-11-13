@@ -1,0 +1,13 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": null,
+		"score": [24, 4],
+		"penalty": [38, 31],
+		"control": null
+	},
+	"options": {
+		"notes": "Casted stream (IPL VS: OVERTIME!! VS Alliance Moon, 720p, game 2 at 1565s) in overtime: \"Overtime!\" in place of the timer, the box behind it dark. Before the overtime gate variant the objective gate took it for no HUD, so a linked broadcast ended the game as overtime started."
+	}
+}

@@ -1,0 +1,55 @@
+.designer {
+	container-type: inline-size;
+}
+
+.back {
+	display: grid;
+	place-items: center;
+	color: var(--color-text-high);
+
+	& svg {
+		width: 20px;
+		height: 20px;
+	}
+}
+
+/* the preview and its scenario next to the editor, stacked when narrow */
+.workspace {
+	display: grid;
+	grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+	gap: var(--s-6);
+	align-items: start;
+
+	@container (width < 1000px) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.controls {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+	gap: var(--s-3);
+	align-items: end;
+}
+
+.play {
+	display: flex;
+	align-items: end;
+}
+
+.scenario {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	min-width: 0;
+	margin: 0;
+	padding: var(--s-4);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+}
+
+.switches {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-4);
+}

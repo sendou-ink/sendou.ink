@@ -175,6 +175,7 @@ export function WeaponPoolFormField({
 					weaponList
 				) : (
 					<DndContext
+						id={id}
 						sensors={sensors}
 						collisionDetection={closestCenter}
 						onDragEnd={handleDragEnd}

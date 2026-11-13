@@ -4,7 +4,13 @@
  * code in on pages other than the scanner's own.
  */
 import { useUser } from "~/features/auth/core/user";
-import type { ScannerActivityState } from "../scanner-activity";
+import {
+	type BroadcastTarget,
+	linkBroadcast,
+	linkedBroadcast,
+	type ScannerActivityState,
+} from "../scanner-activity";
+import { useBroadcastLink } from "./broadcast-link";
 import { useClips } from "./clips-feed";
 import { currentSession, findSession, useFeed } from "./events-feed";
 import {
@@ -20,11 +26,17 @@ import { setUploadUser } from "./upload";
 /** a game is "being read" while its newest event is this fresh */
 const READING_WINDOW_MS = 60_000;
 
-export function ScannerActivityLive() {
+export function ScannerActivityLive({
+	pageBroadcast,
+}: {
+	/** the broadcast the page produces, which a capture started here without a link links to */
+	pageBroadcast: BroadcastTarget | null;
+}) {
 	const live = useLiveSession();
 	const feed = useFeed();
 	const clips = useClips();
 	const user = useUser();
+	const broadcastLink = useBroadcastLink();
 
 	const session = live.status === "running" ? currentSession(feed) : null;
 	const built = session?.built ?? [];
@@ -71,19 +83,32 @@ export function ScannerActivityLive() {
 						).length,
 					}
 				: null,
+		broadcast: broadcastLink.target
+			? {
+					tournamentId: broadcastLink.target.tournamentId,
+					slug: broadcastLink.target.slug,
+					isConnected: broadcastLink.isConnected,
+					error: broadcastLink.error,
+				}
+			: null,
 	};
 
 	return (
 		<ScannerActivityPanel
 			activity={activity}
+			pageBroadcast={pageBroadcast}
 			actions={{
 				start: () => {
+					if (pageBroadcast && !linkedBroadcast()) {
+						linkBroadcast(pageBroadcast);
+					}
 					// the capture uploads as the user, which the scanner page otherwise tells it
 					setUploadUser(user ? { id: user.id } : null);
 					settleClipStore();
 					void startCapture();
 				},
 				stop: stopCapture,
+				linkBroadcast,
 			}}
 		/>
 	);

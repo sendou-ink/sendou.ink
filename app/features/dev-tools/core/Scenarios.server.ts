@@ -9,12 +9,20 @@ import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
+import * as TournamentBroadcastFactory from "~/db/seed/factories/TournamentBroadcastFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
+import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
+import * as TournamentStaffFactory from "~/db/seed/factories/TournamentStaffFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { TournamentSettings } from "~/db/tables-json";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import {
+	broadcastDashboardPage,
+	broadcastOverlayPage,
+} from "~/features/broadcast/broadcast-urls";
+import { isBroadcastEnabled } from "~/features/broadcast/broadcast-utils.server";
 import * as LobbyProgression from "~/features/lobbies/core/LobbyProgression.server";
 import * as LobbySet from "~/features/lobbies/core/LobbySet";
 import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
@@ -49,6 +57,8 @@ import {
 } from "~/utils/urls";
 
 const MAX_RECENT_RUNS = 10;
+
+const BROADCAST_SCENARIO_TWITCH_ACCOUNT = "sendouink";
 
 const SCENARIO_CATEGORIES = [
 	"SendouQ",
@@ -90,6 +100,8 @@ interface ScenarioResult {
 	userId: number;
 	/** Where the scenario is seen. */
 	path: string;
+	/** Other pages of the scenario worth opening, the CLI prints them. */
+	links?: Array<{ label: string; path: string }>;
 }
 
 interface Scenario<
@@ -330,6 +342,88 @@ const SCENARIOS: Scenario[] = [
 					tournamentId: tournament.id,
 					matchId: match.matchId,
 				}),
+			};
+		},
+	}),
+	defineScenario({
+		id: "tournament-broadcast",
+		title: "Broadcasting a tournament",
+		description:
+			"An organization's tournament with the bracket started, optionally some rounds played, and its first match left to play cast on a Twitch channel with the program URL generated. You organize or stream it and land on the channel's broadcast dashboard.",
+		category: "Tournaments",
+		params: {
+			teams: teamsParam,
+			format: formatParam,
+			roundsPlayed: numberParam("Rounds played", {
+				min: 0,
+				max: 10,
+				default: 0,
+			}),
+			role: selectParam(
+				"You are",
+				[
+					{ value: "organizer", label: "Organizer" },
+					{ value: "streamer", label: "Streamer" },
+				],
+				"organizer",
+			),
+		},
+		run: async ({ teams, format, roundsPlayed, role }) => {
+			const [organizerId, streamerId] = await freshUserIds(2);
+			const organization = await TournamentOrganizationFactory.create({
+				ownerId: organizerId,
+				name: `Broadcast org ${freshSuffix()}`,
+			});
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId,
+				organizationId: organization.id,
+				bracketProgression: BRACKET_FORMATS[format],
+				startTimes: [dateToDatabaseTimestamp(subMinutes(new Date(), 30))],
+			});
+			invariant(
+				isBroadcastEnabled(await tournamentFromDB(tournament.id)),
+				"Broadcasts are off for new organizations, set BROADCAST_ORG_IDS=* in .env",
+			);
+			if (role === "streamer") {
+				await TournamentStaffFactory.create({
+					tournamentId: tournament.id,
+					userId: streamerId,
+					role: "STREAMER",
+				});
+			}
+			await registerTeams(tournament.id, teams, { isCheckedIn: true });
+			await TournamentFactory.startBracket(tournament.id);
+			for (let round = 0; round < roundsPlayed; round++) {
+				await TournamentFactory.playMatches(tournament.id);
+			}
+
+			const match = await firstPlayableMatch(tournament.id);
+			await TournamentFactory.castMatch({
+				tournamentId: tournament.id,
+				matchId: match.matchId,
+				twitchAccount: BROADCAST_SCENARIO_TWITCH_ACCOUNT,
+			});
+			const programKey = await TournamentBroadcastFactory.generateProgramKey({
+				tournamentId: tournament.id,
+				channel: {
+					platform: "TWITCH",
+					account: BROADCAST_SCENARIO_TWITCH_ACCOUNT,
+				},
+			});
+
+			const broadcastPage = {
+				tournamentId: tournament.id,
+				slug: BROADCAST_SCENARIO_TWITCH_ACCOUNT,
+			};
+			return {
+				userId: role === "streamer" ? streamerId : organizerId,
+				path: broadcastDashboardPage(broadcastPage),
+				links: [
+					{
+						label: "Program (OBS)",
+						path: broadcastOverlayPage({ ...broadcastPage, programKey }),
+					},
+				],
 			};
 		},
 	}),
@@ -1233,7 +1327,8 @@ async function firstPlayableMatch(tournamentId: number) {
 		?.data.match.find(
 			(candidate) =>
 				typeof candidate.opponent1?.id === "number" &&
-				typeof candidate.opponent2?.id === "number",
+				typeof candidate.opponent2?.id === "number" &&
+				!candidate.winnerSide,
 		);
 	invariant(
 		typeof match?.opponent1?.id === "number",

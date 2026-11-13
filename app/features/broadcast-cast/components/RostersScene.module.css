@@ -1,0 +1,95 @@
+/* Sizes and spots of the rosters scene, the rules below follow them. */
+:global([data-broadcast]) {
+	--rosters-header-top: 56px;
+	--rosters-logo-size: 104px;
+	--rosters-title-size: 52px;
+	--rosters-round-size: 28px;
+	--rosters-teams-top: 236px;
+	--rosters-inline-margin: 96px;
+	--rosters-teams-gap: 200px;
+	--rosters-team-name-size: 58px;
+	--rosters-player-name-size: 42px;
+	--rosters-team-logo-size: 132px;
+	--rosters-versus-size: 112px;
+	--rosters-player-height: 124px;
+}
+
+.rosters {
+	font-family: var(--bc-font-display);
+}
+
+.tournamentLogo {
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.tournamentName {
+	font-size: var(--rosters-title-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 1.05;
+}
+
+.round {
+	color: var(--bc-text-muted);
+	font-size: var(--rosters-round-size);
+	font-weight: var(--bc-weight-semibold);
+}
+
+.teams {
+	--team-header-padding: 20px;
+	--team-header-border: 6px;
+}
+
+.versus {
+	border-radius: 50%;
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+	font-size: 44px;
+	font-weight: var(--bc-weight-bold);
+}
+
+.teamHeader {
+	border-bottom: var(--team-header-border) solid var(--team-color);
+	border-image: linear-gradient(to right, transparent, var(--team-color)) 1;
+
+	[data-team="b"] > & {
+		text-align: right;
+		border-image: linear-gradient(to left, transparent, var(--team-color)) 1;
+	}
+}
+
+.teamName {
+	font-size: var(--rosters-team-name-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 1.05;
+	text-transform: uppercase;
+}
+
+.seed {
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-surface);
+	color: var(--bc-text-muted);
+	font-size: 20px;
+	font-weight: var(--bc-weight-semibold);
+}
+
+.player {
+	border: var(--bc-border-width) solid var(--bc-border);
+	border-radius: var(--bc-radius);
+	background: var(--bc-surface);
+}
+
+.avatar {
+	border-radius: 50%;
+	background: var(--bc-bg);
+	object-fit: cover;
+}
+
+.playerName {
+	font-size: var(--rosters-player-name-size);
+	font-weight: var(--bc-weight-semibold);
+
+	[data-team="b"] & {
+		text-align: right;
+	}
+}

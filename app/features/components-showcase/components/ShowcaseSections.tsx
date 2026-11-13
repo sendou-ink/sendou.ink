@@ -239,6 +239,12 @@ function ButtonsSection() {
 					</SendouButton>
 				</ComponentRow>
 
+				<ComponentRow label="Outlined Warning">
+					<SendouButton variant="outlined-warning">
+						Outlined Warning
+					</SendouButton>
+				</ComponentRow>
+
 				<ComponentRow label="Minimal">
 					<SendouButton variant="minimal">Minimal Button</SendouButton>
 				</ComponentRow>
@@ -3419,6 +3425,15 @@ function mockScannerActivity(id: ScannerExampleId): ScannerActivityState {
 		stats: isRunning
 			? { games: 5, uploaded: id === "uploading" ? 4 : 5, clips: 12 }
 			: null,
+		broadcast:
+			id === "inGame"
+				? {
+						tournamentId: 1,
+						slug: "sendouink",
+						isConnected: true,
+						error: null,
+					}
+				: null,
 	};
 }
 

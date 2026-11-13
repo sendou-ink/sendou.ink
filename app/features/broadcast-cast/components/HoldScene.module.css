@@ -1,0 +1,64 @@
+/* Sizes and spots of the full screen hold scenes (starting, break, standby, ending), the rules below follow them. */
+:global([data-broadcast]) {
+	--hold-content-top: 150px;
+	--hold-inline-margin: 140px;
+	--hold-matchup-bottom: 130px;
+	--hold-ticker-bottom: 48px;
+	--hold-logo-size: 128px;
+	--hold-eyebrow-size: 32px;
+	--hold-title-size: 140px;
+	--hold-countdown-size: 120px;
+	--hold-headline-size: 40px;
+}
+
+.hold {
+	font-family: var(--bc-font-display);
+}
+
+.tournamentLogo {
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.eyebrow {
+	color: var(--bc-text-muted);
+	font-size: var(--hold-eyebrow-size);
+	font-weight: var(--bc-weight-semibold);
+}
+
+.title {
+	font-size: var(--hold-title-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 0.95;
+	text-transform: uppercase;
+
+	&::after {
+		border-radius: 4px;
+		background: var(--bc-accent);
+		content: "";
+	}
+}
+
+.countdown {
+	color: var(--bc-accent);
+	font-size: var(--hold-countdown-size);
+	font-weight: var(--bc-weight-bold);
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
+}
+
+.headline {
+	color: var(--bc-text-muted);
+	font-size: var(--hold-headline-size);
+	font-weight: var(--bc-weight-semibold);
+	line-height: 1.3;
+}
+
+.matchupLabel {
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+	font-size: 22px;
+	font-weight: var(--bc-weight-bold);
+	text-transform: uppercase;
+}

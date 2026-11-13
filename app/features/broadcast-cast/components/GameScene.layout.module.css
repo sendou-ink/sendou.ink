@@ -1,0 +1,311 @@
+/* the info card, the map intro under it */
+.corner {
+	position: absolute;
+	top: var(--game-info-top);
+	left: var(--game-info-left);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 12px;
+}
+
+.infoCard {
+	--bc-enter-x: calc(var(--bc-enter-distance) * -1);
+
+	display: flex;
+	max-width: var(--game-info-max-width);
+	align-items: stretch;
+	min-height: 72px;
+	overflow: hidden;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		var(--scene-enter-delay) both;
+}
+
+.tournamentLogoFrame {
+	display: grid;
+	flex-shrink: 0;
+	width: 72px;
+}
+
+.tournamentLogo {
+	width: 100%;
+	height: 100%;
+}
+
+.infoRows {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 4px;
+	min-width: 0;
+	padding: 10px 20px 10px 16px;
+}
+
+.roundRow {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+	min-width: 0;
+	white-space: nowrap;
+}
+
+.roundName {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.setLength {
+	flex-shrink: 0;
+}
+
+.castersRow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.micIcon {
+	flex-shrink: 0;
+	width: 17px;
+	height: 17px;
+	margin-right: 2px;
+}
+
+.caster {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+}
+
+.pronouns {
+	padding: 2px 6px;
+}
+
+/* the new game's map, until the game is under way: as wide as the info card, its own width left out of the corner's */
+.mapIntro {
+	--bc-enter-x: calc(var(--bc-enter-distance) * -1);
+	--bc-exit-x: calc(var(--bc-enter-distance) * -1);
+
+	position: relative;
+	align-self: stretch;
+	contain: inline-size;
+	overflow: hidden;
+	animation:
+		var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + 3 * var(--bc-stagger)) both,
+		var(--bc-anim-exit) var(--bc-enter-duration) var(--bc-ease-in)
+		calc(var(--scene-enter-delay) + var(--game-map-intro-duration)) forwards;
+}
+
+.mapIntroImage {
+	--camera-overview: scale(1);
+	--camera-zoom: scale(1.08);
+
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	animation: var(--bc-anim-camera) calc(var(--game-map-intro-duration) + 1s)
+		ease-out var(--scene-enter-delay) both;
+}
+
+.mapIntroText {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 12px 20px 14px;
+}
+
+.mapIntroMode {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	white-space: nowrap;
+}
+
+/* the card is only as wide as the info card above it */
+.mapIntroStage {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.scoreboard {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	display: grid;
+	/* the nameplates at the corners, between them a strip low enough to leave the game's "Splatted" messages clear */
+	grid-template-areas:
+		"a . b"
+		"a ticker b";
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	grid-template-rows: minmax(0, 1fr) var(--game-ticker-height);
+	height: var(--game-bar-height);
+	/* the bar and the boxes on it fade in where they are, only the texts on them move */
+	animation: var(--bc-anim-fade-in) var(--bc-enter-duration) ease
+		var(--scene-enter-delay) both;
+
+	&::before {
+		position: absolute;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		height: var(--game-ticker-height);
+	}
+}
+
+.ticker {
+	position: relative;
+	grid-area: ticker;
+	min-width: 0;
+}
+
+.team {
+	--bc-enter-x: calc(var(--bc-enter-distance) * -1);
+
+	position: relative;
+	grid-area: a;
+	min-width: 0;
+
+	&[data-team="b"] {
+		--bc-enter-x: var(--bc-enter-distance);
+
+		grid-area: b;
+	}
+}
+
+.nameplate {
+	display: flex;
+	align-items: stretch;
+	height: 100%;
+	/* the score box follows the rounded corner */
+	overflow: hidden;
+
+	[data-team="b"] > & {
+		flex-direction: row-reverse;
+	}
+}
+
+.logoCell {
+	display: grid;
+	flex-shrink: 0;
+	place-items: center;
+	width: calc(var(--game-bar-height) + 10px);
+	animation: var(--bc-anim-fade-in) var(--bc-enter-duration) ease
+		calc(var(--scene-enter-delay) + var(--bc-stagger)) both;
+}
+
+.teamTitle {
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + var(--bc-stagger)) both;
+}
+
+.teamLogo {
+	width: var(--game-logo-size);
+	height: var(--game-logo-size);
+}
+
+.teamTitle {
+	display: flex;
+	align-items: baseline;
+	align-self: center;
+	gap: 12px;
+	min-width: 0;
+	max-width: 480px;
+	padding: 0 22px 0 6px;
+
+	[data-team="b"] & {
+		flex-direction: row-reverse;
+		padding: 0 6px 0 22px;
+	}
+}
+
+.seed {
+	flex-shrink: 0;
+}
+
+.teamName {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	transition: color var(--bc-transition-duration);
+}
+
+.score {
+	display: grid;
+	place-items: center;
+	width: var(--game-score-width);
+	overflow: hidden;
+}
+
+.scoreEntrance {
+	display: grid;
+	animation: var(--bc-anim-count) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + 2 * var(--bc-stagger)) both;
+}
+
+.scoreValue {
+	animation: var(--bc-anim-count) var(--bc-enter-duration) var(--bc-ease) both;
+}
+
+.roster {
+	/* once the rest of the HUD has settled in */
+	--roster-enter-delay: calc(var(--scene-enter-delay) + 2.5s);
+
+	position: absolute;
+	bottom: calc(100% + 12px);
+	left: 20px;
+	display: flex;
+	flex-direction: column;
+	min-width: 210px;
+	margin: 0;
+	padding: 10px 20px 10px 24px;
+	list-style: none;
+	animation: var(--bc-anim-fade-in) var(--bc-enter-duration) ease
+		var(--roster-enter-delay) both;
+
+	/* the team's color along the roster's outer edge */
+	&::before {
+		position: absolute;
+		top: 10px;
+		bottom: 10px;
+		left: 10px;
+		width: 5px;
+		transition: background var(--bc-transition-duration);
+	}
+
+	[data-team="b"] > & {
+		right: 20px;
+		left: auto;
+		align-items: flex-end;
+		padding: 10px 24px 10px 20px;
+
+		&::before {
+			right: 10px;
+			left: auto;
+		}
+	}
+}
+
+.player {
+	--bc-enter-x: calc(var(--bc-enter-distance) * -0.5);
+
+	max-width: 300px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--roster-enter-delay) + (1 + var(--i)) * var(--bc-stagger)) both;
+
+	[data-team="b"] & {
+		--bc-enter-x: calc(var(--bc-enter-distance) * 0.5);
+	}
+}

@@ -29,6 +29,10 @@ import type {
 	WinLossParticipationArray,
 } from "~/db/tables-json";
 import type { ApiTokenType } from "~/features/api/api-types";
+import type {
+	BroadcastSettings,
+	BroadcastStoredState,
+} from "~/features/broadcast/broadcast-types";
 import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import type {
 	ChatRoomType,
@@ -1219,6 +1223,24 @@ interface LiveStream {
 	thumbnailUrl: string;
 }
 
+/** Overlay broadcast of one of the tournament's cast accounts (`Tournament.castAccounts`). Created on its first write or with its chat room once the cast account is set. */
+interface TournamentBroadcast {
+	id: GeneratedAlways<number>;
+	tournamentId: number;
+	platform: StreamPlatform;
+	/** Twitch login or YouTube channel id, as in the cast account */
+	account: string;
+	/** Producer state: what is on air and what is staged to go on air next */
+	state: JSONColumnType<BroadcastStoredState>;
+	/** Theme, not staged */
+	settings: JSONColumnType<BroadcastSettings>;
+	/** Chat of the tournament's organizers and streamers producing the broadcast, created once the cast account is set */
+	chatRoomId: number | null;
+	/** Secret of the program URL OBS shows the overlay from, `null` until the producer generates one */
+	programKey: string | null;
+	createdAt: Generated<number>;
+}
+
 /** Account seen streaming the tournament while it was running, used to find match VoDs afterwards. */
 interface TournamentStreamer {
 	id: GeneratedAlways<number>;
@@ -1809,6 +1831,7 @@ export interface DB {
 	TournamentBracketProgressionOverride: TournamentBracketProgressionOverride;
 	TournamentOrganizationBannedUser: TournamentOrganizationBannedUser;
 	TournamentStreamer: TournamentStreamer;
+	TournamentBroadcast: TournamentBroadcast;
 	TournamentMatchVod: TournamentMatchVod;
 	Trophy: Trophy;
 	TrophyOwner: TrophyOwner;
