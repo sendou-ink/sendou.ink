@@ -1,4 +1,5 @@
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import { expect, impersonate, navigate, test } from "./helpers/playwright";
 import { NotificationPopover } from "./pages/layout/notification-popover";
 
@@ -34,5 +35,30 @@ test.describe("Notifications", () => {
 
 		await expect(notifications.locators.items).toHaveCount(UNSEEN_COUNT);
 		await expect(notifications.locators.unseenDots).toHaveCount(0);
+	});
+
+	test("the popover links to every notification once its peek list is full", async ({
+		page,
+		factories,
+	}) => {
+		for (
+			let seasonNth = 1;
+			seasonNth <= NOTIFICATIONS.PEEK_COUNT;
+			seasonNth++
+		) {
+			await factories.NotificationFactory.create({
+				notification: { type: "SEASON_STARTED", meta: { seasonNth } },
+				users: [{ userId: ADMIN_ID, seen: 1 }],
+			});
+		}
+
+		await impersonate(page);
+		await navigate({ page, url: "/" });
+
+		const notifications = new NotificationPopover(page);
+		await notifications.open();
+		const allNotifications = await notifications.openAll();
+
+		await expect(allNotifications.locators.heading).toBeVisible();
 	});
 });
