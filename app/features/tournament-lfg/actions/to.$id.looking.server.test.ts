@@ -267,6 +267,69 @@ describe("Tournament LFG JOIN_QUEUE", () => {
 	});
 });
 
+describe("Tournament LFG sub post of a player left in the queue when registration closed", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	const organizerId = () => users.id(1);
+	const playerId = () => users.id(2);
+
+	const subPostUserIds = async (tournamentId: number) =>
+		(await TournamentLFGRepository.findSubGroups(tournamentId)).flatMap(
+			(group) => group.members.map((member) => member.id),
+		);
+
+	/** Registration closed as the start time has passed, the player's placeholder without stay as sub left over. */
+	const createTournamentWithLeftoverPlaceholder = async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId(),
+		});
+		await TournamentLFGTeamFactory.create({
+			tournamentId: tournament.id,
+			userId: playerId(),
+		});
+
+		return tournament;
+	};
+
+	test("deleting the sub post the player added removes it", async () => {
+		const tournament = await createTournamentWithLeftoverPlaceholder();
+		const params = { id: String(tournament.id) };
+
+		await looking(
+			{ _action: "ADD_SUB", message: "can sub" },
+			{ user: playerId(), params },
+		);
+		expect(await subPostUserIds(tournament.id)).toEqual([playerId()]);
+
+		await looking(
+			{ _action: "DELETE_SUB", userId: playerId() },
+			{ user: playerId(), params },
+		);
+
+		expect(await subPostUserIds(tournament.id)).toEqual([]);
+	});
+
+	test("deleting the sub post an organizer added removes it", async () => {
+		const tournament = await createTournamentWithLeftoverPlaceholder();
+		const params = { id: String(tournament.id) };
+
+		await looking(
+			{ _action: "ADD_SUB_FOR_USER", userId: playerId(), message: "can sub" },
+			{ user: organizerId(), params },
+		);
+		expect(await subPostUserIds(tournament.id)).toEqual([playerId()]);
+
+		await looking(
+			{ _action: "DELETE_SUB", userId: playerId() },
+			{ user: organizerId(), params },
+		);
+
+		expect(await subPostUserIds(tournament.id)).toEqual([]);
+	});
+});
+
 describe("Tournament LFG group permissions", () => {
 	beforeEach(async () => {
 		await users.create(3);

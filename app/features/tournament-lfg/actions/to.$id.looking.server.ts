@@ -349,10 +349,9 @@ export const action = defineAction(
 				);
 				errorToastIfFalsy(!hasExistingSubPost, "Already have a sub post");
 
-				await TournamentLFGRepository.insertPlaceholderTeam({
+				await TournamentLFGRepository.insertSubPost({
 					tournamentId,
 					userId: user.id,
-					isStayAsSub: true,
 					lfgNote: body.message ?? undefined,
 				});
 
@@ -390,10 +389,9 @@ export const action = defineAction(
 					"User already has a sub post",
 				);
 
-				await TournamentLFGRepository.insertPlaceholderTeam({
+				await TournamentLFGRepository.insertSubPost({
 					tournamentId,
 					userId: body.userId,
-					isStayAsSub: true,
 					lfgNote: body.message ?? undefined,
 				});
 

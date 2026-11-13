@@ -39,33 +39,32 @@ type CreatePlaceholderTeamArgs = {
 	isStayAsSub?: boolean;
 	lfgNote?: string;
 };
-/** Puts a player without a team in the queue as a placeholder team of their own, also how a sub post is made (`isStayAsSub`). */
+/** Puts a player without a team in the queue as a placeholder team of their own. */
 export function insertPlaceholderTeam(args: CreatePlaceholderTeamArgs) {
-	return db.transaction().execute(async (trx) => {
-		const createdTeam = await trx
-			.insertInto("TournamentTeam")
-			.values({
-				tournamentId: args.tournamentId,
-				name: randomTeamName(),
-				inviteCode: shortNanoid(),
-				isPlaceholder: 1,
-				isLooking: 1,
-				lfgNote: args.lfgNote ?? null,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
+	return db.transaction().execute((trx) => insertPlaceholderTeamTrx(args, trx));
+}
 
+/**
+ * Adds the user's sub post, a placeholder that stays as sub. Replaces the placeholder left over from them looking for a
+ * team without staying as sub while registration was open, so the user keeps a single placeholder.
+ */
+export function insertSubPost(
+	args: Omit<CreatePlaceholderTeamArgs, "isStayAsSub">,
+) {
+	return db.transaction().execute(async (trx) => {
 		await trx
-			.insertInto("TournamentTeamMember")
-			.values({
-				tournamentTeamId: createdTeam.id,
-				userId: args.userId,
-				role: "OWNER",
-				isStayAsSub: toDBBoolean(args.isStayAsSub ?? false),
-			})
+			.deleteFrom("TournamentTeam")
+			.where("TournamentTeam.tournamentId", "=", args.tournamentId)
+			.where("TournamentTeam.isPlaceholder", "=", 1)
+			.where("TournamentTeam.id", "in", (eb) =>
+				eb
+					.selectFrom("TournamentTeamMember")
+					.select("TournamentTeamMember.tournamentTeamId")
+					.where("TournamentTeamMember.userId", "=", args.userId),
+			)
 			.execute();
 
-		return createdTeam;
+		return insertPlaceholderTeamTrx({ ...args, isStayAsSub: true }, trx);
 	});
 }
 
@@ -439,6 +438,36 @@ function lfgMembersAgg(
 		// both callers left join PlusTier which the signature can't express
 		plusTier: eb.ref("PlusTier.tier").$castTo<number | null>(),
 	});
+}
+
+async function insertPlaceholderTeamTrx(
+	args: CreatePlaceholderTeamArgs,
+	trx: Transaction<DB>,
+) {
+	const createdTeam = await trx
+		.insertInto("TournamentTeam")
+		.values({
+			tournamentId: args.tournamentId,
+			name: randomTeamName(),
+			inviteCode: shortNanoid(),
+			isPlaceholder: 1,
+			isLooking: 1,
+			lfgNote: args.lfgNote ?? null,
+		})
+		.returning("id")
+		.executeTakeFirstOrThrow();
+
+	await trx
+		.insertInto("TournamentTeamMember")
+		.values({
+			tournamentTeamId: createdTeam.id,
+			userId: args.userId,
+			role: "OWNER",
+			isStayAsSub: toDBBoolean(args.isStayAsSub ?? false),
+		})
+		.execute();
+
+	return createdTeam;
 }
 
 function deleteLikesByTeamId(teamId: number, trx: Transaction<DB>) {
