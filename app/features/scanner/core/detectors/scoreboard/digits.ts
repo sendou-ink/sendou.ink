@@ -1,5 +1,6 @@
 /** Number field parsing on top of glyph recognition. */
 import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import {
 	type GlyphSet,
 	type RecognizedText,
@@ -39,7 +40,13 @@ export function* parseNumberSteps(
 	let chars = raw.chars;
 	if (options.dropLoweredTrailing && chars.length > 1) {
 		const capY0 = Math.min(...chars.slice(0, -1).map((c) => c.y0));
-		if (chars[chars.length - 1]!.y0 - capY0 >= LOWERED_TRAILING_MIN_PX) {
+		if (
+			Decisions.atLeast(
+				"scoreboard/digits:LOWERED_TRAILING_MIN_PX",
+				chars[chars.length - 1]!.y0 - capY0,
+				LOWERED_TRAILING_MIN_PX,
+			)
+		) {
 			chars = chars.slice(0, -1);
 		}
 	}

@@ -14,6 +14,7 @@ import { DEATH_EVENT_TYPE } from "../../core/detectors/death/index";
 import { MINIMAP_EVENT_TYPE } from "../../core/detectors/minimap/index";
 import type { ScannerMatchKill } from "../../core/scanner-match";
 import { test } from "../node-test-compat";
+import { stubEvent } from "../stub-event";
 
 function kill(t: number, time: number | null = null): ScannerMatchKill {
 	return { t, time, name: null };
@@ -119,19 +120,19 @@ test("clipCovers is inclusive of both ends", () => {
 });
 
 function minimapRead(t: number, cards: { self: boolean; dead: boolean }[]) {
-	return {
+	return stubEvent({
 		type: MINIMAP_EVENT_TYPE,
 		t,
-		confidence: 1,
+		scores: { read: 1 },
 		data: {
 			teammates: cards.map((card) => ({ ...card, specialReady: false })),
 		},
-	};
+	});
 }
 
 test("a minimap read striking out the POV card is a POV death", () => {
 	const events = [
-		{ type: DEATH_EVENT_TYPE, t: 50, confidence: 1, data: {} },
+		stubEvent({ type: DEATH_EVENT_TYPE, t: 50, scores: { read: 1 }, data: {} }),
 		minimapRead(107, [
 			{ self: true, dead: true },
 			{ self: false, dead: false },

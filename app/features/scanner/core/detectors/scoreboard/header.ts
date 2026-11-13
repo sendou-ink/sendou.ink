@@ -11,6 +11,8 @@
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import {
 	type GlyphSet,
 	type RecognizedChar,
@@ -35,8 +37,8 @@ export interface ParsedHeader {
 	lobby: ScannerLobby | null;
 	mode: ModeShort | null;
 	stage: StageId | null;
-	/** min of the closed-set match scores that were attempted */
-	confidence: number;
+	/** the closed-set match score of each line: the lobby's, and the mode and stage's */
+	scores: FieldScores.FieldScores;
 	debug: {
 		lobbyReading: string;
 		lineReading: string;
@@ -204,7 +206,7 @@ function trimTagBand(
 		options.tagLeadInMax ?? TAG_GAP_TOLERANCE,
 		options.tagColumnFraction ?? TAG_COLUMN_FRACTION,
 	);
-	if (end - start < 12) {
+	if (Decisions.below("scoreboard/header:tagMinWidth", end - start, 12)) {
 		crop.delete();
 		return null;
 	}
@@ -241,10 +243,14 @@ export function* parseHeaderSteps(
 	}
 	const latinLineMatch = snapLine(latinLine);
 
-	const unsnapped = (match: { score: number } | null) =>
-		(match?.score ?? 0) < MIN_MATCH_SCORE;
+	const unsnapped = (match: { score: number } | null, site: string) =>
+		Decisions.below(
+			`scoreboard/header:MIN_MATCH_SCORE#${site}`,
+			match?.score ?? 0,
+			MIN_MATCH_SCORE,
+		);
 	const [jaLobby, jaLine] = yield* all([
-		glyphs.lobbyJa && unsnapped(latinLobbyMatch)
+		glyphs.lobbyJa && unsnapped(latinLobbyMatch, "latinLobby")
 			? readTagBandSteps(
 					gray,
 					HEADER_LOBBY_BAND,
@@ -253,7 +259,7 @@ export function* parseHeaderSteps(
 					speculative,
 				)
 			: done(""),
-		glyphs.lineJa && unsnapped(latinLineMatch)
+		glyphs.lineJa && unsnapped(latinLineMatch, "latinLine")
 			? readTagBandSteps(gray, HEADER_LINE_BAND, glyphs.lineJa, {}, speculative)
 			: done(""),
 	]);
@@ -268,22 +274,37 @@ export function* parseHeaderSteps(
 	const lineMatch = jaLineWins ? jaLineMatch : latinLineMatch;
 
 	const lobby =
-		lobbyMatch && lobbyMatch.score >= MIN_MATCH_SCORE
+		lobbyMatch &&
+		Decisions.atLeast(
+			"scoreboard/header:MIN_MATCH_SCORE#lobby",
+			lobbyMatch.score,
+			MIN_MATCH_SCORE,
+		)
 			? lobbyMatch.entry.lobby
 			: null;
 	let mode: ModeShort | null = null;
 	let stage: StageId | null = null;
-	if (lineMatch && lineMatch.score >= MIN_MATCH_SCORE) {
+	if (
+		lineMatch &&
+		Decisions.atLeast(
+			"scoreboard/header:MIN_MATCH_SCORE#line",
+			lineMatch.score,
+			MIN_MATCH_SCORE,
+		)
+	) {
 		mode = lineMatch.entry.mode;
 		stage = lineMatch.entry.stageId;
 	}
 
-	const attempted = [lobbyMatch?.score ?? 0, lineMatch?.score ?? 0];
+	const lineScore = lineMatch?.score ?? 0;
 	return {
 		lobby,
 		mode,
 		stage,
-		confidence: Math.min(...attempted),
+		scores: FieldScores.of({
+			lobby: lobbyMatch?.score ?? 0,
+			"mode,stage": lineScore,
+		}),
 		debug: {
 			lobbyReading,
 			lineReading,

@@ -15,6 +15,8 @@
  * counter (`TIMER_VARIANT`): a readable timer alone emits the strip reads.
  */
 import { type Mat, minMaxLoc } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
 	copyRoi,
@@ -31,9 +33,9 @@ import {
 	trailingDigitRun,
 } from "../scoreboard/banner";
 import type { ScoreboardResources } from "../scoreboard/index";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
-	type PlayerStatusData,
+	type PlayerStatusEvent,
 	parsePlayerStatus,
 	type StripFit,
 } from "./player-status";
@@ -58,7 +60,7 @@ import {
 	STRIP_WEAPON_SAMPLE_INTERVAL,
 	TRACK_PLATE_TEXT_HEIGHTS,
 } from "./rois";
-import { parseStripWeapons, type StripWeaponsData } from "./strip-weapons";
+import { parseStripWeapons, type StripWeaponsEvent } from "./strip-weapons";
 import {
 	readMatchTimerSteps,
 	timerBoxChecks,
@@ -119,6 +121,18 @@ export interface TrackObjectiveData {
 
 export const OBJECTIVE_EVENT_TYPE = "Objective";
 
+/** Reads repeat every second; the content guard keeps every change while static stretches collapse. */
+export const OBJECTIVE_EVENT: EventKind<
+	typeof OBJECTIVE_EVENT_TYPE,
+	ObjectiveData
+> = {
+	type: OBJECTIVE_EVENT_TYPE,
+	mergeWindowS: 10,
+	sameData: sameObjectiveData,
+};
+
+type ObjectiveEvent = EventOf<typeof OBJECTIVE_EVENT>;
+
 /** Gate variants: which overlay the parse reads. */
 const ZONES_VARIANT = "zones";
 const TRACK_VARIANT = "track";
@@ -134,25 +148,23 @@ const CHECK_INTERVAL_SECONDS = 1;
  * second), `teamColor` (pixel means jitter) and a track read's marker `mode`
  * (markers come and go as checkpoints fall) are deliberately not compared.
  */
-export function sameObjectiveData(a: unknown, b: unknown): boolean {
-	const da = a as ObjectiveData;
-	const db = b as ObjectiveData;
+function sameObjectiveData(a: ObjectiveData, b: ObjectiveData): boolean {
 	if (
-		da.score[0] !== db.score[0] ||
-		da.score[1] !== db.score[1] ||
-		da.control !== db.control
+		a.score[0] !== b.score[0] ||
+		a.score[1] !== b.score[1] ||
+		a.control !== b.control
 	) {
 		return false;
 	}
-	if (da.mode === "SZ" || db.mode === "SZ") {
+	if (a.mode === "SZ" || b.mode === "SZ") {
 		return (
-			da.mode === "SZ" &&
-			db.mode === "SZ" &&
-			da.penalty[0] === db.penalty[0] &&
-			da.penalty[1] === db.penalty[1]
+			a.mode === "SZ" &&
+			b.mode === "SZ" &&
+			a.penalty[0] === b.penalty[0] &&
+			a.penalty[1] === b.penalty[1]
 		);
 	}
-	return da.position === db.position;
+	return a.position === b.position;
 }
 
 interface SideRead {
@@ -165,7 +177,7 @@ interface SideRead {
 
 export function createObjectiveDetector(
 	resources: ScoreboardResources,
-): Detector<ObjectiveData | PlayerStatusData | StripWeaponsData> {
+): Detector<ObjectiveEvent | PlayerStatusEvent | StripWeaponsEvent> {
 	let lastStatus: { fit: StripFit; t: number } | undefined;
 	// primed so the very first read samples (short matches, single-frame fixtures)
 	let readsSinceWeaponSample = STRIP_WEAPON_SAMPLE_INTERVAL;
@@ -208,14 +220,22 @@ export function createObjectiveDetector(
 	}
 
 	function plateProbeOk(gray: Mat, roi: Roi): boolean {
-		return meanStd(gray, roi).std <= GATE_PLATE_MAX_STD;
+		return Decisions.atMost(
+			"objective:GATE_PLATE_MAX_STD",
+			meanStd(gray, roi).std,
+			GATE_PLATE_MAX_STD,
+		);
 	}
 
 	function scoreInkOk(frame: Mat, roi: Roi): boolean {
 		const band = maxChannel(frame, roi);
 		const { maxVal } = minMaxLoc(band);
 		band.delete();
-		return maxVal >= GATE_SCORE_MIN_MAX_BRIGHTNESS;
+		return Decisions.atLeast(
+			"objective:GATE_SCORE_MIN_MAX_BRIGHTNESS",
+			maxVal,
+			GATE_SCORE_MIN_MAX_BRIGHTNESS,
+		);
 	}
 
 	/** The timer box, then the track's dot comb (TC/RM), the SZ/CB plates or neither (TW). */
@@ -223,7 +243,14 @@ export function createObjectiveDetector(
 		const gray = frameGray(frame);
 		const timerChecks = timerBoxChecks(gray);
 		const timerBox = timerChecks.every(Boolean);
-		if (timerBox && trackComb(frame) >= GATE_TRACK_MIN_COMB) {
+		if (
+			timerBox &&
+			Decisions.atLeast(
+				"objective:GATE_TRACK_MIN_COMB",
+				trackComb(frame),
+				GATE_TRACK_MIN_COMB,
+			)
+		) {
 			return { pass: true, score: 1, variant: TRACK_VARIANT };
 		}
 		const checks = [
@@ -312,7 +339,18 @@ export function createObjectiveDetector(
 		if (!penaltySet) return null;
 		const pillLikeProbes = PENALTY_PROBE_ROIS[side].filter((roi) => {
 			const { mean, std } = meanStd(gray, roi);
-			return mean <= PENALTY_PROBE_MAX_MEAN && std <= PENALTY_PROBE_MAX_STD;
+			return (
+				Decisions.atMost(
+					"objective:PENALTY_PROBE_MAX_MEAN",
+					mean,
+					PENALTY_PROBE_MAX_MEAN,
+				) &&
+				Decisions.atMost(
+					"objective:PENALTY_PROBE_MAX_STD",
+					std,
+					PENALTY_PROBE_MAX_STD,
+				)
+			);
 		}).length;
 		if (pillLikeProbes === 0) return null;
 		const band = minChannel(frame, PENALTY_ROIS[side]);
@@ -330,7 +368,11 @@ export function createObjectiveDetector(
 		const read = trailingDigitRun(raw, penaltySet);
 		if (
 			pillLikeProbes < PENALTY_PROBE_ROIS[side].length &&
-			read.confidence < PENALTY_SINGLE_PROBE_MIN_CONF
+			Decisions.below(
+				"objective:PENALTY_SINGLE_PROBE_MIN_CONF",
+				read.confidence,
+				PENALTY_SINGLE_PROBE_MIN_CONF,
+			)
 		) {
 			return null;
 		}
@@ -365,9 +407,7 @@ export function createObjectiveDetector(
 		t: number,
 		gateResult: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<
-		DetectedEvent<ObjectiveData | PlayerStatusData | StripWeaponsData>[]
-	> {
+	): MatchSteps<(ObjectiveEvent | PlayerStatusEvent | StripWeaponsEvent)[]> {
 		const variant = (gateResult ?? gate(frame)).variant;
 		const counter =
 			variant === TRACK_VARIANT
@@ -395,7 +435,7 @@ export function createObjectiveDetector(
 
 		// sampled slot-identity evidence for the strip → scoreboard-row assignment;
 		// identities are fixed so every read would re-measure at full sweep cost
-		let stripWeapons: DetectedEvent<StripWeaponsData> | null = null;
+		let stripWeapons: StripWeaponsEvent | null = null;
 		readsSinceWeaponSample++;
 		if (
 			resources.stripWeapons &&
@@ -424,7 +464,7 @@ export function createObjectiveDetector(
 	function* parseZonesSteps(
 		frame: Mat,
 		speculative: boolean,
-	): MatchSteps<{ event: DetectedEvent<ZonesObjectiveData> } | null> {
+	): MatchSteps<{ event: ObjectiveEvent } | null> {
 		const gray = frameGray(frame);
 
 		const [scoreL, scoreR, penaltyL, penaltyR, timer] = yield* all([
@@ -446,7 +486,11 @@ export function createObjectiveDetector(
 				penalty,
 				control:
 					score.value !== null &&
-					fill.saturation >= CONTROL_PLATE_MIN_SATURATION,
+					Decisions.atLeast(
+						"objective:CONTROL_PLATE_MIN_SATURATION",
+						fill.saturation,
+						CONTROL_PLATE_MIN_SATURATION,
+					),
 				fill,
 				// both ROIs together always cover whichever carries the team color
 				teamColor: meanInkColor(frame, [
@@ -458,15 +502,18 @@ export function createObjectiveDetector(
 
 		if (sides.every((side) => side.score.value === null)) return null;
 
-		const confidences = sides.flatMap((side) => [
-			...(side.score.value !== null ? [side.score.confidence] : []),
-			...(side.penalty?.value != null ? [side.penalty.confidence] : []),
-		]);
+		const scoreOf = (read: BannerScoreRead | null) =>
+			read?.value != null ? read.confidence : null;
 		return {
 			event: {
 				type: OBJECTIVE_EVENT_TYPE,
 				t: 0,
-				confidence: confidences.reduce((a, b) => a + b, 0) / confidences.length,
+				scores: FieldScores.of({
+					"score.0": scoreOf(sides[0].score),
+					"penalty.0": scoreOf(sides[0].penalty),
+					"score.1": scoreOf(sides[1].score),
+					"penalty.1": scoreOf(sides[1].penalty),
+				}),
 				data: {
 					mode: "SZ",
 					time: timer.value,
@@ -499,7 +546,7 @@ export function createObjectiveDetector(
 	function* parseTrackSteps(
 		frame: Mat,
 		speculative: boolean,
-	): MatchSteps<{ event: DetectedEvent<TrackObjectiveData> } | null> {
+	): MatchSteps<{ event: ObjectiveEvent } | null> {
 		const gray = frameGray(frame);
 		const [track, timer] = yield* all([
 			readTrackSteps(frame, trackSets, speculative),
@@ -508,15 +555,17 @@ export function createObjectiveDetector(
 		const plates = track.score.filter((read) => read.value !== null);
 		if (track.position === null && plates.length === 0) return null;
 
-		const confidences = [
-			...(track.iconScore !== null ? [track.iconScore] : []),
-			...plates.map((read) => read.confidence),
-		];
 		return {
 			event: {
 				type: OBJECTIVE_EVENT_TYPE,
 				t: 0,
-				confidence: confidences.reduce((a, b) => a + b, 0) / confidences.length,
+				scores: FieldScores.of({
+					position: track.iconScore,
+					"score.0":
+						track.score[0].value === null ? null : track.score[0].confidence,
+					"score.1":
+						track.score[1].value === null ? null : track.score[1].confidence,
+				}),
 				data: {
 					mode: track.mode,
 					time: timer.value,

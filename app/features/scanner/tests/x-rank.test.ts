@@ -13,6 +13,8 @@ import type { Detector } from "../core/detectors/types";
 import { createXRankPositionDetector } from "../core/detectors/x-rank/position";
 import { createXSetCountDetector } from "../core/detectors/x-rank/set-count";
 import { createXSetResultDetector } from "../core/detectors/x-rank/set-result";
+import type { DetectedEvent } from "../core/events";
+import { TimelineBuilder } from "../core/timeline/index";
 import {
 	FIXTURES_DIR,
 	type Fixture,
@@ -23,34 +25,31 @@ import {
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
 
-/** TimelineBuilder's default minConfidence */
-const TIMELINE_MIN_CONFIDENCE = 0.6;
-
 await loadOpenCV();
 const resources = await loadScoreboardResources();
 
 const CARDS: {
 	dir: string;
 	event: Fixture["expected"]["event"];
-	detector: Detector<unknown>;
+	detector: Detector;
 	fields: string[];
 }[] = [
 	{
 		dir: "x-set-count",
 		event: "XSetCount",
-		detector: createXSetCountDetector(resources) as Detector<unknown>,
+		detector: createXSetCountDetector(resources) as Detector,
 		fields: ["mode", "wins", "losses"],
 	},
 	{
 		dir: "x-set-result",
 		event: "XSetResult",
-		detector: createXSetResultDetector(resources) as Detector<unknown>,
+		detector: createXSetResultDetector(resources) as Detector,
 		fields: ["mode", "results", "powerChange", "power"],
 	},
 	{
 		dir: "x-rank-position",
 		event: "XRankPosition",
-		detector: createXRankPositionDetector(resources) as Detector<unknown>,
+		detector: createXRankPositionDetector(resources) as Detector,
 		fields: ["mode", "position", "direction"],
 	},
 ];
@@ -81,13 +80,14 @@ for (const { dir, event: eventType, detector, fields } of CARDS) {
 			const untrusted = fixture.expected.options?.untrusted === true;
 			await t.test(
 				untrusted
-					? "confidence stays under the timeline floor"
-					: "confidence clears the timeline floor",
+					? "the timeline drops the read"
+					: "the timeline keeps the read",
 				() => {
 					assert.equal(
-						event.confidence >= TIMELINE_MIN_CONFIDENCE,
-						!untrusted,
-						`confidence ${event.confidence.toFixed(3)} (${JSON.stringify(event.debug)})`,
+						new TimelineBuilder().push(event as DetectedEvent).action ===
+							"dropped",
+						untrusted,
+						`scores ${JSON.stringify(event.scores)} (${JSON.stringify(event.debug)})`,
 					);
 				},
 			);

@@ -15,6 +15,8 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { toAbilityWithUnknown } from "../../../scanner-types";
 import { getCV, type Mat, minMaxLoc } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import {
 	type GlyphSet,
 	type RecognizedText,
@@ -34,7 +36,7 @@ import { closestEntry, matchKey, rankBy, rankByRead } from "../../text";
 import type { ScoreboardResources } from "../scoreboard/index";
 import { type ParsedName, parseNameSteps } from "../scoreboard/names";
 import { matchWeaponSteps, type WeaponMatch } from "../scoreboard/weapons";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	DEATH_MESSAGE_TEMPLATES,
 	type DeathMessageTemplate,
@@ -87,6 +89,36 @@ export interface DeathData {
 }
 
 export const DEATH_EVENT_TYPE = "Death";
+
+/** The overlay shows ~5s and respawn takes ~8.5s, so repeat frames of one death land inside the window while consecutive deaths fall outside. */
+export const DEATH_EVENT: EventKind<typeof DEATH_EVENT_TYPE, DeathData> = {
+	type: DEATH_EVENT_TYPE,
+	mergeWindowS: 8,
+	complete: ({ data, scores }) =>
+		data.weaponId !== null &&
+		data.name !== null &&
+		FieldScores.reach(scores, ["name"], COMPLETE_NAME_MIN_SCORE) &&
+		data.abilities.length === GEAR_ROWS &&
+		data.abilities.every((row, gear) =>
+			FieldScores.reach(
+				scores,
+				row.map((_, slot) => `abilities.${gear}.${slot}`),
+				COMPLETE_ABILITY_MIN_SCORE,
+			),
+		),
+};
+
+/**
+ * The scores a clean frame reads the killer's name and gear at, just under
+ * the lowest of the fixtures (names 0.736+, badges 0.667+): the overlay
+ * still animating in reads under them.
+ */
+const COMPLETE_NAME_MIN_SCORE = 0.7;
+const COMPLETE_ABILITY_MIN_SCORE = 0.65;
+/** head, clothes, shoes */
+const GEAR_ROWS = 3;
+
+type DeathEvent = EventOf<typeof DEATH_EVENT>;
 
 /** The constant message line must read back at least this well to emit. */
 const LINE1_MIN_SCORE = 0.5;
@@ -201,7 +233,7 @@ function candidatesFor(template: DeathMessageTemplate): WeaponCandidate[] {
 
 export function createDeathDetector(
 	resources: ScoreboardResources,
-): Detector<DeathData> {
+): Detector<DeathEvent> {
 	const cv = getCV();
 
 	const scaled = (
@@ -227,7 +259,14 @@ export function createDeathDetector(
 		let darkOk = 0;
 		const darkProbes = [...GATE_BURST_PROBES, ...GATE_PANEL_PROBES];
 		for (const roi of darkProbes) {
-			if (meanBrightness(frame, roi) < GATE_DARK_MAX_MEAN) darkOk++;
+			if (
+				Decisions.below(
+					"death:GATE_DARK_MAX_MEAN",
+					meanBrightness(frame, roi),
+					GATE_DARK_MAX_MEAN,
+				)
+			)
+				darkOk++;
 		}
 
 		const gray = frameGray(frame);
@@ -239,9 +278,13 @@ export function createDeathDetector(
 		const whiteFraction = cv.countNonZero(bin) / (bin.rows * bin.cols);
 		bin.delete();
 		const textOk =
-			maxVal > GATE_TEXT_MIN_MAX &&
-			whiteFraction > 0.01 &&
-			whiteFraction < GATE_TEXT_MAX_FRACTION;
+			Decisions.above("death:GATE_TEXT_MIN_MAX", maxVal, GATE_TEXT_MIN_MAX) &&
+			Decisions.above("death:gateTextMinFraction", whiteFraction, 0.01) &&
+			Decisions.below(
+				"death:GATE_TEXT_MAX_FRACTION",
+				whiteFraction,
+				GATE_TEXT_MAX_FRACTION,
+			);
 
 		// max RGB channel, not gray: saturated icon art can be gray-dark (rois.ts)
 		let iconOk = 0;
@@ -256,7 +299,8 @@ export function createDeathDetector(
 				if (v > maxCh) maxCh = v;
 			}
 			probe.delete();
-			if (maxCh > GATE_ICON_MIN_MAX) iconOk++;
+			if (Decisions.above("death:GATE_ICON_MIN_MAX", maxCh, GATE_ICON_MIN_MAX))
+				iconOk++;
 		}
 
 		const score =
@@ -303,7 +347,11 @@ export function createDeathDetector(
 				min = Math.min(min, d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!);
 			}
 			probe.delete();
-			return min >= REPLAY_HINT_CHIP_MIN_CHANNEL;
+			return Decisions.atLeast(
+				"death:REPLAY_HINT_CHIP_MIN_CHANNEL",
+				min,
+				REPLAY_HINT_CHIP_MIN_CHANNEL,
+			);
 		});
 	}
 
@@ -566,7 +614,13 @@ export function createDeathDetector(
 		let inkCount = 0;
 		for (let i = 0; i < ink.length; i++)
 			if (ink[i]! > TAG_NAME_BIN_THRESHOLD) inkCount++;
-		if (inkCount >= TAG_NAME_REFINE_MIN_INK) {
+		if (
+			Decisions.atLeast(
+				"death:TAG_NAME_REFINE_MIN_INK",
+				inkCount,
+				TAG_NAME_REFINE_MIN_INK,
+			)
+		) {
 			textColor = medianColor(inner, (i) => ink[i]! > TAG_NAME_BIN_THRESHOLD);
 			const contrast = colorContrast(textColor, backgrounds);
 			refined = distanceBand(inner, [textColor], true, 255 / contrast);
@@ -629,7 +683,11 @@ export function createDeathDetector(
 			const second = dominants[1];
 			if (
 				second &&
-				second.fraction >= TAG_SPLIT_MIN_FRACTION &&
+				Decisions.atLeast(
+					"death:TAG_SPLIT_MIN_FRACTION",
+					second.fraction,
+					TAG_SPLIT_MIN_FRACTION,
+				) &&
 				second.color.some(
 					(c, i) => Math.abs(c - dominant[i]!) > TAG_SPLIT_MIN_CHANNEL_DISTANCE,
 				)
@@ -637,9 +695,11 @@ export function createDeathDetector(
 				candidates.push([dominant, second.color]);
 			}
 			// an empty read never beats one with glyphs (a blanked band scores confidence 1);
-			// near ties go to the longer read since confidence is the *min* char score
-			// and erasing most of a name can still read the survivors immaculately
+			// near ties go to the read of more glyphs since confidence is the *min* char
+			// score and erasing most of a name can still read the survivors immaculately
+			// (a glyph erased mid-name leaves a space, which is no glyph: "strin s")
 			const NEAR_TIE = 0.03;
+			const glyphCount = (name: string) => name.replace(/\s/g, "").length;
 			const beats = (
 				a: { parsed: { name: string; confidence: number } },
 				b: typeof a,
@@ -647,8 +707,14 @@ export function createDeathDetector(
 				const aRead = a.parsed.name.length > 0 ? 1 : 0;
 				const bRead = b.parsed.name.length > 0 ? 1 : 0;
 				if (aRead !== bRead) return aRead - bRead;
-				if (Math.abs(a.parsed.confidence - b.parsed.confidence) <= NEAR_TIE) {
-					return a.parsed.name.length - b.parsed.name.length;
+				if (
+					Decisions.atMost(
+						"death:NEAR_TIE",
+						Math.abs(a.parsed.confidence - b.parsed.confidence),
+						NEAR_TIE,
+					)
+				) {
+					return glyphCount(a.parsed.name) - glyphCount(b.parsed.name);
 				}
 				return a.parsed.confidence - b.parsed.confidence;
 			};
@@ -674,7 +740,14 @@ export function createDeathDetector(
 				background: best.background,
 				textColor: best.textColor,
 			};
-			if (read.confidence >= TAG_MEMO_MIN_CONFIDENCE && read.name !== null) {
+			if (
+				Decisions.atLeast(
+					"death:TAG_MEMO_MIN_CONFIDENCE",
+					read.confidence,
+					TAG_MEMO_MIN_CONFIDENCE,
+				) &&
+				read.name !== null
+			) {
 				tagMemoStore(signature, read);
 			}
 		}
@@ -695,7 +768,13 @@ export function createDeathDetector(
 					const v = Math.max(d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!);
 					if (v > ABILITY_INK_THRESHOLD) ink++;
 				}
-				if (ink < ABILITY_SLOT_MIN_INK) {
+				if (
+					Decisions.below(
+						"death:ABILITY_SLOT_MIN_INK",
+						ink,
+						ABILITY_SLOT_MIN_INK,
+					)
+				) {
 					crop.delete();
 					break;
 				}
@@ -725,11 +804,9 @@ export function createDeathDetector(
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<DeathData>[]> {
+	): MatchSteps<DeathEvent[]> {
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
-
-		const confidences: number[] = [];
 
 		// 1. read both burst lines and find the language template whose constant
 		// line reads best; a gate hit matching none is a lookalike. Latin and JA
@@ -771,7 +848,14 @@ export function createDeathDetector(
 				}
 			}
 			// JA line reads cost ~2x, so they only run when no Latin template owns the frame
-			if (jaGlyphs && line1Score < LATIN_DECISIVE_SCORE) {
+			if (
+				jaGlyphs &&
+				Decisions.below(
+					"death:LATIN_DECISIVE_SCORE",
+					line1Score,
+					LATIN_DECISIVE_SCORE,
+				)
+			) {
 				[jaWeaponLine, jaConstLine] = yield* all([
 					readLine(JA_WEAPON_LINE_ROI, jaGlyphs),
 					readLine(JA_CONST_LINE_ROI, jaGlyphs),
@@ -786,7 +870,10 @@ export function createDeathDetector(
 					}
 				}
 			}
-			if (!template || line1Score < LINE1_MIN_SCORE) {
+			if (
+				!template ||
+				Decisions.below("death:LINE1_MIN_SCORE", line1Score, LINE1_MIN_SCORE)
+			) {
 				return [];
 			}
 		}
@@ -817,7 +904,13 @@ export function createDeathDetector(
 			const match = plainRanked[0];
 			if (match) {
 				weaponScore = match.score;
-				if (match.score >= WEAPON_MIN_SCORE)
+				if (
+					Decisions.atLeast(
+						"death:WEAPON_MIN_SCORE",
+						match.score,
+						WEAPON_MIN_SCORE,
+					)
+				)
 					accept(match.entry.entry, match.score);
 			}
 		}
@@ -837,10 +930,13 @@ export function createDeathDetector(
 		]);
 		burstCrop?.delete();
 		if (burstIcon) {
-			const entry =
-				burstIcon.score >= BURST_ICON_MIN_SCORE
-					? mainById.get(burstIcon.id)
-					: undefined;
+			const entry = Decisions.atLeast(
+				"death:BURST_ICON_MIN_SCORE",
+				burstIcon.score,
+				BURST_ICON_MIN_SCORE,
+			)
+				? mainById.get(burstIcon.id)
+				: undefined;
 			if (entry) accept(entry, burstIcon.score);
 		}
 
@@ -874,8 +970,16 @@ export function createDeathDetector(
 				margin: top.score - (runner?.score ?? 0),
 			};
 			if (
-				latticeTop.score >= LATTICE_MIN_SCORE &&
-				latticeTop.margin >= LATTICE_MIN_MARGIN
+				Decisions.atLeast(
+					"death:LATTICE_MIN_SCORE",
+					latticeTop.score,
+					LATTICE_MIN_SCORE,
+				) &&
+				Decisions.atLeast(
+					"death:LATTICE_MIN_MARGIN",
+					latticeTop.margin,
+					LATTICE_MIN_MARGIN,
+				)
 			) {
 				accept(latticeTop.entry, latticeTop.score);
 			}
@@ -886,7 +990,11 @@ export function createDeathDetector(
 		if (
 			weapon === null &&
 			burstIcon &&
-			burstIcon.score >= BURST_ICON_CORROBORATE_MIN_SCORE
+			Decisions.atLeast(
+				"death:BURST_ICON_CORROBORATE_MIN_SCORE",
+				burstIcon.score,
+				BURST_ICON_CORROBORATE_MIN_SCORE,
+			)
 		) {
 			const entry = mainById.get(burstIcon.id);
 			if (entry) {
@@ -897,24 +1005,30 @@ export function createDeathDetector(
 					);
 				const supported =
 					(plainRanked.length > 0 &&
-						bestFor(plainRanked) >= plainRanked[0]!.score - CORROBORATE_EPS) ||
+						Decisions.atLeast(
+							"death:CORROBORATE_EPS#plain",
+							bestFor(plainRanked),
+							plainRanked[0]!.score - CORROBORATE_EPS,
+						)) ||
 					(latticeRanked.length > 0 &&
-						bestFor(latticeRanked) >=
-							latticeRanked[0]!.score - CORROBORATE_EPS);
+						Decisions.atLeast(
+							"death:CORROBORATE_EPS#lattice",
+							bestFor(latticeRanked),
+							latticeRanked[0]!.score - CORROBORATE_EPS,
+						));
 				if (supported) accept(entry, burstIcon.score);
 			}
 		}
-		if (weaponGlyphs && template) confidences.push(weaponScore);
-
 		const abilityRows: AbilityWithUnknown[][] = [];
 		const abilityDebug: (WeaponMatch | null)[][] = [];
-		for (const matches of abilityMatches ?? []) {
+		const abilityScores: Record<string, number> = {};
+		for (const [row, matches] of (abilityMatches ?? []).entries()) {
 			const ids: AbilityWithUnknown[] = [];
 			const debug: (WeaponMatch | null)[] = [];
-			for (const match of matches) {
+			for (const [slot, match] of matches.entries()) {
 				ids.push(toAbilityWithUnknown(match.id) ?? "UNKNOWN");
 				debug.push(match);
-				confidences.push(Math.max(0, match.score));
+				abilityScores[`abilities.${row}.${slot}`] = match.score;
 			}
 			abilityRows.push(ids);
 			abilityDebug.push(debug);
@@ -933,19 +1047,17 @@ export function createDeathDetector(
 			nameRaw = tag.read.raw;
 			name = tag.read.name;
 			nameConfidence = tag.read.confidence;
-			confidences.push(nameConfidence);
 		}
-
-		const confidence =
-			confidences.length > 0
-				? confidences.reduce((a, b) => a + b, 0) / confidences.length
-				: 0;
 
 		return [
 			{
 				type: DEATH_EVENT_TYPE,
 				t,
-				confidence,
+				scores: FieldScores.of({
+					"weaponId,weaponType": weaponGlyphs && template ? weaponScore : null,
+					...abilityScores,
+					name: tag ? nameConfidence : null,
+				}),
 				data: { weaponId, weaponType, abilities: abilityRows, name },
 				debug: {
 					weaponName: weapon,
@@ -982,15 +1094,15 @@ export function createDeathDetector(
 
 	// the animated background flickers the gate; the 4s rearm hold stays inside
 	// the timeline's 8s Death merge window so every skipped parse would merge anyway.
-	// sufficientConfidence sits just under the clean-read floor (fixtures
-	// 0.750-0.825, scan events 0.751+); refine/stagnation overrides cap the cost
-	// of a dirty read that never reaches it
+	// The refine/stagnation overrides cap the cost of a read that never comes
+	// out complete (a name of unknown glyphs: 3 of 4 deaths on the XHXYlzu4Zt8
+	// VoD) at two more looks within a second
 	return {
 		id: "death",
 		refineIntervalS: 0.5,
-		sufficientConfidence: 0.74,
 		rearmCooldownS: 4,
-		maxStagnantParses: 3,
+		maxStagnantParses: 2,
+		stagnantAfterS: 1,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

@@ -16,6 +16,7 @@ import {
 } from "node:fs";
 import { dirname, resolve, sep } from "node:path";
 import { crc32, inflateRawSync } from "node:zlib";
+import * as ScanLog from "../core/scan-log.ts";
 
 const MiB = 1024 * 1024;
 const MAX_ZIP_BYTES = 1024 * MiB;
@@ -24,6 +25,7 @@ const MAX_ENTRIES = 4000;
 const MAX_FRAME_BYTES = 40 * MiB;
 const MAX_EVENTS_JSON_BYTES = 64 * MiB;
 const MAX_MATCH_JSON_BYTES = 8 * MiB;
+const MAX_SCAN_LOG_JSON_BYTES = 64 * MiB;
 const MAX_EXPECTED_JSON_BYTES = 1 * MiB;
 const MAX_COMPRESSION_RATIO = 200;
 const COMPRESSION_RATIO_FLOOR_BYTES = 64 * 1024;
@@ -51,10 +53,12 @@ const EVENT_TYPES = [
 ] as const;
 
 const EVENT_KEYS = new Set([
+	"v",
 	"type",
 	"t",
 	"detectedAt",
 	"confidence",
+	"scores",
 	"data",
 	"frame",
 ]);
@@ -62,9 +66,11 @@ const EXPECTED_KEYS = new Set(["event", "data", "options"]);
 
 const FRAME_FOLDER_PATTERN =
 	/^frames\/\d{3,5}-([A-Za-z]{1,40})-\d{1,4}m\d{2}s$/;
+const SCAN_LOG_ENTRY = "scan-log.json";
 const ENTRY_NAME_PATTERN =
-	/^(?:match\.json|events\.json|(frames\/\d{3,5}-[A-Za-z]{1,40}-\d{1,4}m\d{2}s)\/(frame\.(?:webp|png|jpg)|expected\.json))$/;
-const JSON_KEY_PATTERN = /^[A-Za-z0-9_$-]{1,64}$/;
+	/^(?:match\.json|events\.json|scan-log\.json|(frames\/\d{3,5}-[A-Za-z]{1,40}-\d{1,4}m\d{2}s)\/(frame\.(?:webp|png|jpg)|expected\.json))$/;
+/** identifiers, and the field paths event scores are keyed by ("players.3.name", "mode,stage", "*") */
+const JSON_KEY_PATTERN = /^[A-Za-z0-9_$.,*-]{1,64}$/;
 
 const SIG_LOCAL_HEADER = 0x04034b50;
 const SIG_CENTRAL_HEADER = 0x02014b50;
@@ -91,7 +97,8 @@ interface GameDataFrame {
 	height: number;
 	/** seconds on the source timeline (wall clock live, file position on a VoD) */
 	t: number;
-	confidence: number;
+	/** mean of the read's field scores */
+	meanScore: number;
 }
 
 export interface GameDataZipSummary {
@@ -99,6 +106,8 @@ export interface GameDataZipSummary {
 	frames: GameDataFrame[];
 	eventCounts: Record<string, number>;
 	eventsWithoutFrame: number;
+	/** the scan's log (a VoD's game), as `scan-log.json` in the output directory; null when the zip has none */
+	scanLog: { lanes: number; frames: number } | null;
 }
 
 /**
@@ -303,6 +312,7 @@ function entryName(nameBytes: Buffer): string {
 function sizeLimit(name: string): number {
 	if (name === "events.json") return MAX_EVENTS_JSON_BYTES;
 	if (name === "match.json") return MAX_MATCH_JSON_BYTES;
+	if (name === SCAN_LOG_ENTRY) return MAX_SCAN_LOG_JSON_BYTES;
 	if (name.endsWith("/expected.json")) return MAX_EXPECTED_JSON_BYTES;
 	return MAX_FRAME_BYTES;
 }
@@ -560,10 +570,21 @@ function summarize(
 			if (!EVENT_KEYS.has(key))
 				fail(`events.json[${index}] has an unexpected key ${key}`);
 		}
-		const { type, t, confidence, detectedAt, data, frame } = event;
+		const { v, type, t, confidence, scores, detectedAt, data, frame } = event;
 		if (!isEventType(type)) fail(`events.json[${index}] has an unknown type`);
-		if (typeof t !== "number" || typeof confidence !== "number") {
-			fail(`events.json[${index}] lacks a numeric t/confidence`);
+		if (typeof t !== "number") fail(`events.json[${index}] lacks a numeric t`);
+		// a zip written before reads were scored per field holds one `confidence`
+		const fieldScores =
+			scores === undefined && typeof confidence === "number"
+				? [confidence]
+				: isRecord(scores)
+					? Object.values(scores)
+					: fail(`events.json[${index}] lacks scores`);
+		if (!fieldScores.every((score) => typeof score === "number")) {
+			fail(`events.json[${index}] has a non-numeric score`);
+		}
+		if (v !== undefined && !Number.isSafeInteger(v)) {
+			fail(`events.json[${index}] has a non-integer v`);
 		}
 		if (detectedAt !== undefined && typeof detectedAt !== "number") {
 			fail(`events.json[${index}] has a non-numeric detectedAt`);
@@ -604,7 +625,9 @@ function summarize(
 			width: frameFile.width,
 			height: frameFile.height,
 			t,
-			confidence,
+			meanScore:
+				fieldScores.reduce((sum, score) => sum + score, 0) /
+				Math.max(1, fieldScores.length),
 		});
 	}
 	for (const folder of frameFiles.keys()) {
@@ -612,7 +635,26 @@ function summarize(
 			fail(`${folder} is not named by any event`);
 	}
 
-	return { outDir: root, frames, eventCounts, eventsWithoutFrame };
+	return {
+		outDir: root,
+		frames,
+		eventCounts,
+		eventsWithoutFrame,
+		scanLog: scanLogSummary(jsonByName.get(SCAN_LOG_ENTRY)),
+	};
+}
+
+function scanLogSummary(value: unknown): GameDataZipSummary["scanLog"] {
+	if (value === undefined) return null;
+	let log: ScanLog.ScanLog;
+	try {
+		log = ScanLog.parse(value);
+	} catch (error) {
+		fail(
+			`${SCAN_LOG_ENTRY} is ${error instanceof Error ? error.message : "malformed"}`,
+		);
+	}
+	return { lanes: log.lanes.length, frames: ScanLog.frameCount(log) };
 }
 
 function isEventType(value: unknown): value is (typeof EVENT_TYPES)[number] {

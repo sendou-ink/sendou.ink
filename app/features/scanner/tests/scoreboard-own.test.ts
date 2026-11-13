@@ -9,12 +9,10 @@ import { createDeathDetector } from "../core/detectors/death/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
 import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
-import {
-	createScoreboardOwnDetector,
-	type ScoreboardOwnData,
-} from "../core/detectors/scoreboard-own/index";
+import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
 import type { Detector } from "../core/detectors/types";
 import {
+	assertCompleteness,
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
@@ -33,10 +31,7 @@ test("scoreboard-own fixtures exist", () => {
 
 for (const fixture of fixtures) {
 	test(`scoreboard-own/${fixture.name}`, async (t) => {
-		const { gate, events } = await runDetectorOnFixture<ScoreboardOwnData>(
-			detector,
-			fixture,
-		);
+		const { gate, events } = await runDetectorOnFixture(detector, fixture);
 		const expectPositive = fixture.expected.event === "ScoreboardOwn";
 
 		await t.test("gate", () => {
@@ -51,6 +46,10 @@ for (const fixture of fixtures) {
 		const event = events[0];
 		assert.ok(event, "gate passed but no event parsed");
 		const expected = fixture.expected.data ?? {};
+
+		await t.test("completeness", () => {
+			assertCompleteness(fixture, event);
+		});
 
 		for (const field of ["lobby", "mode", "stage"] as const) {
 			await t.test(
@@ -129,11 +128,11 @@ for (const fixture of loadFixtures("negative")) {
 	});
 }
 
-const otherDetectors: Detector<unknown>[] = [
-	createScoreboardDetector(resources) as Detector<unknown>,
-	createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
-	createDeathDetector(resources) as Detector<unknown>,
-	createMapStartDetector(resources) as Detector<unknown>,
+const otherDetectors: Detector[] = [
+	createScoreboardDetector(resources) as Detector,
+	createScoreboardBattleLogReplayDetector(resources) as Detector,
+	createDeathDetector(resources) as Detector,
+	createMapStartDetector(resources) as Detector,
 ];
 for (const fixture of fixtures.filter(
 	(f) => f.expected.event === "ScoreboardOwn",

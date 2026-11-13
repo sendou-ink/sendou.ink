@@ -17,9 +17,15 @@
  */
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { copyRoi, type FrameData } from "../../image";
-import type { DetectedEvent } from "../types";
-import type { PlayerStatusData, StripFit } from "./player-status";
+import type { EventKind, EventOf } from "../types";
+import {
+	type PlayerStatusData,
+	type StripFit,
+	slotStateOf,
+} from "./player-status";
 import {
 	STATUS_ICON_CENTER_Y,
 	STATUS_REFERENCE_PITCH,
@@ -37,6 +43,18 @@ import {
 } from "./rois";
 
 export const STRIP_WEAPONS_EVENT_TYPE = "StripWeapons";
+
+/** Sampled every ~5s, each distinct evidence; scored on raw NCC peaks, so no score floor. */
+export const STRIP_WEAPONS_EVENT: EventKind<
+	typeof STRIP_WEAPONS_EVENT_TYPE,
+	StripWeaponsData
+> = {
+	type: STRIP_WEAPONS_EVENT_TYPE,
+	mergeWindowS: 2,
+	minMeanScore: 0,
+};
+
+export type StripWeaponsEvent = EventOf<typeof STRIP_WEAPONS_EVENT>;
 
 interface StripWeaponCandidate {
 	weaponId: MainWeaponId;
@@ -127,13 +145,14 @@ export function parseStripWeapons(
 	status: PlayerStatusData,
 	fit: StripFit,
 	templates: StripWeaponTemplate[],
-): DetectedEvent<StripWeaponsData> {
-	const scores: number[] = [];
+): StripWeaponsEvent {
+	const scores: Record<string, number> = {};
 	const slots = fit.map((sideFit, side) =>
 		sideFit.centers.map((cx, slot) => {
-			if (status.dead[side as 0 | 1][slot]) return null;
+			if (slotStateOf(status.slots[side as 0 | 1][slot]!) === "dead")
+				return null;
 			const candidates = matchSlot(frame, cx, sideFit.pitch, templates);
-			if (candidates) scores.push(candidates[0]!.score);
+			if (candidates) scores[`slots.${side}.${slot}`] = candidates[0]!.score;
 			return candidates;
 		}),
 	) as StripWeaponsData["slots"];
@@ -141,7 +160,7 @@ export function parseStripWeapons(
 	return {
 		type: STRIP_WEAPONS_EVENT_TYPE,
 		t,
-		confidence: scores.length > 0 ? Math.max(...scores) : 0,
+		scores: FieldScores.of(scores),
 		data: {
 			time: status.time,
 			slots,
@@ -205,7 +224,15 @@ function matchSlot(
 			}),
 		}))
 		.sort((a, b) => b.match.score - a.match.score);
-	if (ranked[0]!.match.score < STRIP_WEAPON_MIN_SCORE) return null;
+	if (
+		Decisions.below(
+			"objective/strip-weapons:STRIP_WEAPON_MIN_SCORE",
+			ranked[0]!.match.score,
+			STRIP_WEAPON_MIN_SCORE,
+		)
+	) {
+		return null;
+	}
 	const candidates = ranked
 		.slice(0, STRIP_WEAPON_TOP_K)
 		.map(({ template, match }) => ({
@@ -215,7 +242,11 @@ function matchSlot(
 	const [first, second] = ranked;
 	if (
 		second &&
-		first!.match.score - second.match.score <= STRIP_WEAPON_TIE_MARGIN &&
+		Decisions.atMost(
+			"objective/strip-weapons:STRIP_WEAPON_TIE_MARGIN",
+			first!.match.score - second.match.score,
+			STRIP_WEAPON_TIE_MARGIN,
+		) &&
 		differenceScore(fine, second, first!) >
 			differenceScore(fine, first!, second)
 	) {

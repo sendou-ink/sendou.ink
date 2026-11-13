@@ -24,10 +24,7 @@ import {
 } from "./ability-harvest";
 import { DEATH_EVENT_TYPE, type DeathData } from "./detectors/death/index";
 import { KILL_EVENT_TYPE, type KillData } from "./detectors/kill/index";
-import {
-	MAP_START_EVENT_TYPE,
-	type MapStartData,
-} from "./detectors/map-start/index";
+import { MAP_START_EVENT_TYPE } from "./detectors/map-start/index";
 import {
 	MINIMAP_EVENT_TYPE,
 	type MinimapData,
@@ -37,24 +34,22 @@ import {
 	type ObjectiveData,
 } from "./detectors/objective/index";
 import {
+	FLAGGED_STATE_EVIDENCE,
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
 	type PlayerStatusFlags,
+	type SlotEvidence,
+	statusFlagsOf,
 } from "./detectors/objective/player-status";
 import {
 	STRIP_WEAPONS_EVENT_TYPE,
 	type StripWeaponsData,
 } from "./detectors/objective/strip-weapons";
-import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "./detectors/quick-scoreboard-battle-log/index";
-import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
 import {
 	SCOREBOARD_EVENT_TYPE,
 	type ScoreboardData,
 } from "./detectors/scoreboard/index";
-import {
-	SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
-	type ScoreboardBattleLogData,
-} from "./detectors/scoreboard-battle-log/index";
+import type { ScoreboardBattleLogData } from "./detectors/scoreboard-battle-log/index";
 import {
 	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
 	type ScoreboardBattleLogReplayData,
@@ -63,7 +58,18 @@ import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
 } from "./detectors/scoreboard-own/index";
-import type { DetectedEvent } from "./detectors/types";
+import {
+	type DetectedEvent,
+	type EventOfType,
+	type HistoryScoreboardEvent,
+	isEventOfType,
+	isHistoryScoreboardEvent,
+	isScoreboardEvent,
+	isXBattleCardEvent,
+	type ScoreboardFamilyEvent,
+	type XBattleCardEvent,
+} from "./events";
+import * as FieldScores from "./field-scores";
 import { hueDistance, hueOf, type InkRgb } from "./ink-color";
 import { parseReplayTimestamp } from "./replay-time";
 import {
@@ -92,6 +98,7 @@ import {
 	type StripSnapshot,
 	slotRowPermutation,
 } from "./slot-row-assignment";
+import * as StatusDecode from "./status-decode";
 import { nameSimilarity } from "./text";
 import {
 	multisetOverlap,
@@ -99,7 +106,6 @@ import {
 	SAME_GAME_MIN_SHARED_STAT_LINES,
 	sharedStatLines,
 } from "./timeline/same-scoreboard";
-import { X_BATTLE_CARD_EVENT_TYPES } from "./x-battle";
 
 /** How far back a scoreboard with no MapStart claims deaths: matches run well under 8 min. */
 const FALLBACK_WINDOW_SECONDS = 480;
@@ -147,25 +153,6 @@ const MIN_TEAM_HUE_SEPARATION = 30;
 const REPLAY_ANCHOR_TOLERANCE_SECONDS = 10;
 
 /**
- * Dead-flag runs whose flank-to-flank span is shorter than these are flipped
- * to their surroundings: the fastest respawn is 3.5s, so no true dead stretch
- * is shorter, while a respawned player CAN be re-splatted fast (spawncamps),
- * so the alive floor stays a conservative 2s. Judging by the flank-to-flank
- * span keeps sparse sampling honest: a lone dead read between far-apart reads
- * spans wide and is left alone.
- */
-const DEAD_RUN_MIN_SECONDS = 3.5;
-const ALIVE_RUN_MIN_SECONDS = 2;
-
-/**
- * Regaining a used special takes at least this long (nothing charges off ~7s
- * of painting even with max Special Charge Up), so a not-ready run flanked by
- * ready reads closer than this, with no death inside, is a misread gap (the
- * ready wash pulses through a dim trough; overlays clip icons) and is bridged.
- */
-const SPECIAL_REGAIN_MIN_SECONDS = 7;
-
-/**
  * Kill-feed stack reads further apart than this show independent rows even
  * when the names repeat: a splatted player respawns in ~8.5s, so a repeated
  * name inside it is the same row still up. How long a row stays up is
@@ -191,13 +178,6 @@ const OWN_RESULTS_WINDOW_SECONDS = 90;
  * long for a results screen to claim it.
  */
 const X_BATTLE_CARDS_WINDOW_SECONDS = 90;
-
-/** Battle history screens: browsing them after playing shows games the timeline already holds. */
-const HISTORY_SCOREBOARD_EVENT_TYPES: readonly string[] = [
-	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
-	SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
-	QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
-];
 
 /**
  * Paint totals two boards must share to show the same game: tolerates a couple
@@ -280,16 +260,16 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	const minimapLookahead = buildMinimapLookahead(sorted);
 
 	let open: OpenMatch<E> | null = null;
-	let lastHistoryScreen: E | null = null;
+	let lastHistoryScreen: (E & HistoryScoreboardEvent) | null = null;
 	// matches finalized without a scoreboard, which a history screen may still complete
 	const scoreboardless = new Map<BuiltMatch<E>, OpenMatch<E>>();
 	// deaths/objective/status reads seen with no match open to anchor them yet
-	let orphanDeaths: E[] = [];
-	let orphanObjectives: E[] = [];
-	let orphanPlayerStatuses: E[] = [];
-	let orphanStripWeapons: E[] = [];
-	let orphanKills: E[] = [];
-	let orphanXBattleCards: E[] = [];
+	let orphanDeaths: OpenMatch<E>["deaths"] = [];
+	let orphanObjectives: OpenMatch<E>["objectives"] = [];
+	let orphanPlayerStatuses: OpenMatch<E>["playerStatuses"] = [];
+	let orphanStripWeapons: OpenMatch<E>["stripWeapons"] = [];
+	let orphanKills: OpenMatch<E>["kills"] = [];
+	let orphanXBattleCards: OpenMatch<E>["xBattleCards"] = [];
 	const finalize = (): void => {
 		if (!open) return;
 		if (isBacked(open)) {
@@ -302,7 +282,8 @@ export function buildScannerMatches<E extends DetectedEvent>(
 		open = null;
 	};
 	const claimOrphans = (t: number): OpenMatch<E> => {
-		const withinWindow = (read: E) => t - read.t <= FALLBACK_WINDOW_SECONDS;
+		const withinWindow = (read: DetectedEvent) =>
+			t - read.t <= FALLBACK_WINDOW_SECONDS;
 		return {
 			...startMatch(),
 			deaths: orphanDeaths.filter(withinWindow),
@@ -334,31 +315,32 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	};
 
 	for (const event of sorted) {
-		if (event.type === MAP_START_EVENT_TYPE) {
+		if (isEventOfType(event, MAP_START_EVENT_TYPE)) {
 			// a new match intro abandons any match whose scoreboard was missed
 			finalize();
 			dropOrphans();
 			open = startMatch();
 			open.mapStart = event;
-			vote(open.stageVotes, (event.data as MapStartData).stage);
+			vote(open.stageVotes, event.data.stage);
 			const replayed = replayedHistoryMatch(built, lastHistoryScreen, event);
 			if (replayed) {
 				built.splice(built.indexOf(replayed), 1);
-				const [board, ...revisits] = replayed.sources;
+				// a history-only match: every source is a history screen
+				const [board, ...revisits] = replayed.sources.filter(
+					isHistoryScoreboardEvent,
+				);
 				open.scoreboard = board!;
 				open.revisits = revisits;
-				vote(open.stageVotes, (board!.data as ScoreboardData).stage);
+				vote(open.stageVotes, board!.data.stage);
 			}
-		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
-			if ((event.data as ScoreboardData).noContest) {
+		} else if (isScoreboardEvent(event)) {
+			if (event.data.noContest) {
 				// ended undecided: the game being gathered has no result to keep
 				open = null;
 				dropOrphans();
 				continue;
 			}
-			if (HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type)) {
-				lastHistoryScreen = event;
-			}
+			if (isHistoryScoreboardEvent(event)) lastHistoryScreen = event;
 			const revisited =
 				revisitedMatch(built, event) ??
 				(open ? undefined : reshownResultsMatch(built, event));
@@ -379,7 +361,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			if (missedResults) {
 				const pending = scoreboardless.get(missedResults)!;
 				pending.scoreboard = event;
-				vote(pending.stageVotes, (event.data as ScoreboardData).stage);
+				vote(pending.stageVotes, event.data.stage);
 				built[built.indexOf(missedResults)] = cachedBuiltMatch(
 					pending,
 					cache,
@@ -393,7 +375,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 				// the log shows another game: the one being gathered stays open
 				const shown = startMatch<E>();
 				shown.scoreboard = event;
-				vote(shown.stageVotes, (event.data as ScoreboardData).stage);
+				vote(shown.stageVotes, event.data.stage);
 				built.push(cachedBuiltMatch(shown, cache));
 				continue;
 			}
@@ -401,7 +383,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			// a replay played back from its browser entry ends on that entry again
 			if (open.scoreboard) open.revisits.push(event);
 			else open.scoreboard = event;
-			vote(open.stageVotes, (event.data as ScoreboardData).stage);
+			vote(open.stageVotes, event.data.stage);
 			finalize();
 			orphanDeaths = [];
 			orphanObjectives = [];
@@ -409,17 +391,15 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			orphanStripWeapons = [];
 			orphanKills = [];
 			orphanXBattleCards = [];
-		} else if (event.type === MINIMAP_EVENT_TYPE) {
-			const stage = (event.data as MinimapData).stage;
+		} else if (isEventOfType(event, MINIMAP_EVENT_TYPE)) {
+			const stage = event.data.stage;
 			if (open) {
 				// a stage change only splits when the next read doesn't refute it: a
 				// lone disagreeing frame is a misread folded in as a minority vote.
 				// An intro's stage outranks minimap reads: it holds until no later
 				// read of this game shows it again (the next game's intro was missed)
 				const lookahead = minimapLookahead.get(event)!;
-				const introStage = open.mapStart
-					? (open.mapStart.data as MapStartData).stage
-					: null;
+				const introStage = open.mapStart?.data.stage ?? null;
 				const current = introStage ?? leadingStage(open.stageVotes);
 				const stageChanged =
 					current !== null &&
@@ -436,17 +416,17 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			open.minimaps.push(event);
 			open.lastMinimapT = event.t;
 			vote(open.stageVotes, stage);
-		} else if (event.type === DEATH_EVENT_TYPE) {
+		} else if (isEventOfType(event, DEATH_EVENT_TYPE)) {
 			(open?.deaths ?? orphanDeaths).push(event);
-		} else if (event.type === OBJECTIVE_EVENT_TYPE) {
+		} else if (isEventOfType(event, OBJECTIVE_EVENT_TYPE)) {
 			(open?.objectives ?? orphanObjectives).push(event);
-		} else if (event.type === PLAYER_STATUS_EVENT_TYPE) {
+		} else if (isEventOfType(event, PLAYER_STATUS_EVENT_TYPE)) {
 			(open?.playerStatuses ?? orphanPlayerStatuses).push(event);
-		} else if (event.type === STRIP_WEAPONS_EVENT_TYPE) {
+		} else if (isEventOfType(event, STRIP_WEAPONS_EVENT_TYPE)) {
 			(open?.stripWeapons ?? orphanStripWeapons).push(event);
-		} else if (event.type === KILL_EVENT_TYPE) {
+		} else if (isEventOfType(event, KILL_EVENT_TYPE)) {
 			(open?.kills ?? orphanKills).push(event);
-		} else if (event.type === SCOREBOARD_OWN_EVENT_TYPE) {
+		} else if (isEventOfType(event, SCOREBOARD_OWN_EVENT_TYPE)) {
 			if (!open) {
 				const completed = withOwnResults(built.at(-1), event);
 				if (completed) {
@@ -462,8 +442,8 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			// shown before the results screen (if any): the game being gathered
 			// ended on it, and it is the game's only results when none follows
 			open.ownResults ??= event;
-			vote(open.stageVotes, (event.data as ScoreboardOwnData).stage);
-		} else if (X_BATTLE_CARD_EVENT_TYPES.includes(event.type)) {
+			vote(open.stageVotes, event.data.stage);
+		} else if (isXBattleCardEvent(event)) {
 			// the lobby shows the cards before the game's results screen, so
 			// they usually join the game still being gathered
 			if (open) {
@@ -492,11 +472,11 @@ export function buildScannerMatches<E extends DetectedEvent>(
  */
 function withOwnResults<E extends DetectedEvent>(
 	last: BuiltMatch<E> | undefined,
-	event: E,
+	event: E & EventOfType<typeof SCOREBOARD_OWN_EVENT_TYPE>,
 ): BuiltMatch<E> | undefined {
 	const pov = last?.match.pov;
 	if (!last || !pov || !followsMatch(last, event)) return undefined;
-	const data = event.data as ScoreboardOwnData;
+	const { data } = event;
 	const player = last.match.teams[pov.team].players[pov.index];
 	if (!player || data.abilities.length === 0) return undefined;
 	return {
@@ -633,9 +613,7 @@ export function ingestSkipReasons<E extends DetectedEvent>(
 export function isHistoryOnly(built: {
 	sources: readonly DetectedEvent[];
 }): boolean {
-	return built.sources.every((event) =>
-		HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type),
-	);
+	return built.sources.every((event) => isHistoryScoreboardEvent(event));
 }
 
 /**
@@ -653,10 +631,18 @@ export function invalidObjectiveEvents<E extends DetectedEvent>(
 		const kind = matchCounterKind(match.mode, []);
 		return sources.filter(
 			(event) =>
-				event.type === OBJECTIVE_EVENT_TYPE &&
-				counterKindOfRead(event.data as ObjectiveData) !== kind,
+				isEventOfType(event, OBJECTIVE_EVENT_TYPE) &&
+				counterKindOfRead(event.data) !== kind,
 		);
 	});
+}
+
+/** `events` without the objective reads their matches' modes rule out (`invalidObjectiveEvents`): what a finished scan keeps. */
+export function withoutInvalidObjectives<E extends DetectedEvent>(
+	events: E[],
+): E[] {
+	const invalid = new Set(invalidObjectiveEvents(buildScannerMatches(events)));
+	return invalid.size > 0 ? events.filter((e) => !invalid.has(e)) : events;
 }
 
 type CounterKind = "zones" | "track";
@@ -795,32 +781,30 @@ function endedBeforeClock(
 }
 
 function isPlayedGame(sources: readonly DetectedEvent[]): boolean {
-	return sources.some(
-		(event) => !HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type),
-	);
+	return sources.some((event) => !isHistoryScoreboardEvent(event));
 }
 
 /** A match being accumulated as the timeline is walked. */
 interface OpenMatch<E extends DetectedEvent> {
-	mapStart: E | null;
-	minimaps: E[];
-	deaths: E[];
+	mapStart: (E & EventOfType<typeof MAP_START_EVENT_TYPE>) | null;
+	minimaps: (E & EventOfType<typeof MINIMAP_EVENT_TYPE>)[];
+	deaths: (E & EventOfType<typeof DEATH_EVENT_TYPE>)[];
 	/** objective-counter reads; become the match's `objective` samples */
-	objectives: E[];
+	objectives: (E & EventOfType<typeof OBJECTIVE_EVENT_TYPE>)[];
 	/** icon-strip reads; become the match's `playerStatus` samples */
-	playerStatuses: E[];
+	playerStatuses: (E & EventOfType<typeof PLAYER_STATUS_EVENT_TYPE>)[];
 	/** sampled per-slot weapon evidence for the slot→row assignment */
-	stripWeapons: E[];
+	stripWeapons: (E & EventOfType<typeof STRIP_WEAPONS_EVENT_TYPE>)[];
 	/** kill-feed stack reads; become the match's `kills` */
-	kills: E[];
+	kills: (E & EventOfType<typeof KILL_EVENT_TYPE>)[];
 	/** X Battle lobby cards reporting on this game; ride along in its sources */
-	xBattleCards: E[];
+	xBattleCards: (E & XBattleCardEvent)[];
 	/** the personal results screen, when shown before any results screen closed the game */
-	ownResults: E | null;
+	ownResults: (E & EventOfType<typeof SCOREBOARD_OWN_EVENT_TYPE>) | null;
 	/** the board a replay was played back from, or the results screen that closed the game */
-	scoreboard: E | null;
+	scoreboard: (E & ScoreboardFamilyEvent) | null;
 	/** history screens showing the game again; ride along in its sources */
-	revisits: E[];
+	revisits: (E & ScoreboardFamilyEvent)[];
 	/**
 	 * per-stage read counts (a MapStart's stage seeds it); without an intro
 	 * stage the plurality winner delimits same-vs-next map so one misread frame
@@ -890,19 +874,16 @@ function buildMinimapLookahead<E extends DetectedEvent>(
 	let laterMinimapT: number | null = null;
 	for (let i = sorted.length - 1; i >= 0; i--) {
 		const event = sorted[i]!;
-		if (
-			event.type === MAP_START_EVENT_TYPE ||
-			SCOREBOARD_EVENT_TYPES.includes(event.type)
-		) {
+		if (event.type === MAP_START_EVENT_TYPE || isScoreboardEvent(event)) {
 			laterStages = new Set();
 			continue;
 		}
-		if (event.type !== MINIMAP_EVENT_TYPE) continue;
+		if (!isEventOfType(event, MINIMAP_EVENT_TYPE)) continue;
 		if (laterMinimapT !== null && laterMinimapT - event.t > MATCH_GAP_SECONDS) {
 			laterStages = new Set();
 		}
 		lookahead.set(event, { nextStage, laterStages });
-		const stage = (event.data as MinimapData).stage;
+		const stage = event.data.stage;
 		if (stage !== null && !laterStages.has(stage)) {
 			// copied so the sets already handed out keep what they saw
 			laterStages = new Set(laterStages).add(stage);
@@ -974,30 +955,18 @@ function toBuiltMatch<E extends DetectedEvent>(
 ): BuiltMatch<E> {
 	const sources = openMatchInputs(open).sort((a, b) => a.t - b.t);
 
-	const board = open.scoreboard?.data as ScoreboardData | undefined;
-	const start = open.mapStart?.data as MapStartData | undefined;
-	const own = open.ownResults?.data as ScoreboardOwnData | undefined;
-	const deaths = open.deaths.map((event) => event.data as DeathData);
-	const objectives = open.objectives.map((event) => ({
-		t: event.t,
-		data: event.data as ObjectiveData,
+	const board: ScoreboardData | undefined = open.scoreboard?.data;
+	const start = open.mapStart?.data;
+	const own = open.ownResults?.data;
+	const deaths = open.deaths.map((event) => event.data);
+	const objectives = open.objectives.map(({ t, data }) => ({ t, data }));
+	const playerStatuses = open.playerStatuses.map(({ t, data }) => ({
+		t,
+		data,
 	}));
-	const playerStatuses = open.playerStatuses.map((event) => ({
-		t: event.t,
-		data: event.data as PlayerStatusData,
-	}));
-	const stripWeapons = open.stripWeapons.map((event) => ({
-		t: event.t,
-		data: event.data as StripWeaponsData,
-	}));
-	const minimapReads = open.minimaps.map((event) => ({
-		t: event.t,
-		data: event.data as MinimapData,
-	}));
-	const killReads = open.kills.map((event) => ({
-		t: event.t,
-		data: event.data as KillData,
-	}));
+	const stripWeapons = open.stripWeapons.map(({ t, data }) => ({ t, data }));
+	const minimapReads = open.minimaps.map(({ t, data }) => ({ t, data }));
+	const killReads = open.kills.map(({ t, data }) => ({ t, data }));
 	const minimaps = minimapReads.map((read) => read.data);
 	// without a results screen the minimap's own card is the POV's row, and
 	// its personal results' weapon seats it before the strip evidence does
@@ -1005,7 +974,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 	const minimapTeams = board
 		? null
 		: withOwnBuildOn(
-				teamsFromMinimaps(mostConfidentFirst(open.minimaps), deaths),
+				teamsFromMinimaps(bestScoredFirst(open.minimaps), deaths),
 				selfIndex === null ? null : { team: 0, index: selfIndex },
 				own,
 			);
@@ -1078,7 +1047,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 		// them all — casts never see one
 		cast:
 			pov === null &&
-			(open.minimaps.some((event) => (event.data as MinimapData).spectator) ||
+			(open.minimaps.some((event) => event.data.spectator) ||
 				playerStatuses.some((read) => read.data.cast)),
 		objective: progress.objective,
 		playerStatus: progress.playerStatus,
@@ -1269,36 +1238,27 @@ function buildProgress(
 		liveStatuses.length === 0
 			? null
 			: {
-					samples: withShortSpecialGapsBridged(
-						withImpossibleDeadRunsFlipped(
-							liveStatuses.map((read): ScannerMatchPlayerStatusSample => {
-								const swapped = read.fromMinimap
-									? minimapSwapped
-									: nearestSwapFlag(live, swapFlags, read.t) !== swap;
-								const [a, b] = swapped ? ([1, 0] as const) : ([0, 1] as const);
-								const arrange = (
-									flags: readonly [PlayerStatusFlags, PlayerStatusFlags],
-								): [PlayerStatusFlags, PlayerStatusFlags] =>
-									[a, b].map((source, side) =>
-										applyPermutation(
-											flags[source]!,
-											readPermutation(perms, read, source, side as 0 | 1),
-										),
-									) as [PlayerStatusFlags, PlayerStatusFlags];
-								return {
-									t: Math.max(0, Math.floor(read.t)),
-									time: read.data.time,
-									special: specialChargeable(
-										read.data.time ??
-											(dominant === null ? null : dominant - read.t),
-										clockSeconds,
-									)
-										? arrange(read.data.special)
-										: noSpecialsReady(),
-									dead: arrange(read.data.dead),
-								};
-							}),
-						),
+					samples: decodedSamples(
+						liveStatuses.map((read) => {
+							const swapped = read.fromMinimap
+								? minimapSwapped
+								: nearestSwapFlag(live, swapFlags, read.t) !== swap;
+							const [a, b] = swapped ? ([1, 0] as const) : ([0, 1] as const);
+							const time =
+								read.data.time ??
+								(dominant === null ? null : dominant - read.t);
+							return {
+								t: read.t,
+								time: read.data.time,
+								elapsed: time === null ? null : clockSeconds - time,
+								slots: [a, b].map((source, side) =>
+									applyPermutation(
+										read.data.slots[source]!,
+										readPermutation(perms, read, source, side as 0 | 1),
+									),
+								) as [ReadSide, ReadSide],
+							};
+						}),
 					),
 				};
 
@@ -1581,13 +1541,14 @@ function slotRowEvidence({
 	}
 
 	const snapshots = [0, 1].map((side) =>
-		playerStatuses.map(
-			(read): StripSnapshot => ({
+		playerStatuses.map((read): StripSnapshot => {
+			const flags = statusFlagsOf(read.data);
+			return {
 				t: read.t,
-				dead: read.data.dead[sourceSide(read.t, side as 0 | 1)],
-				special: read.data.special[sourceSide(read.t, side as 0 | 1)],
-			}),
-		),
+				dead: flags.dead[sourceSide(read.t, side as 0 | 1)],
+				special: flags.special[sourceSide(read.t, side as 0 | 1)],
+			};
+		}),
 	);
 	const observe = (side: 0 | 1, observation: StatusObservation): void =>
 		addStatusEvidence(evidence[side]!, snapshots[side]!, observation);
@@ -1757,125 +1718,51 @@ function readPermutation(
 	return perms.strip[side];
 }
 
-/**
- * Debounces per-slot dead flags: an interior run whose flanking opposite-state
- * reads sit closer than the state could have held (DEAD/ALIVE_RUN_MIN_SECONDS)
- * is a misread blip (background ink through a translucent splatted icon, a box
- * over a mid-animation icon) and takes the flanking state. Edge runs stay —
- * nothing attests what came before or after the match window.
- */
-function withImpossibleDeadRunsFlipped(
-	samples: ScannerMatchPlayerStatusSample[],
-): ScannerMatchPlayerStatusSample[] {
-	let smoothed = samples;
-	for (const side of [0, 1] as const) {
-		for (let slot = 0; slot < PLAYERS_PER_TEAM; slot++) {
-			// flipping one blip can expose the next (alternating flicker), so
-			// each slot's series is re-swept until it settles
-			let changed = true;
-			while (changed) {
-				changed = false;
-				const series = smoothed.map((sample) => sample.dead[side][slot]);
-				let runStart = 0;
-				for (let i = 1; i <= series.length; i++) {
-					if (i < series.length && series[i] === series[runStart]) continue;
-					const interior = runStart > 0 && i < series.length;
-					const impossiblyShort =
-						interior &&
-						smoothed[i]!.t - smoothed[runStart - 1]!.t <=
-							(series[runStart] ? DEAD_RUN_MIN_SECONDS : ALIVE_RUN_MIN_SECONDS);
-					if (impossiblyShort) {
-						if (smoothed === samples) {
-							smoothed = samples.map((sample) => ({
-								...sample,
-								dead: [[...sample.dead[0]], [...sample.dead[1]]] as [
-									PlayerStatusFlags,
-									PlayerStatusFlags,
-								],
-							}));
-						}
-						for (let j = runStart; j < i; j++) {
-							smoothed[j]!.dead[side][slot] = !series[runStart];
-						}
-						changed = true;
-						break;
-					}
-					runStart = i;
-				}
-			}
-		}
-	}
-	return smoothed;
-}
-
-/**
- * No special charges within SPECIAL_REGAIN_MIN_SECONDS of the clock starting
- * (or before it), so a ready read there is a misread (a pale backdrop behind
- * the icon, the spectator map's opening wipe) that would otherwise bridge into
- * the first real ready wash. Timerless reads take the clock the match's
- * dominant anchor projects.
- */
-function specialChargeable(time: number | null, clockSeconds: number): boolean {
-	return time === null || time <= clockSeconds - SPECIAL_REGAIN_MIN_SECONDS;
-}
-
 /** An unknown mode gets the ranked clock: Turf War's start window lies within its chargeable time. */
 function clockSecondsOf(mode: ModeShort | null): number {
 	return mode === "TW" ? TURF_WAR_CLOCK_SECONDS : RANKED_CLOCK_SECONDS;
 }
 
-function noSpecialsReady(): [PlayerStatusFlags, PlayerStatusFlags] {
-	return [
-		[false, false, false, false],
-		[false, false, false, false],
-	];
+/**
+ * The oriented status reads as samples, each player's states decoded over the
+ * whole game (status-decode.ts); a sample's flags are its decoded states.
+ */
+function decodedSamples(
+	reads: readonly {
+		t: number;
+		time: number | null;
+		elapsed: number | null;
+		slots: [ReadSide, ReadSide];
+	}[],
+): ScannerMatchPlayerStatusSample[] {
+	const decoded = [0, 1].map((side) =>
+		[0, 1, 2, 3].map((slot) =>
+			StatusDecode.decode(
+				reads.map((read) => ({
+					t: read.t,
+					elapsed: read.elapsed,
+					evidence: read.slots[side]![slot] ?? null,
+				})),
+			),
+		),
+	);
+	return reads.map((read, i) => {
+		const flags = (state: StatusDecode.DecodedState) =>
+			decoded.map((side) => side.map((states) => states[i] === state)) as [
+				PlayerStatusFlags,
+				PlayerStatusFlags,
+			];
+		return {
+			t: Math.max(0, Math.floor(read.t)),
+			time: read.time,
+			special: flags("ready"),
+			dead: flags("dead"),
+		};
+	});
 }
 
-/**
- * Bridges per-slot special-ready gaps: an interior not-ready run whose flanking
- * ready reads sit closer than SPECIAL_REGAIN_MIN_SECONDS, with no death inside
- * to explain the loss, is a misread gap (the ready wash's dim pulse trough) and
- * reads ready throughout. Short READY runs stay (a fresh special really can be
- * spent within a read or two), as do edge runs.
- */
-function withShortSpecialGapsBridged(
-	samples: ScannerMatchPlayerStatusSample[],
-): ScannerMatchPlayerStatusSample[] {
-	let bridged = samples;
-	for (const side of [0, 1] as const) {
-		for (let slot = 0; slot < PLAYERS_PER_TEAM; slot++) {
-			const series = samples.map((sample) => sample.special[side][slot]);
-			let runStart = 0;
-			for (let i = 1; i <= series.length; i++) {
-				if (i < series.length && series[i] === series[runStart]) continue;
-				const interiorGap =
-					!series[runStart] && runStart > 0 && i < series.length;
-				const impossiblyShort =
-					interiorGap &&
-					samples[i]!.t - samples[runStart - 1]!.t < SPECIAL_REGAIN_MIN_SECONDS;
-				const diedInside =
-					interiorGap &&
-					samples.slice(runStart, i).some((sample) => sample.dead[side][slot]);
-				if (impossiblyShort && !diedInside) {
-					if (bridged === samples) {
-						bridged = samples.map((sample) => ({
-							...sample,
-							special: [[...sample.special[0]], [...sample.special[1]]] as [
-								PlayerStatusFlags,
-								PlayerStatusFlags,
-							],
-						}));
-					}
-					for (let j = runStart; j < i; j++) {
-						bridged[j]!.special[side][slot] = true;
-					}
-				}
-				runStart = i;
-			}
-		}
-	}
-	return bridged;
-}
+/** One side of a status read, slots in order; null = a slot the read did not show (a card missing). */
+type ReadSide = (SlotEvidence | null)[];
 
 /** A status read from either source, sides as read (pre-orientation). */
 interface StatusRead {
@@ -1886,8 +1773,7 @@ interface StatusRead {
 	spectator?: boolean;
 	data: {
 		time: number | null;
-		special: [PlayerStatusFlags, PlayerStatusFlags];
-		dead: [PlayerStatusFlags, PlayerStatusFlags];
+		slots: [ReadSide, ReadSide];
 	};
 }
 
@@ -1909,24 +1795,24 @@ function minimapStatusReads(
 				spectator: read.data.spectator,
 				data: {
 					time: null,
-					special: [
-						sideFlags(teammates, "specialReady"),
-						sideFlags(enemies, "specialReady"),
-					],
-					dead: [sideFlags(teammates, "dead"), sideFlags(enemies, "dead")],
+					slots: [sideEvidence(teammates), sideEvidence(enemies)],
 				},
 			},
 		];
 	});
 }
 
-function sideFlags(
+/** The cards' states as evidence, slots past the shown cards unread. */
+function sideEvidence(
 	players: readonly { dead: boolean; specialReady: boolean }[],
-	key: "dead" | "specialReady",
-): PlayerStatusFlags {
-	return [0, 1, 2, 3].map(
-		(slot) => players[slot]?.[key] ?? false,
-	) as PlayerStatusFlags;
+): ReadSide {
+	return [0, 1, 2, 3].map((slot) => {
+		const player = players[slot];
+		if (!player) return null;
+		return FLAGGED_STATE_EVIDENCE[
+			player.dead ? "dead" : player.specialReady ? "ready" : "alive"
+		];
+	});
 }
 
 /**
@@ -2232,10 +2118,9 @@ function historyData(
 ):
 	| (ScoreboardBattleLogData & Partial<ScoreboardBattleLogReplayData>)
 	| undefined {
-	if (!scoreboard || !HISTORY_SCOREBOARD_EVENT_TYPES.includes(scoreboard.type))
-		return undefined;
-	return scoreboard.data as ScoreboardBattleLogData &
-		Partial<ScoreboardBattleLogReplayData>;
+	return scoreboard && isHistoryScoreboardEvent(scoreboard)
+		? scoreboard.data
+		: undefined;
 }
 
 /**
@@ -2248,8 +2133,8 @@ function revisitedMatch<E extends DetectedEvent>(
 	built: readonly BuiltMatch<E>[],
 	event: E,
 ): BuiltMatch<E> | undefined {
-	if (!HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type)) return undefined;
-	const board = event.data as ScoreboardData;
+	if (!isHistoryScoreboardEvent(event)) return undefined;
+	const board = event.data;
 	const shownPlayedAt = playedAt(event);
 
 	return built.findLast((candidate) => {
@@ -2273,8 +2158,8 @@ function revisitedMatch<E extends DetectedEvent>(
  */
 function replayedHistoryMatch<E extends DetectedEvent>(
 	built: readonly BuiltMatch<E>[],
-	lastHistoryScreen: E | null,
-	intro: E,
+	lastHistoryScreen: (E & HistoryScoreboardEvent) | null,
+	intro: E & EventOfType<typeof MAP_START_EVENT_TYPE>,
 ): BuiltMatch<E> | undefined {
 	if (
 		lastHistoryScreen?.type !== SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE ||
@@ -2288,7 +2173,7 @@ function replayedHistoryMatch<E extends DetectedEvent>(
 	);
 	if (!shown) return undefined;
 
-	const { stage, mode } = intro.data as MapStartData;
+	const { stage, mode } = intro.data;
 	if (mode !== null && shown.match.mode !== null && mode !== shown.match.mode) {
 		return undefined;
 	}
@@ -2304,10 +2189,7 @@ function replayedHistoryMatch<E extends DetectedEvent>(
  * a frame caught mid-transition), so it may only join an already built match.
  */
 function isStagelessHistoryRead(event: DetectedEvent): boolean {
-	return (
-		HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type) &&
-		(event.data as ScoreboardData).stage === null
-	);
+	return isHistoryScoreboardEvent(event) && event.data.stage === null;
 }
 
 /**
@@ -2320,9 +2202,9 @@ function isHistoryOfAnotherGame<E extends DetectedEvent>(
 	event: E,
 	pending: OpenMatch<E>,
 ): boolean {
-	if (!HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type)) return false;
-	const board = event.data as ScoreboardData;
-	const start = pending.mapStart?.data as MapStartData | undefined;
+	if (!isHistoryScoreboardEvent(event)) return false;
+	const board = event.data;
+	const start = pending.mapStart?.data;
 
 	const stage = start?.stage ?? leadingStage(pending.stageVotes);
 	if (stage !== null && board.stage !== null && stage !== board.stage) {
@@ -2348,7 +2230,7 @@ function scoreboardlessMatchShown<E extends DetectedEvent>(
 	scoreboardless: ReadonlyMap<BuiltMatch<E>, OpenMatch<E>>,
 	event: E,
 ): BuiltMatch<E> | undefined {
-	if (!HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type)) return undefined;
+	if (!isHistoryScoreboardEvent(event)) return undefined;
 	const fitting = [...scoreboardless].filter(
 		([, pending]) => !isHistoryOfAnotherGame(event, pending),
 	);
@@ -2385,10 +2267,10 @@ function reshownResultsMatch<E extends DetectedEvent>(
 	built: readonly BuiltMatch<E>[],
 	event: E,
 ): BuiltMatch<E> | undefined {
-	if (event.type !== SCOREBOARD_EVENT_TYPE) return undefined;
+	if (!isEventOfType(event, SCOREBOARD_EVENT_TYPE)) return undefined;
 	const last = built.at(-1);
 	if (!last) return undefined;
-	return closesSameGame(last, event.data as ScoreboardData) ? last : undefined;
+	return closesSameGame(last, event.data) ? last : undefined;
 }
 
 /**
@@ -2420,9 +2302,7 @@ function closesSameGame<E extends DetectedEvent>(
 function closingBoardOf<E extends DetectedEvent>(
 	built: BuiltMatch<E>,
 ): ScoreboardData | undefined {
-	return built.sources.find((source) =>
-		SCOREBOARD_EVENT_TYPES.includes(source.type),
-	)?.data as ScoreboardData | undefined;
+	return built.sources.find(isScoreboardEvent)?.data;
 }
 
 /**
@@ -2435,17 +2315,12 @@ function closingBoardOf<E extends DetectedEvent>(
  */
 function withRevealedNames<E extends DetectedEvent>(
 	built: BuiltMatch<E>,
-	history: E,
+	history: E & ScoreboardFamilyEvent,
 ): ScannerMatch {
-	const results = built.sources.find(
-		(source) => source.type === SCOREBOARD_EVENT_TYPE,
+	const results = built.sources.find((source) =>
+		isEventOfType(source, SCOREBOARD_EVENT_TYPE),
 	);
-	const realNames = results
-		? renamedRows(
-				results.data as ScoreboardData,
-				history.data as ScoreboardData,
-			)
-		: null;
+	const realNames = results ? renamedRows(results.data, history.data) : null;
 	if (!realNames) return built.match;
 
 	const { match } = built;
@@ -2528,10 +2403,13 @@ function withRowWeapons(
 	})) as [ScannerMatchTeam, ScannerMatchTeam];
 }
 
-function mostConfidentFirst(events: readonly DetectedEvent[]): MinimapData[] {
+/** The reads' data, the read whose fields scored best on average first. */
+function bestScoredFirst(
+	events: readonly EventOfType<typeof MINIMAP_EVENT_TYPE>[],
+): MinimapData[] {
 	return [...events]
-		.sort((a, b) => b.confidence - a.confidence)
-		.map((event) => event.data as MinimapData);
+		.sort((a, b) => FieldScores.mean(b.scores) - FieldScores.mean(a.scores))
+		.map((event) => event.data);
 }
 
 /**

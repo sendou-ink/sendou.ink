@@ -9,6 +9,7 @@
  */
 import type { StageId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import type { FrameData } from "../../image";
 import { frameGray, frameHsv } from "../../image";
 
@@ -152,7 +153,13 @@ export function matchStage(
 		}
 	}
 	const margin = second < 0 ? best : best - second;
-	if (bestId === null || best < MIN_SCORE || margin < MIN_MARGIN) return null;
+	if (
+		bestId === null ||
+		Decisions.below("minimap/stage:MIN_SCORE", best, MIN_SCORE) ||
+		Decisions.below("minimap/stage:MIN_MARGIN", margin, MIN_MARGIN)
+	) {
+		return null;
+	}
 	return {
 		stageId: bestId,
 		score: Math.round(best * 1000) / 1000,

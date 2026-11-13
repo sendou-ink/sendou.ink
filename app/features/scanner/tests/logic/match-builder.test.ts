@@ -17,25 +17,31 @@ import type {
 	ObjectiveData,
 	TrackObjectiveData,
 } from "../../core/detectors/objective/index";
-import type { PlayerStatusData } from "../../core/detectors/objective/player-status";
+import type {
+	PlayerStatusData,
+	PlayerStatusFlags,
+	SlotEvidence,
+} from "../../core/detectors/objective/player-status";
 import type { StripWeaponsData } from "../../core/detectors/objective/strip-weapons";
 import type { ScoreboardData } from "../../core/detectors/scoreboard/index";
 import type { ScoreboardBattleLogData } from "../../core/detectors/scoreboard-battle-log/index";
 import type { ScoreboardBattleLogReplayData } from "../../core/detectors/scoreboard-battle-log-replay/index";
 import type { ScoreboardOwnData } from "../../core/detectors/scoreboard-own/index";
-import type { DetectedEvent } from "../../core/detectors/types";
 import type { XRankPositionData } from "../../core/detectors/x-rank/position";
 import type { XSetCountData } from "../../core/detectors/x-rank/set-count";
 import type { XSetResultData } from "../../core/detectors/x-rank/set-result";
+import type { DetectedEvent, EventOfType } from "../../core/events";
 import {
 	buildScannerMatches,
 	ingestSkipReasons,
 	invalidObjectiveEvents,
 	isHistoryOnly,
 	type MatchBuildCache,
+	withoutInvalidObjectives,
 } from "../../core/match-builder";
 import { xBattleCards } from "../../core/x-battle";
 import type { ScannerLobby } from "../../scanner-types";
+import { stubEvent } from "../stub-event";
 
 const NAMES = ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"];
 const ALPHA: MainWeaponId[] = [40, 1001, 2010, 3030];
@@ -46,7 +52,7 @@ function mapStart(
 	t: number,
 	{ mode = "SZ" as ModeShort | null, stage = 0 as StageId | null } = {},
 ): DetectedEvent {
-	return { type: "MapStart", t, confidence: 0.9, data: { mode, stage } };
+	return { type: "MapStart", t, scores: { read: 0.9 }, data: { mode, stage } };
 }
 
 function death(
@@ -60,7 +66,7 @@ function death(
 		abilities,
 		name,
 	};
-	return { type: "Death", t, confidence: 0.9, data };
+	return { type: "Death", t, scores: { read: 0.9 }, data };
 }
 
 // default timer stays consistent with t (clock zero projected at 300s of
@@ -83,7 +89,7 @@ function objective(
 		control,
 		teamColor,
 	};
-	return { type: "Objective", t, confidence: 0.9, data };
+	return { type: "Objective", t, scores: { read: 0.9 }, data };
 }
 
 function trackObjective(
@@ -105,7 +111,7 @@ function trackObjective(
 		position,
 		teamColor,
 	};
-	return { type: "Objective", t, confidence: 0.9, data };
+	return { type: "Objective", t, scores: { read: 0.9 }, data };
 }
 
 function scoreboard(
@@ -121,7 +127,7 @@ function scoreboard(
 		names = NAMES,
 		noContest = false,
 	} = {},
-): DetectedEvent {
+): EventOfType<"Scoreboard"> {
 	const data: ScoreboardData = {
 		lobby,
 		mode,
@@ -138,7 +144,7 @@ function scoreboard(
 		})),
 		povIndex,
 	};
-	return { type: "Scoreboard", t, confidence: 0.9, data };
+	return { type: "Scoreboard", t, scores: { read: 0.9 }, data };
 }
 
 function replayScoreboard(
@@ -150,15 +156,15 @@ function replayScoreboard(
 		mode = "SZ" as ModeShort | null,
 		paints = [] as (number | null)[],
 	} = {},
-): DetectedEvent & { detectedAt?: number } {
-	const base = scoreboard(t, { stage, mode, paints }).data as ScoreboardData;
+): EventOfType<"ScoreboardBattleLogReplay"> & { detectedAt?: number } {
+	const base = scoreboard(t, { stage, mode, paints }).data;
 	const data: ScoreboardBattleLogReplayData = {
 		...base,
 		timestamp,
 		replayCode,
 		matchScores: [88, 71],
 	};
-	return { type: "ScoreboardBattleLogReplay", t, confidence: 0.9, data };
+	return { type: "ScoreboardBattleLogReplay", t, scores: { read: 0.9 }, data };
 }
 
 function battleLogScoreboard(
@@ -171,16 +177,15 @@ function battleLogScoreboard(
 		names = NAMES,
 		ka = 10 as number | null,
 	} = {},
-): DetectedEvent & { detectedAt?: number } {
-	const base = scoreboard(t, { paints, stage, mode, names })
-		.data as ScoreboardData;
+): EventOfType<"ScoreboardBattleLog"> & { detectedAt?: number } {
+	const base = scoreboard(t, { paints, stage, mode, names }).data;
 	const data: ScoreboardBattleLogData = {
 		...base,
 		players: base.players.map((player) => ({ ...player, ka })),
 		timestamp,
 		matchScores: [100, 0],
 	};
-	return { type: "ScoreboardBattleLog", t, confidence: 0.9, data };
+	return { type: "ScoreboardBattleLog", t, scores: { read: 0.9 }, data };
 }
 
 function teammate(weaponId: MainWeaponId | null): MinimapTeammate {
@@ -214,7 +219,7 @@ function minimap(
 		teamColors = [null, null] as MinimapData["teamColors"],
 		dead = [[], []] as [number[], number[]],
 		specialReady = [[], []] as [number[], number[]],
-		confidence = 0.8,
+		scores = { read: 0.8 },
 	} = {},
 ): DetectedEvent {
 	const data: MinimapData = {
@@ -232,7 +237,7 @@ function minimap(
 		})),
 		teamColors,
 	};
-	return { type: "Minimap", t, confidence, data };
+	return { type: "Minimap", t, scores, data };
 }
 
 function weapons(match: {
@@ -439,6 +444,21 @@ test("a known TC/RM match drops SZ lookalike reads, and an SZ match track ones",
 	const zonesBuilt = buildScannerMatches(zones);
 	assert.equal(zonesBuilt[0]!.match.objective!.samples[0]!.t, 60);
 	assert.deepEqual(invalidObjectiveEvents(zonesBuilt), [zones[2]]);
+});
+
+test("a finished scan's events lose the reads their match's mode rules out and nothing else", () => {
+	const events = [
+		mapStart(0, { mode: "TC" }),
+		objective(60),
+		trackObjective(61),
+		scoreboard(300, { mode: "TC" }),
+	];
+
+	assert.deepEqual(withoutInvalidObjectives(events), [
+		events[0],
+		events[2],
+		events[3],
+	]);
 });
 
 test("an unknown-mode match builds from its majority overlay and deletes nothing", () => {
@@ -706,7 +726,7 @@ function ownResults(
 		weaponId,
 		abilities: OWN_BUILD,
 	};
-	return { type: "ScoreboardOwn", t, confidence: 0.9, data };
+	return { type: "ScoreboardOwn", t, scores: { read: 0.9 }, data };
 }
 
 test("the personal results screen completes the POV player's build", () => {
@@ -797,7 +817,7 @@ function xCard(
 		XSetResult: SET_RESULT,
 		XRankPosition: RANK_POSITION,
 	}[type];
-	return { type, t, confidence: 0.95, data };
+	return stubEvent({ type, t, scores: { read: 0.95 }, data });
 }
 
 test("an X Battle set count shown before the results screen joins that game", () => {
@@ -1136,7 +1156,7 @@ test("event types that identify no match are ignored", () => {
 	const own: DetectedEvent = {
 		type: "ScoreboardOwn",
 		t: 310,
-		confidence: 0.9,
+		scores: { read: 0.9 },
 		data: {
 			lobby: "PRIVATE",
 			mode: null,
@@ -1174,7 +1194,7 @@ test("a battle log scoreboard closes a match and supplies the recording time wit
 });
 
 test("without a replay timestamp, playedAt falls back to the scoreboard's detection time", () => {
-	const event = scoreboard(300) as DetectedEvent & { detectedAt?: number };
+	const event: DetectedEvent & { detectedAt?: number } = scoreboard(300);
 	event.detectedAt = 1_700_000_000_000;
 	const built = buildScannerMatches([event]);
 	assert.equal(built[0]!.match.playedAt, 1_700_000_000_000);
@@ -1185,9 +1205,9 @@ const OTHER_GAME_PAINTS = [1188, 1003, 1421, 901, 1250, 612, 1377, 745];
 const PLAYED_AT = new Date(2025, 11, 25, 21, 34).getTime();
 
 function playedGame(): DetectedEvent[] {
-	const results = scoreboard(300, { paints: GAME_PAINTS }) as DetectedEvent & {
-		detectedAt?: number;
-	};
+	const results: DetectedEvent & { detectedAt?: number } = scoreboard(300, {
+		paints: GAME_PAINTS,
+	});
 	results.detectedAt = PLAYED_AT;
 	return [mapStart(0), death(100, "l1"), results];
 }
@@ -1461,9 +1481,12 @@ test.each([
 			timestamp: "25.12.2025 21:30",
 			paints: OTHER_GAME_PAINTS,
 		});
-		const reads = [...intro, death(100, "l1")];
+		const reads: (DetectedEvent & { detectedAt?: number })[] = [
+			...intro,
+			death(100, "l1"),
+		];
 		for (const read of reads) {
-			(read as DetectedEvent & { detectedAt?: number }).detectedAt = PLAYED_AT;
+			read.detectedAt = PLAYED_AT;
 		}
 		const built = buildScannerMatches([...reads, view]);
 		assert.equal(built.length, 1);
@@ -1480,7 +1503,7 @@ test.each([
 		why: "of another mode",
 		view: () => {
 			const view = battleLogScoreboard(200);
-			(view.data as ScoreboardData).mode = "CB";
+			view.data.mode = "CB";
 			return view;
 		},
 	},
@@ -1491,7 +1514,7 @@ test.each([
 ])(
 	"a battle log view $why leaves the match being gathered open",
 	({ view: makeView }) => {
-		const start = mapStart(0) as DetectedEvent & { detectedAt?: number };
+		const start: DetectedEvent & { detectedAt?: number } = mapStart(0);
 		start.detectedAt = PLAYED_AT;
 		const view = makeView();
 		const built = buildScannerMatches([
@@ -1641,7 +1664,7 @@ test("with a cache, an earlier match completed from the battle log keeps its ide
 });
 
 test("a battle log view recorded long before the orphan reads leaves them unclaimed", () => {
-	const read = death(100, "l1") as DetectedEvent & { detectedAt?: number };
+	const read: DetectedEvent & { detectedAt?: number } = death(100, "l1");
 	read.detectedAt = PLAYED_AT;
 	const view = battleLogScoreboard(200, { timestamp: "25.12.2025 19:30" });
 	const built = buildScannerMatches([read, view, scoreboard(300)]);
@@ -1700,8 +1723,8 @@ test("a spectator map's minimaps become one cast match: weapons + stage from the
 test("a cast match's players come from its most confident minimap read first", () => {
 	const midWipe = [3010, ...ALPHA.slice(1)] as MainWeaponId[];
 	const built = buildScannerMatches([
-		minimap(70, { alpha: midWipe, confidence: 0.65 }),
-		minimap(71, { confidence: 0.78 }),
+		minimap(70, { alpha: midWipe, scores: { read: 0.65 } }),
+		minimap(71, { scores: { read: 0.78 } }),
 	]);
 	assert.deepEqual(weapons(built[0]!.match), ALL);
 });
@@ -1888,11 +1911,14 @@ test("no minimaps and no scoreboard means no match", () => {
 	assert.deepEqual(buildScannerMatches([mapStart(30), mapStart(400)]), []);
 });
 
-const ALL_FALSE = [
-	[false, false, false, false],
-	[false, false, false, false],
-] as PlayerStatusData["special"];
+type StatusFlags = [PlayerStatusFlags, PlayerStatusFlags];
 
+const ALL_FALSE: StatusFlags = [
+	[false, false, false, false],
+	[false, false, false, false],
+];
+
+/** A clean read: each slot's flagged state at 0.9, the others at 0.05. */
 function playerStatus(
 	t: number,
 	{
@@ -1900,10 +1926,22 @@ function playerStatus(
 		special = ALL_FALSE,
 		dead = ALL_FALSE,
 		cast = null as true | null,
+		/** per slot evidence, over the flags */
+		evidence = [] as { side: 0 | 1; slot: number; evidence: SlotEvidence }[],
 	} = {},
 ): DetectedEvent {
-	const data: PlayerStatusData = { time, special, dead, cast };
-	return { type: "PlayerStatus", t, confidence: 0.9, data };
+	const slots = dead.map((side, sideIndex) =>
+		side.map((isDead, slot): SlotEvidence => {
+			const given = evidence.find(
+				(entry) => entry.side === sideIndex && entry.slot === slot,
+			);
+			if (given) return given.evidence;
+			if (isDead) return [0.05, 0.05, 0.9];
+			return special[sideIndex]![slot] ? [0.05, 0.9, 0.05] : [0.9, 0.05, 0.05];
+		}),
+	) as PlayerStatusData["slots"];
+	const data: PlayerStatusData = { time, slots, cast };
+	return { type: "PlayerStatus", t, scores: { read: 0.9 }, data };
 }
 
 /** Each read slot ranks its weapon at `score` over a runner-up no row plays at FLOOR_SCORE. */
@@ -1913,7 +1951,7 @@ function stripWeaponsEvent(
 	t: number,
 	slots: [(MainWeaponId | null)[], (MainWeaponId | null)[]],
 	{ score = 0.9, time = (300 - Math.round(t)) as number | null } = {},
-): DetectedEvent {
+): EventOfType<"StripWeapons"> {
 	const data: StripWeaponsData = {
 		time,
 		slots: slots.map((side) =>
@@ -1927,18 +1965,18 @@ function stripWeaponsEvent(
 			),
 		) as StripWeaponsData["slots"],
 	};
-	return { type: "StripWeapons", t, confidence: score, data };
+	return { type: "StripWeapons", t, scores: { read: score }, data };
 }
 
 test("player-status reads become teams-order samples on the match", () => {
 	const special = [
 		[true, false, false, false],
 		[false, false, false, false],
-	] as PlayerStatusData["special"];
+	] as StatusFlags;
 	const dead = [
 		[false, false, false, false],
 		[false, false, true, false],
-	] as PlayerStatusData["dead"];
+	] as StatusFlags;
 	const built = buildScannerMatches([
 		mapStart(0),
 		playerStatus(120, { special, dead }),
@@ -2018,12 +2056,12 @@ test("status reads inherit the nearest counter read's cast orientation", () => {
 	assert.equal(built[0]!.match.cast, true);
 });
 
-test("sub-2s dead-flag blips between dense opposite reads get flipped", () => {
+test("dead and alive runs shorter than a respawn or a spawn take the states around them", () => {
 	const deadAt = (slots: number[]) =>
 		[
 			[false, false, false, false],
 			[0, 1, 2, 3].map((slot) => slots.includes(slot)),
-		] as PlayerStatusData["dead"];
+		] as StatusFlags;
 	const built = buildScannerMatches([
 		mapStart(0),
 		// slot0: a real death 101-107 with a one-read false "respawn" at 104
@@ -2059,7 +2097,7 @@ test("a lone dead read between sparse reads is kept", () => {
 	const dead = [
 		[false, false, false, false],
 		[true, false, false, false],
-	] as PlayerStatusData["dead"];
+	] as StatusFlags;
 	const built = buildScannerMatches([
 		mapStart(0),
 		playerStatus(60),
@@ -2070,17 +2108,21 @@ test("a lone dead read between sparse reads is kept", () => {
 	assert.deepEqual(built[0]!.match.playerStatus!.samples[1]!.dead, dead);
 });
 
-test("a sub-10s not-ready gap between ready reads with no death bridges to ready", () => {
+test("a not-ready gap between ready reads too short to regain a special bridges to ready", () => {
 	const specialAt = (on: boolean) =>
 		[
 			[on, false, false, false],
 			[false, false, false, false],
-		] as PlayerStatusData["special"];
+		] as StatusFlags;
+	// the wash's dim pulse trough reads as a toss-up between ready and not
+	const trough = [
+		{ side: 0 as const, slot: 0, evidence: [0.55, 0.4, 0.05] as SlotEvidence },
+	];
 	const built = buildScannerMatches([
 		mapStart(0),
 		playerStatus(100, { special: specialAt(true) }),
-		playerStatus(102, { special: specialAt(false) }),
-		playerStatus(104, { special: specialAt(false) }),
+		playerStatus(102, { evidence: trough }),
+		playerStatus(104, { evidence: trough }),
 		playerStatus(106, { special: specialAt(true) }),
 		playerStatus(108, { special: specialAt(false) }),
 		scoreboard(300),
@@ -2092,12 +2134,34 @@ test("a sub-10s not-ready gap between ready reads with no death bridges to ready
 	assert.deepEqual(slot0Specials, [true, true, true, true, false]);
 });
 
+test("a ready read too soon after a spent special loses to the clean reads around it", () => {
+	const specialAt = (on: boolean) =>
+		[
+			[on, false, false, false],
+			[false, false, false, false],
+		] as StatusFlags;
+	const built = buildScannerMatches([
+		mapStart(0),
+		playerStatus(100, { special: specialAt(true) }),
+		playerStatus(101, { special: specialAt(false) }),
+		playerStatus(102, { special: specialAt(false) }),
+		playerStatus(103, { special: specialAt(false) }),
+		playerStatus(104, { special: specialAt(true) }),
+		playerStatus(105, { special: specialAt(false) }),
+		scoreboard(300),
+	]);
+	const slot0Specials = built[0]!.match.playerStatus!.samples.map(
+		(sample) => sample.special[0][0],
+	);
+	assert.deepEqual(slot0Specials, [true, false, false, false, false, false]);
+});
+
 test("ready reads before a special could charge are dropped, not bridged into the first real one", () => {
 	const specialAt = (on: boolean) =>
 		[
 			[on, false, false, false],
 			[false, false, false, false],
-		] as PlayerStatusData["special"];
+		] as StatusFlags;
 	const built = buildScannerMatches([
 		mapStart(0),
 		playerStatus(11, { time: 300, special: specialAt(true) }),
@@ -2131,11 +2195,11 @@ test("a not-ready gap explained by a death inside it is kept", () => {
 		special: [
 			[special, false, false, false],
 			[false, false, false, false],
-		] as PlayerStatusData["special"],
+		] as StatusFlags,
 		dead: [
 			[dead, false, false, false],
 			[false, false, false, false],
-		] as PlayerStatusData["dead"],
+		] as StatusFlags,
 	});
 	const built = buildScannerMatches([
 		mapStart(0),
@@ -2156,7 +2220,7 @@ test("a not-ready gap wide enough to regain a special is kept", () => {
 		[
 			[on, false, false, false],
 			[false, false, false, false],
-		] as PlayerStatusData["special"];
+		] as StatusFlags;
 	const built = buildScannerMatches([
 		mapStart(0),
 		playerStatus(100, { special: specialAt(true) }),
@@ -2192,7 +2256,7 @@ test("a Turf War match drops ready reads before a special could charge on its 3:
 		[
 			[on, false, false, false],
 			[false, false, false, false],
-		] as PlayerStatusData["special"];
+		] as StatusFlags;
 	const built = buildScannerMatches([
 		mapStart(0, { mode: "TW" }),
 		playerStatus(15, { time: 176, special: specialAt(true) }),
@@ -2311,7 +2375,7 @@ test("weapon evidence below the assignment floor keeps the as-drawn order", () =
 	const dead = [
 		[true, false, false, false],
 		[false, false, false, false],
-	] as PlayerStatusData["dead"];
+	] as StatusFlags;
 	const built = buildScannerMatches([
 		mapStart(0),
 		playerStatus(120, { dead }),
@@ -2363,7 +2427,7 @@ function stripRead(
 			[0, 1, 2, 3].map((slot) =>
 				marked.some(([s, k]) => s === side && k === slot),
 			),
-		) as PlayerStatusData["dead"];
+		) as StatusFlags;
 	return playerStatus(t, { dead: flags(dead), special: flags(special) });
 }
 
@@ -2384,7 +2448,7 @@ test("a named card's state tells apart two rows sharing a weapon", () => {
 		{
 			type: "Minimap",
 			t: 100,
-			confidence: 0.8,
+			scores: { read: 0.8 },
 			data: {
 				stage: 0 as StageId,
 				spectator: false,
@@ -2392,7 +2456,7 @@ test("a named card's state tells apart two rows sharing a weapon", () => {
 				enemies: [],
 				teamColors: [null, null],
 			},
-		} as DetectedEvent,
+		},
 		stripRead(150, { special: [[0, 0]] }),
 		scoreboard(300, { weapons: [40, 40, 2010, 3030, ...BRAVO] }),
 	]);
@@ -2445,7 +2509,7 @@ test("pov diamond cards map to scoreboard rows by name", () => {
 	};
 	const built = buildScannerMatches([
 		mapStart(0),
-		{ type: "Minimap", t: 90, confidence: 0.8, data } as DetectedEvent,
+		{ type: "Minimap", t: 90, scores: { read: 0.8 }, data },
 		scoreboard(300),
 	]);
 	const sample = built[0]!.match.playerStatus!.samples[0]!;
@@ -2485,7 +2549,7 @@ test("pov diamond cards match OCR-garbled names to their scoreboard rows", () =>
 			enemies: BRAVO.map((id) => enemy(id)),
 			teamColors: [null, null],
 		};
-		return { type: "Minimap", t, confidence: 0.8, data };
+		return { type: "Minimap", t, scores: { read: 0.8 }, data };
 	};
 	const built = buildScannerMatches([
 		mapStart(0),
@@ -2524,7 +2588,7 @@ function povMinimapWithHiddenCards(t: number): DetectedEvent {
 		enemies: BRAVO.map((id) => enemy(id)),
 		teamColors: [null, null],
 	};
-	return { type: "Minimap", t, confidence: 0.8, data };
+	return { type: "Minimap", t, scores: { read: 0.8 }, data };
 }
 
 // the strip seats the hidden ally (1001) first and the POV (3030) last
@@ -2567,7 +2631,7 @@ function kill(
 	{ time = (300 - Math.round(t)) as number | null } = {},
 ): DetectedEvent {
 	const data: KillData = { time, names };
-	return { type: "Kill", t, confidence: 0.9, data };
+	return { type: "Kill", t, scores: { read: 0.9 }, data };
 }
 
 test("kill reads become one kill per row entering the stack", () => {
@@ -2778,7 +2842,7 @@ function kitTieStripRead(
 	runnerUp: MainWeaponId,
 ): DetectedEvent {
 	const event = stripWeaponsEvent(t, STRIP_SEATING);
-	const data = event.data as StripWeaponsData;
+	const { data } = event;
 	data.slots[0][0] = [
 		{ weaponId: leader, score: 0.9 },
 		{ weaponId: runnerUp, score: 0.85 },

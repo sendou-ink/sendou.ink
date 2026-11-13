@@ -7,16 +7,14 @@ import assert from "node:assert/strict";
 import { loadOpenCV } from "../core/cv";
 import { createDeathDetector } from "../core/detectors/death/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
-import {
-	createMinimapDetector,
-	type MinimapData,
-} from "../core/detectors/minimap/index";
+import { createMinimapDetector } from "../core/detectors/minimap/index";
 import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
 import type { Detector } from "../core/detectors/types";
 import { hueDistance, hueOf } from "../core/ink-color";
 import {
+	assertCompleteness,
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
@@ -35,10 +33,7 @@ test("minimap fixtures exist", () => {
 
 for (const fixture of fixtures) {
 	test(`minimap/${fixture.name}`, async (t) => {
-		const { gate, events } = await runDetectorOnFixture<MinimapData>(
-			detector,
-			fixture,
-		);
+		const { gate, events } = await runDetectorOnFixture(detector, fixture);
 		const expectPositive = fixture.expected.event === "Minimap";
 
 		await t.test("gate", () => {
@@ -62,14 +57,9 @@ for (const fixture of fixtures) {
 			},
 		);
 
-		if (fixture.expected.options?.unsettled) {
-			await t.test("confidence stays under sufficientConfidence", () => {
-				assert.ok(
-					event.confidence < detector.sufficientConfidence!,
-					`confidence ${event.confidence.toFixed(3)} would end the refinement`,
-				);
-			});
-		}
+		await t.test("completeness", () => {
+			assertCompleteness(fixture, event);
+		});
 
 		await t.test(
 			"stage",
@@ -116,13 +106,13 @@ for (const fixture of fixtures) {
 					if (want.self !== undefined) assert.equal(got.self, want.self);
 					if (
 						want.name !== undefined &&
-						!fieldTestOptions(fixture, `teammates.${i}.name`)
+						!fieldTestOptions(fixture, `teammates.${i}.name`).skip
 					) {
 						assert.equal(got.name, want.name, `name (debug: ${cardDebug})`);
 					}
 					if (
 						want.weaponId !== undefined &&
-						!fieldTestOptions(fixture, `teammates.${i}.weapon`)
+						!fieldTestOptions(fixture, `teammates.${i}.weapon`).skip
 					) {
 						assert.equal(
 							got.weaponId,
@@ -132,7 +122,7 @@ for (const fixture of fixtures) {
 					}
 					if (
 						want.abilities !== undefined &&
-						!fieldTestOptions(fixture, `teammates.${i}.abilities`)
+						!fieldTestOptions(fixture, `teammates.${i}.abilities`).skip
 					) {
 						assert.deepEqual(
 							got.abilities,
@@ -169,13 +159,13 @@ for (const fixture of fixtures) {
 					);
 					if (
 						want.name !== undefined &&
-						!fieldTestOptions(fixture, `enemies.${i}.name`)
+						!fieldTestOptions(fixture, `enemies.${i}.name`).skip
 					) {
 						assert.equal(got.name, want.name, `name (debug: ${rowDebug})`);
 					}
 					if (
 						want.weaponId !== undefined &&
-						!fieldTestOptions(fixture, `enemies.${i}.weapon`)
+						!fieldTestOptions(fixture, `enemies.${i}.weapon`).skip
 					) {
 						assert.equal(
 							got.weaponId,
@@ -185,7 +175,7 @@ for (const fixture of fixtures) {
 					}
 					if (
 						want.abilities !== undefined &&
-						!fieldTestOptions(fixture, `enemies.${i}.abilities`)
+						!fieldTestOptions(fixture, `enemies.${i}.abilities`).skip
 					) {
 						assert.deepEqual(
 							got.abilities,
@@ -215,10 +205,7 @@ for (const fixture of fixtures) {
 test("spectator sub tiles read the two team ink colors", async () => {
 	const fixture = fixtures.find((f) => f.name === "spectator-sws26-swiss");
 	assert.ok(fixture, "spectator-sws26-swiss fixture missing");
-	const { events } = await runDetectorOnFixture<MinimapData>(
-		detector,
-		fixture!,
-	);
+	const { events } = await runDetectorOnFixture(detector, fixture!);
 	const teamColors = events[0]?.data.teamColors;
 	assert.ok(teamColors?.[0] && teamColors[1], "column ink color unreadable");
 	const [alpha, bravo] = teamColors;
@@ -268,12 +255,12 @@ for (const fixture of loadFixtures("negative")) {
 	});
 }
 
-const otherDetectors: Detector<unknown>[] = [
-	createScoreboardDetector(resources) as Detector<unknown>,
-	createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
-	createScoreboardOwnDetector(resources) as Detector<unknown>,
-	createDeathDetector(resources) as Detector<unknown>,
-	createMapStartDetector(resources) as Detector<unknown>,
+const otherDetectors: Detector[] = [
+	createScoreboardDetector(resources) as Detector,
+	createScoreboardBattleLogReplayDetector(resources) as Detector,
+	createScoreboardOwnDetector(resources) as Detector,
+	createDeathDetector(resources) as Detector,
+	createMapStartDetector(resources) as Detector,
 ];
 for (const fixture of fixtures.filter((f) => f.expected.event === "Minimap")) {
 	test(`other gates stay quiet on minimap/${fixture.name}`, async () => {

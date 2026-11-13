@@ -28,15 +28,11 @@ import {
 	scoreWindows,
 	windowClosed,
 } from "../core/clips/scoring";
-import {
-	MAP_START_EVENT_TYPE,
-	type MapStartData,
-} from "../core/detectors/map-start/index";
+import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
-import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
-import type { DetectedEvent } from "../core/detectors/types";
+import { type DetectedEvent, isScoreboardEvent } from "../core/events";
 import type { ScannerMatch } from "../core/scanner-match";
-import { TimelineBuilder } from "../core/timeline/index";
+import { bringsFrame } from "../core/timeline/index";
 import { publishCaptureStatus } from "../scanner-activity";
 import {
 	deleteClip,
@@ -56,7 +52,7 @@ import {
 	refreshFeed,
 	subscribeFeed,
 } from "./events-feed";
-import { type FixtureData, saveFrame } from "./fixture-export";
+import { saveFrame } from "./fixture-export";
 import {
 	matchContaining,
 	retryDueMatches,
@@ -154,10 +150,13 @@ let releaseCaptureLock: (() => void) | null = null;
 let captureEnding: Promise<void> = Promise.resolve();
 let clipStoreSettled = false;
 let unsubscribeFeed: (() => void) | null = null;
-let timeline = new TimelineBuilder();
-const storedIds = new WeakMap<DetectedEvent, number>();
+/**
+ * The stored event's id per slot (`key`) of the worker's timeline, as of the
+ * slot's latest save: a later read of the slot waits for it and takes its id.
+ */
+const storedIds = new Map<number, Promise<number | undefined>>();
 /** event saves in flight, so Stop's last clip pass sees the final kills */
-const persisting = new Set<Promise<void>>();
+const persisting = new Set<Promise<unknown>>();
 // the open match is known to be a mode with no counter overlay (Turf War), so
 // counter reads are lookalike misreads and are not collected at all (the icon
 // strip's reads are real in every mode)
@@ -228,7 +227,7 @@ export async function startCapture(): Promise<void> {
 	objectiveBlocked = false;
 	cuts.length = 0;
 	ownClipIds.clear();
-	timeline = new TimelineBuilder();
+	storedIds.clear();
 	let stream: MediaStream | null = null;
 	try {
 		const settings = readSettings();
@@ -517,44 +516,44 @@ function onResult(
 	result: Parameters<ConstructorParameters<typeof AnalyzerClient>[0]>[0],
 ): void {
 	if (!result.gate.pass) return;
-	for (const event of result.events as DetectedEvent<FixtureData>[]) {
+	for (const { action, key, event } of result.changes) {
+		// never stored, so a later read of its slot is stored as a new event
 		if (event.type === OBJECTIVE_EVENT_TYPE && objectiveBlocked) continue;
-		const action = timeline.push(event);
-		if (action.action === "merged" || action.action === "dropped") continue;
 		if (event.type === MAP_START_EVENT_TYPE) {
-			const mode = (event.data as MapStartData).mode;
-			objectiveBlocked = mode === "TW";
-		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+			objectiveBlocked = event.data.mode === "TW";
+		} else if (isScoreboardEvent(event)) {
 			objectiveBlocked = false;
 		}
-		const stale =
-			action.action === "added" ? undefined : storedIds.get(action.replaced);
-		// a run's trailing read only moves its time; the run's first read keeps the frame
-		const frame = action.action === "extended" ? undefined : result.frame;
-		const saving = persist(action.event, frame, stale);
+		// an amended read keeps its slot's frame
+		const frame = bringsFrame(action) ? result.frame : "kept";
+		const saving = persist(event, frame, storedIds.get(key));
+		storedIds.set(key, saving);
 		persisting.add(saving);
 		void saving.finally(() => persisting.delete(saving));
 	}
 }
 
+/** Saves the event over the one its slot held (`replacing`, once that is saved); resolves to the stored id. */
 async function persist(
 	event: DetectedEvent,
-	frame: Blob | undefined,
-	stale: number | undefined,
-): Promise<void> {
+	frame: Blob | "kept" | undefined,
+	replacing: Promise<number | undefined> | undefined,
+): Promise<number | undefined> {
+	const stale = await replacing;
+	let id = stale;
 	try {
 		// reusing the replaced event's id keeps match card keys stable, so
 		// repeat detections don't remount the cards
-		const id = await saveEvent(event, frame, stale);
-		storedIds.set(event, id);
-		if (uploadEnabled() && SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+		id = await saveEvent(event, frame, stale);
+		const saved = id;
+		if (uploadEnabled() && isScoreboardEvent(event)) {
 			// a scoreboard closes its match — send it, again if it went out
 			// without one; a better read of an already sent scoreboard is not resent
 			const unsent =
 				stale === undefined ? unsentScoreboardMatches : unsentMatches;
 			refreshFeed();
 			await sendLive(
-				(built) => matchContaining(id)(built) && unsent(built),
+				(built) => matchContaining(saved)(built) && unsent(built),
 				newestSessionKey(),
 			);
 		}
@@ -562,6 +561,7 @@ async function persist(
 		set({ error: describeError(error) });
 	}
 	refreshFeed();
+	return id;
 }
 
 /**

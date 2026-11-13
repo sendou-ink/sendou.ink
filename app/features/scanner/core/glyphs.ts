@@ -10,10 +10,20 @@
  * dips ('T' overhangs merge into the next letter); multi-stroke glyphs with a
  * stroke gap (katakana パ/ハ/リ) segment as unmatched fragments, so close pairs
  * are re-classified merged and kept only when the merge decisively wins.
+ *
+ * A template is a line-height cell: its ink box plus where the line's baseline
+ * runs through it. The line is read once with the boxes sliding freely, the
+ * glyphs found there say where its baseline runs, how it is tilted and how
+ * large it is drawn (lineFrame), and from then on a template only matches at
+ * its own height on the line and pays for the ink its cell leaves out. Shapes
+ * that differ in nothing but height ('p'/'P', '_'/'-'/'¯', '.'/'・') are
+ * different templates that way.
  */
+import { median } from "~/utils/number";
 import { getCV, type Mat } from "./cv";
+import * as Decisions from "./decisions";
 import type { FrameData } from "./image";
-import { all, type MatchSteps } from "./match-steps";
+import { all, exactMatchRows, type MatchSteps } from "./match-steps";
 
 interface AtlasGlyphMeta {
 	char: string;
@@ -27,6 +37,19 @@ interface AtlasGlyphMeta {
 	 * takes the max score, so fixture glyphs win where they exist.
 	 */
 	source?: "fixture" | "font";
+	/**
+	 * Rows from the top of the box down to the baseline of the line the glyph
+	 * was drawn on (fractional; past `h` for a glyph floating above it, negative
+	 * for one hanging under it). With it the box is a line-height cell stored
+	 * without its empty rows. Missing only in what bootstrap-atlas-from-fixture.ts
+	 * writes: such an atlas does not load.
+	 */
+	baseline?: number;
+	/**
+	 * Fixture crops only: the text line the crop was cut from and the box's top
+	 * row within it, which is what build-glyph-atlas.ts places `baseline` from.
+	 */
+	line?: { id: number; top: number };
 }
 
 export interface AtlasMeta {
@@ -46,6 +69,8 @@ interface Glyph {
 	ink: number;
 	/** exact fixture crop vs font-rendered approximation */
 	source: "fixture" | "font";
+	/** rows from the top of `mat` down to the baseline of its line (fractional; negative for a mark hanging under it) */
+	ascent: number;
 	/** lazily-built PRESCREEN_SCALE thumbnail for the eligibility prescreen */
 	small?: { mat: Mat; rows: number; cols: number };
 }
@@ -55,6 +80,8 @@ export interface GlyphSet {
 	height: number;
 	/** median tight-box glyph width, used for split/space heuristics */
 	medianWidth: number;
+	/** rows the set's tallest glyph reaches over the baseline and its deepest under it: the line-height cell */
+	cell: { above: number; below: number };
 }
 
 const TEMPLATE_BIN_THRESHOLD = 128;
@@ -69,6 +96,7 @@ function lazyGlyphSet(
 	build: () => { glyphs: Glyph[]; medianWidth: number },
 ): GlyphSet {
 	let built: { glyphs: Glyph[]; medianWidth: number } | null = null;
+	let cell: GlyphSet["cell"] | null = null;
 	return {
 		height,
 		get glyphs() {
@@ -79,11 +107,23 @@ function lazyGlyphSet(
 			built ??= build();
 			return built.medianWidth;
 		},
+		get cell() {
+			cell ??= {
+				above: Math.max(0, ...this.glyphs.map((g) => g.ascent)),
+				below: Math.max(0, ...this.glyphs.map((g) => g.rows - g.ascent)),
+			};
+			return cell;
+		},
 	};
 }
 
 /** Slice glyph templates out of an atlas image using its metadata (on first use). */
 export function loadGlyphSet(atlas: FrameData, meta: AtlasMeta): GlyphSet {
+	if (meta.glyphs.some((g) => g.baseline === undefined)) {
+		throw new Error(
+			"glyph atlas without baselines: rebuild it with scanner:build-glyph-atlas",
+		);
+	}
 	return lazyGlyphSet(meta.height, () => {
 		const cv = getCV();
 		const full = cv.matFromImageData(atlas as unknown as ImageData);
@@ -95,11 +135,11 @@ export function loadGlyphSet(atlas: FrameData, meta: AtlasMeta): GlyphSet {
 			// NB: .data/.clone() are broken on ROI views in this opencv.js build;
 			// always copyTo into a fresh mat before pixel access.
 			const view = gray.roi(new cv.Rect(g.x, g.y, g.w, g.h));
-			const cell = new cv.Mat();
-			view.copyTo(cell);
+			const box = new cv.Mat();
+			view.copyTo(box);
 			view.delete();
-			const mat = tightCropGray(cell, TEMPLATE_BIN_THRESHOLD);
-			cell.delete();
+			const { mat, top } = tightCropGray(box, TEMPLATE_BIN_THRESHOLD);
+			box.delete();
 			// untagged glyphs predate hybrid atlases and were all fixture crops
 			return {
 				char: g.char,
@@ -108,6 +148,7 @@ export function loadGlyphSet(atlas: FrameData, meta: AtlasMeta): GlyphSet {
 				cols: mat.cols,
 				ink: inkOf(mat),
 				source: g.source ?? "fixture",
+				ascent: g.baseline! - top,
 			};
 		});
 		gray.delete();
@@ -143,6 +184,7 @@ export function scaleGlyphSet(set: GlyphSet, factor: number): GlyphSet {
 				cols: mat.cols,
 				ink: inkOf(mat),
 				source: g.source,
+				ascent: g.ascent * factor,
 			};
 		});
 		return { glyphs, medianWidth: Math.round(set.medianWidth * factor) };
@@ -158,8 +200,11 @@ function inkOf(mat: Mat): number {
 	return ink;
 }
 
-/** Crop a grayscale mat to the tight bounds of its above-threshold pixels. */
-function tightCropGray(gray: Mat, threshold: number): Mat {
+/** Crop a grayscale mat to the tight bounds of its above-threshold pixels; `top` is the first row kept. */
+function tightCropGray(
+	gray: Mat,
+	threshold: number,
+): { mat: Mat; top: number } {
 	const cv = getCV();
 	const { cols, rows, data } = gray;
 	let xMin = cols;
@@ -179,14 +224,14 @@ function tightCropGray(gray: Mat, threshold: number): Mat {
 	const out = new cv.Mat();
 	if (xMax < 0) {
 		gray.copyTo(out);
-		return out;
+		return { mat: out, top: 0 };
 	}
 	const view = gray.roi(
 		new cv.Rect(xMin, yMin, xMax - xMin + 1, yMax - yMin + 1),
 	);
 	view.copyTo(out);
 	view.delete();
-	return out;
+	return { mat: out, top: yMin };
 }
 
 export interface RecognizedChar {
@@ -298,7 +343,9 @@ function splitWideSegment(
 			best = i;
 		}
 	}
-	if (best < 0 || bestRatio > 0.45) return [seg];
+	if (best < 0 || Decisions.above("glyphs:splitDipMaxRatio", bestRatio, 0.45)) {
+		return [seg];
+	}
 	// The dip is often a plateau of equally-low columns whose ink ownership
 	// is ambiguous; cut at whichever edge leaves the left part closest to a
 	// whole glyph width.
@@ -323,21 +370,34 @@ interface SegmentInfo extends Segment {
 	/** ink extent rows (y1 exclusive) */
 	y0: number;
 	y1: number;
+	/** ink above each crop row: inkAbove[y] counts rows 0..y-1 */
+	inkAbove: Uint32Array;
 }
 
-function measureSegment(binary: Mat, seg: Segment): SegmentInfo {
+/** `band` = the crop rows that count (the line's cell); ink on the others is not the line's. */
+function measureSegment(
+	binary: Mat,
+	seg: Segment,
+	band: { y0: number; y1: number } | null,
+): SegmentInfo {
 	const { cols, data, rows } = binary;
+	const inkAbove = new Uint32Array(rows + 1);
+	const bandY0 = Math.max(0, band?.y0 ?? 0);
+	const bandY1 = Math.min(rows, band?.y1 ?? rows);
 	let ink = 0;
 	let yMin = rows;
 	let yMax = -1;
 	for (let y = 0; y < rows; y++) {
-		for (let x = seg.x0; x < seg.x1; x++) {
-			if (data[y * cols + x]! > 0) {
-				ink++;
-				if (y < yMin) yMin = y;
-				if (y > yMax) yMax = y;
+		if (y >= bandY0 && y < bandY1) {
+			for (let x = seg.x0; x < seg.x1; x++) {
+				if (data[y * cols + x]! > 0) {
+					ink++;
+					if (y < yMin) yMin = y;
+					if (y > yMax) yMax = y;
+				}
 			}
 		}
+		inkAbove[y + 1] = ink;
 	}
 	return {
 		...seg,
@@ -345,6 +405,49 @@ function measureSegment(binary: Mat, seg: Segment): SegmentInfo {
 		height: Math.max(0, yMax - yMin + 1),
 		y0: Math.min(yMin, rows),
 		y1: yMax + 1,
+		inkAbove,
+	};
+}
+
+/**
+ * Where a line of text runs through its crop: its baseline crosses column x at
+ * row `base + slope * x` (battle log tags are tilted, a levelled death tag
+ * keeps a little of its tilt), and its glyphs measure `scale` times their
+ * templates (each caller scales its set to a nominal height: the quick battle
+ * log's names come out a tenth smaller than their set). On it a glyph's ink
+ * box runs from `ascent * scale` rows over the baseline to
+ * `(rows - ascent) * scale` under it: its cell.
+ */
+interface LineFrame {
+	base: number;
+	slope: number;
+	scale: number;
+}
+
+/** Rows a glyph's ink may be off its cell: whole-pixel rounding on both sides, more on large text. */
+function cellTolerance(set: GlyphSet): number {
+	return 1 + Math.round(0.02 * set.height);
+}
+
+/**
+ * A template leaving this share of the segment's ink outside its cell is not
+ * read at all (a mark at another height: '_' for '-'), and what it does leave
+ * out costs it this many times the share: a tail is a few pixels of a 'j',
+ * and they are all that tells it from the 'i'.
+ */
+const CELL_MAX_UNCOVERED = 0.5;
+const CELL_UNCOVERED_WEIGHT = 0.75;
+
+/** The row the line's baseline crosses the middle of `seg` at. */
+function baselineAt(line: LineFrame, seg: Segment): number {
+	return line.base + (line.slope * (seg.x0 + seg.x1)) / 2;
+}
+
+/** The crop rows of `glyph`'s cell on a line whose baseline is at `baseline` (fractional, y1 exclusive). */
+function cellRows(glyph: Glyph, baseline: number, scale: number) {
+	return {
+		y0: baseline - glyph.ascent * scale,
+		y1: baseline + (glyph.rows - glyph.ascent) * scale,
 	};
 }
 
@@ -366,8 +469,10 @@ const DEFAULT_MAX_CANDIDATES = 5;
  * A dot's template carries a pad row above and below its few ink rows, so on a
  * soft capture (quick log "R.O.B.O.T": 4x3 dots) it outgrows the height ratio
  * and only '_' was left to read them. Blobs no wider than they are tall (plus
- * that pad) accept templates up to the pad taller; bars stay height-checked,
- * which is what tells '_' from '-'.
+ * that pad) accept templates up to the pad taller. Bars stay height-checked
+ * while the line's baseline is unknown, since nothing else tells '_' from '-'
+ * there; on a line their height over the baseline does, and a soft capture
+ * thins a hyphen to three rows, a row under its template.
  */
 const DOT_TEMPLATE_PAD_ROWS = 2;
 
@@ -391,17 +496,50 @@ const PRESCREEN_SCALE = 0.5;
 const PRESCREEN_MARGIN = 0.3;
 const PRESCREEN_MAX_KEEP = 1024;
 
+/**
+ * The crop columns a segment's templates are searched over, and the rows
+ * while the line's baseline is unknown: the segment's ink rows, since line
+ * crops can run far taller than the text (the death tag band is ~2x its
+ * glyphs) and every extra row multiplies matching work. The slack keeps every
+ * hRatio-eligible template (tRows <= 1.3 * seg.height) placeable.
+ */
+function searchRegion(
+	masked: { rows: number; cols: number },
+	seg: SegmentInfo,
+) {
+	const pad = 5;
+	const x0 = Math.max(0, seg.x0 - pad);
+	const vSlack = Math.ceil(0.15 * seg.height) + 2;
+	const y0 = Math.max(0, seg.y0 - vSlack);
+	return {
+		x0,
+		cols: Math.min(masked.cols, seg.x1 + pad) - x0,
+		y0,
+		rows: Math.min(masked.rows, seg.y1 + vSlack) - y0,
+	};
+}
+
+/**
+ * Only placements covering most of the segment: the region is padded, so a
+ * free-sliding template can otherwise match the *neighboring* glyph inside
+ * the pad ('l' next to a narrow 'i' at 0.97+) or a fragment ('t' stem on 'b').
+ */
+const MIN_SEGMENT_OVERLAP = 0.7;
+
 type RankedCandidate = {
 	char: string;
 	score: number;
 	ncc: number;
 	source: "fixture" | "font";
+	glyph: Glyph;
 };
 
 function* classifySegment(
 	masked: Mat,
 	seg: SegmentInfo,
 	set: GlyphSet,
+	/** null = the line's baseline is not known yet: templates slide over the segment's ink rows */
+	line: LineFrame | null,
 	/**
 	 * Exact early-reject floor: a score never exceeds its precomputed bound, so a
 	 * caller only asking whether any glyph can beat `scoreFloor` (mergeSplitGlyphs)
@@ -412,31 +550,25 @@ function* classifySegment(
 	maxCandidates = DEFAULT_MAX_CANDIDATES,
 	/** identity of `masked`'s pixels, so a batching driver can reuse scores */
 	maskedKey?: string,
+	/** what earlier reads of the crop found, to spare this one the same matches */
+	memo: CropMemo = { lowRes: new Map(), free: new Map() },
 ): MatchSteps<RankedCandidate[]> {
-	const cv = getCV();
 	const segWidth = seg.x1 - seg.x0;
-	const pad = 5;
+	const spanKey = seg.x0 * 65536 + seg.x1;
+	// a template kept to its cell sits on placements the free read already
+	// scored, so it cannot beat what it scored there
+	const freeScores = line ? memo.free.get(spanKey) : undefined;
 	// NB: Mat dimension/data accessors go through embind (validateThis etc.)
 	// and are expensive — hoist them out of the per-glyph/per-pixel loops.
 	const maskedRows = masked.rows;
-	const x0 = Math.max(0, seg.x0 - pad);
-	const x1 = Math.min(masked.cols, seg.x1 + pad);
-	const regionCols = x1 - x0;
-	// Crop the search region vertically to the segment's ink rows: line crops can
-	// run far taller than the text (the death tag band is ~2x its glyphs) and every
-	// extra row multiplies matchTemplate work. The slack keeps every hRatio-eligible
-	// template (tRows <= 1.3 * seg.height) placeable.
-	const vSlack = Math.ceil(0.15 * seg.height) + 2;
-	const y0 = Math.max(0, seg.y0 - vSlack);
-	const y1 = Math.min(maskedRows, seg.y1 + vSlack);
-	const regionRows = y1 - y0;
-	const region = masked.roi(new cv.Rect(x0, y0, regionCols, regionRows));
-	const regionKey =
-		maskedKey === undefined
-			? undefined
-			: `${maskedKey}|${x0},${y0},${regionCols},${regionRows}`;
+	const free = searchRegion({ rows: maskedRows, cols: masked.cols }, seg);
+	const x0 = free.x0;
+	const regionCols = free.cols;
+	const baseline = line ? baselineAt(line, seg) : 0;
+	const scale = line?.scale ?? 1;
+	const tolerance = cellTolerance(set);
 
-	// Both penalty factors depend only on glyph and segment, and NCC <= 1, so
+	// Every penalty factor depends only on glyph and segment, and NCC <= 1, so
 	// their product bounds a glyph's score before matching. Matching in
 	// descending-bound order lets the loop stop once no remaining glyph could
 	// come within FIXTURE_TIEBREAK of the best.
@@ -444,72 +576,105 @@ function* classifySegment(
 	for (const glyph of set.glyphs) {
 		const tRows = glyph.rows;
 		const tCols = glyph.cols;
-		if (tRows > regionRows || tCols > regionCols) continue;
+		if (tCols > regionCols) continue;
 		const wRatio = tCols / Math.max(segWidth, 1);
 		if (wRatio < 0.4 || wRatio > 2.5) continue;
-		const hRatio = tRows / Math.max(seg.height, 1);
+		// the glyph's height as this line draws it: a line a tenth smaller than
+		// its templates would cost every true glyph the height penalty below.
+		// (Ink is compared as is: it follows stroke width, which blur changes
+		// on its own.)
+		const inkRows = tRows * scale;
+		const hRatio = inkRows / Math.max(seg.height, 1);
 		// a template sliding freely in a taller region can score high on a fragment
 		// of the segment (an 'l' bar inside a 'c'), so reject height mismatches
 		const padded =
-			segWidth <= seg.height + DOT_TEMPLATE_PAD_ROWS &&
-			tRows - seg.height <= DOT_TEMPLATE_PAD_ROWS;
+			(line !== null || segWidth <= seg.height + DOT_TEMPLATE_PAD_ROWS) &&
+			inkRows - seg.height <= DOT_TEMPLATE_PAD_ROWS;
 		if (hRatio < 0.5 || (hRatio > 1.3 && !padded)) continue;
+		let y0 = free.y0;
+		let rows = free.rows;
+		// what the glyph's cell leaves of the segment's ink: the tail of a 'g' is
+		// ink an 'o' cannot have, however well its bowl fits
+		let covered = 1;
+		if (line) {
+			const cell = cellRows(glyph, baseline, scale);
+			// a template smaller or larger than its cell sits anywhere between
+			// flush with the cell's top and flush with its bottom
+			const flushTop = Math.round(cell.y0);
+			const flushBottom = Math.round(cell.y1) - tRows;
+			y0 = Math.max(0, Math.min(flushTop, flushBottom) - tolerance);
+			rows =
+				Math.min(
+					maskedRows,
+					Math.max(flushTop, flushBottom) + tRows + tolerance,
+				) - y0;
+			const cellY0 = Math.max(0, Math.round(cell.y0) - tolerance);
+			const cellY1 = Math.min(maskedRows, Math.round(cell.y1) + tolerance);
+			const uncovered =
+				cellY1 > cellY0
+					? 1 -
+						(seg.inkAbove[cellY1]! - seg.inkAbove[cellY0]!) /
+							Math.max(seg.ink, 1)
+					: 1;
+			if (uncovered > CELL_MAX_UNCOVERED) continue;
+			covered = 1 - CELL_UNCOVERED_WEIGHT * uncovered;
+		}
+		if (tRows > rows) continue;
 		// ink-coverage penalty: templates should explain the segment's ink
 		const r =
 			Math.min(glyph.ink, seg.ink) / Math.max(Math.max(glyph.ink, seg.ink), 1);
 		// height-mismatch penalty: an x-height template on an ascender/descender
 		// glyph ('o' on 'b') correlates well on the bowl alone
 		const hr =
-			Math.min(tRows, seg.height) / Math.max(tRows, Math.max(seg.height, 1));
+			Math.min(inkRows, seg.height) /
+			Math.max(inkRows, Math.max(seg.height, 1));
+		const freeScore =
+			freeScores &&
+			y0 >= freeScores.y0 &&
+			y0 + rows <= freeScores.y0 + freeScores.rows
+				? freeScores.ncc.get(glyph)
+				: undefined;
 		eligible.push({
 			glyph,
 			tRows,
 			tCols,
 			r,
 			hr,
-			bound: (0.7 + 0.3 * r) * (0.85 + 0.15 * hr),
+			covered,
+			y0,
+			rows,
+			bounded: freeScore !== undefined,
+			penalty: (0.7 + 0.3 * r) * (0.85 + 0.15 * hr) * covered,
+			bound: (freeScore ?? 1) * (0.7 + 0.3 * r) * (0.85 + 0.15 * hr) * covered,
 		});
 	}
 	sortByBound(eligible);
 
-	const candidates: {
-		char: string;
-		score: number;
-		ncc: number;
-		source: "fixture" | "font";
-		inkCoverage: number;
-	}[] = [];
-	// Only placements covering most of the segment: the region is padded, so a
-	// free-sliding template can otherwise match the *neighboring* glyph inside
-	// the pad ('l' next to a narrow 'i' at 0.97+) or a fragment ('t' stem on 'b').
-	const minOverlap = 0.7 * segWidth;
+	const candidates: (RankedCandidate & { inkCoverage: number })[] = [];
+	const minOverlap = MIN_SEGMENT_OVERLAP * segWidth;
 	// In probe mode only "can any glyph beat the floor" matters, so the loop stops
 	// once either answer is certain.
 	const probeMode = scoreFloor !== Number.NEGATIVE_INFINITY;
+	const columns = { x0, cols: regionCols };
 	// a probe prunes against its own floor instead of the front-runner: its usual
 	// answer is "nothing clears the floor", which otherwise costs a full match of
 	// every template whose loose bound exceeds it
 	const contenders =
 		eligible.length >= PRESCREEN_MIN_ELIGIBLE
 			? yield* prescreen(
-					region,
+					masked,
 					eligible,
-					{
-						x0,
-						segX0: seg.x0,
-						segX1: seg.x1,
-						minOverlap,
-					},
+					{ ...free, segX0: seg.x0, segX1: seg.x1 },
+					minOverlap,
 					probeMode ? scoreFloor : null,
-					regionKey,
+					maskedKey,
+					memo.lowRes,
 				)
 			: eligible;
 	// overlap(sx) is concave in sx, so the valid placements form one
 	// contiguous rx interval per template; empty ones are never matched
-	const requestIndex: number[] = [];
-	const templates: Mat[] = [];
-	const requestWindows: (readonly [number, number])[] = [];
-	for (const contender of contenders) {
+	const regions = rowRegions(masked, columns, maskedKey);
+	const slots = contenders.map((contender) => {
 		const window = overlapWindow(
 			regionCols - contender.tCols + 1,
 			x0,
@@ -518,30 +683,27 @@ function* classifySegment(
 			seg.x1,
 			minOverlap,
 		);
-		requestIndex.push(window ? templates.length : -1);
-		if (!window) continue;
-		templates.push(contender.glyph.mat);
-		requestWindows.push(window);
-	}
-	const [scoreOf] =
-		templates.length > 0
-			? yield [
-					{
-						image: region,
-						templates,
-						windows: requestWindows,
-						key: regionKey,
-					},
-				]
-			: [() => Number.NEGATIVE_INFINITY];
+		return window ? regions.add(contender, contender.glyph.mat, window) : null;
+	});
+	const scores = regions.requests.length > 0 ? yield regions.requests : [];
+	const freeNcc = line ? null : new Map<Glyph, number>();
+	if (freeNcc)
+		memo.free.set(spanKey, { y0: free.y0, rows: free.rows, ncc: freeNcc });
 	let bestScore = scoreFloor;
 	for (let i = 0; i < contenders.length; i++) {
-		const { glyph, r, hr, bound } = contenders[i]!;
-		if (bound < bestScore - FIXTURE_TIEBREAK) break;
+		const { glyph, r, hr, covered, bound, bounded } = contenders[i]!;
+		if (bound < bestScore - (bounded ? RUNNER_UP_MARGIN : FIXTURE_TIEBREAK)) {
+			// bounds only fall from here, but a template with a free score is
+			// read further under the best than one without
+			if (bounded || !freeScores) break;
+			continue;
+		}
 		if (probeMode && (bound <= scoreFloor || bestScore > scoreFloor)) break;
-		if (requestIndex[i] === -1) continue;
-		const maxVal = scoreOf!(requestIndex[i]!);
-		const score = maxVal * (0.7 + 0.3 * r) * (0.85 + 0.15 * hr);
+		const slot = slots[i];
+		if (!slot) continue;
+		const maxVal = scores[slot.request]!(slot.template);
+		freeNcc?.set(glyph, maxVal);
+		const score = maxVal * (0.7 + 0.3 * r) * (0.85 + 0.15 * hr) * covered;
 		if (Number.isFinite(score)) {
 			if (score > bestScore) bestScore = score;
 			candidates.push({
@@ -549,23 +711,36 @@ function* classifySegment(
 				score,
 				ncc: maxVal,
 				source: glyph.source,
+				glyph,
 				inkCoverage: r,
 			});
 		}
 	}
-	region.delete();
+	regions.release();
 	sortByScore(candidates);
 	const top = candidates[0];
 	if (top && top.source === "font") {
 		const fixture = candidates.find(
 			(c) =>
 				c.source === "fixture" &&
-				top.score - c.score < FIXTURE_TIEBREAK &&
+				Decisions.below(
+					"glyphs:FIXTURE_TIEBREAK#score",
+					top.score - c.score,
+					FIXTURE_TIEBREAK,
+				) &&
 				// ...only when the fixture's raw correlation is also competitive: a fixture
 				// crop of a *different* char landing near the top via the ink penalty must
 				// not displace a well-matching font glyph
-				top.ncc - c.ncc < FIXTURE_TIEBREAK &&
-				top.inkCoverage - c.inkCoverage < FIXTURE_TIEBREAK_MAX_INK_GAP,
+				Decisions.below(
+					"glyphs:FIXTURE_TIEBREAK#ncc",
+					top.ncc - c.ncc,
+					FIXTURE_TIEBREAK,
+				) &&
+				Decisions.below(
+					"glyphs:FIXTURE_TIEBREAK_MAX_INK_GAP",
+					top.inkCoverage - c.inkCoverage,
+					FIXTURE_TIEBREAK_MAX_INK_GAP,
+				),
 		);
 		if (fixture && fixture !== top) {
 			candidates.splice(candidates.indexOf(fixture), 1);
@@ -581,48 +756,141 @@ interface EligibleGlyph {
 	tCols: number;
 	r: number;
 	hr: number;
+	covered: number;
+	/** crop rows the template may be placed on: `rows` of them from `y0` */
+	y0: number;
+	rows: number;
 	bound: number;
+	/** `bound` holds the template's free score, not the 1 no score exceeds */
+	bounded: boolean;
+	/** the penalty factors alone: `bound` of a template without a free score */
+	penalty: number;
+}
+
+interface RowRequest {
+	image: Mat;
+	templates: Mat[];
+	windows: (readonly [number, number])[];
+	key: string | undefined;
 }
 
 /**
+ * The search images of one segment: its columns of the crop over the rows a
+ * template may be placed on. Read freely every template shares one; on a line
+ * with a baseline each template has the rows of its own cell, so templates
+ * are grouped by those rows into one request each.
+ */
+// XXX: the WebGPU driver matches every template asked for, so there the cell read costs a second round trip per line and a request per cell height (fixture set parse 23 s -> 30 s, CPU unchanged): ask it only for templates whose free score can still win, or drop the question with the GPU matcher
+function rowRegions(
+	masked: Mat,
+	columns: { x0: number; cols: number },
+	maskedKey: string | undefined,
+) {
+	const requests: RowRequest[] = [];
+	const requestOfRows = new Map<number, number>();
+	return {
+		requests,
+		/** Asks for `template`'s score over `rows`; the slot finds it in the step's scores. */
+		add(
+			rows: { y0: number; rows: number },
+			template: Mat,
+			window: readonly [number, number],
+		): { request: number; template: number } {
+			const rowsKey = rows.y0 * 65536 + rows.rows;
+			let request = requestOfRows.get(rowsKey);
+			if (request === undefined) {
+				const { x0, cols } = columns;
+				request = requests.length;
+				requestOfRows.set(rowsKey, request);
+				requests.push({
+					image: masked.roi(new (getCV().Rect)(x0, rows.y0, cols, rows.rows)),
+					templates: [],
+					windows: [],
+					key:
+						maskedKey === undefined
+							? undefined
+							: `${maskedKey}|${x0},${rows.y0},${cols},${rows.rows}`,
+				});
+			}
+			const { templates, windows } = requests[request]!;
+			templates.push(template);
+			windows.push(window);
+			return { request, template: templates.length - 1 };
+		},
+		release(): void {
+			for (const { image } of requests) image.delete();
+		},
+	};
+}
+
+/** The prescreen's low-res NCC per glyph, by the crop region it was taken over. */
+type LowResScores = Map<string, Map<Glyph, number>>;
+
+/** What the reads of one crop found so far. */
+interface CropMemo {
+	lowRes: LowResScores;
+	/** per span (x0 · 65536 + x1): the NCC of every template its free read matched, and the crop rows it slid over */
+	free: Map<number, { y0: number; rows: number; ncc: Map<Glyph, number> }>;
+}
+
+/**
+ * How far under the best a template with a known free score is still read on
+ * a line: wide enough for every runner-up a resolver asks for (an accented
+ * letter up to 0.15 behind the bare one).
+ */
+const RUNNER_UP_MARGIN = 0.2;
+
+/**
  * Low-res ranking pass over an oversized eligibility list; see PRESCREEN_*.
- * `geometry` carries the caller's placement window in full-res coordinates:
- * without the same min-overlap restriction a template scoring on the neighbor
- * inside the pad inflates the front-runner and prunes the true glyph.
+ * It asks which glyphs look like the segment at all, so the templates slide
+ * over the segment's ink rows whether or not the line's baseline is known,
+ * and a region's estimates are taken once for every read of it. `region` and
+ * `minOverlapFull` carry the caller's placement window in full-res
+ * coordinates: without the same min-overlap restriction a template scoring on
+ * the neighbor inside the pad inflates the front-runner and prunes the true
+ * glyph.
  */
 function* prescreen(
-	region: Mat,
+	masked: Mat,
 	eligible: EligibleGlyph[],
-	geometry: { x0: number; segX0: number; segX1: number; minOverlap: number },
+	region: {
+		x0: number;
+		y0: number;
+		cols: number;
+		rows: number;
+		segX0: number;
+		segX1: number;
+	},
+	minOverlapFull: number,
 	/** probe mode: prune against this floor instead of the front-runner */
 	probeFloor: number | null,
-	regionKey: string | undefined,
+	maskedKey: string | undefined,
+	lowRes: LowResScores,
 ): MatchSteps<EligibleGlyph[]> {
 	const cv = getCV();
-	const smallRegion = new cv.Mat();
-	cv.resize(
-		region,
-		smallRegion,
-		scaledSize(region.cols, region.rows),
-		0,
-		0,
-		cv.INTER_AREA,
-	);
-	const smallRows = smallRegion.rows;
-	const smallCols = smallRegion.cols;
-	const x0 = geometry.x0 * PRESCREEN_SCALE;
-	const segX0 = geometry.segX0 * PRESCREEN_SCALE;
-	const segX1 = geometry.segX1 * PRESCREEN_SCALE;
+	const regionId = `${region.x0},${region.y0},${region.cols},${region.rows}`;
+	let known = lowRes.get(regionId);
+	if (!known) {
+		known = new Map();
+		lowRes.set(regionId, known);
+	}
+	const smallSize = scaledSize(region.cols, region.rows);
+	const smallRows = smallSize.height;
+	const smallCols = smallSize.width;
+	const x0 = region.x0 * PRESCREEN_SCALE;
+	const segX0 = region.segX0 * PRESCREEN_SCALE;
+	const segX1 = region.segX1 * PRESCREEN_SCALE;
 	// the slack pixel keeps quantized low-res placements from cutting a
 	// boundary placement the full-res window allows
-	const minOverlap = geometry.minOverlap * PRESCREEN_SCALE - 1;
+	const minOverlap = minOverlapFull * PRESCREEN_SCALE - 1;
 	// entries the low-res pass cannot estimate (degenerate template or no valid
 	// placement after scaling) are force-kept but stay out of the front-runner
 	// max, or their untightened bound (≈1) prunes every estimated glyph
 	const kept: EligibleGlyph[] = [];
-	const estimable: {
-		entry: EligibleGlyph;
-		small: { mat: Mat; rows: number; cols: number };
+	const estimable: EligibleGlyph[] = [];
+	const asked: {
+		glyph: Glyph;
+		small: Mat;
 		window: readonly [number, number];
 	}[] = [];
 	for (const entry of eligible) {
@@ -648,24 +916,38 @@ function* prescreen(
 			kept.push(entry);
 			continue;
 		}
-		estimable.push({ entry, small, window });
+		estimable.push(entry);
+		if (!known.has(entry.glyph)) {
+			asked.push({ glyph: entry.glyph, small: small.mat, window });
+		}
 	}
-	const [scoreOf] =
-		estimable.length > 0
-			? yield [
-					{
-						image: smallRegion,
-						templates: estimable.map((e) => e.small.mat),
-						windows: estimable.map((e) => e.window),
-						key: regionKey === undefined ? undefined : `${regionKey}|small`,
-					},
-				]
-			: [() => Number.NEGATIVE_INFINITY];
-	const scored = estimable.map(({ entry }, i) => ({
+	if (asked.length > 0) {
+		const view = masked.roi(
+			new cv.Rect(region.x0, region.y0, region.cols, region.rows),
+		);
+		const smallRegion = new cv.Mat();
+		cv.resize(view, smallRegion, smallSize, 0, 0, cv.INTER_AREA);
+		view.delete();
+		const [scoreOf] = yield [
+			{
+				image: smallRegion,
+				templates: asked.map((a) => a.small),
+				windows: asked.map((a) => a.window),
+				key:
+					maskedKey === undefined
+						? undefined
+						: `${maskedKey}|${regionId}|small`,
+			},
+		];
+		for (const [i, { glyph }] of asked.entries()) known.set(glyph, scoreOf!(i));
+		smallRegion.delete();
+	}
+	// ranked by the penalties alone, so templates with and without a free
+	// score are estimated alike
+	const scored = estimable.map((entry) => ({
 		entry,
-		est: scoreOf!(i) * entry.bound,
+		est: known.get(entry.glyph)! * entry.penalty,
 	}));
-	smallRegion.delete();
 	scored.sort((a, b) => b.est - a.est);
 	if (scored.length > 0) {
 		const floor =
@@ -773,6 +1055,8 @@ function sortByScore<T extends { score: number }>(items: T[]): void {
 interface ClassifiedSegment {
 	seg: SegmentInfo;
 	ranked: RankedCandidate[];
+	/** read freely it looked like a glyph the line keeps at another height, and nothing at its own came close */
+	displaced?: boolean;
 }
 
 /**
@@ -796,13 +1080,14 @@ const MERGE_WEAK_FRAGMENT = 0.65;
 const MERGE_STRONG_READ = 0.8;
 const MERGE_WEAK_SLACK = 0.03;
 /**
- * Marks drawn at the cap line: a fragment read as one while its ink reaches the
- * baseline is a stroke of a split glyph, however well the stroke matches (ル's
- * left stroke reads ′ at 0.78 beside its right stroke as ι at 0.87, ル at 0.83),
- * so its pair only needs the merge to be a strong read.
+ * A fragment that read freely as a glyph the line keeps at another height,
+ * and as nothing near as well at its own, is a stroke of a split glyph however
+ * well the stroke matched (い's right stroke reads as a prime at 0.80, which
+ * belongs at the cap line, and at its own height as 'r' at 0.68, beside its
+ * left stroke as 'ι' at 0.90 and い at 0.84), so its pair only needs the
+ * merge to be a strong read.
  */
-const RAISED_MARKS = new Set([..."′″‘’‛“”'\"`´ªº°¹²³^˜¨¯"]);
-const RAISED_MARK_BASELINE_SLACK_PX = 2;
+const MERGE_DISPLACED_DROP = 0.1;
 
 function* mergeSplitGlyphs(
 	items: ClassifiedSegment[],
@@ -811,11 +1096,6 @@ function* mergeSplitGlyphs(
 	const { set, maxCandidates } = ctx;
 	const maxGap = Math.max(3, Math.round(set.medianWidth * MERGE_MAX_GAP_RATIO));
 	const maxCharWidth = Math.round(set.medianWidth * 1.5);
-	const bottoms = items.map((item) => item.seg.y1).sort((a, b) => a - b);
-	const baseline = bottoms[Math.floor(bottoms.length / 2)] ?? 0;
-	const strayMark = ({ seg, ranked }: ClassifiedSegment) =>
-		RAISED_MARKS.has(ranked[0]?.char ?? "") &&
-		baseline - seg.y1 <= RAISED_MARK_BASELINE_SLACK_PX;
 	const mergeCandidate = (i: number) => {
 		const a = items[i]!;
 		const b = items[i + 1]!;
@@ -827,9 +1107,15 @@ function* mergeSplitGlyphs(
 		const bScore = b.ranked[0]?.score ?? 0;
 		const fragmentBest = Math.max(aScore, bScore);
 		let floor = fragmentBest + MERGE_MARGIN;
-		if (strayMark(a) || strayMark(b)) {
+		if (a.displaced || b.displaced) {
 			floor = Math.min(floor, MERGE_STRONG_READ);
-		} else if (Math.min(aScore, bScore) < MERGE_WEAK_FRAGMENT) {
+		} else if (
+			Decisions.below(
+				"glyphs:MERGE_WEAK_FRAGMENT",
+				Math.min(aScore, bScore),
+				MERGE_WEAK_FRAGMENT,
+			)
+		) {
 			floor = Math.min(
 				floor,
 				Math.max(MERGE_STRONG_READ, fragmentBest - MERGE_WEAK_SLACK),
@@ -867,7 +1153,7 @@ function* mergeSplitGlyphs(
 			// full run (rare): the winning merge's ranked list must also carry
 			// the sub-floor runner-up candidates downstream consumers see
 			const ranked = yield* classify(ctx, seg, undefined, maxCandidates);
-			if ((ranked[0]?.score ?? 0) > floor) {
+			if (Decisions.above("glyphs:mergeFloor", ranked[0]?.score ?? 0, floor)) {
 				// stay at i: the merged segment may absorb yet another stroke
 				items.splice(i, 2, { seg, ranked });
 				merged = true;
@@ -941,10 +1227,13 @@ interface RecutContext {
 	measure: (seg: Segment) => SegmentInfo;
 	masked: Mat;
 	set: GlyphSet;
+	/** where the line sits in the crop; null while it is read to find that out */
+	line: LineFrame | null;
 	maxCandidates: number;
 	maskedKey: string | undefined;
 	/** prefetch whole candidate sets in lockstep (batching drivers only: on the sync path it is wasted work) */
 	speculative: boolean;
+	memo: CropMemo;
 	/** `classify` results by span (x0 · 65536 + x1), then floor and candidate cap */
 	classified: Map<
 		number,
@@ -978,9 +1267,11 @@ function* classify(
 		ctx.masked,
 		seg,
 		ctx.set,
+		ctx.line,
 		scoreFloor,
 		maxCandidates,
 		ctx.maskedKey,
+		ctx.memo,
 	);
 	results.push({ floor: scoreFloor, maxCandidates, ranked });
 	return ranked;
@@ -1069,7 +1360,16 @@ function* recutMiscutPairs(
 		const b = items[i + 1]!;
 		const aScore = a.ranked[0]?.score ?? 0;
 		const bScore = b.ranked[0]?.score ?? 0;
-		if (aScore >= RECUT_MAX_SCORE || bScore >= RECUT_MAX_SCORE) return null;
+		if (
+			Decisions.atLeast(
+				"glyphs:RECUT_MAX_SCORE#pair",
+				aScore,
+				RECUT_MAX_SCORE,
+			) ||
+			Decisions.atLeast("glyphs:RECUT_MAX_SCORE#pair", bScore, RECUT_MAX_SCORE)
+		) {
+			return null;
+		}
 		if (b.seg.x0 - a.seg.x1 > maxGap) return null;
 		const floor = Math.max(
 			RECUT_MIN_SCORE,
@@ -1120,7 +1420,18 @@ function* splitFusedGlyphs(
 	const minWidth = ctx.set.medianWidth * FUSED_MIN_WIDTH_RATIO;
 	const fused = (item: ClassifiedSegment) => {
 		const score = item.ranked[0]?.score ?? 0;
-		if (score >= RECUT_MAX_SCORE || item.seg.x1 - item.seg.x0 < minWidth)
+		if (
+			Decisions.atLeast(
+				"glyphs:RECUT_MAX_SCORE#fused",
+				score,
+				RECUT_MAX_SCORE,
+			) ||
+			Decisions.below(
+				"glyphs:FUSED_MIN_WIDTH_RATIO",
+				item.seg.x1 - item.seg.x0,
+				minWidth,
+			)
+		)
 			return null;
 		const floor = Math.max(RECUT_MIN_SCORE, score + RECUT_MARGIN);
 		const cuts = deepestDipCuts(
@@ -1190,7 +1501,10 @@ function* resegmentWeakRuns(
 			end++;
 		}
 		const weakest = Math.min(...items.slice(start, end).map(score));
-		if (end - start >= 2 && weakest < RECUT_MAX_SCORE) {
+		if (
+			end - start >= 2 &&
+			Decisions.below("glyphs:RECUT_MAX_SCORE#run", weakest, RECUT_MAX_SCORE)
+		) {
 			runs.push({
 				start,
 				end,
@@ -1281,7 +1595,8 @@ function* bestSegmentation(
 		for (const [i, { to, seg }] of viable.entries()) {
 			const ranked = reads[i]!;
 			const pieceScore = ranked[0]?.score ?? 0;
-			if (pieceScore <= floor) continue;
+			if (Decisions.atMost("glyphs:resegmentFloor", pieceScore, floor))
+				continue;
 			const weakest = Math.min(head.weakest, pieceScore);
 			const total = head.total + pieceScore;
 			const current = best[to];
@@ -1337,38 +1652,62 @@ export function* recognizeTextSteps(
 		const spanKey = seg.x0 * 65536 + seg.x1;
 		let info = measured.get(spanKey);
 		if (!info) {
-			info = measureSegment(binary, seg);
+			info = measureSegment(
+				binary,
+				seg,
+				ctx.line && lineBand(ctx.line, seg, set),
+			);
 			measured.set(spanKey, info);
 		}
 		return info;
 	};
 	const profile = columnProfile(binary);
-	const segments = segmentColumns(profile, minColumnPixels)
-		.flatMap((s) => splitWideSegment(profile, s, set.medianWidth))
-		.map((s) => measure(s));
+	const segments = segmentColumns(profile, minColumnPixels).flatMap((s) =>
+		splitWideSegment(profile, s, set.medianWidth),
+	);
 
 	const ctx: RecutContext = {
 		profile,
 		measure,
 		masked,
 		set,
+		line: null,
 		maxCandidates,
 		maskedKey: speculative ? `m${maskedKeySeq++}` : undefined,
 		speculative,
+		memo: { lowRes: new Map(), free: new Map() },
 		classified: new Map(),
 	};
-	const rankedSegments = yield* all(
-		segments.map((seg) => classify(ctx, seg, undefined, maxCandidates)),
-	);
+	const classifyAll = (spans: Segment[]) =>
+		all(
+			spans.map((span) =>
+				classify(ctx, measure(span), undefined, maxCandidates),
+			),
+		);
+	const freeSegments = segments.map(measure);
+	const freeReads = yield* classifyAll(segments);
+	ctx.line = lineFrame(masked, freeSegments, freeReads, set);
+	// measured anew within the line's rows, and read anew at the glyphs' heights
+	if (ctx.line) {
+		measured.clear();
+		ctx.classified.clear();
+	}
+	const rankedSegments = ctx.line ? yield* classifyAll(segments) : freeReads;
 	const items: ClassifiedSegment[] = segments.map((seg, i) => ({
-		seg,
+		seg: measure(seg),
 		ranked: rankedSegments[i]!,
+		displaced:
+			ctx.line !== null &&
+			Decisions.above(
+				"glyphs:MERGE_DISPLACED_DROP",
+				(freeReads[i]![0]?.score ?? 0) - (rankedSegments[i]![0]?.score ?? 0),
+				MERGE_DISPLACED_DROP,
+			),
 	}));
 	yield* mergeSplitGlyphs(items, ctx);
 	yield* recutMiscutPairs(items, ctx);
 	yield* splitFusedGlyphs(items, ctx);
 	yield* resegmentWeakRuns(items, ctx);
-
 	const chars: RecognizedChar[] = [];
 	let text = "";
 	let prevEnd: number | null = null;
@@ -1406,4 +1745,232 @@ export function* recognizeTextSteps(
 				? 0
 				: 1;
 	return { text, chars, confidence };
+}
+
+/** steepest baseline taken for a line of text, in rows per column (1.7 degrees) */
+const LINE_MAX_SLOPE = 0.03;
+/**
+ * The candidates of a segment that say where the baseline may be: its best
+ * few, and only those scoring near the best. A twin at another height is that
+ * close ('P' 0.03 behind 'p'); the best guess at a stroke of a split kana is
+ * not, and three such guesses made a tilted line of a level one.
+ */
+const LINE_CANDIDATES = 3;
+const LINE_CANDIDATE_MARGIN = 0.1;
+/**
+ * How far off its templates' size a line is taken to be. Until the size is
+ * measured a glyph's baseline is only known to this share of its ink's
+ * distance from it (plus a row), which is how close a candidate must come to
+ * a baseline to count for it.
+ */
+const LINE_MAX_SCALE_ERROR = 0.15;
+/** a tilted baseline is tried through the pairs of this many segments, spread over the line */
+const LINE_TILT_SEGMENTS = 16;
+/** a shorter line is taken to be level: two or three glyphs a row apart are rounding, not tilt */
+const LINE_TILT_MIN_GLYPHS = 5;
+/** glyphs at least this share of the set's height tell the line's size */
+const LINE_SCALE_MIN_HEIGHT = 0.6;
+
+/** A glyph a segment may be, and where the line's baseline would be if it were. */
+interface BaselineVote {
+	glyph: Glyph;
+	/** crop row the glyph's template matched best on */
+	top: number;
+	baseline: number;
+	score: number;
+	/** rows a baseline may pass from `baseline` and still count the glyph */
+	slack: number;
+}
+
+interface VotingSegment {
+	seg: SegmentInfo;
+	x: number;
+	votes: BaselineVote[];
+}
+
+/**
+ * Where the line is, from a read of its segments with the templates sliding
+ * freely: every candidate glyph says where the baseline would be if the
+ * segment were that glyph, and the baseline whose glyphs score the most over
+ * the whole line wins. Twins of one shape at two heights ('p'/'P') disagree,
+ * and the glyphs beside them settle it. The glyphs on the winner then say how
+ * large the line is drawn (segment height over template height, the median of
+ * the tall ones), how it is tilted, and with both exactly where its baseline
+ * runs. Null when nothing was read.
+ */
+function lineFrame(
+	masked: Mat,
+	segments: SegmentInfo[],
+	reads: RankedCandidate[][],
+	set: GlyphSet,
+): LineFrame | null {
+	const voting = reads.map((ranked, i): VotingSegment => {
+		const seg = segments[i]!;
+		const candidates = ranked
+			.slice(0, LINE_CANDIDATES)
+			.filter((c) => c.score >= ranked[0]!.score - LINE_CANDIDATE_MARGIN);
+		const tops = placementRows(
+			masked,
+			seg,
+			candidates.map((c) => c.glyph),
+		);
+		return {
+			seg,
+			x: (seg.x0 + seg.x1) / 2,
+			votes: candidates.map(({ glyph, score }, k) => {
+				const top = tops[k]!;
+				const farEdge = Math.max(
+					Math.abs(glyph.ascent),
+					Math.abs(glyph.rows - glyph.ascent),
+				);
+				return {
+					glyph,
+					top,
+					baseline: top + glyph.ascent,
+					score,
+					slack: 1 + LINE_MAX_SCALE_ERROR * farEdge,
+				};
+			}),
+		};
+	});
+	const onLine = glyphsOnBestBaseline(voting);
+	if (onLine.length === 0) return null;
+	const sizes = onLine
+		.filter(({ vote }) => vote.glyph.rows >= LINE_SCALE_MIN_HEIGHT * set.height)
+		.map(({ seg, vote }) => seg.height / vote.glyph.rows);
+	const scale =
+		sizes.length >= 2
+			? Math.min(
+					1 + LINE_MAX_SCALE_ERROR,
+					Math.max(1 - LINE_MAX_SCALE_ERROR, median(sizes)),
+				)
+			: 1;
+	// a template off its glyph's size matched centered on it: the glyph's own
+	// top edge is half the size difference further out
+	const baselines = onLine.map(({ x, vote }) => ({
+		x,
+		y:
+			vote.top -
+			((scale - 1) * vote.glyph.rows) / 2 +
+			vote.glyph.ascent * scale,
+	}));
+	const slope = tiltOf(baselines);
+	return {
+		base: median(baselines.map(({ x, y }) => y - slope * x)),
+		slope,
+		scale,
+	};
+}
+
+/**
+ * The glyphs of the baseline that explains the most of the line: per segment
+ * the best-scoring vote the baseline passes within its slack of. A level
+ * baseline is tried through every voted row, a tilted one through every pair
+ * of votes (battle log tags are tilted far enough to lose their ends to any
+ * level one), and a tilted one is taken only when it explains more.
+ */
+function glyphsOnBestBaseline(
+	voting: VotingSegment[],
+): (VotingSegment & { vote: BaselineVote })[] {
+	const baselines: { base: number; slope: number }[] = [
+		...new Set(voting.flatMap(({ votes }) => votes.map((v) => v.baseline))),
+	].map((base) => ({ base, slope: 0 }));
+	const step = Math.max(1, Math.ceil(voting.length / LINE_TILT_SEGMENTS));
+	const spread = voting.filter((_, i) => i % step === 0);
+	for (const [i, a] of spread.entries()) {
+		for (const b of spread.slice(i + 1)) {
+			if (b.x === a.x) continue;
+			for (const va of a.votes) {
+				for (const vb of b.votes) {
+					const slope = (vb.baseline - va.baseline) / (b.x - a.x);
+					if (slope === 0 || Math.abs(slope) > LINE_MAX_SLOPE) continue;
+					baselines.push({ base: va.baseline - slope * a.x, slope });
+				}
+			}
+		}
+	}
+	let best: { glyphs: (BaselineVote | null)[]; support: number } | null = null;
+	for (const { base, slope } of baselines) {
+		const glyphs = voting.map(({ x, votes }) => {
+			const at = base + slope * x;
+			let kept: BaselineVote | null = null;
+			for (const vote of votes) {
+				if (
+					vote.score > (kept?.score ?? 0) &&
+					Math.abs(vote.baseline - at) <= vote.slack
+				) {
+					kept = vote;
+				}
+			}
+			return kept;
+		});
+		const support = glyphs.reduce((sum, v) => sum + (v?.score ?? 0), 0);
+		if (!best || support > best.support) best = { glyphs, support };
+	}
+	return (best?.glyphs ?? []).flatMap((vote, i) =>
+		vote ? [{ ...voting[i]!, vote }] : [],
+	);
+}
+
+/**
+ * The tilt of a line through `points`: the median slope over every pair of
+ * them. The whole-row baselines of a level line give exactly zero, and the
+ * few glyphs a vote took at the wrong height (a soft hyphen read as an
+ * underscore at an end of the line) do not tip it.
+ */
+function tiltOf(points: { x: number; y: number }[]): number {
+	if (points.length < LINE_TILT_MIN_GLYPHS) return 0;
+	const slopes: number[] = [];
+	for (const [i, a] of points.entries()) {
+		for (const b of points.slice(i + 1)) {
+			if (b.x !== a.x) slopes.push((b.y - a.y) / (b.x - a.x));
+		}
+	}
+	return Math.max(-LINE_MAX_SLOPE, Math.min(LINE_MAX_SLOPE, median(slopes)));
+}
+
+/**
+ * The crop row each glyph's template matches `seg` best on, read freely:
+ * where the glyph is if the segment is that glyph. Asked of the matcher
+ * rather than read off the segment's ink box, which a neighbor's overhang or
+ * a border line in the crop stretches.
+ */
+function placementRows(
+	masked: Mat,
+	seg: SegmentInfo,
+	glyphs: Glyph[],
+): number[] {
+	if (glyphs.length === 0) return [];
+	const cv = getCV();
+	const region = searchRegion(masked, seg);
+	const view = masked.roi(
+		new cv.Rect(region.x0, region.y0, region.cols, region.rows),
+	);
+	const rows = exactMatchRows(
+		view,
+		glyphs.map((glyph) => glyph.mat),
+		glyphs.map(
+			(glyph) =>
+				overlapWindow(
+					region.cols - glyph.cols + 1,
+					region.x0,
+					glyph.cols,
+					seg.x0,
+					seg.x1,
+					MIN_SEGMENT_OVERLAP * (seg.x1 - seg.x0),
+				)!,
+		),
+	);
+	view.delete();
+	return rows.map((row) => region.y0 + row);
+}
+
+/** The crop rows of the line's cell at `seg`: where ink can be a glyph of this line at all. */
+function lineBand(line: LineFrame, seg: Segment, set: GlyphSet) {
+	const baseline = baselineAt(line, seg);
+	const tolerance = cellTolerance(set);
+	return {
+		y0: Math.round(baseline - set.cell.above * line.scale) - tolerance,
+		y1: Math.round(baseline + set.cell.below * line.scale) + tolerance,
+	};
 }

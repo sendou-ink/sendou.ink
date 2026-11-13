@@ -10,6 +10,7 @@ import { seededRandom } from "~/utils/random";
 import { createCheckTracker } from "../../core/detectors/check-plan";
 import {
 	DetectorScheduler,
+	type ParsedRead,
 	type SchedulingInfo,
 } from "../../core/detectors/scheduler";
 import { test } from "../node-test-compat";
@@ -18,14 +19,24 @@ const DETECTORS: SchedulingInfo[] = [
 	{ id: "default" },
 	{ id: "fixed", checkIntervalS: 0.5 },
 	{ id: "slow-refine", refineIntervalS: 0.4, rearmCooldownS: 5 },
+	{ id: "short-cooldown", refineIntervalS: 0.5, rearmCooldownS: 4 },
 	{
-		id: "sufficient",
-		refineIntervalS: 0.5,
-		rearmCooldownS: 4,
-		sufficientConfidence: 0.9,
+		id: "fast-search",
+		searchIntervalS: 0.1,
+		maxStagnantParses: 2,
+		stagnantAfterS: 0.8,
 	},
-	{ id: "fast-search", searchIntervalS: 0.1, maxStagnantParses: 2 },
 ];
+
+/** A read the timeline dropped, merged, took as a change or found complete, by `roll` in 0..1. */
+function randomRead(roll: number): ParsedRead {
+	return {
+		type: "Event",
+		kept: roll >= 0.2,
+		changed: roll >= 0.5 && roll < 0.8,
+		complete: roll >= 0.8,
+	};
+}
 
 test("every analyzed sample is let through at 60 fps", () => {
 	const { missed } = simulate({ fps: 60, seed: 1, lag: 20 });
@@ -98,10 +109,7 @@ function simulate({
 		times.push(Math.round(t * 1000) / 1000);
 		t += (1 / fps) * (jitter ? 0.5 + random() : 1);
 	}
-	const scheduler = new DetectorScheduler(DETECTORS, {
-		matchOpeningTypes: ["MapStart"],
-		matchClosingTypes: ["Scoreboard"],
-	});
+	const scheduler = new DetectorScheduler(DETECTORS, {});
 	const tracker = createCheckTracker();
 	const stepped = new Map<number, boolean>();
 	let ahead = 0;
@@ -138,9 +146,7 @@ function simulate({
 			scheduler.recordParse(
 				id,
 				sample,
-				random() < 0.5
-					? []
-					: [{ type: "Event", confidence: Math.round(random() * 10) / 10 }],
+				random() < 0.5 ? [] : [randomRead(random())],
 			);
 		}
 		stepTo(index + lag + Math.floor(random() * 5));

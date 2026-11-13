@@ -75,5 +75,12 @@
         "s": 3
       }
     ]
+  },
+  "options": {
+    "incomplete": true,
+    "skipFields": [
+      "players.0.name"
+    ],
+    "notes": "players.0.name skipped: the row reads パンチー. Its first two segments are the strokes of a パ, which the label has as 'l' and 'i', and the bar at the end sits at mid height (a long vowel mark), not at the cap line where a macron is."
   }
 }

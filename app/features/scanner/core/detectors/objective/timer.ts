@@ -6,6 +6,7 @@
  * bigger on upscaled 720p) and the most confident valid read wins.
  */
 import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import {
 	type GlyphSet,
 	type RecognizedChar,
@@ -49,20 +50,36 @@ export function timerGlyphSets(resources: ScoreboardResources): GlyphSet[] {
 /** Per-probe presence checks of the timer box: dark surround, then bright digits. */
 export function timerBoxChecks(gray: Mat): boolean[] {
 	return [
-		...TIMER_DARK_PROBES.map(
-			(roi) => meanBrightness(gray, roi) <= GATE_TIMER_MAX_MEAN,
+		...TIMER_DARK_PROBES.map((roi) =>
+			Decisions.atMost(
+				"objective/timer:GATE_TIMER_MAX_MEAN",
+				meanBrightness(gray, roi),
+				GATE_TIMER_MAX_MEAN,
+			),
 		),
-		maxBrightness(gray, TIMER_DIGIT_ROI) >= GATE_TIMER_MIN_MAX_BRIGHTNESS,
+		Decisions.atLeast(
+			"objective/timer:GATE_TIMER_MIN_MAX_BRIGHTNESS",
+			maxBrightness(gray, TIMER_DIGIT_ROI),
+			GATE_TIMER_MIN_MAX_BRIGHTNESS,
+		),
 	];
 }
 
 /** The M:SS colon's two dots, dark between them. */
 export function timerColonVisible(gray: Mat): boolean {
 	return (
-		TIMER_COLON_DOT_ROIS.every(
-			(roi) => meanBrightness(gray, roi) >= GATE_TIMER_COLON_MIN_DOT_MEAN,
+		TIMER_COLON_DOT_ROIS.every((roi) =>
+			Decisions.atLeast(
+				"objective/timer:GATE_TIMER_COLON_MIN_DOT_MEAN",
+				meanBrightness(gray, roi),
+				GATE_TIMER_COLON_MIN_DOT_MEAN,
+			),
 		) &&
-		meanBrightness(gray, TIMER_COLON_GAP_ROI) <= GATE_TIMER_COLON_MAX_GAP_MEAN
+		Decisions.atMost(
+			"objective/timer:GATE_TIMER_COLON_MAX_GAP_MEAN",
+			meanBrightness(gray, TIMER_COLON_GAP_ROI),
+			GATE_TIMER_COLON_MAX_GAP_MEAN,
+		)
 	);
 }
 
@@ -96,8 +113,16 @@ export function* readMatchTimerSteps(
 		const raw = raws[setIndex]!;
 		if (!best.reading) best = { ...best, reading: raw.text };
 		const isTimerDigit = (c: RecognizedChar) =>
-			c.score >= TIMER_DIGIT_MIN_CONF &&
-			c.y1 - c.y0 >= timerSet.height * TIMER_DIGIT_MIN_HEIGHT_RATIO;
+			Decisions.atLeast(
+				"objective/timer:TIMER_DIGIT_MIN_CONF",
+				c.score,
+				TIMER_DIGIT_MIN_CONF,
+			) &&
+			Decisions.atLeast(
+				"objective/timer:TIMER_DIGIT_MIN_HEIGHT_RATIO",
+				c.y1 - c.y0,
+				timerSet.height * TIMER_DIGIT_MIN_HEIGHT_RATIO,
+			);
 		const chars = raw.chars.filter(isTimerDigit);
 		const digits = chars.map((c) => Number(c.char));
 		if (digits.length !== 3 || digits.some(Number.isNaN)) continue;

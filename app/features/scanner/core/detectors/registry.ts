@@ -1,57 +1,40 @@
 /** Every detector that runs on a frame; new event types register here. */
 
+import type { DetectedEvent } from "../events";
 import { createDeathDetector } from "./death/index";
 import { createKillDetector } from "./kill/index";
 import { createMapStartDetector } from "./map-start/index";
 import { createMinimapDetector } from "./minimap/index";
 import { createObjectiveDetector } from "./objective/index";
-import {
-	createQuickScoreboardBattleLogDetector,
-	QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
-} from "./quick-scoreboard-battle-log/index";
+import { createQuickScoreboardBattleLogDetector } from "./quick-scoreboard-battle-log/index";
 import {
 	createScoreboardDetector,
-	SCOREBOARD_EVENT_TYPE,
 	type ScoreboardResources,
 } from "./scoreboard/index";
-import {
-	createScoreboardBattleLogDetector,
-	SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
-} from "./scoreboard-battle-log/index";
-import {
-	createScoreboardBattleLogReplayDetector,
-	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
-} from "./scoreboard-battle-log-replay/index";
+import { createScoreboardBattleLogDetector } from "./scoreboard-battle-log/index";
+import { createScoreboardBattleLogReplayDetector } from "./scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "./scoreboard-own/index";
 import type { Detector } from "./types";
 import { createXRankPositionDetector } from "./x-rank/position";
 import { createXSetCountDetector } from "./x-rank/set-count";
 import { createXSetResultDetector } from "./x-rank/set-result";
 
-/** Event types whose data is the full 8-player ScoreboardData shape. */
-export const SCOREBOARD_EVENT_TYPES: readonly string[] = [
-	SCOREBOARD_EVENT_TYPE,
-	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
-	SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
-	QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
-];
-
 export function createAllDetectors(
 	resources: ScoreboardResources,
-): Detector<unknown>[] {
+): Detector<DetectedEvent>[] {
 	return [
-		createScoreboardDetector(resources) as Detector<unknown>,
-		createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
-		createScoreboardBattleLogDetector(resources) as Detector<unknown>,
-		createQuickScoreboardBattleLogDetector(resources) as Detector<unknown>,
-		createScoreboardOwnDetector(resources) as Detector<unknown>,
-		createDeathDetector(resources) as Detector<unknown>,
-		createMapStartDetector(resources) as Detector<unknown>,
-		createMinimapDetector(resources) as Detector<unknown>,
-		createObjectiveDetector(resources) as Detector<unknown>,
-		createKillDetector(resources) as Detector<unknown>,
-		createXSetCountDetector(resources) as Detector<unknown>,
-		createXSetResultDetector(resources) as Detector<unknown>,
-		createXRankPositionDetector(resources) as Detector<unknown>,
+		createScoreboardDetector(resources),
+		createScoreboardBattleLogReplayDetector(resources),
+		createScoreboardBattleLogDetector(resources),
+		createQuickScoreboardBattleLogDetector(resources),
+		createScoreboardOwnDetector(resources),
+		createDeathDetector(resources),
+		createMapStartDetector(resources),
+		createMinimapDetector(resources),
+		createObjectiveDetector(resources),
+		createKillDetector(resources),
+		createXSetCountDetector(resources),
+		createXSetResultDetector(resources),
+		createXRankPositionDetector(resources),
 	];
 }

@@ -18,6 +18,7 @@
  *   into, which bounds the assignment. No label is read (localized).
  */
 import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { type GlyphSet, recognizeTextSteps } from "../../glyphs";
 import { copyRoi, minChannel, type Roi } from "../../image";
 import {
@@ -268,7 +269,15 @@ function locateIcon(classes: PixelClasses): IconHit | null {
 			}
 		}
 	}
-	if (best.score < TRACK_ICON_MIN_SCORE) return null;
+	if (
+		Decisions.below(
+			"objective/track:TRACK_ICON_MIN_SCORE",
+			best.score,
+			TRACK_ICON_MIN_SCORE,
+		)
+	) {
+		return null;
+	}
 	return best.kind === "held"
 		? { ...best, hue: ringHue(classes, best.x, best.y) }
 		: best;
@@ -391,12 +400,19 @@ function markerMode(
 		);
 	}
 	// a pedestal is the sharper proof (TC backdrops never scored one), so it wins a tie
-	const mode =
-		pedestal >= TRACK_MARKER_MIN_SCORE
-			? "RM"
-			: square >= TRACK_MARKER_MIN_SCORE
-				? "TC"
-				: null;
+	const mode = Decisions.atLeast(
+		"objective/track:TRACK_MARKER_MIN_SCORE#pedestal",
+		pedestal,
+		TRACK_MARKER_MIN_SCORE,
+	)
+		? "RM"
+		: Decisions.atLeast(
+					"objective/track:TRACK_MARKER_MIN_SCORE#square",
+					square,
+					TRACK_MARKER_MIN_SCORE,
+				)
+			? "TC"
+			: null;
 	return { mode, square, pedestal };
 }
 
@@ -480,7 +496,13 @@ function nearestSide(
 		teamHue === null ? Number.POSITIVE_INFINITY : hueDistance(hue, teamHue),
 	);
 	const side: 0 | 1 = distances[0]! <= distances[1]! ? 0 : 1;
-	return distances[side]! <= TRACK_ICON_MAX_TEAM_HUE_DIST ? side : null;
+	return Decisions.atMost(
+		"objective/track:TRACK_ICON_MAX_TEAM_HUE_DIST",
+		distances[side]!,
+		TRACK_ICON_MAX_TEAM_HUE_DIST,
+	)
+		? side
+		: null;
 }
 
 interface PlateRun {
@@ -537,8 +559,16 @@ function* readPlates(
 		const digits = raw.chars.filter(
 			(c) =>
 				/^\d$/.test(c.char) &&
-				c.score >= TRACK_PLATE_DIGIT_MIN_CONF &&
-				c.y1 - c.y0 >= set.height * DIGIT_MIN_HEIGHT_RATIO,
+				Decisions.atLeast(
+					"objective/track:TRACK_PLATE_DIGIT_MIN_CONF",
+					c.score,
+					TRACK_PLATE_DIGIT_MIN_CONF,
+				) &&
+				Decisions.atLeast(
+					"objective/track:DIGIT_MIN_HEIGHT_RATIO",
+					c.y1 - c.y0,
+					set.height * DIGIT_MIN_HEIGHT_RATIO,
+				),
 		);
 		let group: typeof digits = [];
 		const flush = () => {

@@ -40,7 +40,12 @@ import { ClipStrip } from "./ClipStrip";
 import { MatchCard } from "./MatchCard";
 import styles from "./SessionView.module.css";
 import { aggregateSendStatus } from "./sendou-ingest";
-import type { GetFrame, ScanEvent, SessionKind } from "./session-data";
+import type {
+	GetFrame,
+	GetScanLog,
+	ScanEvent,
+	SessionKind,
+} from "./session-data";
 import { uploadStateOf } from "./UploadStatus";
 
 const NO_KEYS: ReadonlySet<React.Key> = new Set();
@@ -76,6 +81,7 @@ export function SessionView({
 	running,
 	header,
 	getFrame,
+	getScanLog,
 	canUpload,
 	onUpload,
 	emptyText,
@@ -99,6 +105,8 @@ export function SessionView({
 	running: boolean;
 	header: (info: SessionInfo) => React.ReactNode;
 	getFrame: (event: ScanEvent) => GetFrame | undefined;
+	/** the log of the scan the events came from, put into each game's Game data; absent where scans keep none (live) */
+	getScanLog?: GetScanLog;
 	/** logged in: Retry/Upload buttons show */
 	canUpload?: boolean;
 	/** absent for sessions whose matches never upload (VoD scans): the cards show no upload state */
@@ -178,6 +186,7 @@ export function SessionView({
 				coachHref={coachHref?.(b) ?? null}
 				onPlayClip={setPlaying}
 				getFrame={getFrame}
+				getScanLog={getScanLog}
 			/>
 		);
 	};

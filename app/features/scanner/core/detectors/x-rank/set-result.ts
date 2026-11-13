@@ -11,11 +11,13 @@
  */
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import { copyRoi, frameGray, frameRgb, roiSignature } from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
 import type { ScoreboardResources } from "../scoreboard/index";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	CARD_DARK_MAX_MEAN,
 	CARD_ICON_ROI,
@@ -48,11 +50,22 @@ import {
 
 export const X_SET_RESULT_EVENT_TYPE = "XSetResult";
 
+export const X_SET_RESULT_EVENT: EventKind<
+	typeof X_SET_RESULT_EVENT_TYPE,
+	XSetResultData
+> = {
+	type: X_SET_RESULT_EVENT_TYPE,
+	progress: xSetResultProgress,
+	carryOver: xSetResultCarryOver,
+};
+
+type XSetResultEvent = EventOf<typeof X_SET_RESULT_EVENT>;
+
 type XSetGameResult = "WIN" | "LOSE";
 
 export interface XSetResultData {
 	mode: RankedModeShort | null;
-	/** play order (row-major tiles), 3-5 entries; the "2 - 3" header is derived and only cross-checks confidence */
+	/** play order (row-major tiles), 3-5 entries; the "2 - 3" header is derived and only cross-checks them */
 	results: XSetGameResult[];
 	/** signed, e.g. -29.2; null while the splat hasn't appeared */
 	powerChange: number | null;
@@ -67,8 +80,6 @@ const NUMBER_MIN_SCORE = 0.5;
 const SET_WINS_NEEDED = 3;
 const VICTORY_INK = 1;
 const DEFEAT_INK = 2;
-/** Confidence of a read whose header and tiles don't describe one decided set (tiles still popping in): under the timeline floor. */
-const UNDECIDED_CONFIDENCE = 0.3;
 /** X Power has one decimal; float noise in differences stays under this. */
 const POWER_EPSILON = 0.05;
 /** Lower power reads are misreads (e.g. a dropped leading digit). */
@@ -80,22 +91,20 @@ const MIN_POWER = 1500;
  * all, then the power counted further toward its new value. A power further away than the whole change
  * can't lie on the same count, so it's a misread and orders nothing.
  */
-export function xSetResultProgress(a: unknown, b: unknown): number {
-	const da = a as XSetResultData;
-	const db = b as XSetResultData;
-	if (da.results.length !== db.results.length) {
-		return db.results.length - da.results.length;
+function xSetResultProgress(a: XSetResultData, b: XSetResultData): number {
+	if (a.results.length !== b.results.length) {
+		return b.results.length - a.results.length;
 	}
 	const shown = (d: XSetResultData) => (d.powerChange === null ? 0 : 1);
-	if (shown(da) !== shown(db)) return shown(db) - shown(da);
+	if (shown(a) !== shown(b)) return shown(b) - shown(a);
 	const read = (d: XSetResultData) => (d.power === null ? 0 : 1);
-	if (read(da) !== read(db)) return read(db) - read(da);
-	if (da.power === null || db.power === null || db.powerChange === null) {
+	if (read(a) !== read(b)) return read(b) - read(a);
+	if (a.power === null || b.power === null || b.powerChange === null) {
 		return 0;
 	}
-	const delta = db.power - da.power;
-	if (Math.abs(delta) > Math.abs(db.powerChange) + POWER_EPSILON) return 0;
-	return Math.sign(delta * Math.sign(db.powerChange));
+	const delta = b.power - a.power;
+	if (Math.abs(delta) > Math.abs(b.powerChange) + POWER_EPSILON) return 0;
+	return Math.sign(delta * Math.sign(b.powerChange));
 }
 
 /**
@@ -105,9 +114,10 @@ export function xSetResultProgress(a: unknown, b: unknown): number {
  * settles to that sum. A read power off the count between the two is left
  * as read.
  */
-export function xSetResultCarryOver(kept: unknown, further: unknown): unknown {
-	const before = kept as XSetResultData;
-	const after = further as XSetResultData;
+function xSetResultCarryOver(
+	before: XSetResultData,
+	after: XSetResultData,
+): XSetResultData {
 	if (
 		before.powerChange !== null ||
 		before.power === null ||
@@ -126,7 +136,7 @@ export function xSetResultCarryOver(kept: unknown, further: unknown): unknown {
 
 export function createXSetResultDetector(
 	resources: ScoreboardResources,
-): Detector<XSetResultData> {
+): Detector<XSetResultEvent> {
 	const sets = new Map<number, GlyphSet | null>();
 	const digitGlyphs = (height: number) => {
 		if (!sets.has(height)) {
@@ -147,14 +157,33 @@ export function createXSetResultDetector(
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
 		const dark =
-			allDark(gray, RESULT_DARK_PROBES, CARD_DARK_MAX_MEAN) &&
-			allDark(gray, RESULT_PANEL_PROBES, PANEL_DARK_MAX_MEAN);
+			allDark(
+				"x-rank/set-result:CARD_DARK_MAX_MEAN",
+				gray,
+				RESULT_DARK_PROBES,
+				CARD_DARK_MAX_MEAN,
+			) &&
+			allDark(
+				"x-rank/set-result:PANEL_DARK_MAX_MEAN",
+				gray,
+				RESULT_PANEL_PROBES,
+				PANEL_DARK_MAX_MEAN,
+			);
 		const firstTile = tileResults(rgb).length > 0;
 		const power = brightFraction(gray, RESULT_POWER_ROI, NUMBER_BIN_THRESHOLD);
 		const checks = [
 			dark,
 			firstTile,
-			power >= POWER_MIN_FRACTION && power <= POWER_MAX_FRACTION,
+			Decisions.atLeast(
+				"x-rank/set-result:POWER_MIN_FRACTION",
+				power,
+				POWER_MIN_FRACTION,
+			) &&
+				Decisions.atMost(
+					"x-rank/set-result:POWER_MAX_FRACTION",
+					power,
+					POWER_MAX_FRACTION,
+				),
 		];
 		const pass = checks.every(Boolean);
 		return {
@@ -171,7 +200,7 @@ export function createXSetResultDetector(
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<XSetResultData>[]> {
+	): MatchSteps<XSetResultEvent[]> {
 		const headerSet = digitGlyphs(RESULT_HEADER_HEIGHT);
 		const powerSet = digitGlyphs(RESULT_POWER_HEIGHT);
 		const changeSet = digitGlyphs(RESULT_CHANGE_HEIGHT);
@@ -219,9 +248,8 @@ export function createXSetResultDetector(
 			{
 				type: X_SET_RESULT_EVENT_TYPE,
 				t,
-				confidence: decided
-					? headerScore
-					: Math.min(headerScore, UNDECIDED_CONFIDENCE),
+				// a header and tiles not describing one decided set (tiles still popping in) score nothing, so the timeline drops the read
+				scores: FieldScores.of({ results: decided ? headerScore : null }),
 				data: {
 					mode: icon.mode,
 					results,
@@ -275,7 +303,13 @@ function tileResults(rgb: Mat): XSetGameResult[] {
 	crop.delete();
 
 	return runsOf(rowInk, RESULT_TILE_LINE_MAX_GAP)
-		.filter(([y0, y1]) => y1 - y0 >= RESULT_TILE_LINE_MIN_HEIGHT)
+		.filter(([y0, y1]) =>
+			Decisions.atLeast(
+				"x-rank/set-result:RESULT_TILE_LINE_MIN_HEIGHT",
+				y1 - y0,
+				RESULT_TILE_LINE_MIN_HEIGHT,
+			),
+		)
 		.flatMap(([y0, y1]) => {
 			const victory = new Array<number>(cols).fill(0);
 			const defeat = new Array<number>(cols).fill(0);
@@ -288,7 +322,13 @@ function tileResults(rgb: Mat): XSetGameResult[] {
 			}
 			const columnInk = victory.map((v, x) => v + defeat[x]!);
 			return runsOf(columnInk, RESULT_TILE_TEXT_MAX_GAP)
-				.filter(([x0, x1]) => x1 - x0 >= RESULT_TILE_TEXT_MIN_WIDTH)
+				.filter(([x0, x1]) =>
+					Decisions.atLeast(
+						"x-rank/set-result:RESULT_TILE_TEXT_MIN_WIDTH",
+						x1 - x0,
+						RESULT_TILE_TEXT_MIN_WIDTH,
+					),
+				)
 				.map(([x0, x1]): XSetGameResult => {
 					const sum = (counts: number[]) =>
 						counts.slice(x0, x1).reduce((a, b) => a + b, 0);
@@ -323,7 +363,11 @@ function plausiblePower(power: number | null): number | null {
 
 function parsedNumber(read: NumberRead, pattern: RegExp): number | null {
 	if (
-		minScore(read.digitScores) < NUMBER_MIN_SCORE ||
+		Decisions.below(
+			"x-rank/set-result:NUMBER_MIN_SCORE",
+			minScore(read.digitScores),
+			NUMBER_MIN_SCORE,
+		) ||
 		!pattern.test(read.text)
 	) {
 		return null;

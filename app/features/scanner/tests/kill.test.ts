@@ -9,10 +9,7 @@
 import assert from "node:assert/strict";
 import { realpathSync } from "node:fs";
 import { loadOpenCV } from "../core/cv";
-import {
-	createKillDetector,
-	type KillData,
-} from "../core/detectors/kill/index";
+import { createKillDetector } from "../core/detectors/kill/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
 import { createMinimapDetector } from "../core/detectors/minimap/index";
 import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
@@ -41,10 +38,7 @@ test("kill fixtures exist", () => {
 
 for (const fixture of fixtures) {
 	test(`kill/${fixture.name}`, async (t) => {
-		const { gate, events } = await runDetectorOnFixture<KillData>(
-			detector,
-			fixture,
-		);
+		const { gate, events } = await runDetectorOnFixture(detector, fixture);
 		const expectPositive = fixture.expected.event === "Kill";
 
 		await t.test("gate", () => {
@@ -154,22 +148,19 @@ for (const fixture of loadFixtures("negative")) {
 // Death and objective overlays share the live HUD with the feed (the
 // double-row fixture shows a trade with the death cam up), so only the
 // screen-replacing detectors are swept the other way.
-const otherDetectors: readonly [string, Detector<unknown>][] = [
-	["scoreboard", createScoreboardDetector(resources) as Detector<unknown>],
+const otherDetectors: readonly [string, Detector][] = [
+	["scoreboard", createScoreboardDetector(resources) as Detector],
 	[
 		"scoreboard-battle-log-replay",
-		createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
+		createScoreboardBattleLogReplayDetector(resources) as Detector,
 	],
 	[
 		"scoreboard-battle-log",
-		createScoreboardBattleLogDetector(resources) as Detector<unknown>,
+		createScoreboardBattleLogDetector(resources) as Detector,
 	],
-	[
-		"scoreboard-own",
-		createScoreboardOwnDetector(resources) as Detector<unknown>,
-	],
-	["map-start", createMapStartDetector(resources) as Detector<unknown>],
-	["minimap", createMinimapDetector(resources) as Detector<unknown>],
+	["scoreboard-own", createScoreboardOwnDetector(resources) as Detector],
+	["map-start", createMapStartDetector(resources) as Detector],
+	["minimap", createMinimapDetector(resources) as Detector],
 ];
 for (const fixture of fixtures.filter((f) => f.expected.event === "Kill")) {
 	test(`other gates stay quiet on kill/${fixture.name}`, async () => {
@@ -204,7 +195,7 @@ test("row reads are memoized across advancing frames only", async () => {
 		assert.deepEqual(memoizedRows(repeat), [true, true]);
 		assert.deepEqual(memoizedRows(rewound), [false, false]);
 		assert.deepEqual(repeat.data, first.data);
-		assert.equal(repeat.confidence, first.confidence);
+		assert.deepEqual(repeat.scores, first.scores);
 	} finally {
 		frame.delete();
 	}

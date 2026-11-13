@@ -8,6 +8,8 @@
  * read kept (valid over none, longer run over shorter, then confidence).
  */
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import {
 	type GlyphSet,
 	type RecognizedChar,
@@ -138,7 +140,36 @@ export function* parseBannerScoreSteps(
  * loser = the more confident read. Otherwise ranked scores never tie so the
  * higher value is the winner's; one unreadable side reports nothing.
  */
-export function resolveMatchScores({
+export function resolveMatchScores(sides: {
+	left: BannerScoreRead;
+	right: BannerScoreRead;
+	knockout: boolean;
+}): [number | null, number | null] {
+	const [winner, loser] = winnerFirst(sides);
+	if (sides.knockout) return [KO_MATCH_SCORE, loser.value];
+	if (winner.value === null || loser.value === null) return [null, null];
+	return [winner.value, loser.value];
+}
+
+/**
+ * The scores of `resolveMatchScores`' pair: each side's own read, a
+ * knockout's winner the team total that told it (`knockoutScore`).
+ */
+export function matchScoreFieldScores(sides: {
+	left: BannerScoreRead;
+	right: BannerScoreRead;
+	knockout: boolean;
+	knockoutScore: number;
+}): FieldScores.FieldScores {
+	const [winner, loser] = winnerFirst(sides);
+	return FieldScores.of({
+		"matchScores.0": sides.knockout ? sides.knockoutScore : winner.confidence,
+		"matchScores.1": loser.confidence,
+	});
+}
+
+/** The two reads winner first; a knockout's winner is hidden, so its loser is the read worth more. */
+function winnerFirst({
 	left,
 	right,
 	knockout,
@@ -146,24 +177,15 @@ export function resolveMatchScores({
 	left: BannerScoreRead;
 	right: BannerScoreRead;
 	knockout: boolean;
-}): [number | null, number | null] {
+}): [BannerScoreRead, BannerScoreRead] {
+	const bothRead = left.value !== null && right.value !== null;
 	if (knockout) {
-		const loser =
-			left.value !== null && right.value !== null
-				? left.confidence >= right.confidence
-					? left
-					: right
-				: left.value !== null
-					? left
-					: right;
-		return [KO_MATCH_SCORE, loser.value];
+		const leftLoses = bothRead
+			? left.confidence >= right.confidence
+			: left.value !== null;
+		return leftLoses ? [right, left] : [left, right];
 	}
-	if (left.value !== null && right.value !== null) {
-		return left.value >= right.value
-			? [left.value, right.value]
-			: [right.value, left.value];
-	}
-	return [null, null];
+	return bothRead && right.value! > left.value! ? [right, left] : [left, right];
 }
 
 /** Zero out ink components shorter than any digit (see MIN_COMPONENT_HEIGHT). */
@@ -244,9 +266,17 @@ export function trailingDigitRun(
 	} = options;
 	const maxGap = Math.max(4, Math.round(set.medianWidth * DIGIT_GAP_MAX_RATIO));
 	const fullHeight = (c: RecognizedChar) =>
-		c.y1 - c.y0 >= set.height * minHeightRatio;
+		Decisions.atLeast(
+			"scoreboard/banner:DIGIT_MIN_HEIGHT_RATIO",
+			c.y1 - c.y0,
+			set.height * minHeightRatio,
+		);
 	const isRunDigit = (c: RecognizedChar) =>
-		c.score >= extendMinScore && fullHeight(c);
+		Decisions.atLeast(
+			"scoreboard/banner:extendMinScore",
+			c.score,
+			extendMinScore,
+		) && fullHeight(c);
 
 	const run: RecognizedChar[] = [];
 	let i = raw.chars.length - 1;
@@ -257,14 +287,29 @@ export function trailingDigitRun(
 		run.unshift(c);
 	}
 	if (run.length === 0) return { ...EMPTY_READ, reading: raw.text };
-	if (!run.some((c) => c.score >= minCharScore)) {
+	if (
+		!run.some((c) =>
+			Decisions.atLeast(
+				"scoreboard/banner:minCharScore#run",
+				c.score,
+				minCharScore,
+			),
+		)
+	) {
 		return { ...EMPTY_READ, reading: raw.text };
 	}
 	// a further digit left of the run means an unreadable glyph split the number
 	// (turf war "48", ".", "7"); the tail is not the score
 	for (let k = i; k >= 0; k--) {
 		const c = raw.chars[k]!;
-		if (c.score >= minCharScore && fullHeight(c)) {
+		if (
+			Decisions.atLeast(
+				"scoreboard/banner:minCharScore#leftOfRun",
+				c.score,
+				minCharScore,
+			) &&
+			fullHeight(c)
+		) {
 			return { ...EMPTY_READ, reading: raw.text };
 		}
 	}

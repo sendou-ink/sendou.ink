@@ -11,11 +11,13 @@
  */
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import { frameGray, frameRgb, type Roi, roiSignature } from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
 import type { ScoreboardResources } from "../scoreboard/index";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	CARD_DARK_MAX_MEAN,
 	CARD_ICON_ROI,
@@ -45,6 +47,16 @@ import {
 
 export const X_SET_COUNT_EVENT_TYPE = "XSetCount";
 
+export const X_SET_COUNT_EVENT: EventKind<
+	typeof X_SET_COUNT_EVENT_TYPE,
+	XSetCountData
+> = {
+	type: X_SET_COUNT_EVENT_TYPE,
+	progress: xSetCountProgress,
+};
+
+type XSetCountEvent = EventOf<typeof X_SET_COUNT_EVENT>;
+
 export interface XSetCountData {
 	mode: RankedModeShort | null;
 	/** 0-2: the card never shows a decided set */
@@ -62,23 +74,21 @@ const SERIES_SLOT_MAX_FRACTION = 0.01;
 const WIN_SLOT_MIN_INK = 0.3;
 /** A lost squid's white X; the live squid is saturated orange, the empty card black. */
 const LOSS_SLOT_MIN_CROSS = 0.04;
-/** Confidence of a read whose digits disagree with its slots (mid-animation): under the timeline floor. */
-const INCONSISTENT_CONFIDENCE = 0.3;
 const SET_GAMES = 3;
 
 /**
  * Timeline animation order of two reads of one card: positive when `b` has
  * more games counted (the digits only ever count up while the card shows).
  */
-export function xSetCountProgress(a: unknown, b: unknown): number {
+function xSetCountProgress(a: XSetCountData, b: XSetCountData): number {
 	const games = (data: XSetCountData) =>
 		data.wins === null || data.losses === null ? -1 : data.wins + data.losses;
-	return games(b as XSetCountData) - games(a as XSetCountData);
+	return games(b) - games(a);
 }
 
 export function createXSetCountDetector(
 	resources: ScoreboardResources,
-): Detector<XSetCountData> {
+): Detector<XSetCountEvent> {
 	let digits: GlyphSet | null | undefined;
 	const digitGlyphs = () => {
 		digits ??= resources.teamDigits
@@ -92,22 +102,43 @@ export function createXSetCountDetector(
 
 	function gate(frame: Mat): GateResult {
 		const gray = frameGray(frame);
-		const dark = allDark(gray, COUNT_DARK_PROBES, CARD_DARK_MAX_MEAN);
+		const dark = allDark(
+			"x-rank/set-count:CARD_DARK_MAX_MEAN",
+			gray,
+			COUNT_DARK_PROBES,
+			CARD_DARK_MAX_MEAN,
+		);
 		const label = brightFraction(gray, COUNT_LABEL_BAND, NUMBER_BIN_THRESHOLD);
 		const digitFractions = [COUNT_WINS_DIGIT_ROI, COUNT_LOSSES_DIGIT_ROI].map(
 			(roi) => brightFraction(gray, roi, NUMBER_BIN_THRESHOLD),
 		);
 		const digitsOk = digitFractions.every(
-			(f) => f >= DIGIT_MIN_FRACTION && f <= DIGIT_MAX_FRACTION,
+			(f) =>
+				Decisions.atLeast(
+					"x-rank/set-count:DIGIT_MIN_FRACTION",
+					f,
+					DIGIT_MIN_FRACTION,
+				) &&
+				Decisions.atMost(
+					"x-rank/set-count:DIGIT_MAX_FRACTION",
+					f,
+					DIGIT_MAX_FRACTION,
+				),
 		);
-		const seriesSlotsEmpty = COUNT_SERIES_SLOT_PROBES.every(
-			(roi) =>
-				brightFraction(gray, roi, NUMBER_BIN_THRESHOLD) <
+		const seriesSlotsEmpty = COUNT_SERIES_SLOT_PROBES.every((roi) =>
+			Decisions.below(
+				"x-rank/set-count:SERIES_SLOT_MAX_FRACTION",
+				brightFraction(gray, roi, NUMBER_BIN_THRESHOLD),
 				SERIES_SLOT_MAX_FRACTION,
+			),
 		);
 		const checks = [
 			dark,
-			label >= LABEL_MIN_FRACTION,
+			Decisions.atLeast(
+				"x-rank/set-count:LABEL_MIN_FRACTION",
+				label,
+				LABEL_MIN_FRACTION,
+			),
 			digitsOk,
 			seriesSlotsEmpty,
 		];
@@ -126,7 +157,7 @@ export function createXSetCountDetector(
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<XSetCountData>[]> {
+	): MatchSteps<XSetCountEvent[]> {
 		const set = digitGlyphs();
 		if (!set) return [];
 		const gray = frameGray(frame);
@@ -150,21 +181,27 @@ export function createXSetCountDetector(
 		]);
 		const wins = setDigit(winsRead.text);
 		const losses = setDigit(lossesRead.text);
-		const winSlots = COUNT_WIN_SLOT_CENTERS_X.filter(
-			(x) =>
+		const winSlots = COUNT_WIN_SLOT_CENTERS_X.filter((x) =>
+			Decisions.atLeast(
+				"x-rank/set-count:WIN_SLOT_MIN_INK",
 				rgbFraction(
 					rgb,
 					slotRoi(x, COUNT_WIN_SLOT_Y, COUNT_WIN_SLOT_HALF),
 					isInk,
-				) >= WIN_SLOT_MIN_INK,
+				),
+				WIN_SLOT_MIN_INK,
+			),
 		).length;
-		const lossSlots = COUNT_LOSS_SLOT_CENTERS_X.filter(
-			(x) =>
+		const lossSlots = COUNT_LOSS_SLOT_CENTERS_X.filter((x) =>
+			Decisions.atLeast(
+				"x-rank/set-count:LOSS_SLOT_MIN_CROSS",
 				rgbFraction(
 					rgb,
 					slotRoi(x, COUNT_LOSS_SLOT_Y, COUNT_LOSS_SLOT_HALF),
 					isCrossStroke,
-				) >= LOSS_SLOT_MIN_CROSS,
+				),
+				LOSS_SLOT_MIN_CROSS,
+			),
 		).length;
 		const consistent = wins === winSlots && losses === lossSlots;
 		const digitScore = minScore([
@@ -175,9 +212,13 @@ export function createXSetCountDetector(
 			{
 				type: X_SET_COUNT_EVENT_TYPE,
 				t,
-				confidence: consistent
-					? digitScore
-					: Math.min(digitScore, INCONSISTENT_CONFIDENCE),
+				// digits disagreeing with the slots are mid-flip: the read scores nothing, so the timeline drops it
+				scores: consistent
+					? FieldScores.of({
+							wins: minScore(winsRead.digitScores),
+							losses: minScore(lossesRead.digitScores),
+						})
+					: {},
 				data: { mode: icon.mode, wins, losses },
 				debug: {
 					winsReading: winsRead.text,

@@ -2,7 +2,7 @@
 /**
  * Builds the battle music set the clip dialog's "Mute music" takes music out
  * with: every audio file of the given folder is copied to
- * SCANNER_ASSETS_DIR/bgm under a stable id, and its fingerprints go into
+ * MUSIC_DIR under a stable id, and its fingerprints go into
  * bgm/index.bin (core/music/fingerprint.ts). Titles come from the file
  * names (the text in 「」 when there is one). Keep the source folder outside
  * bgm/: the copies are named by id. Shipping a regen means pushing the
@@ -23,7 +23,7 @@ import {
 	type MusicTrack,
 	trackHashes,
 } from "../../app/features/scanner/core/music/fingerprint";
-import { SCANNER_ASSETS_DIR } from "../../app/features/scanner/node/assets-dir";
+import { MUSIC_DIR } from "../../app/features/scanner/node/assets-dir";
 import { decodeAudioFile } from "../../app/features/scanner/node/audio-io";
 
 const AUDIO_EXTENSIONS = new Set([
@@ -36,8 +36,7 @@ const AUDIO_EXTENSIONS = new Set([
 	".flac",
 ]);
 const SAMPLE_RATE = 48_000;
-const OUT_DIR =
-	process.env.SCANNER_MUSIC_OUT_DIR ?? join(SCANNER_ASSETS_DIR, "bgm");
+const OUT_DIR = process.env.SCANNER_MUSIC_OUT_DIR ?? MUSIC_DIR;
 
 const sourceDir = process.argv[2];
 if (!sourceDir) {

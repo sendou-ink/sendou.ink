@@ -25,25 +25,22 @@ import {
 } from "../core/canonical";
 import { getCV, loadOpenCV, type Mat } from "../core/cv";
 import { runDetectorPass } from "../core/detectors/frame-pass";
-import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { MINIMAP_DETECTOR_ID } from "../core/detectors/minimap/index";
-import {
-	createAllDetectors,
-	SCOREBOARD_EVENT_TYPES,
-} from "../core/detectors/registry";
+import { createAllDetectors } from "../core/detectors/registry";
 import { DetectorScheduler } from "../core/detectors/scheduler";
 import {
 	createScanTelemetry,
 	type ScanTelemetry,
 } from "../core/detectors/telemetry";
 import type { Detector } from "../core/detectors/types";
+import type { DetectedEvent } from "../core/events";
 import {
 	type FrameData,
 	normalizeFrame,
 	provideFrameGray,
 	toMat,
 } from "../core/image";
-import { TimelineBuilder } from "../core/timeline/index";
+import { changeOf, TimelineBuilder } from "../core/timeline/index";
 import { createFrameEncoder } from "./frame-encode";
 import {
 	type FrameSource,
@@ -122,7 +119,7 @@ interface Pulled extends SourceItem {
 	read: Promise<PreparedFrame> | null;
 }
 
-let detectors: Detector<unknown>[] = [];
+let detectors: Detector<DetectedEvent>[] = [];
 let gpuMatcher: GpuMatcher | null = null;
 let gpuScaler: GpuFrameScaler | null = null;
 let scheduler: DetectorScheduler | null = null;
@@ -137,13 +134,13 @@ let chunkAborted = false;
 /** last per-frame t, to reset telemetry when a new session rewinds the clock */
 let lastFrameT = Number.NEGATIVE_INFINITY;
 /**
- * Mirror of the main thread's timeline (same defaults), fed every event first:
- * a frame is encoded only when some event would be listed rather than
- * merged into an earlier read — a fixed-cadence detector re-reads a standing
- * screen twice a second, and encoding 1080p for each repeat cost more than
- * the parse.
+ * The scan's timeline, one per chunk scan or per-frame stream; results carry
+ * the changes it made. A frame is encoded only when some event is listed
+ * rather than merged into an earlier read — a fixed-cadence detector re-reads
+ * a standing screen twice a second, and encoding 1080p for each repeat cost
+ * more than the parse.
  */
-let shadowTimeline = new TimelineBuilder();
+let timeline = new TimelineBuilder();
 /** Canvas readback on this thread: live frames, and the reader's fallback. */
 const readFrame = createCanvasReadback();
 /** VoD scans read frames back in a helper worker, overlapping the detector passes. */
@@ -215,8 +212,6 @@ async function init({
 		detectors = createAllDetectors(resources);
 		scheduler = new DetectorScheduler(detectors, {
 			suppressSteadyFrames,
-			matchOpeningTypes: [MAP_START_EVENT_TYPE],
-			matchClosingTypes: SCOREBOARD_EVENT_TYPES,
 		});
 		collectTelemetry = collect;
 		attachFrames = attach;
@@ -306,24 +301,24 @@ async function analyzePrepared(
 			detectors,
 			due,
 			scheduler: scheduler!,
+			timeline,
 			telemetry,
 			runSteps: gpuRunner(),
 			onGated,
 		});
-		for (const { detector, gate, events } of outcomes) {
-			let listed = false;
-			let kept = false;
-			for (const event of events) {
-				const { action } = shadowTimeline.push(event);
-				if (action === "added" || action === "replaced") listed = true;
-				if (action !== "dropped") kept = true;
-			}
+		for (const { detector, gate, parsed, events, actions } of outcomes) {
+			const listed = actions.some(
+				({ action }) => action === "added" || action === "replaced",
+			);
+			const kept = actions.some(({ action }) => action !== "dropped");
 			const result: WorkerResponse = {
 				kind: "result",
 				detector: detector.id,
 				t,
 				gate,
+				parsed,
 				events,
+				changes: actions.flatMap((action) => changeOf(action) ?? []),
 			};
 			const minimapSnapshot =
 				detector.id === MINIMAP_DETECTOR_ID
@@ -354,7 +349,7 @@ async function analyzePrepared(
 async function analyze({ bitmap, t }: AnalyzeRequest): Promise<void> {
 	if (t + 5 < lastFrameT) {
 		telemetry = freshTelemetry();
-		shadowTimeline = new TimelineBuilder();
+		timeline = new TimelineBuilder();
 		minimapOpenConfirmed = false;
 	}
 	lastFrameT = t;
@@ -379,7 +374,7 @@ async function scanChunk({
 	chunkAborted = false;
 	scheduler!.reset(tStart, { midStream: tStart > 0 });
 	telemetry = freshTelemetry();
-	shadowTimeline = new TimelineBuilder();
+	timeline = new TimelineBuilder();
 	minimapOpenConfirmed = false;
 	const wallStart = performance.now();
 	const gpuWaitStart = gpuMatcher?.stats.gpuWaitMs ?? 0;

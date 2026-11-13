@@ -6,6 +6,7 @@
  * whose kit silhouettes are far apart (stamp vs crab, bomb vs beakon).
  */
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import type { FrameData } from "../../image";
 import type { MatchSteps } from "../../match-steps";
 import { WEAPON_KITS } from "./kits";
@@ -176,7 +177,13 @@ function tiedWeaponsWithDistinctKit(
 	const leader = match.top[0];
 	if (!leader) return null;
 	const tied = match.top.filter(
-		(t) => leader.score - t.score < WEAPON_TIE_MARGIN,
+		(t) =>
+			t === leader ||
+			Decisions.below(
+				`scoreboard/specials:WEAPON_TIE_MARGIN#${part}`,
+				leader.score - t.score,
+				WEAPON_TIE_MARGIN,
+			),
 	);
 	const twinId = ICON_TWINS.get(leader.id);
 	if (twinId && !tied.some((t) => t.id === twinId)) {
@@ -224,7 +231,11 @@ function disambiguateWeaponByKit(
 	const runnerUp = ranked.find((t) => kitScore(t.id) < kitScore(winner.id));
 	if (
 		!runnerUp ||
-		kitScore(winner.id) - kitScore(runnerUp.id) < KIT_DECISION_MARGIN
+		Decisions.below(
+			`scoreboard/specials:KIT_DECISION_MARGIN#${part}`,
+			kitScore(winner.id) - kitScore(runnerUp.id),
+			KIT_DECISION_MARGIN,
+		)
 	) {
 		return match;
 	}

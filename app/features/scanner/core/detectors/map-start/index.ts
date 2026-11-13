@@ -9,6 +9,8 @@
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat, minMaxLoc } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import {
 	type GlyphSet,
 	type RecognizedText,
@@ -24,7 +26,7 @@ import {
 import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import { closestBy } from "../../text";
 import type { ScoreboardResources } from "../scoreboard/index";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	BLOCK_MASK_RADIUS,
 	GATE_DARK_MAX_MEAN,
@@ -59,17 +61,37 @@ export interface MapStartData {
 
 export const MAP_START_EVENT_TYPE = "MapStart";
 
+export const MAP_START_EVENT: EventKind<
+	typeof MAP_START_EVENT_TYPE,
+	MapStartData
+> = {
+	type: MAP_START_EVENT_TYPE,
+	complete: ({ data, scores }) =>
+		data.mode !== null &&
+		data.stage !== null &&
+		FieldScores.reach(scores, ["mode", "stage"], COMPLETE_LINE_MIN_SCORE),
+	match: "opens",
+};
+
+/**
+ * The score a settled intro's lines snap at, just under the lowest of the
+ * fixtures (mode 0.714+, stage 0.812+): a line still sliding in can snap
+ * under it.
+ */
+const COMPLETE_LINE_MIN_SCORE = 0.7;
+
+type MapStartEvent = EventOf<typeof MAP_START_EVENT>;
+
 /** "MODE" must read back at least this well for parse to emit. */
 const LABEL_MIN_SCORE = 0.5;
 /** Accept a closed-set match only above this score (1 = exact). */
-const MIN_MATCH_SCORE = 0.62;
 /**
- * A snapped mode with the stage unread (a streamer's overlay over the stage
- * line) scores in this range by its mode score: every snapped mode clears the
- * timeline floor (0.6), so the intro still opens its game, and a frame that
- * reads the stage too outranks it.
+ * A line that does not snap is left unscored: a streamer's overlay over the
+ * stage line then leaves the mode to carry the read (every snapped mode
+ * clears the timeline floor, so the intro still opens its game), and a frame
+ * that reads the stage too fills it in.
  */
-const MODE_ONLY_CONFIDENCE = { min: 0.6, max: 0.7 };
+const MIN_MATCH_SCORE = 0.62;
 
 interface LineBand {
 	y0: number;
@@ -136,7 +158,13 @@ function findLineBands(binary: Mat): LineBand[] {
 		if (last && band.y0 <= last.y1) last.y1 = Math.max(last.y1, band.y1);
 		else merged.push(band);
 	}
-	return merged.filter((b) => b.y1 - b.y0 >= LINE_MIN_HEIGHT);
+	return merged.filter((b) =>
+		Decisions.atLeast(
+			"map-start:LINE_MIN_HEIGHT",
+			b.y1 - b.y0,
+			LINE_MIN_HEIGHT,
+		),
+	);
 }
 
 /** Trim a line band to its text columns so the raw OCR crop excludes edge background. */
@@ -162,7 +190,7 @@ function bandExtent(
 
 export function createMapStartDetector(
 	resources: ScoreboardResources,
-): Detector<MapStartData> {
+): Detector<MapStartEvent> {
 	const cv = getCV();
 
 	const scaled = (
@@ -180,7 +208,14 @@ export function createMapStartDetector(
 	function gate(frame: Mat): GateResult {
 		let darkOk = 0;
 		for (const roi of GATE_DARK_PROBES) {
-			if (meanBrightness(frame, roi) < GATE_DARK_MAX_MEAN) darkOk++;
+			if (
+				Decisions.below(
+					"map-start:GATE_DARK_MAX_MEAN",
+					meanBrightness(frame, roi),
+					GATE_DARK_MAX_MEAN,
+				)
+			)
+				darkOk++;
 		}
 
 		const gray = frameGray(frame);
@@ -193,9 +228,21 @@ export function createMapStartDetector(
 		const whiteFraction = cv.countNonZero(bin) / (bin.rows * bin.cols);
 		bin.delete();
 		const textOk =
-			maxVal > GATE_TEXT_MIN_MAX &&
-			whiteFraction > GATE_TEXT_MIN_FRACTION &&
-			whiteFraction < GATE_TEXT_MAX_FRACTION;
+			Decisions.above(
+				"map-start:GATE_TEXT_MIN_MAX",
+				maxVal,
+				GATE_TEXT_MIN_MAX,
+			) &&
+			Decisions.above(
+				"map-start:GATE_TEXT_MIN_FRACTION",
+				whiteFraction,
+				GATE_TEXT_MIN_FRACTION,
+			) &&
+			Decisions.below(
+				"map-start:GATE_TEXT_MAX_FRACTION",
+				whiteFraction,
+				GATE_TEXT_MAX_FRACTION,
+			);
 
 		// label-to-title gap is solid ink here: near-totally dark (scoreboard pills
 		// aren't) with no bright pixels (death's "Splatted by" line crosses it)
@@ -211,8 +258,16 @@ export function createMapStartDetector(
 		bandDark.delete();
 		band.delete();
 		const inkOk =
-			brightFraction <= GATE_INK_BAND_MAX_BRIGHT &&
-			darkFraction >= GATE_INK_BAND_MIN_DARK;
+			Decisions.atMost(
+				"map-start:GATE_INK_BAND_MAX_BRIGHT",
+				brightFraction,
+				GATE_INK_BAND_MAX_BRIGHT,
+			) &&
+			Decisions.atLeast(
+				"map-start:GATE_INK_BAND_MIN_DARK",
+				darkFraction,
+				GATE_INK_BAND_MIN_DARK,
+			);
 
 		const score =
 			(darkOk / GATE_DARK_PROBES.length + (textOk ? 1 : 0) + (inkOk ? 1 : 0)) /
@@ -310,7 +365,14 @@ export function createMapStartDetector(
 			if (match && match.score > stageScore) {
 				stageScore = match.score;
 				stageReading = read.text;
-				if (match.score >= MIN_MATCH_SCORE) stage = match.entry.stageId;
+				if (
+					Decisions.atLeast(
+						"map-start:MIN_MATCH_SCORE#stage",
+						match.score,
+						MIN_MATCH_SCORE,
+					)
+				)
+					stage = match.entry.stageId;
 			}
 		}
 		masked.delete();
@@ -323,7 +385,7 @@ export function createMapStartDetector(
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<MapStartData>[]> {
+	): MatchSteps<MapStartEvent[]> {
 		const gray = frameGray(frame);
 
 		// 1. confirm the constant label — a gate hit without it is a lookalike
@@ -339,7 +401,13 @@ export function createMapStartDetector(
 			);
 			crop.delete();
 			labelScore = closestBy(label.text, ALL_MODE_LABELS, (l) => l)?.score ?? 0;
-			if (labelScore < LABEL_MIN_SCORE) {
+			if (
+				Decisions.below(
+					"map-start:LABEL_MIN_SCORE",
+					labelScore,
+					LABEL_MIN_SCORE,
+				)
+			) {
 				return [];
 			}
 		}
@@ -359,7 +427,14 @@ export function createMapStartDetector(
 				: null;
 			if (match) {
 				modeScore = match.score;
-				if (match.score >= MIN_MATCH_SCORE) mode = match.entry.mode;
+				if (
+					Decisions.atLeast(
+						"map-start:MIN_MATCH_SCORE#mode",
+						match.score,
+						MIN_MATCH_SCORE,
+					)
+				)
+					mode = match.entry.mode;
 			}
 		}
 		const { stage = null, stageScore = 0, stageReading = "" } = stageRead ?? {};
@@ -368,10 +443,10 @@ export function createMapStartDetector(
 			{
 				type: MAP_START_EVENT_TYPE,
 				t,
-				confidence:
-					stage === null && mode !== null
-						? modeOnlyConfidence(modeScore)
-						: (modeScore + stageScore) / 2,
+				scores: FieldScores.of({
+					mode: mode === null ? null : modeScore,
+					stage: stage === null ? null : stageScore,
+				}),
 				data: { mode, stage },
 				debug: {
 					label: label?.text,
@@ -385,20 +460,11 @@ export function createMapStartDetector(
 		];
 	}
 
-	// just under the clean-read floor (fixtures 0.795-0.864, scan events 0.854-1.0)
 	return {
 		id: "map-start",
-		sufficientConfidence: 0.79,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),
 		parseSteps,
 	};
-}
-
-function modeOnlyConfidence(modeScore: number): number {
-	const { min, max } = MODE_ONLY_CONFIDENCE;
-	return (
-		min + ((max - min) * (modeScore - MIN_MATCH_SCORE)) / (1 - MIN_MATCH_SCORE)
-	);
 }

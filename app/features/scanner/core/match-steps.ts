@@ -172,11 +172,12 @@ function exactScorer(request: MatchRequest): {
 	};
 }
 
-/** Max exact score over the placements in `window` (every row). */
+/** Max exact score over the placements in `window` (every row); `placement` takes the row of the first placement reaching it. */
 function exactWindowMax(
 	image: ImagePixels,
 	template: TemplatePixels,
 	window: readonly [number, number] | undefined,
+	placement?: { row: number },
 ): number {
 	if (template.varInt === 0) return 1;
 	const { rows, cols, ch, sum, squares } = image;
@@ -221,7 +222,10 @@ function exactWindowMax(
 				windowVar -= S * S;
 			}
 			const score = normalizeNcc(num, windowVar, template.varInt);
-			if (score > best) best = score;
+			if (score > best) {
+				best = score;
+				if (placement) placement.row = y;
+			}
 		}
 	}
 	filtered?.delete();
@@ -308,6 +312,26 @@ export function exactMatchMax(
 	const score = exactWindowMax(integral, templateStats(template), [lo, hi]);
 	integral.plane?.delete();
 	return score;
+}
+
+/**
+ * The image row each template sits on where it scores highest over its
+ * window's placements (the topmost of equals): what a recognizer asks about
+ * the few templates it already knows to be the best, on any driver.
+ */
+export function exactMatchRows(
+	image: Mat,
+	templates: readonly Mat[],
+	windows: readonly (readonly [number, number])[],
+): number[] {
+	const integral = imagePixels(image);
+	const rows = templates.map((template, i) => {
+		const placement = { row: 0 };
+		exactWindowMax(integral, templateOf(template), windows[i], placement);
+		return placement.row;
+	});
+	integral.plane?.delete();
+	return rows;
 }
 
 function imagePixels(mat: Mat): ImagePixels {

@@ -12,6 +12,7 @@
 			"!app/db/seed/data/placements.json",
 			"!build/**/*",
 			"!app/features/scanner/tests/fixtures",
+			"!app/features/scanner/tests/tapes",
 			"!test-results/**/*",
 			"!playwright-report/**/*",
 			"!.react-router/**/*",

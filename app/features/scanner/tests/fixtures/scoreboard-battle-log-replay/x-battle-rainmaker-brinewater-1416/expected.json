@@ -79,6 +79,10 @@
     "stageLabel": "Brinewater Springs"
   },
   "options": {
-    "notes": "Heavily compressed stream capture. Code hand-verified from the zoomed frame; a prior parse misread U>D, N>H, F>E, 5>6. めがねがし and むぎ once read without dakuten (see the 1411 case)."
+    "incomplete": true,
+    "notes": "Heavily compressed stream capture. Code hand-verified from the zoomed frame; a prior parse misread U>D, N>H, F>E, 5>6. めがねがし and むぎ once read without dakuten (see the 1411 case). players.0.name skipped: the marks either side of the ~ hang at the cap line (rows 8-17 of a line whose baseline runs at row 31), so they are apostrophes and the row reads G'~'K. The label's commas are the same shape read with no regard to height.",
+    "skipFields": [
+      "players.0.name"
+    ]
   }
 }

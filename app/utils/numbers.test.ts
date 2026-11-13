@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
 	cutToNDecimalPlaces,
+	median,
 	niceStep,
 	safeNumberParse,
 	winPercentage,
@@ -61,5 +62,23 @@ describe("niceStep()", () => {
 		{ why: "fractional step", roughStep: 0.3, expected: 0.5 },
 	])("$why: $roughStep → $expected", ({ roughStep, expected }) => {
 		expect(niceStep(roughStep)).toBeCloseTo(expected);
+	});
+});
+
+describe("median()", () => {
+	test.each([
+		{ why: "an odd count", values: [5, 1, 3], expected: 3 },
+		{ why: "an even count", values: [4, 1, 3, 2], expected: 2.5 },
+		{ why: "one value", values: [7], expected: 7 },
+		{ why: "no values", values: [], expected: 0 },
+		{ why: "values sorted as numbers", values: [10, 9, 100], expected: 10 },
+	])("takes the middle of $why", ({ values, expected }) => {
+		expect(median(values)).toBe(expected);
+	});
+
+	test("leaves its input in place", () => {
+		const values = [3, 1, 2];
+		median(values);
+		expect(values).toEqual([3, 1, 2]);
 	});
 });

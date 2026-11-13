@@ -11,6 +11,8 @@
  * mode, not only where the counter is parsed.
  */
 import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import {
 	copyRoi,
@@ -29,7 +31,7 @@ import {
 } from "../objective/timer";
 import type { ScoreboardResources } from "../scoreboard/index";
 import { type ParsedName, parseNameSteps } from "../scoreboard/names";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import { matchKillMessage } from "./message";
 import {
 	darkProbes,
@@ -59,6 +61,22 @@ export interface KillData {
 }
 
 export const KILL_EVENT_TYPE = "Kill";
+
+/**
+ * The same stack re-read while it shows merges; a splatted player can't
+ * re-enter the feed before respawning (~8.5s), so the window stays under that
+ * and the content guard splits a growing stack. A row is re-read over its whole
+ * ~5s+ life, so a more confident repeat taking over would move the kill to
+ * when the row was about to leave: the first read stays.
+ */
+export const KILL_EVENT: EventKind<typeof KILL_EVENT_TYPE, KillData> = {
+	type: KILL_EVENT_TYPE,
+	mergeWindowS: 8,
+	sameData: sameKillData,
+	keep: "first",
+};
+
+type KillEvent = EventOf<typeof KILL_EVENT>;
 
 /**
  * Template fit below this is a lookalike row (fixtures read 0.89-1.0; the
@@ -92,18 +110,16 @@ const ROW_MEMO_MAX_CELL_DIFF = 48;
 const ROW_MEMO_MAX_ENTRIES = 16;
 
 /** Timeline content guard: repeat frames of one stack merge, a row entering or leaving keeps its own event. */
-export function sameKillData(a: unknown, b: unknown): boolean {
-	const da = a as KillData;
-	const db = b as KillData;
+function sameKillData(a: KillData, b: KillData): boolean {
 	return (
-		da.names.length === db.names.length &&
-		da.names.every((name, i) => name === db.names[i])
+		a.names.length === b.names.length &&
+		a.names.every((name, i) => name === b.names[i])
 	);
 }
 
 export function createKillDetector(
 	resources: ScoreboardResources,
-): Detector<KillData> {
+): Detector<KillEvent> {
 	const cv = getCV();
 	const glyphs: GlyphSet | null = resources.killFeedGlyphs
 		? scaleGlyphSet(
@@ -168,15 +184,43 @@ export function createKillDetector(
 		const text = textRoi(row);
 		const textFraction = whiteFraction(gray, text);
 		return [
-			...darkProbes(row).map(
-				(roi) => meanBrightness(gray, roi) <= GATE_DARK_MAX_MEAN,
+			...darkProbes(row).map((roi) =>
+				Decisions.atMost(
+					"kill:GATE_DARK_MAX_MEAN",
+					meanBrightness(gray, roi),
+					GATE_DARK_MAX_MEAN,
+				),
 			),
-			skullMean >= GATE_SKULL_MIN_MEAN &&
-				skullMean <= GATE_SKULL_MAX_MEAN &&
-				maxBrightness(gray, skull) >= GATE_SKULL_MIN_MAX,
-			maxBrightness(gray, text) >= GATE_TEXT_MIN_MAX &&
-				textFraction >= GATE_TEXT_MIN_FRACTION &&
-				textFraction <= GATE_TEXT_MAX_FRACTION,
+			Decisions.atLeast(
+				"kill:GATE_SKULL_MIN_MEAN",
+				skullMean,
+				GATE_SKULL_MIN_MEAN,
+			) &&
+				Decisions.atMost(
+					"kill:GATE_SKULL_MAX_MEAN",
+					skullMean,
+					GATE_SKULL_MAX_MEAN,
+				) &&
+				Decisions.atLeast(
+					"kill:GATE_SKULL_MIN_MAX",
+					maxBrightness(gray, skull),
+					GATE_SKULL_MIN_MAX,
+				),
+			Decisions.atLeast(
+				"kill:GATE_TEXT_MIN_MAX",
+				maxBrightness(gray, text),
+				GATE_TEXT_MIN_MAX,
+			) &&
+				Decisions.atLeast(
+					"kill:GATE_TEXT_MIN_FRACTION",
+					textFraction,
+					GATE_TEXT_MIN_FRACTION,
+				) &&
+				Decisions.atMost(
+					"kill:GATE_TEXT_MAX_FRACTION",
+					textFraction,
+					GATE_TEXT_MAX_FRACTION,
+				),
 		];
 	}
 
@@ -212,7 +256,7 @@ export function createKillDetector(
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<KillData>[]> {
+	): MatchSteps<KillEvent[]> {
 		if (!glyphs) return [];
 		// reads carry forward in time only: a clock that stands still or rewinds
 		// (a fresh scan, the fixture harness) starts from a blank memo
@@ -247,7 +291,7 @@ export function createKillDetector(
 		}
 
 		const names: (string | null)[] = [];
-		const confidences: number[] = [];
+		const scores: Record<string, number> = {};
 		const rows: Record<string, unknown>[] = [];
 		for (const [row, signature] of signatures.entries()) {
 			const memoized = rowMemoLookup(signature);
@@ -266,9 +310,17 @@ export function createKillDetector(
 				messageScore: message?.score,
 				memoized: memoized !== null,
 			});
-			if (!message || message.score < MESSAGE_MIN_SCORE) break;
+			if (
+				!message ||
+				Decisions.below(
+					"kill:MESSAGE_MIN_SCORE",
+					message.score,
+					MESSAGE_MIN_SCORE,
+				)
+			)
+				break;
+			scores[`names.${names.length}`] = (message.score + parsed.confidence) / 2;
 			names.push(message.name);
-			confidences.push((message.score + parsed.confidence) / 2);
 		}
 		if (names.length === 0) {
 			return [];
@@ -284,8 +336,7 @@ export function createKillDetector(
 			{
 				type: KILL_EVENT_TYPE,
 				t,
-				confidence:
-					confidences.reduce((sum, c) => sum + c, 0) / confidences.length,
+				scores: FieldScores.of(scores),
 				data: { time: timer.value, names },
 				debug: { rows, timerRaw: timer.reading },
 			},

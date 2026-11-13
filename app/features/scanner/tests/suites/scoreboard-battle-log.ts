@@ -13,8 +13,9 @@ import type {
 	ScoreboardRowDebug,
 } from "../../core/detectors/scoreboard/index";
 import type { ScoreboardBattleLogData } from "../../core/detectors/scoreboard-battle-log/index";
-import type { Detector } from "../../core/detectors/types";
+import type { Detector, EventRecord } from "../../core/detectors/types";
 import {
+	assertCompleteness,
 	fieldTestOptions,
 	loadFixtures,
 	loadScoreboardLookalikes,
@@ -29,7 +30,7 @@ export interface BattleLogSuite {
 	eventType: string;
 	createDetector(
 		resources: ScoreboardResources,
-	): Detector<ScoreboardBattleLogData>;
+	): Detector<EventRecord<string, ScoreboardBattleLogData>>;
 }
 
 export async function runScoreboardBattleLogSuite(suite: BattleLogSuite) {
@@ -60,6 +61,10 @@ export async function runScoreboardBattleLogSuite(suite: BattleLogSuite) {
 			assert.ok(event, "gate passed but no event parsed");
 			const rows = (event.debug?.rows ?? []) as ScoreboardRowDebug[];
 			const expected = fixture.expected.data ?? {};
+
+			await t.test("completeness", () => {
+				assertCompleteness(fixture, event);
+			});
 
 			await t.test(
 				"matchScores",
