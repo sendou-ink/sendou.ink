@@ -3,7 +3,7 @@ import { redirect } from "react-router";
 import type * as v from "valibot";
 import * as Visibility from "~/features/associations/core/Visibility";
 import { requireUser } from "~/features/auth/core/user.server";
-import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
@@ -164,7 +164,7 @@ async function validatePickupFriends(userIds: number[], authorId: number) {
 }
 
 async function validatePickupAllUnbanned(userIds: number[]) {
-	const bannedUsers = userIds.filter((id) => userIsBanned(id));
+	const bannedUsers = userIds.filter((id) => Bans.isBanned(id));
 
 	return bannedUsers.length === 0
 		? null

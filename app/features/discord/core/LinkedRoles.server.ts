@@ -1,5 +1,5 @@
 import { add } from "date-fns";
-import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import {
 	databaseTimestampToDate,
@@ -39,7 +39,7 @@ export async function syncUser(userId: number) {
 		platformUsername: user.username,
 		metadata: metadataOf({
 			plusTier: user.plusTier,
-			isBanned: userIsBanned(userId),
+			isBanned: Bans.isBanned(userId),
 		}),
 	});
 

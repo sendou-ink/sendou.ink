@@ -2,7 +2,7 @@ import { sub } from "date-fns";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as DiscordTokenFactory from "~/db/seed/factories/DiscordTokenFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { refreshBannedCache } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as DiscordTokenRepository from "../DiscordTokenRepository.server";
 import * as LinkedRoles from "./LinkedRoles.server";
@@ -72,7 +72,7 @@ describe("LinkedRoles.syncUser", () => {
 			plusTier: 1,
 			ban: { banned: 1, bannedReason: null, bannedByUserId: null },
 		});
-		await refreshBannedCache();
+		await Bans.refresh();
 		await DiscordTokenFactory.create({ userId: linkedUserId() });
 
 		await LinkedRoles.syncUser(linkedUserId());

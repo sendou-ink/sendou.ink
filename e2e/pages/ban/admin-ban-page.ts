@@ -28,6 +28,7 @@ export class AdminBanPage {
 		await navigate({ page: this.page, url: ADMIN_PAGE });
 	}
 
+	/** Bans the user, until `expiresAt` if given and without an end otherwise. */
 	async banUser(
 		userName: string,
 		options: { expiresAt?: Date; reason?: string } = {},
@@ -51,6 +52,7 @@ export class AdminBanPage {
 		await this.save(form);
 	}
 
+	/** Lifts the user's ban. */
 	async unbanUser(userName: string) {
 		const form = this.locators.unbanForm;
 
