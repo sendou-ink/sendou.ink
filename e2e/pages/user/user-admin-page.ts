@@ -10,9 +10,13 @@ export class UserAdminPage {
 	constructor(page: Page) {
 		this.page = page;
 		const reportsList = page.getByTestId("user-reports-list");
+		const banLog = page.getByTestId("ban-log");
 		this.locators = {
 			reportsList,
 			reportDetails: reportsList.locator("details"),
+			banLog,
+			/** Bans and unbans of the user, latest first. */
+			banLogEntries: banLog.locator(":scope > div"),
 		};
 	}
 

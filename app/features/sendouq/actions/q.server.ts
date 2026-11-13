@@ -2,7 +2,7 @@ import { redirect } from "react-router";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
 import { requireUser } from "~/features/auth/core/user.server";
-import { refreshBannedCache } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -148,7 +148,7 @@ export const action = defineAction(
 							bannedByUserId: null,
 						});
 
-						await refreshBannedCache();
+						await Bans.refresh();
 						await refreshApiTokensCache();
 
 						throw redirect(SUSPENDED_PAGE);

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import * as ApiTokenFactory from "~/db/seed/factories/ApiTokenFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { ApiTokenType } from "~/features/api/api-types";
-import { refreshBannedCache } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import { apiAuthMiddleware } from "./api-auth-middleware.server";
 import { refreshApiTokensCache } from "./api-public-utils.server";
 
@@ -40,7 +40,7 @@ describe("apiAuthMiddleware", () => {
 		await UserFactory.grant(bannedUserId(), {
 			ban: { banned: 1, bannedReason: null, bannedByUserId: null },
 		});
-		await refreshBannedCache();
+		await Bans.refresh();
 	});
 
 	test("lets a token of a user in good standing through", async () => {

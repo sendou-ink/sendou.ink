@@ -1,5 +1,5 @@
 import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
-import { refreshBannedCache } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import * as FeedCache from "~/features/feed/core/FeedCache.server";
 import { clearParticipationInfoMap } from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as LobbyActivity from "~/features/lobbies/core/LobbyActivity.server";
@@ -23,7 +23,7 @@ export async function refreshCaches() {
 	UserRepository.clearFriendCodesCache();
 	cache.clear();
 	FeedCache.clear();
-	await refreshBannedCache();
+	await Bans.refresh();
 	await refreshSendouQInstance();
 	await refreshTentativeTiersCache();
 	await refreshApiTokensCache();

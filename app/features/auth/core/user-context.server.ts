@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { redirect } from "react-router";
-import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { SUSPENDED_PAGE } from "~/utils/urls";
 import { IMPERSONATED_SESSION_KEY, SESSION_KEY } from "./authenticator.server";
@@ -41,7 +41,7 @@ export async function getUserFromRequest(
 
 	if (!userId) return { user: undefined };
 
-	if (userIsBanned(userId)) {
+	if (Bans.isBanned(userId)) {
 		const isExemptPath =
 			url.pathname === SUSPENDED_PAGE ||
 			// needed for ban E2E tests

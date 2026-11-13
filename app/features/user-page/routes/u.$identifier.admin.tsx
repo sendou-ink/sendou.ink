@@ -247,9 +247,9 @@ function BanLog() {
 	}
 
 	return (
-		<div className="stack lg">
+		<div className="stack lg" data-testid="ban-log">
 			{data.banLogs.map((ban) => (
-				<div key={ban.createdAt}>
+				<div key={`${ban.createdAt}-${ban.banned}`}>
 					<LocaleTime
 						date={ban.createdAt}
 						options={{

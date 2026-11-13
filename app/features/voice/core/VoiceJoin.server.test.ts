@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import type { ResolvedRoom } from "~/features/chat/ChatRoomResolver.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import * as VoiceRepository from "../VoiceRepository.server";
 import * as VoiceAvailability from "./VoiceAvailability.server";
 import * as VoiceJoin from "./VoiceJoin.server";
 
-vi.mock("~/features/ban/core/banned.server", () => ({
-	userIsBanned: vi.fn(() => false),
+vi.mock("~/features/ban/core/Bans.server", () => ({
+	isBanned: vi.fn(() => false),
 }));
 vi.mock("../VoiceRepository.server", () => ({
 	hasBeenKicked: vi.fn(async () => false),
@@ -21,7 +21,7 @@ const TEAMMATE_ID = 2;
 const OUTSIDER_ID = 3;
 
 beforeEach(() => {
-	vi.mocked(userIsBanned).mockReturnValue(false);
+	vi.mocked(Bans.isBanned).mockReturnValue(false);
 	vi.mocked(VoiceRepository.hasBeenKicked).mockResolvedValue(false);
 	vi.mocked(VoiceAvailability.isAvailable).mockResolvedValue(true);
 });
@@ -40,7 +40,7 @@ describe("VoiceJoin.joinBlock", () => {
 		},
 		{
 			why: "banned",
-			setup: () => vi.mocked(userIsBanned).mockReturnValue(true),
+			setup: () => vi.mocked(Bans.isBanned).mockReturnValue(true),
 			userId: PLAYER_ID,
 			expected: "BANNED",
 		},
