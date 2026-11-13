@@ -1779,8 +1779,8 @@
 					},
 					{
 						"players": [
-							{"name":"rafe","weaponId":4010,"paint":1511,"ka":14,"d":5,"s":6},
-							{"name":"otomic♪","weaponId":1015,"paint":1132,"ka":13,"d":7,"s":4},
+							{"name":"rare","weaponId":4010,"paint":1511,"ka":14,"d":5,"s":6},
+							{"name":"Atomic♪","weaponId":1015,"paint":1132,"ka":13,"d":7,"s":4},
 							{"name":"hexen","weaponId":5000,"paint":961,"ka":8,"d":10,"s":5},
 							{"name":"TK]yol","weaponId":3005,"paint":1104,"ka":6,"d":8,"s":4}
 						]
@@ -1819,7 +1819,7 @@
 						"players": [
 							{"name":"rare","weaponId":2070,"paint":1030,"ka":12,"d":2,"s":4},
 							{"name":"Atomic♪","weaponId":1015,"paint":674,"ka":6,"d":3,"s":2},
-							{"name":"Tt]yol","weaponId":3005,"paint":751,"ka":4,"d":6,"s":2},
+							{"name":"TK]yol","weaponId":3005,"paint":751,"ka":4,"d":6,"s":2},
 							{"name":"hexen","weaponId":5010,"paint":648,"ka":4,"d":6,"s":2}
 						]
 					}
@@ -1924,8 +1924,8 @@
 					{
 						"players": [
 							{"name":"hexen","weaponId":5001,"paint":1250,"ka":21,"d":11,"s":4},
-							{"name":"rafe","weaponId":2070,"paint":1610,"ka":12,"d":7,"s":5},
-							{"name":"Otomic♪","weaponId":1015,"paint":838,"ka":10,"d":9,"s":2},
+							{"name":"rare","weaponId":2070,"paint":1610,"ka":12,"d":7,"s":5},
+							{"name":"Atomic♪","weaponId":1015,"paint":838,"ka":10,"d":9,"s":2},
 							{"name":"TK]yol","weaponId":3005,"paint":909,"ka":10,"d":13,"s":2}
 						]
 					},

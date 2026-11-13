@@ -219,6 +219,7 @@ function minimap(
 		teamColors = [null, null] as MinimapData["teamColors"],
 		dead = [[], []] as [number[], number[]],
 		specialReady = [[], []] as [number[], number[]],
+		names = [[], []] as [(string | null)[], (string | null)[]],
 		scores = { read: 0.8 },
 	} = {},
 ): DetectedEvent {
@@ -227,11 +228,13 @@ function minimap(
 		spectator,
 		teammates: alpha.map((id, i) => ({
 			...teammate(id),
+			name: names[0][i] ?? null,
 			dead: dead[0].includes(i),
 			specialReady: specialReady[0].includes(i),
 		})),
 		enemies: bravo.map((id, i) => ({
 			...enemy(id),
+			name: names[1][i] ?? null,
 			dead: dead[1].includes(i),
 			specialReady: specialReady[1].includes(i),
 		})),
@@ -3113,4 +3116,79 @@ test("a map intro of another stage or long after a replay-browser entry leaves t
 		]);
 		assert.deepEqual(built.map(isHistoryOnly), [true, false]);
 	}
+});
+
+const SET_NAMES = [
+	"Sendou",
+	"Kiver",
+	"Brian",
+	"Zedd",
+	"Gossip",
+	"Noah",
+	"Alice",
+	"Bobby",
+];
+
+function playerNames(match: {
+	teams: [
+		{ players: { name: string | null }[] },
+		{ players: { name: string | null }[] },
+	];
+}): (string | null)[] {
+	return match.teams.flatMap((team) =>
+		team.players.map((player) => player.name),
+	);
+}
+
+test("a name one game of a set misread takes the spelling the set's other games read", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		scoreboard(300, { names: SET_NAMES }),
+		mapStart(400),
+		scoreboard(700, { names: SET_NAMES.with(1, "Kiuer") }),
+		mapStart(800),
+		scoreboard(1100, { names: SET_NAMES }),
+	]);
+	assert.deepEqual(
+		built.map((b) => playerNames(b.match)[1]),
+		["Kiver", "Kiver", "Kiver"],
+	);
+});
+
+test("a near name in another lobby keeps its spelling", () => {
+	const otherLobby = [
+		"Pearl",
+		"Kiuer",
+		"Marina",
+		"Callie",
+		"Marie",
+		"Totoro",
+		"Ramen",
+		"Udon",
+	];
+	const built = buildScannerMatches([
+		mapStart(0),
+		scoreboard(300, { names: SET_NAMES }),
+		mapStart(400),
+		scoreboard(700, { names: SET_NAMES }),
+		mapStart(800),
+		scoreboard(1100, { names: otherLobby }),
+	]);
+	assert.deepEqual(playerNames(built[2]!.match), otherLobby);
+});
+
+test("a minimap-grouped match names a card by the spelling most of its frames read", () => {
+	const frame = (t: number, name: string, read: number) =>
+		minimap(t, {
+			spectator: false,
+			names: [["Sendou", name, "Brian", "Zedd"], []],
+			scores: { read },
+		});
+	const built = buildScannerMatches([
+		mapStart(0),
+		frame(30, "R.0.B.O.T", 0.95),
+		frame(90, "R.O.B.O.T", 0.8),
+		frame(150, "R.O.B.O.T", 0.8),
+	]);
+	assert.equal(built[0]!.match.teams[0].players[1]!.name, "R.O.B.O.T");
 });

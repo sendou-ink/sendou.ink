@@ -456,6 +456,25 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
      build, so browsing the log after playing neither adds a card nor
      re-uploads (the match was already sent).
 
+  Last, the built matches' player names are voted on across the session
+  (`core/name-roster.ts`): the same eight players recur across a set (and a
+  set browsed in the battle log), so a name one game misread takes the
+  spelling more of the other games read. Teams, not whole games, vote on
+  each other, and only when they are the same team: two names read
+  identically and three of four (one sub) pairing up one to one, closest
+  first, within 10
+  games of each other. A set links both of its teams; a team's game against
+  other opponents links only that team, so two games' opponents never vote
+  on each other.
+  Only a reading at 0.7 similarity or closer votes, a spelling wins only with
+  more games behind it than the game's own and any rival (a lone reading
+  against a lone reading stays as read, whatever their scores: a name's score
+  does not tell a misread from a hard name), and a game never ends up with
+  one name on two rows. Kill-feed names stay as read. A match already sent
+  is not sent again for a name a later game corrected. Within a
+  minimap-grouped match a card's name is the spelling most of its frames
+  read.
+
   A match needs a scoreboard, a personal results screen, a minimap or a
   minute of counter reads after its intro to be kept (the last for footage
   with neither, e.g. no results screen shown and the map never opened; it has

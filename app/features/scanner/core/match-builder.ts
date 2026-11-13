@@ -11,6 +11,9 @@
  *    revisit, a replay played back, a missed intro or a missed results screen
  *    is an ordinary outcome of it, not a repair of an earlier decision.
  *
+ * The built matches' player names are then voted on across the session
+ * (name-roster.ts).
+ *
  * A match is emitted only when a scoreboard, a personal results screen,
  * minimaps or a played counter back it, regardless of lobby/outcome —
  * `ingestSkipReasons` filters those (the clip scorer alone asks for the
@@ -73,6 +76,7 @@ import * as FieldScores from "./field-scores";
 import * as GameIdentity from "./game-identity";
 import * as GameSegments from "./game-segments";
 import { hueDistance, hueOf, type InkRgb } from "./ink-color";
+import * as NameRoster from "./name-roster";
 import {
 	type ScannerMatch,
 	type ScannerMatchKill,
@@ -228,6 +232,9 @@ export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
  * game's results screen) join the sources of the game they report on. Every
  * input event ends up in at most one match's `sources`.
  *
+ * A player name a game misread takes the spelling the other games of its
+ * team read (`withRosterNames`).
+ *
  * `unbacked` also emits, flagged, the segments with kill reads no scoreboard,
  * minimap or played counter backed (a results screen missed, the map never
  * opened, a match still being played): the clip scorer needs their streaks,
@@ -252,7 +259,9 @@ export function buildScannerMatches<E extends DetectedEvent>(
 		if (!isBacked(game) && !(unbacked && game.kills.length > 0)) continue;
 		built.push({ from: firstBaseT(game), built: builtGame(game, cache) });
 	}
-	return built.sort((a, b) => a.from - b.from).map((entry) => entry.built);
+	return withRosterNames(
+		built.sort((a, b) => a.from - b.from).map((entry) => entry.built),
+	);
 }
 
 /** A game as assigned: its segment's reads (none for a board-only match), the screens shown after them and its closing board. */
@@ -679,6 +688,47 @@ function builtGame<E extends DetectedEvent>(
 			...xBattleCards,
 		].sort((a, b) => a.t - b.t),
 	};
+}
+
+/**
+ * The matches with their player names voted on across the session
+ * (name-roster.ts): a name the other games of its team read otherwise takes
+ * their spelling. Unbacked matches read no names and take no part.
+ */
+function withRosterNames<E extends DetectedEvent>(
+	built: BuiltMatch<E>[],
+): BuiltMatch<E>[] {
+	const backed = built.filter((entry) => !entry.unbacked);
+	const snapped = NameRoster.snapNames(
+		backed.map(({ match }) =>
+			match.teams.map((team) => team.players.map((player) => player.name)),
+		),
+	);
+	const renamed = new Map(
+		backed.map((entry, i) => [entry, withNames(entry.match, snapped[i]!)]),
+	);
+	return built.map((entry) => {
+		const match = renamed.get(entry);
+		return match && match !== entry.match ? { ...entry, match } : entry;
+	});
+}
+
+/** The match with its players' names, per team; the match itself when none changed. */
+function withNames(
+	match: ScannerMatch,
+	names: readonly (readonly (string | null)[])[],
+): ScannerMatch {
+	let changed = false;
+	const teams = match.teams.map((team, side) => ({
+		...team,
+		players: team.players.map((player, slot) => {
+			const name = names[side]![slot]!;
+			if (name === player.name) return player;
+			changed = true;
+			return { ...player, name };
+		}),
+	})) as ScannerMatch["teams"];
+	return changed ? { ...match, teams } : match;
 }
 
 function withOwnBuildOn(
@@ -2402,7 +2452,10 @@ function teamsFromMinimaps(
 	];
 }
 
-/** For each slot index, the first frame's non-null read of each field. */
+/**
+ * For each slot index, the name most frames read (the first frame's on a tie)
+ * and the first frame's non-null read of every other field.
+ */
 function mergeSlots(
 	frames: Array<Array<MinimapCardRead>>,
 ): ScannerMatchPlayer[] {
@@ -2414,10 +2467,7 @@ function mergeSlots(
 			.filter((read) => read !== undefined);
 		const mains = mergeMains(reads.map((read) => read.abilities));
 		out.push({
-			name:
-				reads
-					.map((read) => read.name?.trim() || null)
-					.find((n) => n !== null) ?? null,
+			name: mostReadName(reads.map((read) => read.name?.trim() || null)),
 			weaponId:
 				reads.map((read) => read.weaponId).find((id) => id !== null) ?? null,
 			paint: null,
@@ -2428,6 +2478,18 @@ function mergeSlots(
 		});
 	}
 	return out;
+}
+
+function mostReadName(reads: readonly (string | null)[]): string | null {
+	const counts = new Map<string, number>();
+	for (const name of reads) {
+		if (name !== null) counts.set(name, (counts.get(name) ?? 0) + 1);
+	}
+	let best: string | null = null;
+	for (const [name, count] of counts) {
+		if (best === null || count > counts.get(best)!) best = name;
+	}
+	return best;
 }
 
 /** the gear slots a build has, in card/death-screen order */
