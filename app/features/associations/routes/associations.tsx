@@ -112,6 +112,14 @@ function AssociationSection({
 						dialogHeading={t("scrims:associations.delete.title", {
 							name: association.name,
 						})}
+						description={
+							association.upcomingLimitedContentCount
+								? t("scrims:associations.delete.blocked", {
+										count: association.upcomingLimitedContentCount,
+									})
+								: undefined
+						}
+						isSubmitDisabled={Boolean(association.upcomingLimitedContentCount)}
 						fields={[
 							["associationId", association.id],
 							["_action", "DELETE_ASSOCIATION"],

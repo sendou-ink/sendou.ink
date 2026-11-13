@@ -58,7 +58,10 @@ export const action = defineAction(
 			case "DELETE_ASSOCIATION": {
 				await requireAssociationPermission(body.associationId, "MANAGE");
 
-				await AssociationRepository.deleteById(body.associationId);
+				errorToastIfFalsy(
+					await AssociationRepository.deleteById(body.associationId),
+					"Can't delete the association while upcoming scrim posts or open lobbies are limited to it",
+				);
 
 				break;
 			}

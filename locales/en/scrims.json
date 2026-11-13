@@ -52,6 +52,8 @@
 	"associations.explanation": "Create an association to look in a smaller group (for example, make one with your team's regular practice opponents or LUTI division).",
 	"associations.join.title": "Join {{name}} association?",
 	"associations.delete.title": "Delete {{name}} association?",
+	"associations.delete.blocked_one": "It can't be deleted while {{count}} upcoming scrim post or open lobby is limited to it",
+	"associations.delete.blocked_other": "It can't be deleted while {{count}} upcoming scrim posts or open lobbies are limited to it",
 	"associations.admin": "Admin: {{username}}",
 	"associations.viewScrims": "View scrims",
 	"associations.leave.title": "Leave {{name}} association?",

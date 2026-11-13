@@ -1,5 +1,7 @@
+import { addHours } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	expect,
 	impersonate,
@@ -43,6 +45,32 @@ test.describe("Associations", () => {
 		await associations.deleteFirst();
 
 		await expect(associations.locators.deleteButtons).toHaveCount(1);
+	});
+
+	test("can't delete an association while an upcoming scrim post is limited to it", async ({
+		page,
+		factories,
+	}) => {
+		const association = await factories.AssociationFactory.create(
+			{ userId: ADMIN_ID },
+			{ memberUserIds: [NZAP_TEST_ID] },
+		);
+		await factories.ScrimPostFactory.create({
+			users: [{ userId: NZAP_TEST_ID, isOwner: 1 }],
+			startsAt: dateToDatabaseTimestamp(addHours(new Date(), 2)),
+			visibility: { forAssociation: association.id },
+		});
+
+		await impersonate(page, ADMIN_ID);
+
+		const associations = new AssociationsPage(page);
+		await associations.goto();
+		await associations.openDeleteFirst();
+
+		await expect(associations.locators.deleteBlockedMessage).toContainText(
+			"1 upcoming scrim post",
+		);
+		await expect(associations.locators.confirmButton).toBeDisabled();
 	});
 
 	test("stars a member, who then takes over when the admin leaves", async ({

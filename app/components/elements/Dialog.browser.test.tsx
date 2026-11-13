@@ -1,7 +1,7 @@
 import type * as React from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { createMemoryRouter, RouterProvider, useBlocker } from "react-router";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
@@ -261,6 +261,35 @@ describe("SendouDialog", () => {
 		}
 	});
 
+	test("stays open under the dialog of a navigation its close button got blocked by", async () => {
+		const router = createMemoryRouter(
+			[
+				{ path: "/", element: "Page behind" },
+				{
+					path: "/new",
+					element: (
+						<>
+							<SendouDialog heading="Form" onCloseTo="/">
+								Form content
+							</SendouDialog>
+							<BlockingGuard />
+						</>
+					),
+				},
+			],
+			{ initialEntries: ["/new"] },
+		);
+		const screen = await render(<RouterProvider router={router} />);
+		await expect.element(screen.getByText("Form content")).toBeVisible();
+
+		await screen.getByRole("button", { name: "Close" }).click();
+		await expect.element(screen.getByText("Leave anyway")).toBeVisible();
+		expect(openDialog().open).toBe(true);
+
+		await screen.getByRole("button", { name: "Leave anyway" }).click();
+		await expect.element(screen.getByText("Page behind")).toBeVisible();
+	});
+
 	test("focuses the dialog itself instead of the close button on open", async () => {
 		await render(
 			withRouter(
@@ -293,3 +322,16 @@ describe("SendouDialog", () => {
 		await vi.waitFor(() => expect(document.activeElement).toBe(openDialog()));
 	});
 });
+
+function BlockingGuard() {
+	const blocker = useBlocker(true);
+	if (blocker.state !== "blocked") return null;
+
+	return (
+		<SendouDialog heading="Unsaved" onClose={() => blocker.reset()}>
+			<button type="button" onClick={() => blocker.proceed()}>
+				Leave anyway
+			</button>
+		</SendouDialog>
+	);
+}

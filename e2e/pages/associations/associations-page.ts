@@ -18,6 +18,8 @@ export class AssociationsPage {
 			leaveButton: page.getByTestId("leave-team-button"),
 			inviteLinkInputs: page.getByLabel("Share link to add members"),
 			resetLinkButton: page.getByText("Reset link"),
+			confirmButton: page.getByTestId("confirm-button"),
+			deleteBlockedMessage: page.getByText(/can't be deleted while/),
 		};
 	}
 
@@ -49,8 +51,12 @@ export class AssociationsPage {
 	}
 
 	async deleteFirst() {
-		await this.locators.deleteButtons.first().click();
+		await this.openDeleteFirst();
 		await modalClickConfirmButton(this.page);
+	}
+
+	async openDeleteFirst() {
+		await this.locators.deleteButtons.first().click();
 	}
 
 	/** The star that lets the member share the invite link, or takes that away. */

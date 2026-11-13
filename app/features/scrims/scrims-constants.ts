@@ -39,6 +39,8 @@ export const SCRIM = {
 	AUTO_CANCEL_WINDOW_HOURS: 1,
 	/** How long after a start passes a request for it is still accepted, the open request modal may not have dropped it yet */
 	REQUEST_START_GRACE_SECONDS: 30 * 60,
+	/** How long after its start a post is still listed */
+	LISTED_HOURS_AFTER_START: 3,
 };
 
 export const SCRIM_TRACKING_AUTO_LOCK_HOURS = 4;

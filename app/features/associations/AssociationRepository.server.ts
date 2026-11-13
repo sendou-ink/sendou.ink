@@ -1,9 +1,13 @@
+import { sub } from "date-fns";
+import type { Kysely } from "kysely";
 import { db } from "~/db/sql";
-import type { Tables, TablesInsertable } from "~/db/tables";
+import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import type { AssociationVirtualIdentifier } from "~/features/associations/associations-constants";
 import { ASSOCIATION } from "~/features/associations/associations-constants";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
+import { SCRIM } from "~/features/scrims/scrims-constants";
 import { isSupporter } from "~/modules/permissions/utils";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
 import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
@@ -290,6 +294,72 @@ export function handleMemberLeaving({
 	});
 }
 
+/**
+ * How many upcoming scrim posts and open lobbies have a step of their visibility schedule limited to the
+ * association. Deleting the association would drop those steps, hiding content limited only to it from everyone.
+ */
+export function countUpcomingContentLimitedTo(associationId: number) {
+	return countUpcomingContentLimitedToWith(db, associationId);
+}
+
+/** Deletes the association, refused (returns `false`) while {@link countUpcomingContentLimitedTo} is above zero. */
 export function deleteById(associationId: number) {
-	return db.deleteFrom("Association").where("id", "=", associationId).execute();
+	return db.transaction().execute(async (trx) => {
+		if ((await countUpcomingContentLimitedToWith(trx, associationId)) > 0) {
+			return false;
+		}
+
+		await trx
+			.deleteFrom("Association")
+			.where("id", "=", associationId)
+			.execute();
+
+		return true;
+	});
+}
+
+async function countUpcomingContentLimitedToWith(
+	executor: Kysely<DB>,
+	associationId: number,
+) {
+	const listedSince = dateToDatabaseTimestamp(
+		sub(new Date(), { hours: SCRIM.LISTED_HOURS_AFTER_START }),
+	);
+
+	const { scrimPostCount, lobbyCount } = await executor
+		.selectFrom("ContentVisibility")
+		.leftJoin("ScrimPost", "ScrimPost.id", "ContentVisibility.scrimPostId")
+		.leftJoin("Lobby", "Lobby.id", "ContentVisibility.lobbyId")
+		.select(({ fn }) => [
+			fn
+				.count<number>("ContentVisibility.scrimPostId")
+				.distinct()
+				.as("scrimPostCount"),
+			fn.count<number>("ContentVisibility.lobbyId").distinct().as("lobbyCount"),
+		])
+		.where("ContentVisibility.associationId", "=", associationId)
+		.where((eb) =>
+			eb.or([
+				eb.and([
+					eb("ScrimPost.id", "is not", null),
+					eb("ScrimPost.startsAt", ">=", listedSince),
+					eb.not(
+						eb.exists(
+							eb
+								.selectFrom("ScrimPostRequest")
+								.select("ScrimPostRequest.id")
+								.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+								.where("ScrimPostRequest.isAccepted", "=", 1),
+						),
+					),
+				]),
+				eb.and([
+					eb("Lobby.id", "is not", null),
+					eb("Lobby.endedAt", "is", null),
+				]),
+			]),
+		)
+		.executeTakeFirstOrThrow();
+
+	return scrimPostCount + lobbyCount;
 }

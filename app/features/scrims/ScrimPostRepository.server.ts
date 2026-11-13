@@ -30,6 +30,7 @@ import type { Unwrapped } from "../../utils/types";
 import type { AssociationVisibility } from "../associations/associations-types";
 import * as Visibility from "../associations/core/Visibility";
 import * as Scrim from "./core/Scrim";
+import { SCRIM } from "./scrims-constants";
 import type { ScrimPost, ScrimPostUser } from "./scrims-types";
 import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
 
@@ -258,7 +259,7 @@ function findMany({
 	viewerId: number | null;
 	associationId: number | null;
 }) {
-	const min = sub(new Date(), { hours: 3 });
+	const min = sub(new Date(), { hours: SCRIM.LISTED_HOURS_AFTER_START });
 	const now = databaseTimestampNow();
 
 	return baseFindQuery

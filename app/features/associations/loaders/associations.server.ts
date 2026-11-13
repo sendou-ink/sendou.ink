@@ -15,20 +15,30 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		})
 	).actual;
 
-	const associationsWithInviteCodes: Array<
-		(typeof associations)[number] & { inviteCode: string | undefined }
+	const associationsWithManagerData: Array<
+		(typeof associations)[number] & {
+			inviteCode: string | undefined;
+			upcomingLimitedContentCount: number | undefined;
+		}
 	> = [];
 	for (const association of associations) {
-		associationsWithInviteCodes.push({
+		associationsWithManagerData.push({
 			...association,
 			inviteCode: association.permissions.MANAGE_INVITE_LINK.includes(user.id)
 				? await AssociationRepository.findInviteCodeById(association.id)
+				: undefined,
+			upcomingLimitedContentCount: association.permissions.MANAGE.includes(
+				user.id,
+			)
+				? await AssociationRepository.countUpcomingContentLimitedTo(
+						association.id,
+					)
 				: undefined,
 		});
 	}
 
 	return {
-		associations: associationsWithInviteCodes,
+		associations: associationsWithManagerData,
 		toJoin: await associationToJoin(request, user.id),
 	};
 };

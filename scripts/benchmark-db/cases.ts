@@ -192,6 +192,12 @@ export function buildCases(fx: Fixtures): {
 		fx.heavyAssociation,
 		(association) => AssociationRepository.findInviteCodeById(association.id),
 	);
+	add(
+		"AssociationRepository.countUpcomingContentLimitedTo",
+		fx.heavyAssociation,
+		(association) =>
+			AssociationRepository.countUpcomingContentLimitedTo(association.id),
+	);
 
 	add("LogInLinkRepository.findValidByCode", fx.logInLinkCode, (code) =>
 		LogInLinkRepository.findValidByCode(code),

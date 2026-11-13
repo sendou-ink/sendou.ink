@@ -26,6 +26,7 @@ export function FormWithConfirm({
 	action,
 	submitButtonTestId = "submit-button",
 	submitButtonVariant = "destructive",
+	isSubmitDisabled,
 	fetcher: _fetcher,
 	isOpen,
 	onOpenChange,
@@ -43,6 +44,8 @@ export function FormWithConfirm({
 	action?: string;
 	submitButtonTestId?: string;
 	submitButtonVariant?: SendouButtonProps["variant"];
+	/** the dialog opens but can't be confirmed, `description` telling why */
+	isSubmitDisabled?: boolean;
 	fetcher?: FetcherWithComponents<any>;
 	/** controlled open state, no child trigger needed */
 	isOpen?: boolean;
@@ -108,6 +111,7 @@ export function FormWithConfirm({
 						{onConfirm ? (
 							<SendouButton
 								variant={submitButtonVariant}
+								isDisabled={isSubmitDisabled}
 								testId={dialogOpen ? "confirm-button" : submitButtonTestId}
 								onClick={() => {
 									closeDialog();
@@ -120,6 +124,7 @@ export function FormWithConfirm({
 							<SubmitButton
 								form={id}
 								variant={submitButtonVariant}
+								isDisabled={isSubmitDisabled}
 								testId={dialogOpen ? "confirm-button" : submitButtonTestId}
 							>
 								{submitButtonText ?? t("common:actions.delete")}
