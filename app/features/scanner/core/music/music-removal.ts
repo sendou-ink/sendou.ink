@@ -21,6 +21,7 @@
  *    A Wiener post-filter then lowers what the subtraction misses.
  */
 import * as R from "remeda";
+import { median } from "~/utils/number";
 import { fft, nextPowerOfTwo } from "./fft";
 import {
 	FINGERPRINT_FRAME_SECONDS,
@@ -863,13 +864,4 @@ function hannWindow(size: number): Float64Array {
 function ramp(x: number): number {
 	const clamped = Math.max(0, Math.min(1, x));
 	return 0.5 - 0.5 * Math.cos(Math.PI * clamped);
-}
-
-function median(values: number[]): number {
-	if (values.length === 0) return 0;
-	const sorted = values.toSorted((a, b) => a - b);
-	const mid = sorted.length >> 1;
-	return sorted.length % 2 === 1
-		? sorted[mid]!
-		: (sorted[mid - 1]! + sorted[mid]!) / 2;
 }

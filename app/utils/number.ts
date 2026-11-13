@@ -39,3 +39,13 @@ export function niceStep(roughStep: number) {
 		) ?? 10) * magnitude
 	);
 }
+
+/** The middle value of `values` (the mean of the two middle ones for an even count), or 0 when there are none. */
+export function median(values: readonly number[]) {
+	if (values.length === 0) return 0;
+	const sorted = values.toSorted((a, b) => a - b);
+	const mid = sorted.length >> 1;
+	return sorted.length % 2 === 1
+		? sorted[mid]!
+		: (sorted[mid - 1]! + sorted[mid]!) / 2;
+}

@@ -8,7 +8,9 @@
  * rest of the charset from the fonts, preserving these fixture-tagged glyphs.
  *
  * Usage: pnpm scanner:bootstrap-atlas
- * Writes SCANNER_ASSETS_DIR/glyphs/*.{png,json}
+ * Writes GLYPH_ATLAS_DIR/*.{png,json}. The crops come out without a baseline
+ * (only the line each was cut from), so an atlas does not load until
+ * build-glyph-atlas.ts has run over it.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -36,11 +38,11 @@ import {
 	type Roi,
 	toMat,
 } from "../../app/features/scanner/core/image";
-import { SCANNER_ASSETS_DIR } from "../../app/features/scanner/node/assets-dir";
+import { GLYPH_ATLAS_DIR } from "../../app/features/scanner/node/assets-dir";
 import { FIXTURES_DIR } from "../../app/features/scanner/node/fixtures";
 import { readImage, writePng } from "../../app/features/scanner/node/image-io";
 
-const OUT_DIR = join(SCANNER_ASSETS_DIR, "glyphs");
+const OUT_DIR = GLYPH_ATLAS_DIR;
 const BIN_THRESHOLD = 150;
 
 /** A labeled header tag region (positions are fixture-specific: tags size to their text). */
@@ -408,11 +410,20 @@ function columnRuns(
 	});
 }
 
+/** A harvested crop, and where it was cut from (AtlasMeta's `line`). */
+interface Crop {
+	mat: Mat;
+	line: { id: number; top: number };
+}
+
+let lineSeq = 0;
+
 function cropGlyph(
 	run: { x0: number; x1: number },
 	roi: Roi,
-	threshold = BIN_THRESHOLD,
-): Mat {
+	threshold: number,
+	lineId: number,
+): Crop {
 	// tight vertical bounds within the run
 	let yMin = roi.y + roi.h;
 	let yMax = -1;
@@ -448,7 +459,7 @@ function cropGlyph(
 	out.copyTo(masked, mask);
 	out.delete();
 	mask.delete();
-	return masked;
+	return { mat: masked, line: { id: lineId, top: rect.y - roi.y } };
 }
 
 /**
@@ -459,7 +470,7 @@ function cropGlyph(
 function harvest(
 	roi: Roi,
 	label: string,
-	collected: Map<string, Mat> | [string, Mat][],
+	collected: Map<string, Crop> | [string, Crop][],
 	splitHints: number[] = [],
 	threshold = BIN_THRESHOLD,
 	mergeHints: number[] = [],
@@ -473,12 +484,13 @@ function harvest(
 		);
 		return;
 	}
+	const lineId = lineSeq++;
 	runs.forEach((run, i) => {
 		const ch = chars[i]!;
 		if (Array.isArray(collected)) {
-			collected.push([ch, cropGlyph(run, roi, threshold)]);
+			collected.push([ch, cropGlyph(run, roi, threshold, lineId)]);
 		} else if (!collected.has(ch)) {
-			collected.set(ch, cropGlyph(run, roi, threshold));
+			collected.set(ch, cropGlyph(run, roi, threshold, lineId));
 		}
 	});
 }
@@ -486,7 +498,7 @@ function harvest(
 function writeAtlas(
 	name: string,
 	height: number,
-	collected: Map<string, Mat> | [string, Mat][],
+	collected: Map<string, Crop> | [string, Crop][],
 ): void {
 	const entries =
 		collected instanceof Map ? [...collected.entries()] : collected;
@@ -497,26 +509,27 @@ function writeAtlas(
 	}
 	const spacing = 2;
 	const totalW =
-		glyphs.reduce((acc, [, m]) => acc + m.cols, 0) +
+		glyphs.reduce((acc, [, { mat }]) => acc + mat.cols, 0) +
 		spacing * (glyphs.length + 1);
-	const maxH = Math.max(...glyphs.map(([, m]) => m.rows)) + 2 * spacing;
+	const maxH = Math.max(...glyphs.map(([, { mat }]) => mat.rows)) + 2 * spacing;
 	const atlas = new cv.Mat(maxH, totalW, cv.CV_8UC1, new cv.Scalar(0));
 
 	const meta: AtlasMeta = { height, glyphs: [] };
 	let x = spacing;
-	for (const [char, m] of glyphs) {
-		const view = atlas.roi(new cv.Rect(x, spacing, m.cols, m.rows));
-		m.copyTo(view);
+	for (const [char, { mat, line }] of glyphs) {
+		const view = atlas.roi(new cv.Rect(x, spacing, mat.cols, mat.rows));
+		mat.copyTo(view);
 		view.delete();
 		meta.glyphs.push({
 			char,
 			x,
 			y: spacing,
-			w: m.cols,
-			h: m.rows,
+			w: mat.cols,
+			h: mat.rows,
 			source: "fixture",
+			line,
 		});
-		x += m.cols + spacing;
+		x += mat.cols + spacing;
 	}
 
 	const rgba = new cv.Mat();
@@ -538,18 +551,18 @@ mkdirSync(OUT_DIR, { recursive: true });
 
 // One crop per char per source: each source keeps its own first-instance map,
 // and the atlases carry every source's crops side by side.
-const nameEntries: [string, Mat][] = [];
-const paintEntries: [string, Mat][] = [];
-const statEntries: [string, Mat][] = [];
-const teamEntries: [string, Mat][] = [];
-const lobbyEntries: [string, Mat][] = [];
-const lineEntries: [string, Mat][] = [];
+const nameEntries: [string, Crop][] = [];
+const paintEntries: [string, Crop][] = [];
+const statEntries: [string, Crop][] = [];
+const teamEntries: [string, Crop][] = [];
+const lobbyEntries: [string, Crop][] = [];
+const lineEntries: [string, Crop][] = [];
 
 for (const source of SOURCES) {
 	console.info(`harvesting ${source.frame}`);
 	gray = await loadGray(source.frame);
 
-	const nameGlyphs: [string, Mat][] = [];
+	const nameGlyphs: [string, Crop][] = [];
 	ROW_CENTERS.forEach((cy, row) => {
 		// name region may include paint digits for long names; stop where digits start
 		harvest(
@@ -561,13 +574,13 @@ for (const source of SOURCES) {
 	});
 	nameEntries.push(...nameGlyphs);
 
-	const paintGlyphs = new Map<string, Mat>();
+	const paintGlyphs = new Map<string, Crop>();
 	ROW_CENTERS.forEach((cy, row) => {
 		harvest(paintRoi(cy), source.paints[row]!, paintGlyphs);
 	});
 	paintEntries.push(...paintGlyphs.entries());
 
-	const statGlyphs = new Map<string, Mat>();
+	const statGlyphs = new Map<string, Crop>();
 	ROW_CENTERS.forEach((cy, row) => {
 		for (const i of [0, 1, 2] as const) {
 			harvest(statRoi(cy, i), source.stats[row]![i]!, statGlyphs);
@@ -575,7 +588,7 @@ for (const source of SOURCES) {
 	});
 	statEntries.push(...statGlyphs.entries());
 
-	const teamGlyphs = new Map<string, Mat>();
+	const teamGlyphs = new Map<string, Crop>();
 	TEAM_SCORE_ROIS.forEach((roi, i) => {
 		harvest(roi, source.teamScores[i]!, teamGlyphs, [], TEAM_BIN_THRESHOLD);
 	});
@@ -585,7 +598,7 @@ for (const source of SOURCES) {
 	// stage (BlitzMain ~22px) side by side.
 	if (source.header) {
 		const { lobby, mode, stage } = source.header;
-		const lobbyGlyphs = new Map<string, Mat>();
+		const lobbyGlyphs = new Map<string, Crop>();
 		harvest(
 			lobby.roi,
 			lobby.label,
@@ -595,9 +608,9 @@ for (const source of SOURCES) {
 		);
 		lobbyEntries.push(...lobbyGlyphs.entries());
 
-		const modeGlyphs = new Map<string, Mat>();
+		const modeGlyphs = new Map<string, Crop>();
 		harvest(mode.roi, mode.label, modeGlyphs, mode.splitHints, mode.threshold);
-		const stageGlyphs = new Map<string, Mat>();
+		const stageGlyphs = new Map<string, Crop>();
 		harvest(
 			stage.roi,
 			stage.label,
@@ -649,11 +662,11 @@ const REPLAY_SOURCES: { frame: string; code: string }[] = [
 	},
 ];
 
-const codeEntries: [string, Mat][] = [];
+const codeEntries: [string, Crop][] = [];
 for (const source of REPLAY_SOURCES) {
 	console.info(`harvesting ${source.frame}`);
 	gray = await loadGreen(source.frame);
-	const codeGlyphs: [string, Mat][] = [];
+	const codeGlyphs: [string, Crop][] = [];
 	harvest(REPLAY_CODE_ROI, source.code, codeGlyphs);
 	codeEntries.push(...codeGlyphs);
 	gray.delete();
@@ -690,11 +703,11 @@ const DEATH_TAG_SOURCES: {
 	},
 ];
 
-const tagEntries: [string, Mat][] = [];
+const tagEntries: [string, Crop][] = [];
 for (const source of DEATH_TAG_SOURCES) {
 	console.info(`harvesting ${source.frame}`);
 	gray = await loadTagBand(source.frame);
-	const tagGlyphs: [string, Mat][] = [];
+	const tagGlyphs: [string, Crop][] = [];
 	harvest(
 		{ x: 0, y: 0, w: gray.cols, h: gray.rows },
 		source.label,
@@ -705,11 +718,14 @@ for (const source of DEATH_TAG_SOURCES) {
 	);
 	gray.delete();
 	const factor = TAG_ATLAS_HEIGHT / TAG_NAME_TEXT_HEIGHT;
-	for (const [char, mat] of tagGlyphs) {
+	for (const [char, { mat, line }] of tagGlyphs) {
 		const scaledMat = new cv.Mat();
 		cv.resize(mat, scaledMat, new cv.Size(0, 0), factor, factor, cv.INTER_AREA);
 		mat.delete();
-		tagEntries.push([char, scaledMat]);
+		tagEntries.push([
+			char,
+			{ mat: scaledMat, line: { id: line.id, top: line.top * factor } },
+		]);
 	}
 }
 
@@ -735,7 +751,7 @@ const DEATH_JA_SOURCES: {
 	},
 ];
 
-const deathJaEntries: [string, Mat][] = [];
+const deathJaEntries: [string, Crop][] = [];
 for (const source of DEATH_JA_SOURCES) {
 	console.info(`harvesting ${source.frame}`);
 	gray = await loadGray(source.frame);

@@ -695,9 +695,11 @@ export function createDeathDetector(
 				candidates.push([dominant, second.color]);
 			}
 			// an empty read never beats one with glyphs (a blanked band scores confidence 1);
-			// near ties go to the longer read since confidence is the *min* char score
-			// and erasing most of a name can still read the survivors immaculately
+			// near ties go to the read of more glyphs since confidence is the *min* char
+			// score and erasing most of a name can still read the survivors immaculately
+			// (a glyph erased mid-name leaves a space, which is no glyph: "strin s")
 			const NEAR_TIE = 0.03;
+			const glyphCount = (name: string) => name.replace(/\s/g, "").length;
 			const beats = (
 				a: { parsed: { name: string; confidence: number } },
 				b: typeof a,
@@ -712,7 +714,7 @@ export function createDeathDetector(
 						NEAR_TIE,
 					)
 				) {
-					return a.parsed.name.length - b.parsed.name.length;
+					return glyphCount(a.parsed.name) - glyphCount(b.parsed.name);
 				}
 				return a.parsed.confidence - b.parsed.confidence;
 			};

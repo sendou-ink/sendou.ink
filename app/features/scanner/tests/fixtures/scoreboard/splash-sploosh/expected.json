@@ -76,5 +76,11 @@
       }
     ],
     "stageLabel": "Brinewater Springs"
+  },
+  "options": {
+    "skipFields": [
+      "players.7.name"
+    ],
+    "notes": "players.7.name skipped: the label's ¬ and ・ are what two glyphs read as with no regard to height. The first is x-height with three bars (reads ョ now, a ¬ has one), the second hangs at the cap line where a ・ never is (reads * now). Neither is legible enough to label by eye."
   }
 }

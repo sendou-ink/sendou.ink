@@ -118,6 +118,9 @@ export function codeCharsetOf(set: GlyphSet): GlyphSet {
 				.sort((a, b) => a - b);
 			return widths[Math.floor(widths.length / 2)] ?? set.medianWidth;
 		},
+		get cell() {
+			return set.cell;
+		},
 	};
 }
 
