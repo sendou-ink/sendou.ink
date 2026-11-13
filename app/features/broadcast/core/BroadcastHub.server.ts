@@ -60,7 +60,7 @@ interface Hub extends HubKey {
 	stop: AbortController;
 	resubscribe: AbortController;
 	rebuildTimer: ReturnType<typeof setTimeout> | null;
-	/** Puts the staged item on air once the live scene has run its length, see `Producer.autoTakeAt`. */
+	/** Puts the staged item on air once the live scene has run its length or a game it waits for is due, see `Producer.autoTakeAt`. */
 	autoTakeTimer: ReturnType<typeof setTimeout> | null;
 	/** Retries a failed build while there is no state to show yet. */
 	retryTimer: ReturnType<typeof setTimeout> | null;
@@ -224,6 +224,7 @@ export async function applyGameSignal<State extends BroadcastState>({
 				signal,
 				liveResults: reportedResults(built.snapshot),
 				now: Date.now(),
+				gameDelayMs: built.snapshot.settings.gameDelayMs,
 			}),
 	});
 
@@ -358,8 +359,9 @@ function scheduleFirstBuildRetry(hub: Hub) {
 }
 
 /**
- * Times the automatic Take of the staged item, replacing the one timed before. One overdue, e.g. as the server
- * restarted while a clip played, is taken right away.
+ * Times the automatic Take of the staged item, replacing the one timed before: after the live scene's length, or
+ * after a game start or end it waits for with the broadcast's game delay. One overdue, e.g. as the server restarted
+ * while a clip played, is taken right away.
  */
 function scheduleAutoTake(hub: Hub) {
 	if (hub.autoTakeTimer) clearTimeout(hub.autoTakeTimer);
@@ -369,6 +371,7 @@ function scheduleAutoTake(hub: Hub) {
 	const takeAt = snapshot
 		? Producer.autoTakeAt(hub.layout.producer, snapshot, {
 				hasMatch: snapshot.match !== null,
+				gameDelayMs: snapshot.settings.gameDelayMs,
 			})
 		: null;
 	if (!snapshot || takeAt === null || hub.stop.signal.aborted) return;
@@ -400,6 +403,7 @@ async function autoTake(hub: Hub, takeId: number) {
 		change: (state) => {
 			const takeAt = Producer.autoTakeAt(hub.layout.producer, state, {
 				hasMatch: built.snapshot.match !== null,
+				gameDelayMs: built.snapshot.settings.gameDelayMs,
 			});
 			const now = Date.now();
 			if (

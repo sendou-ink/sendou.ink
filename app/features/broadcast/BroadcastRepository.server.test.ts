@@ -99,6 +99,7 @@ describe("BroadcastRepository.updateSettings", () => {
 		expect(broadcast?.settings).toEqual({
 			css: "body { color: red; }",
 			weaponImages: "outlined",
+			gameDelayMs: 0,
 			headline: "Finals at 18:00",
 			casterIds: [1, 2],
 		});

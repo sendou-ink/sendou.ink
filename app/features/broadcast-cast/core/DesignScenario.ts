@@ -440,6 +440,7 @@ export function build({
 					resultCount: match.progress.live.resultCount,
 				}
 			: null,
+		gameCut: null,
 		settings: {
 			...settings,
 			headline: scenario.headline ? settings.headline || MOCK_HEADLINE : "",

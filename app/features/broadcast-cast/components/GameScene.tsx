@@ -1,7 +1,11 @@
 import { Mic } from "lucide-react";
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
-import type { BroadcastView } from "~/features/broadcast/broadcast-types";
+import { ModeImage, StageImage } from "~/components/Image";
+import type {
+	BroadcastMap,
+	BroadcastView,
+} from "~/features/broadcast/broadcast-types";
 import {
 	combineStyles,
 	gameInk,
@@ -23,9 +27,9 @@ const styles = combineStyles(look, layout);
 const part = scenePart("game");
 
 /**
- * Over the game feed, clear of the game's own HUD: the round and casters in the top left corner and a bar along the
- * bottom with the teams in the game's ink colors, their set scores and rosters, the other matches' ticker scrolling
- * between them.
+ * Over the game feed, clear of the game's own HUD: the round and casters in the top left corner, each new game's map
+ * under them for its first seconds, and a bar along the bottom with the teams in the game's ink colors, their set
+ * scores and rosters, the other matches' ticker scrolling between them.
  */
 export function GameScene({
 	state,
@@ -35,10 +39,21 @@ export function GameScene({
 	view: BroadcastView;
 }) {
 	const match = state.match;
+	const progress = match?.progress[view];
 
 	return (
 		<>
-			<InfoCard state={state} />
+			<div className={styles.corner}>
+				<InfoCard state={state} />
+				{progress?.currentMap ? (
+					<MapIntro
+						// a new game shows its map again
+						key={`${progress.gameNumber}-${progress.currentMap.mode}-${progress.currentMap.stageId}`}
+						map={progress.currentMap}
+						gameNumber={progress.gameNumber}
+					/>
+				) : null}
+			</div>
 			{match || state.otherMatches.length > 0 ? (
 				<div
 					className={styles.scoreboard}
@@ -112,6 +127,40 @@ function InfoCard({ state }: { state: CastBroadcastState }) {
 						))}
 					</div>
 				) : null}
+			</div>
+		</div>
+	);
+}
+
+function MapIntro({
+	map,
+	gameNumber,
+}: {
+	map: BroadcastMap;
+	gameNumber: number;
+}) {
+	const { t } = useTranslation(["broadcast", "game-misc"]);
+
+	return (
+		<div className={styles.mapIntro} {...part("map-intro")}>
+			<StageImage
+				stageId={map.stageId}
+				width={480}
+				loading="eager"
+				className={styles.mapIntroImage}
+				containerClassName={styles.mapIntroImage}
+			/>
+			<div className={styles.mapIntroText}>
+				<span className={styles.mapIntroGame} {...part("game-number")}>
+					{t("broadcast:overlay.game", { number: gameNumber })}
+				</span>
+				<span className={styles.mapIntroMode} {...part("mode")}>
+					<ModeImage mode={map.mode} size={28} loading="eager" />
+					{t(`game-misc:MODE_LONG_${map.mode}`)}
+				</span>
+				<span className={styles.mapIntroStage} {...part("stage")}>
+					{t(`game-misc:STAGE_${map.stageId}`)}
+				</span>
 			</div>
 		</div>
 	);

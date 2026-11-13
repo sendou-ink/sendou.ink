@@ -20,6 +20,10 @@ import {
 	GATE_TIMER_COLON_MIN_DOT_MEAN,
 	GATE_TIMER_MAX_MEAN,
 	GATE_TIMER_MIN_MAX_BRIGHTNESS,
+	OVERTIME_WARM_MAX_GREEN,
+	OVERTIME_WARM_MIN_FRACTION,
+	OVERTIME_WARM_MIN_RED,
+	OVERTIME_WARM_MIN_RED_OVER_BLUE,
 	TIMER_BIN_THRESHOLD,
 	TIMER_COLON_DOT_ROIS,
 	TIMER_COLON_GAP_ROI,
@@ -54,6 +58,28 @@ export function timerBoxChecks(gray: Mat): boolean[] {
 		),
 		maxBrightness(gray, TIMER_DIGIT_ROI) >= GATE_TIMER_MIN_MAX_BRIGHTNESS,
 	];
+}
+
+/** The timer box showing "Overtime!" in place of the M:SS (see `OVERTIME_WARM_MIN_FRACTION`). */
+export function overtimeBoxVisible(frame: Mat): boolean {
+	const crop = copyRoi(frame, TIMER_DIGIT_ROI);
+	const { data } = crop;
+	const channels = crop.channels();
+	let warm = 0;
+	for (let i = 0; i < data.length; i += channels) {
+		const r = data[i]!;
+		if (
+			r >= OVERTIME_WARM_MIN_RED &&
+			r - data[i + 2]! >= OVERTIME_WARM_MIN_RED_OVER_BLUE &&
+			data[i + 1]! <= OVERTIME_WARM_MAX_GREEN
+		) {
+			warm++;
+		}
+	}
+	const pixels = data.length / channels;
+	crop.delete();
+
+	return warm / pixels >= OVERTIME_WARM_MIN_FRACTION;
 }
 
 /** The M:SS colon's two dots, dark between them. */

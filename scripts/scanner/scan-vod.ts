@@ -8,13 +8,16 @@
  *
  * Requires ffmpeg (and ffprobe for the progress percentage) on PATH.
  *
- * Usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir]
+ * Usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir] [--cues file.json]
  * --telemetry prints the VoD tab's ?telemetry=true scan counters after the run.
  * --gpu matches templates on WebGPU (worker/gpu-matcher.ts) like the browser's
  *   GPU path; needs Dawn (node/webgpu.ts: WEBGPU_NODE). The CSV must stay
  *   byte-identical to a CPU scan's.
  * --record writes every template-match request as a replay corpus for
  *   `pnpm scanner:gpu-replay` (match-corpus.ts).
+ * --cues writes what a linked broadcast's GameCues get as they come in (the
+ *   events it reads and the map overlay's gate passes), as the compact rows
+ *   of the cue timing fixtures (tests/fixtures/game-cues, GameCuesVods.test.ts).
  */
 import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
@@ -26,6 +29,15 @@ import {
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import { runDetectorPass } from "../../app/features/scanner/core/detectors/frame-pass";
 import { MAP_START_EVENT_TYPE } from "../../app/features/scanner/core/detectors/map-start/index";
+import { MINIMAP_DETECTOR_ID } from "../../app/features/scanner/core/detectors/minimap/index";
+import {
+	OBJECTIVE_EVENT_TYPE,
+	type ObjectiveData,
+} from "../../app/features/scanner/core/detectors/objective/index";
+import {
+	PLAYER_STATUS_EVENT_TYPE,
+	type PlayerStatusData,
+} from "../../app/features/scanner/core/detectors/objective/player-status";
 import {
 	createAllDetectors,
 	SCOREBOARD_EVENT_TYPES,
@@ -50,7 +62,7 @@ const PROGRESS_INTERVAL_SECONDS = 60;
 const options = parseArgs(process.argv.slice(2));
 if (!options) {
 	console.error(
-		"usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir]",
+		"usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir] [--cues file.json]",
 	);
 	process.exit(1);
 }
@@ -63,6 +75,7 @@ const {
 	collectTelemetry,
 	gpu,
 	recordDir,
+	cuesPath,
 } = options;
 
 await loadOpenCV();
@@ -84,6 +97,7 @@ const timeline = new TimelineBuilder();
 const telemetry = collectTelemetry ? createScanTelemetry() : null;
 /** per detector: the whole frame pass's latency on each frame it parsed */
 const passLatencies = new Map<string, number[]>();
+const cueRows: unknown[][] = [];
 
 const totalSeconds = await probeDurationSeconds(videoPath);
 const scanEnd =
@@ -144,6 +158,12 @@ if (exitCode !== 0) {
 
 const csv = eventsToCsv(timeline.events as CsvEvent[]);
 writeFileSync(outPath, csv);
+if (cuesPath) {
+	writeFileSync(
+		cuesPath,
+		`[\n${cueRows.map((row) => JSON.stringify(row)).join(",\n")}\n]\n`,
+	);
+}
 printSummary();
 
 function parseArgs(argv: string[]): {
@@ -155,6 +175,7 @@ function parseArgs(argv: string[]): {
 	collectTelemetry: boolean;
 	gpu: boolean;
 	recordDir: string | undefined;
+	cuesPath: string | undefined;
 } | null {
 	let parsedVideoPath: string | undefined;
 	let parsedFps = DEFAULT_FPS;
@@ -164,6 +185,7 @@ function parseArgs(argv: string[]): {
 	let parsedCollectTelemetry = false;
 	let parsedGpu = false;
 	let parsedRecordDir: string | undefined;
+	let parsedCuesPath: string | undefined;
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i]!;
 		if (arg === "--fps") parsedFps = Number(argv[++i]);
@@ -173,6 +195,7 @@ function parseArgs(argv: string[]): {
 		else if (arg === "--telemetry") parsedCollectTelemetry = true;
 		else if (arg === "--gpu") parsedGpu = true;
 		else if (arg === "--record") parsedRecordDir = argv[++i];
+		else if (arg === "--cues") parsedCuesPath = argv[++i];
 		else if (!arg.startsWith("--") && parsedVideoPath === undefined)
 			parsedVideoPath = arg;
 		else return null;
@@ -197,6 +220,7 @@ function parseArgs(argv: string[]): {
 		collectTelemetry: parsedCollectTelemetry,
 		gpu: parsedGpu,
 		recordDir: parsedRecordDir,
+		cuesPath: parsedCuesPath,
 	};
 }
 
@@ -278,6 +302,7 @@ async function processFrame(t: number): Promise<void> {
 			passLatencies.set(detector.id, list);
 		}
 	}
+	if (cuesPath) recordCueInputs(outcomes, t);
 	for (const { events } of outcomes) {
 		for (const event of events) {
 			const action = timeline.push(event);
@@ -289,6 +314,40 @@ async function processFrame(t: number): Promise<void> {
 		}
 	}
 	frame.delete();
+}
+
+/** As live-session.ts hands them to the broadcast link, rows of the cue timing fixtures (GameCuesVods.test.ts). */
+function recordCueInputs(
+	outcomes: Awaited<ReturnType<typeof runDetectorPass>>,
+	t: number,
+): void {
+	const round = (seconds: number) => Math.round(seconds * 1000) / 1000;
+	for (const { detector, gate, events } of outcomes) {
+		if (!gate.pass) continue;
+		if (detector.id === MINIMAP_DETECTOR_ID) {
+			cueRows.push(["open", round(t)]);
+		}
+		for (const event of events) {
+			if (event.type === MAP_START_EVENT_TYPE) {
+				cueRows.push(["intro", round(event.t)]);
+			} else if (event.type === OBJECTIVE_EVENT_TYPE) {
+				cueRows.push([
+					"time",
+					round(event.t),
+					(event.data as ObjectiveData).time,
+				]);
+			} else if (event.type === PLAYER_STATUS_EVENT_TYPE) {
+				const { time, teamHue, teamInk } = event.data as PlayerStatusData;
+				cueRows.push([
+					"hud",
+					round(event.t),
+					time,
+					teamHue,
+					teamInk.map((ink) => (ink ? [ink.r, ink.g, ink.b] : null)),
+				]);
+			}
+		}
+	}
 }
 
 function printSummary(): void {

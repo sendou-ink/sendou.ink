@@ -1,14 +1,17 @@
 /**
  * Game starts and ends as a broadcast cuts to them, off the detector events
  * as they come in (before the timeline merges them, which would delay them).
- * A game starts once the HUD's player icons show both teams' ink hues twice
- * in a row, in every mode, so the overlay knows the colors before cutting to
- * it (their RGB, which tells pairs of about the same hue apart); the intro
- * splash comes earlier but carries no ink. A game ends once
- * its HUD is gone: shortly after the timer ran out, or a while longer
- * without, as a knockout's 0 is gone before it's read (and a blurred 100
- * reads as 0, so the counter can't tell). An observer opening the map hides
- * the HUD too, which keeps the game on while it's up.
+ * Each cue carries the moment the cut belongs at, in event time, so a
+ * broadcast running a stream delay can land it there (see broadcast's
+ * `Producer.applyGameSignal`). A game starts with its intro splash, the
+ * first thing of it shown; the teams' ink follows once the HUD's player
+ * icons show both teams' hues twice in a row (their RGB, which tells pairs of
+ * about the same hue apart). Without an intro read the HUD starts the game,
+ * ink and all. A game ends once its HUD is gone: shortly after the timer ran
+ * out (overtime keeps the HUD up), or a while longer without, as a knockout's
+ * 0 is gone before it's read (and a blurred 100 reads as 0, so the counter
+ * can't tell). The cut belongs at the HUD's last read either way. An observer
+ * opening the map hides the HUD too, which keeps the game on while it's up.
  */
 
 import { MAP_START_EVENT_TYPE } from "./detectors/map-start/index";
@@ -23,12 +26,11 @@ import {
 import type { DetectedEvent } from "./detectors/types";
 import { hueDistance, type InkRgb } from "./ink-color";
 
-// xxx: define exactly when to switch on game start (HUD "Ready?" vs intro) and on game end ("GAME!" vs results) after hearing from Ely
-/** HUD reads with both teams' ink agreeing it takes for the game to start, the HUD fading in reads off at first. */
+/** HUD reads with both teams' ink agreeing it takes for the ink to be known, the HUD fading in reads off at first. */
 const INK_READS_NEEDED = 2;
 /** Two reads of the same teams: their hues summed over both sides this close, in either order (a cast's POV switch flips the sides). */
 const SAME_INK_MAX_HUE_DISTANCE = 30;
-/** HUD reads after which a game whose ink reads never agreed starts without colors rather than not at all. */
+/** HUD reads after which a game whose ink reads never agreed goes on without colors rather than not at all. */
 const HUD_READS_WITHOUT_INK = 6;
 /** Seconds the HUD is gone after the timer ran out before the game counts as ended, it blinks out now and then. */
 const HUD_GONE_SECONDS = 3;
@@ -37,6 +39,8 @@ const HUD_GONE_SECONDS = 3;
  * cast VoDs the HUD went unread mid-game for at most 3s, a knockout's "GAME!" and results for 25s or more.
  */
 const HUD_GONE_SECONDS_WITHOUT_TIME_UP = 6;
+/** Seconds after the intro splash its game's HUD shows up at the latest, an intro misread is taken back after it. */
+const INTRO_MAX_SECONDS = 30;
 /** A timer read this low ran out: the last second or two can be missed between reads. */
 const TIME_UP_MAX_SECONDS = 1;
 /** The read before it this low too, so one misread digit doesn't run the timer out mid-game. */
@@ -45,20 +49,30 @@ const TIME_UP_PREVIOUS_MAX_SECONDS = 10;
 export type GameCue =
 	| {
 			type: "start";
-			/** Both teams' ink colors, left side first as last read. `null` when they couldn't be read. */
+			/** When the game was first seen, in event time: where the cut to it belongs. */
+			t: number;
+			/** Both teams' ink colors, left side first as last read. `null` when not read (yet, see the `ink` cue). */
 			inks: [InkRgb, InkRgb] | null;
 	  }
 	| {
+			/** The ink of a game that started off its intro, once the HUD shows it. */
+			type: "ink";
+			inks: [InkRgb, InkRgb];
+	  }
+	| {
 			type: "end";
-			/** When the game's HUD was last read, in event time. */
+			/** When the game's HUD was last read, in event time: where the cut away from it belongs. */
 			t: number;
 	  };
 
 export interface GameCuesState {
-	isLive: boolean;
-	/** Agreeing reads of both teams' ink while the game hasn't started, newest last. */
+	/** When the game on started, in event time (see the `start` cue's `t`), `null` while none is. */
+	startedAt: number | null;
+	/** The game's ink was told (or given up on), so the HUD reads stop looking for it. */
+	isInkSettled: boolean;
+	/** Agreeing reads of both teams' ink while it isn't settled, newest last. */
 	inkReads: InkRead[];
-	/** Reads of the game's HUD while it hasn't started. */
+	/** Reads of the game's HUD while its ink isn't settled. */
 	hudReads: number;
 	/** When the HUD (or the map an observer opened over it) was last seen, `null` before the game's first read. */
 	lastHudAt: number | null;
@@ -80,10 +94,13 @@ export type GameCuesInput =
 	/** Time passing without events, in event time: what ends a game. */
 	| { kind: "tick"; t: number };
 
+type Stepped = { state: GameCuesState; cues: GameCue[] };
+
 /** State before anything was read: no game on. */
 export function initialState(): GameCuesState {
 	return {
-		isLive: false,
+		startedAt: null,
+		isInkSettled: false,
 		inkReads: [],
 		hudReads: 0,
 		lastHudAt: null,
@@ -93,28 +110,27 @@ export function initialState(): GameCuesState {
 }
 
 /** Moves the state along with an event or time passing, along with the cues it gives. */
-export function step(
-	state: GameCuesState,
-	input: GameCuesInput,
-): { state: GameCuesState; cues: GameCue[] } {
-	if (input.kind === "tick") return endIfHudGone(state, input.t);
+export function step(state: GameCuesState, input: GameCuesInput): Stepped {
+	if (input.kind === "tick") return endIfOver(state, input.t);
 	if (input.kind === "mapOpen") {
 		return {
-			state: state.isLive ? { ...state, lastHudAt: input.t } : state,
+			state: isLive(state) ? { ...state, lastHudAt: input.t } : state,
 			cues: [],
 		};
 	}
 
 	const { event } = input;
-	if (event.type === MAP_START_EVENT_TYPE) {
-		return { state: initialState(), cues: [] };
-	}
+	const ended = endIfOver(state, event.t);
+	const read = readEvent(ended.state, event);
 
-	const ended = endIfHudGone(state, event.t);
-	if (ended.cues.length > 0) return ended;
+	return { state: read.state, cues: [...ended.cues, ...read.cues] };
+}
 
+function readEvent(state: GameCuesState, event: DetectedEvent): Stepped {
+	if (event.type === MAP_START_EVENT_TYPE) return readIntro(state, event.t);
 	if (event.type === OBJECTIVE_EVENT_TYPE) {
-		return readObjective(state, event as DetectedEvent<ObjectiveData>);
+		const { data } = event as DetectedEvent<ObjectiveData>;
+		return { state: readTime(state, event.t, data.time), cues: [] };
 	}
 	if (event.type === PLAYER_STATUS_EVENT_TYPE) {
 		return readHud(state, event as DetectedEvent<PlayerStatusData>);
@@ -123,20 +139,27 @@ export function step(
 	return { state, cues: [] };
 }
 
-function readObjective(
-	state: GameCuesState,
-	event: DetectedEvent<ObjectiveData>,
-): { state: GameCuesState; cues: GameCue[] } {
-	return { state: readTime(state, event.t, event.data.time), cues: [] };
+function isLive(state: GameCuesState) {
+	return state.startedAt !== null;
+}
+
+/** The intro splash starts its game. Read while one is on it's the same intro again, or a misread: the HUD is still up. */
+function readIntro(state: GameCuesState, t: number): Stepped {
+	if (isLive(state)) return { state, cues: [] };
+
+	return {
+		state: { ...initialState(), startedAt: t },
+		cues: [{ type: "start", t, inks: null }],
+	};
 }
 
 function readHud(
 	state: GameCuesState,
 	event: DetectedEvent<PlayerStatusData>,
-): { state: GameCuesState; cues: GameCue[] } {
+): Stepped {
 	const { time, teamHue, teamInk } = event.data;
 	const read = readTime(state, event.t, time);
-	if (state.isLive) return { state: read, cues: [] };
+	if (state.isInkSettled) return { state: read, cues: [] };
 
 	const inkRead = toInkRead(teamHue, teamInk);
 	const previous = state.inkReads.at(-1);
@@ -149,22 +172,34 @@ function readHud(
 			]
 		: [];
 	if (inkRead && inkReads.length >= INK_READS_NEEDED) {
-		return start(read, inkRead.inks);
+		return settleInk(read, event.t, inkRead.inks);
 	}
 
 	const hudReads = state.hudReads + 1;
-	if (hudReads >= HUD_READS_WITHOUT_INK) return start(read, null);
+	if (hudReads >= HUD_READS_WITHOUT_INK) return settleInk(read, event.t, null);
 
 	return { state: { ...read, inkReads, hudReads }, cues: [] };
 }
 
-function start(
+/** The ink is known (or given up on): told with an `ink` cue, or starting the game when no intro started it. */
+function settleInk(
 	state: GameCuesState,
+	t: number,
 	inks: [InkRgb, InkRgb] | null,
-): { state: GameCuesState; cues: GameCue[] } {
+): Stepped {
+	const settled: GameCuesState = {
+		...state,
+		isInkSettled: true,
+		inkReads: [],
+		hudReads: 0,
+	};
+	if (isLive(state)) {
+		return { state: settled, cues: inks ? [{ type: "ink", inks }] : [] };
+	}
+
 	return {
-		state: { ...state, isLive: true, inkReads: [], hudReads: 0 },
-		cues: [{ type: "start", inks }],
+		state: { ...settled, startedAt: t },
+		cues: [{ type: "start", t, inks }],
 	};
 }
 
@@ -193,20 +228,20 @@ function readTime(
 	};
 }
 
-function endIfHudGone(
-	state: GameCuesState,
-	t: number,
-): { state: GameCuesState; cues: GameCue[] } {
+/** Ends the game once its HUD has been gone long enough, or its HUD never showed after the intro (a misread one). */
+function endIfOver(state: GameCuesState, t: number): Stepped {
+	if (state.startedAt === null) return { state, cues: [] };
+
+	if (state.lastHudAt === null) {
+		return t - state.startedAt < INTRO_MAX_SECONDS
+			? { state, cues: [] }
+			: { state: initialState(), cues: [{ type: "end", t: state.startedAt }] };
+	}
+
 	const goneSeconds = state.isTimeUp
 		? HUD_GONE_SECONDS
 		: HUD_GONE_SECONDS_WITHOUT_TIME_UP;
-	if (
-		!state.isLive ||
-		state.lastHudAt === null ||
-		t - state.lastHudAt < goneSeconds
-	) {
-		return { state, cues: [] };
-	}
+	if (t - state.lastHudAt < goneSeconds) return { state, cues: [] };
 
 	return {
 		state: initialState(),

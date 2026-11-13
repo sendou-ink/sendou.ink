@@ -60,6 +60,7 @@ import {
 } from "./rois";
 import { parseStripWeapons, type StripWeaponsData } from "./strip-weapons";
 import {
+	overtimeBoxVisible,
 	readMatchTimerSteps,
 	timerBoxChecks,
 	timerColonVisible,
@@ -73,7 +74,7 @@ export type ObjectiveData = ZonesObjectiveData | TrackObjectiveData;
 interface ZonesObjectiveData {
 	/** names the plates overlay: CB draws it too, so the match's mode tells the two apart */
 	mode: "SZ";
-	/** match timer seconds ("3:35" = 215); null = unreadable. Overtime display unattested so far. */
+	/** match timer seconds ("3:35" = 215); null = unreadable, or overtime */
 	time: number | null;
 	/** displayed count per team, [alpha, bravo]; null = unreadable */
 	score: [number | null, number | null];
@@ -99,7 +100,7 @@ interface ZonesObjectiveData {
 export interface TrackObjectiveData {
 	/** off the checkpoint markers; null when none read (the match's mode decides) */
 	mode: "TC" | "RM" | null;
-	/** match timer seconds; null = unreadable */
+	/** match timer seconds; null = unreadable, or overtime */
 	time: number | null;
 	/**
 	 * displayed "Remaining" count per team, [alpha, bravo]; null = no plate
@@ -119,9 +120,11 @@ export interface TrackObjectiveData {
 
 export const OBJECTIVE_EVENT_TYPE = "Objective";
 
-/** Gate variants: which overlay the parse reads. */
+/** Gate variants: which overlay the parse reads, in overtime with no timer to read. */
 const ZONES_VARIANT = "zones";
+const ZONES_OVERTIME_VARIANT = "zones-overtime";
 const TRACK_VARIANT = "track";
+const TRACK_OVERTIME_VARIANT = "track-overtime";
 /** The timer box alone, as Turf War draws it */
 const TIMER_VARIANT = "timer";
 
@@ -218,16 +221,21 @@ export function createObjectiveDetector(
 		return maxVal >= GATE_SCORE_MIN_MAX_BRIGHTNESS;
 	}
 
-	/** The timer box, then the track's dot comb (TC/RM), the SZ/CB plates or neither (TW). */
+	/** The timer box (or overtime's), then the track's dot comb (TC/RM), the SZ/CB plates or neither (TW). */
 	function gate(frame: Mat): GateResult {
 		const gray = frameGray(frame);
 		const timerChecks = timerBoxChecks(gray);
-		const timerBox = timerChecks.every(Boolean);
+		const isOvertime = !timerChecks.every(Boolean) && overtimeBoxVisible(frame);
+		const timerBox = isOvertime || timerChecks.every(Boolean);
 		if (timerBox && trackComb(frame) >= GATE_TRACK_MIN_COMB) {
-			return { pass: true, score: 1, variant: TRACK_VARIANT };
+			return {
+				pass: true,
+				score: 1,
+				variant: isOvertime ? TRACK_OVERTIME_VARIANT : TRACK_VARIANT,
+			};
 		}
 		const checks = [
-			...timerChecks,
+			...timerChecks.map((check) => check || isOvertime),
 			plateProbeOk(gray, PLATE_PROBE_ROIS[0]),
 			plateProbeOk(gray, PLATE_PROBE_ROIS[1]),
 			scoreInkOk(frame, SCORE_ROIS[0]),
@@ -240,7 +248,7 @@ export function createObjectiveDetector(
 		return {
 			pass: passed === checks.length,
 			score: passed / checks.length,
-			variant: ZONES_VARIANT,
+			variant: isOvertime ? ZONES_OVERTIME_VARIANT : ZONES_VARIANT,
 		};
 	}
 
@@ -369,11 +377,13 @@ export function createObjectiveDetector(
 		DetectedEvent<ObjectiveData | PlayerStatusData | StripWeaponsData>[]
 	> {
 		const variant = (gateResult ?? gate(frame)).variant;
+		const isOvertime =
+			variant === ZONES_OVERTIME_VARIANT || variant === TRACK_OVERTIME_VARIANT;
 		const counter =
-			variant === TRACK_VARIANT
-				? yield* parseTrackSteps(frame, speculative)
-				: variant === ZONES_VARIANT
-					? yield* parseZonesSteps(frame, speculative)
+			variant === TRACK_VARIANT || variant === TRACK_OVERTIME_VARIANT
+				? yield* parseTrackSteps(frame, isOvertime, speculative)
+				: variant === ZONES_VARIANT || variant === ZONES_OVERTIME_VARIANT
+					? yield* parseZonesSteps(frame, isOvertime, speculative)
 					: null;
 		// no counter read (Turf War, or a plate/track lookalike over the real HUD):
 		// a readable timer alone vouches for the strip
@@ -423,6 +433,7 @@ export function createObjectiveDetector(
 	/** The SZ/CB plates read; null = no readable count on either side (a lookalike). */
 	function* parseZonesSteps(
 		frame: Mat,
+		isOvertime: boolean,
 		speculative: boolean,
 	): MatchSteps<{ event: DetectedEvent<ZonesObjectiveData> } | null> {
 		const gray = frameGray(frame);
@@ -469,7 +480,7 @@ export function createObjectiveDetector(
 				confidence: confidences.reduce((a, b) => a + b, 0) / confidences.length,
 				data: {
 					mode: "SZ",
-					time: timer.value,
+					time: isOvertime ? null : timer.value,
 					score: [sides[0].score.value, sides[1].score.value],
 					penalty: [
 						sides[0].penalty?.value ?? null,
@@ -498,6 +509,7 @@ export function createObjectiveDetector(
 	/** The TC/RM track read; null = neither the icon nor a plate read (a lookalike). */
 	function* parseTrackSteps(
 		frame: Mat,
+		isOvertime: boolean,
 		speculative: boolean,
 	): MatchSteps<{ event: DetectedEvent<TrackObjectiveData> } | null> {
 		const gray = frameGray(frame);
@@ -519,7 +531,7 @@ export function createObjectiveDetector(
 				confidence: confidences.reduce((a, b) => a + b, 0) / confidences.length,
 				data: {
 					mode: track.mode,
-					time: timer.value,
+					time: isOvertime ? null : timer.value,
 					score: [track.score[0].value, track.score[1].value],
 					control: track.holder,
 					position: track.position,
