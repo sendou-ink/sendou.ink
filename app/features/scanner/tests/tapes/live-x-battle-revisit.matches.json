@@ -161,8 +161,8 @@
 						{
 							"t": 1791810313,
 							"time": 274,
-							"special": [[false,true,false,false],[false,false,false,true]],
-							"dead": [[false,false,true,false],[true,false,false,false]]
+							"special": [[false,false,false,false],[false,false,false,true]],
+							"dead": [[false,true,true,false],[true,false,false,false]]
 						},
 						{
 							"t": 1791810316,

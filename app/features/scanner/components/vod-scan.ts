@@ -301,12 +301,10 @@ export async function startVodScan(
 					}
 					for (const { action, key, event } of result.changes) {
 						const held = lane.events.get(key);
-						// an amended read keeps its slot's frame; an extended run's trailing read has none of its own
+						// an amended read keeps its slot's frame
 						const frame = bringsFrame(action)
 							? result.frame
-							: action === "amended" && held
-								? frames.get(held)
-								: undefined;
+							: held && frames.get(held);
 						const scanEvent: ScanEvent = {
 							...event,
 							hasFrame: frame !== undefined,

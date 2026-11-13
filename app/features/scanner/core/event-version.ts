@@ -12,7 +12,7 @@
  */
 
 /** The version events are written at. */
-export const CURRENT = 2;
+export const CURRENT = 3;
 
 /** Events stored before they were stamped. */
 const UNSTAMPED = 1;
@@ -43,7 +43,50 @@ const STEPS: Readonly<Record<number, Step>> = {
 		...event,
 		scores: { [WHOLE_READ]: typeof confidence === "number" ? confidence : 0 },
 	}),
+	// PlayerStatus flags became per-slot evidence (core/status-decode.ts decodes them)
+	2: (event) =>
+		event.type === "PlayerStatus" ? playerStatusEvidence(event) : event,
 };
+
+/**
+ * A version 2 status flag as evidence: the state it was read in counts as one
+ * confident read (detectors/objective/player-status.ts); an empty seat was
+ * stored as alive.
+ */
+const FLAGGED_STATE_EVIDENCE = 0.9;
+const OTHER_STATE_EVIDENCE = 0.05;
+
+/** A version 2 PlayerStatus read: special/dead flags per slot, one score per slot covering both. */
+function playerStatusEvidence(event: EventShape): EventShape {
+	const data = event.data as {
+		time: number | null;
+		special: boolean[][];
+		dead: boolean[][];
+		cast: true | null;
+	};
+	const scores = (event.scores ?? {}) as Record<string, number>;
+	const slotScores: Record<string, number> = {};
+	for (const [field, score] of Object.entries(scores)) {
+		const slot = field.match(/^special\.(\d)\.(\d),dead\.\d\.\d$/);
+		slotScores[slot ? `slots.${slot[1]}.${slot[2]}` : field] = score;
+	}
+	return {
+		...event,
+		scores: slotScores,
+		data: {
+			time: data.time,
+			slots: data.dead.map((side, sideIndex) =>
+				side.map((dead, slot) => {
+					const state = dead ? 2 : data.special[sideIndex]![slot] ? 1 : 0;
+					return [0, 1, 2].map((index) =>
+						index === state ? FLAGGED_STATE_EVIDENCE : OTHER_STATE_EVIDENCE,
+					);
+				}),
+			),
+			cast: data.cast,
+		},
+	};
+}
 
 const SCHEMA: Schema = { current: CURRENT, steps: STEPS };
 

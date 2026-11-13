@@ -524,12 +524,8 @@ function onResult(
 		} else if (isScoreboardEvent(event)) {
 			objectiveBlocked = false;
 		}
-		// an amended read keeps its slot's frame; a run's trailing read only moves its time, the run's first read keeps the frame
-		const frame = bringsFrame(action)
-			? result.frame
-			: action === "amended"
-				? "kept"
-				: undefined;
+		// an amended read keeps its slot's frame
+		const frame = bringsFrame(action) ? result.frame : "kept";
 		const saving = persist(event, frame, storedIds.get(key));
 		storedIds.set(key, saving);
 		persisting.add(saving);

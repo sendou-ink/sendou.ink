@@ -44,16 +44,14 @@ describe("TimelineBuilder slot keys", () => {
 		expect(keyOf(amended)).toBe(keyOf(added));
 	});
 
-	test("keeps a run's trailing read in one slot as the run extends", () => {
+	test("gives every status read a slot of its own", () => {
 		const timeline = new TimelineBuilder();
-		const start = timeline.push(status(100));
-		const trailing = timeline.push(status(101));
+		const first = timeline.push(status(100));
 
-		const extended = timeline.push(status(102));
+		const second = timeline.push(status(101));
 
-		expect(extended.action).toBe("extended");
-		expect(keyOf(extended)).toBe(keyOf(trailing));
-		expect(keyOf(extended)).not.toBe(keyOf(start));
+		expect(second.action).toBe("added");
+		expect(keyOf(second)).not.toBe(keyOf(first));
 	});
 });
 
@@ -264,13 +262,13 @@ describe("stitchLanes", () => {
 		expect(stitched).toHaveLength(1);
 	});
 
-	test("continues a status run across a seam", () => {
+	test("keeps every status read on both sides of a seam", () => {
 		const stitched = stitchLanes([
 			{ tStart: 0, events: [status(96), status(99)] },
 			{ tStart: 100, events: [status(100), status(103)] },
 		]);
 
-		expect(stitched.map((event) => event.t)).toEqual([96, 100, 103]);
+		expect(stitched.map((event) => event.t)).toEqual([96, 99, 100, 103]);
 	});
 
 	test("leaves what a lane held away from the seam as it is", () => {
@@ -381,16 +379,15 @@ function rankPosition(
 }
 
 function status(t: number): DetectedEvent {
-	const none: [boolean, boolean, boolean, boolean] = [
-		false,
-		false,
-		false,
-		false,
+	const alive: PlayerStatusData["slots"][0] = [
+		[0.9, 0.05, 0.05],
+		[0.9, 0.05, 0.05],
+		[0.9, 0.05, 0.05],
+		[0.9, 0.05, 0.05],
 	];
 	const data: PlayerStatusData = {
 		time: null,
-		special: [none, none],
-		dead: [none, none],
+		slots: [alive, alive],
 		cast: null,
 	};
 	return { type: "PlayerStatus", t, scores: { read: 0.8 }, data };

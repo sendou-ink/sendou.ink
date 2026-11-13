@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import type { PlayerStatusData } from "../core/detectors/objective/player-status";
+import type {
+	PlayerStatusData,
+	SlotEvidence,
+} from "../core/detectors/objective/player-status";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type { DetectedEvent, EventType } from "../core/events";
 import { TimelineBuilder } from "../core/timeline/index";
@@ -272,52 +275,29 @@ test("a kill stack stays at its first read when a repeat reads more confidently"
 	assert.deepEqual(tl.events[0]!.data, { time: 261, names: ["Jrod_14"] });
 });
 
-const NO_FLAGS: PlayerStatusData["dead"] = [
-	[false, false, false, false],
-	[false, false, false, false],
-];
+const ALIVE: SlotEvidence = [0.9, 0.05, 0.05];
 
-/** A PlayerStatus read; `dead` flags slot 0 of the left team. */
+/** A PlayerStatus read; `dead` splats slot 0 of the left team. */
 function status(t: number, score = 0.8, dead = false): DetectedEvent {
 	const data: PlayerStatusData = {
 		time: null,
-		special: NO_FLAGS,
-		dead: [
-			[dead, false, false, false],
-			[false, false, false, false],
+		slots: [
+			[dead ? [0.05, 0.05, 0.9] : ALIVE, ALIVE, ALIVE, ALIVE],
+			[ALIVE, ALIVE, ALIVE, ALIVE],
 		],
 		cast: null,
 	};
 	return { type: "PlayerStatus", t, scores: { read: score }, data };
 }
 
-test("status reads keep a run's first read and trailing read, re-confirmed every window", () => {
+test("status reads are each kept, in time order", () => {
 	const tl = new TimelineBuilder();
-	assert.equal(tl.push(status(100)).action, "added");
-	assert.equal(tl.push(status(101)).action, "added");
-	const third = tl.push(status(102));
-	assert.equal(third.action, "extended");
-	assert.equal(third.action === "extended" ? third.replaced.t : null, 101);
-	for (let t = 103; t <= 112; t++) tl.push(status(t));
+	for (const t of [100, 101, 103, 102]) {
+		assert.equal(tl.push(status(t, 0.8, t === 101)).action, "added");
+	}
 	assert.deepEqual(
 		tl.events.map((e) => e.t),
-		[100, 105, 110, 112],
-	);
-});
-
-test("a one-read blip stays flanked by the reads either side of it", () => {
-	const tl = new TimelineBuilder();
-	for (let t = 100; t <= 102; t++) tl.push(status(t));
-	assert.equal(tl.push(status(103, 0.8, true)).action, "added");
-	assert.equal(tl.push(status(104)).action, "added");
-	assert.equal(tl.push(status(105)).action, "added");
-	assert.equal(tl.push(status(106)).action, "extended");
-	assert.deepEqual(
-		tl.events.map(
-			(e) =>
-				`${e.t}${e.type === "PlayerStatus" && e.data.dead[0][0] ? "x" : ""}`,
-		),
-		["100", "102", "103x", "104", "106"],
+		[100, 101, 102, 103],
 	);
 });
 
@@ -326,17 +306,4 @@ test("a higher-scoring repeat never moves a sample", () => {
 	tl.push(status(100, 0.7));
 	assert.equal(tl.push(status(101, 0.95)).action, "added");
 	assert.equal(tl.events[0]!.t, 100);
-});
-
-test("a late read inside an existing run merges, as does a same-frame repeat", () => {
-	const tl = new TimelineBuilder();
-	tl.push(status(100));
-	tl.push(status(101));
-	tl.push(status(104));
-	assert.equal(tl.push(status(102)).action, "merged");
-	assert.equal(tl.push(status(104)).action, "merged");
-	assert.deepEqual(
-		tl.events.map((e) => e.t),
-		[100, 104],
-	);
 });

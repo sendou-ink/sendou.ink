@@ -220,10 +220,16 @@ export const STATUS_TEAM_HUE_ROIS: readonly [Roi, Roi] = [
  * Slot state off the apex fractions. Over every fixture slot: alive apexes
  * read ink >=0.43 vs <=0.19 otherwise; ready read pale >=0.6 at grey <=0.14,
  * splats grey >=0.18 at pale <=0.38 (a blown-out backdrop through the plate).
+ * Each threshold is where its evidence is a toss-up; a softness is how far
+ * past it a fraction has to go to count e times as much for one side (alive
+ * and ready fixtures sit 3 or more softnesses past theirs).
  */
 export const STATUS_ALIVE_MIN_INK = 0.3;
 export const STATUS_READY_MIN_PALE = 0.45;
 export const STATUS_READY_MAX_GREY = 0.2;
+export const STATUS_INK_SOFTNESS = 0.04;
+export const STATUS_PALE_SOFTNESS = 0.04;
+export const STATUS_GREY_SOFTNESS = 0.02;
 
 /**
  * A wash pales the whole icon, while a weapon render pale over the apex
@@ -240,6 +246,7 @@ export const STATUS_WASH_BODY_SIDE = {
 	outer: 34,
 };
 export const STATUS_WASH_MAX_BODY_INK = 0.5;
+export const STATUS_WASH_BODY_INK_SOFTNESS = 0.08;
 
 /**
  * Vacant seat (no player in a 1v1 lobby, or a disconnect): the body (reference

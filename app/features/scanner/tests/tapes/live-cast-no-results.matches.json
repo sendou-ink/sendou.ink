@@ -88,7 +88,7 @@
 							"t": 1791051916,
 							"time": 282,
 							"special": [[false,false,false,false],[false,false,false,false]],
-							"dead": [[true,true,true,true],[false,true,false,false]]
+							"dead": [[true,false,true,true],[false,true,false,false]]
 						},
 						{
 							"t": 1791051918,

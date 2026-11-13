@@ -19,7 +19,12 @@
  * lilac or pink to near-white, but never saturates or greys); else splatted
  * (the dark plate under grey X strokes, or a blown-out backdrop through it).
  * A pale apex over a body still in team ink on both sides is a weapon render
- * (Painbrush's head), not the wash, which pales the whole icon.
+ * (Painbrush's head), not the wash, which pales the whole icon. Those are not
+ * cuts but soft evidence: each slot reports how alive, ready and splatted it
+ * looks, a fraction near its threshold leaving the call open, and the match
+ * builder decides every player's states over the whole game at once
+ * (core/status-decode.ts), where what the game allows settles a frame alone
+ * can't.
  */
 import { CANONICAL_WIDTH } from "../../canonical";
 import type { Mat } from "../../cv";
@@ -42,11 +47,14 @@ import {
 	STATUS_FIT_ROW_STEP,
 	STATUS_GAP_WEIGHT,
 	STATUS_GREY_MAX_SATURATION,
+	STATUS_GREY_SOFTNESS,
 	STATUS_ICON_CENTER_Y,
 	STATUS_INK_MIN_SATURATION,
 	STATUS_INK_MIN_VALUE,
+	STATUS_INK_SOFTNESS,
 	STATUS_INNER_CENTER_RANGES,
 	STATUS_PALE_MIN_VALUE,
+	STATUS_PALE_SOFTNESS,
 	STATUS_PITCH_RANGE,
 	STATUS_READY_MAX_GREY,
 	STATUS_READY_MIN_PALE,
@@ -58,6 +66,7 @@ import {
 	STATUS_VACANT_BODY,
 	STATUS_VACANT_MAX_GREY,
 	STATUS_VACANT_MIN_DARK,
+	STATUS_WASH_BODY_INK_SOFTNESS,
 	STATUS_WASH_BODY_SIDE,
 	STATUS_WASH_MAX_BODY_INK,
 	STATUS_WHITE_MAX_SPREAD,
@@ -66,18 +75,13 @@ import {
 
 export const PLAYER_STATUS_EVENT_TYPE = "PlayerStatus";
 
-/**
- * Sampled: the window is how often a standing state is re-confirmed, under the
- * renderer's 15s unknown-gap rule.
- */
+/** Every read is kept: the builder decodes the series, a read's neighbours its evidence. */
 export const PLAYER_STATUS_EVENT: EventKind<
 	typeof PLAYER_STATUS_EVENT_TYPE,
 	PlayerStatusData
 > = {
 	type: PLAYER_STATUS_EVENT_TYPE,
-	mergeWindowS: 5,
-	sameData: samePlayerStatusData,
-	keep: "sampled",
+	keep: "every",
 };
 
 export type PlayerStatusEvent = EventOf<typeof PLAYER_STATUS_EVENT>;
@@ -176,15 +180,24 @@ const ROW_BASE = (() => {
 	return bases;
 })();
 
+/** Decimals the evidence is stored at, as field scores are (field-scores.ts). */
+const EVIDENCE_DECIMALS = 4;
+
 export type PlayerStatusFlags = [boolean, boolean, boolean, boolean];
+
+/** How much a slot's icon looks alive, special-ready and splatted; the three sum to 1. */
+export type SlotEvidence = [alive: number, ready: number, dead: number];
+
+export type SlotState = "alive" | "ready" | "dead";
+
+/** One side's four slots left-to-right. */
+type SideEvidence = [SlotEvidence, SlotEvidence, SlotEvidence, SlotEvidence];
 
 export interface PlayerStatusData {
 	/** match timer seconds, same as the paired Objective event's */
 	time: number | null;
-	/** special held per slot, [left team, right team], slots left-to-right */
-	special: [PlayerStatusFlags, PlayerStatusFlags];
-	/** splatted per slot, same arrangement */
-	dead: [PlayerStatusFlags, PlayerStatusFlags];
+	/** per slot, [left team, right team] */
+	slots: [SideEvidence, SideEvidence];
 	/** true when camera badges proved a cast; never false since badge absence proves nothing */
 	cast: true | null;
 }
@@ -199,23 +212,34 @@ interface StripSideFit {
 export type StripFit = [StripSideFit, StripSideFit];
 
 /**
- * Timeline content guard: reads merge only while every slot state matches.
- * `time` (ticks every second) is not compared.
+ * A state known only as a flag (a minimap card's cross-out or camo, a CSV
+ * cell) as evidence: one confident read of it.
  */
-function samePlayerStatusData(
-	a: PlayerStatusData,
-	b: PlayerStatusData,
-): boolean {
-	for (const side of [0, 1] as const) {
-		for (let slot = 0; slot < 4; slot++) {
-			if (a.special[side][slot] !== b.special[side][slot]) return false;
-			if (a.dead[side][slot] !== b.dead[side][slot]) return false;
-		}
-	}
-	return true;
+export const FLAGGED_STATE_EVIDENCE: Readonly<Record<SlotState, SlotEvidence>> =
+	{
+		alive: [0.9, 0.05, 0.05],
+		ready: [0.05, 0.9, 0.05],
+		dead: [0.05, 0.05, 0.9],
+	};
+
+/** The state a slot's evidence favors on its own. */
+export function slotStateOf(evidence: SlotEvidence): SlotState {
+	const [alive, ready, dead] = evidence;
+	if (alive >= ready && alive >= dead) return "alive";
+	return ready >= dead ? "ready" : "dead";
 }
 
-type SlotState = "alive" | "ready" | "dead" | "vacant";
+/** One read's slots as flags, each slot in the state its own evidence favors. */
+export function statusFlagsOf(data: PlayerStatusData): {
+	special: [PlayerStatusFlags, PlayerStatusFlags];
+	dead: [PlayerStatusFlags, PlayerStatusFlags];
+} {
+	const flags = (state: SlotState) =>
+		data.slots.map((side) =>
+			side.map((evidence) => slotStateOf(evidence) === state),
+		) as [PlayerStatusFlags, PlayerStatusFlags];
+	return { special: flags("ready"), dead: flags("dead") };
+}
 
 /**
  * Parse the icon strip of a frame the objective gate anchored; emitted only
@@ -246,20 +270,17 @@ export function parsePlayerStatus(
 				Object.fromEntries(
 					reads.flatMap((side, sideIndex) =>
 						side.map((read, slot) => [
-							`special.${sideIndex}.${slot},dead.${sideIndex}.${slot}`,
-							read.confidence,
+							`slots.${sideIndex}.${slot}`,
+							Math.max(...read.evidence),
 						]),
 					),
 				),
 			),
 			data: {
 				time,
-				special: reads.map((side) =>
-					side.map((read) => read.state === "ready"),
-				) as PlayerStatusData["special"],
-				dead: reads.map((side) =>
-					side.map((read) => read.state === "dead"),
-				) as PlayerStatusData["dead"],
+				slots: reads.map((side) =>
+					side.map((read) => read.evidence),
+				) as PlayerStatusData["slots"],
 				cast: cast ? true : null,
 			},
 			debug: {
@@ -551,16 +572,18 @@ function contrast(a: SegmentStats, b: SegmentStats): number {
 }
 
 /**
- * State from the apex core's ink / pale / grey fractions; confidence scales
- * with the deciding fraction (1 at twice its threshold).
+ * Evidence from the apex core's ink / pale / grey fractions, each a logistic
+ * of its distance to the threshold that used to cut it: ink makes the icon
+ * alive; else pale without grey makes it ready, unless the body around it
+ * stays inked (then alive); what is left is splatted. An empty seat shows
+ * neither wash nor X: one confident read of alive, as a flag would be.
  */
 function readSlot(
 	band: Band,
 	cx: number,
 	pitch: number,
 ): {
-	state: SlotState;
-	confidence: number;
+	evidence: SlotEvidence;
 	fractions: [number, number, number];
 } {
 	const { state: rows } = PITCH_GEOMETRY[pitch - STATUS_PITCH_RANGE[0]]!;
@@ -596,51 +619,44 @@ function readSlot(
 		grey / count,
 	];
 	const [inkShare, paleShare, greyShare] = fractions;
-	if (
-		Decisions.atLeast(
-			"objective/player-status:STATUS_ALIVE_MIN_INK",
-			inkShare,
-			STATUS_ALIVE_MIN_INK,
-		)
-	) {
-		return {
-			state: "alive",
-			confidence: Math.min(1, inkShare / (2 * STATUS_ALIVE_MIN_INK)),
-			fractions,
-		};
+	const inked = logistic(inkShare - STATUS_ALIVE_MIN_INK, STATUS_INK_SOFTNESS);
+	const washed = Math.min(
+		logistic(paleShare - STATUS_READY_MIN_PALE, STATUS_PALE_SOFTNESS),
+		logistic(STATUS_READY_MAX_GREY - greyShare, STATUS_GREY_SOFTNESS),
+	);
+	if (inked < 0.5 && washed < 0.5 && isVacant(band, cx, pitch)) {
+		return { evidence: FLAGGED_STATE_EVIDENCE.alive, fractions };
 	}
-	if (
-		Decisions.atLeast(
-			"objective/player-status:STATUS_READY_MIN_PALE",
-			paleShare,
-			STATUS_READY_MIN_PALE,
-		) &&
-		Decisions.atMost(
-			"objective/player-status:STATUS_READY_MAX_GREY",
-			greyShare,
-			STATUS_READY_MAX_GREY,
-		)
-	) {
-		return {
-			state: bodyStaysInked(band, cx, pitch) ? "alive" : "ready",
-			confidence: Math.min(1, paleShare / (2 * STATUS_READY_MIN_PALE)),
-			fractions,
-		};
-	}
+	const rendered = logistic(
+		bodySideInk(band, cx, pitch) - STATUS_WASH_MAX_BODY_INK,
+		STATUS_WASH_BODY_INK_SOFTNESS,
+	);
 	return {
-		state: isVacant(band, cx, pitch) ? "vacant" : "dead",
-		confidence: Math.min(1, greyShare / (2 * STATUS_READY_MAX_GREY)),
+		evidence: [
+			inked + (1 - inked) * washed * rendered,
+			(1 - inked) * washed * (1 - rendered),
+			(1 - inked) * (1 - washed),
+		].map(
+			(share) =>
+				Math.round(share * 10 ** EVIDENCE_DECIMALS) / 10 ** EVIDENCE_DECIMALS,
+		) as SlotEvidence,
 		fractions,
 	};
 }
 
+/** 0.5 at `margin` 0, nearing 1 (0) as it grows (falls) by several `softness`. */
+function logistic(margin: number, softness: number): number {
+	return 1 / (1 + Math.exp(-margin / softness));
+}
+
 /**
- * Both body sides still in team ink: the pale apex is a weapon render over it
- * (Painbrush's head), not the wash, which pales the whole icon.
+ * Team ink share of the less inked body side: with both sides inked a pale
+ * apex is a weapon render over it (Painbrush's head), not the wash, which
+ * pales the whole icon.
  */
-function bodyStaysInked(band: Band, cx: number, pitch: number): boolean {
+function bodySideInk(band: Band, cx: number, pitch: number): number {
 	const scale = pitch / STATUS_REFERENCE_PITCH;
-	return [-1, 1].every((direction) => {
+	const shares = [-1, 1].map((direction) => {
 		let ink = 0;
 		let count = 0;
 		for (
@@ -664,12 +680,9 @@ function bodyStaysInked(band: Band, cx: number, pitch: number): boolean {
 				count++;
 			}
 		}
-		return Decisions.atLeast(
-			"objective/player-status:STATUS_WASH_MAX_BODY_INK",
-			ink / count,
-			STATUS_WASH_MAX_BODY_INK,
-		);
+		return ink / count;
 	});
+	return Math.min(...shares);
 }
 
 /**

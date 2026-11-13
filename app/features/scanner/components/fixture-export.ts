@@ -9,7 +9,10 @@ import { KILL_EVENT_TYPE } from "../core/detectors/kill/index";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
-import { PLAYER_STATUS_EVENT_TYPE } from "../core/detectors/objective/player-status";
+import {
+	PLAYER_STATUS_EVENT_TYPE,
+	statusFlagsOf,
+} from "../core/detectors/objective/player-status";
 import { STRIP_WEAPONS_EVENT_TYPE } from "../core/detectors/objective/strip-weapons";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type { ScoreboardBattleLogReplayData } from "../core/detectors/scoreboard-battle-log-replay/index";
@@ -133,14 +136,15 @@ export function buildExpectedJson(event: DetectedEvent | null): string {
 	}
 	if (event.type === PLAYER_STATUS_EVENT_TYPE) {
 		const status = event.data;
+		const flags = statusFlagsOf(status);
 		return `${JSON.stringify(
 			{
 				event: event.type,
 				data: {
 					cast: status.cast,
 					time: status.time,
-					special: status.special,
-					dead: status.dead,
+					special: flags.special,
+					dead: flags.dead,
 				},
 			},
 			null,

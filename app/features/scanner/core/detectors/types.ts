@@ -57,15 +57,12 @@ export interface EventKind<TType extends string = string, TData = unknown> {
 	 * "first": the content guard only merges identical repeats, so a later
 	 * one carries nothing new except a later `t`.
 	 *
-	 * "sampled": per-frame state samples, where every read carries state at its
+	 * "every": per-frame state samples, where every read carries state at its
 	 * instant and a run of same-state reads is a series rather than one repeated
-	 * screen. The timeline keeps the run's first read, the latest read
-	 * (re-placed as the run grows, `extended`) and one read per merge window in
-	 * between, so the run's ends are exact and a lone misread stays flanked by
-	 * the reads either side of it for the match builder's smoothing. Scores
-	 * never move a sample.
+	 * screen: each read is kept as it is, for the match builder to decode the
+	 * series as a whole. Scores never move a sample.
 	 */
-	keep?: "voted" | "first" | "sampled";
+	keep?: "voted" | "first" | "every";
 	/**
 	 * Animation order for screens that count toward their final value (X Battle
 	 * cards): positive when `b` is further along than `a`. Every frame of the

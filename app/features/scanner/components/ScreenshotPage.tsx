@@ -25,7 +25,7 @@ import * as minimap from "../core/detectors/minimap/rois";
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
 import {
 	PLAYER_STATUS_EVENT_TYPE,
-	type PlayerStatusData,
+	statusFlagsOf,
 } from "../core/detectors/objective/player-status";
 import * as objective from "../core/detectors/objective/rois";
 import { STRIP_WEAPONS_EVENT_TYPE } from "../core/detectors/objective/strip-weapons";
@@ -141,7 +141,7 @@ function LabeledCrop(props: {
 
 /** One pill per player slot, both sides; a lit pill is a slot the flag was read on. */
 function StatusSlots(props: {
-	flags: PlayerStatusData["special"] | PlayerStatusData["dead"];
+	flags: ReturnType<typeof statusFlagsOf>["special"];
 	tone: "special" | "dead";
 }) {
 	return (
@@ -958,12 +958,15 @@ export function ScreenshotPage() {
 											</Stat>
 											<Stat label="special">
 												<StatusSlots
-													flags={status.data.special}
+													flags={statusFlagsOf(status.data).special}
 													tone="special"
 												/>
 											</Stat>
 											<Stat label="splatted">
-												<StatusSlots flags={status.data.dead} tone="dead" />
+												<StatusSlots
+													flags={statusFlagsOf(status.data).dead}
+													tone="dead"
+												/>
 											</Stat>
 										</>
 									) : null}

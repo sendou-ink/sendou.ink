@@ -17,6 +17,7 @@ import { OBJECTIVE_EVENT_TYPE } from "../detectors/objective/index";
 import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
+	slotStateOf,
 } from "../detectors/objective/player-status";
 import {
 	STRIP_WEAPONS_EVENT_TYPE,
@@ -129,10 +130,13 @@ function formatStripWeaponsSide(data: StripWeaponsData, side: 0 | 1): string {
 		.join(" | ");
 }
 
-/** one team's four icons as ✕ splatted / ★ special ready / · alive */
+/** one team's four icons as ✕ splatted / ★ special ready / · alive (or an empty seat), each as its read favors */
 function formatPlayerStatusSide(data: PlayerStatusData, side: 0 | 1): string {
-	return data.dead[side]
-		.map((dead, slot) => (dead ? "✕" : data.special[side][slot] ? "★" : "·"))
+	return data.slots[side]
+		.map((evidence) => {
+			const state = slotStateOf(evidence);
+			return state === "dead" ? "✕" : state === "ready" ? "★" : "·";
+		})
 		.join("");
 }
 

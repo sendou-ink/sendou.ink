@@ -34,9 +34,12 @@ import {
 	type ObjectiveData,
 } from "./detectors/objective/index";
 import {
+	FLAGGED_STATE_EVIDENCE,
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
 	type PlayerStatusFlags,
+	type SlotEvidence,
+	statusFlagsOf,
 } from "./detectors/objective/player-status";
 import {
 	STRIP_WEAPONS_EVENT_TYPE,
@@ -95,6 +98,7 @@ import {
 	type StripSnapshot,
 	slotRowPermutation,
 } from "./slot-row-assignment";
+import * as StatusDecode from "./status-decode";
 import { nameSimilarity } from "./text";
 import {
 	multisetOverlap,
@@ -147,25 +151,6 @@ const MIN_TEAM_HUE_SEPARATION = 30;
  * replay wipes land a minute or more away.
  */
 const REPLAY_ANCHOR_TOLERANCE_SECONDS = 10;
-
-/**
- * Dead-flag runs whose flank-to-flank span is shorter than these are flipped
- * to their surroundings: the fastest respawn is 3.5s, so no true dead stretch
- * is shorter, while a respawned player CAN be re-splatted fast (spawncamps),
- * so the alive floor stays a conservative 2s. Judging by the flank-to-flank
- * span keeps sparse sampling honest: a lone dead read between far-apart reads
- * spans wide and is left alone.
- */
-const DEAD_RUN_MIN_SECONDS = 3.5;
-const ALIVE_RUN_MIN_SECONDS = 2;
-
-/**
- * Regaining a used special takes at least this long (nothing charges off ~7s
- * of painting even with max Special Charge Up), so a not-ready run flanked by
- * ready reads closer than this, with no death inside, is a misread gap (the
- * ready wash pulses through a dim trough; overlays clip icons) and is bridged.
- */
-const SPECIAL_REGAIN_MIN_SECONDS = 7;
 
 /**
  * Kill-feed stack reads further apart than this show independent rows even
@@ -1253,36 +1238,27 @@ function buildProgress(
 		liveStatuses.length === 0
 			? null
 			: {
-					samples: withShortSpecialGapsBridged(
-						withImpossibleDeadRunsFlipped(
-							liveStatuses.map((read): ScannerMatchPlayerStatusSample => {
-								const swapped = read.fromMinimap
-									? minimapSwapped
-									: nearestSwapFlag(live, swapFlags, read.t) !== swap;
-								const [a, b] = swapped ? ([1, 0] as const) : ([0, 1] as const);
-								const arrange = (
-									flags: readonly [PlayerStatusFlags, PlayerStatusFlags],
-								): [PlayerStatusFlags, PlayerStatusFlags] =>
-									[a, b].map((source, side) =>
-										applyPermutation(
-											flags[source]!,
-											readPermutation(perms, read, source, side as 0 | 1),
-										),
-									) as [PlayerStatusFlags, PlayerStatusFlags];
-								return {
-									t: Math.max(0, Math.floor(read.t)),
-									time: read.data.time,
-									special: specialChargeable(
-										read.data.time ??
-											(dominant === null ? null : dominant - read.t),
-										clockSeconds,
-									)
-										? arrange(read.data.special)
-										: noSpecialsReady(),
-									dead: arrange(read.data.dead),
-								};
-							}),
-						),
+					samples: decodedSamples(
+						liveStatuses.map((read) => {
+							const swapped = read.fromMinimap
+								? minimapSwapped
+								: nearestSwapFlag(live, swapFlags, read.t) !== swap;
+							const [a, b] = swapped ? ([1, 0] as const) : ([0, 1] as const);
+							const time =
+								read.data.time ??
+								(dominant === null ? null : dominant - read.t);
+							return {
+								t: read.t,
+								time: read.data.time,
+								elapsed: time === null ? null : clockSeconds - time,
+								slots: [a, b].map((source, side) =>
+									applyPermutation(
+										read.data.slots[source]!,
+										readPermutation(perms, read, source, side as 0 | 1),
+									),
+								) as [ReadSide, ReadSide],
+							};
+						}),
 					),
 				};
 
@@ -1565,13 +1541,14 @@ function slotRowEvidence({
 	}
 
 	const snapshots = [0, 1].map((side) =>
-		playerStatuses.map(
-			(read): StripSnapshot => ({
+		playerStatuses.map((read): StripSnapshot => {
+			const flags = statusFlagsOf(read.data);
+			return {
 				t: read.t,
-				dead: read.data.dead[sourceSide(read.t, side as 0 | 1)],
-				special: read.data.special[sourceSide(read.t, side as 0 | 1)],
-			}),
-		),
+				dead: flags.dead[sourceSide(read.t, side as 0 | 1)],
+				special: flags.special[sourceSide(read.t, side as 0 | 1)],
+			};
+		}),
 	);
 	const observe = (side: 0 | 1, observation: StatusObservation): void =>
 		addStatusEvidence(evidence[side]!, snapshots[side]!, observation);
@@ -1741,125 +1718,51 @@ function readPermutation(
 	return perms.strip[side];
 }
 
-/**
- * Debounces per-slot dead flags: an interior run whose flanking opposite-state
- * reads sit closer than the state could have held (DEAD/ALIVE_RUN_MIN_SECONDS)
- * is a misread blip (background ink through a translucent splatted icon, a box
- * over a mid-animation icon) and takes the flanking state. Edge runs stay —
- * nothing attests what came before or after the match window.
- */
-function withImpossibleDeadRunsFlipped(
-	samples: ScannerMatchPlayerStatusSample[],
-): ScannerMatchPlayerStatusSample[] {
-	let smoothed = samples;
-	for (const side of [0, 1] as const) {
-		for (let slot = 0; slot < PLAYERS_PER_TEAM; slot++) {
-			// flipping one blip can expose the next (alternating flicker), so
-			// each slot's series is re-swept until it settles
-			let changed = true;
-			while (changed) {
-				changed = false;
-				const series = smoothed.map((sample) => sample.dead[side][slot]);
-				let runStart = 0;
-				for (let i = 1; i <= series.length; i++) {
-					if (i < series.length && series[i] === series[runStart]) continue;
-					const interior = runStart > 0 && i < series.length;
-					const impossiblyShort =
-						interior &&
-						smoothed[i]!.t - smoothed[runStart - 1]!.t <=
-							(series[runStart] ? DEAD_RUN_MIN_SECONDS : ALIVE_RUN_MIN_SECONDS);
-					if (impossiblyShort) {
-						if (smoothed === samples) {
-							smoothed = samples.map((sample) => ({
-								...sample,
-								dead: [[...sample.dead[0]], [...sample.dead[1]]] as [
-									PlayerStatusFlags,
-									PlayerStatusFlags,
-								],
-							}));
-						}
-						for (let j = runStart; j < i; j++) {
-							smoothed[j]!.dead[side][slot] = !series[runStart];
-						}
-						changed = true;
-						break;
-					}
-					runStart = i;
-				}
-			}
-		}
-	}
-	return smoothed;
-}
-
-/**
- * No special charges within SPECIAL_REGAIN_MIN_SECONDS of the clock starting
- * (or before it), so a ready read there is a misread (a pale backdrop behind
- * the icon, the spectator map's opening wipe) that would otherwise bridge into
- * the first real ready wash. Timerless reads take the clock the match's
- * dominant anchor projects.
- */
-function specialChargeable(time: number | null, clockSeconds: number): boolean {
-	return time === null || time <= clockSeconds - SPECIAL_REGAIN_MIN_SECONDS;
-}
-
 /** An unknown mode gets the ranked clock: Turf War's start window lies within its chargeable time. */
 function clockSecondsOf(mode: ModeShort | null): number {
 	return mode === "TW" ? TURF_WAR_CLOCK_SECONDS : RANKED_CLOCK_SECONDS;
 }
 
-function noSpecialsReady(): [PlayerStatusFlags, PlayerStatusFlags] {
-	return [
-		[false, false, false, false],
-		[false, false, false, false],
-	];
+/**
+ * The oriented status reads as samples, each player's states decoded over the
+ * whole game (status-decode.ts); a sample's flags are its decoded states.
+ */
+function decodedSamples(
+	reads: readonly {
+		t: number;
+		time: number | null;
+		elapsed: number | null;
+		slots: [ReadSide, ReadSide];
+	}[],
+): ScannerMatchPlayerStatusSample[] {
+	const decoded = [0, 1].map((side) =>
+		[0, 1, 2, 3].map((slot) =>
+			StatusDecode.decode(
+				reads.map((read) => ({
+					t: read.t,
+					elapsed: read.elapsed,
+					evidence: read.slots[side]![slot] ?? null,
+				})),
+			),
+		),
+	);
+	return reads.map((read, i) => {
+		const flags = (state: StatusDecode.DecodedState) =>
+			decoded.map((side) => side.map((states) => states[i] === state)) as [
+				PlayerStatusFlags,
+				PlayerStatusFlags,
+			];
+		return {
+			t: Math.max(0, Math.floor(read.t)),
+			time: read.time,
+			special: flags("ready"),
+			dead: flags("dead"),
+		};
+	});
 }
 
-/**
- * Bridges per-slot special-ready gaps: an interior not-ready run whose flanking
- * ready reads sit closer than SPECIAL_REGAIN_MIN_SECONDS, with no death inside
- * to explain the loss, is a misread gap (the ready wash's dim pulse trough) and
- * reads ready throughout. Short READY runs stay (a fresh special really can be
- * spent within a read or two), as do edge runs.
- */
-function withShortSpecialGapsBridged(
-	samples: ScannerMatchPlayerStatusSample[],
-): ScannerMatchPlayerStatusSample[] {
-	let bridged = samples;
-	for (const side of [0, 1] as const) {
-		for (let slot = 0; slot < PLAYERS_PER_TEAM; slot++) {
-			const series = samples.map((sample) => sample.special[side][slot]);
-			let runStart = 0;
-			for (let i = 1; i <= series.length; i++) {
-				if (i < series.length && series[i] === series[runStart]) continue;
-				const interiorGap =
-					!series[runStart] && runStart > 0 && i < series.length;
-				const impossiblyShort =
-					interiorGap &&
-					samples[i]!.t - samples[runStart - 1]!.t < SPECIAL_REGAIN_MIN_SECONDS;
-				const diedInside =
-					interiorGap &&
-					samples.slice(runStart, i).some((sample) => sample.dead[side][slot]);
-				if (impossiblyShort && !diedInside) {
-					if (bridged === samples) {
-						bridged = samples.map((sample) => ({
-							...sample,
-							special: [[...sample.special[0]], [...sample.special[1]]] as [
-								PlayerStatusFlags,
-								PlayerStatusFlags,
-							],
-						}));
-					}
-					for (let j = runStart; j < i; j++) {
-						bridged[j]!.special[side][slot] = true;
-					}
-				}
-				runStart = i;
-			}
-		}
-	}
-	return bridged;
-}
+/** One side of a status read, slots in order; null = a slot the read did not show (a card missing). */
+type ReadSide = (SlotEvidence | null)[];
 
 /** A status read from either source, sides as read (pre-orientation). */
 interface StatusRead {
@@ -1870,8 +1773,7 @@ interface StatusRead {
 	spectator?: boolean;
 	data: {
 		time: number | null;
-		special: [PlayerStatusFlags, PlayerStatusFlags];
-		dead: [PlayerStatusFlags, PlayerStatusFlags];
+		slots: [ReadSide, ReadSide];
 	};
 }
 
@@ -1893,24 +1795,24 @@ function minimapStatusReads(
 				spectator: read.data.spectator,
 				data: {
 					time: null,
-					special: [
-						sideFlags(teammates, "specialReady"),
-						sideFlags(enemies, "specialReady"),
-					],
-					dead: [sideFlags(teammates, "dead"), sideFlags(enemies, "dead")],
+					slots: [sideEvidence(teammates), sideEvidence(enemies)],
 				},
 			},
 		];
 	});
 }
 
-function sideFlags(
+/** The cards' states as evidence, slots past the shown cards unread. */
+function sideEvidence(
 	players: readonly { dead: boolean; specialReady: boolean }[],
-	key: "dead" | "specialReady",
-): PlayerStatusFlags {
-	return [0, 1, 2, 3].map(
-		(slot) => players[slot]?.[key] ?? false,
-	) as PlayerStatusFlags;
+): ReadSide {
+	return [0, 1, 2, 3].map((slot) => {
+		const player = players[slot];
+		if (!player) return null;
+		return FLAGGED_STATE_EVIDENCE[
+			player.dead ? "dead" : player.specialReady ? "ready" : "alive"
+		];
+	});
 }
 
 /**

@@ -1,20 +1,23 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
  * Audits death/special detection against scoreboard truth, from an events CSV
- * downloaded from the scanner UI. Rows are parsed back into DetectedEvents,
- * run through the real match builder and rendered into the timeline's status
- * spans; each player's span counts are diffed against the scoreboard's D/S
- * numbers. A special span ending in a death (or held at the final whistle) is
- * a legit non-use and does not count toward S.
+ * downloaded from the scanner UI or an event tape (`scan-vod --tape`). Its
+ * events run through the real match builder and are rendered into the
+ * timeline's status spans; each player's span counts are diffed against the
+ * scoreboard's D/S numbers. A special span ending in a death (or held at the
+ * final whistle) is a legit non-use and does not count toward S.
  *
- * The CSV is lossy (no ink colors, only top-1 strip-weapon candidates), so
+ * The CSV is lossy (each status slot only as the state its read favored, no
+ * ink colors, only top-1 strip-weapon candidates), so the status decode,
  * cast-footage side orientation and slot→row assignment can degrade to their
  * fallbacks; the output flags mismatches that look like slot-mapping artifacts.
- * Every discrepancy lists the read timestamps most likely to yield a fixture.
+ * A tape holds the events whole. Every discrepancy lists the read timestamps
+ * most likely to yield a fixture.
  *
- * Usage: pnpm scanner:status-audit <events.csv> [--all]
+ * Usage: pnpm scanner:status-audit <events.csv | name.tape.jsonl> [--all]
  */
 import { readFileSync } from "node:fs";
+import { basename } from "node:path";
 import {
 	type PlayerStatusTimelineSample,
 	statusSpans,
@@ -39,9 +42,9 @@ import {
 	type ObjectiveData,
 } from "../../app/features/scanner/core/detectors/objective/index";
 import {
+	FLAGGED_STATE_EVIDENCE,
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
-	type PlayerStatusFlags,
 } from "../../app/features/scanner/core/detectors/objective/player-status";
 import {
 	STRIP_WEAPONS_EVENT_TYPE,
@@ -72,6 +75,7 @@ import type {
 	ScannerMatchPlayerStatusSample,
 } from "../../app/features/scanner/core/scanner-match";
 import type { ScannerLobby } from "../../app/features/scanner/scanner-types";
+import * as Tape from "../../app/features/scanner/tests/tape";
 import { modesShort } from "../../app/modules/in-game-lists/modes";
 import { stageIds } from "../../app/modules/in-game-lists/stage-ids";
 import type {
@@ -84,9 +88,10 @@ import { mainWeaponIds } from "../../app/modules/in-game-lists/weapon-ids";
 
 /** Mirrors PlayerStatusTimeline's MAX_BRIDGE_SECONDS: longer sample gaps render as unobserved. */
 const OBSERVATION_GAP_SECONDS = 15;
-/** Mirrors match-builder's DEAD_RUN_MIN_SECONDS: no true splat is shorter. */
+/** Mirrors status-decode's DEAD_MIN_SECONDS: no true splat is shorter. */
 const MIN_DEAD_SECONDS = 3.5;
 const SPAN_EPSILON_SECONDS = 0.001;
+const TAPE_SUFFIX = ".tape.jsonl";
 
 const SCOREBOARD_TYPES = new Set([
 	SCOREBOARD_EVENT_TYPE,
@@ -115,14 +120,18 @@ const LOBBY_BY_LABEL = new Map<string, ScannerLobby>(
 );
 
 const args = process.argv.slice(2);
-const csvPath = args.find((arg) => !arg.startsWith("--"));
+const inputPath = args.find((arg) => !arg.startsWith("--"));
 const showAllSpans = args.includes("--all");
-if (!csvPath) {
-	console.error("Usage: pnpm scanner:status-audit <events.csv> [--all]");
+if (!inputPath) {
+	console.error(
+		"Usage: pnpm scanner:status-audit <events.csv | name.tape.jsonl> [--all]",
+	);
 	process.exit(1);
 }
 
-const rows = parseCsv(readFileSync(csvPath, "utf8"));
+const isTape = inputPath.endsWith(TAPE_SUFFIX);
+const input = readFileSync(inputPath, "utf8");
+const rows = isTape ? [] : parseCsv(input);
 const header = rows[0] ?? [];
 const col = (name: string) => header.indexOf(name);
 const columns = {
@@ -143,14 +152,19 @@ const columns = {
 	replayCode: col("replay_code"),
 	replayTimestamp: col("replay_timestamp"),
 };
-if (columns.type === -1 || columns.t === -1 || columns.players === -1) {
+if (
+	!isTape &&
+	(columns.type === -1 || columns.t === -1 || columns.players === -1)
+) {
 	console.error(
-		`Not an events CSV (missing type/t_seconds/players columns): ${csvPath}`,
+		`Not an events CSV (missing type/t_seconds/players columns): ${inputPath}`,
 	);
 	process.exit(1);
 }
 
-const events: DetectedEvent[] = [];
+const events: DetectedEvent[] = isTape
+	? [...Tape.parse(basename(inputPath, TAPE_SUFFIX), input).events]
+	: [];
 const skippedTypes = new Map<string, number>();
 const parseFailures: string[] = [];
 for (const row of rows.slice(1)) {
@@ -274,19 +288,17 @@ function parsePlayerStatusCell(cell: string): PlayerStatusData {
 	);
 	if (!match) throw new Error(`bad PlayerStatus cell: ${cell}`);
 	const [, m, s, left, right] = match;
-	const sideFlags = (icons: string) => {
-		const chars = [...icons];
-		return {
-			dead: chars.map((c) => c === "✕") as PlayerStatusFlags,
-			special: chars.map((c) => c === "★") as PlayerStatusFlags,
-		};
-	};
-	const a = sideFlags(left!);
-	const b = sideFlags(right!);
+	// the CSV holds the state each slot's read favored, not how strongly
+	const sideEvidence = (icons: string) =>
+		[...icons].map(
+			(c) =>
+				FLAGGED_STATE_EVIDENCE[
+					c === "✕" ? "dead" : c === "★" ? "ready" : "alive"
+				],
+		) as PlayerStatusData["slots"][0];
 	return {
 		time: m === undefined ? null : parseClock(m, s!),
-		special: [a.special, b.special],
-		dead: [a.dead, b.dead],
+		slots: [sideEvidence(left!), sideEvidence(right!)],
 		// the CSV carries no camera-badge evidence
 		cast: null,
 	};
@@ -631,7 +643,7 @@ function playerLabelOf(match: ScannerMatch, side: 0 | 1, slot: number): string {
 }
 
 function printHeader(): void {
-	console.log(`# Player-status audit: ${csvPath}`);
+	console.log(`# Player-status audit: ${inputPath}`);
 	const counts = new Map<string, number>();
 	for (const event of events) {
 		counts.set(event.type, (counts.get(event.type) ?? 0) + 1);

@@ -161,7 +161,7 @@
 							"t": 1792268617,
 							"time": 282,
 							"special": [[false,false,false,false],[false,false,false,false]],
-							"dead": [[false,false,false,false],[true,true,true,false]]
+							"dead": [[false,false,false,false],[true,true,false,false]]
 						},
 						{
 							"t": 1792268618,
@@ -329,13 +329,13 @@
 							"t": 1792268663,
 							"time": 235,
 							"special": [[false,false,true,true],[false,false,false,false]],
-							"dead": [[false,false,false,false],[false,false,true,false]]
+							"dead": [[false,false,false,false],[false,true,true,false]]
 						},
 						{
 							"t": 1792268665,
 							"time": 234,
 							"special": [[false,false,true,true],[false,false,false,false]],
-							"dead": [[false,false,false,false],[false,false,true,false]]
+							"dead": [[false,false,false,false],[false,true,true,false]]
 						},
 						{
 							"t": 1792268666,
@@ -353,12 +353,12 @@
 							"t": 1792268668,
 							"time": 230,
 							"special": [[false,false,true,true],[false,false,false,true]],
-							"dead": [[false,false,false,false],[false,false,true,false]]
+							"dead": [[false,false,false,false],[false,false,false,false]]
 						},
 						{
 							"t": 1792268669,
 							"time": 229,
-							"special": [[false,false,true,false],[false,false,false,false]],
+							"special": [[false,false,true,false],[false,false,false,true]],
 							"dead": [[false,false,false,true],[false,false,true,false]]
 						},
 						{
@@ -431,13 +431,13 @@
 							"t": 1792268684,
 							"time": 214,
 							"special": [[false,false,false,false],[false,false,false,false]],
-							"dead": [[false,false,true,false],[false,false,true,false]]
+							"dead": [[false,false,true,false],[false,true,true,false]]
 						},
 						{
 							"t": 1792268686,
 							"time": 213,
 							"special": [[false,false,false,false],[true,false,false,false]],
-							"dead": [[false,false,true,false],[false,false,true,false]]
+							"dead": [[false,false,true,false],[false,true,true,false]]
 						},
 						{
 							"t": 1792268687,
@@ -766,7 +766,7 @@
 						{
 							"t": 1792268784,
 							"time": 114,
-							"special": [[false,false,false,false],[false,false,false,false]],
+							"special": [[false,true,false,false],[false,false,false,false]],
 							"dead": [[true,false,false,true],[false,true,true,true]]
 						},
 						{
@@ -797,7 +797,7 @@
 							"t": 1792268792,
 							"time": 106,
 							"special": [[false,true,false,false],[false,false,false,false]],
-							"dead": [[false,false,false,false],[true,true,false,false]]
+							"dead": [[false,false,false,false],[true,true,true,false]]
 						},
 						{
 							"t": 1792268794,
@@ -815,7 +815,7 @@
 							"t": 1792268796,
 							"time": 103,
 							"special": [[false,true,false,false],[false,false,false,false]],
-							"dead": [[false,false,false,true],[false,true,true,false]]
+							"dead": [[false,false,false,true],[false,false,false,false]]
 						},
 						{
 							"t": 1792268797,
@@ -916,8 +916,8 @@
 						{
 							"t": 1792268826,
 							"time": 72,
-							"special": [[false,false,false,false],[false,false,false,true]],
-							"dead": [[false,false,false,false],[true,true,true,false]]
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[true,true,true,true]]
 						},
 						{
 							"t": 1792268827,
@@ -1133,7 +1133,7 @@
 							"t": 1792268888,
 							"time": 10,
 							"special": [[false,false,false,false],[true,false,false,false]],
-							"dead": [[false,false,false,false],[false,true,true,false]]
+							"dead": [[false,false,false,false],[false,true,false,false]]
 						},
 						{
 							"t": 1792268889,

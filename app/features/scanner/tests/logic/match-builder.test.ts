@@ -17,7 +17,11 @@ import type {
 	ObjectiveData,
 	TrackObjectiveData,
 } from "../../core/detectors/objective/index";
-import type { PlayerStatusData } from "../../core/detectors/objective/player-status";
+import type {
+	PlayerStatusData,
+	PlayerStatusFlags,
+	SlotEvidence,
+} from "../../core/detectors/objective/player-status";
 import type { StripWeaponsData } from "../../core/detectors/objective/strip-weapons";
 import type { ScoreboardData } from "../../core/detectors/scoreboard/index";
 import type { ScoreboardBattleLogData } from "../../core/detectors/scoreboard-battle-log/index";
@@ -1907,11 +1911,14 @@ test("no minimaps and no scoreboard means no match", () => {
 	assert.deepEqual(buildScannerMatches([mapStart(30), mapStart(400)]), []);
 });
 
-const ALL_FALSE = [
-	[false, false, false, false],
-	[false, false, false, false],
-] as PlayerStatusData["special"];
+type StatusFlags = [PlayerStatusFlags, PlayerStatusFlags];
 
+const ALL_FALSE: StatusFlags = [
+	[false, false, false, false],
+	[false, false, false, false],
+];
+
+/** A clean read: each slot's flagged state at 0.9, the others at 0.05. */
 function playerStatus(
 	t: number,
 	{
@@ -1919,9 +1926,21 @@ function playerStatus(
 		special = ALL_FALSE,
 		dead = ALL_FALSE,
 		cast = null as true | null,
+		/** per slot evidence, over the flags */
+		evidence = [] as { side: 0 | 1; slot: number; evidence: SlotEvidence }[],
 	} = {},
 ): DetectedEvent {
-	const data: PlayerStatusData = { time, special, dead, cast };
+	const slots = dead.map((side, sideIndex) =>
+		side.map((isDead, slot): SlotEvidence => {
+			const given = evidence.find(
+				(entry) => entry.side === sideIndex && entry.slot === slot,
+			);
+			if (given) return given.evidence;
+			if (isDead) return [0.05, 0.05, 0.9];
+			return special[sideIndex]![slot] ? [0.05, 0.9, 0.05] : [0.9, 0.05, 0.05];
+		}),
+	) as PlayerStatusData["slots"];
+	const data: PlayerStatusData = { time, slots, cast };
 	return { type: "PlayerStatus", t, scores: { read: 0.9 }, data };
 }
 
@@ -1953,11 +1972,11 @@ test("player-status reads become teams-order samples on the match", () => {
 	const special = [
 		[true, false, false, false],
 		[false, false, false, false],
-	] as PlayerStatusData["special"];
+	] as StatusFlags;
 	const dead = [
 		[false, false, false, false],
 		[false, false, true, false],
-	] as PlayerStatusData["dead"];
+	] as StatusFlags;
 	const built = buildScannerMatches([
 		mapStart(0),
 		playerStatus(120, { special, dead }),
@@ -2037,12 +2056,12 @@ test("status reads inherit the nearest counter read's cast orientation", () => {
 	assert.equal(built[0]!.match.cast, true);
 });
 
-test("sub-2s dead-flag blips between dense opposite reads get flipped", () => {
+test("dead and alive runs shorter than a respawn or a spawn take the states around them", () => {
 	const deadAt = (slots: number[]) =>
 		[
 			[false, false, false, false],
 			[0, 1, 2, 3].map((slot) => slots.includes(slot)),
-		] as PlayerStatusData["dead"];
+		] as StatusFlags;
 	const built = buildScannerMatches([
 		mapStart(0),
 		// slot0: a real death 101-107 with a one-read false "respawn" at 104
@@ -2078,7 +2097,7 @@ test("a lone dead read between sparse reads is kept", () => {
 	const dead = [
 		[false, false, false, false],
 		[true, false, false, false],
-	] as PlayerStatusData["dead"];
+	] as StatusFlags;
 	const built = buildScannerMatches([
 		mapStart(0),
 		playerStatus(60),
@@ -2089,17 +2108,21 @@ test("a lone dead read between sparse reads is kept", () => {
 	assert.deepEqual(built[0]!.match.playerStatus!.samples[1]!.dead, dead);
 });
 
-test("a sub-10s not-ready gap between ready reads with no death bridges to ready", () => {
+test("a not-ready gap between ready reads too short to regain a special bridges to ready", () => {
 	const specialAt = (on: boolean) =>
 		[
 			[on, false, false, false],
 			[false, false, false, false],
-		] as PlayerStatusData["special"];
+		] as StatusFlags;
+	// the wash's dim pulse trough reads as a toss-up between ready and not
+	const trough = [
+		{ side: 0 as const, slot: 0, evidence: [0.55, 0.4, 0.05] as SlotEvidence },
+	];
 	const built = buildScannerMatches([
 		mapStart(0),
 		playerStatus(100, { special: specialAt(true) }),
-		playerStatus(102, { special: specialAt(false) }),
-		playerStatus(104, { special: specialAt(false) }),
+		playerStatus(102, { evidence: trough }),
+		playerStatus(104, { evidence: trough }),
 		playerStatus(106, { special: specialAt(true) }),
 		playerStatus(108, { special: specialAt(false) }),
 		scoreboard(300),
@@ -2111,12 +2134,34 @@ test("a sub-10s not-ready gap between ready reads with no death bridges to ready
 	assert.deepEqual(slot0Specials, [true, true, true, true, false]);
 });
 
+test("a ready read too soon after a spent special loses to the clean reads around it", () => {
+	const specialAt = (on: boolean) =>
+		[
+			[on, false, false, false],
+			[false, false, false, false],
+		] as StatusFlags;
+	const built = buildScannerMatches([
+		mapStart(0),
+		playerStatus(100, { special: specialAt(true) }),
+		playerStatus(101, { special: specialAt(false) }),
+		playerStatus(102, { special: specialAt(false) }),
+		playerStatus(103, { special: specialAt(false) }),
+		playerStatus(104, { special: specialAt(true) }),
+		playerStatus(105, { special: specialAt(false) }),
+		scoreboard(300),
+	]);
+	const slot0Specials = built[0]!.match.playerStatus!.samples.map(
+		(sample) => sample.special[0][0],
+	);
+	assert.deepEqual(slot0Specials, [true, false, false, false, false, false]);
+});
+
 test("ready reads before a special could charge are dropped, not bridged into the first real one", () => {
 	const specialAt = (on: boolean) =>
 		[
 			[on, false, false, false],
 			[false, false, false, false],
-		] as PlayerStatusData["special"];
+		] as StatusFlags;
 	const built = buildScannerMatches([
 		mapStart(0),
 		playerStatus(11, { time: 300, special: specialAt(true) }),
@@ -2150,11 +2195,11 @@ test("a not-ready gap explained by a death inside it is kept", () => {
 		special: [
 			[special, false, false, false],
 			[false, false, false, false],
-		] as PlayerStatusData["special"],
+		] as StatusFlags,
 		dead: [
 			[dead, false, false, false],
 			[false, false, false, false],
-		] as PlayerStatusData["dead"],
+		] as StatusFlags,
 	});
 	const built = buildScannerMatches([
 		mapStart(0),
@@ -2175,7 +2220,7 @@ test("a not-ready gap wide enough to regain a special is kept", () => {
 		[
 			[on, false, false, false],
 			[false, false, false, false],
-		] as PlayerStatusData["special"];
+		] as StatusFlags;
 	const built = buildScannerMatches([
 		mapStart(0),
 		playerStatus(100, { special: specialAt(true) }),
@@ -2211,7 +2256,7 @@ test("a Turf War match drops ready reads before a special could charge on its 3:
 		[
 			[on, false, false, false],
 			[false, false, false, false],
-		] as PlayerStatusData["special"];
+		] as StatusFlags;
 	const built = buildScannerMatches([
 		mapStart(0, { mode: "TW" }),
 		playerStatus(15, { time: 176, special: specialAt(true) }),
@@ -2330,7 +2375,7 @@ test("weapon evidence below the assignment floor keeps the as-drawn order", () =
 	const dead = [
 		[true, false, false, false],
 		[false, false, false, false],
-	] as PlayerStatusData["dead"];
+	] as StatusFlags;
 	const built = buildScannerMatches([
 		mapStart(0),
 		playerStatus(120, { dead }),
@@ -2382,7 +2427,7 @@ function stripRead(
 			[0, 1, 2, 3].map((slot) =>
 				marked.some(([s, k]) => s === side && k === slot),
 			),
-		) as PlayerStatusData["dead"];
+		) as StatusFlags;
 	return playerStatus(t, { dead: flags(dead), special: flags(special) });
 }
 

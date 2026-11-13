@@ -75,7 +75,9 @@ opens it, for anyone, through the same handoff Inspect uses.
   its `type`/`data`/`scores` were written at; a record without one is version 1
   (version 2 replaced a read's one `confidence` with `scores` per field; an
   older read is brought up with its confidence as the one score of the whole
-  read, under `*`). The
+  read, under `*`; version 3 replaced a PlayerStatus read's special/dead
+  flags with per-slot evidence, an older read's flagged state counting as
+  one confident read of it). The
   store reads (`listEvents`, `getEvents`, `loadVodEvents`,
   `listCompactedMatches`) and the tape loader hand back
   `EventVersion.readable` events: older ones run through the upgrade steps
@@ -350,7 +352,7 @@ pnpm scanner:unpack-zip <zip> <new-dir> # validate + unpack a user's Game data z
 pnpm scanner:scan-vod <video>           # VoD scan as a CLI (ffmpeg): video in, events CSV out (--gpu, --record, see "WebGPU"; --tape, see "Event tapes")
 pnpm scanner:scan-vod <video> --replay <scan-log.json> # the scan a browser ran on that file, run again from its log, see "Scan log and replay"
 pnpm scanner:tape <name> "<description>" <zip>... # record an event tape from Game data zips
-pnpm scanner:status-audit <events.csv>  # diff the CSV's timeline vs scoreboard D/S, rank fixture candidates
+pnpm scanner:status-audit <events.csv | name.tape.jsonl>  # diff the decoded status vs scoreboard D/S, rank fixture candidates (a tape keeps the evidence the CSV loses)
 pnpm scanner:bootstrap-atlas            # harvest labeled fixture crops into the glyph atlases
 pnpm scanner:build-glyph-atlas          # add the font-rendered charset (fonts required, see below)
 pnpm scanner:build-localized-entries    # regen localized closed sets from ../splat3
@@ -384,7 +386,7 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   Cap->>W: frame + t (live/screenshot/seek) — VoD: worker decodes its own slice
   W->>W: scheduler dueDetectors() → gate() → parse()
   W-->>TL: DetectedEvents
-  TL-->>UI: keyed changes (added / replaced / extended) of the deduped timeline, status reads kept per run end (IndexedDB: events / vod-events)
+  TL-->>UI: keyed changes (added / replaced / amended) of the deduped timeline, every status read kept (IndexedDB: events / vod-events)
   UI->>MB: buildScannerMatches(events)
   MB-->>UI: ScannerMatch[] + source events
   UI->>ING: POST { matches } (live only: on match close / stop)
@@ -524,7 +526,15 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   head: the wash pales the whole icon), else splatted (dark plate
   under grey X strokes) — unless the whole body is opaque black with no X
   or weapon render in it, an empty seat (a 1v1 lobby, a disconnect), which
-  sets neither flag. No geometry implies a footage type: the D-pad camera
+  reads as alive: it shows neither wash nor X (on the fW5h-Ooc-Cg VoD a
+  slot read so for one frame between a ready wash and a splat, the special
+  spent). None of those are cuts: each slot reports soft evidence,
+  how much it looks alive, ready and splatted (`slots`, summing to 1), each
+  fraction a logistic of its distance to the threshold that used to cut it,
+  so a fraction near a threshold leaves the call open for the reads around
+  it to settle. Every read is kept (`keep: "every"`), and the builder
+  decodes each player's states over the whole game at once
+  (`core/status-decode.ts`, see below). No geometry implies a footage type: the D-pad camera
   badges prove a broadcast, reported as `cast: true | null`, but never
   place the strip, since a white backdrop under a POV strip fakes them now
   and then. Emitted
@@ -570,15 +580,28 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   a closer split the base weapon (`weaponIdToBaseWeaponId`). On the
   XHXYlzu4Zt8 VoD a Custom Range Blaster led its kit 29 reads of 30 but only
   6.39 to 4.58 on votes. Strip-weapon fixtures live under
-  `tests/fixtures/strip-weapons/`. The builder additionally
-  flips sub-2s dead-flag runs flanked by dense opposite reads — a splat
-  outlasts the respawn wait, so those are misread blips (background ink
-  bleeding through a crossed-out icon) — and bridges sub-10s not-ready
-  gaps between ready reads when no death inside the gap explains them (no
-  special regains that fast, so the gap is the wash's dim pulse trough);
-  for the same reason ready reads in the clock's first 10s (5:00-4:51,
-  TW 3:00-2:51) or before it starts are dropped before bridging, timerless minimap reads
-  timed by the match's dominant clock anchor. Objective reads land on `ScannerMatch` as
+  `tests/fixtures/strip-weapons/`. Once every status read is oriented and
+  in row order, the builder decodes each player's states from all of them
+  at once (`core/status-decode.ts`): the most likely series of alive /
+  ready / splatted the evidence allows under what the game allows — a
+  splat lasts at least the 3.5s respawn wait, a respawned player stays up
+  2s before the next splat or a full special, a spent special takes 7s to
+  charge again, and nothing is ready in the clock's first 7s (5:00-4:54,
+  TW 3:00-2:54) or before it starts (timerless minimap reads are timed by
+  the match's dominant clock anchor). The rules are hard, the evidence soft,
+  and each change of state costs a little, so a lone weak read does not split
+  a run while a confident one does: a wash in its dim pulse trough (read
+  half alive) is bridged, a splat plate over a bright backdrop between clean
+  reads a second apart is outvoted. States are decoded on a 0.5s grid from
+  the first read to the last, so a run can fall between reads (a respawn
+  and a recharge in a gap) and holds no longer than reach from the read
+  before it to the read after it; a run at either end has no minimum. A
+  minimap card's cross-out and camo count as one confident read of their
+  state, a card not shown as nothing. Stored reads from before the evidence
+  (event version 2: flags) count the same way. This replaced three repairs
+  on hard flags (dead blips flipped, ready gaps bridged, early ready reads
+  dropped) that each saw one rule and the flags another had already
+  changed. Objective reads land on `ScannerMatch` as
   progress samples anchored to the game clock; broadcast replay wipes re-run
   an earlier moment with the counter intact, so the builder keeps only the
   dominant cluster of clock-zero projections (`t + time`) and drops replay
@@ -648,8 +671,7 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   the gate. `checkIntervalS` hard-caps both phases; `attachFrame: false`
   keeps continuously-firing events from storing a frame PNG each, and the
   worker only encodes a frame at all when its timeline lists an event rather
-  than merging it into an earlier read (or extending a status run's trailing
-  read) — a 1080p
+  than merging it into an earlier read — a 1080p
   PNG per repeat read cost more than the parse once the kill feed re-read
   its stack twice a second. Frames no
   detector is due for skip canvas readback, and everything is counted in
@@ -772,9 +794,9 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   `scan-vod` both run. The worker makes a new timeline per chunk scan and per
   per-frame stream; its results carry the raw reads (`events`, what the
   screenshot page shows) and the `changes` the timeline made of them
-  (`added` / `replaced` / `extended` / `amended`, each with the `key` of the
+  (`added` / `replaced` / `amended`, each with the `key` of the
   slot it holds). The page never merges reads itself: `live-session.ts` keeps
-  the stored event id per key and saves a replaced, extended or amended slot
+  the stored event id per key and saves a replaced or amended slot
   over it, `vod-scan.ts` keeps each lane's events by key. Only an added or
   replaced read brings a frame; an amended one (fields outvoted, same `t`)
   keeps the frame its slot has. A VoD's lanes are scanned by
@@ -804,7 +826,7 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
     (reported as no change) unless it completes the kept read; one that
     changes values under the same base is `amended`. Kinds with `progress`
     (X Battle cards) vote only among reads level on the animation, and
-    `first` / `sampled` kinds not at all.
+    `first` / `every` kinds not at all.
   - **Stop.** A kind's `complete` says when a read holds everything its
     screen shows, each field as well as a clean frame reads it; the scheduler
     stops parsing the screen once the kept read is complete (`isComplete` in

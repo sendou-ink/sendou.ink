@@ -13,7 +13,10 @@ import { createDeathDetector } from "../core/detectors/death/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
 import { createMinimapDetector } from "../core/detectors/minimap/index";
 import { createObjectiveDetector } from "../core/detectors/objective/index";
-import { PLAYER_STATUS_EVENT_TYPE } from "../core/detectors/objective/player-status";
+import {
+	PLAYER_STATUS_EVENT_TYPE,
+	statusFlagsOf,
+} from "../core/detectors/objective/player-status";
 import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
@@ -61,7 +64,9 @@ for (const fixture of fixtures) {
 				: "no event (gate did not fire)",
 		);
 		const expected = fixture.expected.data ?? {};
-		const debug = () => JSON.stringify(event.debug);
+		const flags = statusFlagsOf(event.data);
+		const debug = () =>
+			JSON.stringify({ slots: event.data.slots, ...event.debug });
 
 		await t.test(
 			"cast",
@@ -94,7 +99,7 @@ for (const fixture of fixtures) {
 					),
 					() => {
 						assert.equal(
-							event.data.special[side][slot],
+							flags.special[side][slot],
 							expected.special![side]![slot],
 							`special[${side}][${slot}] mismatch (${debug()})`,
 						);
@@ -109,7 +114,7 @@ for (const fixture of fixtures) {
 					),
 					() => {
 						assert.equal(
-							event.data.dead[side][slot],
+							flags.dead[side][slot],
 							expected.dead![side]![slot],
 							`dead[${side}][${slot}] mismatch (${debug()})`,
 						);

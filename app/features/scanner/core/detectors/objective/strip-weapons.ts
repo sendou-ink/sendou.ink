@@ -21,7 +21,11 @@ import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
 import { copyRoi, type FrameData } from "../../image";
 import type { EventKind, EventOf } from "../types";
-import type { PlayerStatusData, StripFit } from "./player-status";
+import {
+	type PlayerStatusData,
+	type StripFit,
+	slotStateOf,
+} from "./player-status";
 import {
 	STATUS_ICON_CENTER_Y,
 	STATUS_REFERENCE_PITCH,
@@ -145,7 +149,8 @@ export function parseStripWeapons(
 	const scores: Record<string, number> = {};
 	const slots = fit.map((sideFit, side) =>
 		sideFit.centers.map((cx, slot) => {
-			if (status.dead[side as 0 | 1][slot]) return null;
+			if (slotStateOf(status.slots[side as 0 | 1][slot]!) === "dead")
+				return null;
 			const candidates = matchSlot(frame, cx, sideFit.pitch, templates);
 			if (candidates) scores[`slots.${side}.${slot}`] = candidates[0]!.score;
 			return candidates;
