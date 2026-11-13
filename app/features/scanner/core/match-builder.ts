@@ -22,6 +22,7 @@ import {
 	harvestAbilities,
 	harvestCardMains,
 } from "./ability-harvest";
+import * as Clock from "./clock";
 import { DEATH_EVENT_TYPE, type DeathData } from "./detectors/death/index";
 import { KILL_EVENT_TYPE, type KillData } from "./detectors/kill/index";
 import { MAP_START_EVENT_TYPE } from "./detectors/map-start/index";
@@ -143,14 +144,6 @@ const RANKED_CLOCK_SECONDS = 300;
  * and orientation falls back to the as-read arrangement.
  */
 const MIN_TEAM_HUE_SEPARATION = 30;
-
-/**
- * A read whose projected clock zero (`t + time`) sits further than this from
- * the match's dominant projection came off a broadcast replay. Live projections
- * jitter a couple of seconds (both clocks round to whole seconds); attested
- * replay wipes land a minute or more away.
- */
-const REPLAY_ANCHOR_TOLERANCE_SECONDS = 10;
 
 /**
  * Kill-feed stack reads further apart than this show independent rows even
@@ -1116,9 +1109,9 @@ function floorOrNull(t: number | undefined): number | null {
  * ink hues (clustered against the first read that saw both); a status read
  * carries no ink and inherits the orientation of the nearest counter read in
  * time (same frames). Broadcast replay wipes re-run an earlier moment with the
- * HUD intact, so both series are anchored by projected clock zero (`t + time`)
- * against one shared dominant projection and reads off it are dropped;
- * timerless reads follow their preceding anchored neighbor. A displayed count
+ * HUD intact, so every series is tracked on one game clock (core/clock.ts)
+ * and reads on a moment shown again are dropped; timerless reads follow the
+ * clock span they fall in. A displayed count
  * never increases, so each side keeps only its longest non-increasing score
  * run (blips voided, not charted). Then into `teams` order: scoreboard-closed
  * is winner-first (POV seat when read; else in SZ the side whose count went
@@ -1169,13 +1162,14 @@ function buildProgress(
 	/** the `teams` side the minimap's enemy column is; null with no scoreboard */
 	minimapEnemySide: 0 | 1 | null;
 } {
-	const dominant = dominantAnchorOf([
-		...objectives,
-		...playerStatuses,
-		...killReads,
-	]);
-	const live = withoutReplayReads(objectives, dominant);
-	const liveKills = withoutReplayReads(killReads, dominant);
+	const clock = Clock.track(
+		[...objectives, ...playerStatuses, ...killReads].map((read) => ({
+			t: read.t,
+			time: read.data.time,
+		})),
+	);
+	const live = onLiveClock(objectives, clock);
+	const liveKills = onLiveClock(killReads, clock);
 	const statusReads = [
 		...playerStatuses.map(
 			(read): StatusRead => ({
@@ -1186,7 +1180,7 @@ function buildProgress(
 		),
 		...minimapStatusReads(minimapReads),
 	].sort((a, b) => a.t - b.t);
-	const liveStatuses = withoutReplayReads(statusReads, dominant);
+	const liveStatuses = onLiveClock(statusReads, clock);
 
 	const clusterHues = seedClusterHues(live);
 	const swapFlags = readSwapFlags(live, clusterHues);
@@ -1206,7 +1200,7 @@ function buildProgress(
 	): SlotRowInputs => ({
 		rows,
 		povIndex,
-		playerStatuses: withoutReplayReads(playerStatuses, dominant),
+		playerStatuses: onLiveClock(playerStatuses, clock),
 		stripWeapons,
 		minimapReads,
 		kills: kills ?? [],
@@ -1262,7 +1256,7 @@ function buildProgress(
 							const [a, b] = swapped ? ([1, 0] as const) : ([0, 1] as const);
 							const time =
 								read.data.time ??
-								(dominant === null ? null : dominant - read.t);
+								Clock.position(clock, { t: read.t, time: null }).remaining;
 							return {
 								t: read.t,
 								time: read.data.time,
@@ -1989,63 +1983,24 @@ function minimapTeamColors(
 }
 
 /**
- * The dominant clock-zero projection across every timed read; null when none.
- * Counter and status reads project the same clock, so one anchor voids both.
+ * Drops reads off broadcast replays and edited VoDs showing a moment again
+ * (core/clock.ts); a timerless read follows the clock span it falls in. A
+ * misread timer takes its span's prediction.
  */
-function dominantAnchorOf(
-	reads: readonly { t: number; data: { time: number | null } }[],
-): number | null {
-	const anchors = reads.flatMap((read) =>
-		read.data.time !== null ? [read.t + read.data.time] : [],
-	);
-	return anchors.length === 0 ? null : dominantAnchor(anchors);
-}
-
-/**
- * Drops reads taken off broadcast replay wipes: `t + time` projects the moment
- * the match timer hits zero, constant across a live game but far off when the
- * broadcast re-runs an earlier moment. Only reads near the dominant projection
- * (the live series outnumbers ~30s replay clips) are kept; a timerless read
- * shares the fate of its preceding anchored neighbor (the following one for a
- * timerless head), so an unreadable timer never voids live reads.
- */
-function withoutReplayReads<
-	T extends { t: number; data: { time: number | null } },
->(reads: readonly T[], dominant: number | null): T[] {
-	if (dominant === null) return [...reads];
-	const anchored = reads.flatMap((read, i) =>
-		read.data.time !== null ? [{ i, anchor: read.t + read.data.time }] : [],
-	);
-	if (anchored.length === 0) return [...reads];
-
-	const keptAnchored = new Map(
-		anchored.map(({ i, anchor }) => [
-			i,
-			Math.abs(anchor - dominant) <= REPLAY_ANCHOR_TOLERANCE_SECONDS,
-		]),
-	);
-
-	let previousKept = keptAnchored.get(anchored[0]!.i)!;
-	return reads.filter((_, i) => {
-		previousKept = keptAnchored.get(i) ?? previousKept;
-		return previousKept;
+function onLiveClock<T extends { t: number; data: { time: number | null } }>(
+	reads: readonly T[],
+	clock: readonly Clock.ClockSpan[],
+): T[] {
+	return reads.flatMap((read) => {
+		const { live, time } = Clock.position(clock, {
+			t: read.t,
+			time: read.data.time,
+		});
+		if (!live) return [];
+		return time === read.data.time
+			? [read]
+			: [{ ...read, data: { ...read.data, time } }];
 	});
-}
-
-/** The clock-zero projection supported by the most reads within tolerance. */
-function dominantAnchor(anchors: readonly number[]): number {
-	const sorted = anchors.toSorted((a, b) => a - b);
-	let best = sorted[0]!;
-	let bestRunLength = 0;
-	let lo = 0;
-	for (let hi = 0; hi < sorted.length; hi++) {
-		while (sorted[hi]! - sorted[lo]! > REPLAY_ANCHOR_TOLERANCE_SECONDS) lo++;
-		if (hi - lo + 1 > bestRunLength) {
-			bestRunLength = hi - lo + 1;
-			best = sorted[Math.floor((lo + hi) / 2)]!;
-		}
-	}
-	return best;
 }
 
 /**

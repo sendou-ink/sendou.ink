@@ -649,20 +649,70 @@ test("post-game replay wipes are dropped by their clock projection", () => {
 		objective(60, { score: [80, 6], penalty: [null, 56] }),
 		objective(61, { score: [78, 6], penalty: [null, 56] }),
 		objective(62, { score: [77, 6], penalty: [null, 56] }),
-		// broadcast re-runs the opening moments, clock jumped back to 4:51
-		objective(90, { time: 291, score: [100, 100] }),
-		objective(91, { time: 290, score: [99, 100] }),
-		// then the closing moments again
-		objective(100, { time: 62, score: [6, 77], penalty: [56, null] }),
-		objective(101, { time: 61, score: [6, 75], penalty: [56, null] }),
-		scoreboard(300),
+		objective(290, { score: [21, 6], penalty: [null, 56] }),
+		objective(291, { score: [20, 6], penalty: [null, 56] }),
+		// after the game the broadcast re-runs its opening moments, clock back at 4:51
+		objective(305, { time: 291, score: [100, 100] }),
+		objective(306, { time: 290, score: [99, 100] }),
+		// then its closing moments
+		objective(315, { time: 12, score: [6, 22], penalty: [56, null] }),
+		objective(316, { time: 11, score: [6, 21], penalty: [56, null] }),
+		scoreboard(330),
 	]);
 	const samples = built[0]!.match.objective!.samples;
 	assert.deepEqual(
 		samples.map((sample) => sample.t),
-		[60, 61, 62],
+		[60, 61, 62, 290, 291],
 	);
 	assert.deepEqual(samples.at(-1)!.penalty, [null, 56]);
+});
+
+test("a status read with a misread timer is sampled on the clock's prediction", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		playerStatus(60),
+		playerStatus(61),
+		// "3:58" read as "2:58"
+		playerStatus(62, { time: 178 }),
+		playerStatus(63),
+		scoreboard(300),
+	]);
+	assert.deepEqual(
+		built[0]!.match.playerStatus!.samples.map((sample) => sample.time),
+		[240, 239, 238, 237],
+	);
+});
+
+test("an edited VoD's cuts ahead in the game stay live", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		objective(60, { score: [80, 90] }),
+		objective(61, { score: [79, 90] }),
+		// the footage skips 40 seconds of the game
+		objective(62, { time: 198, score: [60, 85] }),
+		objective(63, { time: 197, score: [59, 85] }),
+		scoreboard(300),
+	]);
+	assert.deepEqual(
+		built[0]!.match.objective!.samples.map((sample) => sample.time),
+		[240, 239, 198, 197],
+	);
+});
+
+test("a misread timer keeps its read, on the clock's prediction", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		objective(60, { score: [80, 90] }),
+		objective(61, { score: [79, 90] }),
+		// "3:59" read as "2:59"
+		objective(62, { time: 179, score: [78, 90] }),
+		objective(63, { score: [77, 90] }),
+		scoreboard(300),
+	]);
+	assert.deepEqual(
+		built[0]!.match.objective!.samples.map((sample) => sample.time),
+		[240, 239, 238, 237],
+	);
 });
 
 test("timerless reads share their live neighbor's replay-filter fate", () => {
@@ -2695,6 +2745,7 @@ test("kill reads off a replay wipe are dropped", () => {
 		kill(65, ["24K"]),
 		// a broadcast re-running the 3:30 moment at t=200
 		kill(200, ["datkid"], { time: 210 }),
+		objective(201, { time: 209 }),
 		scoreboard(300),
 	]);
 	assert.deepEqual(

@@ -16,7 +16,20 @@
 				"cast": false,
 				"objective": null,
 				"playerStatus": null,
-				"kills": [{"t":774,"time":99,"name":"wolbo"},{"t":776,"time":97,"name":"Garandou"},{"t":781,"time":92,"name":"Neespa!!!"}],
+				"kills": [
+					{"t":732,"time":268,"name":"soppi"},
+					{"t":738,"time":243,"name":"Goyame"},
+					{"t":739,"time":241,"name":"Suemaru"},
+					{"t":744,"time":236,"name":"stre_sena"},
+					{"t":748,"time":157,"name":"soppi"},
+					{"t":751,"time":154,"name":"wolbo"},
+					{"t":766,"time":140,"name":"wolbo"},
+					{"t":774,"time":99,"name":"wolbo"},
+					{"t":776,"time":97,"name":"Garandou"},
+					{"t":781,"time":92,"name":"Neespa!!!"},
+					{"t":796,"time":31,"name":"stre_sena"},
+					{"t":802,"time":25,"name":"Suemaru"}
+				],
 				"teams": [{"players":[]},{"players":[]}],
 				"winner": null,
 				"pov": null

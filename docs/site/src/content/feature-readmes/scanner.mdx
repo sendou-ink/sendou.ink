@@ -498,7 +498,7 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   (`deriveKills`: rows expire oldest-first and a blurred inner row can drop
   out of a single read, so each read is matched newest-first as a
   subsequence of the rows still remembered within
-  `KILL_ROW_LIFETIME_SECONDS`), on the same replay-wipe anchor as the
+  `KILL_ROW_LIFETIME_SECONDS`), on the same game clock as the
   counter series; how long a row stays up is unattested, so a row outliving
   that lifetime would count twice. Row text reads through the `kill-feed`
   atlas, BlitzMain at the row's ~24px caps with the scoreboard-names
@@ -591,7 +591,7 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   2s before the next splat or a full special, a spent special takes 7s to
   charge again, and nothing is ready in the clock's first 7s (5:00-4:54,
   TW 3:00-2:54) or before it starts (timerless minimap reads are timed by
-  the match's dominant clock anchor). The rules are hard, the evidence soft,
+  the game clock's span they fall in). The rules are hard, the evidence soft,
   and each change of state costs a little, so a lone weak read does not split
   a run while a confident one does: a wash in its dim pulse trough (read
   half alive) is bridged, a splat plate over a bright backdrop between clean
@@ -605,11 +605,11 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   on hard flags (dead blips flipped, ready gaps bridged, early ready reads
   dropped) that each saw one rule and the flags another had already
   changed. Objective reads land on `ScannerMatch` as
-  progress samples anchored to the game clock; broadcast replay wipes re-run
-  an earlier moment with the counter intact, so the builder keeps only the
-  dominant cluster of clock-zero projections (`t + time`) and drops replay
-  reads outright (timerless reads follow their preceding anchored
-  neighbor). A displayed count only ever
+  progress samples on the game clock; broadcast replay wipes re-run
+  an earlier moment with the counter intact, so the builder tracks the
+  clock over the match's timed reads and drops the reads on a moment shown
+  again (see "Game clock" below; timerless reads follow the clock span they
+  fall in). A displayed count only ever
   ticks down, so the builder keeps each side's longest non-increasing score
   run and voids reads off it (surviving OCR blips chart as gaps, not dips). Each read also carries a
   per-side team ink color (`core/ink-color.ts` — the plate fill in
@@ -629,13 +629,13 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   card pill lacks) emits the strip reads alone, timed by the timer read
   (no readable timer, nothing emitted) — as it does on a ranked frame whose
   counter fails to read. PlayerStatus reads follow the
-  objective pipeline: same replay-wipe anchor, cast orientation
+  objective pipeline: same game clock, cast orientation
   inherited from the nearest counter read (none on TW: as drawn), and rendered as
   per-player splat/special bands (`~/components/PlayerStatusTimeline.tsx`,
   shared with the match page) above the objective chart. Minimap reads
   feed the same samples: every card/row carries `dead` (respawn
   cross-out) and `specialReady` (special camo) flags, merged in timerless
-  on the shared replay anchor. Parsing details
+  on the shared game clock. Parsing details
   are in each detector's module
   header; accuracy-critical matching internals in `core/glyphs.ts` (see
   "Glyph cells") and `core/detectors/scoreboard/weapons.ts` — read those
@@ -1075,6 +1075,44 @@ nothing but height are separate templates this way: 'p'/'P', 'c'/'C',
 - `tests/glyph-cells.test.ts` draws its own font and line (twins at both
   heights, a tilted line, a line off its set's size, a border line in the
   crop); it needs OpenCV but no fixtures.
+
+## Game clock
+
+The match timer (`objective/timer.ts`) is read off every counter, status
+and kill-feed read, and the builder tracks it as one clock per match
+(`core/clock.ts`) instead of taking each read at its word. Once the clock is
+seen running (two reads agreeing on when it reaches 0:00, `t + time`, with
+the display moving between them), every later read is predicted from that
+anchor and checked against it:
+
+- a read on the anchor confirms it, and so does a held display: the clock
+  shows 5:00 (3:00 in Turf War) for a few seconds before GO and stands at
+  0:01 through overtime while `t` runs on;
+- a lone read off the anchor is a misread of the digits: the read stays,
+  its time becomes the anchor's prediction;
+- two reads agreeing on another anchor break it. A break means the footage
+  moved to another moment of the game (a broadcast replay, an edited VoD's
+  cut) or to another game.
+
+Each anchor holds a span of consecutive reads. Live play never shows a
+moment twice, so within one game the anchor only moves earlier: an edited
+VoD cuts ahead (the Splat World Series REWOUND VoDs cut every ~12 s), live
+footage keeps it. A span whose anchor is later than the one before it shows
+a moment again. The live spans are the heaviest chain of non-increasing
+anchors, counted in reads, the same rule as the counts' longest
+non-increasing run. This replaced keeping only the most common anchor (10 s
+wide), which dropped every cut but one of edited footage.
+
+Measured before building it (2026-11-13): a timer read costs 2.7 ms of a
+64 ms objective parse on the fixtures, and over ~9,000 timer reads on the
+event tapes and four 20 min VoD slices the tracker corrects none: the clock
+reads are already right, the yellow last-minute digits included.
+So the detectors still read the timer on every frame (a verify-only matcher
+would save about 4% of the objective parse and add a second recognition
+path), and the tracker's job is the anchors. Over a scan as a whole, every
+game is a span of its own, which is what segmenting games by clock anchor
+builds on. Liveness only means something within one game: across games the
+anchor moves later every time.
 
 ## Tests
 
