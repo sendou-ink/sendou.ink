@@ -1,7 +1,7 @@
 import { cachified } from "@epic-web/cachified";
 import { hoursToMilliseconds, minutesToMilliseconds } from "date-fns";
 import * as R from "remeda";
-import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import type {
 	SeasonPopularUsersWeapon,
 	UserSPLeaderboardItem,
@@ -177,7 +177,7 @@ export function addPendingPlusTiers<T extends UserSPLeaderboardItem>(
 	for (const entry of entries) {
 		const highestPlusTierWithSpace = resolveHighestPlusTierWithSpace();
 		if (!highestPlusTierWithSpace) break;
-		if (userIsBanned(entry.id)) continue;
+		if (Bans.isBanned(entry.id)) continue;
 
 		const plusTier = plusTiers.find((t) => t.userId === entry.id)?.plusTier;
 

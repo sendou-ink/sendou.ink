@@ -6,17 +6,17 @@ import {
 } from "~/features/auth/core/authenticator.server";
 import { authSessionStorage } from "~/features/auth/core/session.server";
 import type { Nullish } from "~/utils/types";
-import { refreshBannedCache, userIsBanned } from "../core/banned.server";
+import * as Bans from "../core/Bans.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const userId = await getUserIdEvenIfBanned(request);
 
-	if (!userId || !userIsBanned(userId)) return redirect("/");
+	if (!userId || !Bans.isBanned(userId)) return redirect("/");
 
 	const bannedStatus = (await AdminRepository.findAllBannedUsers()).get(userId);
 
 	if (!bannedStatus) {
-		await refreshBannedCache();
+		await Bans.refresh();
 		return redirect("/");
 	}
 

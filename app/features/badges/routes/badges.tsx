@@ -17,7 +17,8 @@ import {
 	navIconUrl,
 } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
-import { type BadgesLoaderData, loader } from "../loaders/badges.server";
+import * as BadgeListing from "../core/BadgeListing";
+import { loader } from "../loaders/badges.server";
 import styles from "./badges.module.css";
 
 export { loader };
@@ -42,26 +43,14 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function BadgesPageLayout() {
-	const { t } = useTranslation(["badges"]);
+	const { t } = useTranslation(["badges", "common"]);
 	const data = useLoaderData<typeof loader>();
 	const user = useUser();
 	const [inputValue, setInputValue] = React.useState("");
 
-	const { ownBadges: allOwnBadges, otherBadges: allOtherBadges } = splitBadges(
+	const { managed: ownBadges, other: otherBadges } = BadgeListing.split(
 		data.badges,
-		user,
-	);
-
-	const inputValueNormalized = inputValue.toLowerCase();
-	const ownBadges = allOwnBadges.filter(
-		(b) =>
-			!inputValueNormalized ||
-			b.displayName.toLowerCase().includes(inputValueNormalized),
-	);
-	const otherBadges = allOtherBadges.filter(
-		(b) =>
-			!inputValueNormalized ||
-			b.displayName.toLowerCase().includes(inputValueNormalized),
+		{ viewerId: user?.id, search: inputValue },
 	);
 
 	return (
@@ -72,11 +61,12 @@ export default function BadgesPageLayout() {
 					type="search"
 					className={styles.searchInput}
 					icon={<Search />}
+					aria-label={t("common:actions.search")}
 					value={inputValue}
 					onChange={(e) => setInputValue(e.target.value)}
 				/>
 				{ownBadges.length > 0 ? (
-					<div className="w-full">
+					<div className="w-full" data-testid="managed-badges">
 						<Divider smallText>{t("badges:own.divider")}</Divider>
 						<div className={styles.smallBadges}>
 							{ownBadges.map((badge) => (
@@ -88,7 +78,7 @@ export default function BadgesPageLayout() {
 					</div>
 				) : null}
 				{ownBadges.length > 0 || otherBadges.length > 0 ? (
-					<div className="w-full">
+					<div className="w-full" data-testid="other-badges">
 						<div className={styles.smallBadges}>
 							{ownBadges.length > 0 ? (
 								<Divider smallText>{t("badges:other.divider")}</Divider>
@@ -113,22 +103,4 @@ export default function BadgesPageLayout() {
 			</div>
 		</Main>
 	);
-}
-
-function splitBadges(
-	badges: BadgesLoaderData["badges"],
-	user: ReturnType<typeof useUser>,
-) {
-	const ownBadges: BadgesLoaderData["badges"] = [];
-	const otherBadges: BadgesLoaderData["badges"] = [];
-
-	for (const badge of badges) {
-		if (user && badge.permissions.MANAGE.includes(user.id)) {
-			ownBadges.push(badge);
-		} else {
-			otherBadges.push(badge);
-		}
-	}
-
-	return { ownBadges, otherBadges };
 }

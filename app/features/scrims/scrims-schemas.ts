@@ -33,8 +33,8 @@ import {
 import {
 	baseVisibilityField,
 	notFoundVisibilityField,
-	visibilityIssues,
 } from "../associations/associations-schemas";
+import * as Visibility from "../associations/core/Visibility";
 import { LUTI_DIVS, SCRIM } from "./scrims-constants";
 
 const deletePostSchema = v.object({
@@ -349,7 +349,7 @@ export const scrimsNewFormSchema = v.pipe(
 			});
 		}
 
-		for (const issue of visibilityIssues(post, { startsAt: post.at })) {
+		for (const issue of Visibility.formIssues(post, { startsAt: post.at })) {
 			ctx.addIssue(issue);
 		}
 	}),

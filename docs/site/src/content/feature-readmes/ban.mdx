@@ -1,0 +1,33 @@
+import Mermaid from "../../components/Mermaid.astro";
+
+A site ban locks a user out of sendou.ink: whatever page they open they are sent to `/suspended`, which shows the reason they were given and when the ban ends. Staff ban and unban from the admin page.
+
+This is the ban from the whole site. A tournament organization banning a player from its own tournaments is a separate thing, part of the `tournament-organization` feature.
+
+## Vocabulary
+
+- **Ban** (`User.banned`): `0` (or `null`) for none, `1` for a ban without an end, otherwise the timestamp the ban ends at. Nothing runs when a timed ban ends, the column keeps its value and the ban just stops holding from then on (`BanStatus.isActive`). `User.bannedReason` is shown to the banned user.
+- **Ban log** (`BanLog`): every ban and unban made by staff, with who made it, shown on the user's admin page (`/u/:identifier/admin`).
+- **Automatic ban**: one the site lays down itself, without anyone in the ban log. The only one so far is submitting a friend code another account already has, which usually means a second account and is sorted out on the Discord helpdesk.
+
+The rules (who is sent where, what gets logged) are listed under Behaviour below, each with the tests that establish it.
+
+## Lifecycle
+
+<Mermaid code={`stateDiagram-v2
+	[*] --> Banned: staff ban from /admin
+	[*] --> Banned: friend code already in use (automatic)
+	Banned --> [*]: staff unban from /admin
+	Banned --> [*]: the end date passes`} />
+
+## What a ban blocks
+
+Banning also deletes the user's API tokens. Being sent to `/suspended` is checked on every request by the root middleware (`auth/core/user-context.server.ts`), the other places check `Bans.isBanned` themselves:
+
+- the public API rejects a banned user's tokens
+- a banned player can't register for a tournament or be added to a team (`SITE_BANNED` of `tournament/core/TeamEligibility.server.ts`), be part of a scrim pick-up or join a voice call
+- banned users are left out of plus server tier assignment, the SendouQ group invite list of friends and the sidebar's X Rank streams
+
+## Where to start reading
+
+`core/Bans.server.ts` keeps who is banned in memory, so the check on every request costs no query, and everything writing `User.banned` refreshes it: the `BAN_USER`, `UNBAN_USER` and `MIGRATE` actions of `admin/actions/admin.server.ts` and the automatic ban of the `ADD_FRIEND_CODE` action in `sendouq/actions/q.server.ts`. `core/BanStatus.ts` reads a `User.banned` value. The writes themselves are `banUser` and `unbanUser` of `admin/AdminRepository.server.ts`, the admin actions also announcing them on Discord through a webhook.

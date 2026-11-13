@@ -1,3 +1,9 @@
+/**
+ * Reading schedules on the server: users' reported weeks together with their commitments, the
+ * time they are known to be busy (tournaments, accepted scrims, team events, league sets). Other
+ * users' schedules are only read through {@link findVisibleByUserIds}, which leaves out those not
+ * sharing theirs with the viewer.
+ */
 import * as R from "remeda";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -6,20 +12,61 @@ import * as TournamentMatchRepository from "~/features/tournament-match/Tourname
 import * as SeriesTeamCount from "~/features/tournament-organization/core/SeriesTeamCount.server";
 import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import { AVAILABILITY } from "../availability-constants";
-import type { BusyBlock } from "../availability-types";
+import type { BusyBlock, TimeRange } from "../availability-types";
 import * as Availability from "./Availability";
-import * as TournamentDuration from "./TournamentDuration";
-import { estimatedEndsAtWith } from "./TournamentDuration.server";
+import * as TournamentDuration from "./TournamentDuration.server";
+
+/**
+ * Reported weeks and busy blocks overlapping the window, of those of `userIds` who share their
+ * schedule with the viewer. Every read of other users' schedules goes through here so the
+ * visibility rule is applied in one place; a user left out looks like one who never filled the
+ * week in. `excludeTournamentId` keeps that tournament's own registrations from counting as busy.
+ * `bypassVisibility` reads every user's schedule: for rosters whose membership itself implies
+ * sharing (a league set's own tournament team).
+ */
+export async function findVisibleByUserIds({
+	userIds,
+	viewerId,
+	startsAt,
+	endsAt,
+	excludeTournamentId,
+	bypassVisibility = false,
+}: TimeRange & {
+	userIds: Array<number>;
+	viewerId: number;
+	excludeTournamentId?: number;
+	bypassVisibility?: boolean;
+}) {
+	const visibleUserIds = bypassVisibility
+		? userIds
+		: await AvailabilityRepository.findScheduleVisibleUserIds({
+				userIds,
+				viewerId,
+			});
+
+	const reportedWeeks = await AvailabilityRepository.findAllWeeksByUserIds({
+		userIds: visibleUserIds,
+		startsAt,
+		endsAt,
+	});
+	const busyByUserId = await busyBlocksByUserIds({
+		userIds: visibleUserIds,
+		startsAt,
+		endsAt,
+		excludeTournamentId,
+	});
+
+	return { reportedWeeks, busyByUserId };
+}
 
 /**
  * Busy blocks of the users within the window, keyed by user id, sorted by start (effective
  * availability = reported − busy). From tournament registrations (start + estimated duration,
- * {@link TournamentDuration.estimateSeconds}), accepted scrims (start + assumed length) and team
+ * {@link TournamentDuration.estimatedEndsAtWith}), accepted scrims (start + assumed length) and team
  * events (actual span). A league registration is not a block, its sets are: each one agreed to be
  * played blocks {@link LeagueScheduling.busyBlock}.
  * `excludeTournamentId` leaves one tournament out, for "busy elsewhere" views of that tournament.
- * Busy blocks are part of the schedule, so callers pass only ids
- * {@link AvailabilityRepository.findScheduleVisibleUserIds} handed back.
+ * Busy blocks are part of the schedule: other users' are read through {@link findVisibleByUserIds}.
  */
 export async function busyBlocksByUserIds({
 	userIds,
@@ -67,7 +114,7 @@ export async function busyBlocksByUserIds({
 				type: "tournament" as const,
 				name: registration.name,
 				startsAt: registration.startsAt,
-				endsAt: estimatedEndsAtWith(
+				endsAt: TournamentDuration.estimatedEndsAtWith(
 					{
 						...registration,
 						minMembersPerTeam: registration.settings.minMembersPerTeam ?? 4,

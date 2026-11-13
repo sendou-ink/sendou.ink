@@ -1,0 +1,43 @@
+import Mermaid from "../../components/Mermaid.astro";
+
+Badges are small animated images players collect, most of them a tournament's prize for its winners. They are shown off on the user page and listed with their owners on `/badges`.
+
+:::note
+Badges are legacy, replaced by [trophies](/features/trophies/). No new badges can be added, but the existing ones are awarded as before: attached to events as prizes, handed out when a tournament is finalized and edited by their managers.
+:::
+
+## Vocabulary
+
+- **Badge** (`Badge`): its `code` names the image in the assets repository (`badgeUrl()`, a still image and a `.gif`), `hue` recolors it (a CSS `hue-rotate`) so one image can serve several badges, a special case set only by the site admin. Badges are made with [picoCAD](https://johanpeitz.itch.io/picocad) v1. Its **author** is the user who made it, `null` for the legacy badges made before authors were recorded.
+- **Manager** (`BadgeManager`): a user, typically the organizer of the event the badge is for, who can attach the badge to their events as a prize and edit its owners. Staff choose the managers.
+- **Owner** and **copy**: a user owns as many copies of a badge as times they won it. Copies are rows of `TournamentBadgeOwner`, either won at a tournament (`tournamentId` set, one copy per row, shown in the feed) or granted by a manager by hand (`tournamentId` `null`, the copies summed into `count`). The `BadgeOwner` view is what to read owners from: it adds a copy of the supporter badge for every patron of tier 2 and up.
+- **What a badge is awarded for**, read from its code (`BadgeOrigin.awardedFor`): winning a tournament, reaching an X Power (`xp…` codes from Splatoon 2, the X Power tier as the code for Splatoon 3) or supporting sendou.ink on Patreon (`patreon`, `patreon_plus`).
+
+The rules (who can edit what, who gets notified) are listed under Behaviour below, each with the tests that establish it.
+
+## Where copies come from
+
+<Mermaid code={`flowchart LR
+	finalize["Tournament finalized"] -- "organizer picks the receivers" --> won["Copy tied to the tournament"]
+	manager["Manager edits the owners"] --> granted["Copy granted by hand"]
+	xp["X Rank player linked or unlinked"] -- "syncXPBadges" --> xpBadge["The one XP badge of the peak X Power"]
+	patron["Patron of tier 2+"] -- "BadgeOwner view" --> supporter["Supporter or Supporter+ badge"]
+	won --> owners[("Owners of the badge")]
+	granted --> owners
+	xpBadge --> owners
+	supporter --> owners`} />
+
+A tournament prize badge is attached as a prize to an event (a calendar event or tournament) by one of its managers, or listed on a tournament organization's page by a member of the organization managing it (`Badges.attachable`). When the tournament is finalized its organizer picks who receives each badge and they are notified. Editing the owners afterwards keeps the copies won at tournaments tied to them as far as the new counts allow (`BadgeOwners.reconcile`).
+
+Splatoon 3 XP badges are handed out anew on every link or unlink of an X Rank player to a user, each user holding only the badge of the highest tier their peak X Power reaches. The Splatoon 2 XP badges were a one time import from the old site and are never handed out again.
+
+## Pages
+
+- `/badges`: every badge, the ones the viewer manages first, searchable by name.
+- `/badges/:id`: a badge with what it is awarded for, its managers, author and owners. The edit dialog (`/badges/:id/edit`) is where managers set the owners and staff the managers.
+
+On their user page, users choose through the widget system whether to show their trophies (the `trophies-owned` widget), their badges or both. The badge widgets are the badges a user owns (`badges-owned`, their favorites first, see `user-page/core/badge-sorting.server.ts`), drew (`badges-authored`) and manages (`badges-managed`), all rendered by `components/BadgeDisplay.tsx`.
+
+## Where to start reading
+
+`BadgeRepository.server.ts` reads the badges and writes their owners and managers, the owner and manager edits being the two actions of `actions/badges.$id.edit.server.ts`. `core/BadgeOwners.ts` holds the owners as copies (counting, the edit dialog's changes, the split between tournament wins and grants), `core/BadgeOrigin.ts` what a badge is awarded for and `core/BadgeListing.ts` the list of `/badges`. The badges of a tournament's prize are handled in the `tournament-bracket` feature's finalize action.

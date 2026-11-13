@@ -16,7 +16,7 @@ import {
 import trackStyles from "~/features/availability/components/ScheduleTracks.module.css";
 import { WeekToggle } from "~/features/availability/components/WeekToggle";
 import * as Availability from "~/features/availability/core/Availability";
-import type { RosterScheduleData } from "~/features/availability/core/RosterSchedule.server";
+import type { RosterScheduleData } from "~/features/availability/core/ScheduleViews.server";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import {
 	databaseTimestampToDate,

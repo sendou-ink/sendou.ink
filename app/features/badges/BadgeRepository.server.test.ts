@@ -51,6 +51,64 @@ describe("syncXPBadges", () => {
 	});
 });
 
+describe("findById", () => {
+	const users = UserFactory.pool();
+	const winnerId = () => users.id(1);
+	const otherId = () => users.id(2);
+
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("sums a user's tournament wins and manual grants into one owner, most copies first", async () => {
+		const badge = await BadgeFactory.create();
+		await TournamentFactory.createPlayed(
+			{ authorId: winnerId(), minMembersPerTeam: 1, badges: [badge.id] },
+			{ teamRosters: [[winnerId()], [otherId()]], playedOut: "all" },
+		);
+		await BadgeRepository.replaceOwners({
+			badgeId: badge.id,
+			ownerIds: [otherId(), winnerId(), winnerId()],
+		});
+
+		const found = await BadgeRepository.findById(badge.id);
+
+		expect(found?.owners.map(({ id, count }) => ({ id, count }))).toEqual([
+			{ id: winnerId(), count: 2 },
+			{ id: otherId(), count: 1 },
+		]);
+	});
+
+	test("returns null for an unknown id", async () => {
+		expect(await BadgeRepository.findById(9999)).toBeNull();
+	});
+});
+
+describe("findByManagersList", () => {
+	const users = UserFactory.pool();
+	const managerId = () => users.id(1);
+	const otherManagerId = () => users.id(2);
+
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("lists a badge managed by several of the users once", async () => {
+		const shared = await BadgeFactory.create(null, {
+			managerIds: [managerId(), otherManagerId()],
+		});
+		const own = await BadgeFactory.create(null, { managerIds: [managerId()] });
+		await BadgeFactory.create();
+
+		const badges = await BadgeRepository.findByManagersList([
+			managerId(),
+			otherManagerId(),
+		]);
+
+		expect(badges.map((badge) => badge.id)).toEqual([shared.id, own.id]);
+	});
+});
+
 describe("replaceManagers", () => {
 	test("empty list clears existing managers", async () => {
 		const user = await UserFactory.create();

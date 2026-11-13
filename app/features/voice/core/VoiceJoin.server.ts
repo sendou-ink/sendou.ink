@@ -1,4 +1,4 @@
-import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import type { ResolvedRoom } from "~/features/chat/ChatRoomResolver.server";
 import * as VoiceRepository from "../VoiceRepository.server";
 import * as VoiceAccess from "./VoiceAccess";
@@ -16,7 +16,7 @@ export async function joinBlock(
 ): Promise<JoinBlock | null> {
 	const feature = VoiceAccess.featureOf(room);
 	if (!feature || !VoiceAccess.canJoin(room, userId)) return "NO_ACCESS";
-	if (userIsBanned(userId)) return "BANNED";
+	if (Bans.isBanned(userId)) return "BANNED";
 	if (await VoiceRepository.hasBeenKicked({ roomId: room.roomId, userId })) {
 		return "KICKED";
 	}

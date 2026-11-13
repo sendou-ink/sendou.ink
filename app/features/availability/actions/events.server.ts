@@ -9,12 +9,11 @@ import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as AvailabilityRepository from "../AvailabilityRepository.server";
-import {
-	AVAILABILITY,
-	SCHEDULE_VISIBILITY_FRIENDS_VALUE,
-} from "../availability-constants";
+import { AVAILABILITY } from "../availability-constants";
 import { eventsActionSchema } from "../availability-schemas";
 import * as Availability from "../core/Availability";
+import * as DayTrack from "../core/DayTrack";
+import * as ScheduleVisibility from "../core/ScheduleVisibility";
 
 const DAY_SECONDS = 24 * 60 * 60;
 
@@ -61,12 +60,12 @@ export const action = defineAction(
 					slots: Availability.normalize(
 						body.days.flatMap((day) =>
 							day.ranges.map((range) => ({
-								startsAt: Availability.dayMinutesToTimestamp({
+								startsAt: DayTrack.dayMinutesToTimestamp({
 									date: day.date,
 									minutes: range.start,
 									timezone,
 								}),
-								endsAt: Availability.dayMinutesToTimestamp({
+								endsAt: DayTrack.dayMinutesToTimestamp({
 									date: day.date,
 									minutes: range.end,
 									timezone,
@@ -97,21 +96,13 @@ export const action = defineAction(
 				break;
 			}
 			case "SAVE_SCHEDULE_VISIBILITY": {
-				// intersecting with the actual memberships is the validation, and prunes teams left since
 				const teams = await TeamRepository.findAllMemberOfByUserId(user.id);
-				const sharedWith = new Set(body.sharedWith);
-
-				const friends = sharedWith.has(SCHEDULE_VISIBILITY_FRIENDS_VALUE);
-				const teamIds = teams
-					.filter((team) => sharedWith.has(String(team.id)))
-					.map((team) => team.id);
 
 				await UserRepository.updateOwnPreferences({
-					// sharing with everyone stays the unset default, so that teams joined later are shared with too
-					scheduleVisibility:
-						friends && teams.length > 0 && teamIds.length === teams.length
-							? undefined
-							: { friends, teamIds },
+					scheduleVisibility: ScheduleVisibility.fromSelection({
+						sharedWith: body.sharedWith,
+						teams,
+					}),
 				});
 
 				break;

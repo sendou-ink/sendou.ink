@@ -1,6 +1,12 @@
 import type { Locator, Page } from "@playwright/test";
 import { EVENTS_PAGE } from "~/utils/urls";
-import { navigate, submit } from "../../helpers/playwright";
+import {
+	expect,
+	modalClickConfirmButton,
+	navigate,
+	submit,
+} from "../../helpers/playwright";
+import { TeamSchedulePage } from "../team/team-schedule-page";
 
 const VIEW_LABELS = {
 	registered: "Registered",
@@ -10,7 +16,7 @@ const VIEW_LABELS = {
 	organization: "Organization",
 };
 
-/** `/events` */
+/** `/events`: the user's events by category and "My availability", the editor of their schedule. */
 export class EventsPage {
 	private readonly page: Page;
 	private readonly main: Locator;
@@ -27,6 +33,7 @@ export class EventsPage {
 			availabilityBars: page.getByTestId("availability-bar"),
 			commitments: page.getByTestId("availability-commitment"),
 			saveWeekButton: page.getByTestId("save-week-button"),
+			savedToast: page.getByText("Availability saved"),
 			copyLastWeekButton: page.getByTestId("copy-last-week-button"),
 			dayEditorPopover: page.getByRole("dialog"),
 			teamScheduleLink: page.getByTestId("team-schedule-link"),
@@ -81,6 +88,60 @@ export class EventsPage {
 
 	async goto() {
 		await navigate({ page: this.page, url: EVENTS_PAGE });
+	}
+
+	/** Opens the day's editor popover, fills in its one range and note, and closes it to commit them. */
+	async fillInDay(
+		dayIndex: number,
+		{ start, end, note }: { start: string; end: string; note?: string },
+	) {
+		await this.dayEditButton(dayIndex).click();
+		const popover = this.locators.dayEditorPopover;
+		await popover.getByLabel("Start").fill(start);
+		await popover.getByLabel("End").fill(end);
+		if (note) await popover.getByLabel("Note").fill(note);
+		await this.page.keyboard.press("Escape");
+	}
+
+	/** The note field of the open day editor popover. */
+	dayNote() {
+		return this.locators.dayEditorPopover.getByLabel("Note");
+	}
+
+	/** Deletes the only range of the day from its editor popover, which closes as the deletion commits. */
+	async deleteOnlyRange(dayIndex: number) {
+		await this.dayEditButton(dayIndex).click();
+		await this.locators.dayEditorPopover
+			.getByRole("button", { name: "Delete" })
+			.click();
+	}
+
+	/** Saves the shown week, waiting for the confirmation toast. */
+	async saveWeek() {
+		await this.locators.saveWeekButton.click();
+		await expect(this.locators.savedToast).toBeAttached();
+	}
+
+	/** Saves the shown week with nothing filled in, confirming it marks the user unavailable all week. */
+	async saveEmptyWeek() {
+		await this.locators.saveWeekButton.click();
+		await modalClickConfirmButton(this.page);
+		await expect(this.locators.savedToast).toBeAttached();
+	}
+
+	/** Fills the shown week with the ranges of the week before it, the current week for the next one. */
+	async copyLastWeek() {
+		await this.locators.copyLastWeekButton.click();
+	}
+
+	async openNextWeek() {
+		await this.locators.nextWeekToggle.click();
+	}
+
+	/** Follows the "Team schedule" link, keeping the week shown. */
+	async openTeamSchedule() {
+		await this.locators.teamScheduleLink.click();
+		return new TeamSchedulePage(this.page);
 	}
 
 	/**

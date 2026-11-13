@@ -20,7 +20,7 @@ import {
 	matchProfileWeapons,
 } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
-import { userIsBanned } from "../ban/core/banned.server";
+import * as Bans from "../ban/core/Bans.server";
 import { FULL_GROUP_SIZE } from "./q-constants";
 import { SendouQError } from "./q-utils.server";
 
@@ -634,7 +634,7 @@ export async function findFriendsAndTeammates(userId: number) {
 		)
 		.execute();
 
-	const rowsWithoutBanned = rows.filter((row) => !userIsBanned(row.id));
+	const rowsWithoutBanned = rows.filter((row) => !Bans.isBanned(row.id));
 
 	const teamMemberIds = rowsWithoutBanned
 		.filter((row) => row.teamId)

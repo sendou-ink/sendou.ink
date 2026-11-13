@@ -272,8 +272,10 @@ export function buildCases(fx: Fixtures): {
 	add("BadgeRepository.findByManagersList", fx.manyUserIds, (userIds) =>
 		BadgeRepository.findByManagersList(userIds),
 	);
-	add("BadgeRepository.findManagedByUserId", fx.badgeManagerUserId, (userId) =>
-		BadgeRepository.findManagedByUserId(userId),
+	add(
+		"BadgeRepository.findByManagersList (one user)",
+		fx.badgeManagerUserId,
+		(userId) => BadgeRepository.findByManagersList([userId]),
 	);
 	add("BadgeRepository.findByOwnerUserId", fx.badgeOwnerUserId, (userId) =>
 		BadgeRepository.findByOwnerUserId(userId, []),

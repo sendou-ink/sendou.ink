@@ -1,3 +1,4 @@
+import { add, sub } from "date-fns";
 import { describe, expect, test } from "vitest";
 import * as Visibility from "./Visibility";
 
@@ -189,5 +190,128 @@ describe("Visibility.withAudiencesOf", () => {
 				named({ visibleFrom: 500, friendsOfUserId: OWNER_ID }),
 			]),
 		).toEqual(associations);
+	});
+});
+
+describe("Visibility.formIssues", () => {
+	const startsAt = add(new Date(), { days: 2 });
+	const notFoundAt = add(new Date(), { days: 1 });
+
+	const messagesOf = (
+		values: Parameters<typeof Visibility.formIssues>[0],
+		options: { startsAt?: Date; isEdit?: boolean } = {},
+	) =>
+		Visibility.formIssues(values, { startsAt, ...options }).map(
+			(issue) => issue.message,
+		);
+
+	test('no issues without a "not found" step', () => {
+		expect(
+			messagesOf({
+				baseVisibility: 3,
+				notFoundVisibility: { at: null, forAssociation: "PUBLIC" },
+			}),
+		).toEqual([]);
+	});
+
+	test("no issues for a step to another audience before the start", () => {
+		expect(
+			messagesOf({
+				baseVisibility: 3,
+				notFoundVisibility: { at: notFoundAt, forAssociation: "PUBLIC" },
+			}),
+		).toEqual([]);
+	});
+
+	test.each([
+		{
+			why: "same audience as the base one",
+			values: {
+				baseVisibility: 3,
+				notFoundVisibility: { at: notFoundAt, forAssociation: 3 },
+			},
+			expected: "forms:errors.visibilityMustBeDifferent",
+		},
+		{
+			why: "public content",
+			values: {
+				baseVisibility: "PUBLIC" as const,
+				notFoundVisibility: { at: notFoundAt, forAssociation: 3 },
+			},
+			expected: "forms:errors.visibilityNotAllowedWhenPublic",
+		},
+		{
+			why: "link only content",
+			values: {
+				baseVisibility: "LINK_ONLY" as const,
+				notFoundVisibility: { at: notFoundAt, forAssociation: 3 },
+			},
+			expected: "forms:errors.visibilityNotAllowedWhenPublic",
+		},
+		{
+			why: "step after the start",
+			values: {
+				baseVisibility: 3,
+				notFoundVisibility: {
+					at: add(startsAt, { hours: 1 }),
+					forAssociation: "PUBLIC" as const,
+				},
+			},
+			expected: "forms:errors.dateAfterScrimDate",
+		},
+	])("$why", ({ values, expected }) => {
+		expect(messagesOf(values)).toEqual([expected]);
+	});
+
+	test("content starting right away can't get a step when made", () => {
+		const startedAt = sub(new Date(), { minutes: 5 });
+
+		expect(
+			messagesOf(
+				{
+					baseVisibility: 3,
+					notFoundVisibility: {
+						at: sub(startedAt, { minutes: 5 }),
+						forAssociation: "PUBLIC",
+					},
+				},
+				{ startsAt: startedAt },
+			),
+		).toEqual(["forms:errors.canNotSetIfLookingNow"]);
+	});
+
+	test("content already started keeps its step when edited", () => {
+		const startedAt = sub(new Date(), { minutes: 5 });
+
+		expect(
+			messagesOf(
+				{
+					baseVisibility: 3,
+					notFoundVisibility: {
+						at: sub(startedAt, { minutes: 5 }),
+						forAssociation: "PUBLIC",
+					},
+				},
+				{ startsAt: startedAt, isEdit: true },
+			),
+		).toEqual([]);
+	});
+
+	test("uses the messages given", () => {
+		expect(
+			Visibility.formIssues(
+				{
+					baseVisibility: 3,
+					notFoundVisibility: {
+						at: add(startsAt, { hours: 1 }),
+						forAssociation: "PUBLIC",
+					},
+				},
+				{
+					startsAt,
+					messages: { afterStart: "after", startingNow: "now" },
+				},
+			),
+		).toEqual([{ path: ["notFoundVisibility"], message: "after" }]);
 	});
 });

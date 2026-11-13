@@ -88,9 +88,9 @@ export const action = defineAction(
 					"Association is full",
 				);
 
-				const maxAssociationCount = user.roles.includes("SUPPORTER")
-					? ASSOCIATION.MAX_COUNT_SUPPORTER
-					: ASSOCIATION.MAX_COUNT_REGULAR_USER;
+				const maxAssociationCount = Association.maxMembershipCount({
+					isSupporter: user.roles.includes("SUPPORTER"),
+				});
 
 				errorToastIfFalsy(
 					(await AssociationRepository.findByMemberUserId(user.id)).actual
@@ -118,7 +118,7 @@ export const action = defineAction(
 					"You cannot leave an association you manage without a starred member to take over",
 				);
 
-				await AssociationRepository.handleMemberLeaving({
+				await AssociationRepository.deleteMember({
 					userId: user.id,
 					associationId: body.associationId,
 					newAdminUserId: newAdmin?.id,

@@ -1,6 +1,8 @@
 import type { Page } from "@playwright/test";
+import { SUSPENDED_PAGE } from "~/utils/urls";
+import { navigate } from "../../helpers/playwright";
 
-/** Where a banned user ends up no matter which page they try to visit. */
+/** `/suspended`, where a banned user ends up no matter which page they try to visit. */
 export class SuspendedPage {
 	private readonly page: Page;
 	readonly locators;
@@ -14,7 +16,14 @@ export class SuspendedPage {
 		};
 	}
 
-	reason(reason: string) {
-		return this.page.getByText(`Reason: ${reason}`);
+	async goto() {
+		await navigate({ page: this.page, url: SUSPENDED_PAGE });
+	}
+
+	/** The reason the ban was given for, as shown to the banned user. */
+	reason(reason: string | RegExp) {
+		return this.page.getByText(
+			typeof reason === "string" ? `Reason: ${reason}` : reason,
+		);
 	}
 }

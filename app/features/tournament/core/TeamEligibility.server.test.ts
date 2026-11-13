@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { refreshBannedCache } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TeamEligibility from "./TeamEligibility.server";
 
@@ -77,7 +77,7 @@ describe("TeamEligibility.ineligibleReason", () => {
 			{},
 			{ ban: { banned: 1, bannedReason: null, bannedByUserId: null } },
 		);
-		await refreshBannedCache();
+		await Bans.refresh();
 
 		expect(
 			await TeamEligibility.ineligibleReason({ tournament, userId: user.id }),

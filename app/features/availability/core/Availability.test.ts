@@ -81,56 +81,6 @@ describe("Availability.dateInTimezone", () => {
 	});
 });
 
-describe("Availability.dayMinutesToTimestamp", () => {
-	test("matches localToTimestamp for a same-day time", () => {
-		expect(
-			Availability.dayMinutesToTimestamp({
-				date: "2026-08-25",
-				minutes: 18 * 60 + 30,
-				timezone: HELSINKI,
-			}),
-		).toBe(at("2026-08-25", "18:30"));
-	});
-
-	test("rolls minutes past 1440 into the next day", () => {
-		expect(
-			Availability.dayMinutesToTimestamp({
-				date: "2026-08-25",
-				minutes: 26 * 60,
-				timezone: HELSINKI,
-			}),
-		).toBe(at("2026-08-26", "02:00"));
-	});
-
-	test.each([
-		{
-			why: "spring",
-			date: "2026-03-28",
-			minutes: 28 * 60,
-			expectedDate: "2026-03-29",
-			expectedTime: "04:00",
-		},
-		{
-			why: "autumn",
-			date: "2026-10-24",
-			minutes: 26 * 60,
-			expectedDate: "2026-10-25",
-			expectedTime: "02:00",
-		},
-	])(
-		"rolls through the $why DST transition like a hand-entered time",
-		({ date, minutes, expectedDate, expectedTime }) => {
-			expect(
-				Availability.dayMinutesToTimestamp({
-					date,
-					minutes,
-					timezone: HELSINKI,
-				}),
-			).toBe(at(expectedDate, expectedTime));
-		},
-	);
-});
-
 describe("Availability.overlaps", () => {
 	test.each([
 		{
@@ -696,230 +646,85 @@ describe("Availability.availabilitySegments", () => {
 	});
 });
 
-describe("Availability.snapMinutes", () => {
-	test.each([
-		[0, 0],
-		[14, 0],
-		[15, 30],
-		[44, 30],
-		[46, 60],
-		[1439, 1440],
-	])("snaps %i minutes to %i", (minutes, expected) => {
-		expect(Availability.snapMinutes(minutes)).toBe(expected);
+describe("Availability.localToTimestamp", () => {
+	test("reads the wall-clock time in the given timezone", () => {
+		expect(
+			Availability.localToTimestamp({
+				date: "2026-08-25",
+				time: "18:00",
+				timezone: "UTC",
+			}),
+		).toBe(Date.UTC(2026, 7, 25, 18) / 1000);
 	});
-});
 
-const TRACK = { trackStart: 14 * 60, trackEnd: 26 * 60 };
-const minuteRange = (start: number, end: number) => ({ start, end });
-
-describe("Availability.timeToMinutes", () => {
-	test.each([
-		["00:00", 0],
-		["09:30", 570],
-		["23:59", 1439],
-	])("resolves %s to %i minutes", (time, expected) => {
-		expect(Availability.timeToMinutes(time)).toBe(expected);
+	test("the same wall-clock time is a different moment in another timezone", () => {
+		expect(
+			at("2026-08-25", "18:00", LOS_ANGELES) - at("2026-08-25", "18:00"),
+		).toBe(10 * HOUR);
 	});
 
 	test("throws on a malformed time", () => {
-		expect(() => Availability.timeToMinutes("half past six")).toThrow();
+		expect(() => at("2026-08-25", "evening")).toThrow();
 	});
 });
 
-describe("Availability.minutesToTime", () => {
+describe("Availability.timeInTimezone", () => {
+	test("reads the timestamp's wall-clock time in the timezone", () => {
+		const evening = at("2026-08-25", "18:30");
+
+		expect(Availability.timeInTimezone(evening, HELSINKI)).toBe("18:30");
+		expect(Availability.timeInTimezone(evening, LOS_ANGELES)).toBe("08:30");
+	});
+});
+
+describe("Availability.dateAcrossTimezones", () => {
 	test.each([
-		{ why: "midnight", minutes: 0, expected: "00:00" },
-		{ why: "an evening time", minutes: 1380, expected: "23:00" },
-		{ why: "a time past midnight", minutes: 1560, expected: "02:00" },
-	])("prints $why as $expected", ({ minutes, expected }) => {
-		expect(Availability.minutesToTime(minutes)).toBe(expected);
+		{
+			why: "the same timezone",
+			from: HELSINKI,
+			to: HELSINKI,
+			expected: "2026-08-25",
+		},
+		{
+			why: "hours apart",
+			from: HELSINKI,
+			to: LOS_ANGELES,
+			expected: "2026-08-25",
+		},
+		{
+			why: "the day's noon falling on the day before across the date line",
+			from: "Pacific/Kiritimati",
+			to: "Pacific/Pago_Pago",
+			expected: "2026-08-24",
+		},
+	])("maps a saved day with $why", ({ from, to, expected }) => {
+		expect(
+			Availability.dateAcrossTimezones({ date: "2026-08-25", from, to }),
+		).toBe(expected);
 	});
 });
 
-describe("Availability.dayRangeFromTimes", () => {
-	test("keeps a same-day range as entered", () => {
-		expect(Availability.dayRangeFromTimes("18:00", "22:00")).toEqual(
-			minuteRange(1080, 1320),
+describe("Availability.isSameWeek", () => {
+	const weekStart = Availability.weekStartsAt(
+		new Date("2026-08-26T12:00:00Z"),
+		HELSINKI,
+	);
+
+	test("the week's start as another timezone sees it is the same week", () => {
+		expect(
+			Availability.isSameWeek(
+				weekStart,
+				Availability.weekStartsAt(
+					new Date("2026-08-26T12:00:00Z"),
+					LOS_ANGELES,
+				),
+			),
+		).toBe(true);
+	});
+
+	test("the next week's start is not", () => {
+		expect(Availability.isSameWeek(weekStart, weekStart + 7 * 24 * HOUR)).toBe(
+			false,
 		);
-	});
-
-	test("pushes an end earlier than the start past midnight", () => {
-		expect(Availability.dayRangeFromTimes("22:00", "02:00")).toEqual(
-			minuteRange(1320, 1560),
-		);
-	});
-
-	test("treats an end equal to the start as an empty range", () => {
-		const result = Availability.dayRangeFromTimes("18:00", "18:00");
-
-		expect(Availability.mergedDayRanges([result])).toEqual([]);
-	});
-});
-
-describe("Availability.mergedDayRanges", () => {
-	test("merges overlapping and touching ranges", () => {
-		expect(
-			Availability.mergedDayRanges([
-				minuteRange(1200, 1320),
-				minuteRange(1080, 1230),
-				minuteRange(1320, 1380),
-			]),
-		).toEqual([minuteRange(1080, 1380)]);
-	});
-
-	test("keeps separated ranges apart and drops empty ones", () => {
-		expect(
-			Availability.mergedDayRanges([
-				minuteRange(1260, 1380),
-				minuteRange(1080, 1140),
-				minuteRange(600, 600),
-			]),
-		).toEqual([minuteRange(1080, 1140), minuteRange(1260, 1380)]);
-	});
-});
-
-describe("Availability.paintedRange", () => {
-	test("snaps both ends and orders a backwards drag", () => {
-		expect(
-			Availability.paintedRange({
-				anchor: 1307,
-				cursor: 1114,
-				walls: [],
-				...TRACK,
-			}),
-		).toEqual(minuteRange(1110, 1320));
-	});
-
-	test("grows a plain press to one step", () => {
-		expect(
-			Availability.paintedRange({
-				anchor: 1085,
-				cursor: 1085,
-				walls: [],
-				...TRACK,
-			}),
-		).toEqual(minuteRange(1080, 1110));
-	});
-
-	test("extends across a wall", () => {
-		expect(
-			Availability.paintedRange({
-				anchor: 1080,
-				cursor: 1440,
-				walls: [minuteRange(1200, 1290)],
-				...TRACK,
-			}),
-		).toEqual(minuteRange(1080, 1440));
-	});
-
-	test("returns null when the anchor is inside a wall", () => {
-		expect(
-			Availability.paintedRange({
-				anchor: 1230,
-				cursor: 1440,
-				walls: [minuteRange(1200, 1290)],
-				...TRACK,
-			}),
-		).toBeNull();
-	});
-
-	test("stays inside the track and starts before midnight", () => {
-		expect(
-			Availability.paintedRange({
-				anchor: 1500,
-				cursor: 2000,
-				walls: [],
-				...TRACK,
-			}),
-		).toEqual(minuteRange(1410, 1560));
-	});
-
-	test("a paint anchored past midnight grows from the day's last step", () => {
-		expect(
-			Availability.paintedRange({
-				anchor: 1470,
-				cursor: 1470,
-				walls: [],
-				...TRACK,
-			}),
-		).toEqual(minuteRange(1410, 1500));
-	});
-});
-
-describe("Availability.movedRange", () => {
-	test("snaps the move to the entry step", () => {
-		expect(
-			Availability.movedRange({
-				range: minuteRange(1080, 1200),
-				delta: 44,
-				...TRACK,
-			}),
-		).toEqual(minuteRange(1110, 1230));
-	});
-
-	test("stops at the track edges", () => {
-		expect(
-			Availability.movedRange({
-				range: minuteRange(1080, 1200),
-				delta: -1000,
-				...TRACK,
-			}),
-		).toEqual(minuteRange(840, 960));
-	});
-
-	test("stops the start before midnight", () => {
-		expect(
-			Availability.movedRange({
-				range: minuteRange(1350, 1380),
-				delta: 120,
-				...TRACK,
-			}),
-		).toEqual(minuteRange(1410, 1440));
-	});
-});
-
-describe("Availability.resizedRange", () => {
-	test("keeps at least one step when dragged past the other edge", () => {
-		expect(
-			Availability.resizedRange({
-				range: minuteRange(1080, 1200),
-				edge: "end",
-				cursor: 900,
-				...TRACK,
-			}),
-		).toEqual(minuteRange(1080, 1110));
-	});
-
-	test("stops the dragged edge at the track edges", () => {
-		expect(
-			Availability.resizedRange({
-				range: minuteRange(1320, 1440),
-				edge: "start",
-				cursor: 500,
-				...TRACK,
-			}),
-		).toEqual(minuteRange(840, 1440));
-	});
-
-	test("snaps the dragged edge", () => {
-		expect(
-			Availability.resizedRange({
-				range: minuteRange(1080, 1200),
-				edge: "end",
-				cursor: 1307,
-				...TRACK,
-			}),
-		).toEqual(minuteRange(1080, 1320));
-	});
-
-	test("stops the start edge before midnight", () => {
-		expect(
-			Availability.resizedRange({
-				range: minuteRange(1380, 1560),
-				edge: "start",
-				cursor: 1500,
-				...TRACK,
-			}),
-		).toEqual(minuteRange(1410, 1560));
 	});
 });

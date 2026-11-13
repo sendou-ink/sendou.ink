@@ -3,7 +3,7 @@ import { hoursToMilliseconds } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
 import type { WindowSchedule } from "~/features/availability/availability-types";
 import * as Availability from "~/features/availability/core/Availability";
-import * as VisibleSchedules from "~/features/availability/core/VisibleSchedules.server";
+import * as Schedules from "~/features/availability/core/Schedules.server";
 import type { RouteChatRoomInput } from "~/features/chat/chat-types";
 import * as RouteChatRooms from "~/features/chat/RouteChatRooms.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
@@ -377,7 +377,7 @@ async function ownTeamAvailability({
 }) {
 	const memberUserIds = tournament.teamById(ownTeamId)?.memberUserIds ?? [];
 
-	const { reportedWeeks, busyByUserId } = await VisibleSchedules.findByUserIds({
+	const { reportedWeeks, busyByUserId } = await Schedules.findVisibleByUserIds({
 		userIds: memberUserIds,
 		viewerId,
 		...window,
