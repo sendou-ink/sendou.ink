@@ -6,6 +6,7 @@ import { Label } from "~/components/Label";
 import { DatetimeFormField } from "~/form/fields/DatetimeFormField";
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import { useFormFieldContext } from "~/form/SendouForm";
+import { ariaAttributes } from "~/form/utils";
 import type { notFoundVisibilityField } from "../associations-schemas";
 import styles from "./VisibilityFormFields.module.css";
 
@@ -27,6 +28,7 @@ const DEFAULT_NOT_FOUND_VISIBILITY = {
 export function BaseVisibilityFormField({
 	associations,
 	isLinkOnlyAvailable = false,
+	bottomText,
 	name,
 	value,
 	onChange,
@@ -34,6 +36,7 @@ export function BaseVisibilityFormField({
 }: {
 	associations: VisibilityAssociations;
 	isLinkOnlyAvailable?: boolean;
+	bottomText?: string;
 	name: string;
 	value: unknown;
 	onChange: (value: unknown) => void;
@@ -52,6 +55,7 @@ export function BaseVisibilityFormField({
 			name={name}
 			label={t("scrims:forms.visibility.title")}
 			error={error}
+			bottomText={bottomText}
 		>
 			{noAssociations && !isLinkOnlyAvailable ? (
 				<FormMessage type="info">
@@ -63,6 +67,9 @@ export function BaseVisibilityFormField({
 					isLinkOnlyAvailable={isLinkOnlyAvailable}
 					id={id}
 					value={String(value)}
+					ariaDescribedBy={
+						ariaAttributes({ name, error, bottomText })["aria-describedby"]
+					}
 					onChange={(e) => {
 						onChange(e.target.value);
 						if (e.target.value === "PUBLIC" || e.target.value === "LINK_ONLY") {
@@ -165,18 +172,26 @@ function AssociationSelect({
 	isLinkOnlyAvailable = false,
 	id,
 	value,
+	ariaDescribedBy,
 	onChange,
 }: {
 	associations: VisibilityAssociations;
 	isLinkOnlyAvailable?: boolean;
 	id: string;
 	value: string;
+	ariaDescribedBy?: string;
 	onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }) {
 	const { t } = useTranslation(["scrims"]);
 
 	return (
-		<select id={id} className="w-full" value={value} onChange={onChange}>
+		<select
+			id={id}
+			className="w-full"
+			value={value}
+			aria-describedby={ariaDescribedBy}
+			onChange={onChange}
+		>
 			<option value="PUBLIC">{t("scrims:forms.visibility.public")}</option>
 			{isLinkOnlyAvailable ? (
 				<option value="LINK_ONLY">

@@ -526,6 +526,7 @@
 	"bottomTexts.lobbyIsApplicationRequired": "Players apply to join and the host approves who gets in. Turning it off later lets in everyone still waiting",
 	"labels.lobbySpectators": "Spectators",
 	"bottomTexts.lobbySpectators": "Players in the room on top of the 8 playing. Spectators rotate in every set, so a different player sits out each time. Everyone else joins the waitlist",
+	"bottomTexts.lobbyVisibility": "You can always invite people with the lobby's invite link too, even if they don't match the selected visibility",
 	"errors.dateAfterLobbyStart": "Date can not be after the lobby's start",
 	"errors.canNotSetIfStartingNow": "Can not be set if starting now"
 }

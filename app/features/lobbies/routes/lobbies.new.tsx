@@ -121,6 +121,7 @@ export default function NewLobbyPage() {
 								<BaseVisibilityFormField
 									associations={data.associations}
 									isLinkOnlyAvailable
+									bottomText="forms:bottomTexts.lobbyVisibility"
 									{...props}
 								/>
 							)}
@@ -185,6 +186,7 @@ function EditLobbyForm({
 							<BaseVisibilityFormField
 								associations={associations}
 								isLinkOnlyAvailable
+								bottomText="forms:bottomTexts.lobbyVisibility"
 								{...props}
 							/>
 						)}
