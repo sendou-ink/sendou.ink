@@ -190,19 +190,19 @@ test.describe("SendouQ", () => {
 		factories,
 	}) => {
 		const owner = await factories.UserFactory.create({
-			discordName: "Owner",
+			defaultName: "Owner",
 			profile: null,
 		});
 		const teammate = await factories.UserFactory.create({
-			discordName: "Teammate",
+			defaultName: "Teammate",
 			profile: null,
 		});
 		const target = await factories.UserFactory.create({
-			discordName: "Target",
+			defaultName: "Target",
 			profile: null,
 		});
 		const other = await factories.UserFactory.create({
-			discordName: "Other",
+			defaultName: "Other",
 			profile: null,
 		});
 

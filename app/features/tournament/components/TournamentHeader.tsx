@@ -13,6 +13,7 @@ import { UserLink } from "~/components/UserLink";
 import { useUser } from "~/features/auth/core/user";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
+import { useVenueTimeFormat } from "~/hooks/intl/useVenueTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { SENDOU_INK_BASE_URL, tournamentPage } from "~/utils/urls";
 import { saveTournamentSchema } from "../tournament-schemas";
@@ -39,8 +40,6 @@ export function TournamentHeader({
 		(date) => date.getTime(),
 	);
 
-	const currentYear = new Date().getFullYear();
-
 	return (
 		<header className={styles.header}>
 			<div className={styles.identity}>
@@ -61,34 +60,67 @@ export function TournamentHeader({
 			</div>
 			<div className={styles.dates}>
 				{startTimes.map((date) => (
-					<div key={date.getTime()} className={styles.date}>
-						<TimePopover
-							date={date}
-							options={{
-								weekday: "long",
-								day: "numeric",
-								month: "long",
-								year:
-									date.getFullYear() !== currentYear ? "numeric" : undefined,
-								hour: "numeric",
-								minute: "numeric",
-							}}
-						/>
-						{estimatedEndsAt ? (
-							<span className={styles.estimatedEnd}>
-								~
-								<LocaleTime
-									date={estimatedEndsAt}
-									options={{ hour: "numeric", minute: "numeric" }}
-									data-testid="estimated-end"
-									inline
-								/>
-							</span>
-						) : null}
-					</div>
+					<StartTime
+						key={date.getTime()}
+						date={date}
+						estimatedEndsAt={estimatedEndsAt}
+						venueTimezone={tournament.venue?.timezone ?? null}
+					/>
 				))}
 			</div>
 		</header>
+	);
+}
+
+function StartTime({
+	date,
+	estimatedEndsAt,
+	venueTimezone,
+}: {
+	date: Date;
+	estimatedEndsAt: number | null;
+	venueTimezone: string | null;
+}) {
+	const options: Intl.DateTimeFormatOptions = {
+		weekday: "long",
+		day: "numeric",
+		month: "long",
+		year:
+			date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
+		hour: "numeric",
+		minute: "numeric",
+	};
+	const { format } = useVenueTimeFormat(options, venueTimezone);
+	const viewerTime = venueTimezone ? format(date).viewer : null;
+
+	return (
+		<div>
+			<div className={styles.date}>
+				<TimePopover
+					date={date}
+					options={options}
+					venueTimezone={venueTimezone}
+				/>
+				{estimatedEndsAt ? (
+					<span className={styles.estimatedEnd}>
+						~
+						<LocaleTime
+							date={estimatedEndsAt}
+							options={{
+								hour: "numeric",
+								minute: "numeric",
+								timeZone: venueTimezone ?? undefined,
+							}}
+							data-testid="estimated-end"
+							inline
+						/>
+					</span>
+				) : null}
+			</div>
+			{viewerTime ? (
+				<div className={styles.viewerTime}>{viewerTime}</div>
+			) : null}
+		</div>
 	);
 }
 

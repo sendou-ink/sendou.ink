@@ -25,6 +25,7 @@ function makeEvent(
 		normalizedTeamCount: 0,
 		badges: [],
 		trophyId: null,
+		venue: null,
 		logoUrl: null,
 		name: "",
 		url: "",
@@ -68,6 +69,39 @@ describe("CalendarEvent.applyFilters", () => {
 		expect(result[0].events.shown[0].id).toBe(1);
 		expect(result[0].events.hidden).toHaveLength(2);
 	});
+
+	test.each([
+		{ why: "included", key: "tagsIncluded", shown: [1, 2], hidden: [3] },
+		{ why: "excluded", key: "tagsExcluded", shown: [3], hidden: [1, 2] },
+	] as const)(
+		"a venue counts as the LAN tag when $why",
+		({ key, shown, hidden }) => {
+			const events = [
+				{
+					at: 123,
+					events: [
+						makeEvent({
+							id: 1,
+							venue: {
+								timezone: "America/Chicago",
+								city: "Austin",
+								countryCode: "US",
+							},
+						}),
+						makeEvent({ id: 2, tags: ["LAN"] }),
+						makeEvent({ id: 3 }),
+					],
+				},
+			];
+			const filters: CalendarFilters = {
+				...CalendarEvent.defaultFilters(),
+				[key]: ["LAN"],
+			};
+			const result = CalendarEvent.applyFilters(events, filters);
+			expect(result[0].events.shown.map((event) => event.id)).toEqual(shown);
+			expect(result[0].events.hidden.map((event) => event.id)).toEqual(hidden);
+		},
+	);
 
 	test("filters by tagsIncluded", () => {
 		const events = [

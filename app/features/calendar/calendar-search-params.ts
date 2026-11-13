@@ -146,3 +146,10 @@ export const calendarNewSearchParams = SearchParams.define({
 		loader: true,
 	}),
 });
+
+export const venueSearchSearchParams = SearchParams.define({
+	q: SP.param(v.pipe(v.string(), v.maxLength(200)), {
+		default: "",
+		loader: true,
+	}),
+});

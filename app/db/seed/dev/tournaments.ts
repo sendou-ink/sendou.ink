@@ -21,14 +21,17 @@ import {
 import { NZAP_YOUTUBE_ID } from "../constants";
 import { faker, unique } from "../core/faker";
 import * as showcaseNames from "../core/showcaseNames";
+import * as CalendarEventVenueFactory from "../factories/CalendarEventVenueFactory";
 import * as ImageFactory from "../factories/ImageFactory";
 import * as SavedCalendarEventFactory from "../factories/SavedCalendarEventFactory";
 import * as TournamentFactory from "../factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "../factories/TournamentLFGTeamFactory";
 import * as TournamentMatchScheduleFactory from "../factories/TournamentMatchScheduleFactory";
 import * as TournamentStaffFactory from "../factories/TournamentStaffFactory";
+import * as TournamentStationFactory from "../factories/TournamentStationFactory";
 import * as TournamentStreamerFactory from "../factories/TournamentStreamerFactory";
 import * as TournamentTeamFactory from "../factories/TournamentTeamFactory";
+import * as UserFactory from "../factories/UserFactory";
 import type { SeededBadges } from "./badges";
 import type { SeededOrganization } from "./organizations";
 import type { SeededTeams } from "./teams";
@@ -48,6 +51,13 @@ const PADDLING_POOL_CAST_ACCOUNTS: CastAccount[] = [
 		account: "UCpaddlingPoolCasts00000",
 		name: "Paddling Pool Casts",
 	},
+];
+const SWIM_OR_SINK_STATIONS = [
+	{ name: "Main stage", locationNote: "On stage" },
+	{ name: "Station 1", locationNote: "North corner, by the windows" },
+	{ name: "Station 2", locationNote: "North corner" },
+	{ name: "Station 3", locationNote: "Back wall" },
+	{ name: "Station 4", locationNote: "Back wall, next to the bar" },
 ];
 /** Uneven counts from a custom pool: every SZ stage, half of the legal TC stages. */
 const PADDLING_POOL_TEAM_PICK: TeamPickSettings = {
@@ -96,6 +106,13 @@ const CORE_PLAYER_COUNT = 8;
 const REGISTERED_TEAM_SHARE = 0.4;
 /** Solo players looking for a team in a tournament whose registration has closed. */
 const SUB_COUNT = 7;
+/** Name and in-game name of the players without accounts of the LAN's walk-in team. */
+const PLACEHOLDER_TEAM_MEMBERS = [
+	["Mika", "Mika#2817"],
+	["Juno", "Juno#4410"],
+	["Rhea", "Rhea#9032"],
+	["Tavi", null],
+] as const;
 
 /** One team's registration: the site team it registers as, when it is one of them. */
 type Roster = {
@@ -266,7 +283,7 @@ export async function seedTournaments({
 	});
 	await seedPaddlingPool({ users, organizations, rosters });
 	await seedLowInk({ users, organizations, rosters });
-	await seedSwimOrSink({ users, organizations, rosters });
+	const swimOrSink = await seedSwimOrSink({ users, organizations, rosters });
 	const luti = await seedLuti({
 		users,
 		organizations,
@@ -292,6 +309,17 @@ export async function seedTournaments({
 		rosters,
 		seriesLogoImgIds,
 	});
+
+	// last so the venue's and placeholders' random values don't shift what the other tournaments were seeded with
+	await CalendarEventVenueFactory.create({ eventId: swimOrSink.eventId });
+	await registerPlaceholderTeam(swimOrSink.id);
+	await TournamentStationFactory.createMany(
+		SWIM_OR_SINK_STATIONS.length,
+		(index) => ({
+			...SWIM_OR_SINK_STATIONS[index],
+			tournamentId: swimOrSink.id,
+		}),
+	);
 
 	return {
 		regOpen: inTheZone,
@@ -441,7 +469,7 @@ async function seedLowInk({ users, rosters }: Ctx) {
 	await TournamentFactory.playOut(tournament.id, 0);
 }
 
-/** #4 round robin → SE, TO maps — everybody checked in, not started. N-ZAP isn't registered, so it is his saved one. */
+/** #4 round robin → SE, TO maps, a LAN with a pool captain, a team of players without accounts and stations — everybody checked in, not started. N-ZAP isn't registered, so it is his saved one. */
 async function seedSwimOrSink({ users, rosters }: Ctx) {
 	const tournament = await TournamentFactory.create({
 		name: nameFor("Swim or Sink"),
@@ -466,6 +494,17 @@ async function seedSwimOrSink({ users, rosters }: Ctx) {
 		userId: users.nzapId,
 		tournamentId: tournament.id,
 	});
+
+	const registeredUserIds = new Set(
+		teamRosters.flatMap((roster) => roster.memberUserIds),
+	);
+	await TournamentStaffFactory.create({
+		tournamentId: tournament.id,
+		userId: users.showcaseIds.find((id) => !registeredUserIds.has(id))!,
+		role: "POOL_CAPTAIN",
+	});
+
+	return tournament;
 }
 
 /**
@@ -991,6 +1030,25 @@ async function seedTournamentExtras(tournamentId: number, users: SeededUsers) {
 		);
 		lfgTeamIds.push(team.id);
 	}
+}
+
+/** A team the organizer added of players without accounts, as at a LAN where people walk in. */
+async function registerPlaceholderTeam(tournamentId: number) {
+	const memberUserIds: number[] = [];
+	for (const [name, inGameName] of PLACEHOLDER_TEAM_MEMBERS) {
+		memberUserIds.push(
+			(await UserFactory.createPlaceholder({ name, inGameName })).id,
+		);
+	}
+
+	await TournamentTeamFactory.create(
+		{
+			tournamentId,
+			team: { name: "Walk-in Wahoos", prefersNotToHost: 0, teamId: null },
+			memberUserIds,
+		},
+		{ isCheckedIn: true },
+	);
 }
 
 async function registerTeams({

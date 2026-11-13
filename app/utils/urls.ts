@@ -85,6 +85,14 @@ export const GITHUB_CONTRIBUTORS_URL =
 export const ipLabsMaps = (pool: string) =>
 	`https://maps.iplabs.ink/?3&pool=${pool}`;
 export const SPLATOON_3_INK = "https://splatoon3.ink/";
+export const openStreetMapUrl = ({
+	latitude,
+	longitude,
+}: {
+	latitude: number;
+	longitude: number;
+}) =>
+	`https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=17/${latitude}/${longitude}`;
 export const RHODESMAS_FREESOUND_PROFILE_URL =
 	"https://freesound.org/people/rhodesmas/";
 export const SPR_INFO_URL =
@@ -120,6 +128,8 @@ export const TEAM_SEARCH_PAGE = "/t";
 export const NEW_TEAM_PAGE = "/t/new";
 export const CALENDAR_PAGE = "/calendar";
 export const CALENDAR_NEW_PAGE = "/calendar/new";
+export const CALENDAR_VENUE_SEARCH_ROUTE = "/calendar/venue-search";
+export const LAN_MAP_PAGE = "/calendar/lan-map";
 export const TOURNAMENT_NEW_PAGE = "/calendar/new?tournament=true";
 export const ORGANIZATION_NEW_PAGE = "/org/new";
 export const STOP_IMPERSONATING_URL = "/auth/impersonate/stop";

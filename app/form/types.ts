@@ -1,5 +1,6 @@
 import type * as React from "react";
 import type * as v from "valibot";
+import type { AddressSearchResult } from "~/components/elements/AddressSearch";
 import type { TeamSearchResult } from "~/components/elements/TeamSearch";
 import type { TournamentSearchItem } from "~/components/elements/TournamentSearch";
 import type { UserSearchResult } from "~/components/elements/UserSearch";
@@ -176,6 +177,10 @@ interface FormFieldTeamSearch<T extends string> extends FormFieldBase<T> {
 	required: boolean;
 }
 
+interface FormFieldAddressSearch<T extends string> extends FormFieldBase<T> {
+	required: boolean;
+}
+
 interface FormFieldBadges<T extends string> extends FormFieldBase<T> {
 	maxCount?: number;
 }
@@ -230,6 +235,7 @@ export type FormField<V extends string = string> =
 	| FormFieldUserSearch<"user-search">
 	| FormFieldTournamentSearch<"tournament-search">
 	| FormFieldTeamSearch<"team-search">
+	| FormFieldAddressSearch<"address-search">
 	| FormFieldBadges<"badges">
 	| FormFieldTrophies<"trophies">
 	| FormFieldStageSelect<"stage-select">
@@ -310,6 +316,8 @@ type TypedFormFieldProps<
 > = {
 	name: TName;
 	label?: string;
+	/** Extra element rendered next to the label, e.g. an `<InfoPopover />`. Only `text-field` and `switch` support it. */
+	labelPopover?: React.ReactNode;
 	disabled?: boolean;
 	/** Focuses the field on mount. Only `text-field` and `text-area` support it. */
 	autoFocus?: boolean;
@@ -374,6 +382,23 @@ export type UserSearchFieldOptions = {
 	onUserSelected?: (user: UserSearchResult | null) => void;
 };
 
+/** Value of the `address-search` field, a place picked from the geocoder. */
+export type AddressFieldValue = {
+	/** Display address */
+	address: string;
+	city: string | null;
+	/** ISO 3166-1 alpha-2 */
+	countryCode: string;
+	latitude: number;
+	longitude: number;
+};
+
+/** `options` prop config of the `address-search` field. */
+export type AddressSearchFieldOptions = {
+	/** Exposes the whole result on selection, e.g. its timezone, which the stored value lacks. */
+	onAddressSelected?: (address: AddressSearchResult | null) => void;
+};
+
 /** `options` prop config of the `tournament-search` field. */
 export type TournamentSearchFieldOptions = {
 	/** Restrict results to tournaments that have already started (finished/past). */
@@ -381,6 +406,12 @@ export type TournamentSearchFieldOptions = {
 	/** Exposes the resolved tournament on selection — the stored form value is only the tournament id. */
 	onTournamentSelected?: (tournament: TournamentSearchItem | null) => void;
 };
+
+/** IANA zone a form's `datetime` fields are entered in, or how to resolve it from the form values. Nullish = the browser's own. */
+export type FormTimeZone =
+	| string
+	| null
+	| ((values: Record<string, unknown>) => string | null | undefined);
 
 /** One step of a multi-step `SendouForm`, rendered by the `<FormStep>` of the same `name`. */
 export interface FormStepDefinition<TFieldName extends string = string> {

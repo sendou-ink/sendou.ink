@@ -1,3 +1,4 @@
+import type { NotNull } from "kysely";
 import type { LoaderFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { userByIdentifierQuery } from "~/utils/kysely.server";
@@ -14,6 +15,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = notFoundIfNullish(
 		await userByIdentifierQuery(identifier)
 			.select(["User.discordId", "User.customUrl"])
+			.where("User.isPlaceholder", "=", 0)
+			.$narrowType<{ discordId: NotNull }>()
 			.executeTakeFirst(),
 	);
 

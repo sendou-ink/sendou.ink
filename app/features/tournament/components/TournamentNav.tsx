@@ -274,11 +274,19 @@ function useNavItems({
 	const showAdmin =
 		tournament.isOrganizer(user) &&
 		(!tournament.ctx.isFinalized || DANGEROUS_CAN_ACCESS_DEV_CONTROLS);
-	if (showAdmin) {
+	// streamers and pool captains of a LAN get the stations board only
+	const showStationsBoardOnly =
+		!showAdmin &&
+		tournament.isLan &&
+		!tournament.ctx.isFinalized &&
+		tournament.canSeeStationsBoard(user);
+	if (showAdmin || showStationsBoardOnly) {
 		items.admin = {
 			key: "admin",
 			label: t("tournament:nav.admin"),
-			to: tournamentAdminPage(tournament.ctx.id),
+			to: showStationsBoardOnly
+				? `${tournamentAdminPage(tournament.ctx.id)}/board`
+				: tournamentAdminPage(tournament.ctx.id),
 			icon: <Settings />,
 			end: false,
 			testId: "admin-tab",

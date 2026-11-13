@@ -245,7 +245,7 @@ describe("validateById", () => {
 
 describe("findAllUnvalidated", () => {
 	beforeEach(async () => {
-		await users.create(3, (index) => ({ discordName: `user${index + 1}` }));
+		await users.create(3, (index) => ({ defaultName: `user${index + 1}` }));
 	});
 
 	test("fetches unvalidated images with submitter info", async () => {

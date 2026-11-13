@@ -18,6 +18,7 @@ import { Label } from "~/components/Label";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { useMapPoolQuickFill } from "~/components/MapPoolPicker";
+import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
 import type {
@@ -34,6 +35,7 @@ import {
 	useFormFieldContext,
 	useFormSteps,
 } from "~/form/SendouForm";
+import type { AddressSearchFieldOptions, SelectOption } from "~/form/types";
 import { errorMessageId } from "~/form/utils";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
@@ -57,6 +59,7 @@ import {
 	TOURNAMENT_FORM_STEPS,
 	teamPickSettingsFromFormValues,
 	tournamentTagsField,
+	venueTimeZoneFromFormValues,
 } from "../calendar-new-schemas";
 import {
 	type BracketFormValue,
@@ -67,6 +70,7 @@ import {
 import { calendarNewSearchParams } from "../calendar-search-params";
 import type { CalendarEventTag } from "../calendar-types";
 import { BracketProgressionBuilder } from "../components/BracketProgressionBuilder";
+import { VenueTimeNotice } from "../components/VenueTimeNotice";
 import { loader } from "../loaders/calendar.new.server";
 
 export { action, loader };
@@ -89,6 +93,11 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["calendar", "game-misc", "tournament"],
 };
+
+const TIMEZONE_OPTIONS: SelectOption[] = TIMEZONES.map((timezone) => ({
+	value: timezone,
+	label: timezone,
+}));
 
 const useBaseEvent = () => {
 	const { eventToEdit, eventToCopy } = useLoaderData<typeof loader>();
@@ -161,6 +170,7 @@ export default function CalendarNewEventPage() {
 					fullWidth
 					steps={data.isAddingTournament ? TOURNAMENT_FORM_STEPS : undefined}
 					submitOnEveryStep={Boolean(data.eventToEdit)}
+					timeZone={venueTimeZoneFromFormValues}
 				>
 					{data.isAddingTournament ? (
 						<TournamentSteps />
@@ -228,6 +238,18 @@ function useDefaultValues() {
 			? String(baseEvent.organization.id)
 			: null,
 		rules: baseEvent?.rules ?? "",
+		isLan: Boolean(baseEvent?.venue),
+		venueAddress: baseEvent?.venue
+			? {
+					address: baseEvent.venue.address,
+					city: baseEvent.venue.city,
+					countryCode: baseEvent.venue.countryCode,
+					latitude: baseEvent.venue.latitude,
+					longitude: baseEvent.venue.longitude,
+				}
+			: null,
+		venueName: baseEvent?.venue?.name ?? "",
+		venueTimezone: baseEvent?.venue?.timezone ?? null,
 		date: data.isAddingTournament
 			? []
 			: (data.eventToEdit?.startTimes?.map((t) =>
@@ -391,6 +413,7 @@ function TournamentSteps() {
 				<div className={styles.stepColumn}>
 					{isEditing ? null : <CopyTournamentPicker />}
 					<FormField name="name" />
+					<VenueFields />
 					<FormField
 						name="startTime"
 						required
@@ -544,6 +567,7 @@ function TournamentReview() {
 				/>
 			) : null,
 			organizationName ?? null,
+			values.isLan ? (values.venueName as string) || null : null,
 		],
 		teams: [
 			`${playersCount}v${playersCount}`,
@@ -604,6 +628,35 @@ function TournamentReview() {
 				})}
 			</dl>
 		</SendouSection>
+	);
+}
+
+function VenueFields() {
+	const { values, setValue, setValueFromPrev } = useFormFieldContext();
+
+	const addressOptions: AddressSearchFieldOptions = {
+		onAddressSelected: (address) => {
+			if (!address) return;
+
+			setValue("venueTimezone", address.timezone);
+			if (address.placeName) {
+				setValueFromPrev("venueName", (prev) => prev || address.placeName);
+			}
+		},
+	};
+
+	return (
+		<>
+			<FormField name="isLan" />
+			{values.isLan ? (
+				<>
+					<FormField name="venueAddress" options={addressOptions} required />
+					<FormField name="venueName" required />
+					<FormField name="venueTimezone" options={TIMEZONE_OPTIONS} />
+					<VenueTimeNotice timeZone={venueTimeZoneFromFormValues(values)} />
+				</>
+			) : null}
+		</>
 	);
 }
 

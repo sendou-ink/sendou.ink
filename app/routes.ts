@@ -180,6 +180,8 @@ export default [
 	...prefix("/calendar", [
 		index("features/calendar/routes/calendar.tsx"),
 		route("new", "features/calendar/routes/calendar.new.tsx"),
+		route("venue-search", "features/calendar/routes/calendar.venue-search.ts"),
+		route("lan-map", "features/calendar/routes/calendar.lan-map.tsx"),
 		route(":id", "features/calendar/routes/calendar.$id.tsx"),
 		route(
 			":id/report-winners",
@@ -234,6 +236,11 @@ export default [
 				"brackets",
 				"features/tournament-admin/routes/to.$id.admin.brackets.tsx",
 			),
+			route(
+				"stations",
+				"features/tournament-admin/routes/to.$id.admin.stations.tsx",
+			),
+			route("board", "features/tournament-admin/routes/to.$id.admin.board.tsx"),
 			route("audit", "features/tournament-admin/routes/to.$id.admin.audit.tsx"),
 		]),
 		route("results", "features/tournament/routes/to.$id.results.tsx"),

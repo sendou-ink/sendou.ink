@@ -144,7 +144,7 @@ export async function upsertUser({ user, connections }: DiscordProfile) {
 
 	const userFromDb = await UserRepository.upsert({
 		discordId: user.id,
-		discordName: user.global_name ?? user.username,
+		defaultName: user.global_name ?? user.username,
 		discordUniqueName: user.global_name ? user.username : null,
 		...parseConnections(connections),
 	});

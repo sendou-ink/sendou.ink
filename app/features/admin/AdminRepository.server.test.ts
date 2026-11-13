@@ -4,6 +4,7 @@ import * as BadgeFactory from "~/db/seed/factories/BadgeFactory";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as PlusSuggestionFactory from "~/db/seed/factories/PlusSuggestionFactory";
 import * as PlusVoteFactory from "~/db/seed/factories/PlusVoteFactory";
+import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as TournamentStreamerFactory from "~/db/seed/factories/TournamentStreamerFactory";
@@ -11,6 +12,7 @@ import * as TrophyFactory from "~/db/seed/factories/TrophyFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as ApiRepository from "~/features/api/ApiRepository.server";
+import { userIdsToIdentifier } from "~/features/mmr/mmr-utils";
 import { lastCompletedVoting } from "~/features/plus-voting/core/voting-time";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import {
@@ -206,6 +208,211 @@ describe("migrate", () => {
 				.select(["userId", "count"])
 				.execute(),
 		).toEqual([{ userId: oldUserId, count: 3 }]);
+	});
+});
+
+describe("claimPlaceholder", () => {
+	const claimerId = () => users.id(1);
+	const opponentIds = () => users.ids(5).slice(1);
+	const claimerTeammateIds = () => users.ids(8).slice(5);
+
+	beforeEach(async () => {
+		await users.create(8);
+	});
+
+	/**
+	 * Plays out and finalizes a tournament where a team of placeholders beats the opponents, returning the placeholders' ids.
+	 * The fifth placeholder is a sub, so the team has an active roster of the first four.
+	 */
+	const playAsPlaceholders = async () => {
+		const placeholderIds: number[] = [];
+		for (let i = 0; i < 5; i++) {
+			placeholderIds.push((await UserFactory.createPlaceholder()).id);
+		}
+
+		const tournament = await TournamentFactory.createPlayed(
+			{ authorId: claimerId() },
+			{ teamRosters: [placeholderIds, opponentIds()], playedOut: "all" },
+		);
+
+		return {
+			placeholderIds,
+			tournamentId: tournament.id,
+			teamId: tournament.teams[0].id,
+		};
+	};
+
+	const userRows = (
+		table:
+			| "TournamentTeamMember"
+			| "TournamentResult"
+			| "TournamentMatchGameResultParticipant"
+			| "SeedingSkill",
+		userId: number,
+	) =>
+		db
+			.selectFrom(table)
+			.select("userId")
+			.where("userId", "=", userId)
+			.execute();
+
+	const soloSkills = (userId: number) =>
+		db
+			.selectFrom("Skill")
+			.select(["Skill.id", "Skill.season", "Skill.tournamentId"])
+			.where("Skill.userId", "=", userId)
+			.orderBy("Skill.id")
+			.execute();
+
+	test("moves the placeholder's tournament history to the user and deletes the placeholder", async () => {
+		const { placeholderIds, tournamentId, teamId } = await playAsPlaceholders();
+		const [placeholderId, ...teammateIds] = placeholderIds.slice(0, 4);
+		const [placeholderSkill] = await soloSkills(placeholderId);
+
+		expect(
+			await AdminRepository.claimPlaceholder({
+				placeholderUserId: placeholderId,
+				userId: claimerId(),
+			}),
+		).toBe(null);
+
+		for (const table of [
+			"TournamentTeamMember",
+			"TournamentResult",
+			"TournamentMatchGameResultParticipant",
+			"SeedingSkill",
+		] as const) {
+			expect(await userRows(table, placeholderId)).toEqual([]);
+			expect((await userRows(table, claimerId())).length).toBeGreaterThan(0);
+		}
+		expect(await soloSkills(claimerId())).toEqual([placeholderSkill]);
+
+		const teamSkill = await db
+			.selectFrom("Skill")
+			.innerJoin("SkillTeamUser", "SkillTeamUser.skillId", "Skill.id")
+			.select("Skill.identifier")
+			.where("SkillTeamUser.userId", "=", claimerId())
+			.where("Skill.tournamentId", "=", tournamentId)
+			.executeTakeFirstOrThrow();
+		expect(teamSkill.identifier).toBe(
+			userIdsToIdentifier([claimerId(), ...teammateIds]),
+		);
+
+		const team = await db
+			.selectFrom("TournamentTeam")
+			.innerJoin("Tournament", "Tournament.id", "TournamentTeam.tournamentId")
+			.select([
+				"TournamentTeam.activeRosterUserIds",
+				"Tournament.seedingSnapshot",
+			])
+			.where("TournamentTeam.id", "=", teamId)
+			.executeTakeFirstOrThrow();
+		expect(team.activeRosterUserIds).toEqual([claimerId(), ...teammateIds]);
+		const snapshotMemberIds = team.seedingSnapshot?.teams
+			.find((snapshotTeam) => snapshotTeam.teamId === teamId)
+			?.members.map((member) => member.userId);
+		expect(snapshotMemberIds).toContain(claimerId());
+		expect(snapshotMemberIds).not.toContain(placeholderId);
+
+		expect(
+			await db
+				.selectFrom("User")
+				.select("id")
+				.where("id", "=", placeholderId)
+				.executeTakeFirst(),
+		).toBeUndefined();
+	});
+
+	test("keeps the user's own skill of a season they both have skill in", async () => {
+		const {
+			placeholderIds: [placeholderId],
+		} = await playAsPlaceholders();
+		const [{ season }] = await soloSkills(placeholderId);
+		await SkillFactory.create({ userId: claimerId(), season });
+		const ownSkills = await soloSkills(claimerId());
+
+		await AdminRepository.claimPlaceholder({
+			placeholderUserId: placeholderId,
+			userId: claimerId(),
+		});
+
+		expect(await soloSkills(claimerId())).toEqual(ownSkills);
+	});
+
+	test("adds up map and player results both have", async () => {
+		const {
+			placeholderIds: [placeholderId],
+		} = await playAsPlaceholders();
+		const [opponentId] = opponentIds();
+		await TournamentFactory.createPlayed(
+			{ authorId: claimerId() },
+			{
+				teamRosters: [[claimerId(), ...claimerTeammateIds()], opponentIds()],
+				playedOut: "all",
+			},
+		);
+
+		const mapWins = (userId: number) =>
+			db
+				.selectFrom("MapResult")
+				.select(({ fn }) => fn.sum<number>("wins").as("wins"))
+				.where("userId", "=", userId)
+				.executeTakeFirstOrThrow()
+				.then((row) => row.wins);
+		const setsAgainstOpponent = (userId: number) =>
+			db
+				.selectFrom("PlayerResult")
+				.select(["setWins", "setLosses"])
+				.where("ownerUserId", "=", userId)
+				.where("otherUserId", "=", opponentId)
+				.executeTakeFirstOrThrow();
+		const expectedMapWins =
+			(await mapWins(claimerId())) + (await mapWins(placeholderId));
+		const ownSets = await setsAgainstOpponent(claimerId());
+		const placeholderSets = await setsAgainstOpponent(placeholderId);
+
+		await AdminRepository.claimPlaceholder({
+			placeholderUserId: placeholderId,
+			userId: claimerId(),
+		});
+
+		expect(await mapWins(claimerId())).toBe(expectedMapWins);
+		expect(await setsAgainstOpponent(claimerId())).toEqual({
+			setWins: ownSets.setWins + placeholderSets.setWins,
+			setLosses: ownSets.setLosses + placeholderSets.setLosses,
+		});
+	});
+
+	test("rejects a user who played the same tournament", async () => {
+		const {
+			placeholderIds: [placeholderId],
+		} = await playAsPlaceholders();
+
+		expect(
+			await AdminRepository.claimPlaceholder({
+				placeholderUserId: placeholderId,
+				userId: opponentIds()[0],
+			}),
+		).toBe("both played the same tournament");
+		expect((await userRows("TournamentResult", placeholderId)).length).toBe(1);
+	});
+
+	test.each([
+		{
+			why: "placeholder is a real user",
+			args: () => ({ placeholderUserId: users.id(2), userId: claimerId() }),
+			error: "placeholder is not a player without an account",
+		},
+		{
+			why: "claimed by another placeholder",
+			args: async () => ({
+				placeholderUserId: (await UserFactory.createPlaceholder()).id,
+				userId: (await UserFactory.createPlaceholder()).id,
+			}),
+			error: "user claiming it is not a player with an account",
+		},
+	])("rejects when $why", async ({ args, error }) => {
+		expect(await AdminRepository.claimPlaceholder(await args())).toBe(error);
 	});
 });
 

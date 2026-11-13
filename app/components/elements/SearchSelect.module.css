@@ -37,6 +37,32 @@
 	margin-block: var(--s-4);
 }
 
+.itemTextsContainerWide {
+	min-width: 0;
+
+	& span {
+		max-width: none;
+	}
+
+	& .itemAdditionalText {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+.itemTextsContainer .triggerText {
+	display: none;
+}
+
+button .itemTextsContainer .triggerText {
+	display: block;
+}
+
+button .listTexts {
+	display: none;
+}
+
 .itemAdditionalText {
 	font-size: var(--font-xs);
 	color: var(--color-text-high);

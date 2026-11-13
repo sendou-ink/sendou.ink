@@ -12,6 +12,7 @@ import {
 } from "~/utils/dates";
 import type { AnySyncSchema, DayMonthYear } from "~/utils/schema";
 import { formRegistry } from "./fields";
+import { AddressSearchFormField } from "./fields/AddressSearchFormField";
 import { ArrayFormField } from "./fields/ArrayFormField";
 import { BadgesFormField } from "./fields/BadgesFormField";
 import { DatetimeFormField } from "./fields/DatetimeFormField";
@@ -42,6 +43,8 @@ import { WeaponSelectFormField } from "./fields/WeaponSelectFormField";
 import type { ImageFieldValue } from "./image-field";
 import { EMPTY_FORM_STORE, useOptionalFormFieldContext } from "./SendouForm";
 import type {
+	AddressFieldValue,
+	AddressSearchFieldOptions,
 	ArrayItemRenderContext,
 	BadgeOption,
 	CustomFieldRenderProps,
@@ -75,7 +78,7 @@ const EMPTY_ITEM_VALUES: Record<string, unknown> = {};
 interface FormFieldProps {
 	name: string;
 	label?: string;
-	/** Extra element rendered next to the label, e.g. an `<InfoPopover />` explaining the field's syntax. Only `text-field` supports it. */
+	/** Extra element rendered next to the label, e.g. an `<InfoPopover />` explaining the field's syntax. Only `text-field` and `switch` support it. */
 	labelPopover?: React.ReactNode;
 	disabled?: boolean;
 	/** Focuses the field on mount. Only `text-field` and `text-area` support it. */
@@ -223,6 +226,7 @@ export function FormField({
 				{...commonProps}
 				{...formField}
 				isDisabled={isDisabled}
+				labelPopover={labelPopover}
 				checked={value as boolean}
 				onChange={handleChange as (v: boolean) => void}
 			/>
@@ -534,6 +538,20 @@ export function FormField({
 				onChange={handleChange as (v: number | null) => void}
 				onTeamSelected={teamOptions?.onTeamSelected}
 				initialTeam={teamOptions?.initialTeam}
+			/>
+		);
+	}
+
+	if (formField.type === "address-search") {
+		const addressOptions = options as AddressSearchFieldOptions | undefined;
+		return (
+			<AddressSearchFormField
+				{...commonProps}
+				{...formField}
+				disabled={isDisabled}
+				value={value as AddressFieldValue | null}
+				onChange={handleChange as (v: AddressFieldValue | null) => void}
+				onAddressSelected={addressOptions?.onAddressSelected}
 			/>
 		);
 	}

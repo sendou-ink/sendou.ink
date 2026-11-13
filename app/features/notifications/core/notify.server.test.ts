@@ -40,6 +40,25 @@ describe("notify()", () => {
 		vi.mocked(ChatSystemMessage.notifyNotificationsChanged).mockClear();
 	});
 
+	test("skips placeholder players", async () => {
+		const placeholder = await UserFactory.createPlaceholder();
+
+		await notify({
+			userIds: [users.id(1), placeholder.id],
+			notification: {
+				type: "SCRIM_NEW_REQUEST",
+				meta: { fromUserId: 1, fromUsername: "alice", scrimPostId: 1 },
+			},
+		});
+
+		expect(await NotificationRepository.findByUserId(users.id(1))).toHaveLength(
+			1,
+		);
+		expect(
+			await NotificationRepository.findByUserId(placeholder.id),
+		).toHaveLength(0);
+	});
+
 	test("different recipients receive same notification", async () => {
 		await notify({
 			userIds: [users.id(1), users.id(2)],

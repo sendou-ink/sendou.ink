@@ -6,7 +6,7 @@
 - task is not considered completely until `pnpm run checks` passes
 - normal file structure has constants at the top immediately followed by the main function body of the file. Helpers are used to structure the code and they are at the bottom of the file (main implementation first, at the top of the file)
 - note: any formatting issue (such as tabs vs. spaces) can be resolved by running the `pnpm run biome:fix` command
-- typical way to structure pure logic is into Modules divided by logical domains which are imported with the "* as Module" import and then used like so "Module.foo()". These functions always need JSDoc.
+- typical way to structure pure logic is into Modules divided by logical domains which are imported with the "* as Module" import and then used like so "Module.foo()". A module file starts with a JSDoc block above its imports explaining what the module is about as a whole (see `app/features/scrims/core/Scrim.ts`), and its exported functions always need JSDoc.
 - non-exported functions typically do not need JSDoc or at least it can be kept short
 - more topic docs live in `docs/site/src/content/docs/dev/` — notably [architecture.mdx](./docs/site/src/content/docs/dev/architecture.mdx) (feature folder layout), [request-flow.mdx](./docs/site/src/content/docs/dev/request-flow.mdx) (one request followed through every layer), [permissions.mdx](./docs/site/src/content/docs/dev/permissions.mdx) (authorization: global roles via `requireRole()`/`useHasRole()`, per-object `permissions` computed in repositories) and [overlays.mdx](./docs/site/src/content/docs/dev/overlays.mdx) (popovers, menus, selects and dialogs: the floating layer, scroll lock and mobile keyboard handling)
 

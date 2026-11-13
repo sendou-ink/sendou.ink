@@ -409,6 +409,7 @@ export async function findUserSPLeaderboard(
 			"User.plusSkippedForSeasonNth",
 		])
 		.where("Latest.matchesCount", ">=", MATCHES_COUNT_NEEDED_FOR_LEADERBOARD)
+		.where("User.isPlaceholder", "=", 0)
 		.orderBy("Latest.ordinal", "desc")
 		.execute();
 

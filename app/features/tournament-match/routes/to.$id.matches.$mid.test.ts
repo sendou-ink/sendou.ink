@@ -1,6 +1,7 @@
 import type * as v from "valibot";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentStaffFactory from "~/db/seed/factories/TournamentStaffFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
@@ -14,6 +15,7 @@ import { cache } from "~/utils/cache.server";
 import type { SerializeFrom } from "~/utils/remix";
 import {
 	assertResponseErrored,
+	type TestUser,
 	wrappedAction,
 	wrappedLoader,
 } from "~/utils/Test";
@@ -38,6 +40,8 @@ const ROSTER_SIZE = 4;
 
 /** Everybody but the organizer, who is created apart from them for their pinned id. */
 const users = UserFactory.pool();
+const poolCaptainId = () => users.id(10);
+const streamerId = () => users.id(11);
 
 let tournamentId: number;
 let matchId: number;
@@ -56,10 +60,12 @@ const reportScoreAction = ({
 	position,
 	params = matchParams(),
 	winnerTeamId = teamOne.id,
+	user = "admin",
 }: {
 	position: number;
 	params?: { id: string; mid: string };
 	winnerTeamId?: number;
+	user?: TestUser;
 }) =>
 	tournamentMatchAction(
 		{
@@ -67,7 +73,19 @@ const reportScoreAction = ({
 			position,
 			winnerTeamId,
 		},
-		{ user: "admin", params },
+		{ user, params },
+	);
+
+const undoReportScoreAction = ({
+	position,
+	user,
+}: {
+	position: number;
+	user: TestUser;
+}) =>
+	tournamentMatchAction(
+		{ _action: "UNDO_REPORT_SCORE", position },
+		{ user, params: matchParams() },
 	);
 
 const setActiveRosterAction = (teamId = teamOne.id, roster = activeRoster()) =>
@@ -107,7 +125,7 @@ const createTournamentTeam = (
 describe("Tournament match page", () => {
 	beforeEach(async () => {
 		organizerId = (await UserFactory.createAdmin()).id;
-		await users.create(9);
+		await users.create(11);
 
 		const tournament = await TournamentFactory.create({
 			authorId: organizerId,
@@ -448,6 +466,71 @@ describe("Tournament match page", () => {
 
 		test("returns error if a member of the team not in turn bans", async () => {
 			const res = await banAction(otherTeamMemberId);
+
+			assertResponseErrored(res, "Unauthorized");
+		});
+	});
+
+	describe("pool captain", () => {
+		beforeEach(async () => {
+			await TournamentStaffFactory.create({
+				tournamentId,
+				userId: poolCaptainId(),
+				role: "POOL_CAPTAIN",
+			});
+			await TournamentStaffFactory.create({
+				tournamentId,
+				userId: streamerId(),
+				role: "STREAMER",
+			});
+			await setActiveRosterAction();
+		});
+
+		test("reports a score of a match they don't play in", async () => {
+			const res = await reportScoreAction({
+				position: 0,
+				user: poolCaptainId(),
+			});
+
+			expect(res).toBe(null);
+			const result = await db
+				.selectFrom("TournamentMatchGameResult")
+				.select("reporterId")
+				.where("matchId", "=", matchId)
+				.executeTakeFirstOrThrow();
+			expect(result.reporterId).toBe(poolCaptainId());
+		});
+
+		test("undoes a reported score", async () => {
+			await reportScoreAction({ position: 0 });
+
+			const res = await undoReportScoreAction({
+				position: 0,
+				user: poolCaptainId(),
+			});
+
+			expect(res).toBe(null);
+			expect((await loadMatchData()).results).toHaveLength(0);
+		});
+
+		test("can't set an active roster", async () => {
+			const res = await tournamentMatchAction(
+				{
+					_action: "SET_ACTIVE_ROSTER",
+					roster: activeRoster(),
+					teamId: teamOne.id,
+				},
+				{ user: poolCaptainId(), params: matchParams() },
+			);
+
+			assertResponseErrored(res, "Unauthorized");
+		});
+
+		test("a streamer can't report a score", async () => {
+			const res = await reportScoreAction({
+				position: 0,
+				user: streamerId(),
+			});
 
 			assertResponseErrored(res, "Unauthorized");
 		});

@@ -3,6 +3,7 @@ import pLimit from "p-limit";
 import { type Urgency, WebPushError } from "web-push";
 import type { NotificationSubscription } from "~/db/tables-json";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { IS_DEV_BUILD } from "~/utils/dev-build";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { toDBBoolean } from "~/utils/sql";
@@ -87,7 +88,12 @@ export async function notify({
 		return;
 	}
 
-	const dededuplicatedUserIds = Array.from(new Set(userIds));
+	const dededuplicatedUserIds = await UserRepository.filterOutPlaceholders(
+		Array.from(new Set(userIds)),
+	);
+	if (dededuplicatedUserIds.length === 0) {
+		return;
+	}
 
 	if (isNotificationAlreadySent(notification, dededuplicatedUserIds)) {
 		return;

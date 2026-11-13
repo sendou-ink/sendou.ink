@@ -27,10 +27,10 @@ const TEST_IMAGE_PATH = path.join(__dirname, "fixtures/test-image.png");
 
 const ROLE_TARGET = {
 	discordId: "223456789012345678",
-	discordName: "RoleTarget",
+	defaultName: "RoleTarget",
 };
-const KEEPER = { discordId: "323456789012345678", discordName: "KeeperUser" };
-const LEAVER = { discordId: "423456789012345678", discordName: "LeaverUser" };
+const KEEPER = { discordId: "323456789012345678", defaultName: "KeeperUser" };
+const LEAVER = { discordId: "423456789012345678", defaultName: "LeaverUser" };
 const FRIEND_CODE = "0123-4567-8901";
 // the wiped database makes the placement's player the first SplatoonPlayer row
 const LINKED_PLAYER_ID = 1;
@@ -54,15 +54,15 @@ test.describe("Admin panel", () => {
 		await impersonate(page, ADMIN_ID);
 		const adminActions = new AdminActionsPage(page);
 		await adminActions.goto();
-		await adminActions.updateFriendCode(ROLE_TARGET.discordName, FRIEND_CODE);
-		await adminActions.giveArtist(ROLE_TARGET.discordName);
-		await adminActions.giveVideoAdder(ROLE_TARGET.discordName);
-		await adminActions.giveApiAccess(ROLE_TARGET.discordName);
+		await adminActions.updateFriendCode(ROLE_TARGET.defaultName, FRIEND_CODE);
+		await adminActions.giveArtist(ROLE_TARGET.defaultName);
+		await adminActions.giveVideoAdder(ROLE_TARGET.defaultName);
+		await adminActions.giveApiAccess(ROLE_TARGET.defaultName);
 
 		await adminActions.openFriendCodeLookUp();
 		await adminActions.searchFriendCode(FRIEND_CODE);
 		await expect(
-			adminActions.foundUserLink(ROLE_TARGET.discordName),
+			adminActions.foundUserLink(ROLE_TARGET.defaultName),
 		).toBeVisible();
 
 		await impersonate(page, target.id);
@@ -99,9 +99,9 @@ test.describe("Admin panel", () => {
 		await impersonate(page, ADMIN_ID);
 		const adminActions = new AdminActionsPage(page);
 		await adminActions.goto();
-		await adminActions.giveTournamentOrganizer(ROLE_TARGET.discordName);
+		await adminActions.giveTournamentOrganizer(ROLE_TARGET.defaultName);
 		// tier one so the tournament organizer grant above stays the only source of that role
-		await adminActions.forcePatron(ROLE_TARGET.discordName, {
+		await adminActions.forcePatron(ROLE_TARGET.defaultName, {
 			tier: "Support",
 			expiresAt: addYears(new Date(), 1),
 		});
@@ -139,12 +139,12 @@ test.describe("Admin panel", () => {
 		await adminActions.linkPlayer("N-ZAP", LINKED_PLAYER_ID);
 		await adminActions.refreshPlusTiers();
 		await adminActions.migrateUser({
-			oldUserName: KEEPER.discordName,
-			newUserName: LEAVER.discordName,
+			oldUserName: KEEPER.defaultName,
+			newUserName: LEAVER.defaultName,
 		});
 
 		await expect(
-			await adminActions.userSearchSuggestion(KEEPER.discordName),
+			await adminActions.userSearchSuggestion(KEEPER.defaultName),
 		).toContainText("+1");
 
 		const userPage = new UserPage(page);
@@ -155,7 +155,26 @@ test.describe("Admin panel", () => {
 
 		// the old user kept their account, now reached via the new user's Discord id
 		await userPage.gotoWithIdentifier(LEAVER.discordId);
-		await expect(userPage.usernameHeading(KEEPER.discordName)).toBeVisible();
+		await expect(userPage.usernameHeading(KEEPER.defaultName)).toBeVisible();
+	});
+
+	test("claims a placeholder player for a user", async ({
+		page,
+		factories,
+	}) => {
+		const placeholder = await factories.UserFactory.createPlaceholder();
+		await factories.UserFactory.create({ ...KEEPER });
+
+		await impersonate(page, ADMIN_ID);
+		const adminActions = new AdminActionsPage(page);
+		await adminActions.goto();
+		await adminActions.claimPlaceholder({
+			placeholderUserId: placeholder.id,
+			userName: KEEPER.defaultName,
+		});
+
+		const placeholderPage = await page.request.get(`/u/${placeholder.id}`);
+		expect(placeholderPage.status()).toBe(404);
 	});
 
 	test("keeps the scroll position when an action shows a toast", async ({
@@ -169,7 +188,7 @@ test.describe("Admin panel", () => {
 		await adminActions.goto();
 
 		// the form is far down the page, so filling it scrolls there
-		await adminActions.updateFriendCode(ROLE_TARGET.discordName, FRIEND_CODE);
+		await adminActions.updateFriendCode(ROLE_TARGET.defaultName, FRIEND_CODE);
 
 		expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
 	});

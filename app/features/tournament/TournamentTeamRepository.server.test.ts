@@ -302,6 +302,142 @@ describe("TournamentTeamRepository", () => {
 
 			expect(events).toHaveLength(1);
 		});
+
+		test("creates players without an account, one of them the owner", async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+			const captain = { name: "Mika", inGameName: "Mika#2817" };
+
+			await withUserId(organizerId(), () =>
+				TournamentTeamRepository.upsertRegistration({
+					tournamentId: tournament.id,
+					name: "Walk-ins",
+					teamId: null,
+					avatarImgId: null,
+					ownerUserId: captain,
+					ownerChange: null,
+					membersToAdd: [],
+					membersToRemove: [],
+					newPlaceholders: [captain, { name: "Juno", inGameName: null }],
+					inGameNameUpdates: [],
+					tournamentNameUpdates: [],
+				}),
+			);
+
+			const members = await db
+				.selectFrom("TournamentTeamMember")
+				.innerJoin("User", "User.id", "TournamentTeamMember.userId")
+				.innerJoin(
+					"TournamentTeam",
+					"TournamentTeam.id",
+					"TournamentTeamMember.tournamentTeamId",
+				)
+				.select([
+					"User.username",
+					"User.inGameName",
+					"User.isPlaceholder",
+					"User.discordId",
+					"TournamentTeamMember.role",
+				])
+				.where("TournamentTeam.tournamentId", "=", tournament.id)
+				.orderBy("User.username", "asc")
+				.execute();
+
+			expect(members).toEqual([
+				{
+					username: "Juno",
+					inGameName: null,
+					isPlaceholder: 1,
+					discordId: null,
+					role: "REGULAR",
+				},
+				{
+					username: "Mika",
+					inGameName: "Mika#2817",
+					isPlaceholder: 1,
+					discordId: null,
+					role: "OWNER",
+				},
+			]);
+		});
+
+		test("hands the owner role to a new player without an account", async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+			const team = await TournamentTeamFactory.create({
+				tournamentId: tournament.id,
+				memberUserIds: [ownerId()],
+				team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+			});
+			const newCaptain = { name: "Mika", inGameName: null };
+
+			await withUserId(organizerId(), () =>
+				TournamentTeamRepository.upsertRegistration({
+					tournamentTeamId: team.id,
+					tournamentId: tournament.id,
+					name: "Team Olive",
+					teamId: null,
+					avatarImgId: null,
+					ownerUserId: newCaptain,
+					ownerChange: { oldOwnerId: ownerId(), newOwnerId: newCaptain },
+					membersToAdd: [],
+					membersToRemove: [],
+					newPlaceholders: [newCaptain],
+					inGameNameUpdates: [],
+					tournamentNameUpdates: [],
+				}),
+			);
+
+			const members = await membersByTeamId(team.id);
+			const owner = members.find((teamMember) => teamMember.role === "OWNER");
+
+			expect(members).toHaveLength(2);
+			expect(owner?.userId).not.toBe(ownerId());
+		});
+
+		test("renames only a player without an account", async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+			const placeholder = await UserFactory.createPlaceholder({ name: "Mika" });
+			const team = await TournamentTeamFactory.create({
+				tournamentId: tournament.id,
+				memberUserIds: [placeholder.id, ownerId()],
+				team: { name: "Walk-ins", prefersNotToHost: 0, teamId: null },
+			});
+
+			await withUserId(organizerId(), () =>
+				TournamentTeamRepository.upsertRegistration({
+					tournamentTeamId: team.id,
+					tournamentId: tournament.id,
+					name: "Walk-ins",
+					teamId: null,
+					avatarImgId: null,
+					ownerUserId: placeholder.id,
+					ownerChange: null,
+					membersToAdd: [],
+					membersToRemove: [],
+					placeholderRenames: [
+						{ userId: placeholder.id, name: "Mikaela" },
+						{ userId: ownerId(), name: "Renamed" },
+					],
+					inGameNameUpdates: [],
+					tournamentNameUpdates: [],
+				}),
+			);
+
+			const usernames = await db
+				.selectFrom("User")
+				.select("User.username")
+				.where("User.id", "in", [placeholder.id, ownerId()])
+				.orderBy("User.id", "asc")
+				.execute();
+
+			expect(usernames.map((user) => user.username)).toContain("Mikaela");
+			expect(usernames.map((user) => user.username)).not.toContain("Renamed");
+		});
 	});
 
 	describe("insert", () => {

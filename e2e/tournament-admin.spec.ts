@@ -12,6 +12,7 @@ import {
 	teamSeeds,
 } from "./helpers/tournament";
 import { TournamentAdminAuditPage } from "./pages/tournament/tournament-admin-audit-page";
+import { TournamentAdminBoardPage } from "./pages/tournament/tournament-admin-board-page";
 import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";
 import { TournamentAdminRegistrationPage } from "./pages/tournament/tournament-admin-registration-page";
 import { TournamentTeamPage } from "./pages/tournament/tournament-team-page";
@@ -81,7 +82,7 @@ test.describe("Tournament admin team management", () => {
 	}) => {
 		const tournament = await createTournament(factories);
 		const player = await factories.UserFactory.create({
-			discordName: "Rostered Riko",
+			defaultName: "Rostered Riko",
 		});
 
 		await impersonate(page, NZAP_TEST_ID);
@@ -121,7 +122,7 @@ test.describe("Tournament admin team management", () => {
 		);
 		const importedRoster = await factories.UserFactory.createMany(
 			ROSTER_SIZE,
-			(i) => ({ discordName: importedRosterNames[i] }),
+			(i) => ({ defaultName: importedRosterNames[i] }),
 		);
 		await factories.TournamentTeamFactory.create({
 			tournamentId: pastTournament.id,
@@ -326,6 +327,162 @@ test.describe("Tournament admin bracket progression editing", () => {
 		await expect(admin.locators.bracketNameInputs.nth(1)).toHaveValue(
 			"Top Cut",
 		);
+	});
+});
+
+test.describe("Tournament admin LAN stations", () => {
+	test("adds stations, removes them down to one and then none", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+		});
+		await factories.CalendarEventVenueFactory.create({
+			eventId: tournament.eventId,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+		const stations = await admin.openStations();
+
+		await expect(stations.locators.autoAssignSwitch).toBeChecked();
+		await stations.fillStation(0, {
+			name: "Main stage",
+			locationNote: "On stage",
+		});
+		await stations.addStation();
+		await stations.fillStation(1, { name: "Station 1" });
+		await stations.addStation();
+		await stations.fillStation(2, { name: "Station 2" });
+		await stations.save();
+
+		await stations.goto(tournament.id);
+		await expect(stations.locators.nameInputs).toHaveCount(3);
+		await expect(stations.locators.nameInputs.nth(0)).toHaveValue("Main stage");
+		await expect(stations.locators.locationNoteInputs.nth(0)).toHaveValue(
+			"On stage",
+		);
+		await expect(stations.locators.nameInputs.nth(1)).toHaveValue("Station 1");
+
+		await stations.removeStation(0);
+		await stations.save();
+
+		await stations.goto(tournament.id);
+		await expect(stations.locators.nameInputs).toHaveCount(2);
+		await expect(stations.locators.nameInputs.nth(0)).toHaveValue("Station 1");
+
+		await stations.removeStation(0);
+		await stations.save();
+
+		await stations.goto(tournament.id);
+		await expect(stations.locators.nameInputs).toHaveCount(1);
+		await expect(stations.locators.nameInputs.nth(0)).toHaveValue("Station 2");
+
+		await stations.removeStation(0);
+		await stations.save();
+
+		await stations.goto(tournament.id);
+		await expect(stations.locators.nameInputs).toHaveCount(1);
+		await expect(stations.locators.nameInputs.nth(0)).toHaveValue("");
+	});
+
+	test("moves matches on the stations board, read-only for a pool captain", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+		});
+		await factories.CalendarEventVenueFactory.create({
+			eventId: tournament.eventId,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(4));
+		const station1 = await factories.TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 1",
+		});
+		const station2 = await factories.TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 2",
+		});
+		const [first, second, final] =
+			await factories.TournamentFactory.startBracket(tournament.id);
+		await factories.TournamentMatchStationFactory.create({
+			matchId: first.id,
+			stationId: station1.id,
+		});
+		await factories.TournamentMatchStationFactory.create({
+			matchId: final.id,
+			stationId: station1.id,
+		});
+		const poolCaptain = await factories.UserFactory.create();
+		await factories.TournamentStaffFactory.create({
+			tournamentId: tournament.id,
+			userId: poolCaptain.id,
+			role: "POOL_CAPTAIN",
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		const board = new TournamentAdminBoardPage(page);
+		await board.goto(tournament.id);
+
+		await expect(
+			board.lane(station1.id).getByTestId(`board-match-${first.id}`),
+		).toContainText("Now");
+		await expect(
+			board.lane(station1.id).getByTestId(`board-match-${final.id}`),
+		).toContainText("Next");
+		await expect(
+			board.lane(null).getByTestId(`board-match-${second.id}`),
+		).toBeVisible();
+
+		await board.dragMatch(second.id, station2.id);
+		await board.moveMatch(first.id, null);
+
+		await board.goto(tournament.id);
+		await expect(
+			board.lane(station2.id).getByTestId(`board-match-${second.id}`),
+		).toContainText("Now");
+		await expect(
+			board.lane(null).getByTestId(`board-match-${first.id}`),
+		).toBeVisible();
+		// teams still unknown, so not Now but Next
+		await expect(
+			board.lane(station1.id).getByTestId(`board-match-${final.id}`),
+		).toContainText("Next");
+		await expect(board.lane(station2.id)).not.toContainText("Next");
+
+		const audit = new TournamentAdminAuditPage(page);
+		await audit.goto(tournament.id);
+		await expect(audit.eventCell("Semis 2: Waiting → Station 2")).toBeVisible();
+		await expect(audit.eventCell("Semis 1: Station 1 → Waiting")).toBeVisible();
+
+		await impersonate(page, poolCaptain.id);
+		await board.goto(tournament.id);
+
+		await expect(board.locators.readOnlyNotice).toBeVisible();
+		await expect(board.match(second.id)).toBeVisible();
+		await expect(board.locators.moveButtons).toHaveCount(0);
+	});
+
+	test("hides the Stations tab of an online tournament", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+
+		await expect(admin.adminTab("Staff")).toBeVisible();
+		await expect(admin.adminTab("Stations")).toHaveCount(0);
 	});
 });
 

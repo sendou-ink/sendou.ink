@@ -1,9 +1,11 @@
 import * as v from "valibot";
 import type { TeamPickSettings } from "~/db/tables-json";
+import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
 import { TEAM_PICK_POOLS } from "~/features/tournament/tournament-constants";
 import {
+	addressSearchOptional,
 	array,
 	badges,
 	checkboxGroup,
@@ -39,11 +41,11 @@ import * as CalendarEvent from "./core/CalendarEvent";
 // the league tag is derived from the league setting, never picked by hand
 const PICKABLE_TAGS = CALENDAR_EVENT.TAGS.filter((tag) => tag !== "LEAGUE");
 
-/** The `tags` field as rendered for tournaments, their team size tag is derived from `minMembersPerTeam` instead. */
+/** The `tags` field as rendered for tournaments, their team size and LAN tags are derived from their settings and venue instead. */
 export const tournamentTagsField = checkboxGroup({
 	label: "labels.tags",
 	items: tagItems(
-		PICKABLE_TAGS.filter((tag) => !CalendarEvent.isVersusTag(tag)),
+		PICKABLE_TAGS.filter((tag) => !CalendarEvent.isDerivedTournamentTag(tag)),
 	),
 });
 
@@ -108,6 +110,18 @@ export const calendarNewBaseSchema = v.object({
 		maxLength: CALENDAR_EVENT.DESCRIPTION_MAX_LENGTH,
 	}),
 	organizationId: selectDynamicOptional({ label: "labels.organization" }),
+	// a tournament with a venue is a LAN, the venue fields are only rendered (and validated) when this is on
+	isLan: toggle({ label: "labels.isLan" }),
+	venueAddress: addressSearchOptional({ label: "labels.venueAddress" }),
+	venueName: textFieldOptional({
+		label: "labels.venueName",
+		bottomText: "bottomTexts.venueName",
+		maxLength: CALENDAR_EVENT.VENUE_NAME_MAX_LENGTH,
+	}),
+	venueTimezone: selectDynamicOptional({
+		label: "labels.venueTimezone",
+		searchable: true,
+	}),
 	rules: textAreaOptional({
 		label: "labels.rules",
 		bottomText: "bottomTexts.bioMarkdown",
@@ -225,6 +239,10 @@ export const TOURNAMENT_FORM_STEPS: ReadonlyArray<
 		label: "steps.tournament.basics",
 		fields: [
 			"name",
+			"isLan",
+			"venueAddress",
+			"venueName",
+			"venueTimezone",
 			"startTime",
 			"regClosesAt",
 			"organizationId",
@@ -301,6 +319,10 @@ function calendarNewSyncRefine(
 		});
 	}
 
+	if (data.toToolsEnabled && data.isLan) {
+		validateVenue(data, ctx);
+	}
+
 	// a calendar event needs a bracket URL; tournaments default to sendou.ink in the action
 	if (!data.toToolsEnabled && !data.bracketUrl) {
 		ctx.addIssue({
@@ -373,6 +395,35 @@ function calendarNewSyncRefine(
 	}
 }
 
+function validateVenue(
+	data: Pick<
+		v.InferOutput<typeof calendarNewBaseSchema>,
+		"venueAddress" | "venueName" | "venueTimezone"
+	>,
+	ctx: ValidationCtx,
+) {
+	if (!data.venueAddress) {
+		ctx.addIssue({
+			path: ["venueAddress"],
+			message: "forms:errors.required",
+		});
+	}
+
+	if (!data.venueName) {
+		ctx.addIssue({
+			path: ["venueName"],
+			message: "forms:errors.required",
+		});
+	}
+
+	if (!data.venueTimezone || !TIMEZONES.includes(data.venueTimezone)) {
+		ctx.addIssue({
+			path: ["venueTimezone"],
+			message: "forms:errors.required",
+		});
+	}
+}
+
 function validateBracketStartTimes(
 	data: Pick<
 		v.InferOutput<typeof calendarNewBaseSchema>,
@@ -434,6 +485,44 @@ function validateTeamPick(
 			message: "forms:errors.teamPick.countOutOfRange",
 		});
 	}
+}
+
+/** Zone the times of the form are entered in: a LAN's venue zone, `null` (browser's own) otherwise. */
+export function venueTimeZoneFromFormValues(values: Record<string, unknown>) {
+	if (!values.toToolsEnabled || !values.isLan) return null;
+
+	const timeZone = values.venueTimezone;
+	return typeof timeZone === "string" && TIMEZONES.includes(timeZone)
+		? timeZone
+		: null;
+}
+
+/** The venue the form values describe, `null` for an online tournament or a calendar event. */
+export function venueFromFormValues(
+	data: Pick<
+		v.InferOutput<typeof calendarNewBaseSchema>,
+		"toToolsEnabled" | "isLan" | "venueAddress" | "venueName" | "venueTimezone"
+	>,
+) {
+	if (
+		!data.toToolsEnabled ||
+		!data.isLan ||
+		!data.venueAddress ||
+		!data.venueName ||
+		!data.venueTimezone
+	) {
+		return null;
+	}
+
+	return {
+		name: data.venueName,
+		address: data.venueAddress.address,
+		city: data.venueAddress.city,
+		countryCode: data.venueAddress.countryCode,
+		latitude: data.venueAddress.latitude,
+		longitude: data.venueAddress.longitude,
+		timezone: data.venueTimezone,
+	};
 }
 
 /** Team pick settings the form values describe, a picked mode without a count gets the default one. */

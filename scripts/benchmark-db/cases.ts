@@ -62,6 +62,7 @@ import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLF
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import { LUTI_ORGANIZATION_ID } from "~/features/tournament-organization/tournament-organization-constants";
+import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -433,6 +434,9 @@ export function buildCases(fx: Fixtures): {
 		"CalendarRepository.findAllBetweenTwoTimestamps",
 		fx.calendarWindow,
 		(window) => CalendarRepository.findAllBetweenTwoTimestamps(window),
+	);
+	addStatic("CalendarRepository.findAllUpcomingWithVenue", () =>
+		CalendarRepository.findAllUpcomingWithVenue(),
 	);
 	add("CalendarRepository.findById", fx.heavyCalendarEventId, (eventId) =>
 		CalendarRepository.findById(eventId, {
@@ -2205,6 +2209,12 @@ export function buildCases(fx: Fixtures): {
 		(tournamentTeamId) =>
 			TournamentTeamRepository.findAllChatRoomIdsByIds([tournamentTeamId]),
 	);
+	add(
+		"TournamentTeamRepository.findPlaceholderNamesByTournamentId",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentTeamRepository.findPlaceholderNamesByTournamentId(tournamentId),
+	);
 	add("TournamentTeamRepository.isPickupAvatarImgId", fx.imageId, (imageId) =>
 		TournamentTeamRepository.isPickupAvatarImgId(imageId),
 	);
@@ -2240,6 +2250,13 @@ export function buildCases(fx: Fixtures): {
 				tournamentTeamId,
 				userId: user.id,
 			}),
+	);
+
+	add(
+		"TournamentStationRepository.findAllByTournamentId",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentStationRepository.findAllByTournamentId(tournamentId),
 	);
 
 	addStatic("TrophyRepository.all", () => TrophyRepository.all());
@@ -2278,6 +2295,12 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("UserRepository.findPageUserByIdentifier", fx.heavyUser, (user) =>
 		UserRepository.findPageUserByIdentifier(user.identifier),
+	);
+	add("UserRepository.findPlaceholderById", fx.heavyUser, (user) =>
+		UserRepository.findPlaceholderById(user.id),
+	);
+	add("UserRepository.filterOutPlaceholders", fx.manyUserIds, (userIds) =>
+		UserRepository.filterOutPlaceholders(userIds),
 	);
 	add("UserRepository.findCountriesByUserIds", fx.skillBatch, (skillBatch) =>
 		UserRepository.findCountriesByUserIds(skillBatch.userIds),

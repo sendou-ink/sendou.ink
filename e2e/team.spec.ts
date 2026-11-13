@@ -453,7 +453,7 @@ test.describe("Team schedule", () => {
 		factories,
 	}) => {
 		const noScheduleMember = await factories.UserFactory.create({
-			discordName: "Schedules-Later",
+			defaultName: "Schedules-Later",
 		});
 		const { id: teamId, customUrl } = await factories.TeamFactory.create({
 			name: TEAM_NAME,

@@ -1,3 +1,4 @@
+import type { NotNull } from "kysely";
 import type { LoaderFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { db } from "~/db/sql";
@@ -31,7 +32,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			.select(({ eb }) => [
 				"User.id",
 				"User.country",
-				"User.discordName",
+				"User.defaultName",
 				"User.twitch",
 				"User.youtubeId",
 				"User.bsky",
@@ -60,6 +61,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				).as("teams"),
 			])
 			.where("User.id", "=", userByIdentifierQuery(identifier))
+			.where("User.isPlaceholder", "=", 0)
+			.$narrowType<{ discordId: NotNull }>()
 			.executeTakeFirst(),
 	);
 
@@ -72,7 +75,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const result: GetUserResponse = {
 		id: user.id,
-		name: user.discordName,
+		name: user.defaultName,
 		discordId: user.discordId,
 		avatarUrl: user.avatar ? avatarUrl(user.avatar, "lg") : null,
 		url: `https://sendou.ink/u/${user.customUrl ?? user.discordId}`,

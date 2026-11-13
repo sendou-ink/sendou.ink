@@ -3,6 +3,7 @@ import { userPageRedirectPath } from "./user-page-urls";
 
 const WITH_CUSTOM_URL = { id: 274, customUrl: "sendou" };
 const WITHOUT_CUSTOM_URL = { id: 274, customUrl: null };
+const PLACEHOLDER = { id: 274, customUrl: null, isPlaceholder: 1 as const };
 
 describe("userPageRedirectPath", () => {
 	test.each([
@@ -41,6 +42,24 @@ describe("userPageRedirectPath", () => {
 			url: "/u/274/seasons/stats?season=1",
 			user: WITH_CUSTOM_URL,
 			expected: "/u/sendou/seasons/stats?season=1",
+		},
+		{
+			why: "placeholder profile -> results",
+			url: "/u/274",
+			user: PLACEHOLDER,
+			expected: "/u/274/results",
+		},
+		{
+			why: "placeholder sub page -> results",
+			url: "/u/274/builds",
+			user: PLACEHOLDER,
+			expected: "/u/274/results",
+		},
+		{
+			why: "placeholder results stay",
+			url: "/u/274/results",
+			user: PLACEHOLDER,
+			expected: null,
 		},
 	])("$why", ({ url, user, expected }) => {
 		expect(userPageRedirectPath(new URL(url, "https://sendou.ink"), user)).toBe(

@@ -33,6 +33,7 @@ function makeEvent(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
 		normalizedTeamCount: 0,
 		badges: [],
 		trophyId: null,
+		venue: null,
 		logoUrl: null,
 		name: "Two Day Cup",
 		url: "/to/1",

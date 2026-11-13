@@ -97,6 +97,27 @@ export class AdminActionsPage {
 		await this.submitForm(form, "Migrate");
 	}
 
+	async claimPlaceholder({
+		placeholderUserId,
+		userName,
+	}: {
+		placeholderUserId: number;
+		userName: string;
+	}) {
+		const form = this.form("Claim placeholder");
+		await form
+			.getByLabel("Placeholder player ID")
+			.fill(String(placeholderUserId));
+		await selectUser({
+			page: this.page,
+			userName,
+			labelName: "Claimed by",
+			within: form,
+		});
+		await form.getByRole("button", { name: "Claim", exact: true }).click();
+		await submit(this.page, this.page.getByTestId("confirm-button"));
+	}
+
 	async refreshPlusTiers() {
 		await this.submitForm(this.form("Refresh Plus Tiers"), "Refresh");
 	}

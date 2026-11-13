@@ -1,6 +1,7 @@
-import { sub } from "date-fns";
+import { add, sub } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
+import * as CalendarEventVenueFactory from "~/db/seed/factories/CalendarEventVenueFactory";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
@@ -8,6 +9,8 @@ import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactor
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { invariant } from "~/utils/invariant";
+import { calendarEventPage, tournamentPage } from "~/utils/urls";
 import * as CalendarRepository from "./CalendarRepository.server";
 
 const users = UserFactory.pool();
@@ -313,5 +316,202 @@ describe("findAllBetweenTwoTimestamps", () => {
 
 		expect(tagsOf("League")).toEqual(["LEAGUE", "SPECIAL"]);
 		expect(tagsOf("Tournament")).toEqual(["SPECIAL"]);
+	});
+
+	test("gives a LAN its venue's timezone, city and country, an online event none", async () => {
+		const lan = await TournamentFactory.create({
+			authorId: authorId(),
+			name: "LAN",
+		});
+		await CalendarEventVenueFactory.create({
+			eventId: lan.eventId,
+			city: "Austin",
+			countryCode: "US",
+			timezone: "America/Chicago",
+		});
+		await TournamentFactory.create({ authorId: authorId(), name: "Online" });
+
+		const days = await CalendarRepository.findAllBetweenTwoTimestamps({
+			startTime: sub(new Date(), { hours: 1 }),
+			endTime: new Date(Date.now() + 60 * 60 * 1000),
+		});
+		const eventOf = (name: string) =>
+			days.flatMap((day) => day.events).find((event) => event.name === name);
+
+		expect(eventOf("LAN")?.venue).toEqual({
+			timezone: "America/Chicago",
+			city: "Austin",
+			countryCode: "US",
+		});
+		expect(eventOf("Online")?.venue).toBeNull();
+	});
+});
+
+describe("findAllUpcomingWithVenue", () => {
+	const authorId = () => users.id(1);
+
+	const createEvent = async ({
+		name,
+		startTimes,
+		isDraft,
+		hasVenue = true,
+	}: {
+		name: string;
+		startTimes: Date[];
+		isDraft?: boolean;
+		hasVenue?: boolean;
+	}) => {
+		const event = await CalendarEventFactory.create({
+			authorId: authorId(),
+			name,
+			isDraft,
+			startTimes: startTimes.map(dateToDatabaseTimestamp),
+		});
+		if (hasVenue) await CalendarEventVenueFactory.create({ eventId: event.id });
+
+		return event;
+	};
+
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test("lists upcoming and still running events with a venue, soonest first", async () => {
+		await createEvent({
+			name: "Later",
+			startTimes: [add(new Date(), { days: 10 })],
+		});
+		await createEvent({
+			name: "Sooner",
+			startTimes: [add(new Date(), { days: 2 })],
+		});
+		await createEvent({
+			name: "Running",
+			startTimes: [
+				sub(new Date(), { days: 1, hours: 2 }),
+				sub(new Date(), { hours: 2 }),
+			],
+		});
+		await createEvent({
+			name: "Past",
+			startTimes: [sub(new Date(), { days: 3 })],
+		});
+		await createEvent({
+			name: "Online",
+			startTimes: [add(new Date(), { days: 1 })],
+			hasVenue: false,
+		});
+		await createEvent({
+			name: "Draft",
+			startTimes: [add(new Date(), { days: 1 })],
+			isDraft: true,
+		});
+
+		const events = await CalendarRepository.findAllUpcomingWithVenue();
+
+		expect(events.map((event) => event.name)).toEqual([
+			"Running",
+			"Sooner",
+			"Later",
+		]);
+	});
+
+	test("gives the event's first day, venue and page", async () => {
+		const firstDay = add(new Date(), { days: 2 });
+		const event = await createEvent({
+			name: "LAN",
+			startTimes: [firstDay, add(firstDay, { days: 1 })],
+			hasVenue: false,
+		});
+		const venue = {
+			name: "Messukeskus",
+			city: "Helsinki",
+			countryCode: "FI",
+			latitude: 60.2033,
+			longitude: 24.9364,
+			timezone: "Europe/Helsinki",
+		};
+		await CalendarEventVenueFactory.create({ eventId: event.id, ...venue });
+
+		const [lan] = await CalendarRepository.findAllUpcomingWithVenue();
+
+		expect(lan.startsAt).toBe(dateToDatabaseTimestamp(firstDay));
+		expect(lan.url).toBe(calendarEventPage(event.id));
+		expect(lan.venue).toEqual(venue);
+	});
+
+	test("links a tournament's venue to the tournament page", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: authorId(),
+			startTimes: [dateToDatabaseTimestamp(add(new Date(), { days: 2 }))],
+		});
+		await CalendarEventVenueFactory.create({ eventId: tournament.eventId });
+
+		const [lan] = await CalendarRepository.findAllUpcomingWithVenue();
+
+		expect(lan.url).toBe(tournamentPage(tournament.id));
+	});
+});
+
+describe("upsertVenue", () => {
+	const authorId = () => users.id(1);
+
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	const venue = {
+		name: "Hilton Ballroom B",
+		address: "500 East Cesar Chavez Street, 78701 Austin, TX, United States",
+		city: "Austin",
+		countryCode: "US",
+		latitude: 30.2636,
+		longitude: -97.7397,
+		timezone: "America/Chicago",
+	};
+
+	test("replaces the event's venue", async () => {
+		const event = await CalendarEventFactory.create({ authorId: authorId() });
+		await CalendarEventVenueFactory.create({ eventId: event.id });
+
+		await CalendarRepository.upsertVenue({ eventId: event.id, venue });
+
+		expect((await CalendarRepository.findById(event.id))?.venue).toEqual(venue);
+	});
+
+	test("null makes the event online", async () => {
+		const event = await CalendarEventFactory.create({ authorId: authorId() });
+		await CalendarEventVenueFactory.create({ eventId: event.id });
+
+		await CalendarRepository.upsertVenue({ eventId: event.id, venue: null });
+
+		expect((await CalendarRepository.findById(event.id))?.venue).toBeNull();
+	});
+
+	test("an update that leaves out the venue keeps it", async () => {
+		const event = await CalendarEventFactory.create({
+			authorId: authorId(),
+			venue,
+		});
+		const found = await CalendarRepository.findById(event.id);
+		invariant(found, "expected the event");
+
+		await CalendarRepository.update({
+			eventId: event.id,
+			authorId: authorId(),
+			name: "Renamed",
+			description: found.description,
+			discordInviteCode: found.discordInviteCode,
+			bracketUrl: found.bracketUrl,
+			organizationId: null,
+			tags: null,
+			rules: null,
+			startTimes: found.startTimes,
+			badges: [],
+			mapPickingStyle: "AUTO",
+			bracketProgression: null,
+		});
+
+		expect((await CalendarRepository.findById(event.id))?.venue).toEqual(venue);
 	});
 });

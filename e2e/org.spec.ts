@@ -91,7 +91,7 @@ test.describe("Tournament Organization", () => {
 		// a long flow: runs past two thirds of the default timeout under load
 		test.slow();
 		const player = await factories.UserFactory.create({
-			discordName: PLAYER_NAME,
+			defaultName: PLAYER_NAME,
 		});
 		const org = await factories.TournamentOrganizationFactory.create({
 			ownerId: ADMIN_ID,

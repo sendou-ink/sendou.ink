@@ -794,6 +794,21 @@ export class Tournament {
 		return this.ctx.settings.isTest ?? false;
 	}
 
+	/** Where the tournament is held in person, `null` for an online tournament. */
+	get venue() {
+		return this.ctx.venue;
+	}
+
+	/** Held in person (has a venue), gating the LAN only features. */
+	get isLan() {
+		return this.ctx.venue !== null;
+	}
+
+	/** LAN only: playable matches are put on free stations without an organizer placing them. */
+	get autoAssignsStations() {
+		return this.ctx.settings.autoAssignStations ?? true;
+	}
+
 	/** Hidden during preparation, must be opened before bracket start. */
 	get isDraft() {
 		return this.ctx.settings.isDraft ?? false;
@@ -1611,6 +1626,16 @@ export class Tournament {
 
 	isOrganizerOrStreamer(user: OptionalIdObject) {
 		return hasPermission(this.ctx, "MANAGE_MATCHES", user);
+	}
+
+	/** Report and undo game results of any match, not only their own team's. */
+	canReportAnyScore(user: OptionalIdObject) {
+		return hasPermission(this.ctx, "REPORT_SCORES", user);
+	}
+
+	/** LAN: viewing the stations board. Moving matches on it is for {@link isOrganizerOrStreamer}. */
+	canSeeStationsBoard(user: OptionalIdObject) {
+		return this.isOrganizerOrStreamer(user) || this.canReportAnyScore(user);
 	}
 
 	/** Live streams of the tournament, empty in the views whose loader did not ship them. */

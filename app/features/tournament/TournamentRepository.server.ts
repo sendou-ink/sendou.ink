@@ -17,6 +17,7 @@ import type {
 	TournamentSettings,
 } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
+import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import type { StreamAccount } from "~/features/live-streams/live-streams-constants";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
 import { organizerPermissions } from "~/features/tournament/core/permissions";
@@ -132,6 +133,7 @@ export async function findById(id: number) {
 					),
 			).as("organization"),
 			tournamentLogoWithDefault(eb).as("logoUrl"),
+			CalendarRepository.withVenue(eb),
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
@@ -302,7 +304,7 @@ export async function findById(id: number) {
 
 /**
  * Who may act on the tournament, following the convention in docs/site/src/content/docs/dev/permissions.mdx.
- * `ADMIN`, `ORGANIZE` and `MANAGE_MATCHES` come from {@link organizerPermissions}.
+ * `ADMIN`, `ORGANIZE`, `MANAGE_MATCHES` and `REPORT_SCORES` come from {@link organizerPermissions}.
  *
  * - `EDIT_EVENT_INFO`: editing the calendar event the tournament belongs to. Organization
  *   admins only qualify when the organization is established or they may add tournaments
@@ -536,6 +538,7 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
 						"User.discordId",
 						"User.country",
 						"User.tournamentName",
+						"User.isPlaceholder",
 						"SeedingSkill.ordinal",
 						"TournamentTeamMember.role",
 						"TournamentTeamMember.createdAt",
@@ -604,7 +607,8 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
 		...team,
 		members: team.members.map(({ ordinal: _, discordId, ...member }) => ({
 			...member,
-			isFreshAccount: accountCreatedInTheLastSixMonths(discordId),
+			isFreshAccount:
+				discordId !== null && accountCreatedInTheLastSixMonths(discordId),
 		})),
 		avgSeedingSkillOrdinal:
 			R.mean(
@@ -842,11 +846,19 @@ export function findAllForShowcase() {
 			"CalendarEvent.id",
 			"CalendarEventDate.eventId",
 		)
+		.leftJoin(
+			"CalendarEventVenue",
+			"CalendarEventVenue.eventId",
+			"CalendarEvent.id",
+		)
 		.select((eb) => [
 			"Tournament.id",
 			"Tournament.settings",
 			"Tournament.tier",
 			"Tournament.isFinalized",
+			"CalendarEventVenue.timezone as venueTimezone",
+			"CalendarEventVenue.city as venueCity",
+			"CalendarEventVenue.countryCode as venueCountryCode",
 			"CalendarEvent.authorId",
 			"CalendarEvent.name",
 			"CalendarEvent.organizationId",

@@ -20,6 +20,7 @@ import {
 	progressionToFormValues,
 } from "../../calendar/calendar-progression-form";
 import { BracketProgressionFormFields } from "../../calendar/components/BracketProgressionFormFields";
+import { VenueTimeNotice } from "../../calendar/components/VenueTimeNotice";
 import { adminBracketsActionSchema } from "../tournament-admin-schemas";
 
 export { action } from "../actions/to.$id.admin.brackets.server";
@@ -145,6 +146,7 @@ function BracketProgressionEdit() {
 			)}
 			submitButtonText="Save changes"
 			fullWidth
+			timeZone={tournament.venue?.timezone}
 			onApply={(values) => {
 				const inputBrackets = formValuesToInputBrackets(
 					values.brackets,
@@ -171,6 +173,7 @@ function BracketProgressionEdit() {
 				});
 			}}
 		>
+			<VenueTimeNotice timeZone={tournament.venue?.timezone ?? null} />
 			<BracketProgressionFormFields
 				isInvitational={tournament.isInvitational}
 				disabledBracketIdxs={disabledBracketIdxs}

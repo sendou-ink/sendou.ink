@@ -109,6 +109,11 @@ Define in a core folder:
 ```ts
 // app/features/cool-feature/core/Module.ts
 
+/**
+ * What the module is about as a whole: the domain it covers and the questions its functions answer.
+ */
+import { something } from "~/somewhere";
+
 /** Descriptive JSDoc goes here */
 export function doTheThing() {
 
@@ -118,7 +123,7 @@ function implementationDetail() {
 }
 ```
 
-You should document any functions exported by the module well.
+Start the file with a JSDoc block above the imports explaining the module's purpose as a whole (e.g. `app/features/scrims/core/Scrim.ts`), and document any functions exported by the module well.
 
 Usage:
 

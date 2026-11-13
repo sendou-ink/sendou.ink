@@ -322,6 +322,23 @@ interface CalendarEventDate {
 	startsAt: number;
 }
 
+/** Where an in-person (LAN) event is held. An event having one is what makes it a LAN. */
+interface CalendarEventVenue {
+	eventId: number;
+	/** E.g. "Hilton Ballroom B" */
+	name: string;
+	/** Display address from the geocoder */
+	address: string;
+	/** From the geocoder, e.g. for the "LAN · Austin" chip. Null if it gave none. */
+	city: string | null;
+	/** ISO 3166-1 alpha-2 */
+	countryCode: string;
+	latitude: number;
+	longitude: number;
+	/** IANA timezone, e.g. "America/Chicago" */
+	timezone: string;
+}
+
 interface CalendarEventResultPlayer {
 	name: string | null;
 	teamId: number;
@@ -861,6 +878,26 @@ interface TournamentLFGLike {
 	createdAt: Generated<number>;
 }
 
+/** A setup at a LAN tournament's venue where matches are played. */
+interface TournamentStation {
+	id: GeneratedAlways<number>;
+	tournamentId: number;
+	/** E.g. "Station 3" */
+	name: string;
+	/** Where to find it at the venue, e.g. "north corner, by the windows" */
+	locationNote: string | null;
+	/** Order of the stations, 0 first. Auto-assignment prefers the lowest free one. */
+	position: number;
+}
+
+/** A match queued on a station, a match being on at most one station. */
+interface TournamentMatchStation {
+	matchId: number;
+	stationId: number;
+	/** Order in the station's queue, 0 first. */
+	position: number;
+}
+
 interface TournamentStaff {
 	tournamentId: number;
 	userId: number;
@@ -1097,10 +1134,12 @@ interface User {
 	customAvatarImgId: number | null;
 	/** Avatar copied from the account the user logs in with. */
 	syncedAvatarImgId: number | null;
-	discordId: string;
-	discordName: string;
+	/** `null` for placeholder players. */
+	discordId: string | null;
+	/** Name shown unless `customName` is set: the Discord display name, synced on log in, or for placeholder players the name the organizer typed. */
+	defaultName: string;
 	customName: string | null;
-	/** coalesce(customName, discordName) */
+	/** coalesce(customName, defaultName) */
 	username: ColumnType<string, never, never>;
 	/** Name the user is shown under in tournaments, set by organizers of established organizations. `null` = their `username` is used. */
 	tournamentName: string | null;
@@ -1113,6 +1152,8 @@ interface User {
 	isVideoAdder: Generated<DBBoolean>;
 	isTournamentOrganizer: Generated<DBBoolean>;
 	isApiAccesser: Generated<DBBoolean>;
+	/** Player without an account, added by a LAN tournament's organizer to a team. Belongs to that one tournament only, can't log in and is left out of searches, leaderboards and notifications until an admin merges it into the real user's account. */
+	isPlaceholder: Generated<DBBoolean>;
 	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
 	pronouns: JSONColumnTypeNullable<Pronouns>;
 	patronStartedAt: number | null;
@@ -1743,6 +1784,7 @@ export interface DB {
 	CalendarEventDate: CalendarEventDate;
 	CalendarEventResultPlayer: CalendarEventResultPlayer;
 	CalendarEventResultTeam: CalendarEventResultTeam;
+	CalendarEventVenue: CalendarEventVenue;
 	ChatMessage: ChatMessage;
 	ChatMessageReadIndicator: ChatMessageReadIndicator;
 	ChatRoom: ChatRoom;
@@ -1787,6 +1829,8 @@ export interface DB {
 	Tournament: Tournament;
 	TournamentDivisionTier: TournamentDivisionTier;
 	TournamentStaff: TournamentStaff;
+	TournamentStation: TournamentStation;
+	TournamentMatchStation: TournamentMatchStation;
 	TournamentGroup: TournamentGroup;
 	TournamentLFGLike: TournamentLFGLike;
 	TournamentMatch: TournamentMatch;

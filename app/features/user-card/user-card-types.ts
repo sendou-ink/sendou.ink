@@ -8,6 +8,8 @@ import type { TieredSkill } from "../mmr/tiered.server";
 export interface UserCardData extends CommonUser {
 	banner: UserCarBannerData;
 	shortBio: string | null;
+	/** Player without an account, who can't be befriended, see `User.isPlaceholder`. */
+	isPlaceholder: boolean;
 	customTheme: CustomTheme | null;
 	friendCode: string | null;
 	freeAgentPostId: number | null;

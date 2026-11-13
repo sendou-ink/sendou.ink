@@ -1,4 +1,4 @@
-import { ArrowLeft, Import } from "lucide-react";
+import { ArrowLeft, Import, UserPlus } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
@@ -30,10 +30,12 @@ import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { tournamentAdminPage } from "~/utils/urls";
 import type { TournamentAdminRegistrationLoaderData } from "../loaders/to.$id.admin.registration.$tid.server";
 import {
+	ADMIN_REGISTRATION_MAX_MEMBERS,
 	type AdminRegistrationFormValues,
 	adminRegistrationFormSchema,
 	type ImportTeamFormValues,
 	importTeamFormSchema,
+	newPlaceholderOwnerId,
 } from "../tournament-admin-registration-schemas";
 import type { ImportTeamsLoaderData } from "./to.$id.admin.import-teams";
 
@@ -41,7 +43,10 @@ export { action } from "../actions/to.$id.admin.registration.server";
 export { loader } from "../loaders/to.$id.admin.registration.$tid.server";
 
 type RosterMemberValue = {
-	userId?: number;
+	_key?: string;
+	isPlaceholder?: boolean;
+	userId?: number | null;
+	placeholderName?: string | null;
 	inGameName?: string | null;
 	tournamentName?: string | null;
 };
@@ -80,13 +85,27 @@ export default function TournamentAdminRegistrationPage() {
 						: null,
 				teamId: team.team?.id ?? null,
 				ownerId: owner ? String(owner.userId) : "",
-				members: team.members.map((member) => ({
-					userId: member.userId,
-					inGameName: tournament.ctx.settings.requireInGameNames
-						? (member.inGameName ?? null)
-						: null,
-					tournamentName: member.tournamentName ?? null,
-				})),
+				members: team.members.map((member) =>
+					member.isPlaceholder
+						? {
+								isPlaceholder: true,
+								userId: member.userId,
+								placeholderName: member.username,
+								inGameName: tournament.ctx.settings.requireInGameNames
+									? (member.inGameName ?? null)
+									: null,
+								tournamentName: null,
+							}
+						: {
+								isPlaceholder: false,
+								userId: member.userId,
+								placeholderName: null,
+								inGameName: tournament.ctx.settings.requireInGameNames
+									? (member.inGameName ?? null)
+									: null,
+								tournamentName: member.tournamentName ?? null,
+							},
+				),
 				mapPool: team.mapPool ?? [],
 			}
 		: undefined;
@@ -165,14 +184,23 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 								}
 							: null,
 				};
-		importedValues.members = importedTeam.members.map((member) => ({
-			userId: member.userId,
+		// a player without an account belongs to their own tournament, so a new one is created in their place
+		const importedMembers = importedTeam.members.filter(
+			(member) => !member.isPlaceholder || tournament.isLan,
+		);
+		importedValues.members = importedMembers.map((member) => ({
+			...(member.isPlaceholder
+				? { isPlaceholder: true, placeholderName: member.username }
+				: { userId: member.userId, tournamentName: member.tournamentName }),
 			inGameName: member.inGameName,
-			tournamentName: member.tournamentName,
 			// fresh key so member rows remount and re-resolve their user search when importing over a previous import
 			_key: crypto.randomUUID(),
 		}));
-		importedValues.ownerId = owner ? String(owner.userId) : "";
+		importedValues.ownerId = !owner
+			? ""
+			: owner.isPlaceholder
+				? newPlaceholderOwnerId(owner.username)
+				: String(owner.userId);
 
 		setImportedLinkedTeam(
 			importedTeam.linkedTeam
@@ -194,23 +222,62 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 		}
 	};
 
-	const ownerOptions: SelectOption[] = members
-		.filter(
-			(member): member is { userId: number } =>
-				typeof member.userId === "number",
-		)
-		.map((member, i) => ({
-			value: String(member.userId),
-			label: usernames[member.userId] ?? `${t("forms:labels.player")} ${i + 1}`,
-		}));
+	const ownerOptions: Array<SelectOption & { rowKey?: string }> =
+		members.flatMap((member, i) => {
+			if (typeof member.userId === "number") {
+				return {
+					rowKey: member._key,
+					value: String(member.userId),
+					label:
+						(member.isPlaceholder && member.placeholderName) ||
+						usernames[member.userId] ||
+						`${t("forms:labels.player")} ${i + 1}`,
+				};
+			}
+
+			const placeholderName = member.placeholderName?.trim();
+			if (!member.isPlaceholder || !placeholderName) return [];
+
+			return {
+				rowKey: member._key,
+				value: newPlaceholderOwnerId(placeholderName),
+				label: placeholderName,
+			};
+		});
+
+	const addPlaceholder = () => {
+		const placeholderRow = {
+			isPlaceholder: true,
+			placeholderName: "",
+			_key: crypto.randomUUID(),
+		};
+		setValue("members", [...members, placeholderRow]);
+	};
 
 	// the non-clearable Captain <select> always shows a member as selected, so keep ownerId in sync:
-	// default to the first member, reset when the current captain left the roster
+	// default to the first member, follow a new placeholder captain's row when their name is edited,
+	// reset when the current captain left the roster
 	const ownerOptionsKey = ownerOptions.map((option) => option.value).join(",");
+	const previousOwnerRowKeys = React.useRef(new Map<string, string>());
 	React.useEffect(() => {
+		const previousRowKeys = previousOwnerRowKeys.current;
+		previousOwnerRowKeys.current = new Map(
+			ownerOptions.flatMap((option) =>
+				option.rowKey ? [[option.value, option.rowKey]] : [],
+			),
+		);
+
 		if (ownerOptions.length === 0) return;
 		if (ownerOptions.some((option) => option.value === values.ownerId)) return;
-		setValue("ownerId", ownerOptions[0].value);
+
+		const ownerRowKey =
+			typeof values.ownerId === "string"
+				? previousRowKeys.get(values.ownerId)
+				: undefined;
+		const sameRowOption = ownerRowKey
+			? ownerOptions.find((option) => option.rowKey === ownerRowKey)
+			: undefined;
+		setValue("ownerId", (sameRowOption ?? ownerOptions[0]).value);
 	}, [ownerOptionsKey]);
 
 	return (
@@ -265,45 +332,66 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 				</>
 			)}
 			<FormField name="members">
-				{({ itemName }: ArrayItemRenderContext) => (
-					<div className="stack sm">
-						<FormField
-							name={`${itemName}.userId`}
-							options={
-								{
-									// the Captain dropdown labels by name instead of "Player N"
-									onUserSelected: (selectedUser) => {
-										if (!selectedUser) return;
-										setUsernames((prev) => ({
-											...prev,
-											[selectedUser.id]: selectedUser.name,
-										}));
-										if (requireInGameNames && selectedUser.inGameName) {
-											setValue(
-												`${itemName}.inGameName`,
-												selectedUser.inGameName,
-											);
-										}
-										// saved as is, so it must show the user's current name or saving would clear it
-										if (canEditTournamentNames) {
-											setValue(
-												`${itemName}.tournamentName`,
-												selectedUser.tournamentName,
-											);
-										}
-									},
-								} satisfies UserSearchFieldOptions
-							}
-						/>
-						{requireInGameNames ? (
-							<FormField name={`${itemName}.inGameName`} />
-						) : null}
-						{canEditTournamentNames ? (
-							<FormField name={`${itemName}.tournamentName`} />
-						) : null}
-					</div>
-				)}
+				{({ itemName, values: member }: ArrayItemRenderContext) =>
+					member.isPlaceholder ? (
+						<div className="stack sm">
+							<FormField name={`${itemName}.placeholderName`} />
+							{requireInGameNames ? (
+								<FormField name={`${itemName}.inGameName`} />
+							) : null}
+						</div>
+					) : (
+						<div className="stack sm">
+							<FormField
+								name={`${itemName}.userId`}
+								options={
+									{
+										// the Captain dropdown labels by name instead of "Player N"
+										onUserSelected: (selectedUser) => {
+											if (!selectedUser) return;
+											setUsernames((prev) => ({
+												...prev,
+												[selectedUser.id]: selectedUser.name,
+											}));
+											if (requireInGameNames && selectedUser.inGameName) {
+												setValue(
+													`${itemName}.inGameName`,
+													selectedUser.inGameName,
+												);
+											}
+											// saved as is, so it must show the user's current name or saving would clear it
+											if (canEditTournamentNames) {
+												setValue(
+													`${itemName}.tournamentName`,
+													selectedUser.tournamentName,
+												);
+											}
+										},
+									} satisfies UserSearchFieldOptions
+								}
+							/>
+							{requireInGameNames ? (
+								<FormField name={`${itemName}.inGameName`} />
+							) : null}
+							{canEditTournamentNames ? (
+								<FormField name={`${itemName}.tournamentName`} />
+							) : null}
+						</div>
+					)
+				}
 			</FormField>
+			{tournament.isLan ? (
+				<SendouButton
+					size="small"
+					variant="outlined"
+					icon={<UserPlus />}
+					onClick={addPlaceholder}
+					isDisabled={members.length >= ADMIN_REGISTRATION_MAX_MEMBERS}
+					className="m-0-auto"
+				>
+					{t("forms:regAddPlaceholder")}
+				</SendouButton>
+			) : null}
 			<FormField name="ownerId" options={ownerOptions} />
 			{tournament.teamsPrePickMaps && !tournament.hasStarted ? (
 				<FormField name="mapPool">

@@ -68,6 +68,7 @@ export const myFormSchema = v.object({
 | `userSearchOptional` | Optional user search | `label` |
 | `tournamentSearchOptional` | Optional tournament search | `label` |
 | `teamSearchOptional` | Optional team search | `label` |
+| `addressSearchOptional` | Optional address/place search (OpenStreetMap via the Photon proxy), `options` takes `onAddressSelected` for the result's timezone etc. | `label` |
 | `image` | Small image upload (avatar / logo / banner) | `label` |
 | `badges` | Badge selection | `label` |
 | `trophies` | Trophy selection | `label` |
@@ -164,6 +165,17 @@ datetime({
   minMessage: "errors.dateInPast",
   maxMessage: "errors.dateTooFarInFuture",
 })
+```
+
+### Time Zone
+
+Datetime inputs read in the browser's zone by default. Pass `timeZone` to `<SendouForm>` (an IANA zone, or a function of the form values) to have every `datetime` field of the form, nested ones too, entered in that zone instead, e.g. a LAN's venue. The fields hold wall-clock times, so changing the zone keeps what was typed: default values are converted to the zone's wall clock on mount and the values become instants in it on submit (both for the server and `onApply`). The fields show the zone next to their label.
+
+```tsx
+<SendouForm
+  schema={schema}
+  timeZone={(values) => (values.isLan ? values.venueTimezone : null)}
+>
 ```
 
 ### Dual Select

@@ -7,6 +7,7 @@ type SwitchFormFieldProps = Omit<FormFieldProps<"switch">, "onBlur"> & {
 	checked: boolean;
 	onChange: (checked: boolean) => void;
 	isDisabled?: boolean;
+	labelPopover?: React.ReactNode;
 };
 
 export function SwitchFormField({
@@ -17,6 +18,7 @@ export function SwitchFormField({
 	checked,
 	onChange,
 	isDisabled,
+	labelPopover,
 }: SwitchFormFieldProps) {
 	const id = React.useId();
 	const { translatedLabel } = useTranslatedTexts({ label });
@@ -32,6 +34,7 @@ export function SwitchFormField({
 				>
 					{translatedLabel}
 				</SendouSwitch>
+				{labelPopover}
 			</div>
 			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 		</div>
