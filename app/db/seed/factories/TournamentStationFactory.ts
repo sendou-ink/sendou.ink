@@ -6,19 +6,23 @@ type Station = Parameters<
 	typeof TournamentStationRepository.setStations
 >[0]["stations"][number];
 
-type InsertArgs = Omit<Station, "id"> & { tournamentId: number };
+type InsertArgs = Omit<Station, "id"> & {
+	tournamentId: number;
+	/** Saved with the station, the tournament's current setting by default. */
+	autoAssign?: boolean;
+};
 
 /** Adds one station after the tournament's existing ones, as the admin stations page saves them. */
 export const { create, createMany } = defineFactory({
 	defaults: () => ({ locationNote: null }),
-	insert: async ({ tournamentId, ...station }: InsertArgs) => {
+	insert: async ({ tournamentId, autoAssign, ...station }: InsertArgs) => {
 		const existing =
 			await TournamentStationRepository.findAllByTournamentId(tournamentId);
 		const tournament = await TournamentRepository.findById(tournamentId);
 
 		await TournamentStationRepository.setStations({
 			tournamentId,
-			autoAssign: tournament?.settings.autoAssignStations ?? true,
+			autoAssign: autoAssign ?? tournament?.settings.autoAssignStations ?? true,
 			stations: [...existing, { ...station, id: null }],
 		});
 

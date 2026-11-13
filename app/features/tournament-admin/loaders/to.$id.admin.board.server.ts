@@ -31,8 +31,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournament,
 		stations:
 			await TournamentStationRepository.findAllByTournamentId(tournamentId),
-		queuedMatches:
-			await TournamentStationRepository.findQueuedMatchesByTournamentId(
+		placements:
+			await TournamentStationRepository.findMatchPlacementsByTournamentId(
 				tournamentId,
 			),
 	});

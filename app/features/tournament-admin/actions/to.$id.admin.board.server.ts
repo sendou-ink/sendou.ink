@@ -1,5 +1,6 @@
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
+import { autoAssignStations } from "~/features/tournament-stations/core/autoAssignStations.server";
 import * as StationsBoard from "~/features/tournament-stations/core/StationsBoard";
 import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
 import { stationsBoardActionSchema } from "~/features/tournament-stations/tournament-stations-schemas";
@@ -52,6 +53,7 @@ export const action = defineAction(
 		ChatSystemMessage.send({
 			channel: tournamentStationsChannel(tournamentId),
 		});
+		await autoAssignStations(tournament);
 
 		return null;
 	},

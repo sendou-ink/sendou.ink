@@ -126,6 +126,11 @@
 	color: var(--color-text-inverse);
 }
 
+.autoAssigned {
+	flex-shrink: 0;
+	color: var(--color-accent);
+}
+
 .roundName {
 	overflow: hidden;
 	color: var(--color-text-high);

@@ -17,6 +17,7 @@ import { TournamentAdminAuditPage } from "./pages/tournament/tournament-admin-au
 import { TournamentAdminBoardPage } from "./pages/tournament/tournament-admin-board-page";
 import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";
 import { TournamentAdminRegistrationPage } from "./pages/tournament/tournament-admin-registration-page";
+import { TournamentAdminStationsPage } from "./pages/tournament/tournament-admin-stations-page";
 import { TournamentTeamPage } from "./pages/tournament/tournament-team-page";
 import { TournamentTeamsPage } from "./pages/tournament/tournament-teams-page";
 
@@ -515,9 +516,10 @@ test.describe("Tournament admin LAN stations", () => {
 		await expect(
 			board.lane(station2.id).getByTestId(`board-match-${second.id}`),
 		).toContainText("Now");
+		await expect(board.autoAssignedButton(second.id)).toHaveCount(0);
 		await expect(
 			board.lane(null).getByTestId(`board-match-${first.id}`),
-		).toBeVisible();
+		).toContainText("Held");
 		// teams still unknown, so not Now but Next
 		await expect(
 			board.lane(station1.id).getByTestId(`board-match-${final.id}`),
@@ -535,6 +537,50 @@ test.describe("Tournament admin LAN stations", () => {
 		await expect(board.locators.readOnlyNotice).toBeVisible();
 		await expect(board.match(second.id)).toBeVisible();
 		await expect(board.locators.moveButtons).toHaveCount(0);
+	});
+
+	test("auto-assigns playable matches to the stations added", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+		});
+		await factories.CalendarEventVenueFactory.create({
+			eventId: tournament.eventId,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(4));
+		const [first, second] = await factories.TournamentFactory.startBracket(
+			tournament.id,
+		);
+
+		await impersonate(page, NZAP_TEST_ID);
+		const board = new TournamentAdminBoardPage(page);
+		await board.goto(tournament.id);
+		await expect(board.locators.noStationsNotice).toBeVisible();
+
+		const stations = new TournamentAdminStationsPage(page);
+		await stations.goto(tournament.id);
+		await stations.fillStation(0, { name: "Main stage" });
+		await stations.save();
+
+		await board.goto(tournament.id);
+		await expect(board.match(first.id)).toContainText("Now");
+		await expect(
+			board.lane(null).getByTestId(`board-match-${second.id}`),
+		).toBeVisible();
+		await board.autoAssignedButton(first.id).click();
+		await expect(board.locators.autoAssignedExplanation).toBeVisible();
+
+		await stations.goto(tournament.id);
+		await stations.addStation();
+		await stations.fillStation(1, { name: "Station 2" });
+		await stations.save();
+
+		await board.goto(tournament.id);
+		await expect(board.match(first.id)).toContainText("Now");
+		await expect(board.match(second.id)).toContainText("Now");
+		await expect(board.lane(null)).toContainText("No matches");
 	});
 
 	test("hides the Stations tab of an online tournament", async ({

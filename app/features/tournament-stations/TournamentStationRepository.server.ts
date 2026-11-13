@@ -1,7 +1,7 @@
 import type { Transaction } from "kysely";
 import * as R from "remeda";
 import { db } from "~/db/sql";
-import type { DB, Tables } from "~/db/tables";
+import type { DB, DBBoolean, Tables } from "~/db/tables";
 import * as TournamentAuditLogRepository from "~/features/tournament/TournamentAuditLogRepository.server";
 
 type SetStationsArgs = {
@@ -30,28 +30,64 @@ export function findAllByTournamentId(tournamentId: number) {
 		.execute();
 }
 
-/** Matches queued on the tournament's stations, finished ones included, each station's queue in order. */
-export function findQueuedMatchesByTournamentId(tournamentId: number) {
+/**
+ * Matches placed on the tournament's stations, finished ones included, each station's queue in order.
+ * `stationId: null` for a match an organizer moved to the Waiting lane.
+ */
+export function findMatchPlacementsByTournamentId(tournamentId: number) {
 	return db
 		.selectFrom("TournamentMatchStation")
 		.innerJoin(
-			"TournamentStation",
-			"TournamentStation.id",
-			"TournamentMatchStation.stationId",
+			"TournamentMatch",
+			"TournamentMatch.id",
+			"TournamentMatchStation.matchId",
+		)
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentMatch.stageId",
 		)
 		.select([
 			"TournamentMatchStation.matchId",
 			"TournamentMatchStation.stationId",
+			"TournamentMatchStation.isAutoAssigned",
 		])
-		.where("TournamentStation.tournamentId", "=", tournamentId)
+		.where("TournamentStage.tournamentId", "=", tournamentId)
 		.orderBy("TournamentMatchStation.stationId", "asc")
 		.orderBy("TournamentMatchStation.position", "asc")
 		.execute();
 }
 
 /**
+ * Puts each match on its station as auto-assigned, in front of the queue's unfinished matches (on a station
+ * auto-assignment picks they can't be played yet). Skips matches someone placed in the meantime.
+ */
+export function insertAutoAssignedMatches(
+	assignments: Array<{ matchId: number; stationId: number }>,
+) {
+	return db.transaction().execute(async (trx) => {
+		for (const { matchId, stationId } of assignments) {
+			const placed = await trx
+				.selectFrom("TournamentMatchStation")
+				.select("TournamentMatchStation.matchId")
+				.where("TournamentMatchStation.matchId", "=", matchId)
+				.executeTakeFirst();
+			if (placed) continue;
+
+			await insertIntoQueue(trx, {
+				matchId,
+				stationId,
+				index: 0,
+				isAutoAssigned: 1,
+			});
+		}
+	});
+}
+
+/**
  * Takes the match off the station it's queued on and puts it in the queue of the given station at `index`,
- * counted among the queue's unfinished matches (finished ones stay at the front). `stationId: null` leaves it on no station.
+ * counted among the queue's unfinished matches (finished ones stay at the front). `stationId: null` keeps it in the Waiting
+ * lane, where auto-assignment leaves it. The moved match counts as placed by hand from then on.
  * With `audit` a change of station (not a reorder within one) is written to the tournament's audit log.
  */
 export function moveMatch({
@@ -95,44 +131,20 @@ export function moveMatch({
 			.where("TournamentMatchStation.matchId", "=", matchId)
 			.execute();
 
-		if (stationId === null) return;
+		if (stationId === null) {
+			await trx
+				.insertInto("TournamentMatchStation")
+				.values({ matchId, stationId: null, position: 0 })
+				.execute();
+			return;
+		}
 
-		const queue = await trx
-			.selectFrom("TournamentMatchStation")
-			.innerJoin(
-				"TournamentMatch",
-				"TournamentMatch.id",
-				"TournamentMatchStation.matchId",
-			)
-			.select(["TournamentMatchStation.matchId", "TournamentMatch.winnerSide"])
-			.where("TournamentMatchStation.stationId", "=", stationId)
-			.orderBy("TournamentMatchStation.position", "asc")
-			.execute();
-
-		const finishedMatchIds = queue
-			.filter((row) => row.winnerSide !== null)
-			.map((row) => row.matchId);
-		const unfinishedMatchIds = queue
-			.filter((row) => row.winnerSide === null)
-			.map((row) => row.matchId)
-			.toSpliced(index, 0, matchId);
-
-		await trx
-			.deleteFrom("TournamentMatchStation")
-			.where("TournamentMatchStation.stationId", "=", stationId)
-			.execute();
-		await trx
-			.insertInto("TournamentMatchStation")
-			.values(
-				[...finishedMatchIds, ...unfinishedMatchIds].map(
-					(queuedMatchId, position) => ({
-						matchId: queuedMatchId,
-						stationId,
-						position,
-					}),
-				),
-			)
-			.execute();
+		await insertIntoQueue(trx, {
+			matchId,
+			stationId,
+			index,
+			isAutoAssigned: 0,
+		});
 	});
 }
 
@@ -215,4 +227,57 @@ async function stationName(trx: Transaction<DB>, stationId: number | null) {
 		.executeTakeFirstOrThrow();
 
 	return station.name;
+}
+
+/** Puts the match in the station's queue at `index` among its unfinished matches, finished ones staying at the front. */
+async function insertIntoQueue(
+	trx: Transaction<DB>,
+	{
+		matchId,
+		stationId,
+		index,
+		isAutoAssigned,
+	}: {
+		matchId: number;
+		stationId: number;
+		index: number;
+		isAutoAssigned: DBBoolean;
+	},
+) {
+	const queue = await trx
+		.selectFrom("TournamentMatchStation")
+		.innerJoin(
+			"TournamentMatch",
+			"TournamentMatch.id",
+			"TournamentMatchStation.matchId",
+		)
+		.select([
+			"TournamentMatchStation.matchId",
+			"TournamentMatchStation.isAutoAssigned",
+			"TournamentMatch.winnerSide",
+		])
+		.where("TournamentMatchStation.stationId", "=", stationId)
+		.orderBy("TournamentMatchStation.position", "asc")
+		.execute();
+
+	const finished = queue.filter((row) => row.winnerSide !== null);
+	const unfinished = queue
+		.filter((row) => row.winnerSide === null)
+		.toSpliced(index, 0, { matchId, isAutoAssigned, winnerSide: null });
+
+	await trx
+		.deleteFrom("TournamentMatchStation")
+		.where("TournamentMatchStation.stationId", "=", stationId)
+		.execute();
+	await trx
+		.insertInto("TournamentMatchStation")
+		.values(
+			[...finished, ...unfinished].map((row, position) => ({
+				matchId: row.matchId,
+				stationId,
+				position,
+				isAutoAssigned: row.isAutoAssigned,
+			})),
+		)
+		.execute();
 }

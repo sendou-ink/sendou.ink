@@ -11,6 +11,10 @@ export class TournamentAdminBoardPage {
 		this.page = page;
 		this.locators = {
 			moveButtons: page.getByLabel("Move to"),
+			noStationsNotice: page.getByText("This tournament has no stations."),
+			autoAssignedExplanation: page.getByText(
+				"Auto-assignment put this match on the station",
+			),
 			readOnlyNotice: page.getByText(
 				"Only organizers and streamers can move matches.",
 			),
@@ -33,6 +37,11 @@ export class TournamentAdminBoardPage {
 
 	match(matchId: number) {
 		return this.page.getByTestId(`board-match-${matchId}`);
+	}
+
+	/** The symbol of an auto-assigned match, opens its explanation. */
+	autoAssignedButton(matchId: number) {
+		return this.match(matchId).getByLabel("Auto-assigned");
 	}
 
 	/** Moves the match through its "Move to" menu. `null` = the Waiting lane. */

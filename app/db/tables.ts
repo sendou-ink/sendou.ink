@@ -902,9 +902,12 @@ interface TournamentStation {
 /** A match queued on a station, a match being on at most one station. */
 interface TournamentMatchStation {
 	matchId: number;
-	stationId: number;
+	/** `null` when an organizer moved the match to the Waiting lane: auto-assignment leaves it there. */
+	stationId: number | null;
 	/** Order in the station's queue, 0 first. */
 	position: number;
+	/** Put on the station by auto-assignment, not by an organizer. */
+	isAutoAssigned: Generated<DBBoolean>;
 }
 
 interface TournamentStaff {

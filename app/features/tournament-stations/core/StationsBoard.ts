@@ -1,11 +1,12 @@
 /**
  * The stations board of a LAN tournament: which unfinished matches are queued on each station and in
  * what order, which of them is played now and next, the playable matches still waiting for a station
- * and the name a match goes by on the board.
+ * (in play order) and the name a match goes by on the board.
  */
 import type { Tables } from "~/db/tables";
 import type { MatchStatus } from "~/features/tournament-bracket/core/engine/status";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import * as PlayOrder from "./PlayOrder";
 
 /** A match as shown on the stations board. */
 export interface StationsBoardMatch {
@@ -22,6 +23,10 @@ export interface StationsBoardMatch {
 	isPlayable: boolean;
 	/** `"NOW"`: the station's first queued match that is playable, `"NEXT"`: the one played after it. */
 	slot: "NOW" | "NEXT" | null;
+	/** Put on its station by auto-assignment, not by an organizer. */
+	isAutoAssigned: boolean;
+	/** Kept in the Waiting lane by an organizer while the tournament auto-assigns stations, which leaves it there. */
+	isHeld: boolean;
 }
 
 interface StationsBoardTeam {
@@ -39,23 +44,34 @@ export interface StationsBoardStation {
 
 /**
  * The stations board of a started tournament: each station's queue without its finished matches, plus the
- * playable matches on no station (the Waiting lane), earlier rounds first.
+ * playable matches on no station (the Waiting lane) in play order.
  */
 export function build({
 	tournament,
 	stations,
-	queuedMatches,
+	placements,
 }: {
 	tournament: Tournament;
 	/** In their order. */
 	stations: Array<
 		Pick<Tables["TournamentStation"], "id" | "name" | "locationNote">
 	>;
-	/** Each station's queue in order, finished matches included. */
-	queuedMatches: Array<{ matchId: number; stationId: number }>;
+	/** Each station's queue in order, finished matches included, and the matches kept in Waiting (`stationId: null`). */
+	placements: Array<
+		Pick<
+			Tables["TournamentMatchStation"],
+			"matchId" | "stationId" | "isAutoAssigned"
+		>
+	>;
 }): { stations: StationsBoardStation[]; waiting: StationsBoardMatch[] } {
 	const matches = boardMatchesById(tournament);
-	const queuedMatchIds = new Set(queuedMatches.map((row) => row.matchId));
+	const playOrder = PlayOrder.byMatchId(tournament);
+	const queuedMatchIds = new Set(
+		placements.flatMap((row) => (row.stationId === null ? [] : [row.matchId])),
+	);
+	const heldMatchIds = new Set(
+		placements.flatMap((row) => (row.stationId === null ? [row.matchId] : [])),
+	);
 
 	return {
 		stations: stations.map((station) => ({
@@ -63,12 +79,17 @@ export function build({
 			name: station.name,
 			locationNote: station.locationNote,
 			matches: withSlots(
-				queuedMatches
+				placements
 					.filter((row) => row.stationId === station.id)
 					.flatMap((row) => {
 						const match = matches.get(row.matchId);
 						return match && match.status !== "COMPLETED"
-							? [match.boardMatch]
+							? [
+									{
+										...match.boardMatch,
+										isAutoAssigned: Boolean(row.isAutoAssigned),
+									},
+								]
 							: [];
 					}),
 			),
@@ -77,8 +98,14 @@ export function build({
 			.filter(
 				(match) => match.status === "STARTED" && !queuedMatchIds.has(match.id),
 			)
-			.toSorted((a, b) => compareSortKeys(a.sortKey, b.sortKey))
-			.map((match) => match.boardMatch),
+			.toSorted(
+				(a, b) =>
+					(playOrder.get(a.id)?.rank ?? 0) - (playOrder.get(b.id)?.rank ?? 0),
+			)
+			.map((match) => ({
+				...match.boardMatch,
+				isHeld: tournament.autoAssignsStations && heldMatchIds.has(match.id),
+			})),
 	};
 }
 
@@ -92,8 +119,6 @@ export function matchName(tournament: Tournament, matchId: number) {
 		.join(" · ");
 }
 
-const SECTION_ORDER = { winners: 0, losers: 1, finals: 2 } as const;
-
 function boardMatchesById(tournament: Tournament) {
 	const startedBrackets = tournament.brackets.filter(
 		(bracket) => !bracket.preview,
@@ -105,34 +130,19 @@ function boardMatchesById(tournament: Tournament) {
 		{
 			id: number;
 			status: MatchStatus;
-			sortKey: number[];
 			boardMatch: StationsBoardMatch;
 		}
 	>();
 
 	for (const bracket of startedBrackets) {
 		const statuses = bracket.matchStatuses();
-		const roundsById = new Map(
-			bracket.data.round.map((round) => [round.id, round]),
-		);
-
 		for (const match of bracket.data.match) {
 			const status = statuses.get(match.id);
 			if (!status) continue;
 
-			const round = roundsById.get(match.roundId);
-			const isFinalsSection = round?.section === "finals";
-
 			result.set(match.id, {
 				id: match.id,
 				status,
-				sortKey: [
-					bracket.idx,
-					isFinalsSection ? 1 : 0,
-					round?.number ?? 0,
-					round?.section ? SECTION_ORDER[round.section] : 0,
-					match.number,
-				],
 				boardMatch: {
 					id: match.id,
 					roundName:
@@ -145,6 +155,8 @@ function boardMatchesById(tournament: Tournament) {
 					score: [match.opponent1?.score ?? 0, match.opponent2?.score ?? 0],
 					isPlayable: status === "STARTED",
 					slot: null,
+					isAutoAssigned: false,
+					isHeld: false,
 				},
 			});
 		}
@@ -173,12 +185,4 @@ function withSlots(matches: StationsBoardMatch[]): StationsBoardMatch[] {
 		...match,
 		slot: idx === nowIdx ? "NOW" : idx === nextIdx ? "NEXT" : null,
 	}));
-}
-
-function compareSortKeys(a: number[], b: number[]) {
-	for (let i = 0; i < a.length; i++) {
-		if (a[i] !== b[i]) return a[i] - b[i];
-	}
-
-	return 0;
 }

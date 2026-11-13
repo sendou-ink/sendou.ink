@@ -52,9 +52,12 @@ export async function up(db: Kysely<any>): Promise<void> {
 					col.primaryKey().references("TournamentMatch.id").onDelete("cascade"),
 				)
 				.addColumn("stationId", "integer", (col) =>
-					col.notNull().references("TournamentStation.id").onDelete("cascade"),
+					col.references("TournamentStation.id").onDelete("cascade"),
 				)
 				.addColumn("position", "integer", (col) => col.notNull())
+				.addColumn("isAutoAssigned", "integer", (col) =>
+					col.notNull().defaultTo(0),
+				)
 				.modifyEnd(sql`strict`)
 				.execute();
 

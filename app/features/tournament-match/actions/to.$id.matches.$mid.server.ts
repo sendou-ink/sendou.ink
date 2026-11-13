@@ -31,6 +31,7 @@ import {
 	tournamentChannel,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
+import { autoAssignStations } from "~/features/tournament-stations/core/autoAssignStations.server";
 import { defineAction } from "~/form/define-action.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
@@ -891,6 +892,10 @@ export const action = defineAction(
 		}
 
 		clearTournamentDataCache(tournamentId, { keepRosters: !rostersChanged });
+
+		if (emitTournamentUpdate) {
+			await autoAssignStations(tournament);
+		}
 
 		// refresh RunningTournaments so the sidebar doesn't show stale matches while the TO delays finalizing
 		if (setIsOver || emitStatusUpdate) {

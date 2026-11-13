@@ -59,6 +59,7 @@ function AutoAssignInfoPopover() {
 					<li>{t("tournament:stations.autoAssign.order")}</li>
 					<li>{t("tournament:stations.autoAssign.stay")}</li>
 					<li>{t("tournament:stations.autoAssign.lowest")}</li>
+					<li>{t("tournament:stations.autoAssign.idle")}</li>
 					<li>{t("tournament:stations.autoAssign.waiting")}</li>
 					<li>{t("tournament:stations.autoAssign.manual")}</li>
 				</ul>

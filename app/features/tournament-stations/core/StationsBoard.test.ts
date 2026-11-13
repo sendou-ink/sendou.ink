@@ -21,8 +21,8 @@ const buildBoard = async (tournamentId: number) =>
 		tournament: await tournamentFromDB(tournamentId),
 		stations:
 			await TournamentStationRepository.findAllByTournamentId(tournamentId),
-		queuedMatches:
-			await TournamentStationRepository.findQueuedMatchesByTournamentId(
+		placements:
+			await TournamentStationRepository.findMatchPlacementsByTournamentId(
 				tournamentId,
 			),
 	});

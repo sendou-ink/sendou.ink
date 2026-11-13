@@ -133,7 +133,7 @@ describe("TournamentStationRepository.moveMatch", () => {
 
 	const queueOf = async (tournamentId: number, stationId: number) =>
 		(
-			await TournamentStationRepository.findQueuedMatchesByTournamentId(
+			await TournamentStationRepository.findMatchPlacementsByTournamentId(
 				tournamentId,
 			)
 		)
@@ -184,7 +184,7 @@ describe("TournamentStationRepository.moveMatch", () => {
 		expect(await queueOf(tournamentId, toStationId)).toEqual([matchId]);
 	});
 
-	test("leaves the match on no station when moved to none", async () => {
+	test("keeps the match in Waiting when moved to none", async () => {
 		const {
 			tournamentId,
 			stationIds: [stationId],
@@ -199,10 +199,10 @@ describe("TournamentStationRepository.moveMatch", () => {
 		});
 
 		expect(
-			await TournamentStationRepository.findQueuedMatchesByTournamentId(
+			await TournamentStationRepository.findMatchPlacementsByTournamentId(
 				tournamentId,
 			),
-		).toEqual([]);
+		).toEqual([{ matchId, stationId: null, isAutoAssigned: 0 }]);
 	});
 
 	test("logs nothing to the audit log without `audit`", async () => {
@@ -247,6 +247,45 @@ describe("TournamentStationRepository.moveMatch", () => {
 			first,
 			second,
 			finalId,
+		]);
+	});
+});
+
+describe("TournamentStationRepository.insertAutoAssignedMatches", () => {
+	beforeEach(async () => {
+		await users.create(17);
+	});
+
+	test("puts the matches in front of the unfinished queue, auto-assigned until moved by hand", async () => {
+		const {
+			tournamentId,
+			stationIds: [stationId],
+			semifinalIds: [first, second],
+			finalId,
+		} = await createStartedLanTournament({
+			authorId: users.id(1),
+			teamRosters: R.chunk(users.ids().slice(1), 4),
+		});
+		await TournamentMatchStationFactory.create({ matchId: finalId, stationId });
+
+		await TournamentStationRepository.insertAutoAssignedMatches([
+			{ matchId: first, stationId },
+			{ matchId: second, stationId },
+		]);
+		await TournamentStationRepository.moveMatch({
+			matchId: first,
+			stationId,
+			index: 0,
+		});
+
+		expect(
+			await TournamentStationRepository.findMatchPlacementsByTournamentId(
+				tournamentId,
+			),
+		).toEqual([
+			{ matchId: first, stationId, isAutoAssigned: 0 },
+			{ matchId: second, stationId, isAutoAssigned: 1 },
+			{ matchId: finalId, stationId, isAutoAssigned: 0 },
 		]);
 	});
 });

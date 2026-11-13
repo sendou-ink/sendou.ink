@@ -22,13 +22,14 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
-import { ArrowRightLeft, GripVertical } from "lucide-react";
+import { ArrowRightLeft, GripVertical, WandSparkles } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import { SendouPopover } from "~/components/elements/Popover";
 import { useUser } from "~/features/auth/core/user";
 import { useLiveRevalidation } from "~/features/chat/chat-hooks";
 import { useEventsTopic } from "~/features/events/events-hooks";
@@ -476,6 +477,14 @@ function MatchCardContent({
 			{dragHandle}
 			<div className={styles.cardBody}>
 				<div className={styles.cardMeta}>
+					{match.isHeld && !showSlot ? (
+						<span
+							className={styles.slot}
+							title={t("tournament:stations.board.held.explanation")}
+						>
+							{t("tournament:stations.board.held")}
+						</span>
+					) : null}
 					{slot ? (
 						<span
 							className={clsx(styles.slot, {
@@ -487,6 +496,7 @@ function MatchCardContent({
 								: t("tournament:stations.board.next")}
 						</span>
 					) : null}
+					{match.isAutoAssigned ? <AutoAssignedPopover /> : null}
 					<Link
 						to={tournamentMatchPage({
 							tournamentId: tournament.ctx.id,
@@ -512,6 +522,28 @@ function MatchCardContent({
 			</div>
 			{menu}
 		</div>
+	);
+}
+
+function AutoAssignedPopover() {
+	const { t } = useTranslation(["tournament"]);
+
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton
+					size="miniscule"
+					variant="minimal"
+					icon={<WandSparkles />}
+					className={styles.autoAssigned}
+					aria-label={t("tournament:stations.board.autoAssigned")}
+				/>
+			}
+		>
+			<div className="text-sm">
+				{t("tournament:stations.board.autoAssigned.explanation")}
+			</div>
+		</SendouPopover>
 	);
 }
 

@@ -20,10 +20,11 @@ const users = UserFactory.pool();
 const organizerId = () => users.id(1);
 const staffId = () => users.id(18);
 
-const createTournament = async () => {
+const createTournament = async ({ autoAssign = false } = {}) => {
 	const tournament = await createStartedLanTournament({
 		authorId: organizerId(),
 		teamRosters: R.chunk(users.ids(17).slice(1), 4),
+		autoAssign,
 	});
 
 	return { ...tournament, params: { id: String(tournament.tournamentId) } };
@@ -52,7 +53,7 @@ const auditLogMetadata = async (tournamentId: number) =>
 	).map((event) => ({ actorId: event.actor?.id, ...event.metadata }));
 
 const queuedMatches = (tournamentId: number) =>
-	TournamentStationRepository.findQueuedMatchesByTournamentId(tournamentId);
+	TournamentStationRepository.findMatchPlacementsByTournamentId(tournamentId);
 
 describe("stations board action", () => {
 	beforeEach(async () => {
@@ -72,10 +73,12 @@ describe("stations board action", () => {
 			{ user: organizerId(), params },
 		);
 
-		expect(await queuedMatches(tournamentId)).toEqual([{ matchId, stationId }]);
+		expect(await queuedMatches(tournamentId)).toEqual([
+			{ matchId, stationId, isAutoAssigned: 0 },
+		]);
 	});
 
-	test("takes the match back to waiting when no station is given", async () => {
+	test("keeps the match in waiting when no station is given", async () => {
 		const {
 			tournamentId,
 			params,
@@ -92,7 +95,52 @@ describe("stations board action", () => {
 			{ user: organizerId(), params },
 		);
 
-		expect(await queuedMatches(tournamentId)).toEqual([]);
+		expect(await queuedMatches(tournamentId)).toEqual([
+			{ matchId, stationId: null, isAutoAssigned: 0 },
+		]);
+	});
+
+	test("puts the other playable match on the free station when auto-assigning", async () => {
+		const {
+			tournamentId,
+			params,
+			stationIds: [firstStationId, secondStationId],
+			semifinalIds: [first, second],
+		} = await createTournament({ autoAssign: true });
+
+		await boardAction(
+			{
+				_action: "MOVE_MATCH",
+				matchId: second,
+				stationId: firstStationId,
+				index: 0,
+			},
+			{ user: organizerId(), params },
+		);
+
+		expect(await queuedMatches(tournamentId)).toEqual([
+			{ matchId: second, stationId: firstStationId, isAutoAssigned: 0 },
+			{ matchId: first, stationId: secondStationId, isAutoAssigned: 1 },
+		]);
+	});
+
+	test("leaves a match moved to waiting there when auto-assigning", async () => {
+		const {
+			tournamentId,
+			params,
+			stationIds: [firstStationId],
+			semifinalIds: [first, second],
+		} = await createTournament({ autoAssign: true });
+
+		await boardAction(
+			{ _action: "MOVE_MATCH", matchId: first, index: 0 },
+			{ user: organizerId(), params },
+		);
+
+		expect(await queuedMatches(tournamentId)).toEqual([
+			{ matchId: first, stationId: null, isAutoAssigned: 0 },
+			{ matchId: second, stationId: firstStationId, isAutoAssigned: 1 },
+		]);
 	});
 
 	test("logs a change of station to the audit log", async () => {
@@ -143,8 +191,8 @@ describe("stations board action", () => {
 		);
 
 		expect(await queuedMatches(tournamentId)).toEqual([
-			{ matchId: second, stationId },
-			{ matchId: first, stationId },
+			{ matchId: second, stationId, isAutoAssigned: 0 },
+			{ matchId: first, stationId, isAutoAssigned: 0 },
 		]);
 		expect(await auditLogMetadata(tournamentId)).toEqual([]);
 	});

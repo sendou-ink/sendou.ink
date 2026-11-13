@@ -6,16 +6,19 @@ import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.
 
 /**
  * A LAN tournament of the four teams of `teamRosters` (seed order) in a started single elimination
- * bracket: the two semifinals playable, the final not. Has the stations named in `stationNames`.
+ * bracket: the two semifinals playable, the final not. Has the stations named in `stationNames`, nothing on
+ * them yet, and auto-assigns them unless `autoAssign` is `false`.
  */
 export async function createStartedLanTournament({
 	authorId,
 	teamRosters,
 	stationNames = ["Station 1", "Station 2"],
+	autoAssign = true,
 }: {
 	authorId: number;
 	teamRosters: number[][];
 	stationNames?: string[];
+	autoAssign?: boolean;
 }) {
 	const tournament = await TournamentFactory.create({ authorId });
 	await CalendarEventVenueFactory.create({ eventId: tournament.eventId });
@@ -34,6 +37,7 @@ export async function createStartedLanTournament({
 				await TournamentStationFactory.create({
 					tournamentId: tournament.id,
 					name,
+					autoAssign,
 				})
 			).id,
 		);
