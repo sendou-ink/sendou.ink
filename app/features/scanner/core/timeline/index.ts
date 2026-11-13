@@ -3,8 +3,8 @@
  * each of its scored fields voted across the run's reads; a read whose field
  * scores average under a floor is dropped. Each event kind declares its own
  * window, content guard, floor and how a run becomes the read kept
- * (`EventKind` in detectors/types.ts, listed in events.ts); sampled kinds
- * (per-frame state reads) keep the ends of every same-state run.
+ * (`EventKind` in detectors/types.ts, listed in events.ts); per-frame state
+ * reads are all kept.
  * A scan has one timeline, pushed to by its frame pass (detectors/frame-pass.ts):
  * the analyzer worker's or the CLI's. Everything else follows it through the
  * keyed changes its pushes report.
@@ -39,13 +39,6 @@ export type TimelineAction =
 			event: DetectedEvent;
 			replaced: DetectedEvent;
 	  }
-	/** a sampled run's trailing read moved forward: same stored slot, no new frame worth keeping */
-	| {
-			action: "extended";
-			key: number;
-			event: DetectedEvent;
-			replaced: DetectedEvent;
-	  }
 	/** a read outvoted fields of the kept one, which stays the slot's frame and `t` */
 	| {
 			action: "amended";
@@ -58,7 +51,7 @@ export type TimelineAction =
 
 /** An action that changed the timeline, as its owner reports it to whoever mirrors it. */
 export interface TimelineChange {
-	action: "added" | "replaced" | "extended" | "amended";
+	action: "added" | "replaced" | "amended";
 	key: number;
 	event: DetectedEvent;
 }
@@ -135,9 +128,7 @@ export class TimelineBuilder {
 		const window = this.windowOf(event.type);
 		const same = (a: DetectedEvent, b: DetectedEvent) =>
 			kind?.sameData?.(a.data, b.data) ?? true;
-		if (kind?.keep === "sampled") {
-			return this.#pushSample(event, window, same);
-		}
+		if (kind?.keep === "every") return this.#add(event);
 		const near = this.#events.find(
 			(e) =>
 				e.type === event.type &&
@@ -173,8 +164,10 @@ export class TimelineBuilder {
 	#add(event: DetectedEvent): TimelineAction {
 		const key = this.#nextKey++;
 		this.#keys.set(event, key);
-		this.#events.push(event);
-		this.#events.sort((a, b) => a.t - b.t);
+		// reads arrive mostly in order; after every read at the same `t`, as a stable sort would place it
+		let at = this.#events.length;
+		while (at > 0 && this.#events[at - 1]!.t > event.t) at--;
+		this.#events.splice(at, 0, event);
 		return { action: "added", key, event };
 	}
 
@@ -207,44 +200,13 @@ export class TimelineBuilder {
 	#replace(
 		kept: DetectedEvent,
 		event: DetectedEvent,
-		action: "replaced" | "extended" | "amended" = "replaced",
+		action: "replaced" | "amended" = "replaced",
 	): TimelineAction {
 		const key = this.#keys.get(kept)!;
 		this.#keys.set(event, key);
 		this.#events[this.#events.indexOf(kept)] = event;
 		this.#events.sort((a, b) => a.t - b.t);
 		return { action, key, event, replaced: kept };
-	}
-
-	/**
-	 * Same-state neighbours (by `t`) decide a sample's fate: none within the
-	 * window → added; already bracketed by two → merged (a late-arriving VoD
-	 * read); following the run's trailing read while the kept read before it is
-	 * still within the window → extends, replacing that trailing read; otherwise
-	 * added as the run's new trailing read.
-	 */
-	#pushSample(
-		event: DetectedEvent,
-		window: number,
-		same: (a: DetectedEvent, b: DetectedEvent) => boolean,
-	): TimelineAction {
-		const continues = (earlier: DetectedEvent, later: DetectedEvent) =>
-			later.t - earlier.t <= window && same(earlier, later);
-		const sameType = this.#events.filter((e) => e.type === event.type);
-		const nextIndex = sameType.findIndex((e) => e.t > event.t);
-		const before = nextIndex === -1 ? sameType : sameType.slice(0, nextIndex);
-		const next = nextIndex === -1 ? undefined : sameType[nextIndex];
-		const prev = before.at(-1);
-		const kept = before.at(-2);
-		if (prev && continues(prev, event)) {
-			if (prev.t === event.t || (next && continues(event, next))) {
-				return { action: "merged", into: prev };
-			}
-			if (kept && continues(kept, prev) && continues(kept, event)) {
-				return this.#replace(prev, event, "extended");
-			}
-		}
-		return this.#add(event);
 	}
 }
 

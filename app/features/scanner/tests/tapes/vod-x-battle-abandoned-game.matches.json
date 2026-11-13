@@ -1108,31 +1108,31 @@
 						{
 							"t": 4589,
 							"time": 126,
-							"special": [[false,false,false,false],[true,false,false,false]],
+							"special": [[false,false,false,false],[false,false,false,false]],
 							"dead": [[false,false,false,false],[false,false,false,false]]
 						},
 						{
 							"t": 4590,
 							"time": 125,
-							"special": [[false,false,false,false],[true,false,false,false]],
-							"dead": [[false,false,false,false],[false,false,false,false]]
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[true,false,false,false]]
 						},
 						{
 							"t": 4592,
 							"time": 123,
-							"special": [[false,false,false,false],[true,false,false,false]],
-							"dead": [[false,false,false,false],[false,false,false,false]]
+							"special": [[false,false,false,false],[false,false,false,false]],
+							"dead": [[false,false,false,false],[true,false,false,false]]
 						},
 						{
 							"t": 4593,
 							"time": 122,
-							"special": [[true,false,false,false],[true,false,false,false]],
+							"special": [[true,false,false,false],[false,false,false,false]],
 							"dead": [[false,false,false,false],[false,false,false,false]]
 						},
 						{
 							"t": 4594,
 							"time": 121,
-							"special": [[true,false,false,false],[true,false,false,false]],
+							"special": [[true,false,false,false],[false,false,false,false]],
 							"dead": [[false,false,false,false],[false,false,false,false]]
 						},
 						{
@@ -1168,7 +1168,7 @@
 						{
 							"t": 4600,
 							"time": null,
-							"special": [[true,false,true,false],[true,false,false,false]],
+							"special": [[true,false,true,false],[false,false,false,false]],
 							"dead": [[false,false,false,false],[true,true,true,true]]
 						},
 						{

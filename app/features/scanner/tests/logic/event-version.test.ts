@@ -98,6 +98,39 @@ describe("EventVersion.upgradedFrom", () => {
 		});
 	});
 
+	test("turns a status read's flags into evidence of one confident read per slot", () => {
+		const off = [false, false, false, false];
+		const event = {
+			type: "PlayerStatus",
+			t: 12,
+			scores: {
+				"special.0.1,dead.0.1": 0.7,
+				"special.1.2,dead.1.2": 0.9,
+			},
+			data: {
+				time: 140,
+				special: [[false, true, false, false], off],
+				dead: [off, [false, false, true, false]],
+				cast: null,
+			},
+		};
+
+		const alive = [0.9, 0.05, 0.05];
+		expect(EventVersion.upgradedFrom(2, event)).toEqual({
+			type: "PlayerStatus",
+			t: 12,
+			scores: { "slots.0.1": 0.7, "slots.1.2": 0.9 },
+			data: {
+				time: 140,
+				slots: [
+					[alive, [0.05, 0.9, 0.05], alive, alive],
+					[alive, alive, [0.05, 0.05, 0.9], alive],
+				],
+				cast: null,
+			},
+		});
+	});
+
 	test("returns an event stamped current as the same object", () => {
 		const event = { type: "Death", scores: { name: 0.8 }, data: { name: "a" } };
 

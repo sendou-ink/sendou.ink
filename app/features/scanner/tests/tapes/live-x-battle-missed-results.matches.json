@@ -142,13 +142,13 @@
 							"t": 1792140428,
 							"time": null,
 							"special": [[false,false,false,false],[false,false,false,false]],
-							"dead": [[false,false,false,false],[false,false,false,false]]
+							"dead": [[true,false,false,false],[false,false,false,false]]
 						},
 						{
 							"t": 1792140429,
 							"time": 275,
 							"special": [[false,false,false,false],[false,false,false,false]],
-							"dead": [[false,false,false,false],[false,false,false,false]]
+							"dead": [[true,false,false,false],[false,false,false,false]]
 						},
 						{
 							"t": 1792140431,
@@ -273,7 +273,7 @@
 						{
 							"t": 1792140467,
 							"time": null,
-							"special": [[false,false,true,false],[false,false,false,false]],
+							"special": [[false,false,false,false],[false,false,false,false]],
 							"dead": [[true,false,true,true],[false,false,false,true]]
 						},
 						{
@@ -585,7 +585,7 @@
 						{
 							"t": 1792140550,
 							"time": null,
-							"special": [[false,false,false,false],[true,true,false,false]],
+							"special": [[false,false,false,false],[true,false,false,false]],
 							"dead": [[false,true,true,true],[false,true,true,false]]
 						},
 						{

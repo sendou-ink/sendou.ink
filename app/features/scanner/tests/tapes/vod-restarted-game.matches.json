@@ -497,7 +497,7 @@
 						{
 							"t": 10871,
 							"time": 221,
-							"special": [[false,false,false,false],[false,true,true,true]],
+							"special": [[false,false,false,false],[false,true,true,false]],
 							"dead": [[false,false,false,false],[false,false,false,false]]
 						},
 						{

@@ -212,13 +212,13 @@
 						{
 							"t": 58,
 							"time": 263,
-							"special": [[false,true,false,false],[false,false,false,true]],
+							"special": [[false,true,false,false],[false,false,false,false]],
 							"dead": [[false,false,false,false],[true,false,false,false]]
 						},
 						{
 							"t": 59,
 							"time": 262,
-							"special": [[false,true,false,false],[false,true,false,true]],
+							"special": [[false,true,false,false],[false,true,false,false]],
 							"dead": [[false,false,false,false],[false,false,false,false]]
 						},
 						{
@@ -911,7 +911,7 @@
 						{
 							"t": 250,
 							"time": 213,
-							"special": [[false,false,false,true],[true,false,false,false]],
+							"special": [[false,false,false,false],[true,false,false,false]],
 							"dead": [[true,false,true,false],[false,true,false,true]]
 						},
 						{
