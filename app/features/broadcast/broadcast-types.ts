@@ -80,6 +80,14 @@ export interface BroadcastStoredState<
 	 * Other games, and every other scene, use the theme's team colors.
 	 */
 	ink: BroadcastGameInk | null;
+	/** The game start or end the staged item waits for, seen by the scanner but not cut to yet (see `Producer.autoTakeAt`). */
+	gameCut: BroadcastGameCut | null;
+}
+
+/** A game starting or ending on the scanner's feed, `at` (epoch ms) when it did: where the cut to or from it belongs. */
+interface BroadcastGameCut {
+	type: "start" | "end";
+	at: number;
 }
 
 export interface LiveResults {
@@ -92,6 +100,8 @@ export interface BroadcastSettings {
 	/** Injected unlayered after the overlays' own styles. */
 	css: string;
 	weaponImages: BroadcastWeaponImages;
+	/** How much later the game shows in OBS than on the scanner's feed, the cuts to and from the game wait for it. */
+	gameDelayMs: number;
 }
 
 /** The cast account a broadcast is for. */
@@ -174,10 +184,18 @@ export interface BroadcastHealth {
 export type BroadcastGameSignal =
 	| {
 			type: "start";
-			/** The teams' ink colors as read off the game's HUD, in no particular order. `null` when not read. */
+			/** How long before the signal was sent the game showed up on the scanner's feed. */
+			agoMs: number;
+			/** The teams' ink colors as read off the game's HUD, in no particular order. `null` when not read (yet). */
 			inks: [BroadcastInkRgb, BroadcastInkRgb] | null;
 	  }
-	| { type: "end" };
+	/** The ink of a game that started without it, once read. */
+	| { type: "ink"; inks: [BroadcastInkRgb, BroadcastInkRgb] }
+	| {
+			type: "end";
+			/** How long before the signal was sent the game ended on the scanner's feed. */
+			agoMs: number;
+	  };
 
 /** A team's ink color as read off the game's HUD, channels 0-255. */
 export interface BroadcastInkRgb {

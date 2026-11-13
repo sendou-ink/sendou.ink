@@ -1,14 +1,15 @@
 /**
  * Links the live capture to the tournament broadcast linked from its
  * dashboard (`broadcastLinkPersisted`): games starting and ending on the
- * capture put the broadcast's scenes waiting for them on air, the start
- * telling the overlay the teams' ink colors first (GameCues, broadcast's
+ * capture put the broadcast's scenes waiting for them on air, timed by when
+ * they were seen, and the teams' ink colors the game (GameCues, broadcast's
  * `Producer.applyGameSignal`). A cast never shows the results screen that
  * would send its match, so the game ending sends it instead; every other
  * upload goes on as without a link. While capturing, the link holds the
  * broadcast's stream open, which is how the dashboard knows a scanner is on.
  */
 import { useSyncExternalStore } from "react";
+import { BROADCAST_GAME_SIGNAL_MAX_AGO_MS } from "~/features/broadcast/broadcast-constants";
 import type {
 	BroadcastGameSignal,
 	BroadcastStreamMessage,
@@ -32,6 +33,11 @@ import { sendLive, uploadEnabled } from "./upload";
 /** How often time passing is checked for a game whose HUD went away. */
 const TICK_MS = 1_000;
 const REOPEN_DELAY_MS = 5_000;
+const SIGNAL_DESCRIPTIONS: Record<BroadcastGameSignal["type"], string> = {
+	start: "the game started",
+	ink: "the teams' ink colors",
+	end: "the game ended",
+};
 
 export interface BroadcastLinkSnapshot {
 	target: LinkedBroadcast | null;
@@ -178,11 +184,7 @@ function advance(input: GameCues.GameCuesInput): void {
 	cuesState = stepped.state;
 
 	for (const cue of stepped.cues) {
-		void postSignal(
-			cue.type === "start"
-				? { type: "start", inks: cue.inks }
-				: { type: "end" },
-		);
+		void postSignal(toSignal(cue));
 		if (cue.type === "end" && uploadEnabled()) {
 			void sendLive(
 				(built) => isMatchAt(built.match, cue.t) && unsentMatches(built),
@@ -190,6 +192,21 @@ function advance(input: GameCues.GameCuesInput): void {
 			);
 		}
 	}
+}
+
+function toSignal(cue: GameCues.GameCue): BroadcastGameSignal {
+	if (cue.type === "ink") return cue;
+
+	const agoMs = Math.round(
+		Math.min(
+			Math.max(Date.now() - cue.t * 1000, 0),
+			BROADCAST_GAME_SIGNAL_MAX_AGO_MS,
+		),
+	);
+
+	return cue.type === "start"
+		? { type: "start", agoMs, inks: cue.inks }
+		: { type: "end", agoMs };
 }
 
 async function postSignal(signal: BroadcastGameSignal): Promise<void> {
@@ -206,7 +223,7 @@ async function postSignal(signal: BroadcastGameSignal): Promise<void> {
 		if (snapshot.error) set({ error: null });
 	} catch (error) {
 		set({
-			error: `Couldn't tell the broadcast the game ${signal.type === "start" ? "started" : "ended"} (${error instanceof Error ? error.message : String(error)})`,
+			error: `Couldn't tell the broadcast ${SIGNAL_DESCRIPTIONS[signal.type]} (${error instanceof Error ? error.message : String(error)})`,
 		});
 	}
 }

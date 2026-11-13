@@ -4,13 +4,17 @@ import type { BroadcastSettings, BroadcastTransition } from "./broadcast-types";
 /** How a Take puts the staged state on air, in the order of the dashboard's transition buttons. */
 export const BROADCAST_TRANSITIONS = ["stinger", "fade", "cut"] as const;
 
+/** The default theme's `--bc-stinger-duration` and `--bc-stinger-covered-at` (`BroadcastOverlay.module.css`). */
+const STINGER_COVERED_MS = Math.round(2_200 * 0.32);
+
 /**
  * When a Take changes the scene with each transition in the default theme's timing: `inMs` from the Take to the new
  * scene starting (once the stinger covers the screen), `outMs` from the Take to the old scene being hidden. Automatic
- * Takes are timed with these so a scene's end is hidden, a theme retiming its transitions moves them off by the difference.
+ * Takes are timed with these so the switch lands where it belongs (a scene's end, a game starting or ending), a theme
+ * retiming its transitions moves them off by the difference.
  */
 export const BROADCAST_TRANSITION_TIMING = {
-	stinger: { inMs: 704, outMs: 704 },
+	stinger: { inMs: STINGER_COVERED_MS, outMs: STINGER_COVERED_MS },
 	fade: { inMs: 0, outMs: 400 },
 	cut: { inMs: 0, outMs: 0 },
 } as const satisfies Record<
@@ -161,9 +165,19 @@ export const BROADCAST_DESIGN_MESSAGE = "broadcast:design";
 /** Posted by the designer's canvas once it listens for {@link BROADCAST_DESIGN_MESSAGE}. */
 export const BROADCAST_DESIGN_READY_MESSAGE = "broadcast:design-ready";
 
+/** Upper bound of the `gameDelayMs` setting, a minute covers any stream delay a cast runs. */
+export const BROADCAST_GAME_DELAY_MAX_MS = 60_000;
+
+/**
+ * How long before the signal was sent a game cue can say it happened: the scanner sends a game's end a few seconds
+ * after its HUD was last seen, and a capture lagging behind can add some.
+ */
+export const BROADCAST_GAME_SIGNAL_MAX_AGO_MS = 60_000;
+
 export const DEFAULT_BROADCAST_SETTINGS = {
 	css: "",
 	weaponImages: "default",
+	gameDelayMs: 0,
 } as const satisfies BroadcastSettings;
 
 export const BROADCAST_WEAPONS_PER_PLAYER = 3;

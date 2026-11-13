@@ -104,9 +104,16 @@ function run(
 }
 
 describe("GameCues.step", () => {
-	test("starts the game with its ink once the HUD shows it twice", () => {
-		expect(run([mapStart(0), hud(10), hud(11), hud(12)])).toEqual([
-			{ type: "start", inks: [LIME.ink, PINK.ink], at: 11 },
+	test("starts the game at its intro, its ink following once the HUD shows it twice", () => {
+		expect(run([mapStart(0), mapStart(1), hud(10), hud(11), hud(12)])).toEqual([
+			{ type: "start", t: 0, inks: null, at: 0 },
+			{ type: "ink", inks: [LIME.ink, PINK.ink], at: 11 },
+		]);
+	});
+
+	test("starts the game at its HUD with its ink when the intro wasn't read", () => {
+		expect(run([hud(10), hud(11), hud(12)])).toEqual([
+			{ type: "start", t: 11, inks: [LIME.ink, PINK.ink], at: 11 },
 		]);
 	});
 
@@ -118,7 +125,7 @@ describe("GameCues.step", () => {
 
 	test("waits for two reads of the same ink", () => {
 		expect(run([hud(10, { teams: [ORANGE, PINK] }), hud(11), hud(12)])).toEqual(
-			[{ type: "start", inks: [LIME.ink, PINK.ink], at: 12 }],
+			[{ type: "start", t: 12, inks: [LIME.ink, PINK.ink], at: 12 }],
 		);
 	});
 
@@ -126,7 +133,7 @@ describe("GameCues.step", () => {
 		const statusOnly = (t: number) => hud(t).slice(1);
 
 		expect(run([statusOnly(10), statusOnly(11)])).toEqual([
-			{ type: "start", inks: [LIME.ink, PINK.ink], at: 11 },
+			{ type: "start", t: 11, inks: [LIME.ink, PINK.ink], at: 11 },
 		]);
 	});
 
@@ -135,7 +142,37 @@ describe("GameCues.step", () => {
 			Array.from({ length: 6 }, (_, i) => hud(10 + i, { teams: [null, PINK] })),
 		);
 
-		expect(cues).toEqual([{ type: "start", inks: null, at: 15 }]);
+		expect(cues).toEqual([{ type: "start", t: 15, inks: null, at: 15 }]);
+	});
+
+	test("gives no ink after the intro when the HUD shows none", () => {
+		const cues = run([
+			mapStart(0),
+			...Array.from({ length: 8 }, (_, i) =>
+				hud(10 + i, { teams: [null, PINK] }),
+			),
+		]);
+
+		expect(cues.map((cue) => cue.type)).toEqual(["start"]);
+	});
+
+	test("waits for the HUD after the intro", () => {
+		const cues = run([mapStart(0), 10, 20, hud(21), hud(22)]);
+
+		expect(cues.map((cue) => cue.type)).toEqual(["start", "ink"]);
+	});
+
+	test("takes back an intro whose HUD never showed", () => {
+		expect(run([mapStart(0), 29, 30])).toEqual([
+			{ type: "start", t: 0, inks: null, at: 0 },
+			{ type: "end", t: 0, at: 30 },
+		]);
+	});
+
+	test("doesn't take an intro read mid-game for the next game", () => {
+		const cues = run([mapStart(0), hud(10), hud(11), mapStart(12), hud(13)]);
+
+		expect(cues.map((cue) => cue.type)).toEqual(["start", "ink"]);
 	});
 
 	test("ends the game shortly after the HUD is gone once the timer ran out", () => {
@@ -204,6 +241,11 @@ describe("GameCues.step", () => {
 			hud(211),
 		]);
 
-		expect(cues.map((cue) => cue.type)).toEqual(["start", "end", "start"]);
+		expect(cues.map((cue) => cue.type)).toEqual([
+			"start",
+			"end",
+			"start",
+			"ink",
+		]);
 	});
 });

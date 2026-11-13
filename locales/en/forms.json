@@ -533,6 +533,8 @@
 	"options.broadcastWeaponImages.outlined": "Outlined",
 	"labels.broadcastCss": "Custom CSS",
 	"bottomTexts.broadcastCss": "Applied after the default styles. Override the variables on [data-broadcast], redefine the bc-* @keyframes or target parts like [data-scene=\"game\"] [data-part=\"team-name\"].",
+	"labels.broadcastGameDelay": "Game feed delay (ms)",
+	"bottomTexts.broadcastGameDelay": "How much later the game shows in OBS than on the scanner's capture, e.g. a render delay on the capture card source. The cuts to and from the game wait this long so they land as the game starts and ends on stream. Leave at 0 when OBS shows the game as the scanner sees it, or when the whole stream is delayed (that delays the overlay too).",
 	"labels.broadcastHeadline": "Headline",
 	"bottomTexts.broadcastHeadline": "Shown on the full screen scenes, e.g. Starting soon and Break.",
 	"labels.broadcastCasters": "Casters",

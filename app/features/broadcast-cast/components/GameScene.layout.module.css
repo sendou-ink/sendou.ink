@@ -1,9 +1,17 @@
-.infoCard {
-	--bc-enter-x: calc(var(--bc-enter-distance) * -1);
-
+/* the info card, the map intro under it */
+.corner {
 	position: absolute;
 	top: var(--game-info-top);
 	left: var(--game-info-left);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 12px;
+}
+
+.infoCard {
+	--bc-enter-x: calc(var(--bc-enter-distance) * -1);
+
 	display: flex;
 	max-width: var(--game-info-max-width);
 	align-items: stretch;
@@ -75,6 +83,56 @@
 
 .pronouns {
 	padding: 2px 6px;
+}
+
+/* the new game's map, until the game is under way: as wide as the info card, its own width left out of the corner's */
+.mapIntro {
+	--bc-enter-x: calc(var(--bc-enter-distance) * -1);
+	--bc-exit-x: calc(var(--bc-enter-distance) * -1);
+
+	position: relative;
+	align-self: stretch;
+	contain: inline-size;
+	overflow: hidden;
+	animation:
+		var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + 3 * var(--bc-stagger)) both,
+		var(--bc-anim-exit) var(--bc-enter-duration) var(--bc-ease-in)
+		calc(var(--scene-enter-delay) + var(--game-map-intro-duration)) forwards;
+}
+
+.mapIntroImage {
+	--camera-overview: scale(1);
+	--camera-zoom: scale(1.08);
+
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	animation: var(--bc-anim-camera) calc(var(--game-map-intro-duration) + 1s)
+		ease-out var(--scene-enter-delay) both;
+}
+
+.mapIntroText {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 12px 20px 14px;
+}
+
+.mapIntroMode {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	white-space: nowrap;
+}
+
+/* the card is only as wide as the info card above it */
+.mapIntroStage {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .scoreboard {

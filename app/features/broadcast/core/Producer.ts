@@ -48,6 +48,7 @@ export function initialState<Item extends ProducerState>(
 		lastItemId: 2,
 		liveResults: null,
 		ink: null,
+		gameCut: null,
 	};
 }
 
@@ -100,6 +101,7 @@ export function take<Item extends ProducerState>(
 		lastItemId: Math.max(state.lastItemId, next.id),
 		liveResults,
 		ink: state.ink,
+		gameCut: null,
 	};
 }
 
@@ -146,27 +148,32 @@ export function liveEndsAt<Item extends ProducerState>(
 
 /**
  * When the staged item goes on air by itself (epoch ms): its transition timed to hide the scene on air as that one
- * ends. `null` when it waits for a Take or can't go on air (see {@link canTake}).
+ * ends, or as the game it waits for started or ended on the scanner's feed (`gameCut`) plus `gameDelayMs`, the delay
+ * of the game in OBS. `null` when it waits for a Take or a game event not seen yet, or can't go on air (see
+ * {@link canTake}). It can be in the past, a game event being seen after the fact.
  */
 export function autoTakeAt<Item extends ProducerState>(
 	rules: Rules<Item>,
 	state: BroadcastStoredState<Item>,
-	{ hasMatch }: { hasMatch: boolean },
+	{ hasMatch, gameDelayMs }: { hasMatch: boolean; gameDelayMs: number },
 ) {
+	if (!canTake(rules, state, { hasMatch })) return null;
+
+	const advance = effectiveAdvance(rules, state.live, state.next);
+	const { outMs } = BROADCAST_TRANSITION_TIMING[state.next.transition];
+	if (advance === "game") {
+		const { gameCut } = state;
+		if (gameCut?.type !== gameCue(rules, state.live, state.next)) return null;
+
+		return gameCut.at + gameDelayMs - outMs;
+	}
+
 	const endsAt = liveEndsAt(rules, state);
-	if (
-		endsAt === null ||
-		!canTake(rules, state, { hasMatch }) ||
-		effectiveAdvance(rules, state.live, state.next) !== "timer" ||
-		state.takenAt === null
-	) {
+	if (advance !== "timer" || endsAt === null || state.takenAt === null) {
 		return null;
 	}
 
-	return Math.max(
-		state.takenAt,
-		endsAt - BROADCAST_TRANSITION_TIMING[state.next.transition].outMs,
-	);
+	return Math.max(state.takenAt, endsAt - outMs);
 }
 
 /**
@@ -206,11 +213,12 @@ export function effectiveAdvance<Item extends ProducerState>(
 }
 
 /**
- * What the scanner seeing a game start or end changes. A start colors the game with the ink read (Color Lock carrying
- * over from the broadcast's previous game, see `InkColor.closestPair`), the teams keeping the sides they had earlier
- * in the set (the pair's first color always goes to the same lobby team). Either puts the
- * staged item on air when it waits for that event, unless it can't go on air (see {@link canTake}). `null` when
- * nothing changes.
+ * What the scanner seeing a game start or end changes. The ink read (with the start or after it) colors the game
+ * (Color Lock carrying over from the broadcast's previous game, see `InkColor.closestPair`), the teams keeping the
+ * sides they had earlier in the set (the pair's first color always goes to the same lobby team). A start or end
+ * the staged item waits for puts it on air, timed so its transition lands where the game started or ended (see
+ * {@link autoTakeAt}): right away when that's due, otherwise it's kept as `gameCut` for the broadcast's timer. Not
+ * when the item can't go on air (see {@link canTake}). `null` when nothing changes.
  */
 export function applyGameSignal<Item extends ProducerState>(
 	rules: Rules<Item>,
@@ -219,15 +227,18 @@ export function applyGameSignal<Item extends ProducerState>(
 		signal,
 		liveResults,
 		now,
+		gameDelayMs,
 	}: {
 		signal: BroadcastGameSignal;
 		/** The featured match and how many of its results are reported, `null` without one. */
 		liveResults: LiveResults | null;
 		now: number;
+		/** How much later the game shows in OBS than on the scanner's feed, see `BroadcastSettings`. */
+		gameDelayMs: number;
 	},
 ): BroadcastStoredState<Item> | null {
 	const inkKey =
-		signal.type === "start" && signal.inks
+		signal.type !== "end" && signal.inks
 			? InkColor.closestPair(signal.inks, state.ink?.key ?? null)
 			: null;
 	const colored: BroadcastStoredState<Item> =
@@ -246,19 +257,24 @@ export function applyGameSignal<Item extends ProducerState>(
 				}
 			: state;
 
+	const hasMatch = liveResults !== null;
 	const isWaitedFor =
+		signal.type !== "ink" &&
 		effectiveAdvance(rules, state.live, state.next) === "game" &&
 		gameCue(rules, state.live, state.next) === signal.type &&
-		canTake(rules, state, { hasMatch: liveResults !== null });
-	if (isWaitedFor) {
-		return take(rules, colored, {
-			liveResults,
-			now,
-			hasMatch: liveResults !== null,
-		});
+		canTake(rules, state, { hasMatch });
+	if (!isWaitedFor) return colored === state ? null : colored;
+
+	const cut: BroadcastStoredState<Item> = {
+		...colored,
+		gameCut: { type: signal.type, at: now - signal.agoMs },
+	};
+	const takeAt = autoTakeAt(rules, cut, { hasMatch, gameDelayMs });
+	if (takeAt !== null && takeAt <= now) {
+		return take(rules, cut, { liveResults, now, hasMatch });
 	}
 
-	return colored === state ? null : colored;
+	return cut;
 }
 
 /** The staged items in the order they go on air: `next` then the queue. */

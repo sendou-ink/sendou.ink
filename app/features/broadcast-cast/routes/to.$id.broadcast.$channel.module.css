@@ -190,6 +190,7 @@
 	flex-direction: column;
 }
 
+/* XXX: style the queue tabs (and the advance icons between them) on rows that wrap away from the editor: only the last row is attached to it, the rows above float as open-bottomed tabs and "+" can end up alone on a row of its own */
 .queue {
 	display: flex;
 	flex-wrap: wrap;

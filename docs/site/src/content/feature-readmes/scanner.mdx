@@ -478,7 +478,10 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   that lifetime would count twice. Row text reads through the `kill-feed`
   atlas, BlitzMain at the row's ~24px caps with the scoreboard-names
   charset, under `parseName`'s opt-in plain-tie rule (at that size an i's
-  dot alone ranks the accented glyphs level with the plain one). The
+  dot alone ranks the accented glyphs level with the plain one). Overtime
+  swaps the timer's M:SS for an orange "Overtime!" over the leading team's
+  ink, which the gate takes for the timer box too (`overtimeBoxVisible`), so
+  the counter keeps being read with `time: null` until the game ends. The
   objective parse also emits a second
   event type per read: `PlayerStatus`
   (`core/detectors/objective/player-status.ts`), per-player special/dead

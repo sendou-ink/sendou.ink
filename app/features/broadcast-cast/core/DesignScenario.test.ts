@@ -16,6 +16,7 @@ const build = (scenario: Partial<DesignScenario.Scenario> = {}) =>
 		settings: {
 			css: "",
 			weaponImages: "default",
+			gameDelayMs: 0,
 			headline: "",
 			casterIds: [],
 		},
@@ -89,6 +90,7 @@ describe("DesignScenario.build", () => {
 			settings: {
 				css: "",
 				weaponImages: "default",
+				gameDelayMs: 0,
 				headline: "",
 				casterIds: [],
 			},
