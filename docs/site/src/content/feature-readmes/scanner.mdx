@@ -402,70 +402,102 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   `~/features/build-analyzer/data` are fine — valibot and the app config graph
   are not (schemas live in `scanner-schemas.ts`; core only `import type`s
   the shapes).
-- `core/match-builder.ts` turns a timeline into `ScannerMatch`es: a MapStart
-  opens a match, a scoreboard closes one (claiming the last 8 min of deaths
-  when the intro was missed). A match needs a scoreboard, a personal results
-  screen, a minimap or a minute of counter reads after its intro to be kept
-  (the last for footage with neither, e.g. no results screen shown and the
-  map never opened; it has no players, so it is not uploaded). Matchmade
-  lobbies show the personal results before the results screen (X Battle:
-  personal results, set card, results screen), and Anarchy Series often
-  shows no results screen at all. So a personal results screen seen while a
-  game is open joins it, and its lobby, mode and stage stand in for a
-  results screen's. With no game open and no match just closed, it claims
-  the counter reads before it the way a scoreboard does. Minimaps group per map by confirmed stage
-  change and >5 min gap — an intro's stage outranks minimap reads, so a
-  match it opened splits only once no later minimap of that game reads it. A battle history screen (battle log, replay
-  browser) showing a game already built — at least 6 paint totals shared
-  order-free (a misread or unread row still joins), stage not contradicting
-  it, and either 6 whole stat lines (paint, K/A, D, S) shared or the recording time within 20 min of its play time (the console clock can be hours off the PC's: another timezone, a misread AM/PM) — joins that match's sources instead of forming a new
-  one, so browsing the log after playing neither adds a card nor re-uploads
-  (the match was already sent). X Battle shows every player under a random
-  alias (a gear name) until the log is asked for the real names: a history
-  screen whose rows pair with the results screen's by stat line under other
-  names puts its names on the match (and on the POV's kills), and the
-  timeline keeps it apart from the alias read of the same entry
+- `core/match-builder.ts` turns a timeline into `ScannerMatch`es in three
+  steps, none of them depending on the order screens were read in beyond what
+  is physically possible:
+  1. **Segments** (`core/game-segments.ts`): the gameplay reads (intro,
+     minimaps, deaths, counters, icon strip, kill feed) split into games. A
+     new game starts at a map intro; at gameplay after a lobby screen
+     (results or history screen, personal results, X Battle card) unless the
+     game clock runs on across it (a screen misread mid-game ends nothing
+     and is part of no match); at the clock starting another game
+     (`Clock.gameOpenings`: a span whose zero lies 210 s+ later than the
+     game's earliest, so a replay span between two games hides nothing,
+     first read within 8 s of its full clock or on the hold before GO; a
+     broadcast's replay of the opening starts later), which
+     splits two games whose intro and results screen were both missed; and,
+     for casts with neither, at a minimap stage change or a >5 min gap
+     between minimaps (an intro's stage outranks minimap reads, so a game it
+     opened splits only once no later minimap of that game reads it). Each
+     segment carries its tail: the lobby screens after it until the next one.
+  2. **Game identities** (`core/game-identity.ts`): every results and history
+     screen clustered by its board alone. Two boards sharing at least 6 paint
+     totals order-free (a misread or unread row still joins; a history screen
+     can misplace the winner panel), stage not contradicting, show one game;
+     a history screen also needs 6 whole stat lines (paint, K/A, D, S) shared
+     or its recording time within 20 min of the other board's play time. Two
+     results screens are one game only with no segment between them (the
+     screen read again after a lost-connection dialog hid it).
+  3. **Assignment** (`assignGames`): a segment is closed by the first board in
+     its tail of a game no earlier segment closed, not shown before the
+     segment started (the battle log browsed before playing), its stage read
+     (a history screen caught mid-transition forms no match of its own; the
+     timeline also holds history screens to a 0.75 mean score floor, clean
+     reads average 0.81+), and not contradicted by the segment's own reads:
+     intro/minimap stage, intro mode, or the recording time vs. the game's
+     first read. So a missed results screen is amended from the log. A
+     segment whose intro comes within 30 s of a replay-browser entry of its
+     stage (and mode) is that replay played back, closed by the entry, and
+     the entry shown again after the replay ends it. A history screen showing
+     a game no tail closed completes an earlier segment left without a
+     results screen (the next game's intro came first) when one fits — stage
+     and mode not contradicting, recording time within 20 min of its first
+     read, the closest winning; on VoD scans (no wall clock) only a sole
+     stage/mode fit — so the card keeps its place and a match first sent
+     without a scoreboard is sent again. Otherwise it forms its own match. The
+     recording times are on the console clock, which can be set to another
+     timezone than the PC: an offset that two distinct games and two
+     distinct history screens, paired one to one, agree on (within 5 min) is
+     taken off every recording time first (`consoleClockOffset`), the
+     `playedAt` a history screen gives its match included; a lone pairing
+     could be any older game browsed and moves nothing. Every other
+     board of a game's identity (the battle log browsed later, the results
+     screen read again) joins that match's sources on top of the cached
+     build, so browsing the log after playing neither adds a card nor
+     re-uploads (the match was already sent).
+
+  A match needs a scoreboard, a personal results screen, a minimap or a
+  minute of counter reads after its intro to be kept (the last for footage
+  with neither, e.g. no results screen shown and the map never opened; it has
+  no players, so it is not uploaded). A segment with neither an intro nor a
+  minimap keeps the reads within 8 min of the screen that closed it.
+  Matchmade lobbies show the personal results before the results screen (X
+  Battle: personal results, set card, results screen), and Anarchy Series
+  often shows no results screen at all. So a personal results screen in a
+  segment's tail before its closing board joins it (one with neither intro
+  nor minimap only when counter reads show it was played), and its lobby,
+  mode and stage stand in for a results screen's. The X Battle cards in the
+  tail join the game too; one shown with no game before it joins the board
+  closing a game within 90 s after it. X Battle shows every player under a
+  random alias (a gear name) until the log is asked for the real names: a
+  history screen whose rows pair with the results screen's by stat line
+  under other names puts its names on the match (and on the POV's kills),
+  and the timeline keeps it apart from the alias read of the same entry
   (`renamedRows`). Only a results screen's names count as aliases, so a match
   a history screen closed keeps its first names; the upload is not redone, so
   sendou.ink keeps the aliases. The recording time's AM/PM letter reads as
   "o" either way, so the header tells them apart by the letter's bottom rows
   (A stands on two legs, P on its stem): a flipped one puts the time 12h off
-  and the screen turns into a duplicate card. Any other history screen closes the game
-  being gathered — a missed results screen amended from the log — unless
-  the intro/minimap stage, intro mode or recording time (vs. the game's
-  first read) contradicts it. Then, or with no game being gathered, it
-  completes an earlier match finalized without a results screen (the next
-  game's intro came first) when one fits — stage and mode not contradicting,
-  recording time within 20 min of its first read, the closest winning; on
-  VoD scans (no wall clock) only a sole stage/mode fit — so the card keeps
-  its place and a match first sent without a scoreboard is sent again.
-  Otherwise it forms its own match and the game stays open. A MapStart within
-  30s of a replay-browser entry of its stage (and mode) is that replay played
-  back: the entry's match reopens with the intro, its gameplay joins it, and
-  the entry shown again after the replay closes it. A history screen with its stage unread
-  (typically a frame caught mid-transition) forms no match of its own; the
-  timeline also holds history screens to a 0.75 mean score floor (clean
-  reads average 0.81+). Likewise a results screen read again with no
-  match opened since (a lost-connection dialog hid it and the detector
-  re-armed) joins the last match. A no-contest results screen (the host
-  ended the game or a disconnect did early: DRAW tags on both team boxes,
-  drawn grey, and "No contest." for a score — `noContest`) discards the game
-  being gathered, so the replay of that map is its only card. An event belongs to at most one match; deaths
-  reveal enemy builds (`ability-harvest.ts`), the personal results screen
-  (`ScoreboardOwn`, joined to the open game or seen within
-  `OWN_RESULTS_WINDOW_SECONDS` of a closed match's scoreboard) completes the
-  POV player's full build (on a minimap-grouped match the own card's row,
-  its weapon too when unread; a gear card whose badges all read under the
-  covered floor keeps what the row had), and minimap
-  cards contribute everyone else's mains — so a card's Builds section
-  covers both teams, each row rendered as far as it was read. Partial matches are fine —
+  and the screen turns into a duplicate card. A no-contest results screen
+  (the host ended the game or a disconnect did early: DRAW tags on both team
+  boxes, drawn grey, and "No contest." for a score — `noContest`) in a
+  segment's tail before its closing board discards the segment, so the
+  replay of that map is its only card. An event belongs to at most one
+  match; deaths reveal enemy builds (`ability-harvest.ts`), the personal
+  results screen (`ScoreboardOwn`, in the game's tail before its closing
+  board or within `OWN_RESULTS_WINDOW_SECONDS` after it) completes the POV
+  player's full build (on a minimap-grouped match the own card's row, its
+  weapon too when unread; a gear card whose badges all read under the
+  covered floor keeps what the row had), and minimap cards contribute
+  everyone else's mains — so a card's Builds section covers both teams, each
+  row rendered as far as it was read. Partial matches are fine —
   scanner-ingest merges them server-side. Senders filter with
   `ingestSkipReasons`: private/unread lobby only, no games without a player
-  read, and no games a disconnect
-  cut short (scoreless + counter left more time than the footage did, or
-  with no counter read, results came before the clock could run out and the
-  same map was replayed right after — the latter only resolves after the
-  fact, so a live scan may already have sent the game).
+  read, and no games a disconnect cut short (scoreless + counter left more
+  time than the footage did, or with no counter read, results came before
+  the clock could run out and the same map was replayed right after — the
+  latter only resolves after the fact, so a live scan may already have sent
+  the game).
 - The route (`routes/scanner.tsx`) is SSR-guarded: the client tree loads via
   `React.lazy` after `useHydrated`; nothing from `core/worker/capture/store`
   may be imported at route-module top level. There is no feature flag: the
@@ -1110,9 +1142,12 @@ reads are already right, the yellow last-minute digits included.
 So the detectors still read the timer on every frame (a verify-only matcher
 would save about 4% of the objective parse and add a second recognition
 path), and the tracker's job is the anchors. Over a scan as a whole, every
-game is a span of its own, which is what segmenting games by clock anchor
-builds on. Liveness only means something within one game: across games the
-anchor moves later every time.
+game is a span of its own (on the 13 event tapes, one span per game plus the
+cuts and replays), which the segmentation uses twice: a lobby screen with the
+clock running on across it ends no game, and a span opening another game
+(`Clock.gameOpenings`) starts one even with its intro missed. Liveness only
+means something within one game: across games the anchor moves later every
+time, so each match tracks its own reads again.
 
 ## Tests
 

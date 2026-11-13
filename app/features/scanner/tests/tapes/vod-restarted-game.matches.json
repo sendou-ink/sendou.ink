@@ -704,7 +704,7 @@
 			}
 		},
 		{
-			"sources": "220",
+			"sources": "0 220",
 			"historyOnly": true,
 			"match": {
 				"startsAt": 10962,

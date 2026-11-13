@@ -216,3 +216,54 @@ describe("Clock.position", () => {
 		});
 	});
 });
+
+describe("Clock.gameOpenings", () => {
+	test.each([
+		{
+			why: "a game read from its start, a game's length after the last",
+			next: running(1000, 701, 710),
+			opens: true,
+		},
+		{
+			why: "a game read from its full clock held before GO",
+			next: [{ t: 697, time: 300 }, ...running(1000, 701, 710)],
+			opens: true,
+		},
+		{
+			why: "a Turf War game read from its start",
+			next: running(880, 701, 710),
+			opens: true,
+		},
+		{
+			why: "a game first read well into its clock (a replay of the opening)",
+			next: running(983, 700, 710),
+			opens: false,
+		},
+		{
+			why: "a moment of the same game shown again",
+			next: running(450, 300, 310),
+			opens: false,
+		},
+	])("$why: $opens", ({ next, opens }) => {
+		const spans = Clock.track([...running(300, 100, 250), ...next]);
+		expect(Clock.gameOpenings(spans)).toEqual([false, opens]);
+	});
+
+	test("a replay of the opening between two games does not hide the next game's start", () => {
+		const spans = Clock.track([
+			...running(300, 100, 250),
+			...running(603, 320, 330),
+			...running(800, 500, 510),
+		]);
+		expect(Clock.gameOpenings(spans)).toEqual([false, false, true]);
+	});
+
+	test("a game opening after a cut ahead is measured from the cut", () => {
+		const spans = Clock.track([
+			...running(400, 100, 150),
+			...running(300, 160, 250),
+			...running(580, 280, 290),
+		]);
+		expect(Clock.gameOpenings(spans)).toEqual([false, false, true]);
+	});
+});

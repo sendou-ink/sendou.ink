@@ -1,13 +1,21 @@
 /**
  * Groups a detected-event timeline into ScannerMatch objects
- * (scanner-match.ts). A MapStart opens a match, a scoreboard-type event
- * closes one, and deaths in between belong to it; a scoreboard with no
- * preceding MapStart claims the last 8 minutes of deaths. Without delimiters
- * (casted footage) minimaps group per map by stage change and time gap. A
- * match is emitted only when a scoreboard, a personal results screen,
- * minimaps or a played counter back it, regardless of lobby/outcome — `ingestSkipReasons` filters those (the clip scorer alone
- * asks for the unbacked ones too). Deaths are harvested
- * onto player rows as enemy builds (ability-harvest.ts).
+ * (scanner-match.ts) in three steps:
+ *
+ * 1. segments (game-segments.ts): the gameplay of each game, split at map
+ *    intros, lobby screens, the clock starting another game and minimap stage
+ *    changes, each followed by the lobby screens shown after it;
+ * 2. game identities (game-identity.ts): which results and history screens
+ *    show the same game, by their paint totals and stat lines alone;
+ * 3. assignment (`assignGames`): which identity closes which segment. A
+ *    revisit, a replay played back, a missed intro or a missed results screen
+ *    is an ordinary outcome of it, not a repair of an earlier decision.
+ *
+ * A match is emitted only when a scoreboard, a personal results screen,
+ * minimaps or a played counter back it, regardless of lobby/outcome —
+ * `ingestSkipReasons` filters those (the clip scorer alone asks for the
+ * unbacked ones too). Deaths are harvested onto player rows as enemy builds
+ * (ability-harvest.ts).
  */
 import type {
 	AbilityWithUnknown,
@@ -23,12 +31,12 @@ import {
 	harvestCardMains,
 } from "./ability-harvest";
 import * as Clock from "./clock";
-import { DEATH_EVENT_TYPE, type DeathData } from "./detectors/death/index";
-import { KILL_EVENT_TYPE, type KillData } from "./detectors/kill/index";
+import type { DeathData } from "./detectors/death/index";
+import type { KillData } from "./detectors/kill/index";
 import { MAP_START_EVENT_TYPE } from "./detectors/map-start/index";
-import {
+import type {
 	MINIMAP_EVENT_TYPE,
-	type MinimapData,
+	MinimapData,
 } from "./detectors/minimap/index";
 import {
 	OBJECTIVE_EVENT_TYPE,
@@ -36,25 +44,17 @@ import {
 } from "./detectors/objective/index";
 import {
 	FLAGGED_STATE_EVIDENCE,
-	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
 	type PlayerStatusFlags,
 	type SlotEvidence,
 	statusFlagsOf,
 } from "./detectors/objective/player-status";
-import {
-	STRIP_WEAPONS_EVENT_TYPE,
-	type StripWeaponsData,
-} from "./detectors/objective/strip-weapons";
+import type { StripWeaponsData } from "./detectors/objective/strip-weapons";
 import {
 	SCOREBOARD_EVENT_TYPE,
 	type ScoreboardData,
 } from "./detectors/scoreboard/index";
-import type { ScoreboardBattleLogData } from "./detectors/scoreboard-battle-log/index";
-import {
-	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
-	type ScoreboardBattleLogReplayData,
-} from "./detectors/scoreboard-battle-log-replay/index";
+import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "./detectors/scoreboard-battle-log-replay/index";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
@@ -62,7 +62,6 @@ import {
 import {
 	type DetectedEvent,
 	type EventOfType,
-	type HistoryScoreboardEvent,
 	isEventOfType,
 	isHistoryScoreboardEvent,
 	isScoreboardEvent,
@@ -71,8 +70,9 @@ import {
 	type XBattleCardEvent,
 } from "./events";
 import * as FieldScores from "./field-scores";
+import * as GameIdentity from "./game-identity";
+import * as GameSegments from "./game-segments";
 import { hueDistance, hueOf, type InkRgb } from "./ink-color";
-import { parseReplayTimestamp } from "./replay-time";
 import {
 	type ScannerMatch,
 	type ScannerMatchKill,
@@ -101,18 +101,10 @@ import {
 } from "./slot-row-assignment";
 import * as StatusDecode from "./status-decode";
 import { nameSimilarity } from "./text";
-import {
-	multisetOverlap,
-	renamedRows,
-	SAME_GAME_MIN_SHARED_STAT_LINES,
-	sharedStatLines,
-} from "./timeline/same-scoreboard";
+import { renamedRows } from "./timeline/same-scoreboard";
 
-/** How far back a scoreboard with no MapStart claims deaths: matches run well under 8 min. */
+/** How far back a board closing a game with no intro or minimap claims its gameplay: matches run well under 8 min. */
 const FALLBACK_WINDOW_SECONDS = 480;
-
-/** Minimaps further apart than this cannot be the same game, even on the same stage. */
-const MATCH_GAP_SECONDS = 300;
 
 /**
  * Counter reads spanning this long after a map intro show a game being played,
@@ -157,6 +149,16 @@ const KILL_ROW_LIFETIME_SECONDS = 5;
 const KILL_SAME_ROW_MIN_SIMILARITY = 0.7;
 
 /**
+ * Offsets between the console and the PC clock this close agree: the console
+ * shows minutes, and a game's first read can come a few minutes in (the intro
+ * missed).
+ */
+const CONSOLE_OFFSET_AGREEMENT_MS = 5 * 60 * 1000;
+
+/** Distinct games and history screens, paired one to one, that must agree on a console clock offset before it is taken. */
+const CONSOLE_OFFSET_MIN_SUPPORT = 2;
+
+/**
  * The personal results screen follows the results screen of the same game;
  * one seen this long after a closed match's scoreboard belongs to that match.
  */
@@ -167,25 +169,10 @@ const OWN_RESULTS_WINDOW_SECONDS = 90;
  * game just played: the lobby shows them after the personal results screen
  * and before the results screen, so they normally join the game still being
  * gathered. A card seen within this of a match closed before it (results
- * screen read first) joins that match; a card with no game open waits this
- * long for a results screen to claim it.
+ * screen read first) joins that match; a card with no game before it waits
+ * this long for a results screen to claim it.
  */
 const X_BATTLE_CARDS_WINDOW_SECONDS = 90;
-
-/**
- * Paint totals two boards must share to show the same game: tolerates a couple
- * of misread or unread rows, while different games practically never share this many.
- */
-const SAME_GAME_MIN_SHARED_PAINTS = 6;
-
-/**
- * How far a history screen's recording time may sit from the earlier read of
- * the same game, or from the first read of the game it closes: it is on the
- * console clock and marks the game's start, while a results screen's time is
- * the PC clock at the game's end. Boards sharing whole stat lines skip it: the
- * console clock can be hours off the PC's (another timezone, a misread AM/PM).
- */
-const REVISIT_PLAYED_AT_TOLERANCE_MS = 20 * 60 * 1000;
 
 export interface BuiltMatch<E extends DetectedEvent> {
 	match: ScannerMatch;
@@ -205,8 +192,9 @@ export interface BuiltMatch<E extends DetectedEvent> {
  * Lets a caller rebuilding a growing timeline reuse each match whose input
  * events are the very same objects as last time, so the per-match work runs
  * only for matches that changed and unchanged ones keep their identity. Keyed
- * by a match's first input event (a match amended from the battle log by the
- * history screen that amended it); events must not be mutated in place.
+ * by a match's closing board, else its first input event; events must not be
+ * mutated in place. Boards showing the game again and the screens joining it
+ * after its results screen are put on the cached match, not built into it.
  */
 export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
 	E,
@@ -214,32 +202,33 @@ export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
 >;
 
 /**
- * Splits a timeline into ScannerMatch objects, chronological. A personal
- * results screen joins the game being gathered (matchmade lobbies show it
- * before the results screen, Anarchy Series often with none after it): its
+ * Splits a timeline into ScannerMatch objects, chronological.
+ *
+ * The board closing a game is the first one in its segment's tail (the lobby
+ * screens after its gameplay) that shows a game no earlier segment closed and
+ * not one shown before the game was played, and that the game's own reads
+ * don't contradict: a history screen of another stage, mode or recording time
+ * (`isHistoryOfAnotherGame`) leaves the game open, so a missed results screen
+ * is amended from the log. A no-contest results screen (DRAW tags: the host
+ * ended the game, an early disconnect) before any of them discards the game: it
+ * has no result, and its replay forms the real match. A game whose intro comes
+ * right after a replay-browser entry of its stage and mode is that replay
+ * played back, closed by the entry. A history screen showing a game no tail
+ * closed completes an earlier game left without a results screen when one
+ * fits (`missedResultsGame`), else it forms a match of its own; one with its
+ * stage unread forms none. Every other board of a game's identity (the battle
+ * log browsed later, a results screen read again) joins its match's
+ * `sources`, putting the real names it reveals on an X Battle's aliased
+ * results.
+ *
+ * A personal results screen joins the game it follows (matchmade lobbies show
+ * it before the results screen, Anarchy Series often with none after it): its
  * lobby, mode and stage stand in for a missing results screen's and its build
- * completes the POV player's. With no game open it completes the match whose
- * results screen it follows, else claims the counter reads before it. The X
- * Battle lobby cards (shown before that game's results screen) join the
- * sources of the game they report on. A battle
- * history screen showing an already built game (≥6 shared paint totals, stage
- * not contradicting it, and ≥6 shared whole stat lines or a recording time not
- * contradicting it) joins that match's `sources` instead of forming a new one,
- * putting the real names it reveals on an X Battle's aliased results, as does
- * a results screen read again with no match opened since. Any other history screen closes the game being gathered (a
- * missed results screen amended from the log) unless its stage, mode or
- * recording time contradicts that game's reads. Then (or with no game being
- * gathered) it completes an earlier match whose results screen was missed
- * instead, when one fits it (`scoreboardlessMatchShown`), else it forms a
- * match of its own and the game being gathered stays open. A history screen
- * with its stage unread and no built match forms none. A map intro right
- * after a replay-browser entry of its stage and mode is that replay played
- * back: its gameplay joins the entry's match. A results screen of a no contest
- * (DRAW tags: the host ended the game, an early disconnect) discards the game
- * being gathered: it has no result, and its replay forms the real match. Every
+ * completes the POV player's. The X Battle lobby cards (shown before that
+ * game's results screen) join the sources of the game they report on. Every
  * input event ends up in at most one match's `sources`.
  *
- * `unbacked` also emits, flagged, the stretches with kill reads no scoreboard,
+ * `unbacked` also emits, flagged, the segments with kill reads no scoreboard,
  * minimap or played counter backed (a results screen missed, the map never
  * opened, a match still being played): the clip scorer needs their streaks,
  * nothing else should see them.
@@ -250,249 +239,446 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	{ unbacked = false }: { unbacked?: boolean } = {},
 ): BuiltMatch<E>[] {
 	const sorted = events.toSorted((a, b) => a.t - b.t);
-	const built: BuiltMatch<E>[] = [];
-	const unbackedBuilt: BuiltMatch<E>[] = [];
-	const minimapLookahead = buildMinimapLookahead(sorted);
+	const segmentation = GameSegments.split(sorted);
+	const identities = GameIdentity.cluster(
+		sorted
+			.filter(isScoreboardEvent)
+			.filter((board) => !segmentation.midGame.has(board)),
+		segmentation.segments.map((segment) => segment.from),
+	);
 
-	let open: OpenMatch<E> | null = null;
-	let lastHistoryScreen: (E & HistoryScoreboardEvent) | null = null;
-	// matches finalized without a scoreboard, which a history screen may still complete
-	const scoreboardless = new Map<BuiltMatch<E>, OpenMatch<E>>();
-	// deaths/objective/status reads seen with no match open to anchor them yet
-	let orphanDeaths: OpenMatch<E>["deaths"] = [];
-	let orphanObjectives: OpenMatch<E>["objectives"] = [];
-	let orphanPlayerStatuses: OpenMatch<E>["playerStatuses"] = [];
-	let orphanStripWeapons: OpenMatch<E>["stripWeapons"] = [];
-	let orphanKills: OpenMatch<E>["kills"] = [];
-	let orphanXBattleCards: OpenMatch<E>["xBattleCards"] = [];
-	const finalize = (): void => {
-		if (!open) return;
-		if (isBacked(open)) {
-			const match = cachedBuiltMatch(open, cache);
-			built.push(match);
-			if (open.scoreboard === null) scoreboardless.set(match, open);
-		} else if (unbacked && open.kills.length > 0) {
-			unbackedBuilt.push(cachedBuiltMatch(open, cache));
-		}
-		open = null;
-	};
-	const claimOrphans = (t: number): OpenMatch<E> => {
-		const withinWindow = (read: DetectedEvent) =>
-			t - read.t <= FALLBACK_WINDOW_SECONDS;
-		return {
-			...startMatch(),
-			deaths: orphanDeaths.filter(withinWindow),
-			objectives: orphanObjectives.filter(withinWindow),
-			playerStatuses: orphanPlayerStatuses.filter(withinWindow),
-			stripWeapons: orphanStripWeapons.filter(withinWindow),
-			kills: orphanKills.filter(withinWindow),
-			xBattleCards: orphanXBattleCards.filter(
-				(card) => t - card.t <= X_BATTLE_CARDS_WINDOW_SECONDS,
-			),
-		};
-	};
-	// orphan reads no scoreboard claimed are left behind
-	const dropOrphans = (): void => {
-		if (unbacked && orphanKills.length > 0) {
-			unbackedBuilt.push(
-				cachedBuiltMatch(
-					{ ...startMatch(), deaths: orphanDeaths, kills: orphanKills },
-					cache,
-				),
-			);
-		}
-		orphanDeaths = [];
-		orphanObjectives = [];
-		orphanPlayerStatuses = [];
-		orphanStripWeapons = [];
-		orphanKills = [];
-		orphanXBattleCards = [];
-	};
+	const built: { from: number; built: BuiltMatch<E> }[] = [];
+	for (const game of assignGames(segmentation, identities)) {
+		if (!isBacked(game) && !(unbacked && game.kills.length > 0)) continue;
+		built.push({ from: firstBaseT(game), built: builtGame(game, cache) });
+	}
+	return built.sort((a, b) => a.from - b.from).map((entry) => entry.built);
+}
 
-	for (const event of sorted) {
-		if (isEventOfType(event, MAP_START_EVENT_TYPE)) {
-			// a new match intro abandons any match whose scoreboard was missed
-			finalize();
-			dropOrphans();
-			open = startMatch();
-			open.mapStart = event;
-			vote(open.stageVotes, event.data.stage);
-			const replayed = replayedHistoryMatch(built, lastHistoryScreen, event);
-			if (replayed) {
-				built.splice(built.indexOf(replayed), 1);
-				// a history-only match: every source is a history screen
-				const [board, ...revisits] = replayed.sources.filter(
-					isHistoryScoreboardEvent,
-				);
-				open.scoreboard = board!;
-				open.revisits = revisits;
-				vote(open.stageVotes, board!.data.stage);
-			}
-		} else if (isScoreboardEvent(event)) {
-			if (event.data.noContest) {
-				// ended undecided: the game being gathered has no result to keep
-				open = null;
-				dropOrphans();
-				continue;
-			}
-			if (isHistoryScoreboardEvent(event)) lastHistoryScreen = event;
-			const revisited =
-				revisitedMatch(built, event) ??
-				(open ? undefined : reshownResultsMatch(built, event));
-			if (revisited) {
-				// the game already has its match, and the one being played (if
-				// any) keeps gathering events
-				built[built.indexOf(revisited)] = {
-					match: withRevealedNames(revisited, event),
-					sources: [...revisited.sources, event],
-				};
-				continue;
-			}
-			if (isStagelessHistoryRead(event)) continue;
-			const missedResults =
-				!open || isHistoryOfAnotherGame(event, open)
-					? scoreboardlessMatchShown(scoreboardless, event)
-					: undefined;
-			if (missedResults) {
-				const pending = scoreboardless.get(missedResults)!;
-				pending.scoreboard = event;
-				vote(pending.stageVotes, event.data.stage);
-				built[built.indexOf(missedResults)] = cachedBuiltMatch(
-					pending,
-					cache,
-					event,
-				);
-				scoreboardless.delete(missedResults);
-				continue;
-			}
-			const closing: OpenMatch<E> = open ?? claimOrphans(event.t);
-			if (isHistoryOfAnotherGame(event, closing)) {
-				// the log shows another game: the one being gathered stays open
-				const shown = startMatch<E>();
-				shown.scoreboard = event;
-				vote(shown.stageVotes, event.data.stage);
-				built.push(cachedBuiltMatch(shown, cache));
-				continue;
-			}
-			open = closing;
-			// a replay played back from its browser entry ends on that entry again
-			if (open.scoreboard) open.revisits.push(event);
-			else open.scoreboard = event;
-			vote(open.stageVotes, event.data.stage);
-			finalize();
-			orphanDeaths = [];
-			orphanObjectives = [];
-			orphanPlayerStatuses = [];
-			orphanStripWeapons = [];
-			orphanKills = [];
-			orphanXBattleCards = [];
-		} else if (isEventOfType(event, MINIMAP_EVENT_TYPE)) {
-			const stage = event.data.stage;
-			if (open) {
-				// a stage change only splits when the next read doesn't refute it: a
-				// lone disagreeing frame is a misread folded in as a minority vote.
-				// An intro's stage outranks minimap reads: it holds until no later
-				// read of this game shows it again (the next game's intro was missed)
-				const lookahead = minimapLookahead.get(event)!;
-				const introStage = open.mapStart?.data.stage ?? null;
-				const current = introStage ?? leadingStage(open.stageVotes);
-				const stageChanged =
-					current !== null &&
-					stage !== null &&
-					stage !== current &&
-					(lookahead.nextStage ?? stage) === stage &&
-					(introStage === null || !lookahead.laterStages.has(introStage));
-				const gapTooBig =
-					open.lastMinimapT !== null &&
-					event.t - open.lastMinimapT > MATCH_GAP_SECONDS;
-				if (stageChanged || gapTooBig) finalize();
-			}
-			open ??= startMatch();
-			open.minimaps.push(event);
-			open.lastMinimapT = event.t;
-			vote(open.stageVotes, stage);
-		} else if (isEventOfType(event, DEATH_EVENT_TYPE)) {
-			(open?.deaths ?? orphanDeaths).push(event);
-		} else if (isEventOfType(event, OBJECTIVE_EVENT_TYPE)) {
-			(open?.objectives ?? orphanObjectives).push(event);
-		} else if (isEventOfType(event, PLAYER_STATUS_EVENT_TYPE)) {
-			(open?.playerStatuses ?? orphanPlayerStatuses).push(event);
-		} else if (isEventOfType(event, STRIP_WEAPONS_EVENT_TYPE)) {
-			(open?.stripWeapons ?? orphanStripWeapons).push(event);
-		} else if (isEventOfType(event, KILL_EVENT_TYPE)) {
-			(open?.kills ?? orphanKills).push(event);
-		} else if (isEventOfType(event, SCOREBOARD_OWN_EVENT_TYPE)) {
-			if (!open) {
-				const completed = withOwnResults(built.at(-1), event);
-				if (completed) {
-					built[built.length - 1] = completed;
+/** A game as assigned: its segment's reads (none for a board-only match), the screens shown after them and its closing board. */
+interface Game<E extends DetectedEvent> {
+	mapStart: GameSegments.Segment<E>["mapStart"];
+	minimaps: GameSegments.Segment<E>["minimaps"];
+	deaths: GameSegments.Segment<E>["deaths"];
+	/** objective-counter reads; become the match's `objective` samples */
+	objectives: GameSegments.Segment<E>["objectives"];
+	/** icon-strip reads; become the match's `playerStatus` samples */
+	playerStatuses: GameSegments.Segment<E>["playerStatuses"];
+	/** sampled per-slot weapon evidence for the slot→row assignment */
+	stripWeapons: GameSegments.Segment<E>["stripWeapons"];
+	/** kill-feed stack reads; become the match's `kills` */
+	kills: GameSegments.Segment<E>["kills"];
+	/** X Battle lobby cards reporting on this game, shown before its closing board */
+	xBattleCards: (E & XBattleCardEvent)[];
+	/** the personal results screen, when shown before the closing board */
+	ownResults: OwnResultsEvent<E> | null;
+	/** the results or history screen closing the game */
+	scoreboard: (E & ScoreboardFamilyEvent) | null;
+	/** a replay played back: its replay-browser entry shown again after it, which ends it */
+	entryShownAgain: (E & ScoreboardFamilyEvent)[];
+	/**
+	 * per-stage read counts (a MapStart's stage seeds it); without an intro
+	 * stage the plurality winner delimits same-vs-next map so one misread frame
+	 * can't poison the match
+	 */
+	stageVotes: Map<StageId, number>;
+	/** put on the built match without rebuilding it, and outside its time span */
+	later: {
+		/** the other boards of its identity: the game shown again */
+		revisits: (E & ScoreboardFamilyEvent)[];
+		/** shown after the closing board, completing the POV player's build */
+		ownResults: OwnResultsEvent<E> | null;
+		/** shown after the closing board */
+		xBattleCards: (E & XBattleCardEvent)[];
+		/** the console clock's offset from the PC's (`consoleClockOffset`), taken off a recording time standing in for `playedAt` */
+		consoleOffset: number;
+	};
+}
+
+type OwnResultsEvent<E extends DetectedEvent> = E &
+	EventOfType<typeof SCOREBOARD_OWN_EVENT_TYPE>;
+
+/**
+ * Which identity closes which segment, and where the other lobby screens go
+ * (see `buildScannerMatches`). Returns every game: the segments' (discarded
+ * no contests left out, unbacked ones in) and the board-only ones.
+ */
+function assignGames<E extends DetectedEvent>(
+	{ segments, leading }: GameSegments.Segmentation<E>,
+	identities: readonly GameIdentity.GameIdentity<E>[],
+): Game<E>[] {
+	const identityOf = new Map<E, GameIdentity.GameIdentity<E>>();
+	for (const identity of identities) {
+		for (const board of identity) identityOf.set(board, identity);
+	}
+	const historyBoards = [...identityOf.keys()]
+		.filter(isHistoryScoreboardEvent)
+		.sort((a, b) => a.t - b.t);
+	const closed = new Map<GameIdentity.GameIdentity<E>, Game<E>>();
+	const close = (
+		game: Game<E>,
+		board: E & ScoreboardFamilyEvent,
+		identity: GameIdentity.GameIdentity<E>,
+	): void => {
+		game.scoreboard = board;
+		GameSegments.vote(game.stageVotes, board.data.stage);
+		closed.set(identity, game);
+	};
+	const looseCards: (E & XBattleCardEvent)[] =
+		leading.filter(isXBattleCardEvent);
+
+	const games = segments.map(gameOfSegment);
+	const consoleOffset = consoleClockOffset(segments, games, identities);
+
+	const segmentGames: { segment: GameSegments.Segment<E>; game: Game<E> }[] =
+		[];
+	for (const [index, segment] of segments.entries()) {
+		const game = games[index]!;
+		const replayed = replayedEntry(segment, historyBoards, identityOf, closed);
+		const replayedIdentity = replayed ? identityOf.get(replayed)! : null;
+		if (replayed) close(game, replayed, replayedIdentity!);
+
+		let discarded = false;
+		for (const read of segment.tail) {
+			if (isScoreboardEvent(read)) {
+				if (replayedIdentity && identityOf.get(read) === replayedIdentity) {
+					game.entryShownAgain.push(read);
+				}
+				if (game.scoreboard || discarded) continue;
+				if (read.data.noContest) {
+					discarded = true;
 					continue;
 				}
-				if (followsMatch(built.at(-1), event)) continue;
-				// a game with no intro or map read ends on it: its reads are still orphans
-				const claimed = claimOrphans(event.t);
-				if (claimed.objectives.length === 0) continue;
-				open = claimed;
-			}
-			// shown before the results screen (if any): the game being gathered
-			// ended on it, and it is the game's only results when none follows
-			open.ownResults ??= event;
-			vote(open.stageVotes, event.data.stage);
-		} else if (isXBattleCardEvent(event)) {
-			// the lobby shows the cards before the game's results screen, so
-			// they usually join the game still being gathered
-			if (open) {
-				open.xBattleCards.push(event);
-			} else {
-				const reported = withXBattleCard(built.at(-1), event);
-				if (reported) built[built.length - 1] = reported;
-				else orphanXBattleCards.push(event);
+				const identity = identityOf.get(read);
+				if (
+					identity &&
+					closesSegment(read, identity, segment, game, closed, consoleOffset)
+				) {
+					close(game, read, identity);
+				}
+			} else if (isEventOfType(read, SCOREBOARD_OWN_EVENT_TYPE)) {
+				if (discarded) continue;
+				if (game.scoreboard) {
+					if (completesOwnBuild(game, read)) game.later.ownResults ??= read;
+				} else if (!game.ownResults && ownResultsClaim(segment, read)) {
+					game.ownResults = read;
+					GameSegments.vote(game.stageVotes, read.data.stage);
+				}
+			} else if (isXBattleCardEvent(read)) {
+				if (discarded) looseCards.push(read);
+				else if (!game.scoreboard) game.xBattleCards.push(read);
+				else if (reportsOnClosed(game, read))
+					game.later.xBattleCards.push(read);
+				else looseCards.push(read);
 			}
 		}
+		if (discarded) continue;
+		withinClaimWindow(segment, game);
+		segmentGames.push({ segment, game });
 	}
-	finalize();
-	dropOrphans();
 
-	// a history screen of another game is built before the open match it interrupted
-	return [...built, ...unbackedBuilt].sort(
-		(a, b) => a.sources[0]!.t - b.sources[0]!.t,
+	const boardGames: Game<E>[] = [];
+	const unclosed = identities
+		.filter((identity) => !closed.has(identity))
+		.sort((a, b) => a[0]!.t - b[0]!.t);
+	for (const identity of unclosed) {
+		const shown = identity.find((board) => !isStagelessHistoryRead(board));
+		if (!shown) continue;
+		const missed = identity.every(isHistoryScoreboardEvent)
+			? missedResultsGame(shown, segmentGames, consoleOffset)
+			: undefined;
+		if (missed) {
+			close(missed, shown, identity);
+			continue;
+		}
+		const game = emptyGame<E>();
+		close(game, shown, identity);
+		boardGames.push(game);
+	}
+
+	for (const [identity, game] of closed) {
+		game.later.consoleOffset = consoleOffset;
+		game.later.revisits = identity.filter(
+			(board) =>
+				board !== game.scoreboard && !game.entryShownAgain.includes(board),
+		);
+	}
+	const assigned = [...segmentGames.map(({ game }) => game), ...boardGames];
+	for (const card of looseCards.sort((a, b) => a.t - b.t)) {
+		const previous = gameClosedBefore(assigned, card);
+		if (previous && reportsOnClosed(previous, card)) {
+			previous.later.xBattleCards.push(card);
+			continue;
+		}
+		gameClosedAfter(assigned, card, segments)?.xBattleCards.push(card);
+	}
+	return assigned;
+}
+
+function gameOfSegment<E extends DetectedEvent>(
+	segment: GameSegments.Segment<E>,
+): Game<E> {
+	return {
+		...emptyGame<E>(),
+		mapStart: segment.mapStart,
+		minimaps: [...segment.minimaps],
+		deaths: [...segment.deaths],
+		objectives: [...segment.objectives],
+		playerStatuses: [...segment.playerStatuses],
+		stripWeapons: [...segment.stripWeapons],
+		kills: [...segment.kills],
+		stageVotes: new Map(segment.stageVotes),
+	};
+}
+
+function emptyGame<E extends DetectedEvent>(): Game<E> {
+	return {
+		mapStart: null,
+		minimaps: [],
+		deaths: [],
+		objectives: [],
+		playerStatuses: [],
+		stripWeapons: [],
+		kills: [],
+		xBattleCards: [],
+		ownResults: null,
+		scoreboard: null,
+		entryShownAgain: [],
+		stageVotes: new Map(),
+		later: {
+			revisits: [],
+			ownResults: null,
+			xBattleCards: [],
+			consoleOffset: 0,
+		},
+	};
+}
+
+/**
+ * Whether a board in a segment's tail closes it: it shows a game no earlier
+ * segment closed and none shown before this one was played (the battle log
+ * browsed before playing), its stage was read, and the segment's own reads
+ * don't contradict it.
+ */
+function closesSegment<E extends DetectedEvent>(
+	board: E & ScoreboardFamilyEvent,
+	identity: GameIdentity.GameIdentity<E>,
+	segment: GameSegments.Segment<E>,
+	game: Game<E>,
+	closed: ReadonlyMap<GameIdentity.GameIdentity<E>, Game<E>>,
+	consoleOffset: number,
+): boolean {
+	if (closed.has(identity) || isStagelessHistoryRead(board)) return false;
+	if (identity[0]!.t < segment.from) return false;
+	return !isHistoryOfAnotherGame(board, game, consoleOffset);
+}
+
+/**
+ * The replay-browser entry a segment plays back: the last history screen
+ * before its intro was that entry, shown at most `REPLAY_LOAD_MAX_SECONDS`
+ * earlier, its game closes no segment yet, and the intro's stage (or with
+ * that unread, its mode) agrees with it. Returns the entry's game's first
+ * board with its stage read.
+ */
+function replayedEntry<E extends DetectedEvent>(
+	segment: GameSegments.Segment<E>,
+	historyBoards: readonly (E & ScoreboardFamilyEvent)[],
+	identityOf: ReadonlyMap<E, GameIdentity.GameIdentity<E>>,
+	closed: ReadonlyMap<GameIdentity.GameIdentity<E>, Game<E>>,
+): (E & ScoreboardFamilyEvent) | null {
+	const intro = segment.mapStart;
+	if (!intro) return null;
+	const entry = historyBoards.findLast((shown) => shown.t < intro.t);
+	if (
+		entry?.type !== SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE ||
+		intro.t - entry.t > REPLAY_LOAD_MAX_SECONDS
+	) {
+		return null;
+	}
+	const identity = identityOf.get(entry);
+	if (
+		!identity ||
+		closed.has(identity) ||
+		!identity.every(isHistoryScoreboardEvent)
+	) {
+		return null;
+	}
+	const board = identity.find((read) => !isStagelessHistoryRead(read));
+	if (!board) return null;
+
+	const { stage, mode } = intro.data;
+	if (mode !== null && board.data.mode !== null && mode !== board.data.mode) {
+		return null;
+	}
+	const agrees =
+		stage !== null
+			? stage === board.data.stage
+			: mode !== null && mode === board.data.mode;
+	return agrees ? board : null;
+}
+
+/**
+ * Whether a personal results screen shown before any board closed the segment
+ * joins it: a game with an intro or a minimap read takes it, one with neither
+ * only when counter reads show it was played.
+ */
+function ownResultsClaim<E extends DetectedEvent>(
+	segment: GameSegments.Segment<E>,
+	own: E,
+): boolean {
+	if (segment.mapStart || segment.minimaps.length > 0) return true;
+	return segment.objectives.some(
+		(read) => own.t - read.t <= FALLBACK_WINDOW_SECONDS,
 	);
 }
 
 /**
- * The personal results screen shows the POV player's full gear (mains and
- * subs), which no other screen reads whole: it completes that player's build
- * on the match whose scoreboard it follows. Returns that match completed, as
- * a copy; undefined when the screen belongs to none.
+ * A game with neither an intro nor a minimap read keeps only the gameplay read
+ * within `FALLBACK_WINDOW_SECONDS` of the screen that claimed it (the
+ * personal results or the closing board).
  */
-function withOwnResults<E extends DetectedEvent>(
-	last: BuiltMatch<E> | undefined,
-	event: E & EventOfType<typeof SCOREBOARD_OWN_EVENT_TYPE>,
-): BuiltMatch<E> | undefined {
-	const pov = last?.match.pov;
-	if (!last || !pov || !followsMatch(last, event)) return undefined;
-	const { data } = event;
-	const player = last.match.teams[pov.team].players[pov.index];
-	if (!player || data.abilities.length === 0) return undefined;
-	return {
-		match: {
-			...last.match,
-			teams: withOwnBuild(last.match.teams, pov, data),
-		},
-		sources: [...last.sources, event],
-	};
+function withinClaimWindow<E extends DetectedEvent>(
+	segment: GameSegments.Segment<E>,
+	game: Game<E>,
+): void {
+	if (segment.mapStart || segment.minimaps.length > 0) return;
+	const claimedAt = game.ownResults?.t ?? game.scoreboard?.t;
+	if (claimedAt === undefined) return;
+	const within = (read: DetectedEvent) =>
+		claimedAt - read.t <= FALLBACK_WINDOW_SECONDS;
+	game.deaths = game.deaths.filter(within);
+	game.objectives = game.objectives.filter(within);
+	game.playerStatuses = game.playerStatuses.filter(within);
+	game.stripWeapons = game.stripWeapons.filter(within);
+	game.kills = game.kills.filter(within);
 }
 
-/** Whether a personal results screen is seen soon enough after the match closed to belong to it. */
-function followsMatch<E extends DetectedEvent>(
-	last: BuiltMatch<E> | undefined,
-	event: E,
+/**
+ * The personal results screen shows the POV player's full gear (mains and
+ * subs), which no other screen reads whole: one shown soon after the closing
+ * board completes that player's build when the board seated the POV.
+ */
+function completesOwnBuild<E extends DetectedEvent>(
+	game: Game<E>,
+	own: OwnResultsEvent<E>,
 ): boolean {
+	const board = game.scoreboard;
 	return (
-		last !== undefined &&
-		last.match.endsAt !== null &&
-		event.t - last.match.endsAt <= OWN_RESULTS_WINDOW_SECONDS
+		board !== null &&
+		board.data.povIndex !== null &&
+		board.data.players[board.data.povIndex] !== undefined &&
+		own.data.abilities.length > 0 &&
+		own.t - lastBaseT(game) <= OWN_RESULTS_WINDOW_SECONDS
 	);
+}
+
+/**
+ * Whether an X Battle lobby card shown after a game's closing board reports on
+ * it: seen soon after, the game an X Battle (or of unread lobby), not a
+ * history screen browsed.
+ */
+function reportsOnClosed<E extends DetectedEvent>(
+	game: Game<E>,
+	card: E,
+): boolean {
+	const board = game.scoreboard;
+	if (!board || isHistoryOnly({ sources: gameInputs(game) })) return false;
+	const lobby = board.data.lobby ?? game.ownResults?.data.lobby ?? null;
+	if (lobby !== null && lobby !== "X") return false;
+	const since = card.t - lastBaseT(game);
+	return since >= 0 && since <= X_BATTLE_CARDS_WINDOW_SECONDS;
+}
+
+/** The game whose closing board came last before the card. */
+function gameClosedBefore<E extends DetectedEvent>(
+	games: readonly Game<E>[],
+	card: E,
+): Game<E> | undefined {
+	let found: Game<E> | undefined;
+	for (const game of games) {
+		const t = game.scoreboard?.t;
+		if (t === undefined || t > card.t) continue;
+		if (!found || t > found.scoreboard!.t) found = game;
+	}
+	return found;
+}
+
+/**
+ * The game whose closing board comes first after a card that joined no game
+ * before it, within `X_BATTLE_CARDS_WINDOW_SECONDS` and with no gameplay
+ * between them.
+ */
+function gameClosedAfter<E extends DetectedEvent>(
+	games: readonly Game<E>[],
+	card: E,
+	segments: readonly GameSegments.Segment<E>[],
+): Game<E> | undefined {
+	let found: Game<E> | undefined;
+	for (const game of games) {
+		const t = game.scoreboard?.t;
+		if (t === undefined || t <= card.t) continue;
+		if (t - card.t > X_BATTLE_CARDS_WINDOW_SECONDS) continue;
+		if (
+			segments.some((segment) => segment.from > card.t && segment.from <= t)
+		) {
+			continue;
+		}
+		if (!found || t < found.scoreboard!.t) found = game;
+	}
+	return found;
+}
+
+/** When the first read a game is built from was seen: the matches' order. */
+function firstBaseT<E extends DetectedEvent>(game: Game<E>): number {
+	return Math.min(...gameInputs(game).map((event) => event.t));
+}
+
+/** When the last read a game is built from was seen. */
+function lastBaseT<E extends DetectedEvent>(game: Game<E>): number {
+	return Math.max(...gameInputs(game).map((event) => event.t));
+}
+
+/** The match as built from its game, cached, with what joined it later put on top. */
+function builtGame<E extends DetectedEvent>(
+	game: Game<E>,
+	cache: MatchBuildCache<E> | undefined,
+): BuiltMatch<E> {
+	const built = cachedBuiltMatch(game, cache);
+	const { revisits, ownResults, xBattleCards, consoleOffset } = game.later;
+	const recorded = game.scoreboard
+		? GameIdentity.recordedAt(game.scoreboard)
+		: null;
+	const onPcClock = recorded !== null && consoleOffset !== 0;
+	if (
+		revisits.length === 0 &&
+		!ownResults &&
+		xBattleCards.length === 0 &&
+		!onPcClock
+	) {
+		return built;
+	}
+	let match = built.match;
+	if (onPcClock) match = { ...match, playedAt: recorded - consoleOffset };
+	for (const board of revisits) {
+		match = withRevealedNames(match, built.sources, board);
+	}
+	if (ownResults && match.pov) {
+		match = {
+			...match,
+			teams: withOwnBuild(match.teams, match.pov, ownResults.data),
+		};
+	}
+	if (xBattleCards.length > 0) match = { ...match, lobby: match.lobby ?? "X" };
+	return {
+		...built,
+		match,
+		sources: [
+			...built.sources,
+			...revisits,
+			...(ownResults ? [ownResults] : []),
+			...xBattleCards,
+		].sort((a, b) => a.t - b.t),
+	};
 }
 
 function withOwnBuildOn(
@@ -535,30 +721,6 @@ function withOwnBuild(
 		}),
 	};
 	return result;
-}
-
-/**
- * An X Battle lobby card seen with no game open joins the match closed
- * shortly before it, as a copy with the card in its sources (and an unread
- * lobby read as X Battle). Undefined when
- * no X Battle game (or one of unread lobby) closed shortly before it.
- */
-function withXBattleCard<E extends DetectedEvent>(
-	last: BuiltMatch<E> | undefined,
-	event: E,
-): BuiltMatch<E> | undefined {
-	if (!last || last.match.endsAt === null || isHistoryOnly(last)) {
-		return undefined;
-	}
-	if (last.match.lobby !== null && last.match.lobby !== "X") return undefined;
-	if (event.t - last.match.endsAt > X_BATTLE_CARDS_WINDOW_SECONDS) {
-		return undefined;
-	}
-	return {
-		...last,
-		match: { ...last.match, lobby: last.match.lobby ?? "X" },
-		sources: [...last.sources, event],
-	};
 }
 
 /** Why a built match is held back from /ingest; absent = it is sent. */
@@ -779,159 +941,50 @@ function isPlayedGame(sources: readonly DetectedEvent[]): boolean {
 	return sources.some((event) => !isHistoryScoreboardEvent(event));
 }
 
-/** A match being accumulated as the timeline is walked. */
-interface OpenMatch<E extends DetectedEvent> {
-	mapStart: (E & EventOfType<typeof MAP_START_EVENT_TYPE>) | null;
-	minimaps: (E & EventOfType<typeof MINIMAP_EVENT_TYPE>)[];
-	deaths: (E & EventOfType<typeof DEATH_EVENT_TYPE>)[];
-	/** objective-counter reads; become the match's `objective` samples */
-	objectives: (E & EventOfType<typeof OBJECTIVE_EVENT_TYPE>)[];
-	/** icon-strip reads; become the match's `playerStatus` samples */
-	playerStatuses: (E & EventOfType<typeof PLAYER_STATUS_EVENT_TYPE>)[];
-	/** sampled per-slot weapon evidence for the slot→row assignment */
-	stripWeapons: (E & EventOfType<typeof STRIP_WEAPONS_EVENT_TYPE>)[];
-	/** kill-feed stack reads; become the match's `kills` */
-	kills: (E & EventOfType<typeof KILL_EVENT_TYPE>)[];
-	/** X Battle lobby cards reporting on this game; ride along in its sources */
-	xBattleCards: (E & XBattleCardEvent)[];
-	/** the personal results screen, when shown before any results screen closed the game */
-	ownResults: (E & EventOfType<typeof SCOREBOARD_OWN_EVENT_TYPE>) | null;
-	/** the board a replay was played back from, or the results screen that closed the game */
-	scoreboard: (E & ScoreboardFamilyEvent) | null;
-	/** history screens showing the game again; ride along in its sources */
-	revisits: (E & ScoreboardFamilyEvent)[];
-	/**
-	 * per-stage read counts (a MapStart's stage seeds it); without an intro
-	 * stage the plurality winner delimits same-vs-next map so one misread frame
-	 * can't poison the match
-	 */
-	stageVotes: Map<StageId, number>;
-	lastMinimapT: number | null;
-}
-
-function isBacked<E extends DetectedEvent>(open: OpenMatch<E>): boolean {
+function isBacked<E extends DetectedEvent>(game: Game<E>): boolean {
 	return (
-		open.scoreboard !== null ||
-		open.ownResults !== null ||
-		open.minimaps.length > 0 ||
-		hasPlayedCounter(open)
+		game.scoreboard !== null ||
+		game.ownResults !== null ||
+		game.minimaps.length > 0 ||
+		hasPlayedCounter(game)
 	);
 }
 
 /** An intro followed by counter reads spanning a stretch of game clock: the game was played, results screen or not. */
-function hasPlayedCounter<E extends DetectedEvent>(
-	open: OpenMatch<E>,
-): boolean {
-	const first = open.objectives[0];
-	const last = open.objectives.at(-1);
+function hasPlayedCounter<E extends DetectedEvent>(game: Game<E>): boolean {
+	const first = game.objectives[0];
+	const last = game.objectives.at(-1);
 	return (
-		open.mapStart !== null &&
+		game.mapStart !== null &&
 		first !== undefined &&
 		last!.t - first.t >= MIN_PLAYED_COUNTER_SECONDS
 	);
 }
 
-function startMatch<E extends DetectedEvent>(): OpenMatch<E> {
-	return {
-		mapStart: null,
-		minimaps: [],
-		deaths: [],
-		objectives: [],
-		playerStatuses: [],
-		stripWeapons: [],
-		kills: [],
-		xBattleCards: [],
-		ownResults: null,
-		scoreboard: null,
-		revisits: [],
-		stageVotes: new Map(),
-		lastMinimapT: null,
-	};
-}
-
-interface MinimapLookahead {
-	/** the next minimap's non-null stage read */
-	nextStage: StageId | null;
-	/** stages read by later minimaps before the next intro, scoreboard or time gap */
-	laterStages: ReadonlySet<StageId>;
-}
-
-/**
- * For each minimap event, what the minimaps after it read — the refutation
- * signals for the stage-change split.
- */
-function buildMinimapLookahead<E extends DetectedEvent>(
-	sorted: readonly E[],
-): Map<E, MinimapLookahead> {
-	const lookahead = new Map<E, MinimapLookahead>();
-	let nextStage: StageId | null = null;
-	let laterStages = new Set<StageId>();
-	let laterMinimapT: number | null = null;
-	for (let i = sorted.length - 1; i >= 0; i--) {
-		const event = sorted[i]!;
-		if (event.type === MAP_START_EVENT_TYPE || isScoreboardEvent(event)) {
-			laterStages = new Set();
-			continue;
-		}
-		if (!isEventOfType(event, MINIMAP_EVENT_TYPE)) continue;
-		if (laterMinimapT !== null && laterMinimapT - event.t > MATCH_GAP_SECONDS) {
-			laterStages = new Set();
-		}
-		lookahead.set(event, { nextStage, laterStages });
-		const stage = event.data.stage;
-		if (stage !== null && !laterStages.has(stage)) {
-			// copied so the sets already handed out keep what they saw
-			laterStages = new Set(laterStages).add(stage);
-		}
-		nextStage = stage ?? nextStage;
-		laterMinimapT = event.t;
-	}
-	return lookahead;
-}
-
-function vote(votes: Map<StageId, number>, stage: StageId | null): void {
-	if (stage !== null) votes.set(stage, (votes.get(stage) ?? 0) + 1);
-}
-
-/** Plurality stage of the reads so far; insertion order breaks ties. */
-function leadingStage(votes: Map<StageId, number>): StageId | null {
-	let winner: StageId | null = null;
-	let best = 0;
-	for (const [stage, count] of votes) {
-		if (count > best) {
-			winner = stage;
-			best = count;
-		}
-	}
-	return winner;
-}
-
-/** The open match's events in a fixed order; equal lists mean the same match. */
-function openMatchInputs<E extends DetectedEvent>(open: OpenMatch<E>): E[] {
+/** The events a game's match is built from in a fixed order; equal lists mean the same match. */
+function gameInputs<E extends DetectedEvent>(game: Game<E>): E[] {
 	return [
-		...(open.mapStart ? [open.mapStart] : []),
-		...open.minimaps,
-		...open.deaths,
-		...open.objectives,
-		...open.playerStatuses,
-		...open.stripWeapons,
-		...open.kills,
-		...open.xBattleCards,
-		...(open.ownResults ? [open.ownResults] : []),
-		...(open.scoreboard ? [open.scoreboard] : []),
-		...open.revisits,
+		...(game.mapStart ? [game.mapStart] : []),
+		...game.minimaps,
+		...game.deaths,
+		...game.objectives,
+		...game.playerStatuses,
+		...game.stripWeapons,
+		...game.kills,
+		...game.xBattleCards,
+		...(game.ownResults ? [game.ownResults] : []),
+		...(game.scoreboard ? [game.scoreboard] : []),
+		...game.entryShownAgain,
 	];
 }
 
 function cachedBuiltMatch<E extends DetectedEvent>(
-	open: OpenMatch<E>,
+	game: Game<E>,
 	cache: MatchBuildCache<E> | undefined,
-	// an amended match's own key, so the match as first built stays cached too
-	key?: E,
 ): BuiltMatch<E> {
-	if (!cache) return toBuiltMatch(open);
-	const inputs = openMatchInputs(open);
-	const cacheKey = key ?? inputs[0]!;
+	if (!cache) return toBuiltMatch(game);
+	const inputs = gameInputs(game);
+	const cacheKey = game.scoreboard ?? inputs[0]!;
 	const cached = cache.get(cacheKey);
 	if (
 		cached &&
@@ -940,15 +993,13 @@ function cachedBuiltMatch<E extends DetectedEvent>(
 	) {
 		return cached.built;
 	}
-	const built = toBuiltMatch(open);
+	const built = toBuiltMatch(game);
 	cache.set(cacheKey, { inputs, built });
 	return built;
 }
 
-function toBuiltMatch<E extends DetectedEvent>(
-	open: OpenMatch<E>,
-): BuiltMatch<E> {
-	const sources = openMatchInputs(open).sort((a, b) => a.t - b.t);
+function toBuiltMatch<E extends DetectedEvent>(open: Game<E>): BuiltMatch<E> {
+	const sources = gameInputs(open).sort((a, b) => a.t - b.t);
 
 	const board: ScoreboardData | undefined = open.scoreboard?.data;
 	const start = open.mapStart?.data;
@@ -1022,7 +1073,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 		startsAt:
 			sources.length > 0 ? Math.max(0, Math.floor(sources[0]!.t)) : null,
 		endsAt: floorOrNull(sources.at(-1)?.t),
-		playedAt: playedAt(open.scoreboard),
+		playedAt: open.scoreboard ? GameIdentity.playedAt(open.scoreboard) : null,
 		// only X Battle shows its lobby cards: they tell a game whose results
 		// screen was missed (or its header unread) apart from other lobbies
 		lobby:
@@ -1032,11 +1083,11 @@ function toBuiltMatch<E extends DetectedEvent>(
 			board?.stage ??
 			start?.stage ??
 			own?.stage ??
-			leadingStage(open.stageVotes),
+			GameSegments.leadingStage(open.stageVotes),
 		matchScores: board?.matchScores.some((score) => score !== null)
 			? board.matchScores
 			: null,
-		replayCode: historyData(open.scoreboard)?.replayCode ?? null,
+		replayCode: GameIdentity.historyData(open.scoreboard)?.replayCode ?? null,
 		// layout alone cannot flag a broadcast (S3 POV footage draws both narrow
 		// strip geometries), so only the spectator map screen or badge-proven
 		// strips count; a results screen that identified the POV seat disproves
@@ -2060,102 +2111,6 @@ function bestCount(
 }
 
 /**
- * When the match was played: a replay/battle log screen's on-screen recording
- * timestamp (anchored to when the screen was seen, not a later send), else the
- * closing scoreboard's detection time — read structurally off richer event
- * records (StoredEvent) so the builder stays generic.
- */
-function playedAt(scoreboard: DetectedEvent | null): number | null {
-	if (!scoreboard) return null;
-	return recordedAt(scoreboard) ?? detectedAtOf(scoreboard);
-}
-
-/** A history screen's on-screen recording time (the game's start, console clock); null when unread. */
-function recordedAt(event: DetectedEvent): number | null {
-	const timestamp = historyData(event)?.timestamp;
-	if (!timestamp) return null;
-	return parseReplayTimestamp(timestamp, {
-		now: detectedAtOf(event) ?? undefined,
-	});
-}
-
-function detectedAtOf(event: DetectedEvent): number | null {
-	return (event as { detectedAt?: number }).detectedAt ?? null;
-}
-
-/** The replay-browser and both battle log screens carry the recording timestamp; only the former a replay code. */
-function historyData(
-	scoreboard: DetectedEvent | null,
-):
-	| (ScoreboardBattleLogData & Partial<ScoreboardBattleLogReplayData>)
-	| undefined {
-	return scoreboard && isHistoryScoreboardEvent(scoreboard)
-		? scoreboard.data
-		: undefined;
-}
-
-/**
- * The earlier match a battle history screen shows again: its closing board
- * shows the same game and either shares whole stat lines with the screen or
- * its play time doesn't contradict the screen's recording time (either may be
- * unknown, e.g. on VoD scans).
- */
-function revisitedMatch<E extends DetectedEvent>(
-	built: readonly BuiltMatch<E>[],
-	event: E,
-): BuiltMatch<E> | undefined {
-	if (!isHistoryScoreboardEvent(event)) return undefined;
-	const board = event.data;
-	const shownPlayedAt = playedAt(event);
-
-	return built.findLast((candidate) => {
-		if (!closesSameGame(candidate, board)) return false;
-		return (
-			sharedStatLines(closingBoardOf(candidate)!, board) >=
-				SAME_GAME_MIN_SHARED_STAT_LINES ||
-			shownPlayedAt === null ||
-			candidate.match.playedAt === null ||
-			Math.abs(shownPlayedAt - candidate.match.playedAt) <=
-				REVISIT_PLAYED_AT_TOLERANCE_MS
-		);
-	});
-}
-
-/**
- * The history-only match a map intro plays back: the last history screen
- * before the intro was its replay-browser entry, shown at most
- * `REPLAY_LOAD_MAX_SECONDS` earlier, and the intro's stage (or with that
- * unread, its mode) agrees with the entry's.
- */
-function replayedHistoryMatch<E extends DetectedEvent>(
-	built: readonly BuiltMatch<E>[],
-	lastHistoryScreen: (E & HistoryScoreboardEvent) | null,
-	intro: E & EventOfType<typeof MAP_START_EVENT_TYPE>,
-): BuiltMatch<E> | undefined {
-	if (
-		lastHistoryScreen?.type !== SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE ||
-		intro.t - lastHistoryScreen.t > REPLAY_LOAD_MAX_SECONDS
-	) {
-		return undefined;
-	}
-	const shown = built.findLast(
-		(candidate) =>
-			isHistoryOnly(candidate) && candidate.sources.includes(lastHistoryScreen),
-	);
-	if (!shown) return undefined;
-
-	const { stage, mode } = intro.data;
-	if (mode !== null && shown.match.mode !== null && mode !== shown.match.mode) {
-		return undefined;
-	}
-	const agrees =
-		stage !== null
-			? stage === shown.match.stage
-			: mode !== null && mode === shown.match.mode;
-	return agrees ? shown : undefined;
-}
-
-/**
  * A history screen whose stage went unread names no game of its own (typically
  * a frame caught mid-transition), so it may only join an already built match.
  */
@@ -2164,116 +2119,161 @@ function isStagelessHistoryRead(event: DetectedEvent): boolean {
 }
 
 /**
- * Whether a history screen shows another game than the one `pending` holds the
+ * Whether a history screen shows another game than the one `game` holds the
  * reads of: the stage or mode its intro or minimaps read disagrees, or its
- * recording time is too far from when those reads were seen. Without such
- * evidence it closes the game, standing in for a missed results screen.
+ * recording time, moved onto the PC clock by `consoleOffset`, is too far from
+ * when those reads were seen. Without such evidence it closes the game,
+ * standing in for a missed results screen.
  */
 function isHistoryOfAnotherGame<E extends DetectedEvent>(
 	event: E,
-	pending: OpenMatch<E>,
+	game: Game<E>,
+	consoleOffset: number,
 ): boolean {
 	if (!isHistoryScoreboardEvent(event)) return false;
-	const board = event.data;
-	const start = pending.mapStart?.data;
+	if (contradictsReads(event, game)) return true;
+	const distance = recordingDistance(event, game, consoleOffset);
+	return distance !== null && distance > GameIdentity.PLAYED_AT_TOLERANCE_MS;
+}
 
-	const stage = start?.stage ?? leadingStage(pending.stageVotes);
+/** Whether a board's stage or mode disagrees with what the game's intro or minimaps read. */
+function contradictsReads<E extends DetectedEvent>(
+	event: E & ScoreboardFamilyEvent,
+	game: Game<E>,
+): boolean {
+	const board = event.data;
+	const start = game.mapStart?.data;
+	const stage = start?.stage ?? GameSegments.leadingStage(game.stageVotes);
 	if (stage !== null && board.stage !== null && stage !== board.stage) {
 		return true;
 	}
 	const mode = start?.mode ?? null;
-	if (mode !== null && board.mode !== null && mode !== board.mode) return true;
+	return mode !== null && board.mode !== null && mode !== board.mode;
+}
 
-	const recorded = recordedAt(event);
-	const firstRead = firstReadAt(pending);
-	if (recorded === null || firstRead === null) return false;
-	return Math.abs(recorded - firstRead) > REVISIT_PLAYED_AT_TOLERANCE_MS;
+/** How far a history screen's recording time, on the PC clock, is from the game's first read; null when either is unknown. */
+function recordingDistance<E extends DetectedEvent>(
+	event: E,
+	game: Game<E>,
+	consoleOffset: number,
+): number | null {
+	const recorded = GameIdentity.recordedAt(event);
+	const firstRead = firstReadAt(game);
+	if (recorded === null || firstRead === null) return null;
+	return Math.abs(recorded - consoleOffset - firstRead);
 }
 
 /**
- * The earlier match a battle history screen completes, its results screen
- * missed: one finalized without a scoreboard whose reads the screen doesn't
- * contradict (`isHistoryOfAnotherGame`), the one first read closest to the
- * recording time. Without times to compare (VoD scans, an unread timestamp)
- * only a sole fitting match is taken.
+ * The earlier game a battle history screen completes, its results screen
+ * missed: one with gameplay read before the screen, backed but closed by no
+ * board, whose reads the screen doesn't contradict (`isHistoryOfAnotherGame`),
+ * the one first read closest to the recording time. Without times to compare
+ * (VoD scans, an unread timestamp) only a sole fitting game is taken.
  */
-function scoreboardlessMatchShown<E extends DetectedEvent>(
-	scoreboardless: ReadonlyMap<BuiltMatch<E>, OpenMatch<E>>,
-	event: E,
-): BuiltMatch<E> | undefined {
-	if (!isHistoryScoreboardEvent(event)) return undefined;
-	const fitting = [...scoreboardless].filter(
-		([, pending]) => !isHistoryOfAnotherGame(event, pending),
+function missedResultsGame<E extends DetectedEvent>(
+	shown: E & ScoreboardFamilyEvent,
+	segmentGames: readonly {
+		segment: GameSegments.Segment<E>;
+		game: Game<E>;
+	}[],
+	consoleOffset: number,
+): Game<E> | undefined {
+	const fitting = segmentGames.flatMap(({ segment, game }) =>
+		game.scoreboard === null &&
+		segment.to < shown.t &&
+		isBacked(game) &&
+		!isHistoryOfAnotherGame(shown, game, consoleOffset)
+			? [game]
+			: [],
 	);
 
-	const recorded = recordedAt(event);
-	let closest: { match: BuiltMatch<E>; distance: number } | undefined;
-	for (const [match, pending] of fitting) {
-		const firstRead = firstReadAt(pending);
-		if (recorded === null || firstRead === null) continue;
-		const distance = Math.abs(recorded - firstRead);
-		if (!closest || distance < closest.distance) closest = { match, distance };
+	let closest: { game: Game<E>; distance: number } | undefined;
+	for (const game of fitting) {
+		const distance = recordingDistance(shown, game, consoleOffset);
+		if (distance === null) continue;
+		if (!closest || distance < closest.distance) closest = { game, distance };
 	}
-	if (closest) return closest.match;
+	if (closest) return closest.game;
 
-	return fitting.length === 1 ? fitting[0]![0] : undefined;
+	return fitting.length === 1 ? fitting[0] : undefined;
 }
 
-/** When the earliest of the match's reads was seen (wall clock); null on VoD scans. */
-function firstReadAt<E extends DetectedEvent>(
-	pending: OpenMatch<E>,
-): number | null {
-	const readTimes = openMatchInputs(pending)
-		.map(detectedAtOf)
+/**
+ * How far the console clock (the history screens' recording times) runs from
+ * the PC's (detection times), told by the scan itself: every game paired with
+ * each history screen of its stage and mode browsed after it gives an offset,
+ * and the one taken is the offset that distinct games and distinct screens,
+ * paired one to one, agree on most (`CONSOLE_OFFSET_MIN_SUPPORT` at least):
+ * the console set to another timezone than the PC, or a misread AM/PM letter
+ * on every screen. 0 without such agreement: a lone pairing could be an older
+ * game browsed.
+ */
+function consoleClockOffset<E extends DetectedEvent>(
+	segments: readonly GameSegments.Segment<E>[],
+	games: readonly Game<E>[],
+	identities: readonly GameIdentity.GameIdentity<E>[],
+): number {
+	const shownGames = identities.flatMap((identity) => {
+		if (!identity.every(isHistoryScoreboardEvent)) return [];
+		const shown = identity.find((board) => !isStagelessHistoryRead(board));
+		const recorded = shown ? GameIdentity.recordedAt(shown) : null;
+		return shown && recorded !== null ? [{ shown, recorded }] : [];
+	});
+	const pairs: { game: number; shown: number; offset: number }[] = [];
+	for (const [gameIndex, game] of games.entries()) {
+		const firstRead = firstReadAt(game);
+		if (firstRead === null) continue;
+		for (const [shownIndex, { shown, recorded }] of shownGames.entries()) {
+			if (shown.t <= segments[gameIndex]!.to) continue;
+			if (contradictsReads(shown, game)) continue;
+			pairs.push({
+				game: gameIndex,
+				shown: shownIndex,
+				offset: recorded - firstRead,
+			});
+		}
+	}
+
+	let best = { offset: 0, support: 0 };
+	for (const candidate of pairs) {
+		const support = oneToOnePairings(
+			pairs.filter(
+				(pair) =>
+					Math.abs(pair.offset - candidate.offset) <=
+					CONSOLE_OFFSET_AGREEMENT_MS,
+			),
+		);
+		if (
+			support > best.support ||
+			(support === best.support &&
+				Math.abs(candidate.offset) < Math.abs(best.offset))
+		) {
+			best = { offset: candidate.offset, support };
+		}
+	}
+	return best.support >= CONSOLE_OFFSET_MIN_SUPPORT ? best.offset : 0;
+}
+
+/** How many of the pairs hold no game and no screen twice (greedy, in order). */
+function oneToOnePairings(
+	pairs: readonly { game: number; shown: number }[],
+): number {
+	const games = new Set<number>();
+	const shown = new Set<number>();
+	for (const pair of pairs) {
+		if (games.has(pair.game) || shown.has(pair.shown)) continue;
+		games.add(pair.game);
+		shown.add(pair.shown);
+	}
+	return games.size;
+}
+
+/** When the earliest of the game's reads was seen (wall clock); null on VoD scans. */
+function firstReadAt<E extends DetectedEvent>(game: Game<E>): number | null {
+	const readTimes = gameInputs(game)
+		.map(GameIdentity.detectedAtOf)
 		.filter((t) => t !== null);
 	return readTimes.length > 0 ? Math.min(...readTimes) : null;
-}
-
-/**
- * The last match again when its results screen is read a second time with no
- * match opened since: an overlay (e.g. a lost-connection dialog) hid the screen
- * long enough for the detector to re-arm.
- */
-function reshownResultsMatch<E extends DetectedEvent>(
-	built: readonly BuiltMatch<E>[],
-	event: E,
-): BuiltMatch<E> | undefined {
-	if (!isEventOfType(event, SCOREBOARD_EVENT_TYPE)) return undefined;
-	const last = built.at(-1);
-	if (!last) return undefined;
-	return closesSameGame(last, event.data) ? last : undefined;
-}
-
-/**
- * Whether `board` shows the game `built` closed with: the stages don't
- * disagree and the boards share enough paint totals, order-free (a history
- * screen can misplace the winner panel). Paint totals practically never repeat
- * between games; names (OCR wobble) and weapons (icon sizes differ per screen)
- * are left out.
- */
-function closesSameGame<E extends DetectedEvent>(
-	built: BuiltMatch<E>,
-	board: ScoreboardData,
-): boolean {
-	const closingBoard = closingBoardOf(built);
-	if (!closingBoard) return false;
-	if (
-		board.stage !== null &&
-		built.match.stage !== null &&
-		board.stage !== built.match.stage
-	) {
-		return false;
-	}
-	return (
-		multisetOverlap(paintsRead(closingBoard), paintsRead(board)) >=
-		SAME_GAME_MIN_SHARED_PAINTS
-	);
-}
-
-function closingBoardOf<E extends DetectedEvent>(
-	built: BuiltMatch<E>,
-): ScoreboardData | undefined {
-	return built.sources.find(isScoreboardEvent)?.data;
 }
 
 /**
@@ -2285,16 +2285,16 @@ function closingBoardOf<E extends DetectedEvent>(
  * their victims' rows.
  */
 function withRevealedNames<E extends DetectedEvent>(
-	built: BuiltMatch<E>,
+	match: ScannerMatch,
+	sources: readonly E[],
 	history: E & ScoreboardFamilyEvent,
 ): ScannerMatch {
-	const results = built.sources.find((source) =>
+	const results = sources.find((source) =>
 		isEventOfType(source, SCOREBOARD_EVENT_TYPE),
 	);
 	const realNames = results ? renamedRows(results.data, history.data) : null;
-	if (!realNames) return built.match;
+	if (!realNames) return match;
 
-	const { match } = built;
 	const teams = match.teams.map((team, side) => ({
 		players: team.players.map((player, index) => {
 			const name = realNames.get(side * PLAYERS_PER_TEAM + index);
@@ -2310,12 +2310,6 @@ function withRevealedNames<E extends DetectedEvent>(
 		}) ?? null;
 
 	return { ...match, teams, kills };
-}
-
-function paintsRead(board: ScoreboardData): number[] {
-	return board.players.flatMap((player) =>
-		player.paint !== null ? [player.paint] : [],
-	);
 }
 
 function teamsFromScoreboard(

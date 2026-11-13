@@ -1198,6 +1198,69 @@ test("a match whose scoreboard was missed is dropped on the next map start", () 
 	);
 });
 
+test("two games whose intros and results screens were both missed are split by the clock starting again", () => {
+	const built = buildScannerMatches([
+		...counterReads(10, 290),
+		minimap(100),
+		...counterReads(400, 600),
+		scoreboard(650),
+	]);
+	assert.deepEqual(
+		built.map((b) => [b.sources[0]!.t, b.sources.at(-1)!.t]),
+		[
+			[10, 290],
+			[400, 650],
+		],
+	);
+});
+
+test.each([
+	{
+		why: "a battle log view",
+		screen: () => battleLogScoreboard(105, { paints: OTHER_GAME_PAINTS }),
+	},
+	{
+		why: "a results screen",
+		screen: () => scoreboard(105, { paints: OTHER_GAME_PAINTS }),
+	},
+])(
+	"$why read while the game clock runs on ends no game and forms none",
+	({ screen }) => {
+		const built = buildScannerMatches([
+			mapStart(0),
+			objective(60),
+			objective(100),
+			screen(),
+			objective(110),
+			objective(200),
+			scoreboard(300),
+		]);
+		assert.deepEqual(
+			built.map((b) => b.sources.map((e) => e.t)),
+			[[0, 60, 100, 110, 200, 300]],
+		);
+	},
+);
+
+test("a broadcast replay between two games missing their intros and results screens does not merge them", () => {
+	const built = buildScannerMatches([
+		...counterReads(10, 290),
+		minimap(100),
+		objective(320, { time: 283 }),
+		objective(325, { time: 278 }),
+		objective(330, { time: 273 }),
+		...counterReads(500, 700),
+		scoreboard(750),
+	]);
+	assert.deepEqual(
+		built.map((b) => [b.sources[0]!.t, b.sources.at(-1)!.t]),
+		[
+			[10, 330],
+			[500, 750],
+		],
+	);
+});
+
 test("a trailing map start with deaths but no scoreboard identifies no match", () => {
 	assert.deepEqual(buildScannerMatches([mapStart(0), death(60, "l2")]), []);
 });
@@ -1722,6 +1785,49 @@ test("a battle log view recorded long before the orphan reads leaves them unclai
 		built.map((b) => b.sources.map((e) => e.t)),
 		[[100, 300], [200]],
 	);
+});
+
+test("boards of one game join one match whatever order their stages were read in", () => {
+	const unread = battleLogScoreboard(100, { paints: GAME_PAINTS, stage: null });
+	const read = battleLogScoreboard(200, { paints: GAME_PAINTS });
+	const built = buildScannerMatches([unread, read]);
+	assert.equal(built.length, 1);
+	assert.deepEqual(built[0]!.sources, [unread, read]);
+	assert.equal(built[0]!.match.startsAt, 200);
+});
+
+test("battle log views complete the games missing their results screens though the console clock is hours off the PC's", () => {
+	const missed = gameMissingResults(0, PLAYED_AT);
+	const later = laterGameOnStage1(400, PLAYED_AT + 7 * MINUTE_MS);
+	const missedView = battleLogScoreboard(900, {
+		timestamp: "26.12.2025 2:30",
+		paints: GAME_PAINTS,
+	});
+	const laterView = battleLogScoreboard(905, {
+		timestamp: "26.12.2025 2:41",
+		paints: OTHER_GAME_PAINTS,
+		stage: 1 as StageId,
+	});
+	const built = buildScannerMatches([
+		...missed,
+		...later,
+		missedView,
+		laterView,
+	]);
+	assert.deepEqual(
+		built.map((b) => b.sources),
+		[
+			[...missed, missedView],
+			[...later, laterView],
+		],
+	);
+	for (const [index, firstReadAt] of [
+		PLAYED_AT,
+		PLAYED_AT + 7 * MINUTE_MS,
+	].entries()) {
+		const playedAt = built[index]!.match.playedAt!;
+		assert.ok(Math.abs(playedAt - firstReadAt) <= 5 * MINUTE_MS);
+	}
 });
 
 test("a results screen read again with no match opened since joins its match", () => {
@@ -2857,9 +2963,9 @@ test("unbacked matches are emitted flagged on request, map intro opened or orpha
 			mapStart(30),
 			kill(60, ["A"]),
 			mapStart(400),
-			kill(460, ["B"]),
+			kill(460, ["B"], { time: 240 }),
 			scoreboard(700),
-			kill(800, ["C"]),
+			kill(800, ["C"], { time: 290 }),
 		],
 		undefined,
 		{ unbacked: true },

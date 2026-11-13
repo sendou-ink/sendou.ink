@@ -30,6 +30,22 @@ const CLOCK_LENGTHS_SECONDS: readonly number[] = [300, 180];
 /** The display holds here once the clock runs out (overtime). */
 const OVERTIME_DISPLAY_MAX_SECONDS = 1;
 
+/**
+ * A span first read this far into its clock, or on the full-length hold before
+ * GO (1-3 s), starts a game: the counter is read from GO on. A broadcast's
+ * post-game replay of the opening moments starts later (the SWS26 REWOUND VoD
+ * replays from 4:43).
+ */
+const GAME_START_MAX_ELAPSED_SECONDS = 8;
+const GAME_START_MAX_HOLD_SECONDS = 5;
+
+/**
+ * The next game's zero lies a whole clock (Turf War's, the shortest) plus the
+ * results and intro after the previous game's; a smaller move later re-runs a
+ * moment of the same game (a broadcast replay).
+ */
+const NEXT_GAME_MIN_ZERO_SHIFT_SECONDS = 210;
+
 /** One read of the match timer. */
 export interface ClockRead {
 	t: number;
@@ -129,6 +145,36 @@ export function position(
 		time: misread ? Math.max(0, Math.ceil(remaining)) : read.time,
 		remaining,
 	};
+}
+
+/**
+ * Per span, whether it starts another game: its zero moved later than the
+ * game before it by more than a replay could, and it was first read at the
+ * start of its clock. The game's zero is the earliest of its spans' (a
+ * broadcast replay shown after it sits later, a cut ahead earlier). Over a
+ * whole scan this splits the games whose intro and results screen were both
+ * missed.
+ */
+export function gameOpenings(spans: readonly ClockSpan[]): boolean[] {
+	let gameZero: number | null = null;
+	return spans.map((span) => {
+		const opens =
+			gameZero !== null &&
+			span.zero - gameZero >= NEXT_GAME_MIN_ZERO_SHIFT_SECONDS &&
+			startsAtFullClock(span);
+		gameZero =
+			opens || gameZero === null ? span.zero : Math.min(gameZero, span.zero);
+		return opens;
+	});
+}
+
+function startsAtFullClock(span: ClockSpan): boolean {
+	const remaining = span.zero - span.from;
+	return CLOCK_LENGTHS_SECONDS.some(
+		(length) =>
+			remaining >= length - GAME_START_MAX_ELAPSED_SECONDS &&
+			remaining <= length + GAME_START_MAX_HOLD_SECONDS,
+	);
 }
 
 function spanAt(spans: readonly ClockSpan[], t: number): ClockSpan | null {
