@@ -1,4 +1,3 @@
-import { addWeeks, subWeeks } from "date-fns";
 import type { Tables } from "~/db/tables";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { AVAILABILITY } from "../availability-constants";
@@ -38,13 +37,14 @@ export async function registrationAvailability({
 	const startDate = databaseTimestampToDate(tournament.startsAt);
 
 	const horizon = Availability.weekRange(
-		addWeeks(new Date(), AVAILABILITY.WEEK_HORIZON - 1),
+		new Date(),
 		timezone,
+		AVAILABILITY.WEEK_HORIZON - 1,
 	);
 	if (tournament.startsAt >= horizon.endsAt) {
 		return {
 			beyondHorizon: {
-				opensAt: Availability.weekStartsAt(subWeeks(startDate, 1), timezone),
+				opensAt: Availability.weekStartsAt(startDate, timezone, -1),
 			},
 			window: null,
 			entries: null,

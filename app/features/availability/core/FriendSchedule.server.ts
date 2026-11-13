@@ -1,4 +1,3 @@
-import { addWeeks } from "date-fns";
 import * as R from "remeda";
 import { AVAILABILITY } from "../availability-constants";
 import type { ScheduleWeekView } from "../availability-types";
@@ -23,7 +22,7 @@ export async function findByUserIds({
 	const now = new Date();
 
 	const ranges = R.range(0, AVAILABILITY.WEEK_HORIZON).map((weekOffset) =>
-		Availability.weekRange(addWeeks(now, weekOffset), timezone),
+		Availability.weekRange(now, timezone, weekOffset),
 	);
 	const horizon = {
 		startsAt: ranges[0].startsAt,

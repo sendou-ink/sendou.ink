@@ -35,10 +35,8 @@ export async function rosterScheduleData({
 	const now = new Date();
 	const horizon = {
 		startsAt: Availability.weekRange(now, timezone).startsAt,
-		endsAt: Availability.weekRange(
-			addWeeks(now, AVAILABILITY.WEEK_HORIZON - 1),
-			timezone,
-		).endsAt,
+		endsAt: Availability.weekRange(now, timezone, AVAILABILITY.WEEK_HORIZON - 1)
+			.endsAt,
 	};
 
 	const { reportedWeeks, busyByUserId } = await VisibleSchedules.findByUserIds({
@@ -49,7 +47,7 @@ export async function rosterScheduleData({
 
 	const weeks = R.range(0, AVAILABILITY.WEEK_HORIZON).map((weekOffset) =>
 		weekView({
-			range: Availability.weekRange(addWeeks(now, weekOffset), timezone),
+			range: Availability.weekRange(now, timezone, weekOffset),
 			timezone,
 		}),
 	);

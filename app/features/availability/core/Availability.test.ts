@@ -59,6 +59,41 @@ describe("Availability.weekRange", () => {
 
 		expect(endsAt).toBe(at("2026-08-31", "00:00"));
 	});
+
+	test.each([
+		{
+			why: "the next week from the first hour of a 169h week",
+			date: "2026-10-19",
+			time: "00:30",
+			weekOffset: 1,
+			expected: "2026-10-26",
+		},
+		{
+			why: "the next week from the last hour before a 167h week",
+			date: "2026-03-22",
+			time: "23:30",
+			weekOffset: 1,
+			expected: "2026-03-23",
+		},
+		{
+			why: "the previous week from the first hour after a 167h week",
+			date: "2026-03-30",
+			time: "00:30",
+			weekOffset: -1,
+			expected: "2026-03-23",
+		},
+	])(
+		"counts the offset in calendar weeks: $why",
+		({ date, time, weekOffset, expected }) => {
+			const { startsAt } = Availability.weekRange(
+				new Date(at(date, time) * 1000),
+				HELSINKI,
+				weekOffset,
+			);
+
+			expect(startsAt).toBe(at(expected, "00:00"));
+		},
+	);
 });
 
 describe("Availability.dateInTimezone", () => {

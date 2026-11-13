@@ -1,4 +1,3 @@
-import { addWeeks } from "date-fns";
 import * as R from "remeda";
 import * as v from "valibot";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -19,19 +18,10 @@ const saveWeek = wrappedAction<typeof saveWeekSchema>({
 });
 
 const weekDays = () => {
-	const weekStartsAt = Availability.weekStartsAt(
-		addWeeks(new Date(), 1),
+	return daysOfWeekStarting(
+		Availability.weekStartsAt(new Date(), TIMEZONE, 1),
 		TIMEZONE,
 	);
-
-	return R.range(0, 7).map((dayIndex) => ({
-		date: Availability.dateInTimezone(
-			weekStartsAt + dayIndex * DAY_SECONDS + DAY_SECONDS / 2,
-			TIMEZONE,
-		),
-		ranges: [] as Array<{ start: number; end: number }>,
-		note: "",
-	}));
 };
 
 // editor with both expanders open: 06:00 -> 06:00 the next day
@@ -47,18 +37,13 @@ const SATURDAY_NIGHT = { start: 22 * 60, end: 28 * 60 };
 const inViewerTimezone = <T>(fn: () => Promise<T>) =>
 	viewerTimezoneAsyncLocalStorage.run({ timezone: HELSINKI }, fn);
 
-const currentWeekDays = () => {
-	const weekStartsAt = Availability.weekStartsAt(NOW, HELSINKI);
+const currentWeekDays = () =>
+	daysOfWeekStarting(Availability.weekStartsAt(NOW, HELSINKI), HELSINKI);
 
-	return R.range(0, 7).map((dayIndex) => ({
-		date: Availability.dateInTimezone(
-			weekStartsAt + dayIndex * DAY_SECONDS + DAY_SECONDS / 2,
-			HELSINKI,
-		),
-		ranges: [] as Array<{ start: number; end: number }>,
-		note: "",
-	}));
-};
+const NEW_YORK = "America/New_York";
+
+const inNewYork = <T>(fn: () => Promise<T>) =>
+	viewerTimezoneAsyncLocalStorage.run({ timezone: NEW_YORK }, fn);
 
 describe("myScheduleData", () => {
 	test("reads back a day painted right after another day's range that reaches into it", async () => {
@@ -167,4 +152,72 @@ describe("myScheduleData", () => {
 			);
 		});
 	});
+
+	describe("in the hour around a DST change of the viewer's timezone, with the server in UTC", () => {
+		const nearDstChange = [
+			{
+				why: "first hour of the Monday of the fall-back week (Mon 2026-10-26 00:30 EDT)",
+				now: "2026-10-26T04:30:00Z",
+			},
+			{
+				why: "last hour of the Sunday before the spring-forward week (Sun 2026-03-01 23:30 EST)",
+				now: "2026-03-02T04:30:00Z",
+			},
+		];
+
+		beforeEach(() => {
+			vi.stubEnv("TZ", "UTC");
+			vi.useFakeTimers({ toFake: ["Date"] });
+		});
+		afterEach(() => {
+			vi.useRealTimers();
+			vi.unstubAllEnvs();
+		});
+
+		test.each(nearDstChange)(
+			"shows the week after the current one as the next week: $why",
+			async ({ now }) => {
+				vi.setSystemTime(new Date(now));
+				const user = await UserFactory.createRegular();
+
+				const data = await inNewYork(() => myScheduleData(user.id));
+
+				const currentWeek = Availability.weekRange(new Date(now), NEW_YORK);
+				expect(data.weeks[0].weekStartsAt).toBe(currentWeek.startsAt);
+				expect(data.weeks[1].weekStartsAt).toBe(currentWeek.endsAt);
+			},
+		);
+
+		test.each(nearDstChange)("saves the next week: $why", async ({ now }) => {
+			vi.setSystemTime(new Date(now));
+			await UserFactory.createRegular();
+			const nextWeekStartsAt = Availability.weekRange(
+				new Date(now),
+				NEW_YORK,
+			).endsAt;
+
+			const response = await inNewYork(() =>
+				saveWeek(
+					{
+						_action: "SAVE_WEEK",
+						days: daysOfWeekStarting(nextWeekStartsAt, NEW_YORK),
+					},
+					{ user: "regular" },
+				),
+			);
+
+			expect(response).toBeNull();
+		});
+	});
 });
+
+function daysOfWeekStarting(weekStartsAt: number, timezone: string) {
+	return R.range(0, 7).map((dayIndex) => ({
+		date: Availability.dateInTimezone(
+			weekStartsAt + dayIndex * DAY_SECONDS + DAY_SECONDS / 2,
+			timezone,
+		),
+		ranges: [] as Array<{ start: number; end: number }>,
+		note: "",
+	}));
+}

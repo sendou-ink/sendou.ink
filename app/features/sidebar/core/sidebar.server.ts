@@ -1,5 +1,5 @@
 import { cachified } from "@epic-web/cachified";
-import { addDays, addWeeks, subHours } from "date-fns";
+import { addDays, subHours } from "date-fns";
 import { href } from "react-router";
 import * as R from "remeda";
 import * as ExternalStreamRepository from "~/features/admin/ExternalStreamRepository.server";
@@ -202,7 +202,7 @@ async function showScheduleNudge(user: AuthenticatedUser | undefined) {
 
 	if (!Availability.isLastDayOfWeek(now, timezone)) return false;
 
-	const weekStartsAt = Availability.weekStartsAt(addWeeks(now, 1), timezone);
+	const weekStartsAt = Availability.weekStartsAt(now, timezone, 1);
 	const dismissedAt = user.preferences?.scheduleNudgeDismissedWeekStartsAt;
 
 	if (

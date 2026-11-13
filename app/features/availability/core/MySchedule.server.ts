@@ -1,4 +1,3 @@
-import { addWeeks, subWeeks } from "date-fns";
 import * as R from "remeda";
 import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
 import type { SerializeFrom } from "~/utils/remix";
@@ -21,10 +20,11 @@ export async function myScheduleData(userId: number) {
 	const timezone = getViewerTimezone() ?? "UTC";
 	const now = new Date();
 
-	const lastWeekRange = Availability.weekRange(subWeeks(now, 1), timezone);
+	const lastWeekRange = Availability.weekRange(now, timezone, -1);
 	const horizonEndsAt = Availability.weekRange(
-		addWeeks(now, AVAILABILITY.WEEK_HORIZON - 1),
+		now,
 		timezone,
+		AVAILABILITY.WEEK_HORIZON - 1,
 	).endsAt;
 	const reportedWeeks = await AvailabilityRepository.findAllWeeksByUserIds({
 		userIds: [userId],
@@ -39,7 +39,7 @@ export async function myScheduleData(userId: number) {
 
 	const weeks = R.range(0, AVAILABILITY.WEEK_HORIZON).map((weekOffset) =>
 		editorWeek({
-			range: Availability.weekRange(addWeeks(now, weekOffset), timezone),
+			range: Availability.weekRange(now, timezone, weekOffset),
 			timezone,
 			reportedWeeks,
 		}),

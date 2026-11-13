@@ -1,4 +1,3 @@
-import { addWeeks } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import { getUser } from "~/features/auth/core/user.server";
@@ -42,10 +41,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const horizon = {
 		startsAt: Availability.weekRange(now, timezone).startsAt,
-		endsAt: Availability.weekRange(
-			addWeeks(now, AVAILABILITY.WEEK_HORIZON - 1),
-			timezone,
-		).endsAt,
+		endsAt: Availability.weekRange(now, timezone, AVAILABILITY.WEEK_HORIZON - 1)
+			.endsAt,
 	};
 	const { reportedWeeks, busyByUserId } = await VisibleSchedules.findByUserIds({
 		userIds: members.map((member) => member.id),
@@ -65,7 +62,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		weeks: R.range(0, AVAILABILITY.WEEK_HORIZON).map((weekOffset) =>
 			weekView({
-				range: Availability.weekRange(addWeeks(now, weekOffset), timezone),
+				range: Availability.weekRange(now, timezone, weekOffset),
 				timezone,
 				memberIds: members.map((member) => member.id),
 				playerIds,

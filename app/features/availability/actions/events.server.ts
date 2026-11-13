@@ -1,4 +1,3 @@
-import { addWeeks } from "date-fns";
 import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
@@ -37,7 +36,7 @@ export const action = defineAction(
 				errorToastIfFalsy(
 					R.range(0, AVAILABILITY.WEEK_HORIZON).some(
 						(weekOffset) =>
-							Availability.weekStartsAt(addWeeks(now, weekOffset), timezone) ===
+							Availability.weekStartsAt(now, timezone, weekOffset) ===
 							weekStartsAt,
 					),
 					"Only the current and the next week can be saved",
@@ -89,8 +88,9 @@ export const action = defineAction(
 			case "DISMISS_SCHEDULE_NUDGE": {
 				await UserRepository.updateOwnPreferences({
 					scheduleNudgeDismissedWeekStartsAt: Availability.weekStartsAt(
-						addWeeks(now, 1),
+						now,
 						timezone,
+						1,
 					),
 				});
 
