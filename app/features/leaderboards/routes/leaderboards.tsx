@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Ban, MoreHorizontal, RotateCcw } from "lucide-react";
+import { Ban, MoreHorizontal, RotateCcw, TriangleAlert } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -12,6 +12,7 @@ import {
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import { SendouPopover } from "~/components/elements/Popover";
 import {
 	SendouTab,
 	SendouTabList,
@@ -477,7 +478,13 @@ function TeamTable({
 					<React.Fragment key={entry.entryId}>
 						<RankTableRow>
 							<RankTableInnerRow>
-								<RankTableRank>{entry.placementRank}</RankTableRank>
+								<RankTableRank>
+									{entry.userIdsWithoutEnoughSets.length > 0 ? (
+										<NotEnoughSetsWarning entry={entry} />
+									) : (
+										entry.placementRank
+									)}
+								</RankTableRank>
 								{entry.team?.avatarUrl ? (
 									<Link
 										to={teamPage(entry.team.customUrl)}
@@ -523,6 +530,46 @@ function TeamTable({
 				);
 			})}
 		</RankTable>
+	);
+}
+
+function NotEnoughSetsWarning({
+	entry,
+}: {
+	entry: NonNullable<SerializeFrom<typeof loader>["teamLeaderboard"]>[number];
+}) {
+	const { t } = useTranslation(["common"]);
+
+	const membersWithoutEnoughSets = entry.members.filter((member) =>
+		entry.userIdsWithoutEnoughSets.includes(member.id),
+	);
+
+	return (
+		<SendouPopover
+			trigger={
+				<button
+					type="button"
+					className={leaderboardsStyles.notEnoughSetsTrigger}
+					aria-label={t("common:leaderboard.notEnoughSets.label")}
+				>
+					<TriangleAlert size={16} />
+				</button>
+			}
+		>
+			<div
+				className={clsx(
+					"stack sm text-sm",
+					leaderboardsStyles.notEnoughSetsContent,
+				)}
+			>
+				<div>{t("common:leaderboard.notEnoughSets.info")}</div>
+				<ul className={leaderboardsStyles.notEnoughSetsList}>
+					{membersWithoutEnoughSets.map((member) => (
+						<li key={member.id}>{member.username}</li>
+					))}
+				</ul>
+			</div>
+		</SendouPopover>
 	);
 }
 

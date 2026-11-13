@@ -88,11 +88,16 @@ export async function findUserTeamEntry({
 	const hasUser = (entry: { members: Array<{ id: number }> }) =>
 		entry.members.some((member) => member.id === userId);
 
-	const rankedEntry = (
-		await cachedTeamLeaderboard({ season, onlyOneEntryPerUser: true })
-	).find(hasUser);
+	const rankedLeaderboard = await cachedTeamLeaderboard({
+		season,
+		onlyOneEntryPerUser: true,
+	});
+	// a skipped team or one short on SendouQ sets is on the leaderboard without taking a placement
+	const rankedEntry =
+		rankedLeaderboard.find(
+			(entry) => hasUser(entry) && entry.placementRank !== null,
+		) ?? rankedLeaderboard.find(hasUser);
 
-	// a skipped team is on the leaderboard without taking a placement
 	if (rankedEntry)
 		return { entry: rankedEntry, rank: rankedEntry.placementRank ?? undefined };
 

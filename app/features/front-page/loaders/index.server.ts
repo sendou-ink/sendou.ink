@@ -103,7 +103,7 @@ function cachedLeaderboards(): Promise<{
 					avatarUrl: entry.avatar ? avatarUrl(entry.avatar, "sm") : null,
 				})),
 				team: team
-					.filter((entry) => entry.team)
+					.filter((entry) => entry.team && entry.placementRank !== null)
 					.slice(0, ENTRIES_PER_LEADERBOARD)
 					.map((entry) => {
 						const entryTeam = entry.team as Pick<

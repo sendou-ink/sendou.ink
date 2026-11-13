@@ -32,17 +32,20 @@ const teamEntry = ({
 	username,
 	isSkipped,
 	placementRank,
+	hasEnoughSets = true,
 }: {
 	entryId: number;
 	username: string;
 	isSkipped: boolean;
 	placementRank: number | null;
+	hasEnoughSets?: boolean;
 }) => ({
 	entryId,
 	identifier: `${entryId}-2-3-4`,
 	ordinal: 25,
 	power: 1500,
 	isSkipped,
+	userIdsWithoutEnoughSets: hasEnoughSets ? [] : [entryId],
 	placementRank,
 	members: [{ id: entryId, username, customUrl: null }],
 	team: undefined,
@@ -174,6 +177,43 @@ describe("LeaderboardsPage", () => {
 
 		expect(textDecorationLineOfRow(skipped.element())).toBe("line-through");
 		expect(textDecorationLineOfRow(placing.element())).toBe("none");
+	});
+
+	test("lists the players of a roster without enough SendouQ sets in its warning", async () => {
+		showTeamLeaderboard();
+
+		const screen = await renderPage({
+			...teamLeaderboardData,
+			teamLeaderboard: [
+				teamEntry({
+					entryId: 3,
+					username: "few_sets_player",
+					isSkipped: false,
+					placementRank: null,
+					hasEnoughSets: false,
+				}),
+				...teamLeaderboardData.teamLeaderboard,
+			],
+		});
+
+		const warnings = screen.getByRole("button", {
+			name: "Not enough SendouQ sets",
+		});
+		await expect.element(warnings).toBeVisible();
+		expect(warnings.all()).toHaveLength(1);
+
+		await warnings.click();
+
+		await expect
+			.element(
+				screen.getByText(
+					"The following players don't have enough SendouQ sets yet to qualify for the Season Finale:",
+				),
+			)
+			.toBeVisible();
+		await expect
+			.element(screen.getByRole("listitem").getByText("few_sets_player"))
+			.toBeVisible();
 	});
 
 	test("hides the skip menu from a user without a staff role", async () => {

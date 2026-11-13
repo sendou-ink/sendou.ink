@@ -6,6 +6,25 @@
 	}
 }
 
+.notEnoughSetsTrigger {
+	display: inline-flex;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--color-warning);
+	cursor: pointer;
+	vertical-align: middle;
+}
+
+.notEnoughSetsContent {
+	text-align: start;
+	font-weight: var(--weight-body);
+}
+
+.notEnoughSetsList {
+	padding-inline-start: var(--s-4);
+}
+
 .tableName {
 	max-width: 117px;
 }

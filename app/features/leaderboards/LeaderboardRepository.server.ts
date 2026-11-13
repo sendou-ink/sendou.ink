@@ -33,12 +33,12 @@ function addPowers<T extends { ordinal: number }>(entries: T[]) {
 	}));
 }
 
-/** Numbers the entries by placement; a skipped team keeps its spot but no number, which passes to the one below. */
-function addPlacementRank<T extends { isSkipped: boolean }>(entries: T[]) {
+/** Numbers the entries by placement; an unplaced entry (skipped team or members short on SendouQ sets) keeps its spot but no number, which passes to the one below. */
+function addPlacementRank<T extends TeamLeaderboardEntryFlags>(entries: T[]) {
 	let placementRank = 0;
 
 	return entries.map((entry): T & { placementRank: number | null } => {
-		if (entry.isSkipped) return { ...entry, placementRank: null };
+		if (isUnplaced(entry)) return { ...entry, placementRank: null };
 
 		placementRank++;
 		return { ...entry, placementRank };
@@ -112,9 +112,17 @@ const teamLeaderboardBySeasonQuery = (season: number, before?: number) =>
 type TeamLeaderboardBySeasonQueryReturnType = InferResult<
 	ReturnType<typeof teamLeaderboardBySeasonQuery>
 >;
-type TeamLeaderboardEntry = TeamLeaderboardBySeasonQueryReturnType[number] & {
+interface TeamLeaderboardEntryFlags {
 	isSkipped: boolean;
-};
+	/** Members below the SendouQ sets needed for the season finale, only set on the one entry per user leaderboard */
+	userIdsWithoutEnoughSets: number[];
+}
+type TeamLeaderboardEntry = TeamLeaderboardBySeasonQueryReturnType[number] &
+	TeamLeaderboardEntryFlags;
+
+function isUnplaced(entry: TeamLeaderboardEntryFlags) {
+	return entry.isSkipped || entry.userIdsWithoutEnoughSets.length > 0;
+}
 
 export async function findTeamLeaderboardBySeason({
 	season,
@@ -134,7 +142,7 @@ export async function findTeamLeaderboardBySeason({
 			: new Set<SkillTeamIdentifier>(),
 	});
 	const withNonSqPlayersHandled = onlyOneEntryPerUser
-		? await filterOutNonSqPlayers({ season, entries, before })
+		? await markNonSqPlayers({ season, entries, before })
 		: entries;
 
 	const oneEntryPerUser = onlyOneEntryPerUser
@@ -153,10 +161,11 @@ function addSkipped(args: {
 	return args.entries.map((entry) => ({
 		...entry,
 		isSkipped: args.skippedIdentifiers.has(entry.identifier),
+		userIdsWithoutEnoughSets: [],
 	}));
 }
 
-async function filterOutNonSqPlayers(args: {
+async function markNonSqPlayers(args: {
 	entries: TeamLeaderboardEntry[];
 	season: number;
 	before?: number;
@@ -168,9 +177,12 @@ async function filterOutNonSqPlayers(args: {
 		),
 	);
 
-	return args.entries.filter((entry) =>
-		entry.members.every((member) => validUserIds.has(member.id)),
-	);
+	return args.entries.map((entry) => ({
+		...entry,
+		userIdsWithoutEnoughSets: entry.members
+			.filter((member) => !validUserIds.has(member.id))
+			.map((member) => member.id),
+	}));
 }
 
 async function userIdsWithEnoughSqMatchesForTeamLeaderboard(
@@ -199,18 +211,30 @@ async function userIdsWithEnoughSqMatchesForTeamLeaderboard(
 }
 
 /** The highest placing entry of each user. A skipped team is always kept and doesn't spend
- * its players' entry, so a roster sharing players with it can still place below it. */
+ * its players' entry, so a roster sharing players with it can still place below it. A roster
+ * with members short on SendouQ sets doesn't spend it either, but is only kept where it would
+ * have placed had they played enough, hiding the lower short rosters of its players. */
 function filterOneEntryPerUser(entries: TeamLeaderboardEntry[]) {
-	const encounteredUserIds = new Set<number>();
+	const placedUserIds = new Set<number>();
+	const shownShortUserIds = new Set<number>();
 	return entries.filter((entry) => {
 		if (entry.isSkipped) return true;
 
-		if (entry.members.some((m) => encounteredUserIds.has(m.id))) {
-			return false;
+		const hasPlacedMember = entry.members.some((m) => placedUserIds.has(m.id));
+		if (hasPlacedMember) return false;
+
+		if (isUnplaced(entry)) {
+			if (entry.members.some((m) => shownShortUserIds.has(m.id))) return false;
+
+			for (const member of entry.members) {
+				shownShortUserIds.add(member.id);
+			}
+
+			return true;
 		}
 
 		for (const member of entry.members) {
-			encounteredUserIds.add(member.id);
+			placedUserIds.add(member.id);
 		}
 
 		return true;
