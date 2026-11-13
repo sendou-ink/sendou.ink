@@ -165,7 +165,7 @@ describe("GameCues.step", () => {
 	test("takes back an intro whose HUD never showed", () => {
 		expect(run([mapStart(0), 29, 30])).toEqual([
 			{ type: "start", t: 0, inks: null, at: 0 },
-			{ type: "end", t: 0, at: 30 },
+			{ type: "end", t: 0, isTimeUp: false, at: 30 },
 		]);
 	});
 
@@ -184,13 +184,15 @@ describe("GameCues.step", () => {
 			15,
 		]);
 
-		expect(cues.at(-1)).toEqual({ type: "end", t: 12, at: 15 });
+		expect(cues.at(-1)).toEqual({ type: "end", t: 12, isTimeUp: true, at: 15 });
 	});
 
 	test("ends a knocked out game once the HUD has been gone a while", () => {
 		const cues = run([hud(10), hud(11, { time: 120 }), 14, 17]);
 
-		expect(cues.slice(1)).toEqual([{ type: "end", t: 11, at: 17 }]);
+		expect(cues.slice(1)).toEqual([
+			{ type: "end", t: 11, isTimeUp: false, at: 17 },
+		]);
 	});
 
 	test("keeps the game on through a short gap in the HUD", () => {

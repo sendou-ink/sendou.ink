@@ -174,6 +174,9 @@ export const BROADCAST_GAME_DELAY_MAX_MS = 60_000;
  */
 export const BROADCAST_GAME_SIGNAL_MAX_AGO_MS = 60_000;
 
+/** Counter reads a game summary can have: one per change of the count or who holds the objective, a few hundred at most. */
+export const BROADCAST_GAME_SUMMARY_MAX_OBJECTIVE_READS = 1_000;
+
 export const DEFAULT_BROADCAST_SETTINGS = {
 	css: "",
 	weaponImages: "default",

@@ -1,7 +1,6 @@
 import { DEFAULT_BROADCAST_SETTINGS } from "~/features/broadcast/broadcast-constants";
 import type * as Producer from "~/features/broadcast/core/Producer";
 import type {
-	BroadcastGameResult,
 	CastBroadcastSettings,
 	CastProducerState,
 	CastScene,
@@ -88,111 +87,6 @@ export const BROADCAST_PROTOTYPE_CLIPS = [
 		durationMs: 19_593,
 	},
 ] as const;
-
-// xxx: prototype, the scanner reads these off the game's end screens eventually
-/** Counter reads of the prototype game: seconds into the game, alpha's and bravo's count, who held the objective. */
-const PROTOTYPE_OBJECTIVE: Array<[number, number, number, 0 | 1 | null]> = [
-	[0, 100, 100, null],
-	[10, 100, 100, null],
-	[20, 100, 100, 0],
-	[30, 92, 100, 0],
-	[40, 84, 100, 0],
-	[50, 76, 100, 0],
-	[60, 70, 100, 1],
-	[70, 70, 94, 1],
-	[80, 70, 86, 1],
-	[90, 70, 78, 1],
-	[100, 70, 72, null],
-	[110, 70, 72, 0],
-	[120, 63, 72, 0],
-	[130, 55, 72, 0],
-	[140, 47, 72, 0],
-	[150, 40, 72, 0],
-	[160, 36, 72, null],
-	[170, 36, 72, 1],
-	[180, 36, 64, 1],
-	[190, 36, 57, 1],
-	[200, 36, 50, 1],
-	[210, 36, 45, null],
-	[220, 36, 45, 0],
-	[230, 29, 45, 0],
-	[240, 22, 45, 0],
-	[250, 16, 45, 0],
-	[260, 14, 45, 1],
-	[270, 14, 41, 1],
-	[280, 14, 41, null],
-	[290, 12, 41, 0],
-	[300, 12, 41, 0],
-];
-
-// xxx: prototype, the scanner reads these off the game's end screens eventually
-/** Game the results scene shows, its teams in the featured match's bracket order. */
-export const BROADCAST_PROTOTYPE_GAME_RESULT: BroadcastGameResult = {
-	map: { mode: "SZ", stageId: 10 },
-	winner: 0,
-	isKnockout: false,
-	teams: [
-		{
-			score: 88,
-			players: [
-				{
-					name: "Noodle",
-					weaponSplId: 40,
-					abilities: ["LDE", "RSU", "SJ"],
-				},
-				{
-					name: "InkJet",
-					weaponSplId: 2010,
-					abilities: ["CB", "ISM", "SJ"],
-				},
-				{
-					name: "Squidly",
-					weaponSplId: 3010,
-					abilities: ["LDE", "SSU", "OS"],
-				},
-				{
-					name: "Marina♪",
-					weaponSplId: 1010,
-					abilities: ["OG", "NS", "SSU"],
-				},
-			],
-		},
-		{
-			score: 59,
-			players: [
-				{
-					name: "Kraken",
-					weaponSplId: 8000,
-					abilities: ["LDE", "RP", "SJ"],
-				},
-				{
-					name: "Blitz",
-					weaponSplId: 4010,
-					abilities: ["CB", "RSU", "SJ"],
-				},
-				{
-					name: "Mochi",
-					weaponSplId: 5010,
-					abilities: ["LDE", "QR", "SJ"],
-				},
-				{
-					name: "Zap",
-					weaponSplId: 6010,
-					abilities: ["ISM", "SPU", "SJ"],
-				},
-			],
-		},
-	],
-	objective: PROTOTYPE_OBJECTIVE.map(([t, alpha, bravo, control]) => ({
-		t,
-		data: {
-			time: 300 - t,
-			score: [alpha, bravo],
-			penalty: [null, null],
-			control,
-		},
-	})),
-};
 
 /**
  * The overlays' stylesheets the designer lays out for editing, in its order, named after their `.module.css` files in

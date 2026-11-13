@@ -1,5 +1,6 @@
 import type { StreamPlatform } from "~/features/live-streams/live-streams-constants";
 import type {
+	AbilityWithUnknown,
 	MainWeaponId,
 	ModeShort,
 	StageId,
@@ -82,6 +83,15 @@ export interface BroadcastStoredState<
 	ink: BroadcastGameInk | null;
 	/** The game start or end the staged item waits for, seen by the scanner but not cut to yet (see `Producer.autoTakeAt`). */
 	gameCut: BroadcastGameCut | null;
+	/** The last game the scanner read to its end, what the scenes after a game show of it. */
+	scannedGame: BroadcastScannedGame | null;
+}
+
+/** A game of the featured match as the scanner read it, whichever of the set's games it was. */
+export interface BroadcastScannedGame extends BroadcastGameSummary {
+	matchId: number;
+	/** Ink colors picked for the game when it ended, `null` when none were. */
+	ink: BroadcastInk | null;
 }
 
 /** A game starting or ending on the scanner's feed, `at` (epoch ms) when it did: where the cut to or from it belongs. */
@@ -195,7 +205,50 @@ export type BroadcastGameSignal =
 			type: "end";
 			/** How long before the signal was sent the game ended on the scanner's feed. */
 			agoMs: number;
+			/** What the scanner read of the game, `null` when it has nothing of it (e.g. a misread intro), which cuts nothing. */
+			summary: BroadcastGameSummary | null;
 	  };
+
+/**
+ * A game as the scanner read it off the game feed, trimmed to what the overlays show of it. Its teams are in the
+ * scanner's order, which `inks` tells apart.
+ */
+export interface BroadcastGameSummary {
+	mode: ModeShort | null;
+	stageId: StageId | null;
+	/** Ended before the timer ran out. */
+	isKnockout: boolean;
+	/** Index of the winning team when the scanner read it off a results screen, which casts never show. */
+	winner: 0 | 1 | null;
+	/** Each team's ink color as the minimap showed it, `null` when not read. */
+	inks: [BroadcastInkRgb | null, BroadcastInkRgb | null];
+	teams: [BroadcastGameSummaryTeam, BroadcastGameSummaryTeam];
+	/** Counter reads over the game in order, empty without (e.g. turf war). */
+	objective: BroadcastObjectiveRead[];
+}
+
+interface BroadcastGameSummaryTeam {
+	/** Up to 4, the ones the scanner never saw left out. */
+	players: BroadcastGameSummaryPlayer[];
+}
+
+export interface BroadcastGameSummaryPlayer {
+	/** In-game name, `null` when not read. */
+	name: string | null;
+	weaponSplId: MainWeaponId | null;
+	/** Main abilities of the head, clothes and shoes, empty when none were read. */
+	abilities: AbilityWithUnknown[];
+}
+
+/** One read of the objective counter. */
+export interface BroadcastObjectiveRead {
+	/** Seconds into the game. */
+	t: number;
+	/** The count each team has left to go, `null` when not read. */
+	score: [number | null, number | null];
+	/** Index of the team holding the objective, `null` for neither. */
+	control: 0 | 1 | null;
+}
 
 /** A team's ink color as read off the game's HUD, channels 0-255. */
 export interface BroadcastInkRgb {

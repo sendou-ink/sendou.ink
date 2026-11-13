@@ -70,6 +70,25 @@ export function closestPair(
 	return closest.key;
 }
 
+/**
+ * Whether the two teams' colors are in the pair's order, the first one closer to the pair's first color than the
+ * second one is (e.g. minimap reads, which render a bit off the HUD's colors). `null` when neither was read.
+ */
+export function isInPairOrder(
+	inks: [BroadcastInkRgb | null, BroadcastInkRgb | null],
+	key: BroadcastInkColorKey,
+): boolean | null {
+	const pair = REFERENCES.find((reference) => reference.key === key);
+	if (!pair || (!inks[0] && !inks[1])) return null;
+
+	const [first, second] = inks.map((ink) => (ink ? toLab(ink) : null));
+	const cost = (firstReference: Lab, secondReference: Lab) =>
+		(first ? deltaE2000(first, firstReference) : 0) +
+		(second ? deltaE2000(second, secondReference) : 0);
+
+	return cost(pair.a, pair.b) <= cost(pair.b, pair.a);
+}
+
 function hexToRgb(hex: string): BroadcastInkRgb {
 	const [r, g, b] = [1, 3, 5].map((start) =>
 		Number.parseInt(hex.slice(start, start + 2), 16),

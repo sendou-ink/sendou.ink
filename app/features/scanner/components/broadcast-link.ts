@@ -3,9 +3,10 @@
  * dashboard (`broadcastLinkPersisted`): games starting and ending on the
  * capture put the broadcast's scenes waiting for them on air, timed by when
  * they were seen, and the teams' ink colors the game (GameCues, broadcast's
- * `Producer.applyGameSignal`). A cast never shows the results screen that
- * would send its match, so the game ending sends it instead; every other
- * upload goes on as without a link. While capturing, the link holds the
+ * `Producer.applyGameSignal`). Once a game ended, what was read of it
+ * follows for the scenes after the game. A cast never shows the results
+ * screen that would send its match, so the game ending sends it instead;
+ * every other upload goes on as without a link. While capturing, the link holds the
  * broadcast's stream open, which is how the dashboard knows a scanner is on.
  */
 import { useSyncExternalStore } from "react";
@@ -19,6 +20,7 @@ import {
 	broadcastStreamUrl,
 } from "~/features/broadcast/broadcast-urls";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
+import { gameSummary } from "../core/broadcast-summary";
 import type { DetectedEvent } from "../core/detectors/types";
 import * as GameCues from "../core/GameCues";
 import {
@@ -26,7 +28,7 @@ import {
 	type LinkedBroadcast,
 	linkedBroadcast,
 } from "../scanner-activity";
-import { newestSessionKey } from "./events-feed";
+import { getFeed, newestSessionKey, refreshFeed } from "./events-feed";
 import { unsentMatches } from "./sendou-ingest";
 import { sendLive, uploadEnabled } from "./upload";
 
@@ -38,6 +40,8 @@ const SIGNAL_DESCRIPTIONS: Record<BroadcastGameSignal["type"], string> = {
 	ink: "the teams' ink colors",
 	end: "the game ended",
 };
+/** How long a game's end waits for what was read of the game: the cut away from it waits along, and is off without it. */
+const SUMMARY_TIMEOUT_MS = 5_000;
 
 export interface BroadcastLinkSnapshot {
 	target: LinkedBroadcast | null;
@@ -60,6 +64,8 @@ let cuesState = GameCues.initialState();
 let stream: EventSource | null = null;
 let tickTimer: ReturnType<typeof setInterval> | null = null;
 let reopenTimer: ReturnType<typeof setTimeout> | null = null;
+/** The signals posted so far, the next one going out after them so the broadcast sees them in order. */
+let posting: Promise<void> = Promise.resolve();
 
 if (typeof window !== "undefined") {
 	retarget();
@@ -184,7 +190,7 @@ function advance(input: GameCues.GameCuesInput): void {
 	cuesState = stepped.state;
 
 	for (const cue of stepped.cues) {
-		void postSignal(toSignal(cue));
+		posting = posting.then(async () => postSignal(await toSignal(cue)));
 		if (cue.type === "end" && uploadEnabled()) {
 			void sendLive(
 				(built) => isMatchAt(built.match, cue.t) && unsentMatches(built),
@@ -194,9 +200,10 @@ function advance(input: GameCues.GameCuesInput): void {
 	}
 }
 
-function toSignal(cue: GameCues.GameCue): BroadcastGameSignal {
+async function toSignal(cue: GameCues.GameCue): Promise<BroadcastGameSignal> {
 	if (cue.type === "ink") return cue;
 
+	const summary = cue.type === "end" ? await endedGameSummary(cue) : null;
 	const agoMs = Math.round(
 		Math.min(
 			Math.max(Date.now() - cue.t * 1000, 0),
@@ -206,7 +213,32 @@ function toSignal(cue: GameCues.GameCue): BroadcastGameSignal {
 
 	return cue.type === "start"
 		? { type: "start", agoMs, inks: cue.inks }
-		: { type: "end", agoMs };
+		: { type: "end", agoMs, summary };
+}
+
+/**
+ * What was read of the game that ended, as the live sessions built it. `null` for an intro whose game never
+ * showed, or when building it takes too long.
+ */
+function endedGameSummary(cue: Extract<GameCues.GameCue, { type: "end" }>) {
+	const since = newestSessionKey();
+	const summary = refreshFeed()
+		.then(() => {
+			const built = getFeed()
+				.sessions.filter(
+					(session) => !session.compacted && session.key >= since,
+				)
+				.flatMap((session) => session.built)
+				.findLast((candidate) => isMatchAt(candidate.match, cue.t));
+
+			return built ? gameSummary(built, { isKnockout: !cue.isTimeUp }) : null;
+		})
+		.catch(() => null);
+	const timeout = new Promise<null>((resolve) =>
+		setTimeout(() => resolve(null), SUMMARY_TIMEOUT_MS),
+	);
+
+	return Promise.race([summary, timeout]);
 }
 
 async function postSignal(signal: BroadcastGameSignal): Promise<void> {

@@ -224,6 +224,8 @@ export interface BuiltMatch<E extends DetectedEvent> {
 	 * game to show or send
 	 */
 	unbacked?: true;
+	/** each team's ink as the minimap showed it, in `teams` order; null when the minimap was never read */
+	inks?: [InkRgb | null, InkRgb | null] | null;
 }
 
 /**
@@ -1020,6 +1022,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 	const counterReads = objectives.filter(
 		(read) => counterKindOfRead(read.data) === counterKind,
 	);
+	const minimapColors = minimapTeamColors(minimaps);
 	const progress = buildProgress(
 		counterReads,
 		counterKind === null
@@ -1034,7 +1037,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 		minimapReads,
 		killReads,
 		board,
-		minimapTeamColors(minimaps),
+		minimapColors,
 		open.deaths.map((event) => event.t),
 		clockSecondsOf(mode),
 		minimapTeams?.every((team) => team.players.length === PLAYERS_PER_TEAM)
@@ -1099,9 +1102,22 @@ function toBuiltMatch<E extends DetectedEvent>(
 		pov,
 	};
 
+	const inks = teamInks(minimapColors, board ? progress.minimapEnemySide : 0);
+
 	return isBacked(open)
-		? { match, sources }
-		: { match, sources, unbacked: true };
+		? { match, sources, inks }
+		: { match, sources, unbacked: true, inks };
+}
+
+/** The minimap's own and enemy ink in `teams` order, by the side the enemy column is (null: not known). */
+function teamInks(
+	minimapColors: [InkRgb | null, InkRgb | null] | null,
+	enemySide: 0 | 1 | null,
+): BuiltMatch<DetectedEvent>["inks"] {
+	if (!minimapColors || enemySide === null) return null;
+
+	const [own, enemy] = minimapColors;
+	return enemySide === 1 ? [own, enemy] : [enemy, own];
 }
 
 /**

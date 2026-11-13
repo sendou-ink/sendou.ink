@@ -1,5 +1,11 @@
 import * as v from "valibot";
 import {
+	mainWeaponIdSchema,
+	modeShortSchema,
+	scannerAbilitySchema,
+	stageIdSchema,
+} from "~/features/scanner/scanner-schemas";
+import {
 	numberField,
 	radioGroup,
 	stringConstant,
@@ -10,6 +16,7 @@ import {
 	BROADCAST_CSS_MAX_LENGTH,
 	BROADCAST_GAME_DELAY_MAX_MS,
 	BROADCAST_GAME_SIGNAL_MAX_AGO_MS,
+	BROADCAST_GAME_SUMMARY_MAX_OBJECTIVE_READS,
 	BROADCAST_SDP_MAX_LENGTH,
 	BROADCAST_WEAPON_IMAGES,
 } from "./broadcast-constants";
@@ -70,8 +77,43 @@ const agoMs = v.pipe(
 	v.maxValue(BROADCAST_GAME_SIGNAL_MAX_AGO_MS),
 );
 
+const teamIndex = v.nullable(v.picklist([0, 1]));
+const count = v.nullable(
+	v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(100)),
+);
+const gameSummaryPlayer = v.object({
+	name: v.nullable(v.pipe(v.string(), v.maxLength(32))),
+	weaponSplId: v.nullable(mainWeaponIdSchema),
+	abilities: v.pipe(v.array(scannerAbilitySchema), v.maxLength(3)),
+});
+const gameSummaryTeam = v.object({
+	players: v.pipe(v.array(gameSummaryPlayer), v.maxLength(4)),
+});
+const gameSummary = v.object({
+	mode: v.nullable(modeShortSchema),
+	stageId: v.nullable(stageIdSchema),
+	isKnockout: v.boolean(),
+	winner: teamIndex,
+	inks: v.tuple([v.nullable(inkRgb), v.nullable(inkRgb)]),
+	teams: v.tuple([gameSummaryTeam, gameSummaryTeam]),
+	objective: v.pipe(
+		v.array(
+			v.object({
+				t: v.pipe(v.number(), v.integer(), v.minValue(0)),
+				score: v.tuple([count, count]),
+				control: teamIndex,
+			}),
+		),
+		v.maxLength(BROADCAST_GAME_SUMMARY_MAX_OBJECTIVE_READS),
+	),
+});
+
 export const broadcastGameSignalSchema = v.variant("type", [
 	v.object({ type: v.literal("start"), agoMs, inks: v.nullable(inks) }),
 	v.object({ type: v.literal("ink"), inks }),
-	v.object({ type: v.literal("end"), agoMs }),
+	v.object({
+		type: v.literal("end"),
+		agoMs,
+		summary: v.nullable(gameSummary),
+	}),
 ]);

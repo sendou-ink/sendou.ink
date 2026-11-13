@@ -5,7 +5,11 @@ import {
 	CAST_PRODUCER_RULES,
 } from "~/features/broadcast-cast/broadcast-cast-constants";
 import type { CastProducerState } from "~/features/broadcast-cast/broadcast-cast-types";
-import type { BroadcastInkRgb, BroadcastStoredState } from "../broadcast-types";
+import type {
+	BroadcastGameSummary,
+	BroadcastInkRgb,
+	BroadcastStoredState,
+} from "../broadcast-types";
 import * as Producer from "./Producer";
 
 const rules = CAST_PRODUCER_RULES;
@@ -62,6 +66,7 @@ const stateWith = ({
 	liveResults: null,
 	ink,
 	gameCut,
+	scannedGame: null,
 });
 
 const stagedIds = (state: BroadcastStoredState<CastProducerState> | null) =>
@@ -103,6 +108,7 @@ describe("Producer.take", () => {
 			liveResults: { matchId: 1, count: 2 },
 			ink,
 			gameCut: null,
+			scannedGame: null,
 		});
 	});
 
@@ -333,6 +339,15 @@ describe("Producer.effectiveAdvance", () => {
 
 describe("Producer.applyGameSignal", () => {
 	const liveResults = { matchId: 1, count: 2 };
+	const summary: BroadcastGameSummary = {
+		mode: "SZ",
+		stageId: 10,
+		isKnockout: false,
+		winner: null,
+		inks: [null, null],
+		teams: [{ players: [] }, { players: [] }],
+		objective: [],
+	};
 	const greenPink: [BroadcastInkRgb, BroadcastInkRgb] = [
 		{ r: 163, g: 198, b: 67 },
 		{ r: 170, g: 54, b: 161 },
@@ -376,6 +391,76 @@ describe("Producer.applyGameSignal", () => {
 		expect(applied?.ink?.isFlipped).toBe(true);
 	});
 
+	test("keeps what was read of the game that ended and puts the scene after it on air", () => {
+		const applied = Producer.applyGameSignal(
+			rules,
+			stateWith({
+				live: item(1, { scene: "game" }),
+				next: item(2, { scene: "results", advance: "game" }),
+			}),
+			{
+				signal: { type: "end", agoMs: 0, summary },
+				liveResults,
+				now: 5,
+				gameDelayMs: 0,
+			},
+		);
+
+		expect(applied?.scannedGame).toEqual({
+			...summary,
+			matchId: 1,
+			ink: null,
+		});
+		expect(applied?.live.id).toBe(2);
+	});
+
+	test("keeps the ink colors picked for the game with what was read of it", () => {
+		const applied = Producer.applyGameSignal(
+			rules,
+			{ ...stateWith({}), ink: { ...ink, resultCount: 2 } },
+			{
+				signal: { type: "end", agoMs: 0, summary },
+				liveResults,
+				now: 5,
+				gameDelayMs: 0,
+			},
+		);
+
+		expect(applied?.scannedGame?.ink).toEqual({
+			key: ink.key,
+			isFlipped: ink.isFlipped,
+		});
+	});
+
+	test("cuts nothing for a game ending without what was read of it", () => {
+		const applied = Producer.applyGameSignal(
+			rules,
+			stateWith({
+				live: item(1, { scene: "game" }),
+				next: item(2, { scene: "maps", advance: "game" }),
+			}),
+			{
+				signal: { type: "end", agoMs: 0, summary: null },
+				liveResults,
+				now: 5,
+				gameDelayMs: 0,
+			},
+		);
+
+		expect(applied).toBeNull();
+	});
+
+	test("leaves what was read of a game without a match out", () => {
+		const applied = Producer.applyGameSignal(rules, stateWith({}), {
+			signal: { type: "end", agoMs: 0, summary },
+			liveResults: null,
+			now: 5,
+			gameDelayMs: 0,
+		});
+
+		expect(applied).toBeNull();
+	});
+
 	test("only colors the game when it waits for a Take", () => {
 		const state = stateWith({ next: item(2, { advance: "take" }) });
 
@@ -398,7 +483,7 @@ describe("Producer.applyGameSignal", () => {
 				next: item(2, { scene: "results", advance: "game" }),
 			}),
 			{
-				signal: { type: "end", agoMs: 0 },
+				signal: { type: "end", agoMs: 0, summary },
 				liveResults: null,
 				now: 5,
 				gameDelayMs: 0,
@@ -416,7 +501,7 @@ describe("Producer.applyGameSignal", () => {
 				next: item(2, { scene: "maps", advance: "game" }),
 			}),
 			{
-				signal: { type: "end", agoMs: 0 },
+				signal: { type: "end", agoMs: 0, summary },
 				liveResults,
 				now: 5,
 				gameDelayMs: 0,
@@ -482,7 +567,7 @@ describe("Producer.applyGameSignal", () => {
 		{
 			why: "the game ending while a game is staged",
 			state: stateWith({ next: item(2, { advance: "game" }) }),
-			signal: { type: "end", agoMs: 0 } as const,
+			signal: { type: "end", agoMs: 0, summary: null } as const,
 		},
 		{
 			why: "the game starting without ink read while a game is on air",

@@ -3,6 +3,8 @@ import { BROADCAST_TRANSITION_TIMING } from "../broadcast-constants";
 import type {
 	BroadcastAdvance,
 	BroadcastGameSignal,
+	BroadcastGameSummary,
+	BroadcastInkColorKey,
 	BroadcastStoredState,
 	LiveResults,
 	ProducerState,
@@ -49,6 +51,7 @@ export function initialState<Item extends ProducerState>(
 		liveResults: null,
 		ink: null,
 		gameCut: null,
+		scannedGame: null,
 	};
 }
 
@@ -102,6 +105,7 @@ export function take<Item extends ProducerState>(
 		liveResults,
 		ink: state.ink,
 		gameCut: null,
+		scannedGame: state.scannedGame,
 	};
 }
 
@@ -218,7 +222,8 @@ export function effectiveAdvance<Item extends ProducerState>(
  * sides they had earlier in the set (the pair's first color always goes to the same lobby team). A start or end
  * the staged item waits for puts it on air, timed so its transition lands where the game started or ended (see
  * {@link autoTakeAt}): right away when that's due, otherwise it's kept as `gameCut` for the broadcast's timer. Not
- * when the item can't go on air (see {@link canTake}). `null` when nothing changes.
+ * when the item can't go on air (see {@link canTake}). A game ending cuts only along with what the scanner read of it,
+ * which is kept as `scannedGame` with the game's ink colors. `null` when nothing changes.
  */
 export function applyGameSignal<Item extends ProducerState>(
 	rules: Rules<Item>,
@@ -241,25 +246,16 @@ export function applyGameSignal<Item extends ProducerState>(
 		signal.type !== "end" && signal.inks
 			? InkColor.closestPair(signal.inks, state.ink?.key ?? null)
 			: null;
-	const colored: BroadcastStoredState<Item> =
-		inkKey && liveResults
-			? {
-					...state,
-					ink: {
-						key: inkKey,
-						isFlipped:
-							state.ink?.matchId === liveResults.matchId
-								? state.ink.isFlipped
-								: false,
-						matchId: liveResults.matchId,
-						resultCount: liveResults.count,
-					},
-				}
-			: state;
+	const colored = withGameReads(state, {
+		inkKey,
+		summary: signal.type === "end" ? signal.summary : null,
+		liveResults,
+	});
 
 	const hasMatch = liveResults !== null;
 	const isWaitedFor =
 		signal.type !== "ink" &&
+		(signal.type !== "end" || signal.summary !== null) &&
 		effectiveAdvance(rules, state.live, state.next) === "game" &&
 		gameCue(rules, state.live, state.next) === signal.type &&
 		canTake(rules, state, { hasMatch });
@@ -275,6 +271,44 @@ export function applyGameSignal<Item extends ProducerState>(
 	}
 
 	return cut;
+}
+
+/** The state with the ink and what was read of the game kept for the featured match, if any. */
+function withGameReads<Item extends ProducerState>(
+	state: BroadcastStoredState<Item>,
+	{
+		inkKey,
+		summary,
+		liveResults,
+	}: {
+		inkKey: BroadcastInkColorKey | null;
+		summary: BroadcastGameSummary | null;
+		liveResults: LiveResults | null;
+	},
+): BroadcastStoredState<Item> {
+	if (!liveResults || (!inkKey && !summary)) return state;
+
+	const { matchId, count: resultCount } = liveResults;
+	const gameInk =
+		state.ink?.matchId === matchId && state.ink.resultCount === resultCount
+			? { key: state.ink.key, isFlipped: state.ink.isFlipped }
+			: null;
+
+	return {
+		...state,
+		...(inkKey
+			? {
+					ink: {
+						key: inkKey,
+						isFlipped:
+							state.ink?.matchId === matchId ? state.ink.isFlipped : false,
+						matchId,
+						resultCount,
+					},
+				}
+			: {}),
+		...(summary ? { scannedGame: { ...summary, matchId, ink: gameInk } } : {}),
+	};
 }
 
 /** The staged items in the order they go on air: `next` then the queue. */
