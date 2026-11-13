@@ -32,7 +32,7 @@ import {
 	createMusicFinder,
 	createMusicSubtractor,
 } from "../../app/features/scanner/core/music/music-stream";
-import { SCANNER_ASSETS_DIR } from "../../app/features/scanner/node/assets-dir";
+import { MUSIC_DIR as DEFAULT_MUSIC_DIR } from "../../app/features/scanner/node/assets-dir";
 import {
 	decodeAudioFile,
 	interleave,
@@ -42,8 +42,7 @@ import {
 
 const SAMPLE_RATE = 48_000;
 const MIN_AUDIO_BITRATE = 192_000;
-const MUSIC_DIR =
-	process.env.SCANNER_MUSIC_DIR ?? join(SCANNER_ASSETS_DIR, "bgm");
+const MUSIC_DIR = process.env.SCANNER_MUSIC_DIR ?? DEFAULT_MUSIC_DIR;
 
 const { values, positionals } = parseArgs({
 	allowPositionals: true,

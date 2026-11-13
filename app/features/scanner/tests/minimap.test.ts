@@ -106,13 +106,13 @@ for (const fixture of fixtures) {
 					if (want.self !== undefined) assert.equal(got.self, want.self);
 					if (
 						want.name !== undefined &&
-						!fieldTestOptions(fixture, `teammates.${i}.name`)
+						!fieldTestOptions(fixture, `teammates.${i}.name`).skip
 					) {
 						assert.equal(got.name, want.name, `name (debug: ${cardDebug})`);
 					}
 					if (
 						want.weaponId !== undefined &&
-						!fieldTestOptions(fixture, `teammates.${i}.weapon`)
+						!fieldTestOptions(fixture, `teammates.${i}.weapon`).skip
 					) {
 						assert.equal(
 							got.weaponId,
@@ -122,7 +122,7 @@ for (const fixture of fixtures) {
 					}
 					if (
 						want.abilities !== undefined &&
-						!fieldTestOptions(fixture, `teammates.${i}.abilities`)
+						!fieldTestOptions(fixture, `teammates.${i}.abilities`).skip
 					) {
 						assert.deepEqual(
 							got.abilities,
@@ -159,13 +159,13 @@ for (const fixture of fixtures) {
 					);
 					if (
 						want.name !== undefined &&
-						!fieldTestOptions(fixture, `enemies.${i}.name`)
+						!fieldTestOptions(fixture, `enemies.${i}.name`).skip
 					) {
 						assert.equal(got.name, want.name, `name (debug: ${rowDebug})`);
 					}
 					if (
 						want.weaponId !== undefined &&
-						!fieldTestOptions(fixture, `enemies.${i}.weapon`)
+						!fieldTestOptions(fixture, `enemies.${i}.weapon`).skip
 					) {
 						assert.equal(
 							got.weaponId,
@@ -175,7 +175,7 @@ for (const fixture of fixtures) {
 					}
 					if (
 						want.abilities !== undefined &&
-						!fieldTestOptions(fixture, `enemies.${i}.abilities`)
+						!fieldTestOptions(fixture, `enemies.${i}.abilities`).skip
 					) {
 						assert.deepEqual(
 							got.abilities,

@@ -611,9 +611,9 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   cross-out) and `specialReady` (special camo) flags, merged in timerless
   on the shared replay anchor. Parsing details
   are in each detector's module
-  header; accuracy-critical matching internals in `core/glyphs.ts` and
-  `core/detectors/scoreboard/weapons.ts` — read those before touching
-  recognition code. Parse cost matters live (a stalled worker drops
+  header; accuracy-critical matching internals in `core/glyphs.ts` (see
+  "Glyph cells") and `core/detectors/scoreboard/weapons.ts` — read those
+  before touching recognition code. Parse cost matters live (a stalled worker drops
   frames): a CJK splash-tag name once cost tens of seconds per death
   parse, which is why the death detector memoizes tag reads on a
   downscaled tag signature (same killer recurs pixel-identical; a per-cell
@@ -623,7 +623,9 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   when a newer one enters; the per-cell cap of the signature compare is
   what keeps near-twin names apart) and `classifySegment` prescreens
   oversized eligibility lists at half scale — all tuned so
-  `scanner:report` stays bit-identical. Within one recognition,
+  `scanner:report` stays bit-identical. The prescreen's estimates are kept
+  per crop region, so the reads of one line share them. Within one
+  recognition,
   classifications are memoized by span, floor and candidate cap (a pure
   function of those: scores are exact), which the speculative prefetch and
   the sequential pass after it otherwise repeat. Glyph sets (atlas slices
@@ -915,16 +917,23 @@ Weapon/ability/special/sub template sources are the site's shared game icons
 in the **sendou-ink/assets repo** under `assets/img/**` (`.avif`; ids from
 `~/modules/in-game-lists`, plus the scanner-only `UNKNOWN` ability badge —
 `toAbilityWithUnknown` narrows template ids back to sendou ids).
-Scanner-specific sets — glyph atlases and the planner signature atlas — live
-in the same repo under `assets/scanner/v1/**` (override the local path with
-`SCANNER_ASSETS_DIR`). These are the only assets that mutate at a fixed URL —
-the CDN serves them with `max-age=3600` and each atlas's `.png` and `.json`
-cache independently. The worker fetches them `no-cache` (an ETag
-revalidation), which keeps the browser cache from pairing a fresh image with
-a stale meta, but the CDN edge can still do so for an hour, so a regen that
-moves glyph boxes must bump the version segment. Otherwise a client can
-silently read garbage (old dirs are deleted from the Space by the sync's
-`--delete-removed`).
+Scanner-specific sets — glyph atlases, the planner signature atlas and the
+music set — live in the same repo under `assets/scanner/` (override the
+local path with `SCANNER_ASSETS_DIR`), each versioned on its own:
+`v2/glyphs`, `v1/planner`, `v1/bgm` (`node/assets-dir.ts` on the Node side,
+`worker/resources.ts` and `capture/music-tracks.ts` in the browser). These
+are the only assets that mutate at a fixed URL — the CDN serves them with
+`max-age=3600` and each atlas's `.png` and `.json` cache independently. The
+worker fetches them `no-cache` (an ETag revalidation), which keeps the
+browser cache from pairing a fresh image with a stale meta, but the CDN edge
+can still do so for an hour, so a regen that moves glyph boxes (a glyph
+added to a charset does) or changes the meta format must bump that set's
+version segment. Otherwise a client can silently read garbage. A bumped set
+has to be on the CDN before the code that reads it deploys, and the old
+directory stays in the assets repo until that code is out (the sync's
+`--delete-removed` takes it off the Space once it is deleted there). The
+glyph atlases went to `v2` when their glyphs got baselines: an atlas without
+them does not load.
 
 Loading never fails init over one asset: every fetch is retried once, an
 icon that still fails only drops its template (a weapon added to
@@ -935,7 +944,7 @@ to start with any (its games would upload unread — an unread lobby passes
 (`node/resources.ts`) stays strict and throws on a missing icon.
 
 - Browser/worker: everything from `Config.staticAssetsUrl` — icons at
-  `img/**`, atlases at `scanner/v1/**` (base URL rides the worker init
+  `img/**`, atlases at `scanner/**` (base URL rides the worker init
   message; the DO Space needs CORS for GET from sendou.ink + localhost).
   Local dev against fresh regens:
   `npx serve /Users/kalle/Developer/assets/assets -l 9100 --cors` and
@@ -943,14 +952,16 @@ to start with any (its games would upload unread — an unread lobby passes
 - Node (tests/scripts): both sets from the sibling `../assets` checkout,
   never the CDN. AVIF decodes through `sharp` (`node/image-io.ts`) —
   `@napi-rs/canvas` mis-decodes AVIF partial-alpha.
-- Atlas regens overwrite the checkout's `assets/scanner/v1` in place, so
+- Atlas regens overwrite the set's directory in the checkout in place, so
   shipping one means pushing the assets repo (its deploy workflow mirrors
   `assets/` to the Space).
 
 Fonts are proprietary and gitignored: `BlitzMain.otf`, `BlitzBold.otf`,
 `FOT-RowdyStd-EB.otf`, `FOT-KurokaneStd-EB.otf` in `assets/fonts/` (repo
-root; from the splatoon3-fonts repo). Atlas builders fail loudly without
-them. Names and row digits use BlitzMain; team totals BlitzBold; the replay
+root; from the splatoon3-fonts repo). `scanner:build-glyph-atlas` fails
+loudly without them, and there is no atlas without it: the fixture crops
+`scanner:bootstrap-atlas` harvests get their baselines there. Names and row
+digits use BlitzMain; team totals BlitzBold; the replay
 code line and VICTORY/DEFEAT tags FOT-RowdyStd-EB; the JP death message mixes
 condensed Kurokane and Rowdy (`death-weapon-ja`); the Japanese results
 header reads through its own Blitz-kana pair (`scoreboard-header-lobby-ja`,
@@ -961,6 +972,62 @@ snap. Regeneration order:
 `scanner:build-localized-entries` (expects a splat3 checkout at `../splat3`)
 then the atlas rebuild; planner atlas via `scanner:build-planner-signatures`
 (reads the assets repo's `assets/planner-maps/`, MINI variant).
+
+## Glyph cells
+
+A glyph template is a line-height cell: its ink box plus the row the
+baseline of its line crosses it at (`baseline` in the atlas meta, fractional,
+from the top of the box; past the box for a glyph floating over the baseline).
+The box is stored tight, so the cell costs no pixels. Shapes that differ in
+nothing but height are separate templates this way: 'p'/'P', 'c'/'C',
+'_'/'-'/'¯', '.'/'・', ','/"'", '°'/'。', a kana and its small form.
+
+- **Atlas**: a font glyph's baseline is the font's own (`measureText`'s
+  `alphabeticBaseline`). A fixture crop is cut from a labeled line, so
+  `scanner:bootstrap-atlas` writes which line and at what row (`line`), and
+  `scanner:build-glyph-atlas` places the line's baseline from the font: each
+  crop's ink bottom less how far under the baseline the font draws that
+  character, the median over the line (a line of kana has no flat capital to
+  read it off). A crop keeps the height it was drawn at, even where the font
+  disagrees (the robot fixture's '・' on the baseline).
+- **Finding the line** (`lineFrame` in `core/glyphs.ts`): the segments are
+  first read with the templates sliding freely, as before. Each of a
+  segment's best candidates says where the baseline would be if the segment
+  were that glyph (the row its template matched best on plus its ascent,
+  asked of the matcher, not read off the ink box: a border line in the crop
+  or a neighbor's overhang stretches the box). The baseline that keeps the
+  most score over the line wins, so twins at two heights are settled by the
+  glyphs beside them. The glyphs on it then give the line's scale (segment
+  height over template height, the median of the tall ones: panels rectified
+  to the scoreboard layout come out up to a tenth off their set's size) and
+  its tilt (the median slope over all pairs: exactly zero for a level line,
+  about one degree for battle log tags and what levelling leaves in a death
+  tag).
+- **Reading in cells**: every segment is then read again with each template
+  kept to its cell: it may only sit between flush with the cell's top and
+  flush with its bottom, give or take a row (`cellTolerance`), and it pays
+  for the share of the segment's ink its cell leaves out
+  (`CELL_UNCOVERED_WEIGHT`: the tail of a 'j' is all that tells it from an
+  'i'). Ink outside the line's own rows (the tallest and deepest glyph of
+  the set around the baseline) is not counted as the segment's at all. The
+  merge, re-cut and re-segmentation passes all read in cells. A line where
+  nothing was read keeps the free read.
+- **What it replaced**: `names.ts` no longer measures baselines. Gone are the
+  underscore, dot, ring, cap line, descender and 'P'/'p' resolvers and the
+  raised-mark rule of the stroke merge. What is left there decides shapes at
+  one height ('b'/'h', 'D'/'O', 'r'/'T', 'u'/'Y', 'S'/'B', a blurred '!') and
+  detached marks a soft capture thins (accents, (han)dakuten: the cell's
+  uncovered ink reads most of them, but a minimap name still loses its ぎ
+  without the probe), and context ('I'/'l'/'1', 'O'/'0', '-'/'ー', a period
+  between Latin letters, 'º' as '°').
+- **Scores**: a glyph at its own height scores about what it did sliding
+  freely (its height penalty is now taken against the line's scale, the
+  segment's ink counted within the line's rows only); a glyph off its
+  height scores less or is not read at all. The floors and margins around
+  the recognizer were left where they were.
+- `tests/glyph-cells.test.ts` draws its own font and line (twins at both
+  heights, a tilted line, a line off its set's size, a border line in the
+  crop); it needs OpenCV but no fixtures.
 
 ## Tests
 

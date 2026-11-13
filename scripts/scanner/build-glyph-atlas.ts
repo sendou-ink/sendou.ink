@@ -8,11 +8,16 @@
  *   team digits   BlitzBold 36px  (~28px — bold face, so paint glyphs can't be reused)
  *   names         BlitzMain 20px  (cap height ~17px), ASCII + Latin-1 + kana + symbols
  *
+ * Every glyph is written with the row its line's baseline crosses its box at
+ * (AtlasMeta's `baseline`): a rendered glyph from the font, a fixture crop from
+ * the line it was cut from (see placeFixtureBaselines).
+ *
  * The fonts ship with the game and are not committed — drop them into
- * assets/fonts/ (see README); bootstrap-atlas-from-fixture.ts is the fallback.
+ * assets/fonts/ (see README). There is no atlas without them: the crops
+ * bootstrap-atlas-from-fixture.ts harvests get their baselines here.
  *
  * Usage: pnpm scanner:build-glyph-atlas
- * Writes SCANNER_ASSETS_DIR/glyphs/scoreboard-*.{png,json}
+ * Writes GLYPH_ATLAS_DIR/*.{png,json}
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -33,8 +38,9 @@ import {
 	RESULT_TAG_ENTRIES,
 } from "../../app/features/scanner/core/localized";
 import { LANGUAGE_ENTRIES } from "../../app/features/scanner/core/localized-entries";
-import { SCANNER_ASSETS_DIR } from "../../app/features/scanner/node/assets-dir";
+import { GLYPH_ATLAS_DIR } from "../../app/features/scanner/node/assets-dir";
 import { readImage, writePng } from "../../app/features/scanner/node/image-io";
+import { median } from "../../app/utils/number";
 import { readFontCoverage } from "./otf-cmap";
 
 /**
@@ -44,7 +50,7 @@ import { readFontCoverage } from "./otf-cmap";
  */
 
 const FONTS_DIR = new URL("../../assets/fonts", import.meta.url).pathname;
-const OUT_DIR = join(SCANNER_ASSETS_DIR, "glyphs");
+const OUT_DIR = GLYPH_ATLAS_DIR;
 
 const FONT_FILES = {
 	BlitzMain: "BlitzMain.otf",
@@ -71,8 +77,7 @@ for (const [family, file] of Object.entries(FONT_FILES)) {
 				"",
 				"The Splatoon fonts are proprietary and not committed. Get",
 				"Decrypted/BlitzMain.otf and Decrypted/BlitzBold.otf (e.g. from the",
-				"splatoon3-fonts repo) into assets/fonts/, or fall back to",
-				"  pnpm scanner:bootstrap-atlas",
+				"splatoon3-fonts repo) into assets/fonts/.",
 			].join("\n"),
 		);
 		process.exit(1);
@@ -96,12 +101,12 @@ function nameCharset(): string[] {
 
 /**
  * Greek letters players stylize names with, added per attested fixture only
- * ("Rιppιng_H"): most of the block are homoglyphs of latin/kana at capture
- * fidelity (η~n, ε~c) and displace correct matches on ranking noise. Even a
+ * ("Rιppιηg_H"): most of the block are homoglyphs of latin/kana at capture
+ * fidelity (ε~c, ο~o) and displace correct matches on ranking noise. Even a
  * few narrow glyphs shift an atlas's median width enough to change
  * wide-segment splitting, so it stays out of the death-tag charset until attested.
  */
-const NAME_GREEK = "ιαβψΞ"; // ι: "Rιppιng_H", α: "◇Dαrz™" (special-symbols fixture), β: "エキヒヒリヨβノ、" (quick log manta-maria), Ξ: "BΞ Bagel!" (anarchy-series-tower-control-double-eight)
+const NAME_GREEK = "ιαβψΞηΛ"; // ι, η: "Rιppιηg_H" (η's leg hangs under the baseline, which an 'n' never does), α: "◇Dαrz™" (special-symbols fixture), β: "エキヒヒリヨβノ、" (quick log manta-maria), Ξ: "BΞ Bagel!" (anarchy-series-tower-control-double-eight), Λ: "☆★」V「ΛGN№★☆" (battle log wahoo-world, cap height where the font's '▲' is smaller)
 
 /**
  * The rest of the in-game name editor's symbol pickers (sendou.ink's
@@ -140,6 +145,10 @@ interface GlyphBitmap {
 	/** grayscale, white-on-black (alpha coverage) */
 	data: Uint8Array;
 	source: "fixture" | "font";
+	/** rows from the bitmap's top down to its line's baseline (AtlasMeta) */
+	baseline?: number;
+	/** a fixture crop's text line and top row within it (AtlasMeta) */
+	line?: { id: number; top: number };
 }
 
 /** Carry fixture-harvested glyphs over from the existing atlas, if any. */
@@ -159,13 +168,22 @@ async function readFixtureGlyphs(name: string): Promise<GlyphBitmap[]> {
 						png.data[((g.y + y) * png.width + (g.x + x)) * 4]!;
 				}
 			}
-			return { char: g.char, w: g.w, h: g.h, data, source: "fixture" as const };
+			return {
+				char: g.char,
+				w: g.w,
+				h: g.h,
+				data,
+				source: "fixture" as const,
+				baseline: g.baseline,
+				line: g.line,
+			};
 		});
 }
 
 /**
- * Renders one glyph and tight-crops it via the alpha channel. xScale < 1
- * condenses horizontally (the JA death message renders squeezed to ~3/4 width).
+ * Renders one glyph and tight-crops it via the alpha channel, keeping where
+ * the font's baseline runs through the crop. xScale < 1 condenses
+ * horizontally (the JA death message renders squeezed to ~3/4 width).
  */
 function renderGlyph(
 	family: string,
@@ -181,6 +199,7 @@ function renderGlyph(
 	ctx.textBaseline = "middle";
 	ctx.scale(xScale, 1);
 	ctx.fillText(char, px / xScale, size / 2);
+	const baselineY = size / 2 - ctx.measureText(char).alphabeticBaseline;
 	const img = ctx.getImageData(0, 0, size, size);
 	let x0 = size;
 	let x1 = -1;
@@ -211,7 +230,74 @@ function renderGlyph(
 			data[y * w + x] = img.data[(sy * size + sx) * 4 + 3]!;
 		}
 	}
-	return { char, w, h, data, source: "font" };
+	return {
+		char,
+		w,
+		h,
+		data,
+		source: "font",
+		baseline: round2(baselineY - (y0 - pad)),
+	};
+}
+
+function round2(value: number): number {
+	return Math.round(value * 100) / 100;
+}
+
+/** Rows from the bitmap's top to the end of its ink, as the recognizer crops it. */
+function inkBottom(glyph: GlyphBitmap): number {
+	for (let y = glyph.h - 1; y >= 0; y--) {
+		for (let x = 0; x < glyph.w; x++) {
+			if (glyph.data[y * glyph.w + x]! > 128) return y + 1;
+		}
+	}
+	return glyph.h;
+}
+
+/**
+ * Places the baseline of every fixture crop that knows its text line. The
+ * crops of a line keep their rows within it, and the font says how far under
+ * (or over) the baseline each of its characters ends, so every crop implies a
+ * baseline for the line and the median is taken: a line of kana has no flat
+ * capital to read it off, and a mislabeled or noisy crop is outvoted.
+ */
+function placeFixtureBaselines(name: string, glyphs: GlyphBitmap[]): void {
+	const descents = new Map<string, number[]>();
+	for (const glyph of glyphs) {
+		if (glyph.source !== "font" || glyph.baseline === undefined) continue;
+		const known = descents.get(glyph.char) ?? [];
+		known.push(inkBottom(glyph) - glyph.baseline);
+		descents.set(glyph.char, known);
+	}
+	const lines = new Map<number, GlyphBitmap[]>();
+	for (const glyph of glyphs) {
+		if (glyph.source !== "fixture" || !glyph.line) continue;
+		lines.set(glyph.line.id, [...(lines.get(glyph.line.id) ?? []), glyph]);
+	}
+	let unplaced = 0;
+	for (const crops of lines.values()) {
+		const implied = crops.flatMap((crop) => {
+			const descent = descents.get(crop.char);
+			return descent
+				? [crop.line!.top + inkBottom(crop) - median(descent)]
+				: [];
+		});
+		for (const crop of crops) {
+			crop.baseline =
+				implied.length > 0
+					? round2(median(implied) - crop.line!.top)
+					: undefined;
+		}
+		if (implied.length === 0) unplaced += crops.length;
+	}
+	const lineless = glyphs.filter(
+		(g) => g.source === "fixture" && !g.line && g.baseline === undefined,
+	).length;
+	if (unplaced + lineless > 0) {
+		console.info(
+			`${name}: ${unplaced + lineless} fixture glyphs without a baseline (rerun scanner:bootstrap-atlas)`,
+		);
+	}
 }
 
 /** Pack glyphs into rows (wrapping at maxWidth) and write PNG + JSON. */
@@ -229,7 +315,16 @@ function writeAtlas(name: string, height: number, glyphs: GlyphBitmap[]): void {
 			y += rowH + spacing;
 			rowH = 0;
 		}
-		meta.glyphs.push({ char: g.char, x, y, w: g.w, h: g.h, source: g.source });
+		meta.glyphs.push({
+			char: g.char,
+			x,
+			y,
+			w: g.w,
+			h: g.h,
+			source: g.source,
+			baseline: g.baseline,
+			line: g.line,
+		});
 		x += g.w + spacing;
 		rowH = Math.max(rowH, g.h);
 		atlasW = Math.max(atlasW, x);
@@ -299,6 +394,7 @@ async function build(
 	console.info(
 		`${name}: carrying over ${fixtureCount} fixture-harvested glyphs`,
 	);
+	placeFixtureBaselines(name, glyphs);
 	writeAtlas(name, height, glyphs);
 }
 

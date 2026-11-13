@@ -76,5 +76,11 @@
       }
     ],
     "stageLabel": "Barnacle & Dime"
+  },
+  "options": {
+    "skipFields": [
+      "players.3.name"
+    ],
+    "notes": "players.3.name skipped: the label's 'n' is a Greek η, drawn with its right leg four rows under the baseline (the ι beside it is Greek too). The names atlas carries η since glyphs keep their height on the line, and the row reads Rιppιηg_H; the label dates from when η read as its nearest glyph. Relabel once checked against the source."
   }
 }

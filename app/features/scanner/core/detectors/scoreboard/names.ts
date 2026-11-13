@@ -134,41 +134,6 @@ function normalizeOhs(name: string): string {
 		.join("");
 }
 
-/**
- * A long bar is '_' or a dash by height alone, which the templates weigh
- * lightly: ">_<" read ">ー<", "Jrod_14" read "Jrod¯14", and the quick log's
- * soft "-Artemis->" read "_Artemis_>". A bar whose bottom reaches the line's
- * baseline (median ink bottom of the other non-descender glyphs: "Rιppιng_H"
- * hangs three of eight below it) is an underscore; one
- * floating above it is a dash (normalizeLongBars picks '-' or 'ー'), a
- * macron at the cap line keeps its read.
- */
-const BASELINE_BAR_CHARS = new Set(["-", "ー", "¯", "_"]);
-const UNDERSCORE_BASELINE_SLACK_PX = 2;
-
-function resolveUnderscoreByBaseline(raw: RecognizedText): RecognizedText {
-	if (!raw.chars.some((c) => BASELINE_BAR_CHARS.has(c.char))) return raw;
-	const anchors = raw.chars
-		.filter(
-			(c) => !BASELINE_BAR_CHARS.has(c.char) && !DESCENDER_LETTERS.has(c.char),
-		)
-		.map((c) => c.y1)
-		.sort((a, b) => a - b);
-	if (anchors.length === 0) return raw;
-	const baseline = anchors[Math.floor(anchors.length / 2)]!;
-	const chars = raw.chars.map((c) => {
-		if (!BASELINE_BAR_CHARS.has(c.char)) return c;
-		const onBaseline = Decisions.atMost(
-			"scoreboard/names:UNDERSCORE_BASELINE_SLACK_PX",
-			baseline - c.y1,
-			UNDERSCORE_BASELINE_SLACK_PX,
-		);
-		if (onBaseline) return c.char === "_" ? c : { ...c, char: "_" };
-		return c.char === "_" ? { ...c, char: "-" } : c;
-	});
-	return { ...raw, text: retext(raw.text, chars), chars };
-}
-
 /** Rebuild the text from re-decided chars, keeping the spaces where they were. */
 function retext(text: string, chars: RecognizedChar[]): string {
 	let ci = 0;
@@ -176,69 +141,26 @@ function retext(text: string, chars: RecognizedChar[]): string {
 }
 
 /**
- * '.', '・', '·' tight-crop to near-identical blobs. A dot floating well above
- * the baseline cannot be '.', so it rereads as the best middle-dot candidate.
  * BlitzMain draws '・' ON the baseline in some names (scoreboard/robot row 5,
- * next to symbols), so a baseline dot only rereads as '.' between two Latin
- * letters or digits ("R.O.B.O.T", "Lv.13"), where no fixture attests a '・'.
+ * next to symbols), where only its width tells it from '.', and a soft capture
+ * loses that. Between two Latin letters or digits ("R.O.B.O.T", "Lv.13") no
+ * fixture attests a '・', so there a middle dot is the period whenever a '.'
+ * fits at its height (a dot floating over the baseline has no such candidate).
  */
-const DOT_CHARS = new Set([".", "・", "·"]);
-const DOT_BASELINE_SLACK_PX = 3;
+const MIDDLE_DOTS = new Set(["・", "·"]);
 const LATIN_OR_DIGIT = /^[\p{Script=Latin}\d]$/u;
 
-function fixDotsByPosition(raw: RecognizedText): RecognizedText {
-	if (!raw.chars.some((c) => DOT_CHARS.has(c.char))) return raw;
-	const anchors = raw.chars
-		.filter((c) => !DOT_CHARS.has(c.char))
-		.map((c) => c.y1)
-		.sort((a, b) => a - b);
-	if (anchors.length === 0) return raw;
-	const baseline = anchors[Math.floor(anchors.length / 2)]!;
+function resolveDotBetweenLatin(raw: RecognizedText): RecognizedText {
+	if (!raw.chars.some((c) => MIDDLE_DOTS.has(c.char))) return raw;
 	const chars = raw.chars.map((c, i) => {
-		if (!DOT_CHARS.has(c.char)) return c;
-		const raised = Decisions.above(
-			"scoreboard/names:DOT_BASELINE_SLACK_PX#dot",
-			baseline - c.y1,
-			DOT_BASELINE_SLACK_PX,
-		);
-		if (raised && c.char === ".") {
-			const alt = c.candidates?.find(
-				(k) => DOT_CHARS.has(k.char) && k.char !== ".",
-			);
-			return { ...c, char: alt?.char ?? "・" };
-		}
-		const betweenLatin =
-			LATIN_OR_DIGIT.test(raw.chars[i - 1]?.char ?? "") &&
-			LATIN_OR_DIGIT.test(raw.chars[i + 1]?.char ?? "");
-		if (raised || c.char === "." || !betweenLatin) return c;
+		if (
+			!MIDDLE_DOTS.has(c.char) ||
+			!LATIN_OR_DIGIT.test(raw.chars[i - 1]?.char ?? "") ||
+			!LATIN_OR_DIGIT.test(raw.chars[i + 1]?.char ?? "")
+		)
+			return c;
 		const period = c.candidates?.find((k) => k.char === ".");
 		return period ? { ...c, char: ".", score: period.score } : c;
-	});
-	return { ...raw, text: retext(raw.text, chars), chars };
-}
-
-/**
- * '°' and '。' tight-crop to the same small ring ("°◎ sneakye" read "。◎"):
- * the degree sign hangs at the cap line, the full stop sits on the baseline.
- */
-const RING_CHARS = new Set(["°", "。"]);
-
-function resolveRingByPosition(raw: RecognizedText): RecognizedText {
-	if (!raw.chars.some((c) => RING_CHARS.has(c.char))) return raw;
-	const anchors = raw.chars
-		.filter((c) => !RING_CHARS.has(c.char))
-		.map((c) => c.y1)
-		.sort((a, b) => a - b);
-	if (anchors.length === 0) return raw;
-	const baseline = anchors[Math.floor(anchors.length / 2)]!;
-	const chars = raw.chars.map((c) => {
-		if (!RING_CHARS.has(c.char)) return c;
-		const raised = Decisions.above(
-			"scoreboard/names:DOT_BASELINE_SLACK_PX#ring",
-			baseline - c.y1,
-			DOT_BASELINE_SLACK_PX,
-		);
-		return { ...c, char: raised ? "°" : "。" };
 	});
 	return { ...raw, text: retext(raw.text, chars), chars };
 }
@@ -654,8 +576,18 @@ function maxLeftIndent(
  * where an 'r' starts at the x-height. A soft gap can also lose the stem to
  * the inverted '¡' ("crystl!!<3" read "crystl¡!<3"), but a real '¡' has its
  * gap at the top and runs solid down to the baseline, so it shows no notch.
+ * With the '¡' kept to its own height on the line the next best reads of that
+ * stem are 'ł' and a fixture 'L', whose stroke and foot leave no notch either.
  */
-const EXCLAMATION_STEM_READS = new Set([...BAR_CHARS, "r", "ι", "ィ", "¡"]);
+const EXCLAMATION_STEM_READS = new Set([
+	...BAR_CHARS,
+	"r",
+	"ι",
+	"ィ",
+	"¡",
+	"ł",
+	"L",
+]);
 const EXCLAMATION_MIN_NOTCH_DEPTH = 0.3;
 const EXCLAMATION_MIN_DOT_RISE = 0.15;
 /** the dip sits below the stem's upper half */
@@ -736,65 +668,6 @@ function resolveExclamationByNotch(
 		return isExclamation ? { ...c, char: "!" } : c;
 	});
 	gray.delete();
-	return { ...raw, text: retext(raw.text, chars), chars };
-}
-
-/**
- * Lowercase letters without ascenders stop at the x-height, a quarter of the
- * cap height under the cap line, while tight cropping hides that from the
- * templates: a 'Y' correlates with the 'v' its arms draw (720p "BLUEYMOM" read
- * "BLUEvMOM"), a 'U' with 'u'. One whose ink starts at the cap line (the
- * median top of the capitals, digits and ascenders beside it) is re-decided to
- * the capital of the same shape when that is a near-tie candidate.
- */
-const CAP_TWINS: Record<string, string> = {
-	c: "C",
-	n: "A",
-	o: "O0A",
-	s: "S",
-	u: "UY",
-	v: "VY",
-	w: "W",
-	x: "X",
-	z: "Z",
-};
-const CAP_LINE_ANCHOR = /^[\p{Lu}\dbdfhikl]$/u;
-const CAP_LINE_MAX_OFFSET = 0.12;
-const CAP_LINE_SCORE_MARGIN = 0.06;
-
-function resolveCaseByCapLine(raw: RecognizedText): RecognizedText {
-	if (!raw.chars.some((c) => c.char in CAP_TWINS)) return raw;
-	const tops = raw.chars
-		.filter((c) => CAP_LINE_ANCHOR.test(c.char))
-		.map((c) => c.y0)
-		.sort((a, b) => a - b);
-	if (tops.length === 0) return raw;
-	const bottoms = raw.chars.map((c) => c.y1).sort((a, b) => a - b);
-	const capLine = tops[Math.floor(tops.length / 2)]!;
-	const capHeight = bottoms[Math.floor(bottoms.length / 2)]! - capLine;
-	if (capHeight <= 0) return raw;
-	const chars = raw.chars.map((c) => {
-		const twins = CAP_TWINS[c.char];
-		if (
-			!twins ||
-			Decisions.above(
-				"scoreboard/names:CAP_LINE_MAX_OFFSET",
-				c.y0 - capLine,
-				CAP_LINE_MAX_OFFSET * capHeight,
-			)
-		)
-			return c;
-		const capital = c.candidates?.find(
-			(k) =>
-				twins.includes(k.char) &&
-				Decisions.atMost(
-					"scoreboard/names:CAP_LINE_SCORE_MARGIN",
-					c.score - k.score,
-					CAP_LINE_SCORE_MARGIN,
-				),
-		);
-		return capital ? { ...c, char: capital.char, score: capital.score } : c;
-	});
 	return { ...raw, text: retext(raw.text, chars), chars };
 }
 
@@ -1047,94 +920,6 @@ function stripMarks(s: string): string {
 }
 
 /**
- * A descender's bowl tight-crops like the round letter it sits on ('g' over
- * 'o': "Bagel!" read "Baoel!"), but the segment still hangs below the
- * baseline. A Latin letter reaching DESCENT_MIN_PX under it takes the
- * descender when that is a near-tie candidate. A dotted stem is 'i' or 'j'
- * above the baseline, so there the descent alone decides ("julufm" read
- * "iulufm" with the 'j' 0.08 behind).
- */
-const DESCENDER_LETTERS = new Set([..."gjpqy"]);
-const DOTTED_STEMS = new Set([..."iìíîï"]);
-const DESCENDER_SCORE_MARGIN = 0.06;
-const LATIN_LETTER = /^\p{Script=Latin}$/u;
-
-function resolveDescenderByBaseline(raw: RecognizedText): RecognizedText {
-	const anchors = raw.chars
-		.filter((c) => !DESCENDER_LETTERS.has(c.char))
-		.map((c) => c.y1)
-		.sort((a, b) => a - b);
-	if (anchors.length === 0) return raw;
-	const baseline = anchors[Math.floor(anchors.length / 2)]!;
-	const chars = raw.chars.map((c) => {
-		if (DESCENDER_LETTERS.has(c.char) || !LATIN_LETTER.test(c.char)) return c;
-		if (
-			Decisions.below(
-				"scoreboard/names:DESCENT_MIN_PX#letter",
-				c.y1 - baseline,
-				DESCENT_MIN_PX,
-			)
-		)
-			return c;
-		const descender = DOTTED_STEMS.has(c.char)
-			? (c.candidates?.find((k) => k.char === "j") ?? {
-					char: "j",
-					score: c.score,
-				})
-			: c.candidates?.find(
-					(k) =>
-						DESCENDER_LETTERS.has(k.char) &&
-						Decisions.atMost(
-							"scoreboard/names:DESCENDER_SCORE_MARGIN",
-							c.score - k.score,
-							DESCENDER_SCORE_MARGIN,
-						),
-				);
-		return descender
-			? { ...c, char: descender.char, score: descender.score }
-			: c;
-	});
-	return { ...raw, text: retext(raw.text, chars), chars };
-}
-
-/**
- * 'P' and 'p' tight-crop to the same shape, but the segment keeps the position
- * the templates lose: 'p' hangs below the baseline (median ink bottom of the
- * non-twin glyphs, which shrugs off real descenders). Skipped with no anchor glyph.
- */
-const DESCENDER_TWINS: Record<string, [upper: string, lower: string]> = {
-	P: ["P", "p"],
-	p: ["P", "p"],
-};
-const DESCENT_MIN_PX = 3;
-
-function resolveCaseByDescent(raw: RecognizedText): string {
-	if (!raw.chars.some((c) => c.char in DESCENDER_TWINS)) return raw.text;
-	const anchors = raw.chars
-		.filter((c) => !(c.char in DESCENDER_TWINS))
-		.map((c) => c.y1)
-		.sort((a, b) => a - b);
-	if (anchors.length === 0) return raw.text;
-	const baseline = anchors[Math.floor(anchors.length / 2)]!;
-	let ci = 0;
-	return [...raw.text]
-		.map((ch) => {
-			if (ch === " ") return ch;
-			const rc: RecognizedChar = raw.chars[ci++]!;
-			const twin = DESCENDER_TWINS[rc.char];
-			if (!twin) return rc.char;
-			return Decisions.atLeast(
-				"scoreboard/names:DESCENT_MIN_PX#twin",
-				rc.y1 - baseline,
-				DESCENT_MIN_PX,
-			)
-				? twin[1]
-				: twin[0];
-		})
-		.join("");
-}
-
-/**
  * Near-tie homoglyphs re-decided toward the plain form before the context
  * rules run (opt-in via `plainTieMargin`; the kill feed's ~24px rows need it):
  * the dot of 'i' alone ranks 'í'/'ì' level with 'i', a blurred 'l' ranks 'í'
@@ -1171,10 +956,13 @@ function preferPlainTies(raw: RecognizedText, margin: number): RecognizedText {
  * The game draws ASCII '<' '>' like the fullwidth forms (the font's own
  * ASCII renders are a size larger), so those templates win on a real '<'
  * ("crystl!!<3" read "crystl!!＜3"). The pixels cannot tell the two apart and
- * ASCII is the common pick, so the read is ASCII.
+ * ASCII is the common pick, so the read is ASCII. Likewise the ordinal 'º'
+ * hangs at the degree sign's height as a ring of the same size at name
+ * resolution ("°◎ sneakye" read "º◎ sneakye"), and the degree sign is the
+ * one names are decorated with.
  */
-const FULLWIDTH_LOOKALIKES: Record<string, string> = { "＜": "<", "＞": ">" };
-const FULLWIDTH_LOOKALIKE_RE = /[＜＞]/g;
+const LOOKALIKES: Record<string, string> = { "＜": "<", "＞": ">", º: "°" };
+const LOOKALIKE_RE = /[＜＞º]/g;
 
 export function* parseNameSteps(
 	gray: Mat,
@@ -1203,48 +991,32 @@ export function* parseNameSteps(
 		options.plainTieMargin === undefined
 			? recognized
 			: preferPlainTies(recognized, options.plainTieMargin);
-	const name = normalizeLongBars(
-		normalizeOhs(
-			normalizeBars(
-				resolveCaseByDescent(
-					resolveCaseByCapLine(
-						resolveAccentByMark(
-							resolveVoicedByMark(
-								resolveBhByBowlFloor(
-									resolveStemTwins(
-										resolveSbByLeftStem(
-											resolveDoByCorners(
-												resolveRingByPosition(
-													fixDotsByPosition(
-														resolveExclamationByNotch(
-															resolveDescenderByBaseline(
-																resolveUnderscoreByBaseline(raw),
-															),
-															gray,
-														),
-													),
-												),
-												gray,
-											),
-											gray,
-											binThreshold,
-										),
-										gray,
-										binThreshold,
-									),
-									gray,
-								),
-								gray,
-								binThreshold,
-							),
+	const resolved = resolveAccentByMark(
+		resolveVoicedByMark(
+			resolveBhByBowlFloor(
+				resolveStemTwins(
+					resolveSbByLeftStem(
+						resolveDoByCorners(
+							resolveDotBetweenLatin(resolveExclamationByNotch(raw, gray)),
 							gray,
-							binThreshold,
 						),
+						gray,
+						binThreshold,
 					),
-				).trim(),
+					gray,
+					binThreshold,
+				),
+				gray,
 			),
+			gray,
+			binThreshold,
 		),
-	).replace(FULLWIDTH_LOOKALIKE_RE, (c) => FULLWIDTH_LOOKALIKES[c]!);
+		gray,
+		binThreshold,
+	);
+	const name = normalizeLongBars(
+		normalizeOhs(normalizeBars(resolved.text.trim())),
+	).replace(LOOKALIKE_RE, (c) => LOOKALIKES[c]!);
 	return {
 		name,
 		confidence: raw.confidence,

@@ -1,7 +1,7 @@
 /**
  * Worker/browser IO for ScoreboardResources over HTTP: game icons come from
  * the CDN's shared `img/<dir>/<id>.avif` sets, the scanner atlases from the
- * same CDN under `scanner/v1/**`. What the bundle contains lives in
+ * same CDN under `scanner/**`. What the bundle contains lives in
  * core/resources.ts. The base URL arrives via the worker init message
  * (worker/protocol.ts) so this module never imports the app config.
  */
@@ -17,11 +17,13 @@ import type { FrameData } from "../core/image";
 import { assembleScoreboardResources } from "../core/resources";
 
 /**
- * Atlas path relative to the CDN base; the version segment guards against
- * cache skew — bump it with breaking atlas format changes (must match the
- * Node-side SCANNER_ASSETS_DIR default in node/assets-dir.ts).
+ * Atlas paths relative to the CDN base. Each set's version segment guards
+ * against cache skew: bump it with a breaking format change or a regen that
+ * moves boxes (must match the Node-side dirs in node/assets-dir.ts). The
+ * glyph atlases are at v2 since their glyphs carry baselines.
  */
-const ATLAS_PATH = "scanner/v1";
+const GLYPHS_PATH = "scanner/v2/glyphs";
+const PLANNER_PATH = "scanner/v1/planner";
 
 /** A failed fetch is tried once more after this, riding out a dropped connection or a CDN hiccup. */
 const RETRY_DELAY_MS = 1_000;
@@ -52,12 +54,12 @@ export async function fetchScoreboardResources(
 			missingAtlases.push(name);
 			return () => null;
 		});
-	const atlasBase = `${base}/${ATLAS_PATH}`;
 	const { resources, missingIcons } = await assembleScoreboardResources({
 		readIcon: (dir, id) => fetchImage(`${base}/img/${dir}/${id}.avif`),
-		loadAtlas: (name) => recordMissing(name, fetchAtlas(atlasBase, name)),
+		loadAtlas: (name) =>
+			recordMissing(name, fetchAtlas(`${base}/${GLYPHS_PATH}`, name)),
 		loadPlannerStages: () =>
-			recordMissing("planner", fetchPlannerStages(atlasBase)),
+			recordMissing("planner", fetchPlannerStages(`${base}/${PLANNER_PATH}`)),
 	});
 	return { resources, missingAtlases, missingIcons };
 }
@@ -95,10 +97,10 @@ async function fetchAtlas(
 ): Promise<(() => GlyphSet) | null> {
 	try {
 		const [meta, image] = await Promise.all([
-			fetchOk(`${base}/glyphs/${name}.json`, ATLAS_FETCH).then(
+			fetchOk(`${base}/${name}.json`, ATLAS_FETCH).then(
 				(res) => res.json() as Promise<AtlasMeta>,
 			),
-			fetchImage(`${base}/glyphs/${name}.png`, ATLAS_FETCH),
+			fetchImage(`${base}/${name}.png`, ATLAS_FETCH),
 		]);
 		const set = loadGlyphSet(image, meta);
 		return () => set;
@@ -113,10 +115,10 @@ async function fetchPlannerStages(
 ): Promise<(() => PlannerStage[]) | null> {
 	try {
 		const [manifest, atlas] = await Promise.all([
-			fetchOk(`${base}/planner/manifest.json`, ATLAS_FETCH).then(
+			fetchOk(`${base}/manifest.json`, ATLAS_FETCH).then(
 				(res) => res.json() as Promise<PlannerManifest>,
 			),
-			fetchImage(`${base}/planner/signatures.png`, ATLAS_FETCH),
+			fetchImage(`${base}/signatures.png`, ATLAS_FETCH),
 		]);
 		const stages = loadPlannerStages(atlas, manifest);
 		return () => stages;
