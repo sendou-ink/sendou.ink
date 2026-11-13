@@ -16,17 +16,10 @@ const stationsAction = wrappedAction<typeof stationsFormSchema>({
 const users = UserFactory.pool();
 const organizerId = () => users.id(1);
 
-const CAST_ACCOUNT = {
-	platform: "TWITCH" as const,
-	account: "lan_cast",
-	name: "LAN Cast",
-};
-
 const createTournament = async ({ isLan }: { isLan: boolean }) => {
-	const tournament = await TournamentFactory.create(
-		{ authorId: organizerId() },
-		{ castAccounts: [CAST_ACCOUNT] },
-	);
+	const tournament = await TournamentFactory.create({
+		authorId: organizerId(),
+	});
 	if (isLan) {
 		await CalendarEventVenueFactory.create({ eventId: tournament.eventId });
 	}
@@ -38,23 +31,23 @@ const station = (
 	name: string,
 	{
 		stationId,
-		castAccount = null,
-	}: { stationId?: number; castAccount?: string | null } = {},
-) => ({ stationId, name, locationNote: null, castAccount });
+		locationNote = null,
+	}: { stationId?: number; locationNote?: string | null } = {},
+) => ({ stationId, name, locationNote });
 
 describe("stations action", () => {
 	beforeEach(async () => {
 		await users.create(1);
 	});
 
-	test("saves the stations linking the chosen cast account", async () => {
+	test("saves the stations in the given order", async () => {
 		const tournament = await createTournament({ isLan: true });
 
 		await stationsAction(
 			{
 				autoAssign: true,
 				stations: [
-					station("Stream", { castAccount: "TWITCH:lan_cast" }),
+					station("Main stage", { locationNote: "On stage" }),
 					station("Station 1"),
 				],
 			},
@@ -64,45 +57,25 @@ describe("stations action", () => {
 		expect(
 			await TournamentStationRepository.findAllByTournamentId(tournament.id),
 		).toMatchObject([
-			{
-				name: "Stream",
-				castAccount: { platform: "TWITCH", account: "lan_cast" },
-			},
-			{ name: "Station 1", castAccount: null },
+			{ name: "Main stage", locationNote: "On stage" },
+			{ name: "Station 1", locationNote: null },
 		]);
 	});
 
-	test.each([
-		{
-			why: "names repeat",
-			stations: [station("Station 1"), station("station 1")],
-			field: "stations[1].name",
-			error: "forms:errors.stationNameNotUnique",
-		},
-		{
-			why: "two stations share a cast account",
-			stations: [
-				station("Stream", { castAccount: "TWITCH:lan_cast" }),
-				station("Stream 2", { castAccount: "TWITCH:lan_cast" }),
-			],
-			field: "stations[1].castAccount",
-			error: "forms:errors.stationCastAccountNotUnique",
-		},
-		{
-			why: "the cast account isn't the tournament's",
-			stations: [station("Stream", { castAccount: "TWITCH:someone_else" })],
-			field: "stations[0].castAccount",
-			error: "forms:errors.stationCastAccountUnknown",
-		},
-	])("rejects the save when $why", async ({ stations, field, error }) => {
+	test("rejects names that repeat", async () => {
 		const tournament = await createTournament({ isLan: true });
 
 		const res = await stationsAction(
-			{ autoAssign: true, stations },
+			{
+				autoAssign: true,
+				stations: [station("Station 1"), station("station 1")],
+			},
 			{ user: organizerId(), params: { id: String(tournament.id) } },
 		);
 
-		expect(res.fieldErrors[field]).toBe(error);
+		expect(res.fieldErrors["stations[1].name"]).toBe(
+			"forms:errors.stationNameNotUnique",
+		);
 		expect(
 			await TournamentStationRepository.findAllByTournamentId(tournament.id),
 		).toEqual([]);

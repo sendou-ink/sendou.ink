@@ -1,5 +1,4 @@
 import type { Params } from "react-router";
-import * as LiveStream from "~/features/live-streams/core/LiveStream";
 import {
 	clearTournamentDataCache,
 	tournamentFromParams,
@@ -20,25 +19,14 @@ export const action = defineAction(
 			"Stations can't be edited",
 		);
 
-		const castAccounts = tournament.ctx.castAccounts ?? [];
-
 		await TournamentStationRepository.setStations({
 			tournamentId,
 			autoAssign: body.autoAssign,
-			stations: body.stations.map((station) => {
-				const castAccount = castAccounts.find(
-					(account) => LiveStream.key(account) === station.castAccount,
-				);
-
-				return {
-					id: station.stationId ?? null,
-					name: station.name,
-					locationNote: station.locationNote,
-					castAccount: castAccount
-						? { platform: castAccount.platform, account: castAccount.account }
-						: null,
-				};
-			}),
+			stations: body.stations.map((station) => ({
+				id: station.stationId ?? null,
+				name: station.name,
+				locationNote: station.locationNote,
+			})),
 		});
 
 		clearTournamentDataCache(tournamentId);

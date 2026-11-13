@@ -1,12 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { InfoPopover } from "~/components/InfoPopover";
-import * as LiveStream from "~/features/live-streams/core/LiveStream";
-import { STREAM_PLATFORM_NAMES } from "~/features/live-streams/live-streams-constants";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { stationsFormSchema } from "~/features/tournament-stations/tournament-stations-schemas";
 import { SendouForm } from "~/form/SendouForm";
-import type { ArrayItemRenderContext, SelectOption } from "~/form/types";
 import type { loader } from "../loaders/to.$id.admin.stations.server";
 
 export { action } from "../actions/to.$id.admin.stations.server";
@@ -16,13 +13,6 @@ export default function TournamentAdminStationsPage() {
 	const { t } = useTranslation(["tournament"]);
 	const { stations } = useLoaderData<typeof loader>();
 	const tournament = useTournament();
-
-	const castAccountOptions: SelectOption[] = (
-		tournament.ctx.castAccounts ?? []
-	).map((account) => ({
-		value: LiveStream.key(account),
-		label: `${account.name} (${STREAM_PLATFORM_NAMES[account.platform]})`,
-	}));
 
 	return (
 		<div className="stack md">
@@ -37,22 +27,11 @@ export default function TournamentAdminStationsPage() {
 				submitButtonTestId="save-stations-button"
 				defaultValues={{
 					autoAssign: tournament.autoAssignsStations,
-					stations: stations.map((station) => {
-						const castAccountKey = station.castAccount
-							? LiveStream.key(station.castAccount)
-							: null;
-
-						return {
-							stationId: station.id,
-							name: station.name,
-							locationNote: station.locationNote,
-							castAccount: castAccountOptions.some(
-								(option) => option.value === castAccountKey,
-							)
-								? castAccountKey
-								: null,
-						};
-					}),
+					stations: stations.map((station) => ({
+						stationId: station.id,
+						name: station.name,
+						locationNote: station.locationNote,
+					})),
 				}}
 			>
 				{({ FormField }) => (
@@ -61,20 +40,7 @@ export default function TournamentAdminStationsPage() {
 							name="autoAssign"
 							labelPopover={<AutoAssignInfoPopover />}
 						/>
-						<FormField name="stations">
-							{({ itemName }: ArrayItemRenderContext) => (
-								<div className="stack sm">
-									<FormField name={`${itemName}.name`} />
-									<FormField name={`${itemName}.locationNote`} />
-									{castAccountOptions.length > 0 ? (
-										<FormField
-											name={`${itemName}.castAccount`}
-											options={castAccountOptions}
-										/>
-									) : null}
-								</div>
-							)}
-						</FormField>
+						<FormField name="stations" />
 					</>
 				)}
 			</SendouForm>
@@ -90,7 +56,6 @@ function AutoAssignInfoPopover() {
 			<div className="stack xs text-sm">
 				<div>{t("tournament:stations.autoAssign.intro")}</div>
 				<ul className="stack xs">
-					<li>{t("tournament:stations.autoAssign.stream")}</li>
 					<li>{t("tournament:stations.autoAssign.order")}</li>
 					<li>{t("tournament:stations.autoAssign.stay")}</li>
 					<li>{t("tournament:stations.autoAssign.lowest")}</li>

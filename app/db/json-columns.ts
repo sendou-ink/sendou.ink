@@ -35,7 +35,6 @@ export const JSON_COLUMNS: ReadonlySet<string> = new Set([
 	"TournamentResult.setResults",
 	"TournamentRound.maps",
 	"TournamentStage.settings",
-	"TournamentStation.castAccount",
 	"TournamentTeam.activeRosterUserIds",
 	"User.buildSorting",
 	"User.customTheme",

@@ -36,7 +36,6 @@ export async function up(db: Kysely<any>): Promise<void> {
 				)
 				.addColumn("name", "text", (col) => col.notNull())
 				.addColumn("locationNote", "text")
-				.addColumn("castAccount", "text")
 				.addColumn("position", "integer", (col) => col.notNull())
 				.modifyEnd(sql`strict`)
 				.execute();

@@ -22,7 +22,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
-import { ArrowRightLeft, GripVertical, Tv } from "lucide-react";
+import { ArrowRightLeft, GripVertical } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
@@ -332,12 +332,6 @@ function Lane({
 		>
 			<header className={styles.laneHeader}>
 				<h2 className={styles.laneName}>
-					{station?.isStream ? (
-						<Tv
-							className={styles.streamIcon}
-							aria-label={t("tournament:stations.board.stream")}
-						/>
-					) : null}
 					{station ? station.name : t("tournament:stations.board.waiting")}
 				</h2>
 				{station?.locationNote ? (
