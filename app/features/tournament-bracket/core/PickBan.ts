@@ -487,6 +487,14 @@ export function isLegal({
 	);
 }
 
+/** Whether the entry at the index of a BAN_2 round's map list can be banned (a map can be listed more than once). */
+export function isMapListIndexLegal({
+	mapListIndex,
+	...rest
+}: MapListWithStatusesArgs & { mapListIndex: number }) {
+	return mapsListWithLegality(rest)[mapListIndex]?.isLegal === true;
+}
+
 export function isModeLegal({
 	mode,
 	...rest
@@ -601,7 +609,12 @@ export function mapsListWithLegality(args: MapListWithStatusesArgs) {
 
 	const everythingBanned = result.every((map) => !map.isLegal);
 	if (everythingBanned) {
-		return result.map((map) => ({ ...map, isLegal: true }));
+		return result.map((map) => ({
+			...map,
+			isLegal: !(
+				"bannedByTournamentTeamId" in map && map.bannedByTournamentTeamId
+			),
+		}));
 	}
 
 	return result;

@@ -37,6 +37,7 @@ interface ResolveCurrentMapListArgs {
 		mode: ModeShort | null;
 		stageId: StageId | null;
 		type: Tables["TournamentMatchPickBanEvent"]["type"];
+		mapListIndex?: number | null;
 	}>;
 	/** Each team's distinct recently played maps, most recent first. */
 	recentlyPlayedMaps?: TournamentMaplistInput["recentlyPlayedMaps"];
@@ -74,10 +75,14 @@ export function resolveMapList(
 	if (!baseMaps) return [];
 
 	return baseMaps
-		.map((map) => {
+		.map((map, mapListIndex) => {
 			return {
 				...map,
-				bannedByTournamentTeamId: resolveBannedByTeamId(args, map),
+				bannedByTournamentTeamId: resolveBannedByTeamId({
+					args,
+					map,
+					mapListIndex,
+				}),
 			};
 		})
 		.concat(
@@ -184,20 +189,28 @@ export function mapListFromResults(
 	}));
 }
 
-function resolveBannedByTeamId(
-	args: ResolveCurrentMapListArgs,
-	map: { stageId: StageId; mode: ModeShort },
-) {
+function resolveBannedByTeamId({
+	args,
+	map,
+	mapListIndex,
+}: {
+	args: ResolveCurrentMapListArgs;
+	map: { stageId: StageId; mode: ModeShort };
+	mapListIndex: number;
+}) {
 	if (args.maps?.pickBan !== "BAN_2") return;
 
 	const [secondPicker, firstPicker] = args.teams;
 
-	const banIdx = args.pickBanEvents.findIndex(
-		(event) =>
-			event.type === "BAN" &&
-			event.mode === map.mode &&
-			event.stageId === map.stageId,
-	);
+	const banIdx = args.pickBanEvents.findIndex((event) => {
+		if (event.type !== "BAN") return false;
+		// bans made before the index was stored
+		if (typeof event.mapListIndex !== "number") {
+			return event.mode === map.mode && event.stageId === map.stageId;
+		}
+
+		return event.mapListIndex === mapListIndex;
+	});
 
 	if (banIdx === -1) return;
 	if (banIdx === 0) return firstPicker;

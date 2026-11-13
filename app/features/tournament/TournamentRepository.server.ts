@@ -1482,6 +1482,7 @@ export function findPickBanEventsByMatchId(matchId: number) {
 			"TournamentMatchPickBanEvent.stageId",
 			"TournamentMatchPickBanEvent.type",
 			"TournamentMatchPickBanEvent.number",
+			"TournamentMatchPickBanEvent.mapListIndex",
 			"TournamentMatchPickBanEvent.createdAt",
 		])
 		.where("matchId", "=", matchId)

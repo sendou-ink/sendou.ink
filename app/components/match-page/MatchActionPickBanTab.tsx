@@ -17,6 +17,7 @@ export interface PickBanMapOption {
 	stageId?: StageId;
 	mode?: ModeShort;
 	picker?: "US" | "THEM" | "BOTH";
+	/** Position in the map list, also tells apart copies of a map listed more than once. */
 	nth?: number;
 }
 
@@ -203,7 +204,7 @@ function StageByModeGrid({
 					<div className={styles.stageGrid}>
 						{byMode.get(mode)!.map((option) => (
 							<StageTile
-								key={`${option.stageId}-${option.mode}`}
+								key={`${option.stageId}-${option.mode}-${option.nth}`}
 								option={option}
 								type={type}
 								isSelected={isSameOption(option, selected)}
@@ -388,5 +389,5 @@ function ModeTile({
 
 function isSameOption(a: PickBanMapOption, b: PickBanMapOption | undefined) {
 	if (!b) return false;
-	return a.stageId === b.stageId && a.mode === b.mode;
+	return a.stageId === b.stageId && a.mode === b.mode && a.nth === b.nth;
 }

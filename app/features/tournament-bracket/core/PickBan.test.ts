@@ -7,6 +7,7 @@ import {
 	CUSTOM_FLOW_VALIDATION_ERRORS,
 	currentTurnSessionStartedAt,
 	isLegal,
+	isMapListIndexLegal,
 	isModeLegal,
 	isStageLegal,
 	type MapPoolTeam,
@@ -1999,6 +2000,55 @@ describe("isLegal / isStageLegal — BAN_2", () => {
 			expect(isStageLegal({ ...ban2Args, stageId })).toBe(expected);
 		},
 	);
+});
+
+describe("isMapListIndexLegal", () => {
+	const ban2Args = (mapList: TournamentMapListMap[]) => ({
+		results: [],
+		maps: { count: 3, type: "BEST_OF", pickBan: "BAN_2" } as const,
+		mapList,
+		teams: [
+			{ id: 100, mapPool: null },
+			{ id: 200, mapPool: null },
+		] satisfies [MapPoolTeam, MapPoolTeam],
+		pickerTeamId: 100,
+		toSetMapPool: [],
+	});
+
+	const mapListWithDuplicate: TournamentMapListMap[] = [
+		{ mode: "RM", stageId: 1, source: "TO" },
+		{ mode: "RM", stageId: 2, source: "TO", bannedByTournamentTeamId: 200 },
+		{ mode: "RM", stageId: 1, source: "TO" },
+	];
+
+	test.each([
+		{ why: "unbanned entry", mapListIndex: 0, expected: true },
+		{ why: "second copy of an unbanned map", mapListIndex: 2, expected: true },
+		{ why: "banned entry", mapListIndex: 1, expected: false },
+		{ why: "index past the list", mapListIndex: 3, expected: false },
+	])("legality of $why is $expected", ({ mapListIndex, expected }) => {
+		expect(
+			isMapListIndexLegal({
+				...ban2Args(mapListWithDuplicate),
+				mapListIndex,
+			}),
+		).toBe(expected);
+	});
+
+	test("the banned copy stays illegal when every entry's stage is banned", () => {
+		const args = ban2Args([
+			{ mode: "RM", stageId: 1, source: "TO", bannedByTournamentTeamId: 200 },
+			{
+				mode: "RM",
+				stageId: 1,
+				source: "TO",
+				bannedByTournamentTeamId: undefined,
+			},
+		]);
+
+		expect(isMapListIndexLegal({ ...args, mapListIndex: 0 })).toBe(false);
+		expect(isMapListIndexLegal({ ...args, mapListIndex: 1 })).toBe(true);
+	});
 });
 
 describe("mapsListWithLegality", () => {

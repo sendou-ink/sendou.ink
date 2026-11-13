@@ -87,7 +87,6 @@ export function TournamentMatchActionPickBanTab({
 
 	const options = buildPickBanOptions({
 		pickBanMapPool,
-		mapList: data.mapList,
 		isModeAction,
 		isCustomStageBan,
 		isBan2: data.match.roundMaps?.pickBan === "BAN_2",
@@ -105,6 +104,7 @@ export function TournamentMatchActionPickBanTab({
 				banPick.submit("BAN_PICK", {
 					mode: map.mode ?? undefined,
 					stageId: map.stageId ?? undefined,
+					mapListIndex: map.nth !== undefined ? map.nth - 1 : undefined,
 				});
 			}}
 		/>
@@ -113,14 +113,12 @@ export function TournamentMatchActionPickBanTab({
 
 function buildPickBanOptions({
 	pickBanMapPool,
-	mapList,
 	isModeAction,
 	isCustomStageBan,
 	isBan2,
 	resolveFrom,
 }: {
 	pickBanMapPool: ReturnType<typeof PickBan.mapsListWithLegality>;
-	mapList: TournamentMatchLoaderData["mapList"];
 	isModeAction: boolean;
 	isCustomStageBan: boolean;
 	isBan2: boolean;
@@ -155,24 +153,23 @@ function buildPickBanOptions({
 		return uniqueStages.sort((a, b) => a.stageId! - b.stageId!);
 	}
 
-	return legal
-		.slice()
+	return pickBanMapPool
+		.map((map, mapListIndex) => ({
+			map,
+			// a BAN_2 round's pool is its map list
+			nth: isBan2 ? mapListIndex + 1 : undefined,
+		}))
+		.filter(({ map }) => map.isLegal)
 		.sort((a, b) => {
-			const modeDiff = modesShort.indexOf(a.mode) - modesShort.indexOf(b.mode);
+			const modeDiff =
+				modesShort.indexOf(a.map.mode) - modesShort.indexOf(b.map.mode);
 			if (modeDiff !== 0) return modeDiff;
-			return a.stageId - b.stageId;
+			return a.map.stageId - b.map.stageId || (a.nth ?? 0) - (b.nth ?? 0);
 		})
-		.map((map) => {
-			const nth = isBan2
-				? (mapList ?? []).findIndex(
-						(m) => m.stageId === map.stageId && m.mode === map.mode,
-					) + 1
-				: undefined;
-			return {
-				stageId: map.stageId,
-				mode: map.mode,
-				picker: resolveFrom(map.stageId, map.mode),
-				...(nth ? { nth } : {}),
-			};
-		});
+		.map(({ map, nth }) => ({
+			stageId: map.stageId,
+			mode: map.mode,
+			picker: resolveFrom(map.stageId, map.mode),
+			...(nth ? { nth } : {}),
+		}));
 }

@@ -401,7 +401,7 @@ describe("Tournament match page", () => {
 
 		const banAction = (user: number) =>
 			tournamentMatchAction(
-				{ _action: "BAN_PICK", mode: "SZ", stageId: 1 },
+				{ _action: "BAN_PICK", mode: "SZ", stageId: 1, mapListIndex: 0 },
 				{ user, params: pickBanParams },
 			);
 
@@ -444,6 +444,18 @@ describe("Tournament match page", () => {
 			expect(data.pickBanEvents.length).toBe(1);
 			expect(data.pickBanEvents[0].type).toBe("BAN");
 			expect(data.pickBanEvents[0].stageId).toBe(1);
+			expect(
+				data.mapList?.map((map) => Boolean(map.bannedByTournamentTeamId)),
+			).toEqual([true, false, false, false, false]);
+		});
+
+		test("returns error if a BAN_2 ban doesn't say which map list entry it bans", async () => {
+			const res = await tournamentMatchAction(
+				{ _action: "BAN_PICK", mode: "SZ", stageId: 1 },
+				{ user: banningTeamMemberId, params: pickBanParams },
+			);
+
+			assertResponseErrored(res, "Map list index is required");
 		});
 
 		test("returns error if a member of the team not in turn bans", async () => {

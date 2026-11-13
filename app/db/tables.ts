@@ -794,6 +794,8 @@ interface TournamentMatchPickBanEvent {
 	matchId: number;
 	authorId: number | null;
 	number: number;
+	/** BAN_2 bans: index of the banned entry in the match's map list. Null for other events and bans made before it was stored. */
+	mapListIndex: number | null;
 	createdAt: Generated<number>;
 }
 

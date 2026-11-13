@@ -362,6 +362,7 @@ export const action = defineAction(
 					actionType === "MODE_PICK" || actionType === "MODE_BAN";
 				const isCustomStageBan =
 					match.roundMaps.pickBan === "CUSTOM" && actionType === "BAN";
+				const isMapListBan = match.roundMaps.pickBan === "BAN_2";
 
 				const pickBanLegalityArgs = {
 					results,
@@ -397,6 +398,18 @@ export const action = defineAction(
 						}),
 						"Illegal stage ban",
 					);
+				} else if (isMapListBan) {
+					errorToastIfFalsy(
+						typeof body.mapListIndex === "number",
+						"Map list index is required for map list bans",
+					);
+					errorToastIfFalsy(
+						PickBan.isMapListIndexLegal({
+							mapListIndex: body.mapListIndex,
+							...pickBanLegalityArgs,
+						}),
+						"Illegal ban",
+					);
 				} else {
 					errorToastIfFalsy(
 						typeof body.stageId === "number" && body.mode,
@@ -418,16 +431,25 @@ export const action = defineAction(
 							? ("PICK" as const)
 							: actionType;
 					}
-					if (match.roundMaps.pickBan === "BAN_2") return "BAN" as const;
+					if (isMapListBan) return "BAN" as const;
 					return "PICK" as const;
 				})();
+
+				const bannedMapListMap = isMapListBan
+					? mapList?.[body.mapListIndex!]
+					: undefined;
 
 				try {
 					await TournamentRepository.insertPickBanEvent({
 						authorId: user.id,
 						matchId: match.id,
-						stageId: isModeAction ? null : body.stageId!,
-						mode: isCustomStageBan ? null : (body.mode ?? null),
+						stageId:
+							bannedMapListMap?.stageId ??
+							(isModeAction ? null : body.stageId!),
+						mode:
+							bannedMapListMap?.mode ??
+							(isCustomStageBan ? null : (body.mode ?? null)),
+						mapListIndex: isMapListBan ? body.mapListIndex! : null,
 						number: currentPickBanEvents.length + 1,
 						type: eventType,
 					});

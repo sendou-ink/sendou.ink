@@ -143,6 +143,34 @@ describe("resolveMapList", () => {
 		).toBe(true);
 	});
 
+	test("BAN_2 round with a map listed twice bans only the copy that was banned", () => {
+		const list = [
+			map("RM", 1),
+			map("RM", 2),
+			map("RM", 1),
+			map("RM", 3),
+			map("RM", 4),
+		];
+
+		const result = resolve({
+			matchId: 13,
+			mapPickingStyle: "TO",
+			maps: { count: 3, type: "BEST_OF", pickBan: "BAN_2", list },
+			pickBanEvents: [
+				{ type: "BAN", mode: "RM", stageId: 1, mapListIndex: 2 },
+				{ type: "BAN", mode: "RM", stageId: 4, mapListIndex: 4 },
+			],
+		});
+
+		expect(result.map((m) => m.bannedByTournamentTeamId)).toEqual([
+			undefined,
+			undefined,
+			TEAM_TWO_ID,
+			undefined,
+			TEAM_ONE_ID,
+		]);
+	});
+
 	test("counterpick round starts with one map of the round's first mode and appends the picks", () => {
 		const mapList = resolve({
 			matchId: 7,

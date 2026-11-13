@@ -64,6 +64,9 @@ export const matchSchema = v.union([
 		_action: _action("BAN_PICK"),
 		stageId: v.optional(stageId),
 		mode: v.optional(modeShort),
+		mapListIndex: v.optional(
+			v.pipe(coerceNumber(), v.integer(), v.minValue(0)),
+		),
 	}),
 	v.object({
 		_action: _action("UNDO_REPORT_SCORE"),
