@@ -1,4 +1,5 @@
 import type { Namespace, TFunction } from "i18next";
+import { DAMAGE_TYPE } from "~/features/build-analyzer/analyzer-constants";
 import type {
 	AnyWeapon,
 	DamageType,
@@ -10,7 +11,11 @@ import {
 	specialWeaponIds,
 	subWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
-import type { CombineWith, DamageReceiver } from "./calculator-types";
+import type {
+	CombinedDamage,
+	CombineWith,
+	DamageReceiver,
+} from "./calculator-types";
 import type objectDamages from "./data/object-dmg.json";
 
 export const DAMAGING_SUB_WEAPON_IDS = subWeaponIds.filter(
@@ -20,6 +25,14 @@ export const DAMAGING_SUB_WEAPON_IDS = subWeaponIds.filter(
 export const DAMAGING_SPECIAL_WEAPON_IDS = specialWeaponIds.filter(
 	(id) => !nonDamagingSpecialWeaponIds.includes(id),
 );
+
+/** Calculator-only damage type: a direct hit plus the explosion it sets off, see `combinedDamages` */
+export const COMBINED_DAMAGE_TYPE = "COMBINED";
+
+export const CALCULATOR_DAMAGE_TYPES = [
+	...DAMAGE_TYPE,
+	COMBINED_DAMAGE_TYPE,
+] as const;
 
 export const DAMAGE_RECEIVERS = [
 	"Chariot", // Crab Tank
@@ -233,15 +246,26 @@ export const damagePriorities: Array<
 	["SPECIAL", [18], "BOMB_NORMAL", "Pogo"],
 ];
 
+export const combinedDamages: Partial<Record<MainWeaponId, CombinedDamage>> = {
+	// Explosher
+	3040: { direct: "DIRECT", explosion: "DISTANCE" },
+	// Tri-Stringer
+	7010: {
+		direct: "NORMAL_MAX",
+		explosion: "DISTANCE",
+		onlyFullyChargedExplodes: true,
+	},
+	// Wellstring V
+	7030: {
+		direct: "NORMAL_MAX",
+		explosion: "DISTANCE",
+		onlyFullyChargedExplodes: true,
+	},
+};
+
 export const damageTypesToCombine: Partial<
 	Record<MainWeaponId, Array<CombineWith>>
 > = {
-	// Explosher
-	3040: [{ when: "DIRECT", combineWith: "DISTANCE" }],
-	// Tri-Stringer
-	7010: [{ when: "NORMAL_MAX", combineWith: "DISTANCE" }],
-	// Wellstring V
-	7030: [{ when: "NORMAL_MAX", combineWith: "DISTANCE" }],
 	// Splatana Stamper
 	8000: [
 		{ when: "SPLATANA_VERTICAL_DIRECT", combineWith: "SPLATANA_VERTICAL" },

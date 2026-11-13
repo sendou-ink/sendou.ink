@@ -1,6 +1,8 @@
 import type { Page } from "@playwright/test";
-import type { DamageType } from "~/features/build-analyzer/analyzer-types";
-import type { DamageReceiver } from "~/features/object-damage-calculator/calculator-types";
+import type {
+	CalculatorDamageType,
+	DamageReceiver,
+} from "~/features/object-damage-calculator/calculator-types";
 import { OBJECT_DAMAGE_CALCULATOR_URL } from "~/utils/urls";
 import { navigate } from "../../helpers/playwright";
 
@@ -48,7 +50,7 @@ export class ObjectDamageCalculatorPage {
 		await this.pickWeapon(name);
 	}
 
-	async selectDamageType(damageType: DamageType) {
+	async selectDamageType(damageType: CalculatorDamageType) {
 		await this.page
 			.locator(`label[for="chip-radio-damage-${damageType}"]`)
 			.click();

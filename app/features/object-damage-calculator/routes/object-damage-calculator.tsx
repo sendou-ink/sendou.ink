@@ -153,6 +153,7 @@ function ObjectDamagePage({ weapon }: { weapon: AnyWeapon }) {
 		allDamageTypes,
 		multiShotCount,
 		isMultiShot,
+		combinedDamage,
 	} = useObjectDamage(weapon);
 
 	return (
@@ -223,7 +224,14 @@ function ObjectDamagePage({ weapon }: { weapon: AnyWeapon }) {
 			)}
 			<div className={styles.bottomContainer}>
 				<div className="text-lighter text-xs">
-					{t("analyzer:dmgHtdExplanation")}
+					<div>{t("analyzer:dmgHtdExplanation")}</div>
+					{combinedDamage ? (
+						<div>
+							{combinedDamage.onlyFullyChargedExplodes
+								? t("analyzer:combinedExplanation.fullyChargedArrow")
+								: t("analyzer:combinedExplanation.direct")}
+						</div>
+					) : null}
 				</div>
 				<div className={styles.patch}>
 					{t("analyzer:patch")} {CURRENT_PATCH}
@@ -545,7 +553,9 @@ function DamageReceiversGrid({
 											</div>
 										</div>
 										<div className={styles.multiplier}>
-											×{damage.multiplier}
+											{damage.multipliers
+												.map((multiplier) => `×${multiplier}`)
+												.join(" + ")}
 										</div>
 									</div>
 								);

@@ -1,9 +1,6 @@
 import * as v from "valibot";
 import { weaponLandingSearchParams } from "~/components/weapon-landing-search-params";
-import {
-	DAMAGE_TYPE,
-	possibleApValues,
-} from "~/features/build-analyzer/analyzer-constants";
+import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
 import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
 import type {
 	MainWeaponId,
@@ -14,6 +11,7 @@ import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { codec, SP } from "~/modules/search-params/search-params";
 import {
+	CALCULATOR_DAMAGE_TYPES,
 	DAMAGING_SPECIAL_WEAPON_IDS,
 	DAMAGING_SUB_WEAPON_IDS,
 } from "./calculator-constants";
@@ -46,7 +44,9 @@ export const calculatorSearchParams = SearchParams.define({
 		),
 		{ default: 0, loader: false },
 	),
-	dmg: SP.param(v.nullable(v.picklist(DAMAGE_TYPE)), { loader: false }),
+	dmg: SP.param(v.nullable(v.picklist(CALCULATOR_DAMAGE_TYPES)), {
+		loader: false,
+	}),
 	multi: SP.param(v.boolean(), { default: true, loader: false }),
 });
 

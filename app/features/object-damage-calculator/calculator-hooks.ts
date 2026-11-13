@@ -5,13 +5,15 @@ import type { DAMAGE_TYPE } from "../build-analyzer/analyzer-constants";
 import type {
 	AnalyzedBuild,
 	AnyWeapon,
-	DamageType,
 } from "../build-analyzer/analyzer-types";
 import { buildStats } from "../build-analyzer/core/stats";
+import { COMBINED_DAMAGE_TYPE } from "./calculator-constants";
 import { calculatorSearchParams } from "./calculator-search-params";
+import type { CalculatorDamageType } from "./calculator-types";
 import {
 	calculateDamage,
 	resolveAllUniqueDamageTypes,
+	resolveCombinedDamage,
 } from "./core/objectDamage";
 
 export function useObjectDamage(anyWeapon: AnyWeapon) {
@@ -29,6 +31,7 @@ export function useObjectDamage(anyWeapon: AnyWeapon) {
 		hasTacticooler: false,
 	});
 
+	const combinedDamage = resolveCombinedDamage(anyWeapon);
 	const damageType = validatedDamageType({
 		dmg: params.dmg,
 		analyzed,
@@ -41,7 +44,7 @@ export function useObjectDamage(anyWeapon: AnyWeapon) {
 		newIsMultiShot = isMultiShot,
 	}: {
 		newAbilityPoints?: number;
-		newDamageType?: DamageType;
+		newDamageType?: CalculatorDamageType;
 		newIsMultiShot?: boolean;
 	}) => {
 		setParams({
@@ -54,8 +57,13 @@ export function useObjectDamage(anyWeapon: AnyWeapon) {
 	return {
 		weapon: anyWeapon,
 		isMultiShot,
-		multiShotCount: analyzed.stats.damages.find((d) => d.type === damageType)
-			?.multiShots,
+		multiShotCount: analyzed.stats.damages.find(
+			(d) =>
+				d.type ===
+				(damageType === COMBINED_DAMAGE_TYPE
+					? combinedDamage?.direct
+					: damageType),
+		)?.multiShots,
 		handleChange,
 		damagesToReceivers: damageType
 			? calculateDamage({
@@ -72,6 +80,7 @@ export function useObjectDamage(anyWeapon: AnyWeapon) {
 		abilityPoints: String(abilityPoints),
 		damageType,
 		allDamageTypes: resolveAllUniqueDamageTypes({ analyzed, anyWeapon }),
+		combinedDamage,
 	};
 }
 
@@ -134,10 +143,10 @@ function validatedDamageType({
 	analyzed,
 	anyWeapon,
 }: {
-	dmg: DamageType | null;
+	dmg: CalculatorDamageType | null;
 	analyzed: AnalyzedBuild;
 	anyWeapon: AnyWeapon;
-}) {
+}): CalculatorDamageType | undefined {
 	const damages =
 		anyWeapon.type === "SPECIAL"
 			? analyzed.stats.specialWeaponDamages
@@ -146,6 +155,7 @@ function validatedDamageType({
 	const found = damages.find((d) => d.type === dmg);
 
 	if (found) return found.type;
+	if (resolveCombinedDamage(anyWeapon)) return COMBINED_DAMAGE_TYPE;
 
 	const fallbackFound = damageTypePriorityList.find((type) =>
 		damages.some((d) => d.type === type),

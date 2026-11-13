@@ -14,11 +14,18 @@ import type {
 import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import { invariant } from "~/utils/invariant";
 import {
+	COMBINED_DAMAGE_TYPE,
+	combinedDamages,
 	DAMAGE_RECEIVERS,
 	damagePriorities,
 	damageTypesToCombine,
 } from "../calculator-constants";
-import type { CombineWith, DamageReceiver } from "../calculator-types";
+import type {
+	CalculatorDamageType,
+	CombinedDamage,
+	CombineWith,
+	DamageReceiver,
+} from "../calculator-types";
 import objectDamages from "../data/object-dmg.json";
 import { objectHitPoints } from "./objectHitPoints";
 
@@ -119,7 +126,7 @@ export function resolveAllUniqueDamageTypes({
 }: {
 	analyzed: AnalyzedBuild;
 	anyWeapon: AnyWeapon;
-}) {
+}): Array<CalculatorDamageType> {
 	const damageTypes =
 		anyWeapon.type === "SUB"
 			? []
@@ -127,12 +134,16 @@ export function resolveAllUniqueDamageTypes({
 				? analyzed.stats.specialWeaponDamages.map((d) => d.type)
 				: analyzed.stats.damages.map((d) => d.type);
 
-	return R.unique(damageTypes).filter(
+	const result = R.unique(damageTypes).filter(
 		(dmg) =>
 			!dmg.startsWith("DIRECT_SECONDARY") &&
 			dmg !== "COMBO" &&
 			dmg !== "DISTANCE_JUMP",
 	);
+
+	return resolveCombinedDamage(anyWeapon)
+		? [COMBINED_DAMAGE_TYPE, ...result]
+		: result;
 }
 
 function resolveFilteredDamages({
@@ -203,9 +214,22 @@ export function calculateDamage({
 	analyzed: AnalyzedBuild;
 	anyWeapon: AnyWeapon;
 	abilityPoints: AbilityPoints;
-	damageType: DamageType;
+	damageType: CalculatorDamageType;
 	isMultiShot: boolean;
-}) {
+}): Array<ReceiverDamages> {
+	if (damageType === COMBINED_DAMAGE_TYPE) {
+		const combined = resolveCombinedDamage(anyWeapon);
+		invariant(combined, "Weapon has no combined damage");
+
+		return calculateCombinedDamage({
+			analyzed,
+			anyWeapon,
+			abilityPoints,
+			combined,
+			isMultiShot,
+		});
+	}
+
 	const toCombine =
 		anyWeapon.type === "MAIN"
 			? (damageTypesToCombine[weaponIdToBaseWeaponId(anyWeapon.id)] ?? []).find(
@@ -253,15 +277,6 @@ export function calculateDamage({
 					}
 
 					const otherDamage = () => {
-						//[Special Case] Booyah ignores Tri-Stringer's otherDamage at full charge. In-game bug
-						if (
-							anyWeapon.type === "MAIN" &&
-							weaponIdToBaseWeaponId(anyWeapon.id) === 7010 &&
-							receiver === "NiceBall_Armor"
-						) {
-							return 0;
-						}
-
 						const result = filteredDamages.find(
 							(candidate) => candidate.type === toCombine?.combineWith,
 						)?.value;
@@ -301,21 +316,16 @@ export function calculateDamage({
 						return normalMultiplier;
 					};
 
-					const objectShredderMultiplier =
-						objectShredderMultipliers.find((m) => m.target === receiver)
-							?.rate ?? 1;
 					const multiplier =
 						baseMultiplier() *
-						(damage.objectShredder ? objectShredderMultiplier : 1);
+						(damage.objectShredder ? objectShredderMultiplier(receiver) : 1);
 
 					const damagePerHit = R.round(dmg() * multiplier, 2);
 
-					const hitsToDestroy = Math.ceil(damageReceiverHp / damagePerHit);
-
 					return {
 						value: damagePerHit,
-						hitsToDestroy,
-						multiplier: R.round(multiplier, 2),
+						hitsToDestroy: Math.ceil(damageReceiverHp / damagePerHit),
+						multipliers: [R.round(multiplier, 2)],
 						type: damage.type,
 						id: `${damage.id}-${String(damage.objectShredder)}`,
 						distance: damage.distance,
@@ -324,4 +334,112 @@ export function calculateDamage({
 				}),
 		};
 	});
+}
+
+/** The direct hit + explosion pair the weapon offers as the "Combined" damage type, or `null` if it has none. */
+export function resolveCombinedDamage(anyWeapon: AnyWeapon) {
+	if (anyWeapon.type !== "MAIN") return null;
+
+	return combinedDamages[weaponIdToBaseWeaponId(anyWeapon.id)] ?? null;
+}
+
+interface ReceiverDamages {
+	receiver: DamageReceiver;
+	hitPoints: number;
+	damages: Array<{
+		value: number;
+		hitsToDestroy: number;
+		/** the rate of every hit that deals damage (one, or direct + explosion for "Combined"), Object Shredder included */
+		multipliers: Array<number>;
+		type: CalculatorDamageType;
+		id: string;
+		distance: Damage["distance"];
+		objectShredder: boolean;
+	}>;
+}
+
+function calculateCombinedDamage({
+	analyzed,
+	anyWeapon,
+	abilityPoints,
+	combined,
+	isMultiShot,
+}: {
+	analyzed: AnalyzedBuild;
+	anyWeapon: AnyWeapon;
+	abilityPoints: AbilityPoints;
+	combined: CombinedDamage;
+	isMultiShot: boolean;
+}): Array<ReceiverDamages> {
+	const hits = [combined.direct, combined.explosion].map((damageType) => {
+		const [damage] = resolveFilteredDamages({
+			analyzed,
+			damageType,
+			isMultiShot,
+			anyWeapon,
+		});
+		invariant(damage, `${damageType} damage not found`);
+
+		return {
+			damage,
+			rates: multipliersToRecordWithFallbacks(
+				damageTypeToMultipliers({ type: damageType, weapon: anyWeapon }),
+			),
+		};
+	});
+	const directHit = hits[0];
+	const hitPoints = objectHitPoints(abilityPoints);
+
+	return DAMAGE_RECEIVERS.map((receiver) => {
+		const countedHits = ignoresExplosion({ anyWeapon, receiver })
+			? [directHit]
+			: hits;
+
+		return {
+			receiver,
+			hitPoints: hitPoints[receiver],
+			damages: [false, true].map((objectShredder) => {
+				const multipliers = countedHits.map(
+					(hit) =>
+						hit.rates[receiver] *
+						(objectShredder ? objectShredderMultiplier(receiver) : 1),
+				);
+				const damagePerHit = R.round(
+					R.sum(countedHits.map((hit, i) => hit.damage.value * multipliers[i])),
+					2,
+				);
+
+				return {
+					value: damagePerHit,
+					hitsToDestroy: Math.ceil(hitPoints[receiver] / damagePerHit),
+					multipliers: multipliers.map((multiplier) => R.round(multiplier, 2)),
+					type: COMBINED_DAMAGE_TYPE,
+					id: `${directHit.damage.id}-${COMBINED_DAMAGE_TYPE}-${String(objectShredder)}`,
+					distance: directHit.damage.distance,
+					objectShredder,
+				};
+			}),
+		};
+	});
+}
+
+// in-game bug: Booyah Bomb armor ignores the explosion of a fully charged Tri-Stringer arrow
+function ignoresExplosion({
+	anyWeapon,
+	receiver,
+}: {
+	anyWeapon: AnyWeapon;
+	receiver: DamageReceiver;
+}) {
+	return (
+		anyWeapon.type === "MAIN" &&
+		weaponIdToBaseWeaponId(anyWeapon.id) === 7010 &&
+		receiver === "NiceBall_Armor"
+	);
+}
+
+function objectShredderMultiplier(receiver: DamageReceiver) {
+	return (
+		objectShredderMultipliers.find((m) => m.target === receiver)?.rate ?? 1
+	);
 }

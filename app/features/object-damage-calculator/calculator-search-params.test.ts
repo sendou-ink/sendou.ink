@@ -17,7 +17,7 @@ describe("calculatorSearchParams", () => {
 				{ type: "SPECIAL", id: 1 },
 			],
 			ap: [0, 3, 57],
-			dmg: [null, "DIRECT", "BOMB_NORMAL"],
+			dmg: [null, "DIRECT", "BOMB_NORMAL", "COMBINED"],
 			multi: [true, false],
 			category: [null, "SUBS"],
 		});
