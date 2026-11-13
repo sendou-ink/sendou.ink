@@ -1227,14 +1227,24 @@ function MapListRow({
 		];
 	});
 
+	const isHighlighted = serializedMapMode(map) === hoveredMap;
+
 	return (
 		<li
 			className={clsx(styles.mapListRow, {
-				"text-theme-secondary underline": serializedMapMode(map) === hoveredMap,
+				[styles.mapListRowHighlighted]: isHighlighted,
 			})}
 			onMouseEnter={() => onHoverMap(serializedMapMode(map))}
+			onMouseLeave={() => onHoverMap(null)}
 		>
-			<span className="text-sm text-lighter font-semi-bold">{number}.</span>
+			<span
+				className={clsx(
+					"text-sm font-semi-bold",
+					isHighlighted ? "text-theme" : "text-lighter",
+				)}
+			>
+				{number}.
+			</span>
 			<SendouSelect
 				aria-label="Map"
 				items={items}

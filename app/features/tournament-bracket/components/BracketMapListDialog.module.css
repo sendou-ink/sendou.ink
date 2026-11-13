@@ -98,10 +98,18 @@
 
 	& > button {
 		height: auto;
-		padding: 0;
+		padding: var(--s-0-5) var(--s-1);
 		border: none;
 		background-color: transparent;
+
+		&:hover {
+			background-color: var(--color-bg-high);
+		}
 	}
+}
+
+.mapListRowHighlighted .mapRowSelect > button {
+	background-color: var(--color-bg-high);
 }
 
 .mapRowSelectPopover {
