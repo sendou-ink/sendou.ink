@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { Trash } from "lucide-react";
 import * as React from "react";
-import { useTranslation } from "react-i18next";
 import { Badge } from "~/components/Badge";
 import { DotPagination } from "~/components/DotPagination";
 import { SendouButton } from "~/components/elements/Button";
@@ -9,8 +8,8 @@ import type { Tables } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
 import { usePagination } from "~/hooks/usePagination";
 import type { Unpacked } from "~/utils/types";
-import { badgeExplanationText } from "../badges-utils";
 import styles from "./BadgeDisplay.module.css";
+import { BadgeExplanation } from "./BadgeExplanation";
 
 export interface BadgeDisplayProps {
 	badges: Array<Omit<Tables["Badge"], "authorId"> & { count?: number }>;
@@ -26,7 +25,6 @@ export function BadgeDisplay({
 	showText = true,
 	compact = false,
 }: BadgeDisplayProps) {
-	const { t } = useTranslation("badges");
 	const [badges, setBadges] = React.useState(_badges);
 	const [shownBadgeIds, setShownBadgeIds] = React.useState(() =>
 		badgeIdsKey(_badges),
@@ -72,7 +70,7 @@ export function BadgeDisplay({
 		<div data-testid="badge-display">
 			{isPaginated && showText ? (
 				<div className={styles.badgeExplanation}>
-					{badgeExplanationText(t, bigBadge)}
+					<BadgeExplanation badge={bigBadge} />
 				</div>
 			) : null}
 			<div
@@ -102,7 +100,7 @@ export function BadgeDisplay({
 			</div>
 			{!isPaginated ? (
 				<div className={styles.badgeExplanation}>
-					{badgeExplanationText(t, bigBadge)}
+					<BadgeExplanation badge={bigBadge} />
 					<SendouButton
 						icon={<Trash />}
 						variant="minimal-destructive"

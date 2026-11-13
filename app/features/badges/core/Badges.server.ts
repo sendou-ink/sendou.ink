@@ -1,3 +1,7 @@
+/**
+ * Badges in the forms of other features: which badges an event or a tournament organization can be given as
+ * its prizes.
+ */
 import * as R from "remeda";
 import * as BadgeRepository from "../BadgeRepository.server";
 

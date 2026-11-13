@@ -12,6 +12,7 @@ import { assertUnreachable } from "~/utils/types";
 import { badgePage } from "~/utils/urls";
 import * as BadgeRepository from "../BadgeRepository.server";
 import { editBadgeActionSchema } from "../badges-schemas";
+import * as BadgeOwners from "../core/BadgeOwners";
 
 export const action = defineAction(
 	{ params: idObject, body: editBadgeActionSchema },
@@ -51,9 +52,7 @@ export const action = defineAction(
 			case "OWNERS": {
 				requirePermission(badge, "MANAGE");
 
-				const oldOwners: number[] = badge.owners.flatMap((owner) =>
-					new Array(owner.count).fill(owner.id),
-				);
+				const oldOwners = BadgeOwners.toOwnerIds(badge.owners);
 
 				await BadgeRepository.replaceOwners({
 					badgeId,

@@ -10,7 +10,8 @@ import {
 	peakXpOverallSql,
 } from "~/utils/kysely.server";
 import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
-import { findSplatoon3XpBadgeValue } from "./badges-utils";
+import * as BadgeOrigin from "./core/BadgeOrigin";
+import * as BadgeOwners from "./core/BadgeOwners";
 
 const addPermissions = <T extends { managers: { userId: number }[] }>(
 	row: T,
@@ -71,6 +72,7 @@ export function insert(
 		.executeTakeFirstOrThrow();
 }
 
+/** Every badge with its managers and author, for the list of `/badges`. */
 export async function findAll() {
 	const rows = await db
 		.selectFrom("Badge")
@@ -87,6 +89,7 @@ export async function findAll() {
 	return rows.map(addPermissions);
 }
 
+/** The badge with its author, managers and owners (one row per user, their copies summed into `count`, most copies first). */
 export async function findById(badgeId: number) {
 	const row = await db
 		.selectFrom("Badge")
@@ -109,6 +112,7 @@ export async function findById(badgeId: number) {
 	return addPermissions(row);
 }
 
+/** The badges any of the users manage, each once. */
 export function findByManagersList(userIds: number[]) {
 	return db
 		.selectFrom("Badge")
@@ -120,16 +124,9 @@ export function findByManagersList(userIds: number[]) {
 		.execute();
 }
 
-export function findManagedByUserId(userId: number) {
-	return db
-		.selectFrom("BadgeManager")
-		.innerJoin("Badge", "Badge.id", "BadgeManager.badgeId")
-		.select(["Badge.id", "Badge.code", "Badge.displayName", "Badge.hue"])
-		.where("BadgeManager.userId", "=", userId)
-		.execute();
-}
-
 /**
+ * The badges the user owns with how many copies of each, the user's favorites first (see `sortBadgesByFavorites`).
+ *
  * Takes a constant userId on purpose: correlating to an outer "User"."id" would stop SQLite
  * pushing the predicate into both arms of the BadgeOwner view, materializing the full view.
  */
@@ -162,6 +159,7 @@ export async function findByOwnerUserId(
 	});
 }
 
+/** The badges the user drew. */
 export function findByAuthorUserId(userId: number) {
 	return db
 		.selectFrom("Badge")
@@ -171,6 +169,7 @@ export function findByAuthorUserId(userId: number) {
 		.execute();
 }
 
+/** Sets who manages the badge, replacing the previous managers. */
 export function replaceManagers({
 	badgeId,
 	managerIds,
@@ -198,9 +197,7 @@ export function replaceManagers({
 
 /**
  * Sets who owns the badge and how many times, one `ownerIds` entry per copy. Copies won at a
- * tournament keep their tournament link: a user's tournament wins count first towards their new
- * total and the rest is a manual grant. Lowering a total below the user's wins removes the most
- * recent ones.
+ * tournament keep their tournament link, see `BadgeOwners.reconcile`.
  */
 export function replaceOwners({
 	badgeId,
@@ -210,30 +207,18 @@ export function replaceOwners({
 	ownerIds: number[];
 }) {
 	return db.transaction().execute(async (trx) => {
-		const newCounts = new Map<number, number>();
-		for (const userId of ownerIds) {
-			newCounts.set(userId, (newCounts.get(userId) ?? 0) + 1);
-		}
-
 		const tournamentWins = await trx
 			.selectFrom("TournamentBadgeOwner")
 			.select(["userId", "tournamentId"])
 			.where("badgeId", "=", badgeId)
 			.where("tournamentId", "is not", null)
 			.$narrowType<{ tournamentId: NotNull }>()
-			.orderBy("tournamentId", "asc")
 			.execute();
 
-		const keptWinCounts = new Map<number, number>();
-		const removedWins: typeof tournamentWins = [];
-		for (const win of tournamentWins) {
-			const keptCount = keptWinCounts.get(win.userId) ?? 0;
-			if (keptCount < (newCounts.get(win.userId) ?? 0)) {
-				keptWinCounts.set(win.userId, keptCount + 1);
-			} else {
-				removedWins.push(win);
-			}
-		}
+		const { removedWins, manualGrants } = BadgeOwners.reconcile({
+			ownerIds,
+			tournamentWins,
+		});
 
 		await trx
 			.deleteFrom("TournamentBadgeOwner")
@@ -250,21 +235,19 @@ export function replaceOwners({
 				.execute();
 		}
 
-		const manualGrants = Array.from(newCounts, ([userId, count]) => ({
-			badgeId,
-			userId,
-			count: count - (keptWinCounts.get(userId) ?? 0),
-		})).filter((grant) => grant.count > 0);
-
 		if (manualGrants.length > 0) {
 			await trx
 				.insertInto("TournamentBadgeOwner")
-				.values(manualGrants)
+				.values(manualGrants.map((grant) => ({ badgeId, ...grant })))
 				.execute();
 		}
 	});
 }
 
+/**
+ * Hands out the Splatoon 3 X Power badges anew from every linked player's peak X Power, each user getting the one
+ * badge their peak reaches (see `BadgeOrigin.xpBadgeValue`). Run after a player is linked to or unlinked from a user.
+ */
 export async function syncXPBadges() {
 	return db.transaction().execute(async (trx) => {
 		const badgeIdByValue = new Map<number, number>();
@@ -294,7 +277,7 @@ export async function syncXPBadges() {
 			.execute();
 
 		const badgeOwners = userTopXPowers.flatMap(({ userId, peakXp }) => {
-			const badgeValue = findSplatoon3XpBadgeValue(peakXp!);
+			const badgeValue = BadgeOrigin.xpBadgeValue(peakXp);
 			const badgeId = badgeValue ? badgeIdByValue.get(badgeValue) : undefined;
 
 			return badgeId ? [{ badgeId, userId }] : [];
