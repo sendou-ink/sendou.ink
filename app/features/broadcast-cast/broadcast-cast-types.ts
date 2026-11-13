@@ -1,7 +1,8 @@
-import type { ObjectiveTimelineEvent } from "~/components/ObjectiveTimeline";
 import type { Pronouns } from "~/db/tables-json";
 import type {
+	BroadcastInk,
 	BroadcastMap,
+	BroadcastObjectiveRead,
 	BroadcastSettings,
 	BroadcastState,
 	BroadcastTeam,
@@ -55,29 +56,34 @@ export interface CastBroadcastState
 	otherMatches: BroadcastOtherMatch[];
 }
 
-/** A game as the scanner read it, what the results scene shows. */
+/** A game of the featured match, what the results scene shows: as the scanner read it, or as reported without one. */
 export interface BroadcastGameResult {
-	map: BroadcastMap;
-	/** Index of the winning team in bracket order. */
-	winner: 0 | 1;
+	/** The set's game it was, 1 for the first. `null` when not known. */
+	gameNumber: number | null;
+	/** Ink colors the game was played in, `null` when none were picked for it. */
+	ink: BroadcastInk | null;
+	/** `null` when neither read nor picked. */
+	map: BroadcastMap | null;
+	/** Index of the winning team in bracket order, `null` when not known. */
+	winner: 0 | 1 | null;
 	isKnockout: boolean;
 	/** In bracket order. */
 	teams: [BroadcastGameResultTeam, BroadcastGameResultTeam];
-	/** Objective counter reads over the game, scores in bracket order. */
-	objective: ObjectiveTimelineEvent[];
+	/** Objective counter reads over the game, scores in bracket order. Empty when none were read. */
+	objective: BroadcastObjectiveRead[];
 }
 
-interface BroadcastGameResultTeam {
-	/** 0-100, how much of the counter the team took. */
-	score: number;
+export interface BroadcastGameResultTeam {
+	/** 0-100, how much of the counter the team took. `null` when not read. */
+	score: number | null;
 	players: BroadcastGameResultPlayer[];
 }
 
-interface BroadcastGameResultPlayer {
-	/** In-game name. */
-	name: string;
-	weaponSplId: MainWeaponId;
-	/** Main abilities of the head, clothes and shoes. */
+export interface BroadcastGameResultPlayer {
+	/** In-game name, `null` when neither read nor known from the roster. */
+	name: string | null;
+	weaponSplId: MainWeaponId | null;
+	/** Main abilities of the head, clothes and shoes, empty when not read. */
 	abilities: AbilityWithUnknown[];
 }
 

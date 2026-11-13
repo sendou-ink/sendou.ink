@@ -1,15 +1,15 @@
 import { describe, expect, test } from "vitest";
-import { controlShares, needsFeaturedMatch } from "./broadcast-cast-utils";
+import {
+	controlShares,
+	needsFeaturedMatch,
+	smoothLinePath,
+} from "./broadcast-cast-utils";
 
 describe("controlShares", () => {
 	const read = (t: number, control: 0 | 1 | null) => ({
 		t,
-		data: {
-			time: null,
-			score: [null, null] as [null, null],
-			penalty: [null, null] as [null, null],
-			control,
-		},
+		score: [null, null] as [null, null],
+		control,
 	});
 
 	test("gives each team's share of the time from a read to the next one", () => {
@@ -62,3 +62,81 @@ describe("needsFeaturedMatch", () => {
 		expect(needsFeaturedMatch(scene, teamPick)).toBe(expected);
 	});
 });
+
+describe("smoothLinePath", () => {
+	test.each([
+		{ why: "no points", points: [], expected: "" },
+		{ why: "a single point", points: [{ x: 1, y: 2 }], expected: "M1,2" },
+	])("draws $why as is", ({ points, expected }) => {
+		expect(smoothLinePath(points, 3)).toBe(expected);
+	});
+
+	test("leaves out the reads close to the line through their neighbors", () => {
+		const path = smoothLinePath(
+			[
+				{ x: 0, y: 0 },
+				{ x: 10, y: 11 },
+				{ x: 20, y: 19 },
+				{ x: 30, y: 30 },
+			],
+			3,
+		);
+
+		expect(segments(path)).toHaveLength(1);
+	});
+
+	test("keeps a turn farther than the tolerance", () => {
+		const path = smoothLinePath(
+			[
+				{ x: 0, y: 0 },
+				{ x: 50, y: 0 },
+				{ x: 60, y: 40 },
+				{ x: 100, y: 40 },
+			],
+			3,
+		);
+
+		expect(segments(path)).toHaveLength(3);
+	});
+
+	test("never curves past the reads of a falling count", () => {
+		const points = [
+			{ x: 0, y: 0 },
+			{ x: 40, y: 0 },
+			{ x: 50, y: 30 },
+			{ x: 55, y: 32 },
+			{ x: 120, y: 33 },
+			{ x: 130, y: 80 },
+		];
+
+		for (const { from, controls, to } of segments(smoothLinePath(points, 0))) {
+			for (const control of controls) {
+				expect(control.y).toBeGreaterThanOrEqual(from.y);
+				expect(control.y).toBeLessThanOrEqual(to.y);
+			}
+		}
+	});
+});
+
+/** The path's cubic segments with the point each starts from. */
+function segments(path: string) {
+	const numbers = (text: string) =>
+		text.split(/[ ,]/).filter(Boolean).map(Number);
+	const [start, ...curves] = path.split(" C");
+	let [x, y] = numbers(start!.slice(1));
+
+	return curves.map((curve) => {
+		const [x1, y1, x2, y2, x3, y3] = numbers(curve);
+		const segment = {
+			from: { x: x!, y: y! },
+			controls: [
+				{ x: x1!, y: y1! },
+				{ x: x2!, y: y2! },
+			],
+			to: { x: x3!, y: y3! },
+		};
+		[x, y] = [x3, y3];
+
+		return segment;
+	});
+}

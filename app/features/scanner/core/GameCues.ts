@@ -63,6 +63,8 @@ export type GameCue =
 			type: "end";
 			/** When the game's HUD was last read, in event time: where the cut away from it belongs. */
 			t: number;
+			/** The timer ran out before the HUD went away, otherwise it was a knockout. */
+			isTimeUp: boolean;
 	  };
 
 export interface GameCuesState {
@@ -235,7 +237,10 @@ function endIfOver(state: GameCuesState, t: number): Stepped {
 	if (state.lastHudAt === null) {
 		return t - state.startedAt < INTRO_MAX_SECONDS
 			? { state, cues: [] }
-			: { state: initialState(), cues: [{ type: "end", t: state.startedAt }] };
+			: {
+					state: initialState(),
+					cues: [{ type: "end", t: state.startedAt, isTimeUp: false }],
+				};
 	}
 
 	const goneSeconds = state.isTimeUp
@@ -245,7 +250,7 @@ function endIfOver(state: GameCuesState, t: number): Stepped {
 
 	return {
 		state: initialState(),
-		cues: [{ type: "end", t: state.lastHudAt }],
+		cues: [{ type: "end", t: state.lastHudAt, isTimeUp: state.isTimeUp }],
 	};
 }
 

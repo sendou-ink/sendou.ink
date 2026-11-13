@@ -2,12 +2,14 @@ import { Config } from "~/config";
 import type {
 	BroadcastMap,
 	BroadcastMatch,
+	BroadcastScannedGame,
 	BroadcastTeam,
 	MatchProgress,
 } from "~/features/broadcast/broadcast-types";
 import { broadcastDesignImageUrl } from "~/features/broadcast/broadcast-urls";
 import * as SetProgress from "~/features/broadcast/core/SetProgress";
 import type {
+	Ability,
 	MainWeaponId,
 	ModeShort,
 	StageId,
@@ -236,6 +238,53 @@ const CASTERS: BroadcastCaster[] = [
 	{ userId: 3, name: "Brie", pronouns: { subject: "she", object: "her" } },
 ];
 
+/** Counter reads of the game the results scene shows: seconds into the game, the teams' counts, who held the objective. */
+const MOCK_OBJECTIVE: Array<[number, number, number, 0 | 1 | null]> = [
+	[0, 100, 100, null],
+	[10, 100, 100, null],
+	[20, 100, 100, 0],
+	[30, 92, 100, 0],
+	[40, 84, 100, 0],
+	[50, 76, 100, 0],
+	[60, 70, 100, 1],
+	[70, 70, 94, 1],
+	[80, 70, 86, 1],
+	[90, 70, 78, 1],
+	[100, 70, 72, null],
+	[110, 70, 72, 0],
+	[120, 63, 72, 0],
+	[130, 55, 72, 0],
+	[140, 47, 72, 0],
+	[150, 40, 72, 0],
+	[160, 36, 72, null],
+	[170, 36, 72, 1],
+	[180, 36, 64, 1],
+	[190, 36, 57, 1],
+	[200, 36, 50, 1],
+	[210, 36, 45, null],
+	[220, 36, 45, 0],
+	[230, 29, 45, 0],
+	[240, 22, 45, 0],
+	[250, 16, 45, 0],
+	[260, 14, 45, 1],
+	[270, 14, 41, 1],
+	[280, 14, 41, null],
+	[290, 12, 41, 0],
+	[300, 12, 41, 0],
+];
+
+/** Main abilities of the players of the game the results scene shows, in turn. */
+const MOCK_ABILITIES: Ability[][] = [
+	["LDE", "RSU", "SJ"],
+	["CB", "ISM", "SJ"],
+	["LDE", "SSU", "OS"],
+	["OG", "NS", "SSU"],
+	["LDE", "RP", "SJ"],
+	["CB", "RSU", "SJ"],
+	["LDE", "QR", "SJ"],
+	["ISM", "SPU", "SJ"],
+];
+
 const MOCK_HEADLINE = "Top 8 starts at 18:00 CEST";
 
 /** Teams of the featured match, by their index in the name pools. */
@@ -441,6 +490,7 @@ export function build({
 				}
 			: null,
 		gameCut: null,
+		scannedGame: mockScannedGame({ match, ink: scenario.ink }),
 		settings: {
 			...settings,
 			headline: scenario.headline ? settings.headline || MOCK_HEADLINE : "",
@@ -590,6 +640,47 @@ function mockMatch({
 		count: scenario.bestOf,
 		teams: [teams[FEATURED[0]], teams[FEATURED[1]]],
 		progress: { live: progress, next: progress },
+	};
+}
+
+/** The game the results scene shows as the scanner read it: the one being played, or the last one of a set that's over. */
+function mockScannedGame({
+	match,
+	ink,
+}: {
+	match: BroadcastMatch;
+	ink: Scenario["ink"];
+}): BroadcastScannedGame {
+	const { progress } = match;
+	const resultCount = progress.live.isOver
+		? progress.live.resultCount - 1
+		: progress.live.resultCount;
+	const map = mapAt(resultCount);
+	const team = (idx: 0 | 1) => ({
+		players: (match.teams[idx]?.players ?? [])
+			.slice(0, 4)
+			.map((player, playerIdx) => ({
+				name: player.name,
+				weaponSplId: player.weapons[0] ?? null,
+				abilities:
+					MOCK_ABILITIES[(idx * 4 + playerIdx) % MOCK_ABILITIES.length],
+			})),
+	});
+
+	return {
+		matchId: match.id,
+		ink: ink ? { key: ink, isFlipped: false } : null,
+		mode: map.mode,
+		stageId: map.stageId,
+		isKnockout: false,
+		winner: null,
+		inks: [null, null],
+		teams: [team(0), team(1)],
+		objective: MOCK_OBJECTIVE.map(([t, alpha, bravo, control]) => ({
+			t,
+			score: [alpha, bravo],
+			control,
+		})),
 	};
 }
 

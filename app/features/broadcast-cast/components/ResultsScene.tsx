@@ -3,19 +3,17 @@ import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import { Ability } from "~/components/Ability";
 import { ModeImage, WeaponImage } from "~/components/Image";
-import type { ObjectiveTimelineEvent } from "~/components/ObjectiveTimeline";
 import { useFitText } from "~/features/broadcast/broadcast-hooks";
 import type {
 	BroadcastGame,
 	BroadcastMap,
+	BroadcastObjectiveRead,
 	BroadcastView,
 	BroadcastWeaponImages,
-	MatchProgress,
 } from "~/features/broadcast/broadcast-types";
 import {
 	combineStyles,
 	formatClock,
-	gameInk,
 	inkColorVars,
 	type MatchSide,
 	matchSides,
@@ -24,12 +22,16 @@ import {
 import { TeamLogo } from "~/features/broadcast/components/TeamLogo";
 import * as SetProgress from "~/features/broadcast/core/SetProgress";
 import { stageVideoUrl } from "~/utils/urls";
-import { BROADCAST_PROTOTYPE_GAME_RESULT } from "../broadcast-cast-constants";
 import type {
 	BroadcastGameResult,
 	CastBroadcastState,
 } from "../broadcast-cast-types";
-import { controlShares, scenePart } from "../broadcast-cast-utils";
+import {
+	controlShares,
+	scenePart,
+	smoothLinePath,
+} from "../broadcast-cast-utils";
+import * as GameResult from "../core/GameResult";
 import { HoldScene } from "./HoldScene";
 import layout from "./ResultsScene.layout.module.css";
 import look from "./ResultsScene.module.css";
@@ -47,11 +49,14 @@ const CHART_LANE_HEIGHT = 14;
 const CHART_LANE_GAP = 12;
 const CHART_LABELS_HEIGHT = 30;
 const CHART_TICK_SECONDS = 60;
+/** How far (chart units, about canvas pixels) a read may sit off the smoothed line, evening out the steps between reads. */
+const CHART_LINE_TOLERANCE = 3;
 const FULL_COUNT = 100;
 
 /**
  * Full screen after a game: the map in a tall panel on the left playing its flyover, on the right who won and by how
- * much, both teams' players with the weapons and main abilities they played and how the objective went.
+ * much, both teams' players with the weapons and main abilities they played and how the objective went. What the
+ * scanner didn't read is left out, without a scanner the last game reported shows with the rosters.
  */
 export function ResultsScene({
 	state,
@@ -61,20 +66,27 @@ export function ResultsScene({
 	view: BroadcastView;
 }) {
 	const match = state.match;
-	if (!match) {
+	const result = match
+		? GameResult.resolve({
+				match,
+				view,
+				scannedGame: state.scannedGame,
+				ink: state.ink,
+			})
+		: null;
+	if (!match || !result) {
 		return <HoldScene scene="results" state={state} view={view} />;
 	}
 
-	// xxx: prototype, comes from the scanner eventually
-	const result = BROADCAST_PROTOTYPE_GAME_RESULT;
 	const sides = matchSides(match, view, state[view]);
+	const progress = match.progress[view];
 
 	return (
 		<div
 			className={styles.results}
 			// the game just played, still in its ink colors
 			style={inkColorVars({
-				ink: gameInk(state, view),
+				ink: result.ink,
 				swapSides: state[view].swapSides,
 			})}
 		>
@@ -83,11 +95,14 @@ export function ResultsScene({
 				map={result.map}
 				round={roundLabel(match)}
 				winner={result.winner}
-				progress={match.progress[view]}
+				gameNumber={result.gameNumber}
 				games={SetProgress.gamesUntilDecided({
-					progress: match.progress[view],
+					progress: {
+						...progress,
+						gameNumber: result.gameNumber ?? progress.gameNumber,
+					},
 					match,
-					currentWinner: result.winner,
+					currentWinner: result.gameNumber !== null ? result.winner : null,
 				})}
 				sides={sides}
 			/>
@@ -103,7 +118,9 @@ export function ResultsScene({
 						/>
 					))}
 				</div>
-				<ObjectivePanel events={result.objective} sides={sides} />
+				{result.objective.length > 1 ? (
+					<ObjectivePanel reads={result.objective} sides={sides} />
+				) : null}
 			</div>
 		</div>
 	);
@@ -113,16 +130,17 @@ function MapPanel({
 	map,
 	round,
 	winner,
-	progress,
+	gameNumber,
 	games,
 	sides,
 }: {
-	map: BroadcastMap;
+	map: BroadcastMap | null;
 	/** Bracket and round, empty when neither is known. */
 	round: string;
 	/** Of the game shown, which might not be reported yet. */
-	winner: 0 | 1;
-	progress: MatchProgress;
+	winner: 0 | 1 | null;
+	/** Of the game shown, `null` when not known which of the set's it was. */
+	gameNumber: number | null;
 	/** Of the set, without the ones it ends before. */
 	games: BroadcastGame[];
 	sides: [MatchSide, MatchSide];
@@ -131,16 +149,18 @@ function MapPanel({
 
 	return (
 		<div className={styles.map} {...part("map")}>
-			<video
-				key={map.stageId}
-				src={stageVideoUrl(map.stageId)}
-				className={styles.mapVideo}
-				autoPlay
-				muted
-				loop
-				playsInline
-				{...part("map-video")}
-			/>
+			{map ? (
+				<video
+					key={map.stageId}
+					src={stageVideoUrl(map.stageId)}
+					className={styles.mapVideo}
+					autoPlay
+					muted
+					loop
+					playsInline
+					{...part("map-video")}
+				/>
+			) : null}
 			<div className={styles.mapInfo}>
 				{round ? (
 					<span className={styles.round} {...part("round")}>
@@ -149,7 +169,7 @@ function MapPanel({
 				) : null}
 				<ol className={styles.games} {...part("games")}>
 					{games.map((game, i) => {
-						const status = gameStatus({ progress, game, number: i + 1 });
+						const status = gameStatus({ gameNumber, game, number: i + 1 });
 						const gameWinner = status === "current" ? winner : game.winner;
 
 						return (
@@ -169,13 +189,17 @@ function MapPanel({
 						);
 					})}
 				</ol>
-				<span className={styles.mode} {...part("mode")}>
-					<ModeImage mode={map.mode} size={36} loading="eager" />
-					{t(`game-misc:MODE_LONG_${map.mode}`)}
-				</span>
-				<span className={styles.stage} {...part("stage")}>
-					{t(`game-misc:STAGE_${map.stageId}`)}
-				</span>
+				{map ? (
+					<>
+						<span className={styles.mode} {...part("mode")}>
+							<ModeImage mode={map.mode} size={36} loading="eager" />
+							{t(`game-misc:MODE_LONG_${map.mode}`)}
+						</span>
+						<span className={styles.stage} {...part("stage")}>
+							{t(`game-misc:STAGE_${map.stageId}`)}
+						</span>
+					</>
+				) : null}
 			</div>
 		</div>
 	);
@@ -195,6 +219,10 @@ function ResultTeam({
 	const { t } = useTranslation(["broadcast"]);
 	const team = result.teams[side.index];
 	const isWinner = result.winner === side.index;
+	const score =
+		isWinner && result.isKnockout
+			? t("broadcast:overlay.knockout")
+			: team.score;
 	const name = side.team?.name ?? t("broadcast:overlay.tbd");
 	const nameRef = useFitText<HTMLSpanElement>({ text: name });
 
@@ -215,14 +243,18 @@ function ResultTeam({
 				<span ref={nameRef} className={styles.teamName} {...part("team-name")}>
 					{name}
 				</span>
-				<span className={styles.result} {...part("result")}>
-					{isWinner ? t("broadcast:overlay.win") : t("broadcast:overlay.lose")}
-				</span>
-				<span className={styles.teamScore} {...part("team-score")}>
-					{isWinner && result.isKnockout
-						? t("broadcast:overlay.knockout")
-						: team.score}
-				</span>
+				{result.winner !== null ? (
+					<span className={styles.result} {...part("result")}>
+						{isWinner
+							? t("broadcast:overlay.win")
+							: t("broadcast:overlay.lose")}
+					</span>
+				) : null}
+				{score !== null ? (
+					<span className={styles.teamScore} {...part("team-score")}>
+						{score}
+					</span>
+				) : null}
 			</header>
 			<ul className={styles.players}>
 				{team.players.map((player, i) => (
@@ -233,21 +265,25 @@ function ResultTeam({
 						{...part("player")}
 					>
 						<span className={styles.weapon} {...part("player-weapon")}>
-							<WeaponImage
-								weaponSplId={player.weaponSplId}
-								variant={weaponImages === "outlined" ? "badge" : "build"}
-								size={72}
-								loading="eager"
-							/>
+							{player.weaponSplId !== null ? (
+								<WeaponImage
+									weaponSplId={player.weaponSplId}
+									variant={weaponImages === "outlined" ? "badge" : "build"}
+									size={72}
+									loading="eager"
+								/>
+							) : null}
 						</span>
 						<span className={styles.playerName} {...part("player-name")}>
 							{player.name}
 						</span>
-						<span className={styles.abilities} {...part("player-abilities")}>
-							{player.abilities.map((ability, abilityIdx) => (
-								<Ability key={abilityIdx} ability={ability} size="HUGE" />
-							))}
-						</span>
+						{player.abilities.length > 0 ? (
+							<span className={styles.abilities} {...part("player-abilities")}>
+								{player.abilities.map((ability, abilityIdx) => (
+									<Ability key={abilityIdx} ability={ability} size="HUGE" />
+								))}
+							</span>
+						) : null}
 					</li>
 				))}
 			</ul>
@@ -256,14 +292,14 @@ function ResultTeam({
 }
 
 function ObjectivePanel({
-	events,
+	reads,
 	sides,
 }: {
-	events: ObjectiveTimelineEvent[];
+	reads: BroadcastObjectiveRead[];
 	sides: [MatchSide, MatchSide];
 }) {
 	const { t } = useTranslation(["broadcast"]);
-	const shares = controlShares(events);
+	const shares = controlShares(reads);
 
 	return (
 		<section className={styles.objective} {...part("objective")}>
@@ -285,19 +321,19 @@ function ObjectivePanel({
 					))}
 				</div>
 			</div>
-			<ObjectiveChart events={events} sides={sides} />
+			<ObjectiveChart reads={reads} sides={sides} />
 		</section>
 	);
 }
 
 function ObjectiveChart({
-	events,
+	reads,
 	sides,
 }: {
-	events: ObjectiveTimelineEvent[];
+	reads: BroadcastObjectiveRead[];
 	sides: [MatchSide, MatchSide];
 }) {
-	const sorted = events.toSorted((a, b) => a.t - b.t);
+	const sorted = reads.toSorted((a, b) => a.t - b.t);
 	const start = sorted[0]?.t ?? 0;
 	const duration = Math.max((sorted.at(-1)?.t ?? 0) - start, 1);
 	const plotBottom =
@@ -333,13 +369,17 @@ function ObjectiveChart({
 				/>
 			))}
 			{sides.map((side) => (
-				<polyline
+				<path
 					key={side.side}
 					className={styles.line}
 					data-team={side.side}
-					points={linePoints(sorted, side.index)
-						.map(({ t, count }) => `${xAt(t)},${yAt(count)}`)
-						.join(" ")}
+					d={smoothLinePath(
+						linePoints(sorted, side.index).map(({ t, count }) => ({
+							x: xAt(t),
+							y: yAt(count),
+						})),
+						CHART_LINE_TOLERANCE,
+					)}
 					{...part("objective-line")}
 				/>
 			))}
@@ -371,34 +411,34 @@ function ObjectiveChart({
 	);
 }
 
-/** The game just played is `current`, it being the set's current one until its result is reported. */
+/** The game shown is `current`, it being the set's current one until its result is reported. */
 function gameStatus({
-	progress,
+	gameNumber,
 	game,
 	number,
 }: {
-	progress: MatchProgress;
+	gameNumber: number | null;
 	game: BroadcastGame;
 	number: number;
 }) {
-	if (number === progress.gameNumber) return "current";
+	if (number === gameNumber) return "current";
 	return game.winner !== null ? "played" : "upcoming";
 }
 
 /** Stretches of the game one team held the objective, a read's control lasting until the next read. */
-function controlSpans(sorted: ObjectiveTimelineEvent[]) {
+function controlSpans(sorted: BroadcastObjectiveRead[]) {
 	const spans: Array<{ from: number; to: number; control: 0 | 1 }> = [];
 
 	for (let i = 0; i < sorted.length - 1; i++) {
-		const { t, data } = sorted[i]!;
+		const { t, control } = sorted[i]!;
 		const to = sorted[i + 1]!.t;
-		if (data.control === null) continue;
+		if (control === null) continue;
 
 		const last = spans.at(-1);
-		if (last && last.control === data.control && last.to === t) {
+		if (last && last.control === control && last.to === t) {
 			last.to = to;
 		} else {
-			spans.push({ from: t, to, control: data.control });
+			spans.push({ from: t, to, control });
 		}
 	}
 
@@ -406,15 +446,15 @@ function controlSpans(sorted: ObjectiveTimelineEvent[]) {
 }
 
 /** The team's counter at each read, an unreadable count carrying the last one read. */
-function linePoints(sorted: ObjectiveTimelineEvent[], index: 0 | 1) {
+function linePoints(sorted: BroadcastObjectiveRead[], index: 0 | 1) {
 	const points: Array<{ t: number; count: number }> = [];
 	let last: number | null = null;
 
-	for (const event of sorted) {
-		const count: number | null = event.data.score[index] ?? last;
+	for (const read of sorted) {
+		const count: number | null = read.score[index] ?? last;
 		if (count === null) continue;
 
-		points.push({ t: event.t, count });
+		points.push({ t: read.t, count });
 		last = count;
 	}
 

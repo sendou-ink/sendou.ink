@@ -78,6 +78,29 @@ describe("InkColor.closestPair", () => {
 	});
 });
 
+describe("InkColor.isInPairOrder", () => {
+	test.each([
+		{
+			why: "first read is the pair's first color",
+			inks: [rgb(202, 190, 33), rgb(60, 32, 186)],
+			expected: true,
+		},
+		{
+			why: "first read is the pair's second color",
+			inks: [rgb(60, 32, 186), rgb(202, 190, 33)],
+			expected: false,
+		},
+		{
+			why: "only the second read, the pair's first color",
+			inks: [null, rgb(202, 190, 33)],
+			expected: false,
+		},
+		{ why: "neither read", inks: [null, null], expected: null },
+	] as const)("$why", ({ inks, expected }) => {
+		expect(InkColor.isInPairOrder([...inks], "yellowDarkBlue")).toBe(expected);
+	});
+});
+
 function rgb(r: number, g: number, b: number): BroadcastInkRgb {
 	return { r, g, b };
 }
