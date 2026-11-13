@@ -43,6 +43,8 @@
 
 .round {
 	text-wrap: balance;
+	/* a bracket name of one long word */
+	overflow-wrap: anywhere;
 }
 
 .games {

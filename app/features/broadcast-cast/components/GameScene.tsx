@@ -114,7 +114,9 @@ function InfoCard({ state }: { state: CastBroadcastState }) {
 								className={styles.caster}
 								{...part("caster")}
 							>
-								{caster.name}
+								<span className={styles.casterName} {...part("caster-name")}>
+									{caster.name}
+								</span>
 								{caster.pronouns ? (
 									<span
 										className={styles.pronouns}

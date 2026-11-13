@@ -179,6 +179,7 @@ export const BROADCAST_SCENE_PARTS = {
 		"set-length",
 		"casters",
 		"caster",
+		"caster-name",
 		"caster-pronouns",
 		"map-intro",
 		"game-number",

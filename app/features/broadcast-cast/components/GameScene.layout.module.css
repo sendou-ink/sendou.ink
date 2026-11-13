@@ -75,13 +75,22 @@
 	margin-right: 2px;
 }
 
+/* casters with long names shrink alike, their names cut short */
 .caster {
 	display: inline-flex;
 	align-items: center;
 	gap: 7px;
+	min-width: 0;
+}
+
+.casterName {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .pronouns {
+	flex-shrink: 0;
 	padding: 2px 6px;
 }
 
