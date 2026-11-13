@@ -825,6 +825,28 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   says `options.incomplete`: a frame caught mid-animation, or a screen with a
   field that never reads; `tests/logic/complete-reads.test.ts` holds each
   kind's read one field short.
+- A screen that holds still is read one frame at a time, never as a stack of
+  its frames. A per-pixel median of the last five frames was measured
+  (2026-11-13: 41 results screens, 9 replay browser entries, 13 X Battle
+  cards and 37 intros of eight VoDs, 360p to 1080p60, H.264 / VP9 / AV1 at
+  1.7-17 Mbps) and left out. The timeline kept the same read on 99 of the
+  100 screens (the other differs by a dot twin) and reached a complete read
+  after the same number of parses on all but one, a parse later stacked.
+  Why it has nothing to remove: an encoder carries a still block over
+  from the frame before instead of coding it again, so a settled screen's
+  noise stands as still as its text (frames differ by ~0.2 gray levels on
+  average, the mean field score of a results screen's reads by under
+  0.002). What does change between
+  frames is the entry animation and the half second an encoder takes to
+  sharpen a screen after a cut, where a stack only lags behind the newest
+  frame; those reads are already dropped by the floor or outvoted per field.
+  The scheduler also stops at the first complete read, the first or second
+  parse of most results screens, before there is anything to stack. And a
+  stack brings misreads no single frame has: names swapped in place (X
+  Battle aliases turning into the real names in the battle log) blend into
+  glyphs neither frame shows, unless stillness is judged per text ROI. Only
+  the intro's stage line, drawn over moving gameplay, read better stacked
+  (+0.01 mean score), without changing a value the timeline kept.
 - A VoD scan writes a log of every frame it analyzed (`core/scan-log.ts`,
   per lane: which detectors were due, each gate's verdict, whether the parse
   ran and what it read), saved with the VoD (`vod-scan-logs`) and put into
