@@ -3,7 +3,6 @@ import {
 	array,
 	fieldset,
 	idConstantOptional,
-	selectDynamicOptional,
 	textField,
 	textFieldOptional,
 	toggle,
@@ -35,17 +34,12 @@ export const stationsFormSchema = v.pipe(
 						placeholder: "placeholders.stationLocationNote",
 						maxLength: TOURNAMENT_STATIONS.LOCATION_NOTE_MAX_LENGTH,
 					}),
-					castAccount: selectDynamicOptional({
-						label: "labels.stationCastAccount",
-						bottomText: "bottomTexts.stationCastAccount",
-					}),
 				}),
 			}),
 		}),
 	}),
 	superRefine((data, ctx) => {
 		const seenNames = new Set<string>();
-		const seenCastAccounts = new Set<string>();
 
 		for (const [index, station] of data.stations.entries()) {
 			const name = station.name.toLowerCase();
@@ -56,15 +50,6 @@ export const stationsFormSchema = v.pipe(
 				});
 			}
 			seenNames.add(name);
-
-			if (!station.castAccount) continue;
-			if (seenCastAccounts.has(station.castAccount)) {
-				ctx.addIssue({
-					message: "forms:errors.stationCastAccountNotUnique",
-					path: ["stations", index, "castAccount"],
-				});
-			}
-			seenCastAccounts.add(station.castAccount);
 		}
 	}),
 );

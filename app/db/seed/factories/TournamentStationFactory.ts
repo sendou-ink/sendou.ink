@@ -10,7 +10,7 @@ type InsertArgs = Omit<Station, "id"> & { tournamentId: number };
 
 /** Adds one station after the tournament's existing ones, as the admin stations page saves them. */
 export const { create, createMany } = defineFactory({
-	defaults: () => ({ locationNote: null, castAccount: null }),
+	defaults: () => ({ locationNote: null }),
 	insert: async ({ tournamentId, ...station }: InsertArgs) => {
 		const existing =
 			await TournamentStationRepository.findAllByTournamentId(tournamentId);

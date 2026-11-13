@@ -14,7 +14,6 @@ const station = (name: string, id: number | null = null) => ({
 	id,
 	name,
 	locationNote: null,
-	castAccount: null,
 });
 
 describe("TournamentStationRepository.setStations", () => {
@@ -31,12 +30,7 @@ describe("TournamentStationRepository.setStations", () => {
 			tournamentId: tournament.id,
 			autoAssign: true,
 			stations: [
-				{
-					id: null,
-					name: "Stream",
-					locationNote: "On stage",
-					castAccount: { platform: "TWITCH", account: "lan_cast" },
-				},
+				{ id: null, name: "Main stage", locationNote: "On stage" },
 				station("Station 1"),
 			],
 		});
@@ -44,12 +38,8 @@ describe("TournamentStationRepository.setStations", () => {
 		expect(
 			await TournamentStationRepository.findAllByTournamentId(tournament.id),
 		).toMatchObject([
-			{
-				name: "Stream",
-				locationNote: "On stage",
-				castAccount: { platform: "TWITCH", account: "lan_cast" },
-			},
-			{ name: "Station 1", locationNote: null, castAccount: null },
+			{ name: "Main stage", locationNote: "On stage" },
+			{ name: "Station 1", locationNote: null },
 		]);
 	});
 

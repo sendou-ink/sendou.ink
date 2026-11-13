@@ -40,10 +40,7 @@ import type {
 } from "~/features/feed/feed-constants";
 import type { FeedEventData, FeedEventType } from "~/features/feed/feed-types";
 import type { LFGType } from "~/features/lfg/lfg-constants";
-import type {
-	StreamAccount,
-	StreamPlatform,
-} from "~/features/live-streams/live-streams-constants";
+import type { StreamPlatform } from "~/features/live-streams/live-streams-constants";
 import type {
 	LobbyBestOf,
 	LobbyLabel,
@@ -889,8 +886,6 @@ interface TournamentStation {
 	name: string;
 	/** Where to find it at the venue, e.g. "north corner, by the windows" */
 	locationNote: string | null;
-	/** One of the tournament's cast accounts, making this its stream station: matches played here are cast. */
-	castAccount: JSONColumnTypeNullable<StreamAccount>;
 	/** Order of the stations, 0 first. Auto-assignment prefers the lowest free one. */
 	position: number;
 }

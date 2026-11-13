@@ -4,7 +4,6 @@
  * and the name a match goes by on the board.
  */
 import type { Tables } from "~/db/tables";
-import type { StreamAccount } from "~/features/live-streams/live-streams-constants";
 import type { MatchStatus } from "~/features/tournament-bracket/core/engine/status";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 
@@ -34,8 +33,6 @@ export interface StationsBoardStation {
 	id: number;
 	name: string;
 	locationNote: string | null;
-	/** Linked to a cast account, matches played here are cast. */
-	isStream: boolean;
 	/** Unfinished matches queued on the station, in the order they are played. */
 	matches: StationsBoardMatch[];
 }
@@ -52,9 +49,7 @@ export function build({
 	tournament: Tournament;
 	/** In their order. */
 	stations: Array<
-		Pick<Tables["TournamentStation"], "id" | "name" | "locationNote"> & {
-			castAccount: StreamAccount | null;
-		}
+		Pick<Tables["TournamentStation"], "id" | "name" | "locationNote">
 	>;
 	/** Each station's queue in order, finished matches included. */
 	queuedMatches: Array<{ matchId: number; stationId: number }>;
@@ -67,7 +62,6 @@ export function build({
 			id: station.id,
 			name: station.name,
 			locationNote: station.locationNote,
-			isStream: station.castAccount !== null,
 			matches: withSlots(
 				queuedMatches
 					.filter((row) => row.stationId === station.id)

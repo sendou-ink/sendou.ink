@@ -2,7 +2,6 @@ import type { Transaction } from "kysely";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
-import type { StreamAccount } from "~/features/live-streams/live-streams-constants";
 import * as TournamentAuditLogRepository from "~/features/tournament/TournamentAuditLogRepository.server";
 
 type SetStationsArgs = {
@@ -13,7 +12,6 @@ type SetStationsArgs = {
 		id: number | null;
 		name: Tables["TournamentStation"]["name"];
 		locationNote: Tables["TournamentStation"]["locationNote"];
-		castAccount: StreamAccount | null;
 	}>;
 	autoAssign: boolean;
 };
@@ -26,7 +24,6 @@ export function findAllByTournamentId(tournamentId: number) {
 			"TournamentStation.id",
 			"TournamentStation.name",
 			"TournamentStation.locationNote",
-			"TournamentStation.castAccount",
 		])
 		.where("TournamentStation.tournamentId", "=", tournamentId)
 		.orderBy("TournamentStation.position", "asc")
@@ -168,9 +165,6 @@ export function setStations({
 			values: {
 				name: station.name,
 				locationNote: station.locationNote,
-				castAccount: station.castAccount
-					? JSON.stringify(station.castAccount)
-					: null,
 				position,
 			},
 		}));

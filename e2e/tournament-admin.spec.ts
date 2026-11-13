@@ -331,18 +331,13 @@ test.describe("Tournament admin bracket progression editing", () => {
 });
 
 test.describe("Tournament admin LAN stations", () => {
-	test("adds stations incl. a stream station, removes them down to one and then none", async ({
+	test("adds stations, removes them down to one and then none", async ({
 		page,
 		factories,
 	}) => {
-		const tournament = await factories.TournamentFactory.create(
-			{ authorId: NZAP_TEST_ID },
-			{
-				castAccounts: [
-					{ platform: "TWITCH", account: "lan_cast", name: "lan_cast" },
-				],
-			},
-		);
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+		});
 		await factories.CalendarEventVenueFactory.create({
 			eventId: tournament.eventId,
 		});
@@ -355,9 +350,8 @@ test.describe("Tournament admin LAN stations", () => {
 
 		await expect(stations.locators.autoAssignSwitch).toBeChecked();
 		await stations.fillStation(0, {
-			name: "Stream",
+			name: "Main stage",
 			locationNote: "On stage",
-			castAccount: "lan_cast (Twitch)",
 		});
 		await stations.addStation();
 		await stations.fillStation(1, { name: "Station 1" });
@@ -367,13 +361,10 @@ test.describe("Tournament admin LAN stations", () => {
 
 		await stations.goto(tournament.id);
 		await expect(stations.locators.nameInputs).toHaveCount(3);
-		await expect(stations.locators.nameInputs.nth(0)).toHaveValue("Stream");
+		await expect(stations.locators.nameInputs.nth(0)).toHaveValue("Main stage");
 		await expect(stations.locators.locationNoteInputs.nth(0)).toHaveValue(
 			"On stage",
 		);
-		await expect(
-			stations.locators.castAccountSelects.nth(0).locator("option:checked"),
-		).toHaveText("lan_cast (Twitch)");
 		await expect(stations.locators.nameInputs.nth(1)).toHaveValue("Station 1");
 
 		await stations.removeStation(0);

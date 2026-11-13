@@ -12,7 +12,6 @@ export class TournamentAdminStationsPage {
 		this.locators = {
 			nameInputs: page.getByRole("textbox", { name: /^Name/ }),
 			locationNoteInputs: page.getByLabel("Location note"),
-			castAccountSelects: page.getByLabel("Cast account"),
 			autoAssignSwitch: page.getByRole("switch", {
 				name: "Auto-assign stations",
 			}),
@@ -31,20 +30,11 @@ export class TournamentAdminStationsPage {
 	/** An empty array field already renders one placeholder station to fill. */
 	async fillStation(
 		nth: number,
-		{
-			name,
-			locationNote,
-			castAccount,
-		}: { name: string; locationNote?: string; castAccount?: string },
+		{ name, locationNote }: { name: string; locationNote?: string },
 	) {
 		await this.locators.nameInputs.nth(nth).fill(name);
 		if (locationNote) {
 			await this.locators.locationNoteInputs.nth(nth).fill(locationNote);
-		}
-		if (castAccount) {
-			await this.locators.castAccountSelects
-				.nth(nth)
-				.selectOption({ label: castAccount });
 		}
 	}
 

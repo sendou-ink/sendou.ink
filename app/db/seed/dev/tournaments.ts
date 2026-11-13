@@ -52,15 +52,8 @@ const PADDLING_POOL_CAST_ACCOUNTS: CastAccount[] = [
 		name: "Paddling Pool Casts",
 	},
 ];
-const SWIM_OR_SINK_CAST_ACCOUNTS: CastAccount[] = [
-	{ platform: "TWITCH", account: "swim_or_sink_lan", name: "swim_or_sink_lan" },
-];
 const SWIM_OR_SINK_STATIONS = [
-	{
-		name: "Stream",
-		locationNote: "On stage",
-		castAccount: SWIM_OR_SINK_CAST_ACCOUNTS[0],
-	},
+	{ name: "Main stage", locationNote: "On stage" },
 	{ name: "Station 1", locationNote: "North corner, by the windows" },
 	{ name: "Station 2", locationNote: "North corner" },
 	{ name: "Station 3", locationNote: "Back wall" },
@@ -322,17 +315,10 @@ export async function seedTournaments({
 	await registerPlaceholderTeam(swimOrSink.id);
 	await TournamentStationFactory.createMany(
 		SWIM_OR_SINK_STATIONS.length,
-		(index) => {
-			const { castAccount, ...station } = SWIM_OR_SINK_STATIONS[index];
-
-			return {
-				...station,
-				tournamentId: swimOrSink.id,
-				castAccount: castAccount
-					? { platform: castAccount.platform, account: castAccount.account }
-					: null,
-			};
-		},
+		(index) => ({
+			...SWIM_OR_SINK_STATIONS[index],
+			tournamentId: swimOrSink.id,
+		}),
 	);
 
 	return {
@@ -483,21 +469,18 @@ async function seedLowInk({ users, rosters }: Ctx) {
 	await TournamentFactory.playOut(tournament.id, 0);
 }
 
-/** #4 round robin → SE, TO maps, a LAN with a pool captain, a team of players without accounts and stations incl. a stream station — everybody checked in, not started. N-ZAP isn't registered, so it is his saved one. */
+/** #4 round robin → SE, TO maps, a LAN with a pool captain, a team of players without accounts and stations — everybody checked in, not started. N-ZAP isn't registered, so it is his saved one. */
 async function seedSwimOrSink({ users, rosters }: Ctx) {
-	const tournament = await TournamentFactory.create(
-		{
-			name: nameFor("Swim or Sink"),
-			authorId: users.adminId,
-			avatarFileName: "swim-or-sink.png",
-			startTimes: [dateToDatabaseTimestamp(hoursAgo(1))],
-			mapPickingStyle: "TO",
-			mapPoolMaps: toSetMapPool(),
-			bracketProgression: ROUND_ROBIN_TO_SINGLE_ELIMINATION,
-			teamsPerGroup: 4,
-		},
-		{ castAccounts: SWIM_OR_SINK_CAST_ACCOUNTS },
-	);
+	const tournament = await TournamentFactory.create({
+		name: nameFor("Swim or Sink"),
+		authorId: users.adminId,
+		avatarFileName: "swim-or-sink.png",
+		startTimes: [dateToDatabaseTimestamp(hoursAgo(1))],
+		mapPickingStyle: "TO",
+		mapPoolMaps: toSetMapPool(),
+		bracketProgression: ROUND_ROBIN_TO_SINGLE_ELIMINATION,
+		teamsPerGroup: 4,
+	});
 
 	const teamRosters = rosters.take({ teamCount: 12, teamSize: 4 });
 
