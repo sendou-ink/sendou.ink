@@ -71,6 +71,7 @@ export const BADGES_DOC_LINK = `${DOCS_SITE_URL}/guides/badges/`;
 export const API_DOC_LINK = `${DOCS_SITE_URL}/api/`;
 export const CREATING_TOURNAMENT_DOC_LINK = `${DOCS_SITE_URL}/guides/tournament-creation/`;
 export const BANNING_POLICY_DOC_LINK = `${DOCS_SITE_URL}/guides/banning-policy/`;
+export const BROADCAST_OVERLAYS_DOC_LINK = `${DOCS_SITE_URL}/guides/broadcast-overlays/`;
 
 export const PLUS_SERVER_DISCORD_URL = "https://discord.gg/FW4dKrY";
 export const SENDOU_INK_DISCORD_URL = "https://discord.gg/sendou";

@@ -1,0 +1,251 @@
+---
+title: "Broadcast overlays"
+description: "Set up sendou.ink's tournament overlays in OBS, link the scanner and theme them with CSS."
+---
+
+import { Steps } from "@astrojs/starlight/components";
+import BroadcastThemeReference from "../../../components/BroadcastThemeReference.astro";
+import { BROADCAST_CSS_MAX_LENGTH } from "../../../../../../app/features/broadcast/broadcast-constants.ts";
+
+export const cssLimit = BROADCAST_CSS_MAX_LENGTH.toLocaleString("en");
+
+sendou.ink draws the overlays of a tournament cast for you: rosters, map list, the game's scoreboard, results, the bracket and the hold screens. You run the stream from the **Broadcast** tab of the tournament, OBS shows whatever is on air. No other software is needed.
+
+The tab is there for the tournament's organizers and streamers. Broadcasts are being rolled out organization by organization, so it only shows for tournaments of organizations that have access.
+
+There is one broadcast per cast channel. A match marked as casted on a channel (from the match page) shows up on that channel's overlays by itself. Its scores, teams, rosters, maps and the bracket all come from the tournament automatically.
+
+:::tip[Theming is just CSS]
+Most of making the overlays your own is plain CSS, the language every website is styled with. It's something anyone can learn, these are good places to start:
+
+- web.dev's [Learn CSS](https://web.dev/learn/css), a course from the basics up
+- MDN's [Styling the content](https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started/Your_first_website/Styling_the_content), a short first look
+:::
+
+## Setting up OBS
+
+<Steps>
+
+1. Open the tournament's Broadcast tab and pick the channel. This is the dashboard.
+2. In the dashboard's **Setup** tab, press **Generate URL**. The URL has a secret key, so only you can show the overlay. It keeps working until you generate a new one, so you can set up OBS before the tournament and leave it. Each tournament and channel has its own URL.
+3. In OBS, create a new scene collection (Scene Collection → New) so your own setup stays untouched.
+4. Set the canvas to 1920×1080 (Settings → Video).
+5. Add your capture card, and on top of it a **Browser** source with the URL, sized 1920×1080.
+
+</Steps>
+
+That's all OBS needs: the browser source switches scenes by itself. On the dashboard, **Next** is what you have staged and **Take** puts it on air (Live) with the transition you picked. Queue scenes to go on air one after another, on a timer or as games start and end.
+
+**Generate new URL** makes the old URL stop working, the OBS sources using it disconnect. Paste the new one into OBS afterwards.
+
+## Linking the scanner
+
+The scanner watches the game feed and tells the broadcast when games start and end, so scenes set to wait for a game start or end go on air by themselves, in the teams' ink colors.
+
+<Steps>
+
+1. Open the dashboard in the browser that sees the game feed without the overlay over it: your capture card, or OBS Virtual Camera of a scene with only the capture card.
+2. Start the scanner from the page's header. The first time, start it on the [scanner page](https://sendou.ink/scanner) instead, where you pick the capture source.
+3. Press **Link scanner** in the dashboard's Setup tab. The dashboard shows "Scanner connected".
+
+</Steps>
+
+Games still upload to sendou.ink as usual.
+
+## The designer
+
+The dashboard's **Theme** tab opens the designer: the overlay over a gameplay screenshot on the left, its CSS on the right. Pick a scene and a situation (short or long names, how far the set is, ink colors, missing logos, …) to see your theme where it is most likely to break, and **Play transition** to watch the stinger.
+
+- **Preset**: ready-made themes (Zine, Matchday, Capsule, Teletext). Picking one loads its CSS into Custom CSS for you to make your own from. Their CSS is also the best example of how far a theme can go, see [the presets' source](https://github.com/sendou-ink/sendou.ink/tree/main/app/features/broadcast-cast/presets).
+- **Stylesheet**: each part of the overlay's default styles to edit in place, e.g. `GameScene`. Its look first, with the sizes and spots everything follows at the top. Turn on **Show layout & motion stylesheets** for how the parts are laid out and animated.
+- **Custom CSS**: your own CSS, applied after everything else.
+
+Only what you changed from the default styles is saved, at most {cssLimit} characters of it ("CSS to save" shows the count). Nothing changes on air before you **Save**, then every OBS source restyles right away.
+
+## How theme CSS works
+
+The overlay is a 1920×1080 canvas, `[data-broadcast]`. You style it with four things:
+
+- **Variables**: colors, fonts, corners, sizes, spots and animation timing, e.g. `--bc-accent` or `--game-bar-height`. Set them on `[data-broadcast]`. Most themes are mostly this.
+- **Scenes and parts**: `[data-scene="game"]` is on each scene, `[data-part="team-name"]` on the things in it. `[data-part="team-name"]` alone styles the team names of every scene.
+- **State attributes**, next to the parts: `data-team` (`a` left, `b` right), `data-winner`, `data-loser`, `data-status` (e.g. a map's `played`, `current`, `upcoming`, `skipped`), `data-result` (`win`, `loss`), `data-featured`, `data-tbd`.
+- **Keyframes**: the animations, `bc-enter`, `bc-reveal`, … Redefine one to change everything using it, or point a `--bc-anim-*` variable at keyframes of your own.
+
+Custom CSS beats the default styles without `!important` or specificity tricks. The designer's stylesheet edits refer to the default styles' classes as `.Stylesheet-class`, e.g. `.GameScene-infoCard`; they work in Custom CSS too, for the few elements that have no part.
+
+## Fonts
+
+The overlay uses two fonts: `--bc-font-display` for titles, names and scores, `--bc-font-body` for the rest. Any font on the web works, [Google Fonts](https://fonts.google.com/) has plenty free to use:
+
+<Steps>
+
+1. Find a font on [Google Fonts](https://fonts.google.com/) and open it, e.g. Barlow Condensed.
+2. Press **Get font**, then **Get embed code**.
+3. Pick the weights you want (the overlay uses semibold, bold and heavy: 600, 700 and 800), then choose **@import** under Web.
+4. Copy only the `@import url(...);` line, without the `<style>` tags around it, to the very top of Custom CSS.
+5. Set the font's name, as shown under "CSS class" on the same page, as the overlay's font:
+
+</Steps>
+
+```css
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&display=swap");
+
+[data-broadcast] {
+	--bc-font-display: "Barlow Condensed", sans-serif;
+	--bc-font-body: "Barlow Condensed", sans-serif;
+}
+```
+
+A font with fewer weights than the overlay uses: set `--bc-weight-semibold`, `--bc-weight-bold` and `--bc-weight-heavy` to the ones it has. A font from elsewhere: point an `@font-face` at its `.woff2` file, the site hosting it has to allow other sites to load it.
+
+```css
+@font-face { font-family: "My Font"; src: url("https://example.com/my-font.woff2") format("woff2"); }
+[data-broadcast] { --bc-font-display: "My Font", sans-serif; }
+```
+
+OBS loads the font from the internet each time the browser source starts, so keep a fallback (`sans-serif`) after its name.
+
+## With this CSS → this effect
+
+```css
+[data-broadcast] { --bc-accent: #ffd400; }
+```
+Every highlight in yellow.
+
+```css
+[data-broadcast] { --bc-team-a: #ff5f1f; --bc-team-b: #1fa2ff; }
+```
+Team colors orange and blue (the game and result scenes use the game's ink colors once they're known).
+
+```css
+[data-broadcast] { --bc-radius: 0; --bc-radius-small: 0; }
+```
+Square corners everywhere.
+
+```css
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap");
+[data-broadcast] { --bc-font-display: "Barlow Condensed", sans-serif; }
+```
+Titles, names and scores in Barlow Condensed.
+
+```css
+[data-part="team-name"] { text-transform: uppercase; }
+```
+Team names in capitals, in every scene.
+
+```css
+[data-scene="game"] [data-part="roster"] { display: none; }
+```
+Game scene without the player names above the nameplates.
+
+```css
+[data-part="caster-pronouns"] { display: none; }
+```
+No pronouns next to the casters' names.
+
+```css
+[data-scene="break"] [data-part="ticker"] { display: none; }
+```
+Break without the other matches' scores.
+
+```css
+[data-winner] [data-part="team-name"] { color: var(--bc-accent); }
+```
+The winning team's name in the accent color.
+
+```css
+[data-scene="game"] [data-part="scoreboard"] { bottom: 40px; }
+```
+Game scoreboard 40px up from the bottom edge.
+
+```css
+[data-broadcast] { --game-bar-height: 84px; --game-team-name-size: 40px; }
+```
+Taller scoreboard, bigger team names.
+
+```css
+.GameScene-corner { left: auto; right: 28px; align-items: flex-end; }
+```
+Game scene's info card and map intro in the top right.
+
+```css
+[data-broadcast] { --game-map-intro-duration: 4s; }
+```
+Map intro leaves after 4 seconds.
+
+```css
+[data-part="backdrop"] { background: #000 url("https://example.com/bg.png") center / cover; }
+```
+Your own image behind the full screen scenes.
+
+```css
+[data-broadcast] { --bc-enter-duration: 900ms; --bc-stagger: 120ms; }
+```
+Things come in slower, further apart.
+
+```css
+[data-broadcast] { --bc-anim-enter: none; }
+```
+No entrance animations, everything is just there.
+
+```css
+@keyframes bc-enter { from { opacity: 0; scale: 0.9; } }
+```
+Everything grows in instead of sliding in.
+
+```css
+[data-part="team-score"] { --bc-anim-count: flip; }
+@keyframes flip { from { transform: rotateX(90deg); } }
+```
+Scores flip in when they change.
+
+```css
+[data-part="stinger-card"] { display: none; }
+```
+Stinger without the card in its middle (the teams, or the tournament without a match).
+
+## Good to know
+
+- `@import`s (web fonts) have to come first in Custom CSS, or the browser ignores them.
+- The stinger changes the scene at `--bc-stinger-duration` × `--bc-stinger-covered-at` (704 ms by default). Cuts to and from a game are timed for that moment, so keep it close to 704 ms if you retime the stinger.
+- Keyframes that pop in with `steps(1, end)` can get stuck hidden: an animation can end a hair short in Chrome. Use `steps(n, jump-none)`, or plain keyframes holding the hidden state until 99%.
+- Everything is in pixels on the 1920×1080 canvas, no need for responsive CSS.
+- The class names you see in the browser's dev tools (e.g. `_infoCard_1x2y3`) change with every update. Use parts, variables and `.Stylesheet-class` names instead.
+
+## What stays stable
+
+Themes are saved as CSS, so renaming anything they refer to breaks them. These names are the theme's contract and are only renamed when there is no way around it:
+
+- `data-scene` values, `data-part` names and the state attributes
+- the variables (`--bc-*` and each stylesheet's own, e.g. `--game-*`)
+- the `bc-*` keyframes
+- the stylesheet and class names (`.GameScene-infoCard`)
+
+The markup around the parts (which element is inside which, their order) can change, so select by parts rather than by structure.
+
+## Reference
+
+### Variables
+
+Each stylesheet's variables with their defaults. The `--bc-*` ones are used across every scene.
+
+<BroadcastThemeReference section="variables" />
+
+### Parts
+
+Every scene but game and replays also has a `backdrop`, the maps scene's with a `backdrop-video` of the next map under a `backdrop-vignette` darkening its edges.
+
+<BroadcastThemeReference section="parts" />
+
+### Keyframes
+
+<BroadcastThemeReference section="keyframes" />
+
+### Stylesheet classes
+
+<details>
+<summary>Classes of each stylesheet</summary>
+
+<BroadcastThemeReference section="classes" />
+
+</details>

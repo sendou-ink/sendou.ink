@@ -54,7 +54,6 @@ export function initialState<Item extends ProducerState>(
 		lastItemId: 2,
 		liveResults: null,
 		ink: null,
-		gameCut: null,
 		scannedGame: null,
 	};
 }
@@ -108,7 +107,6 @@ export function take<Item extends ProducerState>(
 		lastItemId: Math.max(state.lastItemId, next.id),
 		liveResults,
 		ink: state.ink,
-		gameCut: null,
 		scannedGame: state.scannedGame,
 	};
 }
@@ -156,30 +154,26 @@ export function liveEndsAt<Item extends ProducerState>(
 
 /**
  * When the staged item goes on air by itself (epoch ms): its transition timed to hide the scene on air as that one
- * ends, or as the game it waits for started or ended on the scanner's feed (`gameCut`) plus `gameDelayMs`, the delay
- * of the game in OBS. `null` when it waits for a Take or a game event not seen yet, or can't go on air (see
- * {@link canTake}). It can be in the past, a game event being seen after the fact.
+ * ends. `null` when it waits for a Take or a game event (see {@link applyGameSignal}), or can't go on air (see
+ * {@link canTake}).
  */
 export function autoTakeAt<Item extends ProducerState>(
 	rules: Rules<Item>,
 	state: BroadcastStoredState<Item>,
-	{ hasMatch, gameDelayMs }: { hasMatch: boolean; gameDelayMs: number },
+	{ hasMatch }: { hasMatch: boolean },
 ) {
 	if (!canTake(rules, state, { hasMatch })) return null;
 
-	const advance = effectiveAdvance(rules, state.live, state.next);
-	const { outMs } = BROADCAST_TRANSITION_TIMING[state.next.transition];
-	if (advance === "game") {
-		const { gameCut } = state;
-		if (gameCut?.type !== gameCue(rules, state.live, state.next)) return null;
-
-		return gameCut.at + gameDelayMs - outMs;
-	}
-
 	const endsAt = liveEndsAt(rules, state);
-	if (advance !== "timer" || endsAt === null || state.takenAt === null) {
+	if (
+		effectiveAdvance(rules, state.live, state.next) !== "timer" ||
+		endsAt === null ||
+		state.takenAt === null
+	) {
 		return null;
 	}
+
+	const { outMs } = BROADCAST_TRANSITION_TIMING[state.next.transition];
 
 	return Math.max(state.takenAt, endsAt - outMs);
 }
@@ -224,9 +218,7 @@ export function effectiveAdvance<Item extends ProducerState>(
  * What the scanner seeing a game start or end changes. The ink read (with the start or after it) colors the game
  * (Color Lock carrying over from the broadcast's previous game, see `InkColor.closestPair`), the teams keeping the
  * sides they had earlier in the set (the pair's first color always goes to the same lobby team). A start or end
- * the staged item waits for puts it on air, timed so its transition lands where the game started or ended (see
- * {@link autoTakeAt}): right away when that's due, otherwise it's kept as `gameCut` for the broadcast's timer. Not
- * when the item can't go on air (see {@link canTake}). A game ending cuts only along with what the scanner read of it,
+ * the staged item waits for puts it on air right away, not when the item can't go on air (see {@link canTake}). A game ending cuts only along with what the scanner read of it,
  * which is kept as `scannedGame` with the game's ink colors. `null` when nothing changes.
  */
 export function applyGameSignal<Item extends ProducerState>(
@@ -236,14 +228,11 @@ export function applyGameSignal<Item extends ProducerState>(
 		signal,
 		liveResults,
 		now,
-		gameDelayMs,
 	}: {
 		signal: BroadcastGameSignal;
 		/** The featured match and how many of its results are reported, `null` without one. */
 		liveResults: LiveResults | null;
 		now: number;
-		/** How much later the game shows in OBS than on the scanner's feed, see `BroadcastSettings`. */
-		gameDelayMs: number;
 	},
 ): BroadcastStoredState<Item> | null {
 	const inkKey =
@@ -265,16 +254,7 @@ export function applyGameSignal<Item extends ProducerState>(
 		canTake(rules, state, { hasMatch });
 	if (!isWaitedFor) return colored === state ? null : colored;
 
-	const cut: BroadcastStoredState<Item> = {
-		...colored,
-		gameCut: { type: signal.type, at: now - signal.agoMs },
-	};
-	const takeAt = autoTakeAt(rules, cut, { hasMatch, gameDelayMs });
-	if (takeAt !== null && takeAt <= now) {
-		return take(rules, cut, { liveResults, now, hasMatch });
-	}
-
-	return cut;
+	return take(rules, colored, { liveResults, now, hasMatch });
 }
 
 /** The state with the ink and what was read of the game kept for the featured match, if any. */

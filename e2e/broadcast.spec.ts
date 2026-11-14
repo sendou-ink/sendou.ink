@@ -84,9 +84,9 @@ test.describe("Broadcast", () => {
 		});
 		await expect(obs.program.scene("rosters")).toBeVisible();
 
-		expect(
-			await dashboard.postGameSignal({ type: "start", agoMs: 0, inks: null }),
-		).toBe(200);
+		expect(await dashboard.postGameSignal({ type: "start", inks: null })).toBe(
+			200,
+		);
 
 		await expect(dashboard.viewHeading("live", "game")).toBeVisible();
 		await expect(obs.program.scene("game")).toBeVisible();
@@ -187,9 +187,9 @@ test.describe("Broadcast", () => {
 		const program = new BroadcastProgramPage(page, pageArgs(tournament.id));
 
 		expect(await dashboard.responseStatus()).toBe(404);
-		expect(
-			await dashboard.postGameSignal({ type: "start", agoMs: 0, inks: null }),
-		).toBe(404);
+		expect(await dashboard.postGameSignal({ type: "start", inks: null })).toBe(
+			404,
+		);
 		expect(await program.responseStatus(null)).toBe(404);
 		expect(await program.responseStatus(tournament.programKey)).toBe(200);
 		expect(

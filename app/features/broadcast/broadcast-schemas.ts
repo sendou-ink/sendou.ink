@@ -5,17 +5,10 @@ import {
 	scannerAbilitySchema,
 	stageIdSchema,
 } from "~/features/scanner/scanner-schemas";
-import {
-	numberField,
-	radioGroup,
-	stringConstant,
-	textAreaOptional,
-} from "~/form/fields";
+import { radioGroup, stringConstant, textAreaOptional } from "~/form/fields";
 import { id } from "~/utils/schema";
 import {
 	BROADCAST_CSS_MAX_LENGTH,
-	BROADCAST_GAME_DELAY_MAX_MS,
-	BROADCAST_GAME_SIGNAL_MAX_AGO_MS,
 	BROADCAST_GAME_SUMMARY_MAX_OBJECTIVE_READS,
 	BROADCAST_SDP_MAX_LENGTH,
 	BROADCAST_WEAPON_IMAGES,
@@ -42,16 +35,6 @@ export const broadcastThemeFormSchema = v.object({
 	}),
 });
 
-export const broadcastGameDelayFormSchema = v.object({
-	_action: stringConstant("UPDATE_GAME_DELAY"),
-	gameDelayMs: numberField({
-		label: "labels.broadcastGameDelay",
-		bottomText: "bottomTexts.broadcastGameDelay",
-		min: 0,
-		max: BROADCAST_GAME_DELAY_MAX_MS,
-	}),
-});
-
 export const broadcastSignalSchema = v.object({
 	/** The posting peer's own token, see `BroadcastOwnPeer`. */
 	token: v.pipe(v.string(), v.uuid()),
@@ -70,12 +53,6 @@ const inkChannel = v.pipe(
 );
 const inkRgb = v.object({ r: inkChannel, g: inkChannel, b: inkChannel });
 const inks = v.tuple([inkRgb, inkRgb]);
-const agoMs = v.pipe(
-	v.number(),
-	v.integer(),
-	v.minValue(0),
-	v.maxValue(BROADCAST_GAME_SIGNAL_MAX_AGO_MS),
-);
 
 const teamIndex = v.nullable(v.picklist([0, 1]));
 const count = v.nullable(
@@ -109,11 +86,10 @@ const gameSummary = v.object({
 });
 
 export const broadcastGameSignalSchema = v.variant("type", [
-	v.object({ type: v.literal("start"), agoMs, inks: v.nullable(inks) }),
+	v.object({ type: v.literal("start"), inks: v.nullable(inks) }),
 	v.object({ type: v.literal("ink"), inks }),
 	v.object({
 		type: v.literal("end"),
-		agoMs,
 		summary: v.nullable(gameSummary),
 	}),
 ]);

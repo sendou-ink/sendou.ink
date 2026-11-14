@@ -27,6 +27,20 @@
 	}
 }
 
+.guideLink {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+
+	& svg {
+		width: 14px;
+		height: 14px;
+		flex-shrink: 0;
+	}
+}
+
 /* the preview and its scenario next to the editor, stacked when narrow */
 .workspace {
 	display: grid;

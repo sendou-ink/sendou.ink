@@ -8,10 +8,7 @@ import * as EventBus from "~/features/events/core/EventBus.server";
 import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { logger } from "~/utils/logger";
 import * as BroadcastRepository from "../BroadcastRepository.server";
-import {
-	BROADCAST_TRANSITION_TIMING,
-	DEFAULT_BROADCAST_SETTINGS,
-} from "../broadcast-constants";
+import { DEFAULT_BROADCAST_SETTINGS } from "../broadcast-constants";
 import type {
 	BroadcastChannel,
 	BroadcastState,
@@ -206,24 +203,18 @@ describe("BroadcastHub auto-Take", () => {
 		expect(state.takeId).toBe(2);
 	});
 
-	test("cuts to the game the game delay after the scanner saw it start", async () => {
-		const gameDelayMs = 5_000;
+	test("cuts to the game as the scanner sees it start", async () => {
 		const key = await createBroadcast();
-		const build = storedBuild(key, { gameDelayMs });
+		const build = storedBuild(key);
 		connect({ ...key, build });
 		await vi.advanceTimersByTimeAsync(0);
 
 		await BroadcastHub.applyGameSignal({
 			...key,
 			layout: { producer: rules, build },
-			signal: { type: "start", agoMs: 0, inks: null },
+			signal: { type: "start", inks: null },
 		});
-		const cutAt = gameDelayMs - BROADCAST_TRANSITION_TIMING.stinger.outMs;
 
-		await vi.advanceTimersByTimeAsync(cutAt - 1);
-		expect((await storedState(key)).live.scene).toBe("rosters");
-
-		await vi.advanceTimersByTimeAsync(1);
 		expect((await storedState(key)).live.scene).toBe("game");
 	});
 });
@@ -312,11 +303,8 @@ function buildOf(state: BroadcastSnapshot.Snapshot<TestState>) {
 	return vi.fn(async () => built(state));
 }
 
-/** Builds the broadcast as stored like a scene set's layout does, with the settings given. */
-function storedBuild(
-	{ tournamentId }: { tournamentId: number },
-	settings: Partial<TestState["settings"]> = {},
-) {
+/** Builds the broadcast as stored like a scene set's layout does. */
+function storedBuild({ tournamentId }: { tournamentId: number }) {
 	return async () => {
 		const stored = await BroadcastSnapshot.stored({
 			tournamentId,
@@ -325,10 +313,7 @@ function storedBuild(
 			defaultSettings: DEFAULT_BROADCAST_SETTINGS,
 		});
 
-		return built(
-			snapshot(stored.state, { ...stored.settings, ...settings }),
-			tournamentId,
-		);
+		return built(snapshot(stored.state, stored.settings), tournamentId);
 	};
 }
 

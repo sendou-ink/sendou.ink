@@ -494,7 +494,6 @@ export function build({
 					resultCount: match.progress.live.resultCount,
 				}
 			: null,
-		gameCut: null,
 		scannedGame: mockScannedGame({ match, ink: scenario.ink }),
 		settings: {
 			...settings,

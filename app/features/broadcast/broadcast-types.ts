@@ -81,8 +81,6 @@ export interface BroadcastStoredState<
 	 * Other games, and every other scene, use the theme's team colors.
 	 */
 	ink: BroadcastGameInk | null;
-	/** The game start or end the staged item waits for, seen by the scanner but not cut to yet (see `Producer.autoTakeAt`). */
-	gameCut: BroadcastGameCut | null;
 	/** The last game the scanner read to its end, what the scenes after a game show of it. */
 	scannedGame: BroadcastScannedGame | null;
 }
@@ -92,12 +90,6 @@ export interface BroadcastScannedGame extends BroadcastGameSummary {
 	matchId: number;
 	/** Ink colors picked for the game when it ended, `null` when none were. */
 	ink: BroadcastInk | null;
-}
-
-/** A game starting or ending on the scanner's feed, `at` (epoch ms) when it did: where the cut to or from it belongs. */
-interface BroadcastGameCut {
-	type: "start" | "end";
-	at: number;
 }
 
 export interface LiveResults {
@@ -110,8 +102,6 @@ export interface BroadcastSettings {
 	/** Injected unlayered after the overlays' own styles. */
 	css: string;
 	weaponImages: BroadcastWeaponImages;
-	/** How much later the game shows in OBS than on the scanner's feed, the cuts to and from the game wait for it. */
-	gameDelayMs: number;
 }
 
 /** The cast account a broadcast is for. */
@@ -194,8 +184,6 @@ export interface BroadcastHealth {
 export type BroadcastGameSignal =
 	| {
 			type: "start";
-			/** How long before the signal was sent the game showed up on the scanner's feed. */
-			agoMs: number;
 			/** The teams' ink colors as read off the game's HUD, in no particular order. `null` when not read (yet). */
 			inks: [BroadcastInkRgb, BroadcastInkRgb] | null;
 	  }
@@ -203,8 +191,6 @@ export type BroadcastGameSignal =
 	| { type: "ink"; inks: [BroadcastInkRgb, BroadcastInkRgb] }
 	| {
 			type: "end";
-			/** How long before the signal was sent the game ended on the scanner's feed. */
-			agoMs: number;
 			/** What the scanner read of the game, `null` when it has nothing of it (e.g. a misread intro), which cuts nothing. */
 			summary: BroadcastGameSummary | null;
 	  };

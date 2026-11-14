@@ -70,10 +70,7 @@ import {
 	useClipSender,
 	useServerNow,
 } from "~/features/broadcast/broadcast-hooks";
-import {
-	broadcastGameDelayFormSchema,
-	broadcastThemeFormSchema,
-} from "~/features/broadcast/broadcast-schemas";
+import { broadcastThemeFormSchema } from "~/features/broadcast/broadcast-schemas";
 import type {
 	BroadcastAdvance,
 	BroadcastMatch,
@@ -189,7 +186,6 @@ export default function BroadcastDashboardPage() {
 	const canTake = Producer.canTake(CAST_PRODUCER_RULES, state, { hasMatch });
 	const autoTakeAt = Producer.autoTakeAt(CAST_PRODUCER_RULES, state, {
 		hasMatch,
-		gameDelayMs: state.settings.gameDelayMs,
 	});
 	const isAutoTakeImminent =
 		autoTakeAt !== null &&
@@ -695,7 +691,6 @@ function LiveTimer({
 			"timer" ||
 		Producer.autoTakeAt(CAST_PRODUCER_RULES, state, {
 			hasMatch: state.match !== null,
-			gameDelayMs: state.settings.gameDelayMs,
 		}) === null
 	) {
 		return null;
@@ -1463,19 +1458,6 @@ function HeadlineForm({ headline }: { headline: string }) {
 	);
 }
 
-function GameDelayForm({ gameDelayMs }: { gameDelayMs: number }) {
-	return (
-		<SendouForm
-			schema={broadcastGameDelayFormSchema}
-			defaultValues={{ gameDelayMs }}
-			submitButtonSize="small"
-			fullWidth
-		>
-			{({ FormField }) => <FormField name="gameDelayMs" />}
-		</SendouForm>
-	);
-}
-
 function CastersForm({ casterIds }: { casterIds: number[] }) {
 	return (
 		<SendouForm
@@ -1605,7 +1587,6 @@ function Setup({
 						? t("broadcast:dashboard.setup.unlinkScanner")
 						: t("broadcast:dashboard.setup.linkScanner")}
 				</SendouButton>
-				<GameDelayForm gameDelayMs={state.settings.gameDelayMs} />
 			</section>
 		</div>
 	);

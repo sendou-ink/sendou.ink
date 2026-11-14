@@ -183,13 +183,6 @@ export const action = defineAction(
 				});
 				break;
 			}
-			case "UPDATE_GAME_DELAY": {
-				await BroadcastRepository.updateSettings({
-					...key,
-					patch: { gameDelayMs: body.gameDelayMs },
-				});
-				break;
-			}
 			case "UPDATE_HEADLINE": {
 				await BroadcastRepository.updateSettings<CastBroadcastSettings>({
 					...key,

@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { ArrowLeft, Play } from "lucide-react";
+import { ArrowLeft, Play, SquareArrowOutUpRight } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
@@ -33,6 +33,7 @@ import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useLatestRef } from "~/hooks/useLatestRef";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { BROADCAST_OVERLAYS_DOC_LINK } from "~/utils/urls";
 import {
 	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_DESIGN_BEST_OF,
@@ -157,6 +158,15 @@ export default function BroadcastDesignPage() {
 					</h1>
 				</div>
 				<div className="stack horizontal sm items-center">
+					<a
+						href={BROADCAST_OVERLAYS_DOC_LINK}
+						className={styles.guideLink}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						{t("broadcast:design.guide")}
+						<SquareArrowOutUpRight />
+					</a>
 					{isDirty ? (
 						<span className="text-xs text-lighter">
 							{t("broadcast:design.unsaved")}

@@ -10,7 +10,6 @@
  * broadcast's stream open, which is how the dashboard knows a scanner is on.
  */
 import { useSyncExternalStore } from "react";
-import { BROADCAST_GAME_SIGNAL_MAX_AGO_MS } from "~/features/broadcast/broadcast-constants";
 import type {
 	BroadcastGameSignal,
 	BroadcastStreamMessage,
@@ -204,16 +203,9 @@ async function toSignal(cue: GameCues.GameCue): Promise<BroadcastGameSignal> {
 	if (cue.type === "ink") return cue;
 
 	const summary = cue.type === "end" ? await endedGameSummary(cue) : null;
-	const agoMs = Math.round(
-		Math.min(
-			Math.max(Date.now() - cue.t * 1000, 0),
-			BROADCAST_GAME_SIGNAL_MAX_AGO_MS,
-		),
-	);
-
 	return cue.type === "start"
-		? { type: "start", agoMs, inks: cue.inks }
-		: { type: "end", agoMs, summary };
+		? { type: "start", inks: cue.inks }
+		: { type: "end", summary };
 }
 
 /**

@@ -4,10 +4,7 @@ import {
 	BROADCAST_INK_COLORS,
 	BROADCAST_TRANSITIONS,
 } from "~/features/broadcast/broadcast-constants";
-import {
-	broadcastGameDelayFormSchema,
-	broadcastThemeFormSchema,
-} from "~/features/broadcast/broadcast-schemas";
+import { broadcastThemeFormSchema } from "~/features/broadcast/broadcast-schemas";
 import {
 	array,
 	stringConstant,
@@ -131,7 +128,6 @@ export const broadcastActionSchema = v.union([
 		resultCount: nonNegativeInteger,
 	}),
 	broadcastThemeFormSchema,
-	broadcastGameDelayFormSchema,
 	broadcastHeadlineFormSchema,
 	broadcastCastersFormSchema,
 ]);

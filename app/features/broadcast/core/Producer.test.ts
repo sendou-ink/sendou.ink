@@ -25,7 +25,6 @@ const clip = BROADCAST_PROTOTYPE_CLIPS[0];
 
 const TAKEN_AT = 1_000_000;
 const NOW = 2_000_000;
-const STINGER_OUT_MS = 704;
 
 const item = (
 	id: number,
@@ -49,13 +48,11 @@ const stateWith = ({
 	next = item(2),
 	queue = [],
 	takenAt = TAKEN_AT,
-	gameCut = null,
 }: {
 	live?: CastProducerState;
 	next?: CastProducerState;
 	queue?: CastProducerState[];
 	takenAt?: number | null;
-	gameCut?: BroadcastStoredState["gameCut"];
 }): BroadcastStoredState<CastProducerState> => ({
 	takeId: 3,
 	takenAt,
@@ -65,7 +62,6 @@ const stateWith = ({
 	lastItemId: Math.max(live.id, next.id, ...queue.map((queued) => queued.id)),
 	liveResults: null,
 	ink,
-	gameCut,
 	scannedGame: null,
 });
 
@@ -107,7 +103,6 @@ describe("Producer.take", () => {
 			lastItemId: 3,
 			liveResults: { matchId: 1, count: 2 },
 			ink,
-			gameCut: null,
 			scannedGame: null,
 		});
 	});
@@ -162,13 +157,6 @@ describe("Producer.take", () => {
 		);
 
 		expect(taken.next).toMatchObject({ scene: "game", advance: "take" });
-		expect(
-			Producer.autoTakeAt(
-				rules,
-				{ ...taken, gameCut: { type: "start", at: NOW } },
-				{ hasMatch: true, gameDelayMs: 0 },
-			),
-		).toBeNull();
 	});
 });
 
@@ -204,9 +192,9 @@ describe("Producer.autoTakeAt", () => {
 		});
 
 		expect(Producer.liveEndsAt(rules, state)).toBe(TAKEN_AT + clip.durationMs);
-		expect(
-			Producer.autoTakeAt(rules, state, { hasMatch: true, gameDelayMs: 0 }),
-		).toBe(TAKEN_AT + clip.durationMs - 704);
+		expect(Producer.autoTakeAt(rules, state, { hasMatch: true })).toBe(
+			TAKEN_AT + clip.durationMs - 704,
+		);
 	});
 
 	test("counts the scene's length from the stinger revealing it", () => {
@@ -219,9 +207,9 @@ describe("Producer.autoTakeAt", () => {
 			next: item(2, { transition: "cut" }),
 		});
 
-		expect(
-			Producer.autoTakeAt(rules, state, { hasMatch: true, gameDelayMs: 0 }),
-		).toBe(TAKEN_AT + 704 + 15_000);
+		expect(Producer.autoTakeAt(rules, state, { hasMatch: true })).toBe(
+			TAKEN_AT + 704 + 15_000,
+		);
 	});
 
 	test.each([
@@ -235,6 +223,10 @@ describe("Producer.autoTakeAt", () => {
 				live: item(1, { scene: "bracket", durationMs: 15_000 }),
 				next: item(2, { advance: "take" }),
 			}),
+		},
+		{
+			why: "next waits for the game",
+			state: stateWith({ next: item(2, { advance: "game" }) }),
 		},
 		{
 			why: "nothing was taken yet",
@@ -252,34 +244,7 @@ describe("Producer.autoTakeAt", () => {
 			hasMatch: false,
 		},
 	])("is null when $why", ({ state, hasMatch = true }) => {
-		expect(
-			Producer.autoTakeAt(rules, state, { hasMatch, gameDelayMs: 0 }),
-		).toBeNull();
-	});
-
-	test("lands the transition where the game started on the scanner's feed, later by the game delay", () => {
-		const state = stateWith({
-			next: item(2, { advance: "game" }),
-			gameCut: { type: "start", at: NOW },
-		});
-
-		expect(
-			Producer.autoTakeAt(rules, state, { hasMatch: true, gameDelayMs: 5_000 }),
-		).toBe(NOW + 5_000 - STINGER_OUT_MS);
-	});
-
-	test.each([
-		{ why: "the game wasn't seen", gameCut: null },
-		{
-			why: "the game was seen ending, not starting",
-			gameCut: { type: "end", at: NOW } as const,
-		},
-	])("waits for the game start when $why", ({ gameCut }) => {
-		const state = stateWith({ next: item(2, { advance: "game" }), gameCut });
-
-		expect(
-			Producer.autoTakeAt(rules, state, { hasMatch: true, gameDelayMs: 0 }),
-		).toBeNull();
+		expect(Producer.autoTakeAt(rules, state, { hasMatch })).toBeNull();
 	});
 });
 
@@ -375,10 +340,9 @@ describe("Producer.applyGameSignal", () => {
 			rules,
 			stateWith({ next: item(2, { advance: "game" }) }),
 			{
-				signal: { type: "start", agoMs: 0, inks: greenPink },
+				signal: { type: "start", inks: greenPink },
 				liveResults,
 				now: 5,
-				gameDelayMs: 0,
 			},
 		);
 
@@ -399,10 +363,9 @@ describe("Producer.applyGameSignal", () => {
 		};
 
 		const applied = Producer.applyGameSignal(rules, state, {
-			signal: { type: "start", agoMs: 0, inks: greenPink },
+			signal: { type: "start", inks: greenPink },
 			liveResults,
 			now: 5,
-			gameDelayMs: 0,
 		});
 
 		expect(applied?.ink?.isFlipped).toBe(true);
@@ -416,10 +379,9 @@ describe("Producer.applyGameSignal", () => {
 				next: item(2, { scene: "results", advance: "game" }),
 			}),
 			{
-				signal: { type: "end", agoMs: 0, summary },
+				signal: { type: "end", summary },
 				liveResults,
 				now: 5,
-				gameDelayMs: 0,
 			},
 		);
 
@@ -436,10 +398,9 @@ describe("Producer.applyGameSignal", () => {
 			rules,
 			{ ...stateWith({}), ink: { ...ink, resultCount: 2 } },
 			{
-				signal: { type: "end", agoMs: 0, summary },
+				signal: { type: "end", summary },
 				liveResults,
 				now: 5,
-				gameDelayMs: 0,
 			},
 		);
 
@@ -457,10 +418,9 @@ describe("Producer.applyGameSignal", () => {
 				next: item(2, { scene: "maps", advance: "game" }),
 			}),
 			{
-				signal: { type: "end", agoMs: 0, summary: null },
+				signal: { type: "end", summary: null },
 				liveResults,
 				now: 5,
-				gameDelayMs: 0,
 			},
 		);
 
@@ -469,10 +429,9 @@ describe("Producer.applyGameSignal", () => {
 
 	test("leaves what was read of a game without a match out", () => {
 		const applied = Producer.applyGameSignal(rules, stateWith({}), {
-			signal: { type: "end", agoMs: 0, summary },
+			signal: { type: "end", summary },
 			liveResults: null,
 			now: 5,
-			gameDelayMs: 0,
 		});
 
 		expect(applied).toBeNull();
@@ -482,10 +441,9 @@ describe("Producer.applyGameSignal", () => {
 		const state = stateWith({ next: item(2, { advance: "take" }) });
 
 		const applied = Producer.applyGameSignal(rules, state, {
-			signal: { type: "start", agoMs: 0, inks: greenPink },
+			signal: { type: "start", inks: greenPink },
 			liveResults,
 			now: 5,
-			gameDelayMs: 0,
 		});
 
 		expect(applied?.live.id).toBe(1);
@@ -500,10 +458,9 @@ describe("Producer.applyGameSignal", () => {
 				next: item(2, { scene: "results", advance: "game" }),
 			}),
 			{
-				signal: { type: "end", agoMs: 0, summary },
+				signal: { type: "end", summary },
 				liveResults: null,
 				now: 5,
-				gameDelayMs: 0,
 			},
 		);
 
@@ -518,10 +475,9 @@ describe("Producer.applyGameSignal", () => {
 				next: item(2, { scene: "maps", advance: "game" }),
 			}),
 			{
-				signal: { type: "end", agoMs: 0, summary },
+				signal: { type: "end", summary },
 				liveResults,
 				now: 5,
-				gameDelayMs: 0,
 			},
 		);
 
@@ -529,36 +485,19 @@ describe("Producer.applyGameSignal", () => {
 		expect(applied?.next).toMatchObject({ scene: "game", advance: "game" });
 	});
 
-	test("keeps a game start to cut to once the game delay has passed", () => {
+	test("puts the game on air as soon as it starts", () => {
 		const applied = Producer.applyGameSignal(
 			rules,
 			stateWith({ next: item(2, { advance: "game" }) }),
 			{
-				signal: { type: "start", agoMs: 1_000, inks: null },
+				signal: { type: "start", inks: null },
 				liveResults,
 				now: NOW,
-				gameDelayMs: 5_000,
-			},
-		);
-
-		expect(applied?.live.id).toBe(1);
-		expect(applied?.gameCut).toEqual({ type: "start", at: NOW - 1_000 });
-	});
-
-	test("puts the game on air right away once the game delay has passed by the time it's seen", () => {
-		const applied = Producer.applyGameSignal(
-			rules,
-			stateWith({ next: item(2, { advance: "game" }) }),
-			{
-				signal: { type: "start", agoMs: 6_000, inks: null },
-				liveResults,
-				now: NOW,
-				gameDelayMs: 5_000,
 			},
 		);
 
 		expect(applied?.live.id).toBe(2);
-		expect(applied?.gameCut).toBeNull();
+		expect(applied?.takenAt).toBe(NOW);
 	});
 
 	test("colors the game on air with the ink read after it started", () => {
@@ -572,7 +511,6 @@ describe("Producer.applyGameSignal", () => {
 				signal: { type: "ink", inks: greenPink },
 				liveResults,
 				now: 5,
-				gameDelayMs: 0,
 			},
 		);
 
@@ -584,7 +522,7 @@ describe("Producer.applyGameSignal", () => {
 		{
 			why: "the game ending while a game is staged",
 			state: stateWith({ next: item(2, { advance: "game" }) }),
-			signal: { type: "end", agoMs: 0, summary: null } as const,
+			signal: { type: "end", summary: null } as const,
 		},
 		{
 			why: "the game starting without ink read while a game is on air",
@@ -592,7 +530,7 @@ describe("Producer.applyGameSignal", () => {
 				live: item(1, { scene: "game" }),
 				next: item(2, { scene: "maps", advance: "game" }),
 			}),
-			signal: { type: "start", agoMs: 0, inks: null } as const,
+			signal: { type: "start", inks: null } as const,
 		},
 	])("is null for $why", ({ state, signal }) => {
 		expect(
@@ -600,7 +538,6 @@ describe("Producer.applyGameSignal", () => {
 				signal,
 				liveResults,
 				now: 5,
-				gameDelayMs: 0,
 			}),
 		).toBeNull();
 	});
