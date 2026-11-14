@@ -1008,6 +1008,16 @@ The GPU is an accelerator only: the same algorithms make the same decisions.
   `--cpu`, against `runSync` (0 mismatches is the bar for any kernel change),
   and `scanner:gpu-parity` requires byte-identical events from both paths on
   every fixture.
+- **What it buys** (measured 2026-11-14, M5 Pro, Playwright's Chromium on
+  Metal, browser VoD scans of 10 min slices, two runs each way within 1 s of
+  each other): wall-clock with the GPU on vs off, 4 lanes: H.264 1080p60
+  18.6 vs 25.5 s (-27%), AV1 1080p60 18.3 vs 25.7 s (-29%), H.264 720p60 OBS
+  recordings 12.5 vs 15.6 s (-20%) and 17.1 vs 22.9 s (-25%), VP9 1080p60
+  37.8 vs 40.6 s (-7%: software decode is the cap there). With 2 lanes (a
+  4-core machine) -31% and -22%. Parse time falls 2-4x per detector
+  (objective, the largest, about 2x); gates, decode and readback are
+  unchanged, which is what is left. Same match cards both ways. So the GPU
+  path stays: removing it would make a typical scan a quarter to a third slower.
 
 ## Assets (CDN) and fonts
 
