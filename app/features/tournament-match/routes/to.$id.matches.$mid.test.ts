@@ -1,6 +1,8 @@
+import * as R from "remeda";
 import type * as v from "valibot";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentMatchStationFactory from "~/db/seed/factories/TournamentMatchStationFactory";
 import * as TournamentStaffFactory from "~/db/seed/factories/TournamentStaffFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -11,6 +13,7 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import type { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import { createStartedLanTournament } from "~/features/tournament-stations/tests/fixtures";
 import { cache } from "~/utils/cache.server";
 import type { SerializeFrom } from "~/utils/remix";
 import {
@@ -812,5 +815,59 @@ describe("Round robin match page with team picked maps", () => {
 		expect(await recentlyPlayedCount(openedBeforeRoundOne)).toBe(
 			await recentlyPlayedCount(openedAfterRoundOne),
 		);
+	});
+});
+
+const lanUsers = UserFactory.pool();
+
+describe("LAN match page", () => {
+	beforeEach(async () => {
+		await lanUsers.create(17);
+	});
+
+	const createLan = () =>
+		createStartedLanTournament({
+			authorId: lanUsers.id(1),
+			teamRosters: R.chunk(lanUsers.ids().slice(1), 4),
+			stationNames: ["Station 1"],
+			autoAssign: false,
+		});
+
+	const loadLanMatch = (lanTournamentId: number, lanMatchId: number) =>
+		tournamentMatchLoader({
+			params: { id: String(lanTournamentId), mid: String(lanMatchId) },
+		});
+
+	test("shows the station the match is queued on and when it's expected to start, unless it's first in the queue", async () => {
+		const {
+			tournamentId: lanTournamentId,
+			stationIds: [stationId],
+			semifinalIds,
+		} = await createLan();
+		for (const semifinalId of semifinalIds) {
+			await TournamentMatchStationFactory.create({
+				matchId: semifinalId,
+				stationId,
+			});
+		}
+
+		const first = await loadLanMatch(lanTournamentId, semifinalIds[0]);
+		const second = await loadLanMatch(lanTournamentId, semifinalIds[1]);
+
+		expect(first.station?.shortName).toBe("1");
+		expect(second.station?.name).toBe("Station 1");
+		// first in the station's queue, no countdown to it
+		expect(first.eta).toBeNull();
+		// played after the first semifinal on the lone station
+		expect(second.eta!.earliest).toBeGreaterThan(Date.now());
+	});
+
+	test("shows no station for a match on none", async () => {
+		const { tournamentId: lanTournamentId, semifinalIds } = await createLan();
+
+		const data = await loadLanMatch(lanTournamentId, semifinalIds[0]);
+
+		expect(data.station).toBeNull();
+		expect(data.eta).not.toBeNull();
 	});
 });

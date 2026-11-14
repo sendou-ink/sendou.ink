@@ -47,3 +47,23 @@
 		}
 	}
 }
+
+.matchStation {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	margin-block-start: var(--s-2);
+	font-size: var(--font-sm);
+}
+
+.matchStationRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+
+	& svg {
+		flex-shrink: 0;
+		width: 1.1em;
+		height: 1.1em;
+	}
+}

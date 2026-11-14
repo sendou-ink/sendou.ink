@@ -28,6 +28,7 @@ import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import { useTournament } from "~/features/tournament/tournament-context";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import { useStartsInText } from "~/features/tournament-stations/tournament-stations-hooks";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import type { ModeShort } from "~/modules/in-game-lists/types";
@@ -57,6 +58,7 @@ export function TournamentMatchBanner({
 		minute: "2-digit",
 	});
 	const tournament = useTournament();
+	const startsIn = useStartsInText(data.eta);
 	const {
 		currentMap,
 		teamsMissingActiveRoster,
@@ -110,6 +112,11 @@ export function TournamentMatchBanner({
 			? !data.noScreen
 			: undefined;
 
+	// players of a LAN meet at the station, no room to join
+	const joinInfo = tournament.isLan
+		? { station: data.station, startsIn }
+		: { joinPool, joinPass, host };
+
 	const activeRosterByTeamId = (tournamentTeamId: number) => {
 		const team = teams.find((candidate) => candidate?.id === tournamentTeamId);
 		if (!team) return null;
@@ -147,6 +154,7 @@ export function TournamentMatchBanner({
 				)
 			) : schedule.phase === "NOT_OPEN" ? (
 				<IconBanner
+					{...joinInfo}
 					icon={<CalendarClock size={32} />}
 					header={t("tournament:match.schedule.notOpen.header")}
 					subtitle={t("tournament:match.schedule.notOpen.subtitle", {
@@ -158,6 +166,7 @@ export function TournamentMatchBanner({
 				/>
 			) : schedule.phase === "UNSCHEDULED" ? (
 				<IconBanner
+					{...joinInfo}
 					icon={<CalendarClock size={32} />}
 					header={t("tournament:match.schedule.unscheduled.header")}
 					subtitle={t("tournament:match.schedule.unscheduled.subtitle")}
@@ -165,6 +174,7 @@ export function TournamentMatchBanner({
 				/>
 			) : schedule.phase === "SCHEDULED_LOCKED" && schedule.scheduledAt ? (
 				<IconBanner
+					{...joinInfo}
 					icon={<Lock size={32} />}
 					header={scheduleFormatter.format(
 						databaseTimestampToDate(schedule.scheduledAt),
@@ -181,61 +191,52 @@ export function TournamentMatchBanner({
 				/>
 			) : matchIsLocked ? (
 				<IconBanner
+					{...joinInfo}
 					icon={<Lock size={32} />}
 					header={t("tournament:match.locked.header")}
 					subtitle={t("tournament:match.locked.subtitle")}
 					screenLegal={screenLegal}
-					joinPool={joinPool}
-					joinPass={joinPass}
-					host={host}
 				/>
 			) : isMissingTeam ? (
 				<IconBanner
+					{...joinInfo}
 					icon={<Hourglass size={32} />}
 					header={t("tournament:match.waitingForTeams.header")}
 					subtitle={t("tournament:match.waitingForTeams.subtitle")}
 				/>
 			) : waitingForPreviousMatch ? (
 				<IconBanner
+					{...joinInfo}
 					icon={<Hourglass size={32} />}
 					header={t("tournament:match.waitingForPrevious.header")}
 					subtitle={t("tournament:match.waitingForPrevious.subtitle")}
 					screenLegal={screenLegal}
-					joinPool={joinPool}
-					joinPass={joinPass}
-					host={host}
 				/>
 			) : teamsMissingActiveRoster.length > 0 ? (
 				<IconBanner
+					{...joinInfo}
 					icon={<Users size={32} />}
 					header={t("tournament:match.activeRosterMissing.header")}
 					subtitle={t("tournament:match.activeRosterMissing.subtitle", {
 						teams: teamsMissingActiveRoster.join(" & "),
 					})}
 					screenLegal={screenLegal}
-					joinPool={joinPool}
-					joinPass={joinPass}
-					host={host}
 					testId="active-roster-needed-text"
 				/>
 			) : pickBanBanner ? (
 				<IconBanner
+					{...joinInfo}
 					icon={pickBanBanner.icon}
 					header={pickBanBanner.header}
 					subtitle={pickBanBanner.subtitle}
 					screenLegal={screenLegal}
-					joinPool={joinPool}
-					joinPass={joinPass}
-					host={host}
 				/>
 			) : currentMap ? (
 				<MatchBanner
+					{...joinInfo}
 					stageId={currentMap.stageId}
 					mode={currentMap.mode}
 					screenLegal={screenLegal}
-					joinPool={joinPool}
-					joinPass={joinPass}
-					host={host}
 				>
 					<CurrentMapPickInfo
 						source={currentMap.source}
@@ -319,7 +320,7 @@ function TournamentMatchBannerTopRow({
 		<MatchBannerTopRow score={score}>
 			{data.matchIsOver ? (
 				<MatchBannerStartedAt time={startedAt} endTime={endedAt} />
-			) : (
+			) : tournament.isLan ? null : (
 				<MatchBannerTimer time={{ currentMinutes, totalMinutes }} />
 			)}
 		</MatchBannerTopRow>

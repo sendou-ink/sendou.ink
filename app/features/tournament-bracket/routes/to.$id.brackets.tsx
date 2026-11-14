@@ -36,6 +36,8 @@ import {
 	TournamentProvider,
 	useTournament,
 } from "~/features/tournament/tournament-context";
+import { MatchStationsProvider } from "~/features/tournament-stations/match-stations-context";
+import { tournamentStationsChannel } from "~/features/tournament-stations/tournament-stations-utils";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useSearchParam } from "~/modules/search-params/hooks";
@@ -89,7 +91,9 @@ export default function TournamentBracketsPage() {
 
 	return (
 		<TournamentProvider tournament={tournament}>
-			<TournamentBracketsView />
+			<MatchStationsProvider value={data.matchStations}>
+				<TournamentBracketsView />
+			</MatchStationsProvider>
 		</TournamentProvider>
 	);
 }
@@ -119,6 +123,10 @@ function TournamentBracketsView() {
 			groupId: data.groupId,
 		}),
 		!tournament.ctx.isFinalized,
+	);
+	useTopicRevalidation(
+		tournamentStationsChannel(tournament.ctx.id),
+		tournament.isLan && !tournament.ctx.isFinalized,
 	);
 
 	// "WAITING_FOR_BRACKET" so that the team is also told ahead of time when the check-in opens

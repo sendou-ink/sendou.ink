@@ -7,8 +7,7 @@ import {
 	tournamentChannel,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as StationsBoard from "~/features/tournament-stations/core/StationsBoard";
-import { tournamentEtas } from "~/features/tournament-stations/core/tournamentEtas.server";
-import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
+import { tournamentStationsState } from "~/features/tournament-stations/core/tournamentStationsState.server";
 import { tournamentStationsChannel } from "~/features/tournament-stations/tournament-stations-utils";
 import { tournamentPage } from "~/utils/urls";
 
@@ -28,15 +27,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		throw redirect(tournamentPage(tournamentId));
 	}
 
+	const state = await tournamentStationsState(tournament);
 	const board = StationsBoard.build({
 		tournament,
-		stations:
-			await TournamentStationRepository.findAllByTournamentId(tournamentId),
-		placements:
-			await TournamentStationRepository.findMatchPlacementsByTournamentId(
-				tournamentId,
-			),
-		matchStarts: (await tournamentEtas(tournament))?.matchStarts ?? new Map(),
+		stations: state?.stations ?? [],
+		placements: state?.placements ?? [],
+		matchStarts: state?.etas.matchStarts ?? new Map(),
 		now: Date.now(),
 	});
 

@@ -10,6 +10,10 @@ import type {
 } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import { showsOneGroupAtATime } from "~/features/tournament-bracket/tournament-bracket-utils";
+import {
+	type TournamentStationsState,
+	tournamentStationsState,
+} from "~/features/tournament-stations/core/tournamentStationsState.server";
 import * as UserActivity from "~/features/user-activity/core/UserActivity.server";
 import {
 	lobbyPage,
@@ -50,7 +54,7 @@ export async function resolveGlobalStatus(
 
 	return (
 		(await resolveSendouQStatus(activity)) ??
-		resolveTournamentStatus(activity) ??
+		(await resolveTournamentStatus(activity)) ??
 		resolveLobbyStatus(activity) ??
 		(await resolvePendingCheckInStatus(userId))
 	);
@@ -146,9 +150,9 @@ async function resolveSendouQMatchStatus(
 	};
 }
 
-function resolveTournamentStatus(
+async function resolveTournamentStatus(
 	activity: UserActivity.UserActivity,
-): GlobalStatus | null {
+): Promise<GlobalStatus | null> {
 	const relevant = activity.tournaments.filter(
 		(entry) => UserActivity.TOURNAMENT_STATUS_IS_IN_PROGRESS[entry.status.type],
 	);
@@ -165,6 +169,8 @@ function resolveTournamentStatus(
 	const tournamentName = tournament.ctx.name;
 	const roundName = (matchId: number) =>
 		tournament.matchContextNamesById(matchId).roundName;
+	const stationsState = await tournamentStationsState(tournament);
+	const lan = (matchId: number) => lanMatchInfo(stationsState, matchId);
 
 	switch (status.type) {
 		case "MATCH":
@@ -174,6 +180,7 @@ function resolveTournamentStatus(
 				logoUrl,
 				tournamentName,
 				roundName: roundName(status.matchId),
+				...lan(status.matchId),
 			};
 		case "CHECKIN":
 			if ("bracketIdx" in status) {
@@ -202,6 +209,7 @@ function resolveTournamentStatus(
 				logoUrl,
 				tournamentName,
 				roundName: roundName(status.matchId),
+				...lan(status.matchId),
 			};
 		case "WAITING_FOR_MATCH":
 			return {
@@ -210,6 +218,7 @@ function resolveTournamentStatus(
 				logoUrl,
 				tournamentName,
 				roundName: roundName(status.matchId),
+				...lan(status.matchId),
 			};
 		default:
 			return {
@@ -219,6 +228,26 @@ function resolveTournamentStatus(
 				tournamentName,
 			};
 	}
+}
+
+function lanMatchInfo(
+	state: TournamentStationsState | null,
+	matchId: number,
+): Pick<GlobalStatus, "station" | "eta"> {
+	if (!state) return {};
+
+	const station = state.stationByMatchId.get(matchId);
+	const eta = state.etas.matchStarts.get(matchId);
+
+	return {
+		station: station
+			? { name: station.name, locationNote: station.locationNote }
+			: undefined,
+		eta:
+			eta && !station?.isFirstInQueue
+				? { earliest: eta.earliest, latest: eta.latest }
+				: undefined,
+	};
 }
 
 function waitedMatchLink(

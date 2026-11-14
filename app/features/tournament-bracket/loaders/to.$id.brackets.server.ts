@@ -1,5 +1,7 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
+import type * as MatchStations from "~/features/tournament-stations/core/MatchStations";
+import { tournamentStationsState } from "~/features/tournament-stations/core/tournamentStationsState.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { tournamentDivisionsPage } from "~/utils/urls";
 import type { Bracket } from "../core/Bracket";
@@ -69,8 +71,27 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		teamProgressStatus: tournament.teamMemberOfProgressStatus(user),
 		// the match cards' LIVE badges need these, also not shipped by the layout
 		streams: tournament.streams,
+		matchStations: await resolveMatchStations(tournament, bracket),
 	};
 };
+
+/** Stations the bracket's unfinished matches are queued on (LAN only), for the match cards' station chips. */
+async function resolveMatchStations(
+	tournament: Tournament,
+	bracket: Bracket | null,
+): Promise<Partial<Record<number, MatchStations.MatchStation>>> {
+	if (!bracket || bracket.preview) return {};
+
+	const state = await tournamentStationsState(tournament);
+	if (!state) return {};
+
+	return Object.fromEntries(
+		bracket.data.match.flatMap((match) => {
+			const station = state.stationByMatchId.get(match.id);
+			return station ? [[match.id, station]] : [];
+		}),
+	);
+}
 
 /** Falls back to the selected bracket's division, so a link to one bracket works without naming it. */
 function resolveDivisionIdx(

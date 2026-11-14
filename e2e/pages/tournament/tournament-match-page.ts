@@ -42,6 +42,8 @@ export class TournamentMatchPage {
 			stageBanner: page.getByTestId("stage-banner"),
 			finalBanner: page.getByTestId("match-final"),
 			matchTimer: page.getByTestId("match-timer"),
+			station: page.getByTestId("match-station"),
+			eta: page.getByTestId("match-eta"),
 			screenBanned: page.getByTestId("screen-banned"),
 			screenAllowed: page.getByTestId("screen-allowed"),
 			unlockButton: page.getByRole("button", { name: "Unlock" }),

@@ -23,4 +23,9 @@ export class TopRightButtons {
 	globalStatus(text: string) {
 		return this.page.getByRole("banner").getByRole("button", { name: text });
 	}
+
+	/** Station and estimated start of the tournament match in the opened status panel. */
+	get globalStatusStation() {
+		return this.page.getByTestId("status-match-station");
+	}
 }

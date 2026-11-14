@@ -101,6 +101,8 @@
 	"match.groupBravo": "Group Bravo",
 	"match.pool": "Pool",
 	"match.password.short": "Pass",
+	"match.station": "Station",
+	"match.startsIn": "Starts in",
 	"match.cancelMatch": "Cancel match",
 	"match.canceled": "Match canceled",
 	"match.canceled.detail": "Set was canceled as requested by {{requester}} and accepted by {{accepter}}",

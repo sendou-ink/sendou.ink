@@ -3,6 +3,7 @@ import { containerClassName } from "~/components/Main";
 import { MatchPage } from "~/components/match-page/MatchPage";
 import { useTopicRevalidation } from "~/features/chat/chat-hooks";
 import { useTournament } from "~/features/tournament/tournament-context";
+import { tournamentStationsChannel } from "~/features/tournament-stations/tournament-stations-utils";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { action } from "../actions/to.$id.matches.$mid.server";
 import { TournamentMatchBanner } from "../components/TournamentMatchBanner";
@@ -25,6 +26,10 @@ export default function TournamentMatchPage() {
 	useTopicRevalidation(
 		tournamentMatchChannel(data.match.id),
 		!tournament.ctx.isFinalized,
+	);
+	useTopicRevalidation(
+		tournamentStationsChannel(tournament.ctx.id),
+		tournament.isLan && !tournament.ctx.isFinalized && !data.matchIsOver,
 	);
 
 	return (

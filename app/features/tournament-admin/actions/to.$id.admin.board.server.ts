@@ -1,11 +1,9 @@
-import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
 import { autoAssignStations } from "~/features/tournament-stations/core/autoAssignStations.server";
+import { notifyStationsChanged } from "~/features/tournament-stations/core/notifyStationsChanged.server";
 import * as StationsBoard from "~/features/tournament-stations/core/StationsBoard";
-import { clearTournamentEtasCache } from "~/features/tournament-stations/core/tournamentEtas.server";
 import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
 import { stationsBoardActionSchema } from "~/features/tournament-stations/tournament-stations-schemas";
-import { tournamentStationsChannel } from "~/features/tournament-stations/tournament-stations-utils";
 import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 
@@ -51,10 +49,7 @@ export const action = defineAction(
 			},
 		});
 
-		clearTournamentEtasCache(tournamentId);
-		ChatSystemMessage.send({
-			channel: tournamentStationsChannel(tournamentId),
-		});
+		notifyStationsChanged({ tournament, matchIds: [body.matchId] });
 		await autoAssignStations(tournament);
 
 		return null;

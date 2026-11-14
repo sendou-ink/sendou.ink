@@ -6,8 +6,9 @@
 import type { Tables } from "~/db/tables";
 import type { MatchStatus } from "~/features/tournament-bracket/core/engine/status";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import * as EtaSimulation from "./EtaSimulation";
+import type * as EtaSimulation from "./EtaSimulation";
 import * as PlayOrder from "./PlayOrder";
+import * as StartsIn from "./StartsIn";
 
 /** A match as shown on the stations board. */
 export interface StationsBoardMatch {
@@ -86,7 +87,7 @@ export function build({
 
 		return match.slot === "NOW" || !range
 			? null
-			: EtaSimulation.minutesFromNow(range, now);
+			: StartsIn.minutesFromNow(range, now);
 	};
 
 	return {

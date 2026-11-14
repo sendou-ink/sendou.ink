@@ -137,6 +137,14 @@
 	letter-spacing: 1px;
 }
 
+.joinInfoButton {
+	height: auto;
+	padding: 0;
+	color: inherit;
+	line-height: inherit;
+	text-transform: uppercase;
+}
+
 .infoBadge {
 	display: flex;
 	gap: var(--s-1-5);

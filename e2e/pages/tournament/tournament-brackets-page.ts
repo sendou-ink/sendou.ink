@@ -88,6 +88,14 @@ export class TournamentBracketsPage {
 		return this.page.locator(`[data-match-id="${matchId}"]`);
 	}
 
+	/** The station chip of a LAN match card, shown in place of its timer. */
+	matchStation(matchId: number) {
+		return this.page
+			.getByTestId("match-wrapper")
+			.filter({ has: this.match(matchId) })
+			.getByTestId("bracket-match-station");
+	}
+
 	/**
 	 * Scrolls the match close to the top left of the bracket's own scroll container, or of the page below the header
 	 * when the bracket has none: a spot no automatic scroll lands on.

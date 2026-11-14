@@ -21,6 +21,14 @@ interface BannerHost {
 	avatarUrl?: string;
 }
 
+/** Station of a LAN tournament the match is played on. */
+interface BannerStation {
+	/** E.g. "3" for "Station 3". */
+	shortName: string;
+	name: string;
+	locationNote: string | null;
+}
+
 export function MatchBannerContainer({
 	children,
 }: {
@@ -36,6 +44,9 @@ interface MatchBannerProps {
 	joinPool?: string | null;
 	joinPass?: string | null;
 	host?: BannerHost | null;
+	station?: BannerStation | null;
+	/** Estimated time until the match starts e.g. "~15–25 min". */
+	startsIn?: string | null;
 	children?: React.ReactNode;
 }
 
@@ -46,6 +57,8 @@ export function MatchBanner({
 	joinPool,
 	joinPass,
 	host,
+	station,
+	startsIn,
 	children,
 }: MatchBannerProps) {
 	const { t } = useTranslation(["game-misc", "common"]);
@@ -98,8 +111,14 @@ export function MatchBanner({
 				{children}
 			</div>
 
-			{joinPool ? (
-				<JoinInfo pool={joinPool} pass={joinPass} host={host} />
+			{joinPool || station || startsIn ? (
+				<JoinInfo
+					pool={joinPool}
+					pass={joinPass}
+					host={host}
+					station={station}
+					startsIn={startsIn}
+				/>
 			) : null}
 			{screenLegal !== undefined ? (
 				<ScreenNotice screenLegal={screenLegal} />
@@ -144,6 +163,9 @@ interface IconBannerProps {
 	joinPool?: string | null;
 	joinPass?: string | null;
 	host?: BannerHost | null;
+	station?: BannerStation | null;
+	/** Estimated time until the match starts e.g. "~15–25 min". */
+	startsIn?: string | null;
 	topRight?: React.ReactNode;
 	testId?: string;
 }
@@ -156,6 +178,8 @@ export function IconBanner({
 	joinPool,
 	joinPass,
 	host,
+	station,
+	startsIn,
 	topRight,
 	testId,
 }: IconBannerProps) {
@@ -166,8 +190,14 @@ export function IconBanner({
 			{subtitle ? (
 				<div className={styles.iconBannerSubtitle}>{subtitle}</div>
 			) : null}
-			{joinPool ? (
-				<JoinInfo pool={joinPool} pass={joinPass} host={host} />
+			{joinPool || station || startsIn ? (
+				<JoinInfo
+					pool={joinPool}
+					pass={joinPass}
+					host={host}
+					station={station}
+					startsIn={startsIn}
+				/>
 			) : null}
 			{screenLegal !== undefined ? (
 				<ScreenNotice screenLegal={screenLegal} />
@@ -183,19 +213,58 @@ function JoinInfo({
 	pool,
 	pass,
 	host,
+	station,
+	startsIn,
 }: {
-	pool: string;
+	pool?: string | null;
 	pass?: string | null;
 	host?: BannerHost | null;
+	station?: BannerStation | null;
+	startsIn?: string | null;
 }) {
 	const { t } = useTranslation(["q", "common"]);
 
 	return (
 		<div className={styles.joinInfo}>
-			<div className={styles.joinInfoItem}>
-				<div className={styles.joinInfoLabel}>{t("q:match.pool")}</div>
-				<div className={styles.joinInfoValue}>{pool}</div>
-			</div>
+			{station ? (
+				<div className={styles.joinInfoItem}>
+					<div className={styles.joinInfoLabel}>{t("q:match.station")}</div>
+					<SendouPopover
+						trigger={
+							<SendouButton
+								variant="minimal"
+								className={clsx(styles.joinInfoValue, styles.joinInfoButton)}
+								testId="match-station"
+							>
+								{station.shortName}
+							</SendouButton>
+						}
+					>
+						<div className="stack xs">
+							<div className="font-bold">{station.name}</div>
+							{station.locationNote ? (
+								<div className="text-sm text-lighter">
+									{station.locationNote}
+								</div>
+							) : null}
+						</div>
+					</SendouPopover>
+				</div>
+			) : null}
+			{startsIn ? (
+				<div className={styles.joinInfoItem}>
+					<div className={styles.joinInfoLabel}>{t("q:match.startsIn")}</div>
+					<div className={styles.joinInfoValue} data-testid="match-eta">
+						{startsIn}
+					</div>
+				</div>
+			) : null}
+			{pool ? (
+				<div className={styles.joinInfoItem}>
+					<div className={styles.joinInfoLabel}>{t("q:match.pool")}</div>
+					<div className={styles.joinInfoValue}>{pool}</div>
+				</div>
+			) : null}
 			{pass ? (
 				<div className={styles.joinInfoItem}>
 					<div className={styles.joinInfoLabel}>

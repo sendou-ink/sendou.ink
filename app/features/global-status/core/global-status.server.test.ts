@@ -1,4 +1,5 @@
 import { addHours, addMinutes, subHours, subMinutes } from "date-fns";
+import * as R from "remeda";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
@@ -7,6 +8,7 @@ import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as SQReadyCheckFactory from "~/db/seed/factories/SQReadyCheckFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
+import * as TournamentMatchStationFactory from "~/db/seed/factories/TournamentMatchStationFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as LobbyProgression from "~/features/lobbies/core/LobbyProgression.server";
@@ -15,12 +17,14 @@ import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
+import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	runningTournamentWithMatch,
 	testTournament,
 	tournamentCtxTeam,
 } from "~/features/tournament-bracket/core/tests/test-utils";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
+import { createStartedLanTournament } from "~/features/tournament-stations/tests/fixtures";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -465,5 +469,73 @@ describe("resolveGlobalStatus", () => {
 		expect((await resolveGlobalStatus(users.id(1)))?.state).toBe(
 			"LOBBY_IN_ROOM",
 		);
+	});
+});
+
+const lanUsers = UserFactory.pool();
+
+describe("resolveGlobalStatus in a LAN tournament", () => {
+	beforeEach(async () => {
+		await lanUsers.create(17);
+		RunningTournaments.clear();
+		PendingCheckIns.clearCache();
+		await refreshSendouQInstance();
+	});
+
+	/** The semifinals of a started LAN, the first on its lone station, with a player of each. */
+	const lanWithFirstSemifinalOnStation = async () => {
+		const {
+			tournamentId,
+			stationIds: [stationId],
+			semifinalIds,
+		} = await createStartedLanTournament({
+			authorId: lanUsers.id(1),
+			teamRosters: R.chunk(lanUsers.ids().slice(1), 4),
+			stationNames: ["Station 1"],
+			autoAssign: false,
+		});
+		await TournamentMatchStationFactory.create({
+			matchId: semifinalIds[0],
+			stationId,
+		});
+
+		const tournament = await tournamentFromDB(tournamentId);
+		RunningTournaments.add(tournament);
+
+		const playerOf = (matchId: number) => {
+			const match = tournament.brackets[0].data.match.find(
+				(candidate) => candidate.id === matchId,
+			)!;
+			return tournament.teamById(match.opponent1!.id!)!.memberUserIds[0];
+		};
+
+		return {
+			onStation: playerOf(semifinalIds[0]),
+			onNoStation: playerOf(semifinalIds[1]),
+		};
+	};
+
+	test("shows the station the match is queued on, without an ETA when first in its queue", async () => {
+		const { onStation } = await lanWithFirstSemifinalOnStation();
+
+		const status = await resolveGlobalStatus(onStation);
+
+		expect(status?.state).toBe("TO_MATCH");
+		expect(status?.station).toEqual({
+			name: "Station 1",
+			locationNote: null,
+		});
+		// first in the station's queue, no countdown to it
+		expect(status?.eta).toBeUndefined();
+	});
+
+	test("shows no station for a match on none, only when it's expected to start", async () => {
+		const { onNoStation } = await lanWithFirstSemifinalOnStation();
+
+		const status = await resolveGlobalStatus(onNoStation);
+
+		expect(status?.station).toBeUndefined();
+		// the lone station plays the other semifinal first
+		expect(status?.eta?.earliest).toBeGreaterThan(Date.now());
 	});
 });

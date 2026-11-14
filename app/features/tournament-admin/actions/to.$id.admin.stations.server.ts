@@ -4,7 +4,7 @@ import {
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { autoAssignStations } from "~/features/tournament-stations/core/autoAssignStations.server";
-import { clearTournamentEtasCache } from "~/features/tournament-stations/core/tournamentEtas.server";
+import { notifyStationsChanged } from "~/features/tournament-stations/core/notifyStationsChanged.server";
 import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
 import { stationsFormSchemaServer } from "~/features/tournament-stations/tournament-stations-schemas.server";
 import { defineAction } from "~/form/define-action.server";
@@ -21,6 +21,10 @@ export const action = defineAction(
 			"Stations can't be edited",
 		);
 
+		const placementsBefore =
+			await TournamentStationRepository.findMatchPlacementsByTournamentId(
+				tournamentId,
+			);
 		await TournamentStationRepository.setStations({
 			tournamentId,
 			autoAssign: body.autoAssign,
@@ -32,7 +36,10 @@ export const action = defineAction(
 		});
 
 		clearTournamentDataCache(tournamentId);
-		clearTournamentEtasCache(tournamentId);
+		notifyStationsChanged({
+			tournament,
+			matchIds: placementsBefore.map((placement) => placement.matchId),
+		});
 		await autoAssignStations(tournament);
 
 		return null;

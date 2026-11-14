@@ -38,6 +38,7 @@ import type {
 	StationsBoardMatch,
 	StationsBoardStation,
 } from "~/features/tournament-stations/core/StationsBoard";
+import { useFormatStartsIn } from "~/features/tournament-stations/tournament-stations-hooks";
 import { stationsBoardActionSchema } from "~/features/tournament-stations/tournament-stations-schemas";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { tournamentAdminPage, tournamentMatchPage } from "~/utils/urls";
@@ -462,8 +463,9 @@ function MatchCardContent({
 	dragHandle?: React.ReactNode;
 	menu?: React.ReactNode;
 }) {
-	const { t } = useTranslation(["tournament"]);
+	const { t } = useTranslation(["tournament", "common"]);
 	const tournament = useTournament();
+	const formatStartsIn = useFormatStartsIn();
 
 	const slot = showSlot ? match.slot : null;
 	const hasScore = match.score[0] > 0 || match.score[1] > 0;
@@ -509,13 +511,9 @@ function MatchCardContent({
 					{match.startsIn && match.startsIn.max > 0 ? (
 						<span
 							className={styles.eta}
-							title={t("tournament:stations.board.eta.explanation")}
+							title={t("common:startsIn.explanation")}
 						>
-							{match.startsIn.min === match.startsIn.max
-								? t("tournament:stations.board.eta.exact", {
-										minutes: match.startsIn.max,
-									})
-								: t("tournament:stations.board.eta", match.startsIn)}
+							{formatStartsIn(match.startsIn)}
 						</span>
 					) : null}
 				</div>

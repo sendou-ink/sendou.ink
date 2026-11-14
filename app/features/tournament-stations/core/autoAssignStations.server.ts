@@ -1,10 +1,8 @@
-import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { refreshTournamentCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentStationRepository from "../TournamentStationRepository.server";
-import { tournamentStationsChannel } from "../tournament-stations-utils";
+import { notifyStationsChanged } from "./notifyStationsChanged.server";
 import * as StationAutoAssignment from "./StationAutoAssignment";
-import { clearTournamentEtasCache } from "./tournamentEtas.server";
 
 /**
  * Puts the playable matches no one placed on the free stations, see {@link StationAutoAssignment}. Call after a write
@@ -33,7 +31,8 @@ export async function autoAssignStations(tournament: Tournament) {
 	if (assignments.length === 0) return;
 
 	await TournamentStationRepository.insertAutoAssignedMatches(assignments);
-	clearTournamentEtasCache(tournamentId);
-
-	ChatSystemMessage.send({ channel: tournamentStationsChannel(tournamentId) });
+	notifyStationsChanged({
+		tournament: current,
+		matchIds: assignments.map((assignment) => assignment.matchId),
+	});
 }

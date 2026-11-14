@@ -68,6 +68,21 @@
 	margin-inline-start: 8px;
 }
 
+.matchHeaderStation {
+	gap: var(--s-0-5);
+	max-width: 8rem;
+	text-transform: uppercase;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+
+	& svg {
+		flex-shrink: 0;
+		width: 1.1em;
+		height: 1.1em;
+	}
+}
+
 .matchTimerWarning {
 	background-color: var(--color-warning);
 	color: var(--color-text-on-light);

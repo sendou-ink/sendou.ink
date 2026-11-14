@@ -35,6 +35,10 @@ export interface GlobalStatus {
 	tournamentName?: string;
 	/** Round of the tournament match being played or waited on, e.g. "Winners Round 3". */
 	roundName?: string;
+	/** Station of a LAN tournament the match is queued on. */
+	station?: { name: string; locationNote: string | null };
+	/** Estimated start of the match (ms timestamps) when it's not played yet, LAN tournaments only. */
+	eta?: { earliest: number; latest: number };
 	/** When the check-in closes (ms timestamp), known for the registration check-in only. */
 	checkInClosesAt?: number;
 	/** SendouQ match of the `SQ_MATCH` state. */

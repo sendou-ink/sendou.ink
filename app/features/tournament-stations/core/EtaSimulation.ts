@@ -26,10 +26,6 @@ const MINUTES_PER_GAME = 7;
 const SETUP_MINUTES = 5;
 /** Games of a set whose round has no map list, as a best of. */
 const FALLBACK_BEST_OF = 3;
-/** Estimates further out than this are not shown, too much can change before. */
-const MAX_SHOWN_MINUTES = 180;
-/** Shown minutes are rounded to multiples of this. */
-const SHOWN_MINUTES_STEP = 5;
 
 /** @internal */
 export const ETA_CONSTANTS = { MINUTES_PER_GAME, SETUP_MINUTES };
@@ -108,32 +104,6 @@ export function simulate({
 	return {
 		matchStarts,
 		bracketStarts: bracketStarts({ tournament, matches, runs, now }),
-	};
-}
-
-/**
- * Minutes from now to the estimate, rounded to multiples of 5 (`{ min: 0, max: 0 }` when it's due now), or
- * `null` when the estimate is too far out to be worth showing.
- */
-export function minutesFromNow(
-	range: EtaRange,
-	now: number,
-): { min: number; max: number } | null {
-	const toMinutes = (timestamp: number) =>
-		Math.max(0, (timestamp - now) / minutesToMilliseconds(1));
-
-	const max =
-		Math.ceil(toMinutes(range.latest) / SHOWN_MINUTES_STEP) *
-		SHOWN_MINUTES_STEP;
-	if (max > MAX_SHOWN_MINUTES) return null;
-
-	return {
-		min: Math.min(
-			max,
-			Math.round(toMinutes(range.earliest) / SHOWN_MINUTES_STEP) *
-				SHOWN_MINUTES_STEP,
-		),
-		max,
 	};
 }
 
