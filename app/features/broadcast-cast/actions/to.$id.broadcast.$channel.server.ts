@@ -135,7 +135,7 @@ export const action = defineAction(
 			}
 			case "MOVE_IN_QUEUE": {
 				await updateProducer((state) =>
-					Producer.moveItem(state, body.itemId, body.direction),
+					Producer.moveItem(state, body.itemId, body.toIndex),
 				);
 				break;
 			}

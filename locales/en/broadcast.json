@@ -33,8 +33,6 @@
 	"dashboard.queue.onGameStartHint": "At game start",
 	"dashboard.queue.onGameEnd": "Game end",
 	"dashboard.queue.onGameEndHint": "At game end",
-	"dashboard.queue.moveEarlier": "Move earlier",
-	"dashboard.queue.moveLater": "Move later",
 	"dashboard.queue.remove": "Remove",
 	"dashboard.queue.clipMissing": "Not every OBS source has this clip yet. Until they do, the scene shows the OBS footage instead.",
 	"dashboard.transition": "Transition",

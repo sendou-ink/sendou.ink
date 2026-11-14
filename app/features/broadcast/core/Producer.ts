@@ -1,4 +1,3 @@
-import * as R from "remeda";
 import { BROADCAST_TRANSITION_TIMING } from "../broadcast-constants";
 import type {
 	BroadcastAdvance,
@@ -407,18 +406,23 @@ export function removeItem<Item extends ProducerState>(
 	return withStaged(state, remaining);
 }
 
-/** Moves a staged item one place earlier or later, `null` when it is not staged anymore or can't move that way. */
+/** Moves a staged item to `toIndex` of the staged items (`0` = next), `null` when it is not staged anymore, already there or the index is out of range. */
 export function moveItem<Item extends ProducerState>(
 	state: BroadcastStoredState<Item>,
 	itemId: number,
-	direction: "earlier" | "later",
+	toIndex: number,
 ) {
 	const staged = stagedItems(state);
 	const from = staged.findIndex((item) => item.id === itemId);
-	const to = direction === "earlier" ? from - 1 : from + 1;
-	if (from === -1 || to < 0 || to >= staged.length) return null;
+	if (from === -1 || from === toIndex || toIndex >= staged.length) return null;
 
-	return withStaged(state, R.swapIndices(staged, from, to));
+	const remaining = staged.filter((item) => item.id !== itemId);
+
+	return withStaged(state, [
+		...remaining.slice(0, toIndex),
+		staged[from],
+		...remaining.slice(toIndex),
+	]);
 }
 
 function withStaged<Item extends ProducerState>(

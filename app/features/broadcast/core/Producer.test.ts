@@ -720,15 +720,16 @@ describe("Producer.removeItem", () => {
 
 describe("Producer.moveItem", () => {
 	test.each([
-		{ why: "earlier", itemId: 3, direction: "earlier", expected: [3, 2, 4] },
-		{ why: "later", itemId: 3, direction: "later", expected: [2, 4, 3] },
-		{ why: "past the start", itemId: 2, direction: "earlier", expected: null },
-		{ why: "past the end", itemId: 4, direction: "later", expected: null },
-		{ why: "not staged", itemId: 1, direction: "later", expected: null },
-	] as const)("$why", ({ itemId, direction, expected }) => {
-		const state = stateWith({ queue: [item(3), item(4)] });
+		{ why: "one earlier", itemId: 4, toIndex: 1, expected: [2, 4, 3, 5] },
+		{ why: "to next", itemId: 5, toIndex: 0, expected: [5, 2, 3, 4] },
+		{ why: "next to the end", itemId: 2, toIndex: 3, expected: [3, 4, 5, 2] },
+		{ why: "to where it is", itemId: 3, toIndex: 1, expected: null },
+		{ why: "past the end", itemId: 3, toIndex: 4, expected: null },
+		{ why: "not staged", itemId: 1, toIndex: 0, expected: null },
+	])("$why", ({ itemId, toIndex, expected }) => {
+		const state = stateWith({ queue: [item(3), item(4), item(5)] });
 
-		expect(stagedIds(Producer.moveItem(state, itemId, direction))).toEqual(
+		expect(stagedIds(Producer.moveItem(state, itemId, toIndex))).toEqual(
 			expected,
 		);
 	});

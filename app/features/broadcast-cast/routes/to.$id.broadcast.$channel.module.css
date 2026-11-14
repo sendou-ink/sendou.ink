@@ -2,16 +2,16 @@
 	container-type: inline-size;
 }
 
-/* the previews share a row the take column starts at, so what's under them (the queue) doesn't move it */
+/* the previews share a row the take column starts at, so what's under them (the queue) doesn't move it; minmax(0, …) keeps a long queue from widening its column */
 .switcher {
 	display: grid;
-	grid-template-columns: 1fr auto 1fr;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 	grid-template-rows: auto auto 1fr;
 	column-gap: var(--s-4);
 	row-gap: var(--s-2);
 
 	@container (width < 760px) {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 		grid-template-rows: none;
 		row-gap: var(--s-4);
 	}
@@ -25,6 +25,7 @@
 	@container (width >= 760px) {
 		display: grid;
 		grid-row: span 3;
+		grid-template-columns: minmax(0, 1fr);
 		grid-template-rows: subgrid;
 		align-items: start;
 		gap: unset;
@@ -190,14 +191,22 @@
 	flex-direction: column;
 }
 
-/* XXX: style the queue tabs (and the advance icons between them) on rows that wrap away from the editor: only the last row is attached to it, the rows above float as open-bottomed tabs and "+" can end up alone on a row of its own */
+.queueBar {
+	display: flex;
+	align-items: flex-end;
+}
+
+/* one row so every tab stays attached to the editor: the tabs' labels shrink first, then the row scrolls */
 .queue {
 	display: flex;
-	flex-wrap: wrap;
+	flex: 1;
 	align-items: flex-end;
-	gap: var(--s-1) var(--s-0-5);
-	padding: 0;
-	margin: 0;
+	gap: var(--s-0-5);
+	min-width: 0;
+	overflow-x: auto;
+	/* room for focus rings at the top, and for the selected tab reaching over the editor's top border */
+	padding: var(--s-1) 0 2px;
+	margin: 0 0 -2px;
 	list-style: none;
 }
 
@@ -205,6 +214,19 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-0-5);
+
+	&:has(> [data-selected]) {
+		flex-shrink: 0;
+	}
+
+	&[data-dragging] {
+		position: relative;
+		z-index: 2;
+
+		& .queueSelect {
+			cursor: grabbing;
+		}
+	}
 }
 
 .queueItem {
@@ -227,6 +249,7 @@
 
 		& .queueSelect {
 			color: var(--color-fg-accent);
+			cursor: grab;
 		}
 	}
 }
@@ -235,7 +258,6 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1-5);
-	min-width: 0;
 	padding: var(--s-1-5) var(--s-2);
 	border: none;
 	background: none;
@@ -247,6 +269,7 @@
 }
 
 .queuePosition {
+	flex-shrink: 0;
 	color: var(--color-text-high);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
@@ -257,13 +280,27 @@
 	flex-shrink: 0;
 }
 
+/* breaking anywhere lets a squeezed tab shrink its label down to a letter, clamped to one line */
+.queueLabel {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 1;
+	line-clamp: 1;
+	min-width: min-content;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+	white-space: normal;
+}
+
 .queueWarning {
 	display: inline-flex;
+	flex-shrink: 0;
 	color: var(--color-warning);
 }
 
 .queueGap {
 	display: inline-flex;
+	flex-shrink: 0;
 	align-items: center;
 	padding-inline: var(--s-1);
 	color: var(--color-text-high);
@@ -281,6 +318,7 @@
 }
 
 .queueAdd {
+	flex-shrink: 0;
 	margin-inline-start: var(--s-1);
 }
 

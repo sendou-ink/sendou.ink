@@ -115,7 +115,8 @@ export const broadcastActionSchema = v.union([
 	v.object({
 		_action: _action("MOVE_IN_QUEUE"),
 		itemId: id,
-		direction: v.picklist(["earlier", "later"]),
+		/** Where among the staged items it goes, `0` being next. */
+		toIndex: nonNegativeInteger,
 	}),
 	v.object({
 		_action: _action("TAKE"),

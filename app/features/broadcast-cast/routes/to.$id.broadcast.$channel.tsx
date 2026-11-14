@@ -1,10 +1,25 @@
+import type { DragEndEvent } from "@dnd-kit/core";
+import {
+	closestCenter,
+	DndContext,
+	KeyboardSensor,
+	PointerSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
+import {
+	horizontalListSortingStrategy,
+	SortableContext,
+	sortableKeyboardCoordinates,
+	useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
 import {
 	ArrowLeftRight,
 	Brush,
 	Cable,
-	ChevronLeft,
-	ChevronRight,
 	ChevronsLeft,
 	CircleCheck,
 	CircleDashed,
@@ -770,7 +785,7 @@ function AutoTake({
 	);
 }
 
-/** The staged items in the order they go on air, as tabs of the scene editor under them editing the one picked. */
+/** The staged items in the order they go on air, as tabs of the scene editor under them editing the one picked. Tabs are dragged to move them in the queue. */
 function Queue({
 	state,
 	selected,
@@ -783,128 +798,208 @@ function Queue({
 	areClipsOnSources: boolean;
 }) {
 	const { t } = useTranslation(["broadcast"]);
-	const tournament = useTournament();
 	const { submit } = useActionSubmit(broadcastActionSchema);
-	const staged = Producer.stagedItems(state);
+	// shown until the state with the move applied arrives over the stream
+	const [move, setMove] = React.useState<{
+		state: CastBroadcastState;
+		itemId: number;
+		toIndex: number;
+	} | null>(null);
+	const sensors = useSensors(
+		useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+		useSensor(KeyboardSensor, {
+			coordinateGetter: sortableKeyboardCoordinates,
+		}),
+	);
+
+	const staged = Producer.stagedItems(
+		(move?.state === state
+			? Producer.moveItem(state, move.itemId, move.toIndex)
+			: null) ?? state,
+	);
+
+	const handleDragEnd = ({ active, over }: DragEndEvent) => {
+		if (!over || active.id === over.id) return;
+
+		const itemId = Number(active.id);
+		const toIndex = staged.findIndex((item) => item.id === over.id);
+
+		setMove({ state, itemId, toIndex });
+		submit("MOVE_IN_QUEUE", { itemId, toIndex });
+	};
 
 	return (
-		<ol
-			className={styles.queue}
-			aria-label={t("broadcast:dashboard.queue.header")}
-		>
-			{staged.map((item, idx) => {
-				const Icon = SCENE_ICONS[item.scene];
-				const isSelected = item.id === selected.id;
-				const warning = isItemMissingMatch(state, item)
-					? t("broadcast:dashboard.needsMatch")
-					: item.scene === "replays" &&
-							item.clipId !== null &&
-							!areClipsOnSources
-						? t("broadcast:dashboard.queue.clipMissing")
-						: null;
-				const detail = itemDetail(
-					item,
-					item.scene === "team"
-						? pickedTeamName({ state, tournament, item })
-						: undefined,
-				);
-
-				return (
-					<li key={item.id} className={styles.queueEntry}>
-						<QueueGap
-							before={idx === 0 ? state.live : staged[idx - 1]}
-							item={item}
-						/>
-						<div
-							className={styles.queueItem}
-							data-selected={isSelected || undefined}
-						>
-							<button
-								type="button"
-								className={styles.queueSelect}
-								aria-pressed={isSelected}
-								onClick={() => onSelect(item.id)}
-								data-testid={`broadcast-queue-item-${idx}`}
-							>
-								<span className={styles.queuePosition}>
-									{idx === 0 ? t("broadcast:dashboard.next") : idx + 1}
-								</span>
-								<Icon size={16} className={styles.queueIcon} />
-								<span>{t(`broadcast:scene.${item.scene}`)}</span>
-								{detail ? (
-									<span className="text-xs text-lighter">{detail}</span>
-								) : null}
-								{warning ? (
-									<span
-										role="img"
-										className={styles.queueWarning}
-										title={warning}
-										aria-label={warning}
-									>
-										<TriangleAlert size={14} />
-									</span>
-								) : null}
-							</button>
-							{isSelected && staged.length > 1 ? (
-								<>
-									<ActionButton
-										schema={broadcastActionSchema}
-										action="MOVE_IN_QUEUE"
-										fields={{ itemId: item.id, direction: "earlier" }}
-										variant="minimal"
-										size="miniscule"
-										shape="square"
-										icon={<ChevronLeft />}
-										isDisabled={idx === 0}
-										aria-label={t("broadcast:dashboard.queue.moveEarlier")}
-									/>
-									<ActionButton
-										schema={broadcastActionSchema}
-										action="MOVE_IN_QUEUE"
-										fields={{ itemId: item.id, direction: "later" }}
-										variant="minimal"
-										size="miniscule"
-										shape="square"
-										icon={<ChevronRight />}
-										isDisabled={idx === staged.length - 1}
-										aria-label={t("broadcast:dashboard.queue.moveLater")}
-									/>
-									<ActionButton
-										schema={broadcastActionSchema}
-										action="REMOVE_FROM_QUEUE"
-										fields={{ itemId: item.id }}
-										variant="minimal-destructive"
-										size="miniscule"
-										shape="square"
-										icon={<X />}
-										aria-label={t("broadcast:dashboard.queue.remove")}
-										testId={`broadcast-queue-remove-${idx}`}
-									/>
-								</>
-							) : null}
-						</div>
-					</li>
-				);
-			})}
-			<li className={styles.queueEntry}>
-				<SendouButton
-					variant="minimal"
-					size="small"
-					shape="square"
-					icon={<Plus />}
-					className={styles.queueAdd}
-					onClick={() => {
-						submit("ADD_TO_QUEUE");
-						// the item queued gets the id after the last one given
-						onSelect(state.lastItemId + 1);
-					}}
-					title={t("broadcast:dashboard.queue.add")}
-					aria-label={t("broadcast:dashboard.queue.add")}
-					testId="broadcast-queue-add"
-				/>
-			</li>
-		</ol>
+		<div className={styles.queueBar}>
+			<DndContext
+				id="broadcast-queue"
+				sensors={sensors}
+				collisionDetection={closestCenter}
+				modifiers={[restrictToHorizontalAxis]}
+				onDragEnd={handleDragEnd}
+			>
+				<SortableContext
+					items={staged.map((item) => item.id)}
+					strategy={horizontalListSortingStrategy}
+				>
+					<ol
+						className={styles.queue}
+						aria-label={t("broadcast:dashboard.queue.header")}
+					>
+						{staged.map((item, idx) => (
+							<QueueTab
+								key={item.id}
+								state={state}
+								item={item}
+								before={idx === 0 ? state.live : staged[idx - 1]}
+								idx={idx}
+								isSelected={item.id === selected.id}
+								onSelect={onSelect}
+								areClipsOnSources={areClipsOnSources}
+							/>
+						))}
+					</ol>
+				</SortableContext>
+			</DndContext>
+			<SendouButton
+				variant="minimal"
+				size="small"
+				shape="square"
+				icon={<Plus />}
+				className={styles.queueAdd}
+				onClick={() => {
+					submit("ADD_TO_QUEUE");
+					// the item queued gets the id after the last one given
+					onSelect(state.lastItemId + 1);
+				}}
+				title={t("broadcast:dashboard.queue.add")}
+				aria-label={t("broadcast:dashboard.queue.add")}
+				testId="broadcast-queue-add"
+			/>
+		</div>
 	);
+}
+
+function QueueTab({
+	state,
+	item,
+	before,
+	idx,
+	isSelected,
+	onSelect,
+	areClipsOnSources,
+}: {
+	state: CastBroadcastState;
+	item: CastProducerState;
+	before: CastProducerState;
+	idx: number;
+	isSelected: boolean;
+	onSelect: (itemId: number) => void;
+	areClipsOnSources: boolean;
+}) {
+	const { t } = useTranslation(["broadcast"]);
+	const tournament = useTournament();
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		setActivatorNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({ id: item.id });
+
+	const Icon = SCENE_ICONS[item.scene];
+	const warning = isItemMissingMatch(state, item)
+		? t("broadcast:dashboard.needsMatch")
+		: item.scene === "replays" && item.clipId !== null && !areClipsOnSources
+			? t("broadcast:dashboard.queue.clipMissing")
+			: null;
+	const detail = itemDetail(
+		item,
+		item.scene === "team"
+			? pickedTeamName({ state, tournament, item })
+			: undefined,
+	);
+
+	return (
+		<li
+			ref={setNodeRef}
+			style={{ transform: CSS.Translate.toString(transform), transition }}
+			className={styles.queueEntry}
+			data-dragging={isDragging || undefined}
+		>
+			<QueueGap before={before} item={item} />
+			<div
+				ref={isSelected ? scrollIntoQueueView : undefined}
+				className={styles.queueItem}
+				data-selected={isSelected || undefined}
+			>
+				<button
+					{...(isSelected
+						? { ...attributes, ...listeners }
+						: // Space and Enter select a tab, picking it up by keyboard is left to the selected one
+							R.omit(listeners ?? {}, ["onKeyDown"]))}
+					ref={setActivatorNodeRef}
+					type="button"
+					className={styles.queueSelect}
+					aria-pressed={isSelected}
+					onClick={() => onSelect(item.id)}
+					data-testid={`broadcast-queue-item-${idx}`}
+				>
+					<span className={styles.queuePosition}>
+						{idx === 0 ? t("broadcast:dashboard.next") : idx + 1}
+					</span>
+					<Icon size={16} className={styles.queueIcon} />
+					<span className={styles.queueLabel}>
+						{t(`broadcast:scene.${item.scene}`)}
+					</span>
+					{detail ? (
+						<span className={clsx(styles.queueLabel, "text-xs text-lighter")}>
+							{detail}
+						</span>
+					) : null}
+					{warning ? (
+						<span
+							role="img"
+							className={styles.queueWarning}
+							title={warning}
+							aria-label={warning}
+						>
+							<TriangleAlert size={14} />
+						</span>
+					) : null}
+				</button>
+				{isSelected ? (
+					<ActionButton
+						schema={broadcastActionSchema}
+						action="REMOVE_FROM_QUEUE"
+						fields={{ itemId: item.id }}
+						variant="minimal-destructive"
+						size="miniscule"
+						shape="square"
+						icon={<X />}
+						aria-label={t("broadcast:dashboard.queue.remove")}
+						testId={`broadcast-queue-remove-${idx}`}
+					/>
+				) : null}
+			</div>
+		</li>
+	);
+}
+
+/** Scrolls the queue sideways to show the tab, without moving the page as `scrollIntoView` would. */
+function scrollIntoQueueView(tab: HTMLDivElement | null) {
+	const queue = tab?.closest("ol");
+	if (!tab || !queue) return;
+
+	const tabRect = tab.getBoundingClientRect();
+	const queueRect = queue.getBoundingClientRect();
+
+	if (tabRect.left < queueRect.left) {
+		queue.scrollLeft -= queueRect.left - tabRect.left;
+	} else if (tabRect.right > queueRect.right) {
+		queue.scrollLeft += tabRect.right - queueRect.right;
+	}
 }
 
 const ADVANCE_ICONS: Record<BroadcastAdvance, LucideIcon> = {
