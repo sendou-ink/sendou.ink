@@ -9,7 +9,6 @@ import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
-import * as TournamentBroadcastFactory from "~/db/seed/factories/TournamentBroadcastFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
@@ -330,7 +329,7 @@ const SCENARIOS: Scenario[] = [
 			});
 			await TournamentFactory.startBracket(tournament.id);
 
-			const match = await firstPlayableMatch(tournament.id);
+			const match = await TournamentFactory.firstPlayableMatch(tournament.id);
 			const team = registeredTeams.find(
 				(registeredTeam) => registeredTeam.id === match.teamId,
 			);
@@ -374,12 +373,19 @@ const SCENARIOS: Scenario[] = [
 				ownerId: organizerId,
 				name: `Broadcast org ${freshSuffix()}`,
 			});
-			const tournament = await TournamentFactory.create({
-				authorId: organizerId,
-				organizationId: organization.id,
-				bracketProgression: BRACKET_FORMATS[format],
-				startTimes: [dateToDatabaseTimestamp(subMinutes(new Date(), 30))],
-			});
+			const tournament = await TournamentFactory.createBroadcasting(
+				{
+					authorId: organizerId,
+					organizationId: organization.id,
+					bracketProgression: BRACKET_FORMATS[format],
+					startTimes: [dateToDatabaseTimestamp(subMinutes(new Date(), 30))],
+				},
+				{
+					teamRosters: await freshTeamRosters(teams),
+					twitchAccount: BROADCAST_SCENARIO_TWITCH_ACCOUNT,
+					roundsPlayed,
+				},
+			);
 			invariant(
 				isBroadcastEnabled(await tournamentFromDB(tournament.id)),
 				"Broadcasts are off for new organizations, set BROADCAST_ORG_IDS=* in .env",
@@ -391,25 +397,6 @@ const SCENARIOS: Scenario[] = [
 					role: "STREAMER",
 				});
 			}
-			await registerTeams(tournament.id, teams, { isCheckedIn: true });
-			await TournamentFactory.startBracket(tournament.id);
-			for (let round = 0; round < roundsPlayed; round++) {
-				await TournamentFactory.playMatches(tournament.id);
-			}
-
-			const match = await firstPlayableMatch(tournament.id);
-			await TournamentFactory.castMatch({
-				tournamentId: tournament.id,
-				matchId: match.matchId,
-				twitchAccount: BROADCAST_SCENARIO_TWITCH_ACCOUNT,
-			});
-			const programKey = await TournamentBroadcastFactory.generateProgramKey({
-				tournamentId: tournament.id,
-				channel: {
-					platform: "TWITCH",
-					account: BROADCAST_SCENARIO_TWITCH_ACCOUNT,
-				},
-			});
 
 			const broadcastPage = {
 				tournamentId: tournament.id,
@@ -421,7 +408,10 @@ const SCENARIOS: Scenario[] = [
 				links: [
 					{
 						label: "Program (OBS)",
-						path: broadcastOverlayPage({ ...broadcastPage, programKey }),
+						path: broadcastOverlayPage({
+							...broadcastPage,
+							programKey: tournament.programKey,
+						}),
 					},
 				],
 			};
@@ -1257,6 +1247,16 @@ async function registerTeams(
 	return teams;
 }
 
+/** Full rosters of fresh users, one per team. */
+async function freshTeamRosters(count: number) {
+	const rosters: number[][] = [];
+	for (let teamNth = 1; teamNth <= count; teamNth++) {
+		rosters.push(await freshUserIds(FULL_GROUP_SIZE));
+	}
+
+	return rosters;
+}
+
 /** Users with a filled match profile, as the LFG cards show them. */
 async function freshShowcaseUserIds(count: number) {
 	const userIds: number[] = [];
@@ -1317,25 +1317,6 @@ async function lookingGroupIds(
 	}
 
 	return groupIds;
-}
-
-/** First match of the started bracket with two teams, i.e. not a BYE. */
-async function firstPlayableMatch(tournamentId: number) {
-	const tournament = await tournamentFromDB(tournamentId);
-	const match = tournament
-		.bracketByIdx(0)
-		?.data.match.find(
-			(candidate) =>
-				typeof candidate.opponent1?.id === "number" &&
-				typeof candidate.opponent2?.id === "number" &&
-				!candidate.winnerSide,
-		);
-	invariant(
-		typeof match?.opponent1?.id === "number",
-		"Started bracket has no playable match",
-	);
-
-	return { matchId: match.id, teamId: match.opponent1.id };
 }
 
 /** A lobby that started half an hour ago with everyone in `playerIds` checked in, the first hosting. */
