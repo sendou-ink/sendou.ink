@@ -5,6 +5,9 @@ const SOURCE_NOTICE =
 	"Article originally posted at: [https://www.splatoonstronghold.com/news/results-from-riptide-2025](https://www.splatoonstronghold.com/news/results-from-riptide-2025)";
 const BANNER =
 	'<img width="1200" height="675" alt="banner" src="banner.png" />';
+const TITLE = "Results from Riptide 2025";
+const PARAGRAPH =
+	"Riptide 2025 took place between Friday, September 5 and Sunday, September 7.";
 
 describe("Article.bodyWithoutLeadingTitle", () => {
 	test.each([
@@ -94,5 +97,177 @@ describe("Article.bodyWithoutLeadingTitle", () => {
 
 	test("drops a body that is only the title heading", () => {
 		expect(Article.bodyWithoutLeadingTitle("# Riptide", "Riptide")).toBe("");
+	});
+});
+
+describe("Article.description", () => {
+	test.each([
+		{ why: "a plain paragraph", content: PARAGRAPH, expected: PARAGRAPH },
+		{
+			why: "a source notice linking its url",
+			content: `Article originally posted at: [https://www.splatoonstronghold.com/news/results-from-riptide-2025](https://www.splatoonstronghold.com/news/results-from-riptide-2025)\n\n${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "a source notice naming the website",
+			content: `Article ported from the [Splatoon Stronghold](https://www.splatoonstronghold.com/news/a-dying-scene-stronghold-and-splatoon-4) website\n\n${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "a bracketed note the article was originally made elsewhere",
+			content: `[This article was originally made for Nintendo. With their permission rereleasing it this time on sendou.ink.]\n\n${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "a banner image",
+			content: `<img width="1200" height="675" alt="ARTICLE_BANNER" src="https://github.com/user-attachments/assets/3cc38497" />\n\n${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "a markdown image",
+			content: `![Banner](https://example.com/banner.png)\n\n${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "a heading of the title",
+			content: `# **Results from Riptide 2025**\n\n${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "a title heading after a source notice",
+			content: `Article Originally Posted At: [https://www.splatoonstronghold.com/news/superjump-7](https://www.splatoonstronghold.com/news/superjump-7)\n\n# **SuperJump 7: 2025’s Hypest Grand Finals**\n\n${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "a section heading",
+			content: `## **Turf War Always Applies**\n\n${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "a plain line repeating the title in another case",
+			content: `RESULTS FROM RIPTIDE 2025  \n${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "an italic subtitle heading",
+			content:
+				"#### *Dapple Productions brings back the 20XX major for the first time since 2024*\n\n<img src='https://example.com/banner.png' />",
+			expected:
+				"Dapple Productions brings back the 20XX major for the first time since 2024",
+		},
+		{
+			why: "an italic subtitle heading with an escaped exclamation mark",
+			content: "#### *…and their allies, too\\!* \n",
+			expected: "…and their allies, too!",
+		},
+		{
+			why: "an italic subtitle line under the title heading",
+			content:
+				"# **Waving Goodbye**\n*Riptide 2025 was just the start to a wave of top-level players stepping back*",
+			expected:
+				"Riptide 2025 was just the start to a wave of top-level players stepping back",
+		},
+		{
+			why: "a paragraph with a link and emphasis",
+			content:
+				"The main hub is the [Chronically Krill Discord server](https://discord.com/invite/x), **open to everyone**.",
+			expected:
+				"The main hub is the Chronically Krill Discord server, open to everyone.",
+		},
+		{
+			why: "a paragraph with escaped markdown",
+			content: "With the conclusion of Event \\#5 (Week 3\\), 20XX Series 6\\.",
+			expected: "With the conclusion of Event #5 (Week 3), 20XX Series 6.",
+		},
+		{
+			why: "a heading of the title with curly quotes",
+			content: `# **Splatoon’s “Great Retirement”**\n\n${PARAGRAPH}`,
+			title: `Splatoon's ''Great Retirement''`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "a horizontal rule",
+			content: `---\n\n${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "a table separator",
+			content: `| :--- | ---: |\n${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "an html comment",
+			content: `<!-- banner goes here -->\n${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "a blockquote",
+			content: `> ${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "a list item",
+			content: `- ${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "a numbered list item",
+			content: `1. ${PARAGRAPH}`,
+			expected: PARAGRAPH,
+		},
+		{
+			why: "underscores within words",
+			content: "Use the snake_case_name here.",
+			expected: "Use the snake_case_name here.",
+		},
+		{
+			why: "underscore, code and strikethrough markup",
+			content: "An _italic_, __bold__, `code` and ~~struck~~ word.",
+			expected: "An italic, bold, code and struck word.",
+		},
+		{
+			why: "angle brackets in prose",
+			content: "Short range < long range and the meta -> chaos.",
+			expected: "Short range < long range and the meta -> chaos.",
+		},
+	])("describes a body starting with $why", ({ content, title, expected }) => {
+		expect(Article.description(content, title ?? TITLE)).toBe(expected);
+	});
+
+	test.each([
+		{ why: "empty", content: "" },
+		{
+			why: "only a source notice and a banner",
+			content: `Article originally posted at: [x](https://example.com)\n\n<img src="https://example.com/banner.png" />`,
+		},
+		{ why: "only headings", content: `# ${TITLE}\n\n## Introduction` },
+	])("is null for a body that is $why", ({ content }) => {
+		expect(Article.description(content, TITLE)).toBeNull();
+	});
+
+	test("cuts a long paragraph at the last sentence that fits", () => {
+		const first = "a".repeat(100);
+		const second = "b".repeat(100);
+
+		expect(Article.description(`${first}. ${second}.`, TITLE)).toBe(
+			`${first}.`,
+		);
+	});
+
+	test("cuts a long sentence at a word boundary with an ellipsis", () => {
+		const words = Array.from({ length: 40 }, () => "splat").join(", ");
+
+		const description = Article.description(words, TITLE);
+
+		expect(description?.length).toBeLessThanOrEqual(160);
+		expect(description).toMatch(/ splat…$/);
+	});
+
+	test("doesn't end a cut sentence at an abbreviation", () => {
+		const start = `${"a".repeat(140)} organized 4 vs. 4`;
+
+		expect(
+			Article.description(`${start} matches, with many more words.`, TITLE),
+		).toBe(`${start}…`);
 	});
 });

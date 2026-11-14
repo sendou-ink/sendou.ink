@@ -5,6 +5,7 @@ import * as v from "valibot";
 import { IS_DEV_BUILD } from "~/utils/dev-build";
 import { ARTICLES_FOLDER_PATH } from "../articles-constants";
 import { articleDataSchema } from "../articles-schemas.server";
+import * as Article from "./Article";
 
 const RESOLVED_ARTICLES_DIR = path.resolve(ARTICLES_FOLDER_PATH);
 
@@ -32,6 +33,9 @@ export function articleBySlug(slug: string) {
 			date: date.getTime(),
 			authors: normalizeAuthors(restParsed.author),
 			title: restParsed.title,
+			description:
+				restParsed.description ??
+				Article.description(content, restParsed.title),
 		};
 	} catch (e) {
 		if (!(e instanceof Error)) throw e;
