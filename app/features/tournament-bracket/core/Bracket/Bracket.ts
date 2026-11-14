@@ -3,7 +3,10 @@ import type { Tables } from "~/db/tables";
 import type { TournamentStageSettings } from "~/db/tables-json";
 import * as Standings from "~/features/tournament/core/Standings";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
+import type {
+	BracketData,
+	MatchData,
+} from "~/features/tournament-bracket/core/engine/types";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { showsOneGroupAtATime } from "../../tournament-bracket-utils";
@@ -717,12 +720,17 @@ export abstract class Bracket {
 	};
 
 	/**
-	 * Only settled teams appear in the standings, so placements are matched raw until the full
-	 * standings resolve and only then normalized (1,3,5 -> 1,2,3) the way group brackets source.
+	 * Settled teams are matched by the tier of the match they left the bracket from, the same tier the
+	 * bracket shows as the match's destination. Raw placements leave gaps (1,3,5) until every team is placed,
+	 * so matching them before that would advance the wrong teams. Teams without an exit fall back to their
+	 * placement, normalized (1,3,5 -> 1,2,3) once the full standings resolve.
+	 *
+	 * Finished as soon as every match teams leave with a sourced tier from is decided, so the follow-up
+	 * can start while the rest of the bracket is still played.
 	 */
 	protected sourceByStandings(placements: number[], rest: boolean) {
 		const standings = this.standings;
-		const relevantMatchesFinished =
+		const everyTeamPlaced =
 			standings.length === this.participantTournamentTeamIds.length &&
 			this.participantTournamentTeamIds.length > 0;
 
@@ -732,16 +740,54 @@ export abstract class Bracket {
 
 		const uniquePlacements = R.unique(standings.map((s) => s.placement));
 		const placementNormalized = (placement: number) =>
-			relevantMatchesFinished
-				? uniquePlacements.indexOf(placement) + 1
-				: placement;
+			everyTeamPlaced ? uniquePlacements.indexOf(placement) + 1 : placement;
+
+		const exits = this.matchExits();
+		const exitTierByTeamId = this.exitTierByTeamId(exits);
+		const tierOf = (standing: Standing) =>
+			exitTierByTeamId.get(standing.team.id) ??
+			placementNormalized(standing.placement);
+
+		const sourcedExitMatches = this.data.match.filter((match) => {
+			const exit = exits.get(match.id);
+
+			return [exit?.winnerTier, exit?.loserTier].some(
+				(tier) => typeof tier === "number" && matchesPlacement(tier),
+			);
+		});
+		const everySourcedExitDecided =
+			sourcedExitMatches.length > 0 && sourcedExitMatches.every(isDecided);
 
 		return {
-			relevantMatchesFinished,
+			relevantMatchesFinished: everyTeamPlaced || everySourcedExitDecided,
 			teams: standings
-				.filter((s) => matchesPlacement(placementNormalized(s.placement)))
+				.filter((s) => matchesPlacement(tierOf(s)))
 				.map((s) => s.team.id),
 		};
+	}
+
+	/** Tier of the decided match each team left the bracket from, keyed by tournament team id. */
+	private exitTierByTeamId(exits: Map<number, MatchExit>) {
+		const result = new Map<number, number>();
+
+		for (const match of this.data.match) {
+			const exit = exits.get(match.id);
+			const winnerSide = winnerSideOf(match);
+			if (!exit || !winnerSide) continue;
+
+			const winnerId = match[winnerSide]?.id;
+			const loserId =
+				match[winnerSide === "opponent1" ? "opponent2" : "opponent1"]?.id;
+
+			if (typeof winnerId === "number" && typeof exit.winnerTier === "number") {
+				result.set(winnerId, exit.winnerTier);
+			}
+			if (typeof loserId === "number" && typeof exit.loserTier === "number") {
+				result.set(loserId, exit.loserTier);
+			}
+		}
+
+		return result;
 	}
 
 	/** Statuses of every match of the bracket, keyed by match id. */
@@ -762,4 +808,25 @@ export abstract class Bracket {
 	}
 
 	abstract defaultRoundBestOfs(data: BracketData): BracketMapCounts;
+}
+
+/** The side that won, or the side advancing past a BYE once its team is known. Null while undecided. */
+function winnerSideOf(match: MatchData) {
+	if (match.winnerSide) return match.winnerSide;
+	if (match.opponent1 && match.opponent2) return null;
+
+	const advancingSide = match.opponent1
+		? "opponent1"
+		: match.opponent2
+			? "opponent2"
+			: null;
+	if (!advancingSide) return null;
+
+	return typeof match[advancingSide]?.id === "number" ? advancingSide : null;
+}
+
+function isDecided(match: MatchData) {
+	if (!match.opponent1 && !match.opponent2) return true;
+
+	return winnerSideOf(match) !== null;
 }
