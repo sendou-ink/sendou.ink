@@ -126,7 +126,7 @@
 		"web-push": "3.6.7"
 	},
 	"devDependencies": {
-		"@astrojs/markdown-satteri": "0.4.6",
+		"@astrojs/markdown-satteri": "0.4.7",
 		"@astrojs/react": "7.1.2",
 		"@astrojs/starlight": "0.42.8",
 		"@babel/preset-typescript": "7.29.7",
