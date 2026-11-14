@@ -1,8 +1,8 @@
 import clsx from "clsx";
-import { Check } from "lucide-react";
 import * as React from "react";
 import type { MetaFunction } from "react-router";
 import { Form, useLoaderData } from "react-router";
+import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { Markdown } from "~/components/Markdown";
@@ -58,11 +58,7 @@ function VotingTimingInfo(
 ) {
 	return (
 		<div className="stack md">
-			{data.voted ? (
-				<div className={styles.votingAlert}>
-					<Check /> You have voted
-				</div>
-			) : null}
+			{data.voted ? <Alert variation="SUCCESS">You have voted</Alert> : null}
 			<div className="text-sm text-center">
 				{data.timeInfo.timing === "starts"
 					? "Next voting starts"
@@ -107,13 +103,17 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 				) : null}
 			</div>
 			{previous ? (
-				<p className="button-text-paragraph text-sm text-lighter">
-					Previously{" "}
-					<span className={previous.score > 0 ? "text-success" : "text-error"}>
-						{previous.score > 0 ? "+" : ""}
-						{previous.score}
-					</span>{" "}
-					on {previous.user.username}.
+				<p className={clsx(styles.votingHintRow, "text-sm text-lighter")}>
+					<span>
+						Previously{" "}
+						<span
+							className={previous.score > 0 ? "text-success" : "text-error"}
+						>
+							{previous.score > 0 ? "+" : ""}
+							{previous.score}
+						</span>{" "}
+						on {previous.user.username}.
+					</span>
 					<SendouButton
 						className="ml-auto"
 						variant="minimal"
@@ -123,7 +123,9 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 					</SendouButton>
 				</p>
 			) : (
-				<p className="text-sm text-lighter">Tip: {randomTip}</p>
+				<p className={clsx(styles.votingHintRow, "text-sm text-lighter")}>
+					Tip: {randomTip}
+				</p>
 			)}
 			{currentUser ? (
 				<div className="stack md items-center">
