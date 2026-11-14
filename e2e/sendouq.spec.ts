@@ -280,14 +280,14 @@ test.describe("SendouQ", () => {
 			const looking = new SendouQLookingPage(page);
 			await looking.goto();
 
-			const lastCard = looking.groupCard(otherUsers.length - 1);
+			const lastCard = looking.groupCard(otherUsers.length);
 			await lastCard.root.scrollIntoViewIfNeeded();
 			expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
 
 			const scrollYAtPress = await trackScrollYAtPress(page);
 			await lastCard.pressSuggest();
 
-			await expect(looking.groupCard(0).trail).toBeVisible();
+			await expect(looking.groupCard(1).trail).toBeVisible();
 			expect(await page.evaluate(() => window.scrollY)).toBe(
 				await scrollYAtPress(),
 			);
