@@ -7,6 +7,7 @@ import {
 	tournamentChannel,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as StationsBoard from "~/features/tournament-stations/core/StationsBoard";
+import { tournamentEtas } from "~/features/tournament-stations/core/tournamentEtas.server";
 import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
 import { tournamentStationsChannel } from "~/features/tournament-stations/tournament-stations-utils";
 import { tournamentPage } from "~/utils/urls";
@@ -35,6 +36,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			await TournamentStationRepository.findMatchPlacementsByTournamentId(
 				tournamentId,
 			),
+		matchStarts: (await tournamentEtas(tournament))?.matchStarts ?? new Map(),
+		now: Date.now(),
 	});
 
 	return {

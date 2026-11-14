@@ -4,6 +4,7 @@ import {
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { autoAssignStations } from "~/features/tournament-stations/core/autoAssignStations.server";
+import { clearTournamentEtasCache } from "~/features/tournament-stations/core/tournamentEtas.server";
 import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
 import { stationsFormSchemaServer } from "~/features/tournament-stations/tournament-stations-schemas.server";
 import { defineAction } from "~/form/define-action.server";
@@ -31,6 +32,7 @@ export const action = defineAction(
 		});
 
 		clearTournamentDataCache(tournamentId);
+		clearTournamentEtasCache(tournamentId);
 		await autoAssignStations(tournament);
 
 		return null;

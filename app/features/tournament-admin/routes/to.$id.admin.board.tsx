@@ -506,6 +506,18 @@ function MatchCardContent({
 					>
 						{[match.bracketName, match.roundName].filter(Boolean).join(" · ")}
 					</Link>
+					{match.startsIn && match.startsIn.max > 0 ? (
+						<span
+							className={styles.eta}
+							title={t("tournament:stations.board.eta.explanation")}
+						>
+							{match.startsIn.min === match.startsIn.max
+								? t("tournament:stations.board.eta.exact", {
+										minutes: match.startsIn.max,
+									})
+								: t("tournament:stations.board.eta", match.startsIn)}
+						</span>
+					) : null}
 				</div>
 				<div className={styles.teams}>
 					{match.teams.map((team, idx) => (

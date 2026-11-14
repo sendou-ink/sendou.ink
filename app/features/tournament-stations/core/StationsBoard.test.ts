@@ -6,6 +6,7 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentStationRepository from "../TournamentStationRepository.server";
 import { createStartedLanTournament } from "../tests/fixtures";
+import * as EtaSimulation from "./EtaSimulation";
 import * as StationsBoard from "./StationsBoard";
 
 const users = UserFactory.pool();
@@ -16,16 +17,30 @@ const createTournament = () =>
 		teamRosters: R.chunk(users.ids().slice(1), 4),
 	});
 
-const buildBoard = async (tournamentId: number) =>
-	StationsBoard.build({
-		tournament: await tournamentFromDB(tournamentId),
-		stations:
-			await TournamentStationRepository.findAllByTournamentId(tournamentId),
-		placements:
-			await TournamentStationRepository.findMatchPlacementsByTournamentId(
-				tournamentId,
-			),
+const NOW = Date.UTC(2026, 10, 14, 12);
+
+const buildBoard = async (tournamentId: number) => {
+	const tournament = await tournamentFromDB(tournamentId);
+	const stations =
+		await TournamentStationRepository.findAllByTournamentId(tournamentId);
+	const placements =
+		await TournamentStationRepository.findMatchPlacementsByTournamentId(
+			tournamentId,
+		);
+
+	return StationsBoard.build({
+		tournament,
+		stations,
+		placements,
+		matchStarts: EtaSimulation.simulate({
+			tournament,
+			stationIds: stations.map((station) => station.id),
+			placements,
+			now: NOW,
+		}).matchStarts,
+		now: NOW,
 	});
+};
 
 describe("StationsBoard.build", () => {
 	beforeEach(async () => {
@@ -64,6 +79,27 @@ describe("StationsBoard.build", () => {
 		expect(board.stations[0].matches).toMatchObject([
 			{ id: finalId, slot: "NEXT", isPlayable: false, teams: [null, null] },
 			{ id: first, slot: "NOW", isPlayable: true },
+		]);
+	});
+
+	test("shows when the matches not played now are expected to start", async () => {
+		const {
+			tournamentId,
+			stationIds: [stationId],
+			semifinalIds: [first, second],
+			finalId,
+		} = await createTournament();
+		await TournamentMatchStationFactory.create({ matchId: first, stationId });
+		await TournamentMatchStationFactory.create({ matchId: finalId, stationId });
+
+		const board = await buildBoard(tournamentId);
+		const [now, next] = board.stations[0].matches;
+
+		expect(now).toMatchObject({ id: first, startsIn: null });
+		expect(next.id).toBe(finalId);
+		expect(next.startsIn?.min).toBeGreaterThan(0);
+		expect(board.waiting).toMatchObject([
+			{ id: second, startsIn: { min: 0, max: 0 } },
 		]);
 	});
 

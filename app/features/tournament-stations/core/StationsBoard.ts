@@ -1,11 +1,12 @@
 /**
  * The stations board of a LAN tournament: which unfinished matches are queued on each station and in
  * what order, which of them is played now and next, the playable matches still waiting for a station
- * (in play order) and the name a match goes by on the board.
+ * (in play order), when the matches not played yet are expected to start and the name a match goes by on the board.
  */
 import type { Tables } from "~/db/tables";
 import type { MatchStatus } from "~/features/tournament-bracket/core/engine/status";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import * as EtaSimulation from "./EtaSimulation";
 import * as PlayOrder from "./PlayOrder";
 
 /** A match as shown on the stations board. */
@@ -27,6 +28,8 @@ export interface StationsBoardMatch {
 	isAutoAssigned: boolean;
 	/** Kept in the Waiting lane by an organizer while the tournament auto-assigns stations, which leaves it there. */
 	isHeld: boolean;
+	/** Estimated minutes until it starts, `null` for the match played now or when there's no estimate worth showing. */
+	startsIn: { min: number; max: number } | null;
 }
 
 interface StationsBoardTeam {
@@ -50,6 +53,8 @@ export function build({
 	tournament,
 	stations,
 	placements,
+	matchStarts,
+	now,
 }: {
 	tournament: Tournament;
 	/** In their order. */
@@ -63,6 +68,10 @@ export function build({
 			"matchId" | "stationId" | "isAutoAssigned"
 		>
 	>;
+	/** Estimated starts of the matches, see {@link EtaSimulation.simulate}. */
+	matchStarts: Map<number, EtaSimulation.EtaRange>;
+	/** Timestamp in milliseconds. */
+	now: number;
 }): { stations: StationsBoardStation[]; waiting: StationsBoardMatch[] } {
 	const matches = boardMatchesById(tournament);
 	const playOrder = PlayOrder.byMatchId(tournament);
@@ -72,6 +81,13 @@ export function build({
 	const heldMatchIds = new Set(
 		placements.flatMap((row) => (row.stationId === null ? [row.matchId] : [])),
 	);
+	const startsIn = (match: StationsBoardMatch) => {
+		const range = matchStarts.get(match.id);
+
+		return match.slot === "NOW" || !range
+			? null
+			: EtaSimulation.minutesFromNow(range, now);
+	};
 
 	return {
 		stations: stations.map((station) => ({
@@ -92,7 +108,7 @@ export function build({
 								]
 							: [];
 					}),
-			),
+			).map((match) => ({ ...match, startsIn: startsIn(match) })),
 		})),
 		waiting: Array.from(matches.values())
 			.filter(
@@ -105,6 +121,7 @@ export function build({
 			.map((match) => ({
 				...match.boardMatch,
 				isHeld: tournament.autoAssignsStations && heldMatchIds.has(match.id),
+				startsIn: startsIn(match.boardMatch),
 			})),
 	};
 }
@@ -157,6 +174,7 @@ function boardMatchesById(tournament: Tournament) {
 					slot: null,
 					isAutoAssigned: false,
 					isHeld: false,
+					startsIn: null,
 				},
 			});
 		}
