@@ -1,5 +1,5 @@
 ---
-title: "November + December 2026 LANs"
+title: "Historic AREA CUP Victory Goes to First-Time Inter-Regional Winners"
 date: 2026-11-14
 author:
    - name: YELLOW
