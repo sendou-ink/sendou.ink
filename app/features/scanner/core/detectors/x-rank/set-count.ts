@@ -10,11 +10,16 @@
  * draws slots fails the gate.
  */
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
-import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
-import { frameGray, frameRgb, type Roi, roiSignature } from "../../image";
+import {
+	frameGray,
+	frameRgb,
+	type Image,
+	type Roi,
+	roiSignature,
+} from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
 import type { ScoreboardResources } from "../scoreboard/index";
 import type { Detector, EventKind, EventOf, GateResult } from "../types";
@@ -100,7 +105,7 @@ export function createXSetCountDetector(
 		return digits;
 	};
 
-	function gate(frame: Mat): GateResult {
+	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 		const dark = allDark(
 			"x-rank/set-count:CARD_DARK_MAX_MEAN",
@@ -153,7 +158,7 @@ export function createXSetCountDetector(
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,

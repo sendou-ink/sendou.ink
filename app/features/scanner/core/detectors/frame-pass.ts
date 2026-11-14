@@ -12,9 +12,8 @@
  * meet reads of their own types in the timeline, so this ordering is
  * equivalent to gating and parsing one detector at a time.
  */
-import type { Mat } from "../cv";
-import type { DetectedEvent } from "../events";
-import { isComplete } from "../events";
+import { type DetectedEvent, isComplete } from "../events";
+import type { Image } from "../image";
 import { all, type MatchScores, type MatchSteps } from "../match-steps";
 import {
 	changeOf,
@@ -59,7 +58,7 @@ export async function runDetectorPass({
 	speculative = true,
 	onGated,
 }: {
-	frame: Mat;
+	frame: Image;
 	t: number;
 	detectors: readonly Detector<DetectedEvent>[];
 	due: readonly string[];

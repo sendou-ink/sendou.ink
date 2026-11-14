@@ -5,7 +5,6 @@
  * exactly three full-height digits; each glyph size is tried (digits render
  * bigger on upscaled 720p) and the most confident valid read wins.
  */
-import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import {
 	type GlyphSet,
@@ -13,7 +12,12 @@ import {
 	recognizeTextSteps,
 	scaleGlyphSet,
 } from "../../glyphs";
-import { copyRoi, maxBrightness, meanBrightness } from "../../image";
+import {
+	cropRoi,
+	type Image,
+	maxBrightness,
+	meanBrightness,
+} from "../../image";
 import { all, type MatchSteps } from "../../match-steps";
 import type { ScoreboardResources } from "../scoreboard/index";
 import {
@@ -52,7 +56,7 @@ export function timerGlyphSets(resources: ScoreboardResources): GlyphSet[] {
 }
 
 /** Per-probe presence checks of the timer box: dark surround, then bright digits. */
-export function timerBoxChecks(gray: Mat): boolean[] {
+export function timerBoxChecks(gray: Image): boolean[] {
 	return [
 		...TIMER_DARK_PROBES.map((roi) =>
 			Decisions.atMost(
@@ -70,10 +74,8 @@ export function timerBoxChecks(gray: Mat): boolean[] {
 }
 
 /** The timer box showing "Overtime!" in place of the M:SS (see `OVERTIME_WARM_MIN_FRACTION`). */
-export function overtimeBoxVisible(frame: Mat): boolean {
-	const crop = copyRoi(frame, TIMER_DIGIT_ROI);
-	const { data } = crop;
-	const channels = crop.channels();
+export function overtimeBoxVisible(frame: Image): boolean {
+	const { data, channels } = cropRoi(frame, TIMER_DIGIT_ROI);
 	let warm = 0;
 	for (let i = 0; i < data.length; i += channels) {
 		const r = data[i]!;
@@ -86,7 +88,6 @@ export function overtimeBoxVisible(frame: Mat): boolean {
 		}
 	}
 	const pixels = data.length / channels;
-	crop.delete();
 
 	return Decisions.atLeast(
 		"objective/timer:OVERTIME_WARM_MIN_FRACTION",
@@ -96,7 +97,7 @@ export function overtimeBoxVisible(frame: Mat): boolean {
 }
 
 /** The M:SS colon's two dots, dark between them. */
-export function timerColonVisible(gray: Mat): boolean {
+export function timerColonVisible(gray: Image): boolean {
 	return (
 		TIMER_COLON_DOT_ROIS.every((roi) =>
 			Decisions.atLeast(
@@ -115,11 +116,11 @@ export function timerColonVisible(gray: Mat): boolean {
 
 /** The match timer at every glyph size (read in one lockstep), best read kept. */
 export function* readMatchTimerSteps(
-	gray: Mat,
+	gray: Image,
 	timerSets: readonly GlyphSet[],
 	speculative = false,
 ): MatchSteps<TimerRead> {
-	const band = copyRoi(gray, TIMER_DIGIT_ROI);
+	const band = cropRoi(gray, TIMER_DIGIT_ROI);
 	let best: TimerRead & { score: number } = {
 		value: null,
 		reading: "",
@@ -171,6 +172,5 @@ export function* readMatchTimerSteps(
 			};
 		}
 	}
-	band.delete();
 	return { value: best.value, reading: best.reading };
 }

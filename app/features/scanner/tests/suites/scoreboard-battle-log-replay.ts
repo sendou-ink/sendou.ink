@@ -8,7 +8,6 @@
  */
 
 import assert from "node:assert/strict";
-import { loadOpenCV } from "../../core/cv";
 import type {
 	ScoreboardPlayer,
 	ScoreboardRowDebug,
@@ -28,7 +27,6 @@ export async function runScoreboardBattleLogReplaySuite(
 	shard: number,
 	shardCount: number,
 ): Promise<void> {
-	await loadOpenCV();
 	const detector = createScoreboardBattleLogReplayDetector(
 		await loadScoreboardResources(),
 	);

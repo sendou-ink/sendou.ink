@@ -5,8 +5,7 @@
  * so matchWeapon's scoring applies. Mains (⌀~68) and subs (⌀~48) use different
  * art fractions, hence separate template sets.
  */
-import { getCV } from "../../cv";
-import type { FrameData } from "../../image";
+import { createImage, type FrameData } from "../../image";
 import { buildTemplateSizes, type WeaponTemplate } from "../scoreboard/weapons";
 import {
 	ABILITY_INK_THRESHOLD,
@@ -34,17 +33,11 @@ export function buildAbilityRole(
 	artRatio: number,
 	inkThreshold: number = ABILITY_INK_THRESHOLD,
 ): WeaponTemplate[] {
-	const cv = getCV();
 	return icons.map(({ id, image }) => {
 		// pad so the art occupies artRatio of the square, as it does of the badge on screen
 		const side = Math.round(image.width / artRatio);
 		const offset = Math.floor((side - image.width) / 2);
-		const padded = new cv.Mat(
-			side,
-			side,
-			cv.CV_8UC3,
-			new cv.Scalar(BADGE_BACKGROUND, BADGE_BACKGROUND, BADGE_BACKGROUND),
-		);
+		const padded = createImage(side, side, 3, BADGE_BACKGROUND);
 		const dst = padded.data;
 		const src = image.data;
 		for (let y = 0; y < image.height; y++) {
@@ -58,7 +51,6 @@ export function buildAbilityRole(
 			}
 		}
 		const templateSizes = buildTemplateSizes(padded, sizes, inkThreshold);
-		padded.delete();
 		return { id, sizes: templateSizes };
 	});
 }

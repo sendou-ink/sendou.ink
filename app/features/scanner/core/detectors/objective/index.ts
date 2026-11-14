@@ -14,13 +14,14 @@
  * by the shared timer value. Turf War draws the timer and icon strip with no
  * counter (`TIMER_VARIANT`): a readable timer alone emits the strip reads.
  */
-import { type Mat, minMaxLoc } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
-	copyRoi,
+	cropRoi,
 	frameGray,
+	type Image,
+	maxBrightness,
 	maxChannel,
 	minChannel,
 	type Roi,
@@ -210,19 +211,18 @@ export function createObjectiveDetector(
 		: [];
 
 	/** Mean and standard deviation of a grayscale ROI. */
-	function meanStd(gray: Mat, roi: Roi): { mean: number; std: number } {
-		const crop = copyRoi(gray, roi);
+	function meanStd(gray: Image, roi: Roi): { mean: number; std: number } {
+		const crop = cropRoi(gray, roi);
 		const { data } = crop;
 		let sum = 0;
 		for (const v of data) sum += v;
 		const mean = sum / data.length;
 		let varSum = 0;
 		for (const v of data) varSum += (v - mean) ** 2;
-		crop.delete();
 		return { mean, std: Math.sqrt(varSum / data.length) };
 	}
 
-	function plateProbeOk(gray: Mat, roi: Roi): boolean {
+	function plateProbeOk(gray: Image, roi: Roi): boolean {
 		return Decisions.atMost(
 			"objective:GATE_PLATE_MAX_STD",
 			meanStd(gray, roi).std,
@@ -230,10 +230,8 @@ export function createObjectiveDetector(
 		);
 	}
 
-	function scoreInkOk(frame: Mat, roi: Roi): boolean {
-		const band = maxChannel(frame, roi);
-		const { maxVal } = minMaxLoc(band);
-		band.delete();
+	function scoreInkOk(frame: Image, roi: Roi): boolean {
+		const maxVal = maxBrightness(maxChannel(frame, roi));
 		return Decisions.atLeast(
 			"objective:GATE_SCORE_MIN_MAX_BRIGHTNESS",
 			maxVal,
@@ -242,7 +240,7 @@ export function createObjectiveDetector(
 	}
 
 	/** The timer box (or overtime's), then the track's dot comb (TC/RM), the SZ/CB plates or neither (TW). */
-	function gate(frame: Mat): GateResult {
+	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 		const timerChecks = timerBoxChecks(gray);
 		const isOvertime = !timerChecks.every(Boolean) && overtimeBoxVisible(frame);
@@ -281,8 +279,8 @@ export function createObjectiveDetector(
 
 	/** Best trailing-digit read across channel extractions, thresholds and glyph sizes; every combination reads in one lockstep. */
 	function* readScore(
-		frame: Mat,
-		gray: Mat,
+		frame: Image,
+		gray: Image,
 		roi: Roi,
 		speculative: boolean,
 	): MatchSteps<BannerScoreRead> {
@@ -293,7 +291,7 @@ export function createObjectiveDetector(
 			reading: "",
 		};
 		const bands = [
-			copyRoi(gray, roi),
+			cropRoi(gray, roi),
 			minChannel(frame, roi),
 			maxChannel(frame, roi),
 		];
@@ -329,7 +327,6 @@ export function createObjectiveDetector(
 			});
 			if (isBetterRead(read, best)) best = read;
 		}
-		for (const band of bands) band.delete();
 		return best;
 	}
 
@@ -339,8 +336,8 @@ export function createObjectiveDetector(
 	 * probe still reads but the digits must be confident on their own.
 	 */
 	function* readPenalty(
-		frame: Mat,
-		gray: Mat,
+		frame: Image,
+		gray: Image,
 		side: 0 | 1,
 		speculative: boolean,
 	): MatchSteps<BannerScoreRead | null> {
@@ -372,7 +369,6 @@ export function createObjectiveDetector(
 			},
 			speculative,
 		);
-		band.delete();
 		const read = trailingDigitRun(raw, penaltySet);
 		if (
 			pillLikeProbes < PENALTY_PROBE_ROIS[side].length &&
@@ -389,12 +385,12 @@ export function createObjectiveDetector(
 
 	/** Plate fill over the probe strip; saturated = team-color style = in control (CONTROL_PLATE_MIN_SATURATION). */
 	function plateFill(
-		frame: Mat,
+		frame: Image,
 		side: 0 | 1,
 	): { mean: number; saturation: number } {
-		const crop = copyRoi(frame, PLATE_PROBE_ROIS[side]);
+		const crop = cropRoi(frame, PLATE_PROBE_ROIS[side]);
 		const { data } = crop;
-		const channels = crop.channels();
+		const channels = crop.channels;
 		let sum = 0;
 		let satSum = 0;
 		let count = 0;
@@ -406,12 +402,11 @@ export function createObjectiveDetector(
 			satSum += Math.max(r, g, b) - Math.min(r, g, b);
 			count++;
 		}
-		crop.delete();
 		return { mean: sum / count, saturation: satSum / count };
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		gateResult: GateResult | undefined,
 		speculative: boolean,
@@ -472,7 +467,7 @@ export function createObjectiveDetector(
 
 	/** The SZ/CB plates read; null = no readable count on either side (a lookalike). */
 	function* parseZonesSteps(
-		frame: Mat,
+		frame: Image,
 		isOvertime: boolean,
 		speculative: boolean,
 	): MatchSteps<{ event: ObjectiveEvent } | null> {
@@ -555,7 +550,7 @@ export function createObjectiveDetector(
 
 	/** The TC/RM track read; null = neither the icon nor a plate read (a lookalike). */
 	function* parseTrackSteps(
-		frame: Mat,
+		frame: Image,
 		isOvertime: boolean,
 		speculative: boolean,
 	): MatchSteps<{ event: ObjectiveEvent } | null> {

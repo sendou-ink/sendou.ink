@@ -27,10 +27,9 @@
  * can't.
  */
 import { CANONICAL_WIDTH } from "../../canonical";
-import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
-import { copyRoi, type Roi } from "../../image";
+import { cropRoi, type Image, type Roi } from "../../image";
 import type { InkRgb } from "../../ink-color";
 import type { EventKind, EventOf } from "../types";
 import {
@@ -255,7 +254,7 @@ export function statusFlagsOf(data: PlayerStatusData): {
  * `prevFit` (the previous read's, when recent) holds unless clearly beaten.
  */
 export function parsePlayerStatus(
-	frame: Mat,
+	frame: Image,
 	t: number,
 	time: number | null,
 	prevFit?: StripFit,
@@ -343,11 +342,10 @@ interface PitchGeometry {
 	state: number[];
 }
 
-function readBand(frame: Mat): Band {
-	const crop = copyRoi(frame, STATUS_BAND);
+function readBand(frame: Image): Band {
+	const crop = cropRoi(frame, STATUS_BAND);
 	const pixels = new Uint8Array(crop.data);
-	const channels = crop.channels();
-	crop.delete();
+	const channels = crop.channels;
 	const width = STATUS_BAND.w;
 	const teamHues = [0, 1].map((side) =>
 		teamInkHue(pixels, channels, side as 0 | 1),
@@ -829,11 +827,11 @@ function countsMedian(counts: Uint32Array, total: number): number {
 }
 
 /** All four badge probes reading white = that casted spectator arrangement. */
-function badgesVisible(frame: Mat, probes: readonly Roi[]): boolean {
+function badgesVisible(frame: Image, probes: readonly Roi[]): boolean {
 	return probes.every((roi) => {
-		const crop = copyRoi(frame, roi);
+		const crop = cropRoi(frame, roi);
 		const { data } = crop;
-		const channels = crop.channels();
+		const channels = crop.channels;
 		let white = 0;
 		let count = 0;
 		for (let i = 0; i < data.length; i += channels) {
@@ -847,7 +845,6 @@ function badgesVisible(frame: Mat, probes: readonly Roi[]): boolean {
 			}
 			count++;
 		}
-		crop.delete();
 		return Decisions.atLeast(
 			"objective/player-status:STATUS_CAST_MIN_DPAD_WHITE",
 			white / count,

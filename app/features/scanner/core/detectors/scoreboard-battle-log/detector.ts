@@ -15,26 +15,27 @@ import {
 	type Roi,
 	unionRoi,
 } from "../../canonical";
-import { getCV, type Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import type * as FieldScores from "../../field-scores";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
-	createProbeWarp,
 	cropRoi,
 	frameGray,
 	frameRgb,
+	type Image,
 	maxBrightness,
 	maxChannel,
 	meanBrightness,
 	roiSignature,
-	warpPerspective,
+	toGray,
+	toRgb,
 } from "../../image";
 import { RESULT_TAG_ENTRIES } from "../../localized";
 import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import { homographyFromQuad, type PerspectiveQuad } from "../../rectify";
 import { closestBy } from "../../text";
 import { sameScoreboardMatch } from "../../timeline/same-scoreboard";
+import { createProbeWarp, warpPerspective } from "../../warp";
 import {
 	type BannerScoreRead,
 	FULL_COUNT_TEAM_SCORE,
@@ -165,7 +166,6 @@ export function createBattleLogDetector<TType extends string>(
 	resources: ScoreboardResources,
 	layout: BattleLogLayout<TType>,
 ): Detector<EventRecord<TType, ScoreboardBattleLogData>> {
-	const cv = getCV();
 	const { rois } = layout;
 	const homography = rois.RECTIFY ? homographyFromQuad(rois.RECTIFY) : null;
 	const gateProbes = [
@@ -218,11 +218,8 @@ export function createBattleLogDetector<TType extends string>(
 		scaled(resources.headerLineGlyphs, rois.RESULT_TAG_TEXT_HEIGHT);
 
 	/** Mean-RGB saturation (max minus min channel) of a probe ROI. */
-	function probeSaturation(frame: Mat, roi: Roi) {
-		const view = cropRoi(frame, roi);
-		const cont = new cv.Mat();
-		view.copyTo(cont);
-		view.delete();
+	function probeSaturation(frame: Image, roi: Roi) {
+		const cont = cropRoi(frame, roi);
 		const d = cont.data;
 		const n = cont.rows * cont.cols;
 		let r = 0;
@@ -233,55 +230,42 @@ export function createBattleLogDetector<TType extends string>(
 			g += d[i * 4 + 1]!;
 			b += d[i * 4 + 2]!;
 		}
-		cont.delete();
 		if (n === 0) return 0;
 		return (Math.max(r, g, b) - Math.min(r, g, b)) / n;
 	}
 
 	/**
 	 * `frame` as the ROIs see it: itself for a flat layout, else `region` of it
-	 * rectified into a region-sized mat, `local` shifting a ROI into it. Its
-	 * gray/RGB conversions (the frame's shared ones when flat) live until release.
+	 * rectified into a region-sized image, `local` shifting a ROI into it. Its
+	 * gray/RGB conversions are the frame's shared ones when flat.
 	 */
 	function rectifiedView(
-		frame: Mat,
+		frame: Image,
 		region: Roi,
-		warp = (src: Mat) => warpPerspective(src, homography!, region),
+		warp = (src: Image) => warpPerspective(src, homography!, region),
 	) {
 		if (!homography) {
 			return {
-				mat: frame,
+				image: frame,
 				local: (roi: Roi) => roi,
 				gray: () => frameGray(frame),
 				rgb: () => frameRgb(frame),
-				release: () => {},
 			};
 		}
-		const mat = warp(frame);
-		const converted: Mat[] = [];
-		const convert = (code: number) => {
-			const out = new cv.Mat();
-			cv.cvtColor(mat, out, code);
-			converted.push(out);
-			return out;
-		};
+		const image = warp(frame);
 		return {
-			mat,
+			image,
 			local: (roi: Roi): Roi => ({
 				...roi,
 				x: roi.x - region.x,
 				y: roi.y - region.y,
 			}),
-			gray: () => convert(cv.COLOR_RGBA2GRAY),
-			rgb: () => convert(cv.COLOR_RGBA2RGB),
-			release: () => {
-				mat.delete();
-				for (const out of converted) out.delete();
-			},
+			gray: () => toGray(image),
+			rgb: () => toRgb(image),
 		};
 	}
 
-	function gate(frame: Mat): GateResult {
+	function gate(frame: Image): GateResult {
 		const probes = rectifiedView(frame, gateRegion, gateWarp);
 		const gray = probes.gray();
 
@@ -293,7 +277,7 @@ export function createBattleLogDetector<TType extends string>(
 				if (
 					Decisions.below(
 						`${layout.id}:GATE_DARK_MAX_MEAN`,
-						meanBrightness(probes.mat, probes.local(rois.gateDarkProbe(cy))),
+						meanBrightness(probes.image, probes.local(rois.gateDarkProbe(cy))),
 						rois.GATE_DARK_MAX_MEAN,
 					)
 				)
@@ -313,7 +297,7 @@ export function createBattleLogDetector<TType extends string>(
 			if (
 				Decisions.atLeast(
 					`${layout.id}:GATE_COLOR_MIN_SATURATION`,
-					probeSaturation(probes.mat, probes.local(roi)),
+					probeSaturation(probes.image, probes.local(roi)),
 					rois.GATE_COLOR_MIN_SATURATION,
 				)
 			)
@@ -336,15 +320,13 @@ export function createBattleLogDetector<TType extends string>(
 		if (pass && homography) {
 			const flat = rectifiedView(frame, FULL_FRAME);
 			signature = contentSignature(flat.gray());
-			flat.release();
 		} else if (pass) {
 			signature = contentSignature(gray);
 		}
-		probes.release();
 		return { pass, score, signature };
 	}
 
-	function contentSignature(gray: Mat): number[] {
+	function contentSignature(gray: Image): number[] {
 		const signature = roiSignature(gray, rois.HEADER_TOP_BAND, 32, 2);
 		for (const dy of rois.PANEL_DYS) {
 			for (const base of rois.ROW_CENTERS) {
@@ -356,8 +338,8 @@ export function createBattleLogDetector<TType extends string>(
 
 	/** One panel's rows, team total and result tag, all read in one lockstep. */
 	function* parsePanelSteps(
-		gray: Mat,
-		rgb: Mat,
+		gray: Image,
+		rgb: Image,
 		panel: PanelIndex,
 		speculative: boolean,
 	): MatchSteps<PanelParse> {
@@ -413,8 +395,6 @@ export function createBattleLogDetector<TType extends string>(
 					)
 				: done(null),
 		]);
-		teamCrop?.delete();
-		bright?.delete();
 
 		let result: PanelParse["result"] = null;
 		let resultReading = "";
@@ -453,7 +433,7 @@ export function createBattleLogDetector<TType extends string>(
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
@@ -513,8 +493,6 @@ export function createBattleLogDetector<TType extends string>(
 			matchScores = resolveMatchScores({ left, right, knockout });
 			bannerDebug = { left, right, knockout };
 		}
-
-		flat.release();
 
 		return [
 			{

@@ -2,14 +2,13 @@
  * Replay code recognition ("R6KE-DO64-3CXD-XVKL"): green text falls below the
  * grayscale binarization threshold, so it runs on the green channel.
  */
-import { getCV, type Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import {
 	type GlyphSet,
 	type RecognizedText,
 	recognizeTextSteps,
 } from "../../glyphs";
-import { cropRoi } from "../../image";
+import { channelOf, cropRoi, type Image } from "../../image";
 import type { MatchSteps } from "../../match-steps";
 import { REPLAY_CODE_ROI } from "./rois";
 
@@ -53,7 +52,7 @@ const LU_TOP_RIGHT_MIN_FRACTION = 0.2;
 
 function resolveUsByTopRightInk(
 	raw: RecognizedText,
-	green: Mat,
+	green: Image,
 ): RecognizedText {
 	const { cols, data } = green;
 	const chars = raw.chars.map((c) => {
@@ -126,20 +125,11 @@ export function codeCharsetOf(set: GlyphSet): GlyphSet {
 
 /** rgb: full normalized frame in RGB (not RGBA). */
 export function* parseReplayCodeSteps(
-	rgb: Mat,
+	rgb: Image,
 	glyphs: GlyphSet,
 	speculative = false,
 ): MatchSteps<ParsedReplayCode> {
-	const cv = getCV();
-	const view = cropRoi(rgb, REPLAY_CODE_ROI);
-	const channels = new cv.MatVector();
-	cv.split(view, channels);
-	const g = channels.get(1);
-	const green = new cv.Mat();
-	g.copyTo(green);
-	g.delete();
-	channels.delete();
-	view.delete();
+	const green = channelOf(cropRoi(rgb, REPLAY_CODE_ROI), 1);
 
 	const raw = yield* recognizeTextSteps(
 		green,
@@ -151,7 +141,6 @@ export function* parseReplayCodeSteps(
 		speculative,
 	);
 	const resolved = resolveUsByTopRightInk(raw, green);
-	green.delete();
 
 	let text = resolveQsByDescent(resolved).toUpperCase();
 	// thin dashes can drop out of segmentation; re-derive the grouping from the 16 alphanumerics

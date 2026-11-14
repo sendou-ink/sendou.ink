@@ -12,12 +12,14 @@
  */
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import { createAllDetectors } from "../../app/features/scanner/core/detectors/registry";
 import { DetectorScheduler } from "../../app/features/scanner/core/detectors/scheduler";
 import { isComplete } from "../../app/features/scanner/core/events";
 import * as FieldScores from "../../app/features/scanner/core/field-scores";
-import { normalizeFrame, toMat } from "../../app/features/scanner/core/image";
+import {
+	imageFromFrameData,
+	normalizeFrame,
+} from "../../app/features/scanner/core/image";
 import { readImage } from "../../app/features/scanner/node/image-io";
 import { loadScoreboardResources } from "../../app/features/scanner/node/resources";
 
@@ -29,7 +31,6 @@ if (!framesDir || !startTArg || !fpsArg) {
 const startT = Number(startTArg);
 const fps = Number(fpsArg);
 
-await loadOpenCV();
 const detectors = createAllDetectors(await loadScoreboardResources());
 const scheduler = new DetectorScheduler(detectors);
 scheduler.reset(startT);
@@ -43,9 +44,8 @@ for (const [i, file] of files.entries()) {
 	const due = scheduler.dueDetectors(t);
 	if (due.length === 0) continue;
 	const image = await readImage(join(framesDir, file));
-	const src = toMat(image);
+	const src = imageFromFrameData(image);
 	const frame = normalizeFrame(src);
-	src.delete();
 	for (const detector of detectors) {
 		if (!due.includes(detector.id)) continue;
 		const gate = detector.gate(frame);
@@ -82,5 +82,4 @@ for (const [i, file] of files.entries()) {
 				.join(", ")}]`,
 		);
 	}
-	frame.delete();
 }

@@ -2,7 +2,8 @@ import Mermaid from "../../components/Mermaid.astro";
 
 Browser app (route `/scanner`, linked from the Tools menu) that watches a
 capture card or OBS Virtual Camera while you play, or scans VoD files,
-detects Splatoon 3 UI screens with OpenCV.js in a Web Worker, and parses them
+detects Splatoon 3 UI screens in a Web Worker (image operations of its own, see
+"Images"), and parses them
 into events speaking sendou.ink ids (`ModeShort`/`StageId`/weapon ids/`Ability`).
 Events aggregate client-side into `ScannerMatch` objects
 (`core/scanner-match.ts`) — one detected game per object, every field
@@ -360,24 +361,18 @@ pnpm scanner:build-planner-signatures   # regen the minimap stage-ID atlas from 
 pnpm scanner:build-music-index <folder> # regen the battle music set clips' "Mute music" subtracts
 pnpm scanner:remove-music <video>       # take the music out of a video's sound, before/after WAVs
 pnpm scanner:remove-music <video> --video # the whole video again without the music, original audio kept
-pnpm scanner:gpu-parity                 # every fixture: OpenCV vs WebGPU parse decisions + GPU upscale pixels
+pnpm scanner:gpu-parity                 # every fixture: CPU vs WebGPU parse decisions + GPU upscale pixels
 pnpm scanner:gpu-replay <corpus-dir>    # replay recorded match requests on WebGPU, timed, exact-checked
 ```
 
-Scanner scripts run through `vite-node -c scripts/scanner/vite-node.config.ts`:
-the root vite config pre-bundles `@techstark/opencv-js` for the browser worker
-and vite-node must not consume that prebundle. The package is pnpm-patched
-(`patches/`) to wrap its thenable CJS export as `{ cvReadyPromise }`,
-unwrapped in `core/cv.ts`, and to expose its heap's `WebAssembly.Memory` as
-`cv.wasmMemory` (captured from its one `WebAssembly.instantiate` call, all
-in the short wrapper lines: the minified runtime line is never touched, so
-the patch stays small). `core/frame-kernels.ts` runs on that memory.
+Scanner scripts are plain vite-node scripts (`pnpm exec vite-node
+scripts/scanner/<script>.ts` for the ones without a package script).
 
 ## Architecture
 
 <Mermaid code={`sequenceDiagram
   participant Cap as capture (sampler / vod-frames)
-  participant W as analyzer.worker (OpenCV)
+  participant W as analyzer.worker
   participant TL as TimelineBuilder (in the worker)
   participant MB as match-builder
   participant UI as live-session / vod-scan
@@ -396,7 +391,7 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   Note over UI: VoD "Add to VoDs": ScannerMatch → slim prefill param → /vods/new
   Note over UI: scoreWindows(match) → ring buffer / file packet copy → clips store`} />
 
-- `core/` is pure (mats in, events/matches out) and runs in the worker, the
+- `core/` is pure (images in, events/matches out) and runs in the worker, the
   debug view, and Node tests. No DOM/browser APIs; Node-only helpers live
   in `node/`. Pure data/type imports from `~/modules` and
   `~/features/build-analyzer/data` are fine — valibot and the app config graph
@@ -826,7 +821,7 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   card, and its covered ability badges (~0.2, clean ones 0.45+) read
   UNKNOWN and are left unscored.
 - New event types implement `Detector` (`core/detectors/types.ts`): a cheap
-  `gate(mat)` at sample rate plus `parseSteps` (match steps, see "WebGPU")
+  `gate(frame)` at sample rate plus `parseSteps` (match steps, see "WebGPU")
   when the gate fires, `parse` being `runSync` of it. Register in
   `core/detectors/registry.ts`.
 - Every event type is declared once, next to its detector, as an `EventKind`
@@ -930,12 +925,52 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   see "Scan log and replay".
 - Gates and parses read the frame's gray/RGB/HSV
   through `frameGray`/`frameRgb`/`frameHsv` (`core/image.ts`), converted once
-  per frame and shared: never delete or write them, and never pass them a
-  derived mat. Gray and RGB come from WebAssembly SIMD kernels
-  (`core/frame-kernels.c`) bit-identical to `cvtColor` (tested on every
-  24-bit color) at under half its cost. A gate probing a few small ROIs of a
-  rectified region uses `createProbeWarp`, which replays OpenCV's f32
-  bilinear warp at those pixels only (exact; `tests/frame-kernels.test.ts`).
+  per frame and shared: never write them, and never pass them a derived
+  image. They come from the WebAssembly kernels (see "Images"). A gate
+  probing a few small ROIs of a rectified region uses `createProbeWarp`
+  (`core/warp.ts`), the warp computed at those pixels only, with the source
+  coordinates and weights computed once.
+
+## Images
+
+`core/` works on `Image`s (`core/image.ts`): 8-bit samples in a plain
+`Uint8Array`, channels interleaved (1 gray, 3 RGB, 4 RGBA), rows contiguous.
+There are no views and nothing to free: a crop (`cropRoi`) is a copy, and
+an image is garbage collected like any array.
+
+- Every operation OpenCV.js did before reproduces its 8-bit output bit for
+  bit, so the ROI constants, thresholds, glyph atlases and fixtures tuned on
+  it stay valid: `resize` / `resizeBy` (`core/resize.ts`: INTER_AREA,
+  INTER_CUBIC, INTER_LINEAR, INTER_NEAREST, with OpenCV's coefficient tables,
+  f32 steps and fixed point), `warpAffine` / `warpPerspective` /
+  `createProbeWarp` (`core/warp.ts`, OpenCV 5's f32 bilinear warp), the color
+  conversions (`core/image.ts`) and, in `core/filters.ts`, the 3x3
+  Laplacian, the 5x5 Gaussian blur, dilation, min-max normalization and
+  connected components. Template matching was already exact and OpenCV-free
+  (see "WebGPU").
+- `tests/image-kernel-cases.ts` holds 161 cases with the output OpenCV.js
+  5.0.0 gave on them (hashed), recorded before the dependency was dropped,
+  and 25 color conversion cases at odd sizes (the kernels' scalar tails)
+  pinned to the JS loops.
+  `tests/logic/image-kernels.test.ts` checks them on the WebAssembly kernels,
+  `image-kernels-js.test.ts` on the JS loops. When OpenCV went, no read
+  changed: every gate, event, score and recorded decision of every detector
+  on every fixture came out byte-identical.
+- Whole-frame work runs in WebAssembly (`core/frame-kernels.c`, compiled into
+  `frame-kernels.ts`; regeneration steps in the C file): gray, RGB, HSV and
+  the resizes of 65,536 output samples or more. The module has a memory of
+  its own (a frame is copied in and the result out); the tables are computed
+  in JS, which also runs the same loops where WebAssembly SIMD is missing and
+  for small images. In Node, against OpenCV.js on the same machine: 720p to
+  1080p cubic 8 ms (OpenCV 13), 1440p to 1080p area 8 ms (27), HSV 3.8 ms
+  (5.3), gray 0.8 ms (1.0). Every detector on every fixture: 92 s (110).
+  `scan-vod` on 5 min slices, CPU matcher: 1080p 65 s (62), 720p 35-40 s
+  (33), the gap mostly the matcher's large jobs that took OpenCV's DFT
+  (see "WebGPU"); the events CSVs are identical.
+- A new operation the scanner needs from OpenCV gets an exact port next to
+  these, and a case in `tests/image-kernel-cases.ts` taken from OpenCV
+  itself (a scratch script with `@techstark/opencv-js` installed outside
+  the repo).
 
 ## WebGPU
 
@@ -964,9 +999,12 @@ The GPU is an accelerator only: the same algorithms make the same decisions.
   enough to reorder a near-tie (seen once in a browser scan: an 8th-ranked
   strip-weapon candidate, scores 7e-7 apart), hence exact on both. On the CPU
   the cross sums run in WebAssembly SIMD (`core/cross-sums.c`, compiled into
-  `cross-sums.ts`; regeneration steps in the C file), large jobs as one f64
-  `filter2D` (rounded: exact), and the window sums come from integral
-  images — faster than the `matchTemplate` path it replaced.
+  `cross-sums.ts`; regeneration steps in the C file) for templates up to
+  66,051 samples (where u8 products can no longer overflow 2^32; larger ones
+  run in JS), and the window sums come from integral images — faster than
+  the `matchTemplate` path it replaced. Large jobs used to take OpenCV's f64
+  `filter2D` (a DFT) instead; the SIMD loops are slower on those, which
+  costs a CPU-matched `scan-vod` a few percent (see "Images").
 - **Frame pass** (`core/detectors/frame-pass.ts`): the worker and the CLI gate
   every due detector in registry order, then run all approved parses — one
   lockstep of their steps on the GPU — and record results in registry order.
@@ -984,7 +1022,8 @@ The GPU is an accelerator only: the same algorithms make the same decisions.
   window is part of a score's identity.
 - **Frame upscale** (`worker/gpu-frame-scaler.ts`, kernel in
   `worker/cubic-upscaler.ts`): `normalizeFrame`'s INTER_CUBIC upscale of
-  sub-1080p pictures (13-25 ms of WASM per 720p frame) as an integer kernel
+  sub-1080p pictures (8-11 ms per 720p-900p frame in the CPU's WebAssembly
+  kernel) as an integer kernel
   reproducing OpenCV's 8-bit cubic resize bit for bit; 1080p copies and
   INTER_AREA downscales stay on the CPU. A VoD scan reading back through
   WebGPU runs the same kernel in its readback worker instead (see "VoD frame
@@ -1135,7 +1174,7 @@ nothing but height are separate templates this way: 'p'/'P', 'c'/'C',
   the recognizer were left where they were.
 - `tests/glyph-cells.test.ts` draws its own font and line (twins at both
   heights, a tilted line, a line off its set's size, a border line in the
-  crop); it needs OpenCV but no fixtures.
+  crop); it needs no fixtures.
 
 ## Game clock
 
@@ -1185,9 +1224,10 @@ time, so each match tracks its own reads again.
 checkout, so they run in their own Vitest project (`vitest.scanner.config.ts`)
 and stay out of CI.
 
-`tests/logic/*.test.ts` are pure logic over synthetic events — no images, no
-assets checkout — so they belong to the `unit` project and do run in CI. Put
-new tests there whenever they can be written without a frame.
+`tests/logic/*.test.ts` are pure logic over synthetic events and generated
+images (the image operations, see "Images") — no fixtures, no assets
+checkout — so they belong to the `unit` project and do run in CI. Put new
+tests there whenever they can be written without a frame.
 
 ## Threshold margins
 

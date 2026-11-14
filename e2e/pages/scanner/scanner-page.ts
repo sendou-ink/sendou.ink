@@ -6,7 +6,7 @@ import { expect, expectIsHydrated, navigate } from "../../helpers/playwright";
 /** The settings the scanner keeps in localStorage (`components/settings.ts`). */
 const SETTINGS_STORAGE_KEY = "scanner:settings";
 
-/** Loading OpenCV and scanning outlast the default timeout. */
+/** Loading the scanner assets and scanning outlast the default timeout. */
 const SCAN_TIMEOUT = 45_000;
 
 /** `/scanner` */

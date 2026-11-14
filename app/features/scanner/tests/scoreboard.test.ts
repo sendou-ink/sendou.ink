@@ -5,7 +5,6 @@
  */
 
 import assert from "node:assert/strict";
-import { loadOpenCV } from "../core/cv";
 import {
 	createScoreboardDetector,
 	type ScoreboardPlayer,
@@ -21,7 +20,6 @@ import {
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
 
-await loadOpenCV();
 const detector = createScoreboardDetector(await loadScoreboardResources());
 const fixtures = loadFixtures("scoreboard");
 

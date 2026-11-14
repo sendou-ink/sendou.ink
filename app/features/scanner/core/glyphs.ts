@@ -20,10 +20,19 @@
  * different templates that way.
  */
 import { median } from "~/utils/number";
-import { getCV, type Mat } from "./cv";
 import * as Decisions from "./decisions";
-import type { FrameData } from "./image";
+import { dilate, rectElement } from "./filters";
+import {
+	applyMask,
+	cropRoi,
+	type FrameData,
+	type Image,
+	imageFromFrameData,
+	threshold,
+	toGray,
+} from "./image";
 import { all, exactMatchRows, type MatchSteps } from "./match-steps";
+import { resize, resizeBy } from "./resize";
 
 interface AtlasGlyphMeta {
 	char: string;
@@ -61,18 +70,18 @@ export interface AtlasMeta {
 interface Glyph {
 	char: string;
 	/** grayscale white-on-black, tight box */
-	mat: Mat;
-	/** `mat`'s dimensions, kept off the embind accessors in the matching loops */
+	image: Image;
+	/** `image`'s dimensions */
 	rows: number;
 	cols: number;
 	/** count of pixels above the binarization threshold */
 	ink: number;
 	/** exact fixture crop vs font-rendered approximation */
 	source: "fixture" | "font";
-	/** rows from the top of `mat` down to the baseline of its line (fractional; negative for a mark hanging under it) */
+	/** rows from the top of `image` down to the baseline of its line (fractional; negative for a mark hanging under it) */
 	ascent: number;
 	/** lazily-built PRESCREEN_SCALE thumbnail for the eligibility prescreen */
-	small?: { mat: Mat; rows: number; cols: number };
+	small?: Image;
 }
 
 export interface GlyphSet {
@@ -125,33 +134,21 @@ export function loadGlyphSet(atlas: FrameData, meta: AtlasMeta): GlyphSet {
 		);
 	}
 	return lazyGlyphSet(meta.height, () => {
-		const cv = getCV();
-		const full = cv.matFromImageData(atlas as unknown as ImageData);
-		const gray = new cv.Mat();
-		cv.cvtColor(full, gray, cv.COLOR_RGBA2GRAY);
-		full.delete();
-
+		const gray = toGray(imageFromFrameData(atlas));
 		const glyphs: Glyph[] = meta.glyphs.map((g) => {
-			// NB: .data/.clone() are broken on ROI views in this opencv.js build;
-			// always copyTo into a fresh mat before pixel access.
-			const view = gray.roi(new cv.Rect(g.x, g.y, g.w, g.h));
-			const box = new cv.Mat();
-			view.copyTo(box);
-			view.delete();
-			const { mat, top } = tightCropGray(box, TEMPLATE_BIN_THRESHOLD);
-			box.delete();
+			const box = cropRoi(gray, { x: g.x, y: g.y, w: g.w, h: g.h });
+			const { image, top } = tightCropGray(box, TEMPLATE_BIN_THRESHOLD);
 			// untagged glyphs predate hybrid atlases and were all fixture crops
 			return {
 				char: g.char,
-				mat,
-				rows: mat.rows,
-				cols: mat.cols,
-				ink: inkOf(mat),
+				image,
+				rows: image.rows,
+				cols: image.cols,
+				ink: inkOf(image),
 				source: g.source ?? "fixture",
 				ascent: g.baseline! - top,
 			};
 		});
-		gray.delete();
 		const widths = glyphs.map((g) => g.cols).sort((a, b) => a - b);
 		return { glyphs, medianWidth: widths[Math.floor(widths.length / 2)] ?? 8 };
 	});
@@ -173,16 +170,14 @@ export function scaleGlyphSet(set: GlyphSet, factor: number): GlyphSet {
 	const known = byFactor.get(factor);
 	if (known) return known;
 	const scaled = lazyGlyphSet(Math.round(set.height * factor), () => {
-		const cv = getCV();
 		const glyphs = set.glyphs.map((g) => {
-			const mat = new cv.Mat();
-			cv.resize(g.mat, mat, new cv.Size(0, 0), factor, factor, cv.INTER_CUBIC);
+			const image = resizeBy(g.image, factor, factor, "cubic");
 			return {
 				char: g.char,
-				mat,
-				rows: mat.rows,
-				cols: mat.cols,
-				ink: inkOf(mat),
+				image,
+				rows: image.rows,
+				cols: image.cols,
+				ink: inkOf(image),
 				source: g.source,
 				ascent: g.ascent * factor,
 			};
@@ -194,18 +189,17 @@ export function scaleGlyphSet(set: GlyphSet, factor: number): GlyphSet {
 }
 
 /** Count of pixels above the binarization threshold. */
-function inkOf(mat: Mat): number {
+function inkOf(image: Image): number {
 	let ink = 0;
-	for (const v of mat.data as Uint8Array) if (v > TEMPLATE_BIN_THRESHOLD) ink++;
+	for (const v of image.data) if (v > TEMPLATE_BIN_THRESHOLD) ink++;
 	return ink;
 }
 
-/** Crop a grayscale mat to the tight bounds of its above-threshold pixels; `top` is the first row kept. */
+/** Crop a grayscale image to the tight bounds of its above-threshold pixels; `top` is the first row kept. */
 function tightCropGray(
-	gray: Mat,
-	threshold: number,
-): { mat: Mat; top: number } {
-	const cv = getCV();
+	gray: Image,
+	inkThreshold: number,
+): { image: Image; top: number } {
 	const { cols, rows, data } = gray;
 	let xMin = cols;
 	let xMax = -1;
@@ -213,7 +207,7 @@ function tightCropGray(
 	let yMax = -1;
 	for (let y = 0; y < rows; y++) {
 		for (let x = 0; x < cols; x++) {
-			if (data[y * cols + x]! > threshold) {
+			if (data[y * cols + x]! > inkThreshold) {
 				if (x < xMin) xMin = x;
 				if (x > xMax) xMax = x;
 				if (y < yMin) yMin = y;
@@ -221,17 +215,16 @@ function tightCropGray(
 			}
 		}
 	}
-	const out = new cv.Mat();
-	if (xMax < 0) {
-		gray.copyTo(out);
-		return { mat: out, top: 0 };
-	}
-	const view = gray.roi(
-		new cv.Rect(xMin, yMin, xMax - xMin + 1, yMax - yMin + 1),
-	);
-	view.copyTo(out);
-	view.delete();
-	return { mat: out, top: yMin };
+	if (xMax < 0) return { image: gray, top: 0 };
+	return {
+		image: cropRoi(gray, {
+			x: xMin,
+			y: yMin,
+			w: xMax - xMin + 1,
+			h: yMax - yMin + 1,
+		}),
+		top: yMin,
+	};
 }
 
 export interface RecognizedChar {
@@ -277,7 +270,7 @@ interface Segment {
 	x1: number;
 }
 
-function columnProfile(binary: Mat): number[] {
+function columnProfile(binary: Image): number[] {
 	const { cols, rows, data } = binary;
 	const profile = new Array<number>(cols).fill(0);
 	for (let y = 0; y < rows; y++) {
@@ -376,7 +369,7 @@ interface SegmentInfo extends Segment {
 
 /** `band` = the crop rows that count (the line's cell); ink on the others is not the line's. */
 function measureSegment(
-	binary: Mat,
+	binary: Image,
 	seg: Segment,
 	band: { y0: number; y1: number } | null,
 ): SegmentInfo {
@@ -535,7 +528,7 @@ type RankedCandidate = {
 };
 
 function* classifySegment(
-	masked: Mat,
+	masked: Image,
 	seg: SegmentInfo,
 	set: GlyphSet,
 	/** null = the line's baseline is not known yet: templates slide over the segment's ink rows */
@@ -558,8 +551,6 @@ function* classifySegment(
 	// a template kept to its cell sits on placements the free read already
 	// scored, so it cannot beat what it scored there
 	const freeScores = line ? memo.free.get(spanKey) : undefined;
-	// NB: Mat dimension/data accessors go through embind (validateThis etc.)
-	// and are expensive — hoist them out of the per-glyph/per-pixel loops.
 	const maskedRows = masked.rows;
 	const free = searchRegion({ rows: maskedRows, cols: masked.cols }, seg);
 	const x0 = free.x0;
@@ -683,7 +674,9 @@ function* classifySegment(
 			seg.x1,
 			minOverlap,
 		);
-		return window ? regions.add(contender, contender.glyph.mat, window) : null;
+		return window
+			? regions.add(contender, contender.glyph.image, window)
+			: null;
 	});
 	const scores = regions.requests.length > 0 ? yield regions.requests : [];
 	const freeNcc = line ? null : new Map<Glyph, number>();
@@ -716,7 +709,6 @@ function* classifySegment(
 			});
 		}
 	}
-	regions.release();
 	sortByScore(candidates);
 	const top = candidates[0];
 	if (top && top.source === "font") {
@@ -768,8 +760,8 @@ interface EligibleGlyph {
 }
 
 interface RowRequest {
-	image: Mat;
-	templates: Mat[];
+	image: Image;
+	templates: Image[];
 	windows: (readonly [number, number])[];
 	key: string | undefined;
 }
@@ -782,7 +774,7 @@ interface RowRequest {
  */
 // XXX: the WebGPU driver matches every template asked for, so there the cell read costs a second round trip per line and a request per cell height (fixture set parse 23 s -> 30 s, CPU unchanged): ask it only for templates whose free score can still win, or drop the question with the GPU matcher
 function rowRegions(
-	masked: Mat,
+	masked: Image,
 	columns: { x0: number; cols: number },
 	maskedKey: string | undefined,
 ) {
@@ -793,7 +785,7 @@ function rowRegions(
 		/** Asks for `template`'s score over `rows`; the slot finds it in the step's scores. */
 		add(
 			rows: { y0: number; rows: number },
-			template: Mat,
+			template: Image,
 			window: readonly [number, number],
 		): { request: number; template: number } {
 			const rowsKey = rows.y0 * 65536 + rows.rows;
@@ -803,7 +795,7 @@ function rowRegions(
 				request = requests.length;
 				requestOfRows.set(rowsKey, request);
 				requests.push({
-					image: masked.roi(new (getCV().Rect)(x0, rows.y0, cols, rows.rows)),
+					image: cropRoi(masked, { x: x0, y: rows.y0, w: cols, h: rows.rows }),
 					templates: [],
 					windows: [],
 					key:
@@ -816,9 +808,6 @@ function rowRegions(
 			templates.push(template);
 			windows.push(window);
 			return { request, template: templates.length - 1 };
-		},
-		release(): void {
-			for (const { image } of requests) image.delete();
 		},
 	};
 }
@@ -851,7 +840,7 @@ const RUNNER_UP_MARGIN = 0.2;
  * glyph.
  */
 function* prescreen(
-	masked: Mat,
+	masked: Image,
 	eligible: EligibleGlyph[],
 	region: {
 		x0: number;
@@ -867,7 +856,6 @@ function* prescreen(
 	maskedKey: string | undefined,
 	lowRes: LowResScores,
 ): MatchSteps<EligibleGlyph[]> {
-	const cv = getCV();
 	const regionId = `${region.x0},${region.y0},${region.cols},${region.rows}`;
 	let known = lowRes.get(regionId);
 	if (!known) {
@@ -875,8 +863,8 @@ function* prescreen(
 		lowRes.set(regionId, known);
 	}
 	const smallSize = scaledSize(region.cols, region.rows);
-	const smallRows = smallSize.height;
-	const smallCols = smallSize.width;
+	const smallRows = smallSize.rows;
+	const smallCols = smallSize.cols;
 	const x0 = region.x0 * PRESCREEN_SCALE;
 	const segX0 = region.segX0 * PRESCREEN_SCALE;
 	const segX1 = region.segX1 * PRESCREEN_SCALE;
@@ -890,7 +878,7 @@ function* prescreen(
 	const estimable: EligibleGlyph[] = [];
 	const asked: {
 		glyph: Glyph;
-		small: Mat;
+		small: Image;
 		window: readonly [number, number];
 	}[] = [];
 	for (const entry of eligible) {
@@ -918,16 +906,21 @@ function* prescreen(
 		}
 		estimable.push(entry);
 		if (!known.has(entry.glyph)) {
-			asked.push({ glyph: entry.glyph, small: small.mat, window });
+			asked.push({ glyph: entry.glyph, small, window });
 		}
 	}
 	if (asked.length > 0) {
-		const view = masked.roi(
-			new cv.Rect(region.x0, region.y0, region.cols, region.rows),
+		const smallRegion = resize(
+			cropRoi(masked, {
+				x: region.x0,
+				y: region.y0,
+				w: region.cols,
+				h: region.rows,
+			}),
+			smallSize.cols,
+			smallSize.rows,
+			"area",
 		);
-		const smallRegion = new cv.Mat();
-		cv.resize(view, smallRegion, smallSize, 0, 0, cv.INTER_AREA);
-		view.delete();
 		const [scoreOf] = yield [
 			{
 				image: smallRegion,
@@ -940,7 +933,6 @@ function* prescreen(
 			},
 		];
 		for (const [i, { glyph }] of asked.entries()) known.set(glyph, scoreOf!(i));
-		smallRegion.delete();
 	}
 	// ranked by the penalties alone, so templates with and without a free
 	// score are estimated alike
@@ -966,29 +958,19 @@ function* prescreen(
 	return kept;
 }
 
-function smallGlyph(glyph: Glyph): { mat: Mat; rows: number; cols: number } {
+function smallGlyph(glyph: Glyph): Image {
 	if (!glyph.small) {
-		const cv = getCV();
-		const small = new cv.Mat();
-		cv.resize(
-			glyph.mat,
-			small,
-			scaledSize(glyph.cols, glyph.rows),
-			0,
-			0,
-			cv.INTER_AREA,
-		);
-		glyph.small = { mat: small, rows: small.rows, cols: small.cols };
+		const size = scaledSize(glyph.cols, glyph.rows);
+		glyph.small = resize(glyph.image, size.cols, size.rows, "area");
 	}
 	return glyph.small;
 }
 
 function scaledSize(cols: number, rows: number) {
-	const cv = getCV();
-	return new cv.Size(
-		Math.max(1, Math.round(cols * PRESCREEN_SCALE)),
-		Math.max(1, Math.round(rows * PRESCREEN_SCALE)),
-	);
+	return {
+		cols: Math.max(1, Math.round(cols * PRESCREEN_SCALE)),
+		rows: Math.max(1, Math.round(rows * PRESCREEN_SCALE)),
+	};
 }
 
 /**
@@ -1225,7 +1207,7 @@ interface RecutContext {
 	profile: number[];
 	/** measureSegment on the binarized crop, memoized: the prefetch and the sequential passes measure the same spans */
 	measure: (seg: Segment) => SegmentInfo;
-	masked: Mat;
+	masked: Image;
 	set: GlyphSet;
 	/** where the line sits in the crop; null while it is read to find that out */
 	line: LineFrame | null;
@@ -1620,12 +1602,11 @@ let maskedKeySeq = 0;
  * only pays off under a batching driver.
  */
 export function* recognizeTextSteps(
-	gray: Mat,
+	gray: Image,
 	set: GlyphSet,
 	options: RecognizeOptions = {},
 	speculative = false,
 ): MatchSteps<RecognizedText> {
-	const cv = getCV();
 	const {
 		binThreshold = 150,
 		minColumnPixels = 1,
@@ -1634,18 +1615,11 @@ export function* recognizeTextSteps(
 		maxCandidates = DEFAULT_MAX_CANDIDATES,
 	} = options;
 
-	const binary = new cv.Mat();
-	cv.threshold(gray, binary, binThreshold, 255, cv.THRESH_BINARY);
+	const binary = threshold(gray, binThreshold);
 
 	// mask the gray crop so background patterns don't take part in matching,
 	// dilated so antialiased glyph edges survive
-	const mask = new cv.Mat();
-	const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
-	cv.dilate(binary, mask, kernel, new cv.Point(-1, -1), 2);
-	kernel.delete();
-	const masked = new cv.Mat(gray.rows, gray.cols, cv.CV_8UC1, new cv.Scalar(0));
-	gray.copyTo(masked, mask);
-	mask.delete();
+	const masked = applyMask(gray, dilate(binary, rectElement(3, 3), 2));
 
 	const measured = new Map<number, SegmentInfo>();
 	const measure = (seg: Segment) => {
@@ -1735,9 +1709,6 @@ export function* recognizeTextSteps(
 		}
 		prevEnd = seg.x1;
 	}
-	binary.delete();
-	masked.delete();
-
 	const confidence =
 		chars.length > 0
 			? Math.min(...chars.map((c) => c.score))
@@ -1799,7 +1770,7 @@ interface VotingSegment {
  * runs. Null when nothing was read.
  */
 function lineFrame(
-	masked: Mat,
+	masked: Image,
 	segments: SegmentInfo[],
 	reads: RankedCandidate[][],
 	set: GlyphSet,
@@ -1936,19 +1907,20 @@ function tiltOf(points: { x: number; y: number }[]): number {
  * a border line in the crop stretches.
  */
 function placementRows(
-	masked: Mat,
+	masked: Image,
 	seg: SegmentInfo,
 	glyphs: Glyph[],
 ): number[] {
 	if (glyphs.length === 0) return [];
-	const cv = getCV();
 	const region = searchRegion(masked, seg);
-	const view = masked.roi(
-		new cv.Rect(region.x0, region.y0, region.cols, region.rows),
-	);
 	const rows = exactMatchRows(
-		view,
-		glyphs.map((glyph) => glyph.mat),
+		cropRoi(masked, {
+			x: region.x0,
+			y: region.y0,
+			w: region.cols,
+			h: region.rows,
+		}),
+		glyphs.map((glyph) => glyph.image),
 		glyphs.map(
 			(glyph) =>
 				overlapWindow(
@@ -1961,7 +1933,6 @@ function placementRows(
 				)!,
 		),
 	);
-	view.delete();
 	return rows.map((row) => region.y0 + row);
 }
 

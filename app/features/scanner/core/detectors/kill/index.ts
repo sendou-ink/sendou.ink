@@ -10,17 +10,19 @@
  * same frame (objective/timer.ts) so kills plot on the game clock in every
  * mode, not only where the counter is parsed.
  */
-import { getCV, type Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import {
-	copyRoi,
+	countNonZero,
+	cropRoi,
 	frameGray,
+	type Image,
 	maxBrightness,
 	meanBrightness,
 	type Roi,
 	roiSignature,
+	threshold,
 } from "../../image";
 import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import {
@@ -120,7 +122,6 @@ function sameKillData(a: KillData, b: KillData): boolean {
 export function createKillDetector(
 	resources: ScoreboardResources,
 ): Detector<KillEvent> {
-	const cv = getCV();
 	const glyphs: GlyphSet | null = resources.killFeedGlyphs
 		? scaleGlyphSet(
 				resources.killFeedGlyphs,
@@ -167,18 +168,15 @@ export function createKillDetector(
 		return misses;
 	}
 
-	function whiteFraction(gray: Mat, roi: Roi): number {
-		const crop = copyRoi(gray, roi);
-		const bin = new cv.Mat();
-		cv.threshold(crop, bin, GATE_TEXT_MIN_MAX, 255, cv.THRESH_BINARY);
-		crop.delete();
-		const fraction = cv.countNonZero(bin) / (bin.rows * bin.cols);
-		bin.delete();
-		return fraction;
+	function whiteFraction(gray: Image, roi: Roi): number {
+		return (
+			countNonZero(threshold(cropRoi(gray, roi), GATE_TEXT_MIN_MAX)) /
+			(roi.w * roi.h)
+		);
 	}
 
 	/** One row's presence checks: pill interior dark around the line, white skull art, one line of white text. */
-	function rowChecks(gray: Mat, row: number): boolean[] {
+	function rowChecks(gray: Image, row: number): boolean[] {
 		const skull = skullRoi(row);
 		const skullMean = meanBrightness(gray, skull);
 		const text = textRoi(row);
@@ -224,7 +222,7 @@ export function createKillDetector(
 		];
 	}
 
-	function gate(frame: Mat): GateResult {
+	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 		const checks = rowChecks(gray, 0);
 		const passed = checks.filter(Boolean).length;
@@ -232,11 +230,11 @@ export function createKillDetector(
 	}
 
 	function* readBand(
-		gray: Mat,
+		gray: Image,
 		row: number,
 		speculative: boolean,
 	): MatchSteps<ParsedName> {
-		const band = copyRoi(gray, textRoi(row));
+		const band = cropRoi(gray, textRoi(row));
 		const parsed = yield* parseNameSteps(
 			band,
 			glyphs!,
@@ -247,12 +245,11 @@ export function createKillDetector(
 			},
 			speculative,
 		);
-		band.delete();
 		return parsed;
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,

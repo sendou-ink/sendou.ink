@@ -37,7 +37,6 @@ import { basename } from "node:path";
 import { createInterface } from "node:readline";
 import type { Readable } from "node:stream";
 import { eventsToCsv } from "../../app/features/scanner/core/csv/events";
-import { loadOpenCV, type Mat } from "../../app/features/scanner/core/cv";
 import {
 	type DetectorOutcome,
 	runDetectorPass,
@@ -55,7 +54,11 @@ import { DetectorScheduler } from "../../app/features/scanner/core/detectors/sch
 import { createScanTelemetry } from "../../app/features/scanner/core/detectors/telemetry";
 import type { DetectedEvent } from "../../app/features/scanner/core/events";
 import * as FieldScores from "../../app/features/scanner/core/field-scores";
-import { normalizeFrame, toMat } from "../../app/features/scanner/core/image";
+import {
+	type Image,
+	imageFromFrameData,
+	normalizeFrame,
+} from "../../app/features/scanner/core/image";
 import { withoutInvalidObjectives } from "../../app/features/scanner/core/match-builder";
 import { runSync } from "../../app/features/scanner/core/match-steps";
 import * as ScanLog from "../../app/features/scanner/core/scan-log";
@@ -107,7 +110,6 @@ const {
 	replayPath,
 } = options;
 
-await loadOpenCV();
 const matcher = gpu ? await createGpuMatcher(nodeGpu()) : null;
 const recorder = recordDir
 	? recordingRunner(
@@ -736,11 +738,11 @@ async function analyze<T extends { outcomes: DetectorOutcome[] }>(
 	width: number,
 	height: number,
 	t: number,
-	pass: (frame: Mat) => Promise<T>,
+	pass: (frame: Image) => Promise<T>,
 ): Promise<T> {
 	framesAnalyzed++;
 	if (telemetry) telemetry.analyzedFrames++;
-	const src = toMat({
+	const src = imageFromFrameData({
 		width,
 		height,
 		data: new Uint8ClampedArray(
@@ -750,35 +752,30 @@ async function analyze<T extends { outcomes: DetectorOutcome[] }>(
 		),
 	});
 	const frame = normalizeFrame(src);
-	src.delete();
-	try {
-		const passStart = performance.now();
-		const result = await pass(frame);
-		const { outcomes } = result;
-		if (telemetry) {
-			const ms = performance.now() - passStart;
-			for (const { detector, parsed } of outcomes) {
-				if (!parsed) continue;
-				const list = passLatencies.get(detector.id) ?? [];
-				list.push(ms);
-				passLatencies.set(detector.id, list);
-			}
+	const passStart = performance.now();
+	const result = await pass(frame);
+	const { outcomes } = result;
+	if (telemetry) {
+		const ms = performance.now() - passStart;
+		for (const { detector, parsed } of outcomes) {
+			if (!parsed) continue;
+			const list = passLatencies.get(detector.id) ?? [];
+			list.push(ms);
+			passLatencies.set(detector.id, list);
 		}
-		if (cuesPath) recordCueInputs(outcomes, t);
-		for (const { actions } of outcomes) {
-			for (const action of actions) {
-				if (action.action === "added" || action.action === "replaced") {
-					const { event } = action;
-					console.error(
-						`  event t=${event.t.toFixed(2)} ${event.type} score=${FieldScores.mean(event.scores).toFixed(3)}`,
-					);
-				}
-			}
-		}
-		return result;
-	} finally {
-		frame.delete();
 	}
+	if (cuesPath) recordCueInputs(outcomes, t);
+	for (const { actions } of outcomes) {
+		for (const action of actions) {
+			if (action.action === "added" || action.action === "replaced") {
+				const { event } = action;
+				console.error(
+					`  event t=${event.t.toFixed(2)} ${event.type} score=${FieldScores.mean(event.scores).toFixed(3)}`,
+				);
+			}
+		}
+	}
+	return result;
 }
 
 /** As live-session.ts hands them to the broadcast link, rows of the cue timing fixtures (GameCuesVods.test.ts). */

@@ -13,7 +13,6 @@
  */
 import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import {
 	PLANNER_SIG_H,
 	PLANNER_SIG_W,
@@ -22,8 +21,8 @@ import {
 } from "../../app/features/scanner/core/detectors/minimap/stage";
 import {
 	type FrameData,
+	imageFromFrameData,
 	normalizeFrame,
-	toMat,
 } from "../../app/features/scanner/core/image";
 import { PLANNER_DIR } from "../../app/features/scanner/node/assets-dir";
 import { readImage, writePng } from "../../app/features/scanner/node/image-io";
@@ -35,8 +34,6 @@ const SRC_DIR =
 	new URL("../../../assets/assets/planner-maps", import.meta.url).pathname;
 const OUT_DIR = process.env.SCANNER_PLANNER_OUT_DIR ?? PLANNER_DIR;
 const COLS = 5;
-
-await loadOpenCV();
 
 const files = readdirSync(SRC_DIR)
 	.filter((f) => f.endsWith(`-${PLANNER_TYPE}.png`))
@@ -64,11 +61,9 @@ for (let i = 0; i < files.length; i++) {
 	const key = file.replace(`-${PLANNER_TYPE}.png`, "");
 	keys.push(key);
 
-	const img = toMat(await readImage(join(SRC_DIR, file)));
+	const img = imageFromFrameData(await readImage(join(SRC_DIR, file)));
 	const norm = normalizeFrame(img);
 	const sig = plannerSignature(norm);
-	img.delete();
-	norm.delete();
 
 	// quantize to uint8 (load re-normalizes to unit L2, so the scale is free)
 	let max = 0;

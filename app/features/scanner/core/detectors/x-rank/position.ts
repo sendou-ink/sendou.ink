@@ -9,11 +9,16 @@
  * furthest along that direction (`xRankPositionProgress`).
  */
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
-import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
-import { copyRoi, frameGray, frameRgb, roiSignature } from "../../image";
+import {
+	cropRoi,
+	frameGray,
+	frameRgb,
+	type Image,
+	roiSignature,
+} from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
 import type { ScoreboardResources } from "../scoreboard/index";
 import type { Detector, EventKind, EventOf, GateResult } from "../types";
@@ -102,7 +107,7 @@ export function createXRankPositionDetector(
 		return digits;
 	};
 
-	function gate(frame: Mat): GateResult {
+	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
 		const checks = [
@@ -134,7 +139,7 @@ export function createXRankPositionDetector(
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
@@ -188,8 +193,8 @@ export function createXRankPositionDetector(
  * its shaft end is wide and its head ends in a point, so whichever end is
  * narrower is where it points.
  */
-function arrowDirection(rgb: Mat): XRankPositionDirection | null {
-	const crop = copyRoi(rgb, POSITION_ARROW_ROI);
+function arrowDirection(rgb: Image): XRankPositionDirection | null {
+	const crop = cropRoi(rgb, POSITION_ARROW_ROI);
 	const { rows, cols } = crop;
 	const data = crop.data;
 	const isInk = (x: number, y: number) => {
@@ -212,7 +217,6 @@ function arrowDirection(rgb: Mat): XRankPositionDirection | null {
 			if (isInk(x, y)) widths[y]!++;
 		}
 	}
-	crop.delete();
 	const y0 = widths.findIndex((w) => w > 0);
 	const y1 = widths.findLastIndex((w) => w > 0);
 	if (y0 < 0) return null;

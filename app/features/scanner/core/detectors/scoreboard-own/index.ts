@@ -17,15 +17,14 @@ import {
 	toAbilityWithUnknown,
 	toMainWeaponId,
 } from "../../../scanner-types";
-import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
-	copyRoi,
 	cropRoi,
 	frameGray,
 	frameRgb,
+	type Image,
 	maxBrightness,
 	meanBrightness,
 } from "../../image";
@@ -132,7 +131,7 @@ export function createScoreboardOwnDetector(
 	// built on first use (the resource getter memoizes it)
 	const abilities = () => resources.ownAbilities ?? null;
 
-	function gate(frame: Mat): GateResult {
+	function gate(frame: Image): GateResult {
 		let panelOk = 0;
 		for (const roi of GATE_PANEL_PROBES) {
 			if (
@@ -189,7 +188,7 @@ export function createScoreboardOwnDetector(
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
@@ -201,7 +200,7 @@ export function createScoreboardOwnDetector(
 		// weapon card title, recognized whole and NOT via readTagBand: the tag is
 		// fixed-width, and long names render condensed, whose dense antialiased
 		// columns fail the tag-column test and truncate the read mid-name
-		const band = titleGlyphs ? copyRoi(gray, WEAPON_TITLE_BAND) : null;
+		const band = titleGlyphs ? cropRoi(gray, WEAPON_TITLE_BAND) : null;
 		// gear-card ability strips: [head, clothes, shoes] x [main, sub, sub, sub]
 		const abilityCrops = abilities()
 			? Array.from({ length: GEAR_ROWS }, (_, row) => [
@@ -249,8 +248,6 @@ export function createScoreboardOwnDetector(
 				),
 			),
 		]);
-		band?.delete();
-		for (const crop of abilityCrops.flat()) crop.delete();
 
 		let weapon: string | null = null;
 		let weaponId: MainWeaponId | null = null;

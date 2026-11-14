@@ -19,17 +19,16 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import { toAbilityWithUnknown, toMainWeaponId } from "../../../scanner-types";
-import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
+import { laplacianAbs } from "../../filters";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import {
-	copyRoi,
 	cropRoi,
 	frameGray,
 	frameHsv,
 	frameRgb,
-	laplacianAbs,
+	type Image,
 	maxBrightness,
 	meanBrightness,
 	type Roi,
@@ -237,18 +236,17 @@ interface CornerProbe {
 	saturation: number;
 }
 
-function minTopCorner(gray: Mat, hsv: Mat, roi: Roi): CornerProbe {
+function minTopCorner(gray: Image, hsv: Image, roi: Roi): CornerProbe {
 	const corners: Roi[] = [
 		{ x: roi.x, y: roi.y, w: 8, h: 8 },
 		{ x: roi.x + roi.w - 8, y: roi.y, w: 8, h: 8 },
 	];
 	const means = corners.map((c) => meanBrightness(gray, c));
 	const dimmer = corners[means[0]! <= means[1]! ? 0 : 1]!;
-	const crop = copyRoi(hsv, dimmer);
+	const crop = cropRoi(hsv, dimmer);
 	const n = crop.rows * crop.cols;
 	let satSum = 0;
 	for (let i = 0; i < n; i++) satSum += crop.data[i * 3 + 1]!;
-	crop.delete();
 	return {
 		mean: Math.min(...means),
 		brighterMean: Math.max(...means),
@@ -304,7 +302,7 @@ function crossedOut(crossFraction: number, crossLap: number): boolean {
 			);
 }
 
-function medianBrightness(gray: Mat): number {
+function medianBrightness(gray: Image): number {
 	const histogram = new Uint32Array(256);
 	const n = gray.rows * gray.cols;
 	for (let i = 0; i < n; i++) histogram[gray.data[i]!]!++;
@@ -317,8 +315,8 @@ function medianBrightness(gray: Mat): number {
 }
 
 /** fraction of the probe that is saturated-and-bright (cross-out strokes) */
-function saturatedFraction(hsv: Mat, roi: Roi): number {
-	const m = copyRoi(hsv, roi);
+function saturatedFraction(hsv: Image, roi: Roi): number {
+	const m = cropRoi(hsv, roi);
 	const n = m.rows * m.cols;
 	const md = m.data;
 	let hit = 0;
@@ -330,7 +328,6 @@ function saturatedFraction(hsv: Mat, roi: Roi): number {
 			hit++;
 		}
 	}
-	m.delete();
 	return hit / n;
 }
 
@@ -357,14 +354,14 @@ export function createMinimapDetector(
 	// getters memoize them)
 
 	/** Identify the stage from the drawn map. */
-	function detectStage(frame: Mat): StageMatch | null {
+	function detectStage(frame: Image): StageMatch | null {
 		const plannerStages = resources.plannerStages ?? null;
 		if (!plannerStages?.length) return null;
 		return matchStage(plannerSignature(frame), plannerStages);
 	}
 
 	function probeGate(
-		gray: Mat,
+		gray: Image,
 		darkProbes: readonly Roi[],
 		brightProbes: readonly Roi[],
 	): GateResult {
@@ -403,7 +400,7 @@ export function createMinimapDetector(
 	 * (its top gap and the ring above it) may be covered, as a streamer's name
 	 * pill in the corner does, when the rest of the disc and ring hold.
 	 */
-	function overlayGate(gray: Mat): GateResult {
+	function overlayGate(gray: Image): GateResult {
 		const isDark = (site: "closeRing" | "closeTop", roi: Roi) =>
 			Decisions.atMost(
 				`minimap:GATE_DARK_MAX_MEAN#${site}`,
@@ -443,7 +440,7 @@ export function createMinimapDetector(
 	}
 
 	/** Spectator screen: the X jump-button disc beside the 8th player card, in whichever column carries the face buttons. */
-	function spectatorGate(gray: Mat): GateResult {
+	function spectatorGate(gray: Image): GateResult {
 		const right = probeGate(
 			gray,
 			GATE_SPECTATOR_X_DARK,
@@ -458,7 +455,7 @@ export function createMinimapDetector(
 		return left.score > right.score ? left : right;
 	}
 
-	function gate(frame: Mat): GateResult {
+	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 		const overlay = overlayGate(gray);
 		const spectator = spectatorGate(gray);
@@ -471,7 +468,7 @@ export function createMinimapDetector(
 
 	/** Badge matches in `centers` order (null when no badge templates), read in one lockstep. */
 	function* matchBadgesSteps(
-		rgb: Mat,
+		rgb: Image,
 		centers: readonly (readonly [number, number])[],
 		inkThreshold: number,
 	): MatchSteps<WeaponMatch[] | null> {
@@ -481,7 +478,6 @@ export function createMinimapDetector(
 		const matches = yield* all(
 			crops.map((crop) => matchWeaponSteps(crop, badges, { inkThreshold })),
 		);
-		for (const crop of crops) crop.delete();
 		return matches;
 	}
 
@@ -513,7 +509,7 @@ export function createMinimapDetector(
 	 * tint, camo and cross-out.
 	 */
 	function* matchSurfaceWeaponSteps(
-		rgb: Mat,
+		rgb: Image,
 		roi: Roi,
 		tile: Roi,
 		lightSurface: boolean,
@@ -553,13 +549,11 @@ export function createMinimapDetector(
 			match = card;
 			if (bleed && (match === null || bleed.score > match.score)) match = bleed;
 		}
-		crop.delete();
 		if (!match || !subWeapons?.length || !tiedWeaponsWithDistinctSubs(match)) {
 			return match;
 		}
 		const tileCrop = cropRoi(rgb, tile);
 		const sub = yield* matchSpecialSteps(tileCrop, subWeapons);
-		tileCrop.delete();
 		return disambiguateWeaponBySub(match, sub);
 	}
 
@@ -586,12 +580,12 @@ export function createMinimapDetector(
 	}
 
 	function* readCardName(
-		gray: Mat,
+		gray: Image,
 		roi: Roi,
 		glyphs: GlyphSet,
 		speculative: boolean,
 	): MatchSteps<ParsedName> {
-		const band = copyRoi(gray, roi);
+		const band = cropRoi(gray, roi);
 		const parsed = yield* parseNameSteps(
 			band,
 			glyphs,
@@ -603,17 +597,16 @@ export function createMinimapDetector(
 			},
 			speculative,
 		);
-		band.delete();
 		return parsed;
 	}
 
 	/** Try the name band at each spectator glyph height (in lockstep); best read wins. */
 	function* bestNameRead(
-		gray: Mat,
+		gray: Image,
 		roi: Roi,
 		speculative: boolean,
 	): MatchSteps<ParsedName | null> {
-		const band = copyRoi(gray, roi);
+		const band = cropRoi(gray, roi);
 		const reads = yield* all(
 			spectatorNameGlyphs.map((set) =>
 				parseNameSteps(
@@ -627,7 +620,6 @@ export function createMinimapDetector(
 				),
 			),
 		);
-		band.delete();
 		let best: ParsedName | null = null;
 		for (const parsed of reads) {
 			if (!best || parsed.confidence > best.confidence) best = parsed;
@@ -637,8 +629,8 @@ export function createMinimapDetector(
 
 	/** The spectator 8-card grid has its own ROIs (the overlay parse reads phantom cards on it); every card reads in one lockstep. */
 	function* parseSpectatorSteps(
-		frame: Mat,
-		gray: Mat,
+		frame: Image,
+		gray: Image,
 		t: number,
 		speculative: boolean,
 	): MatchSteps<MinimapEvent[]> {
@@ -791,8 +783,6 @@ export function createMinimapDetector(
 		const stageMatch = detectStage(frame);
 		debug.stage = stageMatch;
 
-		lap.delete();
-
 		return [
 			{
 				type: MINIMAP_EVENT_TYPE,
@@ -815,7 +805,7 @@ export function createMinimapDetector(
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		gateResult: GateResult | undefined,
 		speculative: boolean,
@@ -1068,8 +1058,6 @@ export function createMinimapDetector(
 
 		const stageMatch = detectStage(frame);
 		debug.stage = stageMatch;
-
-		lap.delete();
 
 		return [
 			{

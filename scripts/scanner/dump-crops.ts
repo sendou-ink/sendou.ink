@@ -4,60 +4,48 @@
  * (optionally scaled up) and/or a grid overlay for visual inspection.
  *
  * Usage:
- *   vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/dump-crops.ts <image> <outdir> grid
- *   vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/dump-crops.ts <image> <outdir> x,y,w,h[,scale][:label] ...
+ *   pnpm exec vite-node scripts/scanner/dump-crops.ts <image> <outdir> grid
+ *   pnpm exec vite-node scripts/scanner/dump-crops.ts <image> <outdir> x,y,w,h[,scale][:label] ...
  */
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import {
 	cropRoi,
-	matToFrameData,
+	type Image,
+	imageFromFrameData,
+	imageToFrameData,
 	normalizeFrame,
-	toMat,
 } from "../../app/features/scanner/core/image";
+import { resizeBy } from "../../app/features/scanner/core/resize";
 import { readImage, writePng } from "../../app/features/scanner/node/image-io";
 
 const [imagePath, outDir, ...specs] = process.argv.slice(2);
 if (!imagePath || !outDir || specs.length === 0) {
 	console.error(
-		"usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/dump-crops.ts <image> <outdir> (grid | x,y,w,h[,scale][:label])...",
+		"usage: pnpm exec vite-node scripts/scanner/dump-crops.ts <image> <outdir> (grid | x,y,w,h[,scale][:label])...",
 	);
 	process.exit(1);
 }
 
-const cv = await loadOpenCV();
 mkdirSync(outDir, { recursive: true });
 
-const src = toMat(await readImage(imagePath));
+const src = imageFromFrameData(await readImage(imagePath));
 const frame = normalizeFrame(src);
-src.delete();
 
 for (const spec of specs) {
 	if (spec === "grid") {
-		const overlay = frame.clone();
-		for (let x = 0; x < overlay.cols; x += 20) {
-			const major = x % 100 === 0;
-			cv.line(
-				overlay,
-				new cv.Point(x, 0),
-				new cv.Point(x, overlay.rows),
-				new cv.Scalar(255, 0, major ? 0 : 255, 255),
-				major ? 2 : 1,
-			);
+		const overlay = { ...frame, data: frame.data.slice() };
+		for (let y = 0; y < overlay.rows; y++) {
+			for (let x = 0; x < overlay.cols; x++) {
+				// every 100 px a 2 px red line, every 20 px a magenta one
+				if (x % 100 < 2 || y % 100 < 2) {
+					setPixel(overlay, x, y, [255, 0, 0]);
+				} else if (x % 20 === 0 || y % 20 === 0) {
+					setPixel(overlay, x, y, [255, 0, 255]);
+				}
+			}
 		}
-		for (let y = 0; y < overlay.rows; y += 20) {
-			const major = y % 100 === 0;
-			cv.line(
-				overlay,
-				new cv.Point(0, y),
-				new cv.Point(overlay.cols, y),
-				new cv.Scalar(255, 0, major ? 0 : 255, 255),
-				major ? 2 : 1,
-			);
-		}
-		writePng(join(outDir, "grid.png"), matToFrameData(overlay));
-		overlay.delete();
+		writePng(join(outDir, "grid.png"), imageToFrameData(overlay));
 		continue;
 	}
 	const [rect = "", label] = spec.split(":");
@@ -74,20 +62,18 @@ for (const spec of specs) {
 		w: Math.min(w!, frame.cols - cx),
 		h: Math.min(h!, frame.rows - cy),
 	});
-	const out = new cv.Mat();
-	cv.resize(
-		crop,
-		out,
-		new cv.Size(0, 0),
-		Number(scale),
-		Number(scale),
-		cv.INTER_NEAREST,
-	);
+	const out = resizeBy(crop, Number(scale), Number(scale), "nearest");
 	const name = label ?? `crop-${x}-${y}-${w}x${h}`;
-	writePng(join(outDir, `${name}.png`), matToFrameData(out));
-	crop.delete();
-	out.delete();
+	writePng(join(outDir, `${name}.png`), imageToFrameData(out));
 }
 
-frame.delete();
 console.info(`wrote crops to ${outDir}`);
+
+function setPixel(
+	image: Image,
+	x: number,
+	y: number,
+	[r, g, b]: [number, number, number],
+) {
+	image.data.set([r, g, b], (y * image.cols + x) * image.channels);
+}

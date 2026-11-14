@@ -8,16 +8,26 @@
  * better) and the stage line reads its min channel under several binarizations.
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { getCV, type Mat, minMaxLoc } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
+import { dilate, ellipseElement } from "../../filters";
 import {
 	type GlyphSet,
 	type RecognizedText,
 	recognizeTextSteps,
 	scaleGlyphSet,
 } from "../../glyphs";
-import { copyRoi, frameGray, meanBrightness, minChannel } from "../../image";
+import {
+	applyMask,
+	countNonZero,
+	cropRoi,
+	frameGray,
+	type Image,
+	maxBrightness,
+	meanBrightness,
+	minChannel,
+	threshold,
+} from "../../image";
 import {
 	ALL_MODE_ENTRIES,
 	ALL_MODE_LABELS,
@@ -99,26 +109,14 @@ interface LineBand {
 }
 
 /** Zero every pixel with no near-black pixel within `radius` of it. */
-function maskNearDark(gray: Mat, radius: number): Mat {
-	const cv = getCV();
-	const dark = new cv.Mat();
-	cv.threshold(gray, dark, MASK_DARK_MAX, 255, cv.THRESH_BINARY_INV);
-	const kernel = cv.getStructuringElement(
-		cv.MORPH_ELLIPSE,
-		new cv.Size(2 * radius + 1, 2 * radius + 1),
-	);
-	const near = new cv.Mat();
-	cv.dilate(dark, near, kernel);
-	kernel.delete();
-	dark.delete();
-	const out = new cv.Mat(gray.rows, gray.cols, cv.CV_8UC1, new cv.Scalar(0));
-	gray.copyTo(out, near);
-	near.delete();
-	return out;
+function maskNearDark(gray: Image, radius: number): Image {
+	const dark = threshold(gray, MASK_DARK_MAX, true);
+	const near = dilate(dark, ellipseElement(2 * radius + 1, 2 * radius + 1));
+	return applyMask(gray, near);
 }
 
 /** Find text line bands in a binarized block by row projection. */
-function findLineBands(binary: Mat): LineBand[] {
+function findLineBands(binary: Image): LineBand[] {
 	const { rows, cols, data } = binary;
 	const counts = new Array<number>(rows).fill(0);
 	for (let y = 0; y < rows; y++) {
@@ -169,7 +167,7 @@ function findLineBands(binary: Mat): LineBand[] {
 
 /** Trim a line band to its text columns so the raw OCR crop excludes edge background. */
 function bandExtent(
-	binary: Mat,
+	binary: Image,
 	band: LineBand,
 ): { x0: number; x1: number } | null {
 	const { cols, data } = binary;
@@ -191,8 +189,6 @@ function bandExtent(
 export function createMapStartDetector(
 	resources: ScoreboardResources,
 ): Detector<MapStartEvent> {
-	const cv = getCV();
-
 	const scaled = (
 		set: GlyphSet | null | undefined,
 		height: number,
@@ -205,7 +201,7 @@ export function createMapStartDetector(
 		MODE_LABEL_TEXT_HEIGHT,
 	);
 
-	function gate(frame: Mat): GateResult {
+	function gate(frame: Image): GateResult {
 		let darkOk = 0;
 		for (const roi of GATE_DARK_PROBES) {
 			if (
@@ -220,13 +216,12 @@ export function createMapStartDetector(
 
 		const gray = frameGray(frame);
 
-		const label = copyRoi(gray, MODE_LABEL_ROI);
-		const { maxVal } = minMaxLoc(label);
-		const bin = new cv.Mat();
-		cv.threshold(label, bin, TEXT_BIN_THRESHOLD, 255, cv.THRESH_BINARY);
-		label.delete();
-		const whiteFraction = cv.countNonZero(bin) / (bin.rows * bin.cols);
-		bin.delete();
+		const maxVal = maxBrightness(gray, MODE_LABEL_ROI);
+		const whiteFraction =
+			countNonZero(
+				threshold(cropRoi(gray, MODE_LABEL_ROI), TEXT_BIN_THRESHOLD),
+			) /
+			(MODE_LABEL_ROI.w * MODE_LABEL_ROI.h);
 		const textOk =
 			Decisions.above(
 				"map-start:GATE_TEXT_MIN_MAX",
@@ -246,17 +241,12 @@ export function createMapStartDetector(
 
 		// label-to-title gap is solid ink here: near-totally dark (scoreboard pills
 		// aren't) with no bright pixels (death's "Splatted by" line crosses it)
-		const band = copyRoi(gray, GATE_INK_BAND);
+		const band = cropRoi(gray, GATE_INK_BAND);
 		const bandPixels = band.rows * band.cols;
-		const bandBright = new cv.Mat();
-		cv.threshold(band, bandBright, TEXT_BIN_THRESHOLD, 255, cv.THRESH_BINARY);
-		const brightFraction = cv.countNonZero(bandBright) / bandPixels;
-		bandBright.delete();
-		const bandDark = new cv.Mat();
-		cv.threshold(band, bandDark, MASK_DARK_MAX, 255, cv.THRESH_BINARY_INV);
-		const darkFraction = cv.countNonZero(bandDark) / bandPixels;
-		bandDark.delete();
-		band.delete();
+		const brightFraction =
+			countNonZero(threshold(band, TEXT_BIN_THRESHOLD)) / bandPixels;
+		const darkFraction =
+			countNonZero(threshold(band, MASK_DARK_MAX, true)) / bandPixels;
 		const inkOk =
 			Decisions.atMost(
 				"map-start:GATE_INK_BAND_MAX_BRIGHT",
@@ -280,18 +270,16 @@ export function createMapStartDetector(
 
 	/** 2. mode title: find the 1-2 text lines, OCR each (in lockstep), snap the joined text. */
 	function* readModeLines(
-		gray: Mat,
+		gray: Image,
 		glyphs: GlyphSet,
 		speculative: boolean,
 	): MatchSteps<string[]> {
-		const block = copyRoi(gray, MODE_BLOCK_ROI);
+		const block = cropRoi(gray, MODE_BLOCK_ROI);
 		// find bands on the masked block (bright background merges/invents bands)
 		// but OCR the raw crop (masking clips strokes)
 		const masked = maskNearDark(block, BLOCK_MASK_RADIUS);
-		const binary = new cv.Mat();
-		cv.threshold(masked, binary, TEXT_BIN_THRESHOLD, 255, cv.THRESH_BINARY);
-		masked.delete();
-		const lineCrops: Mat[] = [];
+		const binary = threshold(masked, TEXT_BIN_THRESHOLD);
+		const lineCrops: Image[] = [];
 		for (const band of findLineBands(binary)) {
 			const extent = bandExtent(binary, band);
 			if (!extent) continue;
@@ -299,7 +287,7 @@ export function createMapStartDetector(
 			const y0 = Math.max(0, band.y0 - pad);
 			const x0 = Math.max(0, extent.x0 - pad);
 			lineCrops.push(
-				copyRoi(block, {
+				cropRoi(block, {
 					x: x0,
 					y: y0,
 					w: Math.min(block.cols, extent.x1 + 1 + pad) - x0,
@@ -307,8 +295,6 @@ export function createMapStartDetector(
 				}),
 			);
 		}
-		binary.delete();
-		block.delete();
 		const reads = yield* all(
 			lineCrops.map((line) =>
 				recognizeTextSteps(
@@ -319,7 +305,6 @@ export function createMapStartDetector(
 				),
 			),
 		);
-		for (const line of lineCrops) line.delete();
 		return reads.map((read) => read.text.trim()).filter((text) => text);
 	}
 
@@ -329,7 +314,7 @@ export function createMapStartDetector(
 	 * the best snap.
 	 */
 	function* readStage(
-		frame: Mat,
+		frame: Image,
 		glyphs: GlyphSet,
 		speculative: boolean,
 	): MatchSteps<{
@@ -337,13 +322,12 @@ export function createMapStartDetector(
 		stageScore: number;
 		stageReading: string;
 	}> {
-		const rgbaCrop = copyRoi(frame, STAGE_ROI);
+		const rgbaCrop = cropRoi(frame, STAGE_ROI);
 		const bright = minChannel(rgbaCrop);
-		rgbaCrop.delete();
 		const masked = maskNearDark(bright, STAGE_MASK_RADIUS);
-		const attempts: [Mat, number][] = [
+		const attempts: [Image, number][] = [
 			[masked, STAGE_BIN_THRESHOLD],
-			...STAGE_RAW_BIN_THRESHOLDS.map((thr): [Mat, number] => [bright, thr]),
+			...STAGE_RAW_BIN_THRESHOLDS.map((thr): [Image, number] => [bright, thr]),
 		];
 		const reads = yield* all(
 			attempts.map(([input, binThreshold]) =>
@@ -375,13 +359,11 @@ export function createMapStartDetector(
 					stage = match.entry.stageId;
 			}
 		}
-		masked.delete();
-		bright.delete();
 		return { stage, stageScore, stageReading };
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
@@ -392,14 +374,13 @@ export function createMapStartDetector(
 		let label: RecognizedText | null = null;
 		let labelScore = 0;
 		if (labelGlyphs) {
-			const crop = copyRoi(gray, MODE_LABEL_ROI);
+			const crop = cropRoi(gray, MODE_LABEL_ROI);
 			label = yield* recognizeTextSteps(
 				crop,
 				labelGlyphs,
 				{ binThreshold: TEXT_BIN_THRESHOLD, minCharScore: 0.3 },
 				speculative,
 			);
-			crop.delete();
 			labelScore = closestBy(label.text, ALL_MODE_LABELS, (l) => l)?.score ?? 0;
 			if (
 				Decisions.below(

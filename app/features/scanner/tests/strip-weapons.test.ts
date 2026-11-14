@@ -6,7 +6,6 @@
  */
 
 import assert from "node:assert/strict";
-import { loadOpenCV } from "../core/cv";
 import { createObjectiveDetector } from "../core/detectors/objective/index";
 import {
 	STRIP_WEAPONS_EVENT_TYPE,
@@ -25,7 +24,6 @@ import {
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
 
-await loadOpenCV();
 const resources = await loadScoreboardResources();
 const fixtures = loadFixtures("strip-weapons");
 

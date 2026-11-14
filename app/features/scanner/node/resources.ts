@@ -45,7 +45,7 @@ async function loadPlannerStagesLazy(): Promise<() => PlannerStage[] | null> {
 	};
 }
 
-/** Requires loadOpenCV() to have resolved. Throws on a missing icon: tests and atlas builds need the whole set. */
+/** Throws on a missing icon: tests and atlas builds need the whole set. */
 export async function loadScoreboardResources(): Promise<ScoreboardResources> {
 	const { resources, missingIcons } = await assembleScoreboardResources({
 		readIcon: (dir, id) => readImage(join(GAME_IMG_DIR, dir, `${id}.avif`)),

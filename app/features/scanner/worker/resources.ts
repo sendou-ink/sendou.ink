@@ -43,7 +43,6 @@ interface FetchedResources {
 	missingIcons: string[];
 }
 
-/** Requires loadOpenCV() to have resolved. */
 export async function fetchScoreboardResources(
 	base: string,
 ): Promise<FetchedResources> {

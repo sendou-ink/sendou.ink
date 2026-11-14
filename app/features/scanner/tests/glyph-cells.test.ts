@@ -1,10 +1,9 @@
 /**
  * Glyphs as line-height cells, on drawn bitmaps (no fixtures, no atlas
- * checkout, but OpenCV): a shape that is two characters at two heights reads
- * by where it sits on its line.
+ * checkout): a shape that is two characters at two heights reads by where it
+ * sits on its line.
  */
 import { beforeAll, describe, expect, test } from "vitest";
-import { getCV, loadOpenCV, type Mat } from "../core/cv";
 import {
 	type AtlasMeta,
 	type GlyphSet,
@@ -12,7 +11,7 @@ import {
 	recognizeTextSteps,
 	scaleGlyphSet,
 } from "../core/glyphs";
-import type { FrameData } from "../core/image";
+import { createImage, type FrameData, type Image } from "../core/image";
 import { runSync } from "../core/match-steps";
 
 /** `#` ink, `+` soft edge (kept by the template crop, so a bar is not one flat block), `.` nothing */
@@ -75,7 +74,6 @@ const CAP_HEIGHT = 12;
 let set: GlyphSet;
 
 beforeAll(async () => {
-	await loadOpenCV();
 	set = loadGlyphSet(...atlas(Object.keys(FONT)));
 });
 
@@ -104,9 +102,7 @@ describe("recognizeTextSteps", () => {
 	test("leaves a border line of the crop out of the read", () => {
 		const text = "HoHp";
 		const withBorder = line(text);
-		const border = withBorder.roi(new (getCV().Rect)(0, 0, withBorder.cols, 1));
-		border.setTo(new (getCV().Scalar)(255));
-		border.delete();
+		withBorder.data.fill(255, 0, withBorder.cols);
 		expect(read(withBorder, set)).toBe(text);
 	});
 });
@@ -122,9 +118,8 @@ describe("loadGlyphSet", () => {
 	});
 });
 
-function read(gray: Mat, glyphs: GlyphSet): string {
+function read(gray: Image, glyphs: GlyphSet): string {
 	const { text } = runSync(recognizeTextSteps(gray, glyphs));
-	gray.delete();
 	return text;
 }
 
@@ -160,8 +155,7 @@ function atlas(chars: string[]): [FrameData, AtlasMeta] {
 }
 
 /** A grayscale crop with `text` drawn on one baseline, each pixel `scale` wide and tall. */
-function line(text: string, { tilt = 0, scale = 1 } = {}): Mat {
-	const cv = getCV();
+function line(text: string, { tilt = 0, scale = 1 } = {}): Image {
 	const margin = 6;
 	const baseline = margin + CAP_HEIGHT + 4;
 	const cols = 2 * margin + text.length * (GLYPH_WIDTH + GLYPH_GAP);
@@ -181,7 +175,7 @@ function line(text: string, { tilt = 0, scale = 1 } = {}): Mat {
 	}
 	const width = Math.round(cols * scale);
 	const height = Math.round(rows * scale);
-	const gray = new cv.Mat(height, width, cv.CV_8UC1);
+	const gray = createImage(height, width, 1);
 	const pixels = gray.data;
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {

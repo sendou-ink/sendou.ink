@@ -11,7 +11,10 @@ import { readdirSync } from "node:fs";
 import * as Decisions from "../../app/features/scanner/core/decisions";
 import { createAllDetectors } from "../../app/features/scanner/core/detectors/registry";
 import type { ScoreboardResources } from "../../app/features/scanner/core/detectors/scoreboard/index";
-import { normalizeFrame, toMat } from "../../app/features/scanner/core/image";
+import {
+	imageFromFrameData,
+	normalizeFrame,
+} from "../../app/features/scanner/core/image";
 import {
 	FIXTURES_DIR,
 	type Fixture,
@@ -110,7 +113,7 @@ async function recordFixtureDecisions(
 				fixture: `${fixtureDir}/${fixture.name}`,
 				ownScreen: true,
 			};
-			const src = toMat(await readImage(fixture.framePath));
+			const src = imageFromFrameData(await readImage(fixture.framePath));
 			Decisions.setRecorder((sample) =>
 				samples.push({ ...sample, source: { ...source } }),
 			);
@@ -123,10 +126,8 @@ async function recordFixtureDecisions(
 					const gate = detector.gate(frame);
 					if (gate.pass) detector.parse(frame, 0, gate);
 				}
-				frame.delete();
 			} finally {
 				Decisions.setRecorder(null);
-				src.delete();
 			}
 		}
 	}

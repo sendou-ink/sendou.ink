@@ -7,7 +7,6 @@
 
 import assert from "node:assert/strict";
 import { readdirSync } from "node:fs";
-import { loadOpenCV } from "../core/cv";
 import { createAllDetectors } from "../core/detectors/registry";
 import type { Detector } from "../core/detectors/types";
 import { createXRankPositionDetector } from "../core/detectors/x-rank/position";
@@ -25,7 +24,6 @@ import {
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
 
-await loadOpenCV();
 const resources = await loadScoreboardResources();
 
 const CARDS: {

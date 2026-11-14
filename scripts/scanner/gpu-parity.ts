@@ -18,13 +18,13 @@ import {
 	detectContentBox,
 	detectContentBoxFromSums,
 } from "../../app/features/scanner/core/canonical";
-import {
-	getCV,
-	loadOpenCV,
-	type Mat,
-} from "../../app/features/scanner/core/cv";
 import { createAllDetectors } from "../../app/features/scanner/core/detectors/registry";
-import { normalizeFrame, toMat } from "../../app/features/scanner/core/image";
+import {
+	type Image,
+	imageFromFrameData,
+	normalizeFrame,
+} from "../../app/features/scanner/core/image";
+import { resize } from "../../app/features/scanner/core/resize";
 import { FIXTURES_DIR } from "../../app/features/scanner/node/fixtures";
 import { readImage } from "../../app/features/scanner/node/image-io";
 import { loadScoreboardResources } from "../../app/features/scanner/node/resources";
@@ -43,7 +43,6 @@ const MAP_MODE_READ = 0x0001;
 
 const verbose = process.argv.includes("--verbose");
 
-await loadOpenCV();
 const resources = await loadScoreboardResources();
 const matcher = await createGpuMatcher(nodeGpu());
 const scaler = await createGpuFrameScaler(matcher.device);
@@ -64,19 +63,17 @@ for (const group of fixtureGroups()) {
 	const cpuDetectors = createAllDetectors(resources);
 	const gpuDetectors = createAllDetectors(resources);
 	for (const path of group) {
-		const src = toMat(await readImage(path));
+		const src = imageFromFrameData(await readImage(path));
 		const frame = normalizeFrame(src);
 		const scaled = await scaler.normalize(src);
 		if (!samePixels(frame, scaled)) {
 			pixelMismatchFrames++;
 			failures.push(`${path}: GPU upscale differs from normalizeFrame`);
 		}
-		scaled.delete();
 		if (!(await sameDownscale(src))) {
 			pixelMismatchFrames++;
 			failures.push(`${path}: GPU 2160p downscale differs from normalizeFrame`);
 		}
-		src.delete();
 		for (const [i, cpuDetector] of cpuDetectors.entries()) {
 			const gpuDetector = gpuDetectors[i]!;
 			const gate = cpuDetector.gate(frame);
@@ -106,7 +103,6 @@ for (const group of fixtureGroups()) {
 				}
 			}
 		}
-		frame.delete();
 	}
 }
 
@@ -149,54 +145,47 @@ function decisions(events: unknown): string {
 	);
 }
 
-function samePixels(a: Mat, b: Mat): boolean {
-	const x = a.data as Uint8Array;
-	const y = b.data as Uint8Array;
+function samePixels(a: Image, b: Image): boolean {
+	const x = a.data;
+	const y = b.data;
 	if (x.length !== y.length) return false;
 	for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
 	return true;
 }
 
 /** The readback's 2160p path on `frame` upscaled to 2160p: same bars and, without bars, same pixels as normalizeFrame. */
-async function sameDownscale(frame: Mat): Promise<boolean> {
-	const cv = getCV();
-	const src = new cv.Mat();
-	cv.resize(frame, src, new cv.Size(3840, 2160), 0, 0, cv.INTER_CUBIC);
-	try {
-		const device = matcher.device;
-		const data = src.data as Uint8Array;
-		const buffer = device.createBuffer({
-			size: data.byteLength,
-			usage: BUFFER_STORAGE | BUFFER_COPY_DST,
-		});
-		device.queue.writeBuffer(buffer, 0, data);
-		const encoder = device.createCommandEncoder();
-		const { read } = downscaler.encode(encoder, buffer, src.cols);
-		const lines = lineSums.encode(encoder, buffer, {
-			stride: src.cols,
-			w: src.cols,
-			h: src.rows,
-		});
-		device.queue.submit([encoder.finish()]);
-		const [, sums] = await Promise.all([
-			read.mapAsync(MAP_MODE_READ),
-			lines.read(),
-		]);
-		const pixels = new Uint8Array(read.getMappedRange().slice(0));
-		read.unmap();
-		downscaler.release(read);
-		buffer.destroy();
-		const box = detectContentBox(src.cols, src.rows, data);
-		const gpuBox = detectContentBoxFromSums(src.cols, src.rows, sums);
-		if (JSON.stringify(box) !== JSON.stringify(gpuBox)) return false;
-		if (box) return true;
-		const expected = normalizeFrame(src);
-		const cpu = expected.data as Uint8Array;
-		const same =
-			cpu.length === pixels.length && cpu.every((v, i) => v === pixels[i]);
-		expected.delete();
-		return same;
-	} finally {
-		src.delete();
-	}
+async function sameDownscale(frame: Image): Promise<boolean> {
+	const src = resize(frame, 3840, 2160, "cubic");
+	const device = matcher.device;
+	const { data } = src;
+	const buffer = device.createBuffer({
+		size: data.byteLength,
+		usage: BUFFER_STORAGE | BUFFER_COPY_DST,
+	});
+	device.queue.writeBuffer(buffer, 0, data);
+	const encoder = device.createCommandEncoder();
+	const { read } = downscaler.encode(encoder, buffer, src.cols);
+	const lines = lineSums.encode(encoder, buffer, {
+		stride: src.cols,
+		w: src.cols,
+		h: src.rows,
+	});
+	device.queue.submit([encoder.finish()]);
+	const [, sums] = await Promise.all([
+		read.mapAsync(MAP_MODE_READ),
+		lines.read(),
+	]);
+	const pixels = new Uint8Array(read.getMappedRange().slice(0));
+	read.unmap();
+	downscaler.release(read);
+	buffer.destroy();
+	const box = detectContentBox(src.cols, src.rows, data);
+	const gpuBox = detectContentBoxFromSums(src.cols, src.rows, sums);
+	if (JSON.stringify(box) !== JSON.stringify(gpuBox)) return false;
+	if (box) return true;
+	const expected = normalizeFrame(src);
+	const cpu = expected.data;
+	const same =
+		cpu.length === pixels.length && cpu.every((v, i) => v === pixels[i]);
+	return same;
 }

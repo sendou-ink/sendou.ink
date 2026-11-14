@@ -29,7 +29,7 @@ export const meta: MetaFunction = (args) => {
 	});
 };
 
-// Everything below the shell assumes a browser (OpenCV.js worker, IndexedDB,
+// Everything below the shell assumes a browser (analyzer worker, IndexedDB,
 // WebCodecs, getUserMedia): nothing from core/worker/capture/store may be
 // imported at route-module top level — only inside this lazy client tree.
 const ScannerApp = lazy(() =>

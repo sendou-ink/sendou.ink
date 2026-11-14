@@ -18,7 +18,7 @@ import type {
 	GateResult,
 } from "../core/detectors/types";
 import { type DetectedEvent, isComplete } from "../core/events";
-import { normalizeFrame, toMat } from "../core/image";
+import { imageFromFrameData, normalizeFrame } from "../core/image";
 import type { ScannerLobby } from "../scanner-types";
 import { readImage } from "./image-io";
 
@@ -248,17 +248,15 @@ export interface FixtureRun<TEvent extends EventRecord> {
 	events: TEvent[];
 }
 
-/** Run gate+parse the way the live pipeline would. Caller must have loaded OpenCV. */
+/** Run gate+parse the way the live pipeline would. */
 export async function runDetectorOnFixture<TEvent extends EventRecord>(
 	detector: Detector<TEvent>,
 	fixture: Fixture,
 ): Promise<FixtureRun<TEvent>> {
-	const src = toMat(await readImage(fixture.framePath));
+	const src = imageFromFrameData(await readImage(fixture.framePath));
 	const frame = normalizeFrame(src);
-	src.delete();
 	const gate = detector.gate(frame);
 	const events = gate.pass ? detector.parse(frame, 0, gate) : [];
-	frame.delete();
 	return { gate, events };
 }
 

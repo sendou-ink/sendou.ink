@@ -5,7 +5,6 @@
  *
  * Usage: pnpm scanner:fixtures [case-name-substring]
  */
-import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import {
 	createScoreboardDetector,
 	type ScoreboardRowDebug,
@@ -20,7 +19,6 @@ import { loadScoreboardResources } from "../../app/features/scanner/node/resourc
 
 const filter = process.argv[2];
 
-await loadOpenCV();
 const detector = createScoreboardDetector(await loadScoreboardResources());
 
 const fixtures = loadFixtures("scoreboard").filter(

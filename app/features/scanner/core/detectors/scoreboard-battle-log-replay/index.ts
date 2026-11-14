@@ -5,7 +5,6 @@
  * VICTORY/DEFEAT tags keep `players`/`matchScores` winners-first. Reuses the
  * scoreboard helpers with glyph sets rescaled to this screen.
  */
-import { getCV, type Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
@@ -13,6 +12,7 @@ import {
 	cropRoi,
 	frameGray,
 	frameRgb,
+	type Image,
 	maxBrightness,
 	maxChannel,
 	meanBrightness,
@@ -141,12 +141,8 @@ interface PanelParse {
 }
 
 /** Fraction of ROI pixels matching the replay code's green (RGBA frame). */
-function greenFraction(frame: Mat, roi: Roi): number {
-	const cv = getCV();
-	const view = cropRoi(frame, roi);
-	const cont = new cv.Mat();
-	view.copyTo(cont);
-	view.delete();
+function greenFraction(frame: Image, roi: Roi): number {
+	const cont = cropRoi(frame, roi);
 	const d = cont.data;
 	const n = cont.rows * cont.cols;
 	let green = 0;
@@ -157,7 +153,6 @@ function greenFraction(frame: Mat, roi: Roi): number {
 		)
 			green++;
 	}
-	cont.delete();
 	return n > 0 ? green / n : 0;
 }
 
@@ -192,7 +187,7 @@ export function createScoreboardBattleLogReplayDetector(
 				)
 			: null;
 
-	function gate(frame: Mat): GateResult {
+	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 
 		let flatOk = 0;
@@ -258,7 +253,7 @@ export function createScoreboardBattleLogReplayDetector(
 		return { pass, score, signature };
 	}
 
-	function contentSignature(gray: Mat): number[] {
+	function contentSignature(gray: Image): number[] {
 		const signature = roiSignature(gray, HEADER_TOP_BAND, 32, 2);
 		signature.push(...roiSignature(gray, REPLAY_CODE_ROI, 32, 1));
 		for (const dx of PANEL_XS) {
@@ -271,8 +266,8 @@ export function createScoreboardBattleLogReplayDetector(
 
 	/** One panel's rows, totals and result tag, all read in one lockstep. */
 	function* parsePanelSteps(
-		gray: Mat,
-		rgb: Mat,
+		gray: Image,
+		rgb: Image,
 		dx: number,
 		speculative: boolean,
 	): MatchSteps<PanelParse> {
@@ -362,9 +357,6 @@ export function createScoreboardBattleLogReplayDetector(
 					)
 				: done(null),
 		]);
-		teamCrop?.delete();
-		matchCrop?.delete();
-		bright?.delete();
 
 		let matchScore: ParsedNumber | null = matchRead;
 		if (matchScore) {
@@ -426,7 +418,7 @@ export function createScoreboardBattleLogReplayDetector(
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,

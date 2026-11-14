@@ -6,7 +6,6 @@
  */
 
 import assert from "node:assert/strict";
-import { loadOpenCV } from "../../core/cv";
 import type {
 	ScoreboardPlayer,
 	ScoreboardResources,
@@ -35,7 +34,6 @@ export interface BattleLogSuite {
 
 export async function runScoreboardBattleLogSuite(suite: BattleLogSuite) {
 	const { fixturesDir, eventType } = suite;
-	await loadOpenCV();
 	const detector = suite.createDetector(await loadScoreboardResources());
 	const fixtures = loadFixtures(fixturesDir);
 

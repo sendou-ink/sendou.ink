@@ -4,14 +4,14 @@
  * rounding, computed here in f32 steps), the horizontal pass as integer
  * sums, the vertical pass as the fixed-point combine `(Σ + 2^21) >> 22` with
  * saturation, clamped borders. Integer arithmetic makes it identical on every
- * GPU. Free of OpenCV, so the readback workers run it too.
+ * GPU (the tables are core/resize.ts's, which the CPU resize runs on). The
+ * readback workers run it too.
  */
 import { CANONICAL_HEIGHT, CANONICAL_WIDTH } from "../core/canonical";
+import { cubicTable } from "../core/resize";
 
 const WORKGROUP_SIZE = 64;
 const MAX_DISPATCH_X = 65535;
-/** INTER_RESIZE_COEF_SCALE */
-const COEF_SCALE = 2048;
 const BUFFER_MAP_READ = 0x0001;
 const BUFFER_COPY_SRC = 0x0004;
 const BUFFER_COPY_DST = 0x0008;
@@ -211,41 +211,4 @@ export async function createCubicUpscaler(
 	}
 
 	return { encode, release, upscale };
-}
-
-/**
- * OpenCV's cubic resize table for one axis: per destination index the source
- * index `floor(fx)` and four fixed-point weights, with OpenCV's f32 math.
- */
-function cubicTable(srcSize: number, dstSize: number): number[] {
-	const f = Math.fround;
-	const scale = 1 / (dstSize / srcSize);
-	const table: number[] = [];
-	for (let d = 0; d < dstSize; d++) {
-		let fx = f((d + 0.5) * scale - 0.5);
-		const sx = Math.floor(fx);
-		fx = f(fx - sx);
-		const A = f(-0.75);
-		const x1 = f(fx + 1);
-		const c0 = f(
-			f(f(f(f(f(A * x1) - f(5 * A)) * x1) + f(8 * A)) * x1) - f(4 * A),
-		);
-		const c1 = f(f(f(f(f(f(A + 2) * fx) - f(A + 3)) * fx) * fx) + 1);
-		const omx = f(1 - fx);
-		const c2 = f(f(f(f(f(f(A + 2) * omx) - f(A + 3)) * omx) * omx) + 1);
-		const c3 = f(f(f(1 - c0) - c1) - c2);
-		table.push(
-			sx,
-			...[c0, c1, c2, c3].map((c) =>
-				Math.max(-32768, Math.min(32767, roundHalfEven(f(c * COEF_SCALE)))),
-			),
-		);
-	}
-	return table;
-}
-
-/** lrint in the default rounding mode, as OpenCV's cvRound compiles under clang */
-function roundHalfEven(v: number): number {
-	const r = Math.round(v);
-	return Math.abs(v % 1) === 0.5 && r % 2 !== 0 ? r - 1 : r;
 }

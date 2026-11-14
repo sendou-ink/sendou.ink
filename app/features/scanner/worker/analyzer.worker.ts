@@ -1,5 +1,5 @@
 /**
- * AnalyzerWorker: owns OpenCV.js (WASM), the detector registry and a
+ * AnalyzerWorker: owns the detector registry and a
  * DetectorScheduler. "frame": the main thread posts one ImageBitmap/VideoFrame
  * at a time; results come back per detector, then a "done" with the calm
  * signal and telemetry. "scanChunk": the worker scans a contiguous VoD slice
@@ -23,7 +23,6 @@ import {
 	CANONICAL_WIDTH,
 	detectContentBox,
 } from "../core/canonical";
-import { getCV, loadOpenCV, type Mat } from "../core/cv";
 import { runDetectorPass } from "../core/detectors/frame-pass";
 import { MINIMAP_DETECTOR_ID } from "../core/detectors/minimap/index";
 import { createAllDetectors } from "../core/detectors/registry";
@@ -36,9 +35,10 @@ import type { Detector } from "../core/detectors/types";
 import type { DetectedEvent } from "../core/events";
 import {
 	type FrameData,
+	type Image,
+	imageFromFrameData,
 	normalizeFrame,
 	provideFrameGray,
-	toMat,
 } from "../core/image";
 import { changeOf, TimelineBuilder } from "../core/timeline/index";
 import { createFrameEncoder } from "./frame-encode";
@@ -108,7 +108,7 @@ const UNDECODABLE_SKIP_S = 5;
 /** A read-back frame normalized to the canonical size, its capture pixels kept for the stored frame. */
 interface PreparedFrame {
 	pixels: FrameData;
-	frame: Mat;
+	frame: Image;
 	/** frameGray's conversion, computed with the readback */
 	gray?: Uint8Array;
 }
@@ -181,7 +181,6 @@ async function init({
 		frameReader ??= createFrameReaderPool(READERS);
 	}
 	try {
-		await loadOpenCV();
 		if (webgpu && navigator.gpu) {
 			gpuMatcher = await createGpuMatcher(navigator.gpu).catch((error) => {
 				// biome-ignore lint/suspicious/noConsole: a missing GPU silently costs speed, so say why
@@ -245,32 +244,31 @@ function prepareFrame({
 }: ReadFrame): Promise<PreparedFrame> {
 	if (canonical) {
 		// normalized along with the readback
-		const cv = getCV();
-		const frame = new cv.Mat(CANONICAL_HEIGHT, CANONICAL_WIDTH, cv.CV_8UC4);
-		frame.data.set(canonical);
+		const frame = {
+			rows: CANONICAL_HEIGHT,
+			cols: CANONICAL_WIDTH,
+			channels: 4,
+			data: canonical,
+		};
 		return Promise.resolve({ pixels, frame, gray });
 	}
 	const prepared = normalizing.then(async () => {
-		const src = toMat(pixels);
+		const src = imageFromFrameData(pixels);
 		// normalizing would only copy it
 		if (isCanonical(pixels)) return { pixels, frame: src, gray };
-		try {
-			const frame =
-				gpuScaler && gpuRunner()
-					? await gpuScaler.normalize(src)
-					: normalizeFrame(src);
-			return { pixels, frame };
-		} finally {
-			src.delete();
-		}
+		const frame =
+			gpuScaler && gpuRunner()
+				? await gpuScaler.normalize(src)
+				: normalizeFrame(src);
+		return { pixels, frame };
 	});
 	normalizing = prepared.catch(() => {});
 	return prepared;
 }
 
 /**
- * Gates and parses one prepared frame for the `due` detectors, posts the
- * results and deletes the frame; `onGated` sees the parsing detectors once
+ * Gates and parses one prepared frame for the `due` detectors and posts the
+ * results; `onGated` sees the parsing detectors once
  * every gate is recorded.
  */
 async function analyzePrepared(
@@ -294,55 +292,51 @@ async function analyzePrepared(
 		return encoded;
 	};
 
-	try {
-		const outcomes = await runDetectorPass({
-			frame,
+	const outcomes = await runDetectorPass({
+		frame,
+		t,
+		detectors,
+		due,
+		scheduler: scheduler!,
+		timeline,
+		telemetry,
+		runSteps: gpuRunner(),
+		onGated,
+	});
+	for (const { detector, gate, parsed, events, actions } of outcomes) {
+		const listed = actions.some(
+			({ action }) => action === "added" || action === "replaced",
+		);
+		const kept = actions.some(({ action }) => action !== "dropped");
+		const result: WorkerResponse = {
+			kind: "result",
+			detector: detector.id,
 			t,
-			detectors,
-			due,
-			scheduler: scheduler!,
-			timeline,
-			telemetry,
-			runSteps: gpuRunner(),
-			onGated,
-		});
-		for (const { detector, gate, parsed, events, actions } of outcomes) {
-			const listed = actions.some(
-				({ action }) => action === "added" || action === "replaced",
-			);
-			const kept = actions.some(({ action }) => action !== "dropped");
-			const result: WorkerResponse = {
-				kind: "result",
-				detector: detector.id,
-				t,
-				gate,
-				parsed,
-				events,
-				changes: actions.flatMap((action) => changeOf(action) ?? []),
-			};
-			const minimapSnapshot =
-				detector.id === MINIMAP_DETECTOR_ID
-					? snapshotMinimapFrame(gate.pass, kept, pixels)
-					: undefined;
-			const image =
-				attachFrames && listed && detector.attachFrame !== false
-					? frameBlob()
-					: undefined;
-			post(
-				image || minimapSnapshot
-					? Promise.all([
-							image?.catch(() => undefined),
-							minimapSnapshot?.catch(() => undefined),
-						]).then(([encodedFrame, snapshot]) => ({
-							...result,
-							frame: encodedFrame,
-							minimapSnapshot: snapshot,
-						}))
-					: result,
-			);
-		}
-	} finally {
-		frame.delete();
+			gate,
+			parsed,
+			events,
+			changes: actions.flatMap((action) => changeOf(action) ?? []),
+		};
+		const minimapSnapshot =
+			detector.id === MINIMAP_DETECTOR_ID
+				? snapshotMinimapFrame(gate.pass, kept, pixels)
+				: undefined;
+		const image =
+			attachFrames && listed && detector.attachFrame !== false
+				? frameBlob()
+				: undefined;
+		post(
+			image || minimapSnapshot
+				? Promise.all([
+						image?.catch(() => undefined),
+						minimapSnapshot?.catch(() => undefined),
+					]).then(([encodedFrame, snapshot]) => ({
+						...result,
+						frame: encodedFrame,
+						minimapSnapshot: snapshot,
+					}))
+				: result,
+		);
 	}
 }
 
@@ -496,10 +490,7 @@ async function scanChunk({
 				item.frame = null;
 				source!.release(item);
 			}
-			item.read?.then(
-				({ frame }) => frame.delete(),
-				() => {},
-			);
+			item.read?.catch(() => {});
 			item.read = null;
 		};
 		const closeSource = () => {

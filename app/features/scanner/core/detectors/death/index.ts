@@ -14,9 +14,9 @@ import type {
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
 import { toAbilityWithUnknown } from "../../../scanner-types";
-import { getCV, type Mat, minMaxLoc } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
+import { connectedComponents, normalizeMinMax } from "../../filters";
 import {
 	type GlyphSet,
 	type RecognizedText,
@@ -24,15 +24,27 @@ import {
 	scaleGlyphSet,
 } from "../../glyphs";
 import {
-	copyRoi,
+	clearMasked,
+	countNonZero,
+	createImage,
 	cropRoi,
 	frameGray,
 	frameRgb,
+	type Image,
+	maxBrightness,
 	meanBrightness,
 	type Roi,
+	threshold,
 } from "../../image";
 import { all, done, type MatchSteps, runSync } from "../../match-steps";
+import { resize } from "../../resize";
 import { closestEntry, matchKey, rankBy, rankByRead } from "../../text";
+import {
+	rotationMatrix,
+	type WarpBorder,
+	type WarpInterpolation,
+	warpAffine,
+} from "../../warp";
 import type { ScoreboardResources } from "../scoreboard/index";
 import { type ParsedName, parseNameSteps } from "../scoreboard/names";
 import { matchWeaponSteps, type WeaponMatch } from "../scoreboard/weapons";
@@ -234,8 +246,6 @@ function candidatesFor(template: DeathMessageTemplate): WeaponCandidate[] {
 export function createDeathDetector(
 	resources: ScoreboardResources,
 ): Detector<DeathEvent> {
-	const cv = getCV();
-
 	const scaled = (
 		set: GlyphSet | null | undefined,
 		height: number,
@@ -255,7 +265,7 @@ export function createDeathDetector(
 		ALL_WEAPON_ENTRIES.filter((e) => e.type === "MAIN").map((e) => [e.id, e]),
 	);
 
-	function gate(frame: Mat): GateResult {
+	function gate(frame: Image): GateResult {
 		let darkOk = 0;
 		const darkProbes = [...GATE_BURST_PROBES, ...GATE_PANEL_PROBES];
 		for (const roi of darkProbes) {
@@ -270,13 +280,12 @@ export function createDeathDetector(
 		}
 
 		const gray = frameGray(frame);
-		const line1 = copyRoi(gray, SPLAT_LINE1_ROI);
-		const { maxVal } = minMaxLoc(line1);
-		const bin = new cv.Mat();
-		cv.threshold(line1, bin, GATE_TEXT_MIN_MAX, 255, cv.THRESH_BINARY);
-		line1.delete();
-		const whiteFraction = cv.countNonZero(bin) / (bin.rows * bin.cols);
-		bin.delete();
+		const maxVal = maxBrightness(gray, SPLAT_LINE1_ROI);
+		const whiteFraction =
+			countNonZero(
+				threshold(cropRoi(gray, SPLAT_LINE1_ROI), GATE_TEXT_MIN_MAX),
+			) /
+			(SPLAT_LINE1_ROI.w * SPLAT_LINE1_ROI.h);
 		const textOk =
 			Decisions.above("death:GATE_TEXT_MIN_MAX", maxVal, GATE_TEXT_MIN_MAX) &&
 			Decisions.above("death:gateTextMinFraction", whiteFraction, 0.01) &&
@@ -289,16 +298,15 @@ export function createDeathDetector(
 		// max RGB channel, not gray: saturated icon art can be gray-dark (rois.ts)
 		let iconOk = 0;
 		for (const row of [0, 1, 2]) {
-			const probe = copyRoi(frame, gateAbilityProbe(row));
+			const probe = cropRoi(frame, gateAbilityProbe(row));
 			const d = probe.data;
-			const ch = probe.channels();
+			const ch = probe.channels;
 			const n = probe.rows * probe.cols;
 			let maxCh = 0;
 			for (let i = 0; i < n; i++) {
 				const v = Math.max(d[i * ch]!, d[i * ch + 1]!, d[i * ch + 2]!);
 				if (v > maxCh) maxCh = v;
 			}
-			probe.delete();
 			if (Decisions.above("death:GATE_ICON_MIN_MAX", maxCh, GATE_ICON_MIN_MAX))
 				iconOk++;
 		}
@@ -312,41 +320,39 @@ export function createDeathDetector(
 	}
 
 	/** Crop the tilted tag, rotate it level, and return the name band crop. */
-	function levelTagInner(rgb: Mat): Mat {
-		const outer = copyRoi(rgb, TAG_NAME_OUTER);
-		const inner = levelOuter(outer, cv.INTER_LINEAR, cv.BORDER_REPLICATE);
-		outer.delete();
-		return inner;
+	function levelTagInner(rgb: Image): Image {
+		return levelOuter(cropRoi(rgb, TAG_NAME_OUTER), "linear", "replicate");
 	}
 
-	function levelOuter(outer: Mat, interpolation: number, border: number): Mat {
-		const center = new cv.Point(outer.cols / 2, outer.rows / 2);
-		const m = cv.getRotationMatrix2D(center, -TAG_TILT_DEG, 1);
-		const rotated = new cv.Mat();
-		cv.warpAffine(
+	function levelOuter(
+		outer: Image,
+		interpolation: WarpInterpolation,
+		border: WarpBorder,
+	): Image {
+		const m = rotationMatrix(
+			{ x: outer.cols / 2, y: outer.rows / 2 },
+			-TAG_TILT_DEG,
+			1,
+		);
+		const rotated = warpAffine(
 			outer,
-			rotated,
 			m,
-			new cv.Size(outer.cols, outer.rows),
+			outer.cols,
+			outer.rows,
 			interpolation,
 			border,
-			new cv.Scalar(),
 		);
-		m.delete();
-		const inner = copyRoi(rotated, TAG_NAME_INNER);
-		rotated.delete();
-		return inner;
+		return cropRoi(rotated, TAG_NAME_INNER);
 	}
 
-	function showsReplayHints(rgb: Mat): boolean {
+	function showsReplayHints(rgb: Image): boolean {
 		return REPLAY_HINT_CHIP_PROBES.every((roi) => {
-			const probe = copyRoi(rgb, roi);
+			const probe = cropRoi(rgb, roi);
 			const d = probe.data;
 			let min = 255;
 			for (let i = 0; i < probe.rows * probe.cols; i++) {
 				min = Math.min(min, d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!);
 			}
-			probe.delete();
 			return Decisions.atLeast(
 				"death:REPLAY_HINT_CHIP_MIN_CHANNEL",
 				min,
@@ -355,46 +361,29 @@ export function createDeathDetector(
 		});
 	}
 
-	let replayChipMask: Mat | null = null;
+	let replayChipMask: Image | null = null;
 	/** REPLAY_HINT_L_CHIP in the leveled name band's coordinates. */
-	function replayChipMaskInner(): Mat {
+	function replayChipMaskInner(): Image {
 		if (!replayChipMask) {
-			const outer = new cv.Mat(
-				TAG_NAME_OUTER.h,
-				TAG_NAME_OUTER.w,
-				cv.CV_8UC1,
-				new cv.Scalar(0),
-			);
-			const x = REPLAY_HINT_L_CHIP.x - TAG_NAME_OUTER.x;
-			const y = REPLAY_HINT_L_CHIP.y - TAG_NAME_OUTER.y;
-			cv.rectangle(
-				outer,
-				new cv.Point(x, y),
-				new cv.Point(x + REPLAY_HINT_L_CHIP.w, y + REPLAY_HINT_L_CHIP.h),
-				new cv.Scalar(255),
-				-1,
-			);
-			replayChipMask = levelOuter(outer, cv.INTER_NEAREST, cv.BORDER_CONSTANT);
-			outer.delete();
+			const outer = createImage(TAG_NAME_OUTER.h, TAG_NAME_OUTER.w, 1);
+			const x0 = REPLAY_HINT_L_CHIP.x - TAG_NAME_OUTER.x;
+			const y0 = REPLAY_HINT_L_CHIP.y - TAG_NAME_OUTER.y;
+			// both corners inclusive
+			for (let y = y0; y <= y0 + REPLAY_HINT_L_CHIP.h; y++) {
+				for (let x = x0; x <= x0 + REPLAY_HINT_L_CHIP.w; x++) {
+					if (x < outer.cols && y < outer.rows)
+						outer.data[y * outer.cols + x] = 255;
+				}
+			}
+			replayChipMask = levelOuter(outer, "nearest", { constant: [0] });
 		}
 		return replayChipMask;
 	}
 
 	const tagMemo: { signature: Uint8Array; read: TagNameRead }[] = [];
 
-	function tagSignature(inner: Mat): Uint8Array {
-		const small = new cv.Mat();
-		cv.resize(
-			inner,
-			small,
-			new cv.Size(TAG_MEMO_WIDTH, TAG_MEMO_HEIGHT),
-			0,
-			0,
-			cv.INTER_AREA,
-		);
-		const signature = new Uint8Array(small.data);
-		small.delete();
-		return signature;
+	function tagSignature(inner: Image): Uint8Array {
+		return resize(inner, TAG_MEMO_WIDTH, TAG_MEMO_HEIGHT, "area").data;
 	}
 
 	/** Memoized read for a matching tag, freshened to the list's end. */
@@ -427,7 +416,7 @@ export function createDeathDetector(
 
 	/** Per-channel median color of `inner`, over pixels where mask(i) holds. */
 	function medianColor(
-		inner: Mat,
+		inner: Image,
 		mask?: (i: number) => boolean,
 	): [number, number, number] {
 		const n = inner.rows * inner.cols;
@@ -460,7 +449,7 @@ export function createDeathDetector(
 	 * reads are tried. The runner-up feeds the split-banner candidate.
 	 */
 	function dominantColors(
-		inner: Mat,
+		inner: Image,
 		count: number,
 	): { color: [number, number, number]; fraction: number }[] {
 		const n = inner.rows * inner.cols;
@@ -524,14 +513,14 @@ export function createDeathDetector(
 	 * Distances are multiplied by `scale`, saturating at 255.
 	 */
 	function distanceBand(
-		inner: Mat,
+		inner: Image,
 		colors: readonly [number, number, number][],
 		invert: boolean,
 		scale = 1,
-	): Mat {
+	): Image {
 		const n = inner.rows * inner.cols;
 		const px = inner.data;
-		const band = new cv.Mat(inner.rows, inner.cols, cv.CV_8UC1);
+		const band = createImage(inner.rows, inner.cols, 1);
 		const out = band.data;
 		for (let i = 0; i < n; i++) {
 			let d = 255;
@@ -554,48 +543,34 @@ export function createDeathDetector(
 	 * edges while the name sits inside (fixture extremes: dakuten at y=3, descender
 	 * 2px above bottom), and an edge blob merged into a glyph corrupts the read.
 	 */
-	function clearBorderBlobs(band: Mat, threshold: number): void {
-		const bin = new cv.Mat();
-		cv.threshold(band, bin, threshold, 255, cv.THRESH_BINARY);
-		const labels = new cv.Mat();
-		const stats = new cv.Mat();
-		const centroids = new cv.Mat();
-		const count = cv.connectedComponentsWithStats(
-			bin,
-			labels,
-			stats,
-			centroids,
+	function clearBorderBlobs(band: Image, binThreshold: number): void {
+		const { count, labels, stats } = connectedComponents(
+			threshold(band, binThreshold),
 			4,
 		);
-		bin.delete();
-		centroids.delete();
-		const s = stats.data32S;
 		const touchesBorder = new Uint8Array(count);
 		for (let i = 1; i < count; i++) {
-			const left = s[i * 5 + cv.CC_STAT_LEFT]!;
-			const top = s[i * 5 + cv.CC_STAT_TOP]!;
-			const right = left + s[i * 5 + cv.CC_STAT_WIDTH]!;
-			const bottom = top + s[i * 5 + cv.CC_STAT_HEIGHT]!;
+			const { left, top, width, height } = stats[i]!;
 			touchesBorder[i] =
-				left === 0 || top === 0 || right === band.cols || bottom === band.rows
+				left === 0 ||
+				top === 0 ||
+				left + width === band.cols ||
+				top + height === band.rows
 					? 1
 					: 0;
 		}
-		stats.delete();
-		const lab = labels.data32S;
 		const out = band.data;
 		for (let i = 0; i < out.length; i++) {
-			if (touchesBorder[lab[i]!]!) out[i] = 0;
+			if (touchesBorder[labels[i]!]!) out[i] = 0;
 		}
-		labels.delete();
 	}
 
 	/** Splash-tag name read on a band's ink: against the banner color, then refined against the text color estimated from that ink. */
 	function* readWithBackground(
-		inner: Mat,
+		inner: Image,
 		backgrounds: readonly [number, number, number][],
 		spaceGap: number,
-		chipMask: Mat | null,
+		chipMask: Image | null,
 		speculative: boolean,
 	): MatchSteps<{
 		parsed: ParsedName;
@@ -603,12 +578,12 @@ export function createDeathDetector(
 		textColor: [number, number, number] | null;
 	}> {
 		const band = distanceBand(inner, backgrounds, false);
-		if (chipMask) band.setTo(new cv.Scalar(0), chipMask);
-		cv.normalize(band, band, 0, 255, cv.NORM_MINMAX);
+		if (chipMask) clearMasked(band, chipMask);
+		normalizeMinMax(band);
 		clearBorderBlobs(band, TAG_NAME_BIN_THRESHOLD);
 
 		let textColor: [number, number, number] | null = null;
-		let refined: Mat | null = null;
+		let refined: Image | null = null;
 		let refineThreshold = 0;
 		const ink = band.data;
 		let inkCount = 0;
@@ -630,7 +605,7 @@ export function createDeathDetector(
 					(Math.min(TAG_NAME_REFINE_MAX_DISTANCE, contrast / 2) * 255) /
 						contrast,
 				);
-			if (chipMask) refined.setTo(new cv.Scalar(0), chipMask);
+			if (chipMask) clearMasked(refined, chipMask);
 			clearBorderBlobs(refined, refineThreshold);
 		}
 		const [bandParse, refinedParse] = yield* all([
@@ -649,8 +624,6 @@ export function createDeathDetector(
 					)
 				: done(null),
 		]);
-		refined?.delete();
-		band.delete();
 		const parsed =
 			refinedParse && refinedParse.confidence > bandParse.confidence
 				? refinedParse
@@ -664,7 +637,7 @@ export function createDeathDetector(
 	 * pass 1's ink; the more confident read wins. Same for each background estimator.
 	 */
 	function* readTagName(
-		rgb: Mat,
+		rgb: Image,
 		speculative: boolean,
 	): MatchSteps<{ read: TagNameRead; memoHit: boolean }> {
 		const spaceGap = Math.max(7, Math.round(tagNameGlyphs!.medianWidth * 0.55));
@@ -751,16 +724,15 @@ export function createDeathDetector(
 				tagMemoStore(signature, read);
 			}
 		}
-		inner.delete();
 		return { read, memoHit };
 	}
 
 	/** 3. ability grid; rows carry 1-3 left-aligned sub circles, so a sub box without badge ink ends the row. */
-	function* readAbilities(rgb: Mat): MatchSteps<WeaponMatch[][]> {
+	function* readAbilities(rgb: Image): MatchSteps<WeaponMatch[][]> {
 		const rows = Array.from({ length: ABILITY_ROWS }, (_, row) => {
 			const crops = [cropRoi(rgb, abilityMainRoi(row))];
 			for (let slot = 0; slot < ABILITY_SUB_XS.length; slot++) {
-				const crop = copyRoi(rgb, abilitySubRoi(row, slot));
+				const crop = cropRoi(rgb, abilitySubRoi(row, slot));
 				const d = crop.data;
 				const n = crop.rows * crop.cols;
 				let ink = 0;
@@ -775,7 +747,6 @@ export function createDeathDetector(
 						ABILITY_SLOT_MIN_INK,
 					)
 				) {
-					crop.delete();
 					break;
 				}
 				crops.push(crop);
@@ -795,12 +766,11 @@ export function createDeathDetector(
 				),
 			),
 		);
-		for (const crop of rows.flat()) crop.delete();
 		return matches;
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
@@ -829,7 +799,6 @@ export function createDeathDetector(
 					{ binThreshold: SPLAT_TEXT_BIN_THRESHOLD, minCharScore: 0.3 },
 					speculative,
 				);
-				crop.delete();
 				return read;
 			};
 			[line1, line2] = yield* all([
@@ -928,7 +897,6 @@ export function createDeathDetector(
 			abilities() ? readAbilities(rgb) : done(null),
 			tagNameGlyphs ? readTagName(rgb, speculative) : done(null),
 		]);
-		burstCrop?.delete();
 		if (burstIcon) {
 			const entry = Decisions.atLeast(
 				"death:BURST_ICON_MIN_SCORE",

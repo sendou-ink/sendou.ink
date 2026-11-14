@@ -8,14 +8,13 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
-import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import {
-	copyRoi,
 	cropRoi,
 	frameGray,
 	frameRgb,
+	type Image,
 	maxBrightness,
 	meanBrightness,
 } from "../../image";
@@ -223,7 +222,7 @@ export function createScoreboardDetector(
 			)
 		: [];
 
-	function gate(frame: Mat): GateResult {
+	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 
 		let darkOk = 0;
@@ -268,7 +267,7 @@ export function createScoreboardDetector(
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
@@ -338,7 +337,6 @@ export function createScoreboardDetector(
 					])
 				: done(null),
 		]);
-		totalCrop?.delete();
 
 		const players = rows.map((row) => row.player);
 		const rowDebug = rows.map((row) => row.debug);
@@ -400,11 +398,11 @@ export function createScoreboardDetector(
 	};
 }
 
-function isNoContest(rgb: Mat): boolean {
+function isNoContest(rgb: Image): boolean {
 	return TEAM_BOX_BAND_ROIS.every((roi) => {
-		const band = copyRoi(rgb, roi);
+		const band = cropRoi(rgb, roi);
 		const pixels = band.data as Uint8Array;
-		const channels = band.channels();
+		const channels = band.channels;
 		let ink = 0;
 		let valueSum = 0;
 		for (let i = 0; i < pixels.length; i += channels) {
@@ -414,7 +412,6 @@ function isNoContest(rgb: Mat): boolean {
 			if (value > 0 && spread >= NO_CONTEST_INK_MIN_SATURATION * value) ink++;
 			valueSum += value;
 		}
-		band.delete();
 		const count = pixels.length / channels;
 		const meanValue = valueSum / count;
 		return (

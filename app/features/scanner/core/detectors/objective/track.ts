@@ -17,10 +17,9 @@
  *   team whose ink surrounds it — a plate sits on the half its team pushes
  *   into, which bounds the assignment. No label is read (localized).
  */
-import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import { type GlyphSet, recognizeTextSteps } from "../../glyphs";
-import { copyRoi, minChannel, type Roi } from "../../image";
+import { cropRoi, type Image, minChannel, type Roi } from "../../image";
 import {
 	dominantInkColor,
 	hueDistance,
@@ -93,16 +92,16 @@ export interface TrackRead {
 }
 
 /** Comb projection of the track's dot row at its fixed phase, per window with the worst dropped; see GATE_TRACK_MIN_COMB. */
-export function trackComb(frame: Mat): number {
+export function trackComb(frame: Image): number {
 	const [x0, x1] = TRACK_COMB_SPAN;
-	const band = copyRoi(frame, {
+	const band = cropRoi(frame, {
 		x: x0,
 		y: TRACK_Y - TRACK_COMB_OFFSET_Y - 1,
 		w: x1 - x0 + 1,
 		h: 2 * TRACK_COMB_OFFSET_Y + 3,
 	});
 	const { data, cols } = band;
-	const channels = band.channels();
+	const channels = band.channels;
 	const at = (x: number, y: number) => (y * cols + x) * channels;
 	const distance = (a: number, b: number) =>
 		Math.abs(data[a]! - data[b]!) +
@@ -122,7 +121,6 @@ export function trackComb(frame: Mat): number {
 		}
 		contrast.push(sum / 3);
 	}
-	band.delete();
 
 	const windows: number[] = [];
 	for (
@@ -146,7 +144,7 @@ export function trackComb(frame: Mat): number {
 
 /** The track overlay's icon, holder, plates and team inks off one frame. */
 export function* readTrackSteps(
-	frame: Mat,
+	frame: Image,
 	digitSets: readonly GlyphSet[],
 	speculative: boolean,
 ): MatchSteps<TrackRead> {
@@ -228,7 +226,7 @@ interface PixelClasses {
 }
 
 /** Pixel classes of the band the icon and the checkpoint markers can occupy. */
-function trackBandClasses(frame: Mat): PixelClasses {
+function trackBandClasses(frame: Image): PixelClasses {
 	const maxRadius = Math.max(...TRACK_NEUTRAL_RING_RADII) + 1;
 	const margin = Math.ceil(maxRadius) + TRACK_ICON_Y_JITTER;
 	const [spanX0, spanX1] = TRACK_ICON_SPAN;
@@ -283,10 +281,10 @@ function locateIcon(classes: PixelClasses): IconHit | null {
 		: best;
 }
 
-function classifyPixels(frame: Mat, roi: Roi): PixelClasses {
-	const crop = copyRoi(frame, roi);
+function classifyPixels(frame: Image, roi: Roi): PixelClasses {
+	const crop = cropRoi(frame, roi);
 	const { data, cols, rows } = crop;
-	const channels = crop.channels();
+	const channels = crop.channels;
 	const ink = new Uint8Array(cols * rows);
 	const white = new Uint8Array(cols * rows);
 	const olive = new Uint8Array(cols * rows);
@@ -316,7 +314,6 @@ function classifyPixels(frame: Mat, roi: Roi): PixelClasses {
 					: 0;
 		}
 	}
-	crop.delete();
 	return { cols, rows, ink, white, olive, dark, hue, x0: roi.x, y0: roi.y };
 }
 
@@ -518,7 +515,7 @@ interface PlateRun {
 
 /** Every confident digit run in the plate band, each assigned to a side. */
 function* readPlates(
-	frame: Mat,
+	frame: Image,
 	digitSets: readonly GlyphSet[],
 	teamHues: readonly [number | null, number | null],
 	speculative: boolean,
@@ -547,7 +544,6 @@ function* readPlates(
 			),
 		),
 	);
-	band.delete();
 
 	const runs: PlateRun[] = [];
 	for (const [i, set] of digitSets.entries()) {
@@ -619,7 +615,7 @@ function* readPlates(
 }
 
 /** Circular mean hue of the plate ink flanking a digit run (the plate body left and right of it). */
-function plateHue(frame: Mat, x0: number, x1: number): number | null {
+function plateHue(frame: Image, x0: number, x1: number): number | null {
 	const roi: Roi = {
 		x: Math.max(0, Math.round(x0) - TRACK_PLATE_INK_PAD_X),
 		y: TRACK_PLATE_DIGIT_ROI.y,

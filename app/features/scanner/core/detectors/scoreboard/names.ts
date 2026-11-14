@@ -1,5 +1,4 @@
 /** Player name recognition: glyph matching over the name ROI. */
-import { getCV, type Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import {
 	type GlyphSet,
@@ -7,6 +6,7 @@ import {
 	type RecognizedText,
 	recognizeTextSteps,
 } from "../../glyphs";
+import type { Image } from "../../image";
 import type { MatchSteps } from "../../match-steps";
 
 export interface ParsedName {
@@ -180,7 +180,7 @@ const BH_BOWL_MIN_CONTRAST = 40;
 
 function resolveBhByBowlFloor(
 	raw: RecognizedText,
-	grayView: Mat,
+	gray: Image,
 ): RecognizedText {
 	const contested = (c: RecognizedChar) => {
 		const twin = BH_TWINS[c.char];
@@ -199,9 +199,6 @@ function resolveBhByBowlFloor(
 	};
 	if (!raw.chars.some(contested)) return raw;
 
-	// the crop is an ROI view, so copy before pixel access
-	const gray = new (getCV().Mat)();
-	grayView.copyTo(gray);
 	const { cols, data } = gray;
 	const bandMean = (x0: number, x1: number, y0: number, y1: number) => {
 		let sum = 0;
@@ -243,7 +240,6 @@ function resolveBhByBowlFloor(
 				: "h",
 		};
 	});
-	gray.delete();
 	return { ...raw, text: retext(raw.text, chars), chars };
 }
 
@@ -267,10 +263,7 @@ const O_MAX_CORNER_ASYMMETRY = 0.025;
 const SOLID_ROW_FRACTION = 0.8;
 const EDGE_LEVEL = 128;
 
-function resolveDoByCorners(
-	raw: RecognizedText,
-	grayView: Mat,
-): RecognizedText {
+function resolveDoByCorners(raw: RecognizedText, gray: Image): RecognizedText {
 	const twinOf = (c: RecognizedChar) =>
 		c.candidates?.find(
 			(k) =>
@@ -285,8 +278,6 @@ function resolveDoByCorners(
 		(ROUND_CHARS.has(c.char) || c.char === "D") && twinOf(c) !== undefined;
 	if (!raw.chars.some(contested)) return raw;
 
-	const gray = new (getCV().Mat)();
-	grayView.copyTo(gray);
 	const { cols, data } = gray;
 	const chars = raw.chars.map((c) => {
 		if (!contested(c)) return c;
@@ -308,7 +299,6 @@ function resolveDoByCorners(
 		const twin = twinOf(c)!;
 		return { ...c, char: twin.char, score: twin.score };
 	});
-	gray.delete();
 	return { ...raw, text: retext(raw.text, chars), chars };
 }
 
@@ -413,7 +403,7 @@ const STEM_BOTTOM_FRACTION = 0.3;
 
 function resolveStemTwins(
 	raw: RecognizedText,
-	grayView: Mat,
+	gray: Image,
 	binThreshold: number,
 ): RecognizedText {
 	const contested = (c: RecognizedChar) => {
@@ -432,8 +422,6 @@ function resolveStemTwins(
 	};
 	if (!raw.chars.some(contested)) return raw;
 
-	const gray = new (getCV().Mat)();
-	grayView.copyTo(gray);
 	const { cols, data } = gray;
 	const chars = raw.chars.map((c) => {
 		const match = contested(c);
@@ -442,7 +430,6 @@ function resolveStemTwins(
 		if (!bottom || !match.rule.isTwin(bottom)) return c;
 		return { ...c, char: match.twin.char, score: match.twin.score };
 	});
-	gray.delete();
 	return { ...raw, text: retext(raw.text, chars), chars };
 }
 
@@ -503,7 +490,7 @@ const LEFT_STEM_TRIM_FRACTION = 0.15;
 
 function resolveSbByLeftStem(
 	raw: RecognizedText,
-	grayView: Mat,
+	gray: Image,
 	binThreshold: number,
 ): RecognizedText {
 	const contested = (c: RecognizedChar) =>
@@ -518,8 +505,6 @@ function resolveSbByLeftStem(
 		);
 	if (!raw.chars.some(contested)) return raw;
 
-	const gray = new (getCV().Mat)();
-	grayView.copyTo(gray);
 	const { cols, data } = gray;
 	const chars = raw.chars.map((c) => {
 		const twin = contested(c);
@@ -536,7 +521,6 @@ function resolveSbByLeftStem(
 			return c;
 		return { ...c, char: twin.char, score: twin.score };
 	});
-	gray.delete();
 	return { ...raw, text: retext(raw.text, chars), chars };
 }
 
@@ -598,7 +582,7 @@ const EXCLAMATION_MAX_TOP_OFFSET = 0.12;
 
 function resolveExclamationByNotch(
 	raw: RecognizedText,
-	grayView: Mat,
+	gray: Image,
 ): RecognizedText {
 	if (!raw.chars.some((c) => EXCLAMATION_STEM_READS.has(c.char))) return raw;
 	const others = raw.chars.filter(
@@ -609,8 +593,6 @@ function resolveExclamationByNotch(
 	const baseline = bottoms[Math.floor(bottoms.length / 2)]!;
 	const lineTop = Math.min(...others.map((c) => c.y0));
 
-	const gray = new (getCV().Mat)();
-	grayView.copyTo(gray);
 	const { cols, rows, data } = gray;
 	const rowMax = (c: RecognizedChar, y: number) => {
 		let max = 0;
@@ -667,7 +649,6 @@ function resolveExclamationByNotch(
 			);
 		return isExclamation ? { ...c, char: "!" } : c;
 	});
-	gray.delete();
 	return { ...raw, text: retext(raw.text, chars), chars };
 }
 
@@ -718,7 +699,7 @@ const VOICED_MARK_SHAPE: MarkShape = {
 
 function resolveVoicedByMark(
 	raw: RecognizedText,
-	grayView: Mat,
+	gray: Image,
 	binThreshold: number,
 ): RecognizedText {
 	const voicedRunnerUp = (c: RecognizedChar) => {
@@ -736,8 +717,6 @@ function resolveVoicedByMark(
 	};
 	if (!raw.chars.some(voicedRunnerUp)) return raw;
 
-	const gray = new (getCV().Mat)();
-	grayView.copyTo(gray);
 	const { cols, data } = gray;
 	const chars = raw.chars.map((c) => {
 		const twin = voicedRunnerUp(c);
@@ -757,7 +736,6 @@ function resolveVoicedByMark(
 			return c;
 		return { ...c, char: twin.char, score: twin.score };
 	});
-	gray.delete();
 	return { ...raw, text: retext(raw.text, chars), chars };
 }
 
@@ -879,7 +857,7 @@ const ACCENT_MARK_SHAPE: MarkShape = {
 
 function resolveAccentByMark(
 	raw: RecognizedText,
-	grayView: Mat,
+	gray: Image,
 	binThreshold: number,
 ): RecognizedText {
 	const accentedRunnerUp = (c: RecognizedChar) => {
@@ -899,8 +877,6 @@ function resolveAccentByMark(
 	};
 	if (!raw.chars.some(accentedRunnerUp)) return raw;
 
-	const gray = new (getCV().Mat)();
-	grayView.copyTo(gray);
 	const { cols, data } = gray;
 	const chars = raw.chars.map((c) => {
 		const accented = accentedRunnerUp(c);
@@ -911,7 +887,6 @@ function resolveAccentByMark(
 			return c;
 		return { ...c, char: accented.char, score: accented.score };
 	});
-	gray.delete();
 	return { ...raw, text: retext(raw.text, chars), chars };
 }
 
@@ -965,7 +940,7 @@ const LOOKALIKES: Record<string, string> = { "＜": "<", "＞": ">", º: "°" };
 const LOOKALIKE_RE = /[＜＞º]/g;
 
 export function* parseNameSteps(
-	gray: Mat,
+	gray: Image,
 	glyphs: GlyphSet,
 	options: {
 		spaceGap?: number;

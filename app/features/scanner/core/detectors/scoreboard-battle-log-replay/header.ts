@@ -6,10 +6,10 @@
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
 import type { Roi } from "../../canonical";
-import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
 import type { GlyphSet, RecognizedChar } from "../../glyphs";
+import type { Image } from "../../image";
 import { ALL_STAGE_ENTRIES, LOBBY_MODE_COMBOS } from "../../localized";
 import { all, type MatchSteps } from "../../match-steps";
 import { closestBy } from "../../text";
@@ -156,7 +156,7 @@ const REPLAY_BANDS: ReplayHeaderBands = {
 
 /** The top and bottom bands read in one lockstep; each band's lifted-ceiling retry follows its own first read. */
 export function* parseReplayHeaderSteps(
-	gray: Mat,
+	gray: Image,
 	topGlyphs: GlyphSet,
 	bottomGlyphs: GlyphSet,
 	bands: ReplayHeaderBands = REPLAY_BANDS,
@@ -264,7 +264,7 @@ export function* parseReplayHeaderSteps(
  * carry ink right of its middle only for A. Both letters read as "o".
  */
 function probeMeridiem(
-	band: Mat,
+	band: Image,
 	chars: readonly RecognizedChar[],
 ): Meridiem | null {
 	const colonAt = chars.findIndex((c) => c.char === ":");

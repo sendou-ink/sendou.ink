@@ -139,7 +139,7 @@ Map planner improvements
 ## Scanner feature (app/features/scanner)
 
 - computer-vision match-event detection; full docs in `docs/site/src/content/feature-readmes/scanner.mdx` — read it before touching detector/recognition code
-- OpenCV ROI-view gotcha: `.data`/`.clone()` are broken on ROI views — always `view.copyTo(freshMat)` before pixel access
+- images are plain typed arrays (`core/image.ts`, no OpenCV): image operations reproduce OpenCV's 8-bit output bit for bit, so fixtures and thresholds stay valid — a new one gets a case pinned to OpenCV's output in `tests/image-kernel-cases.ts`
 - fixture workflow: every live misread becomes a fixture under `app/features/scanner/tests/fixtures/`; ground-truth labels are hand-corrected by the maintainer and definitive over any matcher output
 - test with `pnpm test:scanner`; accuracy report with `pnpm scanner:report`; atlas regen commands and the assets-repo/CDN flow are in the README
 - events, snap tables, and fixtures speak sendou ids (`ModeShort`/`StageId`/weapon ids/`Ability`) — never reintroduce English game-name literals outside the generated localized snap tables

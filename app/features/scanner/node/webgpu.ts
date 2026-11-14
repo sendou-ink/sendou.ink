@@ -2,8 +2,7 @@
  * WebGPU for the Node scripts: Dawn from the `webgpu` npm package, which is
  * deliberately not a repo dependency (a native binary nothing ships with) —
  * install it anywhere (`npm i webgpu` in a scratch dir) and point
- * WEBGPU_NODE at its package dir. Load OpenCV first: in a plain Node process
- * the two crashed together, under vite-node they coexist.
+ * WEBGPU_NODE at its package dir.
  */
 import { createRequire } from "node:module";
 

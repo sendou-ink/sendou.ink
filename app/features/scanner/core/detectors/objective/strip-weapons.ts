@@ -16,10 +16,15 @@
  * and are skipped.
  */
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { getCV, type Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
-import { copyRoi, type FrameData } from "../../image";
+import {
+	cropRoi,
+	type FrameData,
+	type Image,
+	imageFromFrameData,
+} from "../../image";
+import { resize } from "../../resize";
 import type { EventKind, EventOf } from "../types";
 import {
 	type PlayerStatusData,
@@ -140,7 +145,7 @@ const NEIGHBORS = [
 
 /** Match every alive slot's icon; `status` and `fit` (same frame) supply dead flags, centers and scale. */
 export function parseStripWeapons(
-	frame: Mat,
+	frame: Image,
 	t: number,
 	status: PlayerStatusData,
 	fit: StripFit,
@@ -172,22 +177,20 @@ export function parseStripWeapons(
 export function prepareStripWeaponTemplates(
 	icons: { id: string; image: FrameData }[],
 ): StripWeaponTemplate[] {
-	const cv = getCV();
 	return icons.map(({ id, image }) => {
-		const rgba = cv.matFromImageData(image as unknown as ImageData);
+		const rgba = imageFromFrameData(image);
 		const template = {
 			weaponId: Number(id) as MainWeaponId,
 			fine: maskedArt(rgba, STRIP_WEAPON_ICON_SIZE, FINE_SIZE, 1),
 			coarse: maskedArt(rgba, STRIP_WEAPON_ICON_SIZE / 2, COARSE_SIZE, 1 / 2),
 			canvas: artCanvas(rgba, STRIP_WEAPON_ICON_SIZE),
 		};
-		rgba.delete();
 		return template;
 	});
 }
 
 function matchSlot(
-	frame: Mat,
+	frame: Image,
 	cx: number,
 	pitch: number,
 	templates: StripWeaponTemplate[],
@@ -196,7 +199,7 @@ function matchSlot(
 	const halfWidth = Math.round(STRIP_WEAPON_CROP_HALF.x * scale);
 	const halfHeight = Math.round(STRIP_WEAPON_CROP_HALF.y * scale);
 	const cy = Math.round(STATUS_ICON_CENTER_Y + STRIP_WEAPON_CENTER_DY * scale);
-	const crop = copyRoi(frame, {
+	const crop = cropRoi(frame, {
 		x: cx - halfWidth,
 		y: cy - halfHeight,
 		w: 2 * halfWidth,
@@ -204,7 +207,6 @@ function matchSlot(
 	});
 	const fine = resampledRgb(crop, FINE_SIZE);
 	const coarse = resampledRgb(crop, COARSE_SIZE);
-	crop.delete();
 
 	const shortlist = templates
 		.map((template) => ({
@@ -438,45 +440,33 @@ function drawnByOneOnly(
 	return null;
 }
 
-function artCanvas(rgba: Mat, iconSize: number): ArtCanvas {
-	const cv = getCV();
-	const scaled = new cv.Mat();
+function artCanvas(rgba: Image, iconSize: number): ArtCanvas {
 	const width = Math.round(iconSize);
 	const height = Math.round((rgba.rows * iconSize) / rgba.cols);
-	cv.resize(rgba, scaled, new cv.Size(width, height), 0, 0, cv.INTER_AREA);
-	const canvas = { width, height, rgba: new Uint8Array(scaled.data) };
-	scaled.delete();
-	return canvas;
+	return { width, height, rgba: resize(rgba, width, height, "area").data };
 }
 
-function resampledRgb(crop: Mat, size: CropSize): Float32Array {
-	const cv = getCV();
-	const resized = new cv.Mat();
+function resampledRgb(crop: Image, size: CropSize): Float32Array {
 	const { width, height } = size;
-	cv.resize(crop, resized, new cv.Size(width, height), 0, 0, cv.INTER_AREA);
-	const { data } = resized;
+	const { data } = resize(crop, width, height, "area");
 	const rgb = new Float32Array(width * height * 3);
 	for (let i = 0; i < width * height; i++) {
 		rgb[i * 3] = data[i * 4]!;
 		rgb[i * 3 + 1] = data[i * 4 + 1]!;
 		rgb[i * 3 + 2] = data[i * 4 + 2]!;
 	}
-	resized.delete();
 	return rgb;
 }
 
 function maskedArt(
-	rgba: Mat,
+	rgba: Image,
 	iconSize: number,
 	cropSize: CropSize,
 	scale: number,
 ): MaskedArt {
-	const cv = getCV();
-	const scaled = new cv.Mat();
 	const width = Math.round(iconSize);
 	const height = Math.round((rgba.rows * iconSize) / rgba.cols);
-	cv.resize(rgba, scaled, new cv.Size(width, height), 0, 0, cv.INTER_AREA);
-	const { data } = scaled;
+	const { data } = resize(rgba, width, height, "area");
 	const reachX = (cropSize.width >> 1) - 1;
 	const reachY = (cropSize.height >> 1) - 1;
 	const offsets: number[] = [];
@@ -504,7 +494,6 @@ function maskedArt(
 			}
 		}
 	}
-	scaled.delete();
 
 	return {
 		offsets: Int32Array.from(offsets),

@@ -10,7 +10,6 @@
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
-import { getCV, type Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
 import {
@@ -20,7 +19,7 @@ import {
 	recognizeTextSteps,
 	scaleGlyphSet,
 } from "../../glyphs";
-import { copyRoi } from "../../image";
+import { cropRoi, type Image } from "../../image";
 import { ALL_LOBBY_ENTRIES, MODE_STAGE_COMBOS } from "../../localized";
 import { all, done, type MatchSteps } from "../../match-steps";
 import { closestBy } from "../../text";
@@ -68,7 +67,7 @@ const TAG_RECOGNIZE_OPTIONS: RecognizeOptions = {
  * dark photo edge can fake a short run first); zero-width when no tag.
  */
 function tagExtent(
-	crop: Mat,
+	crop: Image,
 	darkMax: number,
 	maxLeadIn: number,
 	columnFraction: number,
@@ -122,7 +121,7 @@ export interface TagBandOptions extends RecognizeOptions {
 
 /** OCR one header band: trim to the black-tag extent, recognize as a single line. */
 export function* readTagBandSteps(
-	gray: Mat,
+	gray: Image,
 	band: { x: number; y: number; w: number; h: number },
 	glyphs: GlyphSet,
 	options: TagBandOptions = {},
@@ -141,12 +140,12 @@ export function* readTagBandSteps(
 
 /** `readTagBandSteps` that also hands the trimmed band and its recognized glyphs to `inspect` before the band is freed. */
 export function* readTagBandGlyphsSteps<T>(
-	gray: Mat,
+	gray: Image,
 	band: { x: number; y: number; w: number; h: number },
 	glyphs: GlyphSet,
 	options: TagBandOptions,
 	speculative: boolean,
-	inspect: (trimmed: Mat, chars: readonly RecognizedChar[]) => T,
+	inspect: (trimmed: Image, chars: readonly RecognizedChar[]) => T,
 ): MatchSteps<{ text: string; inspected: T | null }> {
 	const trimmed = trimTagBand(gray, band, options);
 	if (!trimmed) return { text: "", inspected: null };
@@ -157,7 +156,6 @@ export function* readTagBandGlyphsSteps<T>(
 		speculative,
 	);
 	const inspected = inspect(trimmed, result.chars);
-	trimmed.delete();
 	return { text: result.text.trim(), inspected };
 }
 
@@ -167,7 +165,7 @@ export function* readTagBandGlyphsSteps<T>(
  * downscaled read from it on.
  */
 function* readLobbyBandSteps(
-	gray: Mat,
+	gray: Image,
 	glyphs: GlyphSet,
 	speculative: boolean,
 ): MatchSteps<string[]> {
@@ -182,7 +180,6 @@ function* readLobbyBandSteps(
 			speculative,
 		),
 	]);
-	trimmed.delete();
 	const joined = (chars: RecognizedChar[]) => chars.map((c) => c.char).join("");
 	const splits = small.chars.flatMap((paren, i) =>
 		paren.char === "("
@@ -195,11 +192,11 @@ function* readLobbyBandSteps(
 }
 
 function trimTagBand(
-	gray: Mat,
+	gray: Image,
 	band: { x: number; y: number; w: number; h: number },
 	options: TagBandOptions,
-): Mat | null {
-	const crop = copyRoi(gray, band);
+): Image | null {
+	const crop = cropRoi(gray, band);
 	const { start, end } = tagExtent(
 		crop,
 		options.tagDarkMax ?? TAG_DARK_MAX,
@@ -207,20 +204,13 @@ function trimTagBand(
 		options.tagColumnFraction ?? TAG_COLUMN_FRACTION,
 	);
 	if (Decisions.below("scoreboard/header:tagMinWidth", end - start, 12)) {
-		crop.delete();
 		return null;
 	}
-	const cv = getCV();
-	const view = crop.roi(new cv.Rect(start, 0, end - start, crop.rows));
-	const trimmed = new cv.Mat();
-	view.copyTo(trimmed);
-	view.delete();
-	crop.delete();
-	return trimmed;
+	return cropRoi(crop, { x: start, y: 0, w: end - start, h: crop.rows });
 }
 
 export function* parseHeaderSteps(
-	gray: Mat,
+	gray: Image,
 	glyphs: HeaderGlyphs,
 	speculative = false,
 ): MatchSteps<ParsedHeader> {

@@ -10,8 +10,8 @@
  * votes their fields as it did. Only the events' data is the replay's own.
  * Each gate and read that came out differently is reported.
  */
-import type { Mat } from "../cv";
 import type { DetectedEvent } from "../events";
+import type { Image } from "../image";
 import * as ScanLog from "../scan-log";
 import type { TimelineBuilder } from "../timeline/index";
 import {
@@ -51,7 +51,7 @@ export async function replayDetectorPass({
 	telemetry,
 	runSteps,
 }: {
-	frame: Mat;
+	frame: Image;
 	logged: ScanLog.ScanLogFrame;
 	detectors: readonly Detector<DetectedEvent>[];
 	timeline: TimelineBuilder;

@@ -118,8 +118,6 @@ same trait.
 - Fix the cause in general terms, and be able to say what in the image the
   code now handles. No special cases keyed to this frame (its names, its exact
   pixel values, a threshold moved just past one score with no margin).
-- OpenCV gotcha: `.data`/`.clone()` are broken on ROI views, always
-  `view.copyTo(freshMat)` before pixel access.
 - Debugging aids: `pnpm scanner:fixtures <case>` (scoreboard, verbose),
   `pnpm scanner:report`, and the dev-only `/scanner?view=fixtures&q=<case>`
   view; `/scanner?view=debug` re-analyzes any frame.

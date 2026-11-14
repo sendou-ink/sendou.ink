@@ -25,7 +25,7 @@ const GAME = FIXTURE_GAME;
 const INTRO_SECONDS = { from: 3, to: 9 };
 const INTRO_TIMESTAMP = /^0:0[3-8]$/;
 
-/** Loading OpenCV and scanning outlast the default timeout. */
+/** Loading the scanner assets and scanning outlast the default timeout. */
 const SCAN_TIMEOUT = 45_000;
 
 test.describe("Scanner", () => {

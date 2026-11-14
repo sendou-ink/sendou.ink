@@ -1,11 +1,11 @@
 /** Number field parsing on top of glyph recognition. */
-import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import {
 	type GlyphSet,
 	type RecognizedText,
 	recognizeTextSteps,
 } from "../../glyphs";
+import type { Image } from "../../image";
 import type { MatchSteps } from "../../match-steps";
 
 export interface ParsedNumber {
@@ -21,7 +21,7 @@ export interface ParsedNumber {
 const LOWERED_TRAILING_MIN_PX = 5;
 
 export function* parseNumberSteps(
-	gray: Mat,
+	gray: Image,
 	digits: GlyphSet,
 	options: { binThreshold?: number; dropLoweredTrailing?: boolean } = {},
 	speculative = false,

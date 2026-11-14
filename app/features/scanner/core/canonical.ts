@@ -1,4 +1,4 @@
-/** Pure constants/types shared by UI and pipeline; no OpenCV dependency, so the main bundle never pulls in the WASM. */
+/** Pure constants/types shared by UI and pipeline, free of image processing so the main bundle stays light. */
 import * as R from "remeda";
 import * as Decisions from "./decisions";
 

@@ -101,7 +101,6 @@ export default defineConfig((config) => {
 				"@aws-sdk/client-s3",
 				"@aws-sdk/lib-storage",
 				"@date-fns/tz",
-				"@techstark/opencv-js",
 				"@dnd-kit/core",
 				"@dnd-kit/modifiers",
 				"@dnd-kit/sortable",

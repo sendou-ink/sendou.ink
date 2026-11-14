@@ -6,7 +6,6 @@
  * margin audit (threshold-margins.ts). Usage: pnpm scanner:report [--margins]
  * (--margins = the audit alone)
  */
-import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import { createDeathDetector } from "../../app/features/scanner/core/detectors/death/index";
 import { createKillDetector } from "../../app/features/scanner/core/detectors/kill/index";
 import { createMapStartDetector } from "../../app/features/scanner/core/detectors/map-start/index";
@@ -30,7 +29,6 @@ import {
 import { loadScoreboardResources } from "../../app/features/scanner/node/resources";
 import { printThresholdMargins } from "./threshold-margins";
 
-await loadOpenCV();
 const resources = await loadScoreboardResources();
 const marginsOnly = process.argv.includes("--margins");
 

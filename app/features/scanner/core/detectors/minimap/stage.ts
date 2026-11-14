@@ -8,10 +8,16 @@
  * NOT (ink-invariance strips the objective marker), so only the stage is reported.
  */
 import type { StageId } from "~/modules/in-game-lists/types";
-import { getCV, type Mat } from "../../cv";
 import * as Decisions from "../../decisions";
-import type { FrameData } from "../../image";
-import { frameGray, frameHsv } from "../../image";
+import { gaussianBlur5, laplacianAbs } from "../../filters";
+import {
+	type FrameData,
+	frameGray,
+	frameHsv,
+	type Image,
+	threshold,
+} from "../../image";
+import { resize } from "../../resize";
 
 /** Downscaled signature dimensions (canonical 1920x1080 / 16). */
 export const PLANNER_SIG_W = 120;
@@ -47,19 +53,11 @@ export interface StageMatch {
  * Ink-invariant signature of a canonical RGBA frame: downscaled, blurred,
  * unit-L2 mask of non-ink edges. Shared by the atlas build tool and the matcher.
  */
-export function plannerSignature(frame: Mat): Float32Array {
-	const cv = getCV();
+export function plannerSignature(frame: Image): Float32Array {
 	const gray = frameGray(frame);
 	const hsv = frameHsv(frame);
 
-	const lap = new cv.Mat();
-	cv.Laplacian(gray, lap, cv.CV_16S, 3);
-	const edges = new cv.Mat();
-	cv.convertScaleAbs(lap, edges);
-	lap.delete();
-	const mask = new cv.Mat();
-	cv.threshold(edges, mask, EDGE_MIN, 255, cv.THRESH_BINARY);
-	edges.delete();
+	const mask = threshold(laplacianAbs(gray), EDGE_MIN);
 
 	// drop saturated (ink) edges, keeping only the structural skeleton
 	const n = mask.rows * mask.cols;
@@ -69,19 +67,9 @@ export function plannerSignature(frame: Mat): Float32Array {
 		if (hd[i * 3 + 1]! >= INK_SATURATION_MIN) md[i] = 0;
 	}
 
-	const down = new cv.Mat();
-	cv.resize(
-		mask,
-		down,
-		new cv.Size(PLANNER_SIG_W, PLANNER_SIG_H),
-		0,
-		0,
-		cv.INTER_AREA,
+	const blur = gaussianBlur5(
+		resize(mask, PLANNER_SIG_W, PLANNER_SIG_H, "area"),
 	);
-	mask.delete();
-	const blur = new cv.Mat();
-	cv.GaussianBlur(down, blur, new cv.Size(5, 5), 0);
-	down.delete();
 
 	const out = new Float32Array(PLANNER_SIG_W * PLANNER_SIG_H);
 	const bd = blur.data;
@@ -90,7 +78,6 @@ export function plannerSignature(frame: Mat): Float32Array {
 		out[i] = bd[i]!;
 		sumSq += out[i]! * out[i]!;
 	}
-	blur.delete();
 	const norm = Math.sqrt(sumSq) || 1;
 	for (let i = 0; i < out.length; i++) out[i]! /= norm;
 	return out;

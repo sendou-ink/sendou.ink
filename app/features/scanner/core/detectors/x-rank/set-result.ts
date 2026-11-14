@@ -10,11 +10,16 @@
  * when an earlier read showed it (`xSetResultCarryOver`).
  */
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
-import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
-import { copyRoi, frameGray, frameRgb, roiSignature } from "../../image";
+import {
+	cropRoi,
+	frameGray,
+	frameRgb,
+	type Image,
+	roiSignature,
+} from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
 import type { ScoreboardResources } from "../scoreboard/index";
 import type { Detector, EventKind, EventOf, GateResult } from "../types";
@@ -153,7 +158,7 @@ export function createXSetResultDetector(
 		return sets.get(height) ?? null;
 	};
 
-	function gate(frame: Mat): GateResult {
+	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
 		const dark =
@@ -196,7 +201,7 @@ export function createXSetResultDetector(
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
@@ -279,8 +284,8 @@ export function createXSetResultDetector(
 }
 
 /** The tiles' results in play order: rows top to bottom, each a band of tile-colored text, tiles left to right. */
-function tileResults(rgb: Mat): XSetGameResult[] {
-	const crop = copyRoi(rgb, RESULT_TILES_ROI);
+function tileResults(rgb: Image): XSetGameResult[] {
+	const crop = cropRoi(rgb, RESULT_TILES_ROI);
 	const { rows, cols } = crop;
 	const data = crop.data;
 	const ink = new Uint8Array(rows * cols);
@@ -300,7 +305,6 @@ function tileResults(rgb: Mat): XSetGameResult[] {
 			if (kind) rowInk[y]!++;
 		}
 	}
-	crop.delete();
 
 	return runsOf(rowInk, RESULT_TILE_LINE_MAX_GAP)
 		.filter(([y0, y1]) =>

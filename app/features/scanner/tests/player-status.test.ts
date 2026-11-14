@@ -8,7 +8,6 @@
  */
 
 import assert from "node:assert/strict";
-import { loadOpenCV } from "../core/cv";
 import { createDeathDetector } from "../core/detectors/death/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
 import { createMinimapDetector } from "../core/detectors/minimap/index";
@@ -29,7 +28,6 @@ import {
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
 
-await loadOpenCV();
 const resources = await loadScoreboardResources();
 const fixtures = loadFixtures("player-status");
 

@@ -8,7 +8,6 @@
 
 import assert from "node:assert/strict";
 import { realpathSync } from "node:fs";
-import { loadOpenCV } from "../core/cv";
 import { createKillDetector } from "../core/detectors/kill/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
 import { createMinimapDetector } from "../core/detectors/minimap/index";
@@ -17,7 +16,7 @@ import { createScoreboardBattleLogDetector } from "../core/detectors/scoreboard-
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
 import type { Detector } from "../core/detectors/types";
-import { normalizeFrame, toMat } from "../core/image";
+import { imageFromFrameData, normalizeFrame } from "../core/image";
 import {
 	fieldTestOptions,
 	loadFixtures,
@@ -27,7 +26,6 @@ import { readImage } from "../node/image-io";
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
 
-await loadOpenCV();
 const resources = await loadScoreboardResources();
 const detector = createKillDetector(resources);
 const fixtures = loadFixtures("kill");
@@ -180,23 +178,18 @@ for (const fixture of fixtures.filter((f) => f.expected.event === "Kill")) {
 // rewinds (a fresh scan, this harness parsing every fixture at t=0).
 test("row reads are memoized across advancing frames only", async () => {
 	const fixture = fixtures.find((f) => f.name === "double-24k-datkid")!;
-	const src = toMat(await readImage(fixture.framePath));
+	const src = imageFromFrameData(await readImage(fixture.framePath));
 	const frame = normalizeFrame(src);
-	src.delete();
-	try {
-		const memoizedRows = (event: { debug?: unknown }) =>
-			(event.debug as { rows: { memoized: boolean }[] }).rows.map(
-				(row) => row.memoized,
-			);
-		const first = detector.parse(frame, 10)[0]!;
-		const repeat = detector.parse(frame, 10.5)[0]!;
-		const rewound = detector.parse(frame, 10.5)[0]!;
-		assert.deepEqual(memoizedRows(first), [false, false]);
-		assert.deepEqual(memoizedRows(repeat), [true, true]);
-		assert.deepEqual(memoizedRows(rewound), [false, false]);
-		assert.deepEqual(repeat.data, first.data);
-		assert.deepEqual(repeat.scores, first.scores);
-	} finally {
-		frame.delete();
-	}
+	const memoizedRows = (event: { debug?: unknown }) =>
+		(event.debug as { rows: { memoized: boolean }[] }).rows.map(
+			(row) => row.memoized,
+		);
+	const first = detector.parse(frame, 10)[0]!;
+	const repeat = detector.parse(frame, 10.5)[0]!;
+	const rewound = detector.parse(frame, 10.5)[0]!;
+	assert.deepEqual(memoizedRows(first), [false, false]);
+	assert.deepEqual(memoizedRows(repeat), [true, true]);
+	assert.deepEqual(memoizedRows(rewound), [false, false]);
+	assert.deepEqual(repeat.data, first.data);
+	assert.deepEqual(repeat.scores, first.scores);
 });

@@ -4,11 +4,10 @@
  * geometry, glyph sets and two match options.
  */
 import { toMainWeaponId } from "../../../scanner-types";
-import type { Mat } from "../../cv";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
 import type { GlyphSet } from "../../glyphs";
-import { cropRoi, type Roi } from "../../image";
+import { cropRoi, type Image, type Roi } from "../../image";
 import { all, type MatchSteps } from "../../match-steps";
 import { type ParsedNumber, parseNumberSteps } from "./digits";
 import type { ScoreboardPlayer, ScoreboardRowDebug } from "./index";
@@ -77,8 +76,8 @@ export interface RowOptions {
  * paint→name and the stats read in one lockstep.
  */
 export function* parseScoreboardRowSteps(
-	gray: Mat,
-	rgb: Mat,
+	gray: Image,
+	rgb: Image,
 	cy: number,
 	rois: RowRois,
 	resources: RowResources,
@@ -179,7 +178,7 @@ export function playerScores(
 }
 
 function* readWeapon(
-	rgb: Mat,
+	rgb: Image,
 	cy: number,
 	rois: RowRois,
 	resources: RowResources,
@@ -194,13 +193,11 @@ function* readWeapon(
 			? { inkThreshold: options.weaponInkThreshold }
 			: {},
 	);
-	crop.delete();
 	// near-tied icons with different kit specials: the row's special icon breaks the tie
 	let special: SpecialMatch | undefined;
 	if (resources.specials?.length && tiedWeaponsWithDistinctSpecials(weapon)) {
 		const spCrop = cropRoi(rgb, rois.specialIcon(cy));
 		special = yield* matchSpecialSteps(spCrop, resources.specials);
-		spCrop.delete();
 		weapon = disambiguateWeaponBySpecial(weapon, special);
 	}
 	return { weapon, special };
@@ -208,7 +205,7 @@ function* readWeapon(
 
 /** Paint first, so the name region can be trimmed at the leftmost paint digit. */
 function* readPaintAndName(
-	gray: Mat,
+	gray: Image,
 	cy: number,
 	rois: RowRois,
 	resources: RowResources,
@@ -225,7 +222,6 @@ function* readPaintAndName(
 			{ dropLoweredTrailing: options.paintDropLoweredTrailing },
 			speculative,
 		);
-		crop.delete();
 	}
 
 	let name: ParsedName | null = null;
@@ -237,14 +233,13 @@ function* readPaintAndName(
 		if (w > 8) {
 			const crop = cropRoi(gray, { ...base, w });
 			name = yield* parseNameSteps(crop, resources.nameGlyphs, {}, speculative);
-			crop.delete();
 		}
 	}
 	return { paint, name };
 }
 
 function* readStats(
-	gray: Mat,
+	gray: Image,
 	cy: number,
 	rois: RowRois,
 	resources: RowResources,
@@ -266,6 +261,5 @@ function* readStats(
 			),
 		),
 	);
-	for (const crop of crops) crop.delete();
 	return parsed;
 }

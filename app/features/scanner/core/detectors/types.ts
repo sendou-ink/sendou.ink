@@ -1,5 +1,5 @@
-import type { Mat } from "../cv";
 import type { FieldScores } from "../field-scores";
+import type { Image } from "../image";
 import type { MatchSteps } from "../match-steps";
 
 /** One read of an event kind; `DetectedEvent` (core/events.ts) is the union over every kind. */
@@ -142,14 +142,14 @@ export interface Detector<TEvent extends EventRecord = EventRecord> {
 	rearmCooldownS?: number;
 	/** false = events ship without the frame PNG; for continuously firing events that would balloon IndexedDB */
 	attachFrame?: boolean;
-	gate(frame: Mat): GateResult;
-	parse(frame: Mat, t: number, gate?: GateResult): TEvent[];
+	gate(frame: Image): GateResult;
+	parse(frame: Image, t: number, gate?: GateResult): TEvent[];
 	/**
 	 * parse() as match steps (match-steps.ts) for a batching driver; `parse`
 	 * must equal runSync of it. `speculative` prefetches candidate sets.
 	 */
 	parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		gate: GateResult | undefined,
 		speculative: boolean,

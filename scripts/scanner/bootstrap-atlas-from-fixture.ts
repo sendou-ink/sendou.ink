@@ -14,7 +14,6 @@
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { loadOpenCV, type Mat } from "../../app/features/scanner/core/cv";
 import {
 	TAG_NAME_INNER,
 	TAG_NAME_OUTER,
@@ -32,12 +31,32 @@ import {
 	CODE_TEXT_HEIGHT,
 	REPLAY_CODE_ROI,
 } from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/rois";
+import {
+	connectedComponents,
+	dilate,
+	normalizeMinMax,
+	rectElement,
+} from "../../app/features/scanner/core/filters";
 import type { AtlasMeta } from "../../app/features/scanner/core/glyphs";
 import {
+	applyMask,
+	threshold as binarize,
+	channelOf,
+	createImage,
+	cropRoi,
+	type Image,
+	imageFromFrameData,
+	imageToFrameData,
 	normalizeFrame,
 	type Roi,
-	toMat,
+	toGray,
+	toRgb,
 } from "../../app/features/scanner/core/image";
+import { resizeBy } from "../../app/features/scanner/core/resize";
+import {
+	rotationMatrix,
+	warpAffine,
+} from "../../app/features/scanner/core/warp";
 import { GLYPH_ATLAS_DIR } from "../../app/features/scanner/node/assets-dir";
 import { FIXTURES_DIR } from "../../app/features/scanner/node/fixtures";
 import { readImage, writePng } from "../../app/features/scanner/node/image-io";
@@ -205,35 +224,22 @@ const SOURCES: Source[] = [
 /** Team totals sit on the light team-color pattern; binarize higher. */
 const TEAM_BIN_THRESHOLD = 175;
 
-const cv = await loadOpenCV();
-
 /** Normalized grayscale of the source frame currently being harvested. */
-let gray: Mat;
+let gray: Image;
 
-async function loadGray(framePath: string): Promise<Mat> {
-	const srcMat = toMat(await readImage(join(FIXTURES_DIR, framePath)));
-	const frame = normalizeFrame(srcMat);
-	srcMat.delete();
-	const out = new cv.Mat();
-	cv.cvtColor(frame, out, cv.COLOR_RGBA2GRAY);
-	frame.delete();
-	return out;
+async function loadFrame(framePath: string): Promise<Image> {
+	return normalizeFrame(
+		imageFromFrameData(await readImage(join(FIXTURES_DIR, framePath))),
+	);
+}
+
+async function loadGray(framePath: string): Promise<Image> {
+	return toGray(await loadFrame(framePath));
 }
 
 /** Green channel instead of luminance — the replay code is green-on-dark. */
-async function loadGreen(framePath: string): Promise<Mat> {
-	const srcMat = toMat(await readImage(join(FIXTURES_DIR, framePath)));
-	const frame = normalizeFrame(srcMat);
-	srcMat.delete();
-	const channels = new cv.MatVector();
-	cv.split(frame, channels);
-	frame.delete();
-	const g = channels.get(1);
-	const out = new cv.Mat();
-	g.copyTo(out);
-	g.delete();
-	channels.delete();
-	return out;
+async function loadGreen(framePath: string): Promise<Image> {
+	return channelOf(await loadFrame(framePath), 1);
 }
 
 /**
@@ -241,52 +247,17 @@ async function loadGreen(framePath: string): Promise<Mat> {
  * the tilted tag, rotate it level, crop the name band, then map each pixel to
  * its max-channel distance from the median banner color, normalized to 0-255.
  */
-async function loadTagBand(framePath: string): Promise<Mat> {
-	const srcMat = toMat(await readImage(join(FIXTURES_DIR, framePath)));
-	const frame = normalizeFrame(srcMat);
-	srcMat.delete();
-	const rgb = new cv.Mat();
-	cv.cvtColor(frame, rgb, cv.COLOR_RGBA2RGB);
-	frame.delete();
-
-	const outerView = rgb.roi(
-		new cv.Rect(
-			TAG_NAME_OUTER.x,
-			TAG_NAME_OUTER.y,
-			TAG_NAME_OUTER.w,
-			TAG_NAME_OUTER.h,
-		),
-	);
-	const outer = new cv.Mat();
-	outerView.copyTo(outer);
-	outerView.delete();
-	rgb.delete();
-	const center = new cv.Point(outer.cols / 2, outer.rows / 2);
-	const m = cv.getRotationMatrix2D(center, -TAG_TILT_DEG, 1);
-	const rotated = new cv.Mat();
-	cv.warpAffine(
+async function loadTagBand(framePath: string): Promise<Image> {
+	const outer = cropRoi(toRgb(await loadFrame(framePath)), TAG_NAME_OUTER);
+	const rotated = warpAffine(
 		outer,
-		rotated,
-		m,
-		new cv.Size(outer.cols, outer.rows),
-		cv.INTER_LINEAR,
-		cv.BORDER_REPLICATE,
-		new cv.Scalar(),
+		rotationMatrix({ x: outer.cols / 2, y: outer.rows / 2 }, -TAG_TILT_DEG, 1),
+		outer.cols,
+		outer.rows,
+		"linear",
+		"replicate",
 	);
-	m.delete();
-	outer.delete();
-	const innerView = rotated.roi(
-		new cv.Rect(
-			TAG_NAME_INNER.x,
-			TAG_NAME_INNER.y,
-			TAG_NAME_INNER.w,
-			TAG_NAME_INNER.h,
-		),
-	);
-	const inner = new cv.Mat();
-	innerView.copyTo(inner);
-	innerView.delete();
-	rotated.delete();
+	const inner = cropRoi(rotated, TAG_NAME_INNER);
 
 	const n = inner.rows * inner.cols;
 	const px = inner.data;
@@ -302,7 +273,7 @@ async function loadTagBand(framePath: string): Promise<Mat> {
 		}
 		background.push(v);
 	}
-	const band = new cv.Mat(inner.rows, inner.cols, cv.CV_8UC1);
+	const band = createImage(inner.rows, inner.cols, 1);
 	const out = band.data;
 	for (let i = 0; i < n; i++) {
 		out[i] = Math.max(
@@ -311,8 +282,7 @@ async function loadTagBand(framePath: string): Promise<Mat> {
 			Math.abs(px[i * 3 + 2]! - background[2]!),
 		);
 	}
-	inner.delete();
-	cv.normalize(band, band, 0, 255, cv.NORM_MINMAX);
+	normalizeMinMax(band);
 	clearBorderBlobs(band, TAG_BIN_THRESHOLD);
 	return band;
 }
@@ -322,40 +292,25 @@ async function loadTagBand(framePath: string): Promise<Mat> {
  * parsing (clearBorderBlobs in death/index.ts): banner art and title-line
  * slivers at the edges would join the column runs or push a tight box past it.
  */
-function clearBorderBlobs(band: Mat, threshold: number): void {
-	const bin = new cv.Mat();
-	cv.threshold(band, bin, threshold, 255, cv.THRESH_BINARY);
-	const labels = new cv.Mat();
-	const stats = new cv.Mat();
-	const centroids = new cv.Mat();
-	const count = cv.connectedComponentsWithStats(
-		bin,
-		labels,
-		stats,
-		centroids,
-		8,
+function clearBorderBlobs(band: Image, threshold: number): void {
+	const { count, labels, stats } = connectedComponents(
+		binarize(band, threshold),
 	);
-	bin.delete();
-	centroids.delete();
-	const s = stats.data32S;
 	const touchesBorder = new Uint8Array(count);
 	for (let i = 1; i < count; i++) {
-		const left = s[i * 5 + cv.CC_STAT_LEFT]!;
-		const top = s[i * 5 + cv.CC_STAT_TOP]!;
-		const right = left + s[i * 5 + cv.CC_STAT_WIDTH]!;
-		const bottom = top + s[i * 5 + cv.CC_STAT_HEIGHT]!;
+		const { left, top, width, height } = stats[i]!;
 		touchesBorder[i] =
-			left === 0 || top === 0 || right === band.cols || bottom === band.rows
+			left === 0 ||
+			top === 0 ||
+			left + width === band.cols ||
+			top + height === band.rows
 				? 1
 				: 0;
 	}
-	stats.delete();
-	const lab = labels.data32S;
 	const out = band.data;
 	for (let i = 0; i < out.length; i++) {
-		if (touchesBorder[lab[i]!]!) out[i] = 0;
+		if (touchesBorder[labels[i]!]!) out[i] = 0;
 	}
-	labels.delete();
 }
 
 function columnRuns(
@@ -369,7 +324,7 @@ function columnRuns(
 	for (let x = roi.x; x < roi.x + roi.w; x++) {
 		let count = 0;
 		for (let y = roi.y; y < roi.y + roi.h; y++) {
-			if (gray.ucharPtr(y, x)[0]! > threshold) count++;
+			if (gray.data[y * gray.cols + x]! > threshold) count++;
 		}
 		const on = count >= 1;
 		if (on && start < 0) start = x;
@@ -412,7 +367,7 @@ function columnRuns(
 
 /** A harvested crop, and where it was cut from (AtlasMeta's `line`). */
 interface Crop {
-	mat: Mat;
+	image: Image;
 	line: { id: number; top: number };
 }
 
@@ -429,37 +384,27 @@ function cropGlyph(
 	let yMax = -1;
 	for (let y = roi.y; y < roi.y + roi.h; y++) {
 		for (let x = run.x0; x < run.x1; x++) {
-			if (gray.ucharPtr(y, x)[0]! > threshold) {
+			if (gray.data[y * gray.cols + x]! > threshold) {
 				if (y < yMin) yMin = y;
 				if (y > yMax) yMax = y;
 			}
 		}
 	}
 	const pad = 1;
-	const rect = new cv.Rect(
-		run.x0 - pad,
-		yMin - pad,
-		run.x1 - run.x0 + 2 * pad,
-		yMax - yMin + 1 + 2 * pad,
-	);
-	const view = gray.roi(rect);
-	const out = new cv.Mat();
-	view.copyTo(out);
-	view.delete();
+	const rect = {
+		x: run.x0 - pad,
+		y: yMin - pad,
+		w: run.x1 - run.x0 + 2 * pad,
+		h: yMax - yMin + 1 + 2 * pad,
+	};
+	const out = cropRoi(gray, rect);
 	// Apply the same background masking recognizeText uses at match time, so
 	// templates harvested off colored backgrounds stay comparable.
-	const binary = new cv.Mat();
-	cv.threshold(out, binary, threshold, 255, cv.THRESH_BINARY);
-	const mask = new cv.Mat();
-	const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
-	cv.dilate(binary, mask, kernel, new cv.Point(-1, -1), 2);
-	kernel.delete();
-	binary.delete();
-	const masked = new cv.Mat(out.rows, out.cols, cv.CV_8UC1, new cv.Scalar(0));
-	out.copyTo(masked, mask);
-	out.delete();
-	mask.delete();
-	return { mat: masked, line: { id: lineId, top: rect.y - roi.y } };
+	const mask = dilate(binarize(out, threshold), rectElement(3, 3), 2);
+	return {
+		image: applyMask(out, mask),
+		line: { id: lineId, top: rect.y - roi.y },
+	};
 }
 
 /**
@@ -509,39 +454,35 @@ function writeAtlas(
 	}
 	const spacing = 2;
 	const totalW =
-		glyphs.reduce((acc, [, { mat }]) => acc + mat.cols, 0) +
+		glyphs.reduce((acc, [, { image }]) => acc + image.cols, 0) +
 		spacing * (glyphs.length + 1);
-	const maxH = Math.max(...glyphs.map(([, { mat }]) => mat.rows)) + 2 * spacing;
-	const atlas = new cv.Mat(maxH, totalW, cv.CV_8UC1, new cv.Scalar(0));
+	const maxH =
+		Math.max(...glyphs.map(([, { image }]) => image.rows)) + 2 * spacing;
+	const atlas = createImage(maxH, totalW, 1);
 
 	const meta: AtlasMeta = { height, glyphs: [] };
 	let x = spacing;
-	for (const [char, { mat, line }] of glyphs) {
-		const view = atlas.roi(new cv.Rect(x, spacing, mat.cols, mat.rows));
-		mat.copyTo(view);
-		view.delete();
+	for (const [char, { image, line }] of glyphs) {
+		for (let y = 0; y < image.rows; y++) {
+			atlas.data.set(
+				image.data.subarray(y * image.cols, (y + 1) * image.cols),
+				(spacing + y) * totalW + x,
+			);
+		}
 		meta.glyphs.push({
 			char,
 			x,
 			y: spacing,
-			w: mat.cols,
-			h: mat.rows,
+			w: image.cols,
+			h: image.rows,
 			source: "fixture",
 			line,
 		});
-		x += mat.cols + spacing;
+		x += image.cols + spacing;
 	}
 
-	const rgba = new cv.Mat();
-	cv.cvtColor(atlas, rgba, cv.COLOR_GRAY2RGBA);
-	writePng(join(OUT_DIR, `${name}.png`), {
-		width: rgba.cols,
-		height: rgba.rows,
-		data: new Uint8ClampedArray(rgba.data),
-	});
+	writePng(join(OUT_DIR, `${name}.png`), imageToFrameData(atlas));
 	writeFileSync(join(OUT_DIR, `${name}.json`), JSON.stringify(meta, null, 2));
-	atlas.delete();
-	rgba.delete();
 	console.info(
 		`${name}: ${glyphs.length} glyphs -> ${OUT_DIR}/${name}.{png,json}`,
 	);
@@ -620,8 +561,6 @@ for (const source of SOURCES) {
 		);
 		lineEntries.push(...modeGlyphs.entries(), ...stageGlyphs.entries());
 	}
-
-	gray.delete();
 }
 
 // Replay-browser fixtures: the code line renders in FOT-RowdyStd, which no
@@ -669,7 +608,6 @@ for (const source of REPLAY_SOURCES) {
 	const codeGlyphs: [string, Crop][] = [];
 	harvest(REPLAY_CODE_ROI, source.code, codeGlyphs);
 	codeEntries.push(...codeGlyphs);
-	gray.delete();
 }
 
 // Death splash-tag names (BlitzBold + Rowdy kana at ~46px). The atlas is
@@ -716,15 +654,14 @@ for (const source of DEATH_TAG_SOURCES) {
 		TAG_BIN_THRESHOLD,
 		source.mergeHints ?? [],
 	);
-	gray.delete();
 	const factor = TAG_ATLAS_HEIGHT / TAG_NAME_TEXT_HEIGHT;
-	for (const [char, { mat, line }] of tagGlyphs) {
-		const scaledMat = new cv.Mat();
-		cv.resize(mat, scaledMat, new cv.Size(0, 0), factor, factor, cv.INTER_AREA);
-		mat.delete();
+	for (const [char, { image, line }] of tagGlyphs) {
 		tagEntries.push([
 			char,
-			{ mat: scaledMat, line: { id: line.id, top: line.top * factor } },
+			{
+				image: resizeBy(image, factor, factor, "area"),
+				line: { id: line.id, top: line.top * factor },
+			},
 		]);
 	}
 }
@@ -765,7 +702,6 @@ for (const source of DEATH_JA_SOURCES) {
 			line.mergeHints ?? [],
 		);
 	}
-	gray.delete();
 }
 
 writeAtlas("scoreboard-names", 22, nameEntries);

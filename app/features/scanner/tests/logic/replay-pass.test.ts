@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-import type { Mat } from "../../core/cv";
 import { runDetectorPass } from "../../core/detectors/frame-pass";
 import {
 	type ReplayDivergence,
@@ -8,6 +7,7 @@ import {
 import { DetectorScheduler } from "../../core/detectors/scheduler";
 import type { Detector } from "../../core/detectors/types";
 import type { DetectedEvent } from "../../core/events";
+import type { Image } from "../../core/image";
 import { done, runSync } from "../../core/match-steps";
 import * as ScanLog from "../../core/scan-log";
 import { TimelineBuilder } from "../../core/timeline/index";
@@ -24,8 +24,8 @@ interface Picture {
 const LIT: Picture = { lit: true, score: 0.8 };
 const DARK: Picture = { lit: false, score: 0.8 };
 
-function frameOf(picture: Picture): Mat {
-	return picture as unknown as Mat;
+function frameOf(picture: Picture): Image {
+	return picture as unknown as Image;
 }
 
 /**
@@ -37,7 +37,7 @@ function frameOf(picture: Picture): Mat {
 function countingDetector(type: "Kill" | "Death" = "Kill") {
 	let gates = 0;
 	let parses = 0;
-	const parse = (frame: Mat, t: number): DetectedEvent[] => {
+	const parse = (frame: Image, t: number): DetectedEvent[] => {
 		parses++;
 		const { score } = frame as unknown as Picture;
 		return [
