@@ -106,7 +106,7 @@ export function ResultsScene({
 				})}
 				sides={sides}
 			/>
-			<div className={styles.content}>
+			<div className={styles.content} {...part("body")}>
 				<div className={styles.teams}>
 					{sides.map((side, i) => (
 						<ResultTeam

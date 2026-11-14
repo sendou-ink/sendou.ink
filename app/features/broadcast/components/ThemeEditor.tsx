@@ -3,6 +3,7 @@ import { CornerDownRight, RotateCcw, Undo2 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { BROADCAST_CSS_MAX_LENGTH } from "../broadcast-constants";
 import type { BroadcastThemeSource } from "../broadcast-theme-sources";
@@ -15,6 +16,17 @@ export interface BroadcastTheme {
 	stylesheets: readonly string[];
 	defaults: Record<BroadcastThemeSource, string>;
 }
+
+/** A ready-made theme the editor loads in place of what is being edited, as the CSS saved for it (see `ThemeCss.compose`). */
+export interface ThemePreset {
+	key: string;
+	label: string;
+	css: string;
+}
+
+/** The picker's options that aren't presets: the default styles, and the drafts when they are no preset as it is. */
+const DEFAULT_PRESET_KEY = "default";
+const OWN_PRESET_KEY = "own";
 
 /** A stylesheet's look or layout, or the custom CSS applied after them. */
 export type ThemeEditorTab = BroadcastThemeSource | "custom";
@@ -40,7 +52,7 @@ export function useThemeDrafts({
 	theme: BroadcastTheme;
 	saved: string;
 }) {
-	const [drafts, setDrafts] = React.useState(() => initialDrafts(theme, saved));
+	const [drafts, setDrafts] = React.useState(() => draftsOfCss(theme, saved));
 	const css = composeCss(theme, drafts);
 	const savedCss = useSavedCss({ theme, saved, drafts });
 	const hasErrors = Object.values(drafts).some((draft) => draft.error);
@@ -50,10 +62,12 @@ export function useThemeDrafts({
 
 /**
  * Editor of a scene set's theme: each stylesheet's look and layout as the default styles with the edits made to them,
- * and the custom CSS applied after them. Variables read on the caret's line link to where they are set.
+ * and the custom CSS applied after them. Variables read on the caret's line link to where they are set. A preset
+ * picked replaces what is being edited with its CSS, to be edited further.
  */
 export function ThemeEditor({
 	theme,
+	presets,
 	drafts,
 	setDrafts,
 	tab,
@@ -62,6 +76,7 @@ export function ThemeEditor({
 	isTooLong,
 }: {
 	theme: BroadcastTheme;
+	presets: ThemePreset[];
 	drafts: Drafts;
 	setDrafts: React.Dispatch<React.SetStateAction<Drafts>>;
 	tab: EditorTab;
@@ -69,8 +84,11 @@ export function ThemeEditor({
 	css: string;
 	isTooLong: boolean;
 }) {
-	const { t } = useTranslation(["broadcast"]);
+	const { t } = useTranslation(["broadcast", "common"]);
 	const [showsLayout, setShowsLayout] = React.useState(false);
+	/** The preset picked over edits of one's own, loaded once confirmed. */
+	const [presetToConfirm, setPresetToConfirm] =
+		React.useState<ThemePreset | null>(null);
 	const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 	const [caret, setCaret] = React.useState(0);
 	/** Where to put the selection once the tab it is in shows. */
@@ -110,6 +128,39 @@ export function ThemeEditor({
 		),
 		"custom" as const,
 	];
+
+	const presetOptions: ThemePreset[] = [
+		{
+			key: DEFAULT_PRESET_KEY,
+			label: t("broadcast:design.preset.default"),
+			css: "",
+		},
+		...presets,
+	];
+	// a draft that doesn't parse is being worked on, whatever its last edit that did compose to
+	const loadedPreset = Object.values(drafts).some(
+		(candidate) => candidate.error,
+	)
+		? undefined
+		: presetOptions.find((preset) => preset.css === css);
+
+	const loadPreset = (preset: ThemePreset) => {
+		setDrafts(draftsOfCss(theme, preset.css));
+		setJumpedFrom(null);
+		setPresetToConfirm(null);
+		if (preset.css) setTab("custom");
+	};
+
+	const pickPreset = (key: string) => {
+		const preset = presetOptions.find((candidate) => candidate.key === key);
+		if (!preset || preset === loadedPreset) return;
+
+		if (loadedPreset) {
+			loadPreset(preset);
+		} else {
+			setPresetToConfirm(preset);
+		}
+	};
 
 	const edit = (text: string) =>
 		setDrafts((current) => ({
@@ -170,6 +221,56 @@ export function ThemeEditor({
 
 	return (
 		<section className={clsx("stack sm", styles.editor)}>
+			<Choice
+				label={t("broadcast:design.preset")}
+				value={loadedPreset?.key ?? OWN_PRESET_KEY}
+				options={[
+					...presetOptions.map((preset) => ({
+						value: preset.key,
+						label: preset.label,
+					})),
+					...(loadedPreset
+						? []
+						: [
+								{
+									value: OWN_PRESET_KEY,
+									label: t("broadcast:design.preset.own"),
+								},
+							]),
+				]}
+				onChange={pickPreset}
+			/>
+			<p className="text-xs text-lighter">{t("broadcast:design.presetHint")}</p>
+			<SendouDialog
+				isOpen={presetToConfirm !== null}
+				heading={t("broadcast:design.presetConfirm.heading")}
+				onClose={() => setPresetToConfirm(null)}
+			>
+				<div className="stack md">
+					<p>
+						{t("broadcast:design.presetConfirm.description", {
+							preset: presetToConfirm?.label,
+						})}
+					</p>
+					<div className="stack horizontal sm justify-end">
+						<SendouButton
+							variant="outlined"
+							onClick={() => setPresetToConfirm(null)}
+						>
+							{t("common:actions.cancel")}
+						</SendouButton>
+						<SendouButton
+							variant="destructive"
+							onClick={() => {
+								if (presetToConfirm) loadPreset(presetToConfirm);
+							}}
+							testId="broadcast-design-preset-confirm"
+						>
+							{t("broadcast:design.presetConfirm.submit")}
+						</SendouButton>
+					</div>
+				</div>
+			</SendouDialog>
 			<div className="stack horizontal sm items-end justify-between">
 				<Choice
 					label={t("broadcast:design.stylesheet")}
@@ -475,10 +576,11 @@ function insertTabOnTab(event: React.KeyboardEvent<HTMLTextAreaElement>) {
 	document.execCommand("insertText", false, "\t");
 }
 
-function initialDrafts(theme: BroadcastTheme, savedCss: string): Drafts {
+/** The drafts editing the CSS (saved, or a preset's): each stylesheet with its edits applied, the rest as the custom CSS. */
+function draftsOfCss(theme: BroadcastTheme, css: string): Drafts {
 	const { stylesheets, custom } = ThemeCss.merge({
 		bases: theme.defaults,
-		css: savedCss,
+		css,
 	});
 
 	return {

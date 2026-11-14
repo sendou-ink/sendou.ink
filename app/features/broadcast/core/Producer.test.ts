@@ -153,6 +153,23 @@ describe("Producer.take", () => {
 
 		expect(taken.next).toMatchObject({ scene: "starting", advance: "game" });
 	});
+
+	test("stages what follows technical difficulties to wait for a Take, not for the game to start", () => {
+		const taken = Producer.take(
+			rules,
+			stateWith({ next: item(2, { scene: "technical" }) }),
+			{ liveResults: null, now: 5, hasMatch: true },
+		);
+
+		expect(taken.next).toMatchObject({ scene: "game", advance: "take" });
+		expect(
+			Producer.autoTakeAt(
+				rules,
+				{ ...taken, gameCut: { type: "start", at: NOW } },
+				{ hasMatch: true, gameDelayMs: 0 },
+			),
+		).toBeNull();
+	});
 });
 
 describe("Producer.lengthMs", () => {
@@ -621,6 +638,31 @@ describe("Producer.editItem", () => {
 		).toBeNull();
 	});
 
+	test("makes the item staged after one changed to technical difficulties wait for a Take", () => {
+		const state = stateWith({
+			next: item(2, { scene: "rosters" }),
+			queue: [item(3, { scene: "game", advance: "game" }), item(4)],
+		});
+
+		const edited = Producer.editItem(rules, state, 2, { scene: "technical" });
+
+		expect(edited?.queue.map((queued) => queued.advance)).toEqual([
+			"take",
+			"timer",
+		]);
+	});
+
+	test("keeps an advance set for the item after technical difficulties", () => {
+		const state = stateWith({
+			next: item(2, { scene: "technical" }),
+			queue: [item(3, { scene: "game", advance: "take" })],
+		});
+
+		const edited = Producer.editItem(rules, state, 3, { advance: "game" });
+
+		expect(edited?.queue[0]?.advance).toBe("game");
+	});
+
 	test("is null for an item no longer staged", () => {
 		expect(
 			Producer.editItem(rules, stateWith({}), 1, { swapSides: true }),
@@ -646,6 +688,17 @@ describe("Producer.enqueue", () => {
 		const queued = Producer.enqueue(rules, state, { hasMatch: false });
 
 		expect(queued.queue.at(-1)?.scene).toBe("starting");
+	});
+
+	test("queues what follows technical difficulties to wait for a Take", () => {
+		const state = stateWith({ next: item(2, { scene: "technical" }) });
+
+		const queued = Producer.enqueue(rules, state, { hasMatch: true });
+
+		expect(queued.queue.at(-1)).toMatchObject({
+			scene: "game",
+			advance: "take",
+		});
 	});
 });
 

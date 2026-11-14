@@ -64,6 +64,7 @@ export function MapsScene({
 			</header>
 			<ol
 				className={styles.games}
+				{...part("games")}
 				style={{ "--count": progress.games.length } as React.CSSProperties}
 			>
 				{progress.games.map((game, i) => (

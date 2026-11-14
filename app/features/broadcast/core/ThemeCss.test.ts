@@ -154,6 +154,27 @@ describe("ThemeCss.compose", () => {
 	test("is empty without edits or custom CSS", () => {
 		expect(ThemeCss.compose({ edits: [""], custom: " " })).toBe("");
 	});
+
+	test("is the custom CSS as written without edits", () => {
+		const custom =
+			'@import url("https://fonts.example/a.css");\n\n.a { top: 0 }';
+
+		expect(ThemeCss.compose({ edits: [""], custom: `\n${custom}\n` })).toBe(
+			custom,
+		);
+	});
+
+	test("keeps the custom CSS' imports before the edits", () => {
+		expect(
+			ThemeCss.compose({
+				edits: [".a {\n\ttop: 0;\n}"],
+				custom:
+					'/* fonts */\n@import url("https://fonts.example/a.css");\n\n[data-part] { color: red; }',
+			}),
+		).toBe(
+			'@import url("https://fonts.example/a.css");\n\n@layer features {\n\t.a {\n\t\ttop: 0;\n\t}\n}\n\n/* fonts */\n\n[data-part] { color: red; }',
+		);
+	});
 });
 
 describe("ThemeCss.merge", () => {
@@ -225,6 +246,23 @@ describe("ThemeCss.merge", () => {
 		expect(merged.custom).toBe(
 			"@layer features {\n\t.Gone-rule {\n\t\ttop: 0;\n\t}\n}\n\n[data-part] { color: red; }",
 		);
+	});
+
+	test("splits composed CSS with imports back to the same edits and custom CSS", () => {
+		const css = ThemeCss.compose({
+			edits: [".Game-card {\n\ttop: 40px;\n}"],
+			custom:
+				'@import url("https://fonts.example/a.css");\n\n[data-part] { color: red; }',
+		});
+
+		const merged = ThemeCss.merge({ bases: { game: BASE }, css });
+
+		expect(
+			ThemeCss.compose({
+				edits: [ThemeCss.diff(BASE, merged.stylesheets.game)],
+				custom: merged.custom,
+			}),
+		).toBe(css);
 	});
 
 	test("leaves CSS that doesn't parse as custom CSS", () => {

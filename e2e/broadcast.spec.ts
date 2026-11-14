@@ -4,6 +4,7 @@ import type { Factories } from "./helpers/factories";
 import { expect, impersonate, test } from "./helpers/playwright";
 import { ROSTER_SIZE, startedTournamentTimes } from "./helpers/tournament";
 import { BroadcastDashboardPage } from "./pages/broadcast/broadcast-dashboard-page";
+import { BroadcastDesignPage } from "./pages/broadcast/broadcast-design-page";
 import { BroadcastProgramPage } from "./pages/broadcast/broadcast-program-page";
 import { TournamentMatchPage } from "./pages/tournament/tournament-match-page";
 
@@ -122,6 +123,52 @@ test.describe("Broadcast", () => {
 		);
 
 		await expect(obs.program.locators.canvas).toHaveCSS("outline-width", "7px");
+
+		await obs.close();
+	});
+
+	test("loads a preset in the designer to edit and shows it on the program", async ({
+		page,
+		browser,
+		baseURL,
+		factories,
+	}) => {
+		const tournament = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		const design = new BroadcastDesignPage(page, pageArgs(tournament.id));
+		await design.goto();
+		await expect(design.locators.presetSelect).toContainText("Default");
+
+		await design.pickPreset("Zine");
+		await expect(design.locators.presetSelect).toContainText("Zine");
+		await expect(design.locators.editor).toHaveValue(/ZINE/);
+
+		const presetCss = await design.locators.editor.inputValue();
+		await design.locators.editor.fill(
+			`${presetCss}\n[data-broadcast] { outline: 7px solid rgb(1, 2, 3); }`,
+		);
+		await expect(design.locators.presetSelect).toContainText("Your own");
+		await design.save();
+
+		const obs = await openObsSource({
+			browser,
+			baseURL: baseURL!,
+			tournamentId: tournament.id,
+			programKey: tournament.programKey,
+		});
+		await expect(obs.program.locators.canvas).toHaveCSS("outline-width", "7px");
+		await expect(obs.program.locators.canvas).toHaveCSS(
+			"color",
+			"rgb(20, 20, 20)",
+		);
+
+		await design.pickPreset("Teletext");
+		await design.locators.confirmPresetButton.click();
+		await expect(design.locators.presetSelect).toContainText("Teletext");
+		await expect(design.locators.editor).toHaveValue(/TELETEXT/);
 
 		await obs.close();
 	});

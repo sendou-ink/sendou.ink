@@ -13,6 +13,7 @@ import {
 	BROADCAST_SCENES,
 	DEFAULT_CAST_BROADCAST_SETTINGS,
 } from "../broadcast-cast-constants";
+import { BROADCAST_THEME_PRESETS } from "../broadcast-cast-theme-presets";
 import type { CastBroadcastState } from "../broadcast-cast-types";
 import * as DesignScenario from "../core/DesignScenario";
 import { CAST_SCENE_SET } from "./CastScene";
@@ -67,6 +68,14 @@ const BRACKET_CASES = BROADCAST_DESIGN_BRACKETS.flatMap((bracket) =>
 			bracketFocus,
 			variant,
 		})),
+	),
+);
+
+const PRESET_VARIANTS = ["long names", "the longest names"] as const;
+
+const PRESET_CASES = BROADCAST_THEME_PRESETS.flatMap((preset) =>
+	BROADCAST_SCENES.flatMap((scene) =>
+		PRESET_VARIANTS.map((variant) => ({ preset: preset.key, scene, variant })),
 	),
 );
 
@@ -125,6 +134,34 @@ describe("CastScene", () => {
 		expect(await overflowsOfStinger({ ...state, match: null })).toEqual([]);
 	});
 
+	test.each(PRESET_CASES)(
+		"fits $scene with $variant in the $preset preset",
+		async ({ preset, scene, variant }) => {
+			const state = withPreset(
+				VARIANTS[variant](stateOf({ ...SCENARIO, scene })),
+				preset,
+			);
+
+			expect(await overflowsOnAir(state)).toEqual([]);
+		},
+	);
+
+	test.each(
+		BROADCAST_THEME_PRESETS.flatMap((preset) =>
+			PRESET_VARIANTS.map((variant) => ({ preset: preset.key, variant })),
+		),
+	)(
+		"fits the stinger with $variant in the $preset preset",
+		async ({ preset, variant }) => {
+			const state = withPreset(
+				VARIANTS[variant](stateOf({ ...SCENARIO, scene: "game" })),
+				preset,
+			);
+
+			expect(await overflowsOfStinger(state)).toEqual([]);
+		},
+	);
+
 	test("reports a name cut off without an ellipsis", async () => {
 		const state = stateOf({ ...SCENARIO, scene: "rosters" });
 
@@ -171,6 +208,24 @@ function stateOf(scenario: DesignScenario.Scenario): CastBroadcastState {
 	return JSON.parse(JSON.stringify(state), (key, value) =>
 		(key === "avatarUrl" || key === "logoUrl") && value ? IMAGE_URL : value,
 	);
+}
+
+/** Themed with the preset, without the web fonts it imports: the test doesn't depend on the network, their fallbacks are measured. */
+function withPreset(
+	state: CastBroadcastState,
+	key: (typeof BROADCAST_THEME_PRESETS)[number]["key"],
+): CastBroadcastState {
+	const preset = BROADCAST_THEME_PRESETS.find(
+		(candidate) => candidate.key === key,
+	)!;
+
+	return {
+		...state,
+		settings: {
+			...state.settings,
+			css: preset.css.replaceAll(/@import url\("[^"]*"\);/g, ""),
+		},
+	};
 }
 
 /** Every name as long as it can be, unbroken by spaces where a name can be one word. */
@@ -404,6 +459,7 @@ function isTransformed(style: CSSStyleDeclaration) {
 		(style.transform !== "none" &&
 			!new DOMMatrix(style.transform).isIdentity) ||
 		(style.translate !== "none" && !/^0px( 0px)?$/.test(style.translate)) ||
+		(style.rotate !== "none" && style.rotate !== "0deg") ||
 		(style.scale !== "none" && !/^1( 1)?$/.test(style.scale))
 	);
 }

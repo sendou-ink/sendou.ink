@@ -41,7 +41,7 @@ export function HoldScene({
 	return (
 		<div className={styles.hold}>
 			<SceneBackdrop variant={scene === "technical" ? "alert" : undefined} />
-			<div className={styles.content}>
+			<div className={styles.content} {...part("content")}>
 				<img
 					className={styles.tournamentLogo}
 					src={state.tournament.logoUrl}

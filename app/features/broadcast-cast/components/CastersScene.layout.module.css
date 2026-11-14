@@ -27,16 +27,17 @@
 	margin: 0;
 }
 
+/* stays where the backdrop is cut out for the camera, only the name under it comes in */
 .frame {
+	position: absolute;
+}
+
+.name {
 	--bc-enter-y: var(--bc-enter-distance);
 
 	position: absolute;
 	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
 		calc(var(--scene-enter-delay) + (var(--i) + 1) * var(--bc-stagger)) both;
-}
-
-.name {
-	position: absolute;
 	top: calc(100% + 24px);
 	right: 0;
 	left: 0;

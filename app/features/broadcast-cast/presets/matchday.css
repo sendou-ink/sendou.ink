@@ -1,0 +1,615 @@
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;1,700&display=swap");
+
+/* MATCHDAY: the sports channel. Condensed capitals, slanted plates, black on white with the teams' colors. */
+
+/* 1. Variables: colors, type, shapes and motion of every scene */
+[data-broadcast] {
+	--bc-bg: #eef0f4;
+	--bc-surface: #fff;
+	--bc-surface-high: #dfe3ea;
+	--bc-border: #c9cfda;
+	--bc-text: #0d1117;
+	--bc-text-muted: #5a6475;
+	--bc-accent: #0d1117;
+	--bc-accent-text: #fff;
+	--bc-team-a: #ff4d2e;
+	--bc-team-a-text: #fff;
+	--bc-team-b: #1f5eff;
+	--bc-team-b-text: #fff;
+	--bc-font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+	--bc-font-body: "Barlow Condensed", "Arial Narrow", sans-serif;
+	--bc-weight-semibold: 500;
+	--bc-weight-bold: 600;
+	--bc-weight-heavy: 700;
+	--bc-radius: 0;
+	--bc-radius-small: 0;
+	--bc-ease: cubic-bezier(0.2, 0.9, 0.2, 1);
+	--bc-enter-duration: 450ms;
+	--bc-enter-distance: 48px;
+	--bc-stagger: 50ms;
+
+	/* the theme's own: how far the slanted ends of a plate lean. 16° is 0.287 times its height, more on a taller one. */
+	--matchday-lean: 16px;
+
+	/* sizes and spots: the type is narrow, so it can be bigger */
+	--game-info-top: 148px;
+	--game-info-max-width: 460px;
+	--game-round-size: 24px;
+	--game-casters-size: 22px;
+	--game-bar-height: 56px;
+	--game-logo-size: 38px;
+	--game-seed-size: 24px;
+	--game-team-name-size: 36px;
+	--game-score-size: 44px;
+	--game-score-width: 76px;
+	--game-player-size: 26px;
+	--game-ticker-height: 38px;
+	--ticker-bar-text-size: 23px;
+	--hold-inline-margin: 170px;
+	--hold-eyebrow-size: 34px;
+	--hold-title-size: 210px;
+	--hold-countdown-size: 150px;
+	--hold-headline-size: 46px;
+	--matchup-name-size: 44px;
+	--matchup-round-size: 28px;
+	--rosters-title-size: 64px;
+	--rosters-round-size: 34px;
+	--rosters-teams-top: 250px;
+	--rosters-team-logo-size: 116px;
+	--rosters-team-name-size: 62px;
+	--rosters-versus-size: 60px;
+	--rosters-player-height: 160px;
+	--rosters-player-name-size: 48px;
+	--maps-header-top: 52px;
+	--maps-eyebrow-size: 34px;
+	--maps-team-name-size: 66px;
+	--maps-bubble-size: 112px;
+	--maps-score-size: 76px;
+	--maps-games-top: 282px;
+	--maps-games-inline-margin: 230px;
+	--maps-games-bottom: 30px;
+	--maps-stage-size: 34px;
+	--results-stage-size: 60px;
+	--results-team-header-height: 112px;
+	--results-team-name-size: 50px;
+	--results-team-score-size: 72px;
+	--results-player-height: 120px;
+	--results-player-name-size: 44px;
+	--casters-eyebrow-size: 32px;
+	--casters-title-size: 92px;
+	--casters-name-size: 42px;
+	--replays-label-size: 36px;
+	--bracket-eyebrow-size: 34px;
+	--bracket-title-size: 76px;
+	--bracket-team-name-size: 26px;
+	--bracket-standing-name-size: 32px;
+	--team-scene-eyebrow-size: 34px;
+	--team-scene-name-size: 110px;
+	--team-scene-player-name-size: 32px;
+	--stinger-team-name-size: 96px;
+	--stinger-tournament-name-size: 60px;
+}
+
+/* the big words lean forward */
+[data-broadcast]
+	:is(
+		[data-part="title"],
+		[data-part$="team-name"],
+		[data-part="bracket-name"],
+		[data-part="stage"],
+		[data-part="countdown"],
+		[data-part$="versus"],
+		[data-part="stinger-vs"],
+		[data-part="replay-label"]
+	) {
+	font-style: italic;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+/* 2. Keyframes: redefining one changes every element using it */
+
+/* shoots in leaning, then straightens up */
+@keyframes bc-enter {
+	from {
+		opacity: 0;
+		transform: translate(var(--bc-enter-x, 0), var(--bc-enter-y, 0))
+			skewX(-14deg);
+	}
+}
+
+/* 3. Parts */
+
+/* faint stripes behind every full screen scene, leaning as the plates do */
+[data-part="backdrop"] {
+	background:
+		repeating-linear-gradient(
+			106deg,
+			transparent 0 70px,
+			rgb(13 17 23 / 0.035) 70px 140px
+		),
+		var(--bc-bg);
+}
+
+/* on the hold scenes a black band coming in from the top left corner, at the same angle */
+:is(
+		[data-scene="starting"],
+		[data-scene="break"],
+		[data-scene="technical"],
+		[data-scene="ending"]
+	)
+	[data-part="backdrop"]::before {
+	position: absolute;
+	inset: 0 auto 0 -260px;
+	width: 330px;
+	background: var(--bc-text);
+	transform: skewX(-16deg);
+	content: "";
+}
+
+/* the plates: black, slanted at both ends */
+[data-scene="game"] [data-part="nameplate"],
+[data-scene="replays"] [data-part="replay-bug"],
+[data-part="content"] [data-part="tournament-name"],
+[data-part="matchup-label"],
+[data-part="matchup"] [data-part="team"],
+[data-scene="casters"] [data-part="caster-name"],
+[data-scene="rosters"] [data-part="versus"],
+[data-part="stinger-vs"],
+[data-part="stinger-header"] {
+	border: 0;
+	border-radius: 0;
+	background: var(--bc-text);
+	color: var(--bc-surface);
+	clip-path: polygon(
+		var(--matchday-lean) 0,
+		100% 0,
+		calc(100% - var(--matchday-lean)) 100%,
+		0 100%
+	);
+}
+
+/* and the rows and boxes slanted the same way */
+[data-scene="game"] :is([data-part="info-bar"], [data-part="map-intro"]),
+[data-scene="rosters"] :is([data-part="player"], [data-part="team-header"]),
+[data-scene="results"]
+	:is(
+		[data-part="player"],
+		[data-part="team-header"],
+		[data-part="map"],
+		[data-part="objective"]
+	),
+[data-scene="maps"] :is([data-part="game"], [data-part="score"] [data-team]),
+[data-scene="team"] :is([data-part="stat"], [data-part="set"]) {
+	border-radius: 0;
+	clip-path: polygon(
+		var(--matchday-lean) 0,
+		100% 0,
+		calc(100% - var(--matchday-lean)) 100%,
+		0 100%
+	);
+}
+
+/* ---------- GAME: a scorebug in the top left corner, one team over the other ---------- */
+[data-scene="game"] [data-part="scoreboard"] {
+	top: 0;
+	display: block;
+	height: auto;
+
+	/* the strip the other matches scroll on */
+	&::before {
+		background: var(--bc-surface);
+	}
+}
+
+/* the rosters are placed on the screen, not on their team */
+[data-scene="game"] [data-part="team"] {
+	position: static;
+	margin: 28px 0 0 28px;
+
+	&[data-team="b"] {
+		margin-top: 4px;
+	}
+}
+
+/* both rows the same way around and as wide, so the scores line up */
+[data-scene="game"] [data-part="nameplate"] {
+	flex-direction: row;
+	width: 460px;
+	height: var(--game-bar-height);
+}
+
+[data-scene="game"] [data-part="team-title"] {
+	flex: 1;
+	flex-direction: row;
+	padding: 0 22px 0 6px;
+}
+
+[data-scene="game"] [data-part="team-seed"] {
+	color: var(--bc-border);
+}
+
+[data-scene="game"] [data-loser] [data-part="team-name"] {
+	color: var(--bc-border);
+}
+
+/* the score on the team's ink color */
+[data-scene="game"] [data-part="team-score"] {
+	padding-right: 10px;
+	background: var(--team-color);
+	color: var(--team-color-text);
+	line-height: 1;
+}
+
+[data-scene="game"] [data-part="roster"] {
+	bottom: calc(var(--game-ticker-height) + 20px);
+	left: 28px;
+	border-radius: 0;
+
+	[data-team="b"] > & {
+		right: 28px;
+		left: auto;
+	}
+}
+
+[data-scene="game"] [data-part="ticker"] {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	height: var(--game-ticker-height);
+}
+
+/* the round and the casters on a white plate under the teams, as wide as them */
+[data-scene="game"] [data-part="info-bar"] {
+	--matchday-lean: 22px;
+
+	flex-direction: column;
+	min-width: 460px;
+	min-height: 0;
+	padding-left: 12px;
+	background: var(--bc-surface);
+	box-shadow: none;
+}
+
+[data-scene="game"] [data-part="tournament-logo"] {
+	display: none;
+}
+
+/* the new game's map on the other side of the screen, under the game's own special gauge */
+[data-scene="game"] [data-part="map-intro"] {
+	--matchday-lean: 34px;
+	--bc-enter-x: var(--bc-enter-distance);
+	--bc-exit-x: var(--bc-enter-distance);
+
+	position: absolute;
+	top: 130px;
+	left: calc(1920px - 56px - 420px);
+	width: 420px;
+	box-shadow: none;
+
+	& :is([data-part="game-number"], [data-part="mode"], [data-part="stage"]) {
+		margin-left: 18px;
+	}
+}
+
+/* ---------- HOLD (starting soon, break...): a headline halfway down the left ---------- */
+[data-part="content"] {
+	top: 50%;
+	gap: 10px;
+	max-width: 1500px;
+	translate: 0 -50%;
+}
+
+/* room for the next match under it */
+[data-scene="break"] [data-part="content"] {
+	top: 38%;
+}
+
+[data-part="content"] [data-part="tournament-logo"] {
+	display: none;
+}
+
+[data-part="content"] [data-part="tournament-name"],
+[data-part="matchup-label"] {
+	--matchday-lean: 13px;
+
+	padding: 2px 30px;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+[data-part="content"] [data-part="title"] {
+	padding-bottom: 34px;
+	line-height: 0.86;
+
+	/* the line under the title: thick, slanted, in the first team's color */
+	&::after {
+		width: 340px;
+		height: 16px;
+		border-radius: 0;
+		background: var(--bc-team-a);
+		transform: skewX(-30deg);
+	}
+}
+
+[data-part="countdown"] {
+	color: var(--bc-team-a);
+}
+
+/* ---------- the featured match in a line, wherever it shows ---------- */
+[data-part="matchup"] [data-part="team"] {
+	padding-inline: 34px;
+}
+
+[data-part="matchup"] [data-part="versus"],
+[data-part="matchup"] [data-part="round"] {
+	color: var(--bc-text);
+}
+
+/*
+ * ---------- ROSTERS laid out anew ----------
+ * The teams one over the other, each a strip: its name on a plate at the outer end, its players in a grid next to it.
+ */
+[data-scene="rosters"] [data-part="teams"] {
+	grid-template-columns: minmax(0, 1fr);
+	align-content: center;
+	gap: 76px;
+}
+
+[data-scene="rosters"] [data-part="team"] {
+	flex-direction: row;
+	gap: 20px;
+
+	&[data-team="b"] {
+		flex-direction: row-reverse;
+	}
+}
+
+[data-scene="rosters"] [data-part="team-header"] {
+	--matchday-lean: 92px;
+
+	/* a one column grid: what is in it is as wide as the plate, so a long name can't push out of it */
+	display: grid;
+	flex-shrink: 0;
+	grid-template-columns: minmax(0, 1fr);
+	align-content: center;
+	gap: 14px;
+	width: 520px;
+	padding: 0 76px 0 100px;
+	border: 0;
+	background: var(--team-color);
+	color: var(--team-color-text);
+
+	[data-team="b"] > & {
+		padding: 0 100px 0 76px;
+	}
+}
+
+[data-scene="rosters"] [data-team="b"] [data-part="team-logo"] {
+	justify-self: end;
+}
+
+/* on two lines when it is long */
+[data-scene="rosters"] [data-part="team-name"] {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+	line-height: 1;
+	white-space: normal;
+}
+
+[data-scene="rosters"] [data-part="players"] {
+	display: grid;
+	flex: 1;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-auto-rows: var(--rosters-player-height);
+	align-content: center;
+	gap: 14px;
+
+	/* a third column for a fifth and a sixth player */
+	&:has(> :nth-child(5)) {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+/* a card: the name over the weapons next to the avatar */
+[data-scene="rosters"] [data-part="player"] {
+	--matchday-lean: 44px;
+
+	display: grid;
+	grid-template: "avatar name" "avatar weapons" / auto minmax(0, 1fr);
+	align-content: center;
+	gap: 6px 24px;
+	padding-inline: 58px;
+	border: 0;
+
+	[data-team="b"] & {
+		grid-template: "name avatar" "weapons avatar" / minmax(0, 1fr) auto;
+		justify-items: end;
+	}
+}
+
+[data-scene="rosters"] [data-part="player-avatar"] {
+	grid-area: avatar;
+}
+
+[data-scene="rosters"] [data-part="player-name"] {
+	grid-area: name;
+	max-width: 100%;
+}
+
+[data-scene="rosters"] [data-part="player-weapons"] {
+	grid-area: weapons;
+
+	& img {
+		width: 54px;
+		height: 54px;
+	}
+}
+
+/* between the two strips */
+[data-scene="rosters"] [data-part="versus"] {
+	top: calc(50% - var(--rosters-versus-size) / 2);
+	width: calc(var(--rosters-versus-size) + 60px);
+	margin-left: calc(var(--rosters-versus-size) / -2 - 30px);
+	font-size: 34px;
+}
+
+/*
+ * ---------- MAPS laid out anew ----------
+ * The games as a list of rows, the map's picture at the start of each and who won it at its end.
+ */
+[data-scene="maps"] [data-part="games"] {
+	grid-template-columns: minmax(0, 1fr);
+	gap: 8px;
+}
+
+[data-scene="maps"] [data-part="game"] {
+	--matchday-lean: 29px;
+
+	flex-direction: row;
+	height: 100px;
+	border: 0;
+
+	/* the game up next stands out */
+	&[data-status="current"] {
+		background: var(--bc-text);
+		color: var(--bc-surface);
+	}
+}
+
+/* in the corner of the picture the slant doesn't cut */
+[data-scene="maps"] [data-part="game-number"] {
+	top: auto;
+	bottom: 0;
+	border-radius: 0;
+	color: var(--bc-text);
+}
+
+[data-scene="maps"] :is([data-part="winner"], [data-part="up-next"]) {
+	display: flex;
+	align-items: center;
+	min-width: 400px;
+	margin-left: auto;
+	padding-inline: 34px 60px;
+	font-size: 30px;
+}
+
+[data-scene="results"] [data-part="player"] {
+	--matchday-lean: 30px;
+
+	padding-inline: 46px;
+	border: 0;
+}
+
+[data-scene="results"] [data-part="team-header"] {
+	--matchday-lean: 30px;
+
+	padding-inline: 44px;
+}
+
+/*
+ * RESULTS laid out anew: the map as a banner along the top with how the objective went next to it, the teams
+ * side by side under them.
+ */
+[data-scene="results"] {
+	--matchday-banner-height: 290px;
+	--matchday-objective-width: 640px;
+}
+
+[data-scene="results"] [data-part="map"] {
+	--matchday-lean: 24px;
+
+	right: var(--results-margin);
+	bottom: auto;
+	width: auto;
+	height: var(--matchday-banner-height);
+
+	/* the text over the left of the footage */
+	&::after {
+		inset: 0;
+		background: linear-gradient(to right, var(--bc-bg) 20%, transparent 70%);
+	}
+}
+
+/* the banner makes room for the objective panel when there is one */
+[data-scene="results"]:has([data-part="objective"]) [data-part="map"] {
+	right: calc(var(--results-margin) + var(--matchday-objective-width) + 24px);
+}
+
+[data-scene="results"] [data-part="body"] {
+	top: calc(var(--results-margin) + var(--matchday-banner-height) + 24px);
+	left: var(--results-margin);
+}
+
+/* out of the column it is in, up next to the banner */
+[data-scene="results"] [data-part="objective"] {
+	--matchday-lean: 40px;
+
+	position: absolute;
+	right: 0;
+	bottom: calc(100% + 24px);
+	justify-content: space-between;
+	width: var(--matchday-objective-width);
+	height: var(--matchday-banner-height);
+	padding-inline: 52px 44px;
+	border: 0;
+}
+
+/* ---------- CASTERS, REPLAYS, TEAM ---------- */
+[data-scene="casters"] [data-part="camera"] {
+	outline-color: var(--bc-text);
+}
+
+[data-scene="casters"] [data-part="caster-name"] {
+	padding-inline: 40px;
+}
+
+[data-scene="replays"] [data-part="corner"] {
+	border-color: var(--bc-surface);
+}
+
+[data-scene="replays"] [data-part="replay-bug"] {
+	padding-inline: 30px;
+}
+
+[data-scene="replays"] [data-part="game"] {
+	border-left-color: var(--bc-text-muted);
+	color: var(--bc-border);
+}
+
+[data-scene="team"] [data-part="header"] {
+	border-image: none;
+	border-bottom-color: var(--bc-text);
+}
+
+/* ---------- STINGER: the default's two halves, the captions on plates ---------- */
+[data-part="stinger-vs"] {
+	width: calc(var(--stinger-versus-size) + 60px);
+}
+
+[data-part="stinger-header"] {
+	padding-inline: 48px 60px;
+}
+
+[data-part="stinger-header"] [data-part="stinger-round"] {
+	color: var(--bc-border);
+}
+
+/* without a match: the tournament on a plate, over the stripe down the middle */
+[data-part="stinger-title-card"] [data-part="stinger-tournament-name"] {
+	padding: 6px 48px;
+	background: var(--bc-text);
+	color: var(--bc-surface);
+	text-shadow: none;
+	clip-path: polygon(
+		var(--matchday-lean) 0,
+		100% 0,
+		calc(100% - var(--matchday-lean)) 100%,
+		0 100%
+	);
+}

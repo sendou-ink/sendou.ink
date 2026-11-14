@@ -32,6 +32,11 @@ export interface Rules<Item extends ProducerState> {
 	needsMatch?(item: Item): boolean;
 	/** Staged instead of the scene that logically follows when that one needs the featured match and there is none. */
 	sceneWithoutMatch?: Item["scene"];
+	/**
+	 * Whether the scene stays on air until a Take, whatever happens meanwhile (e.g. technical difficulties): what is
+	 * staged after it waits for a Take unless the producer sets it otherwise.
+	 */
+	staysUntilTake?(scene: Item["scene"]): boolean;
 }
 
 /** Fields of a staged item the producer edits, see {@link editItem}. */
@@ -320,7 +325,8 @@ export function stagedItems<Item extends ProducerState>(
 
 /**
  * Changes a staged item, `null` when it is not staged anymore (e.g. a Take put it on air). Picking another scene
- * gives the item that scene's default duration and advance.
+ * gives the item that scene's default duration and advance, and one staying on air until a Take (see
+ * `Rules.staysUntilTake`) makes the item staged after it wait for a Take.
  */
 export function editItem<Item extends ProducerState>(
 	rules: Rules<Item>,
@@ -331,9 +337,18 @@ export function editItem<Item extends ProducerState>(
 	const staged = stagedItems(state);
 	if (!staged.some((item) => item.id === itemId)) return null;
 
+	const editedIdx = staged.findIndex((item) => item.id === itemId);
+	const isHeldUntilTake =
+		patch.scene !== undefined &&
+		patch.scene !== staged[editedIdx]!.scene &&
+		Boolean(rules.staysUntilTake?.(patch.scene));
+
 	return withStaged(
 		state,
 		staged.map((item, idx) => {
+			if (isHeldUntilTake && idx === editedIdx + 1) {
+				return { ...item, advance: "take" };
+			}
 			if (item.id !== itemId) return item;
 
 			const isSceneChanged =
@@ -441,5 +456,7 @@ function defaultAdvance<Item extends ProducerState>(
 	before: Pick<Item, "scene">,
 	item: Pick<Item, "scene">,
 ): BroadcastAdvance {
+	if (rules.staysUntilTake?.(before.scene)) return "take";
+
 	return gameCue(rules, before, item) ? "game" : "timer";
 }

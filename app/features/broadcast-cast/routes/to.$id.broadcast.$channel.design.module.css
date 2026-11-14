@@ -1,5 +1,19 @@
 .designer {
+	/* the editor column at its widest, what it is at the page's own width */
+	--editor-max-width: calc((72rem - var(--s-6)) * 0.4);
+
 	container-type: inline-size;
+
+	/*
+	 * Sized against the breakout <main> of the tournament layout: as wide as the content area, the preview growing
+	 * up to the canvas' own 1920px, centered under the page width column.
+	 */
+	:global([data-main-breakout]) & {
+		--designer-max-width: calc(1920px + var(--s-6) + var(--editor-max-width));
+
+		width: min(100cqw, var(--designer-max-width));
+		margin-inline: calc(50% - min(50cqw, var(--designer-max-width) / 2));
+	}
 }
 
 .back {
@@ -16,7 +30,10 @@
 /* the preview and its scenario next to the editor, stacked when narrow */
 .workspace {
 	display: grid;
-	grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+	/* 3 to 2 up to the page's own width, past it only the preview grows */
+	grid-template-columns:
+		minmax(0, 1fr)
+		min(calc((100% - var(--s-6)) * 0.4), var(--editor-max-width));
 	gap: var(--s-6);
 	align-items: start;
 

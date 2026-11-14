@@ -1,0 +1,342 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap");
+
+/* CAPSULE: soft and round. Everything floats in a pill of its own, in front of a slow gradient. */
+
+/* 1. Variables: colors, type, shapes and motion of every scene */
+[data-broadcast] {
+	--bc-bg: #0c0e1a;
+	--bc-surface: rgb(255 255 255 / 0.07);
+	--bc-surface-high: rgb(255 255 255 / 0.14);
+	--bc-border: rgb(255 255 255 / 0.14);
+	--bc-text: #f5f6fb;
+	--bc-text-muted: #a6abc8;
+	--bc-accent: #c6f35e;
+	--bc-accent-text: #0c0e1a;
+	--bc-team-a: #ff8f6b;
+	--bc-team-a-text: #0c0e1a;
+	--bc-team-b: #6cb8ff;
+	--bc-team-b-text: #0c0e1a;
+	--bc-font-display: Outfit, "Trebuchet MS", sans-serif;
+	--bc-font-body: Outfit, "Trebuchet MS", sans-serif;
+	--bc-weight-semibold: 500;
+	--bc-weight-bold: 600;
+	--bc-weight-heavy: 700;
+	--bc-radius: 28px;
+	--bc-radius-small: 14px;
+	--bc-border-width: 1px;
+	/* overshoots a little, so things pop in */
+	--bc-ease: cubic-bezier(0.34, 1.45, 0.64, 1);
+	--bc-enter-duration: 600ms;
+	--bc-enter-distance: 18px;
+	--bc-stagger: 60ms;
+
+	/* the stinger opens and closes like a camera's iris */
+	--bc-anim-panel-slide-in: bc-panel-iris-in;
+	--bc-anim-panel-slide-out: bc-panel-iris-out;
+
+	/* the theme's own */
+	--capsule-pill: 999px;
+	--capsule-glass: rgb(12 14 26 / 0.84);
+	--capsule-shadow: 0 16px 48px rgb(0 0 0 / 0.4);
+	--capsule-gradient:
+		radial-gradient(70% 90% at 10% 0%, #2c3187 0%, transparent 60%),
+		radial-gradient(60% 80% at 95% 100%, #0e6a66 0%, transparent 60%), #0c0e1a;
+
+	/* sizes and spots */
+	--game-bar-height: 62px;
+	--game-logo-size: 38px;
+	--game-seed-size: 16px;
+	--game-team-name-size: 25px;
+	--game-score-size: 30px;
+	--game-score-width: 64px;
+	--game-player-size: 21px;
+	--hold-title-size: 124px;
+	--hold-eyebrow-size: 24px;
+	--hold-inline-margin: 300px;
+	--hold-matchup-bottom: 124px;
+	--rosters-player-height: 112px;
+	--results-team-header-height: 96px;
+}
+
+/* nothing shouts */
+[data-broadcast] * {
+	text-transform: none;
+}
+
+/* 2. Keyframes: redefining one changes every element using it */
+
+/* pops in, growing a little */
+@keyframes bc-enter {
+	from {
+		opacity: 0;
+		transform: translate(var(--bc-enter-x, 0), var(--bc-enter-y, 0)) scale(0.92);
+	}
+}
+
+@keyframes bc-count {
+	from {
+		opacity: 0;
+		transform: scale(0.4);
+	}
+}
+
+@keyframes capsule-drift {
+	to {
+		background-position:
+			12% 8%,
+			88% 92%,
+			0 0;
+	}
+}
+
+/* 3. Parts */
+
+/* the gradient behind every full screen scene, drifting slowly */
+[data-part="backdrop"] {
+	background: var(--capsule-gradient);
+	background-size:
+		140% 140%,
+		140% 140%,
+		auto;
+	animation: capsule-drift 14s ease-in-out infinite alternate;
+}
+
+/* the small labels in pills */
+[data-part="content"] [data-part="tournament-name"],
+[data-part="matchup-label"],
+[data-part="caster-name"],
+[data-part="ticker"],
+[data-part="replay-bug"],
+[data-part="set-length"],
+[data-part$="team-seed"],
+[data-part="result"],
+[data-part="up-next"] {
+	border-radius: var(--capsule-pill);
+}
+
+/* ---------- GAME: both teams in one capsule in the bottom left corner, the scores meeting in its middle ---------- */
+[data-scene="game"] [data-part="scoreboard"] {
+	right: 28px;
+	bottom: 26px;
+	left: 28px;
+	display: flex;
+	align-items: center;
+	gap: 0;
+
+	&::before {
+		display: none;
+	}
+}
+
+[data-scene="game"] [data-part="team"] {
+	/* the capsule is the team's, what is on it has no background of its own */
+	--bc-bg: transparent;
+
+	height: 100%;
+	border-radius: var(--capsule-pill) 0 0 var(--capsule-pill);
+	background: var(--capsule-glass);
+	box-shadow: var(--capsule-shadow);
+
+	&[data-team="b"] {
+		border-radius: 0 var(--capsule-pill) var(--capsule-pill) 0;
+	}
+}
+
+[data-scene="game"] [data-part="team-name"] {
+	max-width: 200px;
+}
+
+/* the score on the team's ink color */
+[data-scene="game"] [data-part="team-score"] {
+	margin: 7px 4px;
+	border-radius: var(--capsule-pill);
+	background: var(--team-color);
+	color: var(--team-color-text);
+}
+
+[data-scene="game"] [data-part="roster"] {
+	bottom: calc(100% + 14px);
+	left: 0;
+	border-radius: 26px;
+	background: var(--capsule-glass);
+
+	[data-team="b"] > & {
+		right: 0;
+	}
+}
+
+/* the other matches in a capsule of their own in the other corner */
+[data-scene="game"] [data-part="ticker"] {
+	width: 540px;
+	height: 44px;
+	margin-left: auto;
+	background: var(--capsule-glass);
+	box-shadow: var(--capsule-shadow);
+}
+
+[data-scene="game"] [data-part="info-bar"] {
+	border-radius: var(--capsule-pill);
+	background: var(--capsule-glass);
+}
+
+[data-scene="game"] [data-part="info-bar"] [data-part="round"] {
+	padding-right: 14px;
+}
+
+[data-scene="game"] [data-part="map-intro"] {
+	border-radius: var(--bc-radius);
+}
+
+/* ---------- HOLD (starting soon, break...): a card in the middle ---------- */
+[data-part="content"] {
+	top: 50%;
+	left: 50%;
+	align-items: center;
+	width: 1180px;
+	max-width: none;
+	padding: 64px 72px 60px;
+	border: 1px solid var(--bc-border);
+	border-radius: 64px;
+	background: var(--bc-surface);
+	text-align: center;
+	translate: -50% -50%;
+}
+
+/* room for the next match under it */
+[data-scene="break"] [data-part="content"] {
+	top: 370px;
+	padding-block: 44px 40px;
+}
+
+[data-part="content"] [data-part="tournament-name"] {
+	padding: 6px 24px;
+	background: var(--bc-surface-high);
+	color: var(--bc-text);
+}
+
+[data-part="content"] [data-part="title"] {
+	/* room for the letters reaching under the line, the title is clipped to its box while it wipes in */
+	padding-bottom: 0.16em;
+	letter-spacing: -0.03em;
+	line-height: 1.05;
+
+	&::after {
+		display: none;
+	}
+}
+
+/* ---------- the featured match in a line, wherever it shows ---------- */
+[data-part="matchup"] [data-part="team"] {
+	padding-inline: 16px 28px;
+	border-radius: var(--capsule-pill);
+
+	&[data-team="b"] {
+		padding-inline: 28px 16px;
+	}
+}
+
+[data-part="matchup"] [data-part="team-score"] {
+	border-radius: 50%;
+}
+
+/* ---------- ROSTERS & RESULTS: a capsule per player ---------- */
+[data-scene="rosters"] [data-part="player"],
+[data-scene="results"] [data-part="player"],
+[data-scene="results"] [data-part="team-header"] {
+	padding-inline: 14px 36px;
+	border-radius: var(--capsule-pill);
+}
+
+[data-scene="rosters"] [data-team="b"] [data-part="player"] {
+	padding-inline: 36px 14px;
+}
+
+[data-scene="results"] [data-part="map"] {
+	border: 1px solid var(--bc-border);
+}
+
+/* ---------- MAPS ---------- */
+[data-scene="maps"] [data-part="up-next"] {
+	margin: 0 14px 14px;
+	padding-block: 4px;
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+	text-align: center;
+}
+
+/* ---------- CASTERS ---------- */
+[data-scene="casters"] [data-part="camera"] {
+	outline: 2px solid var(--bc-border);
+}
+
+[data-scene="casters"] [data-part="caster-name"] {
+	border: 1px solid var(--bc-border);
+	background: var(--bc-surface-high);
+}
+
+/* ---------- REPLAYS ---------- */
+/* each corner mark rounded where its two lines meet */
+[data-scene="replays"] [data-part="corner"] {
+	&[data-corner="tl"] {
+		border-top-left-radius: 30px;
+	}
+
+	&[data-corner="tr"] {
+		border-top-right-radius: 30px;
+	}
+
+	&[data-corner="bl"] {
+		border-bottom-left-radius: 30px;
+	}
+
+	&[data-corner="br"] {
+		border-bottom-right-radius: 30px;
+	}
+}
+
+[data-scene="replays"] [data-part="replay-bug"] {
+	background: var(--capsule-glass);
+	box-shadow: var(--capsule-shadow);
+}
+
+/* ---------- TEAM ---------- */
+[data-scene="team"] [data-part="header"] {
+	border-bottom: 0;
+}
+
+[data-scene="team"] [data-part="mode-record"] {
+	border-radius: var(--capsule-pill);
+}
+
+/* ---------- STINGER: an iris in the accent color, a dark one right behind it ---------- */
+[data-part="stinger-panel"] {
+	background: var(--bc-accent);
+
+	&[data-index="1"] {
+		background: var(--capsule-gradient);
+		animation-delay:
+			calc(var(--bc-stinger-duration) * 0.06),
+			calc(var(--bc-stinger-duration) * (var(--bc-stinger-reveal-at) - 0.06));
+	}
+
+	&:not([data-team]) {
+		display: none;
+	}
+}
+
+[data-part="stinger-team"] {
+	color: var(--bc-text);
+}
+
+[data-part="stinger-team-logo"] {
+	box-shadow: 0 0 0 6px var(--team-color);
+}
+
+[data-part="stinger-vs"] {
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+}
+
+[data-part="stinger-header"] {
+	background: var(--capsule-glass);
+}

@@ -179,7 +179,8 @@ export function diff(base: string, edited: string) {
 
 /**
  * The CSS saved for the overlays: the edits of each stylesheet (see {@link diff}) in {@link THEME_EDITS_LAYER},
- * then the custom CSS as is, unlayered.
+ * then the custom CSS as is, unlayered. The custom CSS' `@import`s (web fonts) stay first, where they have to be to
+ * load. Without edits it is the custom CSS alone.
  */
 export function compose({
 	edits,
@@ -189,11 +190,17 @@ export function compose({
 	custom: string;
 }) {
 	const allEdits = edits.filter(Boolean).join("\n\n");
-	const editsBlock = allEdits
-		? `@layer ${THEME_EDITS_LAYER} {\n${indent(allEdits)}\n}`
-		: "";
+	if (!allEdits) return custom.trim();
 
-	return [editsBlock, custom.trim()].filter(Boolean).join("\n\n");
+	const { imports, rest } = splitImports(custom);
+
+	return [
+		imports,
+		`@layer ${THEME_EDITS_LAYER} {\n${indent(allEdits)}\n}`,
+		rest,
+	]
+		.filter(Boolean)
+		.join("\n\n");
 }
 
 /**
@@ -274,6 +281,27 @@ export function merge<Name extends string>({
 		) as Record<Name, string>,
 		custom: saved.toString().trim(),
 	};
+}
+
+/** The `@import`s (and `@charset`) the CSS starts with apart from the rest, as is when it doesn't parse. */
+function splitImports(css: string) {
+	let root: ReturnType<typeof parse>;
+	try {
+		root = parse(css);
+	} catch {
+		return { imports: "", rest: css.trim() };
+	}
+
+	const imports: string[] = [];
+	for (const node of [...root.nodes]) {
+		if (node.type === "comment") continue;
+		if (node.type !== "atrule" || !/^(import|charset)$/i.test(node.name)) break;
+
+		imports.push(formatNode(node, 0));
+		node.remove();
+	}
+
+	return { imports: imports.join("\n"), rest: root.toString().trim() };
 }
 
 interface DeclarationValue {

@@ -47,6 +47,7 @@ import {
 } from "../broadcast-cast-constants";
 import { broadcastActionSchema } from "../broadcast-cast-schemas";
 import { broadcastDesignSearchParams } from "../broadcast-cast-search-params";
+import { BROADCAST_THEME_PRESETS } from "../broadcast-cast-theme-presets";
 import { BROADCAST_THEME_DEFAULTS } from "../broadcast-cast-theme-sources";
 import type { CastBroadcastState, CastScene } from "../broadcast-cast-types";
 import { ScenePicker, useSceneHotkeys } from "../components/ScenePicker";
@@ -240,6 +241,10 @@ export default function BroadcastDesignPage() {
 
 				<ThemeEditor
 					theme={CAST_THEME}
+					presets={BROADCAST_THEME_PRESETS.map((preset) => ({
+						...preset,
+						label: t(`broadcast:design.preset.${preset.key}`),
+					}))}
 					drafts={drafts}
 					setDrafts={setDrafts}
 					tab={tab}

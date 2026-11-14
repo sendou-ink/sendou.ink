@@ -61,7 +61,7 @@ export function RostersScene({
 				</div>
 			</header>
 			{match ? (
-				<div className={styles.teams}>
+				<div className={styles.teams} {...part("teams")}>
 					{matchSides(match, view, state[view]).map((side) => (
 						<RosterTeam
 							key={side.side}
@@ -90,7 +90,7 @@ function RosterTeam({
 
 	return (
 		<section className={styles.team} data-team={side.side} {...part("team")}>
-			<div className={styles.teamHeader}>
+			<div className={styles.teamHeader} {...part("team-header")}>
 				<TeamLogo
 					team={side.team}
 					className={styles.teamLogo}
@@ -107,7 +107,7 @@ function RosterTeam({
 					) : null}
 				</div>
 			</div>
-			<ul className={styles.players}>
+			<ul className={styles.players} {...part("players")}>
 				{players.map((player, i) => (
 					<Player
 						key={player.userId}

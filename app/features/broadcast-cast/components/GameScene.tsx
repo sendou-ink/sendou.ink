@@ -194,7 +194,7 @@ function TeamPanel({ side }: { side: MatchSide }) {
 					))}
 				</ul>
 			) : null}
-			<div className={styles.nameplate}>
+			<div className={styles.nameplate} {...part("nameplate")}>
 				<div className={styles.logoCell}>
 					<TeamLogo
 						team={side.team}
@@ -202,7 +202,7 @@ function TeamPanel({ side }: { side: MatchSide }) {
 						{...part("team-logo")}
 					/>
 				</div>
-				<div className={styles.teamTitle}>
+				<div className={styles.teamTitle} {...part("team-title")}>
 					{typeof side.team?.seed === "number" ? (
 						<span className={styles.seed} {...part("team-seed")}>
 							{side.team.seed}

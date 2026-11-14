@@ -187,7 +187,9 @@ export const BROADCAST_SCENE_PARTS = {
 		"stage",
 		"scoreboard",
 		"team",
+		"nameplate",
 		"team-logo",
+		"team-title",
 		"team-seed",
 		"team-name",
 		"team-score",
@@ -201,11 +203,14 @@ export const BROADCAST_SCENE_PARTS = {
 		"tournament-name",
 		"round",
 		"set-length",
+		"teams",
 		"versus",
 		"team",
+		"team-header",
 		"team-logo",
 		"team-name",
 		"team-seed",
+		"players",
 		"player",
 		"player-avatar",
 		"player-name",
@@ -218,6 +223,7 @@ export const BROADCAST_SCENE_PARTS = {
 		"team",
 		"team-logo",
 		"team-name",
+		"games",
 		"game",
 		"game-number",
 		"up-next",
@@ -233,6 +239,7 @@ export const BROADCAST_SCENE_PARTS = {
 		"game-number",
 		"mode",
 		"stage",
+		"body",
 		"team",
 		"team-header",
 		"team-logo",
@@ -317,6 +324,7 @@ export const BROADCAST_SCENE_PARTS = {
 		"game",
 	],
 	hold: [
+		"content",
 		"tournament-logo",
 		"tournament-name",
 		"title",
@@ -326,6 +334,7 @@ export const BROADCAST_SCENE_PARTS = {
 	],
 	matchup: [
 		"matchup",
+		"versus",
 		"team",
 		"team-logo",
 		"team-seed",
@@ -388,7 +397,8 @@ const DEFAULT_CAST_ITEM: Omit<CastProducerState, "id"> = {
 /**
  * How the cast's producer moves between its scenes: rosters on air and game staged for when it starts on a new
  * broadcast, both with a stinger. The replays scene playing a clip lasts as long as the clip. The scenes showing the
- * featured match's teams don't go on air without one, starting soon is staged in their place.
+ * featured match's teams don't go on air without one, starting soon is staged in their place. Technical difficulties
+ * stays on air until a Take, a game starting on the scanner's feed doesn't end it.
  */
 export const CAST_PRODUCER_RULES: Producer.Rules<CastProducerState> = {
 	initial: {
@@ -425,4 +435,5 @@ export const CAST_PRODUCER_RULES: Producer.Rules<CastProducerState> = {
 	followedBy: (item) => ({ ...item, clipId: null }),
 	needsMatch: (item) => needsFeaturedMatch(item.scene, item.teamPick),
 	sceneWithoutMatch: "starting",
+	staysUntilTake: (scene) => scene === "technical",
 };

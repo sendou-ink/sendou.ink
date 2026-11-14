@@ -1,8 +1,8 @@
 .backdrop {
 	position: absolute;
 	inset: 0;
+	/* there at once, a scene changing to another full screen one never shows what is under them in between */
 	overflow: hidden;
-	animation: var(--bc-anim-fade-in) var(--bc-enter-duration) var(--bc-ease) both;
 }
 
 .video {

@@ -68,7 +68,9 @@ export function Matchup({
 						) : null}
 					</div>
 				))}
-				<span className={styles.versus}>{t("broadcast:overlay.vs")}</span>
+				<span className={styles.versus} {...part("versus")}>
+					{t("broadcast:overlay.vs")}
+				</span>
 			</div>
 			<div className={styles.round} {...part("round")}>
 				{roundLabel(match)}
