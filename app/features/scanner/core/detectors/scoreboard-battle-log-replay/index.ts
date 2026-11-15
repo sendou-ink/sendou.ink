@@ -187,6 +187,17 @@ export function createScoreboardBattleLogReplayDetector(
 				)
 			: null;
 
+	const gateRois = [
+		...PANEL_XS.flatMap((dx) =>
+			ROW_CENTERS.flatMap((cy) => [
+				gateFlatProbe(cy, dx),
+				paintSuffixRoi(cy, dx),
+			]),
+		),
+		...GATE_GAP_PROBES,
+		REPLAY_CODE_ROI,
+	];
+
 	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 
@@ -519,6 +530,7 @@ export function createScoreboardBattleLogReplayDetector(
 	// no rearm cooldown: browsed replays are told apart by content signature
 	return {
 		id: "scoreboard-battle-log-replay",
+		gateRois,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

@@ -105,6 +105,14 @@ export function createXSetCountDetector(
 		return digits;
 	};
 
+	const gateRois = [
+		...COUNT_DARK_PROBES,
+		COUNT_LABEL_BAND,
+		COUNT_WINS_DIGIT_ROI,
+		COUNT_LOSSES_DIGIT_ROI,
+		...COUNT_SERIES_SLOT_PROBES,
+	];
+
 	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 		const dark = allDark(
@@ -239,6 +247,7 @@ export function createXSetCountDetector(
 
 	return {
 		id: "x-set-count",
+		gateRois,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

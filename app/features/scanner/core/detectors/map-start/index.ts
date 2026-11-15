@@ -201,6 +201,8 @@ export function createMapStartDetector(
 		MODE_LABEL_TEXT_HEIGHT,
 	);
 
+	const gateRois = [...GATE_DARK_PROBES, MODE_LABEL_ROI, GATE_INK_BAND];
+
 	function gate(frame: Image): GateResult {
 		let darkOk = 0;
 		for (const roi of GATE_DARK_PROBES) {
@@ -443,6 +445,7 @@ export function createMapStartDetector(
 
 	return {
 		id: "map-start",
+		gateRois,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

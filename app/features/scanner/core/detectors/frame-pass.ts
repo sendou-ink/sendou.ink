@@ -10,7 +10,10 @@
  * complete) in registry order afterwards; its decisions within a frame depend
  * only on each detector's own state and reads, and a detector's reads only
  * meet reads of their own types in the timeline, so this ordering is
- * equivalent to gating and parsing one detector at a time.
+ * equivalent to gating and parsing one detector at a time. A frame holding
+ * only the gate ROIs (`wholeFrame` given) is swapped for the whole frame as
+ * soon as a gate passes on it: that gate runs again on the whole frame, and
+ * so do the gates after it and the parses.
  */
 import { type DetectedEvent, isComplete } from "../events";
 import type { Image } from "../image";
@@ -57,6 +60,7 @@ export async function runDetectorPass({
 	runSteps,
 	speculative = true,
 	onGated,
+	wholeFrame,
 }: {
 	frame: Image;
 	t: number;
@@ -71,19 +75,28 @@ export async function runDetectorPass({
 	speculative?: boolean;
 	/** called once every gate is recorded, before the parses run, with the parsing detectors' ids */
 	onGated?: (parsing: readonly string[]) => void;
+	/** `frame` holds only the gate ROIs (core/gate-rois.ts); this fetches the whole frame */
+	wholeFrame?: () => Promise<Image>;
 }): Promise<DetectorOutcome[]> {
 	const gated: DetectorOutcome[] = [];
+	let fetchWhole = wholeFrame;
+	let current = frame;
 	for (const detector of detectors) {
 		if (!due.includes(detector.id)) continue;
 		const counters = telemetry
 			? detectorTelemetry(telemetry, detector.id)
 			: null;
 		const gateStart = counters ? performance.now() : 0;
-		const gate = detector.gate(frame);
-		if (counters) {
-			counters.checks++;
-			counters.gateMs += performance.now() - gateStart;
+		let gate = detector.gate(current);
+		if (counters) counters.gateMs += performance.now() - gateStart;
+		if (gate.pass && fetchWhole) {
+			current = await fetchWhole();
+			fetchWhole = undefined;
+			const wholeStart = counters ? performance.now() : 0;
+			gate = detector.gate(current);
+			if (counters) counters.gateMs += performance.now() - wholeStart;
 		}
+		if (counters) counters.checks++;
 		scheduler.recordGate(detector.id, t, gate.pass, gate.signature);
 		if (counters && gate.pass) counters.gatePasses++;
 		const parsed = gate.pass && scheduler.shouldParse(detector.id, t);
@@ -100,7 +113,7 @@ export async function runDetectorPass({
 		const results = await runSteps(
 			all(
 				parsing.map(({ detector, gate }) =>
-					timed(detector.parseSteps(frame, t, gate, speculative), (ms) =>
+					timed(detector.parseSteps(current, t, gate, speculative), (ms) =>
 						addParseMs(detector, ms),
 					),
 				),
@@ -112,7 +125,7 @@ export async function runDetectorPass({
 	} else {
 		for (const outcome of parsing) {
 			const parseStart = telemetry ? performance.now() : 0;
-			outcome.events = outcome.detector.parse(frame, t, outcome.gate);
+			outcome.events = outcome.detector.parse(current, t, outcome.gate);
 			if (telemetry)
 				addParseMs(outcome.detector, performance.now() - parseStart);
 		}

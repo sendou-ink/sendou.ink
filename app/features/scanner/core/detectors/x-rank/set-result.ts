@@ -158,6 +158,13 @@ export function createXSetResultDetector(
 		return sets.get(height) ?? null;
 	};
 
+	const gateRois = [
+		...RESULT_DARK_PROBES,
+		...RESULT_PANEL_PROBES,
+		RESULT_TILES_ROI,
+		RESULT_POWER_ROI,
+	];
+
 	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
@@ -276,6 +283,7 @@ export function createXSetResultDetector(
 
 	return {
 		id: "x-set-result",
+		gateRois,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

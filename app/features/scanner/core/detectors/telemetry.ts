@@ -26,6 +26,14 @@ export interface ScanTelemetry {
 	/** scans (workers) that matched on WebGPU, and their summed wait for GPU results */
 	gpuScans: number;
 	gpuWaitMs: number;
+	/** frames read back (VoD chunk scans), the readback helpers' summed time on them, and the analyzer's waits on readback and on decode */
+	readbacks: number;
+	/** of `readbacks`, those read as their gate ROI pixels alone, and of those, the ones fetched whole once a gate passed */
+	gateReads: number;
+	gateReadsWhole: number;
+	readbackMs: number;
+	readbackWaitMs: number;
+	decodeWaitMs: number;
 	detectors: Record<string, DetectorTelemetry>;
 }
 
@@ -39,6 +47,12 @@ export function createScanTelemetry(): ScanTelemetry {
 		wallMs: 0,
 		gpuScans: 0,
 		gpuWaitMs: 0,
+		readbacks: 0,
+		gateReads: 0,
+		gateReadsWhole: 0,
+		readbackMs: 0,
+		readbackWaitMs: 0,
+		decodeWaitMs: 0,
 		detectors: {},
 	};
 }
@@ -75,6 +89,12 @@ export function mergeScanTelemetry(
 		out.wallMs = Math.max(out.wallMs, part.wallMs);
 		out.gpuScans += part.gpuScans;
 		out.gpuWaitMs += part.gpuWaitMs;
+		out.readbacks += part.readbacks;
+		out.gateReads += part.gateReads;
+		out.gateReadsWhole += part.gateReadsWhole;
+		out.readbackMs += part.readbackMs;
+		out.readbackWaitMs += part.readbackWaitMs;
+		out.decodeWaitMs += part.decodeWaitMs;
 		for (const [id, d] of Object.entries(part.detectors)) {
 			const bucket = detectorTelemetry(out, id);
 			bucket.checks += d.checks;

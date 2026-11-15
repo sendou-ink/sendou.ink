@@ -35,7 +35,7 @@ import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import { homographyFromQuad, type PerspectiveQuad } from "../../rectify";
 import { closestBy } from "../../text";
 import { sameScoreboardMatch } from "../../timeline/same-scoreboard";
-import { createProbeWarp, warpPerspective } from "../../warp";
+import { createProbeWarp, probeWarpSources, warpPerspective } from "../../warp";
 import {
 	type BannerScoreRead,
 	FULL_COUNT_TEAM_SCORE,
@@ -178,18 +178,18 @@ export function createBattleLogDetector<TType extends string>(
 		...rois.GATE_COLOR_PROBES,
 	];
 	const gateRegion = unionRoi(gateProbes);
+	const regionProbes = gateProbes.map((roi) => ({
+		...roi,
+		x: roi.x - gateRegion.x,
+		y: roi.y - gateRegion.y,
+	}));
 	// the gate reads only its probes, so only those pixels are rectified
 	const gateWarp = homography
-		? createProbeWarp(
-				homography,
-				gateRegion,
-				gateProbes.map((roi) => ({
-					...roi,
-					x: roi.x - gateRegion.x,
-					y: roi.y - gateRegion.y,
-				})),
-			)
+		? createProbeWarp(homography, gateRegion, regionProbes)
 		: undefined;
+	const gateRois = homography
+		? probeWarpSources(homography, gateRegion, regionProbes)
+		: gateProbes;
 
 	const scaled = (set: GlyphSet | null, height: number): GlyphSet | null =>
 		set ? scaleGlyphSet(set, height / set.height) : null;
@@ -549,6 +549,7 @@ export function createBattleLogDetector<TType extends string>(
 	// the timeline merges via sameScoreboardMatch
 	return {
 		id: layout.id,
+		gateRois,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

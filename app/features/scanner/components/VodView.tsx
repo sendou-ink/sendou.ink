@@ -295,6 +295,10 @@ function VodSessionView({
 	);
 }
 
+function seconds(ms: number) {
+	return `${(ms / 1000).toFixed(1)} s`;
+}
+
 function TelemetryPanel({ telemetry }: { telemetry: ScanTelemetry }) {
 	const detectors = Object.entries(telemetry.detectors).sort(([a], [b]) =>
 		a.localeCompare(b),
@@ -313,6 +317,9 @@ function TelemetryPanel({ telemetry }: { telemetry: ScanTelemetry }) {
 					: null}
 				{telemetry.gpuScans > 0
 					? ` · WebGPU in ${telemetry.gpuScans} workers, ${formatTime(telemetry.gpuWaitMs / 1000)} waited`
+					: null}
+				{telemetry.readbacks > 0
+					? ` · ${telemetry.readbacks} frames read back (${telemetry.gateReads} as gate ROIs, ${telemetry.gateReadsWhole} of them then whole) in ${seconds(telemetry.readbackMs)}, ${seconds(telemetry.readbackWaitMs)} waited on readback, ${seconds(telemetry.decodeWaitMs)} on decode`
 					: null}
 			</summary>
 			<table>

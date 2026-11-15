@@ -14,7 +14,9 @@
  * GPU ("webgpu-bitmap"); failing that, the frame's planes copied out to a
  * CPU frame are too, at the cost of two readbacks and an upload on the GPU
  * process's main thread ("webgpu-planes"). Either is then copied in, mapped
- * back asynchronously, with no GPU-process round trip to wait on.
+ * back asynchronously, with no GPU-process round trip to wait on. A frame
+ * the scan expects every gate to fail on maps back only the gate ROI pixels
+ * (core/gate-rois.ts) and stays on the GPU until it is fetched whole or let go.
  */
 import {
 	CANONICAL_HEIGHT,
@@ -22,6 +24,7 @@ import {
 	detectContentBox,
 	detectContentBoxFromSums,
 } from "../core/canonical";
+import type * as GateRois from "../core/gate-rois";
 import type { FrameData } from "../core/image";
 import {
 	type AreaDownscaler,
@@ -33,6 +36,7 @@ import {
 	createCubicUpscaler,
 	upscalesCubic,
 } from "./cubic-upscaler";
+import { createGatherKernel, type GatherKernel } from "./gpu-gather";
 import { createGrayKernel, type GrayKernel } from "./gpu-gray";
 import { createLineSumsKernel, type LineSumsKernel } from "./gpu-line-sums";
 
@@ -46,6 +50,8 @@ const BUFFER_STORAGE = 0x0080;
 const MAP_MODE_READ = 0x0001;
 /** WebGPU texture-to-buffer copies pad each row to this many bytes */
 const ROW_ALIGNMENT = 256;
+/** Gate-only reads a readback holds on the GPU at most (an analyzer reads a few frames ahead), the oldest let go past it. */
+const MAX_HELD = 8;
 
 export type ReadbackPath = "canvas" | "webgpu-bitmap" | "webgpu-planes";
 
@@ -79,25 +85,52 @@ export function createCanvasReadback(): (
 export interface ReadFrame extends FrameData {
 	canonical?: Uint8Array;
 	gray?: Uint8Array;
+	/** how long the read took on the thread that read it */
+	readMs?: number;
 }
 
-/** Reads frames back through WebGPU (see the module header); closes `frame`. Rejects when WebGPU is unavailable. */
-export function createWebGpuReadback(): (
-	frame: VideoFrame,
-	options: { source: "bitmap" | "planes"; normalize?: boolean },
-) => Promise<ReadFrame> {
-	let device: Promise<{
-		gpu: GPUDevice;
-		upscaler: CubicUpscaler;
-		downscaler: AreaDownscaler;
-		lineSums: LineSumsKernel;
-		grayKernel: GrayKernel;
-	}> | null = null;
-	/** per frame size: a texture, and buffer pairs not in use */
-	const targets = new Map<
-		string,
-		{ texture: GPUTexture; buffers: { pixels: GPUBuffer; map: GPUBuffer }[] }
-	>();
+/** A frame read back as the gate ROI pixels of its canonical picture only (core/gate-rois.ts), the rest held on the GPU. */
+export interface GateRead {
+	width: number;
+	height: number;
+	/** RGBA, in GateRois.gather's layout */
+	gates: Uint8Array;
+	readMs?: number;
+}
+
+export interface WebGpuReadback {
+	/**
+	 * `frame` read back; given `gates`, a picture without bars that the GPU
+	 * makes canonical (1080p, or an INTER_CUBIC upscale) comes back as its gate
+	 * pixels alone, `held` naming what `whole` or `release` takes next. Closes
+	 * `frame`; rejects when WebGPU is unavailable.
+	 */
+	read(
+		frame: VideoFrame,
+		options: {
+			source: "bitmap" | "planes";
+			normalize?: boolean;
+			gates?: GateRois.GateSpans | null;
+		},
+	): Promise<ReadFrame | (GateRead & { held: number })>;
+	/** A held frame read back as a plain `read` would have: the canonical picture and its gray with it. */
+	whole(held: number): Promise<ReadFrame>;
+	/** Lets a held frame go unread. */
+	release(held: number): void;
+}
+
+/** Reads frames back through WebGPU (see the module header). */
+export function createWebGpuReadback(): WebGpuReadback {
+	let device: Promise<GpuKernels> | null = null;
+	/** per frame size: a texture, and buffers not in use */
+	const targets = new Map<string, Target>();
+	/** gate-only reads whose pixels stay on the GPU until whole or release */
+	const held = new Map<number, HeldPixels>();
+	let nextHeld = 0;
+	let gatherCache: {
+		spans: GateRois.GateSpans;
+		kernel: Promise<GatherKernel>;
+	} | null = null;
 	const getDevice = () => {
 		if (!device) {
 			const created = (async () => {
@@ -106,7 +139,9 @@ export function createWebGpuReadback(): (
 				const gpu = await adapter.requestDevice();
 				void gpu.lost.then(() => {
 					device = null;
+					gatherCache = null;
 					targets.clear();
+					held.clear();
 				});
 				return {
 					gpu,
@@ -123,166 +158,105 @@ export function createWebGpuReadback(): (
 		}
 		return device;
 	};
-	return async (frame, { source: from, normalize = true }) => {
-		const width = frame.displayWidth;
-		const height = frame.displayHeight;
-		try {
-			const [{ gpu, upscaler, downscaler, lineSums, grayKernel }, source] =
-				await Promise.all([
+	const gatherKernel = (gpu: GPUDevice, spans: GateRois.GateSpans) => {
+		if (gatherCache?.spans !== spans) {
+			gatherCache = { spans, kernel: createGatherKernel(gpu, spans) };
+		}
+		return gatherCache.kernel;
+	};
+	const releaseHeld = (pixels: HeldPixels) => {
+		pixels.target.pixels.push(pixels.pixels);
+		if (pixels.upscaled) pixels.kernels.upscaler.release(pixels.upscaled.read);
+	};
+
+	return {
+		async read(frame, { source: from, normalize = true, gates }) {
+			const width = frame.displayWidth;
+			const height = frame.displayHeight;
+			try {
+				const gateOnly =
+					gates &&
+					normalize &&
+					((width === CANONICAL_WIDTH && height === CANONICAL_HEIGHT) ||
+						upscalesCubic(width, height));
+				const [kernels, source] = await Promise.all([
 					getDevice(),
 					from === "bitmap" ? createImageBitmap(frame) : cpuCopy(frame),
 				]);
-			const key = `${width}x${height}`;
-			let target = targets.get(key);
-			if (!target) {
-				target = {
-					texture: gpu.createTexture({
-						size: [width, height],
-						format: "rgba8unorm",
-						usage:
-							TEXTURE_COPY_SRC | TEXTURE_COPY_DST | TEXTURE_RENDER_ATTACHMENT,
-					}),
-					buffers: [],
-				};
-				targets.set(key, target);
-			}
-			const bytesPerRow =
-				Math.ceil((width * 4) / ROW_ALIGNMENT) * ROW_ALIGNMENT;
-			const buffers = target.buffers.pop() ?? {
-				pixels: gpu.createBuffer({
-					size: bytesPerRow * height,
-					usage: BUFFER_STORAGE | BUFFER_COPY_SRC | BUFFER_COPY_DST,
-				}),
-				map: gpu.createBuffer({
-					size: bytesPerRow * height,
-					usage: BUFFER_MAP_READ | BUFFER_COPY_DST,
-				}),
-			};
-			try {
-				gpu.queue.copyExternalImageToTexture(
-					{ source },
-					{ texture: target.texture },
-					[width, height],
-				);
-			} finally {
-				source.close();
-			}
-			// a picture without bars is resized in the same submission, as it
-			// most likely is; one with bars takes a second round trip. A 2160p
-			// picture maps only its downscale and line sums unless it has bars
-			const fullFrame = { x: 0, y: 0, w: width, h: height };
-			const stride = bytesPerRow / 4;
-			const halves = normalize && halvesArea(width, height);
-			gpu.pushErrorScope("validation");
-			const encoder = gpu.createCommandEncoder();
-			encoder.copyTextureToBuffer(
-				{ texture: target.texture },
-				{ buffer: buffers.pixels, bytesPerRow },
-				[width, height],
-			);
-			if (!halves) copyToMap(encoder, buffers);
-			const speculative = halves
-				? {
-						...downscaler.encode(encoder, buffers.pixels, stride),
-						release: downscaler.release,
-					}
-				: normalize && upscalesCubic(width, height)
-					? {
-							...upscaler.encode(encoder, {
-								buffer: buffers.pixels,
-								stride,
-								box: fullFrame,
-							}),
-							release: upscaler.release,
-						}
+				const { gpu } = kernels;
+				// awaited before the texture is written: from then on to the copy
+				// out of it nothing may wait, or another read overwrites it
+				// (a kernel that fails to build leaves every read whole)
+				const gather = gateOnly
+					? await gatherKernel(gpu, gates).catch(() => null)
 					: null;
-			const canonicalSource = speculative
-				? { buffer: speculative.canonical, stride: CANONICAL_WIDTH }
-				: width === CANONICAL_WIDTH && height === CANONICAL_HEIGHT
-					? { buffer: buffers.pixels, stride }
-					: null;
-			const grayRead = canonicalSource
-				? grayKernel.encode(
-						encoder,
-						canonicalSource.buffer,
-						canonicalSource.stride,
-					)
-				: null;
-			const lines = halves
-				? lineSums.encode(encoder, buffers.pixels, {
-						stride,
-						w: width,
-						h: height,
-					})
-				: null;
-			gpu.queue.submit([encoder.finish()]);
-			const [submitError, , scaled, gray, sums] = await Promise.all([
-				gpu.popErrorScope(),
-				halves ? null : buffers.map.mapAsync(MAP_MODE_READ),
-				speculative
-					? mapCopy(speculative.read, () =>
-							speculative.release(speculative.read),
-						)
-					: null,
-				grayRead ? mapCopy(grayRead, () => grayKernel.release(grayRead)) : null,
-				lines?.read(),
-			]);
-			if (submitError) throw new Error(`readback: ${submitError.message}`);
-			if (sums && scaled && !detectContentBoxFromSums(width, height, sums)) {
-				target.buffers.push(buffers);
-				return {
-					width: CANONICAL_WIDTH,
-					height: CANONICAL_HEIGHT,
-					data: new Uint8ClampedArray(scaled.buffer),
-					canonical: scaled,
-					gray: gray ?? undefined,
-				};
-			}
-			if (halves) {
-				gpu.pushErrorScope("validation");
-				const mapEncoder = gpu.createCommandEncoder();
-				copyToMap(mapEncoder, buffers);
-				gpu.queue.submit([mapEncoder.finish()]);
-				const [mapError] = await Promise.all([
-					gpu.popErrorScope(),
-					buffers.map.mapAsync(MAP_MODE_READ),
-				]);
-				if (mapError) throw new Error(`readback: ${mapError.message}`);
-			}
-			const mapped = new Uint8Array(buffers.map.getMappedRange());
-			const data = new Uint8ClampedArray(width * height * 4);
-			if (bytesPerRow === width * 4) data.set(mapped);
-			else {
-				for (let y = 0; y < height; y++) {
-					data.set(
-						mapped.subarray(y * bytesPerRow, y * bytesPerRow + width * 4),
-						y * width * 4,
-					);
+				const key = `${width}x${height}`;
+				let target = targets.get(key);
+				if (!target) {
+					target = {
+						texture: gpu.createTexture({
+							size: [width, height],
+							format: "rgba8unorm",
+							usage:
+								TEXTURE_COPY_SRC | TEXTURE_COPY_DST | TEXTURE_RENDER_ATTACHMENT,
+						}),
+						pixels: [],
+						maps: [],
+					};
+					targets.set(key, target);
 				}
+				const bytesPerRow =
+					Math.ceil((width * 4) / ROW_ALIGNMENT) * ROW_ALIGNMENT;
+				const picture: Picture = {
+					width,
+					height,
+					bytesPerRow,
+					stride: bytesPerRow / 4,
+					target,
+					pixels:
+						target.pixels.pop() ??
+						gpu.createBuffer({
+							size: bytesPerRow * height,
+							usage: BUFFER_STORAGE | BUFFER_COPY_SRC | BUFFER_COPY_DST,
+						}),
+				};
+				try {
+					gpu.queue.copyExternalImageToTexture(
+						{ source },
+						{ texture: target.texture },
+						[width, height],
+					);
+				} finally {
+					source.close();
+				}
+				if (!gather) return await readWhole(kernels, picture, normalize);
+				const gateRead = await readGates(kernels, gather, picture);
+				if ("data" in gateRead) return gateRead;
+				const id = nextHeld++;
+				held.set(id, gateRead.held);
+				// reads nobody comes back for must not pile up on the GPU
+				for (const [oldest, pixels] of held) {
+					if (held.size <= MAX_HELD) break;
+					held.delete(oldest);
+					releaseHeld(pixels);
+				}
+				return { width, height, gates: gateRead.gates, held: id };
+			} finally {
+				frame.close();
 			}
-			buffers.map.unmap();
-			const box = detectContentBox(width, height, data);
-			let canonical: Uint8Array | undefined;
-			if (!box) canonical = scaled ?? undefined;
-			else if (normalize && upscalesCubic(box.w, box.h)) {
-				canonical = await upscaler.upscale({
-					buffer: buffers.pixels,
-					stride,
-					box,
-				});
-			}
-			target.buffers.push(buffers);
-			// the gray is of the picture as it stands: only right without bars
-			return {
-				width,
-				height,
-				data,
-				canonical,
-				gray: box ? undefined : (gray ?? undefined),
-			};
-		} finally {
-			frame.close();
-		}
+		},
+		async whole(id) {
+			const pixels = held.get(id);
+			if (!pixels) throw new Error("readback: the frame is no longer held");
+			held.delete(id);
+			return readHeldWhole(pixels);
+		},
+		release(id) {
+			const pixels = held.get(id);
+			if (!pixels) return;
+			held.delete(id);
+			releaseHeld(pixels);
+		},
 	};
 }
 
@@ -290,27 +264,45 @@ export function createWebGpuReadback(): (
 export function readThrough(
 	readers: {
 		canvas: ReturnType<typeof createCanvasReadback>;
-		webgpu: ReturnType<typeof createWebGpuReadback>;
+		webgpu: WebGpuReadback;
 	},
 	frame: VideoFrame,
 	{ path, normalize }: Required<ReadOptions>,
-): Promise<ReadFrame> {
-	if (path === "canvas") return Promise.resolve(readers.canvas(frame));
-	return readers.webgpu(frame, {
-		source: path === "webgpu-bitmap" ? "bitmap" : "planes",
-		normalize,
-	});
+	gates: GateRois.GateSpans | null = null,
+): Promise<ReadFrame | (GateRead & { held: number })> {
+	const start = performance.now();
+	const read =
+		path === "canvas"
+			? Promise.resolve(readers.canvas(frame))
+			: readers.webgpu.read(frame, {
+					source: path === "webgpu-bitmap" ? "bitmap" : "planes",
+					normalize,
+					gates,
+				});
+	return read.then((pixels) => ({
+		...pixels,
+		readMs: performance.now() - start,
+	}));
 }
 
-export interface ReadbackRequest {
-	id: number;
-	frame: VideoFrame;
-	path: ReadbackPath;
-	normalize: boolean;
-}
+export type ReadbackRequest =
+	| {
+			kind: "read";
+			id: number;
+			frame: VideoFrame;
+			path: ReadbackPath;
+			normalize: boolean;
+			/** the gate pixels alone, where the picture allows it */
+			gates: boolean;
+	  }
+	/** the gate ROIs every `gates` read packs from then on */
+	| { kind: "gates"; spans: GateRois.GateSpans }
+	| { kind: "whole"; id: number; held: number }
+	| { kind: "release"; held: number };
 
 export type ReadbackResponse =
 	| ({ id: number } & ReadFrame)
+	| ({ id: number; held: number } & GateRead)
 	| { id: number; error: string };
 
 export interface ReadOptions {
@@ -319,9 +311,22 @@ export interface ReadOptions {
 	normalize?: boolean;
 }
 
+/** A frame read back as its gate pixels (GateRead), the rest still to fetch or let go; one of the two must follow. */
+export interface HeldFrame extends GateRead {
+	/** the frame as `read` would have returned it */
+	whole(): Promise<ReadFrame>;
+	release(): void;
+}
+
 export interface FrameReader {
 	/** RGBA of `frame`, read off this thread when possible; takes ownership of `frame`. */
 	read(frame: VideoFrame, options?: ReadOptions): Promise<ReadFrame>;
+	/** `read`, or the gate pixels of `spans` alone where the readback can hold the rest on the GPU. */
+	readGates(
+		frame: VideoFrame,
+		spans: GateRois.GateSpans,
+		options?: ReadOptions,
+	): Promise<ReadFrame | HeldFrame>;
 	dispose(): void;
 }
 
@@ -331,13 +336,23 @@ export function createFrameReaderPool(count: number): FrameReader {
 		reader: createFrameReader(),
 		inFlight: 0,
 	}));
+	const leastBusy = () => {
+		const target = readers.reduce((best, candidate) =>
+			candidate.inFlight < best.inFlight ? candidate : best,
+		);
+		target.inFlight++;
+		return target;
+	};
 	return {
 		read(frame, options) {
-			const target = readers.reduce((best, candidate) =>
-				candidate.inFlight < best.inFlight ? candidate : best,
-			);
-			target.inFlight++;
+			const target = leastBusy();
 			return target.reader.read(frame, options).finally(() => {
+				target.inFlight--;
+			});
+		},
+		readGates(frame, spans, options) {
+			const target = leastBusy();
+			return target.reader.readGates(frame, spans, options).finally(() => {
 				target.inFlight--;
 			});
 		},
@@ -347,11 +362,262 @@ export function createFrameReaderPool(count: number): FrameReader {
 	};
 }
 
-function copyToMap(
-	encoder: GPUCommandEncoder,
-	{ pixels, map }: { pixels: GPUBuffer; map: GPUBuffer },
-) {
+interface GpuKernels {
+	gpu: GPUDevice;
+	upscaler: CubicUpscaler;
+	downscaler: AreaDownscaler;
+	lineSums: LineSumsKernel;
+	grayKernel: GrayKernel;
+}
+
+/** One frame size's texture and the buffers of reads not in flight. */
+interface Target {
+	texture: GPUTexture;
+	pixels: GPUBuffer[];
+	maps: GPUBuffer[];
+}
+
+/** A frame being read: its size and the storage buffer it is copied to. */
+interface Picture {
+	width: number;
+	height: number;
+	bytesPerRow: number;
+	/** `bytesPerRow` in pixels */
+	stride: number;
+	target: Target;
+	pixels: GPUBuffer;
+}
+
+/** A gate-only read's pixels on the GPU: the frame copied out, and its canonical upscale when it has one. */
+interface HeldPixels extends Picture {
+	kernels: GpuKernels;
+	upscaled: { canonical: GPUBuffer; read: GPUBuffer } | null;
+}
+
+/**
+ * The frame in `picture` read back whole, the canonical picture and its gray
+ * with it where the GPU makes them. `copied`: its pixels are in the storage
+ * buffer already (the texture may hold another frame by now).
+ */
+async function readWhole(
+	{ gpu, upscaler, downscaler, lineSums, grayKernel }: GpuKernels,
+	picture: Picture,
+	normalize: boolean,
+	copied = false,
+): Promise<ReadFrame> {
+	const { width, height, bytesPerRow, stride, target, pixels } = picture;
+	const map = takeMap(gpu, target, pixels.size);
+	// a picture without bars is resized in the same submission, as it
+	// most likely is; one with bars takes a second round trip. A 2160p
+	// picture maps only its downscale and line sums unless it has bars
+	const fullFrame = { x: 0, y: 0, w: width, h: height };
+	const halves = normalize && halvesArea(width, height);
+	gpu.pushErrorScope("validation");
+	const encoder = gpu.createCommandEncoder();
+	if (!copied) {
+		encoder.copyTextureToBuffer(
+			{ texture: target.texture },
+			{ buffer: pixels, bytesPerRow },
+			[width, height],
+		);
+	}
+	if (!halves) encoder.copyBufferToBuffer(pixels, 0, map, 0, pixels.size);
+	const speculative = halves
+		? {
+				...downscaler.encode(encoder, pixels, stride),
+				release: downscaler.release,
+			}
+		: normalize && upscalesCubic(width, height)
+			? {
+					...upscaler.encode(encoder, {
+						buffer: pixels,
+						stride,
+						box: fullFrame,
+					}),
+					release: upscaler.release,
+				}
+			: null;
+	const canonicalSource = speculative
+		? { buffer: speculative.canonical, stride: CANONICAL_WIDTH }
+		: width === CANONICAL_WIDTH && height === CANONICAL_HEIGHT
+			? { buffer: pixels, stride }
+			: null;
+	const grayRead = canonicalSource
+		? grayKernel.encode(encoder, canonicalSource.buffer, canonicalSource.stride)
+		: null;
+	const lines = halves
+		? lineSums.encode(encoder, pixels, { stride, w: width, h: height })
+		: null;
+	gpu.queue.submit([encoder.finish()]);
+	const [submitError, , scaled, gray, sums] = await Promise.all([
+		gpu.popErrorScope(),
+		halves ? null : map.mapAsync(MAP_MODE_READ),
+		speculative
+			? mapCopy(speculative.read, () => speculative.release(speculative.read))
+			: null,
+		grayRead ? mapCopy(grayRead, () => grayKernel.release(grayRead)) : null,
+		lines?.read(),
+	]);
+	if (submitError) throw new Error(`readback: ${submitError.message}`);
+	if (sums && scaled && !detectContentBoxFromSums(width, height, sums)) {
+		target.pixels.push(pixels);
+		target.maps.push(map);
+		return {
+			width: CANONICAL_WIDTH,
+			height: CANONICAL_HEIGHT,
+			data: new Uint8ClampedArray(scaled.buffer),
+			canonical: scaled,
+			gray: gray ?? undefined,
+		};
+	}
+	if (halves) {
+		gpu.pushErrorScope("validation");
+		const mapEncoder = gpu.createCommandEncoder();
+		mapEncoder.copyBufferToBuffer(pixels, 0, map, 0, pixels.size);
+		gpu.queue.submit([mapEncoder.finish()]);
+		const [mapError] = await Promise.all([
+			gpu.popErrorScope(),
+			map.mapAsync(MAP_MODE_READ),
+		]);
+		if (mapError) throw new Error(`readback: ${mapError.message}`);
+	}
+	const data = mappedPixels(map, width, height, bytesPerRow);
+	const box = detectContentBox(width, height, data);
+	let canonical: Uint8Array | undefined;
+	if (!box) canonical = scaled ?? undefined;
+	else if (normalize && upscalesCubic(box.w, box.h)) {
+		canonical = await upscaler.upscale({ buffer: pixels, stride, box });
+	}
+	target.pixels.push(pixels);
+	target.maps.push(map);
+	// the gray is of the picture as it stands: only right without bars
+	return {
+		width,
+		height,
+		data,
+		canonical,
+		gray: box ? undefined : (gray ?? undefined),
+	};
+}
+
+/**
+ * The gate pixels of the canonical picture in `picture` (1080p or an
+ * INTER_CUBIC upscale), the frame held on the GPU; a frame with bars, whose
+ * canonical picture is a crop, is read whole instead.
+ */
+async function readGates(
+	kernels: GpuKernels,
+	gather: GatherKernel,
+	picture: Picture,
+): Promise<ReadFrame | { gates: Uint8Array; held: HeldPixels }> {
+	const { gpu, upscaler, lineSums } = kernels;
+	const { width, height, bytesPerRow, stride, target, pixels } = picture;
+	gpu.pushErrorScope("validation");
+	const encoder = gpu.createCommandEncoder();
+	encoder.copyTextureToBuffer(
+		{ texture: target.texture },
+		{ buffer: pixels, bytesPerRow },
+		[width, height],
+	);
+	const upscaled = upscalesCubic(width, height)
+		? upscaler.encode(
+				encoder,
+				{ buffer: pixels, stride, box: { x: 0, y: 0, w: width, h: height } },
+				{ mapped: false },
+			)
+		: null;
+	const packed = upscaled
+		? gather.encode(encoder, upscaled.canonical, CANONICAL_WIDTH)
+		: gather.encode(encoder, pixels, stride);
+	const lines = lineSums.encode(encoder, pixels, {
+		stride,
+		w: width,
+		h: height,
+	});
+	gpu.queue.submit([encoder.finish()]);
+	const [submitError, gates, sums] = await Promise.all([
+		gpu.popErrorScope(),
+		packed.read(),
+		lines.read(),
+	]);
+	const bars = detectContentBoxFromSums(width, height, sums) !== null;
+	if (upscaled && (submitError || bars)) upscaler.release(upscaled.read);
+	if (submitError) throw new Error(`readback: ${submitError.message}`);
+	// the canonical picture of a frame with bars is a crop: read it whole
+	if (bars) return readWhole(kernels, picture, true, true);
+	return { gates, held: { ...picture, kernels, upscaled } };
+}
+
+/** What readWhole returns for a held frame (no bars, by its line sums), read from the buffers it holds. */
+async function readHeldWhole({
+	kernels: { gpu, upscaler, grayKernel },
+	width,
+	height,
+	bytesPerRow,
+	stride,
+	target,
+	pixels,
+	upscaled,
+}: HeldPixels): Promise<ReadFrame> {
+	const map = takeMap(gpu, target, pixels.size);
+	gpu.pushErrorScope("validation");
+	const encoder = gpu.createCommandEncoder();
 	encoder.copyBufferToBuffer(pixels, 0, map, 0, pixels.size);
+	if (upscaled) {
+		encoder.copyBufferToBuffer(
+			upscaled.canonical,
+			0,
+			upscaled.read,
+			0,
+			upscaled.canonical.size,
+		);
+	}
+	const grayRead = upscaled
+		? grayKernel.encode(encoder, upscaled.canonical, CANONICAL_WIDTH)
+		: grayKernel.encode(encoder, pixels, stride);
+	gpu.queue.submit([encoder.finish()]);
+	const [submitError, , canonical, gray] = await Promise.all([
+		gpu.popErrorScope(),
+		map.mapAsync(MAP_MODE_READ),
+		upscaled
+			? mapCopy(upscaled.read, () => upscaler.release(upscaled.read))
+			: null,
+		mapCopy(grayRead, () => grayKernel.release(grayRead)),
+	]);
+	if (submitError) throw new Error(`readback: ${submitError.message}`);
+	const data = mappedPixels(map, width, height, bytesPerRow);
+	target.pixels.push(pixels);
+	target.maps.push(map);
+	return { width, height, data, canonical: canonical ?? undefined, gray };
+}
+
+function takeMap(gpu: GPUDevice, target: Target, size: number): GPUBuffer {
+	return (
+		target.maps.pop() ??
+		gpu.createBuffer({ size, usage: BUFFER_MAP_READ | BUFFER_COPY_DST })
+	);
+}
+
+/** RGBA of a mapped frame copy with padded rows; unmaps it. */
+function mappedPixels(
+	map: GPUBuffer,
+	width: number,
+	height: number,
+	bytesPerRow: number,
+): Uint8ClampedArray {
+	const mapped = new Uint8Array(map.getMappedRange());
+	const data = new Uint8ClampedArray(width * height * 4);
+	if (bytesPerRow === width * 4) data.set(mapped);
+	else {
+		for (let y = 0; y < height; y++) {
+			data.set(
+				mapped.subarray(y * bytesPerRow, y * bytesPerRow + width * 4),
+				y * width * 4,
+			);
+		}
+	}
+	map.unmap();
+	return data;
 }
 
 /** A mapped copy of `read`'s contents; `done` runs once it is unmapped (or failed). */
@@ -380,23 +646,36 @@ function createFrameReader(): FrameReader {
 	} catch {
 		worker = null;
 	}
+	/** the spans the worker was last given */
+	let workerSpans: GateRois.GateSpans | null = null;
 	let nextId = 0;
-	/** in-flight reads, each holding a clone of its frame until answered */
+	/** in-flight requests; a read holds a clone of its frame until answered */
 	const pending = new Map<
 		number,
 		{
-			backup: VideoFrame;
-			options: Required<ReadOptions>;
-			resolve: (data: ReadFrame) => void;
+			retry: (() => Promise<ReadFrame | HeldFrame>) | null;
+			resolve: (data: ReadFrame | HeldFrame) => void;
 			reject: (error: unknown) => void;
 		}
 	>();
+	const heldLocally = (
+		read: ReadFrame | (GateRead & { held: number }),
+	): ReadFrame | HeldFrame => {
+		if (!("held" in read)) return read;
+		const { held, ...gateRead } = read;
+		return {
+			...gateRead,
+			whole: () => local.webgpu.whole(held),
+			release: () => local.webgpu.release(held),
+		};
+	};
 	const readLocally = (
 		frame: VideoFrame,
-		{ path, normalize }: Required<ReadOptions>,
+		options: Required<ReadOptions>,
+		spans: GateRois.GateSpans | null,
 	) => {
 		try {
-			return readThrough(local, frame, { path, normalize });
+			return readThrough(local, frame, options, spans).then(heldLocally);
 		} catch (error) {
 			return Promise.reject(error);
 		}
@@ -405,11 +684,33 @@ function createFrameReader(): FrameReader {
 	const abandonWorker = () => {
 		worker?.terminate();
 		worker = null;
-		for (const { backup, options, resolve, reject } of pending.values()) {
-			readLocally(backup, options).then(resolve, reject);
+		for (const { retry, resolve, reject } of pending.values()) {
+			if (retry) retry().then(resolve, reject);
+			else reject(new Error("readback worker failed"));
 		}
 		pending.clear();
 	};
+	const heldInWorker = (held: number, gateRead: GateRead): HeldFrame => ({
+		...gateRead,
+		whole() {
+			if (!worker) {
+				return Promise.reject(new Error("readback worker failed"));
+			}
+			const id = nextId++;
+			const result = new Promise<ReadFrame | HeldFrame>((resolve, reject) => {
+				pending.set(id, { retry: null, resolve, reject });
+			});
+			worker.postMessage({
+				kind: "whole",
+				id,
+				held,
+			} satisfies ReadbackRequest);
+			return result as Promise<ReadFrame>;
+		},
+		release() {
+			worker?.postMessage({ kind: "release", held } satisfies ReadbackRequest);
+		},
+	});
 	if (worker) {
 		worker.onmessage = (e: MessageEvent<ReadbackResponse>) => {
 			const response = e.data;
@@ -417,35 +718,63 @@ function createFrameReader(): FrameReader {
 			if (!waiter) return;
 			pending.delete(response.id);
 			if ("error" in response) {
-				readLocally(waiter.backup, waiter.options).then(
-					waiter.resolve,
-					waiter.reject,
-				);
+				if (waiter.retry) waiter.retry().then(waiter.resolve, waiter.reject);
+				else waiter.reject(new Error(response.error));
 				return;
 			}
-			waiter.backup.close();
-			waiter.resolve(response);
+			if ("held" in response) {
+				const { id: _, held, ...gateRead } = response;
+				waiter.resolve(heldInWorker(held, gateRead));
+			} else {
+				waiter.resolve(response);
+			}
 		};
 		worker.onerror = abandonWorker;
 	}
+	const request = (
+		frame: VideoFrame,
+		{ path = "canvas", normalize = true }: ReadOptions,
+		spans: GateRois.GateSpans | null,
+	): Promise<ReadFrame | HeldFrame> => {
+		const options = { path, normalize };
+		if (!worker) return readLocally(frame, options, spans);
+		if (spans && spans !== workerSpans) {
+			worker.postMessage({ kind: "gates", spans } satisfies ReadbackRequest);
+			workerSpans = spans;
+		}
+		const id = nextId++;
+		const backup = frame.clone();
+		const result = new Promise<ReadFrame | HeldFrame>((resolve, reject) => {
+			pending.set(id, {
+				retry: () => readLocally(backup, options, spans),
+				resolve,
+				reject,
+			});
+		});
+		worker.postMessage(
+			{
+				kind: "read",
+				id,
+				frame,
+				...options,
+				gates: spans !== null,
+			} satisfies ReadbackRequest,
+			{ transfer: [frame] },
+		);
+		// the backup is closed once the read is answered (or read in its place)
+		return result.finally(() => backup.close());
+	};
 	return {
-		read(frame, { path = "canvas", normalize = true } = {}) {
-			const options = { path, normalize };
-			if (!worker) return readLocally(frame, options);
-			const id = nextId++;
-			const result = new Promise<ReadFrame>((resolve, reject) => {
-				pending.set(id, { backup: frame.clone(), options, resolve, reject });
-			});
-			worker.postMessage({ id, frame, ...options } satisfies ReadbackRequest, {
-				transfer: [frame],
-			});
-			return result;
+		read(frame, options = {}) {
+			return request(frame, options, null) as Promise<ReadFrame>;
+		},
+		readGates(frame, spans, options = {}) {
+			return request(frame, options, spans);
 		},
 		dispose() {
 			worker?.terminate();
 			worker = null;
-			for (const { backup, reject } of pending.values()) {
-				backup.close();
+			for (const { reject } of pending.values()) {
 				reject(new Error("frame reader disposed"));
 			}
 			pending.clear();

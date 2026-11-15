@@ -63,6 +63,7 @@ function countingDetector(type: "Kill" | "Death" = "Kill") {
 	};
 	const detector: Detector<DetectedEvent> = {
 		id: "counting",
+		gateRois: [],
 		gate: (frame) => {
 			gates++;
 			return { pass: (frame as unknown as Picture).lit, score: 1 };

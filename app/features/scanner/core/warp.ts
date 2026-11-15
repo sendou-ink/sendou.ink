@@ -144,6 +144,41 @@ export function createProbeWarp(
 	};
 }
 
+/**
+ * The frame pixels `createProbeWarp(h, region, rois)` reads: per ROI, the
+ * box its pixels' bilinear taps fall in (clamped to the canonical frame).
+ */
+export function probeWarpSources(
+	h: Homography,
+	region: Roi,
+	rois: readonly Roi[],
+): Roi[] {
+	const M = perspectiveInverse(h, region);
+	return rois.map((roi) => {
+		let left = Number.POSITIVE_INFINITY;
+		let top = Number.POSITIVE_INFINITY;
+		let right = Number.NEGATIVE_INFINITY;
+		let bottom = Number.NEGATIVE_INFINITY;
+		for (let y = roi.y; y < roi.y + roi.h; y++) {
+			for (let x = roi.x; x < roi.x + roi.w; x++) {
+				const [sx, sy] = projected(M, x, y);
+				left = Math.min(left, Math.floor(sx));
+				top = Math.min(top, Math.floor(sy));
+				right = Math.max(right, Math.floor(sx) + 2);
+				bottom = Math.max(bottom, Math.floor(sy) + 2);
+			}
+		}
+		const x = Math.max(0, left);
+		const y = Math.max(0, top);
+		return {
+			x,
+			y,
+			w: Math.min(CANONICAL_WIDTH, right) - x,
+			h: Math.min(CANONICAL_HEIGHT, bottom) - y,
+		};
+	});
+}
+
 function warp(
 	src: Image,
 	cols: number,

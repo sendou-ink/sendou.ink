@@ -1,5 +1,5 @@
 import type { FieldScores } from "../field-scores";
-import type { Image } from "../image";
+import type { Image, Roi } from "../image";
 import type { MatchSteps } from "../match-steps";
 
 /** One read of an event kind; `DetectedEvent` (core/events.ts) is the union over every kind. */
@@ -143,6 +143,14 @@ export interface Detector<TEvent extends EventRecord = EventRecord> {
 	/** false = events ship without the frame PNG; for continuously firing events that would balloon IndexedDB */
 	attachFrame?: boolean;
 	gate(frame: Image): GateResult;
+	/**
+	 * Every pixel a failing gate decides from, in canonical space: a frame
+	 * holding only these fails the gate as the whole frame does
+	 * (`tests/gate-rois.test.ts`). The VoD scan reads back only them where it
+	 * expects every gate to fail; a gate that passes on them is run again on
+	 * the whole frame, so what it reads only on a pass (a signature) is free.
+	 */
+	gateRois: readonly Roi[];
 	parse(frame: Image, t: number, gate?: GateResult): TEvent[];
 	/**
 	 * parse() as match steps (match-steps.ts) for a batching driver; `parse`

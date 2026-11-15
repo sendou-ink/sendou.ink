@@ -222,6 +222,8 @@ export function createKillDetector(
 		];
 	}
 
+	const gateRois = [...darkProbes(0), skullRoi(0), textRoi(0)];
+
 	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 		const checks = rowChecks(gray, 0);
@@ -345,6 +347,7 @@ export function createKillDetector(
 	// steady-frame suppression (a row samples several times before expiring)
 	return {
 		id: "kill",
+		gateRois,
 		checkIntervalS: 0.5,
 		gate,
 		parse: (frame, t, gateResult) =>

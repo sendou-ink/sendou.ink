@@ -248,6 +248,21 @@ export class DetectorScheduler {
 		return { t, detectors };
 	}
 
+	/**
+	 * Whether a detector that would be due at `t` as things stand passed its
+	 * last gate: a hint for reading a frame back whole rather than its gate
+	 * ROIs alone, never a decision.
+	 */
+	expectsGatePass(t: number): boolean {
+		for (const state of this.#states.values()) {
+			if (!state.gatePassing || state.lastCheckT === undefined) continue;
+			if (t - state.lastCheckT >= this.#interval(state) - INTERVAL_EPSILON_S) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/** Detector ids that should gate the frame at `t`. */
 	dueDetectors(t: number): string[] {
 		if (t + RESET_TOLERANCE_S < this.#maxT) this.reset(t);

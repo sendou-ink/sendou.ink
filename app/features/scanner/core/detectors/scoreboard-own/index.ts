@@ -131,6 +131,12 @@ export function createScoreboardOwnDetector(
 	// built on first use (the resource getter memoizes it)
 	const abilities = () => resources.ownAbilities ?? null;
 
+	const gateRois = [
+		...GATE_PANEL_PROBES,
+		...GATE_TITLE_TEXT_PROBES,
+		...Array.from({ length: GEAR_ROWS }, (_, row) => gateStripProbe(row)),
+	];
+
 	function gate(frame: Image): GateResult {
 		let panelOk = 0;
 		for (const roi of GATE_PANEL_PROBES) {
@@ -325,6 +331,7 @@ export function createScoreboardOwnDetector(
 
 	return {
 		id: "scoreboard-own",
+		gateRois,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

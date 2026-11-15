@@ -724,7 +724,8 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   PNG per repeat read cost more than the parse once the kill feed re-read
   its stack twice a second. Frames no
   detector is due for skip canvas readback, and everything is counted in
-  `core/detectors/telemetry.ts` — but only when a VoD is scanned with
+  `core/detectors/telemetry.ts` (readbacks and the analyzer's waits on
+  readback and on decode included) — but only when a VoD is scanned with
   `?telemetry=true` in the URL (nothing links there) by a debug user;
   otherwise the workers skip collection and the panel stays hidden. A match's objective reads render
   as one step-line timeline
@@ -790,6 +791,29 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   second trip) and converts the canonical picture to gray
   (`worker/gpu-gray.ts`, bit-identical to `frameGray`), so the analyzer
   starts its gates with neither left to do.
+- Gate-only reads (`core/gate-rois.ts`): most analyzed frames fail every
+  gate, and their gates read a fifth of the picture. Every detector declares
+  the pixels its gate decides from (`Detector.gateRois`), and a frame the
+  scheduler expects no gate to pass on (`expectsGatePass`: no detector due
+  then passed its last gate) is read back as those pixels alone: the WebGPU
+  readback packs them out of the canonical picture (`worker/gpu-gather.ts`,
+  a 1080p frame or an INTER_CUBIC upscale, line sums for the bars in the
+  same submission) and holds the frame on the GPU. The analyzer lays them out
+  as a black canonical frame and gates it; the first gate that passes on it
+  fetches the frame whole (`wholeFrame` in the frame pass) and runs again on
+  it, and so do the gates after it and the parses. Otherwise the frame is let
+  go. `tests/gate-rois.test.ts` holds every gate to its ROIs: on each fixture
+  with every other pixel random, a failing gate fails with the same result
+  and a passing one passes. A gate's pass-only reads (the signatures) need no
+  declaring. A frame with bars, a 2160p one, the canvas path and live frames
+  are read whole as before. Measured 2026-11-14 (M5 Pro, GPU matcher on, 4
+  lanes, 10 min slices, two runs): of ~4,800 reads 75-80% gate-only, 25-53
+  of them fetched whole afterwards; the lanes' summed wait on readback 23-30
+  s → 8-9 s, wall-clock H.264 1080p60 30.0/32.1 → 25.6/26.6 s, AV1 1080p60
+  35.9/30.6 → 28.0/25.9 s, H.264 720p60 22.1/17.7 → 21.0/16.7 s, and the
+  raw detections byte-identical either way. There is no content box cache:
+  the line sums find the bars of every frame on the GPU, and a cached box
+  would make a read depend on earlier frames.
 - Recognition is language-agnostic: OCR output snaps against every game
   language at once (`core/localized-entries.ts`, generated) and events carry
   sendou ids. English display names come from `core/labels.ts`.
@@ -821,7 +845,8 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   card, and its covered ability badges (~0.2, clean ones 0.45+) read
   UNKNOWN and are left unscored.
 - New event types implement `Detector` (`core/detectors/types.ts`): a cheap
-  `gate(frame)` at sample rate plus `parseSteps` (match steps, see "WebGPU")
+  `gate(frame)` at sample rate, the `gateRois` it decides from (see
+  "Gate-only reads"), plus `parseSteps` (match steps, see "WebGPU")
   when the gate fires, `parse` being `runSync` of it. Register in
   `core/detectors/registry.ts`.
 - Every event type is declared once, next to its detector, as an `EventKind`

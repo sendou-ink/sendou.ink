@@ -107,6 +107,12 @@ export function createXRankPositionDetector(
 		return digits;
 	};
 
+	const gateRois = [
+		...POSITION_DARK_PROBES,
+		POSITION_LABEL_ROI,
+		POSITION_NUMBER_ROI,
+	];
+
 	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
@@ -181,6 +187,7 @@ export function createXRankPositionDetector(
 
 	return {
 		id: "x-rank-position",
+		gateRois,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

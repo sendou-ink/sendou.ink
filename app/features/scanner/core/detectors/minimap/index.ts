@@ -455,6 +455,18 @@ export function createMinimapDetector(
 		return left.score > right.score ? left : right;
 	}
 
+	const gateRois = [
+		...GATE_CLOSE_X_DARK,
+		...GATE_CLOSE_X_BRIGHT,
+		...GATE_CLOSE_DARK_PROBES,
+		...GATE_SPAWN_DARK_PROBES,
+		GATE_SPAWN_BRIGHT,
+		...GATE_SPECTATOR_X_DARK,
+		...GATE_SPECTATOR_X_BRIGHT,
+		...GATE_SPECTATOR_X_MIRRORED_DARK,
+		...GATE_SPECTATOR_X_MIRRORED_BRIGHT,
+	];
+
 	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 		const overlay = overlayGate(gray);
@@ -1090,6 +1102,7 @@ export function createMinimapDetector(
 	// gate flicker like death's does.
 	return {
 		id: MINIMAP_DETECTOR_ID,
+		gateRois,
 		refineIntervalS: 0.4,
 		maxStagnantParses: 1,
 		stagnantAfterS: 0.4,

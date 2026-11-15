@@ -65,11 +65,12 @@ import { parseStripWeapons, type StripWeaponsEvent } from "./strip-weapons";
 import {
 	overtimeBoxVisible,
 	readMatchTimerSteps,
+	TIMER_GATE_ROIS,
 	timerBoxChecks,
 	timerColonVisible,
 	timerGlyphSets,
 } from "./timer";
-import { readTrackSteps, trackComb } from "./track";
+import { readTrackSteps, TRACK_COMB_ROI, trackComb } from "./track";
 
 export type ObjectiveData = ZonesObjectiveData | TrackObjectiveData;
 
@@ -238,6 +239,13 @@ export function createObjectiveDetector(
 			GATE_SCORE_MIN_MAX_BRIGHTNESS,
 		);
 	}
+
+	const gateRois = [
+		...TIMER_GATE_ROIS,
+		TRACK_COMB_ROI,
+		...PLATE_PROBE_ROIS,
+		...SCORE_ROIS,
+	];
 
 	/** The timer box (or overtime's), then the track's dot comb (TC/RM), the SZ/CB plates or neither (TW). */
 	function gate(frame: Image): GateResult {
@@ -593,6 +601,7 @@ export function createObjectiveDetector(
 
 	return {
 		id: "objective",
+		gateRois,
 		checkIntervalS: CHECK_INTERVAL_SECONDS,
 		attachFrame: false,
 		gate,

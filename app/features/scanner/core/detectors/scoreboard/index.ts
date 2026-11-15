@@ -222,6 +222,11 @@ export function createScoreboardDetector(
 			)
 		: [];
 
+	const gateRois = [
+		...ROW_CENTERS.flatMap((cy) => [gateDarkProbe(cy), paintSuffixRoi(cy)]),
+		...GATE_PANEL_PROBES,
+	];
+
 	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 
@@ -392,6 +397,7 @@ export function createScoreboardDetector(
 	return {
 		id: "scoreboard",
 		gate,
+		gateRois,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),
 		parseSteps,

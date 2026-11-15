@@ -71,6 +71,13 @@ import {
 } from "./rois";
 
 const RING_SAMPLES = 32;
+/** The band trackComb reads: the dot row and a row either side. */
+export const TRACK_COMB_ROI: Roi = {
+	x: TRACK_COMB_SPAN[0],
+	y: TRACK_Y - TRACK_COMB_OFFSET_Y - 1,
+	w: TRACK_COMB_SPAN[1] - TRACK_COMB_SPAN[0] + 1,
+	h: 2 * TRACK_COMB_OFFSET_Y + 3,
+};
 /** Digits of one number nearly touch; a gap past this fraction of a digit width ends the run. */
 const DIGIT_GAP_MAX_RATIO = 0.55;
 /** Digits span the set's full height; the label's lowercase letters top out lower. */
@@ -93,13 +100,7 @@ export interface TrackRead {
 
 /** Comb projection of the track's dot row at its fixed phase, per window with the worst dropped; see GATE_TRACK_MIN_COMB. */
 export function trackComb(frame: Image): number {
-	const [x0, x1] = TRACK_COMB_SPAN;
-	const band = cropRoi(frame, {
-		x: x0,
-		y: TRACK_Y - TRACK_COMB_OFFSET_Y - 1,
-		w: x1 - x0 + 1,
-		h: 2 * TRACK_COMB_OFFSET_Y + 3,
-	});
+	const band = cropRoi(frame, TRACK_COMB_ROI);
 	const { data, cols } = band;
 	const channels = band.channels;
 	const at = (x: number, y: number) => (y * cols + x) * channels;
@@ -133,7 +134,8 @@ export function trackComb(frame: Image): number {
 		let projection = 0;
 		for (const [i, value] of window.entries()) {
 			const phase =
-				(2 * Math.PI * (x0 + start + i - TRACK_FIRST_DOT_X)) / TRACK_DOT_PITCH;
+				(2 * Math.PI * (TRACK_COMB_ROI.x + start + i - TRACK_FIRST_DOT_X)) /
+				TRACK_DOT_PITCH;
 			projection += (value - mean) * Math.cos(phase);
 		}
 		windows.push(projection / window.length);

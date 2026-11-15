@@ -265,6 +265,13 @@ export function createDeathDetector(
 		ALL_WEAPON_ENTRIES.filter((e) => e.type === "MAIN").map((e) => [e.id, e]),
 	);
 
+	const gateRois = [
+		...GATE_BURST_PROBES,
+		...GATE_PANEL_PROBES,
+		SPLAT_LINE1_ROI,
+		...[0, 1, 2].map((row) => gateAbilityProbe(row)),
+	];
+
 	function gate(frame: Image): GateResult {
 		let darkOk = 0;
 		const darkProbes = [...GATE_BURST_PROBES, ...GATE_PANEL_PROBES];
@@ -1067,6 +1074,7 @@ export function createDeathDetector(
 	// VoD) at two more looks within a second
 	return {
 		id: "death",
+		gateRois,
 		refineIntervalS: 0.5,
 		rearmCooldownS: 4,
 		maxStagnantParses: 2,

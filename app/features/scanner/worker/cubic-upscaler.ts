@@ -66,11 +66,13 @@ export interface CubicUpscaler {
 	/**
 	 * Records the upscale of `source` into `encoder`: the canonical RGBA in
 	 * `canonical` for later passes, and once submitted mappable from `read`,
-	 * which goes back with `release` after reading.
+	 * which goes back with `release` after reading. With `mapped: false` the
+	 * copy into `read` is left to the caller, if it maps it at all.
 	 */
 	encode(
 		encoder: GPUCommandEncoder,
 		source: UpscaleSource,
+		options?: { mapped?: boolean },
 	): { canonical: GPUBuffer; read: GPUBuffer };
 	release(read: GPUBuffer): void;
 	/** `box` of `buffer` resized to the canonical size, INTER_CUBIC exactly; RGBA. */
@@ -131,6 +133,7 @@ export async function createCubicUpscaler(
 	const encode = (
 		encoder: GPUCommandEncoder,
 		{ buffer, stride, box }: UpscaleSource,
+		{ mapped = true }: { mapped?: boolean } = {},
 	) => {
 		const { x, y, w, h } = box;
 		const slot = free.pop() ?? {
@@ -181,7 +184,9 @@ export async function createCubicUpscaler(
 			Math.ceil(groups / MAX_DISPATCH_X),
 		);
 		pass.end();
-		encoder.copyBufferToBuffer(slot.dst, 0, slot.read, 0, dstBytes);
+		if (mapped) {
+			encoder.copyBufferToBuffer(slot.dst, 0, slot.read, 0, dstBytes);
+		}
 		return { canonical: slot.dst, read: slot.read };
 	};
 

@@ -17,6 +17,7 @@ import {
 	type Image,
 	maxBrightness,
 	meanBrightness,
+	type Roi,
 } from "../../image";
 import { all, type MatchSteps } from "../../match-steps";
 import type { ScoreboardResources } from "../scoreboard/index";
@@ -54,6 +55,14 @@ export function timerGlyphSets(resources: ScoreboardResources): GlyphSet[] {
 		scaleGlyphSet(digits, h / digits.height),
 	);
 }
+
+/** What timerBoxChecks and timerColonVisible read. */
+export const TIMER_GATE_ROIS: readonly Roi[] = [
+	...TIMER_DARK_PROBES,
+	TIMER_DIGIT_ROI,
+	...TIMER_COLON_DOT_ROIS,
+	TIMER_COLON_GAP_ROI,
+];
 
 /** Per-probe presence checks of the timer box: dark surround, then bright digits. */
 export function timerBoxChecks(gray: Image): boolean[] {
