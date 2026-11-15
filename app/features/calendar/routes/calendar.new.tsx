@@ -57,6 +57,7 @@ import {
 	TOURNAMENT_FORM_STEPS,
 	teamPickSettingsFromFormValues,
 	tournamentTagsField,
+	valuesMovedWithStartTime,
 } from "../calendar-new-schemas";
 import {
 	type BracketFormValue,
@@ -359,30 +360,23 @@ function CalendarEventFields() {
 function TournamentSteps() {
 	const { t } = useTranslation(["calendar", "forms"]);
 	const data = useLoaderData<typeof loader>();
-	const { values, setValueFromPrev } = useFormFieldContext();
+	const { values, setValue } = useFormFieldContext();
 	const organizationOptions = useOrganizationOptions();
 
 	const isEditing = Boolean(data.eventToEdit);
 	const isInvitational = Boolean(values.isInvitational);
 
-	// registration keeps closing the same time before the start, e.g. when a copy is moved to its new date
-	const keepRegClosesAtDistanceToStart = (newStartTime: unknown) => {
-		const previousStartTime = values.startTime;
-		if (
-			!(previousStartTime instanceof Date) ||
-			!(newStartTime instanceof Date)
-		) {
-			return;
-		}
+	const keepDistancesToStart = (newStartTime: unknown) => {
+		const moved = valuesMovedWithStartTime({
+			previousStartTime: values.startTime,
+			newStartTime,
+			regClosesAt: values.regClosesAt,
+			brackets: values.brackets as BracketFormValue[],
+		});
+		if (!moved) return;
 
-		setValueFromPrev("regClosesAt", (regClosesAt) =>
-			regClosesAt instanceof Date
-				? addMilliseconds(
-						regClosesAt,
-						newStartTime.getTime() - previousStartTime.getTime(),
-					)
-				: regClosesAt,
-		);
+		setValue("regClosesAt", moved.regClosesAt);
+		setValue("brackets", moved.brackets);
 	};
 
 	return (
@@ -394,7 +388,7 @@ function TournamentSteps() {
 					<FormField
 						name="startTime"
 						required
-						onValueChange={keepRegClosesAtDistanceToStart}
+						onValueChange={keepDistancesToStart}
 					/>
 					{isInvitational ? null : <FormField name="regClosesAt" />}
 					{data.organizations.length > 0 ? (

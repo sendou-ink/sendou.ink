@@ -149,6 +149,7 @@ function BracketProgressionEdit() {
 				const inputBrackets = formValuesToInputBrackets(
 					values.brackets,
 					values.progression,
+					{ tournamentStartTime: tournament.ctx.startsAt },
 				);
 
 				// started brackets pass through untouched: re-deriving their settings from form values

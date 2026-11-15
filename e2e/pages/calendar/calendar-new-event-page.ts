@@ -41,9 +41,6 @@ export class CalendarNewEventPage {
 			// the builder's side panel edits one bracket or connection at a time
 			bracketNameInput: page.getByLabel(/^Bracket name *\*?$/),
 			bracketStartTimeInput: page.getByLabel(/^Start time *\*?$/),
-			bracketStartBeforeTournamentError: page.getByText(
-				"Can't start before the tournament starts",
-			),
 			bracketFormatSelect: page.getByLabel("Format", { exact: true }),
 			placementCheckboxes: page.getByRole("checkbox", { name: /^#\d+/ }),
 			// chip radios hide the input visually, so the label takes the click

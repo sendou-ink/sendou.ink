@@ -1,3 +1,4 @@
+import { addMilliseconds } from "date-fns";
 import * as v from "valibot";
 import type { TeamPickSettings } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -28,8 +29,10 @@ import type { ModeShort } from "~/modules/in-game-lists/types";
 import { id, modeShort, superRefine, type ValidationCtx } from "~/utils/schema";
 import { CALENDAR_EVENT } from "./calendar-constants";
 import {
+	type BracketFormValue,
 	bracketsFormField,
 	progressionFormField,
+	shiftBracketStartTimes,
 	validateBracketProgressionFormValues,
 } from "./calendar-progression-form";
 import type { CalendarEventTag } from "./calendar-types";
@@ -466,4 +469,34 @@ export function customTeamPickPool(data: {
 	return MapPool.toDbList(data.pool).filter((map) =>
 		data.teamPickModes.includes(map.mode),
 	);
+}
+
+/**
+ * Registration closing and follow-up bracket start times moved by as much as the tournament start time moved,
+ * so they keep their distance to it (e.g. when a copy is moved to its new date). Null if either start time is unset.
+ */
+export function valuesMovedWithStartTime({
+	previousStartTime,
+	newStartTime,
+	regClosesAt,
+	brackets,
+}: {
+	previousStartTime: unknown;
+	newStartTime: unknown;
+	regClosesAt: unknown;
+	brackets: BracketFormValue[];
+}) {
+	if (!(previousStartTime instanceof Date) || !(newStartTime instanceof Date)) {
+		return null;
+	}
+
+	const offsetMs = newStartTime.getTime() - previousStartTime.getTime();
+
+	return {
+		regClosesAt:
+			regClosesAt instanceof Date
+				? addMilliseconds(regClosesAt, offsetMs)
+				: regClosesAt,
+		brackets: shiftBracketStartTimes(brackets, offsetMs),
+	};
 }

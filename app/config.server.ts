@@ -34,6 +34,7 @@ const schema = v.pipe(
 		LOHI_TOKEN: requiredInProd(isProd, "salmon", { rejectDevFallback: true }),
 		SQL_LOG: v.optional(v.picklist(["none", "trunc", "full"]), "none"),
 		DISABLE_CACHE: v.optional(envBoolean, "false"),
+		PORT: v.optional(v.string()),
 
 		DISCORD_CLIENT_ID: requiredInProd(isProd, ""),
 		DISCORD_CLIENT_SECRET: requiredInProd(isProd, ""),
@@ -77,6 +78,9 @@ export const ServerConfig = {
 	/** Also `true` during e2e tests (production build); combine with `IS_E2E_TEST_RUN` to exclude them. */
 	isProduction: values.NODE_ENV === "production",
 	isTest: values.NODE_ENV === "test",
+	/** `pnpm run dev`, not e2e tests (production build) nor unit tests. */
+	isDevelopment: values.NODE_ENV === "development",
+	port: values.PORT,
 
 	dbPath: values.DB_PATH,
 	sessionSecret: values.SESSION_SECRET,

@@ -8,6 +8,7 @@ import {
 	calendarNewSchema,
 	customTeamPickPool,
 	teamPickSettingsFromFormValues,
+	valuesMovedWithStartTime,
 } from "./calendar-new-schemas";
 import {
 	defaultBracketsFormValues,
@@ -243,5 +244,49 @@ describe("customTeamPickPool", () => {
 
 	test("is empty without a pool", () => {
 		expect(customTeamPickPool({ teamPickModes: ["SZ"], pool: "" })).toEqual([]);
+	});
+});
+
+describe("valuesMovedWithStartTime", () => {
+	const previousStartTime = new Date("2026-01-10T18:00:00Z");
+	const newStartTime = addHours(previousStartTime, 7 * 24);
+
+	test("keeps registration closing and follow-up brackets the same distance from the moved start", () => {
+		const moved = valuesMovedWithStartTime({
+			previousStartTime,
+			newStartTime,
+			regClosesAt: subHours(previousStartTime, 1),
+			brackets: [
+				newBracketFormValue(),
+				{
+					...newBracketFormValue(),
+					startTime: addHours(previousStartTime, 24),
+				},
+			],
+		});
+
+		expect(moved?.regClosesAt).toEqual(subHours(newStartTime, 1));
+		expect(moved?.brackets.map((bracket) => bracket.startTime)).toEqual([
+			null,
+			addHours(newStartTime, 24),
+		]);
+	});
+
+	test.each([
+		{ why: "previous start time is unset", from: null, to: newStartTime },
+		{
+			why: "new start time is cleared",
+			from: previousStartTime,
+			to: undefined,
+		},
+	])("moves nothing when the $why", ({ from, to }) => {
+		expect(
+			valuesMovedWithStartTime({
+				previousStartTime: from,
+				newStartTime: to,
+				regClosesAt: subHours(previousStartTime, 1),
+				brackets: [newBracketFormValue()],
+			}),
+		).toBeNull();
 	});
 });

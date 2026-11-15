@@ -229,10 +229,14 @@ export function newProgressionSource(): ProgressionSourceFormValue {
 	return { bracketIdx: "0", placements: "" };
 }
 
-/** Converts the `brackets` + `progression` form values into {@link Progression.InputBracket} format ready for validation. */
+/**
+ * Converts the `brackets` + `progression` form values into {@link Progression.InputBracket} format ready for validation.
+ * Given `tournamentStartTime`, a bracket start time at or before it is dropped, as such a bracket simply starts with the tournament.
+ */
 export function formValuesToInputBrackets(
 	brackets: BracketFormValue[],
 	progression: ProgressionFormValue[],
+	{ tournamentStartTime }: { tournamentStartTime?: Date } = {},
 ): Progression.InputBracket[] {
 	return brackets.map((bracket, bracketIdx) => {
 		const entry = progression[bracketIdx];
@@ -254,7 +258,11 @@ export function formValuesToInputBrackets(
 			type: bracket.type,
 			settings: settingsFromFormValues(bracket, false),
 			requiresCheckIn: bracket.requiresCheckIn,
-			startTime: bracket.startTime ?? undefined,
+			startTime:
+				bracket.startTime &&
+				(!tournamentStartTime || bracket.startTime > tournamentStartTime)
+					? bracket.startTime
+					: undefined,
 			sources: entry.sources.map((source) => ({
 				bracketId: source.bracketIdx,
 				placements: sourceBracketHasEarlyAdvance(brackets, source)

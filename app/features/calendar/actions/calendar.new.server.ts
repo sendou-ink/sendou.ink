@@ -244,13 +244,16 @@ function sortedTagsOrNull(tags: Array<CalendarEventTag>) {
 /** Bracket progression from the `brackets` + `progression` fields, already validated by the schema's refine. */
 function bracketProgressionFromFormData(data: {
 	toToolsEnabled: boolean;
+	startTime?: Date | null;
 	brackets: Parameters<typeof formValuesToInputBrackets>[0];
 	progression: Parameters<typeof formValuesToInputBrackets>[1];
 }) {
 	if (!data.toToolsEnabled || data.brackets.length === 0) return null;
 
 	const validated = Progression.validatedBrackets(
-		formValuesToInputBrackets(data.brackets, data.progression),
+		formValuesToInputBrackets(data.brackets, data.progression, {
+			tournamentStartTime: data.startTime ?? undefined,
+		}),
 	);
 
 	return Progression.isBrackets(validated) ? validated : null;
