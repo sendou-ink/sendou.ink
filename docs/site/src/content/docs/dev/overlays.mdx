@@ -68,3 +68,10 @@ The lock goes on `body` and not `html`. Because we use `body { overflow-x: hidde
 ## Scroll into view
 
 `useScrollIntoView(isOpen, getAnchor)` brings a popover's anchor back into the viewport when a mobile keyboard opens over it. It will not scroll a scroll locked page! Select and Popover use it.
+
+## Full screen panels with a text field
+
+iOS doesn't shrink the page for the keyboard. It moves the visible part down to reveal the focused field instead, using where the field was before the keyboard opened. A full screen fixed panel that makes room for the keyboard itself (the mobile chat panel) therefore gets moved out of view and shows the page behind it. Such a panel:
+
+- keeps covering the whole page while the keyboard is open, and fits only its content to `--visual-viewport-height`, starting at `--visual-viewport-offset-top` (both written by `useVisualViewport`, along with `html[data-keyboard-open]`). The keyboard is translucent and starts a little below the visible part iOS reports, so anything not covered shows through
+- passes `focusWithoutPanning` as its `onTouchEnd`: a tap on a text field that isn't focused yet focuses it with `preventScroll`, so iOS doesn't move the page

@@ -144,8 +144,9 @@ export function useChatAutoScroll(
 
 	const hasMessages = messages.length > 0;
 
-	// the virtualizer resizes the content asynchronously as it measures rows, without
-	// scroll events, so keep the view glued to where it is pinned
+	// the virtualizer resizes the content asynchronously as it measures rows, and the log
+	// itself shrinks when a mobile keyboard opens, both without scroll events, so keep the
+	// view glued to where it is pinned
 	React.useEffect(() => {
 		if (!hasMessages) return;
 
@@ -161,6 +162,7 @@ export function useChatAutoScroll(
 			}
 		});
 		observer.observe(scrollContent);
+		observer.observe(messagesContainer);
 
 		return () => observer.disconnect();
 	}, [ref, hasMessages, scrollToAnchor]);

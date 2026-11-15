@@ -93,6 +93,12 @@
 	height: 100%;
 }
 
+/* the panel keeps covering the whole page under the keyboard, its content starts where the visible part does */
+:global(html[data-keyboard-open]) .panelDialog {
+	height: calc(100% - var(--visual-viewport-offset-top, 0px));
+	margin-block-start: var(--visual-viewport-offset-top, 0px);
+}
+
 .panelTitle {
 	font-size: var(--font-xs);
 	font-weight: var(--weight-bold);

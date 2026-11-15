@@ -776,6 +776,22 @@ describe("Chat", () => {
 		});
 	});
 
+	test("stays at the bottom when the log gets shorter, e.g. a mobile keyboard opening", async () => {
+		const { screen } = await renderChatWithControls(manyMessages(50));
+
+		const log = screen.getByRole("log").element() as HTMLElement;
+		await vi.waitFor(() => {
+			expect(isScrolledToBottom(log)).toBe(true);
+		});
+
+		log.style.height = "120px";
+
+		await vi.waitFor(() => {
+			expect(log.clientHeight).toBeLessThanOrEqual(120);
+			expect(isScrolledToBottom(log)).toBe(true);
+		});
+	});
+
 	test("auto scrolls when a new message arrives while at the bottom", async () => {
 		const { screen, controls } = await renderChatWithControls(manyMessages(50));
 

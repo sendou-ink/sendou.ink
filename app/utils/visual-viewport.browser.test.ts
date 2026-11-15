@@ -4,7 +4,7 @@ import {
 	openKeyboard,
 	shrinkViewport,
 } from "~/components/elements/tests/keyboard";
-import { keyboardIsOpen } from "./visual-viewport";
+import { focusWithoutPanning, keyboardIsOpen } from "./visual-viewport";
 
 const FOCUSED_ELEMENT_ID = "test-focused-element";
 
@@ -57,7 +57,29 @@ describe("keyboardIsOpen", () => {
 	);
 });
 
-function focusElement(html: string) {
+describe("focusWithoutPanning", () => {
+	test("focuses a tapped text field itself, so the browser does not scroll to it", () => {
+		const input = addElement("<input>");
+
+		const event = touchEnd(input);
+
+		expect(event.defaultPrevented).toBe(true);
+		expect(document.activeElement).toBe(input);
+	});
+
+	test.each([
+		{ why: "an already focused text field", html: "<input>", focused: true },
+		{ why: "a checkbox", html: '<input type="checkbox">', focused: false },
+		{ why: "a button", html: "<button>Send</button>", focused: false },
+	])("leaves a tap on $why to the browser", ({ html, focused }) => {
+		const element = addElement(html);
+		if (focused) element.focus();
+
+		expect(touchEnd(element).defaultPrevented).toBe(false);
+	});
+});
+
+function addElement(html: string) {
 	const template = document.createElement("template");
 	template.innerHTML = html;
 	const element = template.content.firstElementChild;
@@ -67,6 +89,18 @@ function focusElement(html: string) {
 
 	element.id = FOCUSED_ELEMENT_ID;
 	document.body.append(element);
+	return element;
+}
+
+function touchEnd(element: HTMLElement) {
+	const event = new Event("touchend", { bubbles: true, cancelable: true });
+	element.addEventListener("touchend", focusWithoutPanning, { once: true });
+	element.dispatchEvent(event);
+	return event;
+}
+
+function focusElement(html: string) {
+	const element = addElement(html);
 	element.focus({ preventScroll: true });
 	expect(document.activeElement).toBe(element);
 }
