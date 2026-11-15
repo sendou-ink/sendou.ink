@@ -673,8 +673,11 @@ function StartBracketAlert({
 	}
 
 	const abDivisionsStartError = getAbDivisionsStartError(bracket, tournament);
+	const participantsCount = bracket.participantTournamentTeamIds.length;
 	const totalTeamsAvailableForTheBracket =
 		tournament.eligibleTeamsCountOfBracket(bracketIdx);
+	const checkedOutCount = totalTeamsAvailableForTheBracket - participantsCount;
+	const hasCheckIn = bracket.isStartingBracket || bracket.requiresCheckIn;
 
 	return (
 		<div className="stack items-center mb-4">
@@ -683,8 +686,11 @@ function StartBracketAlert({
 					variation="INFO"
 					textClassName="stack horizontal md items-center"
 				>
-					{bracket.participantTournamentTeamIds.length}/
-					{totalTeamsAvailableForTheBracket} teams checked in
+					{hasCheckIn
+						? `${participantsCount}/${totalTeamsAvailableForTheBracket} teams checked in`
+						: checkedOutCount > 0
+							? `${participantsCount} teams (${checkedOutCount} checked out)`
+							: `${participantsCount} teams`}
 					{bracket.canBeStarted ? (
 						tournament.isDraft ? (
 							<DraftBracketStartPopover />
