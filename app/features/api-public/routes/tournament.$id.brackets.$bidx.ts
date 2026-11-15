@@ -47,8 +47,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 };
 
 function teams(bracket: Bracket) {
-	const checkedIn = bracket.participantTournamentTeamIds;
 	const pending = bracket.teamsPendingCheckIn ?? [];
+	const checkedIn = bracket.participantTournamentTeamIds.filter(
+		(teamId) => !pending.includes(teamId),
+	);
 
 	return checkedIn
 		.map((teamId) => ({

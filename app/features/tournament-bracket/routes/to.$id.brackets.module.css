@@ -1,8 +1,43 @@
-.miniAlert {
-	background-color: var(--color-info-low);
-	font-size: var(--font-2xs);
-	border-radius: var(--radius-box);
-	padding: var(--s-1) var(--s-2);
+.organizerBar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-3);
+	margin-block-end: var(--s-4);
+	font-size: var(--font-sm);
+
+	&:has(.organizerBarStatus) {
+		padding: var(--s-2-5) var(--s-3);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-box);
+		background-color: var(--color-bg-high);
+	}
+}
+
+.organizerBarStatus {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.organizerBarSchedule {
+	display: flex;
+	flex-wrap: wrap;
+	column-gap: var(--s-1-5);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+
+	& > span + span::before {
+		content: "·";
+		margin-inline-end: var(--s-1-5);
+	}
+}
+
+.organizerBarActions {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	margin-inline-start: auto;
 }
 
 .compactifyButton {

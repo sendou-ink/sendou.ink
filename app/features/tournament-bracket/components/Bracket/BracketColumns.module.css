@@ -29,5 +29,14 @@
 }
 
 .elimRoundColumnWithExits {
-	--exit-width: 160px;
+	/* gap, dots and the longest label, Lexend averaging about 0.65em a character */
+	--exit-width: calc(
+		var(--s-2) +
+		var(--s-5) +
+		2 *
+		var(--s-1) +
+		var(--exit-label-length) *
+		0.65 *
+		var(--font-2xs)
+	);
 }

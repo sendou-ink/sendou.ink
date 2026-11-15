@@ -21,19 +21,26 @@ export function BracketColumns({
 
 export function BracketColumn({
 	roundId,
-	hasExits = false,
+	longestExitLabelLength = 0,
 	children,
 }: {
 	roundId?: number;
-	/** Some match of the round shows where teams leaving the bracket go, which takes room right of it. */
-	hasExits?: boolean;
+	/** Characters in the longest label of where teams leaving the bracket go, shown right of the round's matches. 0 = no labels. */
+	longestExitLabelLength?: number;
 	children: React.ReactNode;
 }) {
 	return (
 		<div
 			className={clsx(styles.elimRoundColumn, {
-				[styles.elimRoundColumnWithExits]: hasExits,
+				[styles.elimRoundColumnWithExits]: longestExitLabelLength > 0,
 			})}
+			style={
+				longestExitLabelLength > 0
+					? ({
+							"--exit-label-length": longestExitLabelLength,
+						} as React.CSSProperties)
+					: undefined
+			}
 			data-round-id={roundId}
 			data-testid="round-column"
 		>

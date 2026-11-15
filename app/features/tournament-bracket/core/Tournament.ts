@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import type {
 	TeamPickSettings,
@@ -306,10 +307,11 @@ export class Tournament {
 		const bracket = this.bracketsMeta[bracketIdx];
 
 		if (bracket.sources) {
-			return [
+			// before its check-in opens a bracket previews the teams pending check-in too
+			return R.unique([
 				...bracket.participantTournamentTeamIds,
 				...(bracket.teamsPendingCheckIn ?? []),
-			];
+			]);
 		}
 
 		return this.teamsOfStartingBracket(bracketIdx).map((team) => team.id);
@@ -426,7 +428,7 @@ export class Tournament {
 			});
 
 		const checkedInTeamsWithReplaysAvoided = this.followUpBracketSeeding(
-			checkedInTeams,
+			this.bracketCheckInYetToOpen(bracketIdx) ? teams : checkedInTeams,
 			{
 				sources,
 				type,
@@ -1146,12 +1148,24 @@ export class Tournament {
 
 	/** When check-in opens for a follow-up bracket that has its own start time, null if it has none. */
 	bracketCheckInStartsAt(bracketIdx: number) {
-		const startTime = this.bracketMetaByIdx(bracketIdx)?.startTime;
+		const startTime =
+			this.ctx.settings.bracketProgression[bracketIdx]?.startTime;
 		if (!startTime) return null;
 
 		return new Date(
-			startTime.getTime() - TOURNAMENT.BRACKET_CHECK_IN_WINDOW_MS,
+			databaseTimestampToDate(startTime).getTime() -
+				TOURNAMENT.BRACKET_CHECK_IN_WINDOW_MS,
 		);
+	}
+
+	/** Until then the bracket previews every team headed to it, like the starting bracket does before the regular check-in. */
+	private bracketCheckInYetToOpen(bracketIdx: number) {
+		const bracket = this.ctx.settings.bracketProgression[bracketIdx];
+		if (!bracket.requiresCheckIn || !bracket.sources) return false;
+
+		const checkInStartsAt = this.bracketCheckInStartsAt(bracketIdx);
+
+		return Boolean(checkInStartsAt && checkInStartsAt > new Date());
 	}
 
 	canCheckInToBracket(bracketIdx: number, user: OptionalIdObject) {
