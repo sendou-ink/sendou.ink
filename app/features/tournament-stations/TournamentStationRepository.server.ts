@@ -58,6 +58,40 @@ export function findMatchPlacementsByTournamentId(tournamentId: number) {
 		.execute();
 }
 
+/** The station the teams of each match of the tournament were last notified of, see `stationNotifications.server.ts`. */
+export function findNotifiedStationsByTournamentId(tournamentId: number) {
+	return db
+		.selectFrom("TournamentMatchStationNotification")
+		.innerJoin(
+			"TournamentMatch",
+			"TournamentMatch.id",
+			"TournamentMatchStationNotification.matchId",
+		)
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentMatch.stageId",
+		)
+		.select([
+			"TournamentMatchStationNotification.matchId",
+			"TournamentMatchStationNotification.stationId",
+		])
+		.where("TournamentStage.tournamentId", "=", tournamentId)
+		.execute();
+}
+
+/** Remembers the station the match's teams were just notified of. */
+export function upsertNotifiedStation({
+	matchId,
+	stationId,
+}: Tables["TournamentMatchStationNotification"]) {
+	return db
+		.insertInto("TournamentMatchStationNotification")
+		.values({ matchId, stationId })
+		.onConflict((oc) => oc.column("matchId").doUpdateSet({ stationId }))
+		.execute();
+}
+
 /**
  * Puts each match on its station as auto-assigned, in front of the queue's unfinished matches (on a station
  * auto-assignment picks they can't be played yet). Skips matches someone placed in the meantime.

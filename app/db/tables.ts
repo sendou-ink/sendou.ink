@@ -910,6 +910,12 @@ interface TournamentMatchStation {
 	isAutoAssigned: Generated<DBBoolean>;
 }
 
+/** The station a match's teams were last notified of. */
+interface TournamentMatchStationNotification {
+	matchId: number;
+	stationId: number;
+}
+
 interface TournamentStaff {
 	tournamentId: number;
 	userId: number;
@@ -1873,6 +1879,7 @@ export interface DB {
 	TournamentStaff: TournamentStaff;
 	TournamentStation: TournamentStation;
 	TournamentMatchStation: TournamentMatchStation;
+	TournamentMatchStationNotification: TournamentMatchStationNotification;
 	TournamentGroup: TournamentGroup;
 	TournamentLFGLike: TournamentLFGLike;
 	TournamentMatch: TournamentMatch;

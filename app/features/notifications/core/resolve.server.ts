@@ -48,6 +48,8 @@ const RESOLUTION_TRIGGERS = {
 	TO_LEAGUE_MATCH_SCHEDULED: "visits the set's match page",
 	TO_LEAGUE_MATCH_STARTING_SOON:
 		"visits the set's match page, or the set gets rescheduled",
+	TO_MATCH_STATION_ASSIGNED: "visits the match page",
+	TO_MATCH_STATION_MOVED: "visits the match page",
 	SCRIM_AUTO_DELETED: null,
 	COMMISSIONS_CLOSED: null,
 	FRIEND_REQUEST_RECEIVED:

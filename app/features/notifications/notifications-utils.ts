@@ -78,6 +78,8 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 		case "TO_LEAGUE_TIMES_PROPOSED":
 		case "TO_LEAGUE_MATCH_SCHEDULED":
 		case "TO_LEAGUE_MATCH_STARTING_SOON":
+		case "TO_MATCH_STATION_ASSIGNED":
+		case "TO_MATCH_STATION_MOVED":
 			return "medal";
 		case "SCRIM_NEW_REQUEST":
 		case "SCRIM_SCHEDULED":
@@ -178,7 +180,9 @@ export const notificationLink = (
 		}
 		case "TO_LEAGUE_TIMES_PROPOSED":
 		case "TO_LEAGUE_MATCH_SCHEDULED":
-		case "TO_LEAGUE_MATCH_STARTING_SOON": {
+		case "TO_LEAGUE_MATCH_STARTING_SOON":
+		case "TO_MATCH_STATION_ASSIGNED":
+		case "TO_MATCH_STATION_MOVED": {
 			return tournamentMatchPage({
 				tournamentId: notification.meta.tournamentId,
 				matchId: notification.meta.matchId,

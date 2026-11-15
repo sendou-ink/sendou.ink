@@ -5,7 +5,9 @@ import {
 	startedTournamentTimes,
 	teamSeeds,
 } from "./helpers/tournament";
+import { NotificationPopover } from "./pages/layout/notification-popover";
 import { TopRightButtons } from "./pages/layout/top-right-buttons";
+import { TournamentAdminBoardPage } from "./pages/tournament/tournament-admin-board-page";
 import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
 import { TournamentMatchPage } from "./pages/tournament/tournament-match-page";
 
@@ -71,5 +73,49 @@ test.describe("LAN tournament stations for players", () => {
 		await topRight.globalStatus("In match").click();
 		await expect(topRight.globalStatusStation).toContainText("Station 1");
 		await expect(topRight.globalStatusStation).toContainText("North corner");
+	});
+
+	test("notifies the teams of a match put on a station", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+		});
+		await factories.CalendarEventVenueFactory.create({
+			eventId: tournament.eventId,
+		});
+		const teams = await createTeams(factories, tournament.id, teamSeeds(4));
+		const station = await factories.TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 1",
+			locationNote: "North corner",
+			autoAssign: false,
+		});
+		await factories.TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 2",
+		});
+		const [first] = await factories.TournamentFactory.startBracket(
+			tournament.id,
+		);
+
+		await impersonate(page, NZAP_TEST_ID);
+		const board = new TournamentAdminBoardPage(page);
+		await board.goto(tournament.id);
+		await board.moveMatch(first.id, station.id);
+
+		// the top seed plays the first semifinal
+		await impersonate(page, teams[0].memberUserIds[0]);
+		const brackets = new TournamentBracketsPage(page);
+		const notifications = new NotificationPopover(page);
+		// sent once the match has stayed on the station for a moment
+		await expect(async () => {
+			await brackets.goto(tournament.id);
+			await notifications.open();
+			await expect(
+				notifications.notification("Station 1 (North corner):"),
+			).toBeVisible({ timeout: 1_000 });
+		}).toPass();
 	});
 });

@@ -179,6 +179,19 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		? null
 		: (stationsState?.stationByMatchId.get(matchId) ?? null);
 
+	if (tournament.isLan && user) {
+		for (const type of [
+			"TO_MATCH_STATION_ASSIGNED",
+			"TO_MATCH_STATION_MOVED",
+		] as const) {
+			await resolveNotifications({
+				userIds: [user.id],
+				type,
+				meta: { matchId },
+			});
+		}
+	}
+
 	const canJoin =
 		!matchIsOver &&
 		R.isNonNullish(match.opponentOne?.id) &&

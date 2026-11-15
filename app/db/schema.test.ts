@@ -8,6 +8,7 @@ const NATURAL_PRIMARY_KEYS = [
 	"UserDiscordToken",
 	"CalendarEventVenue",
 	"TournamentMatchStation",
+	"TournamentMatchStationNotification",
 ];
 
 /** Integer `...Id` columns that intentionally have no foreign key. Game data ids ending in `SplId` are always exempt. */
@@ -26,6 +27,8 @@ const NOT_FOREIGN_KEYS: Record<string, string> = {
 		"preserves the identity of a team after it is hard-deleted",
 	"BuildWeapon.ownerId":
 		"mirror of Build.ownerId, deleted along with its build",
+	"TournamentMatchStationNotification.stationId":
+		"the station the teams were told stays known after it's deleted",
 };
 
 /** Tables the app (practically) never deletes from, so a foreign key to them needs no index for the delete's lookup. */

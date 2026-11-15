@@ -2307,6 +2307,14 @@ export function buildCases(fx: Fixtures): {
 				tournamentId,
 			),
 	);
+	add(
+		"TournamentStationRepository.findNotifiedStationsByTournamentId",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentStationRepository.findNotifiedStationsByTournamentId(
+				tournamentId,
+			),
+	);
 
 	addStatic("TrophyRepository.all", () => TrophyRepository.all());
 	add("TrophyRepository.findById", fx.trophy, (trophy) =>

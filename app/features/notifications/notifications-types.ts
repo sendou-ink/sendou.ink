@@ -97,6 +97,8 @@ export type Notification =
 			"TO_LEAGUE_MATCH_STARTING_SOON",
 			{ tournamentId: number; matchId: number; opponentTeamName: string }
 	  >
+	| NotificationItem<"TO_MATCH_STATION_ASSIGNED", StationNotificationMeta>
+	| NotificationItem<"TO_MATCH_STATION_MOVED", StationNotificationMeta>
 	| NotificationItem<"SCRIM_AUTO_DELETED", { at: number }>
 	| NotificationItem<"COMMISSIONS_CLOSED">
 	| NotificationItem<
@@ -156,6 +158,15 @@ export type Notification =
 				roomUrl: string;
 			}
 	  >;
+
+type StationNotificationMeta = {
+	tournamentId: number;
+	matchId: number;
+	/** The station's name, with its location note in parentheses when it has one. */
+	station: string;
+	matchName: string;
+	opponentTeamName: string;
+};
 
 type NotificationItem<
 	T extends string,

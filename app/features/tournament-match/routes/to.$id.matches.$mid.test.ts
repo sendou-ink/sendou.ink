@@ -1,6 +1,7 @@
 import * as R from "remeda";
 import type * as v from "valibot";
 import { beforeEach, describe, expect, test } from "vitest";
+import * as NotificationFactory from "~/db/seed/factories/NotificationFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentMatchStationFactory from "~/db/seed/factories/TournamentMatchStationFactory";
 import * as TournamentStaffFactory from "~/db/seed/factories/TournamentStaffFactory";
@@ -10,6 +11,7 @@ import { db } from "~/db/sql";
 import type { TournamentSettings } from "~/db/tables-json";
 import { action as removeMemberApiAction } from "~/features/api-public/routes/tournament.$id.teams.$teamId.remove-member";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import type { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
@@ -860,6 +862,43 @@ describe("LAN match page", () => {
 		expect(first.eta).toBeNull();
 		// played after the first semifinal on the lone station
 		expect(second.eta!.earliest).toBeGreaterThan(Date.now());
+	});
+
+	test("marks the player's station notifications of the match as seen", async () => {
+		const {
+			tournamentId: lanTournamentId,
+			semifinalIds: [first],
+		} = await createLan();
+		const playerId = lanUsers.id(2);
+		for (const type of [
+			"TO_MATCH_STATION_ASSIGNED",
+			"TO_MATCH_STATION_MOVED",
+		] as const) {
+			await NotificationFactory.create({
+				notification: {
+					type,
+					meta: {
+						tournamentId: lanTournamentId,
+						matchId: first,
+						station: "Station 1",
+						matchName: "Semis 1",
+						opponentTeamName: "Team Olive",
+					},
+				},
+				users: [{ userId: playerId, seen: 0 }],
+			});
+		}
+
+		await tournamentMatchLoader({
+			params: { id: String(lanTournamentId), mid: String(first) },
+			user: playerId,
+		});
+
+		expect(
+			(await NotificationRepository.findByUserId(playerId)).map(
+				({ seen }) => seen,
+			),
+		).toEqual([1, 1]);
 	});
 
 	test("shows no station for a match on none", async () => {

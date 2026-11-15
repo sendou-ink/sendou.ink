@@ -67,6 +67,16 @@ export async function up(db: Kysely<any>): Promise<void> {
 				.column("stationId")
 				.execute();
 
+			await trx.schema
+				.createTable("TournamentMatchStationNotification")
+				.addColumn("matchId", "integer", (col) =>
+					col.primaryKey().references("TournamentMatch.id").onDelete("cascade"),
+				)
+				// no foreign key: the station the teams were told stays known after it's deleted
+				.addColumn("stationId", "integer", (col) => col.notNull())
+				.modifyEnd(sql`strict`)
+				.execute();
+
 			await makeUserDiscordIdNullable(trx);
 			// also holds the name an organizer typed for a placeholder player, not only Discord's
 			await sql`alter table "User" rename column "discordName" to "defaultName"`.execute(
