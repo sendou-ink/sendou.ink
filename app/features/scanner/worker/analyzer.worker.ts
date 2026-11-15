@@ -543,6 +543,7 @@ async function scanChunk({
 				exhausted = true;
 				return null;
 			}
+			if (telemetry && item.undecoded) telemetry.undecodedFrames++;
 			return { ...item, read: null };
 		};
 		const timedNext = async () => {

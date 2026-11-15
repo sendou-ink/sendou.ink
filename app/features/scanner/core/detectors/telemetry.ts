@@ -16,6 +16,8 @@ export interface DetectorTelemetry {
 
 export interface ScanTelemetry {
 	decodedFrames: number;
+	/** samples of the VoD decode stream left undecoded: certainly not analyzed, and nothing later decodes from them */
+	undecodedFrames: number;
 	/** frames that went through canvas readback + normalize + detectors */
 	analyzedFrames: number;
 	/** video seconds covered by dense sequential decode (chunk scan) */
@@ -41,6 +43,7 @@ export interface ScanTelemetry {
 export function createScanTelemetry(): ScanTelemetry {
 	return {
 		decodedFrames: 0,
+		undecodedFrames: 0,
 		analyzedFrames: 0,
 		activeVideoS: 0,
 		skimVideoS: 0,
@@ -83,6 +86,7 @@ export function mergeScanTelemetry(
 	const out = createScanTelemetry();
 	for (const part of parts) {
 		out.decodedFrames += part.decodedFrames;
+		out.undecodedFrames += part.undecodedFrames;
 		out.analyzedFrames += part.analyzedFrames;
 		out.activeVideoS += part.activeVideoS;
 		out.skimVideoS += part.skimVideoS;

@@ -309,6 +309,9 @@ function TelemetryPanel({ telemetry }: { telemetry: ScanTelemetry }) {
 			<summary>
 				telemetry · analyzed {telemetry.analyzedFrames}/
 				{telemetry.decodedFrames} decoded frames
+				{telemetry.undecodedFrames > 0
+					? ` (${telemetry.undecodedFrames} samples left undecoded)`
+					: null}
 				{coveredS > 0
 					? ` · skimmed ${formatTime(telemetry.skimVideoS)} of ${formatTime(coveredS)}`
 					: null}

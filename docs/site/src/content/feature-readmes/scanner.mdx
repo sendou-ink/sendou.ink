@@ -752,15 +752,31 @@ cap keeps two names on one plain banner apart, their means barely differ), the k
   refine and search cadences) released, and the ones `predictDueTimes` and
   `nextDueCandidates` expect next read back and normalized ahead. The decode
   worker is told that lower bound (`floor`) and closes the samples before it
-  itself, sending bare timestamps — and on AV1 never decodes a sample before
-  it whose unit refreshes no reference slot (`core/av1-refs.ts`: such a unit
-  leaves the decoder as it found it). It is also handed the scheduler's
+  itself, sending bare timestamps — and never decodes a sample before it
+  that no later sample decodes from: on AV1 a unit refreshing no reference
+  slot (`core/av1-refs.ts`), on H.264 a picture whose slices all have
+  `nal_ref_idc` 0 and on HEVC a sub-layer non-reference picture of the
+  highest temporal layer (`core/nal-refs.ts`); each leaves the decoder as it
+  found it. It is also handed the scheduler's
   check plan (`core/detectors/check-plan.ts`): each detector is checked at
   the first sample its interval has elapsed by, and its interval is one of
   its few cadences, so where its next checks can land branches over the
-  stream's real timestamps; such units no branch reaches go undecoded too
-  (~30% fewer decodes on a 1080p60 AV1 scan; non-reference frames are cheap
-  to decode, so the scan itself gains a few percent). When the scheduler
+  stream's real timestamps; such units no branch reaches go undecoded too.
+  H.264/HEVC packets come in decode order (B-frames), so the stream
+  (its bookkeeping in `core/decode-order.ts`) steps
+  the plan's tracker in presentation order and holds a skipped sample back
+  until the decoder has emitted a later one (by then every packet presented
+  before it has been fed); a packet arriving behind a sample the plan
+  already judged turns the plan off for the rest of that stream, and fails
+  the stream if the plan already let a later sample go undecoded. Measured
+  2026-11-15 (M5 Pro, WebGPU, 4 lanes, 10 min slices, the telemetry panel's
+  "samples left undecoded"): 21-42% of the samples go undecoded on H.264 and
+  HEVC with B-frames, 27% on AV1; recordings without B-frames have no
+  non-reference pictures. The `Raw detections` CSV is byte-identical with
+  and without skipping on every slice. The decode wait of the lanes halves
+  and their readback wait drops 25-60% (the hardware decoder and the
+  readback share the GPU process), but wall-clock moves only 0-6%: on that
+  machine neither is what a scan waits on most. When the scheduler
   reports calm (no gate pass for a quiet period, no open match), the worker
   skims keyframe-to-keyframe (hop capped at 2.5s so short screens can't
   hide), snapping back to dense decode on any gate pass. Dense and skim stretches
