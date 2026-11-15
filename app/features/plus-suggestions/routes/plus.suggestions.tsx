@@ -9,6 +9,7 @@ import { Catcher } from "~/components/Catcher";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { NoteAvatar } from "~/components/NoteAvatar";
 import { RelativeTime } from "~/components/RelativeTime";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -18,7 +19,10 @@ import {
 	isVotingActive,
 	nextNonCompletedVoting,
 } from "~/features/plus-voting/core";
-import { UserCard } from "~/features/user-card/components/UserCard";
+import {
+	UserCard,
+	useUserCardData,
+} from "~/features/user-card/components/UserCard";
 import { SendouForm } from "~/form/SendouForm";
 import { hasPermission } from "~/modules/permissions/utils";
 import {
@@ -194,6 +198,7 @@ function SuggestedUser({
 }) {
 	const data = useLoaderData<PlusSuggestionsLoaderData>();
 	const user = useUser();
+	const suggestedUserCard = useUserCardData(suggestion.suggested.id);
 
 	return (
 		<div className="stack md">
@@ -201,7 +206,9 @@ function SuggestedUser({
 				<h2 className={styles.suggestedUserHeading}>
 					<UserCard userId={suggestion.suggested.id}>
 						<span className={styles.suggestedUserTrigger}>
-							<Avatar user={suggestion.suggested} size="md" />
+							<NoteAvatar sentiment={suggestedUserCard?.privateNote?.sentiment}>
+								<Avatar user={suggestion.suggested} size="md" />
+							</NoteAvatar>
 							<span className="truncate">{suggestion.suggested.username}</span>
 						</span>
 					</UserCard>

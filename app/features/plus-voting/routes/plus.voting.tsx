@@ -6,6 +6,7 @@ import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { Markdown } from "~/components/Markdown";
+import { NoteAvatar } from "~/components/NoteAvatar";
 import { RelativeTime } from "~/components/RelativeTime";
 import { SubmitButton } from "~/components/SubmitButton";
 import { usePlusVoting } from "~/features/plus-voting/core";
@@ -132,7 +133,14 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 					<h2>
 						<UserCard userId={currentUser.user.id}>
 							<span className={styles.votingUserTrigger}>
-								<Avatar user={currentUser.user} size="lg" />
+								<NoteAvatar
+									sentiment={
+										data.userCards[currentUser.user.id]?.privateNote?.sentiment
+									}
+									size="lg"
+								>
+									<Avatar user={currentUser.user} size="lg" />
+								</NoteAvatar>
 								{currentUser.user.username}
 							</span>
 						</UserCard>

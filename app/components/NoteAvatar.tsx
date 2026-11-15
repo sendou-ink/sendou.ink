@@ -22,6 +22,7 @@ const SIZE_CLASS = {
 	xs: styles.badgeXs,
 	sm: styles.badgeSm,
 	md: styles.badgeMd,
+	lg: styles.badgeLg,
 } as const;
 
 /**
