@@ -6,6 +6,9 @@ export const MONTH_PARAM_FORMAT = "yyyy-MM";
 /** Id of the "Leagues Under The Ink" (LUTI) organization. */
 export const LUTI_ORGANIZATION_ID = 19;
 
+/** Id of the sendou.ink organization (https://sendou.ink/org/sendouink). */
+export const SENDOU_INK_ORGANIZATION_ID = 1;
+
 export const ESTABLISHED_ORG = {
 	MONTHS_CONSIDERED: 6,
 	GAIN_THRESHOLD: 150,
