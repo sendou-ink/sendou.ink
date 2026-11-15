@@ -9,7 +9,7 @@ import { type articleBySlug, normalizeAuthors } from "./bySlug.server";
 
 type ListedArticle = Omit<
 	NonNullable<ReturnType<typeof articleBySlug>>,
-	"content"
+	"content" | "description"
 > & {
 	slug: string;
 };

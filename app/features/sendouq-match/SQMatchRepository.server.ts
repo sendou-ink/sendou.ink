@@ -1196,6 +1196,7 @@ export async function lockMatchWithoutSkillChange(
 			ordinal: -1,
 			userId: null,
 			matchesCount: 0,
+			createdAt: databaseTimestampNow(),
 		})
 		.execute();
 	await ChatRepository.updateRoomsInactive([match.chatRoomId], true, trx);
@@ -1527,7 +1528,21 @@ export async function reportMapWinner({
 		isDecisive: scoreAlreadyDecisive,
 	} = SendouQMatch.score(match);
 
+	const actualReportedCount = match.mapList.filter(
+		(m) => m.winnerGroupId !== null,
+	).length;
+
 	if (scoreAlreadyDecisive) {
+		// one behind = the other team reported the deciding map at the same time
+		const isReportFromBeforeDecidingMap =
+			reportedCount === actualReportedCount - 1;
+		if (
+			reportedCount !== actualReportedCount &&
+			!isReportFromBeforeDecidingMap
+		) {
+			return { status: "STALE" };
+		}
+
 		return handleMatchConfirmation({
 			match,
 			winnerId,
@@ -1539,9 +1554,6 @@ export async function reportMapWinner({
 		});
 	}
 
-	const actualReportedCount = match.mapList.filter(
-		(m) => m.winnerGroupId !== null,
-	).length;
 	if (actualReportedCount !== reportedCount) {
 		return { status: "STALE" };
 	}

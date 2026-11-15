@@ -17,10 +17,7 @@ export class SendouQLookingPage {
 	constructor(page: Page) {
 		this.page = page;
 		this.locators = {
-			// narrow screens keep the other tabs' cards in the DOM, hidden
-			groupCards: page
-				.getByTestId("sendouq-group-card")
-				.filter({ visible: true }),
+			groupCards: page.getByTestId("sendouq-group-card"),
 			undoButtons: page.getByRole("button", { name: "Undo" }),
 			actionButtons: page.getByTestId("group-card-action-button"),
 			suggestButtons: page.getByTestId("group-card-suggest-button"),
@@ -37,7 +34,7 @@ export class SendouQLookingPage {
 		await navigate({ page: this.page, url: SENDOUQ_LOOKING_PREVIEW_PAGE });
 	}
 
-	/** The own group's card, always the first one on the page. */
+	/** The own group's card, always the first one on the page (on narrow screens too, where its pane is swiped to last). */
 	get ownGroupCard() {
 		return this.groupCard(0);
 	}

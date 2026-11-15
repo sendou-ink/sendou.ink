@@ -3,3 +3,19 @@
 	max-width: 40rem;
 	margin-inline: auto;
 }
+
+/* the weapon picker's top row has no room for the export button on narrow screens */
+.narrowOnly {
+	display: none;
+	justify-content: center;
+}
+
+@container (width < 560px) {
+	.wideOnly {
+		display: none;
+	}
+
+	.narrowOnly {
+		display: flex;
+	}
+}

@@ -127,16 +127,14 @@ export function WeaponCategories({ selectedWeaponIds }: WeaponCategoriesProps) {
 }
 
 function EmptyPill() {
-	const { t } = useTranslation(["analyzer"]);
-
 	return (
 		<div className={clsx(styles.categoryPill, styles.categoryPillEmpty)}>
 			<div className={styles.emptyPillSizer} aria-hidden="true">
 				<div className={styles.emptyPillSizerIcon} />
 				<span className={styles.categoryName}>&nbsp;</span>
 			</div>
-			<span className={styles.emptyPillText}>
-				{t("analyzer:comp.pickWeapon")}
+			<span className={styles.emptyPillText} aria-hidden="true">
+				—
 			</span>
 		</div>
 	);

@@ -32,6 +32,16 @@ export function VoiceCallHost() {
 
 	React.useEffect(() => void voiceClient.rejoinAfterReload(), []);
 
+	React.useEffect(() => {
+		if (document.visibilityState === "hidden") voiceClient.setPageHidden(true);
+		const handleVisibilityChange = () =>
+			voiceClient.setPageHidden(document.visibilityState === "hidden");
+
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+		return () =>
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
+	}, []);
+
 	if (!call?.credentials || !call.voiceSessionId) return null;
 
 	return (

@@ -139,7 +139,7 @@
 	"actions.copyTimestampForDiscord": "Copier le timecode pour Discord",
 	"actions.close": "Fermer",
 	"actions.dismiss": "Rejeter",
-	"actions.cancel": "Annuler le match",
+	"actions.cancel": "Annuler",
 	"actions.loading": "Chargement...",
 	"actions.clear": "Effacer",
 	"actions.selectAll": "Tout Sélectionner",

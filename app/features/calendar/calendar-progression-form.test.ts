@@ -1,3 +1,4 @@
+import { addHours } from "date-fns";
 import { describe, expect, test } from "vitest";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { ValidationCtx } from "~/utils/schema";
@@ -285,6 +286,36 @@ describe("validateBracketProgressionFormValues", () => {
 			"tournament:progression.error.DUPLICATE_SOURCE_BRACKET",
 		);
 	});
+});
+
+describe("formValuesToInputBrackets", () => {
+	const TOURNAMENT_START = new Date("2026-01-10T18:00:00Z");
+
+	test.each([
+		{ why: "before the tournament", hoursAfterStart: -24, kept: false },
+		{ why: "at the tournament start", hoursAfterStart: 0, kept: false },
+		{ why: "after the tournament start", hoursAfterStart: 24, kept: true },
+	])(
+		"a follow-up bracket start time $why is kept: $kept",
+		({ hoursAfterStart, kept }) => {
+			const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
+			const bracketStartTime = addHours(TOURNAMENT_START, hoursAfterStart);
+			formValues.brackets[1] = {
+				...formValues.brackets[1],
+				startTime: bracketStartTime,
+			};
+
+			const inputBrackets = formValuesToInputBrackets(
+				formValues.brackets,
+				formValues.progression,
+				{ tournamentStartTime: TOURNAMENT_START },
+			);
+
+			expect(inputBrackets[1].startTime).toEqual(
+				kept ? bracketStartTime : undefined,
+			);
+		},
+	);
 });
 
 describe("shiftBracketStartTimes", () => {

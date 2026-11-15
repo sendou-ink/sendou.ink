@@ -169,6 +169,7 @@
 	"newTournament.copyPlaceholder": "Pick a tournament",
 	"newTournament.copyButton": "Use as template",
 	"newTournament.copyInfo": "Fills in the settings, maps and format of the tournament you pick",
+	"newTournament.copied": "Copied from <name>{{name}}</name>. Next give your tournament a name and pick when it starts",
 	"newTournament.section.teamSize": "Team size",
 	"newTournament.section.registration": "Registration",
 	"newTournament.section.duringTournament": "During the tournament",

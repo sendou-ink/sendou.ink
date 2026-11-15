@@ -8,7 +8,7 @@ import {
 	BracketColumnMatches,
 	BracketColumns,
 } from "./BracketColumns";
-import { Match } from "./Match";
+import { Match, matchExitLabel } from "./Match";
 import { RoundHeader } from "./RoundHeader";
 import { useBracketSpoilerCensor } from "./useBracketSpoilerCensor";
 
@@ -95,15 +95,29 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 					.slice(0, roundIdx)
 					.some((previousRound) => hiddenRoundIds.has(previousRound.id));
 
-				const hasExits = matches.some(
-					(match) =>
-						match.opponent1 &&
-						match.opponent2 &&
-						exitDestinations.has(match.id),
-				);
+				const exitLabelLengths = matches.flatMap((match) => {
+					const destinations = exitDestinations.get(match.id);
+					if (!match.opponent1 || !match.opponent2 || !destinations) return [];
+
+					return (["winner", "loser"] as const).flatMap((type) => {
+						const bracketIdx = destinations[type];
+						const bracketName =
+							bracketIdx === null
+								? null
+								: props.bracket.tournament.bracketsMeta[bracketIdx]?.name;
+
+						return bracketName
+							? [matchExitLabel(bracketName, type).length]
+							: [];
+					});
+				});
 
 				return (
-					<BracketColumn key={round.id} roundId={round.id} hasExits={hasExits}>
+					<BracketColumn
+						key={round.id}
+						roundId={round.id}
+						longestExitLabelLength={Math.max(0, ...exitLabelLengths)}
+					>
 						<RoundHeader
 							roundId={round.id}
 							bracketIdx={props.bracket.idx}

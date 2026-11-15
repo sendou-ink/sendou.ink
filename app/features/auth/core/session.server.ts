@@ -9,6 +9,7 @@ const LEGACY_COOKIE_DOMAIN = "sendou.ink";
 const authSession = createAuthSession({
 	isSecureContext: ServerConfig.isProduction && !IS_E2E_TEST_RUN,
 	secret: ServerConfig.sessionSecret,
+	devServerPort: ServerConfig.isDevelopment ? ServerConfig.port : undefined,
 });
 
 export const AUTH_SESSION_COOKIE_NAME = authSession.cookieName;
@@ -21,16 +22,25 @@ export const legacySessionMigrationCookies =
  *
  * Sessions issued before the switch live in a `Domain=sendou.ink` cookie. They are still read when no host-only cookie is present,
  * and `legacySessionMigrationCookies` returns the `Set-Cookie` values that re-issue such a session host-only and expire the old cookie.
+ *
+ * Browsers share `localhost` cookies across ports, so given `devServerPort` the cookie is named after it and dev servers running side by side
+ * (e.g. worktrees on different databases) don't overwrite each other's sessions.
  * @internal
  */
 export function createAuthSession({
 	isSecureContext,
 	secret,
+	devServerPort,
 }: {
 	isSecureContext: boolean;
 	secret: string;
+	devServerPort?: string;
 }) {
-	const cookieName = isSecureContext ? "__Host-session" : LEGACY_COOKIE_NAME;
+	const cookieName = isSecureContext
+		? "__Host-session"
+		: devServerPort
+			? `${LEGACY_COOKIE_NAME}-${devServerPort}`
+			: LEGACY_COOKIE_NAME;
 
 	const hostOnlyStorage = createCookieSessionStorage({
 		cookie: {

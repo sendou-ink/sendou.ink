@@ -58,6 +58,16 @@ describe("createAuthSession", () => {
 		expect(authSession.cookieName).toBe("__session");
 	});
 
+	test("names the cookie after the dev server's port", () => {
+		const authSession = createAuthSession({
+			isSecureContext: false,
+			secret: SECRET,
+			devServerPort: "5273",
+		});
+
+		expect(authSession.cookieName).toBe("__session-5273");
+	});
+
 	test("reads the session from the legacy domain cookie when no host-only cookie exists", async () => {
 		const session = await secureAuthSession.storage.getSession(
 			await legacyCookieHeader({ user: 1 }),

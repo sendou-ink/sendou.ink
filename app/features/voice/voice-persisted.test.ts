@@ -3,7 +3,11 @@ import {
 	assertDecodesToDefault,
 	assertRoundTrips,
 } from "~/modules/persisted-state/persisted-state-test-utils";
-import { voiceSettingsPersisted } from "./voice-persisted";
+import {
+	callToRejoinPersisted,
+	micEnabledPersisted,
+	voiceSettingsPersisted,
+} from "./voice-persisted";
 
 describe("voiceSettingsPersisted", () => {
 	test("round-trips", () => {
@@ -25,5 +29,29 @@ describe("voiceSettingsPersisted", () => {
 
 	test("malformed values decode to the default", () => {
 		assertDecodesToDefault(voiceSettingsPersisted, ["{}", "true", "[]"]);
+	});
+});
+
+describe("callToRejoinPersisted", () => {
+	test("round-trips", () => {
+		assertRoundTrips(callToRejoinPersisted, [
+			null,
+			{ roomId: 1, at: 1_700_000_000_000, kind: "CLOSED" },
+			{ roomId: 2, at: 1_700_000_000_000, kind: "HIDDEN" },
+		]);
+	});
+
+	test("malformed values decode to the default", () => {
+		assertDecodesToDefault(callToRejoinPersisted, [
+			"{}",
+			'{"roomId":1,"leftAt":1}',
+			'{"roomId":1,"at":1,"kind":"GONE"}',
+		]);
+	});
+});
+
+describe("micEnabledPersisted", () => {
+	test("round-trips", () => {
+		assertRoundTrips(micEnabledPersisted, [true, false]);
 	});
 });

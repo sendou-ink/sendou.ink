@@ -56,3 +56,24 @@ export function keyboardIsOpen() {
 		document.activeElement?.matches(KEYBOARD_INPUT_SELECTOR) === true
 	);
 }
+
+/**
+ * Touch end handler for a fixed element that already makes room for the keyboard itself: focuses the tapped text field
+ * without iOS also scrolling the page to reveal it, which would move the element away and show what is behind it
+ */
+export function focusWithoutPanning(event: {
+	target: EventTarget | null;
+	preventDefault: () => void;
+}) {
+	const { target } = event;
+	if (
+		!(target instanceof HTMLElement) ||
+		!target.matches(KEYBOARD_INPUT_SELECTOR) ||
+		target === document.activeElement
+	) {
+		return;
+	}
+
+	event.preventDefault();
+	target.focus({ preventScroll: true });
+}

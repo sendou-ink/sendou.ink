@@ -27,6 +27,7 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { LocaleTime } from "~/components/LocaleTime";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { useUser } from "~/features/auth/core/user";
 import { useTopicRevalidation } from "~/features/chat/chat-hooks";
@@ -454,7 +455,7 @@ function MapPreparer({
 					isPreparing
 				/>
 			) : null}
-			<div className="stack sm horizontal ml-auto">
+			<div className="stack sm horizontal items-center">
 				{hasPreparedMaps ? (
 					<Check
 						className="color-success w-6"
@@ -548,10 +549,9 @@ function BracketTabContent({
 	return (
 		<>
 			<AbDivisionsImbalanceAlert bracket={bracket} />
-			<PrepareMapsButton bracket={bracket} bracketIdx={bracketIdx} />
+			<OrganizerBracketBar bracket={bracket} bracketIdx={bracketIdx} />
 			{tournament.bracketsMeta[bracketIdx].enoughTeams ? (
 				<>
-					<StartBracketAlert bracket={bracket} bracketIdx={bracketIdx} />
 					<Bracket
 						bracket={bracket}
 						bracketIdx={bracketIdx}
@@ -596,36 +596,6 @@ function BracketTabContent({
 	);
 }
 
-function PrepareMapsButton({
-	bracket,
-	bracketIdx,
-}: {
-	bracket: BracketType;
-	bracketIdx: number;
-}) {
-	const tournament = useTournament();
-	const user = useUser();
-	const isHydrated = useHydrated();
-
-	if (
-		!tournament.isOrganizer(user) ||
-		bracket.canBeStarted ||
-		!bracket.preview ||
-		!isHydrated
-	) {
-		return null;
-	}
-
-	return (
-		<div className="stack horizontal sm mb-4">
-			{/* Error Boundary because preparing maps is optional, so no need to make the whole page inaccessible if it fails */}
-			<ErrorBoundary fallback={null}>
-				<MapPreparer bracket={bracket} bracketIdx={bracketIdx} />
-			</ErrorBoundary>
-		</div>
-	);
-}
-
 function AbDivisionsImbalanceAlert({ bracket }: { bracket: BracketType }) {
 	const tournament = useTournament();
 	const user = useUser();
@@ -654,7 +624,8 @@ function AbDivisionsImbalanceAlert({ bracket }: { bracket: BracketType }) {
 	);
 }
 
-function StartBracketAlert({
+/** Organizer's controls of an unstarted bracket: how many teams are in and what blocks starting it, next to preparing maps and starting. */
+function OrganizerBracketBar({
 	bracket,
 	bracketIdx,
 }: {
@@ -663,52 +634,120 @@ function StartBracketAlert({
 }) {
 	const tournament = useTournament();
 	const user = useUser();
+	const isHydrated = useHydrated();
 
-	if (
-		!bracket.preview ||
-		!tournament.isOrganizer(user) ||
-		!tournament.regularCheckInStartInThePast
-	) {
-		return null;
-	}
+	if (!bracket.preview || !tournament.isOrganizer(user)) return null;
+
+	const showsStatus =
+		tournament.regularCheckInStartInThePast &&
+		tournament.bracketsMeta[bracketIdx].enoughTeams;
+	const showsMapPreparer = !bracket.canBeStarted && isHydrated;
+
+	if (!showsStatus && !showsMapPreparer) return null;
 
 	const abDivisionsStartError = getAbDivisionsStartError(bracket, tournament);
+	const participantsCount = bracket.participantTournamentTeamIds.length;
 	const totalTeamsAvailableForTheBracket =
 		tournament.eligibleTeamsCountOfBracket(bracketIdx);
+	const checkedOutCount = totalTeamsAvailableForTheBracket - participantsCount;
+	const hasCheckIn = bracket.isStartingBracket || bracket.requiresCheckIn;
+	const checkedInTeamsCount = bracket.participantTournamentTeamIds.filter(
+		(teamId) => !bracket.teamsPendingCheckIn?.includes(teamId),
+	).length;
 
 	return (
-		<div className="stack items-center mb-4">
-			<div className="stack sm items-center">
-				<Alert
-					variation="INFO"
-					textClassName="stack horizontal md items-center"
-				>
-					{bracket.participantTournamentTeamIds.length}/
-					{totalTeamsAvailableForTheBracket} teams checked in
-					{bracket.canBeStarted ? (
-						tournament.isDraft ? (
-							<DraftBracketStartPopover />
-						) : (
-							<BracketStarter
-								bracket={bracket}
-								bracketIdx={bracketIdx}
-								isDisabled={Boolean(abDivisionsStartError)}
-							/>
-						)
-					) : null}
-				</Alert>
-				{!bracket.canBeStarted ? (
-					<div className={styles.miniAlert}>
-						⚠️{" "}
-						{bracket.isStartingBracket
-							? "Tournament start time is in the future"
-							: bracket.startTime && bracket.startTime > new Date()
-								? "Bracket start time is in the future"
-								: "Teams pending from the source brackets"}{" "}
-						(blocks starting)
+		<div className={styles.organizerBar}>
+			{showsStatus ? (
+				<div className={styles.organizerBarStatus}>
+					<div className="font-semi-bold">
+						{hasCheckIn
+							? `${checkedInTeamsCount}/${totalTeamsAvailableForTheBracket} teams checked in`
+							: checkedOutCount > 0
+								? `${participantsCount} teams (${checkedOutCount} checked out)`
+								: `${participantsCount} teams`}
 					</div>
+					{!bracket.canBeStarted ? (
+						<BracketStartSchedule bracket={bracket} bracketIdx={bracketIdx} />
+					) : null}
+				</div>
+			) : null}
+			<div className={styles.organizerBarActions}>
+				{showsMapPreparer ? (
+					// Error Boundary because preparing maps is optional, so no need to make the whole page inaccessible if it fails
+					<ErrorBoundary fallback={null}>
+						<MapPreparer bracket={bracket} bracketIdx={bracketIdx} />
+					</ErrorBoundary>
+				) : null}
+				{showsStatus && bracket.canBeStarted ? (
+					tournament.isDraft ? (
+						<DraftBracketStartPopover />
+					) : (
+						<BracketStarter
+							bracket={bracket}
+							bracketIdx={bracketIdx}
+							isDisabled={Boolean(abDivisionsStartError)}
+						/>
+					)
 				) : null}
 			</div>
+		</div>
+	);
+}
+
+const ORGANIZER_BAR_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+	weekday: "short",
+	hour: "numeric",
+	minute: "numeric",
+};
+
+/** When the bracket's check-in opens and when it can be started, or that it waits for teams from its source brackets. */
+function BracketStartSchedule({
+	bracket,
+	bracketIdx,
+}: {
+	bracket: BracketType;
+	bracketIdx: number;
+}) {
+	const tournament = useTournament();
+
+	const now = new Date();
+	const startTime = bracket.isStartingBracket
+		? tournament.ctx.startsAt
+		: bracket.startTime;
+
+	if (!startTime || startTime <= now) {
+		return (
+			<div className={styles.organizerBarSchedule}>
+				Teams pending from the source brackets
+			</div>
+		);
+	}
+
+	const checkInStartsAt =
+		!bracket.isStartingBracket && bracket.requiresCheckIn
+			? tournament.bracketCheckInStartsAt(bracketIdx)
+			: null;
+
+	return (
+		<div className={styles.organizerBarSchedule}>
+			{checkInStartsAt && checkInStartsAt > now ? (
+				<span>
+					Check-in opens{" "}
+					<LocaleTime
+						date={checkInStartsAt}
+						options={ORGANIZER_BAR_TIME_OPTIONS}
+						inline
+					/>
+				</span>
+			) : null}
+			<span>
+				Can be started{" "}
+				<LocaleTime
+					date={startTime}
+					options={ORGANIZER_BAR_TIME_OPTIONS}
+					inline
+				/>
+			</span>
 		</div>
 	);
 }

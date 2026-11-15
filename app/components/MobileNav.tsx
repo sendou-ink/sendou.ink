@@ -36,6 +36,7 @@ import {
 	teamPage,
 	userPage,
 } from "~/utils/urls";
+import { focusWithoutPanning } from "~/utils/visual-viewport";
 import { Avatar } from "./Avatar";
 import { EventsList } from "./EventsList";
 import {
@@ -640,6 +641,7 @@ function ChatPanel({
 			aria-label={t("front:mobileNav.chat")}
 			className={clsx(styles.menuOverlay, skipAnimation && styles.noAnimation)}
 			onToggle={onToggle}
+			onTouchEnd={focusWithoutPanning}
 		>
 			<div className={styles.panelDialog}>
 				{isOpen ? (

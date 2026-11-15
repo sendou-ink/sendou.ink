@@ -49,6 +49,8 @@ None of this exists in production, and nothing in it can reach production users:
 - **Reseed only `db.sqlite3`.** It wipes every row, so the sandbox, snapshot or any other file is refused.
 - **Fresh users only.** Scenarios create their own users (with Discord ids that can't collide with seeded ones) and never touch existing rows.
 
+Logging in as someone holds on one dev server only: in development the session cookie is named after the server's port (`__session-5173`), as browsers share `localhost` cookies across ports and a server on another database (e.g. a worktree) would otherwise clear a session whose user it doesn't have.
+
 Note that `pnpm run dev` listens on your network too (`--host`), so others on the same network can use these tools, as they already could use `/auth/impersonate` in development.
 
 ## Adding a scenario

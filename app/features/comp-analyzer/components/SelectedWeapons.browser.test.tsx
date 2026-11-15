@@ -33,7 +33,7 @@ describe("SelectedWeapons", () => {
 			const screen = await renderSelectedWeapons({ selectedWeaponIds: [] });
 
 			const emptySlots = screen.container.querySelectorAll(
-				'[class*="weaponNameEmpty"]',
+				'[data-testid="empty-weapon-slot"]',
 			);
 			expect(emptySlots.length).toBe(MAX_WEAPONS);
 		});
@@ -71,16 +71,8 @@ describe("SelectedWeapons", () => {
 				selectedWeaponIds: [0],
 			});
 
-			const subSpecialContainers = screen.container.querySelectorAll(
-				'[class*="subSpecialContainer"]',
-			);
-			const filledContainers = Array.from(subSpecialContainers).filter(
-				(container) => !container.className.includes("Spacer"),
-			);
-			expect(filledContainers.length).toBeGreaterThan(0);
-
-			const kitIcons = screen.container.querySelectorAll('[class*="kitIcon"]');
-			expect(kitIcons.length).toBeGreaterThan(0);
+			await expect.element(screen.getByTitle("Curling Bomb")).toBeVisible();
+			await expect.element(screen.getByTitle("Ultra Stamp")).toBeVisible();
 		});
 
 		test("renders a row per copy when the same weapon is picked twice", async () => {
@@ -94,9 +86,22 @@ describe("SelectedWeapons", () => {
 			expect(rows.length).toBe(2);
 
 			const emptySlots = screen.container.querySelectorAll(
-				'[class*="weaponNameEmpty"]',
+				'[data-testid="empty-weapon-slot"]',
 			);
 			expect(emptySlots.length).toBe(MAX_WEAPONS - 2);
+		});
+
+		test("prompts to pick a weapon only in the next empty slot", async () => {
+			const screen = await renderSelectedWeapons({
+				selectedWeaponIds: [0],
+			});
+
+			const emptySlots = screen.container.querySelectorAll(
+				'[data-testid="empty-weapon-slot"]',
+			);
+			expect(emptySlots[0]).toHaveTextContent("Pick a weapon");
+			expect(emptySlots[1]).not.toHaveTextContent("Pick a weapon");
+			expect(emptySlots[2]).not.toHaveTextContent("Pick a weapon");
 		});
 
 		test("shows empty slots for remaining positions", async () => {
@@ -105,7 +110,7 @@ describe("SelectedWeapons", () => {
 			});
 
 			const emptySlots = screen.container.querySelectorAll(
-				'[class*="weaponNameEmpty"]',
+				'[data-testid="empty-weapon-slot"]',
 			);
 			expect(emptySlots.length).toBe(MAX_WEAPONS - 1);
 		});

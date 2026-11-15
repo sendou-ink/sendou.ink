@@ -1,4 +1,5 @@
 import { db } from "~/db/sql";
+import { CANCELED_MATCH_SEASON } from "~/features/mmr/mmr-constants";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { invariant } from "~/utils/invariant";
@@ -47,6 +48,8 @@ type Options = {
 	createdAt?: Date;
 	/** When the two groups had agreed on the score. Needs `isConcluded`. */
 	confirmedAt?: Date;
+	/** When the match was canceled, if not at `createdAt`. Needs `cancel` or `canceledByStaffUserId`. */
+	canceledAt?: Date;
 };
 
 /** Creates the two full groups with the match, like the matchmaking UI does. Both are returned with the match. */
@@ -104,6 +107,7 @@ export const { create } = defineFactory({
 			canceledByStaffUserId,
 			createdAt,
 			confirmedAt,
+			canceledAt,
 		}: Options,
 	) => {
 		if (isConcluded) {
@@ -131,6 +135,10 @@ export const { create } = defineFactory({
 		if (createdAt) {
 			await backdateSkills(match.id, createdAt);
 		}
+
+		if (canceledAt) {
+			await backdateCancellation(match.id, canceledAt);
+		}
 	},
 });
 
@@ -149,6 +157,18 @@ async function backdateSkills(matchId: number, createdAt: Date) {
 	for (const skill of skills) {
 		await backdate("Skill", skill.id, { createdAt });
 	}
+}
+
+async function backdateCancellation(matchId: number, canceledAt: Date) {
+	const cancellationSkill = await db
+		.selectFrom("Skill")
+		.select("id")
+		.where("groupMatchId", "=", matchId)
+		.where("season", "=", CANCELED_MATCH_SEASON)
+		.executeTakeFirst();
+	invariant(cancellationSkill, "canceledAt needs a canceled match");
+
+	await backdate("Skill", cancellationSkill.id, { createdAt: canceledAt });
 }
 
 async function cancelMatch(

@@ -134,6 +134,7 @@ export function VoiceCall({
 			<Telemetry />
 			<Latency />
 			<ScreenWakeLock />
+			<ResumeCheck />
 		</DailyProvider>
 	);
 }
@@ -409,6 +410,30 @@ function Latency() {
 			voiceClient.setLatency(null);
 		};
 	}, [daily, isJoined]);
+
+	return null;
+}
+
+/** A page the browser froze in the background can come back to a call Daily has ended without a word. */
+function ResumeCheck() {
+	const daily = useDaily();
+
+	React.useEffect(() => {
+		if (!daily) return;
+
+		const check = () => {
+			if (document.visibilityState !== "visible") return;
+			if (voiceClient.getSnapshot().call?.status !== "CONNECTED") return;
+
+			const meetingState = daily.meetingState();
+			if (meetingState === "left-meeting" || meetingState === "error") {
+				void voiceClient.reconnect(`call was ${meetingState} on resume`);
+			}
+		};
+
+		document.addEventListener("visibilitychange", check);
+		return () => document.removeEventListener("visibilitychange", check);
+	}, [daily]);
 
 	return null;
 }

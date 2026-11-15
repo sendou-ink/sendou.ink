@@ -431,17 +431,6 @@ test.describe("Calendar", () => {
 			datetimeLocalValue(followUpStartTime),
 		);
 
-		await newTournament.goToStep("basics");
-		await newTournament.setFirstDate(addDays(startTime, 2));
-		await newTournament.goToStep("prizes");
-
-		await expect(
-			newTournament.locators.bracketStartBeforeTournamentError,
-		).toBeVisible();
-
-		await newTournament.locators.bracketStartTimeInput.fill(
-			datetimeLocalValue(addDays(startTime, 3)),
-		);
 		await newTournament.save();
 
 		await expect(page).toHaveURL(/\/to\/\d+/);
@@ -467,6 +456,9 @@ test.describe("Calendar", () => {
 		const newTournament = new CalendarNewEventPage(page);
 		await newTournament.gotoNewTournament();
 		await newTournament.copyTournament(copied.eventId);
+
+		await expect(page.getByText(/^Copied from/)).toBeVisible();
+		await expect(newTournament.locators.nameInput).toBeFocused();
 
 		await newTournament.form.fill("name", "Copied Tournament");
 		const startTime = await newTournament.tournamentStartTime();

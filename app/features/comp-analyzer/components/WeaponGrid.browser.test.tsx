@@ -11,6 +11,7 @@ const defaultProps: ComponentProps<typeof WeaponGrid> = {
 	onCategorizationChange: vi.fn(),
 	isCollapsed: false,
 	onToggleCollapse: vi.fn(),
+	actions: null,
 };
 
 function renderWeaponGrid(
@@ -130,6 +131,59 @@ describe("WeaponGrid", () => {
 				'[class*="weaponButtonSelected"]',
 			);
 			expect(selectedButtons.length).toBeGreaterThan(0);
+		});
+	});
+
+	describe("search", () => {
+		test("shows only the weapons matching the search", async () => {
+			const screen = await renderWeaponGrid();
+
+			await screen.getByTestId("weapon-search").fill("sploosh");
+
+			await expect
+				.element(screen.getByTestId("weapon-button-0"))
+				.toBeInTheDocument();
+			await expect
+				.element(screen.getByTestId("weapon-button-10"))
+				.not.toBeInTheDocument();
+			await expect
+				.element(screen.getByText("Blasters"))
+				.not.toBeInTheDocument();
+		});
+
+		test("clears the search after picking a weapon", async () => {
+			const onWeaponClick = vi.fn();
+			const screen = await renderWeaponGrid({ onWeaponClick });
+			const search = screen.getByTestId("weapon-search");
+
+			await search.fill("sploosh");
+			await screen.getByTestId("weapon-button-0").click();
+
+			expect(onWeaponClick).toHaveBeenCalledWith(0);
+			await expect.element(search).toHaveValue("");
+			await expect
+				.element(screen.getByTestId("weapon-button-10"))
+				.toBeInTheDocument();
+		});
+
+		test("expands the collapsed grid when typing in the search", async () => {
+			const onToggleCollapse = vi.fn();
+			const screen = await renderWeaponGrid({
+				isCollapsed: true,
+				onToggleCollapse,
+			});
+
+			await screen.getByTestId("weapon-search").fill("s");
+
+			expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+		});
+
+		test("shows no results when nothing matches", async () => {
+			const screen = await renderWeaponGrid();
+
+			await screen.getByTestId("weapon-search").fill("xyzzy");
+
+			await expect.element(screen.getByText("No results")).toBeVisible();
 		});
 	});
 });

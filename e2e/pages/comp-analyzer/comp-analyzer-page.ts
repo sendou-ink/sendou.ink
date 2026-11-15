@@ -14,7 +14,7 @@ export class CompAnalyzerPage {
 		const selectedWeapons = page.getByTestId("selected-weapons");
 		this.locators = {
 			selectedWeapons,
-			emptyWeaponSlots: selectedWeapons.getByText("Pick a weapon"),
+			emptyWeaponSlots: selectedWeapons.getByTestId("empty-weapon-slot"),
 			weaponGridToggle: page.getByTestId("weapon-grid-toggle"),
 			categorizationToggle: page.getByTestId("categorization-toggle"),
 			rangeVisualization: page.getByTestId("range-visualization"),

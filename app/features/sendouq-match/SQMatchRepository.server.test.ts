@@ -17,7 +17,7 @@ import {
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
-import { dateToYYYYMMDD } from "~/utils/dates";
+import { dateToDatabaseTimestamp, dateToYYYYMMDD } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { withUserId } from "~/utils/Test";
 import * as GroupMatchContinueVoteRepository from "./GroupMatchContinueVoteRepository.server";
@@ -30,6 +30,7 @@ const setupMatch = async ({
 }: {
 	createdAt?: Date;
 	isMatchmade?: boolean;
+	isReported?: boolean;
 } = {}) => {
 	const users = await UserFactory.createMany(FULL_GROUP_SIZE * 2);
 	const alphaMembers = users.slice(0, FULL_GROUP_SIZE);
@@ -60,6 +61,12 @@ const fetchMapResults = async (matchId: number) => {
 		.where("matchId", "=", matchId)
 		.orderBy("index", "asc")
 		.execute();
+};
+
+const countReportedMaps = async (matchId: number) => {
+	const maps = await fetchMapResults(matchId);
+
+	return maps.filter((m) => m.winnerGroupId !== null).length;
 };
 
 const fetchGroup = async (groupId: number) => {
@@ -194,6 +201,21 @@ describe("lockMatchWithoutSkillChange", () => {
 		expect(skills[0].sigma).toBe(-1);
 		expect(skills[0].ordinal).toBe(-1);
 		expect(skills[0].userId).toBeNull();
+	});
+
+	test("stamps the dummy skill with the time of locking", async () => {
+		vi.useFakeTimers({ toFake: ["Date"] });
+		try {
+			const { match } = await setupMatch();
+			vi.setSystemTime(add(new Date(), { hours: 1 }));
+
+			await SQMatchRepository.lockMatchWithoutSkillChange(match);
+
+			const skills = await fetchSkills(match.id);
+			expect(skills[0].createdAt).toBe(dateToDatabaseTimestamp(new Date()));
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	test("marks the chat room inactive", async () => {
@@ -702,6 +724,43 @@ describe("finalizeMatch", () => {
 });
 
 describe("reportMapWinner confirmation", () => {
+	test("rejects as stale a map report from a page two reports behind the set-ending score", async () => {
+		// alpha reported every map, bravo's page still shows the map before last in progress
+		const setup = await setupMatch({ isReported: true });
+		const reportedCount = await countReportedMaps(setup.match.id);
+
+		const result = await SQMatchRepository.reportMapWinner({
+			matchId: setup.match.id,
+			winnerId: setup.alphaGroupId,
+			reportedByUserId: setup.bravoMembers[0].id,
+			reportedCount: reportedCount - 2,
+		});
+
+		expect(result.status).toBe("STALE");
+		expect(
+			(await SQMatchRepository.findById(setup.match.id))?.isLocked,
+		).toBeFalsy();
+	});
+
+	test.each([
+		{ why: "same winner", winner: "alpha", expected: "MATCH_FINALIZED" },
+		{ why: "other winner", winner: "bravo", expected: "SCORE_DISAGREEMENT" },
+	] as const)(
+		"treats the other team reporting the deciding map at the same time as a confirmation ($why)",
+		async ({ winner, expected }) => {
+			const setup = await setupMatch({ isReported: true });
+
+			const result = await SQMatchRepository.reportMapWinner({
+				matchId: setup.match.id,
+				winnerId: winner === "alpha" ? setup.alphaGroupId : setup.bravoGroupId,
+				reportedByUserId: setup.bravoMembers[0].id,
+				reportedCount: (await countReportedMaps(setup.match.id)) - 1,
+			});
+
+			expect(result.status).toBe(expected);
+		},
+	);
+
 	test("rejects as stale a confirmation of a set-ending report undone and re-reported since", async () => {
 		vi.useFakeTimers({ toFake: ["Date"] });
 		try {

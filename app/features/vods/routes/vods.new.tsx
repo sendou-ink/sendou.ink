@@ -4,7 +4,6 @@ import { Trans, useTranslation } from "react-i18next";
 import { Link, type MetaFunction, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { UserSearch } from "~/components/elements/UserSearch";
-import { FormMessage } from "~/components/FormMessage";
 import { Image } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
@@ -382,7 +381,7 @@ function PovFormField({ FormField }: { FormField: VodFormFieldComponent }) {
 								? t("calendar:forms.team.player.addAsUser")
 								: t("calendar:forms.team.player.addAsText")}
 						</SendouButton>
-						{error ? <FormMessage type="error">{error}</FormMessage> : null}
+						<FormFieldMessages name={name} error={error} />
 					</div>
 				);
 			}}

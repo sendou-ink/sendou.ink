@@ -31,3 +31,31 @@ export const voiceSettingsPersisted = PersistedState.define({
 });
 
 export type VoiceSettings = (typeof voiceSettingsPersisted)["default"];
+
+/**
+ * The call this tab's page was in when it went away: `CLOSED` by unloading (a reload), `HIDDEN` by being
+ * hidden, which the page outlives unless the browser discards it in the background.
+ */
+export const callToRejoinPersisted = PersistedState.define({
+	key: "voiceCallToRejoin",
+	storage: "session",
+	schema: v.nullable(
+		v.object({
+			roomId: v.number(),
+			at: v.number(),
+			kind: v.picklist(["CLOSED", "HIDDEN"]),
+		}),
+	),
+	default: null,
+});
+
+export type RememberedCall = NonNullable<
+	(typeof callToRejoinPersisted)["default"]
+>;
+
+export const micEnabledPersisted = PersistedState.define({
+	key: "voiceMicEnabled",
+	storage: "local",
+	schema: v.boolean(),
+	default: false,
+});

@@ -40,11 +40,9 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	const description = data.content.trim().split("\n")[0];
-
 	return metaTags({
 		title: data.title,
-		description,
+		description: data.description ?? undefined,
 		image: {
 			url: articlePreviewUrl(args.params.slug),
 		},

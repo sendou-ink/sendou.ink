@@ -1,16 +1,19 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import {
 	SendouTab,
 	SendouTabList,
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { Flipper } from "~/components/Flipper";
+import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import styles from "./LookingColumns.module.css";
 
 /**
  * Looking page layout: own group (with the groups it invited below), available groups and received invitations as three columns,
- * collapsing into tabs on narrow screens where the invited and available groups share one list. The switch is a container query
+ * collapsing on narrow screens into a strip of full-width panes swiped between with scroll snap, where the invited and available
+ * groups share one list. The tabs follow the scroll position and scroll to a pane when clicked. The switch is a container query
  * so the page renders on the server without knowing the screen size.
  */
 export function LookingColumns({
@@ -36,7 +39,9 @@ export function LookingColumns({
 	receivedCount: number;
 }) {
 	const { t } = useTranslation(["q"]);
-	const [selectedTab, setSelectedTab] = React.useState("groups");
+	const [selectedPane, setSelectedPane] = React.useState("groups");
+	const stripRef = React.useRef<HTMLDivElement>(null);
+	const prefersReducedMotion = usePrefersReducedMotion();
 
 	const receivedHeader = t(
 		isFullGroup
@@ -44,11 +49,35 @@ export function LookingColumns({
 			: "q:looking.columns.invitations",
 	);
 
+	const scrollToPane = (pane: string) => {
+		setSelectedPane(pane);
+
+		const strip = stripRef.current;
+		const paneElement = strip?.querySelector(`[data-pane="${pane}"]`);
+		if (!strip || !paneElement) return;
+
+		strip.scrollBy({
+			left: offsetFromStripStart(strip, paneElement),
+			behavior: prefersReducedMotion ? "instant" : "smooth",
+		});
+	};
+
+	const selectPaneInView = () => {
+		const strip = stripRef.current;
+		if (!strip) return;
+
+		const paneInView = R.firstBy(
+			[...strip.querySelectorAll<HTMLElement>("[data-pane]")],
+			(pane) => Math.abs(offsetFromStripStart(strip, pane)),
+		);
+		if (paneInView?.dataset.pane) setSelectedPane(paneInView.dataset.pane);
+	};
+
 	return (
-		<div className={styles.layout} data-tab={selectedTab}>
+		<div className={styles.layout}>
 			<SendouTabs
-				selectedKey={selectedTab}
-				onSelectionChange={setSelectedTab}
+				selectedKey={selectedPane}
+				onSelectionChange={scrollToPane}
 				className={styles.tabs}
 			>
 				<SendouTabList>
@@ -65,36 +94,38 @@ export function LookingColumns({
 					) : null}
 				</SendouTabList>
 			</SendouTabs>
-			<Flipper flipKey={flipKey} className={styles.columns}>
-				<div className={styles.ownColumn}>
+			<div ref={stripRef} className={styles.strip} onScroll={selectPaneInView}>
+				<Flipper flipKey={flipKey} className={styles.columns}>
 					{own ? (
-						<div className={styles.own}>
+						<div className={styles.own} data-pane="own">
 							<ColumnHeader>{t("q:looking.columns.myGroup")}</ColumnHeader>
 							{own.content}
 						</div>
 					) : null}
-					{invited !== null ? (
-						<div className={styles.invited}>
-							<ColumnHeader>
-								{t(
-									isFullGroup
-										? "q:looking.columns.challenged"
-										: "q:looking.columns.invited",
-								)}
-							</ColumnHeader>
-							{invited}
+					<div className={styles.groups} data-pane="groups">
+						{invited !== null ? (
+							<div className={styles.invited}>
+								<ColumnHeader>
+									{t(
+										isFullGroup
+											? "q:looking.columns.challenged"
+											: "q:looking.columns.invited",
+									)}
+								</ColumnHeader>
+								{invited}
+							</div>
+						) : null}
+						<div className={styles.available}>
+							<ColumnHeader>{t("q:looking.columns.available")}</ColumnHeader>
+							{available}
 						</div>
-					) : null}
-				</div>
-				<div className={styles.available}>
-					<ColumnHeader>{t("q:looking.columns.available")}</ColumnHeader>
-					{available}
-				</div>
-				<div className={styles.received}>
-					<ColumnHeader>{receivedHeader}</ColumnHeader>
-					{received}
-				</div>
-			</Flipper>
+					</div>
+					<div className={styles.received} data-pane="received">
+						<ColumnHeader>{receivedHeader}</ColumnHeader>
+						{received}
+					</div>
+				</Flipper>
+			</div>
 		</div>
 	);
 }
@@ -112,4 +143,10 @@ export function SortedCard({
 
 function ColumnHeader({ children }: { children: React.ReactNode }) {
 	return <div className={styles.header}>{children}</div>;
+}
+
+function offsetFromStripStart(strip: HTMLElement, element: Element) {
+	return (
+		element.getBoundingClientRect().left - strip.getBoundingClientRect().left
+	);
 }

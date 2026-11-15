@@ -11,7 +11,7 @@ export function MatchPageHeader({
 }) {
 	return (
 		<div className={styles.root}>
-			<div>
+			<div className={styles.heading}>
 				<h2 className={styles.title}>{children}</h2>
 				<div className={styles.subtitle}>{subtitle}</div>
 			</div>

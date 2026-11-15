@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { HardDriveDownload } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -78,6 +77,11 @@ function CompAnalyzerPage() {
 	const [excludedDamageKeys, setExcludedDamageKeys] = useState<
 		DamageCombos.ExcludedDamageKey[]
 	>([]);
+	const [exportSettings, setExportSettings] = useState<CompExportSettings>({
+		title: "",
+		showRanges: true,
+		showCombos: true,
+	});
 
 	const handleWeaponClick = (weaponId: MainWeaponId) => {
 		if (selectedWeaponIds.length >= MAX_WEAPONS) {
@@ -91,28 +95,31 @@ function CompAnalyzerPage() {
 		setSelectedWeaponIds(selectedWeaponIds.filter((_, i) => i !== index));
 	};
 
+	const exportAction =
+		selectedWeaponIds.length >= MAX_WEAPONS ? (
+			<CompExportDialog
+				weaponIds={selectedWeaponIds}
+				excludedDamageKeys={excludedDamageKeys}
+				settings={exportSettings}
+				onSettingsChange={setExportSettings}
+			/>
+		) : (
+			<SendouPopover trigger={<ExportButton />}>
+				{t("analyzer:comp.exportHint", { max: MAX_WEAPONS })}
+			</SendouPopover>
+		);
+
 	return (
 		<Main bigger className="stack lg">
-			<div className={clsx(styles.selectedWeaponsColumn, "stack lg")}>
+			<div className={styles.selectedWeaponsColumn}>
 				<SelectedWeapons
 					selectedWeaponIds={selectedWeaponIds}
 					onRemove={handleRemoveWeapon}
 					onReorder={setSelectedWeaponIds}
 				/>
-				<div className="stack horizontal justify-end">
-					{selectedWeaponIds.length >= MAX_WEAPONS ? (
-						<CompExportDialog
-							weaponIds={selectedWeaponIds}
-							excludedDamageKeys={excludedDamageKeys}
-						/>
-					) : (
-						<SendouPopover trigger={<ExportButton />}>
-							{t("analyzer:comp.exportHint", { max: MAX_WEAPONS })}
-						</SendouPopover>
-					)}
-				</div>
 			</div>
 			<WeaponCategories selectedWeaponIds={selectedWeaponIds} />
+			<div className={styles.narrowOnly}>{exportAction}</div>
 			<WeaponGrid
 				selectedWeaponIds={selectedWeaponIds}
 				onWeaponClick={handleWeaponClick}
@@ -120,6 +127,7 @@ function CompAnalyzerPage() {
 				onCategorizationChange={setCategorization}
 				isCollapsed={isGridCollapsed}
 				onToggleCollapse={() => setIsGridCollapsed(!isGridCollapsed)}
+				actions={<div className={styles.wideOnly}>{exportAction}</div>}
 			/>
 			<RangeVisualization weaponIds={selectedWeaponIds} />
 			<DamageComboList
@@ -136,11 +144,24 @@ interface CompExportProps {
 	excludedDamageKeys: DamageCombos.ExcludedDamageKey[];
 }
 
-function CompExportDialog({ weaponIds, excludedDamageKeys }: CompExportProps) {
+/** Lives in the page, the export button is rendered in two places (wide and narrow layout) that share it */
+interface CompExportSettings {
+	title: string;
+	showRanges: boolean;
+	showCombos: boolean;
+}
+
+function CompExportDialog({
+	weaponIds,
+	excludedDamageKeys,
+	settings,
+	onSettingsChange,
+}: CompExportProps & {
+	settings: CompExportSettings;
+	onSettingsChange: (settings: CompExportSettings) => void;
+}) {
 	const { t } = useTranslation(["common", "analyzer"]);
-	const [title, setTitle] = useState("");
-	const [showRanges, setShowRanges] = useState(true);
-	const [showCombos, setShowCombos] = useState(true);
+	const { title, showRanges, showCombos } = settings;
 
 	return (
 		<ImageExportDialog
@@ -152,14 +173,26 @@ function CompExportDialog({ weaponIds, excludedDamageKeys }: CompExportProps) {
 					<input
 						type="text"
 						value={title}
-						onChange={(e) => setTitle(e.target.value)}
+						onChange={(e) =>
+							onSettingsChange({ ...settings, title: e.target.value })
+						}
 						placeholder={t("common:imageExport.title")}
 						aria-label={t("common:imageExport.title")}
 					/>
-					<SendouSwitch isSelected={showRanges} onChange={setShowRanges}>
+					<SendouSwitch
+						isSelected={showRanges}
+						onChange={(isSelected) =>
+							onSettingsChange({ ...settings, showRanges: isSelected })
+						}
+					>
 						{t("analyzer:comp.weaponRanges")}
 					</SendouSwitch>
-					<SendouSwitch isSelected={showCombos} onChange={setShowCombos}>
+					<SendouSwitch
+						isSelected={showCombos}
+						onChange={(isSelected) =>
+							onSettingsChange({ ...settings, showCombos: isSelected })
+						}
+					>
 						{t("analyzer:comp.damageCombos")}
 					</SendouSwitch>
 				</>

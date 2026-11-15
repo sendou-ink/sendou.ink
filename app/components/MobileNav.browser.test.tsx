@@ -5,6 +5,14 @@ import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { MobileNav } from "./MobileNav";
 
+const loggedInUser = vi.hoisted(() => ({
+	current: null as { id: number; username: string; roles: string[] } | null,
+}));
+
+vi.mock("~/features/auth/core/user", () => ({
+	useUser: () => loggedInUser.current,
+}));
+
 let cleanupFns: Array<() => void> = [];
 
 beforeEach(async () => {
@@ -12,6 +20,7 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
+	loggedInUser.current = null;
 	for (const cleanup of cleanupFns) {
 		cleanup();
 	}
@@ -28,7 +37,59 @@ describe("MobileNav", () => {
 
 		expect(topmostElementAt(consentButton)).toBe(consentButton);
 	});
+
+	test("a panel keeps covering the whole page under an open keyboard, its content starting where the visible part does", async () => {
+		await render(withRouter(<MobileNav sidebarData={undefined} />));
+
+		await page.getByRole("button", { name: "Menu" }).click();
+		const panel = page.getByRole("dialog", { name: "Menu" });
+		await expect.element(panel).toBeVisible();
+		simulateOpenKeyboard({ offsetTop: 200, height: 300 });
+
+		const panelRect = panel.element().getBoundingClientRect();
+		expect(panelRect.top).toBe(0);
+		expect(panelRect.bottom).toBe(window.innerHeight);
+		expect(panel.element().firstElementChild!.getBoundingClientRect().top).toBe(
+			200,
+		);
+	});
+
+	test("the chat panel focuses a tapped text field itself, so iOS doesn't scroll the page", async () => {
+		loggedInUser.current = { id: 1, username: "Sendou", roles: [] };
+		await render(withRouter(<MobileNav sidebarData={undefined} />));
+
+		await page.getByRole("button", { name: "Chat" }).click();
+		const panel = page.getByRole("dialog", { name: "Chat" });
+		await expect.element(panel).toBeVisible();
+
+		const input = document.createElement("input");
+		panel.element().append(input);
+		const touchEnd = new Event("touchend", { bubbles: true, cancelable: true });
+		input.dispatchEvent(touchEnd);
+
+		expect(touchEnd.defaultPrevented).toBe(true);
+		expect(document.activeElement).toBe(input);
+	});
 });
+
+function simulateOpenKeyboard({
+	offsetTop,
+	height,
+}: {
+	offsetTop: number;
+	height: number;
+}) {
+	const root = document.documentElement;
+	root.setAttribute("data-keyboard-open", "");
+	root.style.setProperty("--visual-viewport-offset-top", `${offsetTop}px`);
+	root.style.setProperty("--visual-viewport-height", `${height}px`);
+
+	cleanupFns.push(() => {
+		root.removeAttribute("data-keyboard-open");
+		root.style.removeProperty("--visual-viewport-offset-top");
+		root.style.removeProperty("--visual-viewport-height");
+	});
+}
 
 function withRouter(element: React.ReactElement) {
 	const router = createMemoryRouter([{ path: "*", element }], {

@@ -101,16 +101,17 @@ export function SelectedWeapons({
 				</SortableContext>
 			</DndContext>
 			{Array.from({ length: emptySlotCount }, (_, i) => (
-				<div key={`empty-${i}`} className={styles.selectedWeaponRow}>
-					<div className={styles.weaponImageContainerEmpty}>
-						<OutlinedImage path={abilityImageUrl("UNKNOWN")} alt="" size={48} />
-					</div>
-					<div className={styles.weaponNamePillEmpty}>
+				<div
+					key={`empty-${i}`}
+					className={clsx(styles.selectedWeaponRow, styles.emptyRow)}
+					data-testid="empty-weapon-slot"
+				>
+					<OutlinedImage path={abilityImageUrl("UNKNOWN")} alt="" size={40} />
+					{i === 0 ? (
 						<span className={styles.weaponNameEmpty}>
 							{t("analyzer:comp.pickWeapon")}
 						</span>
-					</div>
-					<div className={styles.subSpecialContainerSpacer} />
+					) : null}
 				</div>
 			))}
 		</div>
@@ -187,13 +188,13 @@ function SortableWeaponRow({
 			data-testid={`selected-weapon-${index}`}
 			{...attributes}
 		>
-			<div className={styles.weaponImageContainer}>
-				<WeaponImage weaponSplId={weaponId} variant="build" size={48} />
-			</div>
-			<div className={styles.weaponNamePill}>
-				<span className={clsx(styles.weaponName, "truncate")}>
-					{t(`weapons:MAIN_${weaponId}`)}
-				</span>
+			<WeaponImage weaponSplId={weaponId} variant="build" size={40} />
+			<span className={clsx(styles.weaponName, "truncate")}>
+				{t(`weapons:MAIN_${weaponId}`)}
+			</span>
+			<SubWeaponImage subWeaponId={params.subWeaponId} size={24} />
+			<SpecialWeaponImage specialWeaponId={params.specialWeaponId} size={24} />
+			<div className={styles.rowActions}>
 				{showDragHandle ? (
 					<button
 						type="button"
@@ -213,17 +214,6 @@ function SortableWeaponRow({
 				>
 					&times;
 				</button>
-			</div>
-			<div className={styles.subSpecialContainer}>
-				<div className={styles.kitIcon}>
-					<SubWeaponImage subWeaponId={params.subWeaponId} size={24} />
-				</div>
-				<div className={styles.kitIcon}>
-					<SpecialWeaponImage
-						specialWeaponId={params.specialWeaponId}
-						size={24}
-					/>
-				</div>
 			</div>
 		</div>
 	);

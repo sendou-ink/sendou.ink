@@ -24,7 +24,7 @@ export function LobbyMatchHeader() {
 			].join(" · ")}
 			topRight={
 				shareKey || (isHost && isOngoing) ? (
-					<div className="stack horizontal sm items-center">
+					<div className="stack horizontal sm items-center flex-wrap">
 						{shareKey ? (
 							<LobbyInviteLink
 								link={lobbyShareLink({ lobbyId: data.lobby.id, shareKey })}

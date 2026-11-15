@@ -866,6 +866,80 @@ describe("follow-up bracket check-in shared between brackets", () => {
 	});
 });
 
+describe("follow-up bracket preview before its check-in opens", () => {
+	const finalsStartingIn = (minutes: number) => {
+		const data = Engine.create({
+			type: "round_robin",
+			seeding: [1, 2, 3, 4],
+			settings: { groupCount: 1 },
+		});
+		finishPendingMatches(data);
+
+		const tournament = testTournament({
+			data,
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							name: "Groups",
+							type: "round_robin",
+							requiresCheckIn: false,
+							settings: {},
+						},
+						{
+							name: "Finals",
+							type: "single_elimination",
+							requiresCheckIn: true,
+							startTime: dateToDatabaseTimestamp(
+								addMinutes(new Date(), minutes),
+							),
+							settings: {},
+							sources: [{ bracketIdx: 0, placements: [1, 2, 3] }],
+						},
+					],
+				},
+				teams: [1, 2, 3, 4].map((teamId) =>
+					tournamentCtxTeam(teamId, {
+						checkIns: [
+							{ checkedInAt: 1, bracketIdx: null, isCheckOut: 0 },
+							...(teamId === 1
+								? [{ checkedInAt: 2, bracketIdx: 1, isCheckOut: 0 as const }]
+								: []),
+						],
+					}),
+				),
+			},
+		});
+
+		return { tournament, finals: tournament.bracketByIdx(1)! };
+	};
+
+	test("previews every team headed to the bracket", () => {
+		const { finals } = finalsStartingIn(24 * 60);
+
+		expect(finals.previewSeeding).toHaveLength(3);
+	});
+
+	test("keeps the teams not checked in pending check-in", () => {
+		const { finals } = finalsStartingIn(24 * 60);
+
+		expect(finals.teamsPendingCheckIn).toHaveLength(2);
+	});
+
+	test("counts each team of the bracket once", () => {
+		const { tournament } = finalsStartingIn(24 * 60);
+
+		expect(tournament.eligibleTeamsCountOfBracket(1)).toBe(3);
+	});
+
+	test("previews only the checked in teams once its check-in is open", () => {
+		const { tournament, finals } = finalsStartingIn(30);
+
+		expect(finals.previewSeeding).toEqual([1]);
+		expect(tournament.eligibleTeamsCountOfBracket(1)).toBe(3);
+	});
+});
+
 describe("Swiss early advance bracket sourcing", () => {
 	const progressionWithConsolation: Progression.ParsedBracket[] = [
 		{

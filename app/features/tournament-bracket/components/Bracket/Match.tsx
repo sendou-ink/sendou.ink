@@ -148,7 +148,7 @@ function MatchExitLabels({
 						: "tournament:bracket.exit.loser",
 					{ bracket },
 				);
-				const label = `${bracket} ${type === "winner" ? "[W]" : "[L]"}`;
+				const label = matchExitLabel(bracket, type);
 
 				return (
 					<div key={type} className={styles.matchExitRow}>
@@ -175,6 +175,11 @@ function MatchExitLabels({
 			})}
 		</div>
 	);
+}
+
+/** Text shown right of a match for where its winner or loser goes, e.g. "Beta [L]". */
+export function matchExitLabel(bracketName: string, type: "winner" | "loser") {
+	return `${bracketName} ${type === "winner" ? "[W]" : "[L]"}`;
 }
 
 function MatchHeader({ match, type, roundNumber, group }: MatchProps) {

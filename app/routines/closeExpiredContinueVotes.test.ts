@@ -30,6 +30,34 @@ const setupMatch = async ({
 	};
 };
 
+const CANCEL_REPORT = { reason: "Disconnect", nominatedUserIds: [] };
+
+const setupCanceledMatch = async ({
+	createdAt,
+	canceledAt,
+}: {
+	createdAt: Date;
+	canceledAt?: Date;
+}) => {
+	const match = await SQMatchFactory.create(
+		{
+			alphaUserIds: alphaUserIds(),
+			bravoUserIds: bravoUserIds(),
+			isMatchmade: true,
+		},
+		{
+			cancel: { requested: CANCEL_REPORT, accepted: CANCEL_REPORT },
+			createdAt,
+			canceledAt,
+		},
+	);
+
+	return {
+		alphaGroupId: match.alphaGroup.id,
+		bravoGroupId: match.bravoGroup.id,
+	};
+};
+
 const castContinueVote = (groupId: number, userId: number) =>
 	GroupMatchContinueVoteFactory.create({ userId, groupId });
 
@@ -115,5 +143,37 @@ describe("CloseExpiredContinueVotesRoutine", () => {
 
 		const alphaVotes = await fetchVotes(alphaGroupId);
 		expect(alphaVotes.every((v) => v.isContinuing === 1)).toBe(true);
+	});
+
+	test("closes the continue votes of matchmade groups whose match was canceled over 1h ago", async () => {
+		const { alphaGroupId, bravoGroupId } = await setupCanceledMatch({
+			createdAt: sub(new Date(), { hours: 5 }),
+		});
+		// three want to keep playing, the fourth (who disconnected) never votes
+		for (const userId of alphaUserIds().slice(0, 3)) {
+			await castContinueVote(alphaGroupId, userId);
+		}
+
+		await CloseExpiredContinueVotesRoutine.run();
+
+		const alphaVotes = await fetchVotes(alphaGroupId);
+		expect(alphaVotes).toHaveLength(4);
+		expect(alphaVotes.every((v) => v.isContinuing === 0)).toBe(true);
+		expect(await fetchVotes(bravoGroupId)).toHaveLength(4);
+	});
+
+	test("leaves matches canceled under 1h ago untouched even if they were made long ago", async () => {
+		const { alphaGroupId, bravoGroupId } = await setupCanceledMatch({
+			createdAt: sub(new Date(), { hours: 2 }),
+			canceledAt: sub(new Date(), { minutes: 30 }),
+		});
+		await castContinueVote(alphaGroupId, users.id(1));
+
+		await CloseExpiredContinueVotesRoutine.run();
+
+		const alphaVotes = await fetchVotes(alphaGroupId);
+		expect(alphaVotes).toHaveLength(1);
+		expect(alphaVotes[0].isContinuing).toBe(1);
+		expect(await fetchVotes(bravoGroupId)).toHaveLength(0);
 	});
 });

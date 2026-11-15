@@ -59,6 +59,24 @@
 	font-weight: var(--weight-semi);
 }
 
+.copiedMessage {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+
+	& b {
+		color: var(--color-text);
+		font-weight: var(--weight-semi);
+	}
+}
+
+.copiedIcon {
+	width: 1.2em;
+	height: 1.2em;
+	flex-shrink: 0;
+	color: var(--color-success-high);
+}
+
 .helpLinkIcon {
 	width: 14px;
 	height: 14px;
