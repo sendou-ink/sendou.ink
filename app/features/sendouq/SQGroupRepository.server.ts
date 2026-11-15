@@ -11,6 +11,7 @@ import type { UserMapModePreferences } from "~/db/tables-json";
 import * as ModAuditLogRepository from "~/features/admin/ModAuditLogRepository.server";
 import { actorId } from "~/features/auth/core/user.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
+import { CANCELED_MATCH_SEASON } from "~/features/mmr/mmr-constants";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import {
@@ -719,6 +720,11 @@ export async function closeExpiredContinueVotes() {
 				),
 			)
 			.innerJoin("GroupMember", "GroupMember.groupId", "Group.id")
+			.leftJoin("Skill as CancellationSkill", (join) =>
+				join
+					.onRef("CancellationSkill.groupMatchId", "=", "GroupMatch.id")
+					.on("CancellationSkill.season", "=", CANCELED_MATCH_SEASON),
+			)
 			.leftJoin("GroupMatchContinueVote", (join) =>
 				join
 					.onRef("GroupMatchContinueVote.groupId", "=", "Group.id")
@@ -729,8 +735,12 @@ export async function closeExpiredContinueVotes() {
 				"GroupMatch.chatRoomId as matchChatRoomId",
 			])
 			.where("Group.matchmade", "=", 1)
-			.where("GroupMatch.confirmedAt", "is not", null)
-			.where("GroupMatch.confirmedAt", "<", cutoff)
+			.where((eb) =>
+				eb.or([
+					eb("GroupMatch.confirmedAt", "<", cutoff),
+					eb("CancellationSkill.createdAt", "<", cutoff),
+				]),
+			)
 			.where("GroupMatchContinueVote.id", "is", null)
 			.groupBy("Group.id")
 			.execute();

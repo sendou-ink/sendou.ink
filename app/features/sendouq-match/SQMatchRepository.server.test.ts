@@ -17,7 +17,7 @@ import {
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
-import { dateToYYYYMMDD } from "~/utils/dates";
+import { dateToDatabaseTimestamp, dateToYYYYMMDD } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { withUserId } from "~/utils/Test";
 import * as GroupMatchContinueVoteRepository from "./GroupMatchContinueVoteRepository.server";
@@ -194,6 +194,21 @@ describe("lockMatchWithoutSkillChange", () => {
 		expect(skills[0].sigma).toBe(-1);
 		expect(skills[0].ordinal).toBe(-1);
 		expect(skills[0].userId).toBeNull();
+	});
+
+	test("stamps the dummy skill with the time of locking", async () => {
+		vi.useFakeTimers({ toFake: ["Date"] });
+		try {
+			const { match } = await setupMatch();
+			vi.setSystemTime(add(new Date(), { hours: 1 }));
+
+			await SQMatchRepository.lockMatchWithoutSkillChange(match);
+
+			const skills = await fetchSkills(match.id);
+			expect(skills[0].createdAt).toBe(dateToDatabaseTimestamp(new Date()));
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	test("marks the chat room inactive", async () => {

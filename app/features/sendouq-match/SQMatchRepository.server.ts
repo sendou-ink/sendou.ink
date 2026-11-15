@@ -1196,6 +1196,7 @@ export async function lockMatchWithoutSkillChange(
 			ordinal: -1,
 			userId: null,
 			matchesCount: 0,
+			createdAt: databaseTimestampNow(),
 		})
 		.execute();
 	await ChatRepository.updateRoomsInactive([match.chatRoomId], true, trx);
