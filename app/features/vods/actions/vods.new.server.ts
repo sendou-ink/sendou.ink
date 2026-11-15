@@ -17,8 +17,8 @@ export const action = defineAction(
 		requireRole("VIDEO_ADDER");
 
 		// players are saved per weapon, a match without weapons would lose its POV
-		const missingWeaponErrors = missingWeaponFieldErrors(body);
-		if (missingWeaponErrors) return { fieldErrors: missingWeaponErrors };
+		const missingErrors = missingFieldErrors(body);
+		if (missingErrors) return { fieldErrors: missingErrors };
 
 		const video = transformFormDataToVideo(body);
 
@@ -44,7 +44,7 @@ function transformFormDataToVideo(data: VodFormData): VideoBeingAdded {
 		youtubeUrl: data.youtubeUrl,
 		title: data.title,
 		date: data.date,
-		pov: transformPov(data.pov),
+		pov: data.type === "CAST" ? undefined : transformPov(data.pov),
 		matches: data.matches.map((match) => ({
 			startsAt: match.startsAt,
 			mode: match.mode,
@@ -62,9 +62,13 @@ function transformFormDataToVideo(data: VodFormData): VideoBeingAdded {
 	};
 }
 
-function missingWeaponFieldErrors(data: VodFormData) {
+function missingFieldErrors(data: VodFormData) {
 	const teamSize = data.teamSize ? Number(data.teamSize) : 4;
 	const fieldErrors: Record<string, string> = {};
+
+	if (data.type !== "CAST" && !transformPov(data.pov)) {
+		fieldErrors.pov = "forms:errors.required";
+	}
 
 	for (const [matchIdx, match] of data.matches.entries()) {
 		if (data.type !== "CAST") {
