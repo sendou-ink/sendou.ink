@@ -457,6 +457,9 @@ test.describe("Calendar", () => {
 		await newTournament.gotoNewTournament();
 		await newTournament.copyTournament(copied.eventId);
 
+		await expect(page.getByText(/^Copied from/)).toBeVisible();
+		await expect(newTournament.locators.nameInput).toBeFocused();
+
 		await newTournament.form.fill("name", "Copied Tournament");
 		const startTime = await newTournament.tournamentStartTime();
 		await newTournament.setFirstDate(addDays(startTime, 7));

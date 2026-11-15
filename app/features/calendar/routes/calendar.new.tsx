@@ -1,10 +1,10 @@
 import clsx from "clsx";
 import { addMilliseconds, roundToNearestHours } from "date-fns";
-import { SquareArrowOutUpRight, Trash } from "lucide-react";
+import { CircleCheck, SquareArrowOutUpRight, Trash } from "lucide-react";
 import * as React from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Link, useLoaderData, useNavigate } from "react-router";
+import { Link, useLoaderData, useNavigate, useNavigation } from "react-router";
 import { Alert } from "~/components/Alert";
 import { SendouButton } from "~/components/elements/Button";
 import {
@@ -277,6 +277,7 @@ function CopyTournamentPicker() {
 	const { t } = useTranslation(["calendar"]);
 	const { recentTournaments, eventToCopy } = useLoaderData<typeof loader>();
 	const navigate = useNavigate();
+	const navigation = useNavigation();
 	const [eventId, setEventId] = React.useState(() =>
 		eventToCopy &&
 		recentTournaments?.some((event) => event.id === eventToCopy.eventId)
@@ -290,6 +291,12 @@ function CopyTournamentPicker() {
 	});
 
 	if (!recentTournaments || recentTournaments.length === 0) return null;
+
+	const isCopying =
+		navigation.state === "loading" &&
+		calendarNewSearchParams.parse(
+			new URLSearchParams(navigation.location.search),
+		).copyEventId !== null;
 
 	return (
 		<SendouSection gap="lg" title={t("calendar:newTournament.copy")}>
@@ -313,6 +320,7 @@ function CopyTournamentPicker() {
 					<SendouButton
 						variant="outlined"
 						isDisabled={!eventId}
+						isPending={isCopying}
 						testId="use-template-button"
 						onClick={() =>
 							navigate(
@@ -325,9 +333,23 @@ function CopyTournamentPicker() {
 						{t("calendar:newTournament.copyButton")}
 					</SendouButton>
 				</div>
-				<FormMessage type="info">
-					{t("calendar:newTournament.copyInfo")}
-				</FormMessage>
+				{eventToCopy ? (
+					<FormMessage type="info" className={styles.copiedMessage}>
+						<CircleCheck className={styles.copiedIcon} aria-hidden />
+						<span>
+							<Trans
+								t={t}
+								i18nKey="calendar:newTournament.copied"
+								values={{ name: eventToCopy.name }}
+								components={{ name: <b /> }}
+							/>
+						</span>
+					</FormMessage>
+				) : (
+					<FormMessage type="info">
+						{t("calendar:newTournament.copyInfo")}
+					</FormMessage>
+				)}
 			</div>
 		</SendouSection>
 	);
@@ -384,7 +406,7 @@ function TournamentSteps() {
 			<FormStep name="basics">
 				<div className={styles.stepColumn}>
 					{isEditing ? null : <CopyTournamentPicker />}
-					<FormField name="name" />
+					<FormField name="name" autoFocus={Boolean(data.eventToCopy)} />
 					<FormField
 						name="startTime"
 						required
