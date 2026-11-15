@@ -10,15 +10,6 @@ export async function findByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
-export async function findByDiscordId(discordId: string) {
-	return db
-		.selectFrom("UserDiscordToken")
-		.innerJoin("User", "User.id", "UserDiscordToken.userId")
-		.select(["accessToken", "refreshToken", "expiresAt"])
-		.where("User.discordId", "=", discordId)
-		.executeTakeFirst();
-}
-
 export async function allUserIds() {
 	const rows = await db
 		.selectFrom("UserDiscordToken")

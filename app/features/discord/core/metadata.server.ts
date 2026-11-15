@@ -1,6 +1,6 @@
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import invariant from "~/utils/invariant";
+import { invariant } from "~/utils/invariant";
 import type { SendouInkDiscordMetadata } from "../discord-types";
 import * as DiscordAPI from "./DiscordAPI.server";
 

@@ -1,10 +1,12 @@
 import { isPast } from "date-fns";
+import * as v from "valibot";
+import { ServerConfig } from "~/config.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
-import invariant from "~/utils/invariant";
+import { invariant } from "~/utils/invariant";
 import * as DiscordTokenRepository from "../DiscordTokenRepository.server";
 import {
 	oAuthTokensSchema,
@@ -13,9 +15,9 @@ import {
 } from "../discord-schemas";
 import type { SendouInkDiscordMetadata } from "../discord-types";
 
-const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID!;
-const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET!;
-const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI!;
+const DISCORD_CLIENT_ID = ServerConfig.discord.clientId;
+const DISCORD_CLIENT_SECRET = ServerConfig.discord.clientSecret;
+const DISCORD_REDIRECT_URI = ServerConfig.discord.linkedRoleRedirectUri ?? "";
 
 export function getOAuthUrl() {
 	const state = crypto.randomUUID();
@@ -59,7 +61,7 @@ export async function getOAuthTokens(code: string) {
 	}
 
 	const data = await response.json();
-	return oAuthTokensSchema.parse(data);
+	return v.parse(oAuthTokensSchema, data);
 }
 
 /**
@@ -79,7 +81,7 @@ export async function getUserData(tokens: RawDiscordTokens) {
 	}
 
 	const data = await response.json();
-	return userDataSchema.parse(data);
+	return v.parse(userDataSchema, data);
 }
 
 export async function pushMetadata(
@@ -87,6 +89,7 @@ export async function pushMetadata(
 	metadata: SendouInkDiscordMetadata,
 ) {
 	const accessToken = await getAccessToken(user.id);
+	if (!accessToken) return;
 
 	const url = `https://discord.com/api/v10/users/@me/applications/${DISCORD_CLIENT_ID}/role-connection`;
 	const body = {
@@ -134,17 +137,17 @@ export async function getAccessToken(userId: number) {
 			invariant(discordId, "Discord ID not found for user");
 
 			const rawTokens = await response.json();
-			const tokens = oAuthTokensSchema.parse(rawTokens);
+			const refreshedTokens = v.parse(oAuthTokensSchema, rawTokens);
 
 			await DiscordTokenRepository.upsert({
 				discordId,
-				accessToken: tokens.access_token,
-				refreshToken: tokens.refresh_token,
+				accessToken: refreshedTokens.access_token,
+				refreshToken: refreshedTokens.refresh_token,
 				expiresAt: dateToDatabaseTimestamp(
-					new Date(Date.now() + tokens.expires_in * 1000),
+					new Date(Date.now() + refreshedTokens.expires_in * 1000),
 				),
 			});
-			return tokens.access_token;
+			return refreshedTokens.access_token;
 		}
 
 		throw new Error(

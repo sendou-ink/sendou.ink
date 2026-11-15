@@ -1,8 +1,8 @@
-import { type LoaderFunction, redirect } from "@remix-run/node";
+import { redirect } from "react-router";
 import * as DiscordAPI from "~/features/discord/core/DiscordAPI.server";
 import { clientStateCookie } from "../discord-utils.server";
 
-export const loader: LoaderFunction = async () => {
+export const loader = async () => {
 	const { url, state } = DiscordAPI.getOAuthUrl();
 
 	// Store the signed state param in the user's cookies so we can verify

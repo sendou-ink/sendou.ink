@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import * as DiscordAPI from "../core/DiscordAPI.server";
@@ -6,8 +6,8 @@ import { updateUserDiscordMetadata } from "../core/metadata.server";
 import * as DiscordTokenRepository from "../DiscordTokenRepository.server";
 import { clientStateCookie } from "../discord-utils.server";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const url = new URL(request.url);
+export const loader = async ({ request, url }: LoaderFunctionArgs) => {
+	// biome-ignore lint/plugin: OAuth callback param, its name and values defined by the provider
 	const discordState = url.searchParams.get("state");
 
 	const cookieHeader = request.headers.get("Cookie");
@@ -17,6 +17,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		return new Response(null, { status: 403 });
 	}
 
+	// biome-ignore lint/plugin: OAuth callback param, its name and values defined by the provider
 	const code = url.searchParams.get("code");
 	if (!code) {
 		logger.error("No code provided in OAuth callback.");

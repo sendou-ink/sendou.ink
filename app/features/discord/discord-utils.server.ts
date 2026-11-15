@@ -1,16 +1,13 @@
-import { createCookie } from "@remix-run/node";
-import invariant from "~/utils/invariant";
-
-if (process.env.NODE_ENV === "production") {
-	invariant(process.env.SESSION_SECRET, "SESSION_SECRET is required");
-}
+import { createCookie } from "react-router";
+import { ServerConfig } from "~/config.server";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 
 /** Discord linked role security state cookie to validate identity during the redirect */
 export const clientStateCookie = createCookie("clientState", {
 	maxAge: 60 * 5,
 	path: "/",
-	httpOnly: process.env.NODE_ENV === "production",
+	httpOnly: true,
 	sameSite: "lax",
-	secrets: [process.env.SESSION_SECRET ?? "secret"],
-	secure: process.env.NODE_ENV === "production",
+	secrets: [ServerConfig.sessionSecret],
+	secure: ServerConfig.isProduction && !IS_E2E_TEST_RUN,
 });
