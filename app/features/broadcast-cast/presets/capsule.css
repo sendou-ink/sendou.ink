@@ -16,7 +16,6 @@
 	--bc-team-a-text: #0c0e1a;
 	--bc-team-b: #6cb8ff;
 	--bc-team-b-text: #0c0e1a;
-	--bc-font-display: Outfit, "Trebuchet MS", sans-serif;
 	--bc-font-body: Outfit, "Trebuchet MS", sans-serif;
 	--bc-weight-semibold: 500;
 	--bc-weight-bold: 600;
@@ -154,7 +153,9 @@
 	color: var(--team-color-text);
 }
 
+/* over its team's half of the capsule, the two as far apart as they are from it */
 [data-scene="game"] [data-part="roster"] {
+	right: 7px;
 	bottom: calc(100% + 14px);
 	left: 0;
 	border-radius: 26px;
@@ -162,6 +163,7 @@
 
 	[data-team="b"] > & {
 		right: 0;
+		left: 7px;
 	}
 }
 

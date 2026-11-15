@@ -16,7 +16,6 @@
 	--bc-team-a-text: #fff;
 	--bc-team-b: #1f5eff;
 	--bc-team-b-text: #fff;
-	--bc-font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
 	--bc-font-body: "Barlow Condensed", "Arial Narrow", sans-serif;
 	--bc-weight-semibold: 500;
 	--bc-weight-bold: 600;
@@ -156,7 +155,8 @@
 [data-scene="casters"] [data-part="caster-name"],
 [data-scene="rosters"] [data-part="versus"],
 [data-part="stinger-vs"],
-[data-part="stinger-header"] {
+[data-part="stinger-header"],
+[data-part="stinger-title-card"] [data-part="stinger-tournament-name"] {
 	border: 0;
 	border-radius: 0;
 	background: var(--bc-text);
@@ -603,13 +603,5 @@
 /* without a match: the tournament on a plate, over the stripe down the middle */
 [data-part="stinger-title-card"] [data-part="stinger-tournament-name"] {
 	padding: 6px 48px;
-	background: var(--bc-text);
-	color: var(--bc-surface);
 	text-shadow: none;
-	clip-path: polygon(
-		var(--matchday-lean) 0,
-		100% 0,
-		calc(100% - var(--matchday-lean)) 100%,
-		0 100%
-	);
 }

@@ -24,8 +24,9 @@
 	--bc-team-b-text: #ffffff;
 
 	/* shapes */
-	--bc-font-display: lexend, sans-serif;
 	--bc-font-body: lexend, sans-serif;
+	/* titles, names and scores, in the body font unless set */
+	--bc-font-display: var(--bc-font-body);
 	--bc-weight-semibold: 600;
 	--bc-weight-bold: 700;
 	--bc-weight-heavy: 800;
@@ -62,8 +63,6 @@
 	--bc-anim-ticker: bc-ticker;
 	--bc-anim-panel-slide-in: bc-panel-slide-in;
 	--bc-anim-panel-slide-out: bc-panel-slide-out;
-	--bc-anim-panel-iris-in: bc-panel-iris-in;
-	--bc-anim-panel-iris-out: bc-panel-iris-out;
 	--bc-anim-camera: bc-camera;
 	--bc-anim-dim: bc-dim;
 	--bc-anim-glow: bc-glow;

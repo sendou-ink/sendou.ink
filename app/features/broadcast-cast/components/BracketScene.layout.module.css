@@ -84,14 +84,14 @@
 
 .side {
 	display: flex;
-	gap: var(--column-gap);
+	gap: var(--bracket-column-gap);
 }
 
 .round {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	width: var(--match-width);
+	width: var(--bracket-match-width);
 }
 
 .roundName {
@@ -104,7 +104,7 @@
 .slots {
 	display: flex;
 	flex-direction: column;
-	height: calc(var(--slots) * var(--slot-height));
+	height: calc(var(--slots) * var(--bracket-slot-height));
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -120,17 +120,17 @@
 	/* the line in from the previous round */
 	&[data-fed]::before {
 		position: absolute;
-		top: calc(50% - var(--line-width) / 2);
+		top: calc(50% - var(--bracket-line-width) / 2);
 		right: 100%;
-		width: calc(var(--column-gap) / 2);
+		width: calc(var(--bracket-column-gap) / 2);
 	}
 
 	/* the line out towards the next round, joining its pair halfway */
 	[data-connector] > .slots > &:not([data-bye])::after {
 		position: absolute;
-		top: calc(50% - var(--line-width) / 2);
+		top: calc(50% - var(--bracket-line-width) / 2);
 		left: 100%;
-		width: calc(var(--column-gap) / 2);
+		width: calc(var(--bracket-column-gap) / 2);
 	}
 
 	[data-connector="pairs"] > .slots > &:not([data-bye]):nth-child(odd)::after {
@@ -139,7 +139,7 @@
 
 	[data-connector="pairs"] > .slots > &:not([data-bye]):nth-child(even)::after {
 		top: 0;
-		bottom: calc(50% - var(--line-width) / 2);
+		bottom: calc(50% - var(--bracket-line-width) / 2);
 	}
 }
 
@@ -162,7 +162,7 @@
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	height: var(--team-height);
+	height: var(--bracket-team-height);
 	padding-inline-start: 10px;
 
 	&[data-team] {
@@ -238,7 +238,7 @@
 
 .standing {
 	position: relative;
-	height: var(--standing-height);
+	height: var(--bracket-standing-height);
 }
 
 .standingLogo {
@@ -266,12 +266,12 @@
 
 .groupMatches {
 	display: grid;
-	grid-auto-columns: var(--match-width);
+	grid-auto-columns: var(--bracket-match-width);
 	grid-auto-flow: column;
 
 	/* a Swiss pool's matches wrap */
 	[data-pools] & {
-		grid-template-columns: repeat(var(--columns), var(--match-width));
+		grid-template-columns: repeat(var(--columns), var(--bracket-match-width));
 		grid-auto-flow: row;
 	}
 

@@ -81,7 +81,7 @@ Custom CSS beats the default styles without `!important` or specificity tricks. 
 
 ## Fonts
 
-The overlay uses two fonts: `--bc-font-display` for titles, names and scores, `--bc-font-body` for the rest. Any font on the web works, [Google Fonts](https://fonts.google.com/) has plenty free to use:
+The overlay uses two fonts: `--bc-font-body` for everything, and `--bc-font-display` for titles, names and scores, which is the body font unless you set it. Any font on the web works, [Google Fonts](https://fonts.google.com/) has plenty free to use:
 
 <Steps>
 
@@ -89,7 +89,7 @@ The overlay uses two fonts: `--bc-font-display` for titles, names and scores, `-
 2. Press **Get font**, then **Get embed code**.
 3. Pick the weights you want (the overlay uses semibold, bold and heavy: 600, 700 and 800), then choose **@import** under Web.
 4. Copy only the `@import url(...);` line, without the `<style>` tags around it, to the very top of Custom CSS.
-5. Set the font's name, as shown under "CSS class" on the same page, as the overlay's font:
+5. Set the font's name, as shown under "CSS class" on the same page, as the overlay's font (titles, names and scores follow it):
 
 </Steps>
 
@@ -97,7 +97,6 @@ The overlay uses two fonts: `--bc-font-display` for titles, names and scores, `-
 @import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&display=swap");
 
 [data-broadcast] {
-	--bc-font-display: "Barlow Condensed", sans-serif;
 	--bc-font-body: "Barlow Condensed", sans-serif;
 }
 ```
@@ -215,6 +214,7 @@ Stinger without the card in its middle (the teams, or the tournament without a m
 - `@import`s (web fonts) have to come first in Custom CSS, or the browser ignores them.
 - The stinger changes the scene at `--bc-stinger-duration` × `--bc-stinger-covered-at` (704 ms by default). Cuts to and from a game are timed for that moment, so keep it close to 704 ms if you retime the stinger.
 - Keyframes that pop in with `steps(1, end)` can get stuck hidden: an animation can end a hair short in Chrome. Use `steps(n, jump-none)`, or plain keyframes holding the hidden state until 99%.
+- To retime an animation, set `animation-duration` or `animation-delay` rather than the whole `animation`: its keyframes, easing and fill stay as they are. With two animations on a part (in and out), give two comma separated values.
 - Everything is in pixels on the 1920×1080 canvas, no need for responsive CSS.
 - The class names you see in the browser's dev tools (e.g. `_infoCard_1x2y3`) change with every update. Use parts, variables and `.Stylesheet-class` names instead.
 

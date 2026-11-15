@@ -252,7 +252,7 @@ export function ThemeEditor({
 				onClose={() => setPresetToConfirm(null)}
 			>
 				<div className="stack md">
-					<p>
+					<p className="text-sm text-lighter">
 						{t("broadcast:design.presetConfirm.description", {
 							preset: presetToConfirm?.label,
 						})}

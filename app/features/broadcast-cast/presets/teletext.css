@@ -17,7 +17,6 @@
 	--bc-team-a-text: #000;
 	--bc-team-b: #f0f;
 	--bc-team-b-text: #000;
-	--bc-font-display: VT323, "Courier New", monospace;
 	--bc-font-body: VT323, "Courier New", monospace;
 	--bc-weight-semibold: 400;
 	--bc-weight-bold: 400;
@@ -42,7 +41,6 @@
 	--game-casters-size: 24px;
 	--game-bar-height: 52px;
 	--game-seed-size: 24px;
-	--game-team-name-size: 34px;
 	--game-score-size: 36px;
 	--game-score-width: 64px;
 	--game-player-size: 26px;
@@ -259,7 +257,6 @@
 
 	[data-team="b"] > & {
 		justify-content: flex-end;
-		padding: 0;
 	}
 }
 
@@ -426,17 +423,14 @@
 		)
 		calc(var(--i) * -240px) 0 / 1920px 100%;
 	clip-path: none;
-	animation:
-		var(--bc-anim-panel-slide-in) calc(var(--bc-stinger-duration) * 0.2)
-		var(--bc-stinger-ease) calc(var(--bc-stinger-duration) * 0.014 * var(--i))
-		both,
-		var(--bc-anim-panel-slide-out) calc(var(--bc-stinger-duration) * 0.2)
-		var(--bc-stinger-ease)
+	/* the bars one after another, in and out */
+	animation-duration: calc(var(--bc-stinger-duration) * 0.2);
+	animation-delay:
+		calc(var(--bc-stinger-duration) * 0.014 * var(--i)),
 		calc(
 			var(--bc-stinger-duration) *
 			(var(--bc-stinger-reveal-at) + 0.014 * var(--i))
-		)
-		forwards;
+		);
 }
 
 /* captions on the test card */

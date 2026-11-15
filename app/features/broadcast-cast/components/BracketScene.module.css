@@ -41,15 +41,6 @@
 	color: var(--bc-accent);
 }
 
-.sides {
-	--match-width: var(--bracket-match-width);
-	--team-height: var(--bracket-team-height);
-	--slot-height: var(--bracket-slot-height);
-	--column-gap: var(--bracket-column-gap);
-	--line-width: var(--bracket-line-width);
-	--line: var(--line-width) solid var(--bc-border);
-}
-
 .roundName {
 	font-size: 20px;
 	font-weight: var(--bc-weight-bold);
@@ -61,24 +52,24 @@
 .slot {
 	/* the line in from the previous round */
 	&[data-fed]::before {
-		border-top: var(--line);
+		border-top: var(--bracket-line-width) solid var(--bc-border);
 		content: "";
 	}
 
 	/* the line out towards the next round, joining its pair halfway */
 	[data-connector] > .slots > &:not([data-bye])::after {
-		border-top: var(--line);
+		border-top: var(--bracket-line-width) solid var(--bc-border);
 		content: "";
 	}
 
 	[data-connector="pairs"] > .slots > &:not([data-bye]):nth-child(odd)::after {
-		border-right: var(--line);
+		border-right: var(--bracket-line-width) solid var(--bc-border);
 	}
 
 	[data-connector="pairs"] > .slots > &:not([data-bye]):nth-child(even)::after {
 		border-top: none;
-		border-right: var(--line);
-		border-bottom: var(--line);
+		border-right: var(--bracket-line-width) solid var(--bc-border);
+		border-bottom: var(--bracket-line-width) solid var(--bc-border);
 	}
 }
 
@@ -139,13 +130,6 @@
 	background: var(--bc-surface-high);
 	font-size: var(--bracket-score-size);
 	font-weight: var(--bc-weight-bold);
-}
-
-/* a round robin group: its standings next to its rounds */
-.group {
-	--match-width: var(--bracket-match-width);
-	--team-height: var(--bracket-team-height);
-	--standing-height: var(--bracket-standing-height);
 }
 
 .standingsHeader {

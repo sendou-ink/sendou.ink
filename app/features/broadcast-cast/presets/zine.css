@@ -16,7 +16,6 @@
 	--bc-team-a-text: #141414;
 	--bc-team-b: #2f5bff;
 	--bc-team-b-text: #fffdf7;
-	--bc-font-display: "Space Grotesk", sans-serif;
 	--bc-font-body: "Space Grotesk", sans-serif;
 	--bc-weight-semibold: 500;
 	--bc-weight-heavy: 700;
@@ -575,17 +574,18 @@
 		var(--team-color, var(--bc-bg))
 		radial-gradient(rgb(20 20 20 / 0.16) 3px, transparent 3.6px) 0 0 / 30px 30px;
 	clip-path: none;
-	animation:
-		var(--bc-anim-panel-slide-in) calc(var(--bc-stinger-duration) * 0.24)
-		var(--bc-stinger-ease) calc(var(--bc-stinger-duration) * 0.025 * var(--i))
-		both,
-		var(--bc-anim-panel-slide-out) calc(var(--bc-stinger-duration) * 0.26)
-		cubic-bezier(0.45, 0, 0.75, 0.55)
+	/* dropped one after another, tossed down the other way around */
+	animation-duration:
+		calc(var(--bc-stinger-duration) * 0.24),
+		calc(var(--bc-stinger-duration) * 0.26);
+	animation-timing-function:
+		var(--bc-stinger-ease), cubic-bezier(0.45, 0, 0.75, 0.55);
+	animation-delay:
+		calc(var(--bc-stinger-duration) * 0.025 * var(--i)),
 		calc(
 			var(--bc-stinger-duration) *
 			(var(--bc-stinger-reveal-at) + 0.04 * (3 - var(--i)))
-		)
-		forwards;
+		);
 
 	&:nth-child(odd) {
 		--zine-tilt: 2.5deg;
