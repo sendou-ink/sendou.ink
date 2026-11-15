@@ -319,6 +319,37 @@ describe("Producer.effectiveAdvance", () => {
 	});
 });
 
+describe("Producer.advanceOptions", () => {
+	test.each([
+		{
+			why: "only a Take between scenes running until a Take, without a game",
+			before: item(1, { scene: "casters" }),
+			item: item(2, { scene: "bracket" }),
+			expected: ["take"],
+		},
+		{
+			why: "a timer after a scene with a length",
+			before: item(1, { scene: "bracket", durationMs: 15_000 }),
+			item: item(2, { scene: "casters" }),
+			expected: ["take", "timer"],
+		},
+		{
+			why: "a game event into a game",
+			before: item(1, { scene: "rosters" }),
+			item: item(2, { scene: "game" }),
+			expected: ["take", "game"],
+		},
+		{
+			why: "a game event out of a game",
+			before: item(1, { scene: "game" }),
+			item: item(2, { scene: "results" }),
+			expected: ["take", "game"],
+		},
+	])("$why", ({ before, item: staged, expected }) => {
+		expect(Producer.advanceOptions(rules, before, staged)).toEqual(expected);
+	});
+});
+
 describe("Producer.applyGameSignal", () => {
 	const liveResults = { matchId: 1, count: 2 };
 	const summary: BroadcastGameSummary = {

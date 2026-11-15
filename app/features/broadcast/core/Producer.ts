@@ -1,4 +1,7 @@
-import { BROADCAST_TRANSITION_TIMING } from "../broadcast-constants";
+import {
+	BROADCAST_ADVANCES,
+	BROADCAST_TRANSITION_TIMING,
+} from "../broadcast-constants";
 import type {
 	BroadcastAdvance,
 	BroadcastGameSignal,
@@ -212,6 +215,23 @@ export function effectiveAdvance<Item extends ProducerState>(
 	}
 
 	return item.advance;
+}
+
+/**
+ * The advances the item can be set to after the item before it, in {@link BROADCAST_ADVANCES} order: a Take always,
+ * a timer after a scene with a length, a game event where a game starts or ends between them.
+ */
+export function advanceOptions<Item extends ProducerState>(
+	rules: Rules<Item>,
+	before: Item,
+	item: Item,
+): BroadcastAdvance[] {
+	return BROADCAST_ADVANCES.filter(
+		(advance) =>
+			advance === "take" ||
+			(advance === "timer" && lengthMs(rules, before) !== null) ||
+			(advance === "game" && gameCue(rules, before, item) !== null),
+	);
 }
 
 /**

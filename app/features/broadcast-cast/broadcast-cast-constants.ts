@@ -65,6 +65,9 @@ export const BROADCAST_BRACKET_FOCUSES = [
 /** Tabs of the dashboard's show settings under the switcher: the OBS setup and the theme. */
 export const BROADCAST_DASHBOARD_TABS = ["setup", "theme"] as const;
 
+/** The staged item is highlighted for this long before it goes on air by itself. */
+export const BROADCAST_AUTO_TAKE_IMMINENT_MS = 5_000;
+
 // xxx: prototype, these come from the scanner eventually
 /** Replay clips the dashboard sends to the overlays over WebRTC. */
 export const BROADCAST_PROTOTYPE_CLIPS = [

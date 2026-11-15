@@ -25,7 +25,6 @@ import {
 	CircleDashed,
 	Hand,
 	KeyRound,
-	Link2,
 	type LucideIcon,
 	Palette,
 	Pause,
@@ -60,7 +59,6 @@ import { InfoPopover } from "~/components/InfoPopover";
 import { InviteLinkInput } from "~/components/InviteLinkInput";
 import { Config } from "~/config";
 import {
-	BROADCAST_ADVANCES,
 	BROADCAST_INK_COLORS,
 	BROADCAST_REHEARSE_MESSAGE,
 	BROADCAST_TRANSITIONS,
@@ -100,15 +98,21 @@ import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useSearchParam } from "~/modules/search-params/hooks";
+import { StreamDeckKeys } from "~/modules/stream-deck/components/StreamDeckKeys";
+import { StreamDeckSetup } from "~/modules/stream-deck/components/StreamDeckSetup";
+import type * as StreamDeck from "~/modules/stream-deck/stream-deck";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
 import {
+	BROADCAST_AUTO_TAKE_IMMINENT_MS,
 	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_DASHBOARD_TABS,
 	BROADCAST_PROTOTYPE_CLIPS,
 	BROADCAST_SCENE_DURATIONS_MS,
 	CAST_PRODUCER_RULES,
 } from "../broadcast-cast-constants";
+import { useStreamDeckFaces } from "../broadcast-cast-hooks";
+import { ADVANCE_ICONS, SCENE_ICONS } from "../broadcast-cast-icons";
 import {
 	broadcastActionSchema,
 	broadcastCastersFormSchema,
@@ -121,12 +125,9 @@ import type {
 	CastScene,
 } from "../broadcast-cast-types";
 import { needsFeaturedMatch } from "../broadcast-cast-utils";
-import {
-	SCENE_ICONS,
-	ScenePicker,
-	useSceneHotkeys,
-} from "../components/ScenePicker";
+import { ScenePicker, useSceneHotkeys } from "../components/ScenePicker";
 import * as BracketFocus from "../core/BracketFocus";
+import * as CastStreamDeck from "../core/CastStreamDeck";
 import { loader } from "../loaders/to.$id.broadcast.$channel.server";
 import styles from "./to.$id.broadcast.$channel.module.css";
 
@@ -140,9 +141,6 @@ export const handle: SendouRouteHandle = {
 		slug: match.params.channel!,
 	}),
 };
-
-// the staged item is highlighted for this long before it goes on air by itself
-const AUTO_TAKE_IMMINENT_MS = 5_000;
 
 type DashboardTab = (typeof BROADCAST_DASHBOARD_TABS)[number];
 
@@ -190,7 +188,7 @@ export default function BroadcastDashboardPage() {
 	const isAutoTakeImminent =
 		autoTakeAt !== null &&
 		now !== null &&
-		autoTakeAt - now <= AUTO_TAKE_IMMINENT_MS;
+		autoTakeAt - now <= BROADCAST_AUTO_TAKE_IMMINENT_MS;
 	const areClipsOnSources = everySourceHasClips(clipSender.statuses);
 	const { submit: submitScene } = useActionSubmit(broadcastActionSchema);
 	useSceneHotkeys({
@@ -199,6 +197,40 @@ export default function BroadcastDashboardPage() {
 		onSelect: (scene) =>
 			submitScene("SET_SCENE", { itemId: selected.id, scene }),
 	});
+	const streamDeckKeys = CastStreamDeck.keys({ state, selected, now });
+	const streamDeckFaces = useStreamDeckFaces(streamDeckKeys);
+
+	const pressStreamDeckKey = (key: CastStreamDeck.Key) => {
+		switch (key.type) {
+			case "scene":
+				if (key.scene !== selected.scene) {
+					submitScene("SET_SCENE", { itemId: selected.id, scene: key.scene });
+				}
+				return;
+			case "take":
+				submitScene("TAKE", {
+					takeId: state.takeId,
+					matchId: state.match?.id,
+					resultCount: state.match?.progress.next.resultCount,
+				});
+				return;
+			case "queueItem":
+				if (key.nextItemId === null) {
+					submitScene("ADD_TO_QUEUE");
+					// the item queued gets the id after the last one given
+					setSelectedItemId(state.lastItemId + 1);
+				} else {
+					setSelectedItemId(key.nextItemId);
+				}
+				return;
+			case "advance":
+				submitScene("SET_ADVANCE", {
+					itemId: key.itemId,
+					advance: key.nextAdvance,
+				});
+				return;
+		}
+	};
 
 	const rehearse = () =>
 		nextPreviewRef.current?.contentWindow?.postMessage(
@@ -213,6 +245,10 @@ export default function BroadcastDashboardPage() {
 
 	return (
 		<div className={clsx("stack lg", styles.dashboard)}>
+			<StreamDeckKeys
+				faces={streamDeckFaces}
+				onPress={(keyIndex) => pressStreamDeckKey(streamDeckKeys[keyIndex])}
+			/>
 			<header className="stack sm">
 				<div className="stack horizontal sm items-center justify-between flex-wrap">
 					<h1 className="text-lg">
@@ -349,6 +385,7 @@ export default function BroadcastDashboardPage() {
 							scannerLink={pageArgs}
 							statuses={clipSender.statuses}
 							areClipsOnSources={areClipsOnSources}
+							streamDeckFaces={streamDeckFaces}
 						/>
 					</SendouTabPanel>
 					<SendouTabPanel id="theme">
@@ -997,12 +1034,6 @@ function scrollIntoQueueView(tab: HTMLDivElement | null) {
 	}
 }
 
-const ADVANCE_ICONS: Record<BroadcastAdvance, LucideIcon> = {
-	take: Hand,
-	timer: Link2,
-	game: ScanEye,
-};
-
 /** What puts the item on air besides a Take, picked from what can happen after the item before it. */
 function QueueGap({
 	before,
@@ -1014,13 +1045,7 @@ function QueueGap({
 	const { t } = useTranslation(["broadcast"]);
 	const { submit } = useActionSubmit(broadcastActionSchema);
 	const gameCue = Producer.gameCue(CAST_PRODUCER_RULES, before, item);
-	const options = BROADCAST_ADVANCES.filter(
-		(advance) =>
-			advance === "take" ||
-			(advance === "timer" &&
-				Producer.lengthMs(CAST_PRODUCER_RULES, before) !== null) ||
-			(advance === "game" && gameCue !== null),
-	);
+	const options = Producer.advanceOptions(CAST_PRODUCER_RULES, before, item);
 	const current = Producer.effectiveAdvance(CAST_PRODUCER_RULES, before, item);
 
 	const label = (advance: BroadcastAdvance) => {
@@ -1477,6 +1502,7 @@ function Setup({
 	scannerLink,
 	statuses,
 	areClipsOnSources,
+	streamDeckFaces,
 }: {
 	state: CastBroadcastState;
 	/** `null` until the program key is generated. */
@@ -1484,8 +1510,9 @@ function Setup({
 	scannerLink: { tournamentId: number; slug: string };
 	statuses: ClipTransfer.ClipPeerStatus[];
 	areClipsOnSources: boolean;
+	streamDeckFaces: StreamDeck.KeyFace[];
 }) {
-	const { t } = useTranslation(["broadcast"]);
+	const { t } = useTranslation(["broadcast", "common"]);
 	const sourceCount = state.health.sources;
 	const linkedBroadcast = useLinkedBroadcast();
 	const isScannerLinked =
@@ -1587,6 +1614,12 @@ function Setup({
 						? t("broadcast:dashboard.setup.unlinkScanner")
 						: t("broadcast:dashboard.setup.linkScanner")}
 				</SendouButton>
+			</section>
+			<section className="stack md">
+				<h2 className={styles.panelHeader}>{t("common:streamDeck.header")}</h2>
+				<StreamDeckSetup faces={streamDeckFaces}>
+					{t("broadcast:dashboard.streamDeck.explanation")}
+				</StreamDeckSetup>
 			</section>
 		</div>
 	);

@@ -1,40 +1,11 @@
 import clsx from "clsx";
-import {
-	Clapperboard,
-	ClipboardList,
-	Clock,
-	Coffee,
-	Flag,
-	Gamepad2,
-	type LucideIcon,
-	Map as MapIcon,
-	Mic,
-	Shield,
-	TriangleAlert,
-	Trophy,
-	Users,
-} from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLatestRef } from "~/hooks/useLatestRef";
 import { BROADCAST_SCENE_GROUPS } from "../broadcast-cast-constants";
+import { SCENE_ICONS } from "../broadcast-cast-icons";
 import type { CastScene } from "../broadcast-cast-types";
 import styles from "./ScenePicker.module.css";
-
-export const SCENE_ICONS: Record<CastScene, LucideIcon> = {
-	starting: Clock,
-	casters: Mic,
-	rosters: Users,
-	maps: MapIcon,
-	game: Gamepad2,
-	results: ClipboardList,
-	break: Coffee,
-	replays: Clapperboard,
-	bracket: Trophy,
-	team: Shield,
-	technical: TriangleAlert,
-	ending: Flag,
-};
 
 /** Number keys 1–9 and 0 pick these, in this order. */
 const SCENES_BY_HOTKEY: CastScene[] = BROADCAST_SCENE_GROUPS.flatMap(
