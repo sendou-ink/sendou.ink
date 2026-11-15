@@ -5,9 +5,12 @@ import {
 	type VoiceCallParticipant,
 	type VoiceRoomState,
 } from "./voice-client";
+import type { VoicePlatform } from "./voice-constants";
+import type { RememberedCall } from "./voice-persisted";
 
 const ROOM_ID = 1;
 const OTHER_ROOM_ID = 2;
+const MINUTE_MS = 60_000;
 
 const roomState = (
 	overrides: Partial<VoiceRoomState> = {},
@@ -106,12 +109,13 @@ function setup({
 			serverListeners.add(listener);
 			return () => serverListeners.delete(listener);
 		},
-		platform: () => "DESKTOP" as const,
+		platform: vi.fn((): VoicePlatform => "DESKTOP"),
 		playSound: vi.fn(),
 		loadMicEnabled: vi.fn(() => false),
 		saveMicEnabled: vi.fn(),
-		rememberCallForReload: vi.fn(),
-		takeCallToRejoin: vi.fn((): number | null => null),
+		rememberCall: vi.fn(),
+		takeRememberedCall: vi.fn((): RememberedCall | null => null),
+		isPageReload: vi.fn(() => true),
 		now: vi.fn(() => 0),
 		wait: vi.fn(async (_ms: number) => {}),
 		waitUntilOnline: vi.fn(async () => {}),
@@ -328,12 +332,20 @@ describe("createVoiceClient", () => {
 
 		client.leaveOnPageClose();
 
-		expect(deps.rememberCallForReload).toHaveBeenCalledWith(ROOM_ID);
+		expect(deps.rememberCall).toHaveBeenCalledWith({
+			roomId: ROOM_ID,
+			at: 0,
+			kind: "CLOSED",
+		});
 	});
 
 	test("a reload rejoins the remembered call", async () => {
 		const { client, deps } = setup();
-		deps.takeCallToRejoin.mockReturnValue(ROOM_ID);
+		deps.takeRememberedCall.mockReturnValue({
+			roomId: ROOM_ID,
+			at: 0,
+			kind: "CLOSED",
+		});
 
 		await client.rejoinAfterReload();
 
@@ -345,12 +357,155 @@ describe("createVoiceClient", () => {
 
 	test("a refused rejoin after a reload ends quietly", async () => {
 		const { client, deps } = setup({ postRoomAction: async () => null });
-		deps.takeCallToRejoin.mockReturnValue(ROOM_ID);
+		deps.takeRememberedCall.mockReturnValue({
+			roomId: ROOM_ID,
+			at: 0,
+			kind: "CLOSED",
+		});
 
 		await client.rejoinAfterReload();
 
 		expect(client.getSnapshot().call).toBeNull();
 		expect(deps.postTelemetry).not.toHaveBeenCalled();
+	});
+
+	test.each([
+		{ why: "a page coming back long after it closed", reload: true },
+		{ why: "a page opened anew rather than reloaded", reload: false },
+	])("$why doesn't rejoin", async ({ reload }) => {
+		const { client, deps } = setup();
+		deps.isPageReload.mockReturnValue(reload);
+		deps.takeRememberedCall.mockReturnValue({
+			roomId: ROOM_ID,
+			at: 0,
+			kind: "CLOSED",
+		});
+		deps.now.mockReturnValue(reload ? MINUTE_MS : 0);
+
+		await client.rejoinAfterReload();
+
+		expect(client.getSnapshot().call).toBeNull();
+		expect(deps.postRoomAction).not.toHaveBeenCalled();
+	});
+
+	test("hiding the page remembers the call and showing it again forgets it", async () => {
+		const { client, deps } = setup();
+		await client.join(ROOM_ID);
+		deps.now.mockReturnValue(5);
+
+		client.setPageHidden(true);
+		expect(deps.rememberCall).toHaveBeenLastCalledWith({
+			roomId: ROOM_ID,
+			at: 5,
+			kind: "HIDDEN",
+		});
+
+		client.setPageHidden(false);
+		expect(deps.rememberCall).toHaveBeenLastCalledWith(null);
+	});
+
+	test("a call moving to another room while the page is hidden is remembered in its new room", async () => {
+		const { client, deps } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+		client.setPageHidden(true);
+
+		await client.follow({ roomIds: [ROOM_ID], targetRoomId: OTHER_ROOM_ID });
+		client.markConnected("local-2");
+
+		expect(deps.rememberCall).toHaveBeenLastCalledWith({
+			roomId: OTHER_ROOM_ID,
+			at: 0,
+			kind: "HIDDEN",
+		});
+	});
+
+	test("leaving while the page is hidden forgets the call", async () => {
+		const { client, deps } = setup();
+		await client.join(ROOM_ID);
+		client.setPageHidden(true);
+
+		await client.leave();
+
+		expect(deps.rememberCall).toHaveBeenLastCalledWith(null);
+	});
+
+	test("a page the browser discarded in the background rejoins its call", async () => {
+		const { client, deps } = setup();
+		deps.isPageReload.mockReturnValue(false);
+		deps.takeRememberedCall.mockReturnValue({
+			roomId: ROOM_ID,
+			at: 0,
+			kind: "HIDDEN",
+		});
+		deps.now.mockReturnValue(10 * MINUTE_MS);
+
+		await client.rejoinAfterReload();
+
+		expect(client.getSnapshot().call).toMatchObject({
+			roomId: ROOM_ID,
+			voiceSessionId: 10,
+		});
+	});
+
+	test("a page discarded long ago offers to rejoin its call instead", async () => {
+		const { client, deps } = setup();
+		deps.takeRememberedCall.mockReturnValue({
+			roomId: ROOM_ID,
+			at: 0,
+			kind: "HIDDEN",
+		});
+		deps.now.mockReturnValue(60 * MINUTE_MS);
+
+		await client.rejoinAfterReload();
+
+		expect(client.getSnapshot().call).toMatchObject({
+			roomId: ROOM_ID,
+			status: "DISCONNECTED",
+			voiceSessionId: null,
+		});
+		expect(joinRequestCount(deps.postRoomAction)).toBe(0);
+
+		await client.join(ROOM_ID);
+
+		expect(client.getSnapshot().call).toMatchObject({
+			status: "JOINING",
+			voiceSessionId: 10,
+		});
+	});
+
+	test("a page discarded long ago offers nothing when the call can't be joined anymore", async () => {
+		const { client, deps } = setup();
+		deps.fetchRoom.mockResolvedValue(roomState({ canJoin: false }));
+		deps.takeRememberedCall.mockReturnValue({
+			roomId: ROOM_ID,
+			at: 0,
+			kind: "HIDDEN",
+		});
+		deps.now.mockReturnValue(60 * MINUTE_MS);
+
+		await client.rejoinAfterReload();
+
+		expect(client.getSnapshot().call).toBeNull();
+	});
+
+	test("following moves an offered rejoin along without joining", async () => {
+		const { client, deps } = setup();
+		deps.takeRememberedCall.mockReturnValue({
+			roomId: ROOM_ID,
+			at: 0,
+			kind: "HIDDEN",
+		});
+		deps.now.mockReturnValue(60 * MINUTE_MS);
+		await client.rejoinAfterReload();
+
+		await client.follow({ roomIds: [ROOM_ID], targetRoomId: OTHER_ROOM_ID });
+
+		expect(client.getSnapshot().call).toMatchObject({
+			roomId: OTHER_ROOM_ID,
+			status: "DISCONNECTED",
+		});
+		expect(joinRequestCount(deps.postRoomAction)).toBe(0);
 	});
 
 	test("leaving reports the leave even when the call object never finishes leaving", async () => {
@@ -495,6 +650,31 @@ describe("createVoiceClient", () => {
 		);
 		expect(handle.ensureMic).toHaveBeenCalledWith({ mayAsk: false });
 	});
+
+	test.each([
+		{ platform: "ANDROID" as const, holdsMic: true },
+		{ platform: "IOS" as const, holdsMic: false },
+		{ platform: "DESKTOP" as const, holdsMic: false },
+	])(
+		"a muted call on $platform holds the microphone: $holdsMic",
+		async ({ platform, holdsMic }) => {
+			const { client, deps } = setup();
+			const handle = fakeCallHandle();
+			deps.platform.mockReturnValue(platform);
+			await client.join(ROOM_ID);
+			client.registerCallHandle(handle);
+
+			client.markConnected("local");
+
+			if (holdsMic) {
+				expect(handle.ensureMic).toHaveBeenCalledWith({ mayAsk: false });
+			} else {
+				expect(handle.ensureMic).not.toHaveBeenCalled();
+			}
+			expect(handle.setLocalAudio).not.toHaveBeenCalled();
+			expect(client.getSnapshot().call?.micEnabled).toBe(false);
+		},
+	);
 
 	test("a new call stays muted when the microphone can't be had without asking", async () => {
 		const { client, deps } = setup();

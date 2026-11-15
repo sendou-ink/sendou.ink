@@ -3228,6 +3228,7 @@ const VOICE_EXAMPLES: Array<{
 	{ id: "CONNECTED", name: "Connected" },
 	{ id: "RECONNECTING", name: "Reconnecting" },
 	{ id: "FAILED", name: "Failed" },
+	{ id: "DISCONNECTED", name: "Disconnected" },
 ];
 
 const SCANNER_EXAMPLES = [

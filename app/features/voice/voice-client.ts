@@ -1,4 +1,3 @@
-import * as v from "valibot";
 import type { ServerEvent } from "~/features/events/events-types";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import type { CommonUser } from "~/utils/kysely.server";
@@ -14,25 +13,18 @@ import {
 	type VoiceLeaveReason,
 	type VoicePlatform,
 } from "./voice-constants";
-import { voiceSettingsPersisted } from "./voice-persisted";
+import {
+	callToRejoinPersisted,
+	micEnabledPersisted,
+	type RememberedCall,
+	voiceSettingsPersisted,
+} from "./voice-persisted";
 
 const REJOIN_AFTER_RELOAD_WINDOW_MS = 30_000;
+/** How long after the page went away a call it lost in the background is rejoined without asking. */
+const REJOIN_AFTER_BACKGROUND_DROP_WINDOW_MS = 30 * 60_000;
 const RECONNECT_DELAYS_MS = [1_000, 2_000, 5_000, 10_000, 20_000];
 const RECONNECT_GIVE_UP_MS = 2 * 60_000;
-
-const callToRejoinPersisted = PersistedState.define({
-	key: "voiceCallToRejoin",
-	storage: "session",
-	schema: v.nullable(v.object({ roomId: v.number(), leftAt: v.number() })),
-	default: null,
-});
-
-const micEnabledPersisted = PersistedState.define({
-	key: "voiceMicEnabled",
-	storage: "local",
-	schema: v.boolean(),
-	default: false,
-});
 
 export interface VoiceRoomState {
 	available: boolean;
@@ -47,7 +39,9 @@ export type VoiceCallStatus =
 	| "JOINING"
 	| "CONNECTED"
 	| "RECONNECTING"
-	| "FAILED";
+	| "FAILED"
+	/** The page lost the call in the background, e.g. the browser discarded it. Rejoining is up to the user. */
+	| "DISCONNECTED";
 
 export interface VoiceCallParticipant {
 	userId: number;
@@ -106,8 +100,9 @@ interface VoiceClientDeps {
 	playSound: (soundCode: string) => void;
 	loadMicEnabled: () => boolean;
 	saveMicEnabled: (enabled: boolean) => void;
-	rememberCallForReload: (roomId: number) => void;
-	takeCallToRejoin: () => number | null;
+	rememberCall: (call: RememberedCall | null) => void;
+	takeRememberedCall: () => RememberedCall | null;
+	isPageReload: () => boolean;
 	now: () => number;
 	wait: (ms: number) => Promise<void>;
 	waitUntilOnline: () => Promise<void>;
@@ -123,9 +118,12 @@ export interface VoiceClient {
 	join: (roomId: number) => Promise<void>;
 	/** Moves a call in one of `roomIds` to `targetRoomId`, e.g. when the user's team changes. Starts no call. */
 	follow: (args: { roomIds: number[]; targetRoomId: number }) => Promise<void>;
+	/** Rejoins the call the previous page of this tab was in, or offers to when it was lost long ago. */
 	rejoinAfterReload: () => Promise<void>;
 	leave: (reason?: VoiceLeaveReason) => Promise<void>;
 	leaveOnPageClose: () => void;
+	/** Remembers the call while the page is hidden, a browser may discard the page there without warning. */
+	setPageHidden: (hidden: boolean) => void;
 	kick: (roomId: number, userId: number) => Promise<void>;
 	setMicEnabled: (enabled: boolean) => Promise<void>;
 	setDeafened: (deafened: boolean) => Promise<void>;
@@ -163,6 +161,7 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 	let latestSummary: VoiceTelemetrySummary | null = null;
 	let micEnabledBeforeDeafen = false;
 	let micWanted = false;
+	let isPageHidden = false;
 	let joinAttempt = 0;
 	let latestJoinRequest: Promise<unknown> = Promise.resolve();
 	let reconnection: {
@@ -255,10 +254,18 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		});
 	};
 
+	const rememberCallWhileHidden = () => {
+		const call = snapshot.call;
+		if (!isPageHidden || !call?.voiceSessionId) return;
+
+		deps.rememberCall({ roomId: call.roomId, at: deps.now(), kind: "HIDDEN" });
+	};
+
 	const leave = async (reason: VoiceLeaveReason = "LEFT") => {
 		const call = snapshot.call;
 		if (!call) return;
 
+		deps.rememberCall(null);
 		leaveLostSessions(call.roomId);
 		reconnection = null;
 
@@ -290,7 +297,11 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		roomId: number,
 		{ isAutomatic = false }: { isAutomatic?: boolean } = {},
 	) => {
-		if (snapshot.call?.roomId === roomId && snapshot.call.status !== "FAILED") {
+		if (
+			snapshot.call?.roomId === roomId &&
+			snapshot.call.status !== "FAILED" &&
+			snapshot.call.status !== "DISCONNECTED"
+		) {
 			return;
 		}
 		if (snapshot.call) await leave();
@@ -299,20 +310,7 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		const attempt = ++joinAttempt;
 		update({
 			pendingFeedback: null,
-			call: {
-				roomId,
-				voiceSessionId: null,
-				credentials: null,
-				status: "JOINING",
-				micEnabled: false,
-				deafened: false,
-				inputMode: snapshot.inputMode,
-				participants: [],
-				speakingSessionIds: [],
-				audioBlocked: false,
-				errorKind: null,
-				latencyMs: null,
-			},
+			call: newCall(roomId, snapshot.inputMode),
 		});
 		latestSummary = null;
 
@@ -461,11 +459,36 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 			if (!call || call.roomId === targetRoomId) return;
 			if (!roomIds.includes(call.roomId)) return;
 
+			if (call.status === "DISCONNECTED") {
+				updateCall({ roomId: targetRoomId });
+				return;
+			}
 			await join(targetRoomId);
 		},
 		rejoinAfterReload: async () => {
-			const roomId = deps.takeCallToRejoin();
-			if (roomId !== null) await join(roomId, { isAutomatic: true });
+			const remembered = deps.takeRememberedCall();
+			if (!remembered) return;
+
+			const elapsedMs = deps.now() - remembered.at;
+			const isAutomatic =
+				remembered.kind === "CLOSED"
+					? deps.isPageReload() && elapsedMs < REJOIN_AFTER_RELOAD_WINDOW_MS
+					: elapsedMs < REJOIN_AFTER_BACKGROUND_DROP_WINDOW_MS;
+			if (isAutomatic) {
+				await join(remembered.roomId, { isAutomatic: true });
+				return;
+			}
+			if (remembered.kind === "CLOSED") return;
+
+			const room = await deps.fetchRoom(remembered.roomId);
+			if (!room?.available || !room.canJoin || snapshot.call) return;
+			setRoom(remembered.roomId, room);
+			update({
+				call: {
+					...newCall(remembered.roomId, snapshot.inputMode),
+					status: "DISCONNECTED",
+				},
+			});
 		},
 		leave,
 		leaveOnPageClose: () => {
@@ -473,12 +496,24 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 			if (!call?.voiceSessionId) return;
 
 			sendSummary(true);
-			deps.rememberCallForReload(call.roomId);
+			deps.rememberCall({
+				roomId: call.roomId,
+				at: deps.now(),
+				kind: "CLOSED",
+			});
 			deps.beaconRoomAction(call.roomId, {
 				_action: "LEAVE",
 				voiceSessionId: call.voiceSessionId,
 				leaveReason: "PAGE_CLOSED",
 			});
+		},
+		setPageHidden: (hidden) => {
+			isPageHidden = hidden;
+			if (hidden) {
+				rememberCallWhileHidden();
+			} else {
+				deps.rememberCall(null);
+			}
 		},
 		kick: async (roomId, userId) => {
 			await deps.postRoomAction(roomId, { _action: "KICK", userId });
@@ -541,12 +576,16 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 
 			reconnection = null;
 			updateCall({ status: "CONNECTED" });
+			rememberCallWhileHidden();
 
-			if (call.inputMode === "OPEN_MIC" && deps.loadMicEnabled()) {
-				if (call.deafened) {
-					micEnabledBeforeDeafen = true;
-				} else {
-					void enableMic({ byUser: false });
+			const opensMic = call.inputMode === "OPEN_MIC" && deps.loadMicEnabled();
+			if (opensMic && !call.deafened) {
+				void enableMic({ byUser: false });
+			} else {
+				if (opensMic) micEnabledBeforeDeafen = true;
+				// Chrome on Android keeps a page capturing the mic running in the background, muted or not
+				if (deps.platform() === "ANDROID") {
+					void callHandle?.ensureMic({ mayAsk: false });
 				}
 			}
 			deps.playSound(VOICE_JOIN_SOUND);
@@ -662,6 +701,23 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 	};
 }
 
+function newCall(roomId: number, inputMode: VoiceInputMode): VoiceCall {
+	return {
+		roomId,
+		voiceSessionId: null,
+		credentials: null,
+		status: "JOINING",
+		micEnabled: false,
+		deafened: false,
+		inputMode,
+		participants: [],
+		speakingSessionIds: [],
+		audioBlocked: false,
+		errorKind: null,
+		latencyMs: null,
+	};
+}
+
 function silencedLocally(
 	call: VoiceCall,
 ): Pick<VoiceCall, "participants" | "speakingSessionIds"> {
@@ -763,18 +819,14 @@ export const voiceClient = createVoiceClient({
 	loadMicEnabled: () => PersistedState.read(micEnabledPersisted),
 	saveMicEnabled: (enabled) =>
 		PersistedState.write(micEnabledPersisted, enabled),
-	rememberCallForReload: (roomId) =>
-		PersistedState.write(callToRejoinPersisted, { roomId, leftAt: Date.now() }),
-	takeCallToRejoin: () => {
+	rememberCall: (call) => PersistedState.write(callToRejoinPersisted, call),
+	takeRememberedCall: () => {
 		const remembered = PersistedState.read(callToRejoinPersisted);
-		if (!remembered) return null;
 		PersistedState.write(callToRejoinPersisted, null);
 
-		return isPageReload() &&
-			Date.now() - remembered.leftAt < REJOIN_AFTER_RELOAD_WINDOW_MS
-			? remembered.roomId
-			: null;
+		return remembered;
 	},
+	isPageReload,
 	now: () => Date.now(),
 	wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 	waitUntilOnline: () =>

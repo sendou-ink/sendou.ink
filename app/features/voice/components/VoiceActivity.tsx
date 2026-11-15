@@ -46,6 +46,8 @@ export function VoiceActivity() {
 
 	const call = callOf(voices);
 	const isConnected = call?.state.status === "CONNECTED";
+	const isDropped =
+		call?.state.status === "FAILED" || call?.state.status === "DISCONNECTED";
 	const isSilenced =
 		call &&
 		(call.state.deafened ||
@@ -57,7 +59,7 @@ export function VoiceActivity() {
 			icon={<VoiceStateIcon state={call?.state ?? null} />}
 			dot={!call && voices.some((voice) => voice.state.participants.length > 0)}
 			tone={
-				call?.state.status === "FAILED" || (isConnected && isSilenced)
+				isDropped || (isConnected && isSilenced)
 					? "error"
 					: isConnected
 						? "success"
@@ -160,7 +162,8 @@ function VoiceCallSection({
 				title={callTitle(state, t)}
 				titleClassName={clsx({
 					"text-success": state.status === "CONNECTED",
-					"text-error": state.status === "FAILED",
+					"text-error":
+						state.status === "FAILED" || state.status === "DISCONNECTED",
 				})}
 				subtitle={state.roomTitle}
 				end={
@@ -184,14 +187,16 @@ function VoiceCallSection({
 			) : null}
 			<ParticipantList voice={{ state, actions }} />
 			<ActivityPanelControls>
-				{state.status === "FAILED" ? (
+				{state.status === "FAILED" || state.status === "DISCONNECTED" ? (
 					<SendouButton
 						size="small"
 						variant="minimal"
 						icon={<RotateCcw />}
 						onClick={actions.join}
 					>
-						{t("common:chat.voice.retry")}
+						{state.status === "DISCONNECTED"
+							? t("common:chat.voice.rejoin")
+							: t("common:chat.voice.retry")}
 					</SendouButton>
 				) : (
 					<div className={styles.buttonGroup}>
@@ -233,6 +238,8 @@ function callTitle(state: VoiceActivityState, t: TFunction<["common"]>) {
 			return state.errorKind === "CONNECTION_LOST"
 				? t("common:chat.voice.connectionLost")
 				: t("common:chat.voice.failed");
+		case "DISCONNECTED":
+			return t("common:chat.voice.disconnected");
 		default:
 			return t("common:chat.voice.connecting");
 	}
@@ -273,7 +280,8 @@ function StatusDot({ status }: { status: VoiceActivityState["status"] }) {
 		<span
 			className={clsx(styles.statusDot, {
 				[styles.statusDotConnected]: status === "CONNECTED",
-				[styles.statusDotFailed]: status === "FAILED",
+				[styles.statusDotFailed]:
+					status === "FAILED" || status === "DISCONNECTED",
 				[styles.statusDotAvailable]: status === "AVAILABLE",
 			})}
 		/>
