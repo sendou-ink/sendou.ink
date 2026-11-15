@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.server";
 import { broadcastParamsSchema } from "~/features/broadcast/broadcast-schemas";
+import type { BroadcastChannel } from "~/features/broadcast/broadcast-types";
 import { requireBroadcastProducer } from "~/features/broadcast/broadcast-utils.server";
 import * as BroadcastHub from "~/features/broadcast/core/BroadcastHub.server";
 import * as RouteChatRooms from "~/features/chat/RouteChatRooms.server";
@@ -38,7 +39,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		state,
 		channel,
-		programKey: broadcast?.programKey ?? null,
+		program: await ownProgram({
+			userId: user.id,
+			channel,
+			broadcastId: broadcast?.id,
+		}),
 		featuredMatchId,
 		joinInfo: featuredMatch
 			? featuredMatchJoinInfo({ tournament, match: featuredMatch })
@@ -51,6 +56,30 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		),
 	};
 };
+
+/** The user's OBS URL for the channel and what it shows, `null` before the user generated it. */
+async function ownProgram({
+	userId,
+	channel,
+	broadcastId,
+}: {
+	userId: number;
+	channel: BroadcastChannel;
+	broadcastId: number | undefined;
+}) {
+	const program = await BroadcastRepository.findProgram({ userId, channel });
+	if (!program) return null;
+
+	const isShowingThis =
+		program.broadcastId !== null && program.broadcastId === broadcastId;
+
+	return {
+		programKey: program.programKey,
+		isShowingThis,
+		/** Tournament of the channel's other broadcast the URL shows. */
+		showingTournamentName: isShowingThis ? null : program.tournamentName,
+	};
+}
 
 function featuredMatchJoinInfo({
 	tournament,

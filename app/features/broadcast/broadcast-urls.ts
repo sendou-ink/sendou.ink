@@ -1,6 +1,7 @@
 import { Config } from "~/config";
 import {
 	broadcastOverlaySearchParams,
+	broadcastProgramSearchParams,
 	broadcastStreamSearchParams,
 } from "./broadcast-search-params";
 import type { BroadcastStreamRole, BroadcastView } from "./broadcast-types";
@@ -28,36 +29,44 @@ export const broadcastDesignPage = (args: BroadcastPageArgs) =>
 export const broadcastDesignCanvasPage = (args: BroadcastPageArgs) =>
 	`${broadcastDesignPage(args)}/canvas`;
 
-/**
- * The overlay OBS shows as a browser source, switching scenes on its own. Only producers see it without the
- * broadcast's program key.
- */
+/** The broadcast's overlay switching scenes on its own, for its producers (e.g. the dashboard's previews). */
 export const broadcastOverlayPage = ({
 	view = "live",
 	preview = false,
-	programKey = null,
 	...args
 }: BroadcastPageArgs & {
 	view?: BroadcastView;
 	preview?: boolean;
-	programKey?: string | null;
 }) =>
 	broadcastOverlaySearchParams.href(`${broadcastDashboardPage(args)}/program`, {
 		view,
 		preview,
-		key: programKey,
 	});
 
 export const broadcastStreamUrl = ({
 	role,
-	programKey = null,
 	...args
 }: BroadcastPageArgs & {
 	role: BroadcastStreamRole;
-	programKey?: string | null;
 }) =>
 	broadcastStreamSearchParams.href(`${broadcastDashboardPage(args)}/stream`, {
 		role,
+	});
+
+const BROADCAST_PROGRAM_PAGE = "/broadcast/program";
+
+/**
+ * A user's OBS URL: the overlay OBS shows as a browser source, of the tournament broadcast the user last pointed it at.
+ * The key identifies it, so it stays the same from tournament to tournament.
+ */
+export const broadcastProgramPage = (programKey: string) =>
+	broadcastProgramSearchParams.href(BROADCAST_PROGRAM_PAGE, {
+		key: programKey,
+	});
+
+/** The stream of {@link broadcastProgramPage}. */
+export const broadcastProgramStreamUrl = (programKey: string) =>
+	broadcastProgramSearchParams.href(`${BROADCAST_PROGRAM_PAGE}/stream`, {
 		key: programKey,
 	});
 

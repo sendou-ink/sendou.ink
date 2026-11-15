@@ -5,11 +5,11 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { CAST_PRODUCER_RULES } from "~/features/broadcast-cast/broadcast-cast-constants";
 import { testTournament } from "~/features/tournament-bracket/core/tests/test-utils";
-import * as BroadcastRepository from "./BroadcastRepository.server";
 import {
-	canWatchProgram,
+	findProgram,
 	isBroadcastEnabled,
 	isBroadcastProducer,
+	pointProgram,
 	regenerateProgramKey,
 	requireBroadcastProducer,
 } from "./broadcast-utils.server";
@@ -25,6 +25,11 @@ const channel = {
 	platform: "TWITCH" as const,
 	account: "sendouink",
 	slug: "sendouink",
+};
+const OTHER_CHANNEL = {
+	platform: "TWITCH" as const,
+	account: "sendouink2",
+	slug: "sendouink2",
 };
 const rules = CAST_PRODUCER_RULES;
 
@@ -122,63 +127,75 @@ describe("requireBroadcastProducer", () => {
 	});
 });
 
-describe("canWatchProgram", () => {
+describe("findProgram", () => {
 	beforeEach(async () => {
 		ServerConfig.broadcastOrgIds = "*";
-		await users.create(1);
-	});
-
-	test("admits a producer without a key", async () => {
-		const tournamentId = await createTournament();
-
-		expect(
-			await canWatchProgram({
-				tournament: tournament(ORGANIZATION_ID, tournamentId),
-				user: { id: STREAMER_ID },
-				channel,
-				programKey: null,
-			}),
-		).toBe(true);
-	});
-
-	test("admits anyone with the program key", async () => {
-		const tournamentId = await createTournament();
-		const programKey = await generateKey(tournamentId);
-
-		expect(await watchesSignedOut(tournamentId, programKey)).toBe(true);
+		await users.create(2);
 	});
 
 	test.each([
-		{ why: "missing key", wrongKey: () => null },
-		{ why: "shorter key", wrongKey: (key: string) => key.slice(0, -1) },
-		{
-			why: "key of the same length",
-			wrongKey: (key: string) =>
-				`${key.slice(0, -1)}${key.endsWith("a") ? "b" : "a"}`,
-		},
-	])("rejects a $why", async ({ wrongKey }) => {
-		const tournamentId = await createTournament();
-		const programKey = await generateKey(tournamentId);
+		{ why: "no key", programKey: null },
+		{ why: "an unknown key", programKey: "V1StGXR8_Z5jdHi6B-myT" },
+	])("is null for $why", async ({ programKey }) => {
+		expect(await findProgram(programKey)).toBeNull();
+	});
 
-		expect(await watchesSignedOut(tournamentId, wrongKey(programKey))).toBe(
-			false,
+	test("shows the broadcast the URL was pointed at", async () => {
+		const tournamentId = await createTournament();
+		const programKey = await point(tournamentId);
+
+		const program = await findProgram(programKey);
+
+		expect(program?.userId).toBe(users.id(1));
+		expect(program?.tournament?.ctx.id).toBe(tournamentId);
+		expect(program).toMatchObject({
+			platform: channel.platform,
+			account: channel.account,
+		});
+	});
+
+	test("gives each channel of the tournament its own URL", async () => {
+		const tournamentId = await createTournament();
+
+		const firstKey = await point(tournamentId);
+		const otherKey = await point(tournamentId, OTHER_CHANNEL);
+
+		expect(otherKey).not.toBe(firstKey);
+		expect((await findProgram(firstKey))?.account).toBe(channel.account);
+		expect((await findProgram(otherKey))?.account).toBe(OTHER_CHANNEL.account);
+	});
+
+	test("keeps the key when pointed at the next tournament's broadcast", async () => {
+		const firstKey = await point(await createTournament());
+		const nextTournamentId = await createTournament();
+
+		const nextKey = await point(nextTournamentId);
+
+		expect(nextKey).toBe(firstKey);
+		expect((await findProgram(nextKey))?.tournament?.ctx.id).toBe(
+			nextTournamentId,
 		);
 	});
 
-	test("rejects any key while none was generated", async () => {
+	test("shows no broadcast once the user can't produce it", async () => {
 		const tournamentId = await createTournament();
-		await TournamentBroadcastFactory.create({ tournamentId, channel });
+		const programKey = await TournamentBroadcastFactory.pointProgram({
+			userId: users.id(2),
+			tournamentId,
+			channel,
+		});
 
-		expect(await watchesSignedOut(tournamentId, "")).toBe(false);
-		expect(await watchesSignedOut(tournamentId, "some-key")).toBe(false);
+		const program = await findProgram(programKey);
+
+		expect(program?.userId).toBe(users.id(2));
+		expect(program?.tournament).toBeNull();
 	});
 
-	test("rejects the key of an organization broadcasts were turned off for", async () => {
-		const tournamentId = await createTournament();
-		const programKey = await generateKey(tournamentId);
-		ServerConfig.broadcastOrgIds = [ORGANIZATION_ID + 1];
+	test("shows no broadcast once broadcasts are turned off for its organization", async () => {
+		const programKey = await point(await createTournament());
+		ServerConfig.broadcastOrgIds = [ORGANIZATION_ID];
 
-		expect(await watchesSignedOut(tournamentId, programKey)).toBe(false);
+		expect((await findProgram(programKey))?.tournament).toBeNull();
 	});
 });
 
@@ -188,15 +205,31 @@ describe("regenerateProgramKey", () => {
 		await users.create(1);
 	});
 
-	test("replaces the key, the old one no longer admitting", async () => {
+	test("replaces the key, the old one no longer found", async () => {
 		const tournamentId = await createTournament();
-		const oldKey = await generateKey(tournamentId);
+		const oldKey = await point(tournamentId);
 
-		const newKey = await generateKey(tournamentId);
+		const newKey = await regenerateProgramKey({ userId: users.id(1), channel });
 
 		expect(newKey).not.toBe(oldKey);
-		expect(await watchesSignedOut(tournamentId, oldKey)).toBe(false);
-		expect(await watchesSignedOut(tournamentId, newKey)).toBe(true);
+		expect(await findProgram(oldKey)).toBeNull();
+		expect((await findProgram(newKey))?.tournament?.ctx.id).toBe(tournamentId);
+	});
+
+	test("keeps the URL of the user's other channel", async () => {
+		const tournamentId = await createTournament();
+		await point(tournamentId);
+		const otherKey = await point(tournamentId, OTHER_CHANNEL);
+
+		await regenerateProgramKey({ userId: users.id(1), channel });
+
+		expect((await findProgram(otherKey))?.account).toBe(OTHER_CHANNEL.account);
+	});
+
+	test("is null before the user generated a URL for the channel", async () => {
+		expect(
+			await regenerateProgramKey({ userId: users.id(1), channel }),
+		).toBeNull();
 	});
 });
 
@@ -206,23 +239,12 @@ async function createTournament() {
 	return id;
 }
 
-async function generateKey(tournamentId: number) {
-	await regenerateProgramKey({ tournamentId, channel, rules });
-
-	const broadcast = await BroadcastRepository.findByChannel({
+function point(tournamentId: number, pointedChannel = channel) {
+	return pointProgram({
+		userId: users.id(1),
 		tournamentId,
-		channel,
-	});
-
-	return broadcast!.programKey!;
-}
-
-function watchesSignedOut(tournamentId: number, programKey: string | null) {
-	return canWatchProgram({
-		tournament: tournament(ORGANIZATION_ID, tournamentId),
-		user: undefined,
-		channel,
-		programKey,
+		channel: pointedChannel,
+		rules,
 	});
 }
 

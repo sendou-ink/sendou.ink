@@ -3,6 +3,7 @@ import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.s
 import { broadcastParamsSchema } from "~/features/broadcast/broadcast-schemas";
 import type { BroadcastStoredState } from "~/features/broadcast/broadcast-types";
 import {
+	pointProgram,
 	regenerateProgramKey,
 	requireBroadcastProducer,
 } from "~/features/broadcast/broadcast-utils.server";
@@ -190,8 +191,12 @@ export const action = defineAction(
 				});
 				break;
 			}
-			case "GENERATE_PROGRAM_KEY": {
-				await regenerateProgramKey(key);
+			case "POINT_PROGRAM": {
+				await pointProgram({ ...key, userId: user.id });
+				break;
+			}
+			case "REGENERATE_PROGRAM_KEY": {
+				await regenerateProgramKey({ userId: user.id, channel });
 				break;
 			}
 			case "UPDATE_CASTERS": {

@@ -1,23 +1,24 @@
 import { HEARTBEAT_INTERVAL_MS } from "~/features/events/events-types";
-import type { BroadcastState, BroadcastStreamMessage } from "./broadcast-types";
-import * as BroadcastHub from "./core/BroadcastHub.server";
+import type { BroadcastStreamMessage } from "./broadcast-types";
 
 const HEARTBEAT_MESSAGE = JSON.stringify({
 	kind: "heartbeat",
 } satisfies BroadcastStreamMessage);
 
 /**
- * Server-sent events response of a broadcast's stream: the client connected to the broadcast's hub until it goes away,
- * heartbeats keeping the connection alive.
+ * Server-sent events response of a broadcast's stream: the client connected (e.g. to the broadcast's hub with
+ * `BroadcastHub.connect`) until it goes away, heartbeats keeping the connection alive.
  */
-export function broadcastStreamResponse<State extends BroadcastState>({
+export function broadcastStreamResponse({
 	request,
-	...args
-}: Omit<
-	Parameters<typeof BroadcastHub.connect<State>>[0],
-	"send" | "close" | "signal"
-> & {
+	connect,
+}: {
 	request: Request;
+	connect: (connection: {
+		send: (message: string) => void;
+		close: () => void;
+		signal: AbortSignal;
+	}) => void;
 }) {
 	let close = () => {};
 
@@ -58,8 +59,7 @@ export function broadcastStreamResponse<State extends BroadcastState>({
 			}
 			request.signal.addEventListener("abort", close, { once: true });
 
-			BroadcastHub.connect({
-				...args,
+			connect({
 				send: write,
 				close,
 				signal: disconnect.signal,

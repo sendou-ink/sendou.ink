@@ -26,6 +26,7 @@ import {
 	Hand,
 	KeyRound,
 	type LucideIcon,
+	MonitorUp,
 	Palette,
 	Pause,
 	Play,
@@ -77,6 +78,7 @@ import type {
 import {
 	broadcastDesignPage,
 	broadcastOverlayPage,
+	broadcastProgramPage,
 	broadcastSignalUrl,
 	broadcastStreamUrl,
 } from "~/features/broadcast/broadcast-urls";
@@ -101,6 +103,7 @@ import { useSearchParam } from "~/modules/search-params/hooks";
 import { StreamDeckKeys } from "~/modules/stream-deck/components/StreamDeckKeys";
 import { StreamDeckSetup } from "~/modules/stream-deck/components/StreamDeckSetup";
 import type * as StreamDeck from "~/modules/stream-deck/stream-deck";
+import type { SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
 import {
@@ -377,11 +380,7 @@ export default function BroadcastDashboardPage() {
 					<SendouTabPanel id="setup">
 						<Setup
 							state={state}
-							programUrl={
-								data.programKey
-									? `${Config.siteDomain}${broadcastOverlayPage({ ...pageArgs, programKey: data.programKey })}`
-									: null
-							}
+							program={data.program}
 							scannerLink={pageArgs}
 							statuses={clipSender.statuses}
 							areClipsOnSources={areClipsOnSources}
@@ -1498,15 +1497,15 @@ function CastersForm({ casterIds }: { casterIds: number[] }) {
 
 function Setup({
 	state,
-	programUrl,
+	program,
 	scannerLink,
 	statuses,
 	areClipsOnSources,
 	streamDeckFaces,
 }: {
 	state: CastBroadcastState;
-	/** `null` until the program key is generated. */
-	programUrl: string | null;
+	/** The user's OBS URL for the channel, `null` until generated. */
+	program: SerializeFrom<typeof loader>["program"];
 	scannerLink: { tournamentId: number; slug: string };
 	statuses: ClipTransfer.ClipPeerStatus[];
 	areClipsOnSources: boolean;
@@ -1530,33 +1529,65 @@ function Setup({
 						{t("broadcast:dashboard.setup.program")}
 					</InfoPopover>
 				</div>
-				{programUrl ? (
+				{program ? (
 					<div className="stack sm">
 						<InviteLinkInput
 							label={t("broadcast:dashboard.setup.programLabel")}
-							link={programUrl}
+							link={`${Config.siteDomain}${broadcastProgramPage(program.programKey)}`}
 						/>
-						<ActionButton
-							schema={broadcastActionSchema}
-							action="GENERATE_PROGRAM_KEY"
-							size="small"
-							variant="minimal-destructive"
-							icon={<RefreshCw />}
-							className="self-start"
-							confirm={{
-								dialogHeading: t(
-									"broadcast:dashboard.setup.regenerateKeyHeading",
-								),
-								description: t(
-									"broadcast:dashboard.setup.regenerateKeyDescription",
-								),
-								submitButtonText: t("broadcast:dashboard.setup.regenerateKey"),
-								submitButtonVariant: "destructive",
-							}}
-							testId="broadcast-regenerate-key-button"
-						>
-							{t("broadcast:dashboard.setup.regenerateKey")}
-						</ActionButton>
+						<div className="stack horizontal sm flex-wrap">
+							{program.isShowingThis ? null : (
+								<ActionButton
+									schema={broadcastActionSchema}
+									action="POINT_PROGRAM"
+									size="small"
+									icon={<MonitorUp />}
+									confirm={
+										program.showingTournamentName
+											? {
+													dialogHeading: t(
+														"broadcast:dashboard.setup.pointProgramHeading",
+													),
+													description: t(
+														"broadcast:dashboard.setup.pointProgramDescription",
+														{
+															tournamentName: program.showingTournamentName,
+														},
+													),
+													submitButtonText: t(
+														"broadcast:dashboard.setup.pointProgram",
+													),
+												}
+											: undefined
+									}
+									testId="broadcast-point-program-button"
+								>
+									{t("broadcast:dashboard.setup.pointProgram")}
+								</ActionButton>
+							)}
+							<ActionButton
+								schema={broadcastActionSchema}
+								action="REGENERATE_PROGRAM_KEY"
+								size="small"
+								variant="minimal-destructive"
+								icon={<RefreshCw />}
+								confirm={{
+									dialogHeading: t(
+										"broadcast:dashboard.setup.regenerateKeyHeading",
+									),
+									description: t(
+										"broadcast:dashboard.setup.regenerateKeyDescription",
+									),
+									submitButtonText: t(
+										"broadcast:dashboard.setup.regenerateKey",
+									),
+									submitButtonVariant: "destructive",
+								}}
+								testId="broadcast-regenerate-key-button"
+							>
+								{t("broadcast:dashboard.setup.regenerateKey")}
+							</ActionButton>
+						</div>
 					</div>
 				) : (
 					<div className="stack sm items-start">
@@ -1565,7 +1596,7 @@ function Setup({
 						</p>
 						<ActionButton
 							schema={broadcastActionSchema}
-							action="GENERATE_PROGRAM_KEY"
+							action="POINT_PROGRAM"
 							size="small"
 							icon={<KeyRound />}
 							testId="broadcast-generate-key-button"
@@ -1575,6 +1606,17 @@ function Setup({
 					</div>
 				)}
 				<ul className={styles.checklist}>
+					{program ? (
+						<SetupCheck isDone={program.isShowingThis}>
+							{program.isShowingThis
+								? t("broadcast:dashboard.setup.programShowsThis")
+								: program.showingTournamentName
+									? t("broadcast:dashboard.setup.programShowsOther", {
+											tournamentName: program.showingTournamentName,
+										})
+									: t("broadcast:dashboard.setup.programShowsNothing")}
+						</SetupCheck>
+					) : null}
 					<SetupCheck isDone={sourceCount > 0}>
 						{t("broadcast:dashboard.health.sources", { count: sourceCount })}
 					</SetupCheck>

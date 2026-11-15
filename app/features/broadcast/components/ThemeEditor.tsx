@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { FormMessage } from "~/components/FormMessage";
 import { BROADCAST_CSS_MAX_LENGTH } from "../broadcast-constants";
 import type { BroadcastThemeSource } from "../broadcast-theme-sources";
 import * as ThemeCss from "../core/ThemeCss";
@@ -220,27 +221,31 @@ export function ThemeEditor({
 	};
 
 	return (
-		<section className={clsx("stack sm", styles.editor)}>
-			<Choice
-				label={t("broadcast:design.preset")}
-				value={loadedPreset?.key ?? OWN_PRESET_KEY}
-				options={[
-					...presetOptions.map((preset) => ({
-						value: preset.key,
-						label: preset.label,
-					})),
-					...(loadedPreset
-						? []
-						: [
-								{
-									value: OWN_PRESET_KEY,
-									label: t("broadcast:design.preset.own"),
-								},
-							]),
-				]}
-				onChange={pickPreset}
-			/>
-			<p className="text-xs text-lighter">{t("broadcast:design.presetHint")}</p>
+		<section className={clsx("stack md-plus", styles.editor)}>
+			<div className="stack xs">
+				<Choice
+					label={t("broadcast:design.preset")}
+					value={loadedPreset?.key ?? OWN_PRESET_KEY}
+					options={[
+						...presetOptions.map((preset) => ({
+							value: preset.key,
+							label: preset.label,
+						})),
+						...(loadedPreset
+							? []
+							: [
+									{
+										value: OWN_PRESET_KEY,
+										label: t("broadcast:design.preset.own"),
+									},
+								]),
+					]}
+					onChange={pickPreset}
+				/>
+				<FormMessage type="info" spaced={false}>
+					{t("broadcast:design.presetHint")}
+				</FormMessage>
+			</div>
 			<SendouDialog
 				isOpen={presetToConfirm !== null}
 				heading={t("broadcast:design.presetConfirm.heading")}
@@ -271,108 +276,116 @@ export function ThemeEditor({
 					</div>
 				</div>
 			</SendouDialog>
-			<div className="stack horizontal sm items-end justify-between">
-				<Choice
-					label={t("broadcast:design.stylesheet")}
-					value={tab}
-					options={shownTabs.map((option) => ({
-						value: option,
-						label: tabLabel(option),
-					}))}
-					onChange={setTab}
+			<div className="stack sm">
+				<div className="stack xs">
+					<div className="stack horizontal sm items-end justify-between">
+						<Choice
+							label={t("broadcast:design.stylesheet")}
+							value={tab}
+							options={shownTabs.map((option) => ({
+								value: option,
+								label: tabLabel(option),
+							}))}
+							onChange={setTab}
+						/>
+						{defaultText !== null ? (
+							<SendouButton
+								size="small"
+								variant="minimal"
+								icon={<RotateCcw />}
+								isDisabled={draft.text === defaultText}
+								onClick={() => edit(defaultText)}
+							>
+								{t("broadcast:design.revert")}
+							</SendouButton>
+						) : null}
+					</div>
+					<FormMessage type="info" spaced={false}>
+						{tab === "custom"
+							? t("broadcast:design.customHint")
+							: isLayout
+								? t("broadcast:design.layoutHint")
+								: t("broadcast:design.stylesheetHint")}
+					</FormMessage>
+				</div>
+				<SendouSwitch
+					size="small"
+					isSelected={showsLayout}
+					onChange={setShowsLayout}
+				>
+					{t("broadcast:design.showLayout")}
+				</SendouSwitch>
+			</div>
+			<div className="stack xs">
+				<textarea
+					key={tab}
+					ref={textareaRef}
+					className={styles.code}
+					value={draft.text}
+					onChange={(event) => {
+						edit(event.currentTarget.value);
+						updateCaret(event);
+					}}
+					onKeyDown={insertTabOnTab}
+					onKeyUp={updateCaret}
+					onSelect={updateCaret}
+					onClick={(event) => {
+						updateCaret(event);
+						goToClickedVariable(event);
+					}}
+					spellCheck={false}
+					autoCapitalize="off"
+					autoComplete="off"
+					aria-label={t("broadcast:design.stylesheet")}
+					data-testid="broadcast-design-editor"
 				/>
-				{defaultText !== null ? (
-					<SendouButton
-						size="small"
-						variant="minimal"
-						icon={<RotateCcw />}
-						isDisabled={draft.text === defaultText}
-						onClick={() => edit(defaultText)}
-					>
-						{t("broadcast:design.revert")}
-					</SendouButton>
+				<VariablesOnLine
+					theme={theme}
+					drafts={drafts}
+					tab={tab}
+					caret={caret}
+					jumpedFrom={jumpedFrom}
+					tabLabel={tabLabel}
+					onGoTo={goToDefinition}
+					onInline={inline}
+					onBack={() => {
+						if (!jumpedFrom) return;
+
+						select({
+							tab: jumpedFrom.tab,
+							start: jumpedFrom.caret,
+							end: jumpedFrom.caret,
+						});
+						setJumpedFrom(null);
+					}}
+				/>
+				{draft.error ? (
+					<p className="text-xs text-error" role="alert">
+						{t("broadcast:design.syntaxError", {
+							line: draft.error.line,
+							reason: draft.error.reason,
+						})}
+					</p>
 				) : null}
 			</div>
-			<SendouSwitch
-				size="small"
-				isSelected={showsLayout}
-				onChange={setShowsLayout}
-			>
-				{t("broadcast:design.showLayout")}
-			</SendouSwitch>
-			<p className="text-xs text-lighter">
-				{tab === "custom"
-					? t("broadcast:design.customHint")
-					: isLayout
-						? t("broadcast:design.layoutHint")
-						: t("broadcast:design.stylesheetHint")}
-			</p>
-			<textarea
-				key={tab}
-				ref={textareaRef}
-				className={styles.code}
-				value={draft.text}
-				onChange={(event) => {
-					edit(event.currentTarget.value);
-					updateCaret(event);
-				}}
-				onKeyDown={insertTabOnTab}
-				onKeyUp={updateCaret}
-				onSelect={updateCaret}
-				onClick={(event) => {
-					updateCaret(event);
-					goToClickedVariable(event);
-				}}
-				spellCheck={false}
-				autoCapitalize="off"
-				autoComplete="off"
-				aria-label={t("broadcast:design.stylesheet")}
-				data-testid="broadcast-design-editor"
-			/>
-			<VariablesOnLine
-				theme={theme}
-				drafts={drafts}
-				tab={tab}
-				caret={caret}
-				jumpedFrom={jumpedFrom}
-				tabLabel={tabLabel}
-				onGoTo={goToDefinition}
-				onInline={inline}
-				onBack={() => {
-					if (!jumpedFrom) return;
-
-					select({
-						tab: jumpedFrom.tab,
-						start: jumpedFrom.caret,
-						end: jumpedFrom.caret,
-					});
-					setJumpedFrom(null);
-				}}
-			/>
-			{draft.error ? (
-				<p className="text-xs text-error" role="alert">
-					{t("broadcast:design.syntaxError", {
-						line: draft.error.line,
-						reason: draft.error.reason,
-					})}
-				</p>
-			) : null}
-			<details className={styles.result}>
-				<summary className="text-sm font-semi-bold">
-					{t("broadcast:design.result", {
-						length: css.length,
-						max: BROADCAST_CSS_MAX_LENGTH,
-					})}
-				</summary>
-				<pre className={styles.code}>
-					{css || t("broadcast:design.noChanges")}
-				</pre>
-			</details>
-			{isTooLong ? (
-				<p className="text-xs text-error" role="alert">
-					{t("broadcast:design.tooLong", { max: BROADCAST_CSS_MAX_LENGTH })}
-				</p>
-			) : null}
+			<div className="stack xs">
+				<details className={styles.result}>
+					<summary className="text-sm font-semi-bold">
+						{t("broadcast:design.result", {
+							length: css.length,
+							max: BROADCAST_CSS_MAX_LENGTH,
+						})}
+					</summary>
+					<pre className={styles.code}>
+						{css || t("broadcast:design.noChanges")}
+					</pre>
+				</details>
+				{isTooLong ? (
+					<p className="text-xs text-error" role="alert">
+						{t("broadcast:design.tooLong", { max: BROADCAST_CSS_MAX_LENGTH })}
+					</p>
+				) : null}
+			</div>
 		</section>
 	);
 }

@@ -10,8 +10,8 @@ type InsertArgs = Parameters<
 >[0];
 
 type BroadcastKey = Omit<
-	Parameters<typeof BroadcastRepository.refreshProgramKey>[0],
-	"rules"
+	Parameters<typeof BroadcastRepository.updateProducer>[0],
+	"rules" | "change"
 >;
 
 /** Gives a broadcast channel of the tournament its chat room, as setting the cast account does. */
@@ -25,12 +25,17 @@ export const { create } = defineFactory({
 		BroadcastRepository.insertChatRoomIfMissing(args),
 });
 
-/** Generates the channel's program key like the dashboard's "Generate URL" button, returning the key. */
-export function generateProgramKey(key: BroadcastKey) {
-	return BroadcastRepository.refreshProgramKey({
+/**
+ * Points the user's OBS URL for the channel at its broadcast in the tournament like the dashboard's "Generate URL" and "Show this broadcast"
+ * buttons, returning the URL's key.
+ */
+export async function pointProgram(key: BroadcastKey & { userId: number }) {
+	const program = await BroadcastRepository.pointProgram({
 		...key,
 		rules: CAST_PRODUCER_RULES,
 	});
+
+	return program.programKey;
 }
 
 /** Edits the staged item like the dashboard's scene panel and puts it on air with a Take, no match cast on the channel. */

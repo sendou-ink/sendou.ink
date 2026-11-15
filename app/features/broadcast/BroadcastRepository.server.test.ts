@@ -1,10 +1,12 @@
 import { addDays } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { CAST_PRODUCER_RULES } from "~/features/broadcast-cast/broadcast-cast-constants";
 import type { CastBroadcastSettings } from "~/features/broadcast-cast/broadcast-cast-types";
 import * as BroadcastRepository from "./BroadcastRepository.server";
+import { DEFAULT_BROADCAST_SETTINGS } from "./broadcast-constants";
 import * as Producer from "./core/Producer";
 
 const rules = CAST_PRODUCER_RULES;
@@ -12,10 +14,16 @@ const rules = CAST_PRODUCER_RULES;
 const users = UserFactory.pool();
 
 const channel = { platform: "TWITCH" as const, account: "sendouink" };
+const OTHER_CHANNEL = { platform: "TWITCH" as const, account: "sendouink2" };
 
-const createBroadcastKey = async () => {
+const createBroadcastKey = async ({
+	organizationId = null,
+}: {
+	organizationId?: number | null;
+} = {}) => {
 	const { id: tournamentId } = await TournamentFactory.create({
 		authorId: users.id(1),
+		organizationId,
 	});
 
 	return { tournamentId, channel, rules };
@@ -103,6 +111,89 @@ describe("BroadcastRepository.updateSettings", () => {
 			casterIds: [1, 2],
 		});
 	});
+});
+
+describe("BroadcastRepository new broadcast settings", () => {
+	const THEME = {
+		css: "body { color: red; }",
+		weaponImages: "outlined",
+	} as const;
+
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test("carry over from the channel's latest broadcast in the organization", async () => {
+		const organizationId = await createOrganization();
+		const first = await createBroadcastKey({ organizationId });
+		await BroadcastRepository.updateSettings({ ...first, patch: THEME });
+		const latest = await createBroadcastKey({ organizationId });
+		await BroadcastRepository.updateSettings({
+			...latest,
+			patch: { css: "body { color: blue; }" },
+		});
+
+		const next = await createBroadcastKey({ organizationId });
+		await BroadcastRepository.insertChatRoomIfMissing({
+			...next,
+			expiresAt: addDays(new Date(), 7),
+		});
+
+		expect((await BroadcastRepository.findByChannel(next))?.settings).toEqual({
+			...THEME,
+			css: "body { color: blue; }",
+		});
+	});
+
+	test.each([
+		{
+			why: "another organization's broadcast",
+			earlier: async () => ({
+				organizationId: await createOrganization(),
+				channel,
+			}),
+		},
+		{
+			why: "a broadcast without an organization",
+			earlier: async () => ({ organizationId: null, channel }),
+		},
+		{
+			why: "another channel's broadcast in the organization",
+			earlier: async (organizationId: number) => ({
+				organizationId,
+				channel: OTHER_CHANNEL,
+			}),
+		},
+	])("start from the defaults after $why", async ({ earlier }) => {
+		const organizationId = await createOrganization();
+		const earlierBroadcast = await earlier(organizationId);
+		const other = await createBroadcastKey({
+			organizationId: earlierBroadcast.organizationId,
+		});
+		await BroadcastRepository.updateSettings({
+			...other,
+			channel: earlierBroadcast.channel,
+			patch: THEME,
+		});
+
+		const key = await createBroadcastKey({ organizationId });
+		await BroadcastRepository.insertChatRoomIfMissing({
+			...key,
+			expiresAt: addDays(new Date(), 7),
+		});
+
+		expect((await BroadcastRepository.findByChannel(key))?.settings).toEqual(
+			DEFAULT_BROADCAST_SETTINGS,
+		);
+	});
+
+	async function createOrganization() {
+		const { id } = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
+
+		return id;
+	}
 });
 
 describe("BroadcastRepository.updateState", () => {

@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
-import { broadcastOverlaySearchParams } from "~/features/broadcast/broadcast-search-params";
+import { broadcastProgramSearchParams } from "~/features/broadcast/broadcast-search-params";
 import {
-	canWatchProgram,
+	findProgram,
 	isBroadcastProducer,
 } from "~/features/broadcast/broadcast-utils.server";
 import * as LobbySet from "~/features/lobbies/core/LobbySet";
@@ -76,28 +76,24 @@ describe("Scenarios.run", () => {
 	);
 
 	test.each(["organizer", "streamer"])(
-		"tournament-broadcast lands a producer on the dashboard of a channel its program link opens (%s)",
+		"tournament-broadcast lands a producer on the dashboard of a channel their OBS URL shows (%s)",
 		async (role) => {
 			const outcome = await Scenarios.run("tournament-broadcast", { role });
 			if (outcome.status !== "ok") throw new Error(outcome.status);
 
 			const [, , tournamentId, , slug] = outcome.result.path.split("/");
 			const tournament = await tournamentFromDB(Number(tournamentId));
-			const { key: programKey } = broadcastOverlaySearchParams.parse(
+			const { key: programKey } = broadcastProgramSearchParams.parse(
 				new URL(outcome.result.links?.[0]?.path ?? "", "http://localhost"),
 			);
+			const program = await findProgram(programKey);
 
 			expect(
 				isBroadcastProducer(tournament, { id: outcome.result.userId }),
 			).toBe(true);
-			expect(
-				await canWatchProgram({
-					tournament,
-					user: undefined,
-					channel: { platform: "TWITCH", account: slug },
-					programKey,
-				}),
-			).toBe(true);
+			expect(program?.userId).toBe(outcome.result.userId);
+			expect(program?.tournament?.ctx.id).toBe(tournament.ctx.id);
+			expect(program?.account).toBe(slug);
 		},
 	);
 

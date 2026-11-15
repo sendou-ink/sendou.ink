@@ -3,11 +3,7 @@ import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import { BROADCAST_STREAM_ROLES, BROADCAST_VIEWS } from "./broadcast-constants";
 
-/** Secret letting OBS (signed out) see the program, see `canWatchProgram`. */
-const programKey = SP.param(v.nullable(v.pipe(v.string(), v.maxLength(100))), {
-	loader: true,
-});
-
+/** A tournament broadcast's overlay, as the dashboard's previews show it. */
 export const broadcastOverlaySearchParams = SearchParams.define({
 	view: SP.param(v.picklist(BROADCAST_VIEWS), {
 		default: "live",
@@ -15,7 +11,6 @@ export const broadcastOverlaySearchParams = SearchParams.define({
 	}),
 	/** Shown in the dashboard instead of OBS, not counted as an OBS source */
 	preview: SP.param(v.boolean(), { default: false, loader: false }),
-	key: programKey,
 });
 
 export const broadcastStreamSearchParams = SearchParams.define({
@@ -23,5 +18,12 @@ export const broadcastStreamSearchParams = SearchParams.define({
 		default: "source",
 		loader: true,
 	}),
-	key: programKey,
+});
+
+/** A user's OBS URL and its stream, see `findProgram`. */
+export const broadcastProgramSearchParams = SearchParams.define({
+	/** Secret identifying the URL, OBS has no session. */
+	key: SP.param(v.nullable(v.pipe(v.string(), v.maxLength(100))), {
+		loader: true,
+	}),
 });

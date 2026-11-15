@@ -1238,8 +1238,20 @@ interface TournamentBroadcast {
 	settings: JSONColumnType<BroadcastSettings>;
 	/** Chat of the tournament's organizers and streamers producing the broadcast, created once the cast account is set */
 	chatRoomId: number | null;
-	/** Secret of the program URL OBS shows the overlay from, `null` until the producer generates one */
-	programKey: string | null;
+	createdAt: Generated<number>;
+}
+
+/** A user's OBS URL for one cast account, showing the account's tournament broadcast they last pointed it at. */
+interface UserBroadcastProgram {
+	id: GeneratedAlways<number>;
+	userId: number;
+	platform: StreamPlatform;
+	/** Twitch login or YouTube channel id, as in the cast account */
+	account: string;
+	/** Secret of the URL, OBS has no session */
+	programKey: string;
+	/** `null` until pointed at a broadcast, or after the broadcast was deleted */
+	broadcastId: number | null;
 	createdAt: Generated<number>;
 }
 
@@ -1834,6 +1846,7 @@ export interface DB {
 	TournamentOrganizationBannedUser: TournamentOrganizationBannedUser;
 	TournamentStreamer: TournamentStreamer;
 	TournamentBroadcast: TournamentBroadcast;
+	UserBroadcastProgram: UserBroadcastProgram;
 	TournamentMatchVod: TournamentMatchVod;
 	Trophy: Trophy;
 	TrophyOwner: TrophyOwner;

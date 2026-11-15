@@ -181,6 +181,12 @@ export interface Fixtures {
 		channel: Pick<Tables["TournamentBroadcast"], "platform" | "account">;
 		chatRoomIds: number[];
 	} | null;
+	/** Newest user OBS URL, one pointed at a broadcast first. */
+	broadcastProgram: {
+		programKey: string;
+		userId: number;
+		channel: Pick<Tables["UserBroadcastProgram"], "platform" | "account">;
+	} | null;
 	/** Matches of the tournament with the most matches. */
 	manyTournamentMatchIds: number[] | null;
 }
@@ -286,6 +292,7 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		feedCommentItemIds: await resolveFeedCommentItemIds(),
 		feedReactionItemIds: await resolveFeedReactionItemIds(),
 		broadcast: await resolveBroadcast(),
+		broadcastProgram: await resolveBroadcastProgram(),
 		manyTournamentMatchIds: await resolveManyTournamentMatchIds(),
 	};
 
@@ -1846,6 +1853,23 @@ async function resolveBroadcast() {
 		chatRoomIds: rows
 			.map((row) => row.chatRoomId)
 			.filter((id) => typeof id === "number"),
+	};
+}
+
+async function resolveBroadcastProgram() {
+	const row = await db
+		.selectFrom("UserBroadcastProgram")
+		.select(["programKey", "userId", "platform", "account"])
+		.orderBy(sql`"broadcastId" is not null`, "desc")
+		.orderBy("id", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!row) return null;
+
+	return {
+		programKey: row.programKey,
+		userId: row.userId,
+		channel: { platform: row.platform, account: row.account },
 	};
 }
 

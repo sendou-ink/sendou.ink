@@ -2,7 +2,7 @@ import { addDays, max } from "date-fns";
 import { ServerConfig } from "~/config.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { isSameSecret } from "~/utils/crypto.server";
+import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { notFound } from "~/utils/remix.server";
 import * as BroadcastRepository from "./BroadcastRepository.server";
 import {
@@ -25,7 +25,10 @@ export function isBroadcastEnabled(tournament: {
 	return ServerConfig.broadcastOrgIds.includes(organizationId);
 }
 
-/** Producer pages are for the tournament's organizers and streamers. */
+/**
+ * Producer pages are for the tournament's organizers and streamers.
+ * @internal
+ */
 export function isBroadcastProducer(
 	tournament: Tournament,
 	user: { id: number } | undefined,
@@ -40,60 +43,77 @@ export function isBroadcastProducer(
  *
  * @throws {Response} 404 if the user is not one or the tournament can't use broadcasts
  */
-export function requireBroadcastProducer(
+export function requireBroadcastProducer<User extends { id: number }>(
 	tournament: Tournament,
-	user: { id: number } | undefined,
-) {
+	user: User | undefined,
+): asserts user is User {
 	if (!isBroadcastProducer(tournament, user)) notFound();
 }
 
 /**
- * Whether the user may watch the broadcast's program, the overlay page OBS shows and its stream: a producer, or
- * anyone with the broadcast's program key (OBS has no session). Without a key generated, only producers.
+ * The OBS URL of the program key: its id, whose and which channel's it is and the tournament broadcast it shows, `null`
+ * for an unknown key. `tournament` is `null` while the URL isn't pointed at a broadcast, or once its user can't
+ * produce that one anymore.
  */
-export async function canWatchProgram({
-	tournament,
-	user,
-	channel,
-	programKey,
-}: {
-	tournament: Tournament;
-	user: { id: number } | undefined;
-	channel: Pick<BroadcastChannel, "platform" | "account">;
-	programKey: string | null;
-}) {
-	if (isBroadcastProducer(tournament, user)) return true;
-	if (!isBroadcastEnabled(tournament) || !programKey) return false;
+export async function findProgram(programKey: string | null) {
+	if (!programKey) return null;
 
-	const broadcast = await BroadcastRepository.findByChannel({
-		tournamentId: tournament.ctx.id,
-		channel,
-	});
-	if (!broadcast?.programKey) return false;
+	const program = await BroadcastRepository.findProgramByKey(programKey);
+	if (!program) return null;
 
-	return isSameSecret(broadcast.programKey, programKey);
+	const { tournamentId, ...rest } = program;
+	const tournament =
+		tournamentId === null ? null : await tournamentFromDB(tournamentId);
+	if (!tournament || !isBroadcastProducer(tournament, { id: rest.userId })) {
+		return { ...rest, tournament: null };
+	}
+
+	return { ...rest, tournament };
 }
 
-/** Gives the broadcast a new program key, disconnecting the OBS sources (and anyone else) watching with the old one. */
-export async function regenerateProgramKey({
+/**
+ * Points the user's OBS URL for the channel at the channel's broadcast in the tournament (generating the URL if the
+ * user has none for the channel), reloading the OBS sources showing it onto this one. Returns the URL's key.
+ */
+export async function pointProgram({
+	userId,
 	tournamentId,
 	channel,
 	rules,
 }: {
+	userId: number;
 	tournamentId: number;
 	channel: Pick<BroadcastChannel, "platform" | "account" | "slug">;
 	rules: Producer.Rules<ProducerState>;
 }) {
-	const programKey = await BroadcastRepository.refreshProgramKey({
+	const program = await BroadcastRepository.pointProgram({
+		userId,
 		tournamentId,
 		channel,
 		rules,
 	});
-	BroadcastHub.disconnectStaleKeys({
-		tournamentId,
-		slug: channel.slug,
-		programKey,
+	BroadcastHub.reloadProgram({
+		programId: program.id,
+		except: { tournamentId, slug: channel.slug },
 	});
+
+	return program.programKey;
+}
+
+/**
+ * Gives the user's OBS URL for the channel a new key, disconnecting the OBS sources (and anyone else) watching with the
+ * old one. Returns the new key, `null` without a URL.
+ */
+export async function regenerateProgramKey(args: {
+	userId: number;
+	channel: Pick<BroadcastChannel, "platform" | "account">;
+}) {
+	const program = await BroadcastRepository.refreshProgramKey(args);
+	if (!program) return null;
+
+	BroadcastHub.closeProgram(program.id);
+
+	return program.programKey;
 }
 
 /**

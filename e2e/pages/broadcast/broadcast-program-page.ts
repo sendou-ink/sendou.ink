@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import type { BroadcastStreamRole } from "~/features/broadcast/broadcast-types";
 import {
 	broadcastOverlayPage,
+	broadcastProgramPage,
 	broadcastStreamUrl,
 } from "~/features/broadcast/broadcast-urls";
 import type { CastScene } from "~/features/broadcast-cast/broadcast-cast-types";
@@ -12,7 +13,10 @@ interface BroadcastPageArgs {
 	slug: string;
 }
 
-/** `/to/:id/broadcast/:channel/program`, the overlay OBS shows as a browser source. */
+/**
+ * The overlay OBS shows as a browser source: a user's OBS URL (`/broadcast/program?key=…`), or the broadcast's own
+ * `/to/:id/broadcast/:channel/program` its producers preview.
+ */
 export class BroadcastProgramPage {
 	private readonly page: Page;
 	private readonly pageArgs: BroadcastPageArgs;
@@ -26,12 +30,9 @@ export class BroadcastProgramPage {
 		};
 	}
 
-	/** Opens the program with the broadcast's program key, the URL OBS is given. */
+	/** Opens the OBS URL of the program key. */
 	async goto(programKey: string) {
-		await navigate({
-			page: this.page,
-			url: broadcastOverlayPage({ ...this.pageArgs, programKey }),
-		});
+		await navigate({ page: this.page, url: broadcastProgramPage(programKey) });
 	}
 
 	/** The scene drawn on the canvas. */
@@ -39,28 +40,24 @@ export class BroadcastProgramPage {
 		return this.locators.canvas.locator(`[data-scene="${scene}"]`);
 	}
 
-	/** The status the program page answers with, for whoever the page is logged in as. */
+	/** The status the OBS URL of the key (or without one, the broadcast's own program page) answers with, for whoever the page is logged in as. */
 	async responseStatus(programKey: string | null) {
 		const response = await this.page.request.get(
-			broadcastOverlayPage({ ...this.pageArgs, programKey }),
+			programKey
+				? broadcastProgramPage(programKey)
+				: broadcastOverlayPage(this.pageArgs),
 		);
 
 		return response.status();
 	}
 
 	/**
-	 * The status the program's state stream answers with when it refuses the connection. Not for a stream that opens,
+	 * The status the broadcast's own state stream answers with when it refuses the connection. Not for a stream that opens,
 	 * the request would wait for it to end.
 	 */
-	async refusedStreamStatus({
-		role,
-		programKey,
-	}: {
-		role: BroadcastStreamRole;
-		programKey: string | null;
-	}) {
+	async refusedStreamStatus(role: BroadcastStreamRole) {
 		const response = await this.page.request.get(
-			broadcastStreamUrl({ ...this.pageArgs, role, programKey }),
+			broadcastStreamUrl({ ...this.pageArgs, role }),
 		);
 
 		return response.status();

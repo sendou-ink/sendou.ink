@@ -146,6 +146,8 @@ export type BroadcastStreamMessage<
 	| { kind: "heartbeat" }
 	/** The server's code changed under the connection (dev server only), the client opens a new one. */
 	| { kind: "reconnect" }
+	/** The OBS URL the page was opened from now shows another broadcast, the page loads again. */
+	| { kind: "reload" }
 	/**
 	 * First message of every connection: who it is when signaling the clip peer connections, and the server's clock
 	 * (epoch ms) to time the scenes by.

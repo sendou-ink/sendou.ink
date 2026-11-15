@@ -43,8 +43,8 @@ interface Client {
 	send: (message: string) => void;
 	/** Ends the client's connection. */
 	close: () => void;
-	/** The program key it was let in with, `null` for a producer. */
-	programKey: string | null;
+	/** Id of the user's OBS URL it connected through, `null` for a producer's own connection. */
+	programId: number | null;
 	peerId: string;
 	token: string;
 	/** A producer's dashboard, which sends the overlays replay clips over WebRTC. Peers signal only to the other kind. */
@@ -69,16 +69,25 @@ interface Hub extends HubKey {
 	isDirty: boolean;
 }
 
+/** A connection through a user's OBS URL that isn't pointed at a broadcast, waiting for it to be. */
+type StandbyClient = Pick<Client, "send" | "close"> & { programId: number };
+
 declare global {
 	var __broadcastHubs: Map<string, Hub> | undefined;
+	var __broadcastStandbyClients: Set<StandbyClient> | undefined;
 }
 
 // on globalThis so the hubs of the code the dev server evaluated before this are found and retired: they keep
 // running that code, its clients reconnect to hubs running this
 globalThis.__broadcastHubs ??= new Map();
+globalThis.__broadcastStandbyClients ??= new Set();
 const hubs = globalThis.__broadcastHubs;
+const standbyClients = globalThis.__broadcastStandbyClients;
 const RECONNECT_MESSAGE = JSON.stringify({
 	kind: "reconnect",
+} satisfies BroadcastStreamMessage);
+const RELOAD_MESSAGE = JSON.stringify({
+	kind: "reload",
 } satisfies BroadcastStreamMessage);
 for (const hub of hubs.values()) {
 	hub.stop.abort();
@@ -87,6 +96,10 @@ for (const hub of hubs.values()) {
 	}
 }
 hubs.clear();
+for (const client of standbyClients) {
+	client.send(RECONNECT_MESSAGE);
+}
+standbyClients.clear();
 
 /**
  * Connects a client to the broadcast: it gets the current state right away (once built) and every change after,
@@ -100,7 +113,7 @@ export function connect<State extends BroadcastState>({
 	close,
 	signal,
 	isClipSender,
-	programKey,
+	programId,
 	...key
 }: HubKey & {
 	layout: Layout<State>;
@@ -109,7 +122,7 @@ export function connect<State extends BroadcastState>({
 	close: Client["close"];
 	signal: AbortSignal;
 	isClipSender: boolean;
-	programKey: Client["programKey"];
+	programId: Client["programId"];
 }) {
 	if (signal.aborted) return;
 
@@ -125,7 +138,7 @@ export function connect<State extends BroadcastState>({
 		role,
 		send,
 		close,
-		programKey,
+		programId,
 		peerId: crypto.randomUUID(),
 		token: crypto.randomUUID(),
 		isClipSender,
@@ -183,18 +196,41 @@ export function relaySignal({
 	return true;
 }
 
-/** Closes the connections let in with a program key other than the broadcast's current one, e.g. after it was regenerated. */
-export function disconnectStaleKeys({
-	programKey,
-	...key
-}: HubKey & { programKey: string }) {
-	const hub = hubs.get(hubId(key));
-	if (!hub) return;
+/** Keeps a connection through a user's OBS URL while it isn't pointed at a broadcast, see {@link reloadProgram}. */
+export function connectStandby({
+	signal,
+	...client
+}: StandbyClient & { signal: AbortSignal }) {
+	if (signal.aborted) return;
 
-	for (const client of hub.clients) {
-		if (client.programKey !== null && client.programKey !== programKey) {
-			client.close();
-		}
+	standbyClients.add(client);
+	signal.addEventListener("abort", () => standbyClients.delete(client), {
+		once: true,
+	});
+}
+
+/**
+ * Tells the pages connected through a user's OBS URL to load again, e.g. after it was pointed at another broadcast.
+ * Ones already showing the broadcast of `except` are left as they are.
+ */
+export function reloadProgram({
+	programId,
+	except,
+}: {
+	programId: number;
+	except?: HubKey;
+}) {
+	for (const client of programClients(programId)) {
+		if (except && client.hub === hubs.get(hubId(except))) continue;
+
+		client.send(RELOAD_MESSAGE);
+	}
+}
+
+/** Closes the connections through a user's OBS URL, e.g. after its key was regenerated. */
+export function closeProgram(programId: number) {
+	for (const client of programClients(programId)) {
+		client.close();
 	}
 }
 
@@ -248,6 +284,21 @@ function health(key: HubKey): BroadcastHealth {
 	if (!hub) return { sources: 0, scanners: 0 };
 
 	return healthOf(hub);
+}
+
+function* programClients(
+	programId: number,
+): Generator<StandbyClient & { hub: Hub | null }> {
+	for (const hub of hubs.values()) {
+		for (const client of hub.clients) {
+			if (client.programId === programId) {
+				yield { send: client.send, close: client.close, programId, hub };
+			}
+		}
+	}
+	for (const client of standbyClients) {
+		if (client.programId === programId) yield { ...client, hub: null };
+	}
 }
 
 function hubId({ tournamentId, slug }: HubKey) {

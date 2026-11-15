@@ -298,9 +298,9 @@ export async function castMatch({
 
 /**
  * A tournament with its first bracket started, `roundsPlayed` rounds of it played, and its first playable match cast
- * on a Twitch account whose broadcast has the program URL generated: a broadcast ready to produce. Teams are named
- * "Team 1", "Team 2", ... by `teamRosters` order. `isMatchCast: false` adds the cast account but leaves the match to
- * be cast. Returns the match and the program key.
+ * on a Twitch account whose broadcast `programUserId`'s OBS URL shows (the author's by default): a broadcast ready to
+ * produce. Teams are named "Team 1", "Team 2", ... by `teamRosters` order. `isMatchCast: false` adds the cast account
+ * but leaves the match to be cast. Returns the match and the OBS URL's key.
  */
 export async function createBroadcasting(
 	overrides: Parameters<typeof create>[0],
@@ -309,11 +309,13 @@ export async function createBroadcasting(
 		twitchAccount,
 		roundsPlayed = 0,
 		isMatchCast = true,
+		programUserId = overrides.authorId,
 	}: {
 		teamRosters: number[][];
 		twitchAccount: string;
 		roundsPlayed?: number;
 		isMatchCast?: boolean;
+		programUserId?: number;
 	},
 ) {
 	const tournament = await create(overrides);
@@ -343,7 +345,9 @@ export async function createBroadcasting(
 		await addCastAccount({ tournamentId: tournament.id, twitchAccount });
 		clearTournamentDataCache(tournament.id);
 	}
-	const programKey = await TournamentBroadcastFactory.generateProgramKey({
+	invariant(programUserId, "Expected an authorId or a programUserId");
+	const programKey = await TournamentBroadcastFactory.pointProgram({
+		userId: programUserId,
 		tournamentId: tournament.id,
 		channel: { platform: "TWITCH", account: twitchAccount },
 	});

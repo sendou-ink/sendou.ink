@@ -37,7 +37,7 @@ pnpm run dev:tools refresh-caches
 
 A scenario prints a link that logs in as its user and opens its page, so it works for a person and for an agent driving a browser alike. Some print more pages of the scenario below it.
 
-`tournament-broadcast` sets up the broadcast overlays: an organization's tournament (so `BROADCAST_ORG_IDS` must be `*`, the dev default) with a match cast on the `sendouink` Twitch channel. It lands you, the organizer or with `--role=streamer` a streamer, on the channel's broadcast dashboard and also prints the program URL with its key, the one to paste into an OBS browser source. Takes `--teams` and `--format` like the other tournament scenarios, plus `--roundsPlayed`.
+`tournament-broadcast` sets up the broadcast overlays: an organization's tournament (so `BROADCAST_ORG_IDS` must be `*`, the dev default) with a match cast on the `sendouink` Twitch channel. It lands you, the organizer or with `--role=streamer` a streamer, on the channel's broadcast dashboard and also prints your OBS URL for the channel (`/broadcast/program?key=…`, pointed at its broadcast), the one to paste into an OBS browser source. Takes `--teams` and `--format` like the other tournament scenarios, plus `--roundsPlayed`.
 
 ## Safety
 

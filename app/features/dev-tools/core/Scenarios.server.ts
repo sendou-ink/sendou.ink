@@ -19,7 +19,7 @@ import type { TournamentSettings } from "~/db/tables-json";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import {
 	broadcastDashboardPage,
-	broadcastOverlayPage,
+	broadcastProgramPage,
 } from "~/features/broadcast/broadcast-urls";
 import { isBroadcastEnabled } from "~/features/broadcast/broadcast-utils.server";
 import * as LobbyProgression from "~/features/lobbies/core/LobbyProgression.server";
@@ -384,6 +384,7 @@ const SCENARIOS: Scenario[] = [
 					teamRosters: await freshTeamRosters(teams),
 					twitchAccount: BROADCAST_SCENARIO_TWITCH_ACCOUNT,
 					roundsPlayed,
+					programUserId: role === "streamer" ? streamerId : organizerId,
 				},
 			);
 			invariant(
@@ -408,10 +409,7 @@ const SCENARIOS: Scenario[] = [
 				links: [
 					{
 						label: "Program (OBS)",
-						path: broadcastOverlayPage({
-							...broadcastPage,
-							programKey: tournament.programKey,
-						}),
+						path: broadcastProgramPage(tournament.programKey),
 					},
 				],
 			};

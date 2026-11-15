@@ -32,15 +32,15 @@ interface WriteArgs<Item extends ProducerState = ProducerState>
 	rules: Producer.Rules<Item>;
 }
 
-/** Producer state, settings, chat room and program key of the channel's broadcast, `undefined` before anything was written to it. */
+/** Producer state, settings and chat room of the channel's broadcast, `undefined` before anything was written to it. */
 export function findByChannel({ tournamentId, channel }: BroadcastKey) {
 	return db
 		.selectFrom("TournamentBroadcast")
 		.select([
+			"TournamentBroadcast.id",
 			"TournamentBroadcast.state",
 			"TournamentBroadcast.settings",
 			"TournamentBroadcast.chatRoomId",
-			"TournamentBroadcast.programKey",
 		])
 		.where("TournamentBroadcast.tournamentId", "=", tournamentId)
 		.where("TournamentBroadcast.platform", "=", channel.platform)
@@ -194,21 +194,111 @@ export async function updateSettings<
 		.execute();
 }
 
-/** Gives the channel's broadcast a new random program key, replacing the one it had. Returns the new key. */
-export async function refreshProgramKey(key: WriteArgs) {
-	const programKey = nanoid();
+/** The OBS URL of the program key: whose and which channel's it is and the broadcast it shows, `undefined` for an unknown key. */
+export function findProgramByKey(programKey: string) {
+	return db
+		.selectFrom("UserBroadcastProgram")
+		.leftJoin(
+			"TournamentBroadcast",
+			"TournamentBroadcast.id",
+			"UserBroadcastProgram.broadcastId",
+		)
+		.select([
+			"UserBroadcastProgram.id",
+			"UserBroadcastProgram.userId",
+			"UserBroadcastProgram.platform",
+			"UserBroadcastProgram.account",
+			"TournamentBroadcast.tournamentId",
+		])
+		.where("UserBroadcastProgram.programKey", "=", programKey)
+		.executeTakeFirst();
+}
 
-	await insertIfMissing(key);
+/**
+ * The user's OBS URL for the channel: its key and the broadcast it shows with its tournament's name (`null`s before it
+ * is pointed at one). `undefined` before the user generated it.
+ */
+export function findProgram({
+	userId,
+	channel,
+}: {
+	userId: number;
+	channel: BroadcastKey["channel"];
+}) {
+	return db
+		.selectFrom("UserBroadcastProgram")
+		.leftJoin(
+			"TournamentBroadcast",
+			"TournamentBroadcast.id",
+			"UserBroadcastProgram.broadcastId",
+		)
+		.leftJoin(
+			"CalendarEvent",
+			"CalendarEvent.tournamentId",
+			"TournamentBroadcast.tournamentId",
+		)
+		.select([
+			"UserBroadcastProgram.programKey",
+			"UserBroadcastProgram.broadcastId",
+			"CalendarEvent.name as tournamentName",
+		])
+		.where("UserBroadcastProgram.userId", "=", userId)
+		.where("UserBroadcastProgram.platform", "=", channel.platform)
+		.where("UserBroadcastProgram.account", "=", channel.account)
+		.executeTakeFirst();
+}
 
-	await db
-		.updateTable("TournamentBroadcast")
-		.set({ programKey })
-		.where("TournamentBroadcast.tournamentId", "=", key.tournamentId)
-		.where("TournamentBroadcast.platform", "=", key.channel.platform)
-		.where("TournamentBroadcast.account", "=", key.channel.account)
-		.execute();
+/**
+ * Points the user's OBS URL for the channel at the channel's broadcast in the tournament, creating the URL (with a new
+ * random key) or the broadcast when missing. Returns the URL's id and key.
+ */
+export function pointProgram({
+	userId,
+	...key
+}: WriteArgs & {
+	userId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		const broadcastId = await insertIfMissing(key, trx);
 
-	return programKey;
+		return trx
+			.insertInto("UserBroadcastProgram")
+			.values({
+				userId,
+				platform: key.channel.platform,
+				account: key.channel.account,
+				programKey: nanoid(),
+				broadcastId,
+			})
+			.onConflict((oc) =>
+				oc
+					.columns(["userId", "platform", "account"])
+					.doUpdateSet({ broadcastId }),
+			)
+			.returning(["UserBroadcastProgram.id", "UserBroadcastProgram.programKey"])
+			.executeTakeFirstOrThrow();
+	});
+}
+
+/**
+ * Gives the user's OBS URL for the channel a new random key, replacing the one it had. Returns the URL's id and new
+ * key, `undefined` without a URL.
+ */
+export function refreshProgramKey({
+	userId,
+	channel,
+}: {
+	userId: number;
+	channel: BroadcastKey["channel"];
+}) {
+	return db
+		.updateTable("UserBroadcastProgram")
+		.set({ programKey: nanoid() })
+		.where("UserBroadcastProgram.userId", "=", userId)
+		.where("UserBroadcastProgram.platform", "=", channel.platform)
+		.where("UserBroadcastProgram.account", "=", channel.account)
+		.returning(["UserBroadcastProgram.id", "UserBroadcastProgram.programKey"])
+		.executeTakeFirst();
 }
 
 /**
@@ -249,24 +339,65 @@ export function insertChatRoomIfMissing({
 	});
 }
 
-function insertIfMissing<Item extends ProducerState>(
+// a new broadcast starts with the settings (theme, show info) of the channel's latest broadcast in the organization
+async function insertIfMissing<Item extends ProducerState>(
 	{ tournamentId, channel, rules }: WriteArgs<Item>,
 	trx?: Transaction<DB>,
-) {
-	return (trx ?? db)
+): Promise<number> {
+	const executor = trx ?? db;
+	const findId = async () =>
+		(
+			await executor
+				.selectFrom("TournamentBroadcast")
+				.select("TournamentBroadcast.id")
+				.where("TournamentBroadcast.tournamentId", "=", tournamentId)
+				.where("TournamentBroadcast.platform", "=", channel.platform)
+				.where("TournamentBroadcast.account", "=", channel.account)
+				.executeTakeFirst()
+		)?.id;
+
+	const existingId = await findId();
+	if (existingId !== undefined) return existingId;
+
+	const carriedOver = await executor
+		.selectFrom("TournamentBroadcast")
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.tournamentId",
+			"TournamentBroadcast.tournamentId",
+		)
+		.select("TournamentBroadcast.settings")
+		.where("TournamentBroadcast.platform", "=", channel.platform)
+		.where("TournamentBroadcast.account", "=", channel.account)
+		.where("CalendarEvent.organizationId", "=", (eb) =>
+			eb
+				.selectFrom("CalendarEvent")
+				.select("CalendarEvent.organizationId")
+				.where("CalendarEvent.tournamentId", "=", tournamentId),
+		)
+		.orderBy("TournamentBroadcast.id", "desc")
+		.limit(1)
+		.executeTakeFirst();
+
+	const inserted = await executor
 		.insertInto("TournamentBroadcast")
 		.values({
 			tournamentId,
 			platform: channel.platform,
 			account: channel.account,
 			state: JSON.stringify(Producer.initialState(rules)),
-			// xxx: autofill settings (theme) from the same channel's broadcast in the last tournament of this series
-			settings: JSON.stringify(DEFAULT_BROADCAST_SETTINGS),
+			settings: JSON.stringify(
+				carriedOver?.settings ?? DEFAULT_BROADCAST_SETTINGS,
+			),
 		})
 		.onConflict((oc) =>
 			oc.columns(["tournamentId", "platform", "account"]).doNothing(),
 		)
-		.execute();
+		.returning("TournamentBroadcast.id")
+		.executeTakeFirst();
+
+	// created by another write in the meantime
+	return inserted?.id ?? (await findId())!;
 }
 
 function jsonSetPairs(entries: Array<[string, unknown]>) {

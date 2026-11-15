@@ -219,34 +219,81 @@ describe("BroadcastHub auto-Take", () => {
 	});
 });
 
-describe("BroadcastHub.disconnectStaleKeys", () => {
-	test("closes the connections let in with another key", () => {
-		const { close } = connect({ programKey: "old-key" });
+describe("BroadcastHub.reloadProgram", () => {
+	const OTHER_KEY = { tournamentId: 2, slug: "other" };
 
-		BroadcastHub.disconnectStaleKeys({ ...KEY, programKey: "new-key" });
+	test("reloads the pages of the OBS URL showing another broadcast or none", () => {
+		const elsewhere = connect({ ...OTHER_KEY, programId: 1 });
+		const standby = connectStandby(1);
 
-		expect(close).toHaveBeenCalledOnce();
+		BroadcastHub.reloadProgram({ programId: 1, except: KEY });
+
+		expect(elsewhere.reloads()).toBe(1);
+		expect(standby.reloads()).toBe(1);
+	});
+
+	test("leaves pages already showing the broadcast, producers' and other OBS URLs' pages as they are", () => {
+		const showing = connect({ programId: 1 });
+		const producer = connect({ ...OTHER_KEY, programId: null });
+		const otherUser = connect({ ...OTHER_KEY, programId: 2 });
+
+		BroadcastHub.reloadProgram({ programId: 1, except: KEY });
+
+		expect(showing.reloads()).toBe(0);
+		expect(producer.reloads()).toBe(0);
+		expect(otherUser.reloads()).toBe(0);
+	});
+});
+
+describe("BroadcastHub.closeProgram", () => {
+	test("closes the connections through the OBS URL", () => {
+		const showing = connect({ programId: 1 });
+		const standby = connectStandby(1);
+
+		BroadcastHub.closeProgram(1);
+
+		expect(showing.close).toHaveBeenCalledOnce();
+		expect(standby.close).toHaveBeenCalledOnce();
 	});
 
 	test.each([
-		{ why: "the current key", programKey: "new-key" },
-		{ why: "no key (a producer)", programKey: null },
-	])("keeps the connections let in with $why", ({ programKey }) => {
-		const { close } = connect({ programKey });
+		{ why: "a producer's", programId: null },
+		{ why: "another OBS URL's", programId: 2 },
+	])("keeps $why connections", ({ programId }) => {
+		const { close } = connect({ programId });
 
-		BroadcastHub.disconnectStaleKeys({ ...KEY, programKey: "new-key" });
+		BroadcastHub.closeProgram(1);
 
 		expect(close).not.toHaveBeenCalled();
 	});
 });
 
+function connectStandby(programId: number) {
+	const connection = new AbortController();
+	connections.push(connection);
+	const close = vi.fn();
+	const messages: BroadcastStreamMessage[] = [];
+	BroadcastHub.connectStandby({
+		programId,
+		send: (message) => messages.push(JSON.parse(message)),
+		close,
+		signal: connection.signal,
+	});
+
+	return {
+		close,
+		reloads: () =>
+			messages.filter((message) => message.kind === "reload").length,
+	};
+}
+
 function connect({
 	build = async () => null,
-	programKey = null,
+	programId = null,
 	...key
 }: {
 	build?: BroadcastHub.Layout<TestState>["build"];
-	programKey?: string | null;
+	programId?: number | null;
 	tournamentId?: number;
 	slug?: string;
 }) {
@@ -263,7 +310,7 @@ function connect({
 		close,
 		signal: connection.signal,
 		isClipSender: false,
-		programKey,
+		programId,
 	});
 
 	return {
@@ -272,6 +319,8 @@ function connect({
 			messages.flatMap((message) =>
 				message.kind === "state" ? [message.state] : [],
 			),
+		reloads: () =>
+			messages.filter((message) => message.kind === "reload").length,
 	};
 }
 

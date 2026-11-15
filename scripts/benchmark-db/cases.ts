@@ -296,6 +296,12 @@ export function buildCases(fx: Fixtures): {
 	add("BroadcastRepository.findAllByChatRoomIds", fx.broadcast, (broadcast) =>
 		BroadcastRepository.findAllByChatRoomIds(broadcast.chatRoomIds),
 	);
+	add("BroadcastRepository.findProgramByKey", fx.broadcastProgram, (program) =>
+		BroadcastRepository.findProgramByKey(program.programKey),
+	);
+	add("BroadcastRepository.findProgram", fx.broadcastProgram, (program) =>
+		BroadcastRepository.findProgram(program),
+	);
 	add(
 		"BroadcastCastRepository.findAllCastersByUserIds",
 		fx.manyUserIds,

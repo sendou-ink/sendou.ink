@@ -194,12 +194,48 @@ test.describe("Broadcast", () => {
 		);
 		expect(await program.responseStatus(null)).toBe(404);
 		expect(await program.responseStatus(tournament.programKey)).toBe(200);
-		expect(
-			await program.refusedStreamStatus({
-				role: "scanner",
-				programKey: tournament.programKey,
-			}),
-		).toBe(404);
+		expect(await program.refusedStreamStatus("scanner")).toBe(404);
+		expect(await program.refusedStreamStatus("source")).toBe(404);
+	});
+
+	test("keeps one OBS URL across tournaments, showing the broadcast it was pointed at", async ({
+		page,
+		browser,
+		baseURL,
+		factories,
+	}) => {
+		const lastWeek = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+		const thisWeek = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+		expect(thisWeek.programKey).toBe(lastWeek.programKey);
+
+		await impersonate(page, NZAP_TEST_ID);
+		const dashboard = new BroadcastDashboardPage(page, pageArgs(lastWeek.id));
+		await dashboard.goto();
+		await dashboard.saveTheme(
+			"[data-broadcast] { outline: 7px solid rgb(1, 2, 3); }",
+		);
+		const obs = await openObsSource({
+			browser,
+			baseURL: baseURL!,
+			tournamentId: thisWeek.id,
+			programKey: thisWeek.programKey,
+		});
+		await expect(obs.program.scene("rosters")).toBeVisible();
+		await expect(obs.program.locators.canvas).not.toHaveCSS(
+			"outline-width",
+			"7px",
+		);
+
+		await dashboard.pointProgram();
+
+		await expect(dashboard.locators.programShowsThis).toBeVisible();
+		await expect(obs.program.locators.canvas).toHaveCSS("outline-width", "7px");
+
+		await obs.close();
 	});
 
 	test("runs the broadcast from a Stream Deck", async ({ page, factories }) => {
@@ -245,7 +281,7 @@ function pageArgs(tournamentId: number) {
 	return { tournamentId, slug: CAST_ACCOUNT };
 }
 
-/** The setup of the `tournament-broadcast` dev scenario: two teams, their match cast on the channel, the program URL generated. */
+/** The setup of the `tournament-broadcast` dev scenario: two teams, their match cast on the channel, the author's OBS URL showing it. */
 async function createBroadcasting(
 	factories: Factories,
 	{ authorId, isMatchCast }: { authorId: number; isMatchCast?: boolean },

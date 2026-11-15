@@ -54,6 +54,10 @@ export class BroadcastDashboardPage {
 			holdButton: page.getByTestId("broadcast-hold-button"),
 			onGameStart: page.getByText("On game start", { exact: true }),
 			themeTab: page.getByRole("tab", { name: "Theme" }),
+			setupTab: page.getByRole("tab", { name: "Setup" }),
+			programShowsThis: page.getByText(
+				"Your browser source URL shows this broadcast",
+			),
 			cssInput: page.getByLabel("Custom CSS"),
 		};
 	}
@@ -130,6 +134,13 @@ export class BroadcastDashboardPage {
 				.getByRole("tabpanel", { name: "Theme" })
 				.getByTestId("submit-button"),
 		);
+	}
+
+	/** Points the user's OBS URL at this broadcast, confirming the switch away from the one it shows. */
+	async pointProgram() {
+		await this.locators.setupTab.click();
+		await this.page.getByTestId("broadcast-point-program-button").click();
+		await submit(this.page, "confirm-button");
 	}
 
 	/** Tells the broadcast a game started or ended, as the scanner linked from this dashboard does. Returns the response status. */
