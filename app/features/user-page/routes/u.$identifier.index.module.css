@@ -25,12 +25,16 @@
 	font-size: var(--font-xl);
 	font-weight: var(--weight-bold);
 	margin: 0;
+	overflow-wrap: anywhere;
+	text-align: center;
 }
 
 .subtitle {
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
 	align-items: center;
 	gap: var(--s-1);
 }
@@ -85,14 +89,27 @@
 @container (width >= 720px) {
 	.header {
 		flex-direction: row;
-		flex-wrap: wrap;
 		justify-content: flex-start;
 		align-items: center;
 		padding-block-start: var(--s-6);
 	}
 
+	.userInfo {
+		flex: 1;
+		min-width: 0;
+		align-items: flex-start;
+	}
+
 	.nameGroup {
 		align-items: flex-start;
+	}
+
+	.username {
+		text-align: start;
+	}
+
+	.subtitle {
+		justify-content: flex-start;
 	}
 
 	.desktopIconNav {
