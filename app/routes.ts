@@ -206,6 +206,14 @@ export default [
 	),
 
 	route("/to/search", "features/tournament/routes/to.search.ts"),
+	route(
+		"/to/:id/stations/display",
+		"features/tournament-stations/routes/to.$id.stations.display.tsx",
+	),
+	route(
+		"/to/:id/stations/display/stream",
+		"features/tournament-stations/routes/to.$id.stations.display.stream.ts",
+	),
 	route("/to/:id", "features/tournament/routes/to.$id.tsx", [
 		index("features/tournament/routes/to.$id.index.ts"),
 		route("info", "features/tournament/routes/to.$id.info.tsx"),

@@ -22,7 +22,12 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
-import { ArrowRightLeft, GripVertical, WandSparkles } from "lucide-react";
+import {
+	ArrowRightLeft,
+	GripVertical,
+	MonitorPlay,
+	WandSparkles,
+} from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
@@ -41,7 +46,11 @@ import type {
 import { useFormatStartsIn } from "~/features/tournament-stations/tournament-stations-hooks";
 import { stationsBoardActionSchema } from "~/features/tournament-stations/tournament-stations-schemas";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import { tournamentAdminPage, tournamentMatchPage } from "~/utils/urls";
+import {
+	tournamentAdminPage,
+	tournamentMatchPage,
+	tournamentStationsDisplayPage,
+} from "~/utils/urls";
 import type { TournamentAdminBoardLoaderData } from "../loaders/to.$id.admin.board.server";
 import styles from "./to.$id.admin.board.module.css";
 
@@ -88,6 +97,16 @@ export default function TournamentAdminBoardPage() {
 					{!data.canEdit ? (
 						<Alert tiny>{t("tournament:stations.board.readOnly")}</Alert>
 					) : null}
+					<LinkButton
+						size="small"
+						variant="outlined"
+						icon={<MonitorPlay />}
+						to={tournamentStationsDisplayPage(tournament.ctx.id)}
+						className="self-start"
+						isExternal
+					>
+						{t("tournament:stations.board.openDisplay")}
+					</LinkButton>
 					<Board data={data} />
 				</>
 			)}

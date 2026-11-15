@@ -57,3 +57,29 @@ export async function createStartedLanTournament({
 		finalId: matches[2].id,
 	};
 }
+
+/** A LAN tournament of the four teams of `teamRosters` with one station, played out and finalized. */
+export async function createFinalizedLanTournament({
+	authorId,
+	teamRosters,
+}: {
+	authorId: number;
+	teamRosters: number[][];
+}) {
+	const tournament = await TournamentFactory.create({ authorId });
+	await CalendarEventVenueFactory.create({ eventId: tournament.eventId });
+	for (const memberUserIds of teamRosters) {
+		await TournamentTeamFactory.create(
+			{ tournamentId: tournament.id, memberUserIds },
+			{ isCheckedIn: true },
+		);
+	}
+	await TournamentStationFactory.create({
+		tournamentId: tournament.id,
+		name: "Station 1",
+		autoAssign: false,
+	});
+	await TournamentFactory.playOut(tournament.id, "all");
+
+	return { tournamentId: tournament.id };
+}

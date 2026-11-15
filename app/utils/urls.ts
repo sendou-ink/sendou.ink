@@ -360,6 +360,8 @@ export const tournamentRulesPage = (tournamentId: number) =>
 	`/to/${tournamentId}/rules`;
 export const tournamentAdminPage = (tournamentId: number) =>
 	`/to/${tournamentId}/admin`;
+export const tournamentStationsDisplayPage = (tournamentId: number) =>
+	`/to/${tournamentId}/stations/display`;
 export const tournamentAdminRegistrationPage = (tournamentId: number) =>
 	`${tournamentAdminPage(tournamentId)}/registration`;
 export const tournamentAdminRegistrationEditPage = (

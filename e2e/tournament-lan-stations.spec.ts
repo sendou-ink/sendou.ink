@@ -10,6 +10,7 @@ import { TopRightButtons } from "./pages/layout/top-right-buttons";
 import { TournamentAdminBoardPage } from "./pages/tournament/tournament-admin-board-page";
 import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
 import { TournamentMatchPage } from "./pages/tournament/tournament-match-page";
+import { TournamentStationsDisplayPage } from "./pages/tournament/tournament-stations-display-page";
 
 test.describe("LAN tournament stations for players", () => {
 	test("shows the match's station and estimated start, without deadlines, on the bracket, match page and header status", async ({
@@ -117,5 +118,87 @@ test.describe("LAN tournament stations for players", () => {
 				notifications.notification("Station 1 (North corner):"),
 			).toBeVisible({ timeout: 1_000 });
 		}).toPass();
+	});
+});
+
+test.describe("LAN tournament station display screen", () => {
+	test("shows a logged out viewer the stations' matches, updating live when they move", async ({
+		page,
+		browser,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+		});
+		await factories.CalendarEventVenueFactory.create({
+			eventId: tournament.eventId,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(4));
+		const station1 = await factories.TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 1",
+			locationNote: "North corner",
+			autoAssign: false,
+		});
+		const station2 = await factories.TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 2",
+		});
+		const [first, second, final] =
+			await factories.TournamentFactory.startBracket(tournament.id);
+		await factories.TournamentMatchStationFactory.create({
+			matchId: first.id,
+			stationId: station1.id,
+		});
+		await factories.TournamentMatchStationFactory.create({
+			matchId: final.id,
+			stationId: station1.id,
+		});
+
+		const displayContext = await browser.newContext();
+		const display = new TournamentStationsDisplayPage(
+			await displayContext.newPage(),
+		);
+		await display.goto(tournament.id);
+
+		await expect(display.station(station1.id)).toContainText("North corner");
+		await expect(display.now(station1.id)).toContainText("Team 1");
+		await expect(display.now(station1.id)).toContainText("Team 4");
+		// the final's teams aren't known yet
+		await expect(display.next(station1.id)).toContainText("Winner of");
+		await expect(display.next(station1.id)).toContainText("Starts in ~");
+		await expect(display.locators.lastUpdated).toContainText("Last updated");
+		await expect(display.now(station2.id)).toContainText("Free");
+		await expect(display.locators.waiting).toContainText("Team 2");
+
+		await impersonate(page, NZAP_TEST_ID);
+		const board = new TournamentAdminBoardPage(page);
+		await board.goto(tournament.id);
+		await board.moveMatch(second.id, station2.id);
+
+		await expect(display.now(station2.id)).toContainText("Team 2");
+		await expect(display.locators.waiting).toHaveCount(0);
+
+		await displayContext.close();
+	});
+
+	test("tells a logged out viewer a tournament without stations has none", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+		});
+		await factories.CalendarEventVenueFactory.create({
+			eventId: tournament.eventId,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(4));
+		await factories.TournamentFactory.startBracket(tournament.id);
+
+		const display = new TournamentStationsDisplayPage(page);
+		await display.goto(tournament.id);
+
+		await expect(display.locators.noStationsNotice).toBeVisible();
+		await expect(display.locators.waiting).toHaveCount(0);
 	});
 });

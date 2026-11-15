@@ -9,7 +9,11 @@ export {
 } from "./create/settings";
 export { matchHasResultDownstream } from "./propagation/downstream-result";
 export { endDroppedTeamMatches } from "./propagation/dropped-teams";
-export { nextMatchIdsByMatchId } from "./propagation/next-matches";
+export {
+	type FeederMatch,
+	feederMatchesByMatchId,
+	nextMatchIdsByMatchId,
+} from "./propagation/next-matches";
 export { reportResult } from "./propagation/report-result";
 /** @internal */
 export { resetMatchResults } from "./propagation/reset-result";
