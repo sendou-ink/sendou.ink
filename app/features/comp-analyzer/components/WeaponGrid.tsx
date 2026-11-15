@@ -1,10 +1,14 @@
+import { SearchIcon } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { EmptyState } from "~/components/EmptyState";
 import {
 	OutlinedImage,
 	SpecialWeaponImage,
 	SubWeaponImage,
 	WeaponImage,
 } from "~/components/Image";
+import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 import type {
@@ -12,6 +16,7 @@ import type {
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
+import { filterWeapon } from "~/modules/in-game-lists/utils";
 import {
 	mainWeaponIds,
 	specialWeaponIds,
@@ -30,6 +35,8 @@ interface WeaponGridProps {
 	onCategorizationChange: (categorization: CategorizationType) => void;
 	isCollapsed: boolean;
 	onToggleCollapse: () => void;
+	/** Shown in the top row, before the search */
+	actions: React.ReactNode;
 }
 
 export function WeaponGrid({
@@ -39,31 +46,70 @@ export function WeaponGrid({
 	onCategorizationChange,
 	isCollapsed,
 	onToggleCollapse,
+	actions,
 }: WeaponGridProps) {
-	const { t } = useTranslation(["weapons", "analyzer"]);
+	const { t } = useTranslation(["weapons", "analyzer", "common"]);
+	const [searchTerm, setSearchTerm] = useState("");
 	const isMaxSelected = selectedWeaponIds.length >= MAX_WEAPONS;
 
-	const groupedWeapons = groupWeaponsByType(categorization);
+	const trimmedSearchTerm = searchTerm.trim();
+
+	const handleSearchChange = (value: string) => {
+		setSearchTerm(value);
+		if (isCollapsed && value.trim()) {
+			onToggleCollapse();
+		}
+	};
+
+	const handleWeaponClick = (weaponId: MainWeaponId) => {
+		onWeaponClick(weaponId);
+		setSearchTerm("");
+	};
+	const groupedWeapons = groupWeaponsByType(categorization)
+		.map((group) => ({
+			...group,
+			weaponIds: group.weaponIds.filter((weaponId) =>
+				filterWeapon({
+					weapon: { type: "MAIN", id: weaponId },
+					weaponName: t(`weapons:MAIN_${weaponId}`),
+					searchTerm: trimmedSearchTerm,
+				}),
+			),
+		}))
+		.filter((group) => group.weaponIds.length > 0);
 
 	return (
 		<div className={styles.container} data-testid="weapon-grid">
-			<button
-				type="button"
-				className={styles.collapseToggle}
-				onClick={onToggleCollapse}
-				data-testid="weapon-grid-toggle"
-			>
-				<span
-					className={`${styles.collapseArrow} ${isCollapsed ? styles.collapseArrowCollapsed : ""}`}
+			<div className={styles.toolbar}>
+				<button
+					type="button"
+					className={styles.collapseToggle}
+					onClick={onToggleCollapse}
+					data-testid="weapon-grid-toggle"
 				>
-					▼
-				</span>
-				<span>
-					{isCollapsed
-						? t("analyzer:comp.showWeaponGrid")
-						: t("analyzer:comp.hideWeaponGrid")}
-				</span>
-			</button>
+					<span
+						className={`${styles.collapseArrow} ${isCollapsed ? styles.collapseArrowCollapsed : ""}`}
+					>
+						▼
+					</span>
+					<span>
+						{isCollapsed
+							? t("analyzer:comp.showWeaponGrid")
+							: t("analyzer:comp.hideWeaponGrid")}
+					</span>
+				</button>
+				<div className={styles.actions}>{actions}</div>
+				<Input
+					type="search"
+					className={styles.search}
+					icon={<SearchIcon />}
+					value={searchTerm}
+					onChange={(e) => handleSearchChange(e.target.value)}
+					placeholder={t("common:forms.weaponSearch.search.placeholder")}
+					aria-label={t("common:forms.weaponSearch.search.placeholder")}
+					testId="weapon-search"
+				/>
+			</div>
 
 			{!isCollapsed ? (
 				<>
@@ -109,6 +155,11 @@ export function WeaponGrid({
 						</div>
 					</div>
 
+					{groupedWeapons.length === 0 ? (
+						<EmptyState navItem="comp-analyzer">
+							{t("common:noResults")}
+						</EmptyState>
+					) : null}
 					<div className={styles.weaponGrid}>
 						{groupedWeapons.map((group) => (
 							<div key={group.key} className={styles.categorySection}>
@@ -131,7 +182,7 @@ export function WeaponGrid({
 												key={weaponId}
 												type="button"
 												className={`${styles.weaponButton} ${isSelected ? styles.weaponButtonSelected : ""}`}
-												onClick={() => onWeaponClick(weaponId)}
+												onClick={() => handleWeaponClick(weaponId)}
 												disabled={isDisabled}
 												title={t(`weapons:MAIN_${weaponId}`)}
 												data-testid={`weapon-button-${weaponId}`}

@@ -4,6 +4,28 @@
 	gap: var(--s-4);
 }
 
+.toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2) var(--s-4);
+}
+
+.search {
+	flex: 0 1 20rem;
+}
+
+.actions {
+	margin-inline-start: auto;
+}
+
+@container (width < 560px) {
+	.search {
+		order: 1;
+		flex-basis: 100%;
+	}
+}
+
 .collapseToggle {
 	display: flex;
 	align-items: center;
