@@ -106,6 +106,15 @@ function useRoomDisplay() {
 					imageUrl: room.imageUrl ?? `${navIconUrl("medal")}.avif`,
 				};
 			}
+			case "TOURNAMENT_BROADCAST": {
+				return {
+					title: t("common:chat.room.broadcast", {
+						channel: room.titleParams.channelName,
+					}),
+					subtitle: room.titleParams.tournamentName,
+					imageUrl: room.imageUrl ?? `${navIconUrl("medal")}.avif`,
+				};
+			}
 			case "SCRIM": {
 				return {
 					title: dateFormatter.format(
@@ -146,6 +155,8 @@ function roomShortLabel(room: ChatRoomListItem, t: TFunction<["common"]>) {
 			return t("common:chat.room.teamShort");
 		case "LOBBY":
 			return t("common:chat.room.lobby");
+		case "TOURNAMENT_BROADCAST":
+			return t("common:chat.room.broadcastShort");
 		default:
 			return t("common:chat.room.matchShort");
 	}

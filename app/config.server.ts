@@ -5,6 +5,7 @@ import {
 	formatEnvErrors,
 	requiredInProd,
 } from "./config-helpers";
+import { SENDOU_INK_ORGANIZATION_ID } from "./features/tournament-organization/tournament-organization-constants";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { superRefine, type ValidationCtx } from "./utils/schema";
 
@@ -60,6 +61,11 @@ const schema = v.pipe(
 		DAILY_API_KEY: v.optional(v.string()),
 		DAILY_DOMAIN: v.optional(v.string()),
 		DAILY_WEBHOOK_SECRET: v.optional(v.string()),
+
+		BROADCAST_ORG_IDS: v.optional(
+			v.string(),
+			isProd ? `${SENDOU_INK_ORGANIZATION_ID}` : "*",
+		),
 	}),
 	superRefine((val, ctx) => {
 		requireTogether(ctx, val, "TWITCH_CLIENT_ID", "TWITCH_CLIENT_SECRET");
@@ -130,7 +136,19 @@ export const ServerConfig = {
 		domain: values.DAILY_DOMAIN,
 		webhookSecret: values.DAILY_WEBHOOK_SECRET,
 	},
+
+	/** Organizations whose tournaments can use broadcast overlays, `"*"` for every tournament. In production the sendou.ink organization unless `BROADCAST_ORG_IDS` is set. */
+	broadcastOrgIds: parseOrgIds(values.BROADCAST_ORG_IDS),
 };
+
+function parseOrgIds(value: string): number[] | "*" {
+	if (value.trim() === "*") return "*";
+
+	return value
+		.split(",")
+		.map((part) => Number(part.trim()))
+		.filter((id) => Number.isInteger(id) && id > 0);
+}
 
 /** Adds a validation issue unless `a` and `b` are both set or both unset. */
 function requireTogether(

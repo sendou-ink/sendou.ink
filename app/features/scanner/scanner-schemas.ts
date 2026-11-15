@@ -36,7 +36,7 @@ export const mainWeaponIdSchema = v.picklist(mainWeaponIds);
 
 const abilityNames = abilities.map((ability) => ability.name) as Ability[];
 /** a sendou ability id, or the detectors' explicit unrecognized marker */
-const scannerAbilitySchema = v.union([
+export const scannerAbilitySchema = v.union([
 	v.picklist(abilityNames),
 	v.literal("UNKNOWN"),
 ]);

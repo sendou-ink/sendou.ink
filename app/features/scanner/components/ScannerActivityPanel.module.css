@@ -39,6 +39,22 @@
 	font-weight: var(--weight-semi);
 }
 
+.broadcast {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.broadcastIcon {
+	flex-shrink: 0;
+	color: var(--color-fg-accent);
+}
+
+.unlink {
+	flex-shrink: 0;
+	margin-inline-start: auto;
+}
+
 .gameText {
 	display: flex;
 	flex-direction: column;

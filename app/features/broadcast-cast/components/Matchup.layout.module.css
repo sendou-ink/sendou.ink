@@ -1,0 +1,81 @@
+.matchup {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.teams {
+	position: relative;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--matchup-gap);
+}
+
+.versus {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.team {
+	--glow-origin: 0 50%;
+
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	min-width: 0;
+	height: var(--matchup-team-height);
+	padding: 0 18px;
+	overflow: hidden;
+	isolation: isolate;
+
+	/* the team's color shining in from the card's outer edge */
+	&::before {
+		position: absolute;
+		z-index: -1;
+		inset: 0;
+	}
+
+	&[data-team="b"] {
+		--glow-origin: 100% 50%;
+
+		flex-direction: row-reverse;
+	}
+}
+
+.logo {
+	width: var(--matchup-logo-size);
+}
+
+.title {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+	min-width: 0;
+
+	[data-team="b"] > & {
+		align-items: flex-end;
+	}
+}
+
+.name {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.seed {
+	padding: 1px 10px;
+}
+
+.score {
+	display: grid;
+	place-items: center;
+	min-width: 64px;
+	height: 64px;
+}

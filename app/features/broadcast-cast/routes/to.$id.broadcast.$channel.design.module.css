@@ -1,0 +1,86 @@
+.designer {
+	/* the editor column at its widest, what it is at the page's own width */
+	--editor-max-width: calc((72rem - var(--s-6)) * 0.4);
+
+	container-type: inline-size;
+
+	/*
+	 * Sized against the breakout <main> of the tournament layout: as wide as the content area, the preview growing
+	 * up to the canvas' own 1920px, centered under the page width column.
+	 */
+	:global([data-main-breakout]) & {
+		--designer-max-width: calc(1920px + var(--s-6) + var(--editor-max-width));
+
+		width: min(100cqw, var(--designer-max-width));
+		margin-inline: calc(50% - min(50cqw, var(--designer-max-width) / 2));
+	}
+}
+
+.back {
+	display: grid;
+	place-items: center;
+	color: var(--color-text-high);
+
+	& svg {
+		width: 20px;
+		height: 20px;
+	}
+}
+
+.guideLink {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+
+	& svg {
+		width: 14px;
+		height: 14px;
+		flex-shrink: 0;
+	}
+}
+
+/* the preview and its scenario next to the editor, stacked when narrow */
+.workspace {
+	display: grid;
+	/* 3 to 2 up to the page's own width, past it only the preview grows */
+	grid-template-columns:
+		minmax(0, 1fr)
+		min(calc((100% - var(--s-6)) * 0.4), var(--editor-max-width));
+	gap: var(--s-6);
+	align-items: start;
+
+	@container (width < 1000px) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.controls {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+	gap: var(--s-3);
+	align-items: end;
+}
+
+.play {
+	display: flex;
+	align-items: end;
+}
+
+.scenario {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	min-width: 0;
+	margin: 0;
+	padding: var(--s-4);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+}
+
+.switches {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-4);
+}

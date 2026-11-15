@@ -1,0 +1,68 @@
+/* Sizes and spots of the featured match line (break and casters scenes), the rules below follow them. */
+:global([data-broadcast]) {
+	--matchup-gap: 96px;
+	--matchup-team-height: 96px;
+	--matchup-logo-size: 64px;
+	--matchup-name-size: 34px;
+	--matchup-score-size: 40px;
+	--matchup-round-size: 22px;
+}
+
+.versus {
+	color: var(--bc-text-muted);
+	font-size: 28px;
+	font-weight: var(--bc-weight-bold);
+}
+
+.team {
+	border: var(--bc-border-width) solid var(--bc-border);
+	border-radius: var(--bc-radius);
+	background: var(--bc-surface);
+
+	/* the team's color shining in from the card's outer edge */
+	&::before {
+		background: radial-gradient(
+			ellipse 55% 160% at var(--glow-origin),
+			color-mix(in srgb, var(--team-color) 30%, transparent),
+			transparent
+		);
+		content: "";
+	}
+
+	&[data-loser] {
+		& .seed,
+		& .name,
+		& .logo {
+			opacity: 0.45;
+		}
+	}
+}
+
+.name {
+	font-size: var(--matchup-name-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 1.1;
+}
+
+.seed {
+	border-radius: var(--bc-radius-small);
+	background: var(--team-color);
+	color: var(--team-color-text);
+	font-size: 16px;
+	font-weight: var(--bc-weight-bold);
+}
+
+.score {
+	border-radius: var(--bc-radius-small);
+	background: var(--team-color);
+	color: var(--team-color-text);
+	font-size: var(--matchup-score-size);
+	font-weight: var(--bc-weight-bold);
+}
+
+.round {
+	color: var(--bc-text-muted);
+	font-size: var(--matchup-round-size);
+	font-weight: var(--bc-weight-semibold);
+	text-align: center;
+}

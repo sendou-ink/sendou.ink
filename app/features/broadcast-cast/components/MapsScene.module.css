@@ -1,0 +1,121 @@
+/* Sizes and spots of the maps scene, the rules below follow them. */
+:global([data-broadcast]) {
+	--maps-header-top: 80px;
+	--maps-header-inline-margin: 120px;
+	--maps-eyebrow-size: 28px;
+	--maps-team-name-size: 54px;
+	--maps-score-size: 84px;
+	--maps-games-top: 330px;
+	--maps-games-inline-margin: 100px;
+	--maps-games-bottom: 60px;
+	--maps-stage-size: 26px;
+	--maps-bubble-size: 136px;
+}
+
+.maps {
+	font-family: var(--bc-font-display);
+}
+
+.eyebrow {
+	color: var(--bc-text-muted);
+	font-size: var(--maps-eyebrow-size);
+	font-weight: var(--bc-weight-semibold);
+}
+
+/* a long name wraps to a second line next to the logo, then shrinks to fit (useFitText) */
+.headerName {
+	font-size: var(--maps-team-name-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 1.1;
+	text-transform: uppercase;
+
+	[data-team="a"] > & {
+		text-align: right;
+	}
+}
+
+.scores {
+	font-size: var(--maps-score-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 1;
+
+	& [data-team] {
+		border-radius: 50%;
+		background: var(--team-color);
+		color: var(--team-color-text);
+	}
+}
+
+.dash {
+	color: var(--bc-text-muted);
+	font-size: 64px;
+}
+
+.game {
+	border: var(--bc-border-width) solid var(--bc-border);
+	border-radius: var(--bc-radius);
+	background: var(--bc-surface);
+
+	&[data-status="skipped"] {
+		opacity: 0.4;
+	}
+}
+
+.stage {
+	background: var(--bc-bg);
+
+	[data-status="played"] > &::after {
+		background: var(--bc-bg);
+		opacity: 0.4;
+		content: "";
+	}
+}
+
+.stageImage {
+	object-fit: cover;
+}
+
+.unknownMark {
+	color: var(--bc-text-muted);
+	font-size: 64px;
+	font-weight: var(--bc-weight-bold);
+}
+
+.gameNumber {
+	border-bottom-right-radius: var(--bc-radius-small);
+	background: var(--bc-surface);
+	font-size: 24px;
+	font-weight: var(--bc-weight-bold);
+}
+
+.mode {
+	color: var(--bc-text-muted);
+	font-size: 18px;
+	font-weight: var(--bc-weight-semibold);
+}
+
+.stageName {
+	font-size: var(--maps-stage-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 1.15;
+
+	[data-unknown] & {
+		color: var(--bc-text-muted);
+	}
+}
+
+.winner {
+	background: var(--team-color);
+	color: var(--team-color-text);
+	font-size: 20px;
+	font-weight: var(--bc-weight-bold);
+}
+
+.upNext {
+	background: var(--bc-surface-high);
+	color: var(--bc-text);
+	font-size: 20px;
+	font-weight: var(--bc-weight-bold);
+	line-height: 30px;
+	text-transform: uppercase;
+}

@@ -1,0 +1,456 @@
+@import url("https://fonts.googleapis.com/css2?family=VT323&display=swap");
+
+/* TELETEXT: page 100 of a TV from before the internet. Eight colors, one blocky font, nothing moves smoothly. */
+
+/* 1. Variables: colors, type, shapes and motion of every scene */
+[data-broadcast] {
+	--bc-bg: #000;
+	--bc-surface: #000;
+	--bc-surface-high: #00f;
+	--bc-border: #00f;
+	--bc-text: #fff;
+	--bc-text-muted: #0ff;
+	--bc-accent: #ff0;
+	--bc-accent-text: #000;
+	--bc-alert: #f00;
+	--bc-team-a: #0f0;
+	--bc-team-a-text: #000;
+	--bc-team-b: #f0f;
+	--bc-team-b-text: #000;
+	--bc-font-body: VT323, "Courier New", monospace;
+	--bc-weight-semibold: 400;
+	--bc-weight-bold: 400;
+	--bc-weight-heavy: 400;
+	--bc-radius: 0;
+	--bc-radius-small: 0;
+	--bc-border-width: 0px;
+	--bc-enter-duration: 120ms;
+	--bc-stagger: 90ms;
+	--bc-stinger-ease: steps(8, jump-none);
+
+	/* the stinger's panels use keyframes of this theme */
+	--bc-anim-panel-slide-in: ttx-bar-in;
+	--bc-anim-panel-slide-out: ttx-bar-out;
+
+	/* the theme's own: the page number in the corner of the scene */
+	--ttx-page: "100";
+
+	/* sizes and spots */
+	--game-info-max-width: 440px;
+	--game-round-size: 26px;
+	--game-casters-size: 24px;
+	--game-bar-height: 52px;
+	--game-seed-size: 24px;
+	--game-score-size: 36px;
+	--game-score-width: 64px;
+	--game-player-size: 26px;
+	--hold-content-top: 170px;
+	--hold-inline-margin: 120px;
+	--hold-title-size: 110px;
+	--hold-matchup-bottom: 150px;
+	--hold-ticker-bottom: 70px;
+	--rosters-header-top: 84px;
+	--rosters-teams-top: 250px;
+	--maps-header-top: 110px;
+	--casters-header-top: 76px;
+	--bracket-padding: 84px 80px 72px;
+	--team-scene-header-top: 88px;
+	--team-scene-body-top: 320px;
+	--results-margin: 76px;
+	--stinger-team-logo-size: 200px;
+
+	/* the font is small for its size, this makes it as big as the default one. And it has one weight */
+	font-size-adjust: 0.5;
+	font-synthesis: none;
+}
+
+/*
+ * 2. Keyframes: redefining one changes every element using it. No fading or sliding, things just show up: hidden
+ * until the last moment. (Not with a step timing jumping at the end, an animation can stop a hair short of it.)
+ */
+@keyframes bc-enter {
+	from,
+	99% {
+		opacity: 0;
+	}
+}
+
+@keyframes bc-exit {
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes bc-fade-in {
+	from,
+	99% {
+		opacity: 0;
+	}
+}
+
+/* typed out */
+@keyframes bc-reveal {
+	from {
+		clip-path: inset(0 100% 0 0);
+		animation-timing-function: steps(12, jump-none);
+	}
+	to {
+		clip-path: inset(0);
+	}
+}
+
+/* flashes, as teletext's flashing text */
+@keyframes bc-count {
+	0%,
+	24%,
+	50%,
+	74% {
+		opacity: 0;
+	}
+	25%,
+	49%,
+	75% {
+		opacity: 1;
+	}
+}
+
+@keyframes bc-pulse {
+	50%,
+	99% {
+		opacity: 0;
+	}
+	0%,
+	49%,
+	100% {
+		opacity: 1;
+	}
+}
+
+@keyframes ttx-bar-in {
+	from {
+		transform: translateY(-101%);
+	}
+}
+
+@keyframes ttx-bar-out {
+	to {
+		transform: translateY(101%);
+	}
+}
+
+/* 3. Parts */
+
+/* every full screen scene is a page: its number at the top, the colored buttons of the remote at the bottom */
+[data-part="backdrop"]::before,
+[data-part="backdrop"]::after {
+	position: absolute;
+	z-index: 1;
+	top: 18px;
+	left: 40px;
+	font-size: 38px;
+	line-height: 1;
+	white-space: pre;
+	content: "P" var(--ttx-page) "   SENDOU.INK   " var(--ttx-page);
+}
+
+[data-part="backdrop"]::after {
+	top: auto;
+	bottom: 14px;
+	width: 44ch;
+	background: linear-gradient(
+		90deg,
+		#f00 0 11ch,
+		#0f0 0 22ch,
+		#ff0 0 33ch,
+		#0ff 0
+	);
+	color: #000;
+	content: " ROSTERS    MAPS       BRACKET    INDEX     ";
+}
+
+/* over the warning stripes along the bottom of technical difficulties */
+[data-part="backdrop"][data-variant="alert"]::after {
+	bottom: 40px;
+}
+
+[data-scene="casters"] {
+	--ttx-page: "150";
+}
+[data-scene="break"] {
+	--ttx-page: "199";
+}
+[data-scene="rosters"] {
+	--ttx-page: "201";
+}
+[data-scene="maps"] {
+	--ttx-page: "202";
+}
+[data-scene="results"] {
+	--ttx-page: "203";
+}
+[data-scene="bracket"] {
+	--ttx-page: "300";
+}
+[data-scene="team"] {
+	--ttx-page: "310";
+}
+[data-scene="technical"] {
+	--ttx-page: "404";
+}
+[data-scene="ending"] {
+	--ttx-page: "899";
+}
+
+/* colored text instead of colored boxes */
+[data-broadcast]
+	[data-team]
+	:is([data-part$="team-name"], [data-part="roster"]) {
+	color: var(--team-color);
+}
+
+[data-part$="tournament-logo"],
+[data-part="player-avatar"],
+[data-part="player-weapon"],
+[data-part$="versus"],
+[data-part="stinger-vs"],
+[data-part="score"] [data-team] {
+	border-radius: 0;
+}
+
+/*
+ * ---------- GAME: boxed text over the game, as subtitles are ----------
+ * One line along the bottom: the teams and scores in the middle, the rosters in their ink colors at the corners.
+ */
+[data-scene="game"] [data-part="scoreboard"] {
+	grid-template: "a b" minmax(0, 1fr) / minmax(0, 1fr) minmax(0, 1fr);
+
+	&::before {
+		display: none;
+	}
+}
+
+/* each half: the roster at the corner, the team at the middle */
+[data-scene="game"] [data-part="team"] {
+	display: flex;
+	justify-content: space-between;
+
+	&[data-team="b"] {
+		flex-direction: row-reverse;
+	}
+}
+
+/* takes the room the team leaves, each name in a box of its own */
+[data-scene="game"] [data-part="roster"] {
+	position: static;
+	flex: 1 1 0;
+	flex-direction: row;
+	align-items: stretch;
+	min-width: 0;
+	padding: 0;
+	overflow: hidden;
+	background: none;
+	box-shadow: none;
+
+	&::before {
+		display: none;
+	}
+
+	[data-team="b"] > & {
+		justify-content: flex-end;
+	}
+}
+
+[data-scene="game"] [data-part="player"] {
+	flex-shrink: 1;
+	min-width: 0;
+	padding: 0 12px;
+	background: var(--bc-bg);
+	line-height: var(--game-bar-height);
+}
+
+[data-scene="game"] [data-part="team-score"] {
+	line-height: 1;
+}
+
+[data-scene="game"] :is([data-part="ticker"], [data-part$="-logo"]) {
+	display: none;
+}
+
+/* the round and the casters in a box in the corner, under the page's number */
+[data-scene="game"] [data-part="info-bar"] {
+	flex-direction: column;
+	padding-top: 10px;
+	box-shadow: none;
+
+	&::before {
+		padding-inline: 16px;
+		color: var(--bc-text-muted);
+		font-size: 26px;
+		white-space: pre;
+		content: "P302   LIVE";
+	}
+}
+
+[data-scene="game"] [data-part="map-intro"] {
+	box-shadow: none;
+}
+
+[data-scene="game"] [data-part="casters"] {
+	color: var(--bc-accent);
+}
+
+/* ---------- HOLD (starting soon, break...): the title twice as tall on a blue band ---------- */
+[data-part="content"] {
+	right: 0;
+	left: 0;
+	align-items: stretch;
+	gap: 8px;
+	max-width: none;
+	padding-inline: var(--hold-inline-margin);
+}
+
+[data-part="content"] [data-part="tournament-logo"] {
+	display: none;
+}
+
+[data-part="content"] [data-part="title"] {
+	margin: 12px calc(var(--hold-inline-margin) * -1) 150px;
+	padding: 8px var(--hold-inline-margin) 0;
+	background: var(--bc-surface-high);
+	color: var(--bc-accent);
+	white-space: nowrap;
+	transform: scaleY(2);
+	transform-origin: 0 0;
+
+	&::after {
+		display: none;
+	}
+}
+
+[data-part="countdown"] {
+	color: #0f0;
+}
+
+[data-part="headline"] {
+	color: var(--bc-text);
+}
+
+/* ---------- the featured match in a line, wherever it shows ---------- */
+[data-part="matchup"] [data-part="team"]::before {
+	display: none;
+}
+
+/* ---------- ROSTERS, MAPS, RESULTS ---------- */
+[data-scene="rosters"] [data-part="team-header"] {
+	border-image: none;
+}
+
+[data-scene="results"] [data-part="team-header"] {
+	background: var(--bc-surface);
+}
+
+[data-scene="results"] [data-winner] [data-part="team-header"] {
+	background: var(--team-color);
+
+	& [data-part="team-name"] {
+		color: var(--team-color-text);
+	}
+}
+
+[data-scene="results"] [data-part="objective-line"] {
+	stroke-linecap: square;
+	stroke-linejoin: miter;
+}
+
+/* the chart's times fit as they are */
+[data-scene="results"] [data-part="objective-chart"] text {
+	font-size: 16px;
+	font-size-adjust: none;
+}
+
+/* ---------- CASTERS, BRACKET, TEAM ---------- */
+[data-scene="casters"] [data-part="caster-name"] {
+	background: var(--bc-surface-high);
+	color: var(--bc-accent);
+}
+
+[data-scene="bracket"] [data-part="match"] {
+	outline: 2px solid var(--bc-border);
+}
+
+[data-scene="team"] [data-part="header"] {
+	border-image: none;
+}
+
+[data-scene="team"] [data-part="player"]::before {
+	display: none;
+}
+
+[data-part="stat-value"] {
+	color: var(--bc-accent);
+}
+
+/* nothing on blue that is hard to see on it: the set being played is marked by its score instead */
+[data-scene="team"] [data-part="set"][data-status="live"] {
+	background: var(--bc-surface);
+
+	& [data-part="set-score"] {
+		background: var(--bc-accent);
+		color: var(--bc-accent-text);
+	}
+}
+
+[data-scene="team"] [data-part="player-weapons"] {
+	background: none;
+}
+
+/* ---------- STINGER: the color bars of a test card, dropping in one after another ---------- */
+[data-part="stinger-panel"] {
+	left: calc(var(--i) * 12.5%);
+	display: block;
+	width: 12.6%;
+	background:
+		linear-gradient(
+			90deg,
+			#fff 0 240px,
+			#ff0 0 480px,
+			#0ff 0 720px,
+			#0f0 0 960px,
+			#f0f 0 1200px,
+			#f00 0 1440px,
+			#00f 0 1680px,
+			#000 0
+		)
+		calc(var(--i) * -240px) 0 / 1920px 100%;
+	clip-path: none;
+	/* the bars one after another, in and out */
+	animation-duration: calc(var(--bc-stinger-duration) * 0.2);
+	animation-delay:
+		calc(var(--bc-stinger-duration) * 0.014 * var(--i)),
+		calc(
+			var(--bc-stinger-duration) *
+			(var(--bc-stinger-reveal-at) + 0.014 * var(--i))
+		);
+}
+
+/* captions on the test card */
+[data-part="stinger-team"],
+[data-part="stinger-vs"],
+[data-part="stinger-header"],
+[data-part="stinger-title-card"] {
+	justify-self: center;
+	max-width: 100%;
+	padding: 24px 36px;
+	border-radius: 0;
+	background: var(--bc-bg);
+	color: var(--bc-text);
+}
+
+[data-part="stinger-team-logo"],
+[data-part="stinger-title-card"] [data-part="stinger-tournament-logo"] {
+	box-shadow: none;
+}
+
+[data-part="stinger-title-card"] [data-part="stinger-tournament-name"] {
+	text-shadow: none;
+}

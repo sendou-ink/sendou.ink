@@ -43,6 +43,9 @@ importers:
       '@dnd-kit/utilities':
         specifier: 3.2.2
         version: 3.2.2(react@19.3.1)
+      '@elgato-stream-deck/webhid':
+        specifier: 7.9.0
+        version: 7.9.0
       '@epic-web/cachified':
         specifier: 5.6.3
         version: 5.6.3
@@ -121,6 +124,9 @@ importers:
       picocad2-web:
         specifier: 2.0.4
         version: 2.0.4
+      postcss:
+        specifier: 8.5.32
+        version: 8.5.32
       qrcode.react:
         specifier: 4.2.0
         version: 4.2.0(react@19.3.1)
@@ -236,9 +242,6 @@ importers:
       oxc-transform-react:
         specifier: 0.157.0
         version: 0.157.0
-      postcss:
-        specifier: 8.5.32
-        version: 8.5.32
       sharp:
         specifier: ^0.35.5
         version: 0.35.5(@types/node@26.6.6)
@@ -878,6 +881,14 @@ packages:
   '@edgefirst-dev/data@0.0.4':
     resolution: {integrity: sha512-VLhlvEPDJ0Sd0pE6sAYTQkIqZCXVonaWlgRJIQQHzfjTXCadF77qqHj5NxaPSc4wCul0DJO/0MnejVqJAXUiRg==}
     engines: {node: '>=20.0.0'}
+
+  '@elgato-stream-deck/core@7.9.0':
+    resolution: {integrity: sha512-E6+ECGL5My4jFhLou2bwpj2WJD5sUebGsNEjy8ga7STS/Atrnj/pR9ydR/CohzUX2j6G/tIokhCYqfSDiYM2BQ==}
+    engines: {node: '>=18.18'}
+
+  '@elgato-stream-deck/webhid@7.9.0':
+    resolution: {integrity: sha512-74wicx/Azqlrz/xuFveS+cCRCeI7gnQ0Ef4cpr9jazAJK5SQsdCCWIc0ITos5gs026tJhLAp3j0qjhdG18eROQ==}
+    engines: {node: '>=18.18'}
 
   '@emnapi/core@1.11.1':
     resolution: {integrity: sha512-RSvbQmHzdKzNsLYa/wHrbc3KN4sYLKAdPZxqiM2HATqv/SBk2/ENSHpvXGaLOMcsAyz0poEGqkmmKYG3OWiJEQ==}
@@ -3610,6 +3621,9 @@ packages:
   '@types/use-sync-external-store@0.0.6':
     resolution: {integrity: sha512-zFDAD+tlpf2r4asuHEj0XH6pY6i0g5NeAHPn+15wk3BV6JA69eERFXC1gyGThDkVa1zCyKr5jox1+2LbV/AMLg==}
 
+  '@types/w3c-web-hid@1.0.7':
+    resolution: {integrity: sha512-/y97wBH7fYB5vKoDIn11O1ZDMNFLCAVqZ9af0OWDN7VSO2ClErEN2HlGbBuPgHBTUmZOVx1og2ZHX1U2gEJM4Q==}
+
   '@types/web-push@3.6.4':
     resolution: {integrity: sha512-GnJmSr40H3RAnj0s34FNTcJi1hmWFV5KXugE0mYWnYhgTAHLJ/dJKAwDmvPJYMke0RplY2XE9LnM4hqSqKIjhQ==}
 
@@ -4444,6 +4458,9 @@ packages:
   eventemitter3@4.0.7:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
 
+  eventemitter3@5.0.4:
+    resolution: {integrity: sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==}
+
   events@3.3.0:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
@@ -5256,6 +5273,10 @@ packages:
     resolution: {integrity: sha512-aHpj4nDakAfw8d7JjaxjJYP8Y/LiOcGMkEj6PgzKibzwie9/xYOUMqBNwGbcOsrMK8xLwC2S01JWJdoygZZ3hA==}
     engines: {node: ^20.19.0 || >=22.12.0}
 
+  p-finally@1.0.0:
+    resolution: {integrity: sha512-LICb2p9CB7FS+0eR1oqWnHhp0FljGLZCWBE9aix0Uye9W8LTQPwMTYVGWQWIw9RdQiDg4+epXQODwIYJtSJaow==}
+    engines: {node: '>=4'}
+
   p-limit@7.3.3:
     resolution: {integrity: sha512-SKgVvDU5TNIxQ4r30U75BNLC6a+6GOEjngrk/ysM5+Zu3oJuk1SC5ApzIzY/7PjCEjoVPMWJ0zho/4QUiEB7TQ==}
     engines: {node: '>=20'}
@@ -5267,6 +5288,14 @@ packages:
   p-queue@10.0.0:
     resolution: {integrity: sha512-P2wrCri3bhGLPo3kX7qYVXbo/5GvaVATU0DpO24CbeT53Y4z35t8JUWku04ERpXHUYB5rPMi3TkWE3fmJgx5rA==}
     engines: {node: '>=22'}
+
+  p-queue@6.6.2:
+    resolution: {integrity: sha512-RwFpb72c/BhQLEXIZ5K2e+AhgNVmIejGlTgiB9MzZ0e93GRvqZ7uSi0dvRF7/XIXDeNkra2fNHBxTyPDGySpjQ==}
+    engines: {node: '>=8'}
+
+  p-timeout@3.2.0:
+    resolution: {integrity: sha512-rhIwUycgwwKcP9yTOOFK/AKsAopjjCakVqLHePO3CC6Mir1Z99xT+R63jZxAT5lFZLa2inS5h+ZS2GvR99/FBg==}
+    engines: {node: '>=8'}
 
   package-manager-detector@1.9.0:
     resolution: {integrity: sha512-zAMfbta9nPA8AKkA4WdmNAT8R8s6Dk0/xwPsqNnRidMFcLo1YkLuPDTgs2f64XdzS8vbLNnoJ+uUIkgbz7oRHA==}
@@ -7015,6 +7044,19 @@ snapshots:
       tslib: 2.8.1
 
   '@edgefirst-dev/data@0.0.4': {}
+
+  '@elgato-stream-deck/core@7.9.0':
+    dependencies:
+      eventemitter3: 5.0.4
+      tslib: 2.9.1
+
+  '@elgato-stream-deck/webhid@7.9.0':
+    dependencies:
+      '@elgato-stream-deck/core': 7.9.0
+      '@types/w3c-web-hid': 1.0.7
+      eventemitter3: 5.0.4
+      p-queue: 6.6.2
+      tslib: 2.9.1
 
   '@emnapi/core@1.11.1':
     dependencies:
@@ -9585,6 +9627,8 @@ snapshots:
 
   '@types/use-sync-external-store@0.0.6': {}
 
+  '@types/w3c-web-hid@1.0.7': {}
+
   '@types/web-push@3.6.4':
     dependencies:
       '@types/node': 26.6.6
@@ -10434,6 +10478,8 @@ snapshots:
   etag@1.8.1: {}
 
   eventemitter3@4.0.7: {}
+
+  eventemitter3@5.0.4: {}
 
   events@3.3.0: {}
 
@@ -11446,6 +11492,8 @@ snapshots:
       '@oxc-transform-react/binding-win32-ia32-msvc': 0.157.0
       '@oxc-transform-react/binding-win32-x64-msvc': 0.157.0
 
+  p-finally@1.0.0: {}
+
   p-limit@7.3.3:
     dependencies:
       yocto-queue: 1.2.2
@@ -11453,6 +11501,15 @@ snapshots:
   p-map@7.0.8: {}
 
   p-queue@10.0.0: {}
+
+  p-queue@6.6.2:
+    dependencies:
+      eventemitter3: 4.0.7
+      p-timeout: 3.2.0
+
+  p-timeout@3.2.0:
+    dependencies:
+      p-finally: 1.0.0
 
   package-manager-detector@1.9.0: {}
 

@@ -1,0 +1,638 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@500;700&display=swap");
+
+/* ZINE: cut-and-paste paper. Black outlines, hard shadows, everything a little crooked. */
+
+/* 1. Variables: colors, type, shapes and motion of every scene */
+[data-broadcast] {
+	--bc-bg: #f3ecdc;
+	--bc-surface: #fffdf7;
+	--bc-surface-high: #e6dcc4;
+	--bc-border: #141414;
+	--bc-text: #141414;
+	--bc-text-muted: #5e5747;
+	--bc-accent: #ff4f9a;
+	--bc-accent-text: #141414;
+	--bc-team-a: #ff7a1a;
+	--bc-team-a-text: #141414;
+	--bc-team-b: #2f5bff;
+	--bc-team-b-text: #fffdf7;
+	--bc-font-body: "Space Grotesk", sans-serif;
+	--bc-weight-semibold: 500;
+	--bc-weight-heavy: 700;
+	--bc-radius: 0;
+	--bc-radius-small: 0;
+	--bc-border-width: 4px;
+	--bc-ease: cubic-bezier(0.3, 0.7, 0.4, 1);
+	--bc-enter-duration: 650ms;
+	--bc-stagger: 100ms;
+
+	/* the stinger's panels use keyframes of this theme */
+	--bc-anim-panel-slide-in: zine-drop;
+	--bc-anim-panel-slide-out: zine-toss;
+
+	/* the theme's own */
+	--zine-headline: "Archivo Black", "Arial Black", sans-serif;
+	--zine-shadow: 8px 8px 0 var(--bc-border);
+	--zine-shadow-small: 5px 5px 0 var(--bc-border);
+
+	/* sizes and spots */
+	--game-bar-height: 62px;
+	--game-team-name-size: 28px;
+	--game-score-size: 36px;
+	--game-score-width: 70px;
+	--matchup-team-height: 108px;
+	--hold-inline-margin: 280px;
+	--hold-matchup-bottom: 110px;
+	--rosters-teams-top: 250px;
+	--maps-stage-size: 21px;
+	--stinger-team-logo-size: 210px;
+	--results-map-width: 500px;
+
+	/* the headline font has one weight, no faking a bolder one */
+	font-synthesis: none;
+}
+
+/* the big words */
+[data-broadcast]
+	:is(
+		[data-part="title"],
+		[data-part="countdown"],
+		[data-part$="team-name"],
+		[data-part$="team-score"],
+		[data-part="score"],
+		[data-part$="versus"],
+		[data-part="stinger-vs"],
+		[data-part="stage"],
+		[data-part="bracket-name"],
+		[data-part="stat-value"],
+		[data-part="replay-label"]
+	) {
+	font-family: var(--zine-headline);
+	font-weight: 400;
+}
+
+/* 2. Keyframes: redefining one changes every element using it */
+
+/* set down on the page, with a little bounce */
+@keyframes bc-enter {
+	from {
+		opacity: 0;
+		transform: scale(1.2) rotate(-2deg);
+	}
+	40% {
+		opacity: 1;
+	}
+	65% {
+		transform: scale(0.975);
+	}
+	85% {
+		transform: scale(1.01);
+	}
+}
+
+/* falls off the page */
+@keyframes bc-exit {
+	to {
+		opacity: 0;
+		transform: translateY(80px) rotate(12deg) scale(0.85);
+	}
+}
+
+/* typed out */
+@keyframes bc-reveal {
+	from {
+		clip-path: inset(-50px 100% -50px -50px);
+		animation-timing-function: steps(9, jump-none);
+	}
+	to {
+		clip-path: inset(-50px);
+	}
+}
+
+/* flips like a scoreboard card */
+@keyframes bc-count {
+	from {
+		opacity: 0;
+		transform: perspective(240px) rotateX(-110deg);
+	}
+}
+
+/* wobbles */
+@keyframes bc-pulse {
+	50% {
+		transform: scale(1.15) rotate(-6deg);
+	}
+}
+
+@keyframes zine-drop {
+	from {
+		transform: translateY(-120%) rotate(-12deg);
+	}
+	72% {
+		transform: translateY(1.5%) rotate(var(--zine-tilt));
+	}
+	to {
+		transform: rotate(var(--zine-tilt));
+	}
+}
+
+@keyframes zine-toss {
+	from {
+		transform: rotate(var(--zine-tilt));
+	}
+	to {
+		transform: translateY(125%) rotate(16deg);
+	}
+}
+
+/* 3. Parts */
+
+/* dotted paper in a double frame behind every full screen scene */
+[data-part="backdrop"] {
+	background:
+		var(--bc-bg) radial-gradient(rgb(20 20 20 / 0.12) 2px, transparent 2.6px) 0
+		0 / 28px 28px;
+	box-shadow:
+		inset 0 0 0 18px var(--bc-border),
+		inset 0 0 0 30px var(--bc-accent);
+}
+
+/* ---------- GAME: the teams as tabs stuck to the sides, the bottom of the screen left alone ---------- */
+[data-scene="game"] [data-part="scoreboard"] {
+	top: 0;
+	display: block;
+	height: auto;
+
+	&::before {
+		display: none;
+	}
+}
+
+[data-scene="game"] [data-part="team"] {
+	position: absolute;
+	top: 268px;
+	left: -6px;
+	height: var(--game-bar-height);
+	padding-left: 6px;
+	border: 5px solid var(--bc-border);
+	background: var(--bc-bg);
+	box-shadow: var(--zine-shadow);
+	rotate: -1.5deg;
+
+	&[data-team="b"] {
+		right: -6px;
+		left: auto;
+		padding: 0 6px 0 0;
+		rotate: 1.5deg;
+	}
+
+	/* a bit of tape in the team's color */
+	&::before {
+		position: absolute;
+		top: -16px;
+		left: 38%;
+		z-index: 1;
+		width: 96px;
+		height: 26px;
+		background: var(--team-color);
+		opacity: 0.85;
+		rotate: -4deg;
+		content: "";
+	}
+}
+
+[data-scene="game"] [data-part="team-score"] {
+	background: var(--bc-border);
+	color: var(--bc-bg);
+	line-height: 1;
+}
+
+/* the roster on a note under its team's tab */
+[data-scene="game"] [data-part="roster"] {
+	top: calc(100% + 22px);
+	bottom: auto;
+	left: 30px;
+	border: 4px solid var(--bc-border);
+	background: var(--bc-surface);
+	box-shadow: var(--zine-shadow-small);
+	rotate: 2.5deg;
+
+	[data-team="b"] > & {
+		right: 30px;
+		left: auto;
+		rotate: -2.5deg;
+	}
+}
+
+[data-scene="game"] [data-part="info-bar"],
+[data-scene="game"] [data-part="map-intro"] {
+	border: 4px solid var(--bc-border);
+	box-shadow: var(--zine-shadow-small);
+	rotate: -1deg;
+}
+
+[data-scene="game"] [data-part="info-bar"] {
+	background: var(--bc-surface);
+}
+
+[data-scene="game"] [data-part="map-intro"] {
+	margin-top: 6px;
+	rotate: 1deg;
+}
+
+[data-scene="game"] [data-part="game-number"],
+[data-scene="maps"] [data-part="game-number"] {
+	background: var(--bc-border);
+	color: var(--bc-bg);
+}
+
+[data-scene="game"] [data-part="game-number"] {
+	align-self: flex-start;
+	padding: 2px 10px;
+}
+
+/* the other matches on a strip in the bottom left corner */
+[data-scene="game"] [data-part="ticker"] {
+	position: absolute;
+	bottom: 30px;
+	left: 30px;
+	width: 620px;
+	height: 44px;
+	border: 4px solid var(--bc-border);
+	background: var(--bc-surface);
+	box-shadow: var(--zine-shadow-small);
+}
+
+/* ---------- HOLD (starting soon, break...): a poster ---------- */
+[data-part="content"] {
+	inset: 0 0 190px;
+	align-items: center;
+	justify-content: center;
+	gap: 26px;
+	max-width: none;
+	text-align: center;
+}
+
+[data-part="content"] [data-part="tournament-logo"] {
+	width: 150px;
+	height: 150px;
+	margin: 0;
+	border: 6px solid var(--bc-border);
+	border-radius: 0;
+	box-shadow: var(--zine-shadow);
+	rotate: -5deg;
+}
+
+[data-part="content"] [data-part="tournament-name"],
+[data-part="matchup-label"] {
+	padding: 4px 18px;
+	background: var(--bc-border);
+	color: var(--bc-bg);
+	font-weight: 700;
+	text-transform: uppercase;
+	rotate: 1.5deg;
+}
+
+[data-part="content"] [data-part="title"] {
+	max-width: 1500px;
+	padding: 18px 48px 10px;
+	border: 7px solid var(--bc-border);
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+	box-shadow: 16px 16px 0 var(--bc-border);
+	font-size: 110px;
+	rotate: -2deg;
+
+	&::after {
+		display: none;
+	}
+}
+
+[data-part="countdown"] {
+	padding: 10px 30px 0;
+	border: 5px solid var(--bc-border);
+	background: var(--bc-surface);
+	box-shadow: var(--zine-shadow);
+	color: var(--bc-text);
+	rotate: 2deg;
+}
+
+[data-part="headline"] {
+	margin: 12px 0 0;
+	padding: 12px 30px;
+	border: 4px solid var(--bc-border);
+	background: var(--bc-surface);
+	box-shadow: var(--zine-shadow-small);
+	color: var(--bc-text);
+	font-size: 36px;
+	font-weight: 700;
+	rotate: 1deg;
+}
+
+[data-part="matchup-label"] {
+	rotate: -2deg;
+}
+
+/* ---------- the featured match in a line, wherever it shows ---------- */
+[data-part="matchup"] [data-part="team"] {
+	border-width: 5px;
+	background: var(--team-color);
+	color: var(--team-color-text);
+	box-shadow: var(--zine-shadow);
+	rotate: -1.5deg;
+
+	&[data-team="b"] {
+		rotate: 1.5deg;
+	}
+}
+
+[data-part="matchup"] [data-part="team-name"] {
+	text-transform: uppercase;
+}
+
+[data-part="matchup"] [data-part="team-seed"],
+[data-part="matchup"] [data-part="versus"] {
+	background: var(--bc-border);
+	color: var(--bc-bg);
+}
+
+[data-part="matchup"] [data-part="team-score"] {
+	border: 4px solid var(--bc-border);
+	background: var(--bc-surface);
+	color: var(--bc-text);
+}
+
+[data-part="matchup"] [data-part="versus"] {
+	z-index: 1;
+	display: grid;
+	place-items: center;
+	width: 86px;
+	height: 86px;
+	border-radius: 50%;
+}
+
+[data-part="matchup"] [data-part="round"] {
+	align-self: center;
+	padding: 4px 16px;
+	border: 3px solid var(--bc-border);
+	background: var(--bc-surface);
+	color: var(--bc-text);
+	font-weight: 700;
+}
+
+/* ---------- ROSTERS ---------- */
+[data-scene="rosters"] [data-part="header"] {
+	right: auto;
+	left: 50%;
+	padding: 14px 40px 14px 14px;
+	border: 5px solid var(--bc-border);
+	background: var(--bc-surface);
+	box-shadow: var(--zine-shadow);
+	translate: -50% 0;
+	rotate: -1deg;
+}
+
+[data-part="tournament-logo"],
+[data-part="stinger-tournament-logo"],
+[data-part="player-avatar"] {
+	border: 4px solid var(--bc-border);
+	border-radius: 0;
+}
+
+[data-scene="rosters"] [data-part="versus"] {
+	border-radius: 0;
+	background: var(--bc-border);
+	color: var(--bc-bg);
+	box-shadow: 8px 8px 0 var(--bc-accent);
+	rotate: 8deg;
+}
+
+[data-scene="rosters"] [data-part="team-header"] {
+	padding: 16px 24px;
+	border: 5px solid var(--bc-border);
+	border-image: none;
+	background: var(--team-color);
+	color: var(--team-color-text);
+	box-shadow: var(--zine-shadow);
+	rotate: -1deg;
+
+	[data-team="b"] > & {
+		rotate: 1deg;
+	}
+}
+
+[data-scene="rosters"] [data-part="team-logo"],
+[data-part="matchup"] [data-part="team-logo"],
+[data-part="stinger-team-logo"] {
+	border: 4px solid var(--bc-border);
+	box-shadow: none;
+}
+
+[data-scene="rosters"] [data-part="team-seed"] {
+	background: var(--bc-border);
+	color: var(--bc-bg);
+}
+
+[data-scene="rosters"] [data-part="player"],
+[data-scene="results"] [data-part="player"],
+[data-scene="team"] :is([data-part="player"], [data-part="stat"]) {
+	box-shadow: var(--zine-shadow-small);
+	rotate: -0.5deg;
+
+	&:nth-child(even) {
+		rotate: 0.6deg;
+	}
+}
+
+/* ---------- MAPS ---------- */
+[data-scene="maps"] [data-part="round"] {
+	padding: 4px 18px;
+	background: var(--bc-border);
+	color: var(--bc-bg);
+	font-weight: 700;
+	rotate: -1.5deg;
+}
+
+[data-scene="maps"] [data-part="team-logo"] {
+	border: 4px solid var(--bc-border);
+	box-shadow: var(--zine-shadow-small);
+}
+
+[data-scene="maps"] [data-part="score"] [data-team] {
+	border: 6px solid var(--bc-border);
+	border-radius: 0;
+	box-shadow: var(--zine-shadow);
+	rotate: -3deg;
+
+	&[data-team="b"] {
+		rotate: 3deg;
+	}
+}
+
+[data-scene="maps"] [data-part="game"] {
+	border-width: 5px;
+	box-shadow: var(--zine-shadow);
+	rotate: -1.2deg;
+
+	&:nth-child(even) {
+		rotate: 1.2deg;
+	}
+
+	/* the game up next pulled out of the row */
+	&[data-status="current"] {
+		box-shadow: 12px 12px 0 var(--bc-accent);
+		translate: 0 -24px;
+		rotate: 0deg;
+	}
+}
+
+[data-scene="maps"] [data-part="up-next"] {
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+}
+
+/* ---------- RESULTS ---------- */
+[data-scene="results"] [data-part="map"] {
+	border: 5px solid var(--bc-border);
+	box-shadow: var(--zine-shadow);
+	rotate: -1deg;
+}
+
+[data-scene="results"] :is([data-part="team-header"], [data-part="objective"]) {
+	border: 5px solid var(--bc-border);
+	box-shadow: var(--zine-shadow-small);
+}
+
+/* ---------- CASTERS ---------- */
+[data-scene="casters"] [data-part="title"] {
+	margin-top: 6px;
+	padding: 8px 28px 2px;
+	border: 5px solid var(--bc-border);
+	background: var(--bc-accent);
+	color: var(--bc-accent-text);
+	box-shadow: var(--zine-shadow);
+	rotate: -1.5deg;
+}
+
+[data-scene="casters"] [data-part="camera"] {
+	outline-width: 8px;
+	box-shadow: 18px 18px 0 0 var(--bc-border);
+}
+
+[data-scene="casters"] [data-part="caster-name"] {
+	top: calc(100% - 10px);
+	border: 5px solid var(--bc-border);
+	box-shadow: var(--zine-shadow-small);
+	rotate: -2deg;
+}
+
+/* ---------- REPLAYS ---------- */
+[data-scene="replays"] [data-part="corner"] {
+	border-color: var(--bc-border);
+	filter: drop-shadow(5px 5px 0 var(--bc-accent));
+}
+
+[data-scene="replays"] [data-part="replay-bug"] {
+	border-width: 5px;
+	box-shadow: var(--zine-shadow);
+	rotate: -2deg;
+}
+
+[data-scene="replays"] [data-part="replay-dot"] {
+	border: 3px solid var(--bc-border);
+	border-radius: 0;
+	background: var(--bc-accent);
+}
+
+/* ---------- BRACKET & TEAM ---------- */
+[data-scene="bracket"] {
+	--bc-border-width: 3px;
+}
+
+[data-scene="bracket"] [data-part="match"][data-featured] {
+	box-shadow: var(--zine-shadow-small);
+}
+
+[data-scene="team"] [data-part="header"] {
+	border-image: none;
+	border-bottom-color: var(--bc-border);
+}
+
+[data-scene="team"] [data-part="team-logo"] {
+	border: 5px solid var(--bc-border);
+	box-shadow: var(--zine-shadow);
+	rotate: -4deg;
+}
+
+/* ---------- STINGER: sheets of paper slapped on top of each other, then tossed down ---------- */
+[data-part="stinger-panel"] {
+	--zine-tilt: -2deg;
+
+	inset: -12%;
+	border: 8px solid var(--bc-border);
+	background:
+		var(--team-color, var(--bc-bg))
+		radial-gradient(rgb(20 20 20 / 0.16) 3px, transparent 3.6px) 0 0 / 30px 30px;
+	clip-path: none;
+	/* dropped one after another, tossed down the other way around */
+	animation-duration:
+		calc(var(--bc-stinger-duration) * 0.24),
+		calc(var(--bc-stinger-duration) * 0.26);
+	animation-timing-function:
+		var(--bc-stinger-ease), cubic-bezier(0.45, 0, 0.75, 0.55);
+	animation-delay:
+		calc(var(--bc-stinger-duration) * 0.025 * var(--i)),
+		calc(
+			var(--bc-stinger-duration) *
+			(var(--bc-stinger-reveal-at) + 0.04 * (3 - var(--i)))
+		);
+
+	&:nth-child(odd) {
+		--zine-tilt: 2.5deg;
+	}
+
+	/* two more sheets on top of the teams' ones, the last one plain paper */
+	&:is([data-index="2"], [data-index="3"]) {
+		display: block;
+	}
+
+	&[data-index="3"] {
+		--team-color: var(--bc-bg);
+	}
+}
+
+[data-part="stinger-team"] {
+	justify-self: center;
+	max-width: 100%;
+	padding: 28px 36px 22px;
+	border: 6px solid var(--bc-border);
+	background: var(--team-color);
+	box-shadow: var(--zine-shadow);
+	rotate: -2deg;
+
+	&[data-team="b"] {
+		rotate: 2deg;
+	}
+}
+
+[data-part="stinger-vs"] {
+	background: var(--bc-border);
+	color: var(--bc-bg);
+}
+
+[data-part="stinger-header"] {
+	border-radius: 0;
+	background: var(--bc-surface);
+	box-shadow: var(--zine-shadow);
+	rotate: -1deg;
+}
+
+[data-part="stinger-title-card"] [data-part="stinger-tournament-logo"] {
+	border-width: 8px;
+	box-shadow: 16px 16px 0 var(--bc-border);
+	rotate: -4deg;
+}
+
+[data-part="stinger-title-card"] [data-part="stinger-tournament-name"] {
+	text-shadow: none;
+}

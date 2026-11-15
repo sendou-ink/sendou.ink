@@ -1,0 +1,58 @@
+.preview {
+	position: relative;
+	container-type: inline-size;
+	aspect-ratio: 16 / 9;
+	overflow: hidden;
+	border-radius: var(--radius-box);
+	background: repeating-linear-gradient(
+		-45deg,
+		var(--color-bg-high) 0 14px,
+		var(--color-bg-higher) 14px 28px
+	);
+
+	/* the frame drawn over the layers, so they fill the same box and none peeks out at the clipped edges */
+	&::after {
+		position: absolute;
+		inset: 0;
+		border: 1px solid var(--color-border);
+		border-radius: inherit;
+		pointer-events: none;
+		content: "";
+	}
+}
+
+.gameplay {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	color: var(--color-text-high);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
+.footage {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.iframe {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 1920px;
+	max-width: none;
+	height: 1080px;
+	border: 0;
+	/* same as the overlay page's so the iframe stays transparent, "normal" would follow the site's theme */
+	color-scheme: light;
+	/* container width ÷ canvas width as a unitless number, tan(atan2()) because calc() can't divide lengths in every browser yet */
+	transform: scale(tan(atan2(100cqw, 1920px)));
+	transform-origin: 0 0;
+	pointer-events: none;
+}

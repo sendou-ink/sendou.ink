@@ -1,0 +1,466 @@
+import {
+	BROADCAST_ADVANCES,
+	BROADCAST_TRANSITION_TIMING,
+} from "../broadcast-constants";
+import type {
+	BroadcastAdvance,
+	BroadcastGameSignal,
+	BroadcastGameSummary,
+	BroadcastInkColorKey,
+	BroadcastStoredState,
+	LiveResults,
+	ProducerState,
+} from "../broadcast-types";
+import * as InkColor from "./InkColor";
+
+/**
+ * How a scene set's producer moves between its scenes, which the producer functions take first. Its items are the
+ * scene set's `ProducerState`, with the fields its scenes are set up with.
+ */
+export interface Rules<Item extends ProducerState> {
+	/** What is on air (`live`) and staged (`next`) on a broadcast nothing has been written to yet. */
+	initial: { live: Omit<Item, "id">; next: Omit<Item, "id"> };
+	/** The scene that logically follows each scene, staged after it when nothing is queued (e.g. rosters → game). */
+	sceneAfter: Record<Item["scene"], Item["scene"]>;
+	/** The scene showing the game itself: goes on air as the scanner sees the game start, the scene after it as the game ends. */
+	gameScene: Item["scene"];
+	/** Duration a scene gets when picked, `null` runs until a Take. */
+	defaultDurationMs(scene: Item["scene"]): number | null;
+	/** How long the item's scene runs, when some scenes last as long as their footage instead of a given duration. */
+	lengthMs?(item: Item): number | null;
+	/** The item without what doesn't carry over to the item following it (e.g. a clip picked for it). */
+	followedBy?(item: Item): Item;
+	/** Whether the item's scene shows the featured match, so it can't go on air without one. */
+	needsMatch?(item: Item): boolean;
+	/** Staged instead of the scene that logically follows when that one needs the featured match and there is none. */
+	sceneWithoutMatch?: Item["scene"];
+	/**
+	 * Whether the scene stays on air until a Take, whatever happens meanwhile (e.g. technical difficulties): what is
+	 * staged after it waits for a Take unless the producer sets it otherwise.
+	 */
+	staysUntilTake?(scene: Item["scene"]): boolean;
+}
+
+/** Fields of a staged item the producer edits, see {@link editItem}. */
+export type ItemPatch<Item extends ProducerState> = Partial<Omit<Item, "id">>;
+
+/** State of a broadcast nothing has been written to yet, see `Rules.initial`. */
+export function initialState<Item extends ProducerState>(
+	rules: Rules<Item>,
+): BroadcastStoredState<Item> {
+	return {
+		takeId: 0,
+		takenAt: null,
+		live: { ...rules.initial.live, id: 1 } as Item,
+		next: { ...rules.initial.next, id: 2 } as Item,
+		queue: [],
+		lastItemId: 2,
+		liveResults: null,
+		ink: null,
+		scannedGame: null,
+	};
+}
+
+/**
+ * Stored state with the producer fields added after it was written filled in with their defaults. The state is the
+ * one the scene set of the rules wrote.
+ */
+export function withDefaults<Item extends ProducerState>(
+	rules: Rules<Item>,
+	state: BroadcastStoredState,
+): BroadcastStoredState<Item> {
+	const initial = initialState(rules);
+	const stored = state as BroadcastStoredState<Item>;
+
+	return {
+		...initial,
+		...stored,
+		live: { ...initial.live, ...stored.live },
+		next: { ...initial.next, ...stored.next },
+	};
+}
+
+/**
+ * Puts the staged state on air, along with the match results next showed. The first queued item gets staged, or
+ * without one the scene that logically follows (e.g. rosters → game → rosters, see `Rules.sceneWithoutMatch`).
+ */
+export function take<Item extends ProducerState>(
+	rules: Rules<Item>,
+	state: BroadcastStoredState<Item>,
+	{
+		liveResults,
+		now,
+		hasMatch,
+	}: { liveResults: LiveResults | null; now: number; hasMatch: boolean },
+): BroadcastStoredState<Item> {
+	const [queued, ...queue] = state.queue;
+	const next =
+		queued ??
+		followingItem(rules, state.next, {
+			id: state.lastItemId + 1,
+			hasMatch,
+		});
+
+	return {
+		takeId: state.takeId + 1,
+		takenAt: now,
+		live: state.next,
+		next,
+		queue,
+		lastItemId: Math.max(state.lastItemId, next.id),
+		liveResults,
+		ink: state.ink,
+		scannedGame: state.scannedGame,
+	};
+}
+
+/** Whether a Take can put the staged item on air: one showing the featured match (see `Rules.needsMatch`) only with one. */
+export function canTake<Item extends ProducerState>(
+	rules: Rules<Item>,
+	state: BroadcastStoredState<Item>,
+	{ hasMatch }: { hasMatch: boolean },
+) {
+	return hasMatch || !rules.needsMatch?.(state.next);
+}
+
+/**
+ * How long the item's scene runs before the item after it can go on air by itself: the duration it was given, unless
+ * the scene lasts as long as its footage (see `Rules.lengthMs`). `null` runs until a Take.
+ */
+export function lengthMs<Item extends ProducerState>(
+	rules: Rules<Item>,
+	item: Item,
+) {
+	return rules.lengthMs ? rules.lengthMs(item) : item.durationMs;
+}
+
+/** When the scene on air started (epoch ms): once the transition of the Take that put it on air revealed it. */
+export function liveStartedAt(state: BroadcastStoredState) {
+	if (state.takenAt === null) return null;
+
+	return (
+		state.takenAt + BROADCAST_TRANSITION_TIMING[state.live.transition].inMs
+	);
+}
+
+/** When the scene on air has run its length (epoch ms), `null` when it runs until a Take. */
+export function liveEndsAt<Item extends ProducerState>(
+	rules: Rules<Item>,
+	state: BroadcastStoredState<Item>,
+) {
+	const startedAt = liveStartedAt(state);
+	const length = lengthMs(rules, state.live);
+	if (startedAt === null || length === null) return null;
+
+	return startedAt + length;
+}
+
+/**
+ * When the staged item goes on air by itself (epoch ms): its transition timed to hide the scene on air as that one
+ * ends. `null` when it waits for a Take or a game event (see {@link applyGameSignal}), or can't go on air (see
+ * {@link canTake}).
+ */
+export function autoTakeAt<Item extends ProducerState>(
+	rules: Rules<Item>,
+	state: BroadcastStoredState<Item>,
+	{ hasMatch }: { hasMatch: boolean },
+) {
+	if (!canTake(rules, state, { hasMatch })) return null;
+
+	const endsAt = liveEndsAt(rules, state);
+	if (
+		effectiveAdvance(rules, state.live, state.next) !== "timer" ||
+		endsAt === null ||
+		state.takenAt === null
+	) {
+		return null;
+	}
+
+	const { outMs } = BROADCAST_TRANSITION_TIMING[state.next.transition];
+
+	return Math.max(state.takenAt, endsAt - outMs);
+}
+
+/**
+ * Which game event the scanner reporting puts the item on air, given the item before it: the game scene (see
+ * `Rules.gameScene`) goes on air as the game starts, the scene after it as the game ends. `null` between two scenes
+ * without a game.
+ */
+export function gameCue<Item extends ProducerState>(
+	rules: Rules<Item>,
+	before: Pick<Item, "scene">,
+	item: Pick<Item, "scene">,
+): "start" | "end" | null {
+	const { gameScene } = rules;
+	if (item.scene === gameScene && before.scene !== gameScene) return "start";
+	if (before.scene === gameScene && item.scene !== gameScene) return "end";
+
+	return null;
+}
+
+/**
+ * What puts the item on air besides a Take, given the item before it. An advance that can't happen there waits for a
+ * Take: a timer after a scene running until a Take, a game event between scenes without a game.
+ */
+export function effectiveAdvance<Item extends ProducerState>(
+	rules: Rules<Item>,
+	before: Item,
+	item: Item,
+): BroadcastAdvance {
+	if (item.advance === "timer" && lengthMs(rules, before) === null) {
+		return "take";
+	}
+	if (item.advance === "game" && gameCue(rules, before, item) === null) {
+		return "take";
+	}
+
+	return item.advance;
+}
+
+/**
+ * The advances the item can be set to after the item before it, in {@link BROADCAST_ADVANCES} order: a Take always,
+ * a timer after a scene with a length, a game event where a game starts or ends between them.
+ */
+export function advanceOptions<Item extends ProducerState>(
+	rules: Rules<Item>,
+	before: Item,
+	item: Item,
+): BroadcastAdvance[] {
+	return BROADCAST_ADVANCES.filter(
+		(advance) =>
+			advance === "take" ||
+			(advance === "timer" && lengthMs(rules, before) !== null) ||
+			(advance === "game" && gameCue(rules, before, item) !== null),
+	);
+}
+
+/**
+ * What the scanner seeing a game start or end changes. The ink read (with the start or after it) colors the game
+ * (Color Lock carrying over from the broadcast's previous game, see `InkColor.closestPair`), the teams keeping the
+ * sides they had earlier in the set (the pair's first color always goes to the same lobby team). A start or end
+ * the staged item waits for puts it on air right away, not when the item can't go on air (see {@link canTake}). A game ending cuts only along with what the scanner read of it,
+ * which is kept as `scannedGame` with the game's ink colors. `null` when nothing changes.
+ */
+export function applyGameSignal<Item extends ProducerState>(
+	rules: Rules<Item>,
+	state: BroadcastStoredState<Item>,
+	{
+		signal,
+		liveResults,
+		now,
+	}: {
+		signal: BroadcastGameSignal;
+		/** The featured match and how many of its results are reported, `null` without one. */
+		liveResults: LiveResults | null;
+		now: number;
+	},
+): BroadcastStoredState<Item> | null {
+	const inkKey =
+		signal.type !== "end" && signal.inks
+			? InkColor.closestPair(signal.inks, state.ink?.key ?? null)
+			: null;
+	const colored = withGameReads(state, {
+		inkKey,
+		summary: signal.type === "end" ? signal.summary : null,
+		liveResults,
+	});
+
+	const hasMatch = liveResults !== null;
+	const isWaitedFor =
+		signal.type !== "ink" &&
+		(signal.type !== "end" || signal.summary !== null) &&
+		effectiveAdvance(rules, state.live, state.next) === "game" &&
+		gameCue(rules, state.live, state.next) === signal.type &&
+		canTake(rules, state, { hasMatch });
+	if (!isWaitedFor) return colored === state ? null : colored;
+
+	return take(rules, colored, { liveResults, now, hasMatch });
+}
+
+/** The state with the ink and what was read of the game kept for the featured match, if any. */
+function withGameReads<Item extends ProducerState>(
+	state: BroadcastStoredState<Item>,
+	{
+		inkKey,
+		summary,
+		liveResults,
+	}: {
+		inkKey: BroadcastInkColorKey | null;
+		summary: BroadcastGameSummary | null;
+		liveResults: LiveResults | null;
+	},
+): BroadcastStoredState<Item> {
+	if (!liveResults || (!inkKey && !summary)) return state;
+
+	const { matchId, count: resultCount } = liveResults;
+	const gameInk =
+		state.ink?.matchId === matchId && state.ink.resultCount === resultCount
+			? { key: state.ink.key, isFlipped: state.ink.isFlipped }
+			: null;
+
+	return {
+		...state,
+		...(inkKey
+			? {
+					ink: {
+						key: inkKey,
+						isFlipped:
+							state.ink?.matchId === matchId ? state.ink.isFlipped : false,
+						matchId,
+						resultCount,
+					},
+				}
+			: {}),
+		...(summary ? { scannedGame: { ...summary, matchId, ink: gameInk } } : {}),
+	};
+}
+
+/** The staged items in the order they go on air: `next` then the queue. */
+export function stagedItems<Item extends ProducerState>(
+	state: BroadcastStoredState<Item>,
+) {
+	return [state.next, ...state.queue];
+}
+
+/**
+ * Changes a staged item, `null` when it is not staged anymore (e.g. a Take put it on air). Picking another scene
+ * gives the item that scene's default duration and advance, and one staying on air until a Take (see
+ * `Rules.staysUntilTake`) makes the item staged after it wait for a Take.
+ */
+export function editItem<Item extends ProducerState>(
+	rules: Rules<Item>,
+	state: BroadcastStoredState<Item>,
+	itemId: number,
+	patch: ItemPatch<Item>,
+) {
+	const staged = stagedItems(state);
+	if (!staged.some((item) => item.id === itemId)) return null;
+
+	const editedIdx = staged.findIndex((item) => item.id === itemId);
+	const isHeldUntilTake =
+		patch.scene !== undefined &&
+		patch.scene !== staged[editedIdx]!.scene &&
+		Boolean(rules.staysUntilTake?.(patch.scene));
+
+	return withStaged(
+		state,
+		staged.map((item, idx) => {
+			if (isHeldUntilTake && idx === editedIdx + 1) {
+				return { ...item, advance: "take" };
+			}
+			if (item.id !== itemId) return item;
+
+			const isSceneChanged =
+				patch.scene !== undefined && patch.scene !== item.scene;
+			const before = idx === 0 ? state.live : staged[idx - 1]!;
+
+			return {
+				...item,
+				...(isSceneChanged && patch.scene
+					? {
+							durationMs: rules.defaultDurationMs(patch.scene),
+							advance: defaultAdvance(rules, before, { scene: patch.scene }),
+						}
+					: {}),
+				...patch,
+			};
+		}),
+	);
+}
+
+/**
+ * Queues the scene that logically follows the last staged item (see `Rules.sceneWithoutMatch`), with that item's
+ * settings. The new item's id is `lastItemId + 1` of the state given.
+ */
+export function enqueue<Item extends ProducerState>(
+	rules: Rules<Item>,
+	state: BroadcastStoredState<Item>,
+	{ hasMatch }: { hasMatch: boolean },
+): BroadcastStoredState<Item> {
+	const staged = stagedItems(state);
+	const id = state.lastItemId + 1;
+
+	return {
+		...withStaged(state, [
+			...staged,
+			followingItem(rules, staged.at(-1)!, { id, hasMatch }),
+		]),
+		lastItemId: id,
+	};
+}
+
+/**
+ * Takes an item out of the staged ones, the first queued one getting staged when it was `next`. `null` when it is not
+ * staged anymore or is the only one, there always being something staged.
+ */
+export function removeItem<Item extends ProducerState>(
+	state: BroadcastStoredState<Item>,
+	itemId: number,
+) {
+	const staged = stagedItems(state);
+	const remaining = staged.filter((item) => item.id !== itemId);
+	if (remaining.length === staged.length || remaining.length === 0) {
+		return null;
+	}
+
+	return withStaged(state, remaining);
+}
+
+/** Moves a staged item to `toIndex` of the staged items (`0` = next), `null` when it is not staged anymore, already there or the index is out of range. */
+export function moveItem<Item extends ProducerState>(
+	state: BroadcastStoredState<Item>,
+	itemId: number,
+	toIndex: number,
+) {
+	const staged = stagedItems(state);
+	const from = staged.findIndex((item) => item.id === itemId);
+	if (from === -1 || from === toIndex || toIndex >= staged.length) return null;
+
+	const remaining = staged.filter((item) => item.id !== itemId);
+
+	return withStaged(state, [
+		...remaining.slice(0, toIndex),
+		staged[from],
+		...remaining.slice(toIndex),
+	]);
+}
+
+function withStaged<Item extends ProducerState>(
+	state: BroadcastStoredState<Item>,
+	[next, ...queue]: Item[],
+): BroadcastStoredState<Item> {
+	return { ...state, next, queue };
+}
+
+function followingItem<Item extends ProducerState>(
+	rules: Rules<Item>,
+	item: Item,
+	{ id, hasMatch }: { id: number; hasMatch: boolean },
+): Item {
+	const followed = rules.followedBy ? rules.followedBy(item) : item;
+	const after: Item["scene"] = rules.sceneAfter[item.scene as Item["scene"]];
+	const scene =
+		!hasMatch &&
+		rules.sceneWithoutMatch &&
+		rules.needsMatch?.({ ...followed, scene: after })
+			? rules.sceneWithoutMatch
+			: after;
+
+	return {
+		...followed,
+		id,
+		scene,
+		durationMs: rules.defaultDurationMs(scene),
+		advance: defaultAdvance(rules, item, { scene }),
+	};
+}
+
+function defaultAdvance<Item extends ProducerState>(
+	rules: Rules<Item>,
+	before: Pick<Item, "scene">,
+	item: Pick<Item, "scene">,
+): BroadcastAdvance {
+	if (rules.staysUntilTake?.(before.scene)) return "take";
+
+	return gameCue(rules, before, item) ? "game" : "timer";
+}

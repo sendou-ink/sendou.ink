@@ -77,6 +77,9 @@ switch (command) {
 		});
 		log(`User: ${result.userId}`);
 		log(`Page: ${baseUrl}${result.path}`);
+		for (const link of result.links ?? []) {
+			log(`${link.label}: ${baseUrl}${link.path}`);
+		}
 		log(`Log in & open: ${baseUrl}${result.logInUrl}`);
 		break;
 	}

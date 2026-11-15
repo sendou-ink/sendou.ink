@@ -1,17 +1,13 @@
 import * as React from "react";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
-import { resolveRoomPass } from "~/components/match-page/utils";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/tournament-context";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import {
-	groupNumberToLetters,
-	tournamentTeamToActiveRosterUserIds,
-} from "~/features/tournament-bracket/tournament-bracket-utils";
+import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as LeagueScheduling from "./core/LeagueScheduling";
 import type { TournamentMatchLoaderData } from "./loaders/to.$id.matches.$mid.server";
-import { matchIsLocked, resolveHostingTeam } from "./tournament-match-utils";
+import { matchIsLocked, resolveJoinInfo } from "./tournament-match-utils";
 
 /** The tournament wide lite team (resolved seed) plus the roster and map pool the match loader ships for its two teams. */
 export type MatchPageTeam = NonNullable<ReturnType<Tournament["teamById"]>> &
@@ -124,7 +120,7 @@ export function MatchPageProvider({
 	const leagueBlocksPlay =
 		data.schedule.phase !== "CLOSED" && data.schedule.phase !== "SCHEDULED";
 
-	const joinInfo = resolveJoinInfo({ tournament, data, teams });
+	const joinInfo = resolveMatchJoinInfo({ tournament, data, teams });
 
 	const tabs = resolveVisibleTabs({
 		canReportScore: resolveCanReportScore({
@@ -263,7 +259,7 @@ function resolveCanReportScore({
 	return isParticipant || tournament.isOrganizer(user);
 }
 
-function resolveJoinInfo({
+function resolveMatchJoinInfo({
 	tournament,
 	data,
 	teams,
@@ -277,27 +273,11 @@ function resolveJoinInfo({
 	const [teamOne, teamTwo] = teams;
 	if (!teamOne || !teamTwo) return null;
 
-	const hostingTeam = resolveHostingTeam([teamOne, teamTwo]);
-
-	const { bracketIdx, bracketType, groupNumber, hasRoundRobin } =
-		data.bracketContext;
-
-	const poolCode = tournament.resolvePoolCode({
-		hostingTeamId: hostingTeam.id,
-		groupLetters:
-			typeof groupNumber === "number" && bracketType === "round_robin"
-				? groupNumberToLetters(groupNumber)
-				: undefined,
-		bracketNumber:
-			hasRoundRobin && bracketType !== "round_robin" && bracketIdx !== null
-				? bracketIdx + 1
-				: undefined,
+	return resolveJoinInfo({
+		tournament,
+		teams: [teamOne, teamTwo],
+		bracketContext: data.bracketContext,
 	});
-
-	return {
-		pool: `${poolCode.prefix}${poolCode.suffix}`,
-		pass: resolveRoomPass(hostingTeam.id),
-	};
 }
 
 function resolveTeamsMissingActiveRoster(

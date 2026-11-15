@@ -5,6 +5,7 @@ import {
 	LayoutGrid,
 	Medal,
 	Menu,
+	RadioTower,
 	ScrollText,
 	Settings,
 	Trophy,
@@ -20,6 +21,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
+import { tournamentBroadcastsPage } from "~/features/broadcast/broadcast-urls";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
@@ -45,6 +47,7 @@ type NavItemKey =
 	| "matches"
 	| "teams"
 	| "streams"
+	| "broadcast"
 	| "results"
 	| "rules"
 	| "lfg"
@@ -69,18 +72,25 @@ const PRIORITY_ORDER: NavItemKey[] = [
 	"lfg",
 	"streams",
 	"rules",
+	"broadcast",
 	"admin",
 ];
 
 export function TournamentNav({
 	tournament,
 	streamsCount,
+	isBroadcastEnabled,
 }: {
 	tournament: Tournament;
 	streamsCount: number;
+	isBroadcastEnabled: boolean;
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const navItems = useNavItems({ tournament, streamsCount });
+	const navItems = useNavItems({
+		tournament,
+		streamsCount,
+		isBroadcastEnabled,
+	});
 	const { visibleCount, containerRef, measureRef } = useNavOverflow(
 		navItems.length,
 	);
@@ -161,9 +171,11 @@ export function TournamentNav({
 function useNavItems({
 	tournament,
 	streamsCount,
+	isBroadcastEnabled,
 }: {
 	tournament: Tournament;
 	streamsCount: number;
+	isBroadcastEnabled: boolean;
 }): NavItem[] {
 	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
@@ -268,6 +280,20 @@ function useNavItems({
 				: t("tournament:nav.subs"),
 			to: tournamentSubsPage(tournament.ctx.id),
 			icon: <UserPlus />,
+		};
+	}
+
+	if (
+		isBroadcastEnabled &&
+		tournament.isOrganizerOrStreamer(user) &&
+		!tournament.everyBracketOver
+	) {
+		items.broadcast = {
+			key: "broadcast",
+			label: t("tournament:nav.broadcast"),
+			to: tournamentBroadcastsPage(tournament.ctx.id),
+			icon: <RadioTower />,
+			end: false,
 		};
 	}
 

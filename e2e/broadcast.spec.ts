@@ -1,0 +1,393 @@
+import type { Browser } from "@playwright/test";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
+import type { Factories } from "./helpers/factories";
+import { expect, impersonate, test } from "./helpers/playwright";
+import { ROSTER_SIZE, startedTournamentTimes } from "./helpers/tournament";
+import { BroadcastDashboardPage } from "./pages/broadcast/broadcast-dashboard-page";
+import { BroadcastDesignPage } from "./pages/broadcast/broadcast-design-page";
+import { BroadcastProgramPage } from "./pages/broadcast/broadcast-program-page";
+import { TournamentMatchPage } from "./pages/tournament/tournament-match-page";
+
+const CAST_ACCOUNT = "broadcast_cast";
+const STREAM_DECK_KEY_COUNT = 15;
+const STREAM_DECK_KEYS = { casters: 5, bracket: 6, queueItem: 12, take: 14 };
+const TEAM_COUNT = 2;
+
+test.describe("Broadcast", () => {
+	test("casts a match, takes scenes, edits the queue and holds next", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+			isMatchCast: false,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		const dashboard = new BroadcastDashboardPage(page, pageArgs(tournament.id));
+		await dashboard.goto();
+		await expect(dashboard.locators.noFeaturedMatch).toBeVisible();
+
+		const match = new TournamentMatchPage(page);
+		await match.goto({
+			tournamentId: tournament.id,
+			matchId: tournament.matchId,
+		});
+		await match.openTab("admin");
+		await match.setCastedBy(CAST_ACCOUNT);
+
+		await dashboard.goto();
+		await expect(dashboard.locators.featuredMatch).toContainText("Team 1");
+		await expect(dashboard.locators.featuredMatch).toContainText("Team 2");
+		await expect(dashboard.viewHeading("live", "rosters")).toBeVisible();
+		await expect(dashboard.viewHeading("next", "game")).toBeVisible();
+
+		await expect(dashboard.locators.onGameStart).toBeVisible();
+		await dashboard.hold();
+		await expect(dashboard.locators.onGameStart).toBeHidden();
+		await expect(dashboard.locators.holdButton).toBeHidden();
+
+		await dashboard.take();
+		await expect(dashboard.viewHeading("live", "game")).toBeVisible();
+		await expect(dashboard.viewHeading("next", "results")).toBeVisible();
+
+		await dashboard.queueScene();
+		await expect(dashboard.queueItem(1)).toBeVisible();
+		await dashboard.pickScene("bracket");
+		await expect(dashboard.queueItem(1)).toContainText("Bracket");
+
+		await dashboard.selectQueueItem(0);
+		await dashboard.removeQueueItem(0);
+		await expect(dashboard.queueItem(1)).toBeHidden();
+		await expect(dashboard.viewHeading("next", "bracket")).toBeVisible();
+
+		await dashboard.take();
+		await expect(dashboard.viewHeading("live", "bracket")).toBeVisible();
+	});
+
+	test("cuts to the game on the program when the scanner sees it start", async ({
+		page,
+		browser,
+		baseURL,
+		factories,
+	}) => {
+		const tournament = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		const dashboard = new BroadcastDashboardPage(page, pageArgs(tournament.id));
+		await dashboard.goto();
+		const obs = await openObsSource({
+			browser,
+			baseURL: baseURL!,
+			tournamentId: tournament.id,
+			programKey: tournament.programKey,
+		});
+		await expect(obs.program.scene("rosters")).toBeVisible();
+
+		expect(await dashboard.postGameSignal({ type: "start", inks: null })).toBe(
+			200,
+		);
+
+		await expect(dashboard.viewHeading("live", "game")).toBeVisible();
+		await expect(obs.program.scene("game")).toBeVisible();
+
+		await obs.close();
+	});
+
+	test("shows a saved theme on the program", async ({
+		page,
+		browser,
+		baseURL,
+		factories,
+	}) => {
+		const tournament = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		const dashboard = new BroadcastDashboardPage(page, pageArgs(tournament.id));
+		await dashboard.goto();
+		const obs = await openObsSource({
+			browser,
+			baseURL: baseURL!,
+			tournamentId: tournament.id,
+			programKey: tournament.programKey,
+		});
+		await expect(obs.program.locators.canvas).not.toHaveCSS(
+			"outline-width",
+			"7px",
+		);
+
+		await dashboard.saveTheme(
+			"[data-broadcast] { outline: 7px solid rgb(1, 2, 3); }",
+		);
+
+		await expect(obs.program.locators.canvas).toHaveCSS("outline-width", "7px");
+
+		await obs.close();
+	});
+
+	test("loads a preset in the designer to edit and shows it on the program", async ({
+		page,
+		browser,
+		baseURL,
+		factories,
+	}) => {
+		const tournament = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		const design = new BroadcastDesignPage(page, pageArgs(tournament.id));
+		await design.goto();
+		await expect(design.locators.presetSelect).toContainText("Default");
+
+		await design.pickPreset("Zine");
+		await expect(design.locators.presetSelect).toContainText("Zine");
+		await expect(design.locators.editor).toHaveValue(/ZINE/);
+
+		const presetCss = await design.locators.editor.inputValue();
+		await design.locators.editor.fill(
+			`${presetCss}\n[data-broadcast] { outline: 7px solid rgb(1, 2, 3); }`,
+		);
+		await expect(design.locators.presetSelect).toContainText("Your own");
+		await design.save();
+
+		const obs = await openObsSource({
+			browser,
+			baseURL: baseURL!,
+			tournamentId: tournament.id,
+			programKey: tournament.programKey,
+		});
+		await expect(obs.program.locators.canvas).toHaveCSS("outline-width", "7px");
+		await expect(obs.program.locators.canvas).toHaveCSS(
+			"color",
+			"rgb(20, 20, 20)",
+		);
+
+		await design.pickPreset("Teletext");
+		await design.locators.confirmPresetButton.click();
+		await expect(design.locators.presetSelect).toContainText("Teletext");
+		await expect(design.locators.editor).toHaveValue(/TELETEXT/);
+
+		await obs.close();
+	});
+
+	test("keeps everyone but producers out of producing", async ({
+		page,
+		factories,
+	}) => {
+		const [organizer] = await factories.UserFactory.createMany(1);
+		const tournament = await createBroadcasting(factories, {
+			authorId: organizer.id,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		const dashboard = new BroadcastDashboardPage(page, pageArgs(tournament.id));
+		const program = new BroadcastProgramPage(page, pageArgs(tournament.id));
+
+		expect(await dashboard.responseStatus()).toBe(404);
+		expect(await dashboard.postGameSignal({ type: "start", inks: null })).toBe(
+			404,
+		);
+		expect(await program.responseStatus(null)).toBe(404);
+		expect(await program.responseStatus(tournament.programKey)).toBe(200);
+		expect(await program.refusedStreamStatus("scanner")).toBe(404);
+		expect(await program.refusedStreamStatus("source")).toBe(404);
+	});
+
+	test("keeps one OBS URL across tournaments, showing the broadcast it was pointed at", async ({
+		page,
+		browser,
+		baseURL,
+		factories,
+	}) => {
+		const lastWeek = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+		const thisWeek = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+		expect(thisWeek.programKey).toBe(lastWeek.programKey);
+
+		await impersonate(page, NZAP_TEST_ID);
+		const dashboard = new BroadcastDashboardPage(page, pageArgs(lastWeek.id));
+		await dashboard.goto();
+		await dashboard.saveTheme(
+			"[data-broadcast] { outline: 7px solid rgb(1, 2, 3); }",
+		);
+		const obs = await openObsSource({
+			browser,
+			baseURL: baseURL!,
+			tournamentId: thisWeek.id,
+			programKey: thisWeek.programKey,
+		});
+		await expect(obs.program.scene("rosters")).toBeVisible();
+		await expect(obs.program.locators.canvas).not.toHaveCSS(
+			"outline-width",
+			"7px",
+		);
+
+		await dashboard.pointProgram();
+
+		await expect(dashboard.locators.programShowsThis).toBeVisible();
+		await expect(obs.program.locators.canvas).toHaveCSS("outline-width", "7px");
+
+		await obs.close();
+	});
+
+	test("runs the broadcast from a Stream Deck", async ({ page, factories }) => {
+		const tournament = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		await page.addInitScript(installFakeStreamDeck);
+		const dashboard = new BroadcastDashboardPage(page, pageArgs(tournament.id));
+		await dashboard.goto();
+		await expect(dashboard.viewHeading("next", "game")).toBeVisible();
+		await expect
+			.poll(() => page.evaluate(() => window.fakeStreamDeck.drawnKeyCount()))
+			.toBe(STREAM_DECK_KEY_COUNT);
+
+		await page.evaluate(
+			(key) => window.fakeStreamDeck.press(key),
+			STREAM_DECK_KEYS.casters,
+		);
+		await expect(dashboard.viewHeading("next", "casters")).toBeVisible();
+
+		await page.evaluate(
+			(key) => window.fakeStreamDeck.press(key),
+			STREAM_DECK_KEYS.take,
+		);
+		await expect(dashboard.viewHeading("live", "casters")).toBeVisible();
+
+		await page.evaluate(
+			(key) => window.fakeStreamDeck.press(key),
+			STREAM_DECK_KEYS.queueItem,
+		);
+		await expect(dashboard.queueItem(1)).toBeVisible();
+		await page.evaluate(
+			(key) => window.fakeStreamDeck.press(key),
+			STREAM_DECK_KEYS.bracket,
+		);
+		await expect(dashboard.queueItem(1)).toContainText("Bracket");
+	});
+});
+
+function pageArgs(tournamentId: number) {
+	return { tournamentId, slug: CAST_ACCOUNT };
+}
+
+/** The setup of the `tournament-broadcast` dev scenario: two teams, their match cast on the channel, the author's OBS URL showing it. */
+async function createBroadcasting(
+	factories: Factories,
+	{ authorId, isMatchCast }: { authorId: number; isMatchCast?: boolean },
+) {
+	const players = await factories.UserFactory.createMany(
+		TEAM_COUNT * ROSTER_SIZE,
+	);
+
+	return factories.TournamentFactory.createBroadcasting(
+		{ authorId, startTimes: startedTournamentTimes() },
+		{
+			teamRosters: Array.from({ length: TEAM_COUNT }, (_, idx) =>
+				players
+					.slice(idx * ROSTER_SIZE, (idx + 1) * ROSTER_SIZE)
+					.map((player) => player.id),
+			),
+			twitchAccount: CAST_ACCOUNT,
+			isMatchCast,
+		},
+	);
+}
+
+/** The program in a browser of its own with no session, as OBS shows it from the keyed URL. */
+async function openObsSource({
+	browser,
+	baseURL,
+	tournamentId,
+	programKey,
+}: {
+	browser: Browser;
+	baseURL: string;
+	tournamentId: number;
+	programKey: string;
+}) {
+	const context = await browser.newContext({
+		baseURL,
+		viewport: { width: 1920, height: 1080 },
+	});
+	const program = new BroadcastProgramPage(
+		await context.newPage(),
+		pageArgs(tournamentId),
+	);
+	await program.goto(programKey);
+
+	return { program, close: () => context.close() };
+}
+
+declare global {
+	interface Window {
+		fakeStreamDeck: {
+			drawnKeyCount: () => number;
+			press: (keyIndex: number) => void;
+		};
+	}
+}
+
+/** A Stream Deck MK.2 the browser was allowed to use before, on `navigator.hid` (runs in the page). */
+function installFakeStreamDeck() {
+	const KEY_INPUT_OFFSET = 3;
+	const IMAGE_REPORT_ID = 0x02;
+	const drawnKeys = new Set<number>();
+	const device = Object.assign(new EventTarget(), {
+		vendorId: 0x0fd9,
+		productId: 0x80,
+		productName: "Stream Deck MK.2",
+		opened: false,
+		collections: [],
+		async open() {
+			device.opened = true;
+		},
+		async close() {
+			device.opened = false;
+		},
+		async forget() {
+			device.opened = false;
+		},
+		async sendReport(reportId: number, data: Uint8Array) {
+			if (reportId === IMAGE_REPORT_ID) drawnKeys.add(data[1]);
+		},
+		async sendFeatureReport() {},
+		async receiveFeatureReport() {
+			return new DataView(new ArrayBuffer(32));
+		},
+	});
+	const inputReport = (data: Uint8Array) =>
+		device.dispatchEvent(
+			Object.assign(new Event("inputreport"), {
+				reportId: 0x01,
+				data: new DataView(data.buffer),
+			}),
+		);
+
+	Object.defineProperty(navigator, "hid", {
+		configurable: true,
+		value: Object.assign(new EventTarget(), {
+			getDevices: async () => [device],
+			requestDevice: async () => [device],
+		}),
+	});
+	window.fakeStreamDeck = {
+		drawnKeyCount: () => drawnKeys.size,
+		press: (keyIndex) => {
+			const down = new Uint8Array(32);
+			down[KEY_INPUT_OFFSET + keyIndex] = 1;
+			inputReport(down);
+			inputReport(new Uint8Array(32));
+		},
+	};
+}

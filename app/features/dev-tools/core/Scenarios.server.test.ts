@@ -1,7 +1,13 @@
 import { describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
+import { broadcastProgramSearchParams } from "~/features/broadcast/broadcast-search-params";
+import {
+	findProgram,
+	isBroadcastProducer,
+} from "~/features/broadcast/broadcast-utils.server";
 import * as LobbySet from "~/features/lobbies/core/LobbySet";
 import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
+import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import * as Scenarios from "./Scenarios.server";
 
 const userExists = async (userId: number) =>
@@ -66,6 +72,28 @@ describe("Scenarios.run", () => {
 
 			expect(typeof match.opponentOne?.id).toBe("number");
 			expect(typeof match.opponentTwo?.id).toBe("number");
+		},
+	);
+
+	test.each(["organizer", "streamer"])(
+		"tournament-broadcast lands a producer on the dashboard of a channel their OBS URL shows (%s)",
+		async (role) => {
+			const outcome = await Scenarios.run("tournament-broadcast", { role });
+			if (outcome.status !== "ok") throw new Error(outcome.status);
+
+			const [, , tournamentId, , slug] = outcome.result.path.split("/");
+			const tournament = await tournamentFromDB(Number(tournamentId));
+			const { key: programKey } = broadcastProgramSearchParams.parse(
+				new URL(outcome.result.links?.[0]?.path ?? "", "http://localhost"),
+			);
+			const program = await findProgram(programKey);
+
+			expect(
+				isBroadcastProducer(tournament, { id: outcome.result.userId }),
+			).toBe(true);
+			expect(program?.userId).toBe(outcome.result.userId);
+			expect(program?.tournament?.ctx.id).toBe(tournament.ctx.id);
+			expect(program?.account).toBe(slug);
 		},
 	);
 

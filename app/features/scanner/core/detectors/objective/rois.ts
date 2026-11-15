@@ -66,6 +66,20 @@ export const GATE_TIMER_MAX_MEAN = 40;
 export const GATE_TIMER_MIN_MAX_BRIGHTNESS = 200;
 
 /**
+ * Overtime swaps the M:SS for an orange-to-yellow "Overtime!", wider than the
+ * digits, in a box the holding team's ink fills partly or wholly, so none of
+ * the dark probes is left. Warm = red at least `OVERTIME_WARM_MIN_RED` and
+ * that much over blue, green at most `OVERTIME_WARM_MAX_GREEN`: of
+ * `TIMER_DIGIT_ROI` the text alone is 0.13-0.19 warm (dark and purple fills,
+ * the text pulsing paler), gold and orange fills 0.52-0.63 (SWS and IPL
+ * casts), while the last minute's pale yellow M:SS stays under 0.02.
+ */
+export const OVERTIME_WARM_MIN_RED = 170;
+export const OVERTIME_WARM_MIN_RED_OVER_BLUE = 100;
+export const OVERTIME_WARM_MAX_GREEN = 200;
+export const OVERTIME_WARM_MIN_FRACTION = 0.08;
+
+/**
  * The timer's colon sits at one x whatever the digits: two bright dots with
  * dark between. With no counter under the timer (Turf War) it is what tells
  * the box from a dark lookalike pill (a minimap player card). Attested dots
@@ -215,6 +229,10 @@ export const STATUS_TEAM_HUE_ROIS: readonly [Roi, Roi] = [
 	{ x: 500, y: 45, w: 370, h: 41 },
 	{ x: 1050, y: 45, w: 370, h: 41 },
 ];
+
+/** Reported team hue: refined over the ink this close to the modal bin's center, from at least this many samples. */
+export const STATUS_TEAM_HUE_REFINE_DIST = 15;
+export const STATUS_TEAM_HUE_MIN_SAMPLES = 200;
 
 /**
  * Slot state off the apex fractions. Over every fixture slot: alive apexes

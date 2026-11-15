@@ -1,0 +1,190 @@
+/* Sizes and spots of the results scene, the rules below follow them. */
+:global([data-broadcast]) {
+	--results-stage-size: 56px;
+	--results-team-header-height: 104px;
+	--results-team-name-size: 34px;
+	--results-team-score-size: 56px;
+	--results-player-height: 108px;
+	--results-player-name-size: 28px;
+	--results-margin: 56px;
+	--results-map-width: 540px;
+	--results-gap: 48px;
+}
+
+.results {
+	font-family: var(--bc-font-display);
+}
+
+.map {
+	border-radius: calc(var(--bc-radius) * 3);
+	background: var(--bc-surface);
+
+	/* the text over the bottom of the footage */
+	&::after {
+		background: linear-gradient(to bottom, transparent, var(--bc-bg) 85%);
+		content: "";
+	}
+}
+
+.mapVideo {
+	object-fit: cover;
+}
+
+.round {
+	color: var(--bc-text-muted);
+	font-size: 26px;
+	font-weight: var(--bc-weight-semibold);
+}
+
+.game {
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-surface-high);
+	color: var(--bc-text-muted);
+	font-size: 24px;
+	font-weight: var(--bc-weight-bold);
+
+	&[data-status="played"],
+	&[data-status="current"] {
+		background: var(--team-color);
+		color: var(--team-color-text);
+	}
+
+	&[data-status="current"] {
+		text-transform: uppercase;
+	}
+}
+
+.mode {
+	color: var(--bc-text-muted);
+	font-size: 28px;
+	font-weight: var(--bc-weight-semibold);
+}
+
+.stage {
+	font-size: var(--results-stage-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 1.05;
+}
+
+.teamHeader {
+	border-radius: var(--bc-radius);
+	background:
+		linear-gradient(
+			to right,
+			color-mix(in oklch, var(--team-color) 35%, transparent),
+			transparent 50%
+		),
+		var(--bc-surface);
+
+	[data-winner] > & {
+		background: var(--team-color);
+		color: var(--team-color-text);
+	}
+}
+
+.teamLogo {
+	/* a logo-less team's monogram is filled with the team color too */
+	[data-winner] & {
+		box-shadow: 0 0 0 3px var(--team-color-text);
+	}
+}
+
+/* a long name wraps to a second line, then shrinks to fit (useFitText) */
+.teamName {
+	font-size: var(--results-team-name-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 1.1;
+	text-transform: uppercase;
+}
+
+.result {
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-surface-high);
+	color: var(--bc-text-muted);
+	font-size: 22px;
+	font-weight: var(--bc-weight-bold);
+	text-transform: uppercase;
+
+	[data-winner] & {
+		background: var(--team-color-text);
+		color: var(--team-color);
+	}
+}
+
+.teamScore {
+	font-size: var(--results-team-score-size);
+	font-weight: var(--bc-weight-bold);
+	line-height: 1;
+	text-align: right;
+
+	.team:not([data-winner]) & {
+		color: var(--bc-text-muted);
+	}
+}
+
+.player {
+	border: var(--bc-border-width) solid var(--bc-border);
+	border-radius: var(--bc-radius);
+	background: var(--bc-surface);
+}
+
+.weapon {
+	border-radius: 50%;
+	background: var(--bc-bg);
+}
+
+.playerName {
+	font-size: var(--results-player-name-size);
+	font-weight: var(--bc-weight-semibold);
+	line-height: 1.15;
+}
+
+.objective {
+	border: var(--bc-border-width) solid var(--bc-border);
+	border-radius: var(--bc-radius);
+	background: var(--bc-surface);
+}
+
+.controlLabel {
+	color: var(--bc-text-muted);
+	font-size: 24px;
+	font-weight: var(--bc-weight-semibold);
+	text-transform: uppercase;
+}
+
+/* the time neither team held the objective is the gap between the two shares */
+.controlBar {
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-surface-high);
+}
+
+.controlShare {
+	background: var(--team-color);
+	color: var(--team-color-text);
+	font-size: 26px;
+	font-weight: var(--bc-weight-bold);
+}
+
+.gridLine {
+	stroke: var(--bc-border);
+	stroke-dasharray: 6 8;
+	stroke-width: 2;
+}
+
+.line {
+	fill: none;
+	stroke: var(--team-color);
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 6;
+}
+
+.lane {
+	fill: var(--team-color);
+}
+
+.tick {
+	fill: var(--bc-text-muted);
+	font-size: 20px;
+	font-weight: var(--bc-weight-semibold);
+}

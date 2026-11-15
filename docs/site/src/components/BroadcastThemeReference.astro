@@ -1,0 +1,240 @@
+---
+// the broadcast overlays' theming contract read off the code, so the theme guide can't drift from it
+import { Code } from "@astrojs/starlight/components";
+import { type ChildNode, parse } from "postcss";
+import {
+	BROADCAST_SCENE_GROUPS,
+	BROADCAST_SCENE_PARTS,
+	BROADCAST_SCENES,
+	BROADCAST_THEME_STYLESHEETS,
+} from "../../../../app/features/broadcast-cast/broadcast-cast-constants.ts";
+import { BROADCAST_THEME_DEFAULTS } from "../../../../app/features/broadcast-cast/broadcast-cast-theme-sources.ts";
+
+interface Props {
+	section: "variables" | "parts" | "keyframes" | "classes";
+}
+
+/** Designs that aren't a scene of their own, with where they show. */
+const SHARED_DESIGNS: Record<string, string> = {
+	hold: BROADCAST_SCENE_GROUPS.find((group) => group.key === "hold")!
+		.scenes.map((scene) => `"${scene}"`)
+		.join(", "),
+	matchup: "the featured match line some scenes show",
+	ticker:
+		"the other matches' scores along the bottom of the game and hold scenes",
+	stinger: "the transition over every scene, outside any [data-scene]",
+};
+
+const { section } = Astro.props;
+
+const variableBlocks = BROADCAST_THEME_STYLESHEETS.flatMap((stylesheet) => {
+	const css = variablesOf(stylesheet);
+	return css ? [{ stylesheet, css }] : [];
+});
+
+const keyframes = BROADCAST_THEME_STYLESHEETS.flatMap((stylesheet) =>
+	[stylesheet, `${stylesheet}.layout` as const].flatMap((source) =>
+		keyframesOf(BROADCAST_THEME_DEFAULTS[source]).map((keyframe) => ({
+			...keyframe,
+			stylesheet,
+		})),
+	),
+);
+const animationTokens = new Map(
+	Array.from(
+		BROADCAST_THEME_DEFAULTS.BroadcastOverlay.matchAll(
+			/(--bc-anim-[\w-]+):\s*([\w-]+);/g,
+		),
+		([, token, name]) => [name, token],
+	),
+);
+
+const parts = Object.entries(BROADCAST_SCENE_PARTS).map(([design, names]) => ({
+	design,
+	scenes: (BROADCAST_SCENES as readonly string[]).includes(design)
+		? `"${design}"`
+		: SHARED_DESIGNS[design],
+	names,
+}));
+
+const classes = BROADCAST_THEME_STYLESHEETS.map((stylesheet) => ({
+	stylesheet,
+	names: [
+		...new Set(
+			[stylesheet, `${stylesheet}.layout` as const].flatMap((source) =>
+				Array.from(
+					BROADCAST_THEME_DEFAULTS[source].matchAll(
+						new RegExp(`\\.${stylesheet}-(-?[_a-zA-Z][\\w-]*)`, "g"),
+					),
+					([, name]) => `.${stylesheet}-${name}`,
+				),
+			),
+		),
+	],
+}));
+
+/** The variables a stylesheet sets on the canvas, with their comments, as `[data-broadcast]` theme CSS. */
+function variablesOf(stylesheet: (typeof BROADCAST_THEME_STYLESHEETS)[number]) {
+	const lines: string[] = [];
+
+	parse(BROADCAST_THEME_DEFAULTS[stylesheet]).each((node) => {
+		if (
+			node.type !== "rule" ||
+			!["[data-broadcast]", ".BroadcastOverlay-canvas"].includes(node.selector)
+		) {
+			return;
+		}
+
+		const nodes = node.nodes ?? [];
+		for (const [i, child] of nodes.entries()) {
+			if (child.type === "decl" && isVariable(child)) {
+				lines.push(`\t${child.prop}: ${child.value};`);
+			} else if (child.type === "comment" && describesVariable(nodes, i)) {
+				if (lines.length > 0) lines.push("");
+				lines.push(`\t${child.toString()}`);
+			}
+		}
+	});
+
+	return lines.length > 0 ? `[data-broadcast] {\n${lines.join("\n")}\n}` : null;
+}
+
+function isVariable(node: ChildNode | undefined) {
+	return node?.type === "decl" && node.prop.startsWith("--");
+}
+
+/** Whether the comment is followed by a variable, not by other rules left out of the reference. */
+function describesVariable(nodes: ChildNode[], index: number) {
+	const next = nodes.slice(index + 1).find((node) => node.type !== "comment");
+	return isVariable(next);
+}
+
+/** The keyframes of the CSS with the comment right before each, if any. */
+function keyframesOf(css: string) {
+	const found: Array<{ name: string; description: string }> = [];
+
+	parse(css).each((node) => {
+		if (node.type !== "atrule" || node.name !== "keyframes") return;
+
+		const previous = node.prev();
+		const description =
+			previous?.type === "comment"
+				? previous.text
+						.split("\n")
+						.map((line) => line.replace(/^\s*\*?\s*/, ""))
+						.join(" ")
+						.trim()
+				: "";
+		found.push({
+			name: node.params.trim(),
+			description: description.charAt(0).toUpperCase() + description.slice(1),
+		});
+	});
+
+	return found;
+}
+---
+
+{
+	section === "variables"
+		? variableBlocks.map(({ stylesheet, css }) => (
+				<>
+					<p>
+						<strong>{stylesheet}</strong>
+					</p>
+					<Code code={css} lang="css" />
+				</>
+			))
+		: null
+}
+
+{
+	section === "parts" ? (
+		<table>
+			<thead>
+				<tr>
+					<th>Design</th>
+					<th>
+						<code>data-scene</code>
+					</th>
+					<th>
+						<code>data-part</code>s
+					</th>
+				</tr>
+			</thead>
+			<tbody>
+				{parts.map(({ design, scenes, names }) => (
+					<tr>
+						<td>{design}</td>
+						<td>{scenes}</td>
+						<td>
+							{names.map((name) => (
+								<>
+									<code>{name}</code>{" "}
+								</>
+							))}
+						</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	) : null
+}
+
+{
+	section === "keyframes" ? (
+		<table>
+			<thead>
+				<tr>
+					<th>Keyframes</th>
+					<th>Variable</th>
+					<th>What</th>
+					<th>Stylesheet</th>
+				</tr>
+			</thead>
+			<tbody>
+				{keyframes.map(({ name, description, stylesheet }) => (
+					<tr>
+						<td>
+							<code>{name}</code>
+						</td>
+						<td>
+							{animationTokens.has(name) ? (
+								<code>{animationTokens.get(name)}</code>
+							) : null}
+						</td>
+						<td>{description}</td>
+						<td>{stylesheet}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	) : null
+}
+
+{
+	section === "classes" ? (
+		<table>
+			<thead>
+				<tr>
+					<th>Stylesheet</th>
+					<th>Classes</th>
+				</tr>
+			</thead>
+			<tbody>
+				{classes.map(({ stylesheet, names }) => (
+					<tr>
+						<td>{stylesheet}</td>
+						<td>
+							{names.map((name) => (
+								<>
+									<code>{name}</code>{" "}
+								</>
+							))}
+						</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	) : null
+}

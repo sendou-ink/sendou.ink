@@ -24,6 +24,7 @@ import { actAs } from "../core/actAs";
 import { backdate } from "../core/backdate";
 import { defineFactory } from "../core/defineFactory";
 import { eventDefaults } from "./CalendarEventFactory";
+import * as TournamentBroadcastFactory from "./TournamentBroadcastFactory";
 import * as TournamentTeamFactory from "./TournamentTeamFactory";
 
 const SINGLE_ELIMINATION: TournamentSettings["bracketProgression"] = [
@@ -275,7 +276,7 @@ export async function startBracket(
 	return startedBracket.data.match.map((match) => ({ id: match.id }));
 }
 
-/** Marks a match casted by a Twitch account, adding the account to the cast accounts first like the stream page does. */
+/** Marks a match casted by a Twitch account, adding the account to the cast accounts (and its broadcast chat room) first like the stream page does. */
 export async function castMatch({
 	tournamentId,
 	matchId,
@@ -285,18 +286,7 @@ export async function castMatch({
 	matchId: number;
 	twitchAccount: string;
 }) {
-	const tournament = await TournamentRepository.findById(tournamentId);
-	invariant(tournament, `Tournament ${tournamentId} not found`);
-
-	const castAccount = { platform: "TWITCH" as const, account: twitchAccount };
-
-	await TournamentRepository.updateCastAccounts({
-		tournamentId,
-		castAccounts: [
-			...(tournament.castAccounts ?? []),
-			{ ...castAccount, name: twitchAccount },
-		],
-	});
+	const castAccount = await addCastAccount({ tournamentId, twitchAccount });
 	await TournamentRepository.setMatchAsCasted({
 		tournamentId,
 		matchId,
@@ -304,6 +294,84 @@ export async function castMatch({
 	});
 
 	clearTournamentDataCache(tournamentId);
+}
+
+/**
+ * A tournament with its first bracket started, `roundsPlayed` rounds of it played, and its first playable match cast
+ * on a Twitch account whose broadcast `programUserId`'s OBS URL shows (the author's by default): a broadcast ready to
+ * produce. Teams are named "Team 1", "Team 2", ... by `teamRosters` order. `isMatchCast: false` adds the cast account
+ * but leaves the match to be cast. Returns the match and the OBS URL's key.
+ */
+export async function createBroadcasting(
+	overrides: Parameters<typeof create>[0],
+	{
+		teamRosters,
+		twitchAccount,
+		roundsPlayed = 0,
+		isMatchCast = true,
+		programUserId = overrides.authorId,
+	}: {
+		teamRosters: number[][];
+		twitchAccount: string;
+		roundsPlayed?: number;
+		isMatchCast?: boolean;
+		programUserId?: number;
+	},
+) {
+	const tournament = await create(overrides);
+	for (const [idx, memberUserIds] of teamRosters.entries()) {
+		await TournamentTeamFactory.create(
+			{
+				tournamentId: tournament.id,
+				team: { name: `Team ${idx + 1}`, prefersNotToHost: 0, teamId: null },
+				memberUserIds,
+			},
+			{ isCheckedIn: true },
+		);
+	}
+	await startBracket(tournament.id);
+	for (let round = 0; round < roundsPlayed; round++) {
+		await playMatches(tournament.id);
+	}
+
+	const match = await firstPlayableMatch(tournament.id);
+	if (isMatchCast) {
+		await castMatch({
+			tournamentId: tournament.id,
+			matchId: match.matchId,
+			twitchAccount,
+		});
+	} else {
+		await addCastAccount({ tournamentId: tournament.id, twitchAccount });
+		clearTournamentDataCache(tournament.id);
+	}
+	invariant(programUserId, "Expected an authorId or a programUserId");
+	const programKey = await TournamentBroadcastFactory.pointProgram({
+		userId: programUserId,
+		tournamentId: tournament.id,
+		channel: { platform: "TWITCH", account: twitchAccount },
+	});
+
+	return { ...tournament, matchId: match.matchId, programKey };
+}
+
+/** The first match of the first bracket with both teams known and no winner yet, and its first team. */
+export async function firstPlayableMatch(tournamentId: number) {
+	const tournament = await tournamentFromDB(tournamentId);
+	const match = tournament
+		.bracketByIdx(0)
+		?.data.match.find(
+			(candidate) =>
+				typeof candidate.opponent1?.id === "number" &&
+				typeof candidate.opponent2?.id === "number" &&
+				!candidate.winnerSide,
+		);
+	invariant(
+		typeof match?.opponent1?.id === "number",
+		"Started bracket has no playable match",
+	);
+
+	return { matchId: match.id, teamId: match.opponent1.id };
 }
 
 interface PlayedMatch {
@@ -606,4 +674,32 @@ async function findMatch(matchId: number) {
 	invariant(match, `Match ${matchId} not found`);
 
 	return match;
+}
+
+/** Adds a Twitch account to the tournament's cast accounts with its broadcast chat room, as the stream page does. */
+async function addCastAccount({
+	tournamentId,
+	twitchAccount,
+}: {
+	tournamentId: number;
+	twitchAccount: string;
+}) {
+	const tournament = await TournamentRepository.findById(tournamentId);
+	invariant(tournament, `Tournament ${tournamentId} not found`);
+
+	const castAccount = { platform: "TWITCH" as const, account: twitchAccount };
+
+	await TournamentRepository.updateCastAccounts({
+		tournamentId,
+		castAccounts: [
+			...(tournament.castAccounts ?? []),
+			{ ...castAccount, name: twitchAccount },
+		],
+	});
+	await TournamentBroadcastFactory.create({
+		tournamentId,
+		channel: castAccount,
+	});
+
+	return castAccount;
 }

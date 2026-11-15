@@ -462,6 +462,8 @@
 	"chat.room.match": "Match #{{id}}",
 	"chat.room.matchShort": "Match",
 	"chat.room.teamShort": "Team",
+	"chat.room.broadcast": "{{channel}} broadcast",
+	"chat.room.broadcastShort": "Broadcast",
 	"chat.room.scrim": "Scrim",
 	"chat.room.lobby": "Lobby",
 	"chat.room.lobbyTeamAlpha": "Team Alpha",
@@ -601,5 +603,16 @@
 	"vc.YES": "Can VC",
 	"vc.NO": "No VC",
 	"vc.LISTEN_ONLY": "Listen only",
-	"matchProfile.from": "From your match profile"
+	"matchProfile.from": "From your match profile",
+	"streamDeck.header": "Stream Deck",
+	"streamDeck.support": "Works in Chromium browsers (Chrome, Edge, Opera, …) with a Stream Deck of 3 rows of 5 keys, like the Stream Deck MK.2.",
+	"streamDeck.connect": "Connect Stream Deck",
+	"streamDeck.disconnect": "Disconnect",
+	"streamDeck.connected": "{{name}} connected",
+	"streamDeck.noWebHid": "This browser can't connect to a Stream Deck. Open this page in Chrome or Edge.",
+	"streamDeck.unsupportedModel": "{{name}} isn't supported yet. Only Stream Decks with 3 rows of 5 keys are.",
+	"streamDeck.openFailed": "Couldn't connect to the Stream Deck. Is another tab or app using it?",
+	"streamDeck.drawFailed": "Couldn't draw on the Stream Deck ({{message}}). Is another app drawing on it too?",
+	"streamDeck.keys": "Stream Deck keys",
+	"streamDeck.elgatoApp": "Quit Elgato's Stream Deck app first, as it draws on the same keys."
 }

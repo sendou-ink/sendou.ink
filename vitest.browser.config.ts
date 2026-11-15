@@ -1,9 +1,12 @@
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
+import { cssModulesLayer } from "./vite-css-plugins.ts";
 
 const headless = process.env.BROWSER_HEADLESS === "true";
 
 export default defineConfig({
+	// module styles in their cascade layers as in the app, so unlayered CSS (a broadcast theme) beats them here too
+	plugins: [cssModulesLayer()],
 	define: {
 		"process.env.NODE_ENV": JSON.stringify("test"),
 	},
