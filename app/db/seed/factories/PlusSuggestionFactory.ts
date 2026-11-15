@@ -1,13 +1,16 @@
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import {
+	lastCompletedVoting,
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
-import { invariant } from "~/utils/invariant";
 import { defineFactory } from "../core/defineFactory";
 import { faker } from "../core/faker";
 
-/** `authorId` suggests `suggestedId` for `tier`. Defaults to the upcoming voting's month, i.e. currently open. */
+/**
+ * `authorId` suggests `suggestedId` for `tier`. Defaults to the upcoming voting's month, i.e. currently open,
+ * or the last voting's while the next season isn't listed yet.
+ */
 export const { create } = defineFactory({
 	defaults: () => ({
 		...upcomingVotingMonthYear(),
@@ -18,8 +21,8 @@ export const { create } = defineFactory({
 });
 
 function upcomingVotingMonthYear() {
-	const range = nextNonCompletedVoting(new Date());
-	invariant(range, "No next voting found");
+	const now = new Date();
+	const range = nextNonCompletedVoting(now);
 
-	return rangeToMonthYear(range);
+	return range ? rangeToMonthYear(range) : lastCompletedVoting(now);
 }

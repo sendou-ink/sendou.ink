@@ -106,7 +106,7 @@ describe("StreamDeckKeys", () => {
 	test("connects a deck allowed before and draws every key", async () => {
 		const screen = await render(<Page />);
 
-		await expect.poll(() => device.drawnKeyCount()).toBe(KEY_COUNT);
+		await expectEveryKeyDrawn();
 		await expect
 			.element(screen.getByText("Stream Deck MK.2 connected"))
 			.toBeVisible();
@@ -121,14 +121,14 @@ describe("StreamDeckKeys", () => {
 		device.forgetDrawn();
 		await render(<Page />);
 
-		await expect.poll(() => device.drawnKeyCount()).toBe(KEY_COUNT);
+		await expectEveryKeyDrawn();
 		expect(device.opened).toBe(true);
 		expect(device.openCount).toBe(openCount);
 	});
 
 	test("does what the pressed key does", async () => {
 		await render(<Page />);
-		await expect.poll(() => device.drawnKeyCount()).toBe(KEY_COUNT);
+		await expectEveryKeyDrawn();
 
 		device.press(14);
 		device.press(5);
@@ -138,7 +138,7 @@ describe("StreamDeckKeys", () => {
 
 	test("pressing a disabled key does nothing", async () => {
 		await render(<Page disabledKeyIndex={0} />);
-		await expect.poll(() => device.drawnKeyCount()).toBe(KEY_COUNT);
+		await expectEveryKeyDrawn();
 
 		device.press(0);
 
@@ -157,7 +157,7 @@ describe("StreamDeckKeys", () => {
 		device.isFailingWrites = false;
 		await screen.rerender(<Page />);
 
-		await expect.poll(() => device.drawnKeyCount()).toBe(KEY_COUNT);
+		await expectEveryKeyDrawn();
 		await expect
 			.element(screen.getByText(/Couldn't draw on the Stream Deck/))
 			.not.toBeInTheDocument();
@@ -165,7 +165,7 @@ describe("StreamDeckKeys", () => {
 
 	test("disconnecting closes the deck until connected again", async () => {
 		const screen = await render(<Page />);
-		await expect.poll(() => device.drawnKeyCount()).toBe(KEY_COUNT);
+		await expectEveryKeyDrawn();
 
 		device.forgetDrawn();
 		await screen.getByRole("button", { name: "Disconnect" }).click();
@@ -180,7 +180,7 @@ describe("StreamDeckKeys", () => {
 
 		device.forgetDrawn();
 		await later.getByRole("button", { name: "Connect Stream Deck" }).click();
-		await expect.poll(() => device.drawnKeyCount()).toBe(KEY_COUNT);
+		await expectEveryKeyDrawn();
 	});
 });
 
@@ -205,6 +205,13 @@ function Page({ disabledKeyIndex }: { disabledKeyIndex?: number }) {
 			</StreamDeckSetup>
 		</>
 	);
+}
+
+// each key goes through the browser's async JPEG encoding, slow while the whole suite runs at once
+function expectEveryKeyDrawn() {
+	return expect
+		.poll(() => device.drawnKeyCount(), { timeout: 5000 })
+		.toBe(KEY_COUNT);
 }
 
 function wait(ms: number) {

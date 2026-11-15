@@ -107,7 +107,7 @@ export function Widget({
 				return widget.data.bio ? <article>{widget.data.bio}</article> : null;
 			case "bio-md":
 				return widget.data.bio ? (
-					<article className={styles.mdBio}>
+					<article className={styles.markdown}>
 						<React.Suspense fallback={null}>
 							<Markdown>{widget.data.bio}</Markdown>
 						</React.Suspense>
@@ -369,7 +369,7 @@ export function Widget({
 				);
 			case "markdown":
 				return widget.data.content ? (
-					<article>
+					<article className={styles.markdown}>
 						<React.Suspense fallback={null}>
 							<Markdown>{widget.data.content}</Markdown>
 						</React.Suspense>

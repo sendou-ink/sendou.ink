@@ -166,7 +166,9 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 						<article className="w-full">
 							<h2 className={styles.votingBioHeader}>Bio</h2>
 							{currentUser.user.bio.markdown ? (
-								<Markdown>{currentUser.user.bio.text}</Markdown>
+								<div className={styles.votingBioMarkdown}>
+									<Markdown>{currentUser.user.bio.text}</Markdown>
+								</div>
 							) : (
 								currentUser.user.bio.text
 							)}
