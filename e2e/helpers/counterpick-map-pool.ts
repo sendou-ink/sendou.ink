@@ -23,6 +23,17 @@ export function pickedCounterpickMap(
 
 /** Picks the default amount of counterpick maps for every ranked mode, skipping banned ones, and returns them. */
 export async function pickCounterpickMaps(page: Page) {
+	const picked = validCounterpickMaps();
+
+	for (const { mode, stageId } of picked) {
+		await counterpickMap(page, mode, stageId).click();
+	}
+
+	return picked;
+}
+
+/** The maps {@link pickCounterpickMaps} picks: a complete pool for the default team pick settings. */
+export function validCounterpickMaps() {
 	const picked: Array<{ mode: ModeShort; stageId: StageId }> = [];
 	let stageId = FIRST_COUNTERPICK_STAGE_ID;
 
@@ -33,7 +44,6 @@ export async function pickCounterpickMaps(page: Page) {
 				stageId++;
 			}
 
-			await counterpickMap(page, mode, stageId as StageId).click();
 			picked.push({ mode, stageId: stageId as StageId });
 			stageId++;
 		}

@@ -173,6 +173,7 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 			_key: crypto.randomUUID(),
 		}));
 		importedValues.ownerId = owner ? String(owner.userId) : "";
+		importedValues.mapPool = importedTeam.mapPool ?? [];
 
 		setImportedLinkedTeam(
 			importedTeam.linkedTeam

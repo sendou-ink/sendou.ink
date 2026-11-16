@@ -98,6 +98,11 @@ export class TournamentAdminRegistrationPage {
 		return pickedCounterpickMap(this.page, mode, stageId).click();
 	}
 
+	/** A stage of the map pool picker, whether picked or not. */
+	counterpickMap(mode: ModeShort, stageId: StageId) {
+		return counterpickMap(this.page, mode, stageId);
+	}
+
 	pickedCounterpickMap(mode: ModeShort, stageId: StageId) {
 		return pickedCounterpickMap(this.page, mode, stageId);
 	}

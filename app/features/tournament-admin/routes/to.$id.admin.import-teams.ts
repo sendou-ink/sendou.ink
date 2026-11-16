@@ -1,8 +1,12 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as TeamPick from "~/features/tournament/core/TeamPick";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	requireTournamentVisible,
+	type TournamentTeamFull,
 	tournamentDataCached,
+	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import type { SerializeFrom } from "~/utils/remix";
@@ -12,8 +16,10 @@ import { tournamentImportTeamsSearchParams } from "../tournament-admin-search-pa
 export type ImportTeamsLoaderData = SerializeFrom<typeof loader>;
 
 /** Teams (with rosters) of another tournament for importing into the registration form. */
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = requireUser();
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+	const { tournament, user } = await tournamentFromParams(params, {
+		for: "organizer",
+	});
 
 	const fromTournamentId = badRequestIfFalsy(
 		tournamentImportTeamsSearchParams.parse(request).fromTournamentId,
@@ -43,6 +49,24 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				tournamentName: member.tournamentName,
 				isOwner: member.role === "OWNER",
 			})),
+			mapPool: importableMapPool(team.mapPool, tournament),
 		})),
 	};
 };
+
+/** The team's picks if they are a complete, legal map pool in the tournament being registered to. */
+function importableMapPool(
+	mapPool: TournamentTeamFull["mapPool"],
+	tournament: Tournament,
+) {
+	const teamPick = tournament.teamPickSettings;
+	if (!mapPool || !teamPick) return null;
+
+	const status = TeamPick.validateTeamPool({
+		mapPool: new MapPool(mapPool),
+		teamPick,
+		pool: tournament.mapPool,
+	});
+
+	return status === "VALID" ? mapPool : null;
+}

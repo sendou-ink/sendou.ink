@@ -1,8 +1,10 @@
 import * as fs from "node:fs/promises";
 import { addMinutes, subDays } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { TournamentMapPickingStyle } from "~/features/tournament/tournament-constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { validCounterpickMaps } from "./helpers/counterpick-map-pool";
 import type { Factories } from "./helpers/factories";
 import { expect, impersonate, test } from "./helpers/playwright";
 import {
@@ -160,6 +162,73 @@ test.describe("Tournament admin team management", () => {
 		await expect(teamsPage.teamNamed("Imported Legends")).toBeVisible();
 		for (const name of importedRosterNames) {
 			await expect(teamsPage.memberNamed(name)).toBeVisible();
+		}
+	});
+
+	test("imports the counterpick map pool of a team into a tournament with the same map picking settings but not into one with different settings", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await createTournament(factories, {
+			mapPickingStyle: "AUTO",
+		});
+
+		const pastTournament = await factories.TournamentFactory.create({
+			name: "Counterpick Cup 254",
+			authorId: NZAP_TEST_ID,
+			mapPickingStyle: "AUTO",
+			startTimes: [dateToDatabaseTimestamp(subDays(new Date(), 2))],
+		});
+		const roster = await factories.UserFactory.createMany(ROSTER_SIZE);
+		const importedMaps = validCounterpickMaps();
+		await factories.TournamentTeamFactory.create({
+			tournamentId: pastTournament.id,
+			team: pickUpTeam("Pooled Pandas"),
+			memberUserIds: roster.map((user) => user.id),
+			mapPool: new MapPool(importedMaps),
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const registration = new TournamentAdminRegistrationPage(page);
+		await registration.gotoNew(tournament.id);
+		await registration.openImportDialog();
+		await registration.importFirstTeamFrom("Counterpick Cup");
+
+		await expect(registration.locators.importDialogHeading).toHaveCount(0);
+		for (const { mode, stageId } of importedMaps) {
+			await expect(
+				registration.pickedCounterpickMap(mode, stageId),
+			).toBeVisible();
+		}
+
+		await registration.save();
+
+		const admin = new TournamentAdminPage(page);
+		await expect(admin.teamName("Pooled Pandas")).toBeVisible();
+
+		// only Splat Zones with more picks, so the imported pool is not a legal one there
+		const splatZonesOnlyTournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+			mapPickingStyle: "AUTO",
+			teamPick: { modes: [{ mode: "SZ", count: 6 }], pool: "SENDOUQ" },
+			startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+		});
+
+		await registration.gotoNew(splatZonesOnlyTournament.id);
+		await registration.openImportDialog();
+		await registration.importFirstTeamFrom("Counterpick Cup");
+
+		await expect(registration.locators.teamNameInput).toHaveValue(
+			"Pooled Pandas",
+		);
+		for (const { mode, stageId } of importedMaps.filter(
+			(map) => map.mode === "SZ",
+		)) {
+			await expect(registration.counterpickMap(mode, stageId)).toBeVisible();
+			await expect(
+				registration.pickedCounterpickMap(mode, stageId),
+			).toHaveCount(0);
 		}
 	});
 
