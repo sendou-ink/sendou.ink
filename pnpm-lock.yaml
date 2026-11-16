@@ -86,8 +86,8 @@ importers:
         specifier: 4.0.3
         version: 4.0.3
       i18next:
-        specifier: 26.3.6
-        version: 26.3.6(patch_hash=34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a)(typescript@7.0.2)
+        specifier: 27.0.1
+        version: 27.0.1(typescript@7.0.2)
       ics:
         specifier: 3.12.1
         version: 3.12.1
@@ -141,7 +141,7 @@ importers:
         version: 6.1.6(@types/react@19.3.0)(react@19.3.1)
       react-i18next:
         specifier: 17.0.11
-        version: 17.0.11(patch_hash=1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158f27466a269)(i18next@26.3.6(patch_hash=34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a)(typescript@7.0.2))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@7.0.2)
+        version: 17.0.11(patch_hash=1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158f27466a269)(i18next@27.0.1(typescript@7.0.2))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@7.0.2)
       react-router:
         specifier: 8.5.0
         version: 8.5.0(patch_hash=2417a0747ce60b20aae5bfa4fb330c726e6a3fadd59ad660467a617e33f48f7b)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -4678,6 +4678,15 @@ packages:
 
   i18next@26.3.6:
     resolution: {integrity: sha512-Bu5Z2nAXgfVyM8xvW3jk9EKRIuX37PudsrBViThNFx7CR7aaYTpP01cxNB/E4c4UUzTDiAZRstEhsRfPOL/8xA==}
+    peerDependencies:
+      typescript: ^5 || ^6 || ^7
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  i18next@27.0.1:
+    resolution: {integrity: sha512-KaE5ozP8UUeVpOJIwMVbbnpRKpyYQuxd9ZbseJoDzezE3nvLnZZQn20pkzyIJwPI2Uet/Qs3WzPTG812f6F/Eg==}
+    engines: {node: '>=22'}
     peerDependencies:
       typescript: ^5 || ^6 || ^7
     peerDependenciesMeta:
@@ -10757,6 +10766,10 @@ snapshots:
     optionalDependencies:
       typescript: 7.0.2
 
+  i18next@27.0.1(typescript@7.0.2):
+    optionalDependencies:
+      typescript: 7.0.2
+
   iconv-lite@0.6.3:
     dependencies:
       safer-buffer: 2.1.2
@@ -11713,11 +11726,11 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.3.0
 
-  react-i18next@17.0.11(patch_hash=1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158f27466a269)(i18next@26.3.6(patch_hash=34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a)(typescript@7.0.2))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@7.0.2):
+  react-i18next@17.0.11(patch_hash=1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158f27466a269)(i18next@27.0.1(typescript@7.0.2))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@7.0.2):
     dependencies:
       '@babel/runtime': 7.29.10
       html-parse-stringify: 4.0.1
-      i18next: 26.3.6(patch_hash=34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a)(typescript@7.0.2)
+      i18next: 27.0.1(typescript@7.0.2)
       react: 19.3.1
       use-sync-external-store: 1.6.0(react@19.3.1)
     optionalDependencies:
