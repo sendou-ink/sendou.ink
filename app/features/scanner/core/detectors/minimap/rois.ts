@@ -131,7 +131,9 @@ export const CROSS_MIN_FRACTION = 0.08;
  * probe, so past CROSS_BLEED_MIN_FRACTION only the crisp floor counts — the
  * two soft struck reads up there (0.56 at 55, 0.66 at 33) stay lost. Margins
  * are THIN (bleed 0.56 at 41.6 vs struck 0.15 at 41.5) — re-measure before
- * moving any.
+ * moving any. Under the bleed fraction a live card reads up to 38.9
+ * (pov-psi-star-prefix-names) against struck ones from 41.5, so 40 sits in the
+ * middle of a gap a constant cannot widen.
  */
 export const CROSS_MIN_LAPLACIAN = 40;
 export const CROSS_BLEED_MIN_FRACTION = 0.5;
@@ -175,9 +177,12 @@ export const SPECIAL_READY_WEAPON_MIN_SCORE = 0.42;
  * surfaces to ~95-137): both template sets are tried under the camo floor since
  * bleed depresses NCC too (true matches 0.55-0.66; E-liter wins as light 0.611
  * over misranked dark 0.599 — THIN, re-measure before touching). Dark cards
- * (corners <=77) keep the plain dark match.
+ * (corners <=77) keep the plain dark match. A pale backdrop behind the POV
+ * card while the map pops in reads 89.8 (the Blaster of
+ * pov-humpback-superjump-map-pale-backdrop-gate-missed, unread under the old
+ * cut of 90), so the cut sits between the two.
  */
-export const WEAPON_BLEED_MIN_CORNER_MEAN = 90;
+export const WEAPON_BLEED_MIN_CORNER_MEAN = 84;
 
 /** Overlay is crisp over a blurred scene: mean |Laplacian| separates drawn elements from background. */
 export const PRESENCE_MIN_LAPLACIAN = 8;

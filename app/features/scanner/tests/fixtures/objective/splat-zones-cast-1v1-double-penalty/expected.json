@@ -1,0 +1,13 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 25,
+		"score": [9, 5],
+		"penalty": [6, 55],
+		"control": 0
+	},
+	"options": {
+		"notes": "Same frame as player-status/cast-1v1-vacant-seats (1v1 cast, Switzerland #62 VoD, 2400s). Penalty pills under both plates; alpha (purple fill) in control. One right-pill probe reads std 29.7 over the green-inked floor showing through the translucent fill, where PENALTY_PROBE_MAX_STD used to sit at 30."
+	}
+}

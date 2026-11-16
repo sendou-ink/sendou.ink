@@ -132,8 +132,15 @@ export function* matchSpecialSteps(
 	};
 }
 
-/** Weapon-icon score gap under which two candidates count as a tie. */
-const WEAPON_TIE_MARGIN = 0.04;
+/**
+ * Weapon-icon score gap under which two candidates count as a tie. Measured on
+ * the fixtures and four VoD slices (minimap cards and boards labelled by the
+ * game's results screen, 2026-11-16): the kit tile turned a wrong leader
+ * right up to 0.030 (Carbon Roller over Flingza on a Triton cup board at
+ * 0.028) and wrongly favors the runner-up past the kit margin from 0.107
+ * (fW5h card, +0.17 for the wrong kit).
+ */
+const WEAPON_TIE_MARGIN = 0.06;
 
 /**
  * Icon twins differing only by the nozzle: on the replay browser's dim rendering
@@ -148,9 +155,10 @@ const ICON_TWINS: ReadonlyMap<string, string> = new Map([
 
 /**
  * Kit evidence must separate tied kits by this much: shape-matcher confusions (Wave Breaker vs Ink
- * Vac) sit inside, true splits (stamp vs crab) clear it.
+ * Vac) sit inside, true splits (stamp vs crab) clear it. Measured with WEAPON_TIE_MARGIN's data:
+ * true splits from 0.067 (low-res replay), leaders that were right at most 0.003 behind.
  */
-const KIT_DECISION_MARGIN = 0.06;
+const KIT_DECISION_MARGIN = 0.035;
 
 type KitPart = "sub" | "special";
 

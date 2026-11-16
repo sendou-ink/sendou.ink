@@ -1,0 +1,17 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"time": 25,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "1v1 tournament cast (Switzerland #62 VoD [POXiG9X-tEM], 2400s, Splat Zones, 4K AV1 scaled to 1080p with area averaging). Three empty seats per side: opaque black squids with no X and no weapon render, which read as alive (isVacant). The first fixture on the passing side of STATUS_VACANT_MIN_DARK / STATUS_VACANT_MAX_GREY (dark 0.97, grey 0.00). The two players are alive, gauges at 47 and 55, no special held."
+	}
+}

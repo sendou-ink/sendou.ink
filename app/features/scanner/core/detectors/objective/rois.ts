@@ -119,8 +119,15 @@ export const SCORE_EXTEND_MIN_CONF = 0.6;
 
 /** Penalty pill: white digits on the translucent dark fill (~100 gray). */
 export const PENALTY_BIN_THRESHOLD = 170;
+/**
+ * Pill presence probes only spare the digit read: with no probe filter at all
+ * every fixture reads the same penalties (2026-11-16), so the cut can sit far
+ * out on the no-pill side. Uncovered pill probes read means 30-101 and std up
+ * to 29.8 (an overtime dark fill), where a 30 cut used to sit; a nameplate
+ * badge over one end reads std 44 and leaves the other probe to carry it.
+ */
 export const PENALTY_PROBE_MAX_MEAN = 165;
-export const PENALTY_PROBE_MAX_STD = 30;
+export const PENALTY_PROBE_MAX_STD = 40;
 
 /**
  * A spectated player's in-world nameplate badge can cover one rounded end (SWS26
@@ -322,11 +329,17 @@ export const STRIP_WEAPON_BADGE_CORNER = {
 export const STRIP_WEAPON_SEARCH = { x: 16, y: 1 };
 
 /**
- * Top two candidates this close are told apart by the parts only one of them
- * draws (strip-weapons.ts differenceScore): a kit's badge or a scope is too
- * small a share of the icon to rank siblings in the full score.
+ * The top two candidates swap when the parts only one of them draws
+ * (strip-weapons.ts differenceScore) favor the runner-up by this many times
+ * the full score's gap: a kit's badge or a scope is too small a share of the
+ * icon to rank siblings in the full score. Measured 2026-11-16 on the fixtures
+ * and four VoD slices (1,700 slot reads labelled by the game's results
+ * screen): the runner-up was right at 18.6 (Z+F Splatterscope,
+ * bluechara-pov-dome-orange-backdrop), the leader at up to 5 (an E-liter 4K
+ * whose scope part favored the Scope on 51 of 120 reads) and once at 55
+ * (unrelated icons, no ratio tells that one).
  */
-export const STRIP_WEAPON_TIE_MARGIN = 0.03;
+export const STRIP_DIFFERENCE_LEAD_RATIO = 10;
 
 /** A half-resolution pass over every weapon shortlists this many for the full-resolution pass. */
 export const STRIP_WEAPON_SHORTLIST = 12;

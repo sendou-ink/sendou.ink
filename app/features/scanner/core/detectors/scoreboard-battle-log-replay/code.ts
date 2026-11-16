@@ -43,12 +43,13 @@ function resolveQsByDescent(raw: RecognizedText): string {
 
 /**
  * On blurry captures 'L' can edge out a true 'U': a U's right stroke fills the
- * top-right quadrant where an L has no ink (0.00-0.15 on true Ls vs 0.27+ on
- * Us). The margin is generous since no fixture L carries a 'U' candidate at all.
+ * top-right quadrant where an L has no ink (0.00-0.15 on true Ls vs 0.21+ on
+ * Us, the lowest on low-res-2). The margin is generous since no fixture L
+ * carries a 'U' candidate at all.
  */
 const LU_SCORE_MARGIN = 0.12;
 const LU_INK_THRESHOLD = 150;
-const LU_TOP_RIGHT_MIN_FRACTION = 0.2;
+const LU_TOP_RIGHT_MIN_FRACTION = 0.18;
 
 function resolveUsByTopRightInk(
 	raw: RecognizedText,

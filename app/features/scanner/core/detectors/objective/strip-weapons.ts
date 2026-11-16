@@ -34,6 +34,7 @@ import {
 import {
 	STATUS_ICON_CENTER_Y,
 	STATUS_REFERENCE_PITCH,
+	STRIP_DIFFERENCE_LEAD_RATIO,
 	STRIP_WEAPON_BADGE_CORNER,
 	STRIP_WEAPON_CENTER_DY,
 	STRIP_WEAPON_CROP_HALF,
@@ -43,7 +44,6 @@ import {
 	STRIP_WEAPON_PLATE_RADIUS,
 	STRIP_WEAPON_SEARCH,
 	STRIP_WEAPON_SHORTLIST,
-	STRIP_WEAPON_TIE_MARGIN,
 	STRIP_WEAPON_TOP_K,
 } from "./rois";
 
@@ -242,16 +242,7 @@ function matchSlot(
 			score: match.score,
 		}));
 	const [first, second] = ranked;
-	if (
-		second &&
-		Decisions.atMost(
-			"objective/strip-weapons:STRIP_WEAPON_TIE_MARGIN",
-			first!.match.score - second.match.score,
-			STRIP_WEAPON_TIE_MARGIN,
-		) &&
-		differenceScore(fine, second, first!) >
-			differenceScore(fine, first!, second)
-	) {
+	if (second && differenceOverturns(fine, first!, second)) {
 		// the runner-up draws what tells the two apart: it takes the top rank
 		[candidates[0]!.weaponId, candidates[1]!.weaponId] = [
 			candidates[1]!.weaponId,
@@ -333,7 +324,26 @@ function bestNcc(
 
 interface RankedTemplate {
 	template: StripWeaponTemplate;
-	match: { x: number; y: number };
+	match: { score: number; x: number; y: number };
+}
+
+/**
+ * Whether the parts only one of the two draws favor the runner-up by
+ * STRIP_DIFFERENCE_LEAD_RATIO times the full score's gap.
+ */
+function differenceOverturns(
+	fine: Float32Array,
+	first: RankedTemplate,
+	second: RankedTemplate,
+): boolean {
+	const gap = first.match.score - second.match.score;
+	// two NCCs never differ by more than 2
+	if (gap * STRIP_DIFFERENCE_LEAD_RATIO >= 2) return false;
+	return Decisions.above(
+		"objective/strip-weapons:STRIP_DIFFERENCE_LEAD_RATIO",
+		differenceScore(fine, second, first) - differenceScore(fine, first, second),
+		STRIP_DIFFERENCE_LEAD_RATIO * gap,
+	);
 }
 
 /**
