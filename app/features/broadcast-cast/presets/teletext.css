@@ -212,8 +212,8 @@
 [data-part="player-avatar"],
 [data-part="player-weapon"],
 [data-part$="versus"],
-[data-part="stinger-vs"],
-[data-part="score"] [data-team] {
+[data-part="score"],
+[data-part="stinger-vs"] {
 	border-radius: 0;
 }
 

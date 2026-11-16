@@ -24,7 +24,7 @@ const styles = combineStyles(look, layout);
 
 const part = scenePart("rosters");
 
-/** Full screen before the set: both teams facing each other with their rosters, with their active rosters. */
+/** Full screen before the set: both teams facing each other with their active rosters, the set score between them once it started. */
 export function RostersScene({
 	state,
 	view,
@@ -34,6 +34,8 @@ export function RostersScene({
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const match = state.match;
+	const sides = match ? matchSides(match, view, state[view]) : null;
+	const hasStarted = match ? match.progress[view].resultCount > 0 : false;
 
 	return (
 		<div className={styles.rosters}>
@@ -60,18 +62,26 @@ export function RostersScene({
 					) : null}
 				</div>
 			</header>
-			{match ? (
+			{sides ? (
 				<div className={styles.teams} {...part("teams")}>
-					{matchSides(match, view, state[view]).map((side) => (
+					{sides.map((side) => (
 						<RosterTeam
 							key={side.side}
 							side={side}
 							weaponImages={state.settings.weaponImages}
 						/>
 					))}
-					<div className={styles.versus} {...part("versus")}>
-						<span>{t("broadcast:overlay.vs")}</span>
-					</div>
+					{hasStarted ? (
+						<div className={styles.score} {...part("score")}>
+							<span data-team={sides[0].side}>{sides[0].score}</span>
+							<span className={styles.dash}>–</span>
+							<span data-team={sides[1].side}>{sides[1].score}</span>
+						</div>
+					) : (
+						<div className={styles.versus} {...part("versus")}>
+							<span>{t("broadcast:overlay.vs")}</span>
+						</div>
+					)}
 				</div>
 			) : null}
 		</div>

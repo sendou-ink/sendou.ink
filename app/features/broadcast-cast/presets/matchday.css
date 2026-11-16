@@ -57,12 +57,14 @@
 	--rosters-team-logo-size: 116px;
 	--rosters-team-name-size: 62px;
 	--rosters-versus-size: 60px;
+	--rosters-score-size: 60px;
 	--rosters-player-height: 160px;
 	--rosters-player-name-size: 48px;
 	--maps-header-top: 52px;
 	--maps-eyebrow-size: 34px;
 	--maps-team-name-size: 66px;
 	--maps-bubble-size: 112px;
+	--maps-score-height: 96px;
 	--maps-score-size: 76px;
 	--maps-games-top: 282px;
 	--maps-games-inline-margin: 230px;
@@ -98,6 +100,7 @@
 		[data-part="stage"],
 		[data-part="countdown"],
 		[data-part$="versus"],
+		[data-part="score"],
 		[data-part="stinger-vs"],
 		[data-part="replay-label"]
 	) {
@@ -154,6 +157,7 @@
 [data-part="matchup"] [data-part="team"],
 [data-scene="casters"] [data-part="caster-name"],
 [data-scene="rosters"] [data-part="versus"],
+[data-part="score"],
 [data-part="stinger-vs"],
 [data-part="stinger-header"],
 [data-part="stinger-title-card"] [data-part="stinger-tournament-name"] {
@@ -179,7 +183,7 @@
 		[data-part="map"],
 		[data-part="objective"]
 	),
-[data-scene="maps"] :is([data-part="game"], [data-part="score"] [data-team]),
+[data-scene="maps"] [data-part="game"],
 [data-scene="team"] :is([data-part="stat"], [data-part="set"]) {
 	border-radius: 0;
 	clip-path: polygon(
@@ -452,10 +456,9 @@
 }
 
 /* between the two strips */
-[data-scene="rosters"] [data-part="versus"] {
+[data-scene="rosters"] :is([data-part="versus"], [data-part="score"]) {
 	top: calc(50% - var(--rosters-versus-size) / 2);
-	width: calc(var(--rosters-versus-size) + 60px);
-	margin-left: calc(var(--rosters-versus-size) / -2 - 30px);
+	min-width: calc(var(--rosters-versus-size) + 60px);
 	font-size: 34px;
 }
 

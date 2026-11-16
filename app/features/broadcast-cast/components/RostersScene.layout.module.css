@@ -50,24 +50,55 @@
 	gap: var(--rosters-teams-gap);
 }
 
-.versus {
+/* between the teams, on their header lines */
+.versus,
+.score {
 	position: absolute;
 	top: calc(
 		var(--rosters-team-logo-size) +
 		var(--team-header-padding) +
 		var(--team-header-border) /
 		2 -
-		var(--rosters-versus-size) /
+		var(--middle-size) /
 		2
 	);
 	left: 50%;
-	display: grid;
-	place-items: center;
-	width: var(--rosters-versus-size);
-	height: var(--rosters-versus-size);
-	margin-left: calc(var(--rosters-versus-size) / -2);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: var(--middle-size);
+	height: var(--middle-size);
+	translate: -50% 0;
 	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
 		calc(var(--scene-enter-delay) + 3 * var(--bc-stagger)) both;
+}
+
+.versus {
+	--middle-size: var(--rosters-versus-size);
+}
+
+.score {
+	--middle-size: var(--rosters-score-size);
+
+	& [data-team] {
+		display: grid;
+		place-items: center;
+		min-width: calc(var(--middle-size) * 1.1);
+		height: 100%;
+	}
+
+	/* the numbers centered on what the slant leaves of their halves */
+	& [data-team="a"] {
+		padding-inline: 24px calc(12px + var(--rosters-score-slant) / 2);
+	}
+
+	& [data-team="b"] {
+		margin-left: calc(
+			var(--rosters-score-divider) -
+			var(--rosters-score-slant)
+		);
+		padding-inline: calc(12px + var(--rosters-score-slant) / 2) 24px;
+	}
 }
 
 .team {

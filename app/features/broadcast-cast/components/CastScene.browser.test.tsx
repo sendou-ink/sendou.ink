@@ -162,6 +162,32 @@ describe("CastScene", () => {
 		},
 	);
 
+	test("shows VS between the rosters before the set started", async () => {
+		await render(
+			<BroadcastOverlay
+				sceneSet={CAST_SCENE_SET}
+				state={stateOf({ ...SCENARIO, scene: "rosters", set: "start" })}
+				view="live"
+			/>,
+		);
+
+		expect(rostersPart("versus")?.textContent).toBe("VS");
+		expect(rostersPart("score")).toBeNull();
+	});
+
+	test("shows the set score between the rosters in place of VS once the set started", async () => {
+		await render(
+			<BroadcastOverlay
+				sceneSet={CAST_SCENE_SET}
+				state={stateOf({ ...SCENARIO, scene: "rosters", set: "ongoing" })}
+				view="live"
+			/>,
+		);
+
+		expect(rostersPart("score")?.textContent).toBe("2–1");
+		expect(rostersPart("versus")).toBeNull();
+	});
+
 	test("reports a name cut off without an ellipsis", async () => {
 		const state = stateOf({ ...SCENARIO, scene: "rosters" });
 
@@ -325,6 +351,10 @@ async function overflowsOfStinger(state: CastBroadcastState) {
 	await nextFrame();
 
 	return overflows({ root: stinger, marquees: new Set() });
+}
+
+function rostersPart(name: string) {
+	return canvas().querySelector(`[data-scene="rosters"] [data-part="${name}"]`);
 }
 
 function canvas() {

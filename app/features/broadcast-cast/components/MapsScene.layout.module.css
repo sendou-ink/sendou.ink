@@ -54,15 +54,23 @@
 
 .scores {
 	display: flex;
-	align-items: center;
-	gap: 20px;
+	height: var(--maps-score-height);
 
 	& [data-team] {
 		display: grid;
 		place-items: center;
-		width: var(--maps-bubble-size);
-		height: var(--maps-bubble-size);
-		padding-bottom: 6px;
+		min-width: calc(var(--maps-score-height) * 1.1);
+		height: 100%;
+	}
+
+	/* the numbers centered on what the slant leaves of their halves */
+	& [data-team="a"] {
+		padding-inline: 28px calc(14px + var(--maps-score-slant) / 2);
+	}
+
+	& [data-team="b"] {
+		margin-left: calc(var(--maps-score-divider) - var(--maps-score-slant));
+		padding-inline: calc(14px + var(--maps-score-slant) / 2) 28px;
 	}
 }
 

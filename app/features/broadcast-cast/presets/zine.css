@@ -399,7 +399,8 @@
 	border-radius: 0;
 }
 
-[data-scene="rosters"] [data-part="versus"] {
+[data-scene="rosters"] [data-part="versus"],
+[data-part="score"] {
 	border-radius: 0;
 	background: var(--bc-border);
 	color: var(--bc-bg);
@@ -456,17 +457,6 @@
 [data-scene="maps"] [data-part="team-logo"] {
 	border: 4px solid var(--bc-border);
 	box-shadow: var(--zine-shadow-small);
-}
-
-[data-scene="maps"] [data-part="score"] [data-team] {
-	border: 6px solid var(--bc-border);
-	border-radius: 0;
-	box-shadow: var(--zine-shadow);
-	rotate: -3deg;
-
-	&[data-team="b"] {
-		rotate: 3deg;
-	}
 }
 
 [data-scene="maps"] [data-part="game"] {

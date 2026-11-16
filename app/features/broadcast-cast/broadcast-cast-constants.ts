@@ -208,6 +208,7 @@ export const BROADCAST_SCENE_PARTS = {
 		"set-length",
 		"teams",
 		"versus",
+		"score",
 		"team",
 		"team-header",
 		"team-logo",

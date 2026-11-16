@@ -11,6 +11,11 @@
 	--rosters-player-name-size: 42px;
 	--rosters-team-logo-size: 132px;
 	--rosters-versus-size: 112px;
+	--rosters-score-size: 80px;
+	/* how far the score's halves lean into each other along the gap splitting them */
+	--rosters-score-slant: 20px;
+	/* width of that gap */
+	--rosters-score-divider: 5px;
 	--rosters-player-height: 124px;
 }
 
@@ -46,6 +51,39 @@
 	color: var(--bc-accent-text);
 	font-size: 44px;
 	font-weight: var(--bc-weight-bold);
+}
+
+/* a pill of the teams' colors, split by a slanted gap */
+.score {
+	overflow: hidden;
+	border-radius: var(--rosters-score-size);
+	font-size: 48px;
+	font-variant-numeric: tabular-nums;
+	font-weight: var(--bc-weight-bold);
+	line-height: 1;
+
+	& [data-team] {
+		background: var(--team-color);
+		color: var(--team-color-text);
+	}
+
+	& [data-team="a"] {
+		clip-path: polygon(
+			0 0,
+			100% 0,
+			calc(100% - var(--rosters-score-slant)) 100%,
+			0 100%
+		);
+	}
+
+	& [data-team="b"] {
+		clip-path: polygon(var(--rosters-score-slant) 0, 100% 0, 100% 100%, 0 100%);
+	}
+}
+
+/* the halves' colors already tell the numbers apart */
+.dash {
+	display: none;
 }
 
 .teamHeader {

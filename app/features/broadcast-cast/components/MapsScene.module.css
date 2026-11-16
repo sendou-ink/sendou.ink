@@ -4,12 +4,17 @@
 	--maps-header-inline-margin: 120px;
 	--maps-eyebrow-size: 28px;
 	--maps-team-name-size: 54px;
-	--maps-score-size: 84px;
+	--maps-score-size: 60px;
 	--maps-games-top: 330px;
 	--maps-games-inline-margin: 100px;
 	--maps-games-bottom: 60px;
 	--maps-stage-size: 26px;
 	--maps-bubble-size: 136px;
+	--maps-score-height: 96px;
+	/* how far the score's halves lean into each other along the gap splitting them */
+	--maps-score-slant: 24px;
+	/* width of that gap */
+	--maps-score-divider: 6px;
 }
 
 .maps {
@@ -34,21 +39,37 @@
 	}
 }
 
+/* a pill of the teams' colors, split by a slanted gap */
 .scores {
+	overflow: hidden;
+	border-radius: var(--maps-score-height);
 	font-size: var(--maps-score-size);
+	font-variant-numeric: tabular-nums;
 	font-weight: var(--bc-weight-bold);
 	line-height: 1;
 
 	& [data-team] {
-		border-radius: 50%;
 		background: var(--team-color);
 		color: var(--team-color-text);
 	}
+
+	& [data-team="a"] {
+		clip-path: polygon(
+			0 0,
+			100% 0,
+			calc(100% - var(--maps-score-slant)) 100%,
+			0 100%
+		);
+	}
+
+	& [data-team="b"] {
+		clip-path: polygon(var(--maps-score-slant) 0, 100% 0, 100% 100%, 0 100%);
+	}
 }
 
+/* the halves' colors already tell the numbers apart */
 .dash {
-	color: var(--bc-text-muted);
-	font-size: 64px;
+	display: none;
 }
 
 .game {
