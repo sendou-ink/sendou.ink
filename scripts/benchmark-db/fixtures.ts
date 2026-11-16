@@ -141,6 +141,7 @@ export interface Fixtures {
 	imageId: number | null;
 	vod: { userId: number; videoId: number } | null;
 	apiTokenUserId: number | null;
+	discordTokenUserId: number | null;
 	logInLinkCode: string | null;
 	modNoteId: number | null;
 	scannerIngest: {
@@ -274,6 +275,7 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		imageId: await resolveImageId(),
 		vod: await resolveVod(),
 		apiTokenUserId: await resolveApiTokenUserId(),
+		discordTokenUserId: await resolveDiscordTokenUserId(),
 		logInLinkCode: await resolveLogInLinkCode(),
 		modNoteId: await resolveModNoteId(),
 		scannerIngest: await resolveScannerIngest(),
@@ -1443,6 +1445,16 @@ async function resolveVod() {
 async function resolveApiTokenUserId() {
 	const row = await db
 		.selectFrom("ApiToken")
+		.select("userId")
+		.limit(1)
+		.executeTakeFirst();
+
+	return row?.userId ?? null;
+}
+
+async function resolveDiscordTokenUserId() {
+	const row = await db
+		.selectFrom("UserDiscordToken")
 		.select("userId")
 		.limit(1)
 		.executeTakeFirst();

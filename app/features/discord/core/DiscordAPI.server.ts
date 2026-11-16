@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from "node:timers/promises";
 import { OAuth2RequestError, OAuth2Strategy } from "remix-auth-oauth2";
 import * as v from "valibot";
 import { Config } from "~/config";
@@ -101,9 +102,7 @@ export async function putRoleConnection({
 			logger.warn(
 				`Discord role connection rate limited, retrying in ${retryAfterSeconds}s`,
 			);
-			await new Promise((resolve) =>
-				setTimeout(resolve, retryAfterSeconds * 1000),
-			);
+			await sleep(retryAfterSeconds * 1000);
 			continue;
 		}
 

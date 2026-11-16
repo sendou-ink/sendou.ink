@@ -29,9 +29,15 @@ const fetchMock = vi.fn(
 	},
 );
 
+const users = UserFactory.pool();
+const linkedUserId = () => users.id(1);
+const failingUserId = () => users.id(1);
+const succeedingUserId = () => users.id(2);
+
 const expired = () => dateToDatabaseTimestamp(sub(new Date(), { hours: 1 }));
 
-beforeEach(() => {
+beforeEach(async () => {
+	await users.create(2);
 	vi.stubGlobal("fetch", fetchMock);
 	fetchMock.mockClear();
 	roleConnectionResponses = [];
@@ -45,13 +51,13 @@ afterEach(() => {
 
 describe("LinkedRoles.syncUser", () => {
 	test("pushes the user's Plus tier", async () => {
-		const user = await UserFactory.create({}, { plusTier: 2 });
+		await UserFactory.grant(linkedUserId(), { plusTier: 2 });
 		await DiscordTokenFactory.create({
-			userId: user.id,
+			userId: linkedUserId(),
 			accessToken: "access",
 		});
 
-		await LinkedRoles.syncUser(user.id);
+		await LinkedRoles.syncUser(linkedUserId());
 
 		expect(pushes).toEqual([
 			{
@@ -62,17 +68,14 @@ describe("LinkedRoles.syncUser", () => {
 	});
 
 	test("pushes no tier for a banned Plus member", async () => {
-		const user = await UserFactory.create(
-			{},
-			{
-				plusTier: 1,
-				ban: { banned: 1, bannedReason: null, bannedByUserId: null },
-			},
-		);
+		await UserFactory.grant(linkedUserId(), {
+			plusTier: 1,
+			ban: { banned: 1, bannedReason: null, bannedByUserId: null },
+		});
 		await refreshBannedCache();
-		await DiscordTokenFactory.create({ userId: user.id });
+		await DiscordTokenFactory.create({ userId: linkedUserId() });
 
-		await LinkedRoles.syncUser(user.id);
+		await LinkedRoles.syncUser(linkedUserId());
 
 		expect(pushes).toEqual([
 			{
@@ -83,26 +86,29 @@ describe("LinkedRoles.syncUser", () => {
 	});
 
 	test("makes no request for a user who has not linked", async () => {
-		const user = await UserFactory.create({}, { plusTier: 1 });
+		await UserFactory.grant(linkedUserId(), { plusTier: 1 });
 
-		await LinkedRoles.syncUser(user.id);
+		await LinkedRoles.syncUser(linkedUserId());
 
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
 
 	test("deletes the tokens Discord no longer accepts", async () => {
-		const user = await UserFactory.create();
-		await DiscordTokenFactory.create({ userId: user.id });
+		await DiscordTokenFactory.create({ userId: linkedUserId() });
 		roleConnectionResponses = [() => new Response(null, { status: 401 })];
 
-		await LinkedRoles.syncUser(user.id);
+		await LinkedRoles.syncUser(linkedUserId());
 
-		expect(await DiscordTokenRepository.findByUserId(user.id)).toBeUndefined();
+		expect(
+			await DiscordTokenRepository.findByUserId(linkedUserId()),
+		).toBeUndefined();
 	});
 
 	test("refreshes an expired access token and stores the new tokens", async () => {
-		const user = await UserFactory.create();
-		await DiscordTokenFactory.create({ userId: user.id, expiresAt: expired() });
+		await DiscordTokenFactory.create({
+			userId: linkedUserId(),
+			expiresAt: expired(),
+		});
 		tokenResponse = () =>
 			Response.json({
 				access_token: "new-access",
@@ -112,49 +118,55 @@ describe("LinkedRoles.syncUser", () => {
 				scope: "identify role_connections.write",
 			});
 
-		await LinkedRoles.syncUser(user.id);
+		await LinkedRoles.syncUser(linkedUserId());
 
 		expect(pushes[0]?.authorization).toBe("Bearer new-access");
-		expect(await DiscordTokenRepository.findByUserId(user.id)).toMatchObject({
+		expect(
+			await DiscordTokenRepository.findByUserId(linkedUserId()),
+		).toMatchObject({
 			accessToken: "new-access",
 			refreshToken: "new-refresh",
 		});
 	});
 
 	test("deletes the tokens when the refresh token is rejected", async () => {
-		const user = await UserFactory.create();
-		await DiscordTokenFactory.create({ userId: user.id, expiresAt: expired() });
+		await DiscordTokenFactory.create({
+			userId: linkedUserId(),
+			expiresAt: expired(),
+		});
 		tokenResponse = () =>
 			Response.json({ error: "invalid_grant" }, { status: 400 });
 
-		await LinkedRoles.syncUser(user.id);
+		await LinkedRoles.syncUser(linkedUserId());
 
 		expect(pushes).toEqual([]);
-		expect(await DiscordTokenRepository.findByUserId(user.id)).toBeUndefined();
+		expect(
+			await DiscordTokenRepository.findByUserId(linkedUserId()),
+		).toBeUndefined();
 	});
 
 	test("keeps the tokens when Discord fails for another reason", async () => {
-		const user = await UserFactory.create();
-		await DiscordTokenFactory.create({ userId: user.id });
+		await DiscordTokenFactory.create({ userId: linkedUserId() });
 		roleConnectionResponses = [() => new Response(null, { status: 500 })];
 
-		await expect(LinkedRoles.syncUser(user.id)).rejects.toThrow();
+		await expect(LinkedRoles.syncUser(linkedUserId())).rejects.toThrow();
 
-		expect(await DiscordTokenRepository.findByUserId(user.id)).toBeDefined();
+		expect(
+			await DiscordTokenRepository.findByUserId(linkedUserId()),
+		).toBeDefined();
 	});
 });
 
 describe("LinkedRoles.syncUsers", () => {
 	test("carries on after a user fails", async () => {
-		const [failing, succeeding] = await UserFactory.createMany(2);
-		await DiscordTokenFactory.create({ userId: failing.id });
-		await DiscordTokenFactory.create({ userId: succeeding.id });
+		await DiscordTokenFactory.create({ userId: failingUserId() });
+		await DiscordTokenFactory.create({ userId: succeedingUserId() });
 		roleConnectionResponses = [
 			() => new Response(null, { status: 500 }),
 			() => new Response("{}"),
 		];
 
-		await LinkedRoles.syncUsers([failing.id, succeeding.id]);
+		await LinkedRoles.syncUsers([failingUserId(), succeedingUserId()]);
 
 		expect(pushes).toHaveLength(2);
 	});
