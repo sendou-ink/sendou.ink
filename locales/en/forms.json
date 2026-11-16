@@ -206,7 +206,7 @@
 	"options.orgRole.ORGANIZER": "Organizer",
 	"options.orgRole.STREAMER": "Streamer",
 	"labels.staffRole": "Role",
-	"bottomTexts.staffRolesInfo": "Organizer has the same permissions as you except they can't add/remove staff. Streamer can only talk in chats and see room password/pool.",
+	"bottomTexts.staffRolesInfo": "Organizer has the same permissions as you except they can't add/remove staff. Streamer can talk in chats, see room password/pool and report scores.",
 	"options.staffRole.ORGANIZER": "Organizer",
 	"options.staffRole.STREAMER": "Streamer",
 	"labels.vodYoutubeUrl": "YouTube URL",

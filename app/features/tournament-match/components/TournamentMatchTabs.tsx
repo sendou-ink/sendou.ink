@@ -373,7 +373,7 @@ function TournamentMatchRosterTab({
 		if (team.memberUserIds.length <= tournament.minMembersPerTeam) return false;
 
 		const isMemberOfTeam = user ? team.memberUserIds.includes(user.id) : false;
-		return isMemberOfTeam || tournament.isOrganizer(user);
+		return isMemberOfTeam || tournament.canReportAnyScore(user);
 	}
 
 	function needsActiveRosterSelection(team: MatchPageTeam) {

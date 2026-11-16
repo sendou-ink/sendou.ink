@@ -1627,6 +1627,11 @@ export class Tournament {
 		return hasPermission(this.ctx, "MANAGE_MATCHES", user);
 	}
 
+	/** Reporting and undoing games of any match, and setting the teams' active rosters it needs, e.g. a streamer reporting the game they just cast. */
+	canReportAnyScore(user: OptionalIdObject) {
+		return hasPermission(this.ctx, "MANAGE_MATCHES", user);
+	}
+
 	/** Live streams of the tournament, empty in the views whose loader did not ship them. */
 	get streams(): TournamentStream[] {
 		return this.args.streams ?? [];

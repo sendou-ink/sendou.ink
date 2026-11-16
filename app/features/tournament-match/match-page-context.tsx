@@ -256,7 +256,7 @@ function resolveCanReportScore({
 	if (!teamOne || !teamTwo) return false;
 	if (waitingForPreviousMatch || matchIsOver) return false;
 
-	return isParticipant || tournament.isOrganizer(user);
+	return isParticipant || tournament.canReportAnyScore(user);
 }
 
 function resolveMatchJoinInfo({

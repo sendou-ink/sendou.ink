@@ -122,7 +122,7 @@ export const action = defineAction(
 			case "SET_ACTIVE_ROSTER": {
 				errorToastIfFalsy(!tournament.everyBracketOver, "Tournament is over");
 				errorToastIfFalsy(
-					tournament.isOrganizer(user) ||
+					tournament.canReportAnyScore(user) ||
 						tournament.teamMemberOfByUser(user)?.id === body.teamId,
 					"Unauthorized",
 				);

@@ -111,4 +111,48 @@ test.describe("Tournament staff", () => {
 
 		await expect(match.locators.roomPass).toBeVisible();
 	});
+
+	test("streamer sets an active roster, reports a game and undoes it", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(subMinutes(new Date(), 30))],
+		});
+		// one sub on the first team, so its active roster has to be picked before reporting
+		const players = await factories.UserFactory.createMany(ROSTER_SIZE * 2 + 1);
+		for (const roster of [
+			players.slice(0, ROSTER_SIZE + 1),
+			players.slice(ROSTER_SIZE + 1),
+		]) {
+			await factories.TournamentTeamFactory.create(
+				{
+					tournamentId: tournament.id,
+					memberUserIds: roster.map((user) => user.id),
+				},
+				{ isCheckedIn: true },
+			);
+		}
+		const matches = await factories.TournamentFactory.startBracket(
+			tournament.id,
+		);
+		await factories.TournamentStaffFactory.create({
+			tournamentId: tournament.id,
+			userId: NZAP_TEST_ID,
+			role: "STREAMER",
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const match = new TournamentMatchPage(page);
+		await match.goto({ tournamentId: tournament.id, matchId: matches[0].id });
+
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 1, setEnds: false });
+		await expect(match.score([1, 0])).toBeVisible();
+
+		await match.undoLastReport();
+		await expect(match.score([0, 0])).toBeVisible();
+	});
 });

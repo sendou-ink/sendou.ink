@@ -98,6 +98,9 @@ export async function loadFactories(parallelIndex: number) {
 		TournamentReportedWeaponFactory: await import(
 			"~/db/seed/factories/TournamentReportedWeaponFactory"
 		),
+		TournamentStaffFactory: await import(
+			"~/db/seed/factories/TournamentStaffFactory"
+		),
 		TournamentStreamerFactory: await import(
 			"~/db/seed/factories/TournamentStreamerFactory"
 		),

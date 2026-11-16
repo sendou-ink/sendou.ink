@@ -1138,6 +1138,39 @@ describe("matchCanBeReopened", () => {
 	});
 });
 
+describe("canReportAnyScore", () => {
+	const authorId = 1;
+	const organizerId = 2;
+	const streamerId = 3;
+	const outsiderId = 4;
+
+	const tournament = testTournament({
+		ctx: {
+			permissions: {
+				ADMIN: [authorId],
+				ORGANIZE: [authorId, organizerId],
+				MANAGE_MATCHES: [authorId, organizerId, streamerId],
+				EDIT_EVENT_INFO: [authorId],
+				EDIT_IN_GAME_NAMES: [],
+			},
+		},
+	});
+
+	test.each([
+		{ why: "author", userId: authorId, expected: true },
+		{ why: "organizer", userId: organizerId, expected: true },
+		{ why: "streamer", userId: streamerId, expected: true },
+		{ why: "outsider", userId: outsiderId, expected: false },
+		{ why: "logged out", userId: undefined, expected: false },
+	])("$why: $expected", ({ userId, expected }) => {
+		expect(
+			tournament.canReportAnyScore(
+				userId === undefined ? undefined : { id: userId },
+			),
+		).toBe(expected);
+	});
+});
+
 describe("Follow-up bracket teams after a drop out moved the standings", () => {
 	// groups -> Redemption (3rd & 4th) -> Top Cut (top 2 of the groups and of Redemption)
 	const redemptionPlayedThenRunnerUpDropped = () => {
