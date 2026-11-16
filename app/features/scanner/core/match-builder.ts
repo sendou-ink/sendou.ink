@@ -163,8 +163,10 @@ const CONSOLE_OFFSET_AGREEMENT_MS = 5 * 60 * 1000;
 const CONSOLE_OFFSET_MIN_SUPPORT = 2;
 
 /**
- * The personal results screen follows the results screen of the same game;
- * one seen this long after a closed match's scoreboard belongs to that match.
+ * The personal results screen comes before its game's results screen (then
+ * the X Battle cards and the pay-out; 1-23 s before on footage). One no game
+ * being gathered took joins the game whose closing board comes first within
+ * this after it.
  */
 const OWN_RESULTS_WINDOW_SECONDS = 90;
 
@@ -279,7 +281,7 @@ interface Game<E extends DetectedEvent> {
 	kills: GameSegments.Segment<E>["kills"];
 	/** X Battle lobby cards reporting on this game, shown before its closing board */
 	xBattleCards: (E & XBattleCardEvent)[];
-	/** the personal results screen, when shown before the closing board */
+	/** the personal results screen, shown before the closing board */
 	ownResults: OwnResultsEvent<E> | null;
 	/** the results or history screen closing the game */
 	scoreboard: (E & ScoreboardFamilyEvent) | null;
@@ -295,8 +297,6 @@ interface Game<E extends DetectedEvent> {
 	later: {
 		/** the other boards of its identity: the game shown again */
 		revisits: (E & ScoreboardFamilyEvent)[];
-		/** shown after the closing board, completing the POV player's build */
-		ownResults: OwnResultsEvent<E> | null;
 		/** shown after the closing board */
 		xBattleCards: (E & XBattleCardEvent)[];
 		/** the console clock's offset from the PC's (`consoleClockOffset`), taken off a recording time standing in for `playedAt` */
@@ -335,6 +335,10 @@ function assignGames<E extends DetectedEvent>(
 	};
 	const looseCards: (E & XBattleCardEvent)[] =
 		leading.filter(isXBattleCardEvent);
+	const looseOwnResults: OwnResultsEvent<E>[] = leading.filter(
+		(read): read is OwnResultsEvent<E> =>
+			isEventOfType(read, SCOREBOARD_OWN_EVENT_TYPE),
+	);
 
 	const games = segments.map(gameOfSegment);
 	const consoleOffset = consoleClockOffset(segments, games, identities);
@@ -367,11 +371,15 @@ function assignGames<E extends DetectedEvent>(
 				}
 			} else if (isEventOfType(read, SCOREBOARD_OWN_EVENT_TYPE)) {
 				if (discarded) continue;
-				if (game.scoreboard) {
-					if (completesOwnBuild(game, read)) game.later.ownResults ??= read;
-				} else if (!game.ownResults && ownResultsClaim(segment, read)) {
+				if (
+					!game.scoreboard &&
+					!game.ownResults &&
+					ownResultsClaim(segment, read)
+				) {
 					game.ownResults = read;
 					GameSegments.vote(game.stageVotes, read.data.stage);
+				} else {
+					looseOwnResults.push(read);
 				}
 			} else if (isXBattleCardEvent(read)) {
 				if (discarded) looseCards.push(read);
@@ -413,13 +421,29 @@ function assignGames<E extends DetectedEvent>(
 		);
 	}
 	const assigned = [...segmentGames.map(({ game }) => game), ...boardGames];
+	for (const own of looseOwnResults.sort((a, b) => a.t - b.t)) {
+		const game = gameClosedAfter(
+			assigned,
+			own,
+			segments,
+			OWN_RESULTS_WINDOW_SECONDS,
+		);
+		if (game && !game.ownResults && ownResultsAgree(game.scoreboard!, own)) {
+			game.ownResults = own;
+		}
+	}
 	for (const card of looseCards.sort((a, b) => a.t - b.t)) {
 		const previous = gameClosedBefore(assigned, card);
 		if (previous && reportsOnClosed(previous, card)) {
 			previous.later.xBattleCards.push(card);
 			continue;
 		}
-		gameClosedAfter(assigned, card, segments)?.xBattleCards.push(card);
+		gameClosedAfter(
+			assigned,
+			card,
+			segments,
+			X_BATTLE_CARDS_WINDOW_SECONDS,
+		)?.xBattleCards.push(card);
 	}
 	return assigned;
 }
@@ -456,7 +480,6 @@ function emptyGame<E extends DetectedEvent>(): Game<E> {
 		stageVotes: new Map(),
 		later: {
 			revisits: [],
-			ownResults: null,
 			xBattleCards: [],
 			consoleOffset: 0,
 		},
@@ -563,21 +586,25 @@ function withinClaimWindow<E extends DetectedEvent>(
 }
 
 /**
- * The personal results screen shows the POV player's full gear (mains and
- * subs), which no other screen reads whole: one shown soon after the closing
- * board completes that player's build when the board seated the POV.
+ * Whether a personal results screen no game being gathered took can be the
+ * game `board` closes: no lobby, mode, stage or POV weapon both read and
+ * different.
  */
-function completesOwnBuild<E extends DetectedEvent>(
-	game: Game<E>,
+function ownResultsAgree<E extends DetectedEvent>(
+	board: E & ScoreboardFamilyEvent,
 	own: OwnResultsEvent<E>,
 ): boolean {
-	const board = game.scoreboard;
-	return (
-		board !== null &&
-		board.data.povIndex !== null &&
-		board.data.players[board.data.povIndex] !== undefined &&
-		own.data.abilities.length > 0 &&
-		own.t - lastBaseT(game) <= OWN_RESULTS_WINDOW_SECONDS
+	const differs = <T>(a: T | null, b: T | null) =>
+		a !== null && b !== null && a !== b;
+	const povWeapon =
+		board.data.povIndex === null
+			? null
+			: (board.data.players[board.data.povIndex]?.weaponId ?? null);
+	return !(
+		differs(board.data.lobby, own.data.lobby) ||
+		differs(board.data.mode, own.data.mode) ||
+		differs(board.data.stage, own.data.stage) ||
+		differs(povWeapon, own.data.weaponId)
 	);
 }
 
@@ -613,22 +640,22 @@ function gameClosedBefore<E extends DetectedEvent>(
 }
 
 /**
- * The game whose closing board comes first after a card that joined no game
- * before it, within `X_BATTLE_CARDS_WINDOW_SECONDS` and with no gameplay
- * between them.
+ * The game whose closing board comes first after a lobby screen that joined
+ * no game, within `windowSeconds` and with no gameplay between them.
  */
 function gameClosedAfter<E extends DetectedEvent>(
 	games: readonly Game<E>[],
-	card: E,
+	read: E,
 	segments: readonly GameSegments.Segment<E>[],
+	windowSeconds: number,
 ): Game<E> | undefined {
 	let found: Game<E> | undefined;
 	for (const game of games) {
 		const t = game.scoreboard?.t;
-		if (t === undefined || t <= card.t) continue;
-		if (t - card.t > X_BATTLE_CARDS_WINDOW_SECONDS) continue;
+		if (t === undefined || t <= read.t) continue;
+		if (t - read.t > windowSeconds) continue;
 		if (
-			segments.some((segment) => segment.from > card.t && segment.from <= t)
+			segments.some((segment) => segment.from > read.t && segment.from <= t)
 		) {
 			continue;
 		}
@@ -653,17 +680,12 @@ function builtGame<E extends DetectedEvent>(
 	cache: MatchBuildCache<E> | undefined,
 ): BuiltMatch<E> {
 	const built = cachedBuiltMatch(game, cache);
-	const { revisits, ownResults, xBattleCards, consoleOffset } = game.later;
+	const { revisits, xBattleCards, consoleOffset } = game.later;
 	const recorded = game.scoreboard
 		? GameIdentity.recordedAt(game.scoreboard)
 		: null;
 	const onPcClock = recorded !== null && consoleOffset !== 0;
-	if (
-		revisits.length === 0 &&
-		!ownResults &&
-		xBattleCards.length === 0 &&
-		!onPcClock
-	) {
+	if (revisits.length === 0 && xBattleCards.length === 0 && !onPcClock) {
 		return built;
 	}
 	let match = built.match;
@@ -671,22 +693,13 @@ function builtGame<E extends DetectedEvent>(
 	for (const board of revisits) {
 		match = withRevealedNames(match, built.sources, board);
 	}
-	if (ownResults && match.pov) {
-		match = {
-			...match,
-			teams: withOwnBuild(match.teams, match.pov, ownResults.data),
-		};
-	}
 	if (xBattleCards.length > 0) match = { ...match, lobby: match.lobby ?? "X" };
 	return {
 		...built,
 		match,
-		sources: [
-			...built.sources,
-			...revisits,
-			...(ownResults ? [ownResults] : []),
-			...xBattleCards,
-		].sort((a, b) => a.t - b.t),
+		sources: [...built.sources, ...revisits, ...xBattleCards].sort(
+			(a, b) => a.t - b.t,
+		),
 	};
 }
 

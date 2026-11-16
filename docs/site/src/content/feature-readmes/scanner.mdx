@@ -475,12 +475,16 @@ scripts/scanner/<script>.ts` for the ones without a package script).
   with neither, e.g. no results screen shown and the map never opened; it has
   no players, so it is not uploaded). A segment with neither an intro nor a
   minimap keeps the reads within 8 min of the screen that closed it.
-  Matchmade lobbies show the personal results before the results screen (X
-  Battle: personal results, set card, results screen), and Anarchy Series
-  often shows no results screen at all. So a personal results screen in a
-  segment's tail before its closing board joins it (one with neither intro
-  nor minimap only when counter reads show it was played), and its lobby,
-  mode and stage stand in for a results screen's. The X Battle cards in the
+  Every lobby shows the personal results 1-23 s before the results screen
+  (X Battle: personal results, set card, pay-out, results screen; checked on
+  footage, never after it), and Anarchy Series often shows no results screen
+  at all. So a personal results screen in a segment's tail before its
+  closing board joins it (one with neither intro nor minimap only when
+  counter reads show it was played), and its lobby, mode and stage stand in
+  for a results screen's. One no segment took (shown after a game played
+  before the scan started, say) joins the board closing a game within 90 s
+  after it, with no gameplay between them, when no lobby, mode, stage or POV
+  weapon both read differs. The X Battle cards in the
   tail join the game too; one shown with no game before it joins the board
   closing a game within 90 s after it. X Battle shows every player under a
   random alias (a gear name) until the log is asked for the real names: a
@@ -498,8 +502,8 @@ scripts/scanner/<script>.ts` for the ones without a package script).
   segment's tail before its closing board discards the segment, so the
   replay of that map is its only card. An event belongs to at most one
   match; deaths reveal enemy builds (`ability-harvest.ts`), the personal
-  results screen (`ScoreboardOwn`, in the game's tail before its closing
-  board or within `OWN_RESULTS_WINDOW_SECONDS` after it) completes the POV
+  results screen (`ScoreboardOwn`, before its game's closing board)
+  completes the POV
   player's full build (on a minimap-grouped match the own card's row, its
   weapon too when unread; a gear card whose badges all read under the
   covered floor keeps what the row had), and minimap cards contribute

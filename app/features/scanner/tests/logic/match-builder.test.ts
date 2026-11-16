@@ -782,17 +782,7 @@ function ownResults(
 	return { type: "ScoreboardOwn", t, scores: { read: 0.9 }, data };
 }
 
-test("the personal results screen completes the POV player's build", () => {
-	const [built] = buildScannerMatches([
-		mapStart(0),
-		scoreboard(300, { povIndex: 5 }),
-		ownResults(320),
-	]);
-	assert.deepEqual(built!.match.teams[1].players[1]!.abilities, OWN_BUILD);
-	assert.equal(built!.sources.length, 3);
-});
-
-test("a personal results screen shown before the results screen completes the POV player's build", () => {
+test("the personal results screen before the results screen completes the POV player's build", () => {
 	const [built] = buildScannerMatches([
 		mapStart(0),
 		ownResults(300),
@@ -838,11 +828,65 @@ test("a minimap-grouped match puts the personal results' weapon and build on the
 	assert.deepEqual(pov.abilities, OWN_BUILD);
 });
 
-test("a personal results screen long after the scoreboard is left alone", () => {
+test("a personal results screen after the results screen is left alone", () => {
 	const [built] = buildScannerMatches([
 		mapStart(0),
 		scoreboard(300),
-		ownResults(600),
+		ownResults(305),
+	]);
+	assert.equal(built!.match.teams[0].players[0]!.abilities, undefined);
+	assert.equal(built!.sources.length, 2);
+});
+
+test("the personal results of a game played before the scan join the battle log entry after them", () => {
+	const view = battleLogScoreboard(60);
+	const built = buildScannerMatches([ownResults(50), view]);
+	assert.equal(built.length, 1);
+	assert.deepEqual(built[0]!.match.teams[0].players[0]!.abilities, OWN_BUILD);
+	assert.deepEqual(
+		built[0]!.sources.map((event) => event.type),
+		["ScoreboardOwn", "ScoreboardBattleLog"],
+	);
+});
+
+test.each([
+	{ why: "another stage", own: ownResults(50, { stage: 3 }) },
+	{ why: "another POV weapon", own: ownResults(50, { weaponId: BRAVO[0]! }) },
+	{ why: "too long before it", own: ownResults(50 - 120) },
+])(
+	"personal results showing $why stay out of the battle log entry after them",
+	({ own }) => {
+		const [built] = buildScannerMatches([own, battleLogScoreboard(60)]);
+		assert.equal(built!.match.teams[0].players[0]!.abilities, undefined);
+		assert.equal(built!.sources.length, 1);
+	},
+);
+
+test.each([
+	{ why: "same game", own: ownResults(300), joins: true },
+	{ why: "another stage", own: ownResults(300, { stage: 3 }), joins: false },
+])(
+	"personal results its segment declined join the board closing it: $why",
+	({ own, joins }) => {
+		const [built] = buildScannerMatches([
+			death(60, "l2"),
+			death(120, "l3"),
+			own,
+			scoreboard(310, { povIndex: 0 }),
+		]);
+		assert.deepEqual(
+			built!.match.teams[0].players[0]!.abilities,
+			joins ? OWN_BUILD : undefined,
+		);
+		assert.equal(built!.sources.includes(own), joins);
+	},
+);
+
+test("personal results stay out of a game played after them", () => {
+	const [built] = buildScannerMatches([
+		ownResults(50),
+		mapStart(60),
+		scoreboard(300),
 	]);
 	assert.equal(built!.match.teams[0].players[0]!.abilities, undefined);
 	assert.equal(built!.sources.length, 2);
@@ -1430,16 +1474,6 @@ test("with a cache, a battle log view joining a match leaves the cached match as
 		buildScannerMatches([...game, view], cache)[0]!.sources.length,
 		4,
 	);
-});
-
-test("with a cache, a personal results screen leaves the cached match as it was", () => {
-	const cache: MatchBuildCache<DetectedEvent> = new WeakMap();
-	const game = [mapStart(0), scoreboard(300, { povIndex: 5 })];
-	const [before] = buildScannerMatches(game, cache);
-	const [after] = buildScannerMatches([...game, ownResults(320)], cache);
-	assert.equal(before!.match.teams[1].players[1]!.abilities, undefined);
-	assert.deepEqual(after!.match.teams[1].players[1]!.abilities, OWN_BUILD);
-	assert.equal(after!.match.teams[0], before!.match.teams[0]);
 });
 
 test("a battle log view of another game forms its own match", () => {
