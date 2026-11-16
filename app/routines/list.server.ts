@@ -26,6 +26,7 @@ import { NotifySeasonStartRoutine } from "./notifySeasonStart";
 import { OptimizeDatabaseRoutine } from "./optimizeDatabase";
 import { ResolveStaleSQMatchesRoutine } from "./resolveStaleSQMatches";
 import { SetOldGroupsAsInactiveRoutine } from "./setOldGroupsAsInactive";
+import { SyncDiscordLinkedRolesRoutine } from "./syncDiscordLinkedRoles";
 import { SyncLiveStreamsRoutine } from "./syncLiveStreams";
 import { SyncSplatoonRotationsRoutine } from "./syncSplatoonRotations";
 import { SyncTournamentVodsRoutine } from "./syncTournamentVods";
@@ -69,6 +70,7 @@ export const daily = [
 	DeleteOrphanArtTagsRoutine,
 	ComputeLutiDivsRoutine,
 	OptimizeDatabaseRoutine,
+	SyncDiscordLinkedRolesRoutine,
 ];
 
 export const weekly = [VacuumDatabaseRoutine];

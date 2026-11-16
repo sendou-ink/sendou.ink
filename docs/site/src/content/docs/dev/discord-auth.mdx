@@ -31,3 +31,29 @@ If you need to test or debug Discord authentication, here's how to proceed:
    restart it.
 
 </Steps>
+
+## Configuring Discord linked roles
+
+Linked roles let Discord servers hand out roles based on sendou.ink data (currently the Plus tier). Users link from Discord, which opens `/discord/linked-role`, and the metadata is pushed to Discord whenever it changes (Plus tiers refreshed, user banned or unbanned) plus once a day by the `SyncDiscordLinkedRoles` routine.
+
+<Steps>
+
+1. Set up Discord authentication as above.
+1. In the ***Oauth*** settings add a ***redirect*** for
+   `http://localhost:5173/discord/oauth-callback` (built from `VITE_SITE_DOMAIN`
+   too).
+1. In the ***General Information*** settings set the ***Linked Roles Verification
+   URL*** to `http://localhost:5173/discord/linked-role`. If Discord does not
+   accept a local address, expose the dev server with a tunnel such as ngrok and
+   use its URL here, for the redirect and as `VITE_SITE_DOMAIN`.
+1. In the ***Bot*** settings reset the token and copy it into your `.env` as
+   `DISCORD_BOT_TOKEN`. Only the next step uses it.
+1. Register the metadata fields with `pnpm vite-node scripts/register-discord-metadata.ts`.
+   Run it again whenever the fields change.
+1. In a test server, edit a role, open its ***Links*** tab and add your
+   application as a requirement, then claim the role from the server's
+   ***Linked Roles*** menu.
+
+</Steps>
+
+The tokens live in the `UserDiscordToken` table. `pnpm run download-prod-db` empties it in the downloaded copies.

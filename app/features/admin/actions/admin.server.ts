@@ -1,7 +1,9 @@
+import * as R from "remeda";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
+import * as LinkedRoles from "~/features/discord/core/LinkedRoles.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { requireRole } from "~/modules/permissions/guards.server";
@@ -57,8 +59,18 @@ export const action = defineAction(
 			case "REFRESH": {
 				requireRole("ADMIN");
 
+				const membersBefore = await UserRepository.findAllPlusServerMembers();
+
 				await AdminRepository.replacePlusTiers(
 					await plusTiersFromVotingAndLeaderboard(),
+				);
+
+				const membersAfter = await UserRepository.findAllPlusServerMembers();
+
+				void LinkedRoles.syncUsers(
+					R.unique(
+						[...membersBefore, ...membersAfter].map((member) => member.userId),
+					),
 				);
 
 				message = "Plus tiers refreshed";
@@ -130,6 +142,8 @@ export const action = defineAction(
 				await refreshBannedCache();
 				await refreshApiTokensCache();
 
+				void LinkedRoles.syncUsers([body.user]);
+
 				sendUserBannedWebhook({
 					bannedUser,
 					bannedBy: user,
@@ -153,6 +167,8 @@ export const action = defineAction(
 				});
 
 				await refreshBannedCache();
+
+				void LinkedRoles.syncUsers([body.user]);
 
 				sendUserUnbannedWebhook({
 					unbannedUser,

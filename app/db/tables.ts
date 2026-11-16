@@ -1286,6 +1286,13 @@ interface TournamentMatchVod {
 	viewCount: number;
 }
 
+interface UserDiscordToken {
+	userId: number;
+	accessToken: string;
+	refreshToken: string;
+	expiresAt: number;
+}
+
 interface BanLog {
 	id: GeneratedAlways<number>;
 	userId: number;
@@ -1913,4 +1920,5 @@ export interface DB {
 	AvailabilityDayNote: AvailabilityDayNote;
 	TeamEvent: TeamEvent;
 	TeamEventMember: TeamEventMember;
+	UserDiscordToken: UserDiscordToken;
 }

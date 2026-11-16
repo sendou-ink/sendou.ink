@@ -15,6 +15,7 @@ import { RECENT_PATCHES } from "~/features/builds/builds-constants";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import * as ChatRoomResolver from "~/features/chat/ChatRoomResolver.server";
+import * as DiscordTokenRepository from "~/features/discord/DiscordTokenRepository.server";
 import * as FeedCommentRepository from "~/features/feed/FeedCommentRepository.server";
 import * as FeedEventRepository from "~/features/feed/FeedEventRepository.server";
 import * as FeedReactionRepository from "~/features/feed/FeedReactionRepository.server";
@@ -550,6 +551,13 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("ChatRoomResolver.findAllByUserId", fx.heavyChatUsers, (chatUsers) =>
 		ChatRoomResolver.findAllByUserId(chatUsers.busiest.id),
+	);
+
+	add("DiscordTokenRepository.findByUserId", fx.discordTokenUserId, (userId) =>
+		DiscordTokenRepository.findByUserId(userId),
+	);
+	addStatic("DiscordTokenRepository.findAllUserIds", () =>
+		DiscordTokenRepository.findAllUserIds(),
 	);
 
 	// FeedRepository

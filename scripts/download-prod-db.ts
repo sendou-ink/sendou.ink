@@ -25,6 +25,8 @@ const SNAPSHOT_DB = "db-snapshot.sqlite3";
 const SANDBOX_DB = "db-sandbox.sqlite3";
 const LEGACY_DB_NAMES = ["db-prod.sqlite3", "db-copy.sqlite3"];
 const DB_FILE_SUFFIXES = ["", "-shm", "-wal"];
+/** Live third party credentials of users, emptied so local copies can't act on their behalf. */
+const SCRUBBED_TABLES = ["UserDiscordToken"];
 
 const PROBE_SCRIPT = `
 printf 'version=%s\\n' "$(sqlite3 --version | cut -d' ' -f1)"
@@ -124,6 +126,7 @@ async function main() {
 		log("Decompressing...");
 		await decompress(archivePath, stagedPath);
 		verifySnapshot(stagedPath);
+		scrubSnapshot(stagedPath);
 	} catch (error) {
 		fs.rmSync(stagedPath, { force: true });
 		throw new Error(
@@ -381,6 +384,29 @@ function verifySnapshot(snapshotPath: string) {
 		for (const suffix of ["-shm", "-wal"]) {
 			fs.rmSync(`${snapshotPath}${suffix}`, { force: true });
 		}
+	}
+}
+
+function scrubSnapshot(snapshotPath: string) {
+	const database = new DatabaseSync(snapshotPath);
+
+	try {
+		// overwrites the deleted rows instead of only marking their pages free
+		database.exec("PRAGMA secure_delete = ON");
+
+		for (const table of SCRUBBED_TABLES) {
+			const exists = database
+				.prepare(
+					"SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+				)
+				.get(table);
+			if (!exists) continue;
+
+			database.exec(`DELETE FROM "${table}"`);
+			log(`Scrubbed    ${table}`);
+		}
+	} finally {
+		database.close();
 	}
 }
 
