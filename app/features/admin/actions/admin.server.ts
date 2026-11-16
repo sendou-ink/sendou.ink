@@ -1,12 +1,12 @@
+import * as R from "remeda";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
-import { updateUserDiscordMetadata } from "~/features/discord/core/metadata.server";
+import * as LinkedRoles from "~/features/discord/core/LinkedRoles.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { requireRole } from "~/modules/permissions/guards.server";
-import { logger } from "~/utils/logger";
 import {
 	errorToast,
 	notFoundIfNullish,
@@ -59,34 +59,19 @@ export const action = defineAction(
 			case "REFRESH": {
 				requireRole("ADMIN");
 
-				const plusTierMembersBefore =
-					await UserRepository.findAllPlusServerMembers();
-
-				logger.info(
-					`Plus server members before refresh: ${plusTierMembersBefore
-						.map((m) => m.userId)
-						.sort((a, b) => a - b)
-						.join(", ")}`,
-				);
+				const membersBefore = await UserRepository.findAllPlusServerMembers();
 
 				await AdminRepository.replacePlusTiers(
 					await plusTiersFromVotingAndLeaderboard(),
 				);
 
-				const plusTierMembersAfter =
-					await UserRepository.findAllPlusServerMembers();
+				const membersAfter = await UserRepository.findAllPlusServerMembers();
 
-				const allAffectedUserIds = new Set<number>();
-				for (const member of plusTierMembersBefore) {
-					allAffectedUserIds.add(member.userId);
-				}
-				for (const member of plusTierMembersAfter) {
-					allAffectedUserIds.add(member.userId);
-				}
-
-				for (const userId of allAffectedUserIds) {
-					await updateUserDiscordMetadata(userId);
-				}
+				void LinkedRoles.syncUsers(
+					R.unique(
+						[...membersBefore, ...membersAfter].map((member) => member.userId),
+					),
+				);
 
 				message = "Plus tiers refreshed";
 				break;
@@ -157,7 +142,7 @@ export const action = defineAction(
 				await refreshBannedCache();
 				await refreshApiTokensCache();
 
-				await updateUserDiscordMetadata(body.user);
+				void LinkedRoles.syncUsers([body.user]);
 
 				sendUserBannedWebhook({
 					bannedUser,
@@ -182,6 +167,8 @@ export const action = defineAction(
 				});
 
 				await refreshBannedCache();
+
+				void LinkedRoles.syncUsers([body.user]);
 
 				sendUserUnbannedWebhook({
 					unbannedUser,

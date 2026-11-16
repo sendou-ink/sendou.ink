@@ -1,47 +1,60 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { OAuth2RequestError } from "remix-auth-oauth2";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { logger } from "~/utils/logger";
+import {
+	errorToastWithRedirect,
+	successToastWithRedirect,
+} from "~/utils/remix.server";
 import * as DiscordAPI from "../core/DiscordAPI.server";
-import { updateUserDiscordMetadata } from "../core/metadata.server";
-import * as DiscordTokenRepository from "../DiscordTokenRepository.server";
-import { clientStateCookie } from "../discord-utils.server";
+import * as LinkedRoles from "../core/LinkedRoles.server";
 
-export const loader = async ({ request, url }: LoaderFunctionArgs) => {
-	// biome-ignore lint/plugin: OAuth callback param, its name and values defined by the provider
-	const discordState = url.searchParams.get("state");
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+	const tokens = await authenticate(request);
 
-	const cookieHeader = request.headers.get("Cookie");
-	const clientState = await clientStateCookie.parse(cookieHeader);
-	if (clientState !== discordState) {
-		logger.error("State verification failed.");
-		return new Response(null, { status: 403 });
+	const discordId = await DiscordAPI.fetchUserId(tokens.accessToken());
+	const user = await UserRepository.findIdByIdentifier(discordId);
+	if (!user) {
+		errorToastWithRedirect({
+			url: "/",
+			message:
+				"No sendou.ink account found for your Discord account. Log in to sendou.ink once and try again.",
+		});
 	}
 
-	// biome-ignore lint/plugin: OAuth callback param, its name and values defined by the provider
-	const code = url.searchParams.get("code");
-	if (!code) {
-		logger.error("No code provided in OAuth callback.");
-		return new Response(null, { status: 400 });
+	await LinkedRoles.saveTokens(user.id, tokens);
+
+	try {
+		await LinkedRoles.syncUser(user.id);
+	} catch (error) {
+		logger.error("Syncing Discord linked role after linking:", error);
+		errorToastWithRedirect({
+			url: "/",
+			message:
+				"Linked, but updating your Discord roles failed. They will be updated within a day.",
+		});
 	}
 
-	const tokens = await DiscordAPI.getOAuthTokens(code);
-	const meData = await DiscordAPI.getUserData(tokens);
-
-	const token = await DiscordTokenRepository.upsert({
-		discordId: meData.user.id,
-		accessToken: tokens.access_token,
-		refreshToken: tokens.refresh_token,
-		expiresAt: dateToDatabaseTimestamp(
-			new Date(Date.now() + tokens.expires_in * 1000),
-		),
-	});
-
-	await updateUserDiscordMetadata(token.userId);
-
-	return new Response("Successfully linked. You can now close this page.", {
-		status: 200,
-		headers: {
-			"Content-Type": "text/plain",
-		},
+	successToastWithRedirect({
+		url: "/",
+		message: "Linked! Your Discord roles are now up to date.",
 	});
 };
+
+async function authenticate(request: Request) {
+	try {
+		return await DiscordAPI.linkedRoleStrategy.authenticate(request);
+	} catch (error) {
+		if (error instanceof Response) throw error;
+
+		if (error instanceof OAuth2RequestError && error.code === "access_denied") {
+			errorToastWithRedirect({ url: "/", message: "Linking was cancelled" });
+		}
+
+		logger.error("Discord linked role authentication:", error);
+		errorToastWithRedirect({
+			url: "/",
+			message: "Linking failed, please try again",
+		});
+	}
+}

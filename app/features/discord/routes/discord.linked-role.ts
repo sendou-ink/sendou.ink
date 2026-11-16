@@ -1,16 +1,9 @@
-import { redirect } from "react-router";
-import * as DiscordAPI from "~/features/discord/core/DiscordAPI.server";
-import { clientStateCookie } from "../discord-utils.server";
+import type { LoaderFunctionArgs } from "react-router";
+import * as DiscordAPI from "../core/DiscordAPI.server";
 
-export const loader = async () => {
-	const { url, state } = DiscordAPI.getOAuthUrl();
+/** Linked role verification URL set in the Discord developer portal, starts the OAuth flow. */
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+	await DiscordAPI.linkedRoleStrategy.authenticate(request);
 
-	// Store the signed state param in the user's cookies so we can verify
-	// the value later. See:
-	// https://discord.com/developers/docs/topics/oauth2#state-and-security
-	return redirect(url, {
-		headers: {
-			"Set-Cookie": await clientStateCookie.serialize(state),
-		},
-	});
+	return null;
 };

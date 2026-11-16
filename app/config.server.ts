@@ -39,7 +39,6 @@ const schema = v.pipe(
 
 		DISCORD_CLIENT_ID: requiredInProd(isProd, ""),
 		DISCORD_CLIENT_SECRET: requiredInProd(isProd, ""),
-		DISCORD_LINKED_ROLE_REDIRECT_URI: v.optional(v.string()),
 
 		STORAGE_END_POINT: requiredInProd(isProd, "http://127.0.0.1:9000"),
 		STORAGE_ACCESS_KEY: requiredInProd(isProd, "seaweedfs-user"),
@@ -99,8 +98,6 @@ export const ServerConfig = {
 	discord: {
 		clientId: values.DISCORD_CLIENT_ID,
 		clientSecret: values.DISCORD_CLIENT_SECRET,
-		/** Optional, needed only for Discord linked roles. */
-		linkedRoleRedirectUri: values.DISCORD_LINKED_ROLE_REDIRECT_URI,
 	},
 
 	/** S3-compatible object storage */

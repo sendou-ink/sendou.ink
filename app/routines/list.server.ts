@@ -24,9 +24,9 @@ import { NotifyScrimStartingSoonRoutine } from "./notifyScrimStartingSoon";
 import { NotifySeasonEndRoutine } from "./notifySeasonEnd";
 import { NotifySeasonStartRoutine } from "./notifySeasonStart";
 import { OptimizeDatabaseRoutine } from "./optimizeDatabase";
-import { RefreshDiscordTokensRoutine } from "./refreshDiscordTokens";
 import { ResolveStaleSQMatchesRoutine } from "./resolveStaleSQMatches";
 import { SetOldGroupsAsInactiveRoutine } from "./setOldGroupsAsInactive";
+import { SyncDiscordLinkedRolesRoutine } from "./syncDiscordLinkedRoles";
 import { SyncLiveStreamsRoutine } from "./syncLiveStreams";
 import { SyncSplatoonRotationsRoutine } from "./syncSplatoonRotations";
 import { SyncTournamentVodsRoutine } from "./syncTournamentVods";
@@ -64,13 +64,13 @@ export const daily = [
 	DeleteOldAvailabilityRoutine,
 	NotifyScheduleTeamReminderRoutine,
 	CloseExpiredCommissionsRoutine,
-	RefreshDiscordTokensRoutine,
 	CloseExpiredChatRoomsRoutine,
 	DeleteOldVoiceTelemetryRoutine,
 	DeleteOldUnlinkedScannerMatchesRoutine,
 	DeleteOrphanArtTagsRoutine,
 	ComputeLutiDivsRoutine,
 	OptimizeDatabaseRoutine,
+	SyncDiscordLinkedRolesRoutine,
 ];
 
 export const weekly = [VacuumDatabaseRoutine];

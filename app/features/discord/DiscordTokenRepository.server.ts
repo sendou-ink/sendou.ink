@@ -1,8 +1,8 @@
-import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { TablesInsertable } from "~/db/tables";
 
-export async function findByUserId(userId: number) {
+/** The user's stored Discord linked role tokens, `undefined` if they have not linked. */
+export function findByUserId(userId: number) {
 	return db
 		.selectFrom("UserDiscordToken")
 		.select(["accessToken", "refreshToken", "expiresAt"])
@@ -10,7 +10,8 @@ export async function findByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
-export async function allUserIds() {
+/** Ids of every user who has linked sendou.ink as a Discord linked role. */
+export async function findAllUserIds() {
 	const rows = await db
 		.selectFrom("UserDiscordToken")
 		.select("userId")
@@ -19,20 +20,11 @@ export async function allUserIds() {
 	return rows.map((row) => row.userId);
 }
 
-export async function upsert(
-	args: Omit<TablesInsertable["UserDiscordToken"], "userId"> & {
-		discordId: string;
-	},
-) {
-	const user = await db
-		.selectFrom("User")
-		.select("id")
-		.where("discordId", "=", args.discordId)
-		.executeTakeFirstOrThrow();
-
+/** Stores the user's tokens, replacing the ones they had before. */
+export function upsert(args: TablesInsertable["UserDiscordToken"]) {
 	return db
 		.insertInto("UserDiscordToken")
-		.values({ ...R.omit(args, ["discordId"]), userId: user.id })
+		.values(args)
 		.onConflict((oc) =>
 			oc.column("userId").doUpdateSet({
 				accessToken: args.accessToken,
@@ -40,6 +32,20 @@ export async function upsert(
 				expiresAt: args.expiresAt,
 			}),
 		)
-		.returningAll()
-		.executeTakeFirstOrThrow();
+		.execute();
+}
+
+/**
+ * Deletes the user's tokens if the access token is still the given one. A token refreshed
+ * concurrently in the meantime is kept.
+ */
+export function deleteIfUnchanged(args: {
+	userId: number;
+	accessToken: string;
+}) {
+	return db
+		.deleteFrom("UserDiscordToken")
+		.where("userId", "=", args.userId)
+		.where("accessToken", "=", args.accessToken)
+		.execute();
 }
