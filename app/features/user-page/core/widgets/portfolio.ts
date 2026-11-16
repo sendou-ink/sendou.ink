@@ -2,7 +2,7 @@ import type * as v from "valibot";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { USER } from "~/features/user-page/user-page-constants";
 import type { FormObjectSchema } from "~/form/types";
-import type { StoredWidget } from "./types";
+import type { StoredWidget, WidgetId } from "./types";
 import {
 	artSchema,
 	badgesOwnedSchema,
@@ -366,4 +366,17 @@ export function defaultStoredWidget(widgetId: string): StoredWidget {
 	}
 
 	return { id: widget.id } as StoredWidget;
+}
+
+/** Widgets whose name is shared with another one, spelled out so the editor lists stay unambiguous. */
+const EDITOR_WIDGET_NAME_KEYS = {
+	"bio-md": "user:widgets.editorName.bio-md",
+	"game-badges-small": "user:widgets.editorName.game-badges-small",
+} as const;
+
+/** Translation key of a widget's name as the widget editor shows it. */
+export function widgetNameKey(widgetId: WidgetId) {
+	return widgetId in EDITOR_WIDGET_NAME_KEYS
+		? EDITOR_WIDGET_NAME_KEYS[widgetId as keyof typeof EDITOR_WIDGET_NAME_KEYS]
+		: (`user:widget.${widgetId}` as const);
 }
