@@ -2,8 +2,10 @@
 	display: none;
 }
 
-/* the auto row takes the own group's height so the invited groups sit right under it */
+/* the auto row takes the own group's height so the invited groups sit right under it
+   positioned so the fading ghosts of removed cards stay inside the strip instead of widening the page */
 .columns {
+	position: relative;
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
 	grid-template-rows: auto 1fr;
