@@ -304,6 +304,16 @@ export function buildCases(fx: Fixtures): {
 		BroadcastRepository.findProgram(program),
 	);
 	add(
+		"BroadcastRepository.findProgramChannelsByTournament",
+		fx.broadcastProgram?.tournamentId
+			? {
+					userId: fx.broadcastProgram.userId,
+					tournamentId: fx.broadcastProgram.tournamentId,
+				}
+			: null,
+		(args) => BroadcastRepository.findProgramChannelsByTournament(args),
+	);
+	add(
 		"BroadcastCastRepository.findAllCastersByUserIds",
 		fx.manyUserIds,
 		(userIds) => BroadcastCastRepository.findAllCastersByUserIds(userIds),

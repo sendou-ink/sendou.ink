@@ -39,7 +39,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useLoaderData, useRevalidator } from "react-router";
+import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router";
 import * as R from "remeda";
 import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
@@ -59,6 +59,7 @@ import {
 import { InfoPopover } from "~/components/InfoPopover";
 import { InviteLinkInput } from "~/components/InviteLinkInput";
 import { Config } from "~/config";
+import { useUser } from "~/features/auth/core/user";
 import {
 	BROADCAST_INK_COLORS,
 	BROADCAST_REHEARSE_MESSAGE,
@@ -72,10 +73,12 @@ import {
 import { broadcastThemeFormSchema } from "~/features/broadcast/broadcast-schemas";
 import type {
 	BroadcastAdvance,
+	BroadcastChannel,
 	BroadcastMatch,
 	BroadcastView,
 } from "~/features/broadcast/broadcast-types";
 import {
+	broadcastDashboardPage,
 	broadcastDesignPage,
 	broadcastOverlayPage,
 	broadcastProgramPage,
@@ -105,7 +108,7 @@ import { StreamDeckSetup } from "~/modules/stream-deck/components/StreamDeckSetu
 import type * as StreamDeck from "~/modules/stream-deck/stream-deck";
 import type { SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { tournamentMatchPage } from "~/utils/urls";
+import { tournamentAdminPage, tournamentMatchPage } from "~/utils/urls";
 import {
 	BROADCAST_AUTO_TAKE_IMMINENT_MS,
 	BROADCAST_BRACKET_FOCUSES,
@@ -130,6 +133,7 @@ import type {
 import { needsFeaturedMatch } from "../broadcast-cast-utils";
 import { ScenePicker, useSceneHotkeys } from "../components/ScenePicker";
 import * as BracketFocus from "../core/BracketFocus";
+import * as CastChannel from "../core/CastChannel";
 import * as CastStreamDeck from "../core/CastStreamDeck";
 import { loader } from "../loaders/to.$id.broadcast.$channel.server";
 import styles from "./to.$id.broadcast.$channel.module.css";
@@ -152,16 +156,24 @@ const TAB_ICONS: Record<DashboardTab, LucideIcon> = {
 	theme: Palette,
 };
 
+export default function BroadcastDashboardPage() {
+	const data = useLoaderData<typeof loader>();
+
+	// remounts per channel so a switch doesn't carry the previous channel's stream, selection and clips over
+	return <BroadcastDashboard key={data.channel.slug} />;
+}
+
 /**
  * Control panel of one broadcast: the live and the staged ("next") overlay side by side, Take puts next on air.
  * Left of Take is what is on air, right of it what goes on air next: the queue and the selected item's scene.
  * Under them the show settings set up OBS and the scanner, and theme the overlays.
  */
-export default function BroadcastDashboardPage() {
+function BroadcastDashboard() {
 	const { t } = useTranslation(["broadcast"]);
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
 	const pageArgs = { tournamentId: tournament.ctx.id, slug: data.channel.slug };
+	const channels = CastChannel.list(tournament.ctx.castAccounts);
 	const clipSender = useClipSender({
 		signalUrl: broadcastSignalUrl(pageArgs),
 		clips: BROADCAST_PROTOTYPE_CLIPS,
@@ -254,9 +266,14 @@ export default function BroadcastDashboardPage() {
 			/>
 			<header className="stack sm">
 				<div className="stack horizontal sm items-center justify-between flex-wrap">
-					<h1 className="text-lg">
-						{t("broadcast:title")} · {data.channel.name}
-					</h1>
+					<div className="stack horizontal md items-center flex-wrap">
+						<h1 className="text-lg">
+							{channels.length > 1
+								? t("broadcast:title")
+								: `${t("broadcast:title")} · ${data.channel.name}`}
+						</h1>
+						<ChannelSwitcher channels={channels} />
+					</div>
 					<div className="stack horizontal sm items-center flex-wrap">
 						<Health
 							state={state}
@@ -392,6 +409,54 @@ export default function BroadcastDashboardPage() {
 					</SendouTabPanel>
 				</SendouTabs>
 			</div>
+		</div>
+	);
+}
+
+/** Switches to the dashboard of another of the tournament's cast channels, organizers can also add channels. */
+function ChannelSwitcher({ channels }: { channels: BroadcastChannel[] }) {
+	const { t } = useTranslation(["broadcast"]);
+	const tournament = useTournament();
+	const user = useUser();
+	const data = useLoaderData<typeof loader>();
+	const navigate = useNavigate();
+	const canAddChannel =
+		tournament.isOrganizer(user) && !tournament.ctx.isFinalized;
+
+	return (
+		<div className="stack horizontal sm items-center flex-wrap">
+			{channels.length > 1 ? (
+				<SendouChipRadioGroup aria-label={t("broadcast:dashboard.channel")}>
+					{channels.map((channel) => (
+						<SendouChipRadio
+							key={channel.slug}
+							name="broadcast-channel"
+							value={channel.slug}
+							checked={channel.slug === data.channel.slug}
+							onChange={() =>
+								navigate(
+									broadcastDashboardPage({
+										tournamentId: tournament.ctx.id,
+										slug: channel.slug,
+									}),
+								)
+							}
+						>
+							{channel.name}
+						</SendouChipRadio>
+					))}
+				</SendouChipRadioGroup>
+			) : null}
+			{canAddChannel ? (
+				<LinkButton
+					to={`${tournamentAdminPage(tournament.ctx.id)}/stream`}
+					size="small"
+					variant="minimal"
+					icon={<Plus />}
+				>
+					{t("broadcast:addChannel")}
+				</LinkButton>
+			) : null}
 		</div>
 	);
 }

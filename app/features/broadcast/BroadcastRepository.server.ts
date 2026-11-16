@@ -248,6 +248,27 @@ export function findProgram({
 		.executeTakeFirst();
 }
 
+/** Channels whose OBS URL of the user shows one of the tournament's broadcasts. */
+export function findProgramChannelsByTournament({
+	userId,
+	tournamentId,
+}: {
+	userId: number;
+	tournamentId: number;
+}) {
+	return db
+		.selectFrom("UserBroadcastProgram")
+		.innerJoin(
+			"TournamentBroadcast",
+			"TournamentBroadcast.id",
+			"UserBroadcastProgram.broadcastId",
+		)
+		.select(["UserBroadcastProgram.platform", "UserBroadcastProgram.account"])
+		.where("UserBroadcastProgram.userId", "=", userId)
+		.where("TournamentBroadcast.tournamentId", "=", tournamentId)
+		.execute();
+}
+
 /**
  * Points the user's OBS URL for the channel at the channel's broadcast in the tournament, creating the URL (with a new
  * random key) or the broadcast when missing. Returns the URL's id and key.

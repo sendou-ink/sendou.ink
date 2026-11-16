@@ -1,8 +1,9 @@
 {
 	"title": "Broadcast",
-	"list.description": "Overlays for OBS, one broadcast per cast channel. Matches marked as casted on a channel show up on its overlays automatically.",
-	"list.noChannels": "No cast channels yet. Add one to start a broadcast.",
-	"list.addChannels": "Manage cast channels",
+	"addChannel": "Add channel",
+	"empty.description": "Live OBS overlays for your stream, one broadcast per cast channel. Mark a match as casted and its rosters, maps, score and bracket show up on the overlays by themselves, while you switch scenes from a single dashboard.",
+	"empty.getStarted": "Add your cast channel to get started.",
+	"empty.askOrganizer": "Ask an organizer of the tournament to add a cast channel to get started.",
 	"dashboard.live": "Live",
 	"dashboard.next": "Next",
 	"dashboard.take": "Take",
@@ -234,5 +235,6 @@
 	"design.syntaxError": "Line {{line}}: {{reason}}. The preview shows your last edit that worked.",
 	"design.result": "CSS to save ({{length}}/{{max}} characters)",
 	"design.noChanges": "Nothing changed from the default styles",
-	"design.tooLong": "Too many changes to save, at most {{max}} characters fit."
+	"design.tooLong": "Too many changes to save, at most {{max}} characters fit.",
+	"dashboard.channel": "Channel"
 }

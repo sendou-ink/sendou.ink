@@ -676,8 +676,8 @@ async function findMatch(matchId: number) {
 	return match;
 }
 
-/** Adds a Twitch account to the tournament's cast accounts with its broadcast chat room, as the stream page does. */
-async function addCastAccount({
+/** Adds a Twitch account to the tournament's cast accounts with its broadcast chat room, as the stream page does. Doesn't clear the tournament data cache. */
+export async function addCastAccount({
 	tournamentId,
 	twitchAccount,
 }: {

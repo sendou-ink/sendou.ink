@@ -1,4 +1,19 @@
-import { findProgram } from "~/features/broadcast/broadcast-utils.server";
+import type { Params } from "react-router";
+import type { CastAccount } from "~/db/tables-json";
+import {
+	ensureChatRoom,
+	findProgram,
+} from "~/features/broadcast/broadcast-utils.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import { adminStreamFormSchemaServer } from "~/features/tournament-admin/tournament-admin-staff-schemas.server";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import {
+	clearTournamentDataCache,
+	tournamentFromParams,
+} from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { CAST_PRODUCER_RULES } from "./broadcast-cast-constants";
 import * as CastChannel from "./core/CastChannel";
 
 /**
@@ -24,4 +39,44 @@ export async function findCastProgram(programKey: string | null) {
 				? { tournamentId: program.tournament.ctx.id, slug: channel.slug }
 				: null,
 	};
+}
+
+/** Body schema of the tournament's cast accounts form, for its organizers only. */
+export async function castAccountsBodySchema({
+	params,
+}: {
+	params: Params<string>;
+}) {
+	const { tournament } = await tournamentFromParams(params, {
+		for: "organizer",
+	});
+
+	return adminStreamFormSchemaServer({
+		currentCastAccounts: tournament.ctx.castAccounts ?? [],
+	});
+}
+
+/** Saves the tournament's cast accounts, opening the broadcast chat room of each of their channels. */
+export async function updateCastAccounts({
+	tournament,
+	castAccounts,
+}: {
+	tournament: Tournament;
+	castAccounts: CastAccount[];
+}) {
+	await TournamentRepository.updateCastAccounts({
+		tournamentId: tournament.ctx.id,
+		castAccounts,
+	});
+
+	clearTournamentDataCache(tournament.ctx.id);
+	ChatSystemMessage.send({ channel: tournamentChannel(tournament.ctx.id) });
+
+	for (const channel of CastChannel.list(castAccounts)) {
+		await ensureChatRoom({
+			tournament,
+			channel,
+			rules: CAST_PRODUCER_RULES,
+		});
+	}
 }

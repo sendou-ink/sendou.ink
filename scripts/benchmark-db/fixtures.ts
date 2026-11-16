@@ -187,6 +187,8 @@ export interface Fixtures {
 		programKey: string;
 		userId: number;
 		channel: Pick<Tables["UserBroadcastProgram"], "platform" | "account">;
+		/** Tournament of the broadcast it shows. */
+		tournamentId: number | null;
 	} | null;
 	/** Matches of the tournament with the most matches. */
 	manyTournamentMatchIds: number[] | null;
@@ -1871,9 +1873,20 @@ async function resolveBroadcast() {
 async function resolveBroadcastProgram() {
 	const row = await db
 		.selectFrom("UserBroadcastProgram")
-		.select(["programKey", "userId", "platform", "account"])
-		.orderBy(sql`"broadcastId" is not null`, "desc")
-		.orderBy("id", "desc")
+		.leftJoin(
+			"TournamentBroadcast",
+			"TournamentBroadcast.id",
+			"UserBroadcastProgram.broadcastId",
+		)
+		.select([
+			"UserBroadcastProgram.programKey",
+			"UserBroadcastProgram.userId",
+			"UserBroadcastProgram.platform",
+			"UserBroadcastProgram.account",
+			"TournamentBroadcast.tournamentId",
+		])
+		.orderBy(sql`"UserBroadcastProgram"."broadcastId" is not null`, "desc")
+		.orderBy("UserBroadcastProgram.id", "desc")
 		.limit(1)
 		.executeTakeFirst();
 	if (!row) return null;
@@ -1882,6 +1895,7 @@ async function resolveBroadcastProgram() {
 		programKey: row.programKey,
 		userId: row.userId,
 		channel: { platform: row.platform, account: row.account },
+		tournamentId: row.tournamentId,
 	};
 }
 

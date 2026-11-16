@@ -78,6 +78,13 @@ export class BroadcastDashboardPage {
 		return response.status();
 	}
 
+	/** The chip of a cast channel in the channel switcher. */
+	channelChip(name: string) {
+		return this.page
+			.getByRole("radiogroup", { name: "Channel" })
+			.getByText(name, { exact: true });
+	}
+
 	/** Heading of the live or the next view, naming the scene it shows. */
 	viewHeading(view: BroadcastView, scene: CastScene) {
 		return this.page.getByRole("heading", {

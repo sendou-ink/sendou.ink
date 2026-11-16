@@ -1,50 +1,19 @@
-import type { Params } from "react-router";
-import { ensureChatRoom } from "~/features/broadcast/broadcast-utils.server";
-import { CAST_PRODUCER_RULES } from "~/features/broadcast-cast/broadcast-cast-constants";
-import * as CastChannel from "~/features/broadcast-cast/core/CastChannel";
-import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
-	clearTournamentDataCache,
-	tournamentFromParams,
-} from "~/features/tournament-bracket/core/Tournament.server";
-import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
+	castAccountsBodySchema,
+	updateCastAccounts,
+} from "~/features/broadcast-cast/broadcast-cast-utils.server";
+import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
 import { defineAction } from "~/form/define-action.server";
-import { adminStreamFormSchemaServer } from "../tournament-admin-staff-schemas.server";
 
 export const action = defineAction(
-	{ body: streamBodySchema },
+	{ body: castAccountsBodySchema },
 	async ({ params, body }) => {
-		const { tournament, tournamentId } = await tournamentFromParams(params, {
+		const { tournament } = await tournamentFromParams(params, {
 			for: "organizer",
 		});
 
-		await TournamentRepository.updateCastAccounts({
-			tournamentId: tournament.ctx.id,
-			castAccounts: body.castAccounts,
-		});
-
-		clearTournamentDataCache(tournamentId);
-		ChatSystemMessage.send({ channel: tournamentChannel(tournamentId) });
-
-		for (const channel of CastChannel.list(body.castAccounts)) {
-			await ensureChatRoom({
-				tournament,
-				channel,
-				rules: CAST_PRODUCER_RULES,
-			});
-		}
+		await updateCastAccounts({ tournament, castAccounts: body.castAccounts });
 
 		return null;
 	},
 );
-
-async function streamBodySchema({ params }: { params: Params<string> }) {
-	const { tournament } = await tournamentFromParams(params, {
-		for: "organizer",
-	});
-
-	return adminStreamFormSchemaServer({
-		currentCastAccounts: tournament.ctx.castAccounts ?? [],
-	});
-}

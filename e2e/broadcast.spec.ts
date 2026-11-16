@@ -1,14 +1,17 @@
 import type { Browser } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { broadcastDashboardPage } from "~/features/broadcast/broadcast-urls";
 import type { Factories } from "./helpers/factories";
 import { expect, impersonate, test } from "./helpers/playwright";
 import { ROSTER_SIZE, startedTournamentTimes } from "./helpers/tournament";
 import { BroadcastDashboardPage } from "./pages/broadcast/broadcast-dashboard-page";
 import { BroadcastDesignPage } from "./pages/broadcast/broadcast-design-page";
+import { BroadcastPage } from "./pages/broadcast/broadcast-page";
 import { BroadcastProgramPage } from "./pages/broadcast/broadcast-program-page";
 import { TournamentMatchPage } from "./pages/tournament/tournament-match-page";
 
 const CAST_ACCOUNT = "broadcast_cast";
+const OTHER_CAST_ACCOUNT = "broadcast_other";
 const STREAM_DECK_KEY_COUNT = 15;
 const STREAM_DECK_KEYS = { casters: 5, bracket: 6, queueItem: 12, take: 14 };
 const TEAM_COUNT = 2;
@@ -175,6 +178,64 @@ test.describe("Broadcast", () => {
 		await obs.close();
 	});
 
+	test("opens the channel the OBS URL shows and switches between channels", async ({
+		page,
+		factories,
+	}) => {
+		const [streamer] = await factories.UserFactory.createMany(1);
+		const tournament = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+			programUserId: streamer.id,
+		});
+		await factories.TournamentFactory.addCastAccount({
+			tournamentId: tournament.id,
+			twitchAccount: OTHER_CAST_ACCOUNT,
+		});
+		await factories.TournamentBroadcastFactory.pointProgram({
+			userId: NZAP_TEST_ID,
+			tournamentId: tournament.id,
+			channel: { platform: "TWITCH", account: OTHER_CAST_ACCOUNT },
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		await new BroadcastPage(page, tournament.id).goto();
+		await expect(page).toHaveURL(
+			broadcastDashboardPage({
+				tournamentId: tournament.id,
+				slug: OTHER_CAST_ACCOUNT,
+			}),
+		);
+
+		const dashboard = new BroadcastDashboardPage(page, pageArgs(tournament.id));
+		await dashboard.channelChip(CAST_ACCOUNT).click();
+		await expect(page).toHaveURL(
+			broadcastDashboardPage(pageArgs(tournament.id)),
+		);
+		await expect(dashboard.locators.featuredMatch).toContainText("Team 1");
+	});
+
+	test("adds the first cast channel from the broadcast page", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+			startTimes: startedTournamentTimes(),
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		const broadcast = new BroadcastPage(page, tournament.id);
+		await broadcast.goto();
+		await broadcast.addChannel(CAST_ACCOUNT);
+
+		await expect(page).toHaveURL(
+			broadcastDashboardPage(pageArgs(tournament.id)),
+		);
+		await expect(
+			page.getByRole("heading", { name: `Broadcast · ${CAST_ACCOUNT}` }),
+		).toBeVisible();
+	});
+
 	test("keeps everyone but producers out of producing", async ({
 		page,
 		factories,
@@ -284,7 +345,11 @@ function pageArgs(tournamentId: number) {
 /** The setup of the `tournament-broadcast` dev scenario: two teams, their match cast on the channel, the author's OBS URL showing it. */
 async function createBroadcasting(
 	factories: Factories,
-	{ authorId, isMatchCast }: { authorId: number; isMatchCast?: boolean },
+	{
+		authorId,
+		isMatchCast,
+		programUserId,
+	}: { authorId: number; isMatchCast?: boolean; programUserId?: number },
 ) {
 	const players = await factories.UserFactory.createMany(
 		TEAM_COUNT * ROSTER_SIZE,
@@ -300,6 +365,7 @@ async function createBroadcasting(
 			),
 			twitchAccount: CAST_ACCOUNT,
 			isMatchCast,
+			programUserId,
 		},
 	);
 }
