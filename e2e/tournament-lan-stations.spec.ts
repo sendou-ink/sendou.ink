@@ -121,6 +121,56 @@ test.describe("LAN tournament stations for players", () => {
 	});
 });
 
+test.describe("LAN tournament map preview", () => {
+	test("steps through a match's maps in its banner, before and while it's played", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+		});
+		await factories.CalendarEventVenueFactory.create({
+			eventId: tournament.eventId,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(4));
+		// every round is SZ on stages 1, 2 and 3
+		const [semifinal, , final] = await factories.TournamentFactory.startBracket(
+			tournament.id,
+		);
+
+		const match = new TournamentMatchPage(page);
+		const { locators } = match;
+
+		// teams not known yet
+		await match.goto({ tournamentId: tournament.id, matchId: final.id });
+		await expect(locators.stageBanner).toHaveCount(0);
+		await expect(locators.previousMapButton).toHaveCount(0);
+		await locators.nextMapButton.click();
+		await expect(page.getByTestId("banner-map-SZ-1")).toBeVisible();
+		await expect(locators.mapPreviewLabel).toHaveText("Game 1 · upcoming");
+		await expect(locators.previewedMode).toHaveCount(1);
+		await locators.nextMapButton.click();
+		await locators.nextMapButton.click();
+		await expect(page.getByTestId("banner-map-SZ-3")).toBeVisible();
+		await expect(locators.nextMapButton).toHaveCount(0);
+		for (let i = 0; i < 3; i++) await locators.previousMapButton.click();
+		await expect(locators.stageBanner).toHaveCount(0);
+		await expect(locators.previewedMode).toHaveCount(0);
+
+		// being played: the current map, the next ones a step away
+		await match.goto({ tournamentId: tournament.id, matchId: semifinal.id });
+		await expect(page.getByTestId("banner-map-SZ-1")).toBeVisible();
+		await expect(locators.mapPreviewLabel).toHaveCount(0);
+		await expect(locators.previousMapButton).toHaveCount(0);
+		await locators.nextMapButton.click();
+		await expect(page.getByTestId("banner-map-SZ-2")).toBeVisible();
+		await expect(locators.mapPreviewLabel).toHaveText("Game 2 · upcoming");
+		await locators.previousMapButton.click();
+		await expect(page.getByTestId("banner-map-SZ-1")).toBeVisible();
+		await expect(locators.mapPreviewLabel).toHaveCount(0);
+	});
+});
+
 test.describe("LAN tournament station display screen", () => {
 	test("shows a logged out viewer the stations' matches, updating live when they move", async ({
 		page,

@@ -36,7 +36,7 @@ export default function TournamentMatchPage() {
 		<MatchPageProvider data={data}>
 			<MatchPage className={containerClassName("normal")}>
 				<TournamentMatchHeader data={data} />
-				<TournamentMatchBanner data={data} />
+				<TournamentMatchBanner key={data.match.id} data={data} />
 				<TournamentMatchTabs data={data} />
 			</MatchPage>
 		</MatchPageProvider>

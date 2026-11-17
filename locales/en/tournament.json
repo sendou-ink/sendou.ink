@@ -266,6 +266,7 @@
 	"match.waitingForPrevious.header": "Previous match ongoing",
 	"match.waitingForPrevious.subtitle": "Match will be reportable when both teams are ready to play",
 	"match.tbd": "TBD",
+	"match.mapPreview.upcoming": "Game {{number}} · upcoming",
 	"match.action.reopenMatch": "Reopen match",
 	"match.action.endSet": "End set",
 	"match.action.confirmEndSet": "Confirm End Set",

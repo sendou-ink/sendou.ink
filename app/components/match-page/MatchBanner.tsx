@@ -47,6 +47,8 @@ interface MatchBannerProps {
 	station?: BannerStation | null;
 	/** Estimated time until the match starts e.g. "~15–25 min". */
 	startsIn?: string | null;
+	/** Shows a map that isn't the current one, labeled e.g. "Game 3 · upcoming". */
+	preview?: string;
 	children?: React.ReactNode;
 }
 
@@ -59,6 +61,7 @@ export function MatchBanner({
 	host,
 	station,
 	startsIn,
+	preview,
 	children,
 }: MatchBannerProps) {
 	const { t } = useTranslation(["game-misc", "common"]);
@@ -75,7 +78,11 @@ export function MatchBanner({
 
 	return (
 		// keyed so a map change remounts it and plays the swap animations once
-		<div key={stageKey} className={styles.banner} data-testid="stage-banner">
+		<div
+			key={stageKey}
+			className={clsx(styles.banner, { [styles.previewed]: preview })}
+			data-testid="stage-banner"
+		>
 			<div className={styles.backdrop}>
 				{shown.previousStageId !== null ? (
 					<div
@@ -111,6 +118,11 @@ export function MatchBanner({
 				{children}
 			</div>
 
+			{preview ? (
+				<div className={styles.previewLabel} data-testid="banner-map-preview">
+					{preview}
+				</div>
+			) : null}
 			{joinPool || station || startsIn ? (
 				<JoinInfo
 					pool={joinPool}

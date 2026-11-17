@@ -28,6 +28,11 @@
 	padding: var(--s-1);
 }
 
+.modePreviewed {
+	outline: 2px solid var(--color-fg-accent);
+	outline-offset: 1px;
+}
+
 .modePlaceholder {
 	background-color: transparent;
 	padding: calc(var(--s-1) - 1px);
