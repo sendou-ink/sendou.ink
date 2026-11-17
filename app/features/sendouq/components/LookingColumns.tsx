@@ -119,14 +119,15 @@ export function LookingColumns({
 		scrollUpToSettledPane();
 	};
 
-	const followScrollPosition = () => {
-		clickedPaneRef.current = null;
-		selectPaneInView();
-		scrollUpToSettledPane();
-	};
-
+	// selects right away as a swipe cancelling a tab click's scroll before it moved fires no scroll event
 	const releaseClickedPane = () => {
 		clickedPaneRef.current = null;
+		selectPaneInView();
+	};
+
+	const followScrollPosition = () => {
+		releaseClickedPane();
+		scrollUpToSettledPane();
 	};
 
 	const startTouch = () => {
