@@ -1,6 +1,7 @@
 import { addDays } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as BadgeFactory from "~/db/seed/factories/BadgeFactory";
+import * as CalendarEventVenueFactory from "~/db/seed/factories/CalendarEventVenueFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
@@ -592,7 +593,33 @@ describe("calendar new action: venue", () => {
 		).toBe(false);
 	});
 
-	test("turning LAN off on edit removes the venue", async () => {
+	test.each([
+		{ why: "off", createdAsLan: true },
+		{ why: "on", createdAsLan: false },
+	])("turning LAN $why on edit is rejected", async ({ createdAsLan }) => {
+		const eventId = createdEventId(
+			await editAction(
+				calendarNewFormValues({ ...lanFields, isLan: createdAsLan }),
+				{ user: "regular" },
+			),
+		);
+
+		const res = await editAction(
+			calendarNewFormValues({
+				...lanFields,
+				isLan: !createdAsLan,
+				eventToEditId: eventId,
+			}),
+			{ user: "regular" },
+		);
+
+		assertResponseErrored(res, "can't switch between LAN and online");
+		expect(Boolean((await CalendarRepository.findById(eventId))?.venue)).toBe(
+			createdAsLan,
+		);
+	});
+
+	test("editing a LAN tournament updates its venue", async () => {
 		const eventId = createdEventId(
 			await editAction(calendarNewFormValues(lanFields), { user: "regular" }),
 		);
@@ -600,12 +627,45 @@ describe("calendar new action: venue", () => {
 		await editAction(
 			calendarNewFormValues({
 				...lanFields,
-				isLan: false,
+				venueName: "Hilton Ballroom C",
 				eventToEditId: eventId,
 			}),
 			{ user: "regular" },
 		);
 
-		expect((await CalendarRepository.findById(eventId))?.venue).toBeNull();
+		expect((await CalendarRepository.findById(eventId))?.venue?.name).toBe(
+			"Hilton Ballroom C",
+		);
+	});
+
+	test("editing a calendar event keeps its venue", async () => {
+		const calendarEventFields = {
+			toToolsEnabled: false,
+			date: [addDays(new Date(), 7).toISOString() as never],
+			startTime: null,
+			bracketUrl: "https://example.com",
+		};
+		const eventId = createdEventId(
+			await editAction(calendarNewFormValues(calendarEventFields), {
+				user: "regular",
+			}),
+		);
+		await CalendarEventVenueFactory.create({
+			eventId,
+			...CalendarEventVenueFactory.placeIn("Helsinki"),
+		});
+
+		await editAction(
+			calendarNewFormValues({
+				...calendarEventFields,
+				name: "Renamed",
+				eventToEditId: eventId,
+			}),
+			{ user: "regular" },
+		);
+
+		const edited = await CalendarRepository.findById(eventId);
+		expect(edited?.name).toBe("Renamed");
+		expect(edited?.venue?.city).toBe("Helsinki");
 	});
 });

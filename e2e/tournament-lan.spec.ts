@@ -79,6 +79,43 @@ test.describe("LAN tournament", () => {
 		).toBeVisible();
 	});
 
+	test("edits a LAN tournament's venue, the LAN switch locked after creation", async ({
+		page,
+		factories,
+	}) => {
+		const organizer = await factories.UserFactory.create(null, {
+			roles: ["TOURNAMENT_ORGANIZER"],
+		});
+		const tournament = await factories.TournamentFactory.create({
+			authorId: organizer.id,
+		});
+		await factories.CalendarEventVenueFactory.create({
+			eventId: tournament.eventId,
+			...factories.CalendarEventVenueFactory.placeIn("Austin"),
+		});
+		await impersonate(page, organizer.id);
+
+		const editTournament = new CalendarNewEventPage(page);
+		await editTournament.gotoEditTournament(tournament.eventId);
+
+		await expect(editTournament.locators.venueNameInput).toHaveValue(
+			"Austin Convention Center",
+		);
+		await expect(editTournament.locators.lanSwitch).toHaveCount(0);
+
+		await editTournament.form.fill("venueName", "Hilton Ballroom B");
+		// the factory's tournament has no map pool, which the form requires
+		await editTournament.goToStep("maps");
+		await editTournament.pickMapPool([
+			{ stage: "Scorch Gorge", mode: "Splat Zones" },
+		]);
+		await editTournament.save();
+
+		const info = new TournamentInfoPage(page);
+		await info.goto(tournament.id);
+		await expect(page.getByText("Hilton Ballroom B").first()).toBeVisible();
+	});
+
 	test("lets a pool captain report scores and see the stations board only", async ({
 		page,
 		factories,

@@ -429,7 +429,7 @@ function TournamentSteps() {
 				<div className={styles.stepColumn}>
 					{isEditing ? null : <CopyTournamentPicker />}
 					<FormField name="name" autoFocus={Boolean(data.eventToCopy)} />
-					<VenueFields />
+					<VenueFields isEditing={isEditing} />
 					<FormField
 						name="startTime"
 						required
@@ -647,7 +647,8 @@ function TournamentReview() {
 	);
 }
 
-function VenueFields() {
+// a tournament can't switch between LAN and online after it's created
+function VenueFields({ isEditing }: { isEditing: boolean }) {
 	const { values, setValue, setValueFromPrev } = useFormFieldContext();
 
 	const addressOptions: AddressSearchFieldOptions = {
@@ -663,7 +664,7 @@ function VenueFields() {
 
 	return (
 		<>
-			<FormField name="isLan" />
+			{isEditing ? null : <FormField name="isLan" />}
 			{values.isLan ? (
 				<>
 					<FormField name="venueAddress" options={addressOptions} required />

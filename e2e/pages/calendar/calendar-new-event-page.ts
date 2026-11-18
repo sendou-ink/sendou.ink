@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { parse } from "date-fns";
 import { calendarNewBaseSchema } from "~/features/calendar/calendar-new-schemas";
+import { tournamentEditPage } from "~/features/calendar/calendar-urls";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
 import { CALENDAR_NEW_PAGE, TOURNAMENT_NEW_PAGE } from "~/utils/urls";
@@ -57,6 +58,7 @@ export class CalendarNewEventPage {
 			mapPoolLinkInput: page.getByLabel("Map pool link"),
 			copyTournamentSelect: page.getByLabel("Tournament to copy"),
 			useTemplateButton: page.getByTestId("use-template-button"),
+			lanSwitch: page.getByLabel("In-person event (LAN)"),
 			venueNameInput: page.getByLabel(/^Venue name/),
 			venueTimezoneSelect: page.getByLabel(/^Venue timezone/),
 			venueTimeNotice: page.getByText(
@@ -71,6 +73,10 @@ export class CalendarNewEventPage {
 
 	async gotoNewTournament() {
 		await navigate({ page: this.page, url: TOURNAMENT_NEW_PAGE });
+	}
+
+	async gotoEditTournament(eventId: number) {
+		await navigate({ page: this.page, url: tournamentEditPage(eventId) });
 	}
 
 	/** Fills the form in with the settings of a previous tournament of the user. */
