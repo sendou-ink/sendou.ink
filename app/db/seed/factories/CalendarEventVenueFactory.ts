@@ -1,4 +1,5 @@
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import { invariant } from "~/utils/invariant";
 import { defineFactory } from "../core/defineFactory";
 import { faker } from "../core/faker";
 
@@ -66,3 +67,11 @@ export const { create } = defineFactory({
 		return { eventId };
 	},
 });
+
+/** The factory's real place in `city`, to put a LAN in a timezone of choice. */
+export function placeIn(city: string): Venue {
+	const place = PLACES.find((candidate) => candidate.city === city);
+	invariant(place, `No venue factory place in ${city}`);
+
+	return place;
+}

@@ -57,6 +57,11 @@ export class CalendarNewEventPage {
 			mapPoolLinkInput: page.getByLabel("Map pool link"),
 			copyTournamentSelect: page.getByLabel("Tournament to copy"),
 			useTemplateButton: page.getByTestId("use-template-button"),
+			venueNameInput: page.getByLabel(/^Venue name/),
+			venueTimezoneSelect: page.getByLabel(/^Venue timezone/),
+			venueTimeNotice: page.getByText(
+				/^Times are in .+, the venue's timezone$/,
+			),
 		};
 	}
 
@@ -77,6 +82,18 @@ export class CalendarNewEventPage {
 		await this.page.waitForURL(/copyEventId=/);
 		// the URL changes before the form remounts with the copied values, wiping anything filled in between
 		await formBeforeCopy?.waitForElementState("hidden");
+	}
+
+	/** Searches the venue's address and picks the first result. */
+	async pickVenue(query: string) {
+		await this.page.getByLabel(/^Venue address/).click();
+		await this.page.getByTestId("address-search-input").fill(query);
+		await this.page.getByTestId("address-search-item").first().click();
+	}
+
+	/** The "(venue time, CST)" next to a time field's label of a LAN. */
+	venueTimeLabel(timeZoneName: string) {
+		return this.page.getByText(`(venue time, ${timeZoneName})`);
 	}
 
 	/** Start time of the tournament as currently filled in. */

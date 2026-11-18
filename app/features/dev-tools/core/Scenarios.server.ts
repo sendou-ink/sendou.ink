@@ -3,6 +3,7 @@ import { actAs } from "~/db/seed/core/actAs";
 import * as showcaseNames from "~/db/seed/core/showcaseNames";
 import { showcaseOptions } from "~/db/seed/dev/users";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
+import * as CalendarEventVenueFactory from "~/db/seed/factories/CalendarEventVenueFactory";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as PlusSuggestionFactory from "~/db/seed/factories/PlusSuggestionFactory";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
@@ -11,8 +12,10 @@ import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
+import * as TournamentMatchStationFactory from "~/db/seed/factories/TournamentMatchStationFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as TournamentStaffFactory from "~/db/seed/factories/TournamentStaffFactory";
+import * as TournamentStationFactory from "~/db/seed/factories/TournamentStationFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { TournamentSettings } from "~/db/tables-json";
@@ -49,9 +52,11 @@ import {
 	scrimsPage,
 	sendouQMatchPage,
 	teamPage,
+	tournamentAdminPage,
 	tournamentMatchPage,
 	tournamentPage,
 	tournamentRegisterPage,
+	tournamentStationsDisplayPage,
 	tournamentSubsPage,
 	userPage,
 } from "~/utils/urls";
@@ -342,6 +347,82 @@ const SCENARIOS: Scenario[] = [
 					tournamentId: tournament.id,
 					matchId: match.matchId,
 				}),
+			};
+		},
+	}),
+	defineScenario({
+		id: "tournament-lan",
+		title: "Running a LAN tournament",
+		description:
+			"A LAN tournament at a venue, its bracket just started and the playable matches auto-assigned to its stations. You organize it, are its pool captain or captain the team of the first match, which is on Station 1 when there are stations.",
+		category: "Tournaments",
+		params: {
+			teams: teamsParam,
+			format: formatParam,
+			stations: numberParam("Stations", { min: 0, max: 8, default: 3 }),
+			role: selectParam(
+				"You are",
+				[
+					{ value: "organizer", label: "Organizer" },
+					{ value: "pool-captain", label: "Pool captain" },
+					{ value: "player", label: "Player" },
+				],
+				"organizer",
+			),
+		},
+		run: async ({ teams, format, stations, role }) => {
+			const [organizerId, poolCaptainId] = await freshUserIds(2);
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId,
+				bracketProgression: BRACKET_FORMATS[format],
+				startTimes: [dateToDatabaseTimestamp(subMinutes(new Date(), 30))],
+			});
+			await CalendarEventVenueFactory.create({ eventId: tournament.eventId });
+			await TournamentStaffFactory.create({
+				tournamentId: tournament.id,
+				userId: poolCaptainId,
+				role: "POOL_CAPTAIN",
+			});
+			await TournamentStationFactory.createMany(stations, (index) => ({
+				tournamentId: tournament.id,
+				name: `Station ${index + 1}`,
+			}));
+			const registeredTeams = await registerTeams(tournament.id, teams, {
+				isCheckedIn: true,
+			});
+			await TournamentFactory.startBracket(tournament.id);
+			await TournamentMatchStationFactory.autoAssign(tournament.id);
+
+			const boardPath = `${tournamentAdminPage(tournament.id)}/board`;
+			const links = [
+				{ label: "Stations board", path: boardPath },
+				{
+					label: "Display screen",
+					path: tournamentStationsDisplayPage(tournament.id),
+				},
+			];
+
+			if (role !== "player") {
+				return {
+					userId: role === "organizer" ? organizerId : poolCaptainId,
+					path: boardPath,
+					links,
+				};
+			}
+
+			const match = await TournamentFactory.firstPlayableMatch(tournament.id);
+			const team = registeredTeams.find(
+				(registeredTeam) => registeredTeam.id === match.teamId,
+			);
+			invariant(team, "Match team is not one of the registered teams");
+
+			return {
+				userId: team.ownerUserId,
+				path: tournamentMatchPage({
+					tournamentId: tournament.id,
+					matchId: match.matchId,
+				}),
+				links,
 			};
 		},
 	}),

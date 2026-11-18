@@ -70,6 +70,17 @@ export class TournamentAdminRegistrationPage {
 			.click();
 	}
 
+	/** Adds a member row of a player without an account (LAN only) and names them. */
+	async addPlaceholderPlayer(name: string) {
+		await this.page
+			.getByRole("button", { name: "Add player without account" })
+			.click();
+		await this.page
+			.getByLabel(/^Player without account/)
+			.last()
+			.fill(name);
+	}
+
 	/** Names the roster member at `index` for tournaments. Only shown to organizers who may set it. */
 	async setTournamentName(index: number, name: string) {
 		await this.page.getByLabel("Tournament name").nth(index).fill(name);

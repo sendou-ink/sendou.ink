@@ -3,6 +3,7 @@ import { minutesToMilliseconds } from "date-fns";
 import * as R from "remeda";
 import * as v from "valibot";
 import { LRUCache } from "~/modules/cache";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
 
 const PHOTON_API_URL = "https://photon.komoot.io/api/";
@@ -24,6 +25,24 @@ const HOUSE_NUMBER_FIRST_COUNTRIES = new Set([
 	"NZ",
 	"FR",
 ]);
+/** What every search finds in e2e runs, which can't reach Photon. */
+const E2E_PHOTON_RESPONSE = {
+	features: [
+		{
+			geometry: { coordinates: [-97.7397, 30.2636] },
+			properties: {
+				name: "Austin Convention Center",
+				housenumber: "500",
+				street: "East Cesar Chavez Street",
+				postcode: "78701",
+				city: "Austin",
+				state: "Texas",
+				country: "United States",
+				countrycode: "US",
+			},
+		},
+	],
+};
 
 export interface VenueSearchResult {
 	/** Position in the results, only stable within one response. */
@@ -115,14 +134,10 @@ async function fetchFromPhoton(query: string) {
 	url.searchParams.set("q", query);
 	url.searchParams.set("limit", String(RESULT_LIMIT));
 
-	const response = await fetch(url, {
-		headers: { "User-Agent": "sendou.ink" },
-	});
-	if (!response.ok) {
-		throw new Error(`Photon responded with status ${response.status}`);
-	}
-
-	const { features } = v.parse(photonResponseSchema, await response.json());
+	const { features } = v.parse(
+		photonResponseSchema,
+		IS_E2E_TEST_RUN ? E2E_PHOTON_RESPONSE : await fetchPhotonResponse(url),
+	);
 
 	const places = features.flatMap((feature) => {
 		const parsed = v.safeParse(photonFeatureSchema, feature);
@@ -134,6 +149,17 @@ async function fetchFromPhoton(query: string) {
 		...place,
 		id,
 	}));
+}
+
+async function fetchPhotonResponse(url: URL): Promise<unknown> {
+	const response = await fetch(url, {
+		headers: { "User-Agent": "sendou.ink" },
+	});
+	if (!response.ok) {
+		throw new Error(`Photon responded with status ${response.status}`);
+	}
+
+	return response.json();
 }
 
 function featureToPlace(

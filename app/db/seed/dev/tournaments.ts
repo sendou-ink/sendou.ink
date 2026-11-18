@@ -1,3 +1,4 @@
+import { TZDate } from "@date-fns/tz";
 import { addDays, addHours, addWeeks, sub, subWeeks } from "date-fns";
 import type {
 	CastAccount,
@@ -27,6 +28,7 @@ import * as SavedCalendarEventFactory from "../factories/SavedCalendarEventFacto
 import * as TournamentFactory from "../factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "../factories/TournamentLFGTeamFactory";
 import * as TournamentMatchScheduleFactory from "../factories/TournamentMatchScheduleFactory";
+import * as TournamentMatchStationFactory from "../factories/TournamentMatchStationFactory";
 import * as TournamentStaffFactory from "../factories/TournamentStaffFactory";
 import * as TournamentStationFactory from "../factories/TournamentStationFactory";
 import * as TournamentStreamerFactory from "../factories/TournamentStreamerFactory";
@@ -58,6 +60,12 @@ const SWIM_OR_SINK_STATIONS = [
 	{ name: "Station 2", locationNote: "North corner" },
 	{ name: "Station 3", locationNote: "Back wall" },
 	{ name: "Station 4", locationNote: "Back wall, next to the bar" },
+];
+const INK_ARENA_STATIONS = [
+	{ name: "Station 1", locationNote: "Hall B, front row" },
+	{ name: "Station 2", locationNote: "Hall B, front row" },
+	{ name: "Station 3", locationNote: "Hall B, back row" },
+	{ name: "Station 4", locationNote: null },
 ];
 /** Uneven counts from a custom pool: every SZ stage, half of the legal TC stages. */
 const PADDLING_POOL_TEAM_PICK: TeamPickSettings = {
@@ -321,6 +329,9 @@ export async function seedTournaments({
 		}),
 	);
 
+	await seedInkArena({ users, organizations, rosters });
+	await seedSouthernSplash({ users, organizations, rosters });
+
 	return {
 		regOpen: inTheZone,
 		nzapTeamIds,
@@ -502,6 +513,120 @@ async function seedSwimOrSink({ users, rosters }: Ctx) {
 	});
 
 	return tournament;
+}
+
+/**
+ * LAN in Austin, double elimination in progress on four auto-assigned stations: round 1 played on them, every
+ * station has a match going (Station 1's a map in), Station 2 has a match queued by hand after it and a match
+ * is held in Waiting by hand. A pool captain on staff.
+ */
+async function seedInkArena({ users, rosters }: Ctx) {
+	const tournament = await TournamentFactory.create({
+		name: nameFor("Ink Arena"),
+		authorId: users.adminId,
+		startTimes: [dateToDatabaseTimestamp(hoursAgo(2))],
+		mapPickingStyle: "TO",
+		mapPoolMaps: toSetMapPool(),
+		bracketProgression: DOUBLE_ELIMINATION,
+	});
+	await CalendarEventVenueFactory.create({
+		eventId: tournament.eventId,
+		...CalendarEventVenueFactory.placeIn("Austin"),
+	});
+
+	const teamRosters = rosters.take({ teamCount: 16, teamSize: 4 });
+	await registerTeams({
+		tournamentId: tournament.id,
+		rosters: teamRosters,
+		isCheckedIn: true,
+	});
+
+	const registeredUserIds = new Set(
+		teamRosters.flatMap((roster) => roster.memberUserIds),
+	);
+	await TournamentStaffFactory.create({
+		tournamentId: tournament.id,
+		userId: users.showcaseIds.findLast((id) => !registeredUserIds.has(id))!,
+		role: "POOL_CAPTAIN",
+	});
+
+	const stations = await TournamentStationFactory.createMany(
+		INK_ARENA_STATIONS.length,
+		(index) => ({ ...INK_ARENA_STATIONS[index], tournamentId: tournament.id }),
+	);
+
+	await TournamentFactory.startBracket(tournament.id);
+	await TournamentMatchStationFactory.autoAssign(tournament.id);
+	await TournamentFactory.playMatches(tournament.id, { roundNumbers: [1] });
+	const onStations = await TournamentMatchStationFactory.autoAssign(
+		tournament.id,
+	);
+
+	const [queuedByHand, heldByHand] = await unplacedPlayableMatchIds(
+		tournament.id,
+		onStations.map((assignment) => assignment.matchId),
+	);
+	await TournamentMatchStationFactory.create({
+		matchId: queuedByHand,
+		stationId: stations[1].id,
+	});
+	await TournamentMatchStationFactory.create({
+		matchId: heldByHand,
+		stationId: null,
+	});
+
+	await TournamentFactory.playMatches(tournament.id, {
+		matchIds: [onStations[0].matchId],
+		mapCount: 1,
+	});
+}
+
+/** LAN in Melbourne with registration open, starting at 10:00 venue time in a week. No stations. */
+async function seedSouthernSplash({ users, rosters }: Ctx) {
+	const tournament = await TournamentFactory.create({
+		name: nameFor("Southern Splash"),
+		authorId: users.adminId,
+		startTimes: [
+			dateToDatabaseTimestamp(
+				venueWallClock({
+					daysAhead: 7,
+					hour: 10,
+					timeZone: "Australia/Melbourne",
+				}),
+			),
+		],
+		mapPickingStyle: "TO",
+		mapPoolMaps: toSetMapPool(),
+		bracketProgression: DOUBLE_ELIMINATION,
+	});
+	await CalendarEventVenueFactory.create({
+		eventId: tournament.eventId,
+		...CalendarEventVenueFactory.placeIn("Melbourne"),
+	});
+
+	await registerTeams({
+		tournamentId: tournament.id,
+		rosters: rosters.take({ teamCount: 6, teamSize: 4 }),
+	});
+}
+
+/** Playable matches of the first bracket neither auto-assignment nor anyone else placed, in match id order. */
+async function unplacedPlayableMatchIds(
+	tournamentId: number,
+	placedMatchIds: number[],
+) {
+	const tournament = await tournamentFromDB(tournamentId);
+
+	return tournament.brackets[0].data.match
+		.filter(
+			(match) =>
+				typeof match.opponent1?.id === "number" &&
+				typeof match.opponent2?.id === "number" &&
+				!match.winnerSide &&
+				!placedMatchIds.includes(match.id),
+		)
+		.map((match) => match.id)
+		.toSorted((a, b) => a - b);
 }
 
 /**
@@ -1242,6 +1367,30 @@ function legalStages(mode: ModeShort): StageId[] {
 
 function daysFromNow(days: number) {
 	return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+}
+
+/** When the clock in `timeZone` reads `hour`:00, `daysAhead` days from now. */
+function venueWallClock({
+	daysAhead,
+	hour,
+	timeZone,
+}: {
+	daysAhead: number;
+	hour: number;
+	timeZone: string;
+}) {
+	const day = new TZDate(daysFromNow(daysAhead).getTime(), timeZone);
+
+	return new Date(
+		new TZDate(
+			day.getFullYear(),
+			day.getMonth(),
+			day.getDate(),
+			hour,
+			0,
+			timeZone,
+		).getTime(),
+	);
 }
 
 function hoursAgo(hours: number) {
