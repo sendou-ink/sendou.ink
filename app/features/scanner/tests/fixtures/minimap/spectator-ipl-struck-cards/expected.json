@@ -1,0 +1,22 @@
+{
+	"event": "Minimap",
+	"data": {
+		"spectator": true,
+		"teammates": [
+			{ "dead": false },
+			{ "dead": true },
+			{ "dead": false },
+			{ "dead": false }
+		],
+		"enemies": [
+			{ "dead": false },
+			{ "dead": false },
+			{ "dead": true },
+			{ "dead": false }
+		]
+	},
+	"options": {
+		"incomplete": true,
+		"notes": "IPL VS: OVERTIME!! VS Alliance Moon cast (-2nnvIOzSkQ, 720p), Rainmaker, game 3 overtime, t=1949. The caster opened the spectator map mid-game with two players respawning: ZLOOK (left column, second card) and AM Loxlok (right column, third card) are struck through. The old cross-out probe sat to the right of where the X's strokes cross on a spectator card and read 0 saturated on both, so no spectator card ever read struck. Only the dead flags are asserted."
+	}
+}

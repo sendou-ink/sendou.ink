@@ -133,14 +133,18 @@ if (detector === "scoreboard") {
 		rect(frame, card.subTile, [0, 255, 255]);
 		for (const [cx, cy] of card.badges)
 			rect(frame, minimap.badgeRoi(cx, cy), [0, 128, 255]);
-		rect(frame, card.cross, [255, 0, 255]);
+		rect(frame, minimap.crossArmsBox(card.cross), [255, 0, 255]);
 	}
 	for (const cy of minimap.ENEMY_ROW_CYS) {
 		rect(frame, minimap.enemyWeaponRoi(cy), [255, 0, 0]);
 		rect(frame, minimap.enemySubTileRoi(cy), [0, 255, 255]);
 		for (const cx of minimap.ENEMY_BADGE_XS)
 			rect(frame, minimap.badgeRoi(cx, cy), [0, 128, 255]);
-		rect(frame, minimap.enemyCrossRoi(cy), [255, 0, 255]);
+		rect(
+			frame,
+			minimap.crossArmsBox(minimap.enemyCrossArms(cy)),
+			[255, 0, 255],
+		);
 	}
 	for (const roi of [
 		...minimap.GATE_CLOSE_X_BRIGHT,

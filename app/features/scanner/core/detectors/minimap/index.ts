@@ -5,8 +5,8 @@
  * (stage.ts). Map control is deliberately not reported. Two per-player states
  * (`dead`, `specialReady`) feed the match builder's timeline and steer the reads:
  * - a respawning player's card is struck through with a team-color X covering
- *   name and badges (enemy rows keep their weapon icon); an occlusion probe
- *   skips covered fields and reports them null;
+ *   name and badges (enemy rows keep their weapon icon), told by the shape of
+ *   its strokes; covered fields are skipped and reported null;
  * - a charged special swaps the background for light camo; weapons match
  *   against template sets composited for the surface behind them (bg-40 dark,
  *   bg-150 camo — dark templates anti-correlate there), so a corner-brightness
@@ -47,15 +47,13 @@ import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	badgeRoi,
 	CARD_LAYOUTS,
-	CROSS_BLEED_MIN_FRACTION,
-	CROSS_BLEED_MIN_LAPLACIAN,
-	CROSS_MIN_FRACTION,
-	CROSS_MIN_LAPLACIAN,
-	CROSS_SATURATION_MIN,
-	CROSS_VALUE_MIN,
+	CROSS_ARM_GAP,
+	CROSS_ARM_SLOPE,
+	CROSS_MIN_STROKE_COHERENCE,
+	type CrossArms,
 	ENEMY_BADGE_XS,
 	ENEMY_ROW_CYS,
-	enemyCrossRoi,
+	enemyCrossArms,
 	enemySubTileRoi,
 	enemyWeaponRoi,
 	GATE_BRIGHT_MIN_MAX,
@@ -274,32 +272,76 @@ function onLightSurface(corner: CornerProbe): boolean {
 	);
 }
 
-/** the cross probe's saturated strokes are crisp enough to be the X, not scene bleed */
-function crossedOut(crossFraction: number, crossLap: number): boolean {
-	if (
-		Decisions.below(
-			"minimap:CROSS_MIN_FRACTION",
-			crossFraction,
-			CROSS_MIN_FRACTION,
-		)
-	) {
-		return false;
+/** the card is struck through with the respawn cross-out */
+function crossedOut(crossCoherence: number): boolean {
+	return Decisions.atLeast(
+		"minimap:CROSS_MIN_STROKE_COHERENCE",
+		crossCoherence,
+		CROSS_MIN_STROKE_COHERENCE,
+	);
+}
+
+/**
+ * How much of the color variation across the arms is a profile they share:
+ * the samples at each offset from the stroke's center line, pooled over the
+ * two arms of a side, are averaged into a profile, whose variance (less its
+ * linear trend, which a scene gradient has too) is the signal and the spread
+ * around it the noise. 0..1, the better side counts (a streamer's overlay can
+ * cover one).
+ */
+function crossStrokeCoherence(rgb: Image, arms: CrossArms): number {
+	return Math.max(
+		sideStrokeCoherence(rgb, arms, -1),
+		sideStrokeCoherence(rgb, arms, 1),
+	);
+}
+
+function sideStrokeCoherence(
+	rgb: Image,
+	{ x, y, reach, halfWidth }: CrossArms,
+	direction: -1 | 1,
+): number {
+	const offsets = halfWidth * 2 + 1;
+	const sums = new Float64Array(offsets * 3);
+	const squares = new Float64Array(offsets * 3);
+	let samples = 0;
+	for (const slope of [-CROSS_ARM_SLOPE, CROSS_ARM_SLOPE]) {
+		for (let d = CROSS_ARM_GAP; d <= reach; d++) {
+			const column = Math.round(x + direction * d);
+			const center = y + slope * d;
+			for (let o = 0; o < offsets; o++) {
+				const i = (Math.round(center + o - halfWidth) * rgb.cols + column) * 3;
+				for (let c = 0; c < 3; c++) {
+					const v = rgb.data[i + c]!;
+					sums[o * 3 + c]! += v;
+					squares[o * 3 + c]! += v * v;
+				}
+			}
+			samples++;
+		}
 	}
-	return Decisions.above(
-		"minimap:CROSS_BLEED_MIN_FRACTION",
-		crossFraction,
-		CROSS_BLEED_MIN_FRACTION,
-	)
-		? Decisions.atLeast(
-				"minimap:CROSS_BLEED_MIN_LAPLACIAN",
-				crossLap,
-				CROSS_BLEED_MIN_LAPLACIAN,
-			)
-		: Decisions.atLeast(
-				"minimap:CROSS_MIN_LAPLACIAN",
-				crossLap,
-				CROSS_MIN_LAPLACIAN,
-			);
+	const meanOffset = (offsets - 1) / 2;
+	let offsetSpread = 0;
+	for (let o = 0; o < offsets; o++) offsetSpread += (o - meanOffset) ** 2;
+	let signal = 0;
+	let noise = 0;
+	for (let c = 0; c < 3; c++) {
+		let total = 0;
+		let trend = 0;
+		for (let o = 0; o < offsets; o++) {
+			const mean = sums[o * 3 + c]! / samples;
+			total += mean;
+			trend += (o - meanOffset) * mean;
+			noise += squares[o * 3 + c]! / samples - mean * mean;
+		}
+		const level = total / offsets;
+		const slope = trend / offsetSpread;
+		for (let o = 0; o < offsets; o++) {
+			const mean = sums[o * 3 + c]! / samples;
+			signal += (mean - level - slope * (o - meanOffset)) ** 2;
+		}
+	}
+	return signal + noise > 0 ? signal / (signal + noise) : 0;
 }
 
 function medianBrightness(gray: Image): number {
@@ -312,23 +354,6 @@ function medianBrightness(gray: Image): number {
 		if (seen * 2 >= n) return v;
 	}
 	return 255;
-}
-
-/** fraction of the probe that is saturated-and-bright (cross-out strokes) */
-function saturatedFraction(hsv: Image, roi: Roi): number {
-	const m = cropRoi(hsv, roi);
-	const n = m.rows * m.cols;
-	const md = m.data;
-	let hit = 0;
-	for (let i = 0; i < n; i++) {
-		if (
-			md[i * 3 + 1]! >= CROSS_SATURATION_MIN &&
-			md[i * 3 + 2]! >= CROSS_VALUE_MIN
-		) {
-			hit++;
-		}
-	}
-	return hit / n;
 }
 
 export function createMinimapDetector(
@@ -670,9 +695,8 @@ export function createMinimapDetector(
 				) {
 					return { dx, row, layout, presence, probes: null };
 				}
-				const crossFraction = saturatedFraction(hsv, layout.cross);
-				const crossLap = meanBrightness(lap, layout.cross);
-				const occluded = crossedOut(crossFraction, crossLap);
+				const crossCoherence = crossStrokeCoherence(rgb, layout.cross);
+				const occluded = crossedOut(crossCoherence);
 				const corner = minTopCorner(gray, hsv, layout.weapon);
 				const lightSurface = onLightSurface(corner);
 				return {
@@ -681,8 +705,7 @@ export function createMinimapDetector(
 					layout,
 					presence,
 					probes: {
-						crossFraction,
-						crossLap,
+						crossCoherence,
 						occluded,
 						cornerMin: corner.mean,
 						cornerMax: corner.brighterMean,
@@ -727,14 +750,8 @@ export function createMinimapDetector(
 			}
 			const isTeammate = dx === 0;
 			sideSubTiles[isTeammate ? 0 : 1].push(layout.subTile);
-			const {
-				crossFraction,
-				crossLap,
-				occluded,
-				cornerMin,
-				cornerMax,
-				lightSurface,
-			} = probes;
+			const { crossCoherence, occluded, cornerMin, cornerMax, lightSurface } =
+				probes;
 			const [weapon, parsed, badgeMatches] = reads[i]!;
 
 			let name: string | null = null;
@@ -754,8 +771,7 @@ export function createMinimapDetector(
 				dx,
 				row,
 				presence,
-				crossFraction,
-				crossLap,
+				crossCoherence,
 				occluded,
 				cornerMin,
 				cornerMax,
@@ -853,15 +869,14 @@ export function createMinimapDetector(
 			) {
 				return { layout, presence, probes: null };
 			}
-			const crossFraction = saturatedFraction(hsv, layout.cross);
-			const crossLap = meanBrightness(lap, layout.cross);
-			const occluded = crossedOut(crossFraction, crossLap);
+			const crossCoherence = crossStrokeCoherence(rgb, layout.cross);
+			const occluded = crossedOut(crossCoherence);
 			const corner = minTopCorner(gray, hsv, layout.weapon);
 			const lightSurface = onLightSurface(corner);
 			return {
 				layout,
 				presence,
-				probes: { crossFraction, crossLap, occluded, corner, lightSurface },
+				probes: { crossCoherence, occluded, corner, lightSurface },
 			};
 		});
 		const rows = ENEMY_ROW_CYS.map((cy) => {
@@ -876,9 +891,8 @@ export function createMinimapDetector(
 			) {
 				return { cy, weaponRoi, presence, probes: null };
 			}
-			const crossFraction = saturatedFraction(hsv, enemyCrossRoi(cy));
-			const crossLap = meanBrightness(lap, enemyCrossRoi(cy));
-			const occluded = crossedOut(crossFraction, crossLap);
+			const crossCoherence = crossStrokeCoherence(rgb, enemyCrossArms(cy));
+			const occluded = crossedOut(crossCoherence);
 			// light camo rows: pick template variant by corner brightness, raise ink threshold past it
 			const corner = minTopCorner(gray, hsv, weaponRoi);
 			const lightSurface = onLightSurface(corner);
@@ -886,7 +900,7 @@ export function createMinimapDetector(
 				cy,
 				weaponRoi,
 				presence,
-				probes: { crossFraction, crossLap, occluded, corner, lightSurface },
+				probes: { crossCoherence, occluded, corner, lightSurface },
 			};
 		});
 		const [cardReads, rowReads] = yield* all([
@@ -953,8 +967,7 @@ export function createMinimapDetector(
 				cardDebug.push({ self: layout.self, presence, skipped: true });
 				continue;
 			}
-			const { crossFraction, crossLap, occluded, corner, lightSurface } =
-				probes;
+			const { crossCoherence, occluded, corner, lightSurface } = probes;
 			const cornerMin = corner.mean;
 
 			let name: string | null = null;
@@ -978,8 +991,7 @@ export function createMinimapDetector(
 			cardDebug.push({
 				self: layout.self,
 				presence,
-				crossFraction,
-				crossLap,
+				crossCoherence,
 				occluded,
 				cornerMin,
 				cornerMax: corner.brighterMean,
@@ -1023,8 +1035,7 @@ export function createMinimapDetector(
 				enemyDebug.push({ cy, presence, skipped: true });
 				continue;
 			}
-			const { crossFraction, crossLap, occluded, corner, lightSurface } =
-				probes;
+			const { crossCoherence, occluded, corner, lightSurface } = probes;
 			const cornerMin = corner.mean;
 			const [weapon, badgeMatches] = read;
 			const rowScores: CardScores = { weaponId: weapon?.score };
@@ -1035,8 +1046,7 @@ export function createMinimapDetector(
 			enemyDebug.push({
 				cy,
 				presence,
-				crossFraction,
-				crossLap,
+				crossCoherence,
 				occluded,
 				lightSurface,
 				cornerMin,

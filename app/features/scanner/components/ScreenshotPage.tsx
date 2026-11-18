@@ -464,14 +464,14 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 			rect(card.subTile, "#22d3ee");
 			for (const [cx, cy] of card.badges)
 				rect(minimap.badgeRoi(cx, cy), "#60a5fa");
-			rect(card.cross, "#e879f9");
+			rect(minimap.crossArmsBox(card.cross), "#e879f9");
 		}
 		for (const cy of minimap.ENEMY_ROW_CYS) {
 			rect(minimap.enemyWeaponRoi(cy), "#f87171");
 			rect(minimap.enemySubTileRoi(cy), "#22d3ee");
 			for (const cx of minimap.ENEMY_BADGE_XS)
 				rect(minimap.badgeRoi(cx, cy), "#60a5fa");
-			rect(minimap.enemyCrossRoi(cy), "#e879f9");
+			rect(minimap.crossArmsBox(minimap.enemyCrossArms(cy)), "#e879f9");
 		}
 		for (const roi of [
 			...minimap.GATE_CLOSE_X_BRIGHT,

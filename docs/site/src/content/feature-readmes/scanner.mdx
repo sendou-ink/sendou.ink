@@ -687,7 +687,7 @@ scripts/scanner/<script>.ts` for the ones without a package script).
   per-player splat/special bands (`~/components/PlayerStatusTimeline.tsx`,
   shared with the match page) above the objective chart. Minimap reads
   feed the same samples: every card/row carries `dead` (respawn
-  cross-out) and `specialReady` (special camo) flags, merged in timerless
+  cross-out, told by its strokes' shape) and `specialReady` (special camo) flags, merged in timerless
   on the shared game clock. Parsing details
   are in each detector's module
   header; accuracy-critical matching internals in `core/glyphs.ts` (see
@@ -1325,6 +1325,12 @@ screens", and thresholds only those reach come last. `pnpm scanner:report
   tie-break keeps anyway. Where fixtures are thin, label reads on footage by
   the game's results screen (weapons, names) and measure there: the weapon
   tie and strip-weapon constants were set that way.
+- Where two classes overlap on the measured value itself, no constant fixes
+  it: measure something else. The minimap cross-out was saturation plus
+  |Laplacian| (a live card at 38.9 against struck ones from 41.5, wrong both
+  ways on footage); its strokes' shape (`crossStrokeCoherence`) puts every
+  live card of five POV VoDs and three casts under 0.07 and a settled X over
+  0.16.
 - "never on any fixture" means the threshold is attested from one side only:
   nothing shows where it stops being safe.
 - Decisions short-circuit as in production, so a later condition is recorded
