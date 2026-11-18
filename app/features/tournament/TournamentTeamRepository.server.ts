@@ -189,15 +189,12 @@ export function insert({
 	team,
 	avatarImgId = null,
 	userId,
-	additionalMemberUserIds = [],
 	tournamentId,
 }: {
 	team: Pick<Tables["TournamentTeam"], "name" | "prefersNotToHost" | "teamId">;
 	avatarImgId?: number | null;
 	/** The user who becomes the team owner. */
 	userId: number;
-	/** Non-owner members to add to the team on creation. */
-	additionalMemberUserIds?: number[];
 	tournamentId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
@@ -239,39 +236,6 @@ export function insert({
 			},
 			trx,
 		);
-
-		if (additionalMemberUserIds.length > 0) {
-			const members: Array<
-				Pick<
-					Tables["TournamentTeamMember"],
-					"tournamentTeamId" | "userId" | "inGameName" | "isSub"
-				>
-			> = [];
-			for (const memberUserId of additionalMemberUserIds) {
-				members.push({
-					tournamentTeamId: tournamentTeam.id,
-					userId: memberUserId,
-					inGameName: await resolveInGameName(
-						{ tournamentId, userId: memberUserId },
-						trx,
-					),
-					isSub,
-				});
-			}
-
-			await trx.insertInto("TournamentTeamMember").values(members).execute();
-
-			for (const memberUserId of additionalMemberUserIds) {
-				await TournamentAuditLogRepository.insert(
-					{
-						type: "MEMBER_ADDED",
-						tournamentTeamId: tournamentTeam.id,
-						subjectUserId: memberUserId,
-					},
-					trx,
-				);
-			}
-		}
 
 		return {
 			...tournamentTeam,

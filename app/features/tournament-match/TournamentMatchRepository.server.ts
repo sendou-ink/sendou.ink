@@ -54,8 +54,8 @@ export async function findAllByChatRoomIds(chatRoomIds: number[]) {
 }
 
 export type FindMatchById = NonNullable<Unwrapped<typeof findMatchById>>;
-export async function findMatchById(id: number) {
-	const row = await db
+export function findMatchById(id: number) {
+	return db
 		.selectFrom("TournamentMatch")
 		.innerJoin(
 			"TournamentStage",
@@ -90,12 +90,6 @@ export async function findMatchById(id: number) {
 					.select((memberEb) => [
 						...commonUserSelect(memberEb, { inTournament: true }),
 						"TournamentTeamMember.tournamentTeamId",
-						sql<
-							string | null
-						>`coalesce("TournamentTeamMember"."inGameName", "User"."inGameName")`.as(
-							"inGameName",
-						),
-						"User.pronouns",
 					])
 					.where(({ or, eb: innerEb }) =>
 						or([
@@ -115,13 +109,6 @@ export async function findMatchById(id: number) {
 		])
 		.where("TournamentMatch.id", "=", id)
 		.executeTakeFirst();
-
-	if (!row) return;
-
-	return {
-		...row,
-		bestOf: row.roundMaps.count,
-	};
 }
 
 export function findResultById(id: number) {

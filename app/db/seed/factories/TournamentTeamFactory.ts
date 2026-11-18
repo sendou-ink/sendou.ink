@@ -10,7 +10,7 @@ import * as ImageFactory from "./ImageFactory";
 
 type InsertArgs = Omit<
 	Parameters<typeof TournamentTeamRepository.insert>[0],
-	"userId" | "additionalMemberUserIds"
+	"userId"
 > & {
 	/** The team's members, the first of them its owner. */
 	memberUserIds: number[];
@@ -72,10 +72,19 @@ export const { create } = defineFactory({
 				...args,
 				avatarImgId,
 				userId: ownerUserId,
-				additionalMemberUserIds,
 			}),
 		);
 		invariant(team, "Owner is already in a team of the tournament");
+
+		for (const userId of additionalMemberUserIds) {
+			const joined = await actAs(ownerUserId, () =>
+				TournamentTeamRepository.join({ newTeamId: team.id, userId }),
+			);
+			invariant(
+				joined,
+				`User ${userId} is already in a team of the tournament`,
+			);
+		}
 
 		if (mapPool) {
 			await TournamentTeamRepository.upsertCounterpickMaps({
