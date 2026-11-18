@@ -3,23 +3,13 @@ export type MonthYear = {
 	year: number;
 };
 
-export function monthYearToSpan(monthYear: MonthYear) {
-	const date = new Date(monthYear.year, monthYear.month - 1);
-	const lastMonth = new Date(date.getFullYear(), date.getMonth(), 0);
-	const threeMonthsAgo = new Date(date.getFullYear(), date.getMonth() - 3, 1);
-
+/** First and last month of the X Rank season that ended before the given month. */
+export function monthYearToSpan(monthYear: MonthYear): {
+	from: Date;
+	to: Date;
+} {
 	return {
-		from: {
-			month: threeMonthsAgo.getMonth() + 1,
-			year: threeMonthsAgo.getFullYear(),
-		},
-		to: {
-			month: lastMonth.getMonth() + 1,
-			year: lastMonth.getFullYear(),
-		},
-		value: {
-			month: date.getMonth() + 1,
-			year: date.getFullYear(),
-		},
+		from: new Date(monthYear.year, monthYear.month - 4, 1),
+		to: new Date(monthYear.year, monthYear.month - 2, 1),
 	};
 }

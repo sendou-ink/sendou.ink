@@ -107,8 +107,8 @@ function MonthYearSpan({ monthYear }: { monthYear: MonthYear }) {
 
 	return (
 		<LocaleTimeRange
-			from={new Date(span.from.year, span.from.month - 1)}
-			to={new Date(span.to.year, span.to.month - 1)}
+			from={span.from}
+			to={span.to}
 			options={{ month: "numeric", year: "numeric" }}
 			inline
 			data-testid={`xsearch-select-option-${monthYearToKey(monthYear)}`}
@@ -183,7 +183,11 @@ function keyToMonthYear(key: string): MonthYear {
 function monthYearSpanTextValue(monthYear: MonthYear) {
 	const span = monthYearToSpan(monthYear);
 
-	return `${span.from.month}/${span.from.year} - ${span.to.month}/${span.to.year}`;
+	return `${monthYearOfDate(span.from)} - ${monthYearOfDate(span.to)}`;
+}
+
+function monthYearOfDate(date: Date) {
+	return `${date.getMonth() + 1}/${date.getFullYear()}`;
 }
 
 function monthYearsGroupedByYear(monthYears: Array<MonthYear>) {

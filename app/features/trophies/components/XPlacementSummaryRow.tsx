@@ -2,11 +2,11 @@ import { clsx } from "clsx";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { ModeImage, WeaponImage } from "~/components/Image";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { DivisionImage } from "~/features/top-search/components/DivisionImage";
 import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import { topSearchPage } from "~/features/top-search/top-search-urls";
 import { monthYearToSpan } from "~/features/top-search/top-search-utils";
-import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists/types";
 import styles from "./XPlacementSummaryRow.module.css";
 
@@ -26,7 +26,6 @@ export function XPlacementSummaryRow({
 	className?: string;
 }) {
 	const { t } = useTranslation(["common"]);
-	const { formatter } = useDateTimeFormat({ month: "short", year: "numeric" });
 
 	const season = monthYearToSpan(placement);
 	const divisionName = t(`common:divisions.${placement.region}`);
@@ -58,12 +57,12 @@ export function XPlacementSummaryRow({
 						{divisionName}
 					</span>
 					<ModeImage mode={placement.mode} size={14} />
-					<span>
-						{formatter.formatRange(
-							new Date(season.from.year, season.from.month - 1),
-							new Date(season.to.year, season.to.month - 1),
-						)}
-					</span>
+					<LocaleTimeRange
+						from={season.from}
+						to={season.to}
+						options={{ month: "short", year: "numeric" }}
+						inline
+					/>
 				</div>
 			</div>
 		</Link>

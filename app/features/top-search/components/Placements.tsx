@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import {
 	RankTable,
 	RankTableInnerRow,
@@ -26,7 +27,7 @@ export function PlacementsTable({
 	placements,
 	type = "PLAYER_NAME",
 }: PlacementsTableProps) {
-	const { t } = useTranslation(["game-misc"]);
+	const { t } = useTranslation(["game-misc", "common"]);
 
 	return (
 		<RankTable>
@@ -47,11 +48,7 @@ export function PlacementsTable({
 								<div className={styles.tableMode}>
 									<DivisionImage
 										region={placement.region}
-										alt={
-											placement.region === "WEST"
-												? "Tentatek Division"
-												: "Takoroka Division"
-										}
+										alt={t(`common:divisions.${placement.region}`)}
 										size={24}
 									/>
 								</div>
@@ -69,17 +66,34 @@ export function PlacementsTable({
 						<RankTableWeaponImage weaponSplId={placement.weaponSplId} />
 						{type === "PLAYER_NAME" ? <div>{placement.name}</div> : null}
 						{type === "MODE_INFO" ? (
-							<div className={styles.time}>
-								{monthYearToSpan(placement).from.month}/
-								{monthYearToSpan(placement).from.year} -{" "}
-								{monthYearToSpan(placement).to.month}/
-								{monthYearToSpan(placement).to.year}
-							</div>
+							<PlacementSeasonSpan
+								placement={placement}
+								className={styles.time}
+							/>
 						) : null}
 					</RankTableInnerRow>
 					<div>{placement.power.toFixed(1)}</div>
 				</RankTableRow>
 			))}
 		</RankTable>
+	);
+}
+
+function PlacementSeasonSpan({
+	placement,
+	className,
+}: {
+	placement: XRankPlacementRepository.FindPlacement;
+	className: string;
+}) {
+	const span = monthYearToSpan(placement);
+
+	return (
+		<LocaleTimeRange
+			from={span.from}
+			to={span.to}
+			options={{ month: "numeric", year: "numeric" }}
+			className={className}
+		/>
 	);
 }
