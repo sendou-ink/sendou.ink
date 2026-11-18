@@ -4,7 +4,6 @@ import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { peakXpOverallSql } from "~/utils/kysely.server";
 
 export type XRankPlacementInsertArgs = Omit<
 	Tables["XRankPlacement"],
@@ -91,19 +90,6 @@ export async function findTenStarWeaponSplIdsByUserId(userId: number) {
 		.execute();
 
 	return rows.map((row) => row.weaponSplId);
-}
-
-/** From the linked player's denormalized `SplatoonPlayer.peakXp` (see {@link refreshAllPeakXp}); `null` without one. */
-export async function findPeakVerifiedXpByUserId(
-	userId: Tables["User"]["id"],
-): Promise<number | null> {
-	const row = await db
-		.selectFrom("SplatoonPlayer")
-		.where("SplatoonPlayer.userId", "=", userId)
-		.select(peakXpOverallSql().as("overall"))
-		.executeTakeFirst();
-
-	return row?.overall ?? null;
 }
 
 function xRankPlacementsQueryBase() {

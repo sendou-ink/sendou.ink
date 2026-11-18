@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { withUserId } from "~/utils/Test";
 import * as PrivateUserNoteRepository from "./PrivateUserNoteRepository.server";
 
@@ -7,6 +8,14 @@ const authorAndTarget = async () => {
 	const [author, target] = await UserFactory.createMany(2);
 
 	return { authorId: author.id, targetId: target.id };
+};
+
+const privateNoteSeenBy = async (authorId: number, targetId: number) => {
+	const { userCards } = await withUserId(authorId, () =>
+		UserCardRepository.findAllByUserIds({ userIds: [targetId] }),
+	);
+
+	return userCards[targetId]?.privateNote;
 };
 
 describe("PrivateUserNoteRepository", () => {
@@ -22,13 +31,7 @@ describe("PrivateUserNoteRepository", () => {
 				}),
 			);
 
-			const notes = await withUserId(authorId, () =>
-				PrivateUserNoteRepository.findAllOwn(),
-			);
-
-			expect(notes).toHaveLength(1);
-			expect(notes[0]).toMatchObject({
-				targetUserId: targetId,
+			expect(await privateNoteSeenBy(authorId, targetId)).toMatchObject({
 				sentiment: "POSITIVE",
 				text: "good teammate",
 			});
@@ -52,13 +55,20 @@ describe("PrivateUserNoteRepository", () => {
 				}),
 			);
 
-			const notes = await withUserId(authorId, () =>
-				PrivateUserNoteRepository.findAllOwn(),
-			);
+			expect(await privateNoteSeenBy(authorId, targetId)).toMatchObject({
+				sentiment: "NEGATIVE",
+				text: "second",
+			});
+		});
 
-			expect(notes).toHaveLength(1);
-			expect(notes[0].sentiment).toBe("NEGATIVE");
-			expect(notes[0].text).toBe("second");
+		test("throws when called without an acting user", () => {
+			expect(() =>
+				PrivateUserNoteRepository.upsertOwnNote({
+					targetId: 1,
+					sentiment: "NEUTRAL",
+					text: "note",
+				}),
+			).toThrow();
 		});
 	});
 
@@ -77,15 +87,7 @@ describe("PrivateUserNoteRepository", () => {
 				PrivateUserNoteRepository.deleteOwnNoteById(targetId),
 			);
 
-			const notes = await withUserId(authorId, () =>
-				PrivateUserNoteRepository.findAllOwn(),
-			);
-
-			expect(notes).toHaveLength(0);
+			expect(await privateNoteSeenBy(authorId, targetId)).toBeNull();
 		});
-	});
-
-	test("findAllOwn throws when called without an acting user", () => {
-		expect(() => PrivateUserNoteRepository.findAllOwn()).toThrow();
 	});
 });

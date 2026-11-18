@@ -45,7 +45,6 @@ import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerInges
 import * as ScrimMapListRepository from "~/features/scrims/ScrimMapListRepository.server";
 import * as ScrimMapRepository from "~/features/scrims/ScrimMapRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
-import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
 import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatRepository.server";
@@ -64,7 +63,10 @@ import * as TournamentMatchVodRepository from "~/features/tournament-bracket/Tou
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
-import { LUTI_ORGANIZATION_ID } from "~/features/tournament-organization/tournament-organization-constants";
+import {
+	LUTI_NAME_PREFIX,
+	LUTI_ORGANIZATION_ID,
+} from "~/features/tournament-organization/tournament-organization-constants";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -74,7 +76,6 @@ import {
 	weaponCategories,
 	weaponIdToCategory,
 } from "~/modules/in-game-lists/weapon-ids";
-import { LUTI_NAME_PREFIX } from "~/routines/computeLutiDivs";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -1710,16 +1711,6 @@ export function buildCases(fx: Fixtures): {
 		QStreamsRepository.findAllActiveMatchPlayers(),
 	);
 
-	// relies on the benchmark's actor context
-	addStatic("PrivateUserNoteRepository.findAllOwn.all", () =>
-		PrivateUserNoteRepository.findAllOwn(),
-	);
-	add(
-		"PrivateUserNoteRepository.findAllOwn.byTargets",
-		fx.manyUserIds,
-		(userIds) => PrivateUserNoteRepository.findAllOwn(userIds),
-	);
-
 	add(
 		"SQGroupRepository.findAllByChatRoomIds",
 		fx.openChatRoomIdsByType?.SQ_GROUP ?? null,
@@ -1809,12 +1800,6 @@ export function buildCases(fx: Fixtures): {
 		(xrank) =>
 			XRankPlacementRepository.findTenStarWeaponSplIdsByUserId(xrank.userId),
 	);
-	add(
-		"XRankPlacementRepository.findPeakVerifiedXpByUserId",
-		fx.xrank,
-		(xrank) =>
-			XRankPlacementRepository.findPeakVerifiedXpByUserId(xrank.userId),
-	);
 	add("XRankPlacementRepository.findPlacementsOfMonth", fx.xrank, (xrank) =>
 		XRankPlacementRepository.findPlacementsOfMonth({
 			mode: xrank.mode,
@@ -1883,12 +1868,6 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("TournamentLFGRepository.findAllLikesByTeamId", fx.lfgTournament, (lfg) =>
 		TournamentLFGRepository.findAllLikesByTeamId(lfg.teamId),
-	);
-	add(
-		"TournamentLFGRepository.findAllSubsByTournamentId",
-		fx.lfgTournament,
-		(lfg) =>
-			TournamentLFGRepository.findAllSubsByTournamentId(lfg.tournamentId),
 	);
 
 	add(
@@ -2167,11 +2146,6 @@ export function buildCases(fx: Fixtures): {
 			organizationId: LUTI_ORGANIZATION_ID,
 			namePrefix: LUTI_NAME_PREFIX,
 		}),
-	);
-	add(
-		"TournamentRepository.findTOSetMapPoolById",
-		fx.heavyTournamentId,
-		(tournamentId) => TournamentRepository.findTOSetMapPoolById(tournamentId),
 	);
 	add(
 		"TournamentRepository.findPreparedMapsById",

@@ -3,13 +3,13 @@ import {
 	parseLutiSeasonFromName,
 } from "../features/scrims/scrims-utils";
 import * as TournamentRepository from "../features/tournament/TournamentRepository.server";
-import { LUTI_ORGANIZATION_ID } from "../features/tournament-organization/tournament-organization-constants";
+import {
+	LUTI_NAME_PREFIX,
+	LUTI_ORGANIZATION_ID,
+} from "../features/tournament-organization/tournament-organization-constants";
 import * as UserRepository from "../features/user-page/UserRepository.server";
 import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
-
-/** Excludes the other leagues of the organization e.g. FLUTI */
-export const LUTI_NAME_PREFIX = "LUTI";
 
 /**
  * Recomputes `User.div` from the latest finalized LUTI season for every eligible participant (team

@@ -28,7 +28,6 @@ import type {
 } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
-import { modesShort } from "~/modules/in-game-lists/modes";
 import { isSupporter } from "~/modules/permissions/utils";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
@@ -763,25 +762,6 @@ export async function findLatestFinalizedLeagueParticipants(args: {
 		bracketProgression: league.settings.bracketProgression,
 		participants,
 	};
-}
-
-export async function findTOSetMapPoolById(tournamentId: number) {
-	return (
-		await db
-			.selectFrom("CalendarEvent")
-			.innerJoin("MapPoolMap", "CalendarEvent.id", "MapPoolMap.calendarEventId")
-			.select(["MapPoolMap.mode", "MapPoolMap.stageId"])
-			.where("CalendarEvent.tournamentId", "=", tournamentId)
-			.execute()
-	).sort((a, b) => {
-		const modeAIndexOf = modesShort.indexOf(a.mode);
-		const modeBIndexOf = modesShort.indexOf(b.mode);
-
-		if (modeAIndexOf < modeBIndexOf) return -1;
-		if (modeAIndexOf > modeBIndexOf) return 1;
-
-		return a.stageId - b.stageId;
-	});
 }
 
 export async function findPreparedMapsById(tournamentId: number) {

@@ -409,23 +409,6 @@ export function leaveLfg({
 	});
 }
 
-/** Ids of the tournament's users who stay as sub. */
-export async function findAllSubsByTournamentId(tournamentId: number) {
-	const rows = await db
-		.selectFrom("TournamentTeamMember")
-		.innerJoin(
-			"TournamentTeam",
-			"TournamentTeam.id",
-			"TournamentTeamMember.tournamentTeamId",
-		)
-		.select("TournamentTeamMember.userId")
-		.where("TournamentTeam.tournamentId", "=", tournamentId)
-		.where("TournamentTeamMember.isStayAsSub", "=", 1)
-		.execute();
-
-	return rows.map((row) => row.userId);
-}
-
 function lfgMembersAgg(
 	eb: ExpressionBuilder<DB, "User" | "TournamentTeamMember" | "PlusTier">,
 ) {

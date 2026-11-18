@@ -20,6 +20,9 @@ const config = {
 		"scripts/**/*.{js,cjs,mjs,jsx,ts,cts,mts,tsx}!",
 		// runs the e2e suite (also excluded from the production project below)
 		"!scripts/living-docs/capture.ts!",
+		// measures repository reads, which shouldn't count as their production use
+		"!scripts/benchmark-db.ts!",
+		"!scripts/benchmark-db/**!",
 		".claude/skills/*/scripts/*.mjs",
 		"public/sw-2.js!",
 		// swapped in by vite.config.ts for production builds
@@ -37,6 +40,8 @@ const config = {
 		"!app/db/seed/**!",
 		"!app/db/reset.ts!",
 		"!scripts/living-docs/capture.ts!",
+		"!scripts/benchmark-db.ts!",
+		"!scripts/benchmark-db/**!",
 		"!vite-css-plugins.ts!",
 		"!docs/site/src/plugins/**!",
 	],

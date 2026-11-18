@@ -18,6 +18,16 @@ const createPlaceholder = (tournamentId: number, userId: number) =>
 const startLooking = (teamId: number) =>
 	TournamentLFGRepository.startLooking({ teamId });
 
+const isStayAsSub = async (tournamentId: number, userId: number) => {
+	const groups =
+		await TournamentLFGRepository.findLookingTeamsByTournamentId(tournamentId);
+	const member = groups
+		.flatMap((group) => group.members)
+		.find((groupMember) => groupMember.id === userId);
+
+	return Boolean(member?.isStayAsSub);
+};
+
 const chatRoomIdOf = async (teamId: number) => {
 	const row = await db
 		.selectFrom("TournamentTeam")
@@ -588,10 +598,7 @@ describe("updateOwnStayAsSub", () => {
 			}),
 		);
 
-		let subs = await TournamentLFGRepository.findAllSubsByTournamentId(
-			tournament.id,
-		);
-		expect(subs).toContain(users.id(1));
+		expect(await isStayAsSub(tournament.id, users.id(1))).toBe(true);
 
 		await withUserId(users.id(1), () =>
 			TournamentLFGRepository.updateOwnStayAsSub({
@@ -600,10 +607,7 @@ describe("updateOwnStayAsSub", () => {
 			}),
 		);
 
-		subs = await TournamentLFGRepository.findAllSubsByTournamentId(
-			tournament.id,
-		);
-		expect(subs).not.toContain(users.id(1));
+		expect(await isStayAsSub(tournament.id, users.id(1))).toBe(false);
 	});
 });
 
@@ -679,39 +683,6 @@ describe("findSubGroups", () => {
 		expect(subGroups).toHaveLength(1);
 		expect(subGroups[0].id).toBe(subPost.id);
 		expect(subGroups[0].message).toBe("Free all day");
-	});
-});
-
-describe("findAllSubsByTournamentId", () => {
-	beforeEach(async () => {
-		await users.create(2);
-	});
-
-	test("returns userIds with isStayAsSub", async () => {
-		const tournament = await createTournament();
-		await TournamentLFGTeamFactory.create({
-			tournamentId: tournament.id,
-			userId: users.id(1),
-			isStayAsSub: true,
-		});
-		await createPlaceholder(tournament.id, users.id(2));
-
-		const subs = await TournamentLFGRepository.findAllSubsByTournamentId(
-			tournament.id,
-		);
-
-		expect(subs).toEqual([users.id(1)]);
-	});
-
-	test("returns empty when nobody opted in", async () => {
-		const tournament = await createTournament();
-		await createPlaceholder(tournament.id, users.id(1));
-
-		const subs = await TournamentLFGRepository.findAllSubsByTournamentId(
-			tournament.id,
-		);
-
-		expect(subs).toHaveLength(0);
 	});
 });
 
