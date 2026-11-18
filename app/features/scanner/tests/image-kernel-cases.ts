@@ -1706,7 +1706,7 @@ export function imageKernelResult(spec: ImageKernelCase): string {
 					const boxes = stats
 						.slice(1)
 						.map((s) => [s.left, s.top, s.width, s.height, s.area].join(","))
-						.sort();
+						.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 					return `${count}:${fnv(new TextEncoder().encode(boxes.join(";")))}`;
 				}
 			}

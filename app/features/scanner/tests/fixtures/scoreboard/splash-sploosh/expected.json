@@ -67,7 +67,7 @@
         "s": 4
       },
       {
-        "name": "merocï¬・~",
+        "name": "meroεïз•~",
         "weaponId": 0,
         "paint": 1155,
         "ka": 8,
@@ -78,9 +78,9 @@
     "stageLabel": "Brinewater Springs"
   },
   "options": {
-    "skipFields": [
+    "notes": "players.7.name is a known misread (reads merocïョ*~): the ε reads as c, the three-bar з as ョ, and the big dot at the cap line as *.",
+    "misreadFields": [
       "players.7.name"
-    ],
-    "notes": "players.7.name skipped: the label's ¬ and ・ are what two glyphs read as with no regard to height. The first is x-height with three bars (reads ョ now, a ¬ has one), the second hangs at the cap line where a ・ never is (reads * now). Neither is legible enough to label by eye."
+    ]
   }
 }

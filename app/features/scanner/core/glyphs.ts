@@ -772,7 +772,6 @@ interface RowRequest {
  * with a baseline each template has the rows of its own cell, so templates
  * are grouped by those rows into one request each.
  */
-// XXX: the WebGPU driver matches every template asked for, so there the cell read costs a second round trip per line and a request per cell height (fixture set parse 23 s -> 30 s, CPU unchanged): ask it only for templates whose free score can still win, or drop the question with the GPU matcher
 function rowRegions(
 	masked: Image,
 	columns: { x0: number; cols: number },

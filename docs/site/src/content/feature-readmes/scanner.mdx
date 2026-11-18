@@ -1184,7 +1184,11 @@ nothing but height are separate templates this way: 'p'/'P', 'c'/'C',
   crop's ink bottom less how far under the baseline the font draws that
   character, the median over the line (a line of kana has no flat capital to
   read it off). A crop keeps the height it was drawn at, even where the font
-  disagrees (the robot fixture's '・' on the baseline).
+  disagrees (the robot fixture's '・' on the baseline). A glyph the font draws
+  too far off the game's to read gets a crop of its own, cut out of a row
+  alone (`NAME_GLYPH_SOURCES` in `bootstrap-atlas-from-fixture.ts`): a
+  superscript ™ segments as its T and M, and the font's ™ matched the
+  merged pair at 0.80, under the bar a split glyph's merge has to clear.
 - **Finding the line** (`lineFrame` in `core/glyphs.ts`): the segments are
   first read with the templates sliding freely, as before. Each of a
   segment's best candidates says where the baseline would be if the segment
@@ -1220,6 +1224,15 @@ nothing but height are separate templates this way: 'p'/'P', 'c'/'C',
   segment's ink counted within the line's rows only); a glyph off its
   height scores less or is not read at all. The floors and margins around
   the recognizer were left where they were.
+- **Cost**: the second read costs the CPU little (a template cannot score
+  more in its cell than it did sliding freely, so the bound-sorted loop
+  stops early). The WebGPU driver matches every template it is asked for:
+  measured 2026-11-18 on the whole fixture set, GPU parse 29-31 s with the
+  cell read switched off against 33-37 s with it. GPU wait does not grow
+  (the cells have fewer placements), the extra is the driver's work per job.
+  Asking for the templates near the front-runner's bound first and the rest
+  only when the loop reached them cut the jobs by 3% and added 8% more
+  round trips, with no measurable gain, so it was not kept.
 - `tests/glyph-cells.test.ts` draws its own font and line (twins at both
   heights, a tilted line, a line off its set's size, a border line in the
   crop); it needs no fixtures.

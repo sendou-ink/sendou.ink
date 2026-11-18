@@ -19,7 +19,7 @@
         "s": 3
       },
       {
-        "name": "Mathis♪・“",
+        "name": "Mathis♪™",
         "weaponId": 2070,
         "paint": 1566,
         "ka": 14,
@@ -51,7 +51,7 @@
         "s": 6
       },
       {
-        "name": "Rιppιng_H",
+        "name": "Rιppιηg_H",
         "weaponId": 8020,
         "paint": 1315,
         "ka": 9,
@@ -77,10 +77,6 @@
     ]
   },
   "options": {
-    "skipFields": [
-      "players.1.name",
-      "players.5.name"
-    ],
-    "notes": "players.5.name skipped: the label's 'n' is a Greek η, drawn with its right leg four rows under the baseline (the ι beside it is Greek too). The names atlas carries η since glyphs keep their height on the line, and the row reads Rιppιηg_H; the label dates from when η read as its nearest glyph. Relabel once checked against the source. players.1.name skipped: its last two segments are the T and M of a superscript ™ (Mathis♪™). The label's ・“ is what they read as with no regard to height (both hang at the cap line, where a ・ never is); the read is now '“, still wrong, since the pair is not merged into ™."
+    "notes": "players.5.name: the 'n' is a Greek η, drawn with its right leg four rows under the baseline (the ι beside it is Greek too). players.1.name: the ™ is a superscript whose T and M segment apart; the atlas carries this frame's ™, the font's matches it too poorly for the two to merge."
   }
 }

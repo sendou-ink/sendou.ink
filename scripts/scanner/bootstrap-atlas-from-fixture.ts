@@ -704,6 +704,41 @@ for (const source of DEATH_JA_SOURCES) {
 	}
 }
 
+// Name glyphs the font renders too far off the game's to read, cut out of a
+// row on their own (tight boxes, so the row's other glyphs add no crops).
+const NAME_GLYPH_SOURCES: {
+	frame: string;
+	lines: { roi: Roi; label: string; mergeHints?: number[] }[];
+}[] = [
+	{
+		frame: "scoreboard/private-battle-splat-zones-umami/frame.png",
+		lines: [
+			// a superscript ™ (Mathis♪™) segments as its T and M; the font's ™
+			// matches it at 0.80, under the bar a merged split glyph has to clear
+			{
+				roi: { x: 1205, y: 468, w: 20, h: 32 },
+				label: "™",
+				mergeHints: [1212],
+			},
+		],
+	},
+];
+
+for (const source of NAME_GLYPH_SOURCES) {
+	console.info(`harvesting ${source.frame}`);
+	gray = await loadGray(source.frame);
+	for (const line of source.lines) {
+		harvest(
+			line.roi,
+			line.label,
+			nameEntries,
+			[],
+			BIN_THRESHOLD,
+			line.mergeHints ?? [],
+		);
+	}
+}
+
 writeAtlas("scoreboard-names", 22, nameEntries);
 writeAtlas("scoreboard-paint-digits", 28, paintEntries);
 writeAtlas("scoreboard-stat-digits", 17, statEntries);

@@ -14,8 +14,10 @@ import { REPLAY_CODE_ROI } from "./rois";
 
 /**
  * FOT-RowdyStd's 'Q' is a '0' bowl with a tail, so a real Q ranks as '0' by a
- * hair; like names.ts's P/p rule, a 0/O whose ink reaches well below the
- * baseline (median ink bottom of the other chars) is a Q.
+ * hair: a 0/O whose ink reaches well below the baseline (median ink bottom of
+ * the other chars) is a Q. The glyph cells charge a '0' for the tail, but only
+ * by its share of the ink, so the Q still wins by 0.02 at most on sharp
+ * captures and loses outright on blurry ones (low-res).
  */
 const Q_TWINS = new Set(["0", "O"]);
 const Q_DESCENT_MIN_PX = 4;
