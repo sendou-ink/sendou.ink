@@ -27,7 +27,7 @@ type BroadcastTeamPick = "left" | "right" | number;
 
 /** What the producer controls of one cast scene, see `ProducerState`. */
 export interface CastProducerState extends ProducerState<CastScene> {
-	/** Double elimination bracket of the bracket scene, `null` follows the featured match's. */
+	/** Bracket of the bracket scene, `null` follows the featured match's. */
 	bracketIdx: number | null;
 	bracketFocus: BroadcastBracketFocus;
 	/** Clip the replays scene plays, `null` leaves the footage under it to OBS. */
@@ -58,7 +58,7 @@ export interface CastBroadcastState
 	extends BroadcastState<CastProducerState, CastBroadcastSettings> {
 	/** `settings.casters` in order, users that no longer exist left out. */
 	casters: BroadcastCaster[];
-	/** What the bracket scene shows in each view, `null` without a double elimination bracket to show. */
+	/** What the bracket scene shows in each view, `null` without a showable bracket. */
 	bracket: Record<BroadcastView, BroadcastBracket | null>;
 	/** What the team scene shows in each view, `null` when the view is on another scene or the team is not found. */
 	team: Record<BroadcastView, BroadcastTeamSpotlight | null>;
@@ -103,7 +103,7 @@ export interface BroadcastCaster extends BroadcastCasterSetting {
 	pronouns: Pronouns | null;
 }
 
-/** What the bracket scene shows: a double elimination bracket, or one group of a round robin or Swiss bracket. */
+/** What the bracket scene shows: a single or double elimination bracket, or one group of a round robin or Swiss bracket. */
 export type BroadcastBracket =
 	| BroadcastEliminationBracket
 	| BroadcastRoundRobinBracket

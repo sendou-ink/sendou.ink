@@ -7,6 +7,7 @@ import {
 	tournamentBroadcastsPage,
 } from "~/features/broadcast/broadcast-urls";
 import * as CastChannel from "~/features/broadcast-cast/core/CastChannel";
+import * as LiveStream from "~/features/live-streams/core/LiveStream";
 import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
 import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
@@ -265,10 +266,8 @@ async function resolveTournamentBroadcastRooms(
 
 	return joinOwners(rooms, owners, (owner) => {
 		// `undefined` once the cast account was removed from the tournament
-		const channel = CastChannel.list(owner.castAccounts).find(
-			(castChannel) =>
-				castChannel.platform === owner.platform &&
-				castChannel.account === owner.account,
+		const channel = CastChannel.list(owner.castAccounts).find((castChannel) =>
+			LiveStream.isSameAccount(castChannel, owner),
 		);
 
 		return {

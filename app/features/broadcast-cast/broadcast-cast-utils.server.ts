@@ -5,6 +5,7 @@ import {
 	findProgram,
 } from "~/features/broadcast/broadcast-utils.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as LiveStream from "~/features/live-streams/core/LiveStream";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { adminStreamFormSchemaServer } from "~/features/tournament-admin/tournament-admin-staff-schemas.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -25,10 +26,8 @@ export async function findCastProgram(programKey: string | null) {
 	if (!program) return null;
 
 	const channel = program.tournament
-		? CastChannel.list(program.tournament.ctx.castAccounts).find(
-				(candidate) =>
-					candidate.platform === program.platform &&
-					candidate.account === program.account,
+		? CastChannel.list(program.tournament.ctx.castAccounts).find((candidate) =>
+				LiveStream.isSameAccount(candidate, program),
 			)
 		: undefined;
 

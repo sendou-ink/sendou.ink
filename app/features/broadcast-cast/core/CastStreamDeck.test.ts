@@ -227,7 +227,27 @@ describe("CastStreamDeck.keys", () => {
 				state.next = item({ id: 2, scene: "rosters", advance: "timer" });
 			},
 			now: TAKEN_AT,
-			take: { isDisabled: true, remainingMs: null, gameCue: null },
+			take: {
+				isDisabled: true,
+				remainingMs: null,
+				gameCue: null,
+				isImminent: false,
+			},
+		},
+		{
+			why: "results waiting for the game to end without a match block Take and have no game cue",
+			setup: (state: CastBroadcastState) => {
+				state.match = null;
+				state.live = item({ scene: "game" });
+				state.next = item({ id: 2, scene: "results", advance: "game" });
+			},
+			now: TAKEN_AT,
+			take: {
+				isDisabled: true,
+				remainingMs: null,
+				gameCue: null,
+				isImminent: false,
+			},
 		},
 		{
 			why: "next waiting for a Take",

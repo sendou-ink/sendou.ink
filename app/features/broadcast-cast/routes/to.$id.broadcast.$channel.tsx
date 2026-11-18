@@ -111,7 +111,6 @@ import type { SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentAdminPage, tournamentMatchPage } from "~/utils/urls";
 import {
-	BROADCAST_AUTO_TAKE_IMMINENT_MS,
 	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_DASHBOARD_TABS,
 	BROADCAST_PROTOTYPE_CLIPS,
@@ -138,6 +137,7 @@ import { ScenePicker, useSceneHotkeys } from "../components/ScenePicker";
 import * as BracketFocus from "../core/BracketFocus";
 import * as CastChannel from "../core/CastChannel";
 import * as CastStreamDeck from "../core/CastStreamDeck";
+import * as CastTake from "../core/CastTake";
 import { loader } from "../loaders/to.$id.broadcast.$channel.server";
 import styles from "./to.$id.broadcast.$channel.module.css";
 
@@ -201,15 +201,7 @@ function BroadcastDashboard() {
 	// an item gone on air leaves the staged one selected
 	const selected =
 		staged.find((item) => item.id === selectedItemId) ?? state.next;
-	const hasMatch = state.match !== null;
-	const canTake = Producer.canTake(CAST_PRODUCER_RULES, state, { hasMatch });
-	const autoTakeAt = Producer.autoTakeAt(CAST_PRODUCER_RULES, state, {
-		hasMatch,
-	});
-	const isAutoTakeImminent =
-		autoTakeAt !== null &&
-		now !== null &&
-		autoTakeAt - now <= BROADCAST_AUTO_TAKE_IMMINENT_MS;
+	const take = CastTake.status({ state, now });
 	const areClipsOnSources = everySourceHasClips(clipSender.statuses);
 	const { submit: submitScene } = useActionSubmit(broadcastActionSchema);
 	useSceneHotkeys({
@@ -306,7 +298,11 @@ function BroadcastDashboard() {
 						title={t("broadcast:dashboard.live")}
 					/>
 					<div className="stack md">
-						<LiveTimer state={state} now={now} />
+						<LiveTimer
+							state={state}
+							now={now}
+							isTimed={take.remainingMs !== null}
+						/>
 						<OnAirControls state={state} />
 						<ShowInfo state={state} />
 					</div>
@@ -323,20 +319,14 @@ function BroadcastDashboard() {
 						}}
 						size="big"
 						icon={<ChevronsLeft />}
-						isDisabled={!canTake}
+						isDisabled={!take.canTake}
 						className={styles.take}
 						formClassName={styles.takeForm}
 						testId="broadcast-take-button"
 					>
 						{t("broadcast:dashboard.take")}
 					</ActionButton>
-					<AutoTake
-						state={state}
-						canTake={canTake}
-						remainingMs={
-							autoTakeAt !== null && now !== null ? autoTakeAt - now : null
-						}
-					/>
+					<AutoTake state={state} take={take} />
 					<SendouButton
 						size="small"
 						variant="minimal"
@@ -350,11 +340,7 @@ function BroadcastDashboard() {
 				</div>
 
 				<section className={clsx(styles.switcherView, styles.nextView)}>
-					<ViewHeader
-						view="next"
-						state={state}
-						isImminent={isAutoTakeImminent}
-					/>
+					<ViewHeader view="next" state={state} isImminent={take.isImminent} />
 					<BroadcastPreview
 						iframeRef={nextPreviewRef}
 						src={broadcastOverlayPage({
@@ -853,24 +839,18 @@ function ViewHeader({
 function LiveTimer({
 	state,
 	now,
+	isTimed,
 }: {
 	state: CastBroadcastState;
 	now: number | null;
+	/** Next goes on air by itself once the time runs out. */
+	isTimed: boolean;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const startedAt = Producer.liveStartedAt(state);
 	const endsAt = Producer.liveEndsAt(CAST_PRODUCER_RULES, state);
 
-	if (
-		startedAt === null ||
-		endsAt === null ||
-		now === null ||
-		Producer.effectiveAdvance(CAST_PRODUCER_RULES, state.live, state.next) !==
-			"timer" ||
-		Producer.autoTakeAt(CAST_PRODUCER_RULES, state, {
-			hasMatch: state.match !== null,
-		}) === null
-	) {
+	if (startedAt === null || endsAt === null || now === null || !isTimed) {
 		return null;
 	}
 
@@ -898,13 +878,10 @@ function LiveTimer({
 
 function AutoTake({
 	state,
-	canTake,
-	remainingMs,
+	take: { canTake, remainingMs, gameCue },
 }: {
 	state: CastBroadcastState;
-	canTake: boolean;
-	/** `null` when next isn't timed. */
-	remainingMs: number | null;
+	take: CastTake.TakeStatus;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 
@@ -917,12 +894,6 @@ function AutoTake({
 			</div>
 		);
 	}
-
-	const gameCue =
-		Producer.effectiveAdvance(CAST_PRODUCER_RULES, state.live, state.next) ===
-		"game"
-			? Producer.gameCue(CAST_PRODUCER_RULES, state.live, state.next)
-			: null;
 
 	if (remainingMs === null && gameCue === null) {
 		return <div className={styles.autoTake} />;

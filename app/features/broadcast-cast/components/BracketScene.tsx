@@ -30,7 +30,7 @@ const SWISS_MAX_COLUMNS = 6;
 const SWISS_MAX_ROWS = 8;
 
 /**
- * Full screen of a double elimination bracket, the part of it the producer focused on: by default the rounds
+ * Full screen of a single or double elimination bracket, the part of it the producer focused on: by default the rounds
  * still being played. Or of a round robin or Swiss group: its standings next to its rounds (Swiss: the round being
  * played, its matches pooled by the teams' records). Scaled to fill the screen along
  * with its header, then zoomed in on the featured match (and its teams' standings) after a moment, leaving the

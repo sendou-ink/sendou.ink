@@ -1,5 +1,7 @@
 import type { CastAccount, CastedMatchesInfo } from "~/db/tables-json";
 import type { BroadcastChannel } from "~/features/broadcast/broadcast-types";
+import * as LiveStream from "~/features/live-streams/core/LiveStream";
+import type { StreamAccount } from "~/features/live-streams/live-streams-constants";
 import { mySlugify } from "~/utils/urls";
 
 /** The tournament's broadcast channels, one per cast account. */
@@ -29,8 +31,8 @@ export function featuredMatchId({
 	castedMatchesInfo: CastedMatchesInfo | null;
 	channel: Pick<BroadcastChannel, "platform" | "account">;
 }): number | null {
-	const isOfChannel = (match: { platform: string; account: string }) =>
-		match.platform === channel.platform && match.account === channel.account;
+	const isOfChannel = (match: StreamAccount) =>
+		LiveStream.isSameAccount(match, channel);
 
 	return (
 		castedMatchesInfo?.castedMatches.find(isOfChannel)?.matchId ??

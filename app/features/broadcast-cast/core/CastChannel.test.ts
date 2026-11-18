@@ -62,6 +62,22 @@ describe("CastChannel.featuredMatchId", () => {
 			expected: 3,
 		},
 		{
+			why: "a twitch login differing only in case",
+			castedMatches: [
+				{ platform: "TWITCH" as const, account: "SendouInk", matchId: 5 },
+			],
+			lockedMatches: [],
+			expected: 5,
+		},
+		{
+			why: "none for the same account name on another platform",
+			castedMatches: [
+				{ platform: "YOUTUBE" as const, account: "sendouink", matchId: 6 },
+			],
+			lockedMatches: [],
+			expected: null,
+		},
+		{
 			why: "none for the channel",
 			castedMatches: [{ ...otherChannel, matchId: 1 }],
 			lockedMatches: [],

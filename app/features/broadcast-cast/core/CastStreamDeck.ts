@@ -2,7 +2,6 @@ import type { BroadcastAdvance } from "~/features/broadcast/broadcast-types";
 import * as Producer from "~/features/broadcast/core/Producer";
 import * as StreamDeck from "~/modules/stream-deck/stream-deck";
 import {
-	BROADCAST_AUTO_TAKE_IMMINENT_MS,
 	BROADCAST_SCENE_GROUPS,
 	CAST_PRODUCER_RULES,
 } from "../broadcast-cast-constants";
@@ -12,6 +11,7 @@ import type {
 	CastScene,
 } from "../broadcast-cast-types";
 import { needsFeaturedMatch } from "../broadcast-cast-utils";
+import * as CastTake from "./CastTake";
 
 /**
  * The keys from the top left, row by row: the scenes in the scene picker's order (the number keys' order), then the
@@ -58,16 +58,10 @@ export type Key =
 			/** Only a Take can put it on air. */
 			isDisabled: boolean;
 	  }
-	| {
+	| ({
 			type: "take";
 			isDisabled: boolean;
-			/** Time until next goes on air by itself, `null` when it doesn't by a timer. */
-			remainingMs: number | null;
-			/** Next goes on air as the scanner sees this, `null` when it doesn't wait for a game. */
-			gameCue: "start" | "end" | null;
-			/** Next goes on air by itself in a moment. */
-			isImminent: boolean;
-	  };
+	  } & Omit<CastTake.TakeStatus, "canTake">);
 
 /**
  * What each key of a 15 key Stream Deck shows, from the top left row by row ({@link StreamDeck.COLUMNS} per row).
@@ -88,17 +82,7 @@ export function keys({
 	now: number | null;
 }): Key[] {
 	const hasMatch = state.match !== null;
-	const canTake = Producer.canTake(CAST_PRODUCER_RULES, state, { hasMatch });
-	const autoTakeAt = Producer.autoTakeAt(CAST_PRODUCER_RULES, state, {
-		hasMatch,
-	});
-	const remainingMs =
-		autoTakeAt !== null && now !== null ? Math.max(0, autoTakeAt - now) : null;
-	const gameCue =
-		Producer.effectiveAdvance(CAST_PRODUCER_RULES, state.live, state.next) ===
-		"game"
-			? Producer.gameCue(CAST_PRODUCER_RULES, state.live, state.next)
-			: null;
+	const { canTake, ...take } = CastTake.status({ state, now });
 
 	const staged = Producer.stagedItems(state);
 	const position = Math.max(
@@ -147,16 +131,7 @@ export function keys({
 					isDisabled: advanceOptions.length < 2,
 				};
 			case "take":
-				return {
-					type: "take",
-					isDisabled: !canTake,
-					remainingMs: canTake ? remainingMs : null,
-					gameCue: canTake && remainingMs === null ? gameCue : null,
-					isImminent:
-						canTake &&
-						remainingMs !== null &&
-						remainingMs <= BROADCAST_AUTO_TAKE_IMMINENT_MS,
-				};
+				return { type: "take", isDisabled: !canTake, ...take };
 			default:
 				return {
 					type: "scene",
