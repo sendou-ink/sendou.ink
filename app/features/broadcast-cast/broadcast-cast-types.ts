@@ -39,14 +39,24 @@ export interface CastProducerState extends ProducerState<CastScene> {
 export interface CastBroadcastSettings extends BroadcastSettings {
 	/** Message of the full screen scenes, e.g. "Top 8 starts at 18:00 CEST". */
 	headline: string;
-	/** Users under the camera frames of the casters scene, one frame per caster. */
-	casterIds: number[];
+	/** In the camera frames of the casters scene, one frame per caster. */
+	casters: BroadcastCasterSetting[];
+}
+
+export interface BroadcastCasterSetting {
+	userId: number;
+	/** VDO.ninja view link of their camera and microphone, `null` when they're heard some other way. */
+	vdoNinjaUrl: string | null;
+	/** Shows their avatar lighting up as they speak in place of their camera, e.g. when they have none. */
+	isAudioOnly: boolean;
+	/** 0-100, of their camera's audio on air. */
+	volume: number;
 }
 
 /** Full snapshot pushed to every client of a cast broadcast's stream. */
 export interface CastBroadcastState
 	extends BroadcastState<CastProducerState, CastBroadcastSettings> {
-	/** Users of `settings.casterIds` in order, ones that no longer exist left out. */
+	/** `settings.casters` in order, users that no longer exist left out. */
 	casters: BroadcastCaster[];
 	/** What the bracket scene shows in each view, `null` without a double elimination bracket to show. */
 	bracket: Record<BroadcastView, BroadcastBracket | null>;
@@ -87,9 +97,9 @@ export interface BroadcastGameResultPlayer {
 	abilities: AbilityWithUnknown[];
 }
 
-export interface BroadcastCaster {
-	userId: number;
+export interface BroadcastCaster extends BroadcastCasterSetting {
 	name: string;
+	avatarUrl: string | null;
 	pronouns: Pronouns | null;
 }
 

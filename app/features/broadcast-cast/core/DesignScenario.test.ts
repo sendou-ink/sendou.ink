@@ -17,7 +17,7 @@ const build = (scenario: Partial<DesignScenario.Scenario> = {}) =>
 			css: "",
 			weaponImages: "default",
 			headline: "",
-			casterIds: [],
+			casters: [],
 		},
 		takenAt: 0,
 	});
@@ -90,7 +90,7 @@ describe("DesignScenario.build", () => {
 				css: "",
 				weaponImages: "default",
 				headline: "",
-				casterIds: [],
+				casters: [],
 			},
 			takenAt: 0,
 		});

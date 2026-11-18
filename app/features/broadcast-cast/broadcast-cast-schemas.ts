@@ -7,8 +7,10 @@ import {
 import { broadcastThemeFormSchema } from "~/features/broadcast/broadcast-schemas";
 import {
 	array,
+	fieldset,
 	stringConstant,
 	textFieldOptional,
+	toggle,
 	userSearch,
 } from "~/form/fields";
 import { _action, coerceNumber, id } from "~/utils/schema";
@@ -18,7 +20,9 @@ import {
 	BROADCAST_MAX_CASTERS,
 	BROADCAST_SCENE_DURATIONS_MS,
 	BROADCAST_SCENES,
+	BROADCAST_VDO_NINJA_URL_MAX_LENGTH,
 } from "./broadcast-cast-constants";
+import { isVdoNinjaViewUrl } from "./broadcast-cast-utils";
 
 const nonNegativeInteger = v.pipe(coerceNumber(), v.integer(), v.minValue(0));
 const scene = v.picklist(BROADCAST_SCENES);
@@ -48,11 +52,29 @@ export const broadcastHeadlineFormSchema = v.object({
 
 export const broadcastCastersFormSchema = v.object({
 	_action: stringConstant("UPDATE_CASTERS"),
-	casterIds: array({
+	casters: array({
 		label: "labels.broadcastCasters",
 		bottomText: "bottomTexts.broadcastCasters",
 		max: BROADCAST_MAX_CASTERS,
-		field: userSearch({ label: "labels.user" }),
+		field: fieldset({
+			fields: v.object({
+				userId: userSearch({ label: "labels.user" }),
+				vdoNinjaUrl: textFieldOptional({
+					label: "labels.broadcastVdoNinjaUrl",
+					bottomText: "bottomTexts.broadcastVdoNinjaUrl",
+					placeholder: "placeholders.broadcastVdoNinjaUrl",
+					maxLength: BROADCAST_VDO_NINJA_URL_MAX_LENGTH,
+					validate: {
+						func: isVdoNinjaViewUrl,
+						message: "forms:errors.invalidVdoNinjaUrl",
+					},
+				}),
+				isAudioOnly: toggle({
+					label: "labels.broadcastCasterAudioOnly",
+					bottomText: "bottomTexts.broadcastCasterAudioOnly",
+				}),
+			}),
+		}),
 	}),
 });
 
@@ -105,6 +127,11 @@ export const broadcastActionSchema = v.union([
 		_action: _action("SET_ADVANCE"),
 		itemId: id,
 		advance: v.picklist(BROADCAST_ADVANCES),
+	}),
+	v.object({
+		_action: _action("SET_CASTER_VOLUME"),
+		userId: id,
+		volume: v.pipe(coerceNumber(), v.integer(), v.minValue(0), v.maxValue(100)),
 	}),
 	v.object({ _action: _action("ADD_TO_QUEUE") }),
 	v.object({ _action: _action("POINT_PROGRAM") }),

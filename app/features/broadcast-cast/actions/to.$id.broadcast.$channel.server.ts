@@ -13,9 +13,13 @@ import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.
 import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { CAST_PRODUCER_RULES } from "../broadcast-cast-constants";
+import {
+	BROADCAST_DEFAULT_CASTER_VOLUME,
+	CAST_PRODUCER_RULES,
+} from "../broadcast-cast-constants";
 import { broadcastActionSchema } from "../broadcast-cast-schemas";
 import type {
+	BroadcastCasterSetting,
 	CastBroadcastSettings,
 	CastProducerState,
 } from "../broadcast-cast-types";
@@ -25,6 +29,8 @@ const STALE_TAKE_MESSAGE =
 	"Someone else already pressed Take. Check what is live now.";
 const STALE_ITEM_MESSAGE =
 	"That scene isn't staged anymore. Check what is live and queued now.";
+const STALE_CASTER_MESSAGE =
+	"That caster isn't on the broadcast anymore. Check the casters in the Setup tab.";
 const NO_MATCH_MESSAGE =
 	"That scene shows the match's teams, but no match is cast on this channel. Pick another scene.";
 
@@ -200,9 +206,39 @@ export const action = defineAction(
 				break;
 			}
 			case "UPDATE_CASTERS": {
+				const savedCasters = await storedCasters(key);
+
 				await BroadcastRepository.updateSettings<CastBroadcastSettings>({
 					...key,
-					patch: { casterIds: body.casterIds },
+					patch: {
+						casters: body.casters.map((caster) => ({
+							userId: caster.userId,
+							vdoNinjaUrl: caster.vdoNinjaUrl,
+							isAudioOnly: caster.isAudioOnly,
+							volume:
+								savedCasters.find((saved) => saved.userId === caster.userId)
+									?.volume ?? BROADCAST_DEFAULT_CASTER_VOLUME,
+						})),
+					},
+				});
+				break;
+			}
+			case "SET_CASTER_VOLUME": {
+				const savedCasters = await storedCasters(key);
+				errorToastIfFalsy(
+					savedCasters.some((caster) => caster.userId === body.userId),
+					STALE_CASTER_MESSAGE,
+				);
+
+				await BroadcastRepository.updateSettings<CastBroadcastSettings>({
+					...key,
+					patch: {
+						casters: savedCasters.map((caster) =>
+							caster.userId === body.userId
+								? { ...caster, volume: body.volume }
+								: caster,
+						),
+					},
 				});
 				break;
 			}
@@ -219,3 +255,14 @@ export const action = defineAction(
 		return null;
 	},
 );
+
+async function storedCasters(
+	key: Parameters<typeof BroadcastRepository.findByChannel>[0],
+): Promise<BroadcastCasterSetting[]> {
+	const broadcast = await BroadcastRepository.findByChannel(key);
+	const settings = broadcast?.settings as
+		| Partial<CastBroadcastSettings>
+		| undefined;
+
+	return settings?.casters ?? [];
+}

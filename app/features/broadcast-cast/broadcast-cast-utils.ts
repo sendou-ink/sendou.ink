@@ -3,6 +3,13 @@ import type { BroadcastObjectiveRead } from "~/features/broadcast/broadcast-type
 import type { BROADCAST_SCENE_PARTS } from "./broadcast-cast-constants";
 import type { CastProducerState, CastScene } from "./broadcast-cast-types";
 
+/** Params picking the stream(s) a VDO.ninja link watches, see its `?view`. */
+const VDO_NINJA_VIEW_PARAMS = ["view", "v", "streamid", "pull"];
+/** Params of a VDO.ninja room's scene, showing the room's guests. */
+const VDO_NINJA_SCENE_PARAMS = ["scene", "scn"];
+/** Shows only the video (no buttons) filling the frame, on a see-through page. */
+const VDO_NINJA_EMBED_FLAGS = ["cleanoutput", "transparent", "cover"];
+
 /** Builds the scene's `data-part` attributes, only allowing the parts documented in {@link BROADCAST_SCENE_PARTS}. */
 export const scenePart =
 	<S extends keyof typeof BROADCAST_SCENE_PARTS>(_scene: S) =>
@@ -13,6 +20,51 @@ export const scenePart =
 /** Pronouns as shown next to a name, e.g. "he/him". */
 export function pronounsLabel(pronouns: Pronouns) {
 	return `${pronouns.subject}/${pronouns.object}`;
+}
+
+/**
+ * Whether the link is a VDO.ninja link watching a camera: a view link (`https://vdo.ninja/?view=…`) or a room's scene
+ * link (`&room=…&scene`). Not one sending a camera (`?push=…`).
+ */
+export function isVdoNinjaViewUrl(value: string) {
+	const url = parsedUrl(value);
+	if (url?.protocol !== "https:") return false;
+	if (url.hostname !== "vdo.ninja" && !url.hostname.endsWith(".vdo.ninja")) {
+		return false;
+	}
+
+	const params = url.searchParams;
+	if (params.has("push")) return false;
+
+	return (
+		VDO_NINJA_VIEW_PARAMS.some((param) => Boolean(params.get(param))) ||
+		(params.has("room") &&
+			VDO_NINJA_SCENE_PARAMS.some((param) => params.has(param)))
+	);
+}
+
+/**
+ * The caster camera's VDO.ninja link (see {@link isVdoNinjaViewUrl}) as the casters scene embeds it: only the video,
+ * filling the frame, starting at the volume (0-100).
+ */
+export function vdoNinjaEmbedUrl({
+	url,
+	volume,
+	isAudioOnly = false,
+}: {
+	url: string;
+	volume: number;
+	/** Only their sound, not even downloading the video. */
+	isAudioOnly?: boolean;
+}) {
+	const embedUrl = new URL(url);
+	for (const flag of VDO_NINJA_EMBED_FLAGS) {
+		embedUrl.searchParams.set(flag, "");
+	}
+	if (isAudioOnly) embedUrl.searchParams.set("novideo", "");
+	embedUrl.searchParams.set("volume", String(volume));
+
+	return embedUrl.toString();
 }
 
 /**
@@ -142,4 +194,12 @@ function monotoneTangents(points: ReadonlyArray<{ x: number; y: number }>) {
 			Math.min(2 * Math.abs(before), 2 * Math.abs(after), Math.abs(weighted))
 		);
 	});
+}
+
+function parsedUrl(value: string) {
+	try {
+		return new URL(value);
+	} catch {
+		return null;
+	}
 }

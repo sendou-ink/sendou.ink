@@ -171,7 +171,7 @@ export const BROADCAST_SCENE_GROUPS = [
 /**
  * Stable `data-part` hooks of each design for custom CSS, e.g. `[data-scene="game"] [data-part="team-name"]`.
  * `hold` is the design of {@link BROADCAST_HOLD_SCENES}, `matchup` the featured match line some scenes show,
- * `ticker` the other matches' scores along the bottom of the game and hold scenes and `stinger` the transition over every scene. Every scene has a `backdrop` except game and replays, maps' with a `backdrop-video` of the next map under a `backdrop-vignette` darkening its edges.
+ * `ticker` the other matches' scores along the bottom of the game and hold scenes, `cameras` what the casters scene's frames show from under every scene (a caster's VDO.ninja camera, or their avatar as `caster-audio` with `[data-speaking]` while they speak) and `stinger` the transition over every scene. Every scene has a `backdrop` except game and replays, maps' with a `backdrop-video` of the next map under a `backdrop-vignette` darkening its edges.
  * Renaming one breaks users' themes.
  */
 export const BROADCAST_SCENE_PARTS = {
@@ -356,6 +356,13 @@ export const BROADCAST_SCENE_PARTS = {
 		"ticker-team-name",
 		"ticker-team-score",
 	],
+	cameras: [
+		"caster-camera",
+		"caster-camera-placeholder",
+		"caster-audio",
+		"caster-avatar",
+		"caster-speaking-ring",
+	],
 	stinger: [
 		"stinger",
 		"stinger-panel",
@@ -377,13 +384,20 @@ export const BROADCAST_SCENE_PARTS = {
 
 export const BROADCAST_HEADLINE_MAX_LENGTH = 100;
 
-// xxx: or 2?
 export const BROADCAST_MAX_CASTERS = 3;
+
+export const BROADCAST_VDO_NINJA_URL_MAX_LENGTH = 500;
+
+/** How loud a caster's camera is on air when nothing else is set, 0-100. */
+export const BROADCAST_DEFAULT_CASTER_VOLUME = 100;
+
+/** How often a dragged caster volume slider saves at most. */
+export const BROADCAST_VOLUME_SAVE_INTERVAL_MS = 250;
 
 export const DEFAULT_CAST_BROADCAST_SETTINGS = {
 	...DEFAULT_BROADCAST_SETTINGS,
 	headline: "",
-	casterIds: [],
+	casters: [],
 } as const satisfies CastBroadcastSettings;
 
 const DEFAULT_CAST_ITEM: Omit<CastProducerState, "id"> = {

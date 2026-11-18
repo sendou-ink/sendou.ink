@@ -64,6 +64,7 @@
 	"options.teamMemberRoleType.PLAYER": "Player",
 	"options.teamMemberRoleType.OTHER": "Other",
 	"errors.required": "This field is required",
+	"errors.invalidVdoNinjaUrl": "Must be a VDO.ninja view link, e.g. https://vdo.ninja/?view=abc123",
 	"errors.mustBeWholeNumber": "Must be a whole number (no decimals)",
 	"errors.matchNotFound": "No SendouQ match found with this ID",
 	"errors.invalidUrl": "Must be a valid URL",
@@ -537,5 +538,10 @@
 	"labels.broadcastHeadline": "Headline",
 	"bottomTexts.broadcastHeadline": "Shown on the full screen scenes, e.g. Starting soon and Break.",
 	"labels.broadcastCasters": "Casters",
-	"bottomTexts.broadcastCasters": "Shown with the pronouns of their profile. The Game scene lists them next to the round, the Casters scene has a camera frame for each (put your camera sources under the browser source in OBS)."
+	"bottomTexts.broadcastCasters": "Shown with the pronouns of their profile. The Game scene lists them next to the round, the Casters scene has a camera frame for each.",
+	"labels.broadcastVdoNinjaUrl": "VDO.ninja view link",
+	"bottomTexts.broadcastVdoNinjaUrl": "The Casters scene shows their camera in the frame and they're heard on every scene. Without a link their avatar shows instead.",
+	"labels.broadcastCasterAudioOnly": "No camera",
+	"bottomTexts.broadcastCasterAudioOnly": "Shows their avatar in place of the camera, lighting up as they speak.",
+	"placeholders.broadcastVdoNinjaUrl": "https://vdo.ninja/?view=..."
 }

@@ -29,8 +29,23 @@ export interface BroadcastSceneSet<State extends BroadcastState> {
 		onCovered: () => void;
 		onDone: () => void;
 	}>;
+	/**
+	 * Stays mounted under the scene layers whatever is on air, e.g. so a connection lives on from scene to scene.
+	 * `layers` are the scene layers on screen, the one coming in first.
+	 */
+	Underlay?: React.ComponentType<{
+		state: State;
+		view: BroadcastView;
+		layers: BroadcastSceneLayer<State>[];
+	}>;
 	/** Classes of its stylesheets, which the custom CSS refers to as `.{stylesheet}-{class}`. */
 	themeClasses: BroadcastThemeClasses;
+}
+
+/** A scene layer on screen: the state it shows and how it is fading, if it is. */
+export interface BroadcastSceneLayer<State extends BroadcastState> {
+	state: State;
+	transition?: "in" | "out";
 }
 
 interface Stage<State extends BroadcastState> {
@@ -99,7 +114,13 @@ export function BroadcastOverlay<State extends BroadcastState>({
 
 	const shown = stage.frozen ?? state;
 	const stingerId = stage.stingerId;
-	const { Scene, Stinger } = sceneSet;
+	const { Scene, Stinger, Underlay } = sceneSet;
+	const layers: BroadcastSceneLayer<State>[] = [
+		{ state: shown, transition: stage.leaving ? "in" : undefined },
+		...(stage.leaving
+			? [{ state: stage.leaving.state, transition: "out" as const }]
+			: []),
+	];
 
 	return (
 		<>
@@ -109,6 +130,9 @@ export function BroadcastOverlay<State extends BroadcastState>({
 				data-theme="dark"
 				data-broadcast
 			>
+				{Underlay ? (
+					<Underlay state={state} view={view} layers={layers} />
+				) : null}
 				{stage.leaving ? (
 					<SceneLayer
 						key={stage.leaving.layerId}

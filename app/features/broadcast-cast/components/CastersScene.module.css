@@ -32,15 +32,52 @@
 }
 
 .name {
-	border-bottom: 5px solid var(--bc-accent);
-	border-radius: var(--bc-radius-small);
-	background: var(--bc-surface);
-	font-size: var(--casters-name-size);
+	font-size: calc(var(--casters-name-size) * 1.3);
 	font-weight: var(--bc-weight-bold);
+	text-shadow: 0 2px 12px rgb(0 0 0 / 0.5);
+	text-transform: uppercase;
+
+	&::after {
+		background: var(--bc-accent);
+	}
 }
 
 .pronouns {
 	color: var(--bc-text-muted);
+	text-transform: none;
 	font-size: var(--casters-pronouns-size);
 	font-weight: var(--bc-weight-semibold);
+}
+
+/* shows while a camera connects, its page being see-through, and behind a caster's avatar */
+.camera {
+	background: var(--bc-surface);
+}
+
+.cameraPlaceholder {
+	color: var(--bc-text-muted);
+	font-size: var(--casters-pronouns-size);
+	font-weight: var(--bc-weight-semibold);
+}
+
+.audio {
+	background: radial-gradient(
+		circle,
+		color-mix(in srgb, var(--bc-accent) 16%, var(--bc-surface)),
+		var(--bc-surface) 70%
+	);
+}
+
+.avatar {
+	background: var(--bc-surface-high);
+	color: var(--bc-text-muted);
+	font-size: var(--casters-title-size);
+	font-weight: var(--bc-weight-bold);
+}
+
+.speakingRing {
+	border: 8px solid var(--bc-accent);
+	box-shadow:
+		0 0 32px color-mix(in srgb, var(--bc-accent) 60%, transparent),
+		inset 0 0 24px color-mix(in srgb, var(--bc-accent) 40%, transparent);
 }

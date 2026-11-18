@@ -1,4 +1,5 @@
 import { db } from "~/db/sql";
+import { userAvatar } from "~/utils/kysely.server";
 
 /** Casters by their user ids, in no particular order. */
 export function findAllCastersByUserIds(userIds: number[]) {
@@ -6,7 +7,12 @@ export function findAllCastersByUserIds(userIds: number[]) {
 
 	return db
 		.selectFrom("User")
-		.select(["User.id as userId", "User.username as name", "User.pronouns"])
+		.select((eb) => [
+			"User.id as userId",
+			"User.username as name",
+			"User.pronouns",
+			userAvatar(eb).as("avatar"),
+		])
 		.where("User.id", "in", userIds)
 		.execute();
 }

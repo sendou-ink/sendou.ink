@@ -2,7 +2,10 @@ import { addDays } from "date-fns";
 import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.server";
 import * as Producer from "~/features/broadcast/core/Producer";
 import { CAST_PRODUCER_RULES } from "~/features/broadcast-cast/broadcast-cast-constants";
-import type { CastProducerState } from "~/features/broadcast-cast/broadcast-cast-types";
+import type {
+	CastBroadcastSettings,
+	CastProducerState,
+} from "~/features/broadcast-cast/broadcast-cast-types";
 import { defineFactory } from "../core/defineFactory";
 
 type InsertArgs = Parameters<
@@ -52,5 +55,17 @@ export function take({
 				Producer.editItem(CAST_PRODUCER_RULES, state, state.next.id, next)!,
 				{ liveResults: null, now: Date.now(), hasMatch: false },
 			),
+	});
+}
+
+/** Sets the broadcast's casters like the dashboard's casters form and volume sliders. */
+export function setCasters({
+	casters,
+	...key
+}: BroadcastKey & { casters: CastBroadcastSettings["casters"] }) {
+	return BroadcastRepository.updateSettings<CastBroadcastSettings>({
+		...key,
+		rules: CAST_PRODUCER_RULES,
+		patch: { casters },
 	});
 }

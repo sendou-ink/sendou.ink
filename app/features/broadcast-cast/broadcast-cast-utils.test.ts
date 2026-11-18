@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest";
 import {
 	controlShares,
+	isVdoNinjaViewUrl,
 	needsFeaturedMatch,
 	smoothLinePath,
+	vdoNinjaEmbedUrl,
 } from "./broadcast-cast-utils";
 
 describe("controlShares", () => {
@@ -140,3 +142,82 @@ function segments(path: string) {
 		return segment;
 	});
 }
+
+describe("isVdoNinjaViewUrl", () => {
+	test.each([
+		{
+			why: "a view link",
+			url: "https://vdo.ninja/?view=abc123",
+			expected: true,
+		},
+		{
+			why: "the short view param",
+			url: "https://vdo.ninja/?v=abc123",
+			expected: true,
+		},
+		{
+			why: "a view link with a password",
+			url: "https://vdo.ninja/?view=abc123&password=secret",
+			expected: true,
+		},
+		{
+			why: "a version path",
+			url: "https://vdo.ninja/alpha/?view=abc123",
+			expected: true,
+		},
+		{
+			why: "a room's scene link",
+			url: "https://vdo.ninja/?room=casters&scene",
+			expected: true,
+		},
+		{
+			why: "a push link",
+			url: "https://vdo.ninja/?push=abc123",
+			expected: false,
+		},
+		{ why: "an empty view", url: "https://vdo.ninja/?view", expected: false },
+		{
+			why: "a scene without a room",
+			url: "https://vdo.ninja/?scene",
+			expected: false,
+		},
+		{
+			why: "plain http",
+			url: "http://vdo.ninja/?view=abc123",
+			expected: false,
+		},
+		{
+			why: "a look-alike domain",
+			url: "https://vdo.ninja.example.com/?view=abc123",
+			expected: false,
+		},
+		{ why: "not a link", url: "abc123", expected: false },
+	])("$why: $expected", ({ url, expected }) => {
+		expect(isVdoNinjaViewUrl(url)).toBe(expected);
+	});
+});
+
+describe("vdoNinjaEmbedUrl", () => {
+	test("adds the clean output flags and the volume to the link's own params", () => {
+		expect(
+			vdoNinjaEmbedUrl({
+				url: "https://vdo.ninja/?view=abc123&password=secret&volume=20",
+				volume: 70,
+			}),
+		).toBe(
+			"https://vdo.ninja/?view=abc123&password=secret&volume=70&cleanoutput=&transparent=&cover=",
+		);
+	});
+
+	test("leaves the video out of an audio only embed", () => {
+		expect(
+			vdoNinjaEmbedUrl({
+				url: "https://vdo.ninja/?view=abc123",
+				volume: 100,
+				isAudioOnly: true,
+			}),
+		).toBe(
+			"https://vdo.ninja/?view=abc123&cleanoutput=&transparent=&cover=&novideo=&volume=100",
+		);
+	});
+});

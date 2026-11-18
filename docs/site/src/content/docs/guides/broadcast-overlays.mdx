@@ -40,6 +40,16 @@ Your URL shows the channel's broadcast in one tournament at a time, the one wher
 
 **Generate new URL** makes the old URL stop working, the OBS sources using it disconnect. Paste the new one into OBS afterwards.
 
+## Casters' cameras
+
+Add the casters in the dashboard's **Setup** tab, each with their VDO.ninja view link (`https://vdo.ninja/?view=…`):
+
+- The Casters scene shows their camera. With **No camera** on it shows their avatar, ringed while they speak. Without a link, just the avatar.
+- They're heard on every scene, so don't also add their audio to OBS. Each caster's **Volume** slider applies right away.
+- Check **Control audio via OBS** on the browser source, or they won't reach the stream.
+
+The dashboard's previews and the designer show placeholders and play no sound. Anyone with a view link can watch it, so add `&password=` in VDO.ninja if needed.
+
 ## Linking the scanner
 
 The scanner watches the game feed and tells the broadcast when games start and end, so scenes set to wait for a game start or end go on air by themselves, in the teams' ink colors.

@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
+import { BroadcastClipsContext } from "~/features/broadcast/broadcast-clips-context";
 import { BroadcastOverlay } from "~/features/broadcast/components/BroadcastOverlay";
 import { CALENDAR_EVENT } from "~/features/calendar/calendar-constants";
 import { TEAM } from "~/features/team/team-constants";
@@ -186,6 +187,82 @@ describe("CastScene", () => {
 
 		expect(rostersPart("score")?.textContent).toBe("2–1");
 		expect(rostersPart("versus")).toBeNull();
+	});
+
+	test("shows a placeholder in place of a caster's camera outside OBS and an audio only caster's avatar", async () => {
+		await render(
+			<BroadcastOverlay
+				sceneSet={CAST_SCENE_SET}
+				state={stateOf({ ...SCENARIO, scene: "casters", casters: 2 })}
+				view="live"
+			/>,
+		);
+
+		const cameras = canvas().querySelectorAll('[data-part="caster-camera"]');
+		expect(canvas().querySelectorAll("iframe")).toHaveLength(0);
+		expect(
+			cameras[0].querySelector('[data-part="caster-camera-placeholder"]'),
+		).not.toBeNull();
+		expect(
+			cameras[1].querySelector('[data-part="caster-avatar"]'),
+		).not.toBeNull();
+	});
+
+	test("shows the avatar of a caster without a VDO.ninja link", async () => {
+		const state = stateOf({ ...SCENARIO, scene: "casters", casters: 1 });
+
+		await render(
+			<BroadcastClipsContext.Provider
+				value={{ urls: new Map(), isMuted: false, clockOffsetMs: 0 }}
+			>
+				<BroadcastOverlay
+					sceneSet={CAST_SCENE_SET}
+					state={{
+						...state,
+						casters: state.casters.map((caster) => ({
+							...caster,
+							vdoNinjaUrl: null,
+						})),
+					}}
+					view="live"
+				/>
+			</BroadcastClipsContext.Provider>,
+		);
+
+		expect(canvas().querySelectorAll("iframe")).toHaveLength(0);
+		expect(
+			canvas().querySelector('[data-part="caster-avatar"]'),
+		).not.toBeNull();
+	});
+
+	test("keeps the casters' cameras on the program on another scene, out of sight", async () => {
+		const state = stateOf({ ...SCENARIO, scene: "game", casters: 2 });
+
+		await render(
+			<BroadcastClipsContext.Provider
+				value={{ urls: new Map(), isMuted: false, clockOffsetMs: 0 }}
+			>
+				<BroadcastOverlay
+					sceneSet={CAST_SCENE_SET}
+					state={{
+						...state,
+						casters: state.casters.map((caster) => ({
+							...caster,
+							// a host that never resolves, so the test stays off the network
+							vdoNinjaUrl: `https://vdo.invalid/?view=${caster.userId}`,
+						})),
+					}}
+					view="live"
+				/>
+			</BroadcastClipsContext.Provider>,
+		);
+
+		const cameras = canvas().querySelectorAll<HTMLElement>(
+			'[data-part="caster-camera"]',
+		);
+		expect(cameras).toHaveLength(2);
+		expect(cameras[0].querySelector("iframe")?.src).toContain("view=1");
+		expect(getComputedStyle(cameras[0]).visibility).toBe("hidden");
 	});
 
 	test("reports a name cut off without an ellipsis", async () => {

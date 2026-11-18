@@ -4,7 +4,7 @@ import { CAST_THEME_CLASSES } from "../broadcast-cast-theme";
 import type { CastBroadcastState } from "../broadcast-cast-types";
 import { needsFeaturedMatch } from "../broadcast-cast-utils";
 import { BracketScene } from "./BracketScene";
-import { CastersScene } from "./CastersScene";
+import { CasterCameras, CastersScene } from "./CastersScene";
 import { GameScene } from "./GameScene";
 import { HoldScene } from "./HoldScene";
 import { MapsScene } from "./MapsScene";
@@ -18,6 +18,7 @@ import { TeamScene } from "./TeamScene";
 export const CAST_SCENE_SET: BroadcastSceneSet<CastBroadcastState> = {
 	Scene: CastScene,
 	Stinger,
+	Underlay: CasterCameras,
 	themeClasses: CAST_THEME_CLASSES,
 };
 

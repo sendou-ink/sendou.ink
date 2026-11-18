@@ -101,6 +101,7 @@ import {
 } from "~/features/scanner/scanner-activity";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
+import type { ArrayItemRenderContext } from "~/form/types";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { StreamDeckKeys } from "~/modules/stream-deck/components/StreamDeckKeys";
@@ -115,6 +116,7 @@ import {
 	BROADCAST_DASHBOARD_TABS,
 	BROADCAST_PROTOTYPE_CLIPS,
 	BROADCAST_SCENE_DURATIONS_MS,
+	BROADCAST_VOLUME_SAVE_INTERVAL_MS,
 	CAST_PRODUCER_RULES,
 } from "../broadcast-cast-constants";
 import { useStreamDeckFaces } from "../broadcast-cast-hooks";
@@ -126,6 +128,7 @@ import {
 } from "../broadcast-cast-schemas";
 import { broadcastDashboardSearchParams } from "../broadcast-cast-search-params";
 import type {
+	BroadcastCaster,
 	CastBroadcastState,
 	CastProducerState,
 	CastScene,
@@ -150,6 +153,9 @@ export const handle: SendouRouteHandle = {
 };
 
 type DashboardTab = (typeof BROADCAST_DASHBOARD_TABS)[number];
+
+/** How long a released volume slider keeps its value at most while waiting for the state with it saved. */
+const RELEASED_VOLUME_HOLD_MS = 3000;
 
 const TAB_ICONS: Record<DashboardTab, LucideIcon> = {
 	setup: Cable,
@@ -614,9 +620,80 @@ function OnAirControls({ state }: { state: CastBroadcastState }) {
 function ShowInfo({ state }: { state: CastBroadcastState }) {
 	return (
 		<div className={styles.onAir}>
-			<CastersForm casterIds={state.settings.casterIds} />
 			<HeadlineForm headline={state.settings.headline} />
 		</div>
+	);
+}
+
+/** How loud the caster's VDO.ninja camera is on air, changed as the slider moves without saving the form. */
+function CasterVolume({ caster }: { caster: BroadcastCaster }) {
+	const { t } = useTranslation(["broadcast"]);
+	const { submit } = useActionSubmit(broadcastActionSchema);
+	// the slider's value while it is moved and after, until the state with it saved arrives
+	const [draft, setDraft] = React.useState<{
+		volume: number;
+		isReleased: boolean;
+	} | null>(null);
+	const lastSaveAt = React.useRef(0);
+	const pendingSave = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+	const volume =
+		draft && (!draft.isReleased || draft.volume !== caster.volume)
+			? draft.volume
+			: caster.volume;
+
+	const save = (newVolume: number) => {
+		if (pendingSave.current) clearTimeout(pendingSave.current);
+		pendingSave.current = null;
+		lastSaveAt.current = Date.now();
+		submit("SET_CASTER_VOLUME", { userId: caster.userId, volume: newVolume });
+	};
+
+	const change = (newVolume: number) => {
+		setDraft({ volume: newVolume, isReleased: false });
+
+		const sinceLastSave = Date.now() - lastSaveAt.current;
+		if (sinceLastSave >= BROADCAST_VOLUME_SAVE_INTERVAL_MS) {
+			save(newVolume);
+		} else {
+			if (pendingSave.current) clearTimeout(pendingSave.current);
+			pendingSave.current = setTimeout(
+				() => save(newVolume),
+				BROADCAST_VOLUME_SAVE_INTERVAL_MS - sinceLastSave,
+			);
+		}
+	};
+
+	const release = () => {
+		if (!draft || draft.isReleased) return;
+
+		if (pendingSave.current) save(draft.volume);
+		const released = { ...draft, isReleased: true };
+		setDraft(released);
+		// a save that never comes back (or a volume changed by someone else since) shows the saved volume after all
+		setTimeout(
+			() => setDraft((current) => (current === released ? null : current)),
+			RELEASED_VOLUME_HOLD_MS,
+		);
+	};
+
+	return (
+		<label className={styles.casterVolume}>
+			<span className="text-sm font-semi-bold">
+				{t("broadcast:dashboard.casterVolume")}
+			</span>
+			<input
+				type="range"
+				min={0}
+				max={100}
+				value={volume}
+				onChange={(event) => change(Number(event.target.value))}
+				onPointerUp={release}
+				onKeyUp={release}
+				onBlur={release}
+				data-testid={`broadcast-caster-volume-${caster.userId}`}
+			/>
+			<span className={styles.casterVolumeValue}>{volume}%</span>
+		</label>
 	);
 }
 
@@ -1547,15 +1624,48 @@ function HeadlineForm({ headline }: { headline: string }) {
 	);
 }
 
-function CastersForm({ casterIds }: { casterIds: number[] }) {
+/** The casters and their VDO.ninja links, saved with the form. A saved caster's camera volume applies right away. */
+function CastersForm({ state }: { state: CastBroadcastState }) {
+	const { t } = useTranslation(["broadcast"]);
+
 	return (
 		<SendouForm
 			schema={broadcastCastersFormSchema}
-			defaultValues={{ casterIds }}
-			mode="autoSubmit"
+			defaultValues={{
+				casters: state.settings.casters.map((caster) => ({
+					userId: caster.userId,
+					vdoNinjaUrl: caster.vdoNinjaUrl,
+					isAudioOnly: caster.isAudioOnly,
+				})),
+			}}
+			submitButtonSize="small"
 			fullWidth
 		>
-			{({ FormField }) => <FormField name="casterIds" />}
+			{({ FormField }) => (
+				<FormField name="casters">
+					{({ itemName, values }: ArrayItemRenderContext) => {
+						const casterOnCamera = state.casters.find(
+							(caster) => caster.userId === values.userId && caster.vdoNinjaUrl,
+						);
+
+						return (
+							<div className="stack sm">
+								<FormField name={`${itemName}.userId`} />
+								<FormField name={`${itemName}.vdoNinjaUrl`} />
+								<FormField name={`${itemName}.isAudioOnly`} />
+								{casterOnCamera ? (
+									<div className="stack xs">
+										<CasterVolume caster={casterOnCamera} />
+										<span className="text-xs text-lighter">
+											{t("broadcast:dashboard.casterVolumeHint")}
+										</span>
+									</div>
+								) : null}
+							</div>
+						);
+					}}
+				</FormField>
+			)}
 		</SendouForm>
 	);
 }
@@ -1690,6 +1800,17 @@ function Setup({
 					</SetupCheck>
 				</ul>
 				<ClipOverlays statuses={statuses} />
+			</section>
+			<section className="stack md">
+				<div className="stack horizontal xs items-center">
+					<h2 className={styles.panelHeader}>
+						{t("broadcast:dashboard.setup.castersHeader")}
+					</h2>
+					<InfoPopover tiny>
+						{t("broadcast:dashboard.setup.casters")}
+					</InfoPopover>
+				</div>
+				<CastersForm state={state} />
 			</section>
 			<section className="stack md">
 				<h2 className={styles.panelHeader}>

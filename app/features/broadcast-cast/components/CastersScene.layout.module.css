@@ -41,17 +41,36 @@
 	top: calc(100% + 24px);
 	right: 0;
 	left: 0;
+	display: flex;
+	align-items: baseline;
+	gap: 14px;
 	width: fit-content;
 	max-width: 100%;
 	margin-inline: auto;
-	padding: 10px 28px;
+	padding: 0 0 20px;
+	overflow: hidden;
+	white-space: nowrap;
+
+	/* the short bar under the name */
+	&::after {
+		content: "";
+		position: absolute;
+		bottom: 0;
+		left: 50%;
+		width: 64px;
+		height: 6px;
+		translate: -50% 0;
+	}
+}
+
+.nameText {
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .pronouns {
-	margin-inline-start: 14px;
+	flex-shrink: 0;
 }
 
 .matchup {
@@ -63,4 +82,92 @@
 	left: 220px;
 	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
 		calc(var(--scene-enter-delay) + 4 * var(--bc-stagger)) both;
+}
+
+/* under the scene layers, seen through the frames only while the casters scene is on screen, fading with it */
+.cameras {
+	position: absolute;
+	inset: 0;
+
+	&[data-hidden] {
+		visibility: hidden;
+	}
+
+	&[data-transition="in"] {
+		animation: var(--bc-anim-fade-in) var(--bc-transition-duration) ease both;
+	}
+
+	&[data-transition="out"] {
+		animation: var(--bc-anim-fade-out) var(--bc-transition-duration) ease both;
+	}
+}
+
+.camera {
+	position: absolute;
+	overflow: hidden;
+}
+
+.cameraVideo {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+
+.cameraPlaceholder {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 16px;
+	height: 100%;
+	padding-inline: 24px;
+}
+
+.cameraPlaceholderLabel {
+	align-self: stretch;
+	overflow: hidden;
+	text-align: center;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.cameraPlaceholderIcon {
+	width: 96px;
+	height: 96px;
+}
+
+/* over the frame's audio only VDO.ninja page, the avatar centered with the speaking ring around it */
+.audio {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+}
+
+.avatar,
+.speakingRing {
+	grid-area: 1 / 1;
+	height: 56%;
+	aspect-ratio: 1;
+	border-radius: 50%;
+}
+
+.avatar {
+	display: grid;
+	place-items: center;
+	object-fit: cover;
+}
+
+/* grows with how loud the caster is, --caster-level being 0-1 */
+.speakingRing {
+	opacity: 0;
+	transform: scale(calc(1.08 + var(--caster-level, 0) * 0.16));
+	transition:
+		transform 90ms linear,
+		opacity 200ms ease;
+
+	.audio[data-speaking] & {
+		opacity: 1;
+	}
 }

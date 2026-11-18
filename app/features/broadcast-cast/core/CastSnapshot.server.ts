@@ -19,6 +19,7 @@ import {
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { tournamentMatchChannel } from "~/features/tournament-match/tournament-match-utils";
 import { modesShort } from "~/modules/in-game-lists/modes";
+import { avatarUrl } from "~/utils/urls";
 import * as BroadcastCastRepository from "../BroadcastCastRepository.server";
 import {
 	CAST_PRODUCER_RULES,
@@ -29,6 +30,7 @@ import type {
 	BroadcastBracketFocus,
 	BroadcastBracketTeam,
 	BroadcastCaster,
+	BroadcastCasterSetting,
 	BroadcastOtherMatch,
 	BroadcastTeamSpotlight,
 	CastBroadcastState,
@@ -109,7 +111,7 @@ export async function build({
 			v: 1,
 			...state,
 			settings,
-			casters: await casters(settings.casterIds),
+			casters: await casters(settings.casters),
 			tournament: {
 				name: tournament.ctx.name,
 				logoUrl: tournament.ctx.logoUrl,
@@ -315,12 +317,26 @@ function otherMatches({
 	return matches.filter((match) => match.id !== featuredMatchId);
 }
 
-async function casters(userIds: number[]): Promise<BroadcastCaster[]> {
-	const users = await BroadcastCastRepository.findAllCastersByUserIds(userIds);
+async function casters(
+	settings: BroadcastCasterSetting[],
+): Promise<BroadcastCaster[]> {
+	const users = await BroadcastCastRepository.findAllCastersByUserIds(
+		settings.map((caster) => caster.userId),
+	);
 
-	return userIds.flatMap((userId) => {
-		const user = users.find((candidate) => candidate.userId === userId);
-		return user ? [user] : [];
+	return settings.flatMap((caster) => {
+		const user = users.find((candidate) => candidate.userId === caster.userId);
+		if (!user) return [];
+
+		return [
+			{
+				...caster,
+				userId: user.userId,
+				name: user.name,
+				pronouns: user.pronouns,
+				avatarUrl: user.avatar ? avatarUrl(user.avatar, "lg") : null,
+			},
+		];
 	});
 }
 

@@ -100,7 +100,12 @@ describe("BroadcastRepository.updateSettings", () => {
 		});
 		await BroadcastRepository.updateSettings<CastBroadcastSettings>({
 			...key,
-			patch: { headline: "Finals at 18:00", casterIds: [1, 2] },
+			patch: {
+				headline: "Finals at 18:00",
+				casters: [
+					{ userId: 1, vdoNinjaUrl: null, isAudioOnly: false, volume: 100 },
+				],
+			},
 		});
 
 		const broadcast = await BroadcastRepository.findByChannel(key);
@@ -108,7 +113,9 @@ describe("BroadcastRepository.updateSettings", () => {
 			css: "body { color: red; }",
 			weaponImages: "outlined",
 			headline: "Finals at 18:00",
-			casterIds: [1, 2],
+			casters: [
+				{ userId: 1, vdoNinjaUrl: null, isAudioOnly: false, volume: 100 },
+			],
 		});
 	});
 });

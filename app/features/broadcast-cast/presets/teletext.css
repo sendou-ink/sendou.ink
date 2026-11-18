@@ -64,6 +64,21 @@
 	font-synthesis: none;
 }
 
+/* the casters' names on a plate, any rule below wins over it */
+:where([data-scene="casters"] [data-part="caster-name"]) {
+	padding: 10px 28px;
+	border-bottom: 5px solid var(--bc-accent);
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-surface);
+	font-size: var(--casters-name-size);
+	text-shadow: none;
+	text-transform: none;
+
+	&::after {
+		content: none;
+	}
+}
+
 /*
  * 2. Keyframes: redefining one changes every element using it. No fading or sliding, things just show up: hidden
  * until the last moment. (Not with a step timing jumping at the end, an animation can stop a hair short of it.)
