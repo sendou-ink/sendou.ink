@@ -249,21 +249,19 @@ export async function ownEntryPeek({
 
 	if (!found) return null;
 
-	const withTier = (await addTiers([found], season))[0];
-
 	const { intervals } = await userSkills(season);
 
 	const currentTierIndex = intervals.findIndex(
 		(interval) =>
-			interval.name === withTier.tier.name &&
-			interval.isPlus === withTier.tier.isPlus,
+			interval.name === found.tier.name &&
+			interval.isPlus === found.tier.isPlus,
 	);
 
 	const nextTier =
 		currentTierIndex > 0 ? intervals[currentTierIndex - 1] : undefined;
 
 	return {
-		entry: withTier,
+		entry: { ...found, firstOfTier: found.tier },
 		nextTier,
 	};
 }

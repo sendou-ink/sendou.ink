@@ -66,7 +66,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 					: null;
 
 	return {
-		userLeaderboard: filteredLeaderboard ?? userLeaderboard,
+		userLeaderboard: filteredLeaderboard,
 		ownEntryPeek: showOwnEntryPeek
 			? await ownEntryPeek({
 					leaderboard: fullUserLeaderboard,
