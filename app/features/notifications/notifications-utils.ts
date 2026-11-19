@@ -220,7 +220,7 @@ export function isPushServiceEndpoint(endpoint: string) {
 	}
 
 	if (url.protocol !== "https:" || url.port !== "") return false;
-	// web-push connects via legacy url.parse which truncates hosts at chars like ; { ` that WHATWG URL keeps
+	// push services only use plain DNS hostnames
 	if (!STRICT_HOSTNAME_REGEX.test(url.hostname)) return false;
 
 	return (

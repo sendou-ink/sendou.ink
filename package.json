@@ -125,7 +125,7 @@
 		"swr": "2.5.1",
 		"valibot": "^1.5.0",
 		"web-haptics": "0.0.6",
-		"web-push": "3.6.7"
+		"web-push": "4.0.0"
 	},
 	"devDependencies": {
 		"@astrojs/markdown-satteri": "0.4.7",
