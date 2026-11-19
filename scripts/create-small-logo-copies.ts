@@ -1,6 +1,8 @@
 // Uploads the downscaled `-small` copy (see `smallImageFileName`) of every team, tournament, tournament team,
 // organization and stream logo that doesn't have one yet. Images uploaded since get theirs on upload.
 // Resumable: logos whose small copy already exists are skipped, so rerun it to retry failures.
+// The small copy is encoded in the format its file name says, whatever the original's bytes are (old
+// uploads include e.g. GIFs saved as `.webp`).
 //
 // Run it against a fresh production snapshot and the production bucket BEFORE deploying the code that
 // shows the small copies, and once more after the deploy for the logos uploaded in between:
@@ -12,7 +14,7 @@
 import { Config } from "~/config";
 import { db } from "~/db/sql";
 import { smallImageCopy } from "~/features/img-upload/image-bytes.server";
-import { imageExtensionFromMagicBytes } from "~/features/img-upload/image-signature";
+import type { ImageExtension } from "~/features/img-upload/image-signature";
 import {
 	downloadFromS3,
 	existsInS3,
@@ -70,14 +72,12 @@ async function createSmallCopy(
 	fileName: string,
 ): Promise<Exclude<keyof typeof stats, "failed">> {
 	const smallFileName = smallImageFileName(fileName);
-	if (smallFileName === fileName) return "unsupportedFormat";
+	const extension = imageExtensionFromFileName(fileName);
+	if (smallFileName === fileName || !extension) return "unsupportedFormat";
 	if (await existsInS3(smallFileName)) return "alreadyExisted";
 
 	const image = await downloadFromS3(fileName);
 	if (!image) return "missingOriginal";
-
-	const extension = imageExtensionFromMagicBytes(image);
-	if (!extension) return "unsupportedFormat";
 
 	await uploadImmutableToS3({
 		key: smallFileName,
@@ -86,6 +86,14 @@ async function createSmallCopy(
 	});
 
 	return "created";
+}
+
+function imageExtensionFromFileName(fileName: string): ImageExtension | null {
+	const extension = fileName.slice(fileName.lastIndexOf(".") + 1).toLowerCase();
+	if (extension === "webp" || extension === "png") return extension;
+	if (extension === "jpg" || extension === "jpeg") return "jpeg";
+
+	return null;
 }
 
 async function logoFileNames() {
