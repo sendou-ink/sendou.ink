@@ -39,7 +39,7 @@ export const action = defineAction(
 			);
 		}
 
-		await TournamentStationRepository.moveMatch({
+		const moved = await TournamentStationRepository.moveMatch({
 			matchId: body.matchId,
 			stationId,
 			index: body.index,
@@ -48,6 +48,7 @@ export const action = defineAction(
 				matchName: StationsBoard.matchName(tournament, body.matchId),
 			},
 		});
+		errorToastIfFalsy(moved, "Unknown station");
 
 		notifyStationsChanged({ tournament, matchIds: [body.matchId] });
 		await autoAssignStations(tournament);

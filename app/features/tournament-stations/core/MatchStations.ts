@@ -2,7 +2,7 @@
  * The station each unfinished match of a LAN tournament is queued on, the way players see it on the match page,
  * the bracket and the header status. A station also goes by a short label where space is tight: the number its
  * name ends with ("3" for "Station 3"), unless another station of the tournament would get the same label, then its
- * whole name. The first unfinished match of a station's queue is the one to be played there next (or now).
+ * whole name. The first playable match of a station's queue is the one played there now, as on the stations board.
  */
 import type { Tables } from "~/db/tables";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -13,8 +13,8 @@ export interface MatchStation {
 	/** E.g. "3" for "Station 3". */
 	shortName: string;
 	locationNote: string | null;
-	/** The first unfinished match queued on the station: played now or next on it, no wait worth estimating. */
-	isFirstInQueue: boolean;
+	/** The first playable match queued on the station, the one played on it now: no wait worth estimating. */
+	isNow: boolean;
 }
 
 type MatchStatusSource = Pick<
@@ -50,29 +50,58 @@ export function byMatchId({
 		]),
 	);
 
+	const nowMatchIds = new Set(
+		nowMatchIdByStationId({ tournament, placements }).values(),
+	);
+
 	const result = new Map<number, MatchStation>();
-	const stationIdsWithFirst = new Set<number>();
 	for (const placement of placements) {
 		if (placement.stationId === null) continue;
 
 		const station = stationsById.get(placement.stationId);
-		if (!station || isFinished(tournament, placement.matchId)) continue;
+		const status = queuedMatchStatus(tournament, placement.matchId);
+		if (!station || !status || status === "COMPLETED") continue;
 
 		result.set(placement.matchId, {
 			...station,
-			isFirstInQueue: !stationIdsWithFirst.has(station.id),
+			isNow: nowMatchIds.has(placement.matchId),
 		});
-		stationIdsWithFirst.add(station.id);
 	}
 
 	return result;
 }
 
-function isFinished(tournament: MatchStatusSource, matchId: number) {
-	return (
-		tournament.matchIdToBracketIdx(matchId) === null ||
-		tournament.matchStatusById(matchId) === "COMPLETED"
-	);
+/** Status of a match placed on a station, `null` when it isn't in one of the tournament's started brackets. */
+export function queuedMatchStatus(
+	tournament: MatchStatusSource,
+	matchId: number,
+) {
+	if (tournament.matchIdToBracketIdx(matchId) === null) return null;
+
+	return tournament.matchStatusById(matchId);
+}
+
+/** Each station's Now match, the first playable one of its queue, keyed by station id. Stations with none are left out. */
+export function nowMatchIdByStationId({
+	tournament,
+	placements,
+}: {
+	tournament: MatchStatusSource;
+	/** Each station's queue in order. */
+	placements: Array<
+		Pick<Tables["TournamentMatchStation"], "matchId" | "stationId">
+	>;
+}): Map<number, number> {
+	const result = new Map<number, number>();
+	for (const { matchId, stationId } of placements) {
+		if (stationId === null || result.has(stationId)) continue;
+
+		if (queuedMatchStatus(tournament, matchId) === "STARTED") {
+			result.set(stationId, matchId);
+		}
+	}
+
+	return result;
 }
 
 function shortNamesById(stations: Array<{ id: number; name: string }>) {

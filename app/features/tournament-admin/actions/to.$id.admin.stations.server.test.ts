@@ -45,6 +45,7 @@ describe("stations action", () => {
 
 		await stationsAction(
 			{
+				loadedStationIds: [],
 				autoAssign: true,
 				stations: [
 					station("Main stage", { locationNote: "On stage" }),
@@ -67,6 +68,7 @@ describe("stations action", () => {
 
 		const res = await stationsAction(
 			{
+				loadedStationIds: [],
 				autoAssign: true,
 				stations: [station("Station 1"), station("station 1")],
 			},
@@ -91,6 +93,7 @@ describe("stations action", () => {
 
 		const res = await stationsAction(
 			{
+				loadedStationIds: [],
 				autoAssign: true,
 				stations: [station("Hijacked", { stationId: otherStation.id })],
 			},
@@ -102,17 +105,23 @@ describe("stations action", () => {
 
 	test("saving no stations clears them", async () => {
 		const tournament = await createTournament({ isLan: true });
-		await TournamentStationFactory.create({
-			tournamentId: tournament.id,
-			name: "Station 1",
-		});
-		await TournamentStationFactory.create({
-			tournamentId: tournament.id,
-			name: "Station 2",
-		});
+		const loadedStationIds = [
+			(
+				await TournamentStationFactory.create({
+					tournamentId: tournament.id,
+					name: "Station 1",
+				})
+			).id,
+			(
+				await TournamentStationFactory.create({
+					tournamentId: tournament.id,
+					name: "Station 2",
+				})
+			).id,
+		];
 
 		await stationsAction(
-			{ autoAssign: true, stations: [] },
+			{ loadedStationIds, autoAssign: true, stations: [] },
 			{ user: organizerId(), params: { id: String(tournament.id) } },
 		);
 
@@ -121,11 +130,41 @@ describe("stations action", () => {
 		).toEqual([]);
 	});
 
+	test("rejects saving a form that doesn't know of a station added meanwhile", async () => {
+		const tournament = await createTournament({ isLan: true });
+		const loaded = await TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 1",
+		});
+		await TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 2",
+		});
+
+		const res = await stationsAction(
+			{
+				loadedStationIds: [loaded.id],
+				autoAssign: true,
+				stations: [station("Station 1", { stationId: loaded.id })],
+			},
+			{ user: organizerId(), params: { id: String(tournament.id) } },
+		);
+
+		assertResponseErrored(res, "changed by someone else");
+		expect(
+			await TournamentStationRepository.findAllByTournamentId(tournament.id),
+		).toHaveLength(2);
+	});
+
 	test("rejects an online tournament", async () => {
 		const tournament = await createTournament({ isLan: false });
 
 		const res = await stationsAction(
-			{ autoAssign: true, stations: [station("Station 1")] },
+			{
+				loadedStationIds: [],
+				autoAssign: true,
+				stations: [station("Station 1")],
+			},
 			{ user: organizerId(), params: { id: String(tournament.id) } },
 		);
 

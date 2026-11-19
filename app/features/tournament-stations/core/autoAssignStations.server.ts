@@ -5,6 +5,8 @@ import { notifyStationsChanged } from "./notifyStationsChanged.server";
 import * as StationAutoAssignment from "./StationAutoAssignment";
 import { updateStationNotifications } from "./stationNotifications.server";
 
+const passByTournamentId = new Map<number, Promise<void>>();
+
 /**
  * Puts the playable matches no one placed on the free stations, see {@link StationAutoAssignment}, then schedules
  * the notifications telling teams their match's station ({@link updateStationNotifications}). Call after a write
@@ -14,9 +16,23 @@ import { updateStationNotifications } from "./stationNotifications.server";
 export async function autoAssignStations(tournament: Tournament) {
 	if (!tournament.isLan) return;
 
-	const current = await refreshTournamentCache(tournament.ctx.id);
-	await assignFreeStations(current);
-	await updateStationNotifications(current);
+	const tournamentId = tournament.ctx.id;
+	// one at a time per tournament: two passes reading the same free station would both fill it
+	const pass = (passByTournamentId.get(tournamentId) ?? Promise.resolve())
+		.catch(() => {})
+		.then(async () => {
+			const current = await refreshTournamentCache(tournamentId);
+			await assignFreeStations(current);
+			await updateStationNotifications(current);
+		})
+		.finally(() => {
+			if (passByTournamentId.get(tournamentId) === pass) {
+				passByTournamentId.delete(tournamentId);
+			}
+		});
+	passByTournamentId.set(tournamentId, pass);
+
+	return pass;
 }
 
 async function assignFreeStations(tournament: Tournament) {

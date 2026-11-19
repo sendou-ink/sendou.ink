@@ -3,6 +3,7 @@ import * as MatchStations from "./MatchStations";
 
 const COMPLETED_MATCH_ID = 100;
 const UNKNOWN_MATCH_ID = 200;
+const PENDING_MATCH_ID = 300;
 
 const tournament = {
 	matchIdToBracketIdx: (matchId: number) =>
@@ -10,7 +11,9 @@ const tournament = {
 	matchStatusById: (matchId: number) =>
 		matchId === COMPLETED_MATCH_ID
 			? ("COMPLETED" as const)
-			: ("STARTED" as const),
+			: matchId === PENDING_MATCH_ID
+				? ("PENDING" as const)
+				: ("STARTED" as const),
 };
 
 const station = (
@@ -66,7 +69,7 @@ describe("MatchStations.byMatchId", () => {
 		expect(shortNames(names)).toEqual(expected);
 	});
 
-	test("gives the queued matches their station, the first one in its queue marked", () => {
+	test("gives the queued matches their station, the one played now marked", () => {
 		const result = MatchStations.byMatchId({
 			tournament,
 			stations: [station(1, "Station 1", "North corner")],
@@ -81,9 +84,25 @@ describe("MatchStations.byMatchId", () => {
 			name: "Station 1",
 			shortName: "1",
 			locationNote: "North corner",
-			isFirstInQueue: true,
+			isNow: true,
 		});
-		expect(result.get(2)).toMatchObject({ id: 1, isFirstInQueue: false });
+		expect(result.get(2)).toMatchObject({ id: 1, isNow: false });
+	});
+
+	test("marks the first playable match as played now, not one queued in front of it with teams unknown", () => {
+		const result = MatchStations.byMatchId({
+			tournament,
+			stations: [station(1, "Station 1")],
+			placements: [
+				{ matchId: PENDING_MATCH_ID, stationId: 1 },
+				{ matchId: 1, stationId: 1 },
+				{ matchId: 2, stationId: 1 },
+			],
+		});
+
+		expect(result.get(PENDING_MATCH_ID)?.isNow).toBe(false);
+		expect(result.get(1)?.isNow).toBe(true);
+		expect(result.get(2)?.isNow).toBe(false);
 	});
 
 	test("leaves out finished, held and unknown matches", () => {

@@ -13,6 +13,7 @@ import {
 	clearStationNotificationsForTesting,
 	STATION_NOTIFICATION_DELAY_MS,
 } from "./stationNotifications.server";
+import { tournamentStationsState } from "./tournamentStationsState.server";
 
 const users = UserFactory.pool();
 /** Plays the first semifinal (seed 1 vs 4): the second team of the pool. */
@@ -244,6 +245,17 @@ describe("updateStationNotifications", () => {
 		expect(
 			(await notificationsOf(firstSemifinalPlayerId())).map(({ type }) => type),
 		).toEqual(["TO_MATCH_STATION_MOVED", "TO_MATCH_STATION_ASSIGNED"]);
+	});
+
+	test("sends a notice scheduled before a server restart once the tournament's stations are loaded again", async () => {
+		const { tournamentId } = await createTournament();
+		await update(tournamentId);
+
+		clearStationNotificationsForTesting();
+		await tournamentStationsState(await tournamentFromDB(tournamentId));
+		await vi.advanceTimersByTimeAsync(STATION_NOTIFICATION_DELAY_MS);
+
+		expect(await notificationsOf(firstSemifinalPlayerId())).toHaveLength(1);
 	});
 
 	test("notifies a match queued behind another once it's next in line", async () => {

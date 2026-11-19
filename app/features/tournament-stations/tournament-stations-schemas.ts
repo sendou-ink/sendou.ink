@@ -2,6 +2,7 @@ import * as v from "valibot";
 import {
 	array,
 	fieldset,
+	hidden,
 	idConstantOptional,
 	textField,
 	textFieldOptional,
@@ -12,6 +13,8 @@ import { TOURNAMENT_STATIONS } from "./tournament-stations-constants";
 
 export const stationsFormSchema = v.pipe(
 	v.object({
+		/** The stations the form was loaded with, to tell the ones deleted from the ones someone added meanwhile. */
+		loadedStationIds: hidden(v.array(id)),
 		autoAssign: toggle({
 			label: "labels.autoAssignStations",
 			initialValue: true,

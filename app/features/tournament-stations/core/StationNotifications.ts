@@ -8,6 +8,7 @@
 import type { Tables } from "~/db/tables";
 import type { Notification } from "~/features/notifications/notifications-types";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import * as MatchStations from "./MatchStations";
 import * as StationsBoard from "./StationsBoard";
 
 /** The teams of a match should hear of its station. */
@@ -47,18 +48,9 @@ export function notices({
 		notifiedStations.map((row) => [row.matchId, row.stationId]),
 	);
 
-	const stationIdsWithNow = new Set<number>();
-
-	return placements.flatMap(({ matchId, stationId }) => {
-		if (
-			stationId === null ||
-			stationIdsWithNow.has(stationId) ||
-			!isPlayable(tournament, matchId)
-		) {
-			return [];
-		}
-		stationIdsWithNow.add(stationId);
-
+	return Array.from(
+		MatchStations.nowMatchIdByStationId({ tournament, placements }),
+	).flatMap(([stationId, matchId]) => {
 		const previousStationId = notifiedStationIdByMatchId.get(matchId) ?? null;
 		if (previousStationId === stationId) return [];
 
@@ -160,11 +152,4 @@ function stationLabel(
 	return station.locationNote
 		? `${station.name} (${station.locationNote})`
 		: station.name;
-}
-
-function isPlayable(tournament: StationNoticeTournament, matchId: number) {
-	return (
-		tournament.matchIdToBracketIdx(matchId) !== null &&
-		tournament.matchStatusById(matchId) === "STARTED"
-	);
 }

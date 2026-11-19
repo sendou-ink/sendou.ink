@@ -123,6 +123,7 @@ export function insertAutoAssignedMatches(
  * counted among the queue's unfinished matches (finished ones stay at the front). `stationId: null` keeps it in the Waiting
  * lane, where auto-assignment leaves it. The moved match counts as placed by hand from then on.
  * With `audit` a change of station (not a reorder within one) is written to the tournament's audit log.
+ * Returns `false` without moving it when the station doesn't exist (e.g. deleted meanwhile).
  */
 export function moveMatch({
 	matchId,
@@ -136,6 +137,15 @@ export function moveMatch({
 	audit?: { tournamentId: number; matchName: string };
 }) {
 	return db.transaction().execute(async (trx) => {
+		if (stationId !== null) {
+			const station = await trx
+				.selectFrom("TournamentStation")
+				.select("TournamentStation.id")
+				.where("TournamentStation.id", "=", stationId)
+				.executeTakeFirst();
+			if (!station) return false;
+		}
+
 		const previousStationId =
 			(
 				await trx
@@ -170,7 +180,7 @@ export function moveMatch({
 				.insertInto("TournamentMatchStation")
 				.values({ matchId, stationId: null, position: 0 })
 				.execute();
-			return;
+			return true;
 		}
 
 		await insertIntoQueue(trx, {
@@ -178,6 +188,43 @@ export function moveMatch({
 			stationId,
 			index,
 			isAutoAssigned: 0,
+		});
+
+		return true;
+	});
+}
+
+/**
+ * Moves a match within the queue of the station it's on to `index`, counted among the queue's unfinished matches,
+ * keeping whether it was auto-assigned. Does nothing for a match on no station.
+ */
+export function reorderQueuedMatch({
+	matchId,
+	index,
+}: {
+	matchId: number;
+	index: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		const placement = await trx
+			.selectFrom("TournamentMatchStation")
+			.select([
+				"TournamentMatchStation.stationId",
+				"TournamentMatchStation.isAutoAssigned",
+			])
+			.where("TournamentMatchStation.matchId", "=", matchId)
+			.executeTakeFirst();
+		if (!placement || placement.stationId === null) return;
+
+		await trx
+			.deleteFrom("TournamentMatchStation")
+			.where("TournamentMatchStation.matchId", "=", matchId)
+			.execute();
+		await insertIntoQueue(trx, {
+			matchId,
+			stationId: placement.stationId,
+			index,
+			isAutoAssigned: placement.isAutoAssigned,
 		});
 	});
 }

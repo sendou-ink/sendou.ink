@@ -49,4 +49,10 @@ export class TournamentAdminStationsPage {
 	save() {
 		return submit(this.page, "save-stations-button");
 	}
+
+	/** Saving deletes a station with matches queued on it, which asks for a confirmation first. */
+	async saveConfirmingDelete() {
+		await this.page.getByTestId("save-stations-button").click();
+		await submit(this.page, "confirm-button");
+	}
 }

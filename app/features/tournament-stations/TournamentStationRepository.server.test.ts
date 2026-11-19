@@ -249,6 +249,64 @@ describe("TournamentStationRepository.moveMatch", () => {
 			finalId,
 		]);
 	});
+
+	test("leaves the match where it was when the station was deleted meanwhile", async () => {
+		const {
+			tournamentId,
+			stationIds: [stationId, deletedStationId],
+			semifinalIds: [matchId],
+		} = await createTournament();
+		await TournamentMatchStationFactory.create({ matchId, stationId });
+		await TournamentStationRepository.setStations({
+			tournamentId,
+			autoAssign: false,
+			stations: [station("Station 1", stationId)],
+		});
+
+		const moved = await TournamentStationRepository.moveMatch({
+			matchId,
+			stationId: deletedStationId,
+			index: 0,
+		});
+
+		expect(moved).toBe(false);
+		expect(await queueOf(tournamentId, stationId)).toEqual([matchId]);
+	});
+});
+
+describe("TournamentStationRepository.reorderQueuedMatch", () => {
+	beforeEach(async () => {
+		await users.create(17);
+	});
+
+	test("moves the match within its queue, keeping it auto-assigned", async () => {
+		const {
+			tournamentId,
+			stationIds: [stationId],
+			semifinalIds: [first, second],
+		} = await createStartedLanTournament({
+			authorId: users.id(1),
+			teamRosters: R.chunk(users.ids().slice(1), 4),
+		});
+		await TournamentStationRepository.insertAutoAssignedMatches([
+			{ matchId: first, stationId },
+		]);
+		await TournamentMatchStationFactory.create({ matchId: second, stationId });
+
+		await TournamentStationRepository.reorderQueuedMatch({
+			matchId: first,
+			index: 1,
+		});
+
+		expect(
+			await TournamentStationRepository.findMatchPlacementsByTournamentId(
+				tournamentId,
+			),
+		).toEqual([
+			{ matchId: second, stationId, isAutoAssigned: 0 },
+			{ matchId: first, stationId, isAutoAssigned: 1 },
+		]);
+	});
 });
 
 describe("TournamentStationRepository.insertAutoAssignedMatches", () => {

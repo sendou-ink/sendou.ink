@@ -244,7 +244,7 @@ function lanMatchInfo(
 			? { name: station.name, locationNote: station.locationNote }
 			: undefined,
 		eta:
-			eta && !station?.isFirstInQueue
+			eta && !station?.isNow
 				? { earliest: eta.earliest, latest: eta.latest }
 				: undefined,
 	};

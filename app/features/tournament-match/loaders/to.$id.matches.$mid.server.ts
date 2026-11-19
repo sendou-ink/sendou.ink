@@ -179,7 +179,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		? null
 		: (stationsState?.stationByMatchId.get(matchId) ?? null);
 
-	if (tournament.isLan && user) {
+	// station notices go to the teams only
+	if (tournament.isLan && user && isParticipant) {
 		for (const type of [
 			"TO_MATCH_STATION_ASSIGNED",
 			"TO_MATCH_STATION_MOVED",
@@ -250,9 +251,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schedule,
 		// LAN only
 		station: matchStation,
-		// the head of its station's queue is played now or next, a countdown to it only confuses
+		// the match played now on its station needs no countdown
 		eta:
-			matchIsOver || matchStation?.isFirstInQueue
+			matchIsOver || matchStation?.isNow
 				? null
 				: (stationsState?.etas.matchStarts.get(matchId) ?? null),
 		// the views can't derive these themselves, the layout ships no bracket match data

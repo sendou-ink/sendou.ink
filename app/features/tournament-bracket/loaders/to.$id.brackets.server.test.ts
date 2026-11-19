@@ -46,7 +46,7 @@ describe("brackets loader matchStations", () => {
 				name: "Station 1",
 				shortName: "1",
 				locationNote: null,
-				isFirstInQueue: true,
+				isNow: true,
 			},
 		});
 	});

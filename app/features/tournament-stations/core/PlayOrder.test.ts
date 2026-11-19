@@ -2,6 +2,8 @@ import { describe, expect, test } from "vitest";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import {
 	byRound,
+	matchesOfRound,
+	playedOut,
 	teamIds,
 } from "~/features/tournament-bracket/core/tests/bracket-fixtures";
 import {
@@ -92,6 +94,19 @@ describe("PlayOrder.byMatchId", () => {
 			"finals 1": [5],
 			"finals 2": [6],
 		});
+	});
+
+	test("keeps a grand finals reset after the grand finals once the winners side team won them", () => {
+		const data = playedOut(doubleElimination().data);
+		const tournament = testTournament({
+			data,
+			ctx: {
+				settings: { bracketProgression: [...DOUBLE_ELIMINATION_PROGRESSION] },
+			},
+		});
+		const resetId = matchesOfRound(data, "finals", 2)[0].id;
+
+		expect(depthsOf(tournament).get(resetId)).toBe(6);
 	});
 
 	test("orders winners before losers of the same depth, then by match number", () => {

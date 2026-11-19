@@ -21,6 +21,15 @@ export const action = defineAction(
 			"Stations can't be edited",
 		);
 
+		const currentStationIds = (
+			await TournamentStationRepository.findAllByTournamentId(tournamentId)
+		).map((station) => station.id);
+		errorToastIfFalsy(
+			currentStationIds.length === body.loadedStationIds.length &&
+				currentStationIds.every((id) => body.loadedStationIds.includes(id)),
+			"The stations were changed by someone else in the meantime. Reload the page and try again.",
+		);
+
 		const placementsBefore =
 			await TournamentStationRepository.findMatchPlacementsByTournamentId(
 				tournamentId,

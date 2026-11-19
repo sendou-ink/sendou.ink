@@ -5,6 +5,7 @@ import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import {
 	matchesOfRound,
+	playedOut,
 	reportWinner,
 	teamIds,
 } from "~/features/tournament-bracket/core/tests/bracket-fixtures";
@@ -49,7 +50,7 @@ const simulate = ({
 	placements = [],
 }: {
 	data: BracketData;
-	type?: "single_elimination" | "round_robin";
+	type?: "single_elimination" | "double_elimination" | "round_robin";
 	stationIds?: number[];
 	placements?: Array<{ matchId: number; stationId: number | null }>;
 }) =>
@@ -272,6 +273,30 @@ describe("EtaSimulation.simulate", () => {
 		});
 
 		expect(matchStarts.has(first)).toBe(false);
+	});
+
+	test("estimates a grand finals reset only while the grand finals can call for it", () => {
+		const doubleElimination = Engine.create({
+			type: "double_elimination",
+			seeding: teamIds(4),
+			settings: null,
+		});
+		const resetId = matchesOfRound(doubleElimination, "finals", 2)[0].id;
+
+		const before = simulate({
+			data: doubleElimination,
+			type: "double_elimination",
+			stationIds: [101],
+		});
+		// the winners side team wins the grand finals, no reset
+		const after = simulate({
+			data: playedOut(doubleElimination),
+			type: "double_elimination",
+			stationIds: [101],
+		});
+
+		expect(before.matchStarts.has(resetId)).toBe(true);
+		expect(after.matchStarts.size).toBe(0);
 	});
 
 	test.each([

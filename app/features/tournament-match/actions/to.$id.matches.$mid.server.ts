@@ -32,6 +32,7 @@ import {
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { autoAssignStations } from "~/features/tournament-stations/core/autoAssignStations.server";
+import { requeueReopenedMatch } from "~/features/tournament-stations/core/requeueReopenedMatch.server";
 import { defineAction } from "~/form/define-action.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
@@ -85,6 +86,7 @@ export const action = defineAction(
 		let rostersChanged = false;
 		let endedDroppedMatchIds: number[] = [];
 		let followingMatchIds: number[] = [];
+		let isReopened = false;
 
 		switch (body._action) {
 			case "REPORT_SCORE": {
@@ -556,6 +558,7 @@ export const action = defineAction(
 				emitMatchUpdate = true;
 				emitTournamentUpdate = true;
 				emitStatusUpdate = true;
+				isReopened = true;
 
 				break;
 			}
@@ -896,6 +899,13 @@ export const action = defineAction(
 		}
 
 		clearTournamentDataCache(tournamentId, { keepRosters: !rostersChanged });
+
+		if (isReopened) {
+			await requeueReopenedMatch({
+				tournament: await refreshTournamentCache(tournamentId),
+				matchId: match.id,
+			});
+		}
 
 		if (emitTournamentUpdate) {
 			await autoAssignStations(tournament);

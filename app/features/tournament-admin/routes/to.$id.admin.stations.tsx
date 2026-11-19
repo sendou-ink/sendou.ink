@@ -1,10 +1,14 @@
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
+import { SendouButton } from "~/components/elements/Button";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { InfoPopover } from "~/components/InfoPopover";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { stationsFormSchema } from "~/features/tournament-stations/tournament-stations-schemas";
-import { SendouForm } from "~/form/SendouForm";
+import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import type { loader } from "../loaders/to.$id.admin.stations.server";
+
+type LoadedStation = Awaited<ReturnType<typeof loader>>["stations"][number];
 
 export { action } from "../actions/to.$id.admin.stations.server";
 export { loader } from "../loaders/to.$id.admin.stations.server";
@@ -25,7 +29,12 @@ export default function TournamentAdminStationsPage() {
 				schema={stationsFormSchema}
 				fullWidth
 				submitButtonTestId="save-stations-button"
+				// deleting a station with queued matches asks first, see SubmitWithDeleteConfirm
+				hideSubmitButtonWhen={(values) =>
+					deletedStationsWithMatches(stations, values.stations).length > 0
+				}
 				defaultValues={{
+					loadedStationIds: stations.map((station) => station.id),
 					autoAssign: tournament.autoAssignsStations,
 					stations: stations.map((station) => ({
 						stationId: station.id,
@@ -41,10 +50,50 @@ export default function TournamentAdminStationsPage() {
 							labelPopover={<AutoAssignInfoPopover />}
 						/>
 						<FormField name="stations" />
+						<SubmitWithDeleteConfirm stations={stations} />
 					</>
 				)}
 			</SendouForm>
 		</div>
+	);
+}
+
+function SubmitWithDeleteConfirm({ stations }: { stations: LoadedStation[] }) {
+	const { t } = useTranslation(["tournament", "forms"]);
+	const { values, submitToServer } = useFormFieldContext();
+
+	const deleted = deletedStationsWithMatches(
+		stations,
+		values.stations as Array<{ stationId?: unknown }> | undefined,
+	);
+	if (deleted.length === 0) return null;
+
+	return (
+		<div className="mt-4 stack horizontal md mx-auto justify-center items-center">
+			<FormWithConfirm
+				dialogHeading={t("tournament:stations.deleteConfirm.heading")}
+				description={t("tournament:stations.deleteConfirm.description", {
+					stations: deleted.map((station) => station.name).join(", "),
+				})}
+				submitButtonText={t("tournament:stations.deleteConfirm.submit")}
+				onConfirm={() => submitToServer(values)}
+			>
+				<SendouButton testId="save-stations-button">
+					{t("forms:submit")}
+				</SendouButton>
+			</FormWithConfirm>
+		</div>
+	);
+}
+
+function deletedStationsWithMatches(
+	stations: LoadedStation[],
+	values: Array<{ stationId?: unknown }> | undefined,
+) {
+	const keptIds = new Set((values ?? []).map((value) => value.stationId));
+
+	return stations.filter(
+		(station) => station.hasQueuedMatches && !keptIds.has(station.id),
 	);
 }
 

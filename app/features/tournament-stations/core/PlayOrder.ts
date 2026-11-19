@@ -123,14 +123,37 @@ function localDepths(data: Engine.BracketData) {
 		}
 	}
 
+	const matchesById = new Map(data.match.map((match) => [match.id, match]));
+	// a grand finals reset has no feeders, it's played by the grand finals' teams
+	const previousRoundMatchIds = (matchId: number) => {
+		const match = matchesById.get(matchId);
+		const round = match ? roundsById.get(match.roundId) : undefined;
+		if (!match || !round || round.number === 1) return [];
+
+		const previousRound = data.round.find(
+			(candidate) =>
+				candidate.groupId === round.groupId &&
+				candidate.section === round.section &&
+				candidate.number === round.number - 1,
+		);
+
+		return data.match
+			.filter((candidate) => candidate.roundId === previousRound?.id)
+			.map((candidate) => candidate.id);
+	};
+
 	const result = new Map<number, number>();
 	const depthOf = (matchId: number): number => {
 		const cached = result.get(matchId);
 		if (cached !== undefined) return cached;
 
 		const feederIds = feederIdsByMatchId.get(matchId) ?? [];
+		const precedingIds =
+			feederIds.length > 0 ? feederIds : previousRoundMatchIds(matchId);
 		const depth =
-			feederIds.length === 0 ? 0 : Math.max(...feederIds.map(depthOf)) + 1;
+			precedingIds.length === 0
+				? 0
+				: Math.max(...precedingIds.map(depthOf)) + 1;
 		result.set(matchId, depth);
 
 		return depth;

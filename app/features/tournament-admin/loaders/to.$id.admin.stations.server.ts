@@ -12,8 +12,23 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		throw redirect(tournamentAdminPage(tournamentId));
 	}
 
+	const placements =
+		await TournamentStationRepository.findMatchPlacementsByTournamentId(
+			tournamentId,
+		);
+	const isUnfinished = (matchId: number) =>
+		tournament.matchIdToBracketIdx(matchId) !== null &&
+		tournament.matchStatusById(matchId) !== "COMPLETED";
+
 	return {
-		stations:
-			await TournamentStationRepository.findAllByTournamentId(tournamentId),
+		stations: (
+			await TournamentStationRepository.findAllByTournamentId(tournamentId)
+		).map((station) => ({
+			...station,
+			hasQueuedMatches: placements.some(
+				(placement) =>
+					placement.stationId === station.id && isUnfinished(placement.matchId),
+			),
+		})),
 	};
 };

@@ -4,7 +4,10 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentMatchStationFactory from "~/db/seed/factories/TournamentMatchStationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
-import { createStartedLanTournament } from "../tests/fixtures";
+import {
+	createFinalizedLanTournament,
+	createStartedLanTournament,
+} from "../tests/fixtures";
 import {
 	clearTournamentStationsStateCache,
 	tournamentStationsState,
@@ -60,6 +63,51 @@ describe("tournamentStationsState", () => {
 		expect(
 			await tournamentStationsState(await tournamentFromDB(tournamentId)),
 		).not.toBe(first);
+	});
+
+	test("is null for a finalized tournament", async () => {
+		const { tournamentId } = await createFinalizedLanTournament({
+			authorId: users.id(1),
+			teamRosters: R.chunk(users.ids().slice(1), 4),
+		});
+
+		expect(
+			await tournamentStationsState(await tournamentFromDB(tournamentId)),
+		).toBe(null);
+	});
+
+	test("keeps the estimates of each instance when two of them take turns", async () => {
+		const { tournamentId } = await createTournament();
+		const shared = await tournamentFromDB(tournamentId);
+		const registryCopy = await tournamentFromDB(tournamentId);
+
+		const sharedState = await tournamentStationsState(shared);
+		const registryState = await tournamentStationsState(registryCopy);
+
+		expect(await tournamentStationsState(shared)).toBe(sharedState);
+		expect(await tournamentStationsState(registryCopy)).toBe(registryState);
+	});
+
+	test("estimates every instance again once cleared", async () => {
+		const {
+			tournamentId,
+			stationIds: [stationId],
+			semifinalIds: [first],
+		} = await createTournament();
+		const shared = await tournamentFromDB(tournamentId);
+		const registryCopy = await tournamentFromDB(tournamentId);
+		await tournamentStationsState(shared);
+		await tournamentStationsState(registryCopy);
+
+		await TournamentMatchStationFactory.create({ matchId: first, stationId });
+		clearTournamentStationsStateCache(tournamentId);
+
+		for (const instance of [shared, registryCopy]) {
+			expect(
+				(await tournamentStationsState(instance))?.stationByMatchId.get(first)
+					?.id,
+			).toBe(stationId);
+		}
 	});
 
 	test("estimates again after a minute", async () => {

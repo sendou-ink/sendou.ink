@@ -135,10 +135,27 @@ function simulatedMatches(tournament: Tournament, now: number) {
 			}
 		}
 
+		const unfinishedIds = new Set(
+			bracket.data.match
+				.filter((match) => statuses.get(match.id) !== "COMPLETED")
+				.map((match) => match.id),
+		);
+
 		for (const match of bracket.data.match) {
 			const position = playOrder.get(match.id);
 			const isBye = !match.opponent1 || !match.opponent2;
-			if (!position || isBye || statuses.get(match.id) === "COMPLETED") {
+			// e.g. a grand finals reset, played only if the grand finals call for it
+			const hasNoTeamsComing =
+				teamIdsOf(match).length === 0 &&
+				!(feederIdsByMatchId.get(match.id) ?? []).some((feederId) =>
+					unfinishedIds.has(feederId),
+				);
+			if (
+				!position ||
+				isBye ||
+				hasNoTeamsComing ||
+				!unfinishedIds.has(match.id)
+			) {
 				continue;
 			}
 

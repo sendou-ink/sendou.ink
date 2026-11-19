@@ -459,6 +459,50 @@ test.describe("Tournament admin LAN stations", () => {
 		await expect(stations.locators.nameInputs.nth(0)).toHaveValue("");
 	});
 
+	test("asks before deleting a station with a match queued on it, which goes back to Waiting", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+		});
+		await factories.CalendarEventVenueFactory.create({
+			eventId: tournament.eventId,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(4));
+		const station1 = await factories.TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 1",
+			autoAssign: false,
+		});
+		const station2 = await factories.TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 2",
+			autoAssign: false,
+		});
+		const [first] = await factories.TournamentFactory.startBracket(
+			tournament.id,
+		);
+		await factories.TournamentMatchStationFactory.create({
+			matchId: first.id,
+			stationId: station1.id,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		const stations = new TournamentAdminStationsPage(page);
+		await stations.goto(tournament.id);
+
+		await stations.removeStation(0);
+		await stations.saveConfirmingDelete();
+
+		const board = new TournamentAdminBoardPage(page);
+		await board.goto(tournament.id);
+		await expect(board.lane(station2.id)).toBeVisible();
+		await expect(
+			board.lane(null).getByTestId(`board-match-${first.id}`),
+		).toBeVisible();
+	});
+
 	test("moves matches on the stations board, read-only for a pool captain", async ({
 		page,
 		factories,
