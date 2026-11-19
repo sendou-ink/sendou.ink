@@ -45,7 +45,7 @@ export function AddressSearchFormField({
 						id: INITIAL_ADDRESS_ID,
 						name: value.address,
 						placeName: null,
-						timezone: "",
+						timezone: null,
 					}
 				: undefined,
 	);

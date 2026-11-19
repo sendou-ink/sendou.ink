@@ -17,6 +17,7 @@ import { holdRevalidationsDuring } from "~/features/chat/revalidation-scope";
 import { useLatestRef } from "~/hooks/useLatestRef";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import * as SearchParams from "~/modules/search-params/search-params";
+import { WALL_CLOCK_TIME_ZONE } from "~/utils/dates";
 import { FormField as FormFieldComponent } from "./FormField";
 import { getFormFieldMetadata } from "./fields";
 import { formSearchParams } from "./form-search-params";
@@ -38,7 +39,6 @@ import {
 	instantsToWallClocks,
 	issuePathKeys,
 	RENDERS_FIELD_ERRORS_KEY,
-	resolveFormTimeZone,
 	seedArrayItemDefaults,
 	setNestedValue,
 	validateField,
@@ -144,7 +144,8 @@ type BaseFormProps<T extends v.ObjectEntries> = {
 	submitOnEveryStep?: boolean;
 	/**
 	 * Zone every `datetime` field is entered in, e.g. a LAN's venue. The fields keep the typed wall-clock times when
-	 * it changes, they become instants in it on submit. Default: the browser's zone.
+	 * it changes, they become instants in it on submit. Nullish: the browser's zone. Given at all (`null` too), the
+	 * form's `datetime` values are wall-clock times read in `WALL_CLOCK_TIME_ZONE`, see `useFormWallClockZone`.
 	 */
 	timeZone?: FormTimeZone;
 };
@@ -1220,14 +1221,14 @@ export function useFormFieldContext(): FormContextValue {
 	};
 }
 
-/** The zone the form's `datetime` fields are entered in (see the `timeZone` prop), `null` for the browser's own. */
-export function useFormTimeZone(): string | null {
+/**
+ * Zone to read the form's `datetime` values in when showing them: `WALL_CLOCK_TIME_ZONE` when the form has a
+ * `timeZone`, `undefined` (local time) otherwise.
+ */
+export function useFormWallClockZone(): string | undefined {
 	const context = React.useContext(FormContext);
-	const store = context?.store ?? EMPTY_FORM_STORE;
 
-	const getTimeZone = () =>
-		resolveFormTimeZone(context?.timeZone, store.values);
-	return React.useSyncExternalStore(store.subscribe, getTimeZone, getTimeZone);
+	return context?.timeZone === undefined ? undefined : WALL_CLOCK_TIME_ZONE;
 }
 
 export function useOptionalFormFieldContext() {

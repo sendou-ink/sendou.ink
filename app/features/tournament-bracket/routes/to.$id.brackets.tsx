@@ -27,8 +27,7 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
-import { LocaleTime } from "~/components/LocaleTime";
-import { LocaleTimeRange } from "~/components/LocaleTimeRange";
+import { VenueLocaleTime } from "~/components/VenueLocaleTime";
 import { useUser } from "~/features/auth/core/user";
 import { useTopicRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
@@ -583,14 +582,15 @@ function BracketTabContent({
 							{bracket.startTime ? (
 								<span>
 									(open{" "}
-									<LocaleTimeRange
-										from={tournament.bracketCheckInStartsAt(bracketIdx)!}
+									<VenueLocaleTime
+										date={tournament.bracketCheckInStartsAt(bracketIdx)!}
 										to={bracket.startTime}
 										options={{
 											hour: "numeric",
 											minute: "numeric",
 											weekday: "long",
 										}}
+										venueTimezone={tournament.venue?.timezone}
 										inline
 									/>
 									)
@@ -741,18 +741,20 @@ function BracketStartSchedule({
 			{checkInStartsAt && checkInStartsAt > now ? (
 				<span>
 					Check-in opens{" "}
-					<LocaleTime
+					<VenueLocaleTime
 						date={checkInStartsAt}
 						options={ORGANIZER_BAR_TIME_OPTIONS}
+						venueTimezone={tournament.venue?.timezone}
 						inline
 					/>
 				</span>
 			) : null}
 			<span>
 				Can be started{" "}
-				<LocaleTime
+				<VenueLocaleTime
 					date={startTime}
 					options={ORGANIZER_BAR_TIME_OPTIONS}
+					venueTimezone={tournament.venue?.timezone}
 					inline
 				/>
 			</span>

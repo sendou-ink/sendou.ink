@@ -64,6 +64,9 @@ export class CalendarNewEventPage {
 			venueTimeNotice: page.getByText(
 				/^Times are in .+, the venue's timezone$/,
 			),
+			venueTimeZoneChangedWarning: page.getByText(
+				/^The start, registration closing and bracket start times stay as entered/,
+			),
 		};
 	}
 
@@ -95,11 +98,6 @@ export class CalendarNewEventPage {
 		await this.page.getByLabel(/^Venue address/).click();
 		await this.page.getByTestId("address-search-input").fill(query);
 		await this.page.getByTestId("address-search-item").first().click();
-	}
-
-	/** The "(venue time, CST)" next to a time field's label of a LAN. */
-	venueTimeLabel(timeZoneName: string) {
-		return this.page.getByText(`(venue time, ${timeZoneName})`);
 	}
 
 	/** Start time of the tournament as currently filled in. */

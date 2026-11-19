@@ -12,7 +12,6 @@ import {
 	getNestedSchema,
 	getNestedValue,
 	instantsToWallClocks,
-	resolveFormTimeZone,
 	setNestedValue,
 	validateField,
 	wallClocksToInstants,
@@ -196,28 +195,10 @@ describe("validateField", () => {
 	);
 });
 
-describe("resolveFormTimeZone", () => {
-	test.each([
-		{ why: "a zone", timeZone: "Asia/Tokyo", expected: "Asia/Tokyo" },
-		{ why: "no zone", timeZone: undefined, expected: null },
-		{ why: "null", timeZone: null, expected: null },
-		{ why: "an empty string", timeZone: "", expected: null },
-		{ why: "a function", timeZone: () => "Asia/Tokyo", expected: "Asia/Tokyo" },
-		{ why: "a function returning null", timeZone: () => null, expected: null },
-		{
-			why: "a function returning undefined",
-			timeZone: () => undefined,
-			expected: null,
-		},
-	])("resolves $why", ({ timeZone, expected }) => {
-		expect(resolveFormTimeZone(timeZone, {})).toBe(expected);
-	});
-});
-
 describe("wallClocksToInstants", () => {
 	// 10:00 in Chicago, whatever zone the tests run in
 	const CHICAGO_TEN_AM = new Date("2026-11-20T16:00:00.000Z");
-	const tenAmWallClock = () => new Date(2026, 10, 20, 10, 0);
+	const tenAmWallClock = () => new Date(Date.UTC(2026, 10, 20, 10, 0));
 
 	const schema = v.object({
 		zone: textFieldOptional({ label: "labels.name", maxLength: 100 }),
@@ -290,13 +271,20 @@ describe("wallClocksToInstants", () => {
 		expect(result).toEqual({ zone: "x" });
 	});
 
-	test.each([
-		{ why: "no zone", timeZone: undefined },
-		{ why: "a function returning null", timeZone: () => null },
-	])("returns the values as they are with $why", ({ timeZone }) => {
-		const values = { startTime: tenAmWallClock() };
+	test("returns the values as they are without a zone", () => {
+		const values = { startTime: new Date(2026, 10, 20, 10, 0) };
 
-		expect(wallClocksToInstants(schema, values, timeZone)).toBe(values);
+		expect(wallClocksToInstants(schema, values, undefined)).toBe(values);
+	});
+
+	test("reads the wall clock in the local zone when the zone resolves to none", () => {
+		const result = wallClocksToInstants(
+			schema,
+			{ startTime: tenAmWallClock() },
+			() => null,
+		);
+
+		expect(result.startTime).toEqual(new Date(2026, 10, 20, 10, 0));
 	});
 
 	test("resolves a function zone from the values", () => {

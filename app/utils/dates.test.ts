@@ -4,6 +4,7 @@ import {
 	wallClockToInstant,
 	weekNumberToDate,
 	weekNumberToDateRange,
+	zonesReadSameClock,
 } from "./dates";
 
 describe("weekNumberToDate", () => {
@@ -94,18 +95,18 @@ describe("wallClockToInstant", () => {
 		},
 	])("10:00 in Chicago $why", ({ day, expected }) => {
 		const [year, month, date] = day as [number, number, number];
-		const wallClock = new Date(year, month, date, 10, 0);
+		const wallClock = new Date(Date.UTC(year, month, date, 10, 0));
 
 		expect(wallClockToInstant(wallClock, "America/Chicago").toISOString()).toBe(
 			expected,
 		);
 	});
 
-	test("is identity in the local zone", () => {
-		const wallClock = new Date(2026, 9, 25, 12, 30);
+	test("keeps a venue time the local zone skips (its spring-forward hour)", () => {
+		const wallClock = new Date(Date.UTC(2026, 2, 29, 3, 30));
 
-		expect(wallClockToInstant(wallClock, "Europe/Helsinki").getTime()).toBe(
-			wallClock.getTime(),
+		expect(wallClockToInstant(wallClock, "America/Chicago").toISOString()).toBe(
+			"2026-03-29T08:30:00.000Z",
 		);
 	});
 });
@@ -130,9 +131,18 @@ describe("instantToWallClock", () => {
 	])("reads the venue clock $why", ({ instant, date }) => {
 		const wallClock = instantToWallClock(new Date(instant), "America/Chicago");
 
-		expect(wallClock.getDate()).toBe(date);
-		expect(wallClock.getHours()).toBe(10);
-		expect(wallClock.getMinutes()).toBe(0);
+		expect(wallClock.getUTCDate()).toBe(date);
+		expect(wallClock.getUTCHours()).toBe(10);
+		expect(wallClock.getUTCMinutes()).toBe(0);
+	});
+
+	test("reads a venue time the local zone skips (its spring-forward hour)", () => {
+		const wallClock = instantToWallClock(
+			new Date("2026-03-29T08:30:00.000Z"),
+			"America/Chicago",
+		);
+
+		expect(wallClock.toISOString()).toBe("2026-03-29T03:30:00.000Z");
 	});
 
 	test.each([
@@ -140,10 +150,44 @@ describe("instantToWallClock", () => {
 		{ why: "Tokyo (crosses the date line)", timeZone: "Asia/Tokyo" },
 		{ why: "Kathmandu (45 min offset)", timeZone: "Asia/Kathmandu" },
 	])("round trips with wallClockToInstant in $why", ({ timeZone }) => {
-		const wallClock = new Date(2026, 10, 1, 23, 45);
+		const wallClock = new Date(Date.UTC(2026, 10, 1, 23, 45));
 
 		expect(
 			instantToWallClock(wallClockToInstant(wallClock, timeZone), timeZone),
 		).toEqual(wallClock);
+	});
+});
+
+describe("zonesReadSameClock", () => {
+	const FROM = new Date("2026-11-19T12:00:00.000Z");
+
+	test.each([
+		{
+			why: "the same zone",
+			a: "Europe/Helsinki",
+			b: "Europe/Helsinki",
+			expected: true,
+		},
+		{ why: "aliases", a: "Asia/Calcutta", b: "Asia/Kolkata", expected: true },
+		{
+			why: "neighbours",
+			a: "Europe/Berlin",
+			b: "Europe/Stockholm",
+			expected: true,
+		},
+		{
+			why: "zones apart only in summer",
+			a: "Europe/London",
+			b: "Africa/Abidjan",
+			expected: false,
+		},
+		{
+			why: "zones hours apart",
+			a: "Europe/Helsinki",
+			b: "America/Chicago",
+			expected: false,
+		},
+	])("$why: $expected", ({ a, b, expected }) => {
+		expect(zonesReadSameClock(a, b, FROM)).toBe(expected);
 	});
 });

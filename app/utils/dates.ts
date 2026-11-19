@@ -7,6 +7,8 @@ import type { LanguageCode } from "~/modules/i18n/config";
 import { logger } from "./logger";
 import type { DayMonthYear } from "./schema";
 
+const HALF_MONTH_MS = 15 * 24 * 60 * 60 * 1000;
+
 // en-US ships with date-fns core as the default locale, so it costs no extra bytes
 const LOCALE_LOADERS: Record<LanguageCode, () => Promise<Locale>> = {
 	de: () => import("date-fns/locale/de").then((module) => module.de),
@@ -94,37 +96,70 @@ export function localDateToDayMonthYear(date: Date): DayMonthYear {
 }
 
 /**
- * The instant at which the clock in `timeZone` reads what `wallClock` reads in local time, e.g. a "10:00" typed
- * into a form turned into 10:00 at the venue.
+ * Zone a wall-clock time is held in: a `Date` whose UTC fields read the clock time. Unlike a local time `Date`, it
+ * can hold any clock time, also one the browser's own zone skips (its spring-forward hour).
+ */
+export const WALL_CLOCK_TIME_ZONE = "UTC";
+
+/**
+ * The instant at which the clock in `timeZone` reads what `wallClock` (see {@link WALL_CLOCK_TIME_ZONE}) reads,
+ * e.g. a "10:00" typed into a form turned into 10:00 at the venue.
  */
 export function wallClockToInstant(wallClock: Date, timeZone: string) {
 	return new Date(
 		new TZDate(
-			wallClock.getFullYear(),
-			wallClock.getMonth(),
-			wallClock.getDate(),
-			wallClock.getHours(),
-			wallClock.getMinutes(),
-			wallClock.getSeconds(),
-			wallClock.getMilliseconds(),
+			wallClock.getUTCFullYear(),
+			wallClock.getUTCMonth(),
+			wallClock.getUTCDate(),
+			wallClock.getUTCHours(),
+			wallClock.getUTCMinutes(),
+			wallClock.getUTCSeconds(),
+			wallClock.getUTCMilliseconds(),
 			timeZone,
 		).getTime(),
 	);
 }
 
-/** Local time `Date` reading what the clock in `timeZone` reads at `instant`, the inverse of {@link wallClockToInstant}. */
+/** Wall-clock time (see {@link WALL_CLOCK_TIME_ZONE}) the clock in `timeZone` reads at `instant`, the inverse of {@link wallClockToInstant}. */
 export function instantToWallClock(instant: Date, timeZone: string) {
 	const zoned = new TZDate(instant.getTime(), timeZone);
 
 	return new Date(
-		zoned.getFullYear(),
-		zoned.getMonth(),
-		zoned.getDate(),
-		zoned.getHours(),
-		zoned.getMinutes(),
-		zoned.getSeconds(),
-		zoned.getMilliseconds(),
+		Date.UTC(
+			zoned.getFullYear(),
+			zoned.getMonth(),
+			zoned.getDate(),
+			zoned.getHours(),
+			zoned.getMinutes(),
+			zoned.getSeconds(),
+			zoned.getMilliseconds(),
+		),
 	);
+}
+
+/**
+ * Whether two zones read the same clock all through the year from `from`, e.g. aliases ("Asia/Calcutta" and
+ * "Asia/Kolkata") or neighbours ("Europe/Berlin" and "Europe/Stockholm"). Compared twice a month.
+ */
+export function zonesReadSameClock(a: string, b: string, from = new Date()) {
+	if (a === b) return true;
+
+	for (let idx = 0; idx <= 24; idx++) {
+		const instant = from.getTime() + idx * HALF_MONTH_MS;
+		if (
+			new TZDate(instant, a).getTimezoneOffset() !==
+			new TZDate(instant, b).getTimezoneOffset()
+		) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/** The browser's (or server's) own IANA zone. */
+export function localTimeZone() {
+	return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
 /** Day/month/year to a database timestamp, noon UTC. */

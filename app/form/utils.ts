@@ -1,6 +1,10 @@
 import { isPlainObject } from "remeda";
 import * as v from "valibot";
-import { instantToWallClock, wallClockToInstant } from "~/utils/dates";
+import {
+	instantToWallClock,
+	localTimeZone,
+	wallClockToInstant,
+} from "~/utils/dates";
 import type { AnySyncSchema } from "~/utils/schema";
 import { getFormFieldMetadata } from "./fields";
 import type { FormField, FormObjectSchema, FormTimeZone } from "./types";
@@ -279,28 +283,19 @@ export function ariaAttributes({
 	};
 }
 
-/** The zone the form's `datetime` fields are entered in, `null` for the browser's own. */
-export function resolveFormTimeZone(
-	timeZone: FormTimeZone | undefined,
-	values: Record<string, unknown>,
-): string | null {
-	const resolved = typeof timeZone === "function" ? timeZone(values) : timeZone;
-
-	return resolved || null;
-}
-
 /**
- * Form `datetime` fields hold wall-clock times read in the browser's zone: instants coming in (e.g. default values)
- * become the wall clock they have in the form's time zone, so changing the zone keeps the typed times.
+ * A form given a `timeZone` (even one resolving to the browser's own) holds its `datetime` values as wall-clock
+ * times (see `WALL_CLOCK_TIME_ZONE`): instants coming in (e.g. default values) become the wall clock they have in
+ * the form's time zone, so changing the zone keeps the typed times. Without one they stay local time `Date`s.
  */
 export function instantsToWallClocks(
 	schema: FormObjectSchema,
 	values: Record<string, unknown>,
 	timeZone: FormTimeZone | undefined,
 ) {
-	const zone = resolveFormTimeZone(timeZone, values);
-	if (!zone) return values;
+	if (timeZone === undefined) return values;
 
+	const zone = resolveFormTimeZone(timeZone, values) ?? localTimeZone();
 	return mapDatetimeValues(schema.entries, values, (date) =>
 		instantToWallClock(date, zone),
 	);
@@ -312,9 +307,9 @@ export function wallClocksToInstants(
 	values: Record<string, unknown>,
 	timeZone: FormTimeZone | undefined,
 ) {
-	const zone = resolveFormTimeZone(timeZone, values);
-	if (!zone) return values;
+	if (timeZone === undefined) return values;
 
+	const zone = resolveFormTimeZone(timeZone, values) ?? localTimeZone();
 	return mapDatetimeValues(schema.entries, values, (date) =>
 		wallClockToInstant(date, zone),
 	);
@@ -358,4 +353,14 @@ function mapDatetimeValue(
 	}
 
 	return value;
+}
+
+/** The zone the form's `datetime` fields are entered in, `null` for the browser's own. */
+function resolveFormTimeZone(
+	timeZone: FormTimeZone | undefined,
+	values: Record<string, unknown>,
+): string | null {
+	const resolved = typeof timeZone === "function" ? timeZone(values) : timeZone;
+
+	return resolved || null;
 }

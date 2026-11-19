@@ -52,7 +52,6 @@ test.describe("LAN tournament", () => {
 
 		// entered as the venue's wall clock: 10:00 in Austin in January is 16:00 UTC
 		await newTournament.setFirstDate(new Date(2027, 0, 15, 10, 0));
-		await expect(newTournament.venueTimeLabel("CST").first()).toBeVisible();
 
 		await newTournament.goToStep("maps");
 		await newTournament.form.checkItems("mapPickingStyle", ["TO"]);
@@ -79,7 +78,7 @@ test.describe("LAN tournament", () => {
 		).toBeVisible();
 	});
 
-	test("edits a LAN tournament's venue, the LAN switch locked after creation", async ({
+	test("edits a LAN tournament's venue, the LAN switch locked after creation and a timezone change warned about", async ({
 		page,
 		factories,
 	}) => {
@@ -102,6 +101,19 @@ test.describe("LAN tournament", () => {
 			"Austin Convention Center",
 		);
 		await expect(editTournament.locators.lanSwitch).toHaveCount(0);
+
+		// the times keep their wall clock, so another zone moves them
+		await expect(
+			editTournament.locators.venueTimeZoneChangedWarning,
+		).toHaveCount(0);
+		await editTournament.form.select("venueTimezone", "Asia/Tokyo");
+		await expect(
+			editTournament.locators.venueTimeZoneChangedWarning,
+		).toBeVisible();
+		await editTournament.form.select("venueTimezone", "America/Chicago");
+		await expect(
+			editTournament.locators.venueTimeZoneChangedWarning,
+		).toHaveCount(0);
 
 		await editTournament.form.fill("venueName", "Hilton Ballroom B");
 		// the factory's tournament has no map pool, which the form requires

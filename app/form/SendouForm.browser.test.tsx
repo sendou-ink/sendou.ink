@@ -346,13 +346,12 @@ describe("SendouForm", () => {
 			return { screen, onApply };
 		};
 
-		test("shows the wall-clock time and zone of the form's time zone", async () => {
+		test("shows the wall-clock time of the form's time zone", async () => {
 			const { screen } = await renderZonedForm("America/Chicago");
 
 			await expect
 				.element(screen.getByLabelText("Start time"))
 				.toHaveValue("2026-11-20T10:00");
-			await expect.element(screen.getByText("(venue time, CST)")).toBeVisible();
 		});
 
 		test("submits instants in the form's time zone, nested fields too", async () => {
@@ -380,6 +379,38 @@ describe("SendouForm", () => {
 			);
 			expect(submitted.brackets[0].startTime.toISOString()).toBe(
 				CHICAGO_TEN_AM.toISOString(),
+			);
+		});
+
+		test("keeps a venue time that falls in the browser's spring-forward hour", async () => {
+			const { screen, onApply } = await renderZonedForm("America/Chicago");
+
+			// 03:30 doesn't exist on this day in e.g. Europe/Helsinki
+			await userEvent.fill(
+				screen.getByLabelText("Start time").element(),
+				"2026-03-29T03:30",
+			);
+			await expect
+				.element(screen.getByLabelText("Start time"))
+				.toHaveValue("2026-03-29T03:30");
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply.mock.calls[0][0].startTime.toISOString()).toBe(
+				"2026-03-29T08:30:00.000Z",
+			);
+		});
+
+		test("reads the times in the browser's zone when the zone resolves to none", async () => {
+			const { screen, onApply } = await renderZonedForm(() => null);
+
+			await userEvent.fill(
+				screen.getByLabelText("Start time").element(),
+				"2026-11-20T10:00",
+			);
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply.mock.calls[0][0].startTime).toEqual(
+				new Date(2026, 10, 20, 10, 0),
 			);
 		});
 

@@ -34,6 +34,7 @@ import {
 	SendouForm,
 	useFormFieldContext,
 	useFormSteps,
+	useFormWallClockZone,
 } from "~/form/SendouForm";
 import type { AddressSearchFieldOptions, SelectOption } from "~/form/types";
 import { errorMessageId } from "~/form/utils";
@@ -41,7 +42,7 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { databaseTimestampToDate } from "~/utils/dates";
+import { databaseTimestampToDate, zonesReadSameClock } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -536,6 +537,7 @@ function TournamentReview() {
 	const data = useLoaderData<typeof loader>();
 	const { values } = useFormFieldContext();
 	const { steps, goToStep } = useFormSteps();
+	const wallClockZone = useFormWallClockZone();
 	const organizationOptions = useOrganizationOptions();
 
 	const fieldLabel = (
@@ -579,6 +581,7 @@ function TournamentReview() {
 						month: "short",
 						hour: "numeric",
 						minute: "numeric",
+						timeZone: wallClockZone,
 					}}
 				/>
 			) : null,
@@ -649,7 +652,15 @@ function TournamentReview() {
 
 // a tournament can't switch between LAN and online after it's created
 function VenueFields({ isEditing }: { isEditing: boolean }) {
+	const { t } = useTranslation(["forms"]);
+	const { eventToEdit } = useLoaderData<typeof loader>();
 	const { values, setValue, setValueFromPrev } = useFormFieldContext();
+	const timeZone = venueTimeZoneFromFormValues(values);
+	const savedTimeZone = eventToEdit?.venue?.timezone ?? null;
+	// the times keep their wall clock, so a new zone moves them
+	const isTimeZoneChanged = Boolean(
+		savedTimeZone && timeZone && !zonesReadSameClock(savedTimeZone, timeZone),
+	);
 
 	const addressOptions: AddressSearchFieldOptions = {
 		onAddressSelected: (address) => {
@@ -669,8 +680,16 @@ function VenueFields({ isEditing }: { isEditing: boolean }) {
 				<>
 					<FormField name="venueAddress" options={addressOptions} required />
 					<FormField name="venueName" required />
-					<FormField name="venueTimezone" options={TIMEZONE_OPTIONS} />
-					<VenueTimeNotice timeZone={venueTimeZoneFromFormValues(values)} />
+					<FormField name="venueTimezone" options={TIMEZONE_OPTIONS} required />
+					<VenueTimeNotice timeZone={timeZone} />
+					{isTimeZoneChanged ? (
+						<Alert variation="WARNING" tiny>
+							{t("forms:datetime.venueTimeZoneChanged", {
+								timeZone,
+								previousTimeZone: savedTimeZone,
+							})}
+						</Alert>
+					) : null}
 				</>
 			) : null}
 		</>

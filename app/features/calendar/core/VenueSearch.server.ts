@@ -2,6 +2,7 @@ import tzLookup from "@photostructure/tz-lookup";
 import { minutesToMilliseconds } from "date-fns";
 import * as R from "remeda";
 import * as v from "valibot";
+import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { LRUCache } from "~/modules/cache";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
@@ -57,8 +58,8 @@ export interface VenueSearchResult {
 	countryCode: string;
 	latitude: number;
 	longitude: number;
-	/** IANA timezone at the coordinates. */
-	timezone: string;
+	/** IANA timezone at the coordinates, `null` for one the venue timezone select doesn't offer (e.g. `Etc/GMT+5` out at sea). */
+	timezone: string | null;
 }
 
 const optionalText = v.optional(v.string());
@@ -196,8 +197,12 @@ function featureToPlace(
 		countryCode,
 		latitude,
 		longitude,
-		timezone: tzLookup(latitude, longitude),
+		timezone: selectableTimezone(tzLookup(latitude, longitude)),
 	};
+}
+
+function selectableTimezone(timezone: string) {
+	return (TIMEZONES as readonly string[]).includes(timezone) ? timezone : null;
 }
 
 function consumeUserRequest(userId: number) {

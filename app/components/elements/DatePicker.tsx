@@ -1,3 +1,4 @@
+import { tz } from "@date-fns/tz";
 import { format, isValid, parse } from "date-fns";
 
 const DATE_INPUT_FORMAT = "yyyy-MM-dd";
@@ -19,6 +20,8 @@ interface SendouDatePickerProps
 	onChange: (value: Date | null, meta: { isBadInput: boolean }) => void;
 	granularity?: "day" | "minute";
 	onBlur?: () => void;
+	/** Zone the value is read and written in, default the browser's own. */
+	timeZone?: string;
 }
 
 /**
@@ -30,12 +33,14 @@ export function SendouDatePicker({
 	onChange,
 	granularity = "minute",
 	onBlur,
+	timeZone,
 	...inputProps
 }: SendouDatePickerProps) {
 	const inputValue = value
 		? format(
 				value,
 				granularity === "day" ? DATE_INPUT_FORMAT : DATETIME_INPUT_FORMAT,
+				{ in: timeZone ? tz(timeZone) : undefined },
 			)
 		: "";
 
@@ -46,7 +51,7 @@ export function SendouDatePicker({
 			type={granularity === "day" ? "date" : "datetime-local"}
 			value={inputValue}
 			onChange={(event) =>
-				onChange(parseInputValue(event.target.value, granularity), {
+				onChange(parseInputValue(event.target.value, granularity, timeZone), {
 					isBadInput: event.target.validity.badInput,
 				})
 			}
@@ -61,6 +66,7 @@ export function SendouDatePicker({
 function parseInputValue(
 	raw: string,
 	granularity: "day" | "minute",
+	timeZone: string | undefined,
 ): Date | null {
 	if (!raw) return null;
 
@@ -68,7 +74,8 @@ function parseInputValue(
 		raw,
 		granularity === "day" ? DATE_INPUT_FORMAT : DATETIME_INPUT_FORMAT,
 		new Date(),
+		{ in: timeZone ? tz(timeZone) : undefined },
 	);
 
-	return isValid(date) ? date : null;
+	return isValid(date) ? new Date(date.getTime()) : null;
 }

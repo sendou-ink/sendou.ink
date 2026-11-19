@@ -53,4 +53,27 @@ describe("SendouDatePicker", () => {
 
 		expect(onChange).toHaveBeenLastCalledWith(null, { isBadInput: false });
 	});
+
+	test("reads and writes the value in the given zone", async () => {
+		const onChange = vi.fn();
+		const screen = await render(
+			<SendouDatePicker
+				aria-label="When"
+				value={new Date("2026-03-29T03:30:00.000Z")}
+				onChange={onChange}
+				timeZone="UTC"
+			/>,
+		);
+
+		await expect
+			.element(screen.getByLabelText("When"))
+			.toHaveValue("2026-03-29T03:30");
+
+		await screen.getByLabelText("When").fill("2026-03-29T02:15");
+
+		expect(onChange).toHaveBeenLastCalledWith(
+			new Date("2026-03-29T02:15:00.000Z"),
+			{ isBadInput: false },
+		);
+	});
 });

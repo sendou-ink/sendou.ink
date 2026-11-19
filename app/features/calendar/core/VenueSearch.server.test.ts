@@ -83,6 +83,20 @@ describe("VenueSearch.search", () => {
 		expect(result.timezone).toBe("Europe/Helsinki");
 	});
 
+	test("leaves out a timezone the venue timezone select doesn't offer", async () => {
+		// tz-lookup gives Etc/GMT+3 out in the Atlantic
+		features = [
+			{
+				...AUSTIN_FEATURE,
+				geometry: { coordinates: [-40, 30] },
+			},
+		];
+
+		const [result] = await VenueSearch.search({ query: "ocean", userId: 1 });
+
+		expect(result.timezone).toBeNull();
+	});
+
 	test("skips results without a country", async () => {
 		features = [
 			{
