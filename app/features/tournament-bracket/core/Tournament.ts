@@ -973,8 +973,10 @@ export class Tournament {
 		throw new Error("Match not found");
 	}
 
-	/** Whether the match is held back from starting until a cast picks it up. */
+	/** Whether the match is held back from starting until a cast picks it up. Never in a LAN. */
 	isMatchLockedForCast(matchId: number) {
+		if (this.isLan) return false;
+
 		return (
 			this.ctx.castedMatchesInfo?.lockedMatches.some(
 				(lm) => lm.matchId === matchId,

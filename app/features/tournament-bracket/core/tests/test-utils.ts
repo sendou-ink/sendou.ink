@@ -147,19 +147,21 @@ export const testTournamentData = ({
 	};
 };
 
-/** A started swiss tournament of two teams with their first match ongoing, optionally locked for a cast. */
+/** A started swiss tournament of two teams with their first match ongoing, optionally locked for a cast or a LAN. */
 export const runningTournamentWithMatch = ({
 	tournamentId,
 	teamOneUserIds,
 	teamTwoUserIds,
 	isLeague,
 	lockFirstMatchForCast,
+	isLan,
 }: {
 	tournamentId: number;
 	teamOneUserIds: number[];
 	teamTwoUserIds: number[];
 	isLeague?: boolean;
 	lockFirstMatchForCast?: boolean;
+	isLan?: boolean;
 }) => {
 	const data = Engine.create({
 		type: "swiss",
@@ -185,6 +187,18 @@ export const runningTournamentWithMatch = ({
 							},
 						],
 						castedMatches: [],
+					}
+				: null,
+			venue: isLan
+				? {
+						name: "Austin Convention Center",
+						address:
+							"500 East Cesar Chavez Street, 78701 Austin, Texas, United States",
+						city: "Austin",
+						countryCode: "US",
+						latitude: 30.2635,
+						longitude: -97.7396,
+						timezone: "America/Chicago",
 					}
 				: null,
 			teams: [

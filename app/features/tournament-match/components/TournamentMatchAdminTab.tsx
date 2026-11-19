@@ -141,7 +141,7 @@ function AdminCastSection({
 		null;
 	const isLocked = tournament.isMatchLockedForCast(matchId);
 
-	const canLock = matchStatus === "PENDING" && !isLocked;
+	const canLock = !tournament.isLan && matchStatus === "PENDING" && !isLocked;
 	const canUnlock = !isMatchStarted && isLocked;
 
 	return (

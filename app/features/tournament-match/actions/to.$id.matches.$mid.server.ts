@@ -586,6 +586,10 @@ export const action = defineAction(
 					"Not an organizer or streamer",
 				);
 				errorToastIfFalsy(
+					!tournament.isLan,
+					"LAN matches can't be locked to be casted",
+				);
+				errorToastIfFalsy(
 					isCastAccountOf(tournament, body.castAccount),
 					"Invalid cast account",
 				);

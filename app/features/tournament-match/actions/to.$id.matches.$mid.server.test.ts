@@ -6,10 +6,14 @@ import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.
 import type { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
 import { createStartedLanTournament } from "~/features/tournament-stations/tests/fixtures";
-import { wrappedAction } from "~/utils/Test";
+import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import { action } from "./to.$id.matches.$mid.server";
 
 const matchAction = wrappedAction<typeof matchSchema>({ action });
+const jsonMatchAction = wrappedAction<typeof matchSchema>({
+	action,
+	isJsonSubmission: true,
+});
 
 const users = UserFactory.pool();
 const organizerId = () => users.id(1);
@@ -53,5 +57,35 @@ describe("Match action REPORT_SCORE", () => {
 			{ matchId: first, stationId, isAutoAssigned: 0 },
 			{ matchId: second, stationId, isAutoAssigned: 1 },
 		]);
+	});
+});
+
+describe("Match action LOCK", () => {
+	beforeEach(async () => {
+		await users.create(17);
+	});
+
+	test("rejects locking a LAN match to be casted", async () => {
+		const { tournamentId, finalId } = await createStartedLanTournament({
+			authorId: organizerId(),
+			teamRosters: R.chunk(users.ids().slice(1), 4),
+		});
+
+		const response = await jsonMatchAction(
+			{
+				_action: "LOCK",
+				castAccount: { platform: "TWITCH", account: "lan_stream" },
+			},
+			{
+				user: organizerId(),
+				params: { id: String(tournamentId), mid: String(finalId) },
+			},
+		);
+
+		assertResponseErrored(response, "LAN matches can't be locked");
+		expect(
+			(await tournamentFromDB(tournamentId)).ctx.castedMatchesInfo
+				?.lockedMatches ?? [],
+		).toEqual([]);
 	});
 });

@@ -379,6 +379,20 @@ describe("resolveGlobalStatus", () => {
 		);
 	});
 
+	test("resolves a LAN match locked for cast as an ongoing match", async () => {
+		RunningTournaments.add(
+			runningTournamentWithMatch({
+				tournamentId: 1,
+				teamOneUserIds: userIds([1]),
+				teamTwoUserIds: userIds([2]),
+				lockFirstMatchForCast: true,
+				isLan: true,
+			}),
+		);
+
+		expect((await resolveGlobalStatus(users.id(1)))?.state).toBe("TO_MATCH");
+	});
+
 	test("resolves an open regular check-in, closing as the tournament starts", async () => {
 		const tournament = runningTournamentWithOpenCheckIn({
 			tournamentId: 1,
