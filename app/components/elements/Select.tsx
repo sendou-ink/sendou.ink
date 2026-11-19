@@ -747,6 +747,7 @@ function normalizeForSearch(value: string) {
 	return value
 		.normalize("NFD")
 		.replace(/\p{Diacritic}/gu, "")
+		.replace(/\p{Dash_Punctuation}/gu, " ")
 		.toLowerCase();
 }
 
@@ -759,7 +760,7 @@ function normalizeForSearchCached(value: string) {
 	return normalized;
 }
 
-/** Case- and diacritic-insensitive "contains" matcher, the select's default search filter. */
+/** Case-, diacritic- and dash-insensitive (dash = space) "contains" matcher, the select's default search filter. */
 export function searchContains(value: string, substring: string) {
 	return normalizeForSearch(value).includes(normalizeForSearch(substring));
 }

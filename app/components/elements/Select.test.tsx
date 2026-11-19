@@ -4,6 +4,7 @@ import {
 	SendouSelect,
 	SendouSelectItem,
 	SendouSelectItemSection,
+	searchContains,
 } from "./Select";
 
 const SEASONS = [
@@ -64,5 +65,32 @@ describe("SendouSelect", () => {
 		expect(html).toContain("Pick a season");
 		expect(html).not.toContain('role="option"');
 		expect(html).not.toContain('role="group"');
+	});
+});
+
+describe("searchContains", () => {
+	test.each([
+		{ why: "space for a dash", value: "Ink-wash Shirt", substring: "ink wash" },
+		{
+			why: "dash for a space",
+			value: "Splattershot Jr. Pro",
+			substring: "jr.-pro",
+		},
+		{
+			why: "en dash for a dash",
+			value: "Tri-Slosher",
+			substring: "tri–slosher",
+		},
+		{
+			why: "diacritics and case",
+			value: "Pokémon Shirt",
+			substring: "POKEMON",
+		},
+	])("matches $why", ({ value, substring }) => {
+		expect(searchContains(value, substring)).toBe(true);
+	});
+
+	test("does not match a different name", () => {
+		expect(searchContains("Ink-wash Shirt", "ink washer")).toBe(false);
 	});
 });
