@@ -1006,13 +1006,6 @@ interface TournamentOrganizationBannedUser {
 	expiresAt: number | null;
 }
 
-/** Indicates a user trusts another. Allows direct adding to groups/teams without invite links. */
-interface TrustRelationship {
-	trustGiverUserId: number;
-	trustReceiverUserId: number;
-	lastUsedAt: number;
-}
-
 /** Mutual friendship between two users. Invariant: userOneId < userTwoId. */
 interface Friendship {
 	id: GeneratedAlways<number>;
@@ -1863,7 +1856,6 @@ export interface DB {
 	SpecialTrophyOwner: SpecialTrophyOwner;
 	PendingTrophy: PendingTrophy;
 	PendingTrophyApproval: PendingTrophyApproval;
-	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
 	FeedComment: FeedComment;
 	FeedEvent: FeedEvent;
