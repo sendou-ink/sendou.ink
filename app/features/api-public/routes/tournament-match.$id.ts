@@ -1,13 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { db } from "~/db/sql";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { tournamentSharedCached } from "~/features/tournament-bracket/core/Tournament.server";
-import { resolveMapList } from "~/features/tournament-match/core/mapList.server";
+import { resolveMatchMapList } from "~/features/tournament-match/core/mapList.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import { jsonArrayFrom } from "~/utils/kysely.server";
-import { logger } from "~/utils/logger";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
 import type { GetTournamentMatchResponse } from "../schema";
@@ -40,7 +37,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				"TournamentMatch.opponentTwo",
 				"TournamentMatch.winnerSide",
 				"Tournament.mapPickingStyle",
-				"TournamentRound.maps",
+				"TournamentRound.maps as roundMaps",
 				jsonArrayFrom(
 					eb
 						.selectFrom("TournamentMatchGameResult")
@@ -93,38 +90,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 		if (match.winnerSide) return playedMaps;
 
-		const pickBanEvents = match.maps?.pickBan
-			? await TournamentRepository.findPickBanEventsByMatchId(match.id)
-			: [];
-
-		const mapPools = await TournamentTeamRepository.findMapPoolsByTeamIds([
-			opponentOne.id,
-			opponentTwo.id,
-		]);
-
-		const upcomingMaps = resolveMapList({
-			tournamentId: match.tournamentId,
-			matchId,
-			teams: [opponentOne.id, opponentTwo.id],
-			mapPoolByTeamId: (teamId) => mapPools.get(teamId) ?? [],
-			mapPickingStyle: match.mapPickingStyle,
-			maps: match.maps,
-			pool: tournament.mapPool,
-			modesIncluded: tournament.modesIncluded,
-			pickBanEvents,
-			recentlyPlayedMaps:
-				match.mapPickingStyle !== "TO"
-					? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
-							teamIds: [opponentOne.id, opponentTwo.id],
-							excludeMatchId: matchId,
-						}).catch((error) => {
-							logger.error("Failed to fetch recently played maps", error);
-							return undefined;
-						})
-					: undefined,
-			isWaitingForPreviousRound:
-				tournament.matchStatusById(matchId) === "PENDING",
-		})
+		const upcomingMaps = (
+			(await resolveMatchMapList({ match, tournament })) ?? []
+		)
 			.filter((mapListMap) => !mapListMap.bannedByTournamentTeamId)
 			.slice(playedMaps.length)
 			.map((mapListMap) => {

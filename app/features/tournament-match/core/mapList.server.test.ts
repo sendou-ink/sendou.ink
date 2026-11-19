@@ -46,7 +46,6 @@ const resolve = ({
 	...overrides
 }: Partial<ResolveArgs> & { matchId: number }) =>
 	resolveMapList({
-		tournamentId: 1,
 		matchId,
 		mapPickingStyle: "AUTO",
 		teams: [TEAM_ONE_ID, TEAM_TWO_ID],

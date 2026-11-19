@@ -75,8 +75,6 @@ export const action = defineAction(
 			match.opponentTwo?.score ?? 0,
 		];
 
-		const mapList = await resolveMatchMapList({ match, tournament });
-
 		let emitMatchUpdate = false;
 		let emitTournamentUpdate = false;
 		// lets broadcast receivers skip revalidating the tournament layout and root loaders
@@ -92,7 +90,7 @@ export const action = defineAction(
 				const reported = await reportScore({
 					match,
 					tournament,
-					mapList,
+					mapList: await resolveMatchMapList({ match, tournament }),
 					user,
 					position: body.position,
 					winnerTeamId: body.winnerTeamId,
@@ -336,6 +334,13 @@ export const action = defineAction(
 
 				const currentPickBanEvents =
 					await TournamentRepository.findPickBanEventsByMatchId(match.id);
+
+				const mapList = await resolveMatchMapList({
+					match,
+					tournament,
+					pickBanEvents: currentPickBanEvents,
+					mapPoolByTeamId: (teamId) => mapPools.get(teamId) ?? [],
+				});
 
 				const turnOfResult = PickBan.turnOf({
 					results,

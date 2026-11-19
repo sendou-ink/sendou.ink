@@ -28,12 +28,14 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, ttl } from "~/utils/cache.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
-import { logger } from "~/utils/logger";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFound, notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { executeRoll } from "../core/executeRoll.server";
 import * as LeagueScheduling from "../core/LeagueScheduling";
-import { mapListFromResults, resolveMapList } from "../core/mapList.server";
+import {
+	mapListFromResults,
+	resolveMatchMapList,
+} from "../core/mapList.server";
 import type { FindMatchById } from "../TournamentMatchRepository.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
 
@@ -130,34 +132,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				})
 			: null;
 
-	const mapList =
-		match.opponentOne?.id && match.opponentTwo?.id
-			? matchIsOver
-				? mapListFromResults(results)
-				: resolveMapList({
-						tournamentId,
-						matchId,
-						teams: [match.opponentOne.id, match.opponentTwo.id],
-						mapPoolByTeamId: (teamId) => teamFullById(teamId)?.mapPool ?? [],
-						mapPickingStyle: match.mapPickingStyle,
-						maps: match.roundMaps,
-						pool: tournament.mapPool,
-						modesIncluded: tournament.modesIncluded,
-						pickBanEvents,
-						recentlyPlayedMaps:
-							match.mapPickingStyle !== "TO"
-								? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
-										teamIds: [match.opponentOne.id, match.opponentTwo.id],
-										excludeMatchId: matchId,
-									}).catch((error) => {
-										logger.error("Failed to fetch recently played maps", error);
-										return undefined;
-									})
-								: undefined,
-						isWaitingForPreviousRound:
-							tournament.matchStatusById(matchId) === "PENDING",
-					})
-			: null;
+	const mapList = matchIsOver
+		? match.opponentOne?.id && match.opponentTwo?.id
+			? mapListFromResults(results)
+			: null
+		: await resolveMatchMapList({
+				match,
+				tournament,
+				pickBanEvents,
+				mapPoolByTeamId: (teamId) => teamFullById(teamId)?.mapPool ?? [],
+			});
 
 	const endedEarly = matchIsOver
 		? matchEndedEarly({
