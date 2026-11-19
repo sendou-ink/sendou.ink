@@ -9,10 +9,7 @@ import {
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills } from "~/features/mmr/tiered.server";
 import { getDefaultMapWeights } from "~/features/sendouq/core/default-maps.server";
-import type {
-	SQMatch,
-	SQUncensoredGroup,
-} from "~/features/sendouq/core/SendouQ.server";
+import type { SQUncensoredGroup } from "~/features/sendouq/core/SendouQ.server";
 import type { ModeShort, ModeWithStage } from "~/modules/in-game-lists/types";
 import type {
 	TournamentMapListMap,
@@ -281,57 +278,6 @@ function alternatingTeamFilters({
 
 		return [votedBy(picker)];
 	};
-}
-
-export function compareMatchToReportedScores({
-	match,
-	winners,
-	newReporterGroupId,
-	previousReporterGroupId,
-}: {
-	match: Pick<SQMatch, "mapList"> & {
-		groupAlpha: { id: number };
-		groupBravo: { id: number };
-	};
-	winners: ("ALPHA" | "BRAVO")[];
-	newReporterGroupId: number;
-	previousReporterGroupId?: number;
-}) {
-	if (!match.mapList.some((m) => m.reportedByUserId !== null)) {
-		return "FIRST_REPORT";
-	}
-
-	const sameGroupReporting = newReporterGroupId === previousReporterGroupId;
-	const differentConstant = sameGroupReporting ? "FIX_PREVIOUS" : "DIFFERENT";
-
-	if (
-		previousReporterGroupId &&
-		match.mapList.filter((m) => m.winnerGroupId).length !== winners.length
-	) {
-		return differentConstant;
-	}
-
-	for (const [
-		i,
-		{ winnerGroupId: previousWinnerGroupId },
-	] of match.mapList.entries()) {
-		const newWinner = winners[i] ?? null;
-
-		if (!newWinner && !previousWinnerGroupId) continue;
-
-		if (!newWinner && previousWinnerGroupId) return differentConstant;
-		if (newWinner && !previousWinnerGroupId) return differentConstant;
-
-		const previousWinner =
-			previousWinnerGroupId === match.groupAlpha.id ? "ALPHA" : "BRAVO";
-
-		if (previousWinner !== newWinner) return differentConstant;
-	}
-
-	// same group reporting the same exact score
-	if (sameGroupReporting) return "DUPLICATE";
-
-	return "SAME";
 }
 
 /** Tiers of the two groups in a starting match and of their members, taken as it is created. */

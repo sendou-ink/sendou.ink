@@ -200,7 +200,7 @@ async function cancelMatch(
 
 async function cancelMatchAsStaff(matchId: number, staffUserId: number) {
 	const result = await actAs(staffUserId, () =>
-		SQMatchRepository.cancelMatch({ matchId, isAdminReport: true }),
+		SQMatchRepository.staffCancelMatch(matchId),
 	);
 
 	invariant(

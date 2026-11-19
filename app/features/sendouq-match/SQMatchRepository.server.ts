@@ -48,7 +48,6 @@ import {
 	MATCHES_PER_SEASONS_PAGE,
 	type SeasonResultSource,
 } from "../user-page/user-page-constants";
-import { compareMatchToReportedScores } from "./core/match.server";
 import * as RejoinVote from "./core/RejoinVote";
 import * as SendouQMatch from "./core/SendouQMatch";
 import * as SkillDifference from "./core/SkillDifference";
@@ -1203,103 +1202,46 @@ export async function lockMatchWithoutSkillChange(
 	await ReportedWeaponRepository.deleteByMatchId(match.id, trx);
 }
 
-export type CancelMatchResult =
-	| { status: "CANCEL_REPORTED"; shouldRefreshCaches: false }
-	| { status: "CANCEL_CONFIRMED"; shouldRefreshCaches: true }
-	| { status: "CANT_CANCEL"; shouldRefreshCaches: false }
-	| { status: "DUPLICATE"; shouldRefreshCaches: false };
+export type CancelMatchResult = { status: "CANCEL_CONFIRMED" | "CANT_CANCEL" };
 
-export async function cancelMatch({
-	matchId,
-	isAdminReport,
-}: {
-	matchId: number;
-	isAdminReport?: boolean;
-}): Promise<CancelMatchResult> {
+/** Staff cancel: locks the match with every map unplayed, overriding a pending cancel request. */
+export async function staffCancelMatch(
+	matchId: number,
+): Promise<CancelMatchResult> {
 	const reportedByUserId = actorId();
 	const match = await findById(matchId);
 	invariant(match, "Match not found");
 
 	if (match.isLocked) {
-		return { status: "CANT_CANCEL", shouldRefreshCaches: false };
-	}
-
-	if (isAdminReport) {
-		await db.transaction().execute(async (trx) => {
-			await trx
-				.updateTable("GroupMatchMap")
-				.set({
-					winnerGroupId: null,
-					reportedAt: databaseTimestampNow(),
-					reportedByUserId,
-				})
-				.where("matchId", "=", matchId)
-				.execute();
-			await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
-			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
-			await lockMatchWithoutSkillChange(match, trx);
-			await trx
-				.updateTable("GroupMatch")
-				.set({ cancelRequestedByUserId: null })
-				.where("id", "=", matchId)
-				.execute();
-			// a pending cancel request's report is one-sided, staff canceling overrides it
-			await trx
-				.deleteFrom("GroupMatchCancelReport")
-				.where("groupMatchId", "=", matchId)
-				.execute();
-		});
-		return { status: "CANCEL_CONFIRMED", shouldRefreshCaches: true };
-	}
-
-	const members = buildMembers(match);
-	const reporterGroupId = members.find(
-		(m) => m.id === reportedByUserId,
-	)?.groupId;
-	invariant(reporterGroupId, "Reporter is not a member of any group");
-
-	const previousReporterGroupId = lastReporterGroupId(match, members);
-
-	const compared = compareMatchToReportedScores({
-		match,
-		winners: [],
-		newReporterGroupId: reporterGroupId,
-		previousReporterGroupId,
-	});
-
-	if (compared === "DUPLICATE") {
-		return { status: "DUPLICATE", shouldRefreshCaches: false };
-	}
-
-	if (compared === "DIFFERENT") {
-		await SQGroupRepository.setAsInactive(reporterGroupId);
-		return { status: "CANT_CANCEL", shouldRefreshCaches: false };
-	}
-
-	if (compared === "FIRST_REPORT" || compared === "FIX_PREVIOUS") {
-		await db.transaction().execute(async (trx) => {
-			await trx
-				.updateTable("GroupMatchMap")
-				.set({
-					winnerGroupId: null,
-					reportedAt: databaseTimestampNow(),
-					reportedByUserId,
-				})
-				.where("matchId", "=", matchId)
-				.execute();
-			await SQGroupRepository.setAsInactive(reporterGroupId, trx);
-			if (compared === "FIX_PREVIOUS") {
-				await ReportedWeaponRepository.replaceByMatchId(matchId, [], trx);
-			}
-		});
-		return { status: "CANCEL_REPORTED", shouldRefreshCaches: false };
+		return { status: "CANT_CANCEL" };
 	}
 
 	await db.transaction().execute(async (trx) => {
-		await SQGroupRepository.setAsInactive(reporterGroupId, trx);
+		await trx
+			.updateTable("GroupMatchMap")
+			.set({
+				winnerGroupId: null,
+				reportedAt: databaseTimestampNow(),
+				reportedByUserId,
+			})
+			.where("matchId", "=", matchId)
+			.execute();
+		await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
+		await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
 		await lockMatchWithoutSkillChange(match, trx);
+		await trx
+			.updateTable("GroupMatch")
+			.set({ cancelRequestedByUserId: null })
+			.where("id", "=", matchId)
+			.execute();
+		// a pending cancel request's report is one-sided, staff canceling overrides it
+		await trx
+			.deleteFrom("GroupMatchCancelReport")
+			.where("groupMatchId", "=", matchId)
+			.execute();
 	});
-	return { status: "CANCEL_CONFIRMED", shouldRefreshCaches: true };
+
+	return { status: "CANCEL_CONFIRMED" };
 }
 
 export type RequestCancelResult =
@@ -2183,16 +2125,4 @@ function buildMembers(
 			groupId: match.groupBravo.id,
 		})),
 	];
-}
-
-function lastReporterGroupId(
-	match: NonNullable<Awaited<ReturnType<typeof findById>>>,
-	members: ReturnType<typeof buildMembers>,
-) {
-	const lastReportedMap = match.mapList
-		.toReversed()
-		.find((m) => m.reportedByUserId !== null);
-	if (!lastReportedMap?.reportedByUserId) return undefined;
-	return members.find((m) => m.id === lastReportedMap.reportedByUserId)
-		?.groupId;
 }

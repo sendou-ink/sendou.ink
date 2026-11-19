@@ -429,12 +429,9 @@ export const action = defineAction(
 				case "ADMIN_CANCEL": {
 					errorToastIfFalsy(isStaff, "Only mods can admin cancel");
 
-					const result = await SQMatchRepository.cancelMatch({
-						matchId,
-						isAdminReport: true,
-					});
+					const result = await SQMatchRepository.staffCancelMatch(matchId);
 
-					if (result.shouldRefreshCaches) {
+					if (result.status === "CANCEL_CONFIRMED") {
 						try {
 							await refreshUserSkills(Seasons.currentOrPrevious()!.nth);
 						} catch (error) {

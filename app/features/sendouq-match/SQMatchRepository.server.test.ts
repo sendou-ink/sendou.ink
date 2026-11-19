@@ -240,81 +240,29 @@ describe("lockMatchWithoutSkillChange", () => {
 	});
 });
 
-describe("cancelMatch", () => {
+describe("staffCancelMatch", () => {
 	let setup: Awaited<ReturnType<typeof setupMatch>>;
 
 	beforeEach(async () => {
 		setup = await setupMatch();
 	});
 
-	test("first cancel report sets group inactive", async () => {
+	test("cant cancel a locked match", async () => {
+		await SQMatchRepository.lockMatchWithoutSkillChange(setup.match);
+
 		const result = await withUserId(setup.alphaMembers[0].id, () =>
-			SQMatchRepository.cancelMatch({
-				matchId: setup.match.id,
-			}),
-		);
-
-		expect(result.status).toBe("CANCEL_REPORTED");
-		expect(result.shouldRefreshCaches).toBe(false);
-
-		const alphaGroup = await fetchGroup(setup.alphaGroupId);
-		expect(alphaGroup?.status).toBe("INACTIVE");
-	});
-
-	test("matching cancel confirms and locks match", async () => {
-		await withUserId(setup.alphaMembers[0].id, () =>
-			SQMatchRepository.cancelMatch({
-				matchId: setup.match.id,
-			}),
-		);
-
-		const result = await withUserId(setup.bravoMembers[0].id, () =>
-			SQMatchRepository.cancelMatch({
-				matchId: setup.match.id,
-			}),
-		);
-
-		expect(result.status).toBe("CANCEL_CONFIRMED");
-		expect(result.shouldRefreshCaches).toBe(true);
-
-		const alphaGroup = await fetchGroup(setup.alphaGroupId);
-		const bravoGroup = await fetchGroup(setup.bravoGroupId);
-		expect(alphaGroup?.status).toBe("INACTIVE");
-		expect(bravoGroup?.status).toBe("INACTIVE");
-
-		const skills = await fetchSkills(setup.match.id);
-		expect(skills).toHaveLength(1);
-		expect(skills[0].season).toBe(-1);
-	});
-
-	test("cant cancel after score reported", async () => {
-		await SQMatchRepository.reportMapWinner({
-			matchId: setup.match.id,
-			winnerId: setup.alphaGroupId,
-			reportedByUserId: setup.alphaMembers[0].id,
-			reportedCount: 0,
-		});
-
-		const result = await withUserId(setup.bravoMembers[0].id, () =>
-			SQMatchRepository.cancelMatch({
-				matchId: setup.match.id,
-			}),
+			SQMatchRepository.staffCancelMatch(setup.match.id),
 		);
 
 		expect(result.status).toBe("CANT_CANCEL");
-		expect(result.shouldRefreshCaches).toBe(false);
 	});
 
-	test("admin cancel locks match without applying SP changes", async () => {
+	test("locks match without applying SP changes", async () => {
 		const result = await withUserId(setup.alphaMembers[0].id, () =>
-			SQMatchRepository.cancelMatch({
-				matchId: setup.match.id,
-				isAdminReport: true,
-			}),
+			SQMatchRepository.staffCancelMatch(setup.match.id),
 		);
 
 		expect(result.status).toBe("CANCEL_CONFIRMED");
-		expect(result.shouldRefreshCaches).toBe(true);
 
 		const alphaGroup = await fetchGroup(setup.alphaGroupId);
 		const bravoGroup = await fetchGroup(setup.bravoGroupId);
@@ -333,7 +281,7 @@ describe("cancelMatch", () => {
 		}
 	});
 
-	test("admin cancel deletes a pending cancel request's report", async () => {
+	test("deletes a pending cancel request's report", async () => {
 		await SQMatchRepository.requestCancelMatch({
 			matchId: setup.match.id,
 			requestedByUserId: setup.alphaMembers[0].id,
@@ -342,10 +290,7 @@ describe("cancelMatch", () => {
 		});
 
 		const result = await withUserId(setup.alphaMembers[0].id, () =>
-			SQMatchRepository.cancelMatch({
-				matchId: setup.match.id,
-				isAdminReport: true,
-			}),
+			SQMatchRepository.staffCancelMatch(setup.match.id),
 		);
 
 		expect(result.status).toBe("CANCEL_CONFIRMED");
