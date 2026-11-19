@@ -100,6 +100,7 @@
 		"i18next": "27.0.1",
 		"ics": "3.12.1",
 		"isbot": "5.2.3",
+		"konva": "10.9.1",
 		"kysely": "0.29.0",
 		"lucide-react": "1.72.0",
 		"markdown-to-jsx": "9.10.6",

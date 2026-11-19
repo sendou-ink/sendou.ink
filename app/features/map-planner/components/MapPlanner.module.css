@@ -1,0 +1,42 @@
+.planner {
+	position: fixed;
+	inset: 0;
+	z-index: 10;
+	display: grid;
+	grid-template:
+		"slots slots slots" auto
+		"tools map actions" minmax(0, 1fr)
+		/ auto minmax(0, 1fr) auto;
+	gap: var(--s-2);
+	padding: var(--s-2);
+	padding-top: max(var(--s-2), env(safe-area-inset-top));
+	padding-bottom: max(var(--s-2), env(safe-area-inset-bottom));
+	background-color: var(--color-bg);
+}
+
+html[data-fuse="true"] .planner {
+	bottom: var(--layout-fuse-bottom-height);
+}
+
+body:has(.planner) :is(nav, header, footer) {
+	display: none;
+}
+
+.slotBar {
+	grid-area: slots;
+}
+
+.toolSidebar {
+	grid-area: tools;
+	align-self: start;
+}
+
+.canvas {
+	grid-area: map;
+	overflow: hidden;
+}
+
+.actionBar {
+	grid-area: actions;
+	align-self: start;
+}

@@ -1,0 +1,9 @@
+.sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	padding: var(--s-1);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}

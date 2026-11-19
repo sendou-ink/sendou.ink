@@ -1,0 +1,29 @@
+.slotBar {
+	display: flex;
+	justify-content: center;
+	gap: var(--s-8);
+}
+
+.team {
+	display: flex;
+	gap: var(--s-2);
+}
+
+.slot {
+	--slot-shape: polygon(50% 0, 100% 25%, 100% 100%, 0 100%, 0 25%);
+
+	position: relative;
+	width: 3.5rem;
+	height: 4rem;
+	border-bottom: 3px solid var(--team-color);
+	background-color: var(--color-border);
+	clip-path: var(--slot-shape);
+
+	&::before {
+		content: "";
+		position: absolute;
+		inset: var(--border-width) var(--border-width) 0;
+		background-color: var(--color-bg-high);
+		clip-path: var(--slot-shape);
+	}
+}
