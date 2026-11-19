@@ -23,7 +23,7 @@ export function TrophyShowcase({
 	return (
 		<div className={styles.wrapper}>
 			<div className={clsx(styles.content, className)}>
-				<Trophy model={model} code={code} />
+				<Trophy model={model} code={code} showUnsupportedText />
 				<div className={clsx(styles.details, detailsClassName)}>{children}</div>
 			</div>
 		</div>

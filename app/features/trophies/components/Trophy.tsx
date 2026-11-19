@@ -1,5 +1,5 @@
 import { clsx } from "clsx";
-import { Ban } from "lucide-react";
+import { Ban, Trophy as TrophyIcon } from "lucide-react";
 import {
 	type ColorScheme,
 	PicoCAD2Context,
@@ -14,6 +14,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { TierPill } from "~/components/TierPill";
 import { useTheme } from "~/features/theme/core/provider";
 import { useLatestRef } from "~/hooks/useLatestRef";
@@ -25,7 +26,8 @@ import style from "./Trophy.module.css";
 
 type TrophyCtxValue =
 	| { context: PicoCAD2Context }
-	| { context: undefined; isLoading: true };
+	| { context: undefined; isLoading: true }
+	| { context: undefined; isUnsupported: true };
 
 const TrophyCtx = createContext<TrophyCtxValue | undefined>(undefined);
 
@@ -37,7 +39,8 @@ const TrophyCtx = createContext<TrophyCtxValue | undefined>(undefined);
  * render a spacer while it is loading instead of a canvas.
  */
 
-let sharedContext: PicoCAD2Context | undefined;
+/** `null` once creating it failed, e.g. the browser has WebGL 2 turned off */
+let sharedContext: PicoCAD2Context | null | undefined;
 
 // even a single frame blocks the main thread for seconds on software WebGL (e2e is always CPU),
 // racing hydration and the test's own actions
@@ -45,8 +48,16 @@ const RENDERS_MODELS = !IS_E2E_TEST_RUN;
 
 function getSharedTrophyContext() {
 	if (typeof window === "undefined" || !RENDERS_MODELS) return undefined;
-	if (!sharedContext) sharedContext = new PicoCAD2Context();
-	return sharedContext;
+	if (sharedContext === undefined) sharedContext = createContextOrNull();
+	return sharedContext ?? undefined;
+}
+
+function createContextOrNull() {
+	try {
+		return new PicoCAD2Context();
+	} catch {
+		return null;
+	}
 }
 
 export function TrophyContextProvider({
@@ -54,15 +65,18 @@ export function TrophyContextProvider({
 }: {
 	children: React.ReactNode;
 }) {
-	const [context, setContext] = useState<PicoCAD2Context | undefined>();
+	const [value, setValue] = useState<TrophyCtxValue>({
+		context: undefined,
+		isLoading: true,
+	});
 
 	useEffect(() => {
-		setContext(getSharedTrophyContext());
+		const context = getSharedTrophyContext();
+		if (context) setValue({ context });
+		else if (sharedContext === null) {
+			setValue({ context: undefined, isUnsupported: true });
+		}
 	}, []);
-
-	const value: TrophyCtxValue = context
-		? { context }
-		: { context: undefined, isLoading: true };
 
 	return <TrophyCtx.Provider value={value}>{children}</TrophyCtx.Provider>;
 }
@@ -103,6 +117,7 @@ export function Trophy({
 	fps = 60,
 	deferred,
 	showAnimationProgress,
+	showUnsupportedText,
 }: {
 	model: string;
 	code?: string | null;
@@ -119,11 +134,17 @@ export function Trophy({
 	fps?: number;
 	deferred?: boolean;
 	showAnimationProgress?: boolean;
+	/** Spells out under the placeholder why the 3D model can't be shown, for views with room for it */
+	showUnsupportedText?: boolean;
 }) {
+	const { t } = useTranslation(["common"]);
 	const ctxValue = useContext(TrophyCtx);
 	const context = ctxValue?.context;
 	const isLoadingSharedContext =
-		ctxValue !== undefined && ctxValue.context === undefined;
+		ctxValue !== undefined && "isLoading" in ctxValue;
+	const [viewerFailed, setViewerFailed] = useState(false);
+	const isUnsupported =
+		viewerFailed || (ctxValue !== undefined && "isUnsupported" in ctxValue);
 	const viewerRef = useRef<PicoCAD2Viewer | null>(null);
 	const [error, setError] = useState<boolean>(false);
 	const [drawn, setDrawn] = useState(false);
@@ -172,16 +193,15 @@ export function Trophy({
 
 			if (modelState === null) return;
 
-			const viewer = new PicoCAD2Viewer({
+			const viewer = createViewerOrNull({
 				canvas,
 				context: context ?? getSharedTrophyContext(),
-				resolution: { width: 128, height: 128, scale: 4 },
-				clampCameraDistance: {
-					enabled: true,
-					minimumDistance: 3,
-				},
 				colorScheme,
 			});
+			if (!viewer) {
+				setViewerFailed(true);
+				return;
+			}
 			viewerRef.current = viewer;
 
 			try {
@@ -299,6 +319,35 @@ export function Trophy({
 		</div>
 	) : null;
 
+	if (isUnsupported) {
+		return (
+			<div className={style.container} style={containerStyle}>
+				<div
+					className={clsx(
+						style.trophy,
+						style.error,
+						style.unsupported,
+						style.visible,
+					)}
+					role="img"
+					aria-label={t("common:trophies.unsupported")}
+					title={
+						showUnsupportedText ? undefined : t("common:trophies.unsupported")
+					}
+				>
+					<TrophyIcon size={48} />
+					{showUnsupportedText ? (
+						<p className={style.unsupportedText}>
+							{t("common:trophies.unsupported")}
+						</p>
+					) : null}
+				</div>
+				{tierPill}
+				{cornerPill}
+			</div>
+		);
+	}
+
 	if (error || (modelState === null && !isLoadingXpState)) {
 		return (
 			<div className={style.container} style={containerStyle}>
@@ -346,6 +395,34 @@ export function Trophy({
 			{cornerPill}
 		</div>
 	);
+}
+
+function createViewerOrNull({
+	canvas,
+	context,
+	colorScheme,
+}: {
+	canvas: HTMLCanvasElement;
+	context: PicoCAD2Context | undefined;
+	colorScheme: ColorScheme;
+}) {
+	// without a shared context the viewer would try to create its own, which already failed
+	if (!context) return null;
+
+	try {
+		return new PicoCAD2Viewer({
+			canvas,
+			context,
+			resolution: { width: 128, height: 128, scale: 4 },
+			clampCameraDistance: {
+				enabled: true,
+				minimumDistance: 3,
+			},
+			colorScheme,
+		});
+	} catch {
+		return null;
+	}
 }
 
 function configureViewer(viewer: PicoCAD2Viewer, fps: number) {
