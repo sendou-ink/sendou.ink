@@ -2,9 +2,8 @@ import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
-import * as ChatRepository from "../ChatRepository.server";
 import * as ChatRoomResolver from "../ChatRoomResolver.server";
-import { findParticipantsById, roomListItem } from "../chat-room-list.server";
+import { roomListItems } from "../chat-room-list.server";
 import type { ChatRoomListItem } from "../chat-types";
 
 /**
@@ -19,10 +18,7 @@ export const loader = async ({
 
 	const room = await ChatRoomResolver.requireRoom(roomId, "VIEW");
 
-	const [stats] = await ChatRepository.findMessageStatsByRoomIds(user.id, [
-		roomId,
-	]);
-	const participantsById = await findParticipantsById([room]);
+	const [item] = await roomListItems([room], user);
 
-	return { room: roomListItem(room, { stats, participantsById, user }) };
+	return { room: item };
 };

@@ -110,18 +110,16 @@ export async function resolveAll(roomIds: number[]): Promise<ResolvedRoom[]> {
 	const byType = (type: ChatRoomType) =>
 		rooms.filter((room) => room.type === type);
 
-	const resolved = (
-		await Promise.all([
-			resolveSqGroupRooms(byType("SQ_GROUP")),
-			resolveSqMatchRooms(byType("SQ_MATCH")),
-			resolveTournamentMatchRooms(byType("TOURNAMENT_MATCH")),
-			resolveTournamentTeamRooms(byType("TOURNAMENT_TEAM")),
-			resolveTournamentBroadcastRooms(byType("TOURNAMENT_BROADCAST")),
-			resolveScrimRooms(byType("SCRIM")),
-			resolveLobbyRooms(byType("LOBBY")),
-			resolveLobbyTeamRooms(byType("LOBBY_TEAM")),
-		])
-	).flat();
+	const resolved = [
+		...(await resolveSqGroupRooms(byType("SQ_GROUP"))),
+		...(await resolveSqMatchRooms(byType("SQ_MATCH"))),
+		...(await resolveTournamentMatchRooms(byType("TOURNAMENT_MATCH"))),
+		...(await resolveTournamentTeamRooms(byType("TOURNAMENT_TEAM"))),
+		...(await resolveTournamentBroadcastRooms(byType("TOURNAMENT_BROADCAST"))),
+		...(await resolveScrimRooms(byType("SCRIM"))),
+		...(await resolveLobbyRooms(byType("LOBBY"))),
+		...(await resolveLobbyTeamRooms(byType("LOBBY_TEAM"))),
+	];
 
 	return resolved.sort((a, b) => a.roomId - b.roomId);
 }

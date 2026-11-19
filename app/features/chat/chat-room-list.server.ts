@@ -13,7 +13,14 @@ type MessageStats = Awaited<
 export async function resolveRoomList(user: {
 	id: number;
 }): Promise<ChatRoomListItem[]> {
-	const rooms = await ChatRoomResolver.findAllByUserId(user.id);
+	return roomListItems(await ChatRoomResolver.findAllByUserId(user.id), user);
+}
+
+/** Resolved rooms as the chat client lists them for the user, with unread stats and participants, in the order given. */
+export async function roomListItems(
+	rooms: ChatRoomResolver.ResolvedRoom[],
+	user: { id: number },
+): Promise<ChatRoomListItem[]> {
 	const messageStats = await ChatRepository.findMessageStatsByRoomIds(
 		user.id,
 		rooms.map((room) => room.roomId),
@@ -30,9 +37,7 @@ export async function resolveRoomList(user: {
 	);
 }
 
-export async function findParticipantsById(
-	rooms: ChatRoomResolver.ResolvedRoom[],
-) {
+async function findParticipantsById(rooms: ChatRoomResolver.ResolvedRoom[]) {
 	const participants = await ChatRepository.findAllParticipantsByUserIds(
 		R.unique(rooms.flatMap((room) => room.participantUserIds)),
 	);
@@ -40,8 +45,7 @@ export async function findParticipantsById(
 	return new Map(participants.map((user) => [user.id, user]));
 }
 
-/** Shapes a resolved room into the list item the chat client consumes. */
-export function roomListItem(
+function roomListItem(
 	room: ChatRoomResolver.ResolvedRoom,
 	{
 		stats,

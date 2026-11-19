@@ -2,7 +2,7 @@ import { hasPermission } from "~/modules/permissions/utils";
 import { logger } from "~/utils/logger";
 import * as ChatRepository from "./ChatRepository.server";
 import * as ChatRoomResolver from "./ChatRoomResolver.server";
-import { findParticipantsById, roomListItem } from "./chat-room-list.server";
+import { roomListItems } from "./chat-room-list.server";
 import type { RouteChatRoom, RouteChatRoomInput } from "./chat-types";
 
 /**
@@ -22,17 +22,13 @@ export async function resolve(
 	const viewableRooms = rooms.filter((room) =>
 		hasPermission(room, "VIEW", user),
 	);
-	const stats = await ChatRepository.findMessageStatsByRoomIds(
-		user.id,
-		viewableRooms.map((room) => room.roomId),
+	const itemsById = new Map(
+		(await roomListItems(viewableRooms, user)).map((item) => [item.id, item]),
 	);
-	const participantsById = await findParticipantsById(viewableRooms);
-	const statsByRoomId = new Map(stats.map((row) => [row.roomId, row]));
-	const roomsById = new Map(viewableRooms.map((room) => [room.roomId, room]));
 
 	const result: RouteChatRoom[] = [];
 	for (const { roomId, ...input } of inputs) {
-		const room = roomsById.get(roomId);
+		const room = itemsById.get(roomId);
 		if (!room) {
 			logger.warn(`Route surfaced chat room ${roomId} the user can not view`);
 			continue;
@@ -40,11 +36,7 @@ export async function resolve(
 
 		result.push({
 			...input,
-			room: roomListItem(room, {
-				stats: statsByRoomId.get(roomId),
-				participantsById,
-				user,
-			}),
+			room,
 			messages: input.autoOpen
 				? await ChatRepository.findAllMessagesByRoomId(roomId)
 				: null,
