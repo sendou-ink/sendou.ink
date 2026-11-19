@@ -162,7 +162,7 @@ export function tournamentSummary({
 			teams,
 			progression,
 		}),
-		setResults: setResults({ results, teams }),
+		setResults: setParticipationByUserId({ results, teams }),
 	};
 }
 
@@ -632,7 +632,8 @@ function tournamentResults({
 	return result;
 }
 
-function setResults({
+/** Per user, the W/L/sat-out (null) result of every set their team played. */
+export function setParticipationByUserId({
 	results,
 	teams,
 }: {

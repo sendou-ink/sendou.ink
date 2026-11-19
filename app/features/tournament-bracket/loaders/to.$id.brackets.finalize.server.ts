@@ -1,13 +1,8 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import * as Seasons from "~/features/mmr/core/Seasons";
-import { seasonRatings, seedingRatings } from "~/features/mmr/mmr-utils.server";
 import * as Standings from "~/features/tournament/core/Standings";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import {
-	summaryRatingTargets,
-	tournamentSummary,
-} from "~/features/tournament-bracket/core/summarizer.server";
+import { setParticipationByUserId } from "~/features/tournament-bracket/core/summarizer.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
@@ -68,35 +63,9 @@ async function standingsWithSetParticipation({
 	);
 	invariant(results.length > 0, "No results found");
 
-	const season = Seasons.current(tournament.ctx.startsAt)?.nth;
-
-	const seedingSkillCountsFor = tournament.skillCountsFor;
-
-	const calculateSeasonalStats =
-		tournament.ranked && typeof season === "number";
-	const ratingTargets = summaryRatingTargets(results);
-	const ratings = calculateSeasonalStats
-		? await seasonRatings({ season, ...ratingTargets })
-		: null;
-	const seedingRating = seedingSkillCountsFor
-		? await seedingRatings({
-				type: seedingSkillCountsFor,
-				userIds: ratingTargets.userIds,
-			})
-		: null;
-
-	const { setResults } = tournamentSummary({
-		teams: tournament.ctx.teams,
-		finalStandings,
+	const setResults = setParticipationByUserId({
 		results,
-		calculateSeasonalStats,
-		queryCurrentTeamRating: (identifier) => ratings!.team(identifier).rating,
-		queryCurrentUserRating: (userId) => ratings!.user(userId).rating,
-		queryTeamPlayerRatingAverage: (identifier) =>
-			ratings!.teamPlayerAverage(identifier),
-		queryCurrentSeedingRating: (userId) => seedingRating!(userId),
-		seedingSkillCountsFor,
-		progression: tournament.ctx.settings.bracketProgression,
+		teams: tournament.ctx.teams,
 	});
 
 	const rostersByTeamId = new Map(
