@@ -7,6 +7,7 @@ import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactor
 import { db } from "~/db/sql";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { SUPPORTER_MIN_PATRON_TIER } from "~/modules/permissions/utils";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { ConcurrentModificationError } from "~/utils/errors";
 import * as XpTrophy from "./core/XpTrophy";
@@ -689,6 +690,69 @@ describe("X Power trophies", () => {
 				{ code: "xp-chargers-3000", division: "WEST" },
 				{ code: "xp-shooters-3500", division: "JPN" },
 			]);
+		});
+	});
+
+	describe("findByOwnerUserId favorites and hidden", () => {
+		const SPLAT_ROLLER = 1010;
+
+		const shootersId = () => trophyIdByCode.get("xp-shooters-3000")!;
+		const rollersId = () => trophyIdByCode.get("xp-rollers-3000")!;
+		const chargersId = () => trophyIdByCode.get("xp-chargers-3000")!;
+
+		const ownedIds = async () =>
+			(await TrophyRepository.findByOwnerUserId(playerId())).map(
+				(trophy) => trophy.id,
+			);
+
+		beforeEach(async () => {
+			for (const weaponSplId of [
+				SPLATTERSHOT,
+				SPLAT_ROLLER,
+				SPLAT_CHARGER,
+			] as const) {
+				await place({ userId: playerId(), weaponSplId, power: 3050 });
+			}
+			await TrophyRepository.syncSpecialTrophies();
+		});
+
+		test("leaves out hidden trophies, which the including hidden variant still returns", async () => {
+			await UserFactory.updateProfile(playerId(), {
+				hiddenTrophyIds: [rollersId()],
+			});
+
+			expect(await ownedIds()).not.toContain(rollersId());
+			expect(
+				(
+					await TrophyRepository.findByOwnerUserIdIncludingHidden(playerId())
+				).map((trophy) => trophy.id),
+			).toContain(rollersId());
+		});
+
+		test("puts a supporter's favorites first in the order they picked", async () => {
+			await UserFactory.grant(playerId(), {
+				patronTier: SUPPORTER_MIN_PATRON_TIER,
+			});
+			await UserFactory.updateProfile(playerId(), {
+				favoriteTrophyIds: [shootersId(), chargersId()],
+			});
+
+			expect(await ownedIds()).toEqual([
+				shootersId(),
+				chargersId(),
+				rollersId(),
+			]);
+		});
+
+		test("gives a non-supporter's favorites no boost", async () => {
+			const newestFirst = [shootersId(), rollersId(), chargersId()].toSorted(
+				(a, b) => b - a,
+			);
+			await UserFactory.updateProfile(playerId(), {
+				favoriteTrophyIds: [newestFirst[2]],
+			});
+
+			expect(await ownedIds()).toEqual(newestFirst);
 		});
 	});
 

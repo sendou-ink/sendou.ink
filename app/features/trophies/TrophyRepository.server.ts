@@ -202,7 +202,6 @@ async function findOwnedTrophies(userId: number) {
 	const tournamentRows = await db
 		.selectFrom("TrophyOwner")
 		.innerJoin("Trophy", "Trophy.id", "TrophyOwner.trophyId")
-		.innerJoin("User", "User.id", "TrophyOwner.userId")
 		.select(({ fn }) => [
 			fn.count<number>("TrophyOwner.trophyId").as("count"),
 			fn.min<number | null>("TrophyOwner.tier").as("tier"),
@@ -210,9 +209,6 @@ async function findOwnedTrophies(userId: number) {
 			"Trophy.name",
 			"Trophy.model",
 			"Trophy.code",
-			"User.favoriteTrophyIds",
-			"User.hiddenTrophyIds",
-			"User.patronTier",
 		])
 		.where("TrophyOwner.userId", "=", userId)
 		.groupBy(["TrophyOwner.trophyId", "TrophyOwner.userId"])
@@ -221,16 +217,7 @@ async function findOwnedTrophies(userId: number) {
 	const specialRows = await db
 		.selectFrom("SpecialTrophyOwner")
 		.innerJoin("Trophy", "Trophy.id", "SpecialTrophyOwner.trophyId")
-		.innerJoin("User", "User.id", "SpecialTrophyOwner.userId")
-		.select([
-			"Trophy.id",
-			"Trophy.name",
-			"Trophy.model",
-			"Trophy.code",
-			"User.favoriteTrophyIds",
-			"User.hiddenTrophyIds",
-			"User.patronTier",
-		])
+		.select(["Trophy.id", "Trophy.name", "Trophy.model", "Trophy.code"])
 		.where("SpecialTrophyOwner.userId", "=", userId)
 		.execute();
 
@@ -271,27 +258,22 @@ export async function findByOwnerUserId(userId: number) {
 
 	if (rows.length === 0) return [];
 
-	const { favoriteTrophyIds, hiddenTrophyIds, patronTier } = rows[0];
+	const { favoriteTrophyIds, hiddenTrophyIds, patronTier } = await db
+		.selectFrom("User")
+		.select(["favoriteTrophyIds", "hiddenTrophyIds", "patronTier"])
+		.where("id", "=", userId)
+		.executeTakeFirstOrThrow();
 	const hiddenSet = new Set(hiddenTrophyIds ?? []);
 
 	return sortTrophiesByFavorites({
 		favoriteTrophyIds,
-		hiddenTrophyIds,
 		patronTier,
-		trophies: rows
-			.filter((row) => !hiddenSet.has(row.id))
-			.map((row) =>
-				R.omit(row, ["favoriteTrophyIds", "hiddenTrophyIds", "patronTier"]),
-			),
-	}).trophies;
+		trophies: rows.filter((row) => !hiddenSet.has(row.id)),
+	});
 }
 
-export async function findByOwnerUserIdIncludingHidden(userId: number) {
-	const rows = await findOwnedTrophies(userId);
-
-	return rows.map((row) =>
-		R.omit(row, ["favoriteTrophyIds", "hiddenTrophyIds", "patronTier"]),
-	);
+export function findByOwnerUserIdIncludingHidden(userId: number) {
+	return findOwnedTrophies(userId);
 }
 
 export async function findById(trophyId: number) {

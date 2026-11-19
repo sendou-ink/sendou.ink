@@ -4,42 +4,30 @@ interface SortTrophiesByFavoritesArgs<
 	T extends Array<{ id: number; tier?: number | null }>,
 > {
 	favoriteTrophyIds: number[] | null;
-	hiddenTrophyIds: number[] | null;
 	trophies: T;
 	patronTier: number | null;
 }
 
+/**
+ * Favorite trophies first, in the order the user picked them (supporters only), the rest by tier
+ * and then descending id. Favorites no longer owned are ignored.
+ */
 export function sortTrophiesByFavorites<
 	T extends Array<{ id: number; tier?: number | null }>,
 >({
 	favoriteTrophyIds,
-	hiddenTrophyIds,
 	trophies,
 	patronTier,
-}: SortTrophiesByFavoritesArgs<T>): {
-	trophies: T;
-	favoriteTrophyIds: number[] | null;
-} {
-	const hiddenSet = new Set(hiddenTrophyIds ?? []);
-
-	let filteredFavoriteIds =
-		favoriteTrophyIds?.filter(
-			(trophyId) =>
-				!hiddenSet.has(trophyId) &&
+}: SortTrophiesByFavoritesArgs<T>): T {
+	const effectiveFavoriteIds = isSupporter({ patronTier })
+		? (favoriteTrophyIds ?? []).filter((trophyId) =>
 				trophies.some((trophy) => trophy.id === trophyId),
-		) ?? null;
+			)
+		: [];
 
-	if (filteredFavoriteIds?.length === 0) {
-		filteredFavoriteIds = null;
-	}
-
-	filteredFavoriteIds = isSupporter({ patronTier })
-		? filteredFavoriteIds
-		: null;
-
-	const sortedTrophies = trophies.toSorted((a, b) => {
-		const aIdx = filteredFavoriteIds?.indexOf(a.id) ?? -1;
-		const bIdx = filteredFavoriteIds?.indexOf(b.id) ?? -1;
+	return trophies.toSorted((a, b) => {
+		const aIdx = effectiveFavoriteIds.indexOf(a.id);
+		const bIdx = effectiveFavoriteIds.indexOf(b.id);
 
 		if (aIdx !== bIdx) {
 			if (aIdx === -1) return 1;
@@ -54,6 +42,4 @@ export function sortTrophiesByFavorites<
 
 		return b.id - a.id;
 	}) as T;
-
-	return { trophies: sortedTrophies, favoriteTrophyIds: filteredFavoriteIds };
 }

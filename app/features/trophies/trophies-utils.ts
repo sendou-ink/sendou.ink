@@ -1,6 +1,7 @@
 import { addWeeks } from "date-fns";
 import type { RawPicoCAD2File } from "picocad2-web";
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { ADMIN_ID, QA_IDS } from "~/features/admin/admin-constants";
 import type { Role } from "~/modules/permissions/types";
 import { usePersistedState } from "~/modules/persisted-state/hooks";
 import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
@@ -63,6 +64,9 @@ export function canBackfillTrophies(user?: { roles: Array<Role> } | null) {
 
 	return user.roles.includes("ADMIN") || user.roles.includes("DEV");
 }
+
+/** Notified of new trophy submissions: only part of who may review ({@link canReviewTrophies}), STAFF outside this list can review but are not notified. */
+export const TROPHY_SUBMISSION_NOTIFIED_IDS = [ADMIN_ID, ...QA_IDS];
 
 export function canReviewTrophies(user?: { roles: Array<Role> } | null) {
 	if (!user) return false;

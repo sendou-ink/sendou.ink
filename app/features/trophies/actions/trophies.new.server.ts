@@ -1,5 +1,4 @@
 import * as v from "valibot";
-import { ADMIN_ID, QA_IDS } from "~/features/admin/admin-constants";
 import {
 	type AuthenticatedUser,
 	requireUser,
@@ -28,6 +27,7 @@ import {
 	canBackfillTrophies,
 	canReviewTrophies,
 	compressTrophyModel,
+	TROPHY_SUBMISSION_NOTIFIED_IDS,
 } from "../trophies-utils";
 
 export const action = defineAction(
@@ -264,7 +264,7 @@ export const action = defineAction(
 
 function resolveSubmittedNotification(trophyName: string) {
 	return resolveNotifications({
-		userIds: [ADMIN_ID, ...QA_IDS],
+		userIds: TROPHY_SUBMISSION_NOTIFIED_IDS,
 		type: "TROPHY_SUBMITTED",
 		meta: { trophyName },
 	});
@@ -278,7 +278,7 @@ async function notifyReviewersOfSubmission({
 	submitter: AuthenticatedUser;
 }) {
 	const reviewerIds = await UserRepository.existingUserIds(
-		[ADMIN_ID, ...QA_IDS].filter((id) => id !== submitter.id),
+		TROPHY_SUBMISSION_NOTIFIED_IDS.filter((id) => id !== submitter.id),
 	);
 
 	notify({
