@@ -1,8 +1,10 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
-import * as Standings from "~/features/tournament/core/Standings";
 import * as Engine from "~/features/tournament-bracket/core/engine";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
+import type {
+	BracketData,
+	MatchData,
+} from "~/features/tournament-bracket/core/engine/types";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { cutToNDecimalPlaces } from "../../../../utils/number";
@@ -102,352 +104,279 @@ export class SwissBracket extends Bracket {
 	}
 
 	protected calculateStandings(): Standing[] {
-		return this.computeStandings({ includeUnfinishedGroups: false });
+		return this.groupStageStandings({
+			includeUnfinishedGroups: false,
+			teamStatsOfGroup: (matches, placedLastTeamIds) =>
+				this.teamStatsOfGroup(matches, placedLastTeamIds),
+		});
 	}
 
 	protected override calculateLiveStandings(): Standing[] {
-		return this.computeStandings({ includeUnfinishedGroups: true });
+		return this.groupStageStandings({
+			includeUnfinishedGroups: true,
+			teamStatsOfGroup: (matches, placedLastTeamIds) =>
+				this.teamStatsOfGroup(matches, placedLastTeamIds),
+		});
 	}
 
-	private computeStandings({
-		includeUnfinishedGroups,
-	}: {
-		includeUnfinishedGroups: boolean;
-	}): Standing[] {
-		const groupIds = this.data.group.map((group) => group.id);
+	private teamStatsOfGroup(
+		matches: MatchData[],
+		placedLastTeamIds: Set<number>,
+	) {
+		const teams: {
+			id: number;
+			setWins: number;
+			setLosses: number;
+			mapWins: number;
+			mapLosses: number;
+			winsAgainstTied: number;
+			lossesAgainstTied: number;
+			opponentSets: TeamTrackRecord;
+			opponentMaps: TeamTrackRecord;
+		}[] = [];
 
-		const placements: (Standing & { groupId: number })[] = [];
-		for (const groupId of groupIds) {
-			const matches = this.data.match.filter(
-				(match) => match.groupId === groupId,
-			);
+		const updateTeam = ({
+			teamId,
+			setWins = 0,
+			setLosses = 0,
+			mapWins = 0,
+			mapLosses = 0,
+			opponentSets = { wins: 0, losses: 0 },
+			opponentMaps = { wins: 0, losses: 0 },
+		}: {
+			teamId: number;
+			setWins?: number;
+			setLosses?: number;
+			mapWins?: number;
+			mapLosses?: number;
+			opponentSets?: TeamTrackRecord;
+			opponentMaps?: TeamTrackRecord;
+		}) => {
+			const team = teams.find((candidate) => candidate.id === teamId);
+			if (team) {
+				team.setWins += setWins;
+				team.setLosses += setLosses;
+				team.mapWins += mapWins;
+				team.mapLosses += mapLosses;
 
-			const groupIsFinished = matches.every(
-				(match) =>
-					// BYE
-					match.opponent1 === null ||
-					match.opponent2 === null ||
-					// match was played out
-					match.winnerSide,
-			);
-
-			if (!groupIsFinished && !includeUnfinishedGroups) continue;
-
-			const teams: {
-				id: number;
-				setWins: number;
-				setLosses: number;
-				mapWins: number;
-				mapLosses: number;
-				winsAgainstTied: number;
-				lossesAgainstTied: number;
-				opponentSets: TeamTrackRecord;
-				opponentMaps: TeamTrackRecord;
-			}[] = [];
-
-			const updateTeam = ({
-				teamId,
-				setWins = 0,
-				setLosses = 0,
-				mapWins = 0,
-				mapLosses = 0,
-				opponentSets = { wins: 0, losses: 0 },
-				opponentMaps = { wins: 0, losses: 0 },
-			}: {
-				teamId: number;
-				setWins?: number;
-				setLosses?: number;
-				mapWins?: number;
-				mapLosses?: number;
-				opponentSets?: TeamTrackRecord;
-				opponentMaps?: TeamTrackRecord;
-			}) => {
-				const team = teams.find((candidate) => candidate.id === teamId);
-				if (team) {
-					team.setWins += setWins;
-					team.setLosses += setLosses;
-					team.mapWins += mapWins;
-					team.mapLosses += mapLosses;
-
-					team.opponentSets.wins += opponentSets.wins;
-					team.opponentSets.losses += opponentSets.losses;
-					team.opponentMaps.wins += opponentMaps.wins;
-					team.opponentMaps.losses += opponentMaps.losses;
-				} else {
-					teams.push({
-						id: teamId,
-						setWins,
-						setLosses,
-						mapWins,
-						mapLosses,
-						winsAgainstTied: 0,
-						lossesAgainstTied: 0,
-						opponentMaps,
-						opponentSets,
-					});
-				}
-			};
-
-			const matchUps = new Map<number, number[]>();
-
-			for (const match of matches) {
-				if (match.opponent1?.id && match.opponent2?.id) {
-					const opponentOneMatchUps = matchUps.get(match.opponent1.id) ?? [];
-					const opponentTwoMatchUps = matchUps.get(match.opponent2.id) ?? [];
-
-					matchUps.set(match.opponent1.id, [
-						...opponentOneMatchUps,
-						match.opponent2.id,
-					]);
-					matchUps.set(match.opponent2.id, [
-						...opponentTwoMatchUps,
-						match.opponent1.id,
-					]);
-				}
-
-				if (!match.winnerSide) {
-					// teams yet to finish a match still belong in the standings
-					if (match.opponent1?.id) {
-						updateTeam({ teamId: match.opponent1.id });
-					}
-					if (match.opponent2?.id) {
-						updateTeam({ teamId: match.opponent2.id });
-					}
-					continue;
-				}
-
-				const winner =
-					match.winnerSide === "opponent1" ? match.opponent1 : match.opponent2;
-
-				const loser =
-					match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
-
-				if (!winner || !loser) continue;
-
-				invariant(
-					typeof winner.id === "number" && typeof loser.id === "number",
-					"SwissBracket.standings: winner or loser id not found",
-				);
-
-				// note: score might be missing in the case the set was ended early
-				updateTeam({
-					teamId: winner.id,
-					setWins: 1,
-					setLosses: 0,
-					mapWins: winner.score ?? 0,
-					mapLosses: loser.score ?? 0,
-				});
-				updateTeam({
-					teamId: loser.id,
-					setWins: 0,
-					setLosses: 1,
-					mapWins: loser.score ?? 0,
-					mapLosses: winner.score ?? 0,
-				});
-			}
-
-			// BYES
-			for (const match of matches) {
-				if (match.opponent1 && match.opponent2) {
-					continue;
-				}
-
-				const winner = match.opponent1 ? match.opponent1 : match.opponent2;
-
-				if (!winner?.id) {
-					logger.warn("SwissBracket.computeStandings: winner not found");
-					continue;
-				}
-
-				const round = this.data.round.find(
-					(candidate) => candidate.id === match.roundId,
-				);
-				const mapWins =
-					round?.maps?.type === "PLAY_ALL"
-						? round?.maps?.count
-						: Math.ceil((round?.maps?.count ?? 0) / 2);
-				// preview
-				if (!mapWins) {
-					continue;
-				}
-
-				updateTeam({
-					teamId: winner.id,
-					setWins: 1,
-					setLosses: 0,
+				team.opponentSets.wins += opponentSets.wins;
+				team.opponentSets.losses += opponentSets.losses;
+				team.opponentMaps.wins += opponentMaps.wins;
+				team.opponentMaps.losses += opponentMaps.losses;
+			} else {
+				teams.push({
+					id: teamId,
+					setWins,
+					setLosses,
 					mapWins,
-					mapLosses: 0,
-				});
-			}
-
-			// opponent win %
-			for (const team of teams) {
-				const teamsWhoPlayedAgainst = matchUps.get(team.id) ?? [];
-
-				const opponentSets = {
-					wins: 0,
-					losses: 0,
-				};
-				const opponentMaps = {
-					wins: 0,
-					losses: 0,
-				};
-
-				for (const teamId of teamsWhoPlayedAgainst) {
-					const opponent = teams.find((t) => t.id === teamId);
-					if (!opponent) {
-						logger.warn("SwissBracket.computeStandings: opponent not found", {
-							teamId,
-						});
-						continue;
-					}
-
-					opponentSets.wins += opponent.setWins;
-					opponentSets.losses += opponent.setLosses;
-
-					opponentMaps.wins += opponent.mapWins;
-					opponentMaps.losses += opponent.mapLosses;
-				}
-
-				updateTeam({
-					teamId: team.id,
-					opponentSets,
+					mapLosses,
+					winsAgainstTied: 0,
+					lossesAgainstTied: 0,
 					opponentMaps,
+					opponentSets,
 				});
 			}
+		};
 
-			const placedLastTeamIds = this.droppedOutTeamIdsPlacedLast();
+		const matchUps = new Map<number, number[]>();
 
-			// teams that finished their run keep counting so dropping them only moves the teams below up
-			const droppedOutMidRunTeamIds = new Set(
-				teams
-					.filter(
-						(team) =>
-							placedLastTeamIds.has(team.id) && !this.runIsComplete(team),
-					)
-					.map((team) => team.id),
-			);
+		for (const match of matches) {
+			if (match.opponent1?.id && match.opponent2?.id) {
+				const opponentOneMatchUps = matchUps.get(match.opponent1.id) ?? [];
+				const opponentTwoMatchUps = matchUps.get(match.opponent2.id) ?? [];
 
-			// wins against tied, results against teams that dropped out mid-run don't count
-			for (const team of teams) {
-				if (droppedOutMidRunTeamIds.has(team.id)) continue;
-
-				for (const team2 of teams) {
-					if (team.id === team2.id) continue;
-					if (droppedOutMidRunTeamIds.has(team2.id)) continue;
-					if (
-						team.setWins !== team2.setWins ||
-						// check also set losses to account for dropped teams
-						team.setLosses !== team2.setLosses
-					) {
-						continue;
-					}
-
-					// they are different teams and are tied, let's check who won
-
-					const finishedMatchesBetweenTeams = matches.filter((match) => {
-						const isBetweenTeams =
-							(match.opponent1?.id === team.id &&
-								match.opponent2?.id === team2.id) ||
-							(match.opponent1?.id === team2.id &&
-								match.opponent2?.id === team.id);
-
-						const isFinished = Boolean(match.winnerSide);
-
-						return isBetweenTeams && isFinished;
-					});
-
-					for (const finishedMatchBetweenTeams of finishedMatchesBetweenTeams) {
-						const wonTheirMatch =
-							(finishedMatchBetweenTeams.opponent1!.id === team.id &&
-								finishedMatchBetweenTeams.winnerSide === "opponent1") ||
-							(finishedMatchBetweenTeams.opponent2!.id === team.id &&
-								finishedMatchBetweenTeams.winnerSide === "opponent2");
-
-						if (wonTheirMatch) {
-							team.winsAgainstTied++;
-						} else {
-							team.lossesAgainstTied++;
-						}
-					}
-				}
+				matchUps.set(match.opponent1.id, [
+					...opponentOneMatchUps,
+					match.opponent2.id,
+				]);
+				matchUps.set(match.opponent2.id, [
+					...opponentTwoMatchUps,
+					match.opponent1.id,
+				]);
 			}
 
-			placements.push(
-				...teams
-					// client-side the layout's teams can lag behind freshly loaded match data, mostly preview tournaments (prevent crash)
-					.filter((team) => this.tournament.teamById(team.id))
-					.map((team) => ({
-						id: team.id,
-						stats: {
-							setWins: team.setWins,
-							setLosses: team.setLosses,
-							mapWins: team.mapWins,
-							mapLosses: team.mapLosses,
-							winsAgainstTied: team.winsAgainstTied,
-							lossesAgainstTied: team.lossesAgainstTied,
-							opponentSetWinPercentage: this.trackRecordToWinPercentage(
-								team.opponentSets,
-							),
-							opponentMapWinPercentage: this.trackRecordToWinPercentage(
-								team.opponentMaps,
-							),
-						},
-					}))
-					.sort((a, b) => {
-						// TIEBREAKER 0) dropped out teams are last
-						const aDroppedOut = placedLastTeamIds.has(a.id);
-						const bDroppedOut = placedLastTeamIds.has(b.id);
+			if (!match.winnerSide) {
+				// teams yet to finish a match still belong in the standings
+				if (match.opponent1?.id) {
+					updateTeam({ teamId: match.opponent1.id });
+				}
+				if (match.opponent2?.id) {
+					updateTeam({ teamId: match.opponent2.id });
+				}
+				continue;
+			}
 
-						if (aDroppedOut && !bDroppedOut) return 1;
-						if (!aDroppedOut && bDroppedOut) return -1;
+			const winner =
+				match.winnerSide === "opponent1" ? match.opponent1 : match.opponent2;
 
-						const tiebreakerResult = Tiebreakers.compare(
-							this.tiebreakers,
-							a.stats,
-							b.stats,
-						);
-						if (tiebreakerResult !== 0) return tiebreakerResult;
+			const loser =
+				match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
 
-						// initial seeding made by the TO
-						const aSeed = Number(this.tournament.teamById(a.id)?.seed);
-						const bSeed = Number(this.tournament.teamById(b.id)?.seed);
+			if (!winner || !loser) continue;
 
-						if (aSeed < bSeed) return -1;
-						if (aSeed > bSeed) return 1;
-
-						return 0;
-					})
-					.map((team, i) => {
-						return {
-							team: this.tournament.teamById(team.id)!,
-							placement: i + 1,
-							groupId,
-							stats: team.stats,
-						};
-					}),
+			invariant(
+				typeof winner.id === "number" && typeof loser.id === "number",
+				"SwissBracket.standings: winner or loser id not found",
 			);
+
+			// note: score might be missing in the case the set was ended early
+			updateTeam({
+				teamId: winner.id,
+				setWins: 1,
+				setLosses: 0,
+				mapWins: winner.score ?? 0,
+				mapLosses: loser.score ?? 0,
+			});
+			updateTeam({
+				teamId: loser.id,
+				setWins: 0,
+				setLosses: 1,
+				mapWins: loser.score ?? 0,
+				mapLosses: winner.score ?? 0,
+			});
 		}
 
-		const effectiveSeed = this.effectiveSeedResolver();
-		const sorted = placements.sort((a, b) => {
-			if (a.placement < b.placement) return -1;
-			if (a.placement > b.placement) return 1;
+		// BYES
+		for (const match of matches) {
+			if (match.opponent1 && match.opponent2) {
+				continue;
+			}
 
-			const aEffectiveSeed = effectiveSeed(a.team.id);
-			const bEffectiveSeed = effectiveSeed(b.team.id);
-			if (aEffectiveSeed < bEffectiveSeed) return -1;
-			if (aEffectiveSeed > bEffectiveSeed) return 1;
+			const winner = match.opponent1 ? match.opponent1 : match.opponent2;
 
-			if (a.groupId < b.groupId) return -1;
-			if (a.groupId > b.groupId) return 1;
+			if (!winner?.id) {
+				logger.warn("SwissBracket.teamStatsOfGroup: winner not found");
+				continue;
+			}
 
-			return 0;
-		});
+			const round = this.data.round.find(
+				(candidate) => candidate.id === match.roundId,
+			);
+			const mapWins =
+				round?.maps?.type === "PLAY_ALL"
+					? round?.maps?.count
+					: Math.ceil((round?.maps?.count ?? 0) / 2);
+			// preview
+			if (!mapWins) {
+				continue;
+			}
 
-		return this.standingsWithoutNonParticipants(
-			Standings.reNumberPlacements(sorted),
+			updateTeam({
+				teamId: winner.id,
+				setWins: 1,
+				setLosses: 0,
+				mapWins,
+				mapLosses: 0,
+			});
+		}
+
+		// opponent win %
+		for (const team of teams) {
+			const teamsWhoPlayedAgainst = matchUps.get(team.id) ?? [];
+
+			const opponentSets = {
+				wins: 0,
+				losses: 0,
+			};
+			const opponentMaps = {
+				wins: 0,
+				losses: 0,
+			};
+
+			for (const teamId of teamsWhoPlayedAgainst) {
+				const opponent = teams.find((t) => t.id === teamId);
+				if (!opponent) {
+					logger.warn("SwissBracket.teamStatsOfGroup: opponent not found", {
+						teamId,
+					});
+					continue;
+				}
+
+				opponentSets.wins += opponent.setWins;
+				opponentSets.losses += opponent.setLosses;
+
+				opponentMaps.wins += opponent.mapWins;
+				opponentMaps.losses += opponent.mapLosses;
+			}
+
+			updateTeam({
+				teamId: team.id,
+				opponentSets,
+				opponentMaps,
+			});
+		}
+
+		// teams that finished their run keep counting so dropping them only moves the teams below up
+		const droppedOutMidRunTeamIds = new Set(
+			teams
+				.filter(
+					(team) => placedLastTeamIds.has(team.id) && !this.runIsComplete(team),
+				)
+				.map((team) => team.id),
 		);
+
+		// wins against tied, results against teams that dropped out mid-run don't count
+		for (const team of teams) {
+			if (droppedOutMidRunTeamIds.has(team.id)) continue;
+
+			for (const team2 of teams) {
+				if (team.id === team2.id) continue;
+				if (droppedOutMidRunTeamIds.has(team2.id)) continue;
+				if (
+					team.setWins !== team2.setWins ||
+					// check also set losses to account for dropped teams
+					team.setLosses !== team2.setLosses
+				) {
+					continue;
+				}
+
+				// they are different teams and are tied, let's check who won
+
+				const finishedMatchesBetweenTeams = matches.filter((match) => {
+					const isBetweenTeams =
+						(match.opponent1?.id === team.id &&
+							match.opponent2?.id === team2.id) ||
+						(match.opponent1?.id === team2.id &&
+							match.opponent2?.id === team.id);
+
+					const isFinished = Boolean(match.winnerSide);
+
+					return isBetweenTeams && isFinished;
+				});
+
+				for (const finishedMatchBetweenTeams of finishedMatchesBetweenTeams) {
+					const wonTheirMatch =
+						(finishedMatchBetweenTeams.opponent1!.id === team.id &&
+							finishedMatchBetweenTeams.winnerSide === "opponent1") ||
+						(finishedMatchBetweenTeams.opponent2!.id === team.id &&
+							finishedMatchBetweenTeams.winnerSide === "opponent2");
+
+					if (wonTheirMatch) {
+						team.winsAgainstTied++;
+					} else {
+						team.lossesAgainstTied++;
+					}
+				}
+			}
+		}
+
+		return teams.map((team) => ({
+			id: team.id,
+			stats: {
+				setWins: team.setWins,
+				setLosses: team.setLosses,
+				mapWins: team.mapWins,
+				mapLosses: team.mapLosses,
+				winsAgainstTied: team.winsAgainstTied,
+				lossesAgainstTied: team.lossesAgainstTied,
+				opponentSetWinPercentage: this.trackRecordToWinPercentage(
+					team.opponentSets,
+				),
+				opponentMapWinPercentage: this.trackRecordToWinPercentage(
+					team.opponentMaps,
+				),
+			},
+		}));
 	}
 
 	/** Has the team played every round or, with an advance threshold, already advanced or been eliminated? */

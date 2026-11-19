@@ -16,7 +16,7 @@ import * as Progression from "../Progression";
 import type { Tournament } from "../Tournament";
 import type { TournamentDataTeam } from "../Tournament.server";
 import type { BracketMapCounts } from "../toMapList";
-import type * as Tiebreakers from "./Tiebreakers";
+import * as Tiebreakers from "./Tiebreakers";
 
 export interface CreateBracketArgs {
 	id: number;
@@ -54,6 +54,12 @@ export interface Standing {
 		opponentSetWinPercentage?: number;
 		opponentMapWinPercentage?: number;
 	};
+}
+
+/** One team's stats in its group, gathered from the group's matches. */
+interface GroupTeamStats {
+	id: number;
+	stats: NonNullable<Standing["stats"]>;
 }
 
 /** Teams leaving the bracket from a match: the placement tier (or for losers knocked out early, the elimination round) they leave with. */
@@ -472,36 +478,108 @@ export abstract class Bracket {
 	}
 
 	/**
+	 * Standings of a stage played in groups (round robin, swiss): every group's teams ranked by the stats
+	 * `teamStatsOfGroup` gathers from the group's matches (dropped out teams last, then the tiebreakers, then seed),
+	 * merged across the groups like `mergedGroupStandings`.
+	 */
+	protected groupStageStandings({
+		includeUnfinishedGroups,
+		teamStatsOfGroup,
+	}: {
+		includeUnfinishedGroups: boolean;
+		teamStatsOfGroup: (
+			matches: MatchData[],
+			placedLastTeamIds: Set<number>,
+		) => GroupTeamStats[];
+	}): Standing[] {
+		const placedLastTeamIds = this.droppedOutTeamIdsPlacedLast();
+
+		const standings = this.data.group.flatMap((group) => {
+			const matches = this.data.match.filter(
+				(match) => match.groupId === group.id,
+			);
+			if (!includeUnfinishedGroups && !groupIsFinished(matches)) return [];
+
+			return (
+				teamStatsOfGroup(matches, placedLastTeamIds)
+					// client-side the layout's teams can lag behind freshly loaded match data, mostly preview tournaments (prevent crash)
+					.filter((team) => this.tournament.teamById(team.id))
+					.sort((a, b) => {
+						// TIEBREAKER 0) dropped out teams are last
+						const aDroppedOut = placedLastTeamIds.has(a.id);
+						const bDroppedOut = placedLastTeamIds.has(b.id);
+
+						if (aDroppedOut && !bDroppedOut) return 1;
+						if (!aDroppedOut && bDroppedOut) return -1;
+
+						const tiebreakerResult = Tiebreakers.compare(
+							this.tiebreakers,
+							a.stats,
+							b.stats,
+						);
+						if (tiebreakerResult !== 0) return tiebreakerResult;
+
+						// initial seeding made by the TO
+						const aSeed = Number(this.tournament.teamById(a.id)?.seed);
+						const bSeed = Number(this.tournament.teamById(b.id)?.seed);
+
+						if (aSeed < bSeed) return -1;
+						if (aSeed > bSeed) return 1;
+
+						return 0;
+					})
+					.map((team, i) => ({
+						team: this.tournament.teamById(team.id)!,
+						placement: i + 1,
+						groupId: group.id,
+						stats: team.stats,
+					}))
+			);
+		});
+
+		return this.standingsWithoutNonParticipants(
+			Standings.reNumberPlacements(this.sortedAcrossGroups(standings)),
+		);
+	}
+
+	/**
 	 * One elimination group's standings as is. Many are merged like round robin groups: by placement,
 	 * then effective seed, then group. Placements are renumbered across the groups once every team is placed.
 	 */
 	protected mergedGroupStandings(standingsByGroup: Standing[][]): Standing[] {
 		if (standingsByGroup.length <= 1) return standingsByGroup[0] ?? [];
 
-		const effectiveSeed = this.effectiveSeedResolver();
-		const sorted = standingsByGroup
-			.flatMap((standings, groupIdx) =>
+		const sorted = this.sortedAcrossGroups(
+			standingsByGroup.flatMap((standings, groupIdx) =>
 				standings.map((standing) => ({
 					...standing,
 					groupId: this.data.group[groupIdx].id,
 				})),
-			)
-			.sort((a, b) => {
-				if (a.placement !== b.placement) return a.placement - b.placement;
-
-				const aEffectiveSeed = effectiveSeed(a.team.id);
-				const bEffectiveSeed = effectiveSeed(b.team.id);
-				if (aEffectiveSeed !== bEffectiveSeed) {
-					return aEffectiveSeed - bEffectiveSeed;
-				}
-
-				return a.groupId - b.groupId;
-			});
+			),
+		);
 
 		const everyTeamPlaced =
 			sorted.length === this.participantTournamentTeamIds.length;
 
 		return everyTeamPlaced ? Standings.reNumberPlacements(sorted) : sorted;
+	}
+
+	private sortedAcrossGroups<T extends Standing & { groupId: number }>(
+		standings: T[],
+	): T[] {
+		const effectiveSeed = this.effectiveSeedResolver();
+
+		return standings.sort((a, b) => {
+			if (a.placement !== b.placement) return a.placement - b.placement;
+
+			const aEffectiveSeed = effectiveSeed(a.team.id);
+			const bEffectiveSeed = effectiveSeed(b.team.id);
+			if (aEffectiveSeed !== bEffectiveSeed) {
+				return aEffectiveSeed - bEffectiveSeed;
+			}
+
+			return a.groupId - b.groupId;
+		});
 	}
 
 	/**
@@ -808,6 +886,16 @@ export abstract class Bracket {
 	}
 
 	abstract defaultRoundBestOfs(data: BracketData): BracketMapCounts;
+}
+
+/** Every match of the group played out or a BYE. */
+function groupIsFinished(matches: MatchData[]) {
+	return matches.every(
+		(match) =>
+			match.opponent1 === null ||
+			match.opponent2 === null ||
+			Boolean(match.winnerSide),
+	);
 }
 
 /** The side that won, or the side advancing past a BYE once its team is known. Null while undecided. */
