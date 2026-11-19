@@ -5,6 +5,7 @@ import type {
 	StreamAccount,
 	StreamPlatform,
 } from "~/features/live-streams/live-streams-constants";
+import type { TournamentRoundSection } from "~/features/tournament/tournament-constants";
 import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
 import { hasTwitchEnvVars } from "~/modules/twitch/utils.server";
 import {
@@ -30,7 +31,7 @@ interface ArchivedStream {
 
 interface VodMatchRound {
 	stageType: string;
-	groupNumber: number;
+	roundSection: TournamentRoundSection | null;
 	roundNumber: number;
 }
 
@@ -220,7 +221,7 @@ async function fetchAccountArchivedStreams(
 export function vodTimestampOffsetSeconds(match: VodMatchRound) {
 	const isBracketReset =
 		match.stageType === "double_elimination" &&
-		match.groupNumber === 3 &&
+		match.roundSection === "finals" &&
 		match.roundNumber === 2;
 
 	return isBracketReset

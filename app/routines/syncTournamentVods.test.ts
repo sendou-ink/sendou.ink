@@ -344,6 +344,50 @@ describe("syncTournamentVods", () => {
 	});
 });
 
+describe("vodTimestampOffsetSeconds", () => {
+	test.each([
+		{
+			why: "bracket reset",
+			stageType: "double_elimination",
+			roundSection: "finals",
+			roundNumber: 2,
+			expected: 0,
+		},
+		{
+			why: "grand finals",
+			stageType: "double_elimination",
+			roundSection: "finals",
+			roundNumber: 1,
+			expected: 180,
+		},
+		{
+			why: "winners round 2",
+			stageType: "double_elimination",
+			roundSection: "winners",
+			roundNumber: 2,
+			expected: 180,
+		},
+		{
+			why: "losers round 2",
+			stageType: "double_elimination",
+			roundSection: "losers",
+			roundNumber: 2,
+			expected: 180,
+		},
+		{
+			why: "single elimination round 2",
+			stageType: "single_elimination",
+			roundSection: null,
+			roundNumber: 2,
+			expected: 180,
+		},
+	] as const)("$why -> $expected s", async ({ expected, ...match }) => {
+		const { vodTimestampOffsetSeconds } = await import("./syncTournamentVods");
+
+		expect(vodTimestampOffsetSeconds(match)).toBe(expected);
+	});
+});
+
 function twitchVideo({
 	id = "video1",
 	createdAt = new Date((MATCH_START_SECONDS - 600) * 1000).toISOString(),
