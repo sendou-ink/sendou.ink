@@ -445,13 +445,8 @@ function advancingFromSource({
 		return eliminatedInFirstRoundsCount({ bracket, data, source });
 	}
 
-	const maxExplicit = Math.max(...source.placements);
-
 	return R.sumBy(standingsPlacementSizes({ bracket, data }), (size, index) =>
-		source.placements.includes(index + 1) ||
-		(source.rest === true && index + 1 >= maxExplicit)
-			? size
-			: 0,
+		Progression.sourceClaimsPlacement(source, index + 1) ? size : 0,
 	);
 }
 

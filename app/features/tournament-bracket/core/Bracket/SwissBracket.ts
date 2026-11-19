@@ -1,4 +1,3 @@
-import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import type {
@@ -9,23 +8,17 @@ import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { cutToNDecimalPlaces } from "../../../../utils/number";
 import { calculateTeamStatus } from "../engine/swiss/team-status";
+import * as Progression from "../Progression";
 import { type BracketMapCounts, roundSetKey } from "../toMapList";
 import { Bracket, type Standing, type TeamTrackRecord } from "./Bracket";
 import * as Tiebreakers from "./Tiebreakers";
 
 export class SwissBracket extends Bracket {
-	source({
-		placements,
-		advanceThreshold,
-		rest,
-	}: {
-		placements: number[];
-		advanceThreshold?: number;
-		rest?: boolean;
-	}): {
+	source({ placements, rest }: { placements: number[]; rest?: boolean }): {
 		relevantMatchesFinished: boolean;
 		teams: number[];
 	} {
+		const advanceThreshold = this.settings?.advanceThreshold;
 		invariant(
 			advanceThreshold || placements.length > 0,
 			"Placements or advanceThreshold required",
@@ -56,21 +49,17 @@ export class SwissBracket extends Bracket {
 			};
 		}
 
-		const uniquePlacements = R.unique(standings.map((s) => s.placement));
-
-		// 1,3,5 -> 1,2,3 e.g.
-		const placementNormalized = (p: number) => {
-			return uniquePlacements.indexOf(p) + 1;
-		};
-
-		const maxExplicit = Math.max(...placements);
-		const matchesPlacement = (p: number) =>
-			placements.includes(p) || (rest === true && p >= maxExplicit);
+		const placementNormalized = this.placementNormalizer(standings);
 
 		return {
 			relevantMatchesFinished,
 			teams: standings
-				.filter((s) => matchesPlacement(placementNormalized(s.placement)))
+				.filter((s) =>
+					Progression.sourceClaimsPlacement(
+						{ placements, rest },
+						placementNormalized(s.placement),
+					),
+				)
 				.map((s) => s.team.id),
 		};
 	}

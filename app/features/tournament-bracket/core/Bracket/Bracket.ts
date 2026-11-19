@@ -788,11 +788,7 @@ export abstract class Bracket {
 		);
 	}
 
-	abstract source(options: {
-		placements: number[];
-		advanceThreshold?: number;
-		rest?: boolean;
-	}): {
+	abstract source(options: { placements: number[]; rest?: boolean }): {
 		relevantMatchesFinished: boolean;
 		teams: number[];
 	};
@@ -812,13 +808,12 @@ export abstract class Bracket {
 			standings.length === this.participantTournamentTeamIds.length &&
 			this.participantTournamentTeamIds.length > 0;
 
-		const maxExplicit = Math.max(...placements);
 		const matchesPlacement = (placement: number) =>
-			placements.includes(placement) || (rest && placement >= maxExplicit);
+			Progression.sourceClaimsPlacement({ placements, rest }, placement);
 
-		const uniquePlacements = R.unique(standings.map((s) => s.placement));
+		const consecutivePlacement = this.placementNormalizer(standings);
 		const placementNormalized = (placement: number) =>
-			everyTeamPlaced ? uniquePlacements.indexOf(placement) + 1 : placement;
+			everyTeamPlaced ? consecutivePlacement(placement) : placement;
 
 		const exits = this.matchExits();
 		const exitTierByTeamId = this.exitTierByTeamId(exits);
@@ -842,6 +837,13 @@ export abstract class Bracket {
 				.filter((s) => matchesPlacement(tierOf(s)))
 				.map((s) => s.team.id),
 		};
+	}
+
+	/** Maps the raw placements of the standings to consecutive ones e.g. 1,3,5 -> 1,2,3 */
+	protected placementNormalizer(standings: Standing[]) {
+		const uniquePlacements = R.unique(standings.map((s) => s.placement));
+
+		return (placement: number) => uniquePlacements.indexOf(placement) + 1;
 	}
 
 	/** Tier of the decided match each team left the bracket from, keyed by tournament team id. */

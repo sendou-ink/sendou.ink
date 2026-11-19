@@ -1328,7 +1328,11 @@ export function destinationByPlacement({
 	return destination ?? null;
 }
 
-function sourceClaimsPlacement(source: DBSource, placement: number): boolean {
+/** Whether the source takes the team at `placement`: listed explicitly, or covered by `rest` (the last listed placement and everything below it). */
+export function sourceClaimsPlacement(
+	source: Pick<DBSource, "placements" | "rest">,
+	placement: number,
+): boolean {
 	if (source.placements.includes(placement)) return true;
 	if (source.rest && source.placements.length > 0 && placement > 0) {
 		return placement >= Math.max(...source.placements);

@@ -5,6 +5,7 @@ import type {
 	MatchData,
 } from "~/features/tournament-bracket/core/engine/types";
 import { invariant } from "~/utils/invariant";
+import * as Progression from "../Progression";
 import { type BracketMapCounts, roundSetKey } from "../toMapList";
 import { Bracket, type Standing } from "./Bracket";
 import * as Tiebreakers from "./Tiebreakers";
@@ -26,10 +27,6 @@ export class RoundRobinBracket extends Bracket {
 		const relevantMatchesFinished =
 			standings.length === this.participantTournamentTeamIds.length;
 
-		const maxExplicit = Math.max(...placements);
-		const matchesPlacement = (p: number) =>
-			placements.includes(p) || (rest === true && p >= maxExplicit);
-
 		if (this.settings?.hasAbDivisions) {
 			return {
 				relevantMatchesFinished,
@@ -41,17 +38,17 @@ export class RoundRobinBracket extends Bracket {
 			};
 		}
 
-		const uniquePlacements = R.unique(standings.map((s) => s.placement));
-
-		// 1,3,5 -> 1,2,3 e.g.
-		const placementNormalized = (p: number) => {
-			return uniquePlacements.indexOf(p) + 1;
-		};
+		const placementNormalized = this.placementNormalizer(standings);
 
 		return {
 			relevantMatchesFinished,
 			teams: standings
-				.filter((s) => matchesPlacement(placementNormalized(s.placement)))
+				.filter((s) =>
+					Progression.sourceClaimsPlacement(
+						{ placements, rest },
+						placementNormalized(s.placement),
+					),
+				)
 				.map((s) => s.team.id),
 		};
 	}
@@ -66,23 +63,18 @@ export class RoundRobinBracket extends Bracket {
 				.map((s) => s.groupId)
 				.filter((id): id is number => typeof id === "number"),
 		);
-		const maxExplicit = Math.max(...placements);
 		const teams: number[] = [];
 		for (const groupId of groupIds) {
 			for (const division of [0, 1] as const) {
 				const divisionStandings = standings.filter(
 					(s) => s.groupId === groupId && s.team.abDivision === division,
 				);
-				const maxPlacement = rest ? divisionStandings.length : maxExplicit;
-				for (let placement = 1; placement <= maxPlacement; placement++) {
+				for (const [idx, standing] of divisionStandings.entries()) {
 					if (
-						!placements.includes(placement) &&
-						!(rest && placement >= maxExplicit)
+						Progression.sourceClaimsPlacement({ placements, rest }, idx + 1)
 					) {
-						continue;
+						teams.push(standing.team.id);
 					}
-					const standing = divisionStandings[placement - 1];
-					if (standing) teams.push(standing.team.id);
 				}
 			}
 		}

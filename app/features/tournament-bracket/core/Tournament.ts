@@ -476,7 +476,6 @@ export class Tournament {
 			const { teams: sourcedTeams, relevantMatchesFinished } =
 				sourceBracket.source({
 					placements: source.placements,
-					advanceThreshold: sourceBracket.settings?.advanceThreshold,
 					rest: source.rest,
 				});
 			if (!relevantMatchesFinished) {
