@@ -53,21 +53,6 @@ import { calendarEventSorter } from "./calendar-utils";
 
 const RECENT_TOURNAMENTS_SHOWN = 10;
 
-function hasBadge(eb: ExpressionBuilder<DB, "CalendarEventDate">) {
-	return eb
-		.exists(
-			eb
-				.selectFrom("CalendarEventBadge")
-				.select("CalendarEventBadge.eventId")
-				.whereRef(
-					"CalendarEventBadge.eventId",
-					"=",
-					"CalendarEventDate.eventId",
-				),
-		)
-		.as("hasBadge");
-}
-
 const withMapPool = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
 	return jsonArrayFrom(
 		eb
@@ -342,7 +327,6 @@ export async function findById(
 			"CalendarEventDate.startsAt",
 			"CalendarEventDate.eventId",
 			...commonUserSelect(eb, { idAs: "authorId" }),
-			hasBadge(eb),
 			tournamentOrganization(eb.ref("CalendarEvent.organizationId")).as(
 				"organization",
 			),
@@ -563,8 +547,6 @@ type CreateArgs = Pick<
 	bracketProgression: TournamentSettings["bracketProgression"] | null;
 	minMembersPerTeam?: number;
 	maxMembersPerTeam?: number;
-	teamsPerGroup?: number;
-	thirdPlaceMatch?: boolean;
 	requireInGameNames?: boolean;
 	isRanked?: boolean;
 	isTest?: boolean;
@@ -577,11 +559,7 @@ type CreateArgs = Pick<
 	regClosesAt?: number;
 	rules: string | null;
 	tournamentToCopyId?: number | null;
-	swissGroupCount?: number;
-	swissRoundCount?: number;
-	avatarFileName?: string;
 	avatarImgId?: number;
-	autoValidateAvatar?: boolean;
 };
 export async function insert(args: CreateArgs) {
 	const copiedStaff = args.tournamentToCopyId
@@ -599,8 +577,6 @@ export async function insert(args: CreateArgs) {
 			invariant(args.bracketProgression, "Expected bracketProgression");
 			const settings: Tables["Tournament"]["settings"] = {
 				bracketProgression: args.bracketProgression,
-				teamsPerGroup: args.teamsPerGroup,
-				thirdPlaceMatch: args.thirdPlaceMatch,
 				isRanked: args.isRanked,
 				isTest: args.isTest,
 				isLeague: args.isLeague,
@@ -613,13 +589,6 @@ export async function insert(args: CreateArgs) {
 				requireInGameNames: args.requireInGameNames,
 				minMembersPerTeam: args.minMembersPerTeam,
 				maxMembersPerTeam: args.maxMembersPerTeam,
-				swiss:
-					args.swissGroupCount && args.swissRoundCount
-						? {
-								groupCount: args.swissGroupCount,
-								roundCount: args.swissRoundCount,
-							}
-						: undefined,
 				teamPick: teamPickSettings(args),
 			};
 
@@ -649,13 +618,6 @@ export async function insert(args: CreateArgs) {
 				.execute();
 		}
 
-		const avatarImgId = args.avatarFileName
-			? await insertSubmittedImage(
-					{ avatarFileName: args.avatarFileName, userId: args.authorId },
-					trx,
-				)
-			: null;
-
 		const { id: eventId } = await trx
 			.insertInto("CalendarEvent")
 			.values({
@@ -665,7 +627,7 @@ export async function insert(args: CreateArgs) {
 				description: args.description,
 				discordInviteCode: args.discordInviteCode,
 				bracketUrl: args.bracketUrl,
-				avatarImgId: args.avatarImgId ?? avatarImgId,
+				avatarImgId: args.avatarImgId ?? null,
 				organizationId: args.organizationId,
 				hidden: toDBBoolean(Boolean(args.isTest || args.isDraft)),
 				tournamentId,
@@ -684,35 +646,11 @@ export async function insert(args: CreateArgs) {
 	});
 }
 
-async function insertSubmittedImage(
-	{ avatarFileName, userId }: { avatarFileName: string; userId: number },
-	trx: Transaction<DB>,
-) {
-	const result = await trx
-		.insertInto("UnvalidatedUserSubmittedImage")
-		.values({
-			url: avatarFileName,
-			validatedAt: databaseTimestampNow(),
-			submitterUserId: userId,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	return result.id;
-}
-
 type UpdateArgs = Omit<CreateArgs, "createTournament" | "isFullTournament"> & {
 	eventId: number;
 };
 export async function update(args: UpdateArgs) {
 	return db.transaction().execute(async (trx) => {
-		const avatarImgId = args.avatarFileName
-			? await insertSubmittedImage(
-					{ avatarFileName: args.avatarFileName, userId: args.authorId },
-					trx,
-				)
-			: null;
-
 		const { tournamentId } = await trx
 			.updateTable("CalendarEvent")
 			.set({
@@ -721,7 +659,7 @@ export async function update(args: UpdateArgs) {
 				description: args.description,
 				discordInviteCode: args.discordInviteCode,
 				bracketUrl: args.bracketUrl,
-				avatarImgId: args.avatarImgId ?? avatarImgId,
+				avatarImgId: args.avatarImgId ?? null,
 				organizationId: args.organizationId,
 				trophyId: args.trophyId ?? null,
 			})
@@ -790,8 +728,6 @@ async function updateTournamentTables(
 
 	const settings: Tables["Tournament"]["settings"] = {
 		bracketProgression: args.bracketProgression,
-		teamsPerGroup: args.teamsPerGroup,
-		thirdPlaceMatch: args.thirdPlaceMatch,
 		isRanked: args.isRanked,
 		isTest: existingSettings.isTest, // this one is not editable after creation
 		isLeague: args.isLeague,
@@ -804,13 +740,6 @@ async function updateTournamentTables(
 		requireInGameNames: args.requireInGameNames,
 		minMembersPerTeam: args.minMembersPerTeam,
 		maxMembersPerTeam: args.maxMembersPerTeam,
-		swiss:
-			args.swissGroupCount && args.swissRoundCount
-				? {
-						groupCount: args.swissGroupCount,
-						roundCount: args.swissRoundCount,
-					}
-				: undefined,
 		teamPick,
 	};
 

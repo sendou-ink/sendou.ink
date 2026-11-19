@@ -140,7 +140,7 @@ const ROUND_ROBIN_TO_SINGLE_ELIMINATION: Progression = [
 		type: "round_robin",
 		name: "Groups Stage",
 		requiresCheckIn: false,
-		settings: {},
+		settings: { teamsPerGroup: 4 },
 	},
 	{
 		type: "single_elimination",
@@ -325,7 +325,7 @@ async function seedInTheZone({
 		name,
 		authorId: users.adminId,
 		organizationId: organizations[0]?.id,
-		avatarFileName: "in-the-zone.png",
+		avatarImgId: await validatedLogoImgId("in-the-zone.png", users.adminId),
 		startTimes: [startsAt],
 		mapPickingStyle: "TO",
 		mapPoolMaps: toSetMapPool(),
@@ -384,7 +384,7 @@ async function seedPaddlingPool({ users, rosters }: Ctx) {
 		{
 			name: nameFor("Paddling Pool"),
 			authorId: users.adminId,
-			avatarFileName: "paddling-pool.png",
+			avatarImgId: await validatedLogoImgId("paddling-pool.png", users.adminId),
 			startTimes: [dateToDatabaseTimestamp(hoursAgo(1))],
 			mapPickingStyle: "AUTO",
 			teamPick: PADDLING_POOL_TEAM_PICK,
@@ -422,8 +422,6 @@ async function seedLowInk({ users, rosters }: Ctx) {
 		mapPickingStyle: "TO",
 		mapPoolMaps: toSetMapPool(),
 		bracketProgression: SWISS_TO_SINGLE_ELIMINATION,
-		swissGroupCount: 1,
-		swissRoundCount: 4,
 	});
 
 	const teamRosters = rosters.take({
@@ -446,12 +444,11 @@ async function seedSwimOrSink({ users, rosters }: Ctx) {
 	const tournament = await TournamentFactory.create({
 		name: nameFor("Swim or Sink"),
 		authorId: users.adminId,
-		avatarFileName: "swim-or-sink.png",
+		avatarImgId: await validatedLogoImgId("swim-or-sink.png", users.adminId),
 		startTimes: [dateToDatabaseTimestamp(hoursAgo(1))],
 		mapPickingStyle: "TO",
 		mapPoolMaps: toSetMapPool(),
 		bracketProgression: ROUND_ROBIN_TO_SINGLE_ELIMINATION,
-		teamsPerGroup: 4,
 	});
 
 	const teamRosters = rosters.take({ teamCount: 12, teamSize: 4 });
@@ -858,7 +855,6 @@ async function seedHistoricalTournaments({
 				mapPickingStyle: "AUTO",
 				teamPick,
 				bracketProgression: progression,
-				teamsPerGroup: 4,
 				isRanked: isRecent,
 				badges: badgeId ? [badgeId] : [],
 				trophyId: trophies.ids[i % trophies.ids.length],
@@ -948,6 +944,15 @@ async function seriesLogoImgId(
 		{ isValidated: true },
 	);
 	imgIds.set(stem.name, image.id);
+
+	return image.id;
+}
+
+async function validatedLogoImgId(url: string, submitterUserId: number) {
+	const image = await ImageFactory.create(
+		{ submitterUserId, url },
+		{ isValidated: true },
+	);
 
 	return image.id;
 }

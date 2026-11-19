@@ -12,7 +12,6 @@ export const loader = async (args: LoaderFunctionArgs) => {
 	});
 	const event = notFoundIfNullish(
 		await CalendarRepository.findById(params.id, {
-			includeBadgePrizes: true,
 			includeMapPool: true,
 		}),
 	);
