@@ -219,7 +219,7 @@ function Run({
 
 	return (
 		<section className={styles.section}>
-			<SectionTitle>{t("broadcast:overlay.runSoFar")}</SectionTitle>
+			<SectionTitle>{t("broadcast:overlay.tournamentPath")}</SectionTitle>
 			{sets.length === 0 ? (
 				<p className={styles.empty}>{t("broadcast:overlay.noSetsYet")}</p>
 			) : (
