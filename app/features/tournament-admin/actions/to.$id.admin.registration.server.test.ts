@@ -1,9 +1,11 @@
 import { addDays } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
+import * as SavedCalendarEventFactory from "~/db/seed/factories/SavedCalendarEventFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -89,5 +91,48 @@ describe("admin registration action", () => {
 			memberIds: group.members.map((member) => member.id).sort((a, b) => a - b),
 		}));
 		expect(groups).toEqual([{ isPlaceholder: false, memberIds: rosterIds }]);
+	});
+
+	test("adding a member unsaves the tournament for them", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId(),
+			startTimes: [dateToDatabaseTimestamp(addDays(new Date(), 7))],
+		});
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [teamOwnerId()],
+			team: { name: "Team", prefersNotToHost: 0, teamId: null },
+		});
+		await SavedCalendarEventFactory.create({
+			userId: soloPlayerId(),
+			tournamentId: tournament.id,
+		});
+
+		const response = await adminRegistration(
+			{
+				_action: "UPSERT_REGISTRATION",
+				tournamentTeamId: team.id,
+				linkedTeam: false,
+				pickUpName: "Team",
+				logo: null,
+				teamId: null,
+				ownerId: String(teamOwnerId()),
+				members: [teamOwnerId(), soloPlayerId()].map((userId) => ({
+					userId,
+					inGameName: null,
+					tournamentName: null,
+				})),
+				mapPool: [],
+			} as any,
+			{ user: organizerId(), params: { id: String(tournament.id) } },
+		);
+		expect(response.headers.get("Location")).not.toContain("__error");
+
+		expect(
+			await SavedCalendarEventRepository.isSaved({
+				userId: soloPlayerId(),
+				tournamentId: tournament.id,
+			}),
+		).toBe(false);
 	});
 });

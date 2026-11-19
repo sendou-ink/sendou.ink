@@ -1,9 +1,8 @@
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
-import { notify } from "~/features/notifications/core/notify.server";
 import * as TeamEligibility from "~/features/tournament/core/TeamEligibility.server";
+import * as TeamJoin from "~/features/tournament/core/TeamJoin.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
@@ -14,7 +13,6 @@ import {
 	tournamentChannel,
 	tournamentTeamChannel,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
-import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
@@ -60,7 +58,7 @@ export const action = defineAction(
 				skip: ["ORG_BANNED"],
 			});
 
-			const leftLfgUserIds = await TournamentLFGRepository.leaveLfg({
+			const leftLfgUserIds = await TeamJoin.beforeJoin({
 				userId,
 				tournamentId,
 			});
@@ -86,29 +84,11 @@ export const action = defineAction(
 			]);
 			errorToastIfFalsy(joinedUserIds, "User is already in a team");
 
-			ShowcaseTournaments.addToCached({
-				tournamentId,
-				type: "participant",
-				userId,
+			await TeamJoin.afterJoined({
+				tournament,
+				userIds: [userId],
+				addedBy: { username: user.username, team },
 			});
-			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
-
-			if (!tournament.isTest && !tournament.isDraft) {
-				notify({
-					userIds: [userId],
-					notification: {
-						type: "TO_ADDED_TO_TEAM",
-						pictureUrl: team.logoUrl ?? tournament.ctx.logoUrl,
-						meta: {
-							adderUsername: user.username,
-							teamName: team.name,
-							tournamentId,
-							tournamentName: tournament.ctx.name,
-							tournamentTeamId: team.id,
-						},
-					},
-				});
-			}
 
 			clearTournamentDataCache(tournamentId);
 

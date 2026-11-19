@@ -1,6 +1,5 @@
 import { redirect } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
@@ -11,13 +10,13 @@ import {
 	tournamentChannel,
 	tournamentTeamChannel,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
-import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import { defineAction } from "~/form/define-action.server";
 import { invariant } from "~/utils/invariant";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { tournamentPage, tournamentRegisterPage } from "~/utils/urls";
 import * as TeamEligibility from "../core/TeamEligibility.server";
+import * as TeamJoin from "../core/TeamJoin.server";
 import { tournamentJoinSearchParams } from "../tournament-search-params";
 import { validateCanJoinTeam } from "../tournament-utils";
 
@@ -63,7 +62,7 @@ export const action = defineAction(async ({ params, url }) => {
 		"Cannot join this team or invite code is invalid",
 	);
 
-	const leftLfgUserIds = await TournamentLFGRepository.leaveLfg({
+	const leftLfgUserIds = await TeamJoin.beforeJoin({
 		userId: user.id,
 		tournamentId,
 	});
@@ -81,12 +80,7 @@ export const action = defineAction(async ({ params, url }) => {
 		"Leave your current team before joining another",
 	);
 
-	ShowcaseTournaments.addToCached({
-		tournamentId,
-		type: "participant",
-		userId: user.id,
-	});
-	await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+	await TeamJoin.afterJoined({ tournament, userIds: [user.id] });
 
 	clearTournamentDataCache(tournamentId);
 

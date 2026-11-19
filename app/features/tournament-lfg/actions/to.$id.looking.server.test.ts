@@ -1,9 +1,11 @@
 import { addDays, subDays } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
+import * as SavedCalendarEventFactory from "~/db/seed/factories/SavedCalendarEventFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
@@ -171,6 +173,42 @@ describe("Tournament LFG ACCEPT", () => {
 		);
 
 		expect(await memberCountsOfGroups(tournament.id)).toEqual([1, 1]);
+	});
+
+	test("merging a placeholder into a registered team unsaves the tournament only for the players who joined", async () => {
+		const tournament = await createOpenTournament();
+		const registeredTeam = await TournamentTeamFactory.create(
+			{
+				tournamentId: tournament.id,
+				memberUserIds: [users.id(1), users.id(2)],
+			},
+			{ isLooking: true },
+		);
+		const placeholder = await TournamentLFGTeamFactory.create(
+			{ tournamentId: tournament.id, userId: users.id(3) },
+			{ likedTeamIds: [registeredTeam.id] },
+		);
+		for (const userId of [users.id(1), users.id(3)]) {
+			await SavedCalendarEventFactory.create({
+				userId,
+				tournamentId: tournament.id,
+			});
+		}
+
+		await accept({
+			tournamentId: tournament.id,
+			userId: users.id(1),
+			targetTeamId: placeholder.id,
+		});
+
+		const isSaved = (userId: number) =>
+			SavedCalendarEventRepository.isSaved({
+				userId,
+				tournamentId: tournament.id,
+			});
+		expect(await memberCountsOfGroups(tournament.id)).toEqual([3]);
+		expect(await isSaved(users.id(3))).toBe(false);
+		expect(await isSaved(users.id(1))).toBe(true);
 	});
 
 	test("does not merge away a team that has checked in", async () => {

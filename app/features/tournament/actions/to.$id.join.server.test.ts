@@ -1,9 +1,13 @@
+import { addDays } from "date-fns";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import * as SavedCalendarEventFactory from "~/db/seed/factories/SavedCalendarEventFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import { tournamentJoinSearchParams } from "../tournament-search-params";
 import { action as joinAction } from "./to.$id.join.server";
@@ -51,6 +55,35 @@ const subId = () => users.id(9);
 describe("join action", () => {
 	beforeEach(async () => {
 		await users.create(9);
+	});
+
+	test("joining a team unsaves the tournament", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: users.id(1),
+			startTimes: [dateToDatabaseTimestamp(addDays(new Date(), 7))],
+		});
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: users.ids(4),
+		});
+		await SavedCalendarEventFactory.create({
+			userId: subId(),
+			tournamentId: tournament.id,
+		});
+
+		const response = await joinWithInviteOf({
+			tournamentId: tournament.id,
+			teamId: team.id,
+			userId: subId(),
+		});
+
+		expect(response.status).toBe(302);
+		expect(
+			await SavedCalendarEventRepository.isSaved({
+				userId: subId(),
+				tournamentId: tournament.id,
+			}),
+		).toBe(false);
 	});
 
 	test("a player whose team never checked in can sub for another team after the start", async () => {

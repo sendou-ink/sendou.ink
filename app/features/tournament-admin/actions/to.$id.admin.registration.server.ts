@@ -3,8 +3,8 @@ import type * as v from "valibot";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { notify } from "~/features/notifications/core/notify.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import * as TeamJoin from "~/features/tournament/core/TeamJoin.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
@@ -15,7 +15,6 @@ import {
 	tournamentChannel,
 	tournamentTeamChannel,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
-import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import { defineAction } from "~/form/define-action.server";
 import type { ResolvedImages } from "~/form/parse.server";
@@ -125,13 +124,9 @@ async function upsertRegistration(
 			? new MapPool(data.mapPool)
 			: undefined;
 
-	// before joining, otherwise the user's first looking group could be the team they join
 	for (const addId of membersToAdd) {
 		ChatSystemMessage.notifyRoomsChanged(
-			await TournamentLFGRepository.leaveLfg({
-				userId: addId,
-				tournamentId,
-			}),
+			await TeamJoin.beforeJoin({ userId: addId, tournamentId }),
 		);
 	}
 
@@ -159,13 +154,6 @@ async function upsertRegistration(
 		);
 	}
 
-	for (const addId of membersToAdd) {
-		ShowcaseTournaments.addToCached({
-			tournamentId,
-			type: "participant",
-			userId: addId,
-		});
-	}
 	for (const removeId of membersToRemove) {
 		ShowcaseTournaments.removeFromCached({
 			tournamentId,
@@ -173,31 +161,24 @@ async function upsertRegistration(
 			userId: removeId,
 		});
 	}
-
-	if (
-		team &&
-		membersToAdd.length > 0 &&
-		!tournament.isTest &&
-		!tournament.isDraft
-	) {
-		notify({
-			userIds: membersToAdd,
-			notification: {
-				type: "TO_ADDED_TO_TEAM",
-				pictureUrl:
-					team.team?.logoUrl ?? team.pickupAvatarUrl ?? tournament.ctx.logoUrl,
-				meta: {
-					adderUsername: user.username,
-					teamName: name,
-					tournamentId,
-					tournamentName: tournament.ctx.name,
-					tournamentTeamId: team.id,
-				},
-			},
-		});
+	if (membersToRemove.length > 0) {
+		await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 	}
 
-	await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+	await TeamJoin.afterJoined({
+		tournament,
+		userIds: membersToAdd,
+		addedBy: team
+			? {
+					username: user.username,
+					team: {
+						id: team.id,
+						name,
+						logoUrl: team.team?.logoUrl ?? team.pickupAvatarUrl,
+					},
+				}
+			: undefined,
+	});
 
 	clearTournamentDataCache(tournamentId);
 

@@ -1,8 +1,8 @@
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as TeamEligibility from "~/features/tournament/core/TeamEligibility.server";
+import * as TeamJoin from "~/features/tournament/core/TeamJoin.server";
 import { requireNotBannedByOrganization } from "~/features/tournament/tournament-utils.server";
 import {
 	clearTournamentDataCache,
@@ -214,7 +214,15 @@ export const action = defineAction(
 				});
 				ChatSystemMessage.notifyRoomsChanged(roomsChangedUserIds);
 
-				await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+				// the merged team is a registered one, so placeholder groups' members join a team only now
+				await TeamJoin.afterJoined({
+					tournament,
+					userIds: [ownGroup, theirGroup].flatMap((group) =>
+						group.id === surviving && !group.isPlaceholder
+							? []
+							: group.members.map((member) => member.id),
+					),
+				});
 
 				notify({
 					userIds: theirGroup.members.map((m) => m.id),
