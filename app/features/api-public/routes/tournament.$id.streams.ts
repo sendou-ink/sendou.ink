@@ -1,12 +1,7 @@
-import { sql } from "kysely";
 import type { LoaderFunctionArgs } from "react-router";
 import { db } from "~/db/sql";
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
-import {
-	isCastLiveStreamOf,
-	isLiveStreamOf,
-	jsonArrayFrom,
-} from "~/utils/kysely.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
 import type { GetTournamentStreamsResponse } from "../schema";
@@ -17,69 +12,33 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: idObject,
 	});
 
-	const tournament = notFoundIfNullish(
+	notFoundIfNullish(
 		await db
 			.selectFrom("Tournament")
-			.select([
-				jsonArrayFrom(
-					db
-						.selectFrom("TournamentTeam")
-						.innerJoin(
-							"TournamentTeamMember",
-							"TournamentTeamMember.tournamentTeamId",
-							"TournamentTeam.id",
-						)
-						.innerJoin("User", "User.id", "TournamentTeamMember.userId")
-						.innerJoin("LiveStream", (join) => join.on(isLiveStreamOf()))
-						.select([
-							"User.id as userId",
-							"LiveStream.platform",
-							"LiveStream.account",
-							"LiveStream.videoId",
-							"LiveStream.viewerCount",
-						])
-						.where("TournamentTeam.tournamentId", "=", tournamentId)
-						.groupBy("LiveStream.id"),
-				).as("playerStreams"),
-				jsonArrayFrom(
-					db
-						.selectFrom("LiveStream")
-						.select([
-							"LiveStream.platform",
-							"LiveStream.account",
-							"LiveStream.videoId",
-							"LiveStream.viewerCount",
-						])
-						.where(isCastLiveStreamOf(sql.ref("Tournament.castAccounts"))),
-				).as("castStreams"),
-			])
+			.select("Tournament.id")
 			.where("Tournament.id", "=", tournamentId)
 			.executeTakeFirst(),
 	);
 
-	const playerStreams: GetTournamentStreamsResponse =
-		tournament.playerStreams.map((stream) => ({
-			type: "PLAYER",
+	const { participantStreams, castStreams } =
+		await TournamentRepository.findStreamsByTournamentId(tournamentId);
+
+	const result: GetTournamentStreamsResponse = [
+		...participantStreams.map((stream) => ({
+			type: "PLAYER" as const,
 			userId: stream.userId,
 			platform: stream.platform,
 			channelId: stream.account,
 			url: LiveStream.url(stream),
 			viewerCount: stream.viewerCount,
-		}));
-
-	const castStreams: GetTournamentStreamsResponse = tournament.castStreams.map(
-		(stream) => ({
-			type: "CAST",
+		})),
+		...castStreams.map((stream) => ({
+			type: "CAST" as const,
 			platform: stream.platform,
 			channelId: stream.account,
 			url: LiveStream.url(stream),
 			viewerCount: stream.viewerCount,
-		}),
-	);
-
-	const result: GetTournamentStreamsResponse = [
-		...playerStreams,
-		...castStreams,
+		})),
 	].sort((a, b) => b.viewerCount - a.viewerCount);
 
 	return Response.json(result);
