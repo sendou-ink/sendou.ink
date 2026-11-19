@@ -1,6 +1,8 @@
 const config = {
 	tags: ["-lintignore"],
 	ignoreBinaries: ["ffmpeg", "ffprobe", "yt-dlp"],
+	// XXX: remove once the planner imports its new core (Konva canvas step of the map planner epic)
+	ignore: ["app/features/map-planner/core/Plan*.ts"],
 	astro: {
 		config: ["docs/site/astro.config.ts"],
 		entry: [
