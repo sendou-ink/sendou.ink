@@ -154,11 +154,7 @@ export async function getSendouQSidebarStreams(): Promise<
 		});
 	}
 
-	return entries.sort((a, b) => {
-		const aTierIndex = getTierIndexFromSubtitle(a.sidebarStream.subtitle);
-		const bTierIndex = getTierIndexFromSubtitle(b.sidebarStream.subtitle);
-		return aTierIndex - bTierIndex;
-	});
+	return entries;
 }
 
 function calculateAverageTierForMatch(
@@ -185,12 +181,4 @@ function calculateAverageTierForMatch(
 	const tierName = TIERS[baseTierIndex]?.name ?? "IRON";
 
 	return { name: tierName, isPlus };
-}
-
-function getTierIndexFromSubtitle(subtitle: string): number {
-	const tierName = subtitle.replace("+", "");
-	const isPlus = subtitle.endsWith("+");
-	const baseIndex = TIERS.findIndex((t) => t.name === tierName);
-	if (baseIndex === -1) return 999;
-	return baseIndex * 2 + (isPlus ? 0 : 1);
 }
