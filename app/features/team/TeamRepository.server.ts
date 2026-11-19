@@ -77,6 +77,17 @@ export function findById(teamId: number) {
 		.executeTakeFirst();
 }
 
+/** The team the user has set as their main team, if any. */
+export function findMainTeamByUserId(userId: number) {
+	return db
+		.selectFrom("TeamMemberWithSecondary")
+		.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
+		.select(["Team.id", "Team.name"])
+		.where("TeamMemberWithSecondary.userId", "=", userId)
+		.where("TeamMemberWithSecondary.isMainTeam", "=", 1)
+		.executeTakeFirst();
+}
+
 export function findAllMemberOfByUserId(userId: number) {
 	return db
 		.selectFrom("TeamMemberWithSecondary")

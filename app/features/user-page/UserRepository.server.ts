@@ -205,25 +205,18 @@ export function findLayoutDataById(userId: number, loggedInUserId?: number) {
 		.executeTakeFirst();
 }
 
-export async function findProfileByUserId(userId: number) {
-	const row = await db
+/** The fields the edit-profile form prefills. */
+export function findEditableProfileById(userId: number) {
+	return db
 		.selectFrom("User")
 		.where("User.id", "=", userId)
-		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.select(({ eb }) => [
-			"User.twitch",
-			"User.youtubeId",
-			"User.bsky",
 			"User.country",
 			"User.inGameName",
 			"User.customName",
-			"User.discordName",
-			"User.discordUniqueName",
+			"User.pronouns",
 			"User.favoriteTrophyIds",
 			"User.hiddenTrophyIds",
-			"User.patronTier",
-			"PlusTier.tier as plusTier",
-			"User.pronouns",
 			"User.customAvatarImgId",
 			concatUserSubmittedImagePrefix(
 				eb
@@ -232,41 +225,8 @@ export async function findProfileByUserId(userId: number) {
 					.whereRef("UserSubmittedImage.id", "=", "User.customAvatarImgId")
 					.$asScalar(),
 			).as("customAvatarUrl"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TeamMemberWithSecondary")
-					.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
-					.leftJoin(
-						"UserSubmittedImage",
-						"UserSubmittedImage.id",
-						"Team.avatarImgId",
-					)
-					.select((teamEb) => [
-						"Team.name",
-						"Team.customUrl",
-						"Team.id",
-						"TeamMemberWithSecondary.isMainTeam",
-						"TeamMemberWithSecondary.role as userTeamRole",
-						"TeamMemberWithSecondary.customRole as userTeamCustomRole",
-						concatUserSubmittedImagePrefix(
-							teamEb.ref("UserSubmittedImage.url"),
-						).as("avatarUrl"),
-					])
-					.whereRef("TeamMemberWithSecondary.userId", "=", "User.id"),
-			).as("teams"),
 		])
 		.executeTakeFirst();
-
-	if (!row) {
-		return null;
-	}
-
-	return {
-		...row,
-		team: row.teams.find((t) => t.isMainTeam),
-		secondaryTeams: row.teams.filter((t) => !t.isMainTeam),
-		teams: undefined,
-	};
 }
 
 export async function upsertWidgets(

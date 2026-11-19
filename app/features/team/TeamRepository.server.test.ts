@@ -175,6 +175,36 @@ describe("findAllByMemberUserId", () => {
 	});
 });
 
+describe("findMainTeamByUserId", () => {
+	const users = UserFactory.pool();
+	const userId = () => users.id(1);
+
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test("returns the main team, not a secondary one", async () => {
+		await TeamFactory.create({
+			name: "Secondary team",
+			isMainTeam: false,
+			memberUserIds: [userId()],
+		});
+		await TeamFactory.create({
+			name: "Main team",
+			isMainTeam: true,
+			memberUserIds: [userId()],
+		});
+
+		const team = await TeamRepository.findMainTeamByUserId(userId());
+
+		expect(team?.name).toBe("Main team");
+	});
+
+	test("returns undefined for a user without a team", async () => {
+		expect(await TeamRepository.findMainTeamByUserId(userId())).toBeUndefined();
+	});
+});
+
 describe("transferOwnership", () => {
 	const users = UserFactory.pool();
 	const ownerId = () => users.id(1);

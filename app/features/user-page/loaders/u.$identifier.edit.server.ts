@@ -12,19 +12,13 @@ export const loader = async () => {
 		throw redirect(userPage(userToBeEdited));
 	}
 
-	const userProfile = (await UserRepository.findProfileByUserId(user.id))!;
-	const friendCodeResult = await UserRepository.findCurrentFriendCodeByUserId(
-		user.id,
-	);
+	const userProfile = (await UserRepository.findEditableProfileById(user.id))!;
 	const ownedTrophies = await TrophyRepository.findByOwnerUserIdIncludingHidden(
 		user.id,
 	);
 
 	return {
 		user: userProfile,
-		favoriteTrophyIds: userProfile.favoriteTrophyIds,
-		hiddenTrophyIds: userProfile.hiddenTrophyIds,
 		ownedTrophies,
-		friendCode: friendCodeResult?.friendCode ?? null,
 	};
 };

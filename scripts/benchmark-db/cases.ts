@@ -1773,6 +1773,9 @@ export function buildCases(fx: Fixtures): {
 	add("TeamRepository.findById", fx.heavyTeam, (team) =>
 		TeamRepository.findById(team.id),
 	);
+	add("TeamRepository.findMainTeamByUserId", fx.heavyTeam, (team) =>
+		TeamRepository.findMainTeamByUserId(team.memberUserId),
+	);
 	add("TeamRepository.findAllMemberOfByUserId", fx.heavyTeam, (team) =>
 		TeamRepository.findAllMemberOfByUserId(team.memberUserId),
 	);
@@ -2329,8 +2332,8 @@ export function buildCases(fx: Fixtures): {
 	add("UserRepository.findLayoutDataById", fx.heavyUser, (user) =>
 		UserRepository.findLayoutDataById(user.id, user.id),
 	);
-	add("UserRepository.findProfileByUserId", fx.heavyUser, (user) =>
-		UserRepository.findProfileByUserId(user.id),
+	add("UserRepository.findEditableProfileById", fx.heavyUser, (user) =>
+		UserRepository.findEditableProfileById(user.id),
 	);
 	add("UserRepository.findStoredWidgetsByUserId", fx.heavyUser, (user) =>
 		UserRepository.findStoredWidgetsByUserId(user.id),

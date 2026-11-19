@@ -1,7 +1,7 @@
 import { redirect } from "react-router";
 import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
+import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
@@ -14,7 +14,7 @@ export const action = defineAction({ body: lfgNewSchema }, async ({ body }) => {
 	const user = requireUser();
 	const type = body.type as Tables["LFGPost"]["type"];
 
-	const { team } = (await UserRepository.findProfileByUserId(user.id)) ?? {};
+	const team = await TeamRepository.findMainTeamByUserId(user.id);
 
 	const shouldIncludeTeam = TEAM_POST_TYPES.includes(type);
 

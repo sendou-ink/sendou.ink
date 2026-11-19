@@ -48,8 +48,8 @@ export default function UserEditPage() {
 		inGameName: data.user.inGameName ?? "",
 		pronouns: pronounsDefaultValue(data.user.pronouns),
 		country: data.user.country ?? null,
-		favoriteTrophyIds: data.favoriteTrophyIds ?? [],
-		hiddenTrophyIds: data.hiddenTrophyIds ?? [],
+		favoriteTrophyIds: data.user.favoriteTrophyIds ?? [],
+		hiddenTrophyIds: data.user.hiddenTrophyIds ?? [],
 		commissionsOpen: Boolean(layoutData.user.commissionsOpen),
 		commissionText: layoutData.user.commissionText ?? "",
 	};
