@@ -621,6 +621,18 @@ describe("createVoiceClient", () => {
 		expect(client.getSnapshot().call?.speakingSessionIds).toEqual([]);
 	});
 
+	test.each([
+		{ why: "boosts up to 200%", volume: 1.5, expected: 1.5 },
+		{ why: "caps a boost at 200%", volume: 3, expected: 2 },
+		{ why: "never goes below silent", volume: -1, expected: 0 },
+	])("setting a participant's volume $why", ({ volume, expected }) => {
+		const { client } = setup();
+
+		client.setVolume(5, volume);
+
+		expect(client.getSnapshot().volumeByUserId.get(5)).toBe(expected);
+	});
+
 	test("muting the own microphone clears the own speaking indicator right away", async () => {
 		const { client } = setup();
 		await client.join(ROOM_ID);

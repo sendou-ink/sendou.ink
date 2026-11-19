@@ -30,6 +30,7 @@ import {
 	type VoiceActivityState,
 	type VoiceActivity as VoiceActivityValue,
 } from "../voice-activity";
+import { VOICE_MAX_PARTICIPANT_VOLUME } from "../voice-constants";
 import { useVoiceSnapshot } from "../voice-hooks";
 import styles from "./VoiceActivity.module.css";
 import { VoiceFeedbackPrompt } from "./VoiceFeedbackPrompt";
@@ -378,7 +379,7 @@ function ParticipantRow({
 						<input
 							type="range"
 							min={0}
-							max={100}
+							max={VOICE_MAX_PARTICIPANT_VOLUME * 100}
 							value={Math.round(participant.volume * 100)}
 							onChange={(event) =>
 								actions.setVolume(

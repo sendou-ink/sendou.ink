@@ -8,6 +8,7 @@ import { eventsClient } from "../events/events-client";
 import {
 	VOICE_JOIN_SOUND,
 	VOICE_LEAVE_SOUND,
+	VOICE_MAX_PARTICIPANT_VOLUME,
 	type VoiceClientErrorKind,
 	type VoiceInputMode,
 	type VoiceLeaveReason,
@@ -564,7 +565,10 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		},
 		setVolume: (userId, volume) => {
 			const volumeByUserId = new Map(snapshot.volumeByUserId);
-			volumeByUserId.set(userId, Math.min(1, Math.max(0, volume)));
+			volumeByUserId.set(
+				userId,
+				Math.min(VOICE_MAX_PARTICIPANT_VOLUME, Math.max(0, volume)),
+			);
 			update({ volumeByUserId });
 		},
 		registerCallHandle: (handle) => {

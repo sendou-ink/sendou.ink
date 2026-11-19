@@ -13,6 +13,9 @@ export const VOICE_MONTHLY_BUDGET_USD = 500;
 export const VOICE_FREE_MINUTES_PER_MONTH = 10_000;
 export const VOICE_PRICE_PER_MINUTE_USD = 0.00099;
 
+/** Highest playback volume a participant can be set to, 2 = 200% */
+export const VOICE_MAX_PARTICIPANT_VOLUME = 2;
+
 export const VOICE_TELEMETRY_INTERVAL_MS = 60_000;
 export const VOICE_FEEDBACK_MIN_SESSION_SECONDS = 120;
 export const VOICE_FEEDBACK_COOLDOWN_HOURS = 24;

@@ -30,7 +30,7 @@ export interface VoiceActivityParticipant {
 	speaking: boolean;
 	muted: boolean;
 	deafened: boolean;
-	/** Playback volume set for this user, 0-1. */
+	/** Playback volume set for this user, 0-2 (above 1 boosts them). */
 	volume: number;
 }
 

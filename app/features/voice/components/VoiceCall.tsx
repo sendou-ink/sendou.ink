@@ -8,6 +8,7 @@ import {
 	DailyAudioTrack,
 	DailyProvider,
 	useAudioLevelObserver,
+	useAudioTrack,
 	useDaily,
 	useDailyEvent,
 	useMeetingState,
@@ -24,6 +25,8 @@ import {
 	canPickOutputDevice,
 	MicCaptureError,
 	micCapture,
+	type PlaybackBoost,
+	voicePlayback,
 } from "../voice-audio";
 import { type VoiceCallParticipant, voiceClient } from "../voice-client";
 import { VOICE_TELEMETRY_INTERVAL_MS } from "../voice-constants";
@@ -91,15 +94,9 @@ export function VoiceCall({
 			leave: () => callObject.leave(),
 			resumeAudio: () => {
 				micCapture.resume();
+				void voicePlayback.resume().catch(flagIfAutoplayBlocked);
 				for (const audio of audioElements) {
-					void audio.play().catch((error: unknown) => {
-						if (
-							error instanceof DOMException &&
-							error.name === "NotAllowedError"
-						) {
-							voiceClient.setAudioBlocked(true);
-						}
-					});
+					void audio.play().catch(flagIfAutoplayBlocked);
 				}
 			},
 		});
@@ -270,6 +267,11 @@ function SpeakingObserver({ sessionId }: { sessionId: string }) {
 function RemoteAudio() {
 	const daily = useDaily();
 	const remoteSessionIds = useParticipantIds({ filter: "remote" });
+	const [{ outputDeviceId }] = usePersistedState(voiceSettingsPersisted);
+
+	React.useEffect(() => {
+		voicePlayback.setDevice(outputDeviceId);
+	}, [outputDeviceId]);
 
 	return (
 		<>
@@ -296,20 +298,40 @@ function ParticipantAudio({
 		voiceSettingsPersisted,
 	);
 	const audioRef = React.useRef<HTMLAudioElement>(null);
-	const volume = Math.min(
-		1,
-		(volumeByUserId.get(userId) ?? 1) * (outputVolume / 100),
-	);
+	const track = useAudioTrack(sessionId).persistentTrack;
+	const volume = (volumeByUserId.get(userId) ?? 1) * (outputVolume / 100);
 	const deafened = call?.deafened ?? false;
+	const isBoosted = volume > 1 && !deafened && Boolean(track);
+	const volumeRef = useLatestRef(volume);
+	const boostRef = React.useRef<PlaybackBoost | null>(null);
 
 	React.useEffect(() => {
 		const audio = audioRef.current;
 		if (!audio) return;
 
 		// iOS ignores `volume` (lol), muting at least works everywhere
-		audio.volume = volume;
-		audio.muted = volume === 0 || deafened;
-	}, [volume, deafened]);
+		audio.volume = Math.min(1, volume);
+		audio.muted = volume === 0 || deafened || isBoosted;
+	}, [volume, deafened, isBoosted]);
+
+	React.useEffect(() => {
+		if (!isBoosted || !track) return;
+
+		const boost = voicePlayback.boost(
+			track,
+			volumeRef.current,
+			flagIfAutoplayBlocked,
+		);
+		boostRef.current = boost;
+		return () => {
+			boost.stop();
+			boostRef.current = null;
+		};
+	}, [isBoosted, track, volumeRef]);
+
+	React.useEffect(() => {
+		boostRef.current?.setGain(volume);
+	}, [volume]);
 
 	React.useEffect(() => {
 		const audio = audioRef.current;
@@ -573,5 +595,11 @@ async function teardownCallObject(callObject: DailyCall) {
 		await callObject.leave();
 	} finally {
 		await callObject.destroy();
+	}
+}
+
+function flagIfAutoplayBlocked(error: unknown) {
+	if (error instanceof DOMException && error.name === "NotAllowedError") {
+		voiceClient.setAudioBlocked(true);
 	}
 }

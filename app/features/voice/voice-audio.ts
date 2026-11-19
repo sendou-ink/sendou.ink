@@ -12,6 +12,17 @@ const GATE_HOLD_SECONDS = 0.3;
 const GATE_ATTACK_SECONDS = 0.005;
 const GATE_RELEASE_SECONDS = 0.08;
 const ANALYSER_FFT_SIZE = 1024;
+const BOOST_LIMITER = {
+	threshold: -3,
+	knee: 0,
+	ratio: 20,
+	attack: 0.003,
+	release: 0.25,
+};
+// undoes the makeup gain DynamicsCompressorNode adds, (1 / curve(0 dBFS))^0.6 per the Web Audio spec (exact with knee 0)
+const BOOST_LIMITER_MAKEUP_COMPENSATION =
+	10 **
+	((0.6 * (BOOST_LIMITER.threshold * (1 - 1 / BOOST_LIMITER.ratio))) / 20);
 
 // loaded from a Blob so it skips the bundler, this is very hacky but the only way to get an AudioWorkletProcessor in a module context, we can likely remove this when we ditch Daily
 const GATE_PROCESSOR_SOURCE = `
@@ -171,6 +182,124 @@ export const micTest = {
 		micTestCapture.stop();
 	},
 };
+
+export interface PlaybackBoost {
+	/** Gain applied to the track, above 1 amplifies it. */
+	setGain: (gain: number) => void;
+	stop: () => void;
+}
+
+/**
+ * Plays remote tracks through Web Audio so they can go above 100% volume, which `HTMLMediaElement.volume`
+ * can't. Only meant for boosting: Chrome's echo cancellation ignores Web Audio output, so tracks at or below
+ * 100% keep playing from their own audio element. That element has to stay attached (muted) while a track is
+ * boosted, Chrome feeds no remote audio to Web Audio otherwise.
+ */
+export const voicePlayback = createVoicePlayback();
+
+function createVoicePlayback() {
+	let output: {
+		context: AudioContext;
+		destination: MediaStreamAudioDestinationNode;
+		element: HTMLAudioElement;
+	} | null = null;
+	let deviceId = DEFAULT_DEVICE_ID;
+	let activeBoosts = 0;
+
+	const applyDevice = () => {
+		if (!output || !canPickOutputDevice()) return;
+
+		void output.element
+			.setSinkId(deviceId === DEFAULT_DEVICE_ID ? "" : deviceId)
+			.catch((error: unknown) => {
+				logger.warn(
+					"Playing boosted voice audio on the picked device failed",
+					error,
+				);
+			});
+	};
+
+	const play = async () => {
+		if (!output) return;
+
+		resumeWhenAllowed(output.context);
+		await output.element.play();
+	};
+
+	const createOutput = () => {
+		const context = createAudioContext();
+		const destination = context.createMediaStreamDestination();
+		const element = new Audio();
+		element.srcObject = destination.stream;
+
+		return { context, destination, element };
+	};
+
+	const closeOutput = () => {
+		if (!output) return;
+
+		output.element.pause();
+		output.element.srcObject = null;
+		void output.context.close();
+		output = null;
+	};
+
+	return {
+		/** `onPlayFailed` is called when the browser refuses to start the boosted audio, e.g. before any user interaction. */
+		boost: (
+			track: MediaStreamTrack,
+			gain: number,
+			onPlayFailed: (error: unknown) => void,
+		): PlaybackBoost => {
+			if (!output) {
+				output = createOutput();
+				applyDevice();
+				play().catch(onPlayFailed);
+			}
+			const { context, destination } = output;
+			activeBoosts++;
+
+			const source = context.createMediaStreamSource(new MediaStream([track]));
+			const gainNode = context.createGain();
+			gainNode.gain.value = gain;
+			const limiter = context.createDynamicsCompressor();
+			limiter.threshold.value = BOOST_LIMITER.threshold;
+			limiter.knee.value = BOOST_LIMITER.knee;
+			limiter.ratio.value = BOOST_LIMITER.ratio;
+			limiter.attack.value = BOOST_LIMITER.attack;
+			limiter.release.value = BOOST_LIMITER.release;
+
+			const makeupCompensation = context.createGain();
+			makeupCompensation.gain.value = BOOST_LIMITER_MAKEUP_COMPENSATION;
+
+			source.connect(gainNode);
+			gainNode.connect(limiter);
+			limiter.connect(makeupCompensation);
+			makeupCompensation.connect(destination);
+
+			let isStopped = false;
+			return {
+				setGain: (newGain) => {
+					gainNode.gain.value = newGain;
+				},
+				stop: () => {
+					if (isStopped) return;
+					isStopped = true;
+
+					source.disconnect();
+					makeupCompensation.disconnect();
+					activeBoosts--;
+					if (activeBoosts === 0) closeOutput();
+				},
+			};
+		},
+		setDevice: (newDeviceId: string) => {
+			deviceId = newDeviceId;
+			applyDevice();
+		},
+		resume: play,
+	};
+}
 
 function createMicCapture() {
 	let pipeline: Pipeline | null = null;
