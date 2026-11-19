@@ -1474,7 +1474,15 @@ around an olive disc), its x mapped linearly to `position` -100..100; the
 holder is the icon's ink against each team's ink off its own track end (end
 marker plus first dots, which the backdrop can't drown like the strip); the
 counts are every confident digit run in the plate band, each assigned by the
-plate ink around it (no label is read: localized). The checkpoint markers
+plate ink around it (no label is read: localized). Both text sizes are read
+and their digits pooled, the best score per glyph. Digits join a run by the
+gap between boxes widened to a digit's width: a '1' is narrow in a
+full-width advance, and its plain ink gap to a neighbor sat on the cut, so
+"21" read `2` or `1` frame to frame. A digit under the confidence floor
+still holds its place, and its run goes unread: a blurred digit used to
+drop out and leave its neighbor as a confident shorter count ("98" read
+`9`). A run with little ink around it (under 0.4 of the pixels beside it,
+plates 0.59+) is a white streak in the scene, not a plate. The checkpoint markers
 tell the modes apart (TC black-framed squares, RM pedestals); when neither
 reads, the read's `mode` is null and the match's mode decides. `control` is
 the holder's side (`0 | 1 | null`) on every overlay — in SZ too, where a

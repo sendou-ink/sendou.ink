@@ -475,8 +475,12 @@ export const TRACK_PLATE_DIGIT_ROI: Roi = { x: 460, y: 214, w: 1000, h: 48 };
 export const TRACK_PLATE_TEXT_HEIGHTS = [33, 36] as const;
 export const TRACK_PLATE_BIN_THRESHOLD = 190;
 export const TRACK_PLATE_DIGIT_MIN_CONF = 0.75;
+/** Weaker digits still hold their place in a run (which then goes unread), so a blurred '2' of 22 leaves no confident '2'. */
+export const TRACK_PLATE_DIGIT_MIN_CANDIDATE = 0.5;
 /** Plate ink sampled beside a digit run: this far out and this tall. */
 export const TRACK_PLATE_INK_PAD_X = 10;
+/** Share of those pixels in ink: plates 0.59+, white streaks in the scene read as digits 0.17 at most. */
+export const TRACK_PLATE_MIN_INK_SHARE = 0.4;
 /**
  * A plate sits on the half its team pushes into; the tip can reach just past
  * the center when a side's record is still ~100.

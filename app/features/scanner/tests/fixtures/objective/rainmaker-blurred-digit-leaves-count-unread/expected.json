@@ -1,0 +1,13 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "RM",
+		"time": 259,
+		"score": [null, null],
+		"control": 0,
+		"position": 73
+	},
+	"options": {
+		"notes": "XHXYlzu4Zt8 VoD, about 1706.5 s. The plate shows 22, motion-blurred: the first '2' reads 0.80, the second (merged with the pale backdrop) only 0.73 in both text sizes. The null on side 0 is the truncation outcome, not a missing plate: a digit candidate under the confidence floor holds its place and leaves the count unread, where it used to drop out and leave a confident `2`. Purple has no plate yet."
+	}
+}
