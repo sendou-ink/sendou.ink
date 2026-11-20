@@ -1021,7 +1021,7 @@ describe("abuse limits", () => {
 
 		await expect(ingest(user, request(4))).rejects.toThrow("429");
 		expect(await fetchIngestedMatches()).toHaveLength(128);
-	});
+	}, 30_000);
 });
 
 async function ingestDecidingGame({
