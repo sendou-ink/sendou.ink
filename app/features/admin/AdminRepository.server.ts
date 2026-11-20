@@ -45,21 +45,24 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 
 /**
  * For a placeholder player (`User.isPlaceholder`) turning out to be an existing user: moves the placeholder's
- * tournament history (rosters, results, skill and stats) onto the user and deletes the placeholder. Skill moves as
- * is, except in a season where the user already has skill of their own, which is kept instead. Resolves to `null`
- * on success, or an error message if validation fails.
+ * tournament history (rosters, results, skill and stats) and the private notes written about them onto the user
+ * and deletes the placeholder. Skill moves as is, except in a season where the user already has skill of their
+ * own, which is kept instead. Resolves to the seasons the placeholder had skill in (their tiers and leaderboards
+ * need refreshing), or an error message if validation fails.
  */
-export function claimPlaceholder(args: {
-	placeholderUserId: number;
-	userId: number;
-}) {
+export function claimPlaceholder(
+	args: ClaimArgs,
+): Promise<{ error: string } | { error: null; skillSeasons: number[] }> {
 	return db.transaction().execute(async (trx) => {
 		const error = await validateClaim(trx, args);
 		if (error) {
-			return error;
+			return { error };
 		}
 
+		const skillSeasons = await placeholderSkillSeasons(trx, args);
+
 		await moveTournamentHistory(trx, args);
+		await movePrivateNotes(trx, args);
 		await mergeAccountRows(trx, {
 			newUserId: args.placeholderUserId,
 			oldUserId: args.userId,
@@ -70,7 +73,7 @@ export function claimPlaceholder(args: {
 			.where("User.id", "=", args.placeholderUserId)
 			.execute();
 
-		return null;
+		return { error: null, skillSeasons };
 	});
 }
 
@@ -474,6 +477,49 @@ async function playedTournamentIds(trx: Transaction<DB>, userId: number) {
 		.execute();
 
 	return new Set(rows.map((row) => row.tournamentId));
+}
+
+async function placeholderSkillSeasons(trx: Transaction<DB>, args: ClaimArgs) {
+	const rows = await trx
+		.selectFrom("Skill")
+		.select("Skill.season")
+		.where("Skill.userId", "=", args.placeholderUserId)
+		.union(
+			trx
+				.selectFrom("SkillTeamUser")
+				.innerJoin("Skill", "Skill.id", "SkillTeamUser.skillId")
+				.select("Skill.season")
+				.where("SkillTeamUser.userId", "=", args.placeholderUserId),
+		)
+		.execute();
+
+	return rows.map((row) => row.season);
+}
+
+/** Notes about the placeholder now are about the user, except where the author already has one about the user (or is the user). */
+async function movePrivateNotes(trx: Transaction<DB>, args: ClaimArgs) {
+	await trx
+		.deleteFrom("PrivateUserNote")
+		.where("targetId", "=", args.placeholderUserId)
+		.where((eb) =>
+			eb.or([
+				eb("authorId", "=", args.userId),
+				eb(
+					"authorId",
+					"in",
+					eb
+						.selectFrom("PrivateUserNote as own")
+						.select("own.authorId")
+						.where("own.targetId", "=", args.userId),
+				),
+			]),
+		)
+		.execute();
+	await trx
+		.updateTable("PrivateUserNote")
+		.where("targetId", "=", args.placeholderUserId)
+		.set({ targetId: args.userId })
+		.execute();
 }
 
 /** The tournament tables {@link mergeAccountRows} leaves alone, as an account being migrated can't have played. */

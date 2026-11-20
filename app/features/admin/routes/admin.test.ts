@@ -9,6 +9,7 @@ import * as Bans from "~/features/ban/core/Bans.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
+import { userSkills } from "~/features/mmr/tiered.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
@@ -397,6 +398,8 @@ describe("Account migration", () => {
 });
 
 describe("Claiming a placeholder", () => {
+	const CLAIMED_SEASON = 1;
+
 	beforeEach(async () => {
 		await createUsers(2);
 	});
@@ -419,6 +422,22 @@ describe("Claiming a placeholder", () => {
 		expect(await UserRepository.findPlaceholderById(placeholder.id)).toBe(
 			undefined,
 		);
+	});
+
+	test("refreshes the tiers of the seasons the placeholder had skill in", async () => {
+		const placeholder = await UserFactory.createPlaceholder();
+		await SkillFactory.create(
+			{ userId: placeholder.id, season: CLAIMED_SEASON },
+			{ matchesCount: MATCHES_COUNT_NEEDED_FOR_LEADERBOARD },
+		);
+		// cached before the claim, like a season whose tiers are already computed
+		await userSkills(CLAIMED_SEASON);
+
+		await claimAction(placeholder.id);
+
+		expect(
+			(await userSkills(CLAIMED_SEASON)).userSkills[users.id(1)],
+		).toBeDefined();
 	});
 
 	test("shows why a claim failed", async () => {

@@ -4,6 +4,7 @@ import * as BadgeFactory from "~/db/seed/factories/BadgeFactory";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as PlusSuggestionFactory from "~/db/seed/factories/PlusSuggestionFactory";
 import * as PlusVoteFactory from "~/db/seed/factories/PlusVoteFactory";
+import * as PrivateUserNoteFactory from "~/db/seed/factories/PrivateUserNoteFactory";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
@@ -274,7 +275,7 @@ describe("claimPlaceholder", () => {
 				placeholderUserId: placeholderId,
 				userId: claimerId(),
 			}),
-		).toBe(null);
+		).toEqual({ error: null, skillSeasons: [placeholderSkill.season] });
 
 		for (const table of [
 			"TournamentTeamMember",
@@ -383,6 +384,46 @@ describe("claimPlaceholder", () => {
 		});
 	});
 
+	test("moves private notes about the placeholder to the user, keeping an author's own note about the user", async () => {
+		const placeholder = await UserFactory.createPlaceholder();
+		const [movedAuthorId, keptAuthorId] = opponentIds();
+		await PrivateUserNoteFactory.create({
+			authorId: movedAuthorId,
+			targetId: placeholder.id,
+			text: "moved",
+		});
+		await PrivateUserNoteFactory.create({
+			authorId: keptAuthorId,
+			targetId: placeholder.id,
+			text: "dropped",
+		});
+		await PrivateUserNoteFactory.create({
+			authorId: keptAuthorId,
+			targetId: claimerId(),
+			text: "kept",
+		});
+		await PrivateUserNoteFactory.create({
+			authorId: claimerId(),
+			targetId: placeholder.id,
+			text: "about themselves",
+		});
+
+		await AdminRepository.claimPlaceholder({
+			placeholderUserId: placeholder.id,
+			userId: claimerId(),
+		});
+
+		const notes = await db
+			.selectFrom("PrivateUserNote")
+			.select(["authorId", "targetId", "text"])
+			.orderBy("authorId")
+			.execute();
+		expect(notes).toEqual([
+			{ authorId: movedAuthorId, targetId: claimerId(), text: "moved" },
+			{ authorId: keptAuthorId, targetId: claimerId(), text: "kept" },
+		]);
+	});
+
 	test("rejects a user who played the same tournament", async () => {
 		const {
 			placeholderIds: [placeholderId],
@@ -393,7 +434,7 @@ describe("claimPlaceholder", () => {
 				placeholderUserId: placeholderId,
 				userId: opponentIds()[0],
 			}),
-		).toBe("both played the same tournament");
+		).toEqual({ error: "both played the same tournament" });
 		expect((await userRows("TournamentResult", placeholderId)).length).toBe(1);
 	});
 
@@ -412,7 +453,9 @@ describe("claimPlaceholder", () => {
 			error: "user claiming it is not a player with an account",
 		},
 	])("rejects when $why", async ({ args, error }) => {
-		expect(await AdminRepository.claimPlaceholder(await args())).toBe(error);
+		expect(await AdminRepository.claimPlaceholder(await args())).toEqual({
+			error,
+		});
 	});
 });
 

@@ -4,6 +4,8 @@ import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.se
 import { requireUser } from "~/features/auth/core/user.server";
 import * as Bans from "~/features/ban/core/Bans.server";
 import * as LinkedRoles from "~/features/discord/core/LinkedRoles.server";
+import { clearCachedTeamLeaderboards } from "~/features/leaderboards/core/leaderboards.server";
+import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
@@ -61,13 +63,18 @@ export const action = defineAction(
 				requireRole("STAFF");
 
 				try {
-					const errorMessage = await AdminRepository.claimPlaceholder({
+					const result = await AdminRepository.claimPlaceholder({
 						placeholderUserId: body.placeholderUserId,
 						userId: body.user,
 					});
 
-					if (errorMessage) {
-						errorToast(`Claiming failed. Reason: ${errorMessage}`);
+					if (result.error !== null) {
+						errorToast(`Claiming failed. Reason: ${result.error}`);
+					}
+
+					for (const season of result.skillSeasons) {
+						await refreshUserSkills(season);
+						clearCachedTeamLeaderboards(season);
 					}
 				} catch (err) {
 					if (errorIsSqliteForeignKeyConstraintFailure(err)) {

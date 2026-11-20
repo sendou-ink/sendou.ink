@@ -208,6 +208,65 @@ describe("tournament admin registration - players without an account", () => {
 		await expect.poll(() => actionCallCount).toBe(1);
 	});
 
+	test("a new one made captain by default gives way to a player with an account added after", async () => {
+		loaderData = { team: null };
+
+		const screen = await renderPage();
+
+		await screen
+			.getByRole("button", { name: "Add player without account" })
+			.click();
+		await screen.getByLabelText("Player without account").fill("Mika");
+		await expect
+			.element(screen.getByLabelText("Captain"))
+			.toHaveValue("new:Mika");
+
+		await screen.getByRole("button", { name: "Add", exact: true }).click();
+		await userEvent.click(
+			screen.getByRole("button", { name: "Player User search" }),
+		);
+		await userEvent.type(
+			screen.getByTestId("user-search-input").element(),
+			"Jolt",
+		);
+		await screen.getByTestId("user-search-item").click();
+
+		await expect.element(screen.getByLabelText("Captain")).toHaveValue("2");
+	});
+
+	test("a new one picked back as captain by hand stays captain when a player with an account is added", async () => {
+		loaderData = { team: null };
+
+		const screen = await renderPage();
+
+		const addPlaceholder = async (name: string) => {
+			await screen
+				.getByRole("button", { name: "Add player without account" })
+				.click();
+			await screen.getByLabelText("Player without account").last().fill(name);
+		};
+		await addPlaceholder("Mika");
+		await addPlaceholder("Nori");
+		const captain = screen.getByLabelText("Captain");
+		await captain.selectOptions("Nori");
+		await captain.selectOptions("Mika");
+
+		await screen.getByRole("button", { name: "Add", exact: true }).click();
+		await userEvent.click(
+			screen.getByRole("button", { name: "Player User search" }),
+		);
+		await userEvent.type(
+			screen.getByTestId("user-search-input").element(),
+			"Jolt",
+		);
+		await screen.getByTestId("user-search-item").click();
+
+		await expect
+			.element(captain.getByRole("option", { name: "Jolt" }))
+			.toBeInTheDocument();
+		await expect.element(captain).toHaveValue("new:Mika");
+	});
+
 	test("a new one picked as captain stays captain when their name is edited", async () => {
 		loaderData = {
 			team: {

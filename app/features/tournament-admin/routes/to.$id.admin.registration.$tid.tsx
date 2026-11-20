@@ -223,28 +223,31 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 		}
 	};
 
-	const ownerOptions: Array<SelectOption & { rowKey?: string }> =
-		members.flatMap((member, i) => {
-			if (typeof member.userId === "number") {
-				return {
-					rowKey: member._key,
-					value: String(member.userId),
-					label:
-						(member.isPlaceholder && member.placeholderName) ||
-						usernames[member.userId] ||
-						`${t("forms:labels.player")} ${i + 1}`,
-				};
-			}
-
-			const placeholderName = member.placeholderName?.trim();
-			if (!member.isPlaceholder || !placeholderName) return [];
-
+	const ownerOptions: Array<
+		SelectOption & { rowKey?: string; isPlaceholder: boolean }
+	> = members.flatMap((member, i) => {
+		if (typeof member.userId === "number") {
 			return {
 				rowKey: member._key,
-				value: newPlaceholderOwnerId(placeholderName),
-				label: placeholderName,
+				isPlaceholder: Boolean(member.isPlaceholder),
+				value: String(member.userId),
+				label:
+					(member.isPlaceholder && member.placeholderName) ||
+					usernames[member.userId] ||
+					`${t("forms:labels.player")} ${i + 1}`,
 			};
-		});
+		}
+
+		const placeholderName = member.placeholderName?.trim();
+		if (!member.isPlaceholder || !placeholderName) return [];
+
+		return {
+			rowKey: member._key,
+			isPlaceholder: true,
+			value: newPlaceholderOwnerId(placeholderName),
+			label: placeholderName,
+		};
+	});
 
 	const addPlaceholder = () => {
 		const placeholderRow = {
@@ -256,10 +259,12 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 	};
 
 	// the non-clearable Captain <select> always shows a member as selected, so keep ownerId in sync:
-	// default to the first member, follow a new placeholder captain's row when their name is edited,
-	// reset when the current captain left the roster
+	// default to the first member with an account (a player without one can't use captain actions),
+	// follow a new placeholder captain's row when their name is edited, reset when the current captain
+	// left the roster. A captain picked by default gives way to a member with an account added later.
 	const ownerOptionsKey = ownerOptions.map((option) => option.value).join(",");
 	const previousOwnerRowKeys = React.useRef(new Map<string, string>());
+	const defaultedOwnerRowKey = React.useRef<string | null>(null);
 	React.useEffect(() => {
 		const previousRowKeys = previousOwnerRowKeys.current;
 		previousOwnerRowKeys.current = new Map(
@@ -269,7 +274,26 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 		);
 
 		if (ownerOptions.length === 0) return;
-		if (ownerOptions.some((option) => option.value === values.ownerId)) return;
+
+		const defaultOption =
+			ownerOptions.find((option) => !option.isPlaceholder) ?? ownerOptions[0];
+		const setDefaultOwner = () => {
+			defaultedOwnerRowKey.current = defaultOption.rowKey ?? null;
+			setValue("ownerId", defaultOption.value);
+		};
+
+		const currentOption = ownerOptions.find(
+			(option) => option.value === values.ownerId,
+		);
+		if (currentOption) {
+			const isDefaultedPlaceholder =
+				currentOption.isPlaceholder &&
+				currentOption.rowKey === defaultedOwnerRowKey.current;
+			if (isDefaultedPlaceholder && !defaultOption.isPlaceholder) {
+				setDefaultOwner();
+			}
+			return;
+		}
 
 		const ownerRowKey =
 			typeof values.ownerId === "string"
@@ -278,7 +302,12 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 		const sameRowOption = ownerRowKey
 			? ownerOptions.find((option) => option.rowKey === ownerRowKey)
 			: undefined;
-		setValue("ownerId", (sameRowOption ?? ownerOptions[0]).value);
+		if (sameRowOption) {
+			setValue("ownerId", sameRowOption.value);
+			return;
+		}
+
+		setDefaultOwner();
 	}, [ownerOptionsKey]);
 
 	return (
@@ -393,7 +422,14 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 					{t("forms:regAddPlaceholder")}
 				</SendouButton>
 			) : null}
-			<FormField name="ownerId" options={ownerOptions} />
+			<FormField
+				name="ownerId"
+				options={ownerOptions}
+				// picked by hand, so no longer a default to replace
+				onValueChange={() => {
+					defaultedOwnerRowKey.current = null;
+				}}
+			/>
 			{tournament.teamsPrePickMaps && !tournament.hasStarted ? (
 				<FormField name="mapPool">
 					{(props: CustomFieldRenderProps) => (

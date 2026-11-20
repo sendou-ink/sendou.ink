@@ -375,6 +375,22 @@ describe("LeaderboardRepository.findTeamLeaderboardBySeason", () => {
 		]);
 	});
 
+	test("leaves out a roster with a placeholder player", async () => {
+		const placeholder = await UserFactory.createPlaceholder();
+		await playTournamentsWith(
+			[users.id(10), users.id(11), users.id(12), placeholder.id],
+			{
+				mu: 100,
+			},
+		);
+
+		expect(await allRostersPlacements()).toEqual([
+			[userIdsToIdentifier(topRoster()), 1, false],
+			[userIdsToIdentifier(sharedPlayersRoster()), 2, false],
+			[userIdsToIdentifier(beatenRoster()), 3, false],
+		]);
+	});
+
 	test("gives a team its placement back when it is unskipped", async () => {
 		await skipTeam(topRoster());
 		await LeaderboardRepository.deleteTeamSkip({
