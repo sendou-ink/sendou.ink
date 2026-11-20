@@ -4,15 +4,13 @@ import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import { existingImage } from "~/form/image-field";
 import { SendouForm } from "~/form/SendouForm";
-import { useHydrated } from "~/hooks/useHydrated";
+import { useCountryOptions } from "~/hooks/useCountryOptions";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { countryCodeToTranslatedName } from "~/utils/i18n";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { action } from "../actions/u.$identifier.edit.server";
 import { DiscordSyncCard } from "../components/DiscordSyncCard";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.edit.server";
-import { COUNTRY_CODES } from "../user-page-constants";
 import { useUserPageLayoutData } from "../user-page-hooks";
 import { userEditProfileBaseSchema } from "../user-page-schemas";
 
@@ -98,23 +96,6 @@ export default function UserEditPage() {
 				</SendouForm>
 			</div>
 		</div>
-	);
-}
-
-function useCountryOptions() {
-	const { i18n } = useTranslation();
-	const isHydrated = useHydrated();
-
-	return COUNTRY_CODES.map((countryCode) => ({
-		value: countryCode,
-		label: isHydrated
-			? countryCodeToTranslatedName({
-					countryCode,
-					language: i18n.language,
-				})
-			: countryCode,
-	})).sort((a, b) =>
-		a.label.localeCompare(b.label, i18n.language, { sensitivity: "base" }),
 	);
 }
 

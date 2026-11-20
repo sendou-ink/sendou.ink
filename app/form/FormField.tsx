@@ -552,6 +552,7 @@ export function FormField({
 				value={value as AddressFieldValue | null}
 				onChange={handleChange as (v: AddressFieldValue | null) => void}
 				onAddressSelected={addressOptions?.onAddressSelected}
+				tournamentId={addressOptions?.tournamentId}
 			/>
 		);
 	}

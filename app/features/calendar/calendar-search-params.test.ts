@@ -128,6 +128,7 @@ describe("venueSearchSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(venueSearchSearchParams, {
 			q: ["", "austin convention center", "Messuaukio 1, Helsinki"],
+			tournamentId: [null, 1, 1234],
 		});
 	});
 });

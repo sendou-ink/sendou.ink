@@ -56,11 +56,13 @@ import {
 	calendarNewBaseSchema,
 	calendarNewSchema,
 	customTeamPickPool,
+	type FilledVenueName,
 	type TeamPickCountsFormValue,
 	TOURNAMENT_FORM_STEPS,
 	teamPickSettingsFromFormValues,
 	tournamentTagsField,
 	valuesMovedWithStartTime,
+	venueNameAfterAddressPick,
 	venueTimeZoneFromFormValues,
 } from "../calendar-new-schemas";
 import {
@@ -653,8 +655,14 @@ function TournamentReview() {
 // a tournament can't switch between LAN and online after it's created
 function VenueFields({ isEditing }: { isEditing: boolean }) {
 	const { t } = useTranslation(["forms"]);
-	const { eventToEdit } = useLoaderData<typeof loader>();
-	const { values, setValue, setValueFromPrev } = useFormFieldContext();
+	const { eventToEdit, eventToCopy } = useLoaderData<typeof loader>();
+	const { values, setValue } = useFormFieldContext();
+	const [filledVenueName, setFilledVenueName] = React.useState<FilledVenueName>(
+		{
+			name: eventToCopy?.venue?.name ?? "",
+			isCopied: true,
+		},
+	);
 	const timeZone = venueTimeZoneFromFormValues(values);
 	const savedTimeZone = eventToEdit?.venue?.timezone ?? null;
 	// the times keep their wall clock, so a new zone moves them
@@ -667,10 +675,17 @@ function VenueFields({ isEditing }: { isEditing: boolean }) {
 			if (!address) return;
 
 			setValue("venueTimezone", address.timezone);
-			if (address.placeName) {
-				setValueFromPrev("venueName", (prev) => prev || address.placeName);
-			}
+
+			const { name, filledName } = venueNameAfterAddressPick({
+				currentName:
+					typeof values.venueName === "string" ? values.venueName : "",
+				filledName: filledVenueName,
+				placeName: address.placeName,
+			});
+			setValue("venueName", name);
+			setFilledVenueName(filledName);
 		},
+		tournamentId: eventToEdit?.tournamentId ?? undefined,
 	};
 
 	return (

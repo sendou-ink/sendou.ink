@@ -397,6 +397,8 @@ export type AddressFieldValue = {
 export type AddressSearchFieldOptions = {
 	/** Exposes the whole result on selection, e.g. its timezone, which the stored value lacks. */
 	onAddressSelected?: (address: AddressSearchResult | null) => void;
+	/** Tournament being edited, lets its editors search even without the right to add tournaments. */
+	tournamentId?: number;
 };
 
 /** `options` prop config of the `tournament-search` field. */

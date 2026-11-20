@@ -16,6 +16,9 @@ const RATE_LIMIT_WINDOW_MS = minutesToMilliseconds(1);
 const MAX_REQUESTS_PER_USER = 30;
 /** Requests reaching Photon per window, across all users, to stay within its fair use. */
 const MAX_PHOTON_REQUESTS = 60;
+const PHOTON_TIMEOUT_MS = 5_000;
+/** Photon result type of a city, town or village, whose name is the city itself, e.g. "Austin". */
+const PHOTON_SETTLEMENT_TYPE = "city";
 /** Countries where the house number is written before the street. */
 const HOUSE_NUMBER_FIRST_COUNTRIES = new Set([
 	"US",
@@ -46,7 +49,7 @@ const E2E_PHOTON_RESPONSE = {
 };
 
 export interface VenueSearchResult {
-	/** Position in the results, only stable within one response. */
+	/** Derived from the place, so the same place has the same id in every response. */
 	id: number;
 	/** Label of the result, the place name followed by its address. */
 	name: string;
@@ -79,6 +82,7 @@ const photonFeatureSchema = v.object({
 		city: optionalText,
 		town: optionalText,
 		village: optionalText,
+		type: optionalText,
 		state: optionalText,
 		country: optionalText,
 		countrycode: v.pipe(v.string(), v.toUpperCase(), v.regex(/^[A-Z]{2}$/)),
@@ -97,7 +101,7 @@ const photonRequests = { windowStart: 0, count: 0 };
 /**
  * Searches addresses and places matching the query from Photon (OpenStreetMap), each with the
  * timezone at its coordinates. Results are cached for the server's uptime and requests rate limited
- * per user and overall, a rate limited or failed search returns no results.
+ * per user and overall. Returns `null` when the search is unavailable: rate limited, timed out or failed.
  */
 export async function search({
 	query,
@@ -105,18 +109,18 @@ export async function search({
 }: {
 	query: string;
 	userId: number;
-}): Promise<VenueSearchResult[]> {
+}): Promise<VenueSearchResult[] | null> {
 	const normalizedQuery = query.trim().toLowerCase().replace(/\s+/g, " ");
 	if (!normalizedQuery) return [];
 
-	if (!consumeUserRequest(userId)) return [];
+	if (!consumeUserRequest(userId)) return null;
 
 	const cached = resultsByQuery.get(normalizedQuery);
 	if (cached) return cached;
 
 	if (!consumePhotonRequest()) {
 		logger.warn("Venue search failed: Photon request limit reached");
-		return [];
+		return null;
 	}
 
 	try {
@@ -126,7 +130,7 @@ export async function search({
 		return results;
 	} catch (error) {
 		logger.warn(`Venue search failed: ${(error as Error).message}`);
-		return [];
+		return null;
 	}
 }
 
@@ -146,15 +150,16 @@ async function fetchFromPhoton(query: string) {
 	});
 
 	// one place is often in OpenStreetMap a few times over, e.g. as a building and as its venue
-	return R.uniqueBy(places, (place) => place.name).map((place, id) => ({
+	return R.uniqueBy(places, (place) => place.name).map((place) => ({
 		...place,
-		id,
+		id: placeId(place),
 	}));
 }
 
 async function fetchPhotonResponse(url: URL): Promise<unknown> {
 	const response = await fetch(url, {
 		headers: { "User-Agent": "sendou.ink" },
+		signal: AbortSignal.timeout(PHOTON_TIMEOUT_MS),
 	});
 	if (!response.ok) {
 		throw new Error(`Photon responded with status ${response.status}`);
@@ -170,7 +175,12 @@ function featureToPlace(
 	const [longitude, latitude] = feature.geometry.coordinates;
 	const countryCode = properties.countrycode;
 
-	const city = properties.city ?? properties.town ?? properties.village ?? null;
+	const isSettlement = properties.type === PHOTON_SETTLEMENT_TYPE;
+	const city =
+		properties.city ??
+		properties.town ??
+		properties.village ??
+		(isSettlement ? (properties.name ?? null) : null);
 	const streetLine = properties.street
 		? R.filter(
 				HOUSE_NUMBER_FIRST_COUNTRIES.has(countryCode)
@@ -187,7 +197,7 @@ function featureToPlace(
 			R.isTruthy,
 		),
 	).join(", ");
-	const placeName = properties.name ?? null;
+	const placeName = isSettlement ? null : (properties.name ?? null);
 
 	return {
 		name: R.filter([placeName, address], R.isTruthy).join(", "),
@@ -199,6 +209,17 @@ function featureToPlace(
 		longitude,
 		timezone: selectableTimezone(tzLookup(latitude, longitude)),
 	};
+}
+
+// FNV-1a, a stable 32-bit hash
+function placeId(place: Omit<VenueSearchResult, "id">) {
+	let hash = 0x811c9dc5;
+	for (const char of `${place.name}|${place.latitude}|${place.longitude}`) {
+		hash ^= char.charCodeAt(0);
+		hash = Math.imul(hash, 0x01000193);
+	}
+
+	return hash >>> 0;
 }
 
 function selectableTimezone(timezone: string) {

@@ -10,6 +10,7 @@ const PLACEHOLDER_TEXTS = {
 	addressSearch: {
 		placeholder: "common:forms.addressSearch.placeholder",
 		noResults: "common:forms.addressSearch.noResults",
+		unavailable: "common:forms.addressSearch.unavailable",
 	},
 	organizationSearch: {
 		placeholder: "common:forms.organizationSearch.placeholder",
@@ -107,10 +108,11 @@ function PlaceholderItem({
 	id,
 	i18nKey,
 }: {
-	id: "PLACEHOLDER" | "NO_RESULTS";
+	id: "PLACEHOLDER" | "NO_RESULTS" | "UNAVAILABLE";
 	i18nKey: keyof typeof PLACEHOLDER_TEXTS;
 }) {
 	const { t } = useTranslation(["common"]);
+	const texts = PLACEHOLDER_TEXTS[i18nKey];
 
 	return (
 		<SendouSelectItem
@@ -120,8 +122,10 @@ function PlaceholderItem({
 			className={styles.placeholder}
 		>
 			{id === "PLACEHOLDER"
-				? t(PLACEHOLDER_TEXTS[i18nKey].placeholder)
-				: t(PLACEHOLDER_TEXTS[i18nKey].noResults)}
+				? t(texts.placeholder)
+				: id === "UNAVAILABLE" && "unavailable" in texts
+					? t(texts.unavailable)
+					: t(texts.noResults)}
 		</SendouSelectItem>
 	);
 }

@@ -85,3 +85,6 @@ export const CALENDAR_EVENT_RESULT = {
 	MAX_TEAM_PLACEMENT: 256,
 	MAX_PLAYER_NAME_LENGTH: 100,
 } as const;
+
+/** Longer venue search queries are cut to this length. */
+export const VENUE_SEARCH_QUERY_MAX_LENGTH = 200;

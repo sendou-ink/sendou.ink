@@ -528,6 +528,44 @@ export function venueFromFormValues(
 	};
 }
 
+/** A venue name that wasn't typed by the TO: copied from the copied tournament or filled in from a picked place. */
+export interface FilledVenueName {
+	name: string;
+	isCopied: boolean;
+}
+
+/**
+ * Venue name after an address is picked. A filled in name follows the picked place, one the TO typed is kept.
+ * A copied name belonged to another venue, so an address without a place name clears it.
+ */
+export function venueNameAfterAddressPick({
+	currentName,
+	filledName,
+	placeName,
+}: {
+	currentName: string;
+	filledName: FilledVenueName;
+	placeName: string | null;
+}): { name: string; filledName: FilledVenueName } {
+	const isFilledIn = !currentName || currentName === filledName.name;
+
+	if (placeName) {
+		return {
+			name: isFilledIn ? placeName : currentName,
+			filledName: { name: placeName, isCopied: false },
+		};
+	}
+
+	if (filledName.isCopied) {
+		return {
+			name: isFilledIn ? "" : currentName,
+			filledName: { name: "", isCopied: false },
+		};
+	}
+
+	return { name: currentName, filledName };
+}
+
 /** Team pick settings the form values describe, a picked mode without a count gets the default one. */
 export function teamPickSettingsFromFormValues(data: {
 	teamPickModes: ModeShort[];

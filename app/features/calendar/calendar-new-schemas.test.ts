@@ -9,6 +9,7 @@ import {
 	customTeamPickPool,
 	teamPickSettingsFromFormValues,
 	valuesMovedWithStartTime,
+	venueNameAfterAddressPick,
 } from "./calendar-new-schemas";
 import {
 	defaultBracketsFormValues,
@@ -288,5 +289,89 @@ describe("valuesMovedWithStartTime", () => {
 				brackets: [newBracketFormValue()],
 			}),
 		).toBeNull();
+	});
+});
+
+describe("venueNameAfterAddressPick", () => {
+	const copied = { name: "Old Hall", isCopied: true };
+	const picked = { name: "Austin Convention Center", isCopied: false };
+	const nothingFilled = { name: "", isCopied: true };
+
+	test.each([
+		{
+			why: "an empty name gets the place's",
+			currentName: "",
+			filledName: nothingFilled,
+			placeName: "Hilton",
+			expected: "Hilton",
+		},
+		{
+			why: "a copied name follows the new place",
+			currentName: "Old Hall",
+			filledName: copied,
+			placeName: "Hilton",
+			expected: "Hilton",
+		},
+		{
+			why: "a name filled in from a picked place follows the next one",
+			currentName: "Austin Convention Center",
+			filledName: picked,
+			placeName: "Hilton",
+			expected: "Hilton",
+		},
+		{
+			why: "a typed name is kept over a place's",
+			currentName: "Big LAN Hall",
+			filledName: picked,
+			placeName: "Hilton",
+			expected: "Big LAN Hall",
+		},
+		{
+			why: "a typed name is kept over a copied one's replacement",
+			currentName: "Big LAN Hall",
+			filledName: copied,
+			placeName: "Hilton",
+			expected: "Big LAN Hall",
+		},
+		{
+			why: "a copied name is cleared by an address without a place",
+			currentName: "Old Hall",
+			filledName: copied,
+			placeName: null,
+			expected: "",
+		},
+		{
+			why: "a name from a picked place is kept by an address without a place",
+			currentName: "Austin Convention Center",
+			filledName: picked,
+			placeName: null,
+			expected: "Austin Convention Center",
+		},
+		{
+			why: "a typed name is kept by an address without a place",
+			currentName: "Big LAN Hall",
+			filledName: copied,
+			placeName: null,
+			expected: "Big LAN Hall",
+		},
+	])("$why", ({ currentName, filledName, placeName, expected }) => {
+		expect(
+			venueNameAfterAddressPick({ currentName, filledName, placeName }).name,
+		).toBe(expected);
+	});
+
+	test("a copied name no longer counts as filled in once replaced", () => {
+		const first = venueNameAfterAddressPick({
+			currentName: "Old Hall",
+			filledName: copied,
+			placeName: null,
+		});
+		const second = venueNameAfterAddressPick({
+			currentName: "Old Hall",
+			filledName: first.filledName,
+			placeName: "Hilton",
+		});
+
+		expect(second.name).toBe("Old Hall");
 	});
 });

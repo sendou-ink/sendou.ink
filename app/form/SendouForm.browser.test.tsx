@@ -1158,6 +1158,152 @@ describe("SendouForm", () => {
 				.element(trigger.getByText("Oakland Convention Center"))
 				.not.toBeVisible();
 		});
+
+		const OAKLAND_VALUE = {
+			address: OAKLAND_ADDRESS,
+			city: "Oakland",
+			countryCode: "US",
+			latitude: 37.8013,
+			longitude: -122.2768,
+		};
+
+		const renderAddressForm = async (
+			defaultValues?: Record<string, unknown>,
+		) => {
+			const onApply = vi.fn();
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm
+								schema={ADDRESS_SEARCH}
+								defaultValues={defaultValues}
+								onApply={onApply}
+							>
+								<FormField name="venue" />
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+			const screen = await render(<RouterProvider router={router} />);
+
+			return { screen, onApply };
+		};
+
+		test("shows results for a query cut to the longest one searched", async () => {
+			const longQuery = "oakland ".repeat(40).trim();
+			mockFetcherData = {
+				query: longQuery.slice(0, 200),
+				results: [
+					{
+						id: 0,
+						name: OAKLAND_ADDRESS,
+						placeName: null,
+						address: OAKLAND_ADDRESS,
+						city: "Oakland",
+						countryCode: "US",
+						latitude: 37.8013,
+						longitude: -122.2768,
+						timezone: "America/Los_Angeles",
+					},
+				],
+			};
+			const screen = await renderForm(ADDRESS_SEARCH);
+
+			await userEvent.click(screen.getByLabelText("Venue address"));
+			await userEvent.fill(
+				screen.getByTestId("address-search-input"),
+				longQuery,
+			);
+
+			await expect
+				.element(screen.getByTestId("address-search-item"))
+				.toBeVisible();
+		});
+
+		test("leaves the address empty while one entered by hand is incomplete", async () => {
+			const { screen, onApply } = await renderAddressForm();
+
+			await userEvent.click(screen.getByTestId("address-entry-mode-button"));
+			await userEvent.type(
+				screen.getByLabelText("Venue address"),
+				"1 Main Street, Oakland",
+			);
+			await userEvent.type(
+				screen.getByLabelText("Coordinates"),
+				"37.8, -122.27",
+			);
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({ venue: null });
+		});
+
+		test("shows an address entered by hand as the search's selection", async () => {
+			const { screen } = await renderAddressForm({ venue: OAKLAND_VALUE });
+
+			await userEvent.click(screen.getByTestId("address-entry-mode-button"));
+			const address = screen.getByLabelText("Venue address");
+			await userEvent.clear(address);
+			await userEvent.type(address, "1 Main Street, Oakland");
+			await userEvent.click(screen.getByTestId("address-entry-mode-button"));
+
+			await expect
+				.element(
+					screen
+						.getByLabelText("Venue address")
+						.getByText("1 Main Street, Oakland")
+						.first(),
+				)
+				.toBeVisible();
+		});
+
+		test("tells when the search is unavailable", async () => {
+			mockFetcherData = { query: "oakland", results: [], isUnavailable: true };
+			const screen = await renderForm(ADDRESS_SEARCH);
+
+			await userEvent.click(screen.getByLabelText("Venue address"));
+			await userEvent.type(
+				screen.getByTestId("address-search-input"),
+				"oakland",
+			);
+
+			await expect
+				.element(screen.getByText(/address search isn't available/))
+				.toBeVisible();
+		});
+
+		test("edits the address by hand, starting from the current one", async () => {
+			const { screen, onApply } = await renderAddressForm({
+				venue: OAKLAND_VALUE,
+			});
+
+			await userEvent.click(screen.getByTestId("address-entry-mode-button"));
+			await expect
+				.element(screen.getByLabelText("Venue address"))
+				.toHaveValue(OAKLAND_ADDRESS);
+			const coordinates = screen.getByLabelText("Coordinates");
+			await userEvent.clear(coordinates);
+			await userEvent.type(coordinates, "37.8, nope");
+			await expect
+				.element(screen.getByText(/Write the coordinates as latitude/))
+				.toBeVisible();
+			await userEvent.clear(coordinates);
+			await userEvent.type(coordinates, "37.8, -122.27");
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({
+				venue: {
+					address: OAKLAND_ADDRESS,
+					city: "Oakland",
+					countryCode: "US",
+					latitude: 37.8,
+					longitude: -122.27,
+				},
+			});
+		});
 	});
 
 	describe("fieldset field", () => {
