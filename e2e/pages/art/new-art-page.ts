@@ -2,7 +2,11 @@ import type { Page } from "@playwright/test";
 import type { Tables } from "~/db/tables";
 import { artFormSchema } from "~/features/art/art-schemas";
 import { newArtPage } from "~/features/art/art-urls";
-import { navigate, waitForPOSTResponse } from "../../helpers/playwright";
+import {
+	navigate,
+	selectUser,
+	waitForPOSTResponse,
+} from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 import { UserArtPage } from "./user-art-page";
 
@@ -20,6 +24,13 @@ export class NewArtPage {
 			preview: this.page.locator("form img"),
 			existingImage: this.page.locator('form img[src*="-small."]'),
 			descriptionInput: this.page.getByLabel(this.form.getLabel("description")),
+			showcaseSwitch: this.page.getByRole("switch", {
+				name: this.form.getLabel("isShowcase"),
+			}),
+			/** Shown instead of the form to users without the artist role. */
+			gainPermissionsText: this.page.getByText(
+				/to gain permissions to upload art/,
+			),
 		};
 	}
 
@@ -30,6 +41,22 @@ export class NewArtPage {
 
 	async selectImage(filePath: string) {
 		await this.locators.fileInput.setInputFiles(filePath);
+	}
+
+	/** Adds the user to the users the art is of, the first empty slot taking them. */
+	async tagUser(userName: string) {
+		await selectUser({
+			page: this.page,
+			userName,
+			labelName: "User",
+			within: this.page.locator("form"),
+		});
+	}
+
+	/** Makes the art the one shown for its artist in the showcase. */
+	async makeShowcase() {
+		// the switch indicator covers its input
+		await this.locators.showcaseSwitch.click({ force: true });
 	}
 
 	/** Lands on the uploader's own art page. */

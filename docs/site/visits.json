@@ -98,14 +98,30 @@
 		]
 	},
 	"e2e/ban.spec.ts": {
-		"User banning › banned user is redirected to suspended page and cannot access site": [
-			"/",
+		"Ban › Automatic ban › submitting a friend code another account already has bans the user": [
+			"/suspended",
+			"/u/2/edit"
+		],
+		"Ban › Ban log › the user's admin page lists their bans and unbans": [
+			"/admin",
+			"/u/2/admin"
+		],
+		"Ban › Banning › a ban that has ended no longer suspends the user": [
+			"/"
+		],
+		"Ban › Banning › a banned user is sent to the suspended page from every page": [
 			"/admin",
 			"/suspended"
 		],
-		"User banning › timed ban shows expiration date on suspended page": [
-			"/admin",
+		"Ban › Suspended page › a timed ban shows when it ends": [
 			"/suspended"
+		],
+		"Ban › Suspended page › a user who isn't banned is sent to the front page": [
+			"/"
+		],
+		"Ban › Unbanning › an unbanned user can use the site again": [
+			"/admin",
+			"/builds"
 		]
 	},
 	"e2e/builds.spec.ts": {

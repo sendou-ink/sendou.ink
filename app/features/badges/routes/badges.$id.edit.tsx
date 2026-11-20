@@ -6,10 +6,10 @@ import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { UserSearch } from "~/components/elements/UserSearch";
-import type { Tables } from "~/db/tables";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { action } from "../actions/badges.$id.edit.server";
 import { editBadgeActionSchema } from "../badges-schemas";
+import * as BadgeOwners from "../core/BadgeOwners";
 import type { BadgeDetailsLoaderData } from "../loaders/badges.$id.server";
 import type { BadgeDetailsContext } from "./badges.$id";
 import styles from "./badges.$id.edit.module.css";
@@ -55,7 +55,7 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 		).length;
 
 	return (
-		<div className="stack md">
+		<div className="stack md" data-testid="badge-managers-editor">
 			<div className="stack sm">
 				<h3 className={styles.editSmallHeader}>Managers</h3>
 				<UserSearch
@@ -122,7 +122,7 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 			initialOwners,
 		);
 
-	const ownerDifferences = getOwnerDifferences(
+	const ownerDifferences = BadgeOwners.changes(
 		owners.map((o) => ({ ...o, username: o.name })),
 		data.badge.owners,
 	);
@@ -130,7 +130,7 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 	const userInputKey = owners.map((o) => `${o.id}-${o.count}`).join("-");
 
 	return (
-		<div className="stack md">
+		<div className="stack md" data-testid="badge-owners-editor">
 			<div className="stack sm">
 				<h3 className={styles.editSmallHeader}>Owners</h3>
 				<UserSearch
@@ -161,6 +161,7 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 						<input
 							className={styles.editNumberInput}
 							type="number"
+							aria-label={`Copies owned by ${owner.name}`}
 							value={owner.count}
 							min={0}
 							max={100}
@@ -202,7 +203,7 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 				<ActionButton
 					schema={editBadgeActionSchema}
 					action="OWNERS"
-					fields={{ ownerIds: countArrayToDuplicatedIdsArray(owners) }}
+					fields={{ ownerIds: BadgeOwners.toOwnerIds(owners) }}
 					isDisabled={ownerDifferences.length === 0}
 				>
 					Submit
@@ -210,46 +211,4 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 			</div>
 		</div>
 	);
-}
-
-function getOwnerDifferences(
-	newOwners: BadgeDetailsLoaderData["badge"]["owners"],
-	oldOwners: BadgeDetailsLoaderData["badge"]["owners"],
-) {
-	const result: Array<{
-		id: Tables["User"]["id"];
-		type: "added" | "removed";
-		difference: number;
-		username: string;
-	}> = [];
-
-	for (const owner of newOwners) {
-		const oldOwner = oldOwners.find((o) => o.id === owner.id);
-		if (!oldOwner) {
-			result.push({
-				id: owner.id,
-				type: "added",
-				difference: owner.count,
-				username: owner.username,
-			});
-			continue;
-		}
-
-		if (owner.count !== oldOwner.count) {
-			result.push({
-				id: owner.id,
-				type: owner.count > oldOwner.count ? "added" : "removed",
-				difference: Math.abs(owner.count - oldOwner.count),
-				username: owner.username,
-			});
-		}
-	}
-
-	return result;
-}
-
-function countArrayToDuplicatedIdsArray(
-	owners: Array<{ id: Tables["User"]["id"]; count: number }>,
-) {
-	return owners.flatMap((o) => new Array(o.count).fill(null).map(() => o.id));
 }

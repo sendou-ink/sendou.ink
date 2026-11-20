@@ -1,0 +1,26 @@
+import Mermaid from "../../components/Mermaid.astro";
+
+Articles about competitive Splatoon written by community members: event recaps, roster news, guides. They are read on `/a`.
+
+An **article** is a markdown file of `content/articles/` in this repository, not a database row. Its file name is its **slug** (`/a/<slug>`) and its front matter gives the **title**, the **date** (a calendar day, the same everywhere in the world) and the **author**: a name, a name with a link (usually to their sendou.ink user page) or a list of them. The **preview image** shared with a link to the article is `img/article-previews/<slug>.png` of the static assets. The rules are listed under Behaviour below, each with the tests that establish it.
+
+## Publishing
+
+<Mermaid code={`flowchart LR
+	write["Writer drafts the article"] --> pr["Pull request adding content/articles/slug.md"]
+	pr --> deploy["Merged and deployed"]
+	deploy --> listed["Listed on /a"]
+	deploy --> feed["Newest article in the feed"]`} />
+
+Publishing, editing and removing an article all go through a pull request to this repository, there is no editor on the site. The preview image is added to the assets repository separately.
+
+## Pages
+
+- `/a`: the 100 newest articles.
+- `/a/:slug`: one article, its markdown rendered by the shared `Markdown` component.
+
+The newest article is also an item of the feed (`ARTICLE_NEW`).
+
+## Where to start reading
+
+`core/Articles.server.ts` reads the files: the list for `/a` and the feed, one article for its page. The front matter is validated by `articles-schemas.server.ts`, an article with an invalid one being a 404 and failing the list (a unit test parses every article, so it fails before that happens). `core/Article.ts` is how the page shows an article: its authors and where their names link to, and the text without a title heading it starts with.

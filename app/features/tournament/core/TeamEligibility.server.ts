@@ -1,4 +1,4 @@
-import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { errorToast } from "~/utils/remix.server";
@@ -30,7 +30,7 @@ export async function ineligibleReason({
 	const user = await UserRepository.findLeanById(userId);
 	if (!user) return "USER_NOT_FOUND";
 
-	if (runs("SITE_BANNED") && userIsBanned(userId)) return "SITE_BANNED";
+	if (runs("SITE_BANNED") && Bans.isBanned(userId)) return "SITE_BANNED";
 	if (
 		runs("ORG_BANNED") &&
 		(await isBannedByOrganization({ tournament, userId }))

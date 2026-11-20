@@ -5,7 +5,7 @@ import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import { refreshBannedCache } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
@@ -56,7 +56,7 @@ const skipPlusForSeason = (userId: number, seasonNth: number) =>
 describe("Plus voting", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
-		await refreshBannedCache();
+		await Bans.refresh();
 	});
 
 	afterEach(async () => {
@@ -167,7 +167,7 @@ describe("Plus voting", () => {
 		await UserFactory.grant(users.id(2), {
 			ban: { banned: 1, bannedReason: null, bannedByUserId: null },
 		});
-		await refreshBannedCache();
+		await Bans.refresh();
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 

@@ -1,4 +1,10 @@
+/**
+ * Art pieces (`Art`) with their image, tags (`ArtTag` through `TaggedArt`) and the users tagged in them
+ * (`ArtUserMetadata`). Listings only see art whose image a moderator has approved, as they read
+ * the validated images view (`UserSubmittedImage`).
+ */
 import { type ExpressionBuilder, sql, type Transaction } from "kysely";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
@@ -11,6 +17,7 @@ import { seededRandom } from "~/utils/random";
 import { toDBBoolean } from "~/utils/sql";
 import type { ListedArt } from "./art-types";
 
+/** Removes the acting user from the users tagged in the art. */
 export function unlinkOwnFromArt(artId: number) {
 	return db
 		.deleteFrom("ArtUserMetadata")
@@ -27,6 +34,10 @@ function getDailySeed() {
 	return `${year}-${month}-${day}`;
 }
 
+/**
+ * One art per artist for the showcase: the one they picked as their showcase or, if they have none,
+ * their latest. Shuffled with a seed that changes daily.
+ */
 export async function findShowcaseArts(): Promise<ListedArt[]> {
 	const arts = await db
 		.selectFrom((eb) =>
@@ -87,6 +98,7 @@ export async function findShowcaseArts(): Promise<ListedArt[]> {
 	return seededShuffle(mappedArts);
 }
 
+/** The latest art of each artist having the tag, an artist's showcase art first if it has it. */
 export async function findShowcaseArtsByTag(
 	tagId: Tables["ArtTag"]["id"],
 ): Promise<ListedArt[]> {
@@ -111,36 +123,25 @@ export async function findShowcaseArtsByTag(
 		.orderBy("Art.createdAt", "desc")
 		.execute();
 
-	const encounteredUserIds = new Set<number>();
-
-	return arts
-		.filter((row) => {
-			if (encounteredUserIds.has(row.userId)) {
-				return false;
-			}
-
-			encounteredUserIds.add(row.userId);
-
-			return true;
-		})
-		.map((a) => ({
-			id: a.id,
-			createdAt: a.createdAt,
-			url: a.url,
-			isShowcase: Boolean(a.isShowcase),
-			author: {
-				commissionsOpen: a.commissionsOpen,
-				avatar: a.avatar,
-				id: a.userId,
-				username: a.username,
-			},
-			permissions: artPermissions({
-				authorId: a.userId,
-				linkedUsers: a.linkedUsers,
-			}),
-		}));
+	return R.uniqueBy(arts, (row) => row.userId).map((a) => ({
+		id: a.id,
+		createdAt: a.createdAt,
+		url: a.url,
+		isShowcase: Boolean(a.isShowcase),
+		author: {
+			commissionsOpen: a.commissionsOpen,
+			avatar: a.avatar,
+			id: a.userId,
+			username: a.username,
+		},
+		permissions: artPermissions({
+			authorId: a.userId,
+			linkedUsers: a.linkedUsers,
+		}),
+	}));
 }
 
+/** The 100 most recently uploaded art pieces, latest first. */
 export async function findRecentlyUploadedArts(): Promise<ListedArt[]> {
 	const arts = await db
 		.selectFrom("Art")
@@ -179,10 +180,12 @@ export async function findRecentlyUploadedArts(): Promise<ListedArt[]> {
 	}));
 }
 
+/** Every tag any artist has created. */
 export async function findAllTags() {
 	return db.selectFrom("ArtTag").select(["id", "name"]).execute();
 }
 
+/** Deletes the tags no art has anymore, returning how many were deleted. */
 export async function deleteOrphanTags() {
 	const result = await db
 		.deleteFrom("ArtTag")
@@ -216,6 +219,10 @@ export async function findById(id: Tables["Art"]["id"]) {
 	};
 }
 
+/**
+ * Art the user made (without an `author`, it being them) and art made of them by someone else (with one),
+ * latest first. Either can be left out.
+ */
 export async function findArtsByUserId(
 	userId: number,
 	{ includeAuthored = true, includeTagged = true } = {},
@@ -338,6 +345,7 @@ export async function findArtsByUserId(
 	return combined.sort((a, b) => b.createdAt - a.createdAt);
 }
 
+/** Deletes the art, its image staying in storage. */
 export async function deleteById(id: number) {
 	return db.deleteFrom("Art").where("id", "=", id).execute();
 }
@@ -350,6 +358,10 @@ type InsertArtArgs = Pick<Tables["Art"], "description"> &
 		tags: TagsToAdd;
 	};
 
+/**
+ * Adds art made by the acting user, creating the tags that don't exist yet. The artist's first art
+ * becomes their showcase.
+ */
 export async function insert(args: InsertArtArgs) {
 	const authorId = actorId();
 	return await db.transaction().execute(async (trx) => {
@@ -397,6 +409,10 @@ type UpdateArtArgs = Pick<Tables["Art"], "description"> & {
 	tags: TagsToAdd;
 };
 
+/**
+ * Replaces the art's description, tags and tagged users. Making it the showcase takes the showcase
+ * from the artist's other art.
+ */
 export async function update(id: number, args: UpdateArtArgs) {
 	return await db.transaction().execute(async (trx) => {
 		const { authorId } = await trx

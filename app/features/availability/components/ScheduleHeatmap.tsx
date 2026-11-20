@@ -10,6 +10,7 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import { AVAILABILITY } from "../availability-constants";
 import type { DayTimeRange, TimeRange } from "../availability-types";
 import * as Availability from "../core/Availability";
+import * as DayTrack from "../core/DayTrack";
 import type { TeamScheduleLoaderData } from "../loaders/t.$customUrl.schedule.server";
 import { PlayableWindowsSummary, TierDot } from "./PlayableWindowsSummary";
 import { useRangeText } from "./ScheduleDayCell";
@@ -73,12 +74,12 @@ export function ScheduleHeatmap({
 		range: TimeRange,
 		day: WeekData["days"][number],
 	): DayTimeRange => ({
-		start: Availability.timestampToDayMinutes({
+		start: DayTrack.timestampToDayMinutes({
 			date: day.date,
 			timestamp: range.startsAt,
 			timezone: week.timezone,
 		}),
-		end: Availability.timestampToDayMinutes({
+		end: DayTrack.timestampToDayMinutes({
 			date: day.date,
 			timestamp: range.endsAt,
 			timezone: week.timezone,
@@ -102,12 +103,12 @@ export function ScheduleHeatmap({
 		day,
 		dayIndex,
 		cells: cellStarts.map((startMinutes) => {
-			const startsAt = Availability.dayMinutesToTimestamp({
+			const startsAt = DayTrack.dayMinutesToTimestamp({
 				date: day.date,
 				minutes: startMinutes,
 				timezone: week.timezone,
 			});
-			const endsAt = Availability.dayMinutesToTimestamp({
+			const endsAt = DayTrack.dayMinutesToTimestamp({
 				date: day.date,
 				minutes: startMinutes + CELL_MINUTES,
 				timezone: week.timezone,

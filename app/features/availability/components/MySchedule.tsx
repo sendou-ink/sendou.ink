@@ -18,8 +18,8 @@ import type {
 	AvailabilityEditorWeek,
 	ScheduleAudienceTeam,
 } from "../availability-types";
-import { scheduleAudiencesHiddenFrom } from "../availability-utils";
-import type { MyScheduleData } from "../core/MySchedule.server";
+import type { MyScheduleData } from "../core/ScheduleViews.server";
+import * as ScheduleVisibility from "../core/ScheduleVisibility";
 import styles from "./MySchedule.module.css";
 import { ScheduleVisibilityDialog } from "./ScheduleVisibilityDialog";
 import { WeekAvailabilityEditor } from "./WeekAvailabilityEditor";
@@ -41,7 +41,7 @@ export function MySchedule({
 	);
 	const [visibilityDialogOpen, setVisibilityDialogOpen] = React.useState(false);
 	const [emptyWeekConfirmOpen, setEmptyWeekConfirmOpen] = React.useState(false);
-	const hiddenFrom = scheduleAudiencesHiddenFrom({
+	const hiddenFrom = ScheduleVisibility.hiddenFrom({
 		visibility: user?.preferences.scheduleVisibility,
 		teams,
 	});

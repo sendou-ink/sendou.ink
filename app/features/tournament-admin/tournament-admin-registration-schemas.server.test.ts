@@ -4,7 +4,7 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { refreshBannedCache } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { adminRegistrationFormSchemaServer } from "./tournament-admin-registration-schemas.server";
 
@@ -123,7 +123,7 @@ describe("adminRegistrationFormSchemaServer", () => {
 		const bannedNewcomer = await UserFactory.create();
 		await UserFactory.grant(bannedMember.id, { ban: BAN });
 		await UserFactory.grant(bannedNewcomer.id, { ban: BAN });
-		await refreshBannedCache();
+		await Bans.refresh();
 
 		expect(
 			await memberIssues({

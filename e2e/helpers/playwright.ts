@@ -797,12 +797,12 @@ export async function clickNavTab(page: Page, testId: string) {
 export const MACHINE_TIMEZONE =
 	Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-/** Pre-writes the timezone cookie so the first document request already renders in the machine's timezone. */
-export function setTimezoneCookie(page: Page) {
+/** Pre-writes the timezone cookie so the first document request already renders in the timezone (default: the machine's). */
+export function setTimezoneCookie(page: Page, timezone = MACHINE_TIMEZONE) {
 	return page.context().addCookies([
 		{
 			name: "timezone",
-			value: MACHINE_TIMEZONE,
+			value: timezone,
 			domain: "localhost",
 			path: "/",
 		},

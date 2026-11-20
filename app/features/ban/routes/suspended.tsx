@@ -1,8 +1,8 @@
 import { type MetaFunction, useLoaderData } from "react-router";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
-import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
+import * as BanStatus from "../core/BanStatus";
 import { loader } from "../loaders/suspended.server";
 
 export { loader };
@@ -17,11 +17,7 @@ export const meta: MetaFunction = (args) => {
 export default function SuspendedPage() {
 	const data = useLoaderData<typeof loader>();
 
-	const ends = (() => {
-		if (!data.banned || data.banned === 1) return null;
-
-		return databaseTimestampToDate(data.banned);
-	})();
+	const ends = BanStatus.endsAt(data.banned);
 
 	return (
 		<Main>

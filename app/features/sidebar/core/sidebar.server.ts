@@ -6,7 +6,7 @@ import * as ExternalStreamRepository from "~/features/admin/ExternalStreamReposi
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as AvailabilityRepository from "~/features/availability/AvailabilityRepository.server";
 import * as Availability from "~/features/availability/core/Availability";
-import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import {
 	COMBINED_STREAMS_KEY,
@@ -303,7 +303,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 		[(row) => row.viewerCount, "desc"],
 	);
 	for (const row of xRankRowsMostViewedFirst) {
-		if (userIsBanned(row.id)) continue;
+		if (Bans.isBanned(row.id)) continue;
 		if (seenStreamKeys.has(LiveStream.key(row))) continue;
 		if (xRankUserIds.has(row.id)) continue;
 		xRankUserIds.add(row.id);

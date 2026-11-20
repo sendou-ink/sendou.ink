@@ -1,0 +1,29 @@
+import Mermaid from "../../components/Mermaid.astro";
+
+Artists upload their Splatoon art to sendou.ink, where it is shown on `/art`, on their own page and on the pages of the players it is of. It doubles as a portfolio for finding an artist to commission.
+
+An **art** (`Art`) is one image uploaded by its **author**, a user with the artist role (`User.isArtist`, granted by an admin on request). It can have a description, **tags** (`ArtTag`, shared by all art, any artist creating new ones as they tag) and **linked users** (`ArtUserMetadata`), the players the art is made of, who get a notification and find it on their own page. Each artist has one **showcase** art (`Art.isShowcase`), the one representing them on the Showcase tab of `/art`. An artist's **commissions** are open or closed as set on their profile, closing by themselves a month after being opened (the `CloseExpiredCommissions` routine). The rules are listed under Behaviour below, each with the tests that establish it.
+
+## Lifecycle
+
+<Mermaid code={`stateDiagram-v2
+	[*] --> Pending: uploaded on /art/new
+	[*] --> Listed: uploaded by a patron
+	Pending --> Listed: image approved by a moderator
+	Pending --> [*]: image rejected, deleting the art
+	Listed --> Listed: description, tags, linked users or showcase edited
+	Listed --> [*]: deleted by its author`} />
+
+The image is a user submitted image (`UserSubmittedImage`, see the `img-upload` feature) kept in the format it was uploaded in, along with a `-small` thumbnail the browser makes before uploading. Until a moderator approves it on `/upload/admin` the art is shown to no one, its author only seeing how many of their uploads are waiting. The image can't be swapped after the upload: replacing it means deleting the art and uploading it again.
+
+## Pages
+
+- `/art`: Recently Uploaded (the latest 100) and Showcase (one art per artist, in an order shuffled daily, narrowed down to a tag on request). The lists are cached for two hours, so new and edited art can take that long to show there.
+- `/art/new`: the upload form, editing an existing art with `?art=`.
+- `/u/:identifier/art`: a user's art, both what they made and what others made of them, the art opening big over the page (`?big=`, the link a notification of being tagged leads to). The route belongs to the `user-page` feature.
+
+Art also shows in the art widget of the user page and in the feed.
+
+## Where to start reading
+
+The data of every page comes from `ArtRepository.server.ts`, the narrowing down of the lists they show (by source, tag and open commissions) from `core/ArtListing.ts`. Uploading and editing is one `SendouForm` (`art-schemas.ts`), its action (`actions/art.new.server.ts`) uploading the image through `art-image.server.ts`. Deleting and unlinking are actions of the user page's art route. `components/ArtGrid.tsx` renders every list of art, `BigImageDialog` being the lightbox.

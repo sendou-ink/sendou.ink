@@ -5,6 +5,7 @@ import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";
 import * as TeamEventFactory from "~/db/seed/factories/TeamEventFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { db } from "~/db/sql";
 import type { UserPreferences } from "~/db/tables-json";
 import * as AvailabilityRepository from "./AvailabilityRepository.server";
 import * as Availability from "./core/Availability";
@@ -764,5 +765,123 @@ describe("AvailabilityRepository.findScheduleVisibleUserIds", () => {
 				viewerId: viewerId(),
 			}),
 		).toEqual([]);
+	});
+});
+
+describe("AvailabilityRepository.insertTeamEvent", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("records the acting user as the author and the whole team taking part", async () => {
+		const team = await TeamFactory.create({
+			memberUserIds: [users.id(1), users.id(2)],
+		});
+
+		const eventId = await actAs(users.id(1), () =>
+			AvailabilityRepository.insertTeamEvent({
+				teamId: team.id,
+				name: "VoD review",
+				startsAt: at("2026-08-25", "20:00"),
+				endsAt: at("2026-08-25", "21:30"),
+			}),
+		);
+
+		const [event] = await AvailabilityRepository.findTeamEventsByTeamId({
+			teamId: team.id,
+			...WINDOW,
+		});
+		expect(event).toMatchObject({
+			id: eventId,
+			name: "VoD review",
+			participants: [],
+		});
+		expect(
+			await db
+				.selectFrom("TeamEvent")
+				.select("authorId")
+				.where("id", "=", eventId)
+				.executeTakeFirst(),
+		).toEqual({ authorId: users.id(1) });
+	});
+
+	test("limits the event to the given participants", async () => {
+		const team = await TeamFactory.create({
+			memberUserIds: [users.id(1), users.id(2)],
+		});
+
+		await actAs(users.id(1), () =>
+			AvailabilityRepository.insertTeamEvent({
+				teamId: team.id,
+				name: "Strategy meeting",
+				startsAt: at("2026-08-25", "20:00"),
+				endsAt: at("2026-08-25", "21:30"),
+				participantUserIds: [users.id(2)],
+			}),
+		);
+
+		const [event] = await AvailabilityRepository.findTeamEventsByTeamId({
+			teamId: team.id,
+			...WINDOW,
+		});
+		expect(event.participants).toEqual([
+			expect.objectContaining({ userId: users.id(2) }),
+		]);
+	});
+});
+
+describe("AvailabilityRepository.findTeamEventById", () => {
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test("finds the event with the team it belongs to", async () => {
+		const team = await TeamFactory.create({ memberUserIds: [users.id(1)] });
+		const event = await TeamEventFactory.create({
+			teamId: team.id,
+			authorId: users.id(1),
+			name: "VoD review",
+			startsAt: at("2026-08-25", "20:00"),
+			endsAt: at("2026-08-25", "21:30"),
+		});
+
+		expect(await AvailabilityRepository.findTeamEventById(event.id)).toEqual({
+			id: event.id,
+			teamId: team.id,
+		});
+	});
+
+	test("returns undefined for an unknown id", async () => {
+		expect(await AvailabilityRepository.findTeamEventById(999)).toBeUndefined();
+	});
+});
+
+describe("AvailabilityRepository.deleteTeamEventsEndedBefore", () => {
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test("deletes the events that ended before the timestamp and keeps the rest", async () => {
+		const team = await TeamFactory.create({ memberUserIds: [users.id(1)] });
+		const eventAt = (date: string, name: string) =>
+			TeamEventFactory.create({
+				teamId: team.id,
+				authorId: users.id(1),
+				name,
+				startsAt: at(date, "20:00"),
+				endsAt: at(date, "21:30"),
+			});
+		await eventAt("2026-08-24", "Ended");
+		await eventAt("2026-08-26", "Upcoming");
+
+		await AvailabilityRepository.deleteTeamEventsEndedBefore(
+			at("2026-08-25", "00:00"),
+		);
+
+		const events = await AvailabilityRepository.findTeamEventsByTeamId({
+			teamId: team.id,
+			...WINDOW,
+		});
+		expect(events.map((event) => event.name)).toEqual(["Upcoming"]);
 	});
 });

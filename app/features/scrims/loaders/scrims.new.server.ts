@@ -1,7 +1,7 @@
 import * as R from "remeda";
 import * as AssociationRepository from "~/features/associations/AssociationRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as RosterSchedule from "~/features/availability/core/RosterSchedule.server";
+import * as ScheduleViews from "~/features/availability/core/ScheduleViews.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
 import type { SerializeFrom } from "~/utils/remix";
@@ -31,7 +31,7 @@ export const loader = async () => {
 		teams,
 		associations: await AssociationRepository.findByMemberUserId(user.id),
 		recentPickupRosters: await ScrimPickupRosterRepository.findAllOwnRecent(),
-		schedule: await RosterSchedule.rosterScheduleData({
+		schedule: await ScheduleViews.rosterScheduleData({
 			userIds: scheduleUserIds,
 			timezone: getViewerTimezone() ?? "UTC",
 			viewerId: user.id,

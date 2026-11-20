@@ -56,7 +56,7 @@ export default function ArticlePage() {
 		<Main>
 			<article className="article">
 				<h1>{data.title}</h1>
-				<div className="text-sm text-lighter">
+				<div className="text-sm text-lighter" data-testid="article-byline">
 					by <Author /> •{" "}
 					<LocaleTime
 						date={new Date(data.date)}
@@ -82,18 +82,16 @@ function Author() {
 	const data = useLoaderData<typeof loader>();
 
 	return data.authors.map((author, i) => {
-		if (!author.link) return author.name;
-
-		const authorLink = author.link.includes("https://sendou.ink")
-			? author.link.replace("https://sendou.ink", "")
-			: author.link;
+		const link = Article.authorHref(author);
 
 		return (
 			<React.Fragment key={author.name}>
-				{author.link.includes("https://sendou.ink") ? (
-					<Link to={authorLink}>{author.name}</Link>
+				{!link ? (
+					author.name
+				) : link.isInternal ? (
+					<Link to={link.href}>{author.name}</Link>
 				) : (
-					<a href={author.link}>{author.name}</a>
+					<a href={link.href}>{author.name}</a>
 				)}
 				{i < data.authors.length - 1 ? " & " : ""}
 			</React.Fragment>

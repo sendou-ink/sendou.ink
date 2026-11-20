@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { ArtGrid } from "~/features/art/components/ArtGrid";
+import * as ArtListing from "~/features/art/core/ArtListing";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { action } from "../actions/u.$identifier.art.server";
@@ -25,19 +26,11 @@ export default function UserArtPage() {
 		data.tagCounts?.find((tagCount) => tagCount[0] === tagParam)?.[0] ?? null;
 	const layoutData = useUserPageLayoutData();
 
-	const hasBothArtMadeByAndMadeOf =
-		data.arts.some((a) => a.author) && data.arts.some((a) => !a.author);
-
-	let arts =
-		type === "ALL" || !hasBothArtMadeByAndMadeOf
-			? data.arts
-			: type === "MADE-BY"
-				? data.arts.filter((a) => !a.author)
-				: data.arts.filter((a) => a.author);
-
-	if (filteredTag) {
-		arts = arts.filter((a) => a.tags?.some((tag) => tag.name === filteredTag));
-	}
+	const hasBothArtMadeByAndMadeOf = ArtListing.hasBothSources(data.arts);
+	const arts = ArtListing.filterUserArts(data.arts, {
+		source: type,
+		tag: filteredTag,
+	});
 
 	return (
 		<div className="stack md">

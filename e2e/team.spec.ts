@@ -1,37 +1,24 @@
-import { addWeeks } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import {
-	addTeamEventSchema,
-	editTeamEventSchema,
-} from "~/features/availability/availability-schemas";
-import * as Availability from "~/features/availability/core/Availability";
-import { weekDates, weekRange } from "./helpers/availability";
 import type { Factories } from "./helpers/factories";
 import {
 	expect,
 	impersonate,
 	isNotVisible,
-	MACHINE_TIMEZONE,
 	navigate,
-	setTimezoneCookie,
 	test,
 } from "./helpers/playwright";
-import { createFormHelpers } from "./helpers/playwright-form";
 import { AnythingAdder } from "./pages/layout/anything-adder";
 import { JoinTeamPage } from "./pages/team/join-team-page";
 import { NewTeamPage } from "./pages/team/new-team-page";
 import { TeamEditPage } from "./pages/team/team-edit-page";
 import { TeamPage } from "./pages/team/team-page";
-import { TeamSchedulePage } from "./pages/team/team-schedule-page";
 import { UserPage } from "./pages/user/user-page";
 
 const TEAM_NAME = "Alliance Rogue";
 const SECONDARY_TEAM_NAME = "Team Olive";
 const ROSTER_SIZE = 4;
 const TOURNAMENT_NAME = "In The Zone 30";
-const WEDNESDAY = 2;
-const THURSDAY = 3;
 
 test.describe("New team creation", () => {
 	test("creates new team", async ({ page }) => {
@@ -445,220 +432,4 @@ async function createFullTeam(factories: Factories) {
 		name: TEAM_NAME,
 		memberUserIds: [ADMIN_ID, ...members.map((member) => member.id)],
 	});
-}
-
-test.describe("Team schedule", () => {
-	test("member sees the heatmap, the grid states and playable windows", async ({
-		page,
-		factories,
-	}) => {
-		const noScheduleMember = await factories.UserFactory.create({
-			discordName: "Schedules-Later",
-		});
-		const { id: teamId, customUrl } = await factories.TeamFactory.create({
-			name: TEAM_NAME,
-			memberUserIds: [ADMIN_ID, NZAP_TEST_ID, noScheduleMember.id],
-		});
-
-		const { startsAt } = weekRange();
-		await factories.AvailabilityWeekFactory.create({
-			userId: ADMIN_ID,
-			weekStartsAt: startsAt,
-			timezone: MACHINE_TIMEZONE,
-			// the small-hours slot guards day bucketing: on machines off UTC it
-			// falls on another UTC day, so it moves columns if the server ignores
-			// the viewer's timezone
-			slots: [
-				daySlot(WEDNESDAY, "18:00", "22:00"),
-				daySlot(THURSDAY, "00:30", "02:00"),
-			],
-			dayNotes: [{ date: weekDates()[WEDNESDAY], text: "Leaving early" }],
-		});
-		await factories.AvailabilityWeekFactory.create({
-			userId: NZAP_TEST_ID,
-			weekStartsAt: startsAt,
-			timezone: MACHINE_TIMEZONE,
-			slots: [daySlot(WEDNESDAY, "19:00", "23:00")],
-		});
-		// a commitment late in the shared Wednesday evening: renders as a busy
-		// block beside the reported time in the grid and trims the heatmap's
-		// effective availability without removing the window
-		await factories.TeamEventFactory.create({
-			teamId,
-			authorId: ADMIN_ID,
-			name: "VoD review",
-			...daySlot(WEDNESDAY, "22:00", "23:30"),
-		});
-
-		await impersonate(page, ADMIN_ID);
-		await setTimezoneCookie(page);
-
-		const team = new TeamPage(page);
-		await team.goto(customUrl);
-
-		const schedule = await team.openSchedule();
-
-		// heatmap is the default view: two share Wed 19-22, one is also free Wed 18-19 and Thu 1-2
-		await expect(schedule.locators.heatmap).toBeVisible();
-		await expect(schedule.heatmapCells(2)).toHaveCount(3);
-		await expect(schedule.heatmapCells(1)).toHaveCount(2);
-		// the count shade must actually paint: an equal-specificity base background once blanked the whole grid
-		expect(await schedule.heatmapCellBackground(2)).not.toBe(
-			await schedule.heatmapCellBackground(0),
-		);
-		await expect(schedule.locators.heatmapUnreported).toContainText(
-			"Schedules-Later",
-		);
-		await expect(schedule.dayDot(WEDNESDAY)).toBeVisible();
-
-		// hovering a block names who is free then and who has no schedule
-		await schedule.heatmapCells(2).first().hover();
-		await expect(schedule.locators.heatmapTooltip).toContainText("2/3");
-		await expect(schedule.locators.heatmapTooltip).toContainText("N-ZAP");
-		await expect(schedule.locators.heatmapTooltip).toContainText(
-			"Schedules-Later",
-		);
-
-		// dropping the member without a schedule from the count clears the nudge about them
-		await schedule.memberChip(noScheduleMember.id).click();
-		await isNotVisible(schedule.locators.heatmapUnreported);
-		await schedule.memberChip(noScheduleMember.id).click();
-
-		await schedule.locators.gridViewTab.click();
-		await expect(schedule.locators.grid).toBeVisible();
-
-		await expect(schedule.cellRange(ADMIN_ID, WEDNESDAY)).toBeVisible();
-		await expect(schedule.cellRange(ADMIN_ID, THURSDAY)).toBeVisible();
-		await expect(schedule.cell(ADMIN_ID, 0)).toHaveText("—");
-		await expect(schedule.cell(noScheduleMember.id, 0)).toHaveText("?");
-		// the grid shows the reported 19-23 in full, the commitment named beside
-		// it with its own time rather than cut out of it
-		await expect(schedule.cellRange(NZAP_TEST_ID, WEDNESDAY)).toContainText(
-			"11:00",
-		);
-		await expect(schedule.cellBusy(NZAP_TEST_ID, WEDNESDAY)).toContainText(
-			"VoD review",
-		);
-		await expect(schedule.cellBusy(NZAP_TEST_ID, WEDNESDAY)).toContainText(
-			"10:00",
-		);
-		await expect(schedule.locators.notes).toContainText("Leaving early");
-
-		// two members share Wed 19-22 while the third has no schedule, so the
-		// only playable window is the one-short tier
-		await expect(schedule.locators.windows).toHaveText(/Wed/);
-		await expect(schedule.dayDot(WEDNESDAY)).toBeVisible();
-		await isNotVisible(schedule.dayDot(0));
-
-		await expect(schedule.locators.teamEvents).toContainText("VoD review");
-	});
-
-	test("hides the schedule from non-members, a friend of a member included", async ({
-		page,
-		factories,
-	}) => {
-		const friend = await factories.UserFactory.create();
-		const { customUrl } = await factories.TeamFactory.create({
-			name: TEAM_NAME,
-			memberUserIds: [ADMIN_ID],
-		});
-		await factories.FriendshipFactory.create({
-			userOneId: ADMIN_ID,
-			userTwoId: friend.id,
-		});
-		await factories.AvailabilityWeekFactory.create({
-			userId: ADMIN_ID,
-			weekStartsAt: weekRange().startsAt,
-			timezone: MACHINE_TIMEZONE,
-			slots: [daySlot(WEDNESDAY, "18:00", "22:00")],
-		});
-
-		await impersonate(page, friend.id);
-
-		const schedule = new TeamSchedulePage(page);
-		await schedule.goto(customUrl);
-		await expect(schedule.locators.hiddenMessage).toBeVisible();
-		await isNotVisible(schedule.locators.grid);
-	});
-
-	test("owner adds, edits and deletes a team event, a regular member only sees it", async ({
-		page,
-		factories,
-	}) => {
-		const { customUrl } = await factories.TeamFactory.create({
-			name: TEAM_NAME,
-			memberUserIds: [ADMIN_ID, NZAP_TEST_ID],
-		});
-
-		await impersonate(page, ADMIN_ID);
-		await setTimezoneCookie(page);
-
-		const schedule = new TeamSchedulePage(page);
-		await schedule.goto(customUrl);
-
-		await schedule.locators.addEventButton.click();
-		const form = createFormHelpers(page, addTeamEventSchema);
-		await form.fill("name", "VoD review vs. FTWin");
-		await form.setDateTime("startsAt", nextWeekTime(WEDNESDAY, "20:00"));
-		await form.select("duration", "90");
-		await form.submit();
-
-		await schedule.locators.nextWeekToggle.click();
-		await expect(schedule.locators.teamEvents).toContainText(
-			"VoD review vs. FTWin",
-		);
-
-		await page.getByTestId(/edit-team-event/).click();
-		const editForm = createFormHelpers(page, editTeamEventSchema);
-		await editForm.fill("name", "Strategy meeting");
-		await editForm.checkItems("participants", ["SELECTED"]);
-		await page.getByLabel("N-ZAP", { exact: true }).click();
-		await editForm.submit();
-
-		await expect(schedule.locators.teamEvents).toContainText(
-			"Strategy meeting",
-		);
-		await expect(schedule.locators.teamEvents).toContainText("N-ZAP");
-
-		await impersonate(page, NZAP_TEST_ID);
-		await schedule.goto(customUrl);
-		await schedule.locators.nextWeekToggle.click();
-		await expect(schedule.locators.teamEvents).toBeVisible();
-		await isNotVisible(schedule.locators.addEventButton);
-		await isNotVisible(page.getByTestId(/delete-team-event/));
-
-		await impersonate(page, ADMIN_ID);
-		await schedule.goto(customUrl);
-		await schedule.locators.nextWeekToggle.click();
-		await page.getByTestId(/delete-team-event/).click();
-		await page.getByTestId("confirm-button").click();
-		await isNotVisible(schedule.locators.teamEvents);
-	});
-});
-
-/** Wall-clock time on a day of next week, always ahead of "now" so the add-event form accepts it. */
-function nextWeekTime(dayIndex: number, time: string) {
-	const date = weekDates(addWeeks(new Date(), 1))[dayIndex];
-
-	return new Date(
-		Availability.localToTimestamp({ date, time, timezone: MACHINE_TIMEZONE }) *
-			1000,
-	);
-}
-
-function daySlot(dayIndex: number, start: string, end: string) {
-	const dates = weekDates();
-
-	return {
-		startsAt: Availability.localToTimestamp({
-			date: dates[dayIndex],
-			time: start,
-			timezone: MACHINE_TIMEZONE,
-		}),
-		endsAt: Availability.localToTimestamp({
-			date: dates[dayIndex],
-			time: end,
-			timezone: MACHINE_TIMEZONE,
-		}),
-	};
 }

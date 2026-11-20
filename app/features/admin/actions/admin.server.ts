@@ -2,7 +2,7 @@ import * as R from "remeda";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
 import { requireUser } from "~/features/auth/core/user.server";
-import { refreshBannedCache } from "~/features/ban/core/banned.server";
+import * as Bans from "~/features/ban/core/Bans.server";
 import * as LinkedRoles from "~/features/discord/core/LinkedRoles.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
@@ -42,7 +42,7 @@ export const action = defineAction(
 						errorToast(`Migration failed. Reason: ${errorMessage}`);
 					}
 
-					await refreshBannedCache();
+					await Bans.refresh();
 
 					message = "Account migrated";
 					break;
@@ -139,7 +139,7 @@ export const action = defineAction(
 					bannedByUserId: user.id,
 				});
 
-				await refreshBannedCache();
+				await Bans.refresh();
 				await refreshApiTokensCache();
 
 				void LinkedRoles.syncUsers([body.user]);
@@ -166,7 +166,7 @@ export const action = defineAction(
 					unbannedByUserId: user.id,
 				});
 
-				await refreshBannedCache();
+				await Bans.refresh();
 
 				void LinkedRoles.syncUsers([body.user]);
 

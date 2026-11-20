@@ -9,6 +9,49 @@ const TITLE = "Results from Riptide 2025";
 const PARAGRAPH =
 	"Riptide 2025 took place between Friday, September 5 and Sunday, September 7.";
 
+describe("Article.normalizeAuthors", () => {
+	test.each([
+		{
+			why: "a name",
+			author: "YELLOW",
+			expected: [{ name: "YELLOW", link: null }],
+		},
+		{
+			why: "a name with a link",
+			author: { name: "YELLOW", link: "https://sendou.ink/u/yellow" },
+			expected: [{ name: "YELLOW", link: "https://sendou.ink/u/yellow" }],
+		},
+		{
+			why: "a list mixing both",
+			author: ["Samino", { name: "Radha", link: "https://sendou.ink/u/wiper" }],
+			expected: [
+				{ name: "Samino", link: null },
+				{ name: "Radha", link: "https://sendou.ink/u/wiper" },
+			],
+		},
+	])("reads $why", ({ author, expected }) => {
+		expect(Article.normalizeAuthors(author)).toEqual(expected);
+	});
+});
+
+describe("Article.authorHref", () => {
+	test.each([
+		{
+			why: "a sendou.ink link becomes an in-app path",
+			link: "https://sendou.ink/u/samino",
+			expected: { href: "/u/samino", isInternal: true },
+		},
+		{
+			why: "any other link is kept as is",
+			link: "https://bsky.app/profile/yellow",
+			expected: { href: "https://bsky.app/profile/yellow", isInternal: false },
+		},
+		{ why: "an author without a link has none", link: null, expected: null },
+	])("$why", ({ link, expected }) => {
+		expect(Article.authorHref({ name: "Samino", link })).toEqual(expected);
+	});
+});
+
 describe("Article.bodyWithoutLeadingTitle", () => {
 	test.each([
 		{

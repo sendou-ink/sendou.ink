@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 import type * as v from "valibot";
-import { visibilityIssues } from "~/features/associations/associations-schemas";
+import * as Visibility from "~/features/associations/core/Visibility";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -305,7 +305,7 @@ export const action = defineAction(
 			}
 			case "EDIT": {
 				requirePermission(lobby, "MANAGE");
-				const [issue] = visibilityIssues(body, {
+				const [issue] = Visibility.formIssues(body, {
 					startsAt: databaseTimestampToDate(lobby.startsAt),
 					isEdit: true,
 					messages: LOBBY_VISIBILITY_ISSUE_MESSAGES,
