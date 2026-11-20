@@ -42,7 +42,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 	const filtered = CalendarEvent.applyFilters(events, filters);
 
 	const canSaveAsDefault =
-		user != null &&
+		user !== undefined &&
 		!R.isDeepEqual(
 			filters,
 			user.preferences?.defaultCalendarFilters

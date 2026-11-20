@@ -13,7 +13,7 @@ export function ScrimMapListForm() {
 	const data = useLoaderData<typeof loader>();
 	const postTournament = data.post.mapsTournament;
 	const isPostAuthorSide = data.mapByMap.viewerSide === "ALPHA";
-	const useFromPost = postTournament != null && isPostAuthorSide;
+	const useFromPost = postTournament !== null && isPostAuthorSide;
 	const defaultSource: SourceValue = useFromPost ? "FROM_POST" : "TOURNAMENT";
 
 	return (

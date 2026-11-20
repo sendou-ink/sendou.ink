@@ -362,7 +362,8 @@ export function CustomThemeSelector({
 			<div className={styles.customThemeSelectorActions}>
 				<SendouButton
 					isDisabled={
-						!isSupporter || (fetcherState != null && fetcherState !== "idle")
+						!isSupporter ||
+						(fetcherState !== undefined && fetcherState !== "idle")
 					}
 					onClick={handleSave}
 				>
@@ -370,7 +371,8 @@ export function CustomThemeSelector({
 				</SendouButton>
 				<SendouButton
 					isDisabled={
-						!isSupporter || (fetcherState != null && fetcherState !== "idle")
+						!isSupporter ||
+						(fetcherState !== undefined && fetcherState !== "idle")
 					}
 					variant="destructive"
 					onClick={handleReset}

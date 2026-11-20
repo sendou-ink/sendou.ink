@@ -8,7 +8,7 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { WeaponReporter, type WeaponReporterMap } from "./WeaponReporter";
 
 vi.mock("~/features/auth/core/user", () => ({
-	useUser: () => null,
+	useUser: () => undefined,
 }));
 
 const SPLATTERSHOT = 40 as MainWeaponId;

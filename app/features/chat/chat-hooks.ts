@@ -170,14 +170,14 @@ export function useChatAutoScroll(
 	const latestMessage = messages.at(-1);
 	const latestMessagePublicId = latestMessage?.publicId;
 	const latestMessageIsOwn =
-		user != null && latestMessage?.authorUserId === user.id;
+		user !== undefined && latestMessage?.authorUserId === user.id;
 
 	React.useEffect(() => {
 		if (!latestMessagePublicId) return;
 
 		const messagesContainer = ref.current;
 		const everyMessageFits =
-			messagesContainer != null &&
+			messagesContainer !== null &&
 			messagesContainer.scrollHeight <= messagesContainer.clientHeight;
 
 		if (latestMessageIsOwn || pinnedToBottomRef.current || everyMessageFits) {
@@ -227,7 +227,7 @@ export function useLiveRevalidation(enabled = true) {
 	useEventStreamCatchUp({
 		// a logged out visitor has no event stream to miss broadcasts from in the first
 		// place, and revalidating for them would only add load
-		enabled: enabled && user != null,
+		enabled: enabled && user !== undefined,
 		// the catch-up itself is already jittered, so it does not go through the
 		// broadcast scheduler on top of that
 		onCatchUp: () => revalidateWithScope(revalidate, undefined),

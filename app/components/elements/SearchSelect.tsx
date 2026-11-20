@@ -76,7 +76,7 @@ export function SearchSelect<TItem extends { id: number; name: string }>({
 			data-testid={testId}
 			selectedKey={search.selectedKey}
 			onSelectionChange={(key) => {
-				if (key != null) {
+				if (key !== null) {
 					search.onSelectionChange(Number(key));
 				}
 			}}

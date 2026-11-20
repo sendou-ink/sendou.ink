@@ -350,7 +350,7 @@ function teamFieldValue(
 		case "teamName":
 			return team.name;
 		case "seed":
-			return team.seed != null ? String(team.seed) : "";
+			return team.seed !== null ? String(team.seed) : "";
 		case "registeredAt":
 			return databaseTimestampToDate(team.createdAt).toISOString();
 		case "checkInStatus":

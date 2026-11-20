@@ -6,6 +6,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import * as R from "remeda";
 import { Dropzone, DropzoneAction } from "~/components/Dropzone";
 import { SendouButton } from "~/components/elements/Button";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -118,7 +119,7 @@ function Stat(props: { label: string; raw?: unknown; children: ReactNode }) {
 		<span className={styles.stat}>
 			<span className={styles.statLabel}>{props.label}</span>
 			<span className={styles.statValue}>{props.children}</span>
-			{props.raw != null && props.raw !== "" ? (
+			{R.isNonNullish(props.raw) && props.raw !== "" ? (
 				<span className={styles.statRaw}>raw: {String(props.raw)}</span>
 			) : null}
 		</span>

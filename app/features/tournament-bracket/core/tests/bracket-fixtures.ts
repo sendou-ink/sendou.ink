@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import * as Engine from "../engine";
 import type { BracketData, MatchData, RoundSection } from "../engine/types";
 
@@ -76,9 +77,9 @@ export function readyMatches(
 	return data.match.filter(
 		(match) =>
 			predicate(match) &&
-			match.opponent1?.id != null &&
-			match.opponent2?.id != null &&
-			match.winnerSide == null,
+			R.isNonNullish(match.opponent1?.id) &&
+			R.isNonNullish(match.opponent2?.id) &&
+			match.winnerSide === null,
 	);
 }
 

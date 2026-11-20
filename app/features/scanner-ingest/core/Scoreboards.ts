@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import type {
 	ScannerMatch,
 	ScannerMatchObjective,
@@ -164,7 +165,7 @@ export function matchedGames({
 				const view = winnerFirstView(match);
 				return view ? { ...view, matchIndex } : null;
 			})
-			.filter((view): view is TimedView => view?.playedAt != null)
+			.filter((view): view is TimedView => R.isNonNullish(view?.playedAt))
 			.filter((view) => isLinkableLobby(view.lobby))
 			.sort((a, b) => a.playedAt - b.playedAt),
 	);

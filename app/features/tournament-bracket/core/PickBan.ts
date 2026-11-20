@@ -447,7 +447,7 @@ export function currentTurnSessionStartedAt({
 	teams: [PickBanTeam, PickBanTeam];
 	matchId: number;
 }): number | null {
-	if (!currentTurn || matchStartedAt == null) return null;
+	if (!currentTurn || matchStartedAt === null) return null;
 
 	const timeline: TimelineItem[] = [];
 	for (let i = 0; i < events.length; i++) {

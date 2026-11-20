@@ -16,8 +16,10 @@
  *
  * Usage: pnpm scanner:status-audit <events.csv | name.tape.jsonl> [--all]
  */
+
 import { readFileSync } from "node:fs";
 import { basename } from "node:path";
+import * as R from "remeda";
 import {
 	type PlayerStatusTimelineSample,
 	statusSpans,
@@ -913,7 +915,7 @@ function printPovCrossCheck(
 		(event) => event.type === DEATH_EVENT_TYPE,
 	).length;
 	const povRow = match.teams[match.pov.team].players[match.pov.index];
-	if (povRow?.d == null) return;
+	if (R.isNullish(povRow?.d)) return;
 	const agrees = overlayDeaths === povRow.d ? "✓" : "✗ disagrees";
 	console.log(
 		`pov cross-check: ${overlayDeaths} respawn-overlay death event(s) vs scoreboard d=${povRow.d} for ${povRow.name ?? "?"} ${agrees} (independent of the icon-strip pipeline)`,

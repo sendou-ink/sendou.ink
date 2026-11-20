@@ -6,7 +6,7 @@ import { analyzerSearchParams } from "../analyzer-search-params";
 import BuildAnalyzerShell from "./analyzer";
 
 vi.mock("../loaders/analyzer.server", () => ({ loader: vi.fn() }));
-vi.mock("~/features/auth/core/user", () => ({ useUser: () => null }));
+vi.mock("~/features/auth/core/user", () => ({ useUser: () => undefined }));
 
 const SQUEEZER_ID: MainWeaponId = 400;
 const BALLPOINT_SPLATLING_ID: MainWeaponId = 4030;

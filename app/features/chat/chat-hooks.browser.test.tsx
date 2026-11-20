@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
 	releaseHold: vi.fn(),
 	revalidateWithScope: vi.fn(),
 	scheduleBroadcastRevalidation: vi.fn(),
-	user: null as { id: number } | null,
+	user: undefined as { id: number } | undefined,
 	catchUpOptions: null as {
 		enabled: boolean;
 		onCatchUp: () => void;
@@ -56,7 +56,7 @@ afterEach(() => {
 	mocks.releaseHold.mockClear();
 	mocks.revalidateWithScope.mockClear();
 	mocks.scheduleBroadcastRevalidation.mockClear();
-	mocks.user = null;
+	mocks.user = undefined;
 	mocks.catchUpOptions = null;
 	mocks.serverEventListener = null;
 });
@@ -70,7 +70,7 @@ function LiveRevalidator({ enabled }: { enabled: boolean }) {
 describe("useLiveRevalidation", () => {
 	test.each([
 		{ why: "logged in and enabled", user: { id: 1 }, enabled: true, on: true },
-		{ why: "logged out visitor", user: null, enabled: true, on: false },
+		{ why: "logged out visitor", user: undefined, enabled: true, on: false },
 		{ why: "explicitly disabled", user: { id: 1 }, enabled: false, on: false },
 	])("catching up is $on for a $why", async ({ user, enabled, on }) => {
 		mocks.user = user;

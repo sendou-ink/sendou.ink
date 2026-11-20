@@ -5,6 +5,7 @@
  * VICTORY/DEFEAT tags keep `players`/`matchScores` winners-first. Reuses the
  * scoreboard helpers with glyph sets rescaled to this screen.
  */
+import * as R from "remeda";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
@@ -460,8 +461,8 @@ export function createScoreboardBattleLogReplayDetector(
 		if (left.result !== null || right.result !== null) {
 			swapped = left.result === "DEFEAT" || right.result === "VICTORY";
 		} else if (
-			left.matchScore?.value != null &&
-			right.matchScore?.value != null
+			R.isNonNullish(left.matchScore?.value) &&
+			R.isNonNullish(right.matchScore?.value)
 		) {
 			swapped = right.matchScore.value > left.matchScore.value;
 		}

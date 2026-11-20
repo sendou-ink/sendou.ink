@@ -15,7 +15,7 @@ export function AuthErrorDialog() {
 	const user = useUser();
 	const [authError] = useSearchParam(authErrorSearchParams, "authError");
 
-	if (authError == null || !isHydrated || user) return null;
+	if (authError === null || !isHydrated || user) return null;
 
 	return createPortal(
 		<SendouDialog

@@ -60,7 +60,7 @@ export function SendouQMatchActionTab({
 	const user = useUser();
 	if (!user) return null;
 
-	const isStaffOnly = ownTeamId == null;
+	const isStaffOnly = ownTeamId === null;
 
 	const { isDecisive } = SendouQMatch.score(data.match);
 	const awaitingConfirmation = !data.match.isLocked && isDecisive;
@@ -91,7 +91,7 @@ export function SendouQMatchActionTab({
 		!awaitingConfirmation &&
 		!isLocked &&
 		!isStaffOnly &&
-		cancelRequestedByGroupId != null &&
+		cancelRequestedByGroupId !== undefined &&
 		cancelRequestedByGroupId !== ownTeamId
 	) {
 		return <CancelRespondTab data={data} />;
@@ -542,7 +542,7 @@ function InProgressTab({
 		setExpectedReportedCount(null);
 	}
 
-	const isStaffOnly = ownTeamId == null;
+	const isStaffOnly = ownTeamId === null;
 
 	const {
 		mapsToWin,

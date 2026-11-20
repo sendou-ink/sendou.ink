@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import type {
 	IngestedScoreboardData,
 	IngestedScoreboardPlayer,
@@ -119,7 +120,7 @@ function toTimelineObjective(
 						? 1
 						: 0,
 			position:
-				!alphaIsWinner && sample.position != null
+				!alphaIsWinner && R.isNonNullish(sample.position)
 					? 0 - sample.position
 					: sample.position,
 		},

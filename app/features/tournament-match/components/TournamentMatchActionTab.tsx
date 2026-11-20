@@ -298,7 +298,7 @@ function buildSetEndingData({
 				alpha: alphaParticipants,
 				bravo: bravoParticipants,
 			},
-			ko: result.ko != null ? Boolean(result.ko) : undefined,
+			ko: result.ko !== null ? Boolean(result.ko) : undefined,
 		};
 	});
 

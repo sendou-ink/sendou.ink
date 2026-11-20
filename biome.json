@@ -46,7 +46,11 @@
 				"noNestedPromises": "error",
 				"noUnusedExpressions": "error",
 				"noShadow": "error",
-				"noJsxLeakedDollar": "error"
+				"noJsxLeakedDollar": "error",
+				"noDoubleEquals": {
+					"level": "error",
+					"options": { "ignoreNull": false }
+				}
 			},
 			"correctness": {
 				"noUndeclaredVariables": "error",

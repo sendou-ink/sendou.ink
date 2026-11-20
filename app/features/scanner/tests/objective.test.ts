@@ -7,6 +7,7 @@
 
 import assert from "node:assert/strict";
 import { realpathSync } from "node:fs";
+import * as R from "remeda";
 import { createDeathDetector } from "../core/detectors/death/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
 import { createMinimapDetector } from "../core/detectors/minimap/index";
@@ -135,7 +136,7 @@ for (const fixture of fixtures) {
 			() => {
 				const position =
 					event.data.mode === "SZ" ? undefined : event.data.position;
-				if (expected.position === null || position == null) {
+				if (expected.position === null || R.isNullish(position)) {
 					assert.equal(position, expected.position, `(${debug()})`);
 					return;
 				}

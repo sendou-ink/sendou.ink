@@ -1,4 +1,5 @@
 /** Pure logic for stored scanner matches: canonical serialization (hashing), same-game identity of two partials, and merging a partial into a stored one. */
+import * as R from "remeda";
 import { isSameReplayCode } from "~/features/scanner/core/replay-code";
 import type {
 	ScannerMatch,
@@ -47,18 +48,16 @@ export function canonicalMatch(match: ScannerMatch): ScannerMatch {
 		objective:
 			match.objective === null ? null : canonicalObjective(match.objective),
 		// `?? null` also normalizes rows stored before the field existed
-		playerStatus:
-			match.playerStatus == null
-				? null
-				: canonicalPlayerStatus(match.playerStatus),
-		kills:
-			match.kills == null
-				? null
-				: match.kills.map((kill) => ({
-						t: kill.t,
-						time: kill.time,
-						name: kill.name,
-					})),
+		playerStatus: R.isNullish(match.playerStatus)
+			? null
+			: canonicalPlayerStatus(match.playerStatus),
+		kills: R.isNullish(match.kills)
+			? null
+			: match.kills.map((kill) => ({
+					t: kill.t,
+					time: kill.time,
+					name: kill.name,
+				})),
 		teams: [canonicalTeam(match.teams[0]), canonicalTeam(match.teams[1])],
 		winner: match.winner,
 		pov:
@@ -345,21 +344,20 @@ function swapSides(match: ScannerMatch): ScannerMatch {
 							penalty: [sample.penalty[1], sample.penalty[0]],
 							control:
 								sample.control === null ? null : sample.control === 0 ? 1 : 0,
-							...(sample.position != null
+							...(R.isNonNullish(sample.position)
 								? { position: 0 - sample.position }
 								: null),
 						})),
 					},
-		playerStatus:
-			match.playerStatus == null
-				? null
-				: {
-						samples: match.playerStatus.samples.map((sample) => ({
-							...sample,
-							special: [sample.special[1], sample.special[0]],
-							dead: [sample.dead[1], sample.dead[0]],
-						})),
-					},
+		playerStatus: R.isNullish(match.playerStatus)
+			? null
+			: {
+					samples: match.playerStatus.samples.map((sample) => ({
+						...sample,
+						special: [sample.special[1], sample.special[0]],
+						dead: [sample.dead[1], sample.dead[0]],
+					})),
+				},
 	};
 }
 

@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import * as v from "valibot";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
@@ -31,7 +32,7 @@ export function adminRegistrationFormSchemaServer({
 					: undefined
 				: data.pickUpName;
 			if (
-				name != null &&
+				R.isNonNullish(name) &&
 				tournamentTeamNameTaken({
 					tournament,
 					name,

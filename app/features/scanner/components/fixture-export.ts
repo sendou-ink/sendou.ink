@@ -3,6 +3,7 @@
  * expected.json prefilled from the detector's output, so labeling is review-and-correct.
  */
 
+import * as R from "remeda";
 import { downloadBlob as download } from "~/utils/download";
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import { KILL_EVENT_TYPE } from "../core/detectors/kill/index";
@@ -209,8 +210,8 @@ export function buildExpectedJson(event: DetectedEvent | null): string {
 					stage: card.stage,
 					stageLabel: stageLabel(card.stage),
 				}),
-				...(card.timestamp != null && { timestamp: card.timestamp }),
-				...(card.replayCode != null && { replayCode: card.replayCode }),
+				...(R.isNonNullish(card.timestamp) && { timestamp: card.timestamp }),
+				...(R.isNonNullish(card.replayCode) && { replayCode: card.replayCode }),
 				matchScores: card.matchScores,
 				players: card.players.map((p) => ({
 					name: p.name,

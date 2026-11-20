@@ -870,7 +870,7 @@ function buildRowsByIds(ids: number[]) {
 }
 
 function weaponIsTop500(sortValue: number | null): boolean {
-	return sortValue != null && sortValue % 2 === 0;
+	return sortValue !== null && sortValue % 2 === 0;
 }
 
 interface BuildRowToResultInput {

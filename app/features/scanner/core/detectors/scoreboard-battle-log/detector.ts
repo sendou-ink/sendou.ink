@@ -9,6 +9,7 @@
  * layout drawn in perspective names the homography that levels it (RECTIFY),
  * and its ROIs then live in the rectified frame.
  */
+import * as R from "remeda";
 import {
 	CANONICAL_HEIGHT,
 	CANONICAL_WIDTH,
@@ -576,8 +577,8 @@ function decideSwapped(
 	if (topTotal === FULL_COUNT_TEAM_SCORE) return false;
 	if (bottomTotal === FULL_COUNT_TEAM_SCORE) return true;
 	if (
-		left?.value != null &&
-		right?.value != null &&
+		R.isNonNullish(left?.value) &&
+		R.isNonNullish(right?.value) &&
 		topTotal !== null &&
 		bottomTotal !== null &&
 		topTotal !== bottomTotal

@@ -32,7 +32,7 @@ export default function NewBuildPage() {
 		<NewBuildForm
 			defaultValues={defaultValues}
 			gearIdToAbilities={gearIdToAbilities}
-			isEditing={defaultValues?.buildToEditId != null}
+			isEditing={defaultValues?.buildToEditId !== undefined}
 		/>
 	);
 }

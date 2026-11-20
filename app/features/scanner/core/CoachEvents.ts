@@ -1056,7 +1056,7 @@ function isHold(run: ControlRun): boolean {
  */
 function progressOf(run: ControlRun): number {
 	const forward = run.samples.flatMap((sample) =>
-		sample.position == null
+		R.isNullish(sample.position)
 			? []
 			: [run.team === 0 ? sample.position : -sample.position],
 	);

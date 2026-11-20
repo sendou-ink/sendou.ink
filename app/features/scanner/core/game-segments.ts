@@ -17,6 +17,7 @@
  * Which game a lobby screen shows is not decided here: the builder assigns
  * them (match-builder.ts).
  */
+import * as R from "remeda";
 import type { StageId } from "~/modules/in-game-lists/types";
 import * as Clock from "./clock";
 import { DEATH_EVENT_TYPE } from "./detectors/death/index";
@@ -123,7 +124,7 @@ export function split<E extends DetectedEvent>(
 		if (!isGameplayEvent(event)) continue;
 
 		const opensGame =
-			clock.spanOpenedBy(index) !== null && current?.spanIndex != null;
+			clock.spanOpenedBy(index) !== null && R.isNonNullish(current?.spanIndex);
 		if (
 			!current ||
 			ended ||

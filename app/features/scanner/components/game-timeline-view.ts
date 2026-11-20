@@ -1,5 +1,7 @@
 /** Prop derivation for rendering a ScannerMatch with the shared <GameTimeline />. */
+
 import type { ComponentProps } from "react";
+import * as R from "remeda";
 import type { GameTimeline } from "~/components/GameTimeline";
 import type { PlayerStatusTimelineTeam } from "~/components/PlayerStatusTimeline";
 import { type ScannerMatch, victimSlot } from "../core/scanner-match";
@@ -60,7 +62,7 @@ export function gameTimelineProps(
 				control:
 					sample.control === null ? null : sample.control === first ? 0 : 1,
 				position:
-					first === 1 && sample.position != null
+					first === 1 && R.isNonNullish(sample.position)
 						? 0 - sample.position
 						: sample.position,
 			},

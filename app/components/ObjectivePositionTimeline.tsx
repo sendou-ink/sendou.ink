@@ -5,6 +5,7 @@
  */
 
 import clsx from "clsx";
+import * as R from "remeda";
 import { useElementSize } from "~/hooks/useElementSize";
 import styles from "./ObjectivePositionTimeline.module.css";
 import type { ObjectiveTimelineEvent } from "./ObjectiveTimeline";
@@ -31,7 +32,7 @@ export function ObjectivePositionTimeline({
 	const { ref: measureRef, size } = useElementSize<HTMLDivElement>();
 
 	const reads = events.flatMap((event) =>
-		event.data.position != null
+		R.isNonNullish(event.data.position)
 			? [{ t: event.t, position: event.data.position }]
 			: [],
 	);

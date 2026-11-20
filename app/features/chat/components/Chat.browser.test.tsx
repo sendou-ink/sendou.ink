@@ -13,7 +13,7 @@ const CONNECTION_STATUS_GRACE_MS = 1_500;
 const currentUser = vi.hoisted(() => ({ id: null as number | null }));
 
 vi.mock("~/features/auth/core/user", () => ({
-	useUser: () => (currentUser.id === null ? null : { id: currentUser.id }),
+	useUser: () => (currentUser.id === null ? undefined : { id: currentUser.id }),
 }));
 
 // the composer only sends over a live event stream, which the tests have none of

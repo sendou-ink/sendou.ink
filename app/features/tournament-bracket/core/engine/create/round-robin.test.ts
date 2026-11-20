@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import { describe, expect, test } from "vitest";
 import type { BracketData, MatchData } from "../types";
 import { createResolved } from "./index";
@@ -199,7 +200,9 @@ describe("Create a round-robin stage", () => {
 });
 
 function isRealMatch(match: MatchData) {
-	return match.opponent1?.id != null && match.opponent2?.id != null;
+	return (
+		R.isNonNullish(match.opponent1?.id) && R.isNonNullish(match.opponent2?.id)
+	);
 }
 
 function matchById(data: BracketData, id: number) {

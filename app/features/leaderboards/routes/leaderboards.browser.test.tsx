@@ -7,7 +7,7 @@ import LeaderboardsPage from "./leaderboards";
 vi.mock("../loaders/leaderboards.server", () => ({ loader: vi.fn() }));
 vi.mock("../actions/leaderboards.server", () => ({ action: vi.fn() }));
 const mocks = vi.hoisted(() => ({
-	user: null as { id: number; roles: Array<string> } | null,
+	user: undefined as { id: number; roles: Array<string> } | undefined,
 }));
 vi.mock("~/features/auth/core/user", () => ({ useUser: () => mocks.user }));
 
@@ -91,7 +91,7 @@ function renderPage(loaderData: unknown) {
 
 afterEach(() => {
 	window.history.replaceState(null, "", window.location.pathname);
-	mocks.user = null;
+	mocks.user = undefined;
 });
 
 const showLeaderboard = (

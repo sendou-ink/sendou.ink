@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import type {
 	ScannerMatch,
 	ScannerMatchPlayer,
@@ -83,7 +84,7 @@ export function sideSwapped(match: ScannerMatch): ScannerMatch {
 							penalty: [sample.penalty[1], sample.penalty[0]],
 							control:
 								sample.control === null ? null : sample.control === 0 ? 1 : 0,
-							...(sample.position != null
+							...(R.isNonNullish(sample.position)
 								? { position: 0 - sample.position }
 								: null),
 						})),

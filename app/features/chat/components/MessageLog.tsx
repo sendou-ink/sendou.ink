@@ -2,6 +2,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { browser } from "react-dom";
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import { useLatestRef } from "~/hooks/useLatestRef";
 import { useVirtualizer } from "~/modules/virtualizer/react";
 import { SendouButton } from "../../../components/elements/Button";
@@ -204,7 +205,7 @@ export function MessageLog({
 									<Message
 										message={msg}
 										label={
-											msg.authorUserId != null
+											R.isNonNullish(msg.authorUserId)
 												? labelByUserId?.[msg.authorUserId]
 												: undefined
 										}

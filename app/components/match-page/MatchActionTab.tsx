@@ -75,7 +75,7 @@ export function MatchActionTab({
 	const canSubmit = winnerId !== null && cooldownSecondsLeft === 0;
 
 	const isOnTeam =
-		ownTeamId != null &&
+		ownTeamId !== null &&
 		(teams[0].id === ownTeamId || teams[1].id === ownTeamId);
 
 	const submit = () => {
@@ -150,7 +150,7 @@ export function MatchActionTab({
 						<TeamRadioOption
 							team={teams[1]}
 							isOwnTeam={teams[1].id === ownTeamId}
-							hideLabel={ownTeamId == null}
+							hideLabel={ownTeamId === null}
 							className={clsx(styles.bravo)}
 							testId="winner-radio-2"
 						/>

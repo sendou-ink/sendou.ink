@@ -13,6 +13,7 @@
 import { ChevronDown, ChevronUp, Eye, EyeOff, Minus } from "lucide-react";
 import type * as React from "react";
 import { Fragment, useState } from "react";
+import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouTab,
@@ -313,7 +314,7 @@ function XSetDivider({ cards }: { cards: XBattleCards }) {
 						Set {wins > losses ? "won" : "lost"} {wins}–{losses}
 					</span>
 				) : null}
-				{result?.power != null ? (
+				{R.isNonNullish(result?.power) ? (
 					<span>
 						X Power {result.power.toFixed(1)}
 						{result.powerChange !== null ? (

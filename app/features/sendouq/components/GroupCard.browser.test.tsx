@@ -12,7 +12,7 @@ import type { TierRange } from "../q-types";
 import { GroupCard } from "./GroupCard";
 
 vi.mock("~/features/auth/core/user", () => ({
-	useUser: () => null,
+	useUser: () => undefined,
 }));
 
 function createMember(overrides: Partial<SQGroupMember> = {}): SQGroupMember {

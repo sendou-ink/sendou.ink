@@ -1,6 +1,7 @@
 import cachified from "@epic-web/cachified";
 import { hoursToMilliseconds } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
+import * as R from "remeda";
 import type { WindowSchedule } from "~/features/availability/availability-types";
 import * as Availability from "~/features/availability/core/Availability";
 import * as Schedules from "~/features/availability/core/Schedules.server";
@@ -174,8 +175,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const canJoin =
 		!matchIsOver &&
-		match.opponentOne?.id != null &&
-		match.opponentTwo?.id != null &&
+		R.isNonNullish(match.opponentOne?.id) &&
+		R.isNonNullish(match.opponentTwo?.id) &&
 		(isParticipant || tournament.isOrganizerOrStreamer(user)) &&
 		(schedule.phase === "CLOSED" || schedule.phase === "SCHEDULED");
 

@@ -78,7 +78,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				name: association.name,
 			})) ?? [],
 		canSaveAsDefault:
-			user != null &&
+			user !== undefined &&
 			!R.isDeepEqual(
 				filters,
 				user.preferences?.defaultScrimsFilters ?? Scrim.defaultFilters(),

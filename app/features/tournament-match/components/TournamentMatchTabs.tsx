@@ -153,7 +153,7 @@ function resolveTimelineMaps(
 		participants
 			.filter((p) => p.tournamentTeamId === tournamentTeamId)
 			.map((p) => playerById.get(p.userId))
-			.filter((u): u is NonNullable<typeof u> => u != null)
+			.filter((u): u is NonNullable<typeof u> => u !== undefined)
 			.map((u) => ({
 				id: u.id,
 				username: u.username,
@@ -203,7 +203,7 @@ function resolveTimelineMaps(
 			weapons: hasAnyWeapon
 				? { alpha: alphaWeapons, bravo: bravoWeapons }
 				: undefined,
-			ko: result.ko != null ? Boolean(result.ko) : undefined,
+			ko: result.ko !== null ? Boolean(result.ko) : undefined,
 			scoreboard: resolveTimelineScoreboard(
 				ingestedScoreboard?.data,
 				alphaIsWinner,

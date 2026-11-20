@@ -7,7 +7,7 @@
 import clsx from "clsx";
 import { memo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { clamp } from "remeda";
+import { clamp, isNonNullish } from "remeda";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { abilityImageUrl } from "~/utils/urls";
 import styles from "./GameTimeline.module.css";
@@ -231,7 +231,7 @@ function ScrubReadout({
 			>
 				<div className={styles.readoutTitle}>
 					{formatElapsed(time)}
-					{objectiveNow?.clock != null
+					{isNonNullish(objectiveNow?.clock)
 						? ` · ${t("common:objectiveTimeline.timeLeft", {
 								time: formatElapsed(objectiveNow.clock),
 							})}`
@@ -254,7 +254,7 @@ function ScrubReadout({
 									{objectiveNow.scores[side] ?? "?"}
 								</span>
 							) : null}
-							{objectiveNow?.penalties[side] != null ? (
+							{isNonNullish(objectiveNow?.penalties[side]) ? (
 								<span className={styles.readoutPenalty}>
 									{t("common:objectiveTimeline.penalty", {
 										value: objectiveNow.penalties[side],
@@ -266,7 +266,7 @@ function ScrubReadout({
 									{t("common:objectiveTimeline.inControl")}
 								</span>
 							) : null}
-							{objectiveNow?.position != null &&
+							{isNonNullish(objectiveNow?.position) &&
 							pushingSide(objectiveNow.position) === side ? (
 								<span className={styles.readoutControl}>
 									{t("common:objectiveTimeline.pushed", {
@@ -324,7 +324,7 @@ function StatusWeaponsRow({
 			</span>
 			<span className={styles.readoutWeapons}>
 				{slots.map((slot) =>
-					weapons[slot] != null ? (
+					isNonNullish(weapons[slot]) ? (
 						<WeaponImage
 							key={slot}
 							weaponSplId={weapons[slot]}

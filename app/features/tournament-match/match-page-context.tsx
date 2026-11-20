@@ -285,7 +285,7 @@ function resolveTeamsMissingActiveRoster(
 	minMembersPerTeam: number,
 ): string[] {
 	return teams
-		.filter((team): team is MatchPageTeam => team != null)
+		.filter((team): team is MatchPageTeam => team !== null)
 		.filter(
 			(team) => !tournamentTeamToActiveRosterUserIds(team, minMembersPerTeam),
 		)

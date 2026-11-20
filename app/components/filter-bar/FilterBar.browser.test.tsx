@@ -213,7 +213,7 @@ describe("FilterBar", () => {
 	});
 
 	test("prompts a logged out user to log in instead of opening a pill", async () => {
-		useUser.mockReturnValue(null);
+		useUser.mockReturnValue(undefined);
 
 		const screen = await render(<TestFilterBar initialMode="SZ" />);
 
@@ -228,7 +228,7 @@ describe("FilterBar", () => {
 	});
 
 	test("prompts a logged out user to log in instead of opening the add filter menu", async () => {
-		useUser.mockReturnValue(null);
+		useUser.mockReturnValue(undefined);
 
 		const screen = await render(<TestFilterBar />);
 
@@ -243,7 +243,7 @@ describe("FilterBar", () => {
 	});
 
 	test("keeps a pill marked usable logged out on the bar and out of the log in prompt", async () => {
-		useUser.mockReturnValue(null);
+		useUser.mockReturnValue(undefined);
 
 		const screen = await render(<TestHighlightsFilterBar />);
 

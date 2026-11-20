@@ -99,7 +99,7 @@ const mockTournament = {
 };
 
 vi.mock("~/features/auth/core/user", () => ({
-	useUser: () => null,
+	useUser: () => undefined,
 }));
 
 vi.mock("~/features/tournament/tournament-context", () => ({

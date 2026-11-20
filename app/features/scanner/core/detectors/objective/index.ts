@@ -14,6 +14,7 @@
  * by the shared timer value. Turf War draws the timer and icon strip with no
  * counter (`TIMER_VARIANT`): a readable timer alone emits the strip reads.
  */
+import * as R from "remeda";
 import * as Decisions from "../../decisions";
 import * as FieldScores from "../../field-scores";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
@@ -517,7 +518,7 @@ export function createObjectiveDetector(
 		if (sides.every((side) => side.score.value === null)) return null;
 
 		const scoreOf = (read: BannerScoreRead | null) =>
-			read?.value != null ? read.confidence : null;
+			R.isNonNullish(read?.value) ? read.confidence : null;
 		return {
 			event: {
 				type: OBJECTIVE_EVENT_TYPE,
