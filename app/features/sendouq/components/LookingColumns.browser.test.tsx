@@ -172,6 +172,9 @@ describe("LookingColumns", () => {
 		const strip = pane("groups").closest<HTMLElement>("[class*='strip']")!;
 
 		await userEvent.click(screen.getByRole("tab").nth(2));
+		await vi.waitFor(() => {
+			expect(strip.scrollLeft).toBeGreaterThan(0);
+		}, 3000);
 		strip.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
 		strip.scrollTo({ left: 0, behavior: "instant" });
 
