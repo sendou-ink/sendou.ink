@@ -5,7 +5,10 @@ import {
 	formatEnvErrors,
 	requiredInProd,
 } from "./config-helpers";
-import { SENDOU_INK_ORGANIZATION_ID } from "./features/tournament-organization/tournament-organization-constants";
+import {
+	INKLING_PERFORMANCE_LABS_ORGANIZATION_ID,
+	SENDOU_INK_ORGANIZATION_ID,
+} from "./features/tournament-organization/tournament-organization-constants";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { superRefine, type ValidationCtx } from "./utils/schema";
 
@@ -64,7 +67,9 @@ const schema = v.pipe(
 
 		BROADCAST_ORG_IDS: v.optional(
 			v.string(),
-			isProd ? `${SENDOU_INK_ORGANIZATION_ID}` : "*",
+			isProd
+				? `${SENDOU_INK_ORGANIZATION_ID},${INKLING_PERFORMANCE_LABS_ORGANIZATION_ID}`
+				: "*",
 		),
 	}),
 	superRefine((val, ctx) => {
@@ -137,7 +142,7 @@ export const ServerConfig = {
 		webhookSecret: values.DAILY_WEBHOOK_SECRET,
 	},
 
-	/** Organizations whose tournaments can use broadcast overlays, `"*"` for every tournament. In production the sendou.ink organization unless `BROADCAST_ORG_IDS` is set. */
+	/** Organizations whose tournaments can use broadcast overlays, `"*"` for every tournament. In production the sendou.ink and Inkling Performance Labs (From the Ink Up) organizations unless `BROADCAST_ORG_IDS` is set. */
 	broadcastOrgIds: parseOrgIds(values.BROADCAST_ORG_IDS),
 };
 

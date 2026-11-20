@@ -12,6 +12,9 @@ export const LUTI_NAME_PREFIX = "LUTI";
 /** Id of the sendou.ink organization (https://sendou.ink/org/sendouink). */
 export const SENDOU_INK_ORGANIZATION_ID = 1;
 
+/** Id of the "Inkling Performance Labs" organization. */
+export const INKLING_PERFORMANCE_LABS_ORGANIZATION_ID = 3;
+
 export const ESTABLISHED_ORG = {
 	MONTHS_CONSIDERED: 6,
 	GAIN_THRESHOLD: 150,
