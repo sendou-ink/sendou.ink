@@ -776,6 +776,78 @@ describe("Chat", () => {
 		});
 	});
 
+	test("a long log mounted while hidden lays out its rows once shown", async () => {
+		const router = createMemoryRouter(
+			[
+				{
+					path: "/",
+					element: (
+						<div data-testid="chat-wrapper" style={{ display: "none" }}>
+							<Chat messages={manyMessages(400)} onSend={() => {}} />
+						</div>
+					),
+				},
+			],
+			{ initialEntries: ["/"] },
+		);
+		const screen = await render(<RouterProvider router={router} />);
+
+		const log = screen.getByRole("log", { includeHidden: true });
+		await expect.element(log).toBeInTheDocument();
+
+		const wrapper = screen.getByTestId("chat-wrapper").element() as HTMLElement;
+		wrapper.style.display = "block";
+		wrapper.style.width = "400px";
+
+		await vi.waitFor(() => {
+			const element = log.element() as HTMLElement;
+			expect(element.scrollHeight).toBeGreaterThan(element.clientHeight);
+			expect(isScrolledToBottom(element)).toBe(true);
+		});
+		expect(
+			screen.getByTestId("chat-message-row").elements().length,
+		).toBeLessThan(50);
+	});
+
+	test("a log hidden and shown again keeps its row sizes", async () => {
+		const router = createMemoryRouter(
+			[
+				{
+					path: "/",
+					element: (
+						<div data-testid="chat-wrapper" style={{ width: 400 }}>
+							<Chat messages={manyMessages(400)} onSend={() => {}} />
+						</div>
+					),
+				},
+			],
+			{ initialEntries: ["/"] },
+		);
+		const screen = await render(<RouterProvider router={router} />);
+
+		const log = screen.getByRole("log", { includeHidden: true });
+		await vi.waitFor(() => {
+			expect(isScrolledToBottom(log.element() as HTMLElement)).toBe(true);
+		});
+		const scrollHeightBefore = (log.element() as HTMLElement).scrollHeight;
+
+		const wrapper = screen.getByTestId("chat-wrapper").element() as HTMLElement;
+		wrapper.style.display = "none";
+		await wait(100);
+
+		expect(
+			screen.getByTestId("chat-message-row").elements().length,
+		).toBeLessThan(50);
+
+		wrapper.style.display = "block";
+
+		await vi.waitFor(() => {
+			const element = log.element() as HTMLElement;
+			expect(element.scrollHeight).toBe(scrollHeightBefore);
+			expect(isScrolledToBottom(element)).toBe(true);
+		});
+	});
+
 	test("stays at the bottom when the log gets shorter, e.g. a mobile keyboard opening", async () => {
 		const { screen } = await renderChatWithControls(manyMessages(50));
 

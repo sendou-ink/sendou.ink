@@ -84,7 +84,7 @@ export function useVirtualizer({
 			let changed = false;
 			for (const entry of entries) {
 				const index = indexByElementRef.current.get(entry.target);
-				if (index === undefined) continue;
+				if (index === undefined || !isLaidOut(entry.target)) continue;
 				const size = (entry.target as HTMLElement).offsetHeight;
 				if (core.measure(index, size)) changed = true;
 			}
@@ -107,7 +107,7 @@ export function useVirtualizer({
 		const callback: MeasureRef = (element) => {
 			if (!element) return;
 			indexByElementRef.current.set(element, index);
-			if (core.measure(index, element.offsetHeight)) {
+			if (isLaidOut(element) && core.measure(index, element.offsetHeight)) {
 				rerender();
 			}
 			resizeObserver().observe(element);
@@ -131,6 +131,12 @@ export function useVirtualizer({
 		measureElement,
 		startOf: (index: number) => core.startOf(index),
 	};
+}
+
+// a row inside a `display: none` ancestor measures 0, which would pull every
+// row into the window one overscan at a time
+function isLaidOut(element: Element) {
+	return element.getClientRects().length > 0;
 }
 
 function windowOf(items: VirtualItem[]) {
