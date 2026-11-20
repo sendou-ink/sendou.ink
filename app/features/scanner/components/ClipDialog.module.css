@@ -1,7 +1,37 @@
-/* as wide as the screen allows while the 16:9 video still fits under the dialog's height cap */
+/* as wide as the screen allows while the heading, the 16:9 video and the trim bar (the tallest controls, so the video keeps its size in both modes) fit under the dialog's height cap */
 .dialog {
-	width: min(1600px, calc(100vw - 2 * var(--s-4)), calc(65dvh * 16 / 9));
+	--clip-heading-height: calc(
+		var(--field-size) +
+		var(--s-2) +
+		var(--border-width) +
+		var(--s-4)
+	);
+	/* the dialog's border and room for subpixel rounding */
+	--clip-dialog-slack: calc(2px + var(--s-1));
+	/* filmstrip row (48px track + its 3px frame borders) and actions row */
+	--clip-trim-bar-height: calc(54px + var(--s-3) + var(--field-size-sm));
+	--clip-video-height: calc(
+		var(--visual-viewport-height, 100dvh) -
+		2 *
+		var(--modal-margin-block) -
+		2 *
+		var(--dialog-padding-block) -
+		var(--clip-dialog-slack) -
+		var(--clip-heading-height) -
+		var(--s-3) -
+		var(--clip-trim-bar-height)
+	);
+
+	width: min(
+		1600px,
+		calc(100vw - 2 * var(--s-4)),
+		max(20rem, calc(var(--clip-video-height) * 16 / 9 + 2 * var(--s-6) + 2px))
+	);
 	max-width: none;
+
+	@media (width >= 600px) {
+		--modal-margin-block: var(--s-8);
+	}
 }
 
 .body {
