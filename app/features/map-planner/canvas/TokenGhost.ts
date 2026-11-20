@@ -24,11 +24,13 @@ export interface TokenGhost {
 export function create({
 	player,
 	isEnemy,
+	teamColor,
 	scale,
 	pixelOrigin,
 }: {
 	player: PlanPlayer;
 	isEnemy: boolean;
+	teamColor: string;
 	scale: number;
 	pixelOrigin: Point;
 }): TokenGhost {
@@ -52,7 +54,7 @@ export function create({
 	const layer = new Konva.Layer({ listening: false });
 	const group = new Konva.Group({ scaleX: scale, scaleY: scale });
 	const parts = TokenLook.createParts();
-	group.add(parts.image, parts.pointer);
+	group.add(...parts.nodes);
 	layer.add(group);
 	stage.add(layer);
 
@@ -63,6 +65,7 @@ export function create({
 			player,
 			isEnemy,
 			isSelected: true,
+			teamColor,
 		});
 		loading?.addEventListener("load", show, { once: true });
 	};

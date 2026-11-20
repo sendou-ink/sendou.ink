@@ -14,25 +14,31 @@ async function renderSlotBar(
 	const editor = PlanEditor.create(initial);
 	const selection = PlanSelection.create();
 	const onPlayerClick = vi.fn();
+	const onPlayerContextMenu = vi.fn();
 
 	function Harness() {
 		const document = React.useSyncExternalStore(
 			editor.subscribe,
 			editor.getDocument,
 		);
+		const [pickerSlot, setPickerSlot] =
+			React.useState<PlanDocument.SlotIndex | null>(null);
 		return (
 			<SlotBar
 				editor={editor}
 				document={document}
 				selection={selection}
+				pickerSlot={pickerSlot}
+				onPickerSlotChange={setPickerSlot}
 				onPlayerClick={onPlayerClick}
+				onPlayerContextMenu={onPlayerContextMenu}
 				onWeaponDragOut={vi.fn()}
 			/>
 		);
 	}
 
 	const screen = await render(<Harness />);
-	return { screen, editor, selection, onPlayerClick };
+	return { screen, editor, selection, onPlayerClick, onPlayerContextMenu };
 }
 
 describe("SlotBar", () => {
@@ -100,6 +106,17 @@ describe("SlotBar", () => {
 		await screen.getByTestId("plan-slot-3").click();
 
 		expect(onPlayerClick).toHaveBeenCalledWith(3);
+	});
+
+	test("right clicking a filled slot selects it and opens its context menu", async () => {
+		const { screen, selection, onPlayerContextMenu } = await renderSlotBar(
+			typicalPlan(),
+		);
+
+		await screen.getByTestId("plan-slot-2").click({ button: "right" });
+
+		expect(onPlayerContextMenu).toHaveBeenCalledWith(2, expect.any(Array));
+		expect(selection.get()).toEqual({ type: "player", slot: 2 });
 	});
 
 	test("shows the selected slot as pressed", async () => {

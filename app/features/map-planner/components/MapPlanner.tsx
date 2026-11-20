@@ -6,6 +6,7 @@ import * as PlanEditor from "../core/PlanEditor";
 import * as PlanSelection from "../core/PlanSelection";
 import { ActionBar } from "./ActionBar";
 import styles from "./MapPlanner.module.css";
+import { PlanContextMenu } from "./PlanContextMenu";
 import { SlotBar } from "./SlotBar";
 import { ToolSidebar } from "./ToolSidebar";
 
@@ -22,6 +23,12 @@ export function MapPlanner() {
 	);
 	// XXX: start shown when autosave restores a plan or a link opens one
 	const [isMapShown, setIsMapShown] = React.useState(false);
+	const [pickerSlot, setPickerSlot] =
+		React.useState<PlanDocument.SlotIndex | null>(null);
+	const [contextMenu, setContextMenu] = React.useState<{
+		target: PlanCanvas.ContextMenuTarget;
+		clientPoint: PlanDocument.Point;
+	} | null>(null);
 	const canvasRef = React.useRef<PlanCanvas.PlanCanvas | null>(null);
 	const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -33,6 +40,8 @@ export function MapPlanner() {
 			editor,
 			selection,
 			isMapShown: false,
+			onContextMenu: (target, clientPoint) =>
+				setContextMenu({ target, clientPoint }),
 		});
 		canvasRef.current = canvas;
 
@@ -52,6 +61,11 @@ export function MapPlanner() {
 				editor={editor}
 				document={document}
 				selection={selection}
+				pickerSlot={pickerSlot}
+				onPickerSlotChange={setPickerSlot}
+				onPlayerContextMenu={(slot, clientPoint) =>
+					setContextMenu({ target: { type: "player", slot }, clientPoint })
+				}
 				onPlayerClick={(slot) => {
 					editor.apply(PlanCommands.placePlayer(editor.getDocument(), slot));
 					selection.set({ type: "player", slot });
@@ -77,6 +91,16 @@ export function MapPlanner() {
 				onFitView={() => canvasRef.current?.fitView()}
 				className={styles.actionBar}
 			/>
+			{contextMenu ? (
+				<PlanContextMenu
+					editor={editor}
+					document={document}
+					target={contextMenu.target}
+					clientPoint={contextMenu.clientPoint}
+					onClose={() => setContextMenu(null)}
+					onSwitchWeapon={setPickerSlot}
+				/>
+			) : null}
 		</div>
 	);
 }

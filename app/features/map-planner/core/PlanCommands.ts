@@ -1,5 +1,5 @@
-// User actions that edit more than one object, expressed as the operations
-// they apply. Applied together through the editor they are one undo step.
+// User actions expressed as the operations they apply, often on more than one
+// object. Applied together through the editor they are one undo step.
 
 import { stagesObj } from "~/modules/in-game-lists/stage-ids";
 import type {
@@ -11,19 +11,27 @@ import {
 	emptyObjective,
 	MAP_SIZE,
 	type MapVariant,
+	newId,
 	newPlayer,
 	type PlanDocument,
+	type PlanMarker,
+	type PlayerStatus,
 	type Point,
 	SLOTS_PER_TEAM,
 	type SlotIndex,
 	teamOfSlot,
 } from "./PlanDocument";
+import * as PlanKit from "./PlanKit";
 import type { PlanOperation } from "./PlanOperation";
 
 /** Distance from the render's left (team A) or right (team B) edge of tokens placed without a position. */
 const TEAM_SIDE_INSET = 80;
 /** Vertical distance between the tokens of one team placed without a position. */
 const PLACED_TOKEN_SPACING = 140;
+/** How far from its player's token a new marker lands. */
+const MARKER_DISTANCE = 70;
+/** Angle between the markers of one player, so a new one doesn't land on the last. */
+const MARKER_ANGLE_STEP = Math.PI / 5;
 
 /** The layout variants a stage has besides its standard one. */
 export function variantsOfStage(stageId: StageId): MapVariant[] {
@@ -171,6 +179,129 @@ export function placePlayer(
 	];
 }
 
+/**
+ * Puts the player in `status`. Any status but normal ends the special, the special's marker
+ * staying where it was placed. Nothing when it already is.
+ */
+export function setStatus(
+	document: PlanDocument,
+	slot: SlotIndex,
+	status: PlayerStatus,
+): PlanOperation[] {
+	const player = document.slots[slot];
+	if (!player || player.status === status) return [];
+
+	return [
+		{
+			type: "updatePlayer",
+			slot,
+			patch:
+				status === "normal" ? { status } : { status, specialActive: false },
+		},
+	];
+}
+
+/**
+ * Starts or ends the player's special. Starting it brings the player back to normal status and,
+ * for a special placed away from the player (see `PlanKit.isPlacedSpecial`), drops its marker
+ * next to the token. Ending it takes that marker off the map.
+ */
+export function toggleSpecial(
+	document: PlanDocument,
+	slot: SlotIndex,
+): PlanOperation[] {
+	const player = document.slots[slot];
+	if (!player) return [];
+
+	const specialMarkers = document.markers.filter(
+		(marker) => marker.owner === slot && marker.kind === "special",
+	);
+	if (player.specialActive) {
+		return [
+			...specialMarkers.map(
+				(marker): PlanOperation => ({ type: "removeMarker", id: marker.id }),
+			),
+			{ type: "updatePlayer", slot, patch: { specialActive: false } },
+		];
+	}
+
+	const markerPosition = nextMarkerPosition(document, slot);
+	const dropsMarker =
+		PlanKit.isPlacedSpecial(PlanKit.specialOf(player.weaponId)) &&
+		specialMarkers.length === 0 &&
+		markerPosition;
+
+	return [
+		{
+			type: "updatePlayer",
+			slot,
+			patch: { specialActive: true, status: "normal" },
+		},
+		...(dropsMarker
+			? [newMarker({ kind: "special", owner: slot, position: markerPosition })]
+			: []),
+	];
+}
+
+/** Drops a marker of the player's sub next to the token. Nothing while the token is off the map. */
+export function throwSub(
+	document: PlanDocument,
+	slot: SlotIndex,
+): PlanOperation[] {
+	const position = nextMarkerPosition(document, slot);
+	if (!position) return [];
+
+	return [newMarker({ kind: "sub", owner: slot, position })];
+}
+
+/**
+ * Switches the player to the next kit of the same weapon (see `PlanKit.nextKit`), like
+ * {@link setWeapon} ending the special and removing the old kit's markers.
+ */
+export function switchKit(
+	document: PlanDocument,
+	slot: SlotIndex,
+): PlanOperation[] {
+	const player = document.slots[slot];
+	if (!player) return [];
+
+	return setWeapon(document, slot, PlanKit.nextKit(player.weaponId));
+}
+
+/**
+ * Takes the token off the map, the slot keeping everything else, or puts a token that is off
+ * the map back on it (see {@link placePlayer}).
+ */
+export function toggleHidden(
+	document: PlanDocument,
+	slot: SlotIndex,
+): PlanOperation[] {
+	const player = document.slots[slot];
+	if (!player) return [];
+	if (!isOnMap(document, slot)) return placePlayer(document, slot);
+
+	return [{ type: "updatePlayer", slot, patch: { hidden: true } }];
+}
+
+/** Moves a marker to `position`, clamped to the map. */
+export function moveMarker(
+	document: PlanDocument,
+	id: string,
+	position: Point,
+): PlanOperation[] {
+	if (!document.markers.some((marker) => marker.id === id)) return [];
+
+	return [
+		{ type: "updateMarker", id, patch: { position: clampedToMap(position) } },
+	];
+}
+
+/** Whether the slot's token is on the map: placed and not hidden. */
+export function isOnMap(document: PlanDocument, slot: SlotIndex) {
+	const player = document.slots[slot];
+	return Boolean(player?.position && !player.hidden);
+}
+
 /** Down the render's left edge for team A and right edge for team B, in slot order from the top. */
 // XXX: with cutouts the render's edges are the map itself, revisit where unplaced tokens go in the cutouts step
 function teamSidePosition(slot: SlotIndex): Point {
@@ -208,4 +339,31 @@ function clearedInk(document: PlanDocument): PlanOperation[] {
 	}
 
 	return cells.length > 0 ? [{ type: "setInk", cells }] : [];
+}
+
+/**
+ * Around the token, starting towards the enemy's side and turning a step further for every
+ * marker the player already has. `null` while the token is off the map.
+ */
+function nextMarkerPosition(
+	document: PlanDocument,
+	slot: SlotIndex,
+): Point | null {
+	const position = document.slots[slot]?.position;
+	if (!position || !isOnMap(document, slot)) return null;
+
+	const markerCount = document.markers.filter(
+		(marker) => marker.owner === slot,
+	).length;
+	const towardsEnemy = teamOfSlot(slot) === 0 ? 0 : Math.PI;
+	const angle = towardsEnemy + markerCount * MARKER_ANGLE_STEP;
+
+	return clampedToMap([
+		position[0] + Math.cos(angle) * MARKER_DISTANCE,
+		position[1] + Math.sin(angle) * MARKER_DISTANCE,
+	]);
+}
+
+function newMarker(marker: Omit<PlanMarker, "id">): PlanOperation {
+	return { type: "addMarker", marker: { id: newId(), ...marker } };
 }

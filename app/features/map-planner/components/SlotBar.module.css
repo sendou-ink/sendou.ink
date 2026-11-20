@@ -50,9 +50,12 @@
 	background: none;
 	color: var(--color-text-high);
 	cursor: pointer;
+	-webkit-touch-callout: none;
+	user-select: none;
 
 	& > :not(.slotShape) {
 		position: relative;
+		grid-area: 1 / 1;
 	}
 
 	&:hover .slotOutline,
@@ -81,6 +84,26 @@
 	&[data-status="sharking"] img {
 		opacity: 0.6;
 	}
+}
+
+.inSpecial {
+	display: grid;
+	place-items: center;
+}
+
+.specialWeaponBadge {
+	position: absolute;
+	right: -0.6rem;
+	bottom: -0.45rem;
+}
+
+.deadCross {
+	width: 2.25rem;
+	height: 2.25rem;
+	color: var(--color-error);
+	stroke-width: 3;
+	filter: drop-shadow(0 0 1px rgb(0 0 0 / 0.8));
+	pointer-events: none;
 }
 
 .slotShape {

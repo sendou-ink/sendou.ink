@@ -1,12 +1,14 @@
 import clsx from "clsx";
-import { EyeOff, Plus, Rocket, Skull, Waves, X } from "lucide-react";
+import { ChevronsUp, EyeOff, Plus, Waves, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SpecialWeaponImage, WeaponImage } from "~/components/Image";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
+import { useLatestRef } from "~/hooks/useLatestRef";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import * as LongPress from "../canvas/LongPress";
 import * as PlanCommands from "../core/PlanCommands";
 import {
 	PLAYER_LABEL_MAX_LENGTH,
@@ -62,33 +64,42 @@ const SLOT_OUTLINE_PATH = roundedPolygonPath([
 ]);
 const SLOT_TEAM_BAR_PATH = `M 0 ${SLOT_SHAPE.height - SLOT_SHAPE.inset} H ${SLOT_SHAPE.width}`;
 
-const STATUS_ICONS: Record<
-	Exclude<PlayerStatus, "normal">,
+/** Statuses shown as a badge, dead players are greyed and crossed out instead. */
+const STATUS_BADGE_ICONS: Record<
+	Exclude<PlayerStatus, "normal" | "dead">,
 	React.ComponentType<{ className?: string }>
 > = {
-	dead: Skull,
 	sharking: Waves,
-	jumping: Rocket,
+	jumping: ChevronsUp,
 };
 
 /**
  * The eight player slots, team A's four on the left and team B's on the right. An empty slot
- * opens the weapon picker; a filled one shows the player, a click puts its token on the map and
- * a double click opens the picker to switch the weapon.
+ * opens the weapon picker; a filled one shows the player, a click puts its token on the map, a
+ * double click opens the picker to switch the weapon and a right click or long press opens the
+ * player's context menu.
  */
 export function SlotBar({
 	editor,
 	document,
 	selection,
+	pickerSlot,
+	onPickerSlotChange,
 	onPlayerClick,
+	onPlayerContextMenu,
 	onWeaponDragOut,
 	className,
 }: {
 	editor: PlanEditor;
 	document: PlanDocument;
 	selection: PlanSelection.PlanSelection;
+	/** The slot whose weapon picker is open. */
+	pickerSlot: SlotIndex | null;
+	onPickerSlotChange: (slot: SlotIndex | null) => void;
 	/** A filled slot was clicked: its token should go on the map and be selected. */
 	onPlayerClick: (slot: SlotIndex) => void;
+	/** A filled slot was right clicked or long pressed at a point of the page. */
+	onPlayerContextMenu: (slot: SlotIndex, clientPoint: Point) => void;
 	/** A weapon is being dragged out of the slot's weapon picker, to be carried onto the map. */
 	onWeaponDragOut: (
 		slot: SlotIndex,
@@ -102,11 +113,9 @@ export function SlotBar({
 		() => PlanSelection.selectedSlot(selection.get()),
 		() => null,
 	);
-	const [pickerSlot, setPickerSlot] = React.useState<SlotIndex | null>(null);
-
 	const pickWeapon = (slot: SlotIndex, weaponId: MainWeaponId) => {
 		editor.apply(PlanCommands.setWeapon(editor.getDocument(), slot, weaponId));
-		setPickerSlot(null);
+		onPickerSlotChange(null);
 		selection.set({ type: "player", slot });
 	};
 
@@ -126,11 +135,10 @@ export function SlotBar({
 							<SendouPopover
 								key={slot}
 								isOpen={pickerSlot === slot}
-								onOpenChange={(isOpen) =>
-									setPickerSlot((current) =>
-										isOpen ? slot : current === slot ? null : current,
-									)
-								}
+								onOpenChange={(isOpen) => {
+									if (isOpen) onPickerSlotChange(slot);
+									else if (pickerSlot === slot) onPickerSlotChange(null);
+								}}
 								placement="bottom"
 								popoverClassName={styles.pickerPopover}
 								trigger={
@@ -141,7 +149,11 @@ export function SlotBar({
 												player={player}
 												isSelected={selectedSlot === slot}
 												onClick={() => onPlayerClick(slot)}
-												onDoubleClick={() => setPickerSlot(slot)}
+												onDoubleClick={() => onPickerSlotChange(slot)}
+												onContextMenu={(clientPoint) => {
+													selection.set({ type: "player", slot });
+													onPlayerContextMenu(slot, clientPoint);
+												}}
 												onRemove={() => {
 													editor.apply(
 														PlanCommands.emptySlot(editor.getDocument(), slot),
@@ -159,7 +171,7 @@ export function SlotBar({
 										) : (
 											<EmptySlot
 												slot={slot}
-												onClick={() => setPickerSlot(slot)}
+												onClick={() => onPickerSlotChange(slot)}
 											/>
 										)}
 									</div>
@@ -170,7 +182,7 @@ export function SlotBar({
 									onPick={(weaponId) => pickWeapon(slot, weaponId)}
 									onWeaponDragStart={(weaponId, clientPoint) => {
 										onWeaponDragOut(slot, weaponId, clientPoint);
-										setPickerSlot(null);
+										onPickerSlotChange(null);
 									}}
 								/>
 							</SendouPopover>
@@ -217,6 +229,7 @@ function FilledSlot({
 	isSelected,
 	onClick,
 	onDoubleClick,
+	onContextMenu,
 	onRemove,
 	onLabelChange,
 }: {
@@ -226,12 +239,20 @@ function FilledSlot({
 	onClick: () => void;
 	/** Opens the weapon picker to switch the weapon. */
 	onDoubleClick: () => void;
+	onContextMenu: (clientPoint: Point) => void;
 	onRemove: () => void;
 	onLabelChange: (label: string) => void;
 }) {
 	const { t } = useTranslation(["common"]);
+	const onContextMenuRef = useLatestRef(onContextMenu);
+	const [longPress] = React.useState(() =>
+		LongPress.create((clientPoint) => onContextMenuRef.current(clientPoint)),
+	);
 	const isOnMap = player.position !== null && !player.hidden;
-	const status = player.status === "normal" ? null : player.status;
+	const badgeStatus =
+		player.status === "sharking" || player.status === "jumping"
+			? player.status
+			: null;
 
 	return (
 		<>
@@ -242,18 +263,36 @@ function FilledSlot({
 					aria-pressed={isSelected}
 					data-status={player.status}
 					data-on-map={isOnMap}
-					onClick={onClick}
+					onClick={() => {
+						if (!longPress.didFire()) onClick();
+					}}
 					onDoubleClick={onDoubleClick}
+					onContextMenu={(event) => {
+						event.preventDefault();
+						onContextMenu([event.clientX, event.clientY]);
+					}}
+					onPointerDown={(event) => longPress.pointerDown(event.nativeEvent)}
+					onPointerMove={(event) => longPress.pointerMove(event.nativeEvent)}
+					onPointerUp={longPress.cancel}
+					onPointerCancel={longPress.cancel}
 					data-testid={`plan-slot-${slot}`}
 				>
 					<SlotShape />
 					{player.specialActive ? (
-						<SpecialWeaponImage
-							specialWeaponId={
-								mainWeaponParams(player.weaponId).specialWeaponId
-							}
-							size={36}
-						/>
+						<span className={styles.inSpecial}>
+							<SpecialWeaponImage
+								specialWeaponId={
+									mainWeaponParams(player.weaponId).specialWeaponId
+								}
+								size={36}
+							/>
+							<WeaponImage
+								weaponSplId={player.weaponId}
+								variant="badge"
+								size={22}
+								className={styles.specialWeaponBadge}
+							/>
+						</span>
 					) : (
 						<WeaponImage
 							weaponSplId={player.weaponId}
@@ -261,11 +300,17 @@ function FilledSlot({
 							size={40}
 						/>
 					)}
+					{player.status === "dead" ? (
+						<X
+							className={styles.deadCross}
+							aria-label={t("common:plans.status.dead")}
+						/>
+					) : null}
 				</button>
-				{status ? (
+				{badgeStatus ? (
 					<StatusBadge
-						status={status}
-						title={t(`common:plans.status.${status}`)}
+						status={badgeStatus}
+						title={t(`common:plans.status.${badgeStatus}`)}
 					/>
 				) : null}
 				{player.hidden ? (
@@ -316,10 +361,10 @@ function StatusBadge({
 	status,
 	title,
 }: {
-	status: Exclude<PlayerStatus, "normal">;
+	status: keyof typeof STATUS_BADGE_ICONS;
 	title: string;
 }) {
-	const Icon = STATUS_ICONS[status];
+	const Icon = STATUS_BADGE_ICONS[status];
 
 	return (
 		<span className={styles.badge} title={title}>

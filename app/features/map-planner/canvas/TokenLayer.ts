@@ -1,19 +1,19 @@
 // The players' tokens on the map, looking as `TokenLook` draws them. Dragging
-// a token moves the player, one undo step per drag. Plain Konva, no React.
+// a token moves the player, one undo step per drag; a right click or a long
+// press opens its context menu. Plain Konva, no React.
 
 import Konva from "konva";
 import * as PlanCommands from "../core/PlanCommands";
 import { type Point, type SlotIndex, teamOfSlot } from "../core/PlanDocument";
 import type { PlanEditor } from "../core/PlanEditor";
 import * as PlanSelection from "../core/PlanSelection";
+import * as LongPress from "./LongPress";
 import * as TokenLook from "./TokenLook";
 
 const LEFT_MOUSE_BUTTON = 0;
 
 /** See {@link create}. */
 export interface TokenLayer {
-	/** Whether a token is under the point, in pixels of the stage's container. Only tokens listen on this layer. */
-	hitsToken: (point: Point) => boolean;
 	destroy: () => void;
 }
 
@@ -22,21 +22,24 @@ interface Token {
 	parts: TokenLook.TokenParts;
 }
 
-/** Adds the token layer to `stage`, drawing the editor's players and the selection. */
+/** Adds the tokens to `parent`, drawing the editor's players and the selection. */
 export function create({
-	stage,
+	parent,
 	editor,
 	selection,
 	isPanning,
+	onContextMenu,
 }: {
-	stage: Konva.Stage;
+	parent: Konva.Container;
 	editor: PlanEditor;
 	selection: PlanSelection.PlanSelection;
 	/** Whether the pointer pans the camera now (e.g. Space held), so tokens don't drag. */
 	isPanning: () => boolean;
+	/** The token of `slot` was right clicked or long pressed at a point of the page. */
+	onContextMenu: (slot: SlotIndex, clientPoint: Point) => void;
 }): TokenLayer {
-	const layer = new Konva.Layer();
-	stage.add(layer);
+	const root = new Konva.Group();
+	parent.add(root);
 	const tokens = new Map<SlotIndex, Token>();
 	const loadingImages = new Set<HTMLImageElement>();
 	let isDestroyed = false;
@@ -49,16 +52,30 @@ export function create({
 	const createToken = (slot: SlotIndex): Token => {
 		const group = new Konva.Group({ draggable: true });
 		const parts = TokenLook.createParts();
-		group.add(parts.image, parts.pointer);
+		group.add(...parts.nodes);
+		const longPress = LongPress.create((clientPoint) => {
+			group.stopDrag();
+			onContextMenu(slot, clientPoint);
+		});
 
-		group.on("pointerdown", () => {
+		group.on("pointerdown", (event) => {
 			if (isPanning()) return;
 			selection.set({ type: "player", slot });
+			longPress.pointerDown(event.evt);
+		});
+		group.on("pointermove", (event) => longPress.pointerMove(event.evt));
+		group.on("pointerup pointercancel", longPress.cancel);
+		group.on("contextmenu", (event) => {
+			event.evt.preventDefault();
+			if (isPanning()) return;
+			selection.set({ type: "player", slot });
+			onContextMenu(slot, [event.evt.clientX, event.evt.clientY]);
 		});
 		group.on("dragstart", (event) => {
 			const button = (event.evt as MouseEvent | undefined)?.button;
 			if (
 				isPanning() ||
+				longPress.didFire() ||
 				(button !== undefined && button !== LEFT_MOUSE_BUTTON)
 			) {
 				group.stopDrag();
@@ -67,7 +84,9 @@ export function create({
 			editor.beginGroup();
 			selection.set({ type: "player", slot });
 		});
-		group.on("dragmove", () => {
+		// Konva stops firing pointer events on a node it is dragging, so the drag feeds the long press
+		group.on("dragmove", (event) => {
+			longPress.pointerMove(event.evt);
 			const operations = PlanCommands.placePlayer(editor.getDocument(), slot, [
 				group.x(),
 				group.y(),
@@ -76,15 +95,18 @@ export function create({
 			const position = editor.getDocument().slots[slot]?.position;
 			if (position) group.position({ x: position[0], y: position[1] });
 		});
-		group.on("dragend", () => editor.endGroup());
+		group.on("dragend", () => {
+			longPress.cancel();
+			editor.endGroup();
+		});
 		group.on("mouseenter", () => {
-			stage.container().style.cursor = "grab";
+			parent.getStage()!.container().style.cursor = "grab";
 		});
 		group.on("mouseleave", () => {
-			stage.container().style.cursor = "";
+			parent.getStage()!.container().style.cursor = "";
 		});
 
-		layer.add(group);
+		root.add(group);
 		return { group, parts };
 	};
 
@@ -109,10 +131,12 @@ export function create({
 			if (!token.group.isDragging()) {
 				token.group.position({ x: position[0], y: position[1] });
 			}
+			const team = teamOfSlot(slot);
 			const loading = TokenLook.update(token.parts, {
 				player,
-				isEnemy: teamOfSlot(slot) === 1,
+				isEnemy: team === 1,
 				isSelected: selected === slot,
+				teamColor: document.teams[team].color,
 			});
 			if (loading && !loadingImages.has(loading)) {
 				loadingImages.add(loading);
@@ -132,12 +156,11 @@ export function create({
 	render();
 
 	return {
-		hitsToken: ([x, y]) => layer.getIntersection({ x, y }) !== null,
 		destroy: () => {
 			isDestroyed = true;
 			unsubscribeEditor();
 			unsubscribeSelection();
-			layer.destroy();
+			root.destroy();
 		},
 	};
 }

@@ -17,6 +17,8 @@ import {
 } from "../core/PlanDocument";
 import type { PlanEditor } from "../core/PlanEditor";
 import type { PlanSelection } from "../core/PlanSelection";
+import * as MarkerLayer from "./MarkerLayer";
+import * as RadiusLayer from "./RadiusLayer";
 import * as TokenGhost from "./TokenGhost";
 import * as TokenLayer from "./TokenLayer";
 
@@ -25,8 +27,14 @@ const WHEEL_ZOOM_SPEED = 0.002;
 const PINCH_WHEEL_ZOOM_SPEED = 0.01;
 const WHEEL_LINE_HEIGHT_PX = 16;
 const MIDDLE_MOUSE_BUTTON = 1;
+const RIGHT_MOUSE_BUTTON = 2;
 /** How far a pointer may move between down and up for it to count as a tap, in screen pixels. */
 const TAP_MAX_DISTANCE = 4;
+
+/** What a context menu opened on the map is about. */
+export type ContextMenuTarget =
+	| { type: "player"; slot: SlotIndex }
+	| { type: "marker"; id: string };
 
 /** See {@link create}. */
 export interface PlanCanvas {
@@ -56,12 +64,15 @@ export function create({
 	editor,
 	selection,
 	isMapShown: initialIsMapShown = true,
+	onContextMenu,
 }: {
 	container: HTMLDivElement;
 	editor: PlanEditor;
 	selection: PlanSelection;
 	/** `false` leaves the map blank (and its image unloaded) until {@link PlanCanvas.setMapShown}. */
 	isMapShown?: boolean;
+	/** A token or marker was right clicked or long pressed at a point of the page. */
+	onContextMenu: (target: ContextMenuTarget, clientPoint: Point) => void;
 }): PlanCanvas {
 	const stage = new Konva.Stage({
 		container,
@@ -75,7 +86,9 @@ export function create({
 		height: MAP_SIZE.height,
 	});
 	mapLayer.add(mapImage);
-	stage.add(mapLayer);
+	/** Radii, markers and tokens, in this order. Only markers and tokens listen. */
+	const pieceLayer = new Konva.Layer();
+	stage.add(mapLayer, pieceLayer);
 
 	const viewport = (): PlanCamera.Viewport => ({
 		width: stage.width(),
@@ -138,21 +151,33 @@ export function create({
 	resizeObserver.observe(container);
 
 	const fitView = () => setCamera(PlanCamera.fit(viewport()));
-	let tokenLayer: TokenLayer.TokenLayer | null = null;
 	const cameraInput = listenToCameraInput({
 		container,
 		getCamera: () => camera,
 		setCamera: (next) => setCamera(PlanCamera.clamp(next, viewport())),
 		viewport,
 		fitView,
-		isOnToken: (point) => tokenLayer?.hitsToken(point) ?? false,
+		isOnPiece: ([x, y]) => pieceLayer.getIntersection({ x, y }) !== null,
 		onTapMap: () => selection.set(null),
 	});
-	tokenLayer = TokenLayer.create({
-		stage,
+	const radiusLayer = RadiusLayer.create({
+		parent: pieceLayer,
+		editor,
+	});
+	const markerLayer = MarkerLayer.create({
+		parent: pieceLayer,
+		editor,
+		isPanning: cameraInput.isPanning,
+		onContextMenu: (id, clientPoint) =>
+			onContextMenu({ type: "marker", id }, clientPoint),
+	});
+	const tokenLayer = TokenLayer.create({
+		parent: pieceLayer,
 		editor,
 		selection,
 		isPanning: cameraInput.isPanning,
+		onContextMenu: (slot, clientPoint) =>
+			onContextMenu({ type: "player", slot }, clientPoint),
 	});
 
 	/** The map point under a point of the page, `null` off the canvas or off the map. */
@@ -195,9 +220,11 @@ export function create({
 		}
 
 		const rect = container.getBoundingClientRect();
+		const team = teamOfSlot(slot);
 		const ghost = TokenGhost.create({
 			player,
-			isEnemy: teamOfSlot(slot) === 1,
+			isEnemy: team === 1,
+			teamColor: editor.getDocument().teams[team].color,
 			scale: camera.scale,
 			pixelOrigin: [rect.left, rect.top],
 		});
@@ -264,7 +291,9 @@ export function create({
 			unsubscribe();
 			resizeObserver.disconnect();
 			cameraInput.remove();
-			tokenLayer?.destroy();
+			radiusLayer.destroy();
+			markerLayer.destroy();
+			tokenLayer.destroy();
 			stage.destroy();
 		},
 	};
@@ -282,8 +311,8 @@ function mapImageUrl(document: PlanDocument) {
 
 /**
  * Wheel zooms around the pointer; dragging the map with one pointer pans, with two it pinches.
- * Space held or the middle mouse button pan whatever the pointer is over, tokens included.
- * Shift+1 fits the map.
+ * Space held or the middle mouse button pan whatever the pointer is over, tokens and markers
+ * included. The right button is left to context menus. Shift+1 fits the map.
  */
 function listenToCameraInput({
 	container,
@@ -291,7 +320,7 @@ function listenToCameraInput({
 	setCamera,
 	viewport,
 	fitView,
-	isOnToken,
+	isOnPiece,
 	onTapMap,
 }: {
 	container: HTMLDivElement;
@@ -299,9 +328,9 @@ function listenToCameraInput({
 	setCamera: (camera: PlanCamera.Camera) => void;
 	viewport: () => PlanCamera.Viewport;
 	fitView: () => void;
-	/** Whether a token is under the container point, which the pointer then drags instead of panning. */
-	isOnToken: (point: Point) => boolean;
-	/** A pointer went down and up on the map without moving, away from tokens. */
+	/** Whether a token or marker is under the container point, which the pointer then drags instead of panning. */
+	isOnPiece: (point: Point) => boolean;
+	/** A pointer went down and up on the map without moving, away from tokens and markers. */
 	onTapMap: () => void;
 }) {
 	const pointers = new Map<number, Point>();
@@ -341,10 +370,12 @@ function listenToCameraInput({
 	};
 
 	const onPointerDown = (event: PointerEvent) => {
+		if (event.button === RIGHT_MOUSE_BUTTON) return;
+
 		const point = localPoint(event);
 		const isPanButton = event.button === MIDDLE_MOUSE_BUTTON || spaceHeld;
 		if (event.button === MIDDLE_MOUSE_BUTTON) event.preventDefault();
-		if (!isPanButton && isOnToken(point)) return;
+		if (!isPanButton && isOnPiece(point)) return;
 
 		tapStart = pointers.size === 0 && !isPanButton ? point : null;
 		container.setPointerCapture(event.pointerId);
@@ -430,11 +461,14 @@ function listenToCameraInput({
 		updateCursor();
 	};
 
+	const onContextMenu = (event: MouseEvent) => event.preventDefault();
+
 	container.addEventListener("wheel", onWheel, { passive: false });
 	container.addEventListener("pointerdown", onPointerDown);
 	container.addEventListener("pointermove", onPointerMove);
 	container.addEventListener("pointerup", onPointerEnd);
 	container.addEventListener("pointercancel", onPointerEnd);
+	container.addEventListener("contextmenu", onContextMenu);
 	window.addEventListener("keydown", onKeyDown);
 	window.addEventListener("keyup", onKeyUp);
 	window.addEventListener("blur", onBlur);
@@ -448,6 +482,7 @@ function listenToCameraInput({
 			container.removeEventListener("pointermove", onPointerMove);
 			container.removeEventListener("pointerup", onPointerEnd);
 			container.removeEventListener("pointercancel", onPointerEnd);
+			container.removeEventListener("contextmenu", onContextMenu);
 			window.removeEventListener("keydown", onKeyDown);
 			window.removeEventListener("keyup", onKeyUp);
 			window.removeEventListener("blur", onBlur);

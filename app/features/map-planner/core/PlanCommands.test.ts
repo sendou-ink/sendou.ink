@@ -271,3 +271,210 @@ describe("PlanCommands.placePlayer", () => {
 		expect(PlanCommands.placePlayer(planWith({}), 0)).toEqual([]);
 	});
 });
+
+describe("PlanCommands.setStatus", () => {
+	test("puts the player in the status", () => {
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(PlanCommands.setStatus(editor.getDocument(), 2, "sharking"));
+
+		expect(editor.getDocument().slots[2]?.status).toBe("sharking");
+	});
+
+	test("ends the special but leaves its marker where it was placed", () => {
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(PlanCommands.setStatus(editor.getDocument(), 5, "dead"));
+
+		expect(editor.getDocument().slots[5]).toMatchObject({
+			status: "dead",
+			specialActive: false,
+		});
+		expect(editor.getDocument().markers).toEqual(typicalPlan().markers);
+	});
+
+	test("changes nothing for the status the player is in", () => {
+		expect(PlanCommands.setStatus(typicalPlan(), 6, "dead")).toEqual([]);
+	});
+});
+
+describe("PlanCommands.toggleSpecial", () => {
+	test("a placed special drops its marker next to the token", () => {
+		// Splat Roller: Big Bubbler
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(PlanCommands.toggleSpecial(editor.getDocument(), 1));
+
+		expect(editor.getDocument().slots[1]?.specialActive).toBe(true);
+		const marker = editor.getDocument().markers.at(-1);
+		expect(marker).toMatchObject({ kind: "special", owner: 1 });
+		expect(
+			distance(marker!.position, editor.getDocument().slots[1]!.position!),
+		).toBeCloseTo(70, 0);
+	});
+
+	test("a special used where the player is drops no marker", () => {
+		// Splattershot: Trizooka
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(PlanCommands.toggleSpecial(editor.getDocument(), 0));
+
+		expect(editor.getDocument().slots[0]?.specialActive).toBe(true);
+		expect(editor.getDocument().markers).toEqual(typicalPlan().markers);
+	});
+
+	test("brings a dead player back to normal", () => {
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(PlanCommands.toggleSpecial(editor.getDocument(), 6));
+
+		expect(editor.getDocument().slots[6]).toMatchObject({
+			status: "normal",
+			specialActive: true,
+		});
+	});
+
+	test("starting the special again keeps the marker left behind instead of dropping a second", () => {
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(PlanCommands.setStatus(editor.getDocument(), 5, "dead"));
+		editor.apply(PlanCommands.toggleSpecial(editor.getDocument(), 5));
+
+		expect(editor.getDocument().slots[5]?.specialActive).toBe(true);
+		expect(editor.getDocument().markers).toEqual(typicalPlan().markers);
+	});
+
+	test("ending the special leaves the player's thrown subs", () => {
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(PlanCommands.throwSub(editor.getDocument(), 5));
+		editor.apply(PlanCommands.toggleSpecial(editor.getDocument(), 5));
+
+		expect(
+			editor
+				.getDocument()
+				.markers.filter((marker) => marker.owner === 5)
+				.map((marker) => marker.kind),
+		).toEqual(["sub"]);
+	});
+
+	test("ending the special removes its marker", () => {
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(PlanCommands.toggleSpecial(editor.getDocument(), 5));
+
+		expect(editor.getDocument().slots[5]?.specialActive).toBe(false);
+		expect(
+			editor.getDocument().markers.some((marker) => marker.owner === 5),
+		).toBe(false);
+	});
+
+	test("is undone in one step", () => {
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(PlanCommands.toggleSpecial(editor.getDocument(), 1));
+		editor.undo();
+
+		expect(editor.getDocument()).toEqual(typicalPlan());
+	});
+});
+
+describe("PlanCommands.throwSub", () => {
+	test("drops sub markers around the token, each a step further round", () => {
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(PlanCommands.throwSub(editor.getDocument(), 2));
+		editor.apply(PlanCommands.throwSub(editor.getDocument(), 2));
+
+		const subs = editor
+			.getDocument()
+			.markers.filter((marker) => marker.owner === 2);
+		expect(subs).toHaveLength(2);
+		expect(subs.every((marker) => marker.kind === "sub")).toBe(true);
+		expect(subs[0].position).not.toEqual(subs[1].position);
+	});
+
+	test("throws towards the enemy's side first", () => {
+		const plan = typicalPlan();
+
+		const [teamA] = PlanCommands.throwSub(plan, 2);
+		const [teamB] = PlanCommands.throwSub(plan, 7);
+
+		expect(teamA).toMatchObject({
+			type: "addMarker",
+			marker: {
+				position: [
+					plan.slots[2]!.position![0] + 70,
+					plan.slots[2]!.position![1],
+				],
+			},
+		});
+		expect(teamB).toMatchObject({
+			type: "addMarker",
+			marker: {
+				position: [
+					plan.slots[7]!.position![0] - 70,
+					plan.slots[7]!.position![1],
+				],
+			},
+		});
+	});
+
+	test("changes nothing while the token is off the map", () => {
+		const plan = typicalPlan();
+		plan.slots[2] = { ...plan.slots[2]!, hidden: true };
+
+		expect(PlanCommands.throwSub(plan, 2)).toEqual([]);
+	});
+});
+
+describe("PlanCommands.switchKit", () => {
+	test("switches to the next kit, ending the special and dropping the old kit's markers", () => {
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(PlanCommands.switchKit(editor.getDocument(), 5));
+
+		expect(editor.getDocument().slots[5]).toMatchObject({
+			weaponId: 311,
+			specialActive: false,
+		});
+		expect(
+			editor.getDocument().markers.some((marker) => marker.owner === 5),
+		).toBe(false);
+	});
+});
+
+describe("PlanCommands.toggleHidden", () => {
+	test("takes a token off the map and puts it back where it was", () => {
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(PlanCommands.toggleHidden(editor.getDocument(), 3));
+		expect(editor.getDocument().slots[3]?.hidden).toBe(true);
+		expect(PlanCommands.isOnMap(editor.getDocument(), 3)).toBe(false);
+
+		editor.apply(PlanCommands.toggleHidden(editor.getDocument(), 3));
+		expect(editor.getDocument()).toEqual(typicalPlan());
+	});
+});
+
+describe("PlanCommands.moveMarker", () => {
+	test("moves the marker, kept on the map", () => {
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(
+			PlanCommands.moveMarker(editor.getDocument(), "mrk00001", [-40, 300.4]),
+		);
+
+		expect(editor.getDocument().markers[0].position).toEqual([0, 300]);
+	});
+
+	test("changes nothing for a removed marker", () => {
+		expect(PlanCommands.moveMarker(typicalPlan(), "gone", [10, 10])).toEqual(
+			[],
+		);
+	});
+});
+
+function distance([ax, ay]: PlanDocument.Point, [bx, by]: PlanDocument.Point) {
+	return Math.hypot(ax - bx, ay - by);
+}
