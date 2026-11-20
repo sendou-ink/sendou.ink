@@ -2,25 +2,14 @@
 /**
  * Accuracy report across all fixtures, separate from pass/fail testing:
  * aggregate per-field accuracy plus character error rate (CER) for names,
- * the metric that drives glyph atlas expansion. Usage: pnpm scanner:report
+ * the metric that drives glyph atlas expansion, followed by the threshold
+ * margin audit (threshold-margins.ts). Usage: pnpm scanner:report [--margins]
+ * (--margins = the audit alone)
  */
-import { loadOpenCV } from "../../app/features/scanner/core/cv";
-import {
-	createDeathDetector,
-	type DeathData,
-} from "../../app/features/scanner/core/detectors/death/index";
-import {
-	createKillDetector,
-	type KillData,
-} from "../../app/features/scanner/core/detectors/kill/index";
-import {
-	createMapStartDetector,
-	type MapStartData,
-} from "../../app/features/scanner/core/detectors/map-start/index";
-import {
-	createMinimapDetector,
-	type MinimapData,
-} from "../../app/features/scanner/core/detectors/minimap/index";
+import { createDeathDetector } from "../../app/features/scanner/core/detectors/death/index";
+import { createKillDetector } from "../../app/features/scanner/core/detectors/kill/index";
+import { createMapStartDetector } from "../../app/features/scanner/core/detectors/map-start/index";
+import { createMinimapDetector } from "../../app/features/scanner/core/detectors/minimap/index";
 import { createQuickScoreboardBattleLogDetector } from "../../app/features/scanner/core/detectors/quick-scoreboard-battle-log/index";
 import { createScoreboardDetector } from "../../app/features/scanner/core/detectors/scoreboard/index";
 import { createScoreboardBattleLogDetector } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
@@ -28,23 +17,26 @@ import {
 	createScoreboardBattleLogReplayDetector,
 	type ScoreboardBattleLogReplayData,
 } from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/index";
-import {
-	createScoreboardOwnDetector,
-	type ScoreboardOwnData,
-} from "../../app/features/scanner/core/detectors/scoreboard-own/index";
-import type { Detector } from "../../app/features/scanner/core/detectors/types";
+import { createScoreboardOwnDetector } from "../../app/features/scanner/core/detectors/scoreboard-own/index";
+import type {
+	Detector,
+	EventRecord,
+} from "../../app/features/scanner/core/detectors/types";
 import {
 	loadFixtures,
 	runDetectorOnFixture,
 } from "../../app/features/scanner/node/fixtures";
 import { loadScoreboardResources } from "../../app/features/scanner/node/resources";
+import { printThresholdMargins } from "./threshold-margins";
 
-await loadOpenCV();
 const resources = await loadScoreboardResources();
+const marginsOnly = process.argv.includes("--margins");
 
 interface Config {
 	label: string;
-	detector: Detector<Partial<ScoreboardBattleLogReplayData>>;
+	detector: Detector<
+		EventRecord<string, Partial<ScoreboardBattleLogReplayData>>
+	>;
 	fixturesDir: string;
 	event: string;
 }
@@ -106,7 +98,7 @@ function pct(t: Tally): string {
 	return `${((100 * t.ok) / t.total).toFixed(1).padStart(5)}% (${t.ok}/${t.total})`;
 }
 
-for (const config of configs) {
+for (const config of marginsOnly ? [] : configs) {
 	// Shared negatives count toward gate accuracy (expectPositive is false).
 	const fixtures = [
 		...loadFixtures(config.fixturesDir),
@@ -226,7 +218,7 @@ for (const config of configs) {
 }
 
 // Map-start fixtures only carry mode + stage, so they get their own pass.
-{
+if (!marginsOnly) {
 	const detector = createMapStartDetector(resources);
 	const fixtures = loadFixtures("map-start");
 	const tally = {
@@ -237,10 +229,7 @@ for (const config of configs) {
 	const misses: string[] = [];
 
 	for (const fixture of fixtures) {
-		const { gate, events } = await runDetectorOnFixture<MapStartData>(
-			detector,
-			fixture,
-		);
+		const { gate, events } = await runDetectorOnFixture(detector, fixture);
 		const expectPositive = fixture.expected.event === "MapStart";
 		tally.gate.total++;
 		if (gate.pass === expectPositive) tally.gate.ok++;
@@ -276,7 +265,7 @@ for (const config of configs) {
 }
 
 // Scoreboard-own fixtures carry header + own weapon + ability grid.
-{
+if (!marginsOnly) {
 	const detector = createScoreboardOwnDetector(resources);
 	const fixtures = [
 		...loadFixtures("scoreboard-own"),
@@ -291,10 +280,7 @@ for (const config of configs) {
 	const misses: string[] = [];
 
 	for (const fixture of fixtures) {
-		const { gate, events } = await runDetectorOnFixture<ScoreboardOwnData>(
-			detector,
-			fixture,
-		);
+		const { gate, events } = await runDetectorOnFixture(detector, fixture);
 		const expectPositive = fixture.expected.event === "ScoreboardOwn";
 		tally.gate.total++;
 		if (gate.pass === expectPositive) tally.gate.ok++;
@@ -348,7 +334,7 @@ for (const config of configs) {
 }
 
 // Minimap fixtures carry teammates/enemies, so they get their own pass.
-{
+if (!marginsOnly) {
 	const detector = createMinimapDetector(resources);
 	const fixtures = [...loadFixtures("minimap"), ...loadFixtures("negative")];
 	const tally = {
@@ -364,10 +350,7 @@ for (const config of configs) {
 	const misses: string[] = [];
 
 	for (const fixture of fixtures) {
-		const { gate, events } = await runDetectorOnFixture<MinimapData>(
-			detector,
-			fixture,
-		);
+		const { gate, events } = await runDetectorOnFixture(detector, fixture);
 		const expectPositive = fixture.expected.event === "Minimap";
 		tally.gate.total++;
 		if (gate.pass === expectPositive) tally.gate.ok++;
@@ -467,7 +450,7 @@ for (const config of configs) {
 
 // Death fixtures carry a different data shape (weapon text, ability grid,
 // splash-tag name), so they get their own pass instead of a Config entry.
-{
+if (!marginsOnly) {
 	const detector = createDeathDetector(resources);
 	const fixtures = loadFixtures("death");
 	const tally = {
@@ -481,10 +464,7 @@ for (const config of configs) {
 	const misses: string[] = [];
 
 	for (const fixture of fixtures) {
-		const { gate, events } = await runDetectorOnFixture<DeathData>(
-			detector,
-			fixture,
-		);
+		const { gate, events } = await runDetectorOnFixture(detector, fixture);
 		const expectPositive = fixture.expected.event === "Death";
 		tally.gate.total++;
 		if (gate.pass === expectPositive) tally.gate.ok++;
@@ -536,7 +516,7 @@ for (const config of configs) {
 }
 
 // Kill fixtures: the feed's stacked rows (names, newest first) and the timer.
-{
+if (!marginsOnly) {
 	const detector = createKillDetector(resources);
 	const fixtures = loadFixtures("kill");
 	const tally = {
@@ -550,10 +530,7 @@ for (const config of configs) {
 	const misses: string[] = [];
 
 	for (const fixture of fixtures) {
-		const { gate, events } = await runDetectorOnFixture<KillData>(
-			detector,
-			fixture,
-		);
+		const { gate, events } = await runDetectorOnFixture(detector, fixture);
 		const expectPositive = fixture.expected.event === "Kill";
 		tally.gate.total++;
 		if (gate.pass === expectPositive) tally.gate.ok++;
@@ -601,3 +578,5 @@ for (const config of configs) {
 		for (const m of misses) console.info(`  ${m}`);
 	}
 }
+
+await printThresholdMargins(resources);

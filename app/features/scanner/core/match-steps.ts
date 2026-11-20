@@ -14,12 +14,12 @@
  * wanders by up to ~3e-4, enough to flip a near-tie between them).
  */
 import { simdCrossSums } from "./cross-sums";
-import { getCV, type Mat } from "./cv";
+import type { Image } from "./image";
 
 export interface MatchRequest {
-	/** search image; must stay alive until the generator resumes past its scores */
-	image: Mat;
-	templates: readonly Mat[];
+	/** search image; must not be written to until the generator resumes past its scores */
+	image: Image;
+	templates: readonly Image[];
 	/**
 	 * per template: the result columns [lo, hi] whose max counts (every row);
 	 * omitted = the whole result map. An empty window (hi < lo) is never asked.
@@ -111,21 +111,10 @@ export function* done<T>(value: T): MatchSteps<T> {
 	return value;
 }
 
-/**
- * Above this many multiply-adds (placements × template samples) a template's
- * cross sums come from one f64 `filter2D` (a DFT) instead of the direct SIMD
- * loops: the measured crossover.
- */
-const DIRECT_MAX_WORK = 1_500_000;
+/** Samples per template (rows × cols × channels) whose u8 products still sum below 2^32, the SIMD kernel's exact range. */
+const SIMD_MAX_TEMPLATE_SAMPLES = Math.floor(0xffffffff / (255 * 255));
 
-interface Pixels {
-	rows: number;
-	cols: number;
-	ch: number;
-	data: Uint8Array;
-}
-
-interface TemplatePixels extends Pixels {
+interface TemplatePixels extends Image {
 	n: number;
 	/** per channel ΣT */
 	sum: number[];
@@ -133,21 +122,19 @@ interface TemplatePixels extends Pixels {
 	varInt: number;
 }
 
-interface ImagePixels extends Pixels {
+interface ImagePixels extends Image {
 	/** per-channel integral image, (rows + 1) × (cols + 1) × ch */
 	sum: Float64Array;
 	/** integral image of Σ_c I_c², (rows + 1) × (cols + 1) */
 	squares: Float64Array;
-	/** the f64 plane filter2D reads, made on first need and freed with the scorer */
-	plane: Mat | null;
 }
 
 /** Templates are long-lived (atlases, icon sets): their pixels and sums are read once. */
-const templatePixels = new WeakMap<Mat, TemplatePixels>();
+const templatePixels = new WeakMap<Image, TemplatePixels>();
 
 /**
- * Exact scores of one request, each computed on first access; released (and
- * guarded against late reads) once the generator resumed past the step.
+ * Exact scores of one request, each computed on first access; guarded
+ * against late reads once the generator resumed past the step.
  */
 function exactScorer(request: MatchRequest): {
 	scores: MatchScores;
@@ -158,7 +145,7 @@ function exactScorer(request: MatchRequest): {
 	return {
 		scores: (index) => {
 			if (released) throw new Error("match scores read after their step");
-			image ??= imagePixels(request.image);
+			image ??= integralPixels(request.image);
 			return exactWindowMax(
 				image,
 				templateOf(request.templates[index]!),
@@ -167,41 +154,34 @@ function exactScorer(request: MatchRequest): {
 		},
 		release: () => {
 			released = true;
-			image?.plane?.delete();
 		},
 	};
 }
 
-/** Max exact score over the placements in `window` (every row). */
+/** Max exact score over the placements in `window` (every row); `placement` takes the row of the first placement reaching it. */
 function exactWindowMax(
 	image: ImagePixels,
 	template: TemplatePixels,
 	window: readonly [number, number] | undefined,
+	placement?: { row: number },
 ): number {
 	if (template.varInt === 0) return 1;
-	const { rows, cols, ch, sum, squares } = image;
+	const { rows, cols, channels: ch, sum, squares } = image;
 	const [lo, hi] = window ?? [0, cols - template.cols];
 	const placementRows = rows - template.rows + 1;
-	const work = placementRows * (hi - lo + 1) * template.n * ch;
-	const filtered =
-		work > DIRECT_MAX_WORK ? filteredCrossSums(image, template) : null;
-	// read in place: nothing below allocates on the WASM heap, so the view stays valid
-	const cross = filtered?.data64F as Float64Array | undefined;
-	const crossStride = cols * ch;
-	const direct = filtered
-		? null
-		: (simdCrossSums()?.compute(image, template, lo, hi) ?? null);
+	const direct =
+		template.data.length <= SIMD_MAX_TEMPLATE_SAMPLES
+			? (simdCrossSums()?.compute(image, template, lo, hi) ?? null)
+			: null;
 	const width = hi - lo + 1;
 	const sumStride = (cols + 1) * ch;
 	const squareStride = cols + 1;
 	let best = Number.NEGATIVE_INFINITY;
 	for (let y = 0; y < placementRows; y++) {
 		for (let x = lo; x <= hi; x++) {
-			const P = cross
-				? Math.round(cross[y * crossStride + x * ch]!)
-				: direct
-					? direct[y * width + x - lo]!
-					: directCrossSum(image, template, x, y);
+			const P = direct
+				? direct[y * width + x - lo]!
+				: directCrossSum(image, template, x, y);
 			const x1 = x + template.cols;
 			const y1 = y + template.rows;
 			let num = template.n * P;
@@ -221,10 +201,12 @@ function exactWindowMax(
 				windowVar -= S * S;
 			}
 			const score = normalizeNcc(num, windowVar, template.varInt);
-			if (score > best) best = score;
+			if (score > best) {
+				best = score;
+				if (placement) placement.row = y;
+			}
 		}
 	}
-	filtered?.delete();
 	return best;
 }
 
@@ -235,12 +217,12 @@ function directCrossSum(
 	x: number,
 	y: number,
 ): number {
-	const rowLength = template.cols * image.ch;
+	const rowLength = template.cols * image.channels;
 	const imageData = image.data;
 	const templateData = template.data;
 	let P = 0;
 	for (let ty = 0; ty < template.rows; ty++) {
-		const ib = ((y + ty) * image.cols + x) * image.ch;
+		const ib = ((y + ty) * image.cols + x) * image.channels;
 		const tb = ty * rowLength;
 		for (let k = 0; k < rowLength; k++) {
 			P += imageData[ib + k]! * templateData[tb + k]!;
@@ -250,72 +232,41 @@ function directCrossSum(
 }
 
 /**
- * Cross sums of every placement at once: the interleaved channels read as one
- * plane `ch` times wider, so a single f64 `filter2D` correlates all of them
- * (column x·ch of the output is placement x). Exact after rounding: the
- * largest sum (< 2^32) leaves the f64 DFT's error far under 0.5.
- */
-function filteredCrossSums(image: ImagePixels, template: TemplatePixels): Mat {
-	const cv = getCV();
-	image.plane ??= planeOf(image);
-	const kernel = planeOf(template);
-	const out = new cv.Mat();
-	cv.filter2D(
-		image.plane,
-		out,
-		cv.CV_64F,
-		kernel,
-		new cv.Point(0, 0),
-		0,
-		cv.BORDER_CONSTANT,
-	);
-	kernel.delete();
-	return out;
-}
-
-/** A single-channel f64 plane of interleaved samples. */
-function planeOf(pixels: Pixels): Mat {
-	const cv = getCV();
-	const plane = new cv.Mat(pixels.rows, pixels.cols * pixels.ch, cv.CV_64F);
-	plane.data64F.set(pixels.data);
-	return plane;
-}
-
-function readPixels(mat: Mat): Pixels {
-	const copy = new (getCV().Mat)();
-	mat.copyTo(copy);
-	const pixels = {
-		rows: copy.rows,
-		cols: copy.cols,
-		ch: copy.channels(),
-		data: new Uint8Array(copy.data),
-	};
-	copy.delete();
-	return pixels;
-}
-
-/**
  * The exact score `runSync` gives one job — the max over placements x in
  * [lo, hi] of every row — for batching drivers finishing jobs on the CPU.
  */
 export function exactMatchMax(
-	image: Pixels,
-	template: Pixels,
+	image: Image,
+	template: Image,
 	lo: number,
 	hi: number,
 ): number {
+	return exactWindowMax(integralPixels(image), templateStats(template), [
+		lo,
+		hi,
+	]);
+}
+
+/**
+ * The image row each template sits on where it scores highest over its
+ * window's placements (the topmost of equals): what a recognizer asks about
+ * the few templates it already knows to be the best, on any driver.
+ */
+export function exactMatchRows(
+	image: Image,
+	templates: readonly Image[],
+	windows: readonly (readonly [number, number])[],
+): number[] {
 	const integral = integralPixels(image);
-	const score = exactWindowMax(integral, templateStats(template), [lo, hi]);
-	integral.plane?.delete();
-	return score;
+	return templates.map((template, i) => {
+		const placement = { row: 0 };
+		exactWindowMax(integral, templateOf(template), windows[i], placement);
+		return placement.row;
+	});
 }
 
-function imagePixels(mat: Mat): ImagePixels {
-	return integralPixels(readPixels(mat));
-}
-
-function integralPixels(pixels: Pixels): ImagePixels {
-	const { rows, cols, ch, data } = pixels;
+function integralPixels(pixels: Image): ImagePixels {
+	const { rows, cols, channels: ch, data } = pixels;
 	const sum = new Float64Array((rows + 1) * (cols + 1) * ch);
 	const squares = new Float64Array((rows + 1) * (cols + 1));
 	const sumStride = (cols + 1) * ch;
@@ -334,19 +285,19 @@ function integralPixels(pixels: Pixels): ImagePixels {
 				squares[y * (cols + 1) + x + 1]! + squareRow;
 		}
 	}
-	return { ...pixels, sum, squares, plane: null };
+	return { ...pixels, sum, squares };
 }
 
-function templateOf(mat: Mat): TemplatePixels {
-	const known = templatePixels.get(mat);
+function templateOf(image: Image): TemplatePixels {
+	const known = templatePixels.get(image);
 	if (known) return known;
-	const template = templateStats(readPixels(mat));
-	templatePixels.set(mat, template);
+	const template = templateStats(image);
+	templatePixels.set(image, template);
 	return template;
 }
 
-function templateStats(pixels: Pixels): TemplatePixels {
-	const { ch, data } = pixels;
+function templateStats(pixels: Image): TemplatePixels {
+	const { channels: ch, data } = pixels;
 	const n = pixels.rows * pixels.cols;
 	const sum = new Array<number>(ch).fill(0);
 	const sq = new Array<number>(ch).fill(0);

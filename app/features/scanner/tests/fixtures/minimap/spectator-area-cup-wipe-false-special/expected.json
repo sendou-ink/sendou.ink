@@ -56,7 +56,7 @@
     ]
   },
   "options": {
-    "unsettled": true,
+    "incomplete": true,
     "notes": "AREA CUP cast (area-cup-crown VoD 1:52:58, 6778.77s, Urchin Underpass): the spectator map screen's opening wipe crosses enemy row 0 (りうくん, Heavy Splatling), lighting one top corner of its weapon box white while the other stays just over the camo floor — read as the light camo of a charged special 12s before the clock started, and the icon under the stroke misread as Order Shot Replica. No special is held; real camo lights both corners evenly (140-165). Enemy row 0's icon still reads through the stroke on the dark-card templates; enemy row 2 (Tri-Slosher Nouveau) is under the wipe and expected unread. Stage not asserted."
   }
 }

@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-import type { DetectedEvent } from "../../core/detectors/types";
 import {
 	X_RANK_POSITION_EVENT_TYPE,
 	type XRankPositionData,
@@ -12,6 +11,7 @@ import {
 	X_SET_RESULT_EVENT_TYPE,
 	type XSetResultData,
 } from "../../core/detectors/x-rank/set-result";
+import type { DetectedEvent } from "../../core/events";
 import { TimelineBuilder } from "../../core/timeline/index";
 
 const SET_RESULTS: XSetResultData["results"] = [
@@ -148,13 +148,13 @@ describe("TimelineBuilder X Battle cards", () => {
 
 function count(
 	t: number,
-	confidence: number,
+	score: number,
 	data: Omit<XSetCountData, "mode">,
 ): DetectedEvent {
 	return {
 		type: X_SET_COUNT_EVENT_TYPE,
 		t,
-		confidence,
+		scores: { read: score },
 		data: { mode: "TC", ...data } satisfies XSetCountData,
 	};
 }
@@ -166,7 +166,7 @@ function result(
 	return {
 		type: X_SET_RESULT_EVENT_TYPE,
 		t,
-		confidence: 0.94,
+		scores: { read: 0.94 },
 		data: {
 			mode: "TC",
 			results: SET_RESULTS,
@@ -182,7 +182,7 @@ function rankPosition(
 	return {
 		type: X_RANK_POSITION_EVENT_TYPE,
 		t,
-		confidence: 0.94,
+		scores: { read: 0.94 },
 		data: { mode: "TC", ...data } satisfies XRankPositionData,
 	};
 }

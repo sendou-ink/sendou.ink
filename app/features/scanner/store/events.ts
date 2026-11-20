@@ -7,7 +7,8 @@
  * frames past `frames.ts`'s age and size budget (the events stay, marked frameless).
  */
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
-import type { DetectedEvent } from "../core/detectors/types";
+import * as EventVersion from "../core/event-version";
+import { type DetectedEvent, detectionOf } from "../core/events";
 import { expiredSessionEventIds } from "../core/sessions";
 import { EVENTS_STORE, FRAMES_STORE, readwrite, tx } from "./db";
 import { trimFrames } from "./frames";
@@ -29,57 +30,64 @@ export interface SendStatus {
 	attempts?: number;
 }
 
-export interface StoredEvent {
+/** A persisted detection; `t` is wall-clock seconds for live captures, seconds into the file for VoDs. */
+export type StoredEvent = DetectedEvent & {
 	id?: number;
-	type: string;
-	/** seconds — wall-clock seconds for live captures, seconds into the file for VoDs */
-	t: number;
+	/** `core/event-version.ts` version `type` and `data` were written at; absent on events stored before the stamp */
+	v?: number;
 	/** wall-clock time of detection */
 	detectedAt: number;
-	confidence: number;
-	data: unknown;
 	/** whether a full-res frame exists in the `frames` store under this id */
 	hasFrame?: boolean;
 	send?: SendStatus;
-}
+};
 
 let lastRetentionAt = 0;
 
 /**
- * Persists a detection; resolves to its store id. `reuseId` overwrites that row
- * (and its frame) so an event a better read replaces keeps a stable id.
+ * Persists a detection; resolves to its store id. `reuseId` overwrites that
+ * row so an event a later read replaces keeps a stable id. Its frame goes
+ * with it: `frame` takes its place, "kept" leaves the stored one (the read
+ * only amended fields of the one the frame shows), none removes it.
  */
 export async function saveEvent(
 	event: DetectedEvent,
-	frame?: Blob,
+	frame?: Blob | "kept",
 	reuseId?: number,
 ): Promise<number> {
 	const record: StoredEvent = {
 		...(reuseId !== undefined ? { id: reuseId } : null),
-		type: event.type,
-		t: event.t,
+		...detectionOf(event),
+		v: EventVersion.CURRENT,
 		detectedAt: Date.now(),
-		confidence: event.confidence,
-		data: event.data,
-		hasFrame: frame !== undefined,
 	};
+	const keepsFrame = frame === "kept" && reuseId !== undefined;
+	const newFrame = frame instanceof Blob ? frame : undefined;
 	let id = 0;
 	let retained = false;
 	await readwrite([EVENTS_STORE, FRAMES_STORE], (transaction) => {
 		const events = transaction.objectStore(EVENTS_STORE);
 		const frames = transaction.objectStore(FRAMES_STORE);
-		const add = events.put(record) as IDBRequest<number>;
-		add.onsuccess = () => {
-			id = add.result;
-			if (frame) frames.put(frame, id);
-			else if (reuseId !== undefined) frames.delete(id);
-			const now = Date.now();
-			if (now - lastRetentionAt >= RETENTION_INTERVAL_MS) {
-				lastRetentionAt = now;
-				retainSessions(events, frames, now);
-				retained = true;
-			}
+		const put = (hasFrame: boolean) => {
+			const add = events.put({ ...record, hasFrame }) as IDBRequest<number>;
+			add.onsuccess = () => {
+				id = add.result;
+				if (newFrame) frames.put(newFrame, id);
+				else if (reuseId !== undefined && !keepsFrame) frames.delete(id);
+				const now = Date.now();
+				if (now - lastRetentionAt >= RETENTION_INTERVAL_MS) {
+					lastRetentionAt = now;
+					retainSessions(events, frames, now);
+					retained = true;
+				}
+			};
 		};
+		if (keepsFrame) {
+			const held = events.get(reuseId) as IDBRequest<StoredEvent | undefined>;
+			held.onsuccess = () => put(held.result?.hasFrame === true);
+		} else {
+			put(newFrame !== undefined);
+		}
 	});
 	if (retained) void trimFrames().catch(() => {});
 	return id;
@@ -155,9 +163,12 @@ export async function deleteEvents(ids: number[]): Promise<void> {
 	});
 }
 
-/** Events detected at or after `since` (wall-clock ms), every event by default. */
-export function listEvents(since = 0): Promise<StoredEvent[]> {
-	return tx(
+/**
+ * Events detected at or after `since` (wall-clock ms), every event by default,
+ * in the current event shapes (`EventVersion.readable`).
+ */
+export async function listEvents(since = 0): Promise<StoredEvent[]> {
+	const events = await tx(
 		EVENTS_STORE,
 		"readonly",
 		(store) =>
@@ -165,9 +176,10 @@ export function listEvents(since = 0): Promise<StoredEvent[]> {
 				.index("detectedAt")
 				.getAll(IDBKeyRange.lowerBound(since)) as IDBRequest<StoredEvent[]>,
 	);
+	return EventVersion.readable(events);
 }
 
-/** The stored events among `ids`, read over their id range; ids no longer stored are left out. */
+/** The stored events among `ids`, read over their id range like `listEvents` reads; ids no longer stored are left out. */
 export async function getEvents(
 	ids: readonly number[],
 ): Promise<StoredEvent[]> {
@@ -184,7 +196,9 @@ export async function getEvents(
 				),
 			) as IDBRequest<StoredEvent[]>,
 	);
-	return inRange.filter((event) => wanted.has(event.id!));
+	return EventVersion.readable(
+		inRange.filter((event) => wanted.has(event.id!)),
+	);
 }
 
 /** The event's full-res analyzed frame, or undefined when none was stored. */

@@ -5,11 +5,12 @@
  *
  * Usage: pnpm scanner:fixtures [case-name-substring]
  */
-import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import {
 	createScoreboardDetector,
 	type ScoreboardRowDebug,
 } from "../../app/features/scanner/core/detectors/scoreboard/index";
+import { isComplete } from "../../app/features/scanner/core/events";
+import * as FieldScores from "../../app/features/scanner/core/field-scores";
 import {
 	loadFixtures,
 	runDetectorOnFixture,
@@ -18,7 +19,6 @@ import { loadScoreboardResources } from "../../app/features/scanner/node/resourc
 
 const filter = process.argv[2];
 
-await loadOpenCV();
 const detector = createScoreboardDetector(await loadScoreboardResources());
 
 const fixtures = loadFixtures("scoreboard").filter(
@@ -34,7 +34,9 @@ for (const fixture of fixtures) {
 	console.info(`\n=== ${fixture.name}`);
 	console.info(`gate: pass=${gate.pass} score=${gate.score.toFixed(3)}`);
 	for (const event of events) {
-		console.info(`event confidence=${event.confidence.toFixed(3)}`);
+		console.info(
+			`event mean score=${FieldScores.mean(event.scores).toFixed(3)} complete=${isComplete(event)}`,
+		);
 		console.info(`matchScores: ${JSON.stringify(event.data.matchScores)}`);
 		const rows = (event.debug?.rows ?? []) as ScoreboardRowDebug[];
 		event.data.players.forEach((p, i) => {

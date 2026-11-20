@@ -4,7 +4,11 @@
  * split into one contiguous slice per analyzer worker and each worker
  * demuxes, decodes, schedules and analyzes its slice itself
  * (worker/analyzer.worker.ts); the seek fallback drives a <video> element
- * through a single worker. The finished scan persists under its file name
+ * through a single worker. Each worker keeps the timeline of what it scans
+ * and reports its changes; the lanes' timelines are stitched at their seams
+ * when the scan ends. Every analyzed frame's checks go to the scan's log
+ * (core/scan-log.ts), per lane, so the scan can be replayed. The finished scan
+ * persists under its file name
  * (store/vods.ts), then its clips are cut off the file (vod-clip-cutter.ts). Unlike a live session, a VoD's
  * matches never upload: without a wall clock they can't be told apart from
  * someone else's games. A scan is all or nothing: leaving the page cancels it and nothing is saved.
@@ -16,14 +20,15 @@ import {
 	mergeScanTelemetry,
 	type ScanTelemetry,
 } from "../core/detectors/telemetry";
-import type { DetectedEvent } from "../core/detectors/types";
+import { detectionOf } from "../core/events";
 import { formatPosition } from "../core/format";
 import {
 	buildScannerMatches,
-	invalidObjectiveEvents,
+	withoutInvalidObjectives,
 } from "../core/match-builder";
+import * as ScanLog from "../core/scan-log";
 import { sessionSummary } from "../core/sessions";
-import { TimelineBuilder } from "../core/timeline/index";
+import { bringsFrame, stitchLanes } from "../core/timeline/index";
 import {
 	loadVodEventFrame,
 	loadVodEvents,
@@ -37,7 +42,6 @@ import {
 	defaultScanWorkerCount,
 } from "../worker/client";
 import { describeError } from "./errors";
-import type { FixtureData } from "./fixture-export";
 import type { ScanEvent } from "./session-data";
 import { readSettings } from "./settings";
 import { cutVodClips } from "./vod-clip-cutter";
@@ -121,6 +125,8 @@ const progressListeners = new Set<() => void>();
 const laneCanvases = new Map<number, HTMLCanvasElement>();
 /** lossless images of the frames the detectors analyzed this scan, until saved */
 let frames = new WeakMap<ScanEvent, Blob>();
+/** the log of this visit's scan, as far as it has come */
+let scanLog: ScanLog.ScanLog | null = null;
 let abortRef = { aborted: false };
 let abortChunks: (() => void) | null = null;
 /**
@@ -190,6 +196,11 @@ export function vodScanFrame(
 	return undefined;
 }
 
+/** The log of the scan run this visit, still growing while it runs. */
+export function vodScanLog(): ScanLog.ScanLog | undefined {
+	return scanLog ?? undefined;
+}
+
 /** The file named `name` scanned or opened this visit; null when it was scanned in an earlier one. */
 export function visitVodFile(name: string): File | null {
 	return visitFiles.get(name) ?? null;
@@ -224,6 +235,7 @@ export async function startVodScan(
 	const abort = { aborted: false };
 	abortRef = abort;
 	frames = new WeakMap();
+	scanLog = null;
 	visitFiles.set(file.name, file);
 	const own = ++generation;
 	const update = (patch: Partial<VodScanSnapshot>) => {
@@ -243,14 +255,23 @@ export async function startVodScan(
 	});
 	setProgress(IDLE_PROGRESS);
 
-	const timeline = new TimelineBuilder();
 	let events: ScanEvent[] = [];
+	/** per worker: where its slice starts and its timeline's events by slot key */
+	const lanes: { tStart: number; events: Map<number, ScanEvent> }[] = [];
 	const minimaps: VodMinimap[] = [];
+	let log: ScanLog.ScanLog | null = null;
+	const startLog = (slices: { tStart: number; tEnd: number }[]) => {
+		log = ScanLog.create(slices);
+		if (own === generation) scanLog = log;
+	};
 	let clients: AnalyzerClient[] = [];
 	let publishTimer: ReturnType<typeof setTimeout> | null = null;
 	const publish = () => {
 		publishTimer ??= setTimeout(() => {
 			publishTimer = null;
+			events = lanes
+				.flatMap((lane) => [...lane.events.values()])
+				.sort((a, b) => a.t - b.t);
 			update({ events });
 		}, EVENTS_PUBLISH_INTERVAL_MS);
 	};
@@ -259,56 +280,60 @@ export async function startVodScan(
 		// seek fallback: latest per-frame done info + the waiter for the next one
 		const seek: { doneInfo: DoneInfo | null; frameDone: (() => void) | null } =
 			{ doneInfo: null, frameDone: null };
-		clients = Array.from(
-			{ length: defaultScanWorkerCount() },
-			() =>
-				new AnalyzerClient(
-					(result) => {
-						if (!result.gate.pass) return;
-						if (result.minimapSnapshot) {
-							minimaps.push({ t: result.t, image: result.minimapSnapshot });
-						}
-						for (const event of result.events as DetectedEvent<FixtureData>[]) {
-							const action = timeline.push(event);
-							if (action.action === "merged" || action.action === "dropped")
-								continue;
-							const frame =
-								action.action === "extended" ? undefined : result.frame;
-							const replaced =
-								action.action === "added"
-									? undefined
-									: events.find((e) => sameEvent(e, action.replaced));
-							const scanEvent: ScanEvent = {
-								...action.event,
-								hasFrame: frame !== undefined,
-							};
-							if (frame) frames.set(scanEvent, frame);
-							events = events.filter((e) => e !== replaced);
-							events.push(scanEvent);
-							events.sort((a, b) => a.t - b.t);
-							publish();
-						}
-					},
-					(message) => {
-						seek.frameDone?.();
-						seek.frameDone = null;
-						if (!abort.aborted) {
-							update({ error: describeError(new Error(message)) });
-						}
-					},
-					(_t, info: DoneInfo) => {
-						seek.doneInfo = info;
-						seek.frameDone?.();
-						seek.frameDone = null;
-					},
-					{
-						collectTelemetry: telemetry,
-						webgpu: readSettings().webgpu,
-						attachFrames: saveFrames,
-						snapshotMinimaps: saveFrames,
-					},
-				),
-		);
+		clients = Array.from({ length: defaultScanWorkerCount() }, () => {
+			const laneIndex = lanes.length;
+			const lane = { tStart: 0, events: new Map<number, ScanEvent>() };
+			lanes.push(lane);
+			return new AnalyzerClient(
+				(result) => {
+					if (log) {
+						ScanLog.record(log, laneIndex, result.t, {
+							detector: result.detector,
+							pass: result.gate.pass,
+							variant: result.gate.variant,
+							parsed: result.parsed,
+							reads: ScanLog.readsOf(result.events),
+						});
+					}
+					if (!result.gate.pass) return;
+					if (result.minimapSnapshot) {
+						minimaps.push({ t: result.t, image: result.minimapSnapshot });
+					}
+					for (const { action, key, event } of result.changes) {
+						const held = lane.events.get(key);
+						// an amended read keeps its slot's frame
+						const frame = bringsFrame(action)
+							? result.frame
+							: held && frames.get(held);
+						const scanEvent: ScanEvent = {
+							...event,
+							hasFrame: frame !== undefined,
+						};
+						if (frame) frames.set(scanEvent, frame);
+						lane.events.set(key, scanEvent);
+					}
+					if (result.changes.length > 0) publish();
+				},
+				(message) => {
+					seek.frameDone?.();
+					seek.frameDone = null;
+					if (!abort.aborted) {
+						update({ error: describeError(new Error(message)) });
+					}
+				},
+				(_t, info: DoneInfo) => {
+					seek.doneInfo = info;
+					seek.frameDone?.();
+					seek.frameDone = null;
+				},
+				{
+					collectTelemetry: telemetry,
+					webgpu: readSettings().webgpu,
+					attachFrames: saveFrames,
+					snapshotMinimaps: saveFrames,
+				},
+			);
+		});
 		await Promise.all(clients.map((c) => c.whenReady()));
 		if (abort.aborted) return;
 
@@ -322,6 +347,7 @@ export async function startVodScan(
 			// the file; the main thread only aggregates progress
 			const { duration } = probe;
 			const span = duration / clients.length;
+			for (const [i, lane] of lanes.entries()) lane.tStart = i * span;
 			const chunks = clients.map((scanClient, i) => ({
 				client: scanClient,
 				tStart: i * span,
@@ -332,6 +358,7 @@ export async function startVodScan(
 				failed: false,
 				telemetry: null as ScanTelemetry | null,
 			}));
+			startLog(chunks);
 			abortChunks = () => {
 				for (const client of clients) client.abortChunk();
 			};
@@ -418,6 +445,7 @@ export async function startVodScan(
 			const strideRef = { current: SEEK_ACTIVE_STRIDE_S };
 			const vod = await openSeekScan(video, () => strideRef.current);
 			if (abort.aborted) return;
+			startLog([{ tStart: 0, tEnd: vod.duration }]);
 			const client = clients[0]!;
 			let lastUiUpdate = Number.NEGATIVE_INFINITY;
 			for await (const { frame, t } of vod.frames) {
@@ -472,7 +500,20 @@ export async function startVodScan(
 	}
 
 	async function finalize(duration: number): Promise<void> {
-		events = withoutInvalidObjectives(events);
+		if (publishTimer !== null) clearTimeout(publishTimer);
+		publishTimer = null;
+		events = withoutInvalidObjectives(
+			stitchLanes(
+				lanes.map((lane) => ({
+					tStart: lane.tStart,
+					events: [...lane.events.values()],
+				})),
+				(event, from) => {
+					const frame = frames.get(from);
+					if (frame) frames.set(event, frame);
+				},
+			),
+		);
 		update({ events });
 		updateProgress({
 			progress: {
@@ -490,13 +531,11 @@ export async function startVodScan(
 				summary: sessionSummary(buildScannerMatches(events)),
 			},
 			events.map((event) => ({
-				type: event.type,
-				t: event.t,
-				confidence: event.confidence,
-				data: event.data,
+				...detectionOf(event),
 				frame: frames.get(event),
 			})),
 			minimaps,
+			log ?? undefined,
 		);
 		events = (await loadVodEvents(file.name)).map(toScanEvent);
 		update({
@@ -509,26 +548,12 @@ export async function startVodScan(
 	}
 }
 
-/** Objective reads that grouped into a match whose mode rules their overlay out (misreads) are dropped. */
-function withoutInvalidObjectives(events: ScanEvent[]): ScanEvent[] {
-	const invalid = new Set(invalidObjectiveEvents(buildScannerMatches(events)));
-	return invalid.size > 0 ? events.filter((e) => !invalid.has(e)) : events;
-}
-
 function toScanEvent(event: StoredVodEvent): ScanEvent {
 	return {
+		...detectionOf(event),
 		id: event.id,
-		type: event.type,
-		t: event.t,
-		confidence: event.confidence,
-		data: event.data,
 		hasFrame: event.hasFrame,
 	};
-}
-
-/** A stored event re-pushed into the timeline is a different object than the scan's copy. */
-function sameEvent(a: ScanEvent, b: DetectedEvent): boolean {
-	return a === b || (a.type === b.type && a.t === b.t && a.data === b.data);
 }
 
 function drawPreview(

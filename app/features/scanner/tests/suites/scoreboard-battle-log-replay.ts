@@ -8,13 +8,13 @@
  */
 
 import assert from "node:assert/strict";
-import { loadOpenCV } from "../../core/cv";
 import type {
 	ScoreboardPlayer,
 	ScoreboardRowDebug,
 } from "../../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../../core/detectors/scoreboard-battle-log-replay/index";
 import {
+	assertCompleteness,
 	fieldTestOptions,
 	loadFixtures,
 	loadScoreboardLookalikes,
@@ -27,7 +27,6 @@ export async function runScoreboardBattleLogReplaySuite(
 	shard: number,
 	shardCount: number,
 ): Promise<void> {
-	await loadOpenCV();
 	const detector = createScoreboardBattleLogReplayDetector(
 		await loadScoreboardResources(),
 	);
@@ -63,6 +62,10 @@ export async function runScoreboardBattleLogReplaySuite(
 			assert.ok(event, "gate passed but no event parsed");
 			const rows = (event.debug?.rows ?? []) as ScoreboardRowDebug[];
 			const expected = fixture.expected.data ?? {};
+
+			await t.test("completeness", () => {
+				assertCompleteness(fixture, event);
+			});
 
 			await t.test(
 				"matchScores",

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { gameSummary } from "../../core/broadcast-summary";
-import type { DetectedEvent } from "../../core/detectors/types";
+import type { DetectedEvent } from "../../core/events";
 import type { BuiltMatch } from "../../core/match-builder";
 import type {
 	ScannerMatch,

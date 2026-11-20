@@ -5,8 +5,8 @@
 
 import assert from "node:assert/strict";
 import { describe, test } from "vitest";
-import type { DetectedEvent } from "../../core/detectors/types";
 import type { XSetResultData } from "../../core/detectors/x-rank/set-result";
+import type { DetectedEvent } from "../../core/events";
 import type {
 	ScannerMatch,
 	ScannerMatchObjectiveSample,
@@ -26,6 +26,7 @@ import {
 	sessionSummary,
 	splitSessions,
 } from "../../core/sessions";
+import { stubEvent } from "../stub-event";
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -77,7 +78,7 @@ function match(
 function built(
 	game: ScannerMatch,
 	sources: DetectedEvent[] = [
-		{ type: "Scoreboard", t: 300, confidence: 0.9, data: {} },
+		stubEvent({ type: "Scoreboard", t: 300, scores: { read: 0.9 }, data: {} }),
 	],
 ) {
 	return { match: game, sources };
@@ -100,7 +101,7 @@ function setResult(results: XSetResultData["results"]): DetectedEvent {
 	return {
 		type: "XSetResult",
 		t: 310,
-		confidence: 0.95,
+		scores: { read: 0.95 },
 		data: { mode: "TC", results, powerChange: 15, power: 2500 },
 	};
 }
@@ -164,7 +165,12 @@ test("the summary leaves out games only seen in the battle log", () => {
 	const summary = sessionSummary([
 		built(match({ result: "win", ka: 8, d: 2 })),
 		built(match({ result: "loss", ka: 4, d: 6 }), [
-			{ type: "ScoreboardBattleLog", t: 900, confidence: 0.9, data: {} },
+			stubEvent({
+				type: "ScoreboardBattleLog",
+				t: 900,
+				scores: { read: 0.9 },
+				data: {},
+			}),
 		]),
 	]);
 	assert.deepEqual(summary, { games: 1, wins: 1, losses: 0, ka: 8, d: 2 });

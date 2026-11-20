@@ -11,7 +11,7 @@
     ],
     "players": [
       {
-        "name": "liンチ¯",
+        "name": "パンチー",
         "weaponId": 60,
         "paint": 1229,
         "ka": 10,
@@ -75,5 +75,9 @@
         "s": 3
       }
     ]
+  },
+  "options": {
+    "incomplete": true,
+    "notes": "players.0.name: the first two segments are the strokes of a パ, and the bar at the end sits at mid height (a long vowel mark), not at the cap line where a macron is."
   }
 }

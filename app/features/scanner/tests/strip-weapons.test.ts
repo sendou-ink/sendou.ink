@@ -6,13 +6,11 @@
  */
 
 import assert from "node:assert/strict";
-import { loadOpenCV } from "../core/cv";
 import { createObjectiveDetector } from "../core/detectors/objective/index";
 import {
 	STRIP_WEAPONS_EVENT_TYPE,
-	type StripWeaponsData,
+	type StripWeaponsEvent,
 } from "../core/detectors/objective/strip-weapons";
-import type { DetectedEvent } from "../core/detectors/types";
 import {
 	addWeaponEvidence,
 	emptySlotRowEvidence,
@@ -26,7 +24,6 @@ import {
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
 
-await loadOpenCV();
 const resources = await loadScoreboardResources();
 const fixtures = loadFixtures("strip-weapons");
 
@@ -34,7 +31,7 @@ test("strip-weapons fixtures exist", () => {
 	assert.ok(fixtures.length > 0, "no fixtures found under strip-weapons/");
 });
 
-const parsed = new Map<string, DetectedEvent<StripWeaponsData>>();
+const parsed = new Map<string, StripWeaponsEvent>();
 
 for (const fixture of fixtures) {
 	test(`strip-weapons/${fixture.name}`, async (t) => {
@@ -43,9 +40,7 @@ for (const fixture of fixtures) {
 			fixture,
 		);
 		assert.ok(gate.pass, `objective gate did not fire (${gate.score})`);
-		const event = events.find((e) => e.type === STRIP_WEAPONS_EVENT_TYPE) as
-			| DetectedEvent<StripWeaponsData>
-			| undefined;
+		const event = events.find((e) => e.type === STRIP_WEAPONS_EVENT_TYPE);
 		assert.ok(event, "no StripWeapons event alongside the counter read");
 		parsed.set(fixture.name, event);
 		const expected = fixture.expected.data ?? {};

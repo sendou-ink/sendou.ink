@@ -1,7 +1,7 @@
 {
   "event": "Scoreboard",
   "options": {
-    "notes": "KNOCKOUT! burst on the RIGHT banner side (loser's Score: 0 on the left) - regression guard for the burst reading as a 7-0 score. players.3 (AHOOUUUUUU) once read AHOOLUUUUU: a fixture 'L' crop correlated 0.91 with the first U's stem and floor and took the fixture tie-break while explaining only 63% of its ink, which the tie-break now requires. players.6 name uses dotless i (as parsed) - verify against source if it ever fails."
+    "notes": "KNOCKOUT! burst on the RIGHT banner side (loser's Score: 0 on the left) - regression guard for the burst reading as a 7-0 score. players.3 (AHOOUUUUUU) once read AHOOLUUUUU: a fixture 'L' crop correlated 0.91 with the first U's stem and floor and took the fixture tie-break while explaining only 63% of its ink, which the tie-break now requires. players.6 name uses dotless i (as parsed) - verify against source if it ever fails. players.6.name: the 'n' is a Greek η, drawn with its right leg four rows under the baseline (the ι beside it is Greek too)."
   },
   "data": {
     "lobby": "PRIVATE",
@@ -63,7 +63,7 @@
         "s": 2
       },
       {
-        "name": "Rιppιng_H",
+        "name": "Rιppιηg_H",
         "weaponId": 8001,
         "paint": 270,
         "ka": 3,

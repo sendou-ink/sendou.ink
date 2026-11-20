@@ -2,20 +2,22 @@
  * Replay code recognition ("R6KE-DO64-3CXD-XVKL"): green text falls below the
  * grayscale binarization threshold, so it runs on the green channel.
  */
-import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import {
 	type GlyphSet,
 	type RecognizedText,
 	recognizeTextSteps,
 } from "../../glyphs";
-import { cropRoi } from "../../image";
+import { channelOf, cropRoi, type Image } from "../../image";
 import type { MatchSteps } from "../../match-steps";
 import { REPLAY_CODE_ROI } from "./rois";
 
 /**
  * FOT-RowdyStd's 'Q' is a '0' bowl with a tail, so a real Q ranks as '0' by a
- * hair; like names.ts's P/p rule, a 0/O whose ink reaches well below the
- * baseline (median ink bottom of the other chars) is a Q.
+ * hair: a 0/O whose ink reaches well below the baseline (median ink bottom of
+ * the other chars) is a Q. The glyph cells charge a '0' for the tail, but only
+ * by its share of the ink, so the Q still wins by 0.02 at most on sharp
+ * captures and loses outright on blurry ones (low-res).
  */
 const Q_TWINS = new Set(["0", "O"]);
 const Q_DESCENT_MIN_PX = 4;
@@ -29,29 +31,45 @@ function resolveQsByDescent(raw: RecognizedText): string {
 	const baseline = anchors[Math.floor(anchors.length / 2)]!;
 	return raw.chars
 		.map((c) =>
-			Q_TWINS.has(c.char) && c.y1 - baseline >= Q_DESCENT_MIN_PX ? "Q" : c.char,
+			Q_TWINS.has(c.char) &&
+			Decisions.atLeast(
+				"scoreboard-battle-log-replay/code:Q_DESCENT_MIN_PX",
+				c.y1 - baseline,
+				Q_DESCENT_MIN_PX,
+			)
+				? "Q"
+				: c.char,
 		)
 		.join("");
 }
 
 /**
  * On blurry captures 'L' can edge out a true 'U': a U's right stroke fills the
- * top-right quadrant where an L has no ink (0.00-0.15 on true Ls vs 0.27+ on
- * Us). The margin is generous since no fixture L carries a 'U' candidate at all.
+ * top-right quadrant where an L has no ink (0.00-0.15 on true Ls vs 0.21+ on
+ * Us, the lowest on low-res-2). The margin is generous since no fixture L
+ * carries a 'U' candidate at all.
  */
 const LU_SCORE_MARGIN = 0.12;
 const LU_INK_THRESHOLD = 150;
-const LU_TOP_RIGHT_MIN_FRACTION = 0.2;
+const LU_TOP_RIGHT_MIN_FRACTION = 0.18;
 
 function resolveUsByTopRightInk(
 	raw: RecognizedText,
-	green: Mat,
+	green: Image,
 ): RecognizedText {
 	const { cols, data } = green;
 	const chars = raw.chars.map((c) => {
 		if (c.char !== "L") return c;
 		const u = c.candidates?.find((k) => k.char === "U");
-		if (!u || c.score - u.score > LU_SCORE_MARGIN) return c;
+		if (
+			!u ||
+			Decisions.above(
+				"scoreboard-battle-log-replay/code:LU_SCORE_MARGIN",
+				c.score - u.score,
+				LU_SCORE_MARGIN,
+			)
+		)
+			return c;
 		const xMid = Math.ceil((c.x0 + c.x1) / 2);
 		const yMid = Math.floor((c.y0 + c.y1) / 2);
 		let ink = 0;
@@ -62,7 +80,12 @@ function resolveUsByTopRightInk(
 				if (data[y * cols + x]! > LU_INK_THRESHOLD) ink++;
 			}
 		}
-		return total > 0 && ink / total >= LU_TOP_RIGHT_MIN_FRACTION
+		return total > 0 &&
+			Decisions.atLeast(
+				"scoreboard-battle-log-replay/code:LU_TOP_RIGHT_MIN_FRACTION",
+				ink / total,
+				LU_TOP_RIGHT_MIN_FRACTION,
+			)
 			? { ...c, char: "U" }
 			: c;
 	});
@@ -97,25 +120,19 @@ export function codeCharsetOf(set: GlyphSet): GlyphSet {
 				.sort((a, b) => a - b);
 			return widths[Math.floor(widths.length / 2)] ?? set.medianWidth;
 		},
+		get cell() {
+			return set.cell;
+		},
 	};
 }
 
 /** rgb: full normalized frame in RGB (not RGBA). */
 export function* parseReplayCodeSteps(
-	rgb: Mat,
+	rgb: Image,
 	glyphs: GlyphSet,
 	speculative = false,
 ): MatchSteps<ParsedReplayCode> {
-	const cv = getCV();
-	const view = cropRoi(rgb, REPLAY_CODE_ROI);
-	const channels = new cv.MatVector();
-	cv.split(view, channels);
-	const g = channels.get(1);
-	const green = new cv.Mat();
-	g.copyTo(green);
-	g.delete();
-	channels.delete();
-	view.delete();
+	const green = channelOf(cropRoi(rgb, REPLAY_CODE_ROI), 1);
 
 	const raw = yield* recognizeTextSteps(
 		green,
@@ -127,7 +144,6 @@ export function* parseReplayCodeSteps(
 		speculative,
 	);
 	const resolved = resolveUsByTopRightInk(raw, green);
-	green.delete();
 
 	let text = resolveQsByDescent(resolved).toUpperCase();
 	// thin dashes can drop out of segmentation; re-derive the grouping from the 16 alphanumerics

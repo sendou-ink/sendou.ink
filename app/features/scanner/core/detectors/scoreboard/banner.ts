@@ -7,14 +7,16 @@
  * bounce as the value lands, so every size and threshold is parsed and the best
  * read kept (valid over none, longer run over shorter, then confidence).
  */
-import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
+import { connectedComponents } from "../../filters";
 import {
 	type GlyphSet,
 	type RecognizedChar,
 	type RecognizedText,
 	recognizeTextSteps,
 } from "../../glyphs";
-import { copyRoi, type Roi } from "../../image";
+import { cropRoi, type Image, type Roi, threshold } from "../../image";
 import { all, type MatchSteps } from "../../match-steps";
 
 /** The count a knockout wins at — the burst hides it, so it is never read. */
@@ -96,12 +98,12 @@ const EMPTY_READ: BannerScoreRead = {
  * fail at least one of those tests.
  */
 export function* parseBannerScoreSteps(
-	gray: Mat,
+	gray: Image,
 	roi: Roi,
 	sets: readonly GlyphSet[],
 	speculative = false,
 ): MatchSteps<BannerScoreRead> {
-	const crop = copyRoi(gray, roi);
+	const crop = cropRoi(gray, roi);
 	clearShortBlobs(crop);
 	const reads = [
 		BANNER_SCORE_BIN_THRESHOLD,
@@ -129,7 +131,6 @@ export function* parseBannerScoreSteps(
 		});
 		if (isBetterRead(read, best)) best = read;
 	}
-	crop.delete();
 	return best;
 }
 
@@ -138,7 +139,36 @@ export function* parseBannerScoreSteps(
  * loser = the more confident read. Otherwise ranked scores never tie so the
  * higher value is the winner's; one unreadable side reports nothing.
  */
-export function resolveMatchScores({
+export function resolveMatchScores(sides: {
+	left: BannerScoreRead;
+	right: BannerScoreRead;
+	knockout: boolean;
+}): [number | null, number | null] {
+	const [winner, loser] = winnerFirst(sides);
+	if (sides.knockout) return [KO_MATCH_SCORE, loser.value];
+	if (winner.value === null || loser.value === null) return [null, null];
+	return [winner.value, loser.value];
+}
+
+/**
+ * The scores of `resolveMatchScores`' pair: each side's own read, a
+ * knockout's winner the team total that told it (`knockoutScore`).
+ */
+export function matchScoreFieldScores(sides: {
+	left: BannerScoreRead;
+	right: BannerScoreRead;
+	knockout: boolean;
+	knockoutScore: number;
+}): FieldScores.FieldScores {
+	const [winner, loser] = winnerFirst(sides);
+	return FieldScores.of({
+		"matchScores.0": sides.knockout ? sides.knockoutScore : winner.confidence,
+		"matchScores.1": loser.confidence,
+	});
+}
+
+/** The two reads winner first; a knockout's winner is hidden, so its loser is the read worth more. */
+function winnerFirst({
 	left,
 	right,
 	knockout,
@@ -146,55 +176,30 @@ export function resolveMatchScores({
 	left: BannerScoreRead;
 	right: BannerScoreRead;
 	knockout: boolean;
-}): [number | null, number | null] {
+}): [BannerScoreRead, BannerScoreRead] {
+	const bothRead = left.value !== null && right.value !== null;
 	if (knockout) {
-		const loser =
-			left.value !== null && right.value !== null
-				? left.confidence >= right.confidence
-					? left
-					: right
-				: left.value !== null
-					? left
-					: right;
-		return [KO_MATCH_SCORE, loser.value];
+		const leftLoses = bothRead
+			? left.confidence >= right.confidence
+			: left.value !== null;
+		return leftLoses ? [right, left] : [left, right];
 	}
-	if (left.value !== null && right.value !== null) {
-		return left.value >= right.value
-			? [left.value, right.value]
-			: [right.value, left.value];
-	}
-	return [null, null];
+	return bothRead && right.value! > left.value! ? [right, left] : [left, right];
 }
 
 /** Zero out ink components shorter than any digit (see MIN_COMPONENT_HEIGHT). */
-function clearShortBlobs(band: Mat): void {
-	const cv = getCV();
-	const bin = new cv.Mat();
-	cv.threshold(band, bin, BANNER_SCORE_BIN_THRESHOLD, 255, cv.THRESH_BINARY);
-	const labels = new cv.Mat();
-	const stats = new cv.Mat();
-	const centroids = new cv.Mat();
-	const count = cv.connectedComponentsWithStats(
-		bin,
-		labels,
-		stats,
-		centroids,
-		8,
+function clearShortBlobs(band: Image): void {
+	const { count, labels, stats } = connectedComponents(
+		threshold(band, BANNER_SCORE_BIN_THRESHOLD),
 	);
-	bin.delete();
-	centroids.delete();
-	const s = stats.data32S;
 	const short = new Uint8Array(count);
 	for (let i = 1; i < count; i++) {
-		short[i] = s[i * 5 + cv.CC_STAT_HEIGHT]! < MIN_COMPONENT_HEIGHT ? 1 : 0;
+		short[i] = stats[i]!.height < MIN_COMPONENT_HEIGHT ? 1 : 0;
 	}
-	stats.delete();
-	const lab = labels.data32S;
 	const out = band.data;
 	for (let i = 0; i < out.length; i++) {
-		if (short[lab[i]!]!) out[i] = 0;
+		if (short[labels[i]!]!) out[i] = 0;
 	}
-	labels.delete();
 }
 
 /** A valid value beats none, a longer digit run beats a shorter one, confidence breaks ties. */
@@ -244,9 +249,17 @@ export function trailingDigitRun(
 	} = options;
 	const maxGap = Math.max(4, Math.round(set.medianWidth * DIGIT_GAP_MAX_RATIO));
 	const fullHeight = (c: RecognizedChar) =>
-		c.y1 - c.y0 >= set.height * minHeightRatio;
+		Decisions.atLeast(
+			"scoreboard/banner:DIGIT_MIN_HEIGHT_RATIO",
+			c.y1 - c.y0,
+			set.height * minHeightRatio,
+		);
 	const isRunDigit = (c: RecognizedChar) =>
-		c.score >= extendMinScore && fullHeight(c);
+		Decisions.atLeast(
+			"scoreboard/banner:extendMinScore",
+			c.score,
+			extendMinScore,
+		) && fullHeight(c);
 
 	const run: RecognizedChar[] = [];
 	let i = raw.chars.length - 1;
@@ -257,14 +270,29 @@ export function trailingDigitRun(
 		run.unshift(c);
 	}
 	if (run.length === 0) return { ...EMPTY_READ, reading: raw.text };
-	if (!run.some((c) => c.score >= minCharScore)) {
+	if (
+		!run.some((c) =>
+			Decisions.atLeast(
+				"scoreboard/banner:minCharScore#run",
+				c.score,
+				minCharScore,
+			),
+		)
+	) {
 		return { ...EMPTY_READ, reading: raw.text };
 	}
 	// a further digit left of the run means an unreadable glyph split the number
 	// (turf war "48", ".", "7"); the tail is not the score
 	for (let k = i; k >= 0; k--) {
 		const c = raw.chars[k]!;
-		if (c.score >= minCharScore && fullHeight(c)) {
+		if (
+			Decisions.atLeast(
+				"scoreboard/banner:minCharScore#leftOfRun",
+				c.score,
+				minCharScore,
+			) &&
+			fullHeight(c)
+		) {
 			return { ...EMPTY_READ, reading: raw.text };
 		}
 	}

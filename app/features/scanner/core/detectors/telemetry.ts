@@ -16,6 +16,8 @@ export interface DetectorTelemetry {
 
 export interface ScanTelemetry {
 	decodedFrames: number;
+	/** samples of the VoD decode stream left undecoded: certainly not analyzed, and nothing later decodes from them */
+	undecodedFrames: number;
 	/** frames that went through canvas readback + normalize + detectors */
 	analyzedFrames: number;
 	/** video seconds covered by dense sequential decode (chunk scan) */
@@ -26,6 +28,14 @@ export interface ScanTelemetry {
 	/** scans (workers) that matched on WebGPU, and their summed wait for GPU results */
 	gpuScans: number;
 	gpuWaitMs: number;
+	/** frames read back (VoD chunk scans), the readback helpers' summed time on them, and the analyzer's waits on readback and on decode */
+	readbacks: number;
+	/** of `readbacks`, those read as their gate ROI pixels alone, and of those, the ones fetched whole once a gate passed */
+	gateReads: number;
+	gateReadsWhole: number;
+	readbackMs: number;
+	readbackWaitMs: number;
+	decodeWaitMs: number;
 	detectors: Record<string, DetectorTelemetry>;
 }
 
@@ -33,12 +43,19 @@ export interface ScanTelemetry {
 export function createScanTelemetry(): ScanTelemetry {
 	return {
 		decodedFrames: 0,
+		undecodedFrames: 0,
 		analyzedFrames: 0,
 		activeVideoS: 0,
 		skimVideoS: 0,
 		wallMs: 0,
 		gpuScans: 0,
 		gpuWaitMs: 0,
+		readbacks: 0,
+		gateReads: 0,
+		gateReadsWhole: 0,
+		readbackMs: 0,
+		readbackWaitMs: 0,
+		decodeWaitMs: 0,
 		detectors: {},
 	};
 }
@@ -69,12 +86,19 @@ export function mergeScanTelemetry(
 	const out = createScanTelemetry();
 	for (const part of parts) {
 		out.decodedFrames += part.decodedFrames;
+		out.undecodedFrames += part.undecodedFrames;
 		out.analyzedFrames += part.analyzedFrames;
 		out.activeVideoS += part.activeVideoS;
 		out.skimVideoS += part.skimVideoS;
 		out.wallMs = Math.max(out.wallMs, part.wallMs);
 		out.gpuScans += part.gpuScans;
 		out.gpuWaitMs += part.gpuWaitMs;
+		out.readbacks += part.readbacks;
+		out.gateReads += part.gateReads;
+		out.gateReadsWhole += part.gateReadsWhole;
+		out.readbackMs += part.readbackMs;
+		out.readbackWaitMs += part.readbackWaitMs;
+		out.decodeWaitMs += part.decodeWaitMs;
 		for (const [id, d] of Object.entries(part.detectors)) {
 			const bucket = detectorTelemetry(out, id);
 			bucket.checks += d.checks;

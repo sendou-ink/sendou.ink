@@ -3,10 +3,20 @@
  * their punctuation, and color/ink fractions of small regions.
  */
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
-import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { type GlyphSet, recognizeTextSteps } from "../../glyphs";
-import { copyRoi, type FrameData, meanBrightness, type Roi } from "../../image";
+import {
+	countNonZero,
+	createImage,
+	cropRoi,
+	type FrameData,
+	type Image,
+	meanBrightness,
+	type Roi,
+	threshold,
+} from "../../image";
 import { all, type MatchSteps } from "../../match-steps";
+import { resize } from "../../resize";
 import { MODE_ICON_MIN_SCORE, MODE_ICON_TEMPLATE_SIZES } from "./rois";
 
 export const X_RANK_MODES: readonly RankedModeShort[] = [
@@ -33,7 +43,7 @@ const SYMBOL_MAX_SCORE = 0.75;
 export interface ModeIconTemplate {
 	mode: RankedModeShort;
 	/** RGB icon composited on black, one per MODE_ICON_TEMPLATE_SIZES entry */
-	sizes: Mat[];
+	sizes: Image[];
 }
 
 export interface NumberRead {
@@ -57,7 +67,6 @@ interface InkRun {
 export function prepareModeIconTemplates(
 	icons: { id: string; image: FrameData }[],
 ): ModeIconTemplate[] {
-	const cv = getCV();
 	return icons.flatMap(({ id, image }) => {
 		const mode = X_RANK_MODES.find((m) => m === id);
 		if (!mode) return [];
@@ -78,7 +87,7 @@ export function prepareModeIconTemplates(
 		}
 		const w = Math.max(1, xMax - xMin + 1);
 		const h = Math.max(1, yMax - yMin + 1);
-		const composite = new cv.Mat(h, w, cv.CV_8UC3, new cv.Scalar(0, 0, 0));
+		const composite = createImage(h, w, 3);
 		const dst = composite.data;
 		for (let y = 0; y < h; y++) {
 			for (let x = 0; x < w; x++) {
@@ -91,33 +100,25 @@ export function prepareModeIconTemplates(
 		}
 		const sizes = MODE_ICON_TEMPLATE_SIZES.map((size) => {
 			const scale = size / Math.max(w, h);
-			const resized = new cv.Mat();
-			cv.resize(
+			return resize(
 				composite,
-				resized,
-				new cv.Size(
-					Math.max(1, Math.round(w * scale)),
-					Math.max(1, Math.round(h * scale)),
-				),
-				0,
-				0,
-				cv.INTER_AREA,
+				Math.max(1, Math.round(w * scale)),
+				Math.max(1, Math.round(h * scale)),
+				"area",
 			);
-			return resized;
 		});
-		composite.delete();
 		return [{ mode, sizes }];
 	});
 }
 
 /** The card's mode icon in `roi` of the frame's RGB; null below MODE_ICON_MIN_SCORE. */
 export function* readModeIconSteps(
-	rgb: Mat,
+	rgb: Image,
 	roi: Roi,
 	templates: readonly ModeIconTemplate[] | null | undefined,
 ): MatchSteps<{ mode: RankedModeShort | null; score: number }> {
 	if (!templates || templates.length === 0) return { mode: null, score: 0 };
-	const search = copyRoi(rgb, roi);
+	const search = cropRoi(rgb, roi);
 	const fitting = (t: ModeIconTemplate) =>
 		t.sizes.filter((s) => s.rows <= search.rows && s.cols <= search.cols);
 	const [scoreOf] = yield [
@@ -134,8 +135,11 @@ export function* readModeIconSteps(
 			if (score > best.score) best = { mode: template.mode, score };
 		}
 	}
-	search.delete();
-	return best.score >= MODE_ICON_MIN_SCORE
+	return Decisions.atLeast(
+		"x-rank/shared:MODE_ICON_MIN_SCORE",
+		best.score,
+		MODE_ICON_MIN_SCORE,
+	)
 		? best
 		: { mode: null, score: best.score };
 }
@@ -150,34 +154,37 @@ export function* readModeIconSteps(
  * position's "#259", "1位"), told apart from digits by their poor match.
  */
 export function* readNumberSteps(
-	gray: Mat,
+	gray: Image,
 	roi: Roi,
 	digits: GlyphSet,
 	binThreshold: number,
 	speculative: boolean,
 	extras?: "sign" | "symbols",
 ): MatchSteps<NumberRead> {
-	const cv = getCV();
-	const crop = copyRoi(gray, roi);
-	const binary = new cv.Mat();
-	cv.threshold(crop, binary, binThreshold, 255, cv.THRESH_BINARY);
+	const crop = cropRoi(gray, roi);
+	const binary = threshold(crop, binThreshold);
 	const runs = inkRuns(binary);
-	binary.delete();
 	const lineHeight = Math.max(0, ...runs.map((r) => r.y1 - r.y0));
 	const minInk = Math.max(
 		RUN_MIN_INK,
 		lineHeight * lineHeight * RUN_MIN_INK_RATIO,
 	);
-	const inked = runs.filter((r) => r.ink >= minInk);
+	const inked = runs.filter((r) =>
+		Decisions.atLeast("x-rank/shared:RUN_MIN_INK", r.ink, minInk),
+	);
 	const lead = extras === "sign" ? inked[0] : undefined;
 	const kept = lead ? inked.slice(1) : inked;
 	const isTall = (r: InkRun) =>
-		r.y1 - r.y0 >= lineHeight * PUNCTUATION_MAX_HEIGHT_RATIO;
+		Decisions.atLeast(
+			"x-rank/shared:PUNCTUATION_MAX_HEIGHT_RATIO",
+			r.y1 - r.y0,
+			lineHeight * PUNCTUATION_MAX_HEIGHT_RATIO,
+		);
 	const tall = kept.filter(isTall);
 	const lineTop = Math.min(...tall.map((r) => r.y0));
 	const crops = tall.map((r) => {
 		const x0 = Math.max(0, r.x0 - RUN_PAD);
-		return copyRoi(crop, {
+		return cropRoi(crop, {
 			x: x0,
 			y: 0,
 			w: Math.min(crop.cols, r.x1 + RUN_PAD) - x0,
@@ -194,12 +201,14 @@ export function* readNumberSteps(
 			),
 		),
 	);
-	for (const c of crops) c.delete();
-	crop.delete();
 
 	// a symbol can split into several runs (位's two radicals)
 	const isSymbol = (index: number) =>
-		minScore(reads[index]!.chars.map((c) => c.score)) < SYMBOL_MAX_SCORE;
+		Decisions.below(
+			"x-rank/shared:SYMBOL_MAX_SCORE",
+			minScore(reads[index]!.chars.map((c) => c.score)),
+			SYMBOL_MAX_SCORE,
+		);
 	let first = 0;
 	let last = tall.length - 1;
 	if (extras === "symbols") {
@@ -221,7 +230,13 @@ export function* readNumberSteps(
 				text += char.char;
 				digitScores.push(char.score);
 			}
-		} else if (run.y0 - lineTop >= lineHeight * DOT_MIN_TOP_RATIO) {
+		} else if (
+			Decisions.atLeast(
+				"x-rank/shared:DOT_MIN_TOP_RATIO",
+				run.y0 - lineTop,
+				lineHeight * DOT_MIN_TOP_RATIO,
+			)
+		) {
 			text += ".";
 		} else {
 			text += "-";
@@ -235,49 +250,54 @@ export function minScore(scores: readonly number[]): number {
 	return scores.length > 0 ? Math.min(...scores) : 0;
 }
 
-/** Every probe's mean brightness is at most `max`. */
+/** Every probe's mean brightness is at most `max`; `id` names the decision (decisions.ts). */
 export function allDark(
-	gray: Mat,
+	id: string,
+	gray: Image,
 	probes: readonly Roi[],
 	max: number,
 ): boolean {
-	return probes.every((roi) => meanBrightness(gray, roi) <= max);
+	return probes.every((roi) =>
+		Decisions.atMost(id, meanBrightness(gray, roi), max),
+	);
 }
 
 /** Fraction of `roi`'s pixels (of an RGB mat) passing `predicate`. */
 export function rgbFraction(
-	rgb: Mat,
+	rgb: Image,
 	roi: Roi,
 	predicate: (r: number, g: number, b: number) => boolean,
 ): number {
-	const crop = copyRoi(rgb, roi);
+	const crop = cropRoi(rgb, roi);
 	const data = crop.data;
 	let hits = 0;
 	for (let i = 0; i < data.length; i += 3) {
 		if (predicate(data[i]!, data[i + 1]!, data[i + 2]!)) hits++;
 	}
-	crop.delete();
 	return hits / (roi.w * roi.h);
 }
 
-/** Fraction of a grayscale `roi` at or above `threshold`. */
-export function brightFraction(gray: Mat, roi: Roi, threshold: number): number {
-	const cv = getCV();
-	const crop = copyRoi(gray, roi);
-	const bin = new cv.Mat();
-	cv.threshold(crop, bin, threshold - 1, 255, cv.THRESH_BINARY);
-	const fraction = cv.countNonZero(bin) / (roi.w * roi.h);
-	bin.delete();
-	crop.delete();
-	return fraction;
+/** Fraction of a grayscale `roi` at or above `minValue`. */
+export function brightFraction(
+	gray: Image,
+	roi: Roi,
+	minValue: number,
+): number {
+	return (
+		countNonZero(threshold(cropRoi(gray, roi), minValue - 1)) / (roi.w * roi.h)
+	);
 }
 
 function isFlat(run: InkRun): boolean {
-	return (run.y1 - run.y0) / (run.x1 - run.x0) < MINUS_MAX_ASPECT;
+	return Decisions.below(
+		"x-rank/shared:MINUS_MAX_ASPECT",
+		(run.y1 - run.y0) / (run.x1 - run.x0),
+		MINUS_MAX_ASPECT,
+	);
 }
 
 /** Column runs of ink in a binary mat, each with its row extent and pixel count. */
-function inkRuns(binary: Mat): InkRun[] {
+function inkRuns(binary: Image): InkRun[] {
 	const { rows, cols, data } = binary;
 	const runs: InkRun[] = [];
 	let current: InkRun | null = null;

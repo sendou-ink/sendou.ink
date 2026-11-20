@@ -67,7 +67,7 @@
         "s": 4
       },
       {
-        "name": "merocï¬・~",
+        "name": "meroεïз•~",
         "weaponId": 0,
         "paint": 1155,
         "ka": 8,
@@ -76,5 +76,11 @@
       }
     ],
     "stageLabel": "Brinewater Springs"
+  },
+  "options": {
+    "notes": "players.7.name is a known misread (reads merocïョ*~): the ε reads as c, the three-bar з as ョ, and the big dot at the cap line as *.",
+    "misreadFields": [
+      "players.7.name"
+    ]
   }
 }

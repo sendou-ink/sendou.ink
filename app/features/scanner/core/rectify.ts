@@ -2,7 +2,7 @@
  * Plane rectification for screens drawn in perspective (the lobby's quick
  * battle log card is yawed a few degrees): a homography from four point
  * correspondences. Pure math, so the debug views can map ROIs back onto the
- * raw frame without OpenCV; the warp itself is image.ts's warpPerspective.
+ * raw frame; the warp itself is warp.ts's warpPerspective.
  */
 import type { Roi } from "./canonical";
 

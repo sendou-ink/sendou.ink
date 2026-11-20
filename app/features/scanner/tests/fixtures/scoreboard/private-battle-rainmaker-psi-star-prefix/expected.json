@@ -66,6 +66,7 @@
     ]
   },
   "options": {
-    "notes": "User-submitted 720p VoD scan, Undertow Spillway RM private battle, KO win. The winning team's tag is the Greek small letter psi (ψ, U+03C8: x-height top with a descender, not the cap-height Ψ) before a star; the names atlas had no ψ, so it read as \"4\" (here), \"y\" or \"T\". Defeat-side names are left out: each has a tiny superscript between the dot and the name that isn't legible at 720p. Weapons are left out (kit variants not verifiable at this size)."
+    "notes": "User-submitted 720p VoD scan, Undertow Spillway RM private battle, KO win. The winning team's tag is the Greek small letter psi (ψ, U+03C8: x-height top with a descender, not the cap-height Ψ) before a star; the names atlas had no ψ, so it read as \"4\" (here), \"y\" or \"T\". Defeat-side names are left out: each has a tiny superscript between the dot and the name that isn't legible at 720p. Weapons are left out (kit variants not verifiable at this size). incomplete: the defeat side's illegible superscripts read at 0.52-0.56, under the name floor, now that a mark has to fit its height on the line; such a board is read on until it stagnates.",
+    "incomplete": true
   }
 }

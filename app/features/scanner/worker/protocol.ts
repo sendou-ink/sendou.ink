@@ -1,13 +1,15 @@
 import type { ScanTelemetry } from "../core/detectors/telemetry";
-import type { DetectedEvent, GateResult } from "../core/detectors/types";
+import type { GateResult } from "../core/detectors/types";
+import type { DetectedEvent } from "../core/events";
+import type { TimelineChange } from "../core/timeline/index";
 
 export interface InitRequest {
 	kind: "init";
 	/** static assets CDN root (`Config.staticAssetsUrl`), passed in so the worker bundle stays free of the app config graph */
 	assetsBaseUrl: string;
 	/**
-	 * skip parse() for a detector whose gate keeps firing without confidence
-	 * improving and let the scheduler thin out checks; default true — one-shot
+	 * skip parse() for a detector whose gate keeps firing without its reads
+	 * changing the timeline and let the scheduler thin out checks; default true — one-shot
 	 * consumers like the screenshot harness turn it off
 	 */
 	suppressSteadyFrames?: boolean;
@@ -64,8 +66,17 @@ export type WorkerResponse =
 			detector: string;
 			t: number;
 			gate: GateResult;
-			events: DetectedEvent<unknown>[];
-			/** lossless image of the exact frame that was analyzed; present when events fired */
+			/** the gate passed and the scheduler let the parse run */
+			parsed: boolean;
+			/** every read of the frame, as parsed */
+			events: DetectedEvent[];
+			/**
+			 * what those reads changed in the worker's timeline (one per chunk scan
+			 * or per-frame stream), which is the scan's only one: reads it merged or
+			 * dropped are not here
+			 */
+			changes: TimelineChange[];
+			/** lossless image of the exact frame that was analyzed; present when a change added or replaced an event */
 			frame?: Blob;
 			/** downscaled image of the frame, on every minimap gate pass of an open a read of it was kept from (`snapshotMinimaps`) */
 			minimapSnapshot?: Blob;

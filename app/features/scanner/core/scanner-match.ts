@@ -92,8 +92,9 @@ export interface ScannerMatchPlayerStatusSample {
 
 /**
  * Per-player special/death states over the match, read off the icon strip next
- * to the objective counter. Chronological and deduped like the objective
- * samples, re-confirmed every ~6s — render longer gaps as unknown.
+ * to the objective counter and the minimap cards, each player's decoded over
+ * the whole match (core/status-decode.ts). Chronological, one per read (about
+ * one a second while the strip shows) — render gaps over 15s as unknown.
  */
 export interface ScannerMatchPlayerStatus {
 	samples: ScannerMatchPlayerStatusSample[];

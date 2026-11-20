@@ -1,10 +1,11 @@
 /** Number field parsing on top of glyph recognition. */
-import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import {
 	type GlyphSet,
 	type RecognizedText,
 	recognizeTextSteps,
 } from "../../glyphs";
+import type { Image } from "../../image";
 import type { MatchSteps } from "../../match-steps";
 
 export interface ParsedNumber {
@@ -20,7 +21,7 @@ export interface ParsedNumber {
 const LOWERED_TRAILING_MIN_PX = 5;
 
 export function* parseNumberSteps(
-	gray: Mat,
+	gray: Image,
 	digits: GlyphSet,
 	options: { binThreshold?: number; dropLoweredTrailing?: boolean } = {},
 	speculative = false,
@@ -39,7 +40,13 @@ export function* parseNumberSteps(
 	let chars = raw.chars;
 	if (options.dropLoweredTrailing && chars.length > 1) {
 		const capY0 = Math.min(...chars.slice(0, -1).map((c) => c.y0));
-		if (chars[chars.length - 1]!.y0 - capY0 >= LOWERED_TRAILING_MIN_PX) {
+		if (
+			Decisions.atLeast(
+				"scoreboard/digits:LOWERED_TRAILING_MIN_PX",
+				chars[chars.length - 1]!.y0 - capY0,
+				LOWERED_TRAILING_MIN_PX,
+			)
+		) {
 			chars = chars.slice(0, -1);
 		}
 	}

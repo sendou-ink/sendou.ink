@@ -35,7 +35,7 @@
         "s": 6
       },
       {
-        "name": "Rιppιng_H",
+        "name": "Rιppιηg_H",
         "weaponId": 8001,
         "paint": 1248,
         "ka": 10,
@@ -76,5 +76,8 @@
       }
     ],
     "stageLabel": "Barnacle & Dime"
+  },
+  "options": {
+    "notes": "players.3.name: the 'n' is a Greek η, drawn with its right leg four rows under the baseline (the ι beside it is Greek too)."
   }
 }

@@ -19,7 +19,7 @@
  * exactly too. scripts/scanner/gpu-replay.ts checks both against a JS
  * reference.
  */
-import { getCV, type Mat } from "../core/cv";
+import type { Image } from "../core/image";
 import {
 	exactMatchMax,
 	type MatchRequest,
@@ -287,17 +287,10 @@ fn selectMain(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(num_workgr
 }
 `;
 
-interface U8Image {
-	rows: number;
-	cols: number;
-	ch: number;
-	data: Uint8Array;
-}
-
 interface TemplateEntry {
 	/** sequential, for numeric score-cache keys */
 	id: number;
-	image: U8Image;
+	image: Image;
 	/** offset into the GPU template buffer, in words; rows padded to whole words */
 	offset: number;
 	rowWords: number;
@@ -308,7 +301,7 @@ interface TemplateEntry {
 }
 
 interface Job {
-	image: U8Image;
+	image: Image;
 	template: TemplateEntry;
 	lo: number;
 	hi: number;
@@ -408,17 +401,16 @@ export async function createGpuMatcher(
 
 	// templates are long-lived (glyph atlases, weapon icons): packed once, on
 	// first use, into one growable buffer that only uploads what is new
-	const templates = new Map<Mat, TemplateEntry>();
+	const templates = new Map<Image, TemplateEntry>();
 	let templateMirror = new Uint32Array(1 << 20);
 	let templateBytes = new Uint8Array(templateMirror.buffer);
 	let templateLength = 0;
 	let templateUploaded = 0;
 	let templateBuffer: GPUBuffer | null = null;
-	const templateOf = (mat: Mat): TemplateEntry => {
-		const known = templates.get(mat);
+	const templateOf = (image: Image): TemplateEntry => {
+		const known = templates.get(image);
 		if (known) return known;
-		const image = readPixels(mat);
-		const rowBytes = image.cols * image.ch;
+		const rowBytes = image.cols * image.channels;
 		const rowWords = Math.ceil(rowBytes / 4);
 		const words = image.rows * rowWords;
 		if (templateLength + words > templateMirror.length) {
@@ -443,7 +435,7 @@ export async function createGpuMatcher(
 			...templateStats(image),
 		};
 		templateLength += words;
-		templates.set(mat, entry);
+		templates.set(image, entry);
 		return entry;
 	};
 	const syncTemplates = () => {
@@ -502,8 +494,8 @@ export async function createGpuMatcher(
 		stats.jobs += jobs.length;
 
 		// images, each word-aligned and padded, with their integral-image slots
-		const imageIndex = new Map<U8Image, number>();
-		const images: { image: U8Image; offset: number; satOffset: number }[] = [];
+		const imageIndex = new Map<Image, number>();
+		const images: { image: Image; offset: number; satOffset: number }[] = [];
 		let wordLength = 0;
 		let satLength = 0;
 		for (const { image } of jobs) {
@@ -511,7 +503,7 @@ export async function createGpuMatcher(
 			imageIndex.set(image, images.length);
 			images.push({ image, offset: wordLength, satOffset: satLength });
 			wordLength += Math.ceil(image.data.length / 4) + IMAGE_PAD_WORDS;
-			satLength += (image.rows + 1) * (image.cols + 1) * (image.ch + 1);
+			satLength += (image.rows + 1) * (image.cols + 1) * (image.channels + 1);
 		}
 		// stale padding is harmless: it only ever meets zero template padding
 		if (imageWords.length < wordLength) {
@@ -538,7 +530,7 @@ export async function createGpuMatcher(
 			meta[b] = offset;
 			meta[b + 1] = image.rows;
 			meta[b + 2] = image.cols;
-			meta[b + 3] = image.ch;
+			meta[b + 3] = image.channels;
 			meta[b + 4] = satOffset;
 			meta[b + 5] = template.offset;
 			meta[b + 6] = template.image.rows;
@@ -564,7 +556,7 @@ export async function createGpuMatcher(
 			meta[b] = offset;
 			meta[b + 1] = image.rows;
 			meta[b + 2] = image.cols;
-			meta[b + 3] = image.ch;
+			meta[b + 3] = image.channels;
 			meta[b + 4] = satOffset;
 		}
 		stats.placements += total;
@@ -724,7 +716,7 @@ export async function createGpuMatcher(
 
 	async function run<T>(steps: MatchSteps<T>): Promise<T> {
 		const cache = new Map<string, Map<number, number>>();
-		const keyedImages = new Map<string, U8Image>();
+		const keyedImages = new Map<string, Image>();
 		let step = steps.next();
 		while (!step.done) {
 			if (lost) return runSync(steps, step);
@@ -753,14 +745,14 @@ export async function createGpuMatcher(
 		request: MatchRequest,
 		cache: Map<string, Map<number, number>>,
 		inflight: Map<string, Map<number, Job>>,
-		keyedImages: Map<string, U8Image>,
+		keyedImages: Map<string, Image>,
 		jobs: Job[],
 	): number[] {
 		const scores = new Array<number>(request.templates.length);
 		const { key, windows } = request;
 		const cached = key === undefined ? null : entriesOf(cache, key);
 		const pending = key === undefined ? null : entriesOf(inflight, key);
-		let image: U8Image | null = null;
+		let image: Image | null = null;
 		for (const [i, mat] of request.templates.entries()) {
 			const template = templateOf(mat);
 			// a score is the max over its window, so the window is part of its identity
@@ -783,9 +775,9 @@ export async function createGpuMatcher(
 			}
 			image ??=
 				key === undefined
-					? readPixels(request.image)
+					? request.image
 					: (keyedImages.get(key) ??
-						keyedImages.set(key, readPixels(request.image)).get(key)!);
+						keyedImages.set(key, request.image).get(key)!);
 			const [lo, hi] = window ?? [0, image.cols - template.image.cols];
 			const job: Job = {
 				image,
@@ -802,9 +794,9 @@ export async function createGpuMatcher(
 				continue;
 			}
 			if (
-				(image.ch !== 1 && image.ch !== 3) ||
-				image.ch !== template.image.ch ||
-				template.n * template.image.ch > MAX_TEMPLATE_SAMPLES ||
+				(image.channels !== 1 && image.channels !== 3) ||
+				image.channels !== template.image.channels ||
+				template.n * template.image.channels > MAX_TEMPLATE_SAMPLES ||
 				image.cols > MAX_IMAGE_COLS
 			) {
 				stats.unsupported++;
@@ -873,31 +865,18 @@ function grid(count: number): [number, number] {
 	];
 }
 
-function readPixels(mat: Mat): U8Image {
-	const copy = new (getCV().Mat)();
-	mat.copyTo(copy);
-	const image = {
-		rows: copy.rows,
-		cols: copy.cols,
-		ch: copy.channels(),
-		data: new Uint8Array(copy.data),
-	};
-	copy.delete();
-	return image;
-}
-
-function templateStats(t: U8Image) {
+function templateStats(t: Image) {
 	const n = t.rows * t.cols;
-	const sum = new Array<number>(t.ch).fill(0);
-	const sq = new Array<number>(t.ch).fill(0);
+	const sum = new Array<number>(t.channels).fill(0);
+	const sq = new Array<number>(t.channels).fill(0);
 	for (let i = 0; i < n; i++) {
-		for (let c = 0; c < t.ch; c++) {
-			const v = t.data[i * t.ch + c]!;
+		for (let c = 0; c < t.channels; c++) {
+			const v = t.data[i * t.channels + c]!;
 			sum[c]! += v;
 			sq[c]! += v * v;
 		}
 	}
 	let varInt = 0;
-	for (let c = 0; c < t.ch; c++) varInt += n * sq[c]! - sum[c]! * sum[c]!;
+	for (let c = 0; c < t.channels; c++) varInt += n * sq[c]! - sum[c]! * sum[c]!;
 	return { n, sum, varInt };
 }

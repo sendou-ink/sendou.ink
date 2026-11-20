@@ -119,8 +119,15 @@ export const SCORE_EXTEND_MIN_CONF = 0.6;
 
 /** Penalty pill: white digits on the translucent dark fill (~100 gray). */
 export const PENALTY_BIN_THRESHOLD = 170;
+/**
+ * Pill presence probes only spare the digit read: with no probe filter at all
+ * every fixture reads the same penalties (2026-11-16), so the cut can sit far
+ * out on the no-pill side. Uncovered pill probes read means 30-101 and std up
+ * to 29.8 (an overtime dark fill), where a 30 cut used to sit; a nameplate
+ * badge over one end reads std 44 and leaves the other probe to carry it.
+ */
 export const PENALTY_PROBE_MAX_MEAN = 165;
-export const PENALTY_PROBE_MAX_STD = 30;
+export const PENALTY_PROBE_MAX_STD = 40;
 
 /**
  * A spectated player's in-world nameplate badge can cover one rounded end (SWS26
@@ -238,10 +245,16 @@ export const STATUS_TEAM_HUE_MIN_SAMPLES = 200;
  * Slot state off the apex fractions. Over every fixture slot: alive apexes
  * read ink >=0.43 vs <=0.19 otherwise; ready read pale >=0.6 at grey <=0.14,
  * splats grey >=0.18 at pale <=0.38 (a blown-out backdrop through the plate).
+ * Each threshold is where its evidence is a toss-up; a softness is how far
+ * past it a fraction has to go to count e times as much for one side (alive
+ * and ready fixtures sit 3 or more softnesses past theirs).
  */
 export const STATUS_ALIVE_MIN_INK = 0.3;
 export const STATUS_READY_MIN_PALE = 0.45;
 export const STATUS_READY_MAX_GREY = 0.2;
+export const STATUS_INK_SOFTNESS = 0.04;
+export const STATUS_PALE_SOFTNESS = 0.04;
+export const STATUS_GREY_SOFTNESS = 0.02;
 
 /**
  * A wash pales the whole icon, while a weapon render pale over the apex
@@ -258,6 +271,7 @@ export const STATUS_WASH_BODY_SIDE = {
 	outer: 34,
 };
 export const STATUS_WASH_MAX_BODY_INK = 0.5;
+export const STATUS_WASH_BODY_INK_SOFTNESS = 0.08;
 
 /**
  * Vacant seat (no player in a 1v1 lobby, or a disconnect): the body (reference
@@ -315,11 +329,17 @@ export const STRIP_WEAPON_BADGE_CORNER = {
 export const STRIP_WEAPON_SEARCH = { x: 16, y: 1 };
 
 /**
- * Top two candidates this close are told apart by the parts only one of them
- * draws (strip-weapons.ts differenceScore): a kit's badge or a scope is too
- * small a share of the icon to rank siblings in the full score.
+ * The top two candidates swap when the parts only one of them draws
+ * (strip-weapons.ts differenceScore) favor the runner-up by this many times
+ * the full score's gap: a kit's badge or a scope is too small a share of the
+ * icon to rank siblings in the full score. Measured 2026-11-16 on the fixtures
+ * and four VoD slices (1,700 slot reads labelled by the game's results
+ * screen): the runner-up was right at 18.6 (Z+F Splatterscope,
+ * bluechara-pov-dome-orange-backdrop), the leader at up to 5 (an E-liter 4K
+ * whose scope part favored the Scope on 51 of 120 reads) and once at 55
+ * (unrelated icons, no ratio tells that one).
  */
-export const STRIP_WEAPON_TIE_MARGIN = 0.03;
+export const STRIP_DIFFERENCE_LEAD_RATIO = 10;
 
 /** A half-resolution pass over every weapon shortlists this many for the full-resolution pass. */
 export const STRIP_WEAPON_SHORTLIST = 12;
@@ -455,8 +475,12 @@ export const TRACK_PLATE_DIGIT_ROI: Roi = { x: 460, y: 214, w: 1000, h: 48 };
 export const TRACK_PLATE_TEXT_HEIGHTS = [33, 36] as const;
 export const TRACK_PLATE_BIN_THRESHOLD = 190;
 export const TRACK_PLATE_DIGIT_MIN_CONF = 0.75;
+/** Weaker digits still hold their place in a run (which then goes unread), so a blurred '2' of 22 leaves no confident '2'. */
+export const TRACK_PLATE_DIGIT_MIN_CANDIDATE = 0.5;
 /** Plate ink sampled beside a digit run: this far out and this tall. */
 export const TRACK_PLATE_INK_PAD_X = 10;
+/** Share of those pixels in ink: plates 0.59+, white streaks in the scene read as digits 0.17 at most. */
+export const TRACK_PLATE_MIN_INK_SHARE = 0.4;
 /**
  * A plate sits on the half its team pushes into; the tip can reach just past
  * the center when a side's record is still ~100.

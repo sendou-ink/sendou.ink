@@ -2,8 +2,7 @@
  * OpenCV's INTER_AREA resize of an RGBA picture exactly twice the canonical
  * size (2160p) on the GPU, exactly: at a 2:1 ratio OpenCV averages each 2×2
  * block as `(Σ + 2) >> 2`, so the readback maps a quarter of the pixels and
- * the analyzer skips the CPU resize. Free of OpenCV, so the readback workers
- * run it too.
+ * the analyzer skips the CPU resize. The readback workers run it too.
  */
 import { CANONICAL_HEIGHT, CANONICAL_WIDTH } from "../core/canonical";
 

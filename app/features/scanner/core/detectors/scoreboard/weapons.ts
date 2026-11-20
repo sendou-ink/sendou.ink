@@ -4,9 +4,16 @@
  * template can't win on a lucky sub-window of a bigger icon. Large sets run
  * coarse-to-fine (quarter-res ranking, shortlist re-matched at full res).
  */
-import { getCV, type Mat } from "../../cv";
-import type { FrameData } from "../../image";
+import * as Decisions from "../../decisions";
+import {
+	createImage,
+	cropRoi,
+	type FrameData,
+	type Image,
+	imageFromFrameData,
+} from "../../image";
 import type { MatchSteps } from "../../match-steps";
+import { resize, resizeBy } from "../../resize";
 
 /** Icon heights to try: live rows ~44-56px, replay browser ~60-64px (skipped inside the live 56px ROI). */
 const WEAPON_TEMPLATE_SIZES = [40, 44, 48, 52, 56, 60, 64] as const;
@@ -35,14 +42,14 @@ const COARSE_SCALE = 0.25;
 /** How many coarse-ranked ids survive into the full-resolution pass. */
 const COARSE_SHORTLIST = 16;
 
-/** `rows`/`cols` mirror the mat's dimensions, kept off the embind accessors in the matching loops. */
+/** `rows`/`cols` mirror the image's dimensions. */
 export interface TemplateSize {
-	mat: Mat;
+	image: Image;
 	rows: number;
 	cols: number;
 	ink: number;
 	/** the same template at COARSE_SCALE, for the coarse ranking pass */
-	coarse: { mat: Mat; rows: number; cols: number; ink: number };
+	coarse: { image: Image; rows: number; cols: number; ink: number };
 }
 
 export interface WeaponTemplate {
@@ -64,11 +71,11 @@ export interface WeaponMatch {
 	subResolved?: boolean;
 }
 
-/** Icon-ink pixel count of a continuous RGB mat (NOT an ROI view). */
-function countInkRgb(mat: Mat, threshold: number): number {
+/** Icon-ink pixel count of an RGB image. */
+function countInkRgb(image: Image, threshold: number): number {
 	let ink = 0;
-	const d = mat.data;
-	const n = mat.rows * mat.cols;
+	const d = image.data;
+	const n = image.rows * image.cols;
 	for (let i = 0; i < n; i++) {
 		const v = Math.max(d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!);
 		if (v > threshold) ink++;
@@ -84,49 +91,32 @@ function countInkRgb(mat: Mat, threshold: number): number {
  * square would exceed the ROI (see cropToArt).
  */
 export function buildTemplateSizes(
-	composited: Mat,
+	composited: Image,
 	sizes: readonly number[],
 	inkThreshold: number,
 	referenceSize?: number,
 ): TemplateSize[] {
-	const cv = getCV();
 	return sizes.map((size) => {
-		const mat = new cv.Mat();
-		if (referenceSize) {
-			const scale = size / referenceSize;
-			cv.resize(
-				composited,
-				mat,
-				new cv.Size(
+		const scale = referenceSize ? size / referenceSize : 0;
+		const image = referenceSize
+			? resize(
+					composited,
 					Math.max(1, Math.round(composited.cols * scale)),
 					Math.max(1, Math.round(composited.rows * scale)),
-				),
-				0,
-				0,
-				cv.INTER_AREA,
-			);
-		} else {
-			cv.resize(composited, mat, new cv.Size(size, size), 0, 0, cv.INTER_AREA);
-		}
-		const coarseMat = new cv.Mat();
-		cv.resize(
-			mat,
-			coarseMat,
-			new cv.Size(0, 0),
-			COARSE_SCALE,
-			COARSE_SCALE,
-			cv.INTER_AREA,
-		);
+					"area",
+				)
+			: resize(composited, size, size, "area");
+		const coarse = resizeBy(image, COARSE_SCALE, COARSE_SCALE, "area");
 		return {
-			mat,
-			rows: mat.rows,
-			cols: mat.cols,
-			ink: countInkRgb(mat, inkThreshold),
+			image,
+			rows: image.rows,
+			cols: image.cols,
+			ink: countInkRgb(image, inkThreshold),
 			coarse: {
-				mat: coarseMat,
-				rows: coarseMat.rows,
-				cols: coarseMat.cols,
-				ink: countInkRgb(coarseMat, inkThreshold),
+				image: coarse,
+				rows: coarse.rows,
+				cols: coarse.cols,
+				ink: countInkRgb(coarse, inkThreshold),
 			},
 		};
 	});
@@ -148,23 +138,19 @@ export function prepareWeaponTemplates(
 		cropToArt?: boolean;
 	} = {},
 ): WeaponTemplate[] {
-	const cv = getCV();
 	const background = options.background ?? PILL_BACKGROUND;
 	const inkThreshold = options.inkThreshold ?? INK_THRESHOLD;
 	return icons.map(({ id, image }) => {
-		const rgba = cv.matFromImageData(image as unknown as ImageData);
+		const rgba = imageFromFrameData(image);
 		const source = options.cropToArt ? cropToAlphaBbox(rgba) : rgba;
 		const composited = compositeOnBackground(source, background);
-		if (source !== rgba) source.delete();
 		const referenceSize = options.cropToArt ? rgba.cols : undefined;
-		rgba.delete();
 		const sizes = buildTemplateSizes(
 			composited,
 			templateSizes,
 			inkThreshold,
 			referenceSize,
 		);
-		composited.delete();
 		return { id, sizes };
 	});
 }
@@ -173,8 +159,7 @@ export function prepareWeaponTemplates(
 const ART_ALPHA_MIN = 32;
 const ART_BBOX_MARGIN = 6;
 
-function cropToAlphaBbox(rgba: Mat): Mat {
-	const cv = getCV();
+function cropToAlphaBbox(rgba: Image): Image {
 	const d = rgba.data;
 	const cols = rgba.cols;
 	const rows = rgba.rows;
@@ -193,25 +178,16 @@ function cropToAlphaBbox(rgba: Mat): Mat {
 			}
 		}
 	}
-	if (x1 < 0) {
-		const copy = new cv.Mat();
-		rgba.copyTo(copy);
-		return copy;
-	}
+	if (x1 < 0) return rgba;
 	x0 = Math.max(0, x0 - ART_BBOX_MARGIN);
 	y0 = Math.max(0, y0 - ART_BBOX_MARGIN);
 	x1 = Math.min(cols - 1, x1 + ART_BBOX_MARGIN);
 	y1 = Math.min(rows - 1, y1 + ART_BBOX_MARGIN);
-	const view = rgba.roi(new cv.Rect(x0, y0, x1 - x0 + 1, y1 - y0 + 1));
-	const out = new cv.Mat();
-	view.copyTo(out); // ROI views: .data/.clone broken, copy out
-	view.delete();
-	return out;
+	return cropRoi(rgba, { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 });
 }
 
-function compositeOnBackground(rgba: Mat, background: number): Mat {
-	const cv = getCV();
-	const out = new cv.Mat(rgba.rows, rgba.cols, cv.CV_8UC3);
+function compositeOnBackground(rgba: Image, background: number): Image {
+	const out = createImage(rgba.rows, rgba.cols, 3);
 	const src = rgba.data;
 	const dst = out.data;
 	const n = rgba.rows * rgba.cols;
@@ -230,20 +206,11 @@ function compositeOnBackground(rgba: Mat, background: number): Mat {
  * tie-break. Null when no coarse template fits.
  */
 function* coarseShortlist(
-	searchRgb: Mat,
+	searchRgb: Image,
 	templates: WeaponTemplate[],
 	inkThreshold: number,
 ): MatchSteps<Set<string> | null> {
-	const cv = getCV();
-	const region = new cv.Mat();
-	cv.resize(
-		searchRgb,
-		region,
-		new cv.Size(0, 0),
-		COARSE_SCALE,
-		COARSE_SCALE,
-		cv.INTER_AREA,
-	);
+	const region = resizeBy(searchRgb, COARSE_SCALE, COARSE_SCALE, "area");
 	const searchInk = countInkRgb(region, inkThreshold);
 
 	const searchRows = searchRgb.rows;
@@ -262,7 +229,9 @@ function* coarseShortlist(
 	const [scoreOf] = yield [
 		{
 			image: region,
-			templates: templates.flatMap((t) => sizesOf(t).map((s) => s.coarse.mat)),
+			templates: templates.flatMap((t) =>
+				sizesOf(t).map((s) => s.coarse.image),
+			),
 		},
 	];
 	const scored: { id: string; score: number }[] = [];
@@ -279,7 +248,6 @@ function* coarseShortlist(
 		}
 		if (score > -1) scored.push({ id: template.id, score });
 	}
-	region.delete();
 	if (scored.length === 0) return null;
 
 	scored.sort((a, b) => b.score - a.score);
@@ -292,25 +260,21 @@ function* coarseShortlist(
 }
 
 /**
- * searchRgb: RGB crop of the weapon ROI (view is fine). Raise inkThreshold on
+ * searchRgb: RGB crop of the weapon ROI. Raise inkThreshold on
  * screens with lighter pills (replay browser ~61 vs live ~12) or everything
  * counts as ink and the coverage penalty collapses. Runs as match steps: a
  * coarse shortlist pass, then one full-res pass.
  */
 export function* matchWeaponSteps(
-	searchRgb: Mat,
+	searchRgb: Image,
 	templates: WeaponTemplate[],
 	options: { inkThreshold?: number; topN?: number } = {},
 ): MatchSteps<WeaponMatch> {
-	const cv = getCV();
 	const inkThreshold = options.inkThreshold ?? INK_THRESHOLD;
 	const topN = options.topN ?? 3;
 
-	// icon ink present in the search region (pixel access needs a copy)
-	const cont = new cv.Mat();
-	searchRgb.copyTo(cont);
-	const searchInk = countInkRgb(cont, inkThreshold);
-	cont.delete();
+	// icon ink present in the search region
+	const searchInk = countInkRgb(searchRgb, inkThreshold);
 
 	// below ~2x the shortlist size the coarse pass costs more calls than it saves
 	let pool = templates;
@@ -329,7 +293,7 @@ export function* matchWeaponSteps(
 	const [scoreOf] = yield [
 		{
 			image: searchRgb,
-			templates: pool.flatMap((t) => sizesOf(t).map((s) => s.mat)),
+			templates: pool.flatMap((t) => sizesOf(t).map((s) => s.image)),
 		},
 	];
 	let index = 0;
@@ -353,7 +317,14 @@ export function* matchWeaponSteps(
 	const unscopedId = SCOPED_TWINS.get(first.id);
 	if (unscopedId) {
 		const twin = ranked.find((r) => r.id === unscopedId);
-		if (twin && first.score - twin.score < TWIN_MARGIN) {
+		if (
+			twin &&
+			Decisions.below(
+				"scoreboard/weapons:TWIN_MARGIN",
+				first.score - twin.score,
+				TWIN_MARGIN,
+			)
+		) {
 			twinAmbiguous = true;
 			first = twin;
 			const i = top.findIndex((t) => t.id === twin.id);

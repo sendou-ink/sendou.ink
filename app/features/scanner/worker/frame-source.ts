@@ -11,11 +11,15 @@
  *
  * Decoding a sample the analyzer does not want is skipped outright where the
  * codec proves it changes nothing later frames decode to (AV1 units that
- * refresh no reference slot, av1-refs.ts) — its bare timestamp still comes
- * in its place. Decoding runs in decode.worker.ts, off the analyzer's thread
- * (demux and decode bookkeeping cost ~0.15 ms a sample, and a 60 fps slice
- * decodes ten samples for every one analyzed); where that worker cannot
- * run, the same stream is decoded on this thread.
+ * refresh no reference slot, av1-refs.ts; H.264/HEVC non-reference pictures,
+ * nal-refs.ts) — its bare timestamp still comes in its place, in
+ * presentation order: an H.264/HEVC stream's packets come in decode order,
+ * so a skipped sample waits until the decoder has emitted a later one (by
+ * then every packet presented before it has been fed). Decoding runs in
+ * decode.worker.ts, off the analyzer's thread (demux and decode bookkeeping
+ * cost ~0.15 ms a sample, and a 60 fps slice decodes ten samples for every
+ * one analyzed); where that worker cannot run, the same stream is decoded on
+ * this thread.
  */
 import {
 	ALL_FORMATS,
@@ -28,10 +32,12 @@ import {
 	VideoSampleSink,
 } from "mediabunny";
 import { createAv1UnitClassifier } from "../core/av1-refs";
+import { createDecodeOrder, type DecodeOrderEntry } from "../core/decode-order";
+import type { CheckPlan } from "../core/detectors/check-plan";
 import {
-	type CheckPlan,
-	createCheckTracker,
-} from "../core/detectors/check-plan";
+	createAvcUnitClassifier,
+	createHevcUnitClassifier,
+} from "../core/nal-refs";
 
 /**
  * Decoded 1080p frames the stream keeps open for the analyzer at once (more
@@ -59,6 +65,8 @@ export interface SourceItem {
 	frame: VideoFrame | null;
 	/** a small thumbnail of this sample for the progress preview */
 	preview?: ImageBitmap;
+	/** the sample was never decoded (telemetry) */
+	undecoded?: true;
 }
 
 export interface FrameSource {
@@ -140,12 +148,8 @@ type CreateDecoder = (
 ) => Promise<SampleDecoder>;
 
 /** A sample on its way out: its place in the stream is known before its picture is. */
-interface Pending {
-	t: number;
-	state: "decoding" | "previewing" | "ready";
+interface Pending extends DecodeOrderEntry {
 	item: SourceItem;
-	/** a detector pass may run on it */
-	wanted: boolean;
 }
 
 /**
@@ -187,19 +191,20 @@ export async function pumpFrames({
 		return;
 	}
 	const codec = await track.getCodec();
-	// one shown frame per packet, in presentation order; elsewhere (B-frames,
-	// invisible frames) every packet is decoded and samples go out as the
-	// decoder emits them
-	const inDecodeOrder = codec === "av1";
-	const changesState =
-		codec === "av1" ? await av1UnitClassifier(track) : () => true;
+	// AV1, H.264, HEVC: one picture per packet, so each sample is known as its
+	// packet is fed; elsewhere (VP9's invisible frames) every packet is
+	// decoded and samples go out as the decoder emits them
+	const changesState = await unitClassifier(track);
+	const perPacket = changesState !== null;
+	// AV1 packets come in presentation order, H.264/HEVC ones in decode order
+	const reorders = codec !== "av1";
 	const packets = new EncodedPacketSink(track);
 	const firstPacket = await packets.getPacket(start, PACKET_OPTIONS);
 	const firstT = firstPacket
 		? roundT(firstPacket.timestamp)
 		: Number.NEGATIVE_INFINITY;
 
-	const pending: Pending[] = [];
+	const order = createDecodeOrder<Pending>({ perPacket, reorders, firstT });
 	let batch: SourceItem[] = [];
 	let ended = false;
 	let failure: Error | null = null;
@@ -217,10 +222,14 @@ export async function pumpFrames({
 		if (batch.length > 0 || last) control.deliver(batch, last);
 		batch = [];
 	};
-	/** Hands on the samples whose pictures are in, in stream order. */
-	const emitReady = () => {
-		while (pending.length > 0 && pending[0]!.state === "ready") {
-			const { item } = pending.shift()!;
+	/** Hands on the samples whose pictures are in, in stream order; `draining` after a flush. */
+	const emitReady = (draining = false) => {
+		for (
+			let entry = order.next(draining);
+			entry;
+			entry = order.next(draining)
+		) {
+			const { item } = entry;
 			if (ended || item.t < firstT || item.t >= endT || control.stopped()) {
 				if (item.t >= endT) ended = true;
 				item.frame?.close();
@@ -234,7 +243,10 @@ export async function pumpFrames({
 	const settle = (entry: Pending, sample: VideoSample) => {
 		const { t } = entry;
 		const keep =
-			entry.wanted && t >= control.floor() && t >= control.seekT() && !ended;
+			t >= control.floor() &&
+			t >= control.seekT() &&
+			!ended &&
+			order.wanted(t, control.plan());
 		const now = performance.now();
 		const wantsPreview = now - lastPreviewAt >= preview.intervalMs;
 		if (wantsPreview) lastPreviewAt = now;
@@ -270,19 +282,17 @@ export async function pumpFrames({
 		(sample) => {
 			emitted++;
 			const t = roundT(sample.timestamp);
-			let entry: Pending | undefined;
-			if (inDecodeOrder) {
-				entry = pending.find((p) => p.state === "decoding");
-			} else {
-				entry = {
+			if (!perPacket) {
+				order.add({
 					t,
 					state: "decoding",
 					item: { t, frame: null },
-					wanted: true,
-				};
-				pending.push(entry);
+					skipped: false,
+					byPlan: false,
+				});
 			}
-			if (!entry || entry.t !== t) {
+			const entry = order.emitted(t);
+			if (!entry) {
 				sample.close();
 				failure ??= new Error(`decoder emitted ${t} out of order`);
 				wake();
@@ -300,8 +310,6 @@ export async function pumpFrames({
 
 	const iterate = (from: EncodedPacket | null) =>
 		from ? packets.packets(from, undefined, PACKET_OPTIONS) : null;
-	const tracker = createCheckTracker();
-	let plan: CheckPlan | null = null;
 	let iterator = iterate(
 		(await packets.getKeyPacket(start, PACKET_OPTIONS)) ??
 			(await packets.getFirstKeyPacket(PACKET_OPTIONS)),
@@ -310,8 +318,7 @@ export async function pumpFrames({
 		let packet = (await iterator?.next())?.value ?? null;
 		while (packet && !control.stopped() && !ended) {
 			if (failure) throw failure;
-			let decoding = 0;
-			for (const entry of pending) if (entry.state === "decoding") decoding++;
+			const decoding = order.decoding();
 			const queued = decoder.getDecodeQueueSize();
 			const room =
 				decoding < depth &&
@@ -346,38 +353,39 @@ export async function pumpFrames({
 				const key = await packets.getKeyPacket(seekT, PACKET_OPTIONS);
 				if (key && key.sequenceNumber > packet.sequenceNumber) {
 					await decoder.flush();
-					emitReady();
+					order.forgetUnemitted();
+					emitReady(true);
 					await iterator?.return(undefined);
-					tracker.clear();
+					order.jump();
 					iterator = iterate(key);
 					packet = (await iterator?.next())?.value ?? null;
 					continue;
 				}
 			}
 			const t = roundT(packet.timestamp);
-			if (inDecodeOrder && t >= endT) break;
-			if (control.plan() !== plan) {
-				plan = control.plan();
-				tracker.setPlan(plan);
-				for (const entry of pending) {
-					if (entry.state === "decoding")
-						entry.wanted = tracker.wanted(entry.t);
-				}
-			}
-			const wanted = !inDecodeOrder || tracker.step(t);
-			const skip =
-				inDecodeOrder &&
-				!changesState(packet.data) &&
-				(t < control.floor() || t < seekT || !wanted);
-			if (inDecodeOrder) {
-				pending.push({
+			if (perPacket && !reorders && t >= endT) break;
+			if (perPacket) {
+				order.admit(t);
+				// every packet goes through the classifier: it tracks the stream's state
+				const skippable = !changesState(packet.data);
+				const belowBound = t < control.floor() || t < seekT;
+				const byPlan =
+					skippable && !belowBound && !order.wanted(t, control.plan());
+				const skipped = skippable && (belowBound || byPlan);
+				const entry: Pending = {
 					t,
-					state: skip ? "ready" : "decoding",
-					item: { t, frame: null },
-					wanted,
-				});
+					state: skipped ? "ready" : "decoding",
+					item: skipped
+						? { t, frame: null, undecoded: true }
+						: { t, frame: null },
+					skipped,
+					byPlan,
+				};
+				order.add(entry);
+				if (!skipped) decoder.decode(packet);
+			} else {
+				decoder.decode(packet);
 			}
-			if (!skip) decoder.decode(packet);
 			emitReady();
 			packet = (await iterator?.next())?.value ?? null;
 		}
@@ -385,12 +393,13 @@ export async function pumpFrames({
 		if (!control.stopped()) await decoder.flush();
 		await Promise.all(previews);
 		if (failure) throw failure;
-		emitReady();
+		order.forgetUnemitted();
+		emitReady(true);
 		flushBatch(true);
 	} finally {
 		decoder.close();
 		await iterator?.return(undefined);
-		for (const { item } of pending) {
+		for (const { item } of order.entries()) {
 			item.frame?.close();
 			item.preview?.close();
 		}
@@ -410,12 +419,15 @@ export async function maxOpenFrames(track: InputVideoTrack): Promise<number> {
 	);
 }
 
-async function av1UnitClassifier(
+/** Whether decoding a packet of `track` can change what later ones decode to; null for codecs without one picture per packet. */
+async function unitClassifier(
 	track: InputVideoTrack,
-): Promise<(unit: Uint8Array) => boolean> {
+): Promise<((unit: Uint8Array) => boolean) | null> {
+	const codec = await track.getCodec();
+	if (codec !== "av1" && codec !== "avc" && codec !== "hevc") return null;
 	const config = await track.getDecoderConfig();
 	const description = config?.description;
-	const av1C = !description
+	const record = !description
 		? undefined
 		: ArrayBuffer.isView(description)
 			? new Uint8Array(
@@ -424,8 +436,10 @@ async function av1UnitClassifier(
 					description.byteLength,
 				)
 			: new Uint8Array(description);
+	if (codec === "avc") return createAvcUnitClassifier(record);
+	if (codec === "hevc") return createHevcUnitClassifier(record);
 	// av1C: 4 bytes of fields, then the config OBUs
-	return createAv1UnitClassifier(av1C?.subarray(4));
+	return createAv1UnitClassifier(record?.subarray(4));
 }
 
 /** Every sample of `samples` in order, frames from the floor on: the stream without skipping or seeking. */

@@ -22,7 +22,7 @@ import { formatTime } from "../core/format";
 import { isHistoryOnly } from "../core/match-builder";
 import { scannerSearchParams } from "../scanner-search-params";
 import { deleteVodClips } from "../store/clips";
-import { deleteVod, loadVodEventFrame } from "../store/vods";
+import { deleteVod, loadVodEventFrame, loadVodScanLog } from "../store/vods";
 import { refreshClips, useClips } from "./clips-feed";
 import { ExportMenu } from "./ExportMenu";
 import { NotFound } from "./NotFound";
@@ -30,7 +30,7 @@ import { ScanWorkers } from "./ScanWorkers";
 import { SessionHeader, StatusPill } from "./SessionHeader";
 import { SessionView } from "./SessionView";
 import { sendouUpload } from "./sendou-upload";
-import type { ScanEvent } from "./session-data";
+import type { GetScanLog, ScanEvent } from "./session-data";
 import { useDebug } from "./use-debug";
 import { VodClipsPanel } from "./VodClipsPanel";
 import { VodMusicDialog } from "./VodMusicDialog";
@@ -44,6 +44,7 @@ import {
 	useVodScanProgress,
 	VOD_FILE_ACCEPT,
 	vodScanFrame,
+	vodScanLog,
 } from "./vod-scan";
 import { refreshVods } from "./vods-feed";
 
@@ -68,6 +69,7 @@ function ScanVodView({ name }: { name: string }) {
 			events={scan.events}
 			running={scanning}
 			getFrame={vodScanFrame}
+			getScanLog={async () => vodScanLog()}
 			status={
 				scan.status === "error" ? (
 					<div className={styles.errorBox}>
@@ -134,6 +136,7 @@ function StoredVodView({ name }: { name: string }) {
 					? () => loadVodEventFrame(event.id!)
 					: undefined
 			}
+			getScanLog={() => loadVodScanLog(name)}
 			status={null}
 			telemetry={null}
 		/>
@@ -145,6 +148,7 @@ function VodSessionView({
 	events,
 	running,
 	getFrame,
+	getScanLog,
 	status,
 	telemetry,
 }: {
@@ -152,6 +156,7 @@ function VodSessionView({
 	events: ScanEvent[];
 	running: boolean;
 	getFrame: (event: ScanEvent) => (() => Promise<Blob | undefined>) | undefined;
+	getScanLog: GetScanLog;
 	status: React.ReactNode;
 	telemetry: React.ReactNode;
 }) {
@@ -181,6 +186,7 @@ function VodSessionView({
 			clipsTitle="Clips"
 			running={running}
 			getFrame={getFrame}
+			getScanLog={getScanLog}
 			emptyText={
 				running
 					? "Games appear here as their results screens are found."
@@ -289,6 +295,10 @@ function VodSessionView({
 	);
 }
 
+function seconds(ms: number) {
+	return `${(ms / 1000).toFixed(1)} s`;
+}
+
 function TelemetryPanel({ telemetry }: { telemetry: ScanTelemetry }) {
 	const detectors = Object.entries(telemetry.detectors).sort(([a], [b]) =>
 		a.localeCompare(b),
@@ -299,6 +309,9 @@ function TelemetryPanel({ telemetry }: { telemetry: ScanTelemetry }) {
 			<summary>
 				telemetry · analyzed {telemetry.analyzedFrames}/
 				{telemetry.decodedFrames} decoded frames
+				{telemetry.undecodedFrames > 0
+					? ` (${telemetry.undecodedFrames} samples left undecoded)`
+					: null}
 				{coveredS > 0
 					? ` · skimmed ${formatTime(telemetry.skimVideoS)} of ${formatTime(coveredS)}`
 					: null}
@@ -307,6 +320,9 @@ function TelemetryPanel({ telemetry }: { telemetry: ScanTelemetry }) {
 					: null}
 				{telemetry.gpuScans > 0
 					? ` · WebGPU in ${telemetry.gpuScans} workers, ${formatTime(telemetry.gpuWaitMs / 1000)} waited`
+					: null}
+				{telemetry.readbacks > 0
+					? ` · ${telemetry.readbacks} frames read back (${telemetry.gateReads} as gate ROIs, ${telemetry.gateReadsWhole} of them then whole) in ${seconds(telemetry.readbackMs)}, ${seconds(telemetry.readbackWaitMs)} waited on readback, ${seconds(telemetry.decodeWaitMs)} on decode`
 					: null}
 			</summary>
 			<table>

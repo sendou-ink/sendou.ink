@@ -1,5 +1,5 @@
 /**
- * AnalyzerWorker: owns OpenCV.js (WASM), the detector registry and a
+ * AnalyzerWorker: owns the detector registry and a
  * DetectorScheduler. "frame": the main thread posts one ImageBitmap/VideoFrame
  * at a time; results come back per detector, then a "done" with the calm
  * signal and telemetry. "scanChunk": the worker scans a contiguous VoD slice
@@ -23,27 +23,29 @@ import {
 	CANONICAL_WIDTH,
 	detectContentBox,
 } from "../core/canonical";
-import { getCV, loadOpenCV, type Mat } from "../core/cv";
-import { runDetectorPass } from "../core/detectors/frame-pass";
-import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
-import { MINIMAP_DETECTOR_ID } from "../core/detectors/minimap/index";
 import {
-	createAllDetectors,
-	SCOREBOARD_EVENT_TYPES,
-} from "../core/detectors/registry";
+	type DetectorOutcome,
+	runDetectorPass,
+} from "../core/detectors/frame-pass";
+import { MINIMAP_DETECTOR_ID } from "../core/detectors/minimap/index";
+import { createAllDetectors } from "../core/detectors/registry";
 import { DetectorScheduler } from "../core/detectors/scheduler";
 import {
 	createScanTelemetry,
 	type ScanTelemetry,
 } from "../core/detectors/telemetry";
 import type { Detector } from "../core/detectors/types";
+import type { DetectedEvent } from "../core/events";
+import * as GateRois from "../core/gate-rois";
 import {
 	type FrameData,
+	type Image,
+	imageFromFrameData,
 	normalizeFrame,
 	provideFrameGray,
-	toMat,
+	toGray,
 } from "../core/image";
-import { TimelineBuilder } from "../core/timeline/index";
+import { changeOf, TimelineBuilder } from "../core/timeline/index";
 import { createFrameEncoder } from "./frame-encode";
 import {
 	type FrameSource,
@@ -68,6 +70,7 @@ import {
 	createCanvasReadback,
 	createFrameReaderPool,
 	type FrameReader,
+	type HeldFrame,
 	type ReadFrame,
 } from "./readback";
 import { exactReadbackPath, exactReadbackPathOf } from "./readback-parity";
@@ -111,18 +114,34 @@ const UNDECODABLE_SKIP_S = 5;
 /** A read-back frame normalized to the canonical size, its capture pixels kept for the stored frame. */
 interface PreparedFrame {
 	pixels: FrameData;
-	frame: Mat;
+	frame: Image;
 	/** frameGray's conversion, computed with the readback */
 	gray?: Uint8Array;
 }
 
+/**
+ * A frame read back as its gate ROI pixels alone (core/gate-rois.ts), the
+ * rest held by the readback until the pass fetches it or lets it go.
+ */
+interface GateFrame {
+	gates: Uint8Array;
+	whole: () => Promise<PreparedFrame>;
+	release: () => void;
+}
+
+type Prepared = PreparedFrame | GateFrame;
+
 /** A decoded VoD sample awaiting its step. */
 interface Pulled extends SourceItem {
 	/** its readback and normalization, started ahead when it looked likely to be analyzed */
-	read: Promise<PreparedFrame> | null;
+	read: Promise<Prepared> | null;
 }
 
-let detectors: Detector<unknown>[] = [];
+let detectors: Detector<DetectedEvent>[] = [];
+/** every detector's gate ROIs, which a VoD scan reads back alone where it expects every gate to fail */
+let gateSpans: GateRois.GateSpans | null = null;
+/** the canonical frame gate-only reads are laid out in: only the gate ROIs are ever written */
+let gateCanvas: { rgba: Uint8Array; gray: Uint8Array } | null = null;
 let gpuMatcher: GpuMatcher | null = null;
 let gpuScaler: GpuFrameScaler | null = null;
 let scheduler: DetectorScheduler | null = null;
@@ -137,13 +156,13 @@ let chunkAborted = false;
 /** last per-frame t, to reset telemetry when a new session rewinds the clock */
 let lastFrameT = Number.NEGATIVE_INFINITY;
 /**
- * Mirror of the main thread's timeline (same defaults), fed every event first:
- * a frame is encoded only when some event would be listed rather than
- * merged into an earlier read — a fixed-cadence detector re-reads a standing
- * screen twice a second, and encoding 1080p for each repeat cost more than
- * the parse.
+ * The scan's timeline, one per chunk scan or per-frame stream; results carry
+ * the changes it made. A frame is encoded only when some event is listed
+ * rather than merged into an earlier read — a fixed-cadence detector re-reads
+ * a standing screen twice a second, and encoding 1080p for each repeat cost
+ * more than the parse.
  */
-let shadowTimeline = new TimelineBuilder();
+let timeline = new TimelineBuilder();
 /** Canvas readback on this thread: live frames, and the reader's fallback. */
 const readFrame = createCanvasReadback();
 /** VoD scans read frames back in a helper worker, overlapping the detector passes. */
@@ -184,7 +203,6 @@ async function init({
 		frameReader ??= createFrameReaderPool(READERS);
 	}
 	try {
-		await loadOpenCV();
 		if (webgpu && navigator.gpu) {
 			gpuMatcher = await createGpuMatcher(navigator.gpu).catch((error) => {
 				// biome-ignore lint/suspicious/noConsole: a missing GPU silently costs speed, so say why
@@ -213,10 +231,9 @@ async function init({
 			});
 		}
 		detectors = createAllDetectors(resources);
+		gateSpans = GateRois.spansOf(detectors.flatMap((d) => d.gateRois));
 		scheduler = new DetectorScheduler(detectors, {
 			suppressSteadyFrames,
-			matchOpeningTypes: [MAP_START_EVENT_TYPE],
-			matchClosingTypes: SCOREBOARD_EVENT_TYPES,
 		});
 		collectTelemetry = collect;
 		attachFrames = attach;
@@ -242,55 +259,80 @@ async function analyzeFrame(
 	await analyzePrepared(await prepareFrame(pixels), t, due);
 }
 
+/** A VoD frame's read prepared for its pass: normalized when whole, as it is when only its gate pixels came back. */
+function prepareRead(read: ReadFrame | HeldFrame): Promise<Prepared> {
+	if (telemetry) {
+		telemetry.readbacks++;
+		telemetry.readbackMs += read.readMs ?? 0;
+	}
+	if (!("gates" in read)) return prepareFrame(read);
+	if (telemetry) telemetry.gateReads++;
+	return Promise.resolve({
+		gates: read.gates,
+		whole: async () => {
+			const whole = await read.whole();
+			if (telemetry) {
+				telemetry.gateReadsWhole++;
+				telemetry.readbackMs += whole.readMs ?? 0;
+			}
+			return prepareFrame(whole);
+		},
+		release: read.release,
+	});
+}
+
 /** Normalizes read-back pixels (caller owns the frame), after any normalization already queued. */
 function prepareFrame({
 	canonical,
 	gray,
+	readMs: _,
 	...pixels
 }: ReadFrame): Promise<PreparedFrame> {
 	if (canonical) {
 		// normalized along with the readback
-		const cv = getCV();
-		const frame = new cv.Mat(CANONICAL_HEIGHT, CANONICAL_WIDTH, cv.CV_8UC4);
-		frame.data.set(canonical);
+		const frame = {
+			rows: CANONICAL_HEIGHT,
+			cols: CANONICAL_WIDTH,
+			channels: 4,
+			data: canonical,
+		};
 		return Promise.resolve({ pixels, frame, gray });
 	}
 	const prepared = normalizing.then(async () => {
-		const src = toMat(pixels);
+		const src = imageFromFrameData(pixels);
 		// normalizing would only copy it
 		if (isCanonical(pixels)) return { pixels, frame: src, gray };
-		try {
-			const frame =
-				gpuScaler && gpuRunner()
-					? await gpuScaler.normalize(src)
-					: normalizeFrame(src);
-			return { pixels, frame };
-		} finally {
-			src.delete();
-		}
+		const frame =
+			gpuScaler && gpuRunner()
+				? await gpuScaler.normalize(src)
+				: normalizeFrame(src);
+		return { pixels, frame };
 	});
 	normalizing = prepared.catch(() => {});
 	return prepared;
 }
 
 /**
- * Gates and parses one prepared frame for the `due` detectors, posts the
- * results and deletes the frame; `onGated` sees the parsing detectors once
+ * Gates and parses one prepared frame for the `due` detectors and posts the
+ * results; `onGated` sees the parsing detectors once
  * every gate is recorded.
  */
 async function analyzePrepared(
-	{ pixels, frame, gray }: PreparedFrame,
+	prepared: Prepared,
 	t: number,
 	due: readonly string[],
 	onGated?: (parsing: readonly string[]) => void,
 ): Promise<void> {
 	if (telemetry) telemetry.analyzedFrames++;
-	if (gray) provideFrameGray(frame, gray);
+	let whole: PreparedFrame | null = "gates" in prepared ? null : prepared;
+	if (whole?.gray) provideFrameGray(whole.frame, whole.gray);
 
 	// ship back the exact analyzed pixels (lossless, capture resolution) so the
 	// UI never re-grabs a later frame — encoded at most once per frame
 	let encoded: Promise<Blob> | null = null;
+	// only a parse lists events, and a parse runs on the whole frame
 	const frameBlob = () => {
+		const { pixels } = whole!;
 		encodeFrame ??= createFrameEncoder();
 		// the encoder takes ownership; a minimap snapshot may still need them
 		encoded ??= encodeFrame(
@@ -299,62 +341,76 @@ async function analyzePrepared(
 		return encoded;
 	};
 
+	let outcomes: DetectorOutcome[];
 	try {
-		const outcomes = await runDetectorPass({
-			frame,
+		outcomes = await runDetectorPass({
+			frame: "gates" in prepared ? gateFrameOf(prepared.gates) : prepared.frame,
 			t,
 			detectors,
 			due,
 			scheduler: scheduler!,
+			timeline,
 			telemetry,
 			runSteps: gpuRunner(),
 			onGated,
+			wholeFrame:
+				"gates" in prepared
+					? async () => {
+							const waitStart = performance.now();
+							const fetched = await prepared.whole();
+							if (telemetry) {
+								telemetry.readbackWaitMs += performance.now() - waitStart;
+							}
+							if (fetched.gray) provideFrameGray(fetched.frame, fetched.gray);
+							whole = fetched;
+							return fetched.frame;
+						}
+					: undefined,
 		});
-		for (const { detector, gate, events } of outcomes) {
-			let listed = false;
-			let kept = false;
-			for (const event of events) {
-				const { action } = shadowTimeline.push(event);
-				if (action === "added" || action === "replaced") listed = true;
-				if (action !== "dropped") kept = true;
-			}
-			const result: WorkerResponse = {
-				kind: "result",
-				detector: detector.id,
-				t,
-				gate,
-				events,
-			};
-			const minimapSnapshot =
-				detector.id === MINIMAP_DETECTOR_ID
-					? snapshotMinimapFrame(gate.pass, kept, pixels)
-					: undefined;
-			const image =
-				attachFrames && listed && detector.attachFrame !== false
-					? frameBlob()
-					: undefined;
-			post(
-				image || minimapSnapshot
-					? Promise.all([
-							image?.catch(() => undefined),
-							minimapSnapshot?.catch(() => undefined),
-						]).then(([encodedFrame, snapshot]) => ({
-							...result,
-							frame: encodedFrame,
-							minimapSnapshot: snapshot,
-						}))
-					: result,
-			);
-		}
 	} finally {
-		frame.delete();
+		if (!whole && "gates" in prepared) prepared.release();
+	}
+	for (const { detector, gate, parsed, events, actions } of outcomes) {
+		const listed = actions.some(
+			({ action }) => action === "added" || action === "replaced",
+		);
+		const kept = actions.some(({ action }) => action !== "dropped");
+		const result: WorkerResponse = {
+			kind: "result",
+			detector: detector.id,
+			t,
+			gate,
+			parsed,
+			events,
+			changes: actions.flatMap((action) => changeOf(action) ?? []),
+		};
+		const minimapSnapshot =
+			detector.id === MINIMAP_DETECTOR_ID
+				? snapshotMinimapFrame(gate.pass, kept, whole?.pixels)
+				: undefined;
+		const image =
+			attachFrames && listed && detector.attachFrame !== false
+				? frameBlob()
+				: undefined;
+		post(
+			image || minimapSnapshot
+				? Promise.all([
+						image?.catch(() => undefined),
+						minimapSnapshot?.catch(() => undefined),
+					]).then(([encodedFrame, snapshot]) => ({
+						...result,
+						frame: encodedFrame,
+						minimapSnapshot: snapshot,
+					}))
+				: result,
+		);
 	}
 }
 
 async function analyze({ bitmap, t }: AnalyzeRequest): Promise<void> {
 	if (t + 5 < lastFrameT) {
 		telemetry = freshTelemetry();
-		shadowTimeline = new TimelineBuilder();
+		timeline = new TimelineBuilder();
 		minimapOpenConfirmed = false;
 	}
 	lastFrameT = t;
@@ -379,7 +435,7 @@ async function scanChunk({
 	chunkAborted = false;
 	scheduler!.reset(tStart, { midStream: tStart > 0 });
 	telemetry = freshTelemetry();
-	shadowTimeline = new TimelineBuilder();
+	timeline = new TimelineBuilder();
 	minimapOpenConfirmed = false;
 	const wallStart = performance.now();
 	const gpuWaitStart = gpuMatcher?.stats.gpuWaitMs ?? 0;
@@ -487,11 +543,27 @@ async function scanChunk({
 				exhausted = true;
 				return null;
 			}
+			if (telemetry && item.undecoded) telemetry.undecodedFrames++;
 			return { ...item, read: null };
 		};
+		const timedNext = async () => {
+			const waitAt = performance.now();
+			const item = await next();
+			if (telemetry) telemetry.decodeWaitMs += performance.now() - waitAt;
+			return item;
+		};
+		/**
+		 * A frame's readback for its step at `t`: the gate pixels alone where
+		 * the GPU reads it and no gate due then passed last time.
+		 */
+		const readFor = (frame: VideoFrame, t: number): Promise<Prepared> =>
+			(gateSpans && path !== "canvas" && !scheduler!.expectsGatePass(t)
+				? reader.readGates(frame, gateSpans, { path })
+				: reader.read(frame, { path })
+			).then(prepareRead);
 		/** Hands the item's frame to the reader: read back and normalized ahead of its step. */
 		const readAhead = (item: Pulled) => {
-			item.read = reader.read(item.frame!, { path }).then(prepareFrame);
+			item.read = readFor(item.frame!, item.t);
 			item.frame = null;
 			source!.release(item);
 		};
@@ -502,7 +574,9 @@ async function scanChunk({
 				source!.release(item);
 			}
 			item.read?.then(
-				({ frame }) => frame.delete(),
+				(prepared) => {
+					if ("gates" in prepared) prepared.release();
+				},
 				() => {},
 			);
 			item.read = null;
@@ -534,7 +608,7 @@ async function scanChunk({
 
 			/** Awaits the frame and runs its pass, reading ahead meanwhile. */
 			const analyzeAhead = async (
-				prepared: Promise<PreparedFrame>,
+				prepared: Promise<Prepared>,
 				t: number,
 				due: readonly string[],
 			) => {
@@ -548,8 +622,10 @@ async function scanChunk({
 				stream.plan(scheduler!.checkPlan(t, due));
 				let wake: () => void = () => {};
 				let finished = false;
-				const done = prepared.then((frame) =>
-					analyzePrepared(frame, t, due, (parsing) => {
+				const stepAt = performance.now();
+				const done = prepared.then((frame) => {
+					if (telemetry) telemetry.readbackWaitMs += performance.now() - stepAt;
+					return analyzePrepared(frame, t, due, (parsing) => {
 						bound = scheduler!.nextDueLowerBound(t, parsing);
 						guesses = readAheadTimes(
 							likely.filter((guess) => guess >= bound),
@@ -558,8 +634,8 @@ async function scanChunk({
 						stream.floor(bound);
 						stream.plan(scheduler!.checkPlan(t, parsing));
 						wake();
-					}),
-				);
+					});
+				});
 				done.then(
 					() => {
 						finished = true;
@@ -613,7 +689,7 @@ async function scanChunk({
 			for (;;) {
 				// every sample before the next due time is certainly skipped
 				stream.floor(scheduler!.nextDueT());
-				const item = queue.shift() ?? (exhausted ? null : await next());
+				const item = queue.shift() ?? (exhausted ? null : await timedNext());
 				if (!item) return "end";
 				if (chunkAborted || item.t >= tEnd) {
 					release(item);
@@ -647,7 +723,7 @@ async function scanChunk({
 			const stream = openSource();
 			stream.seek(targetT);
 			for (;;) {
-				const item = queue.shift() ?? (exhausted ? null : await next());
+				const item = queue.shift() ?? (exhausted ? null : await timedNext());
 				if (!item) return null;
 				if (item.t < targetT) {
 					release(item);
@@ -704,7 +780,7 @@ async function scanChunk({
 							sample.close();
 							item = { t, frame, read: null };
 							// not the stream's: nothing to release on it
-							item.read = reader.read(frame, { path }).then(prepareFrame);
+							item.read = readFor(frame, t);
 							item.frame = null;
 						}
 						const { t } = item;
@@ -725,7 +801,12 @@ async function scanChunk({
 							if (!item.read) readAhead(item);
 							const read = item.read!;
 							item.read = null;
-							await analyzePrepared(await read, t, due);
+							const stepAt = performance.now();
+							const prepared = await read;
+							if (telemetry) {
+								telemetry.readbackWaitMs += performance.now() - stepAt;
+							}
+							await analyzePrepared(prepared, t, due);
 						} else {
 							release(item);
 						}
@@ -824,10 +905,10 @@ function gpuRunner() {
 function snapshotMinimapFrame(
 	gatePassed: boolean,
 	readKept: boolean,
-	pixels: FrameData,
+	pixels: FrameData | undefined,
 ): Promise<Blob> | undefined {
 	minimapOpenConfirmed = gatePassed && (minimapOpenConfirmed || readKept);
-	return snapshotMinimaps && minimapOpenConfirmed
+	return snapshotMinimaps && minimapOpenConfirmed && pixels
 		? encodeSnapshot(pixels)
 		: undefined;
 }
@@ -898,6 +979,33 @@ async function decodesInSoftware(
 		track.getDisplayHeight(),
 	]);
 	return codec === "av1" && width * height >= SOFTWARE_LANE_MIN_PIXELS;
+}
+
+/**
+ * A gate-only read laid out as a canonical frame, its gray handed to
+ * frameGray; the frame is valid until the next one is laid out.
+ */
+function gateFrameOf(gates: Uint8Array): Image {
+	gateCanvas ??= {
+		rgba: new Uint8Array(CANONICAL_WIDTH * CANONICAL_HEIGHT * 4),
+		gray: new Uint8Array(CANONICAL_WIDTH * CANONICAL_HEIGHT),
+	};
+	const canonical = { rows: CANONICAL_HEIGHT, cols: CANONICAL_WIDTH };
+	const frame = { ...canonical, channels: 4, data: gateCanvas.rgba };
+	GateRois.scatter(gateSpans!, gates, frame);
+	const gray = toGray({
+		rows: 1,
+		cols: gates.length / 4,
+		channels: 4,
+		data: gates,
+	});
+	GateRois.scatter(gateSpans!, gray.data, {
+		...canonical,
+		channels: 1,
+		data: gateCanvas.gray,
+	});
+	provideFrameGray(frame, gateCanvas.gray);
+	return frame;
 }
 
 /** A frame normalizeFrame would only copy: canonical size, no bars. */

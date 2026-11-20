@@ -1,6 +1,18 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import * as EventVersion from "../core/event-version";
+import * as ScanLog from "../core/scan-log";
 import { sessionSummary } from "../core/sessions";
-import { deleteVod, listVods, loadVodMinimaps, saveVod } from "./vods";
+import { stubEvent } from "../tests/stub-event";
+import { tx, VOD_EVENTS_STORE } from "./db";
+import {
+	deleteVod,
+	listVods,
+	loadVodEvents,
+	loadVodMinimaps,
+	loadVodScanLog,
+	type StoredVodEvent,
+	saveVod,
+} from "./vods";
 
 const NAME = "game.mp4";
 
@@ -21,9 +33,88 @@ function saveWithMinimaps(name: string, ts: number[]): Promise<void> {
 	);
 }
 
+function logWithFrameAt(t: number): ScanLog.ScanLog {
+	const log = ScanLog.create([{ tStart: 0, tEnd: 60 }]);
+	ScanLog.record(log, 0, t, {
+		detector: "objective",
+		pass: true,
+		variant: "zones",
+		parsed: true,
+		reads: [{ type: "Objective", scores: [0.9] }],
+	});
+	return log;
+}
+
+function saveWithScanLog(log?: ScanLog.ScanLog): Promise<void> {
+	return saveVod(
+		{ name: NAME, savedAt: 0, duration: 60, summary: sessionSummary([]) },
+		[],
+		[],
+		log,
+	);
+}
+
 async function minimapTimes(name: string): Promise<number[]> {
 	return (await loadVodMinimaps(name)).map((minimap) => minimap.t);
 }
+
+const DEATH = stubEvent({
+	type: "Death",
+	t: 1,
+	scores: { read: 1 },
+	data: { name: "a" },
+});
+
+/** A record as some other version of the code left it in the store. */
+function putRawEvent(record: StoredVodEvent): Promise<number> {
+	return tx(
+		VOD_EVENTS_STORE,
+		"readwrite",
+		(store) => store.put(record) as IDBRequest<number>,
+	);
+}
+
+describe("loadVodEvents", () => {
+	beforeEach(async () => {
+		for (const vod of await listVods()) await deleteVod(vod.name);
+		await deleteVod(NAME);
+	});
+
+	test("stamps saved events with the current event version", async () => {
+		await saveVod(
+			{ name: NAME, savedAt: 0, duration: 60, summary: sessionSummary([]) },
+			[DEATH],
+		);
+
+		expect((await loadVodEvents(NAME)).map((event) => event.v)).toEqual([
+			EventVersion.CURRENT,
+		]);
+	});
+
+	test("reads events stored before the version stamp and leaves out a newer version's", async () => {
+		const unstamped = {
+			type: "Death",
+			t: 1,
+			confidence: 0.8,
+			data: { name: "a" },
+			vod: NAME,
+		} as unknown as StoredVodEvent;
+		const id = await putRawEvent(unstamped);
+		await putRawEvent({ ...DEATH, vod: NAME, v: EventVersion.CURRENT + 1 });
+
+		expect(await loadVodEvents(NAME)).toEqual([
+			{
+				type: "Death",
+				t: 1,
+				scores: { "*": 0.8 },
+				data: { name: "a" },
+				vod: NAME,
+				v: EventVersion.CURRENT,
+				id,
+			},
+		]);
+	});
+});
 
 describe("loadVodMinimaps", () => {
 	beforeEach(async () => {
@@ -50,5 +141,48 @@ describe("loadVodMinimaps", () => {
 		await deleteVod(NAME);
 
 		expect(await minimapTimes(NAME)).toEqual([]);
+	});
+});
+
+describe("loadVodScanLog", () => {
+	beforeEach(async () => {
+		for (const vod of await listVods()) await deleteVod(vod.name);
+	});
+
+	test("loads the log the scan was saved with", async () => {
+		const log = logWithFrameAt(10);
+		await saveWithScanLog(log);
+
+		expect(await loadVodScanLog(NAME)).toEqual(log);
+	});
+
+	test("is undefined for a VoD saved without a log", async () => {
+		await saveWithScanLog();
+
+		expect(await loadVodScanLog(NAME)).toBeUndefined();
+	});
+
+	test("a rescan replaces the earlier log", async () => {
+		await saveWithScanLog(logWithFrameAt(10));
+
+		await saveWithScanLog(logWithFrameAt(20));
+
+		expect(await loadVodScanLog(NAME)).toEqual(logWithFrameAt(20));
+	});
+
+	test("a rescan that kept no log removes the earlier one", async () => {
+		await saveWithScanLog(logWithFrameAt(10));
+
+		await saveWithScanLog();
+
+		expect(await loadVodScanLog(NAME)).toBeUndefined();
+	});
+
+	test("deleting the VoD deletes its log", async () => {
+		await saveWithScanLog(logWithFrameAt(10));
+
+		await deleteVod(NAME);
+
+		expect(await loadVodScanLog(NAME)).toBeUndefined();
 	});
 });

@@ -9,12 +9,19 @@
  * furthest along that direction (`xRankPositionProgress`).
  */
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
-import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
-import { copyRoi, frameGray, frameRgb, roiSignature } from "../../image";
+import {
+	cropRoi,
+	frameGray,
+	frameRgb,
+	type Image,
+	roiSignature,
+} from "../../image";
 import { all, type MatchSteps, runSync } from "../../match-steps";
 import type { ScoreboardResources } from "../scoreboard/index";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	CARD_DARK_MAX_MEAN,
 	NUMBER_BIN_THRESHOLD,
@@ -37,6 +44,16 @@ import {
 
 export const X_RANK_POSITION_EVENT_TYPE = "XRankPosition";
 
+export const X_RANK_POSITION_EVENT: EventKind<
+	typeof X_RANK_POSITION_EVENT_TYPE,
+	XRankPositionData
+> = {
+	type: X_RANK_POSITION_EVENT_TYPE,
+	progress: xRankPositionProgress,
+};
+
+type XRankPositionEvent = EventOf<typeof X_RANK_POSITION_EVENT>;
+
 type XRankPositionDirection = "UP" | "DOWN" | "SAME";
 
 export interface XRankPositionData {
@@ -45,8 +62,6 @@ export interface XRankPositionData {
 	direction: XRankPositionDirection | null;
 }
 
-/** Confidence of a read whose number didn't parse: under the timeline floor. */
-const UNREAD_CONFIDENCE = 0.3;
 /** The arrow is ~155px long; a shorter run of ink is something else. */
 const ARROW_MIN_LENGTH = 90;
 /** Columns with fewer ink pixels are speckle. */
@@ -62,26 +77,25 @@ const ARROW_END_RATIO = 1.5;
  * Timeline animation order of two reads of one card: positive when `b`'s
  * number is further along the arrow's direction (a DOWN arrow counts up).
  */
-export function xRankPositionProgress(a: unknown, b: unknown): number {
-	const da = a as XRankPositionData;
-	const db = b as XRankPositionData;
-	const direction = db.direction ?? da.direction;
+function xRankPositionProgress(
+	a: XRankPositionData,
+	b: XRankPositionData,
+): number {
+	const direction = b.direction ?? a.direction;
 	if (
-		da.position === null ||
-		db.position === null ||
+		a.position === null ||
+		b.position === null ||
 		!direction ||
 		direction === "SAME"
 	) {
 		return 0;
 	}
-	return Math.sign(
-		(db.position - da.position) * (direction === "DOWN" ? 1 : -1),
-	);
+	return Math.sign((b.position - a.position) * (direction === "DOWN" ? 1 : -1));
 }
 
 export function createXRankPositionDetector(
 	resources: ScoreboardResources,
-): Detector<XRankPositionData> {
+): Detector<XRankPositionEvent> {
 	let digits: GlyphSet | null | undefined;
 	const digitGlyphs = () => {
 		digits ??= resources.teamDigits
@@ -93,15 +107,32 @@ export function createXRankPositionDetector(
 		return digits;
 	};
 
-	function gate(frame: Mat): GateResult {
+	const gateRois = [
+		...POSITION_DARK_PROBES,
+		POSITION_LABEL_ROI,
+		POSITION_NUMBER_ROI,
+	];
+
+	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
 		const checks = [
-			allDark(gray, POSITION_DARK_PROBES, CARD_DARK_MAX_MEAN),
-			rgbFraction(rgb, POSITION_LABEL_ROI, isTitleTeal) >=
+			allDark(
+				"x-rank/position:CARD_DARK_MAX_MEAN",
+				gray,
+				POSITION_DARK_PROBES,
+				CARD_DARK_MAX_MEAN,
+			),
+			Decisions.atLeast(
+				"x-rank/position:POSITION_LABEL_MIN_FRACTION",
+				rgbFraction(rgb, POSITION_LABEL_ROI, isTitleTeal),
 				POSITION_LABEL_MIN_FRACTION,
-			rgbFraction(rgb, POSITION_NUMBER_ROI, isNumberInk) >=
+			),
+			Decisions.atLeast(
+				"x-rank/position:POSITION_NUMBER_MIN_FRACTION",
+				rgbFraction(rgb, POSITION_NUMBER_ROI, isNumberInk),
 				POSITION_NUMBER_MIN_FRACTION,
+			),
 		];
 		const pass = checks.every(Boolean);
 		return {
@@ -114,11 +145,11 @@ export function createXRankPositionDetector(
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<XRankPositionData>[]> {
+	): MatchSteps<XRankPositionEvent[]> {
 		const set = digitGlyphs();
 		if (!set) return [];
 		const gray = frameGray(frame);
@@ -140,10 +171,10 @@ export function createXRankPositionDetector(
 			{
 				type: X_RANK_POSITION_EVENT_TYPE,
 				t,
-				confidence:
-					position === null
-						? Math.min(numberScore, UNREAD_CONFIDENCE)
-						: numberScore,
+				// a number that didn't parse scores nothing, so the timeline drops the read
+				scores: FieldScores.of({
+					position: position === null ? null : numberScore,
+				}),
 				data: { mode: icon.mode, position, direction: arrowDirection(rgb) },
 				debug: {
 					numberReading: number.text,
@@ -156,6 +187,7 @@ export function createXRankPositionDetector(
 
 	return {
 		id: "x-rank-position",
+		gateRois,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),
@@ -168,8 +200,8 @@ export function createXRankPositionDetector(
  * its shaft end is wide and its head ends in a point, so whichever end is
  * narrower is where it points.
  */
-function arrowDirection(rgb: Mat): XRankPositionDirection | null {
-	const crop = copyRoi(rgb, POSITION_ARROW_ROI);
+function arrowDirection(rgb: Image): XRankPositionDirection | null {
+	const crop = cropRoi(rgb, POSITION_ARROW_ROI);
 	const { rows, cols } = crop;
 	const data = crop.data;
 	const isInk = (x: number, y: number) => {
@@ -192,12 +224,25 @@ function arrowDirection(rgb: Mat): XRankPositionDirection | null {
 			if (isInk(x, y)) widths[y]!++;
 		}
 	}
-	crop.delete();
 	const y0 = widths.findIndex((w) => w > 0);
 	const y1 = widths.findLastIndex((w) => w > 0);
 	if (y0 < 0) return null;
-	if (x1 - x0 >= y1 - y0) return x1 - x0 >= ARROW_MIN_LENGTH ? "SAME" : null;
-	if (y1 - y0 < ARROW_MIN_LENGTH) return null;
+	if (x1 - x0 >= y1 - y0)
+		return Decisions.atLeast(
+			"x-rank/position:ARROW_MIN_LENGTH#flat",
+			x1 - x0,
+			ARROW_MIN_LENGTH,
+		)
+			? "SAME"
+			: null;
+	if (
+		Decisions.below(
+			"x-rank/position:ARROW_MIN_LENGTH#upright",
+			y1 - y0,
+			ARROW_MIN_LENGTH,
+		)
+	)
+		return null;
 	const band = Math.max(1, Math.round((y1 - y0) * ARROW_END_FRACTION));
 	const mean = (from: number) =>
 		widths.slice(from, from + band).reduce((sum, w) => sum + w, 0) / band;

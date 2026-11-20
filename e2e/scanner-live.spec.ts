@@ -6,7 +6,7 @@ import { FIXTURE_GAME } from "./pages/scanner/fixture-game";
 import { ScannerPage } from "./pages/scanner/scanner-page";
 import { SendouQMatchPage } from "./pages/sendouq/sendouq-match-page";
 
-/** Loading OpenCV and reading a screen at the live sample rate outlast the default timeout. */
+/** Loading the scanner assets and reading a screen at the live sample rate outlast the default timeout. */
 const SCAN_TIMEOUT = 45_000;
 
 /** The fixture game first, then maps nobody plays. */

@@ -16,13 +16,25 @@
  * and are skipped.
  */
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { getCV, type Mat } from "../../cv";
-import { copyRoi, type FrameData } from "../../image";
-import type { DetectedEvent } from "../types";
-import type { PlayerStatusData, StripFit } from "./player-status";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
+import {
+	cropRoi,
+	type FrameData,
+	type Image,
+	imageFromFrameData,
+} from "../../image";
+import { resize } from "../../resize";
+import type { EventKind, EventOf } from "../types";
+import {
+	type PlayerStatusData,
+	type StripFit,
+	slotStateOf,
+} from "./player-status";
 import {
 	STATUS_ICON_CENTER_Y,
 	STATUS_REFERENCE_PITCH,
+	STRIP_DIFFERENCE_LEAD_RATIO,
 	STRIP_WEAPON_BADGE_CORNER,
 	STRIP_WEAPON_CENTER_DY,
 	STRIP_WEAPON_CROP_HALF,
@@ -32,11 +44,22 @@ import {
 	STRIP_WEAPON_PLATE_RADIUS,
 	STRIP_WEAPON_SEARCH,
 	STRIP_WEAPON_SHORTLIST,
-	STRIP_WEAPON_TIE_MARGIN,
 	STRIP_WEAPON_TOP_K,
 } from "./rois";
 
 export const STRIP_WEAPONS_EVENT_TYPE = "StripWeapons";
+
+/** Sampled every ~5s, each distinct evidence; scored on raw NCC peaks, so no score floor. */
+export const STRIP_WEAPONS_EVENT: EventKind<
+	typeof STRIP_WEAPONS_EVENT_TYPE,
+	StripWeaponsData
+> = {
+	type: STRIP_WEAPONS_EVENT_TYPE,
+	mergeWindowS: 2,
+	minMeanScore: 0,
+};
+
+export type StripWeaponsEvent = EventOf<typeof STRIP_WEAPONS_EVENT>;
 
 interface StripWeaponCandidate {
 	weaponId: MainWeaponId;
@@ -122,18 +145,19 @@ const NEIGHBORS = [
 
 /** Match every alive slot's icon; `status` and `fit` (same frame) supply dead flags, centers and scale. */
 export function parseStripWeapons(
-	frame: Mat,
+	frame: Image,
 	t: number,
 	status: PlayerStatusData,
 	fit: StripFit,
 	templates: StripWeaponTemplate[],
-): DetectedEvent<StripWeaponsData> {
-	const scores: number[] = [];
+): StripWeaponsEvent {
+	const scores: Record<string, number> = {};
 	const slots = fit.map((sideFit, side) =>
 		sideFit.centers.map((cx, slot) => {
-			if (status.dead[side as 0 | 1][slot]) return null;
+			if (slotStateOf(status.slots[side as 0 | 1][slot]!) === "dead")
+				return null;
 			const candidates = matchSlot(frame, cx, sideFit.pitch, templates);
-			if (candidates) scores.push(candidates[0]!.score);
+			if (candidates) scores[`slots.${side}.${slot}`] = candidates[0]!.score;
 			return candidates;
 		}),
 	) as StripWeaponsData["slots"];
@@ -141,7 +165,7 @@ export function parseStripWeapons(
 	return {
 		type: STRIP_WEAPONS_EVENT_TYPE,
 		t,
-		confidence: scores.length > 0 ? Math.max(...scores) : 0,
+		scores: FieldScores.of(scores),
 		data: {
 			time: status.time,
 			slots,
@@ -153,22 +177,20 @@ export function parseStripWeapons(
 export function prepareStripWeaponTemplates(
 	icons: { id: string; image: FrameData }[],
 ): StripWeaponTemplate[] {
-	const cv = getCV();
 	return icons.map(({ id, image }) => {
-		const rgba = cv.matFromImageData(image as unknown as ImageData);
+		const rgba = imageFromFrameData(image);
 		const template = {
 			weaponId: Number(id) as MainWeaponId,
 			fine: maskedArt(rgba, STRIP_WEAPON_ICON_SIZE, FINE_SIZE, 1),
 			coarse: maskedArt(rgba, STRIP_WEAPON_ICON_SIZE / 2, COARSE_SIZE, 1 / 2),
 			canvas: artCanvas(rgba, STRIP_WEAPON_ICON_SIZE),
 		};
-		rgba.delete();
 		return template;
 	});
 }
 
 function matchSlot(
-	frame: Mat,
+	frame: Image,
 	cx: number,
 	pitch: number,
 	templates: StripWeaponTemplate[],
@@ -177,7 +199,7 @@ function matchSlot(
 	const halfWidth = Math.round(STRIP_WEAPON_CROP_HALF.x * scale);
 	const halfHeight = Math.round(STRIP_WEAPON_CROP_HALF.y * scale);
 	const cy = Math.round(STATUS_ICON_CENTER_Y + STRIP_WEAPON_CENTER_DY * scale);
-	const crop = copyRoi(frame, {
+	const crop = cropRoi(frame, {
 		x: cx - halfWidth,
 		y: cy - halfHeight,
 		w: 2 * halfWidth,
@@ -185,7 +207,6 @@ function matchSlot(
 	});
 	const fine = resampledRgb(crop, FINE_SIZE);
 	const coarse = resampledRgb(crop, COARSE_SIZE);
-	crop.delete();
 
 	const shortlist = templates
 		.map((template) => ({
@@ -205,7 +226,15 @@ function matchSlot(
 			}),
 		}))
 		.sort((a, b) => b.match.score - a.match.score);
-	if (ranked[0]!.match.score < STRIP_WEAPON_MIN_SCORE) return null;
+	if (
+		Decisions.below(
+			"objective/strip-weapons:STRIP_WEAPON_MIN_SCORE",
+			ranked[0]!.match.score,
+			STRIP_WEAPON_MIN_SCORE,
+		)
+	) {
+		return null;
+	}
 	const candidates = ranked
 		.slice(0, STRIP_WEAPON_TOP_K)
 		.map(({ template, match }) => ({
@@ -213,12 +242,7 @@ function matchSlot(
 			score: match.score,
 		}));
 	const [first, second] = ranked;
-	if (
-		second &&
-		first!.match.score - second.match.score <= STRIP_WEAPON_TIE_MARGIN &&
-		differenceScore(fine, second, first!) >
-			differenceScore(fine, first!, second)
-	) {
+	if (second && differenceOverturns(fine, first!, second)) {
 		// the runner-up draws what tells the two apart: it takes the top rank
 		[candidates[0]!.weaponId, candidates[1]!.weaponId] = [
 			candidates[1]!.weaponId,
@@ -300,7 +324,26 @@ function bestNcc(
 
 interface RankedTemplate {
 	template: StripWeaponTemplate;
-	match: { x: number; y: number };
+	match: { score: number; x: number; y: number };
+}
+
+/**
+ * Whether the parts only one of the two draws favor the runner-up by
+ * STRIP_DIFFERENCE_LEAD_RATIO times the full score's gap.
+ */
+function differenceOverturns(
+	fine: Float32Array,
+	first: RankedTemplate,
+	second: RankedTemplate,
+): boolean {
+	const gap = first.match.score - second.match.score;
+	// two NCCs never differ by more than 2
+	if (gap * STRIP_DIFFERENCE_LEAD_RATIO >= 2) return false;
+	return Decisions.above(
+		"objective/strip-weapons:STRIP_DIFFERENCE_LEAD_RATIO",
+		differenceScore(fine, second, first) - differenceScore(fine, first, second),
+		STRIP_DIFFERENCE_LEAD_RATIO * gap,
+	);
 }
 
 /**
@@ -407,45 +450,33 @@ function drawnByOneOnly(
 	return null;
 }
 
-function artCanvas(rgba: Mat, iconSize: number): ArtCanvas {
-	const cv = getCV();
-	const scaled = new cv.Mat();
+function artCanvas(rgba: Image, iconSize: number): ArtCanvas {
 	const width = Math.round(iconSize);
 	const height = Math.round((rgba.rows * iconSize) / rgba.cols);
-	cv.resize(rgba, scaled, new cv.Size(width, height), 0, 0, cv.INTER_AREA);
-	const canvas = { width, height, rgba: new Uint8Array(scaled.data) };
-	scaled.delete();
-	return canvas;
+	return { width, height, rgba: resize(rgba, width, height, "area").data };
 }
 
-function resampledRgb(crop: Mat, size: CropSize): Float32Array {
-	const cv = getCV();
-	const resized = new cv.Mat();
+function resampledRgb(crop: Image, size: CropSize): Float32Array {
 	const { width, height } = size;
-	cv.resize(crop, resized, new cv.Size(width, height), 0, 0, cv.INTER_AREA);
-	const { data } = resized;
+	const { data } = resize(crop, width, height, "area");
 	const rgb = new Float32Array(width * height * 3);
 	for (let i = 0; i < width * height; i++) {
 		rgb[i * 3] = data[i * 4]!;
 		rgb[i * 3 + 1] = data[i * 4 + 1]!;
 		rgb[i * 3 + 2] = data[i * 4 + 2]!;
 	}
-	resized.delete();
 	return rgb;
 }
 
 function maskedArt(
-	rgba: Mat,
+	rgba: Image,
 	iconSize: number,
 	cropSize: CropSize,
 	scale: number,
 ): MaskedArt {
-	const cv = getCV();
-	const scaled = new cv.Mat();
 	const width = Math.round(iconSize);
 	const height = Math.round((rgba.rows * iconSize) / rgba.cols);
-	cv.resize(rgba, scaled, new cv.Size(width, height), 0, 0, cv.INTER_AREA);
-	const { data } = scaled;
+	const { data } = resize(rgba, width, height, "area");
 	const reachX = (cropSize.width >> 1) - 1;
 	const reachY = (cropSize.height >> 1) - 1;
 	const offsets: number[] = [];
@@ -473,7 +504,6 @@ function maskedArt(
 			}
 		}
 	}
-	scaled.delete();
 
 	return {
 		offsets: Int32Array.from(offsets),

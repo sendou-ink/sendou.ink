@@ -13,13 +13,17 @@
  *   -100 (left end) .. 100 (right end); the left team pushes right.
  * - Holder: the held icon's ink hue against each side's ink, read off that
  *   side's own end of the track (its marker and first dots).
- * - Scores: every confident digit run in the plate band, each assigned to the
+ * - Scores: every confident digit run on plate ink in the band, each assigned to the
  *   team whose ink surrounds it — a plate sits on the half its team pushes
  *   into, which bounds the assignment. No label is read (localized).
  */
-import type { Mat } from "../../cv";
-import { type GlyphSet, recognizeTextSteps } from "../../glyphs";
-import { copyRoi, minChannel, type Roi } from "../../image";
+import * as Decisions from "../../decisions";
+import {
+	type GlyphSet,
+	type RecognizedChar,
+	recognizeTextSteps,
+} from "../../glyphs";
+import { cropRoi, type Image, minChannel, type Roi } from "../../image";
 import {
 	dominantInkColor,
 	hueDistance,
@@ -59,9 +63,11 @@ import {
 	TRACK_PEDESTAL_SPAN,
 	TRACK_PLATE_BIN_THRESHOLD,
 	TRACK_PLATE_CENTER_SLACK,
+	TRACK_PLATE_DIGIT_MIN_CANDIDATE,
 	TRACK_PLATE_DIGIT_MIN_CONF,
 	TRACK_PLATE_DIGIT_ROI,
 	TRACK_PLATE_INK_PAD_X,
+	TRACK_PLATE_MIN_INK_SHARE,
 	TRACK_SQUARE_SIZES,
 	TRACK_SQUARE_SPAN,
 	TRACK_STRIP_INK_ROIS,
@@ -71,7 +77,18 @@ import {
 } from "./rois";
 
 const RING_SAMPLES = 32;
-/** Digits of one number nearly touch; a gap past this fraction of a digit width ends the run. */
+/** The band trackComb reads: the dot row and a row either side. */
+export const TRACK_COMB_ROI: Roi = {
+	x: TRACK_COMB_SPAN[0],
+	y: TRACK_Y - TRACK_COMB_OFFSET_Y - 1,
+	w: TRACK_COMB_SPAN[1] - TRACK_COMB_SPAN[0] + 1,
+	h: 2 * TRACK_COMB_OFFSET_Y + 3,
+};
+/**
+ * Digits of one number nearly touch: a gap past this fraction of a digit width
+ * ends the run. Measured between boxes at least a digit wide, as a '1' is
+ * narrow in a full-width advance.
+ */
 const DIGIT_GAP_MAX_RATIO = 0.55;
 /** Digits span the set's full height; the label's lowercase letters top out lower. */
 const DIGIT_MIN_HEIGHT_RATIO = 0.82;
@@ -92,16 +109,10 @@ export interface TrackRead {
 }
 
 /** Comb projection of the track's dot row at its fixed phase, per window with the worst dropped; see GATE_TRACK_MIN_COMB. */
-export function trackComb(frame: Mat): number {
-	const [x0, x1] = TRACK_COMB_SPAN;
-	const band = copyRoi(frame, {
-		x: x0,
-		y: TRACK_Y - TRACK_COMB_OFFSET_Y - 1,
-		w: x1 - x0 + 1,
-		h: 2 * TRACK_COMB_OFFSET_Y + 3,
-	});
+export function trackComb(frame: Image): number {
+	const band = cropRoi(frame, TRACK_COMB_ROI);
 	const { data, cols } = band;
-	const channels = band.channels();
+	const channels = band.channels;
 	const at = (x: number, y: number) => (y * cols + x) * channels;
 	const distance = (a: number, b: number) =>
 		Math.abs(data[a]! - data[b]!) +
@@ -121,7 +132,6 @@ export function trackComb(frame: Mat): number {
 		}
 		contrast.push(sum / 3);
 	}
-	band.delete();
 
 	const windows: number[] = [];
 	for (
@@ -134,7 +144,8 @@ export function trackComb(frame: Mat): number {
 		let projection = 0;
 		for (const [i, value] of window.entries()) {
 			const phase =
-				(2 * Math.PI * (x0 + start + i - TRACK_FIRST_DOT_X)) / TRACK_DOT_PITCH;
+				(2 * Math.PI * (TRACK_COMB_ROI.x + start + i - TRACK_FIRST_DOT_X)) /
+				TRACK_DOT_PITCH;
 			projection += (value - mean) * Math.cos(phase);
 		}
 		windows.push(projection / window.length);
@@ -145,7 +156,7 @@ export function trackComb(frame: Mat): number {
 
 /** The track overlay's icon, holder, plates and team inks off one frame. */
 export function* readTrackSteps(
-	frame: Mat,
+	frame: Image,
 	digitSets: readonly GlyphSet[],
 	speculative: boolean,
 ): MatchSteps<TrackRead> {
@@ -227,7 +238,7 @@ interface PixelClasses {
 }
 
 /** Pixel classes of the band the icon and the checkpoint markers can occupy. */
-function trackBandClasses(frame: Mat): PixelClasses {
+function trackBandClasses(frame: Image): PixelClasses {
 	const maxRadius = Math.max(...TRACK_NEUTRAL_RING_RADII) + 1;
 	const margin = Math.ceil(maxRadius) + TRACK_ICON_Y_JITTER;
 	const [spanX0, spanX1] = TRACK_ICON_SPAN;
@@ -268,16 +279,24 @@ function locateIcon(classes: PixelClasses): IconHit | null {
 			}
 		}
 	}
-	if (best.score < TRACK_ICON_MIN_SCORE) return null;
+	if (
+		Decisions.below(
+			"objective/track:TRACK_ICON_MIN_SCORE",
+			best.score,
+			TRACK_ICON_MIN_SCORE,
+		)
+	) {
+		return null;
+	}
 	return best.kind === "held"
 		? { ...best, hue: ringHue(classes, best.x, best.y) }
 		: best;
 }
 
-function classifyPixels(frame: Mat, roi: Roi): PixelClasses {
-	const crop = copyRoi(frame, roi);
+function classifyPixels(frame: Image, roi: Roi): PixelClasses {
+	const crop = cropRoi(frame, roi);
 	const { data, cols, rows } = crop;
-	const channels = crop.channels();
+	const channels = crop.channels;
 	const ink = new Uint8Array(cols * rows);
 	const white = new Uint8Array(cols * rows);
 	const olive = new Uint8Array(cols * rows);
@@ -307,7 +326,6 @@ function classifyPixels(frame: Mat, roi: Roi): PixelClasses {
 					: 0;
 		}
 	}
-	crop.delete();
 	return { cols, rows, ink, white, olive, dark, hue, x0: roi.x, y0: roi.y };
 }
 
@@ -391,12 +409,19 @@ function markerMode(
 		);
 	}
 	// a pedestal is the sharper proof (TC backdrops never scored one), so it wins a tie
-	const mode =
-		pedestal >= TRACK_MARKER_MIN_SCORE
-			? "RM"
-			: square >= TRACK_MARKER_MIN_SCORE
-				? "TC"
-				: null;
+	const mode = Decisions.atLeast(
+		"objective/track:TRACK_MARKER_MIN_SCORE#pedestal",
+		pedestal,
+		TRACK_MARKER_MIN_SCORE,
+	)
+		? "RM"
+		: Decisions.atLeast(
+					"objective/track:TRACK_MARKER_MIN_SCORE#square",
+					square,
+					TRACK_MARKER_MIN_SCORE,
+				)
+			? "TC"
+			: null;
 	return { mode, square, pedestal };
 }
 
@@ -480,7 +505,13 @@ function nearestSide(
 		teamHue === null ? Number.POSITIVE_INFINITY : hueDistance(hue, teamHue),
 	);
 	const side: 0 | 1 = distances[0]! <= distances[1]! ? 0 : 1;
-	return distances[side]! <= TRACK_ICON_MAX_TEAM_HUE_DIST ? side : null;
+	return Decisions.atMost(
+		"objective/track:TRACK_ICON_MAX_TEAM_HUE_DIST",
+		distances[side]!,
+		TRACK_ICON_MAX_TEAM_HUE_DIST,
+	)
+		? side
+		: null;
 }
 
 interface PlateRun {
@@ -496,7 +527,7 @@ interface PlateRun {
 
 /** Every confident digit run in the plate band, each assigned to a side. */
 function* readPlates(
-	frame: Mat,
+	frame: Image,
 	digitSets: readonly GlyphSet[],
 	teamHues: readonly [number | null, number | null],
 	speculative: boolean,
@@ -525,49 +556,32 @@ function* readPlates(
 			),
 		),
 	);
-	band.delete();
 
+	const rawReading = raws.map((raw) => raw.text).join(" / ");
+	const digits = pooledDigits(raws, digitSets);
+	const digitWidth = Math.min(...digitSets.map((set) => set.medianWidth));
+	const maxGap = digitWidth * DIGIT_GAP_MAX_RATIO;
 	const runs: PlateRun[] = [];
-	for (const [i, set] of digitSets.entries()) {
-		const raw = raws[i]!;
-		const maxGap = Math.max(
-			4,
-			Math.round(set.medianWidth * DIGIT_GAP_MAX_RATIO),
-		);
-		const digits = raw.chars.filter(
-			(c) =>
-				/^\d$/.test(c.char) &&
-				c.score >= TRACK_PLATE_DIGIT_MIN_CONF &&
-				c.y1 - c.y0 >= set.height * DIGIT_MIN_HEIGHT_RATIO,
-		);
-		let group: typeof digits = [];
-		const flush = () => {
-			if (group.length > 0 && group.length <= 3) {
-				const value = Number.parseInt(group.map((c) => c.char).join(""), 10);
-				if (value <= MAX_COUNT) {
-					const x0 = TRACK_PLATE_DIGIT_ROI.x + group[0]!.x0;
-					const x1 = TRACK_PLATE_DIGIT_ROI.x + group.at(-1)!.x1;
-					const hue = plateHue(frame, x0, x1);
-					const x = (x0 + x1) / 2;
-					runs.push({
-						value,
-						confidence: Math.min(...group.map((c) => c.score)),
-						digits: group.length,
-						x,
-						hue,
-						side: plateSide(x, hue, teamHues),
-						reading: raw.text,
-					});
-				}
-			}
-			group = [];
-		};
-		for (const c of digits) {
-			if (group.length > 0 && c.x0 - group.at(-1)!.x1 > maxGap) flush();
-			group.push(c);
+	let group: PlateDigit[] = [];
+	const flush = () => {
+		const run = group.length > 0 ? plateRun(frame, group, teamHues) : null;
+		if (run) runs.push({ ...run, reading: rawReading });
+		group = [];
+	};
+	for (const digit of digits) {
+		if (
+			group.length > 0 &&
+			!Decisions.atMost(
+				"objective/track:DIGIT_GAP_MAX_RATIO",
+				digitGap(group.at(-1)!, digit, digitWidth),
+				maxGap,
+			)
+		) {
+			flush();
 		}
-		flush();
+		group.push(digit);
 	}
+	flush();
 
 	for (const run of runs) {
 		if (run.side === null) continue;
@@ -588,8 +602,110 @@ function* readPlates(
 	return { score, runs };
 }
 
-/** Circular mean hue of the plate ink flanking a digit run (the plate body left and right of it). */
-function plateHue(frame: Mat, x0: number, x1: number): number | null {
+interface PlateDigit {
+	char: string;
+	score: number;
+	/** band x */
+	x0: number;
+	x1: number;
+	center: number;
+}
+
+/**
+ * The digit candidates of every text size, one per glyph: where sizes read
+ * the same glyph the best score keeps it. A plate's digits can each read
+ * confidently at a different size on a blurred or splatted frame.
+ */
+function pooledDigits(
+	raws: readonly { chars: readonly RecognizedChar[] }[],
+	digitSets: readonly GlyphSet[],
+): PlateDigit[] {
+	const candidates = raws.flatMap((raw, i) =>
+		raw.chars
+			.filter(
+				(c) =>
+					/^\d$/.test(c.char) &&
+					c.score >= TRACK_PLATE_DIGIT_MIN_CANDIDATE &&
+					Decisions.atLeast(
+						"objective/track:DIGIT_MIN_HEIGHT_RATIO",
+						c.y1 - c.y0,
+						digitSets[i]!.height * DIGIT_MIN_HEIGHT_RATIO,
+					),
+			)
+			.map((c) => ({
+				char: c.char,
+				score: c.score,
+				x0: c.x0,
+				x1: c.x1,
+				center: (c.x0 + c.x1) / 2,
+			})),
+	);
+	const kept: PlateDigit[] = [];
+	for (const digit of candidates.sort((a, b) => b.score - a.score)) {
+		const sameGlyph = kept.some(
+			(other) => digit.center >= other.x0 && digit.center < other.x1,
+		);
+		if (!sameGlyph) kept.push(digit);
+	}
+	return kept.sort((a, b) => a.center - b.center);
+}
+
+/** Gap between two digits' boxes, each widened to at least a digit's width about its center. */
+function digitGap(left: PlateDigit, right: PlateDigit, digitWidth: number) {
+	const halfWidth = (digit: PlateDigit) =>
+		Math.max(digit.x1 - digit.x0, digitWidth) / 2;
+	return right.center - left.center - halfWidth(left) - halfWidth(right);
+}
+
+/**
+ * A run of digits as one plate's count, or null when it is no count, not on a
+ * plate, or holds a digit under the confidence floor: a blurred digit leaves
+ * the count unread rather than its neighbors reading as a shorter number.
+ */
+function plateRun(
+	frame: Image,
+	group: readonly PlateDigit[],
+	teamHues: readonly [number | null, number | null],
+): Omit<PlateRun, "reading"> | null {
+	if (group.length > 3) return null;
+	const confident = Decisions.atLeast(
+		"objective/track:TRACK_PLATE_DIGIT_MIN_CONF",
+		Math.min(...group.map((c) => c.score)),
+		TRACK_PLATE_DIGIT_MIN_CONF,
+	);
+	if (!confident) return null;
+	const value = Number.parseInt(group.map((c) => c.char).join(""), 10);
+	if (value > MAX_COUNT) return null;
+	const x0 = TRACK_PLATE_DIGIT_ROI.x + group[0]!.x0;
+	const x1 = TRACK_PLATE_DIGIT_ROI.x + group.at(-1)!.x1;
+	const x = (x0 + x1) / 2;
+	const ink = plateInk(frame, x0, x1);
+	// white streaks in the scene read as a '1'; a plate's digits sit on its ink
+	const onPlate = Decisions.atLeast(
+		"objective/track:TRACK_PLATE_MIN_INK_SHARE",
+		ink.share,
+		TRACK_PLATE_MIN_INK_SHARE,
+	);
+	if (!onPlate) return null;
+	return {
+		value,
+		confidence: Math.min(...group.map((c) => c.score)),
+		digits: group.length,
+		x,
+		hue: ink.hue,
+		side: plateSide(x, ink.hue, teamHues),
+	};
+}
+
+/**
+ * The plate ink around a digit run (the plate body left and right of it): its
+ * share of the pixels and their circular mean hue.
+ */
+function plateInk(
+	frame: Image,
+	x0: number,
+	x1: number,
+): { share: number; hue: number | null } {
 	const roi: Roi = {
 		x: Math.max(0, Math.round(x0) - TRACK_PLATE_INK_PAD_X),
 		y: TRACK_PLATE_DIGIT_ROI.y,
@@ -597,7 +713,11 @@ function plateHue(frame: Mat, x0: number, x1: number): number | null {
 		h: TRACK_PLATE_DIGIT_ROI.h,
 	};
 	const classes = classifyPixels(frame, roi);
-	return meanInkHue(classes, classes.ink.keys());
+	const inked = classes.ink.reduce((sum, value) => sum + value, 0);
+	return {
+		share: inked / classes.ink.length,
+		hue: meanInkHue(classes, classes.ink.keys()),
+	};
 }
 
 /**

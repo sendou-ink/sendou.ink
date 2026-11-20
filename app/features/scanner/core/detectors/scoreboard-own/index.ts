@@ -17,13 +17,14 @@ import {
 	toAbilityWithUnknown,
 	toMainWeaponId,
 } from "../../../scanner-types";
-import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
-	copyRoi,
 	cropRoi,
 	frameGray,
 	frameRgb,
+	type Image,
 	maxBrightness,
 	meanBrightness,
 } from "../../image";
@@ -34,7 +35,7 @@ import { ALL_WEAPON_ENTRIES, type WeaponEntry } from "../death/weapon-names";
 import { parseHeaderSteps } from "../scoreboard/header";
 import type { ScoreboardResources } from "../scoreboard/index";
 import { matchWeaponSteps, type WeaponMatch } from "../scoreboard/weapons";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	GATE_PANEL_MAX_MEAN,
 	GATE_PANEL_PROBES,
@@ -65,12 +66,30 @@ export interface ScoreboardOwnData {
 
 export const SCOREBOARD_OWN_EVENT_TYPE = "ScoreboardOwn";
 
+export const SCOREBOARD_OWN_EVENT: EventKind<
+	typeof SCOREBOARD_OWN_EVENT_TYPE,
+	ScoreboardOwnData
+> = {
+	type: SCOREBOARD_OWN_EVENT_TYPE,
+	// a covered badge has no score
+	complete: ({ data, scores }) =>
+		data.lobby !== null &&
+		data.mode !== null &&
+		data.stage !== null &&
+		data.weaponId !== null &&
+		data.abilities.every((row, gear) =>
+			row.every((_, slot) => `abilities.${gear}.${slot}` in scores),
+		),
+};
+
+type ScoreboardOwnEvent = EventOf<typeof SCOREBOARD_OWN_EVENT>;
+
 /** Snapped weapon reading below this is reported as null (kept in debug). */
 const WEAPON_MIN_SCORE = 0.55;
 /**
  * A badge scoring under this is covered (a streamer's chat box over the gear
- * cards reads ~0.2, clean badges 0.45+): it reads UNKNOWN and is left out of
- * the confidence, so the header still carries the read.
+ * cards reads ~0.2, clean badges 0.45+): it reads UNKNOWN and is left
+ * unscored, so the header still carries the read.
  */
 const ABILITY_MIN_SCORE = 0.35;
 
@@ -102,7 +121,7 @@ function mainWeaponCandidates(): WeaponCandidate[] {
 
 export function createScoreboardOwnDetector(
 	resources: ScoreboardResources,
-): Detector<ScoreboardOwnData> {
+): Detector<ScoreboardOwnEvent> {
 	const titleGlyphs: GlyphSet | null = resources.deathWeaponGlyphs
 		? scaleGlyphSet(
 				resources.deathWeaponGlyphs,
@@ -112,22 +131,54 @@ export function createScoreboardOwnDetector(
 	// built on first use (the resource getter memoizes it)
 	const abilities = () => resources.ownAbilities ?? null;
 
-	function gate(frame: Mat): GateResult {
+	const gateRois = [
+		...GATE_PANEL_PROBES,
+		...GATE_TITLE_TEXT_PROBES,
+		...Array.from({ length: GEAR_ROWS }, (_, row) => gateStripProbe(row)),
+	];
+
+	function gate(frame: Image): GateResult {
 		let panelOk = 0;
 		for (const roi of GATE_PANEL_PROBES) {
-			if (meanBrightness(frame, roi) < GATE_PANEL_MAX_MEAN) panelOk++;
+			if (
+				Decisions.below(
+					"scoreboard-own:GATE_PANEL_MAX_MEAN",
+					meanBrightness(frame, roi),
+					GATE_PANEL_MAX_MEAN,
+				)
+			)
+				panelOk++;
 		}
 
 		const gray = frameGray(frame);
 		let textOk = 0;
 		for (const roi of GATE_TITLE_TEXT_PROBES) {
-			if (maxBrightness(gray, roi) > GATE_TEXT_MIN_MAX) textOk++;
+			if (
+				Decisions.above(
+					"scoreboard-own:GATE_TEXT_MIN_MAX",
+					maxBrightness(gray, roi),
+					GATE_TEXT_MIN_MAX,
+				)
+			)
+				textOk++;
 		}
 
 		let stripOk = 0;
 		for (let row = 0; row < GEAR_ROWS; row++) {
 			const mean = meanBrightness(frame, gateStripProbe(row));
-			if (mean >= GATE_STRIP_MIN_MEAN && mean <= GATE_STRIP_MAX_MEAN) stripOk++;
+			if (
+				Decisions.atLeast(
+					"scoreboard-own:GATE_STRIP_MIN_MEAN",
+					mean,
+					GATE_STRIP_MIN_MEAN,
+				) &&
+				Decisions.atMost(
+					"scoreboard-own:GATE_STRIP_MAX_MEAN",
+					mean,
+					GATE_STRIP_MAX_MEAN,
+				)
+			)
+				stripOk++;
 		}
 
 		const score =
@@ -143,11 +194,11 @@ export function createScoreboardOwnDetector(
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<ScoreboardOwnData>[]> {
+	): MatchSteps<ScoreboardOwnEvent[]> {
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
 
@@ -155,7 +206,7 @@ export function createScoreboardOwnDetector(
 		// weapon card title, recognized whole and NOT via readTagBand: the tag is
 		// fixed-width, and long names render condensed, whose dense antialiased
 		// columns fail the tag-column test and truncate the read mid-name
-		const band = titleGlyphs ? copyRoi(gray, WEAPON_TITLE_BAND) : null;
+		const band = titleGlyphs ? cropRoi(gray, WEAPON_TITLE_BAND) : null;
 		// gear-card ability strips: [head, clothes, shoes] x [main, sub, sub, sub]
 		const abilityCrops = abilities()
 			? Array.from({ length: GEAR_ROWS }, (_, row) => [
@@ -203,11 +254,6 @@ export function createScoreboardOwnDetector(
 				),
 			),
 		]);
-		band?.delete();
-		for (const crop of abilityCrops.flat()) crop.delete();
-
-		const confidences: number[] = [];
-		if (header) confidences.push(header.confidence);
 
 		let weapon: string | null = null;
 		let weaponId: MainWeaponId | null = null;
@@ -220,42 +266,49 @@ export function createScoreboardOwnDetector(
 				: null;
 			if (match) {
 				weaponScore = match.score;
-				if (match.score >= WEAPON_MIN_SCORE) {
+				if (
+					Decisions.atLeast(
+						"scoreboard-own:WEAPON_MIN_SCORE",
+						match.score,
+						WEAPON_MIN_SCORE,
+					)
+				) {
 					weapon = match.entry.entry.name;
 					weaponId = toMainWeaponId(match.entry.entry.id);
 				}
 			}
-			confidences.push(weaponScore);
 		}
 
 		const abilityRows: AbilityWithUnknown[][] = [];
 		const abilityDebug: (WeaponMatch | null)[][] = [];
-		for (const matches of abilityMatches) {
+		const abilityScores: Record<string, number> = {};
+		for (const [row, matches] of abilityMatches.entries()) {
 			const ids: AbilityWithUnknown[] = [];
 			const debug: (WeaponMatch | null)[] = [];
-			for (const match of matches) {
+			for (const [slot, match] of matches.entries()) {
 				debug.push(match);
 				if (match.score < ABILITY_MIN_SCORE) {
 					ids.push("UNKNOWN");
 					continue;
 				}
 				ids.push(toAbilityWithUnknown(match.id) ?? "UNKNOWN");
-				confidences.push(match.score);
+				abilityScores[`abilities.${row}.${slot}`] = match.score;
 			}
 			abilityRows.push(ids);
 			abilityDebug.push(debug);
 		}
 
-		const confidence =
-			confidences.length > 0
-				? confidences.reduce((a, b) => a + b, 0) / confidences.length
-				: 0;
-
 		return [
 			{
 				type: SCOREBOARD_OWN_EVENT_TYPE,
 				t,
-				confidence,
+				scores: {
+					...header?.scores,
+					...FieldScores.of({
+						weaponId: title ? weaponScore : null,
+						...abilityScores,
+					}),
+				},
 				data: {
 					lobby: header?.lobby ?? null,
 					mode: header?.mode ?? null,
@@ -276,11 +329,9 @@ export function createScoreboardOwnDetector(
 		];
 	}
 
-	// just under the clean-read floor (fixtures 0.562-0.669, scan events
-	// 0.612-0.635; the ability-grid scores keep the mean low even on perfect reads)
 	return {
 		id: "scoreboard-own",
-		sufficientConfidence: 0.55,
+		gateRois,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

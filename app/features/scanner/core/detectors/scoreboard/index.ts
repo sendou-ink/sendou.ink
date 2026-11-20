@@ -8,21 +8,23 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
-import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import {
-	copyRoi,
 	cropRoi,
 	frameGray,
 	frameRgb,
+	type Image,
 	maxBrightness,
 	meanBrightness,
 } from "../../image";
 import { all, done, type MatchSteps, runSync } from "../../match-steps";
+import { sameScoreboardMatch } from "../../timeline/same-scoreboard";
 import type { StripWeaponTemplate } from "../objective/strip-weapons";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import {
 	FULL_COUNT_TEAM_SCORE,
+	matchScoreFieldScores,
 	parseBannerScoreSteps,
 	resolveMatchScores,
 } from "./banner";
@@ -53,7 +55,12 @@ import {
 	TEAM_SCORE_ROIS,
 	weaponRoi,
 } from "./rois";
-import { parseScoreboardRowSteps, type RowRois } from "./row";
+import {
+	parseScoreboardRowSteps,
+	playerScores,
+	type RowRois,
+	rowsComplete,
+} from "./row";
 import type { SpecialMatch, SpecialTemplate } from "./specials";
 import type { WeaponMatch, WeaponTemplate } from "./weapons";
 
@@ -179,9 +186,28 @@ export interface ScoreboardResources {
 
 export const SCOREBOARD_EVENT_TYPE = "Scoreboard";
 
+export const SCOREBOARD_EVENT: EventKind<
+	typeof SCOREBOARD_EVENT_TYPE,
+	ScoreboardData
+> = {
+	type: SCOREBOARD_EVENT_TYPE,
+	sameData: sameScoreboardMatch,
+	// a no-contest game shows no score
+	complete: ({ data, scores }) =>
+		rowsComplete(data.players, scores) &&
+		data.lobby !== null &&
+		data.mode !== null &&
+		data.stage !== null &&
+		(data.noContest === true ||
+			data.matchScores.every((score) => score !== null)),
+	match: "closes",
+};
+
+type ScoreboardEvent = EventOf<typeof SCOREBOARD_EVENT>;
+
 export function createScoreboardDetector(
 	resources: ScoreboardResources,
-): Detector<ScoreboardData> {
+): Detector<ScoreboardEvent> {
 	const teamDigits =
 		resources.teamDigits ??
 		(resources.paintDigits
@@ -196,20 +222,44 @@ export function createScoreboardDetector(
 			)
 		: [];
 
-	function gate(frame: Mat): GateResult {
+	const gateRois = [
+		...ROW_CENTERS.flatMap((cy) => [gateDarkProbe(cy), paintSuffixRoi(cy)]),
+		...GATE_PANEL_PROBES,
+	];
+
+	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 
 		let darkOk = 0;
 		let suffixOk = 0;
 		for (const cy of ROW_CENTERS) {
-			if (meanBrightness(frame, gateDarkProbe(cy)) < GATE_DARK_MAX_MEAN)
+			if (
+				Decisions.below(
+					"scoreboard:GATE_DARK_MAX_MEAN",
+					meanBrightness(frame, gateDarkProbe(cy)),
+					GATE_DARK_MAX_MEAN,
+				)
+			)
 				darkOk++;
-			if (maxBrightness(gray, paintSuffixRoi(cy)) > GATE_TEXT_MIN_MAX)
+			if (
+				Decisions.above(
+					"scoreboard:GATE_TEXT_MIN_MAX",
+					maxBrightness(gray, paintSuffixRoi(cy)),
+					GATE_TEXT_MIN_MAX,
+				)
+			)
 				suffixOk++;
 		}
 		let panelOk = 0;
 		for (const roi of GATE_PANEL_PROBES) {
-			if (meanBrightness(frame, roi) < GATE_PANEL_MAX_MEAN) panelOk++;
+			if (
+				Decisions.below(
+					"scoreboard:GATE_PANEL_MAX_MEAN",
+					meanBrightness(frame, roi),
+					GATE_PANEL_MAX_MEAN,
+				)
+			)
+				panelOk++;
 		}
 
 		const score =
@@ -222,11 +272,11 @@ export function createScoreboardDetector(
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<ScoreboardData>[]> {
+	): MatchSteps<ScoreboardEvent[]> {
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
 
@@ -292,14 +342,10 @@ export function createScoreboardDetector(
 					])
 				: done(null),
 		]);
-		totalCrop?.delete();
 
 		const players = rows.map((row) => row.player);
 		const rowDebug = rows.map((row) => row.debug);
-		const confidences = rows.flatMap((row) => row.confidences);
 		const povIndex = findPovIndex(rowDebug.map((r) => r.povFraction));
-
-		if (header) confidences.push(header.confidence);
 
 		// the winner's total is read only to recognize a knockout: only a full 100
 		// count reaches 500, and the banner value is hidden under the KNOCKOUT! burst
@@ -311,20 +357,25 @@ export function createScoreboardDetector(
 		if (banners) {
 			const [left, right] = banners;
 			matchScores = resolveMatchScores({ left, right, knockout });
-			confidences.push(left.confidence, right.confidence);
 			bannerDebug = { left, right, knockout, winnerTotalConf };
 		}
-
-		const confidence =
-			confidences.length > 0
-				? confidences.reduce((a, b) => a + b, 0) / confidences.length
-				: 0;
 
 		return [
 			{
 				type: SCOREBOARD_EVENT_TYPE,
 				t,
-				confidence,
+				scores: {
+					...playerScores(rows),
+					...header?.scores,
+					...(banners
+						? matchScoreFieldScores({
+								left: banners[0],
+								right: banners[1],
+								knockout,
+								knockoutScore: winnerTotalConf,
+							})
+						: null),
+				},
 				data: {
 					lobby: header?.lobby ?? null,
 					mode: header?.mode ?? null,
@@ -343,22 +394,21 @@ export function createScoreboardDetector(
 		];
 	}
 
-	// just under the clean-read floor (fixtures 0.865-0.899, scan events down to 0.799)
 	return {
 		id: "scoreboard",
-		sufficientConfidence: 0.79,
 		gate,
+		gateRois,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),
 		parseSteps,
 	};
 }
 
-function isNoContest(rgb: Mat): boolean {
+function isNoContest(rgb: Image): boolean {
 	return TEAM_BOX_BAND_ROIS.every((roi) => {
-		const band = copyRoi(rgb, roi);
+		const band = cropRoi(rgb, roi);
 		const pixels = band.data as Uint8Array;
-		const channels = band.channels();
+		const channels = band.channels;
 		let ink = 0;
 		let valueSum = 0;
 		for (let i = 0; i < pixels.length; i += channels) {
@@ -368,13 +418,24 @@ function isNoContest(rgb: Mat): boolean {
 			if (value > 0 && spread >= NO_CONTEST_INK_MIN_SATURATION * value) ink++;
 			valueSum += value;
 		}
-		band.delete();
 		const count = pixels.length / channels;
 		const meanValue = valueSum / count;
 		return (
-			ink / count <= NO_CONTEST_MAX_INK_SHARE &&
-			meanValue >= NO_CONTEST_GREY_VALUE_RANGE[0] &&
-			meanValue <= NO_CONTEST_GREY_VALUE_RANGE[1]
+			Decisions.atMost(
+				"scoreboard:NO_CONTEST_MAX_INK_SHARE",
+				ink / count,
+				NO_CONTEST_MAX_INK_SHARE,
+			) &&
+			Decisions.atLeast(
+				"scoreboard:NO_CONTEST_GREY_VALUE_RANGE#min",
+				meanValue,
+				NO_CONTEST_GREY_VALUE_RANGE[0],
+			) &&
+			Decisions.atMost(
+				"scoreboard:NO_CONTEST_GREY_VALUE_RANGE#max",
+				meanValue,
+				NO_CONTEST_GREY_VALUE_RANGE[1],
+			)
 		);
 	});
 }

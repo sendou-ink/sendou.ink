@@ -7,18 +7,14 @@
 
 import assert from "node:assert/strict";
 import { realpathSync } from "node:fs";
-import { loadOpenCV } from "../core/cv";
 import { createDeathDetector } from "../core/detectors/death/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
 import { createMinimapDetector } from "../core/detectors/minimap/index";
-import {
-	createObjectiveDetector,
-	type ObjectiveData,
-} from "../core/detectors/objective/index";
+import { createObjectiveDetector } from "../core/detectors/objective/index";
 import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
-import type { DetectedEvent, Detector } from "../core/detectors/types";
+import type { Detector } from "../core/detectors/types";
 import { hueDistance, hueOf, type InkRgb } from "../core/ink-color";
 import {
 	fieldTestOptions,
@@ -28,7 +24,6 @@ import {
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
 
-await loadOpenCV();
 const resources = await loadScoreboardResources();
 const detector = createObjectiveDetector(resources);
 const fixtures = loadFixtures("objective");
@@ -47,7 +42,7 @@ for (const fixture of fixtures) {
 		);
 		const events = allEvents.filter(
 			(candidate) => candidate.type === "Objective",
-		) as DetectedEvent<ObjectiveData>[];
+		);
 		const expectPositive = fixture.expected.event === "Objective";
 
 		await t.test("gate", () => {
@@ -167,11 +162,8 @@ test("cast fixture pair: team ink hues identify sides across camera swaps", asyn
 	const colors: Array<readonly [InkRgb, InkRgb]> = [];
 	for (const fixture of pair) {
 		const { events } = await runDetectorOnFixture(detector, fixture!);
-		const teamColor = (
-			events.find((event) => event.type === "Objective") as
-				| DetectedEvent<ObjectiveData>
-				| undefined
-		)?.data.teamColor;
+		const teamColor = events.find((event) => event.type === "Objective")?.data
+			.teamColor;
 		assert.ok(teamColor?.[0] && teamColor[1], "side ink color unreadable");
 		colors.push([teamColor[0], teamColor[1]] as const);
 	}
@@ -255,19 +247,16 @@ const sharedFrames = new Map(
 		new Set(loadFixtures(dir).map((f) => realpathSync(f.framePath))),
 	]),
 );
-const otherDetectors: readonly [string, Detector<unknown>][] = [
-	["scoreboard", createScoreboardDetector(resources) as Detector<unknown>],
+const otherDetectors: readonly [string, Detector][] = [
+	["scoreboard", createScoreboardDetector(resources) as Detector],
 	[
 		"scoreboard-battle-log-replay",
-		createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
+		createScoreboardBattleLogReplayDetector(resources) as Detector,
 	],
-	[
-		"scoreboard-own",
-		createScoreboardOwnDetector(resources) as Detector<unknown>,
-	],
-	["death", createDeathDetector(resources) as Detector<unknown>],
-	["map-start", createMapStartDetector(resources) as Detector<unknown>],
-	["minimap", createMinimapDetector(resources) as Detector<unknown>],
+	["scoreboard-own", createScoreboardOwnDetector(resources) as Detector],
+	["death", createDeathDetector(resources) as Detector],
+	["map-start", createMapStartDetector(resources) as Detector],
+	["minimap", createMinimapDetector(resources) as Detector],
 ];
 for (const fixture of fixtures.filter(
 	(f) => f.expected.event === "Objective",

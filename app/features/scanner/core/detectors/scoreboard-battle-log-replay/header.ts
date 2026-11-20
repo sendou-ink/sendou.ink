@@ -6,8 +6,10 @@
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
 import type { Roi } from "../../canonical";
-import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import type { GlyphSet, RecognizedChar } from "../../glyphs";
+import type { Image } from "../../image";
 import { ALL_STAGE_ENTRIES, LOBBY_MODE_COMBOS } from "../../localized";
 import { all, type MatchSteps } from "../../match-steps";
 import { closestBy } from "../../text";
@@ -19,8 +21,8 @@ export interface ParsedReplayHeader {
 	stage: StageId | null;
 	lobby: ScannerLobby | null;
 	mode: ModeShort | null;
-	/** min of the closed-set match scores that were attempted */
-	confidence: number;
+	/** the closed-set match score of the stage, and of the lobby and mode line; the timestamp has none */
+	scores: FieldScores.FieldScores;
 	debug: {
 		topReading: string;
 		bottomReading: string;
@@ -124,7 +126,14 @@ function parseTopBand(
 		);
 		if (match) {
 			stageScore = match.score;
-			if (match.score >= MIN_MATCH_SCORE) stage = match.entry.stageId;
+			if (
+				Decisions.atLeast(
+					"scoreboard-battle-log-replay/header:MIN_MATCH_SCORE#stage",
+					match.score,
+					MIN_MATCH_SCORE,
+				)
+			)
+				stage = match.entry.stageId;
 		}
 	}
 	return { reading, timestamp, stage, stageScore };
@@ -147,7 +156,7 @@ const REPLAY_BANDS: ReplayHeaderBands = {
 
 /** The top and bottom bands read in one lockstep; each band's lifted-ceiling retry follows its own first read. */
 export function* parseReplayHeaderSteps(
-	gray: Mat,
+	gray: Image,
 	topGlyphs: GlyphSet,
 	bottomGlyphs: GlyphSet,
 	bands: ReplayHeaderBands = REPLAY_BANDS,
@@ -187,7 +196,14 @@ export function* parseReplayHeaderSteps(
 		let bottomMatch = bottomReading
 			? closestBy(bottomReading, LOBBY_MODE_COMBOS, (c) => c.text)
 			: null;
-		if (!bottomMatch || bottomMatch.score < MIN_MATCH_SCORE) {
+		if (
+			!bottomMatch ||
+			Decisions.below(
+				"scoreboard-battle-log-replay/header:MIN_MATCH_SCORE#liftedRetry",
+				bottomMatch.score,
+				MIN_MATCH_SCORE,
+			)
+		) {
 			const reading = yield* readTagBandSteps(
 				gray,
 				bands.bottom,
@@ -212,7 +228,14 @@ export function* parseReplayHeaderSteps(
 
 	let lobby: ScannerLobby | null = null;
 	let mode: ModeShort | null = null;
-	if (bottomMatch && bottomMatch.score >= MIN_MATCH_SCORE) {
+	if (
+		bottomMatch &&
+		Decisions.atLeast(
+			"scoreboard-battle-log-replay/header:MIN_MATCH_SCORE#lobbyMode",
+			bottomMatch.score,
+			MIN_MATCH_SCORE,
+		)
+	) {
 		lobby = bottomMatch.entry.lobby;
 		mode = bottomMatch.entry.mode;
 	}
@@ -222,7 +245,10 @@ export function* parseReplayHeaderSteps(
 		stage: top.stage,
 		lobby,
 		mode,
-		confidence: Math.min(top.stageScore, bottomMatch?.score ?? 0),
+		scores: FieldScores.of({
+			stage: top.stageScore,
+			"lobby,mode": bottomMatch?.score ?? 0,
+		}),
 		debug: {
 			topReading: top.reading,
 			bottomReading,
@@ -238,7 +264,7 @@ export function* parseReplayHeaderSteps(
  * carry ink right of its middle only for A. Both letters read as "o".
  */
 function probeMeridiem(
-	band: Mat,
+	band: Image,
 	chars: readonly RecognizedChar[],
 ): Meridiem | null {
 	const colonAt = chars.findIndex((c) => c.char === ":");

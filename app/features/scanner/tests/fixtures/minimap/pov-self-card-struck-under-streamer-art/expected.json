@@ -1,0 +1,22 @@
+{
+	"event": "Minimap",
+	"data": {
+		"spectator": false,
+		"teammates": [
+			{ "self": false, "dead": false },
+			{ "self": false, "dead": false },
+			{ "self": false, "dead": false },
+			{ "self": true, "dead": true }
+		],
+		"enemies": [
+			{ "dead": false },
+			{ "dead": false },
+			{ "dead": false },
+			{ "dead": false }
+		]
+	},
+	"options": {
+		"incomplete": true,
+		"notes": "XHXYlzu4Zt8 (1080p S3 POV, X Battle), t=2566. The streamer's drawn character covers the left half of the self card and of the left teammate card. The POV player is respawning: the right half of the self card's X shows over the badges. The old cross-out probe (saturated fraction plus |Laplacian|) read 0.68 at 57 there and took the art for scene bleed, so the card read alive; the stroke coherence of the X's right arms (0.49) reads it struck. Only the dead flags are asserted (the covered names read partly)."
+	}
+}

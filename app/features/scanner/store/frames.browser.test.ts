@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { DetectedEvent } from "../core/detectors/types";
+import type { DetectedEvent } from "../core/events";
 import { sessionSummary } from "../core/sessions";
 import { deleteEvents, listEvents, loadEventFrame, saveEvent } from "./events";
 import { trimFrames } from "./frames";
@@ -17,7 +17,7 @@ const HOUR = 60 * 60 * 1000;
 const mapStart: DetectedEvent = {
 	type: "MapStart",
 	t: 0,
-	confidence: 0.9,
+	scores: { read: 0.9 },
 	data: { mode: "SZ", stage: 0 },
 };
 

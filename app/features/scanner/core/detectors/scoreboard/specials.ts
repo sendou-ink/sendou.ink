@@ -5,9 +5,15 @@
  * enough since it only splits near-tied main icons (Splash- vs Sploosh-o-matic)
  * whose kit silhouettes are far apart (stamp vs crab, bomb vs beakon).
  */
-import { getCV, type Mat } from "../../cv";
-import type { FrameData } from "../../image";
+import * as Decisions from "../../decisions";
+import {
+	createImage,
+	type FrameData,
+	type Image,
+	threshold,
+} from "../../image";
 import type { MatchSteps } from "../../match-steps";
+import { resize } from "../../resize";
 import { WEAPON_KITS } from "./kits";
 import type { WeaponMatch } from "./weapons";
 
@@ -19,8 +25,8 @@ const SPECIAL_INK_THRESHOLD = 48;
 
 export interface SpecialTemplate {
 	id: string;
-	/** binary silhouette (dimensions mirrored off embind) + ink pixel count at each templateSizes entry */
-	sizes: { mat: Mat; rows: number; cols: number; ink: number }[];
+	/** binary silhouette + ink pixel count at each templateSizes entry */
+	sizes: { image: Image; rows: number; cols: number; ink: number }[];
 }
 
 export interface SpecialMatch {
@@ -34,7 +40,6 @@ export function prepareSpecialTemplates(
 	icons: { id: string; image: FrameData }[],
 	templateSizes: readonly number[] = SPECIAL_TEMPLATE_SIZES,
 ): SpecialTemplate[] {
-	const cv = getCV();
 	return icons.map(({ id, image }) => {
 		const { width, height, data } = image;
 		let xMin = width;
@@ -53,7 +58,7 @@ export function prepareSpecialTemplates(
 		}
 		const w = Math.max(1, xMax - xMin + 1);
 		const h = Math.max(1, yMax - yMin + 1);
-		const silhouette = new cv.Mat(h, w, cv.CV_8UC1, new cv.Scalar(0));
+		const silhouette = createImage(h, w, 1);
 		const dst = silhouette.data;
 		for (let y = 0; y < h; y++) {
 			for (let x = 0; x < w; x++) {
@@ -64,44 +69,30 @@ export function prepareSpecialTemplates(
 		}
 		const sizes = templateSizes.map((size) => {
 			const scale = size / Math.max(w, h);
-			const resized = new cv.Mat();
-			cv.resize(
+			const resized = resize(
 				silhouette,
-				resized,
-				new cv.Size(
-					Math.max(1, Math.round(w * scale)),
-					Math.max(1, Math.round(h * scale)),
-				),
-				0,
-				0,
-				cv.INTER_AREA,
+				Math.max(1, Math.round(w * scale)),
+				Math.max(1, Math.round(h * scale)),
+				"area",
 			);
 			// re-binarize the interpolated edges to match the search region's two-level scale
-			const mat = new cv.Mat();
-			cv.threshold(resized, mat, 127, 255, cv.THRESH_BINARY);
-			resized.delete();
+			const binary = threshold(resized, 127);
 			let ink = 0;
-			for (const v of mat.data) if (v > 0) ink++;
-			return { mat, rows: mat.rows, cols: mat.cols, ink };
+			for (const v of binary.data) if (v > 0) ink++;
+			return { image: binary, rows: binary.rows, cols: binary.cols, ink };
 		});
-		silhouette.delete();
 		return { id, sizes };
 	});
 }
 
-/** searchRgb: RGB crop of the icon ROI (view is fine); binarized on max(r,g,b) so any tint reads as shape. */
+/** searchRgb: RGB crop of the icon ROI; binarized on max(r,g,b) so any tint reads as shape. */
 export function* matchSpecialSteps(
-	searchRgb: Mat,
+	searchRgb: Image,
 	templates: SpecialTemplate[],
 ): MatchSteps<SpecialMatch> {
-	const cv = getCV();
-
-	// binarized copy of the search region (pixel access needs a copy)
-	const cont = new cv.Mat();
-	searchRgb.copyTo(cont);
-	const { rows, cols } = cont;
-	const binary = new cv.Mat(rows, cols, cv.CV_8UC1, new cv.Scalar(0));
-	const src = cont.data;
+	const { rows, cols } = searchRgb;
+	const binary = createImage(rows, cols, 1);
+	const src = searchRgb.data;
 	const dst = binary.data;
 	let searchInk = 0;
 	for (let i = 0; i < rows * cols; i++) {
@@ -111,14 +102,13 @@ export function* matchSpecialSteps(
 			searchInk++;
 		}
 	}
-	cont.delete();
 
 	const sizesOf = (template: SpecialTemplate) =>
 		template.sizes.filter((size) => size.rows <= rows && size.cols <= cols);
 	const [scoreOf] = yield [
 		{
 			image: binary,
-			templates: templates.flatMap((t) => sizesOf(t).map((s) => s.mat)),
+			templates: templates.flatMap((t) => sizesOf(t).map((s) => s.image)),
 		},
 	];
 	const ranked: { id: string; score: number }[] = [];
@@ -134,7 +124,6 @@ export function* matchSpecialSteps(
 		}
 		ranked.push({ id: template.id, score });
 	}
-	binary.delete();
 	ranked.sort((a, b) => b.score - a.score);
 	return {
 		id: ranked[0]?.id ?? "unknown",
@@ -143,8 +132,15 @@ export function* matchSpecialSteps(
 	};
 }
 
-/** Weapon-icon score gap under which two candidates count as a tie. */
-const WEAPON_TIE_MARGIN = 0.04;
+/**
+ * Weapon-icon score gap under which two candidates count as a tie. Measured on
+ * the fixtures and four VoD slices (minimap cards and boards labelled by the
+ * game's results screen, 2026-11-16): the kit tile turned a wrong leader
+ * right up to 0.030 (Carbon Roller over Flingza on a Triton cup board at
+ * 0.028) and wrongly favors the runner-up past the kit margin from 0.107
+ * (fW5h card, +0.17 for the wrong kit).
+ */
+const WEAPON_TIE_MARGIN = 0.06;
 
 /**
  * Icon twins differing only by the nozzle: on the replay browser's dim rendering
@@ -159,9 +155,10 @@ const ICON_TWINS: ReadonlyMap<string, string> = new Map([
 
 /**
  * Kit evidence must separate tied kits by this much: shape-matcher confusions (Wave Breaker vs Ink
- * Vac) sit inside, true splits (stamp vs crab) clear it.
+ * Vac) sit inside, true splits (stamp vs crab) clear it. Measured with WEAPON_TIE_MARGIN's data:
+ * true splits from 0.067 (low-res replay), leaders that were right at most 0.003 behind.
  */
-const KIT_DECISION_MARGIN = 0.06;
+const KIT_DECISION_MARGIN = 0.035;
 
 type KitPart = "sub" | "special";
 
@@ -176,7 +173,13 @@ function tiedWeaponsWithDistinctKit(
 	const leader = match.top[0];
 	if (!leader) return null;
 	const tied = match.top.filter(
-		(t) => leader.score - t.score < WEAPON_TIE_MARGIN,
+		(t) =>
+			t === leader ||
+			Decisions.below(
+				`scoreboard/specials:WEAPON_TIE_MARGIN#${part}`,
+				leader.score - t.score,
+				WEAPON_TIE_MARGIN,
+			),
 	);
 	const twinId = ICON_TWINS.get(leader.id);
 	if (twinId && !tied.some((t) => t.id === twinId)) {
@@ -224,7 +227,11 @@ function disambiguateWeaponByKit(
 	const runnerUp = ranked.find((t) => kitScore(t.id) < kitScore(winner.id));
 	if (
 		!runnerUp ||
-		kitScore(winner.id) - kitScore(runnerUp.id) < KIT_DECISION_MARGIN
+		Decisions.below(
+			`scoreboard/specials:KIT_DECISION_MARGIN#${part}`,
+			kitScore(winner.id) - kitScore(runnerUp.id),
+			KIT_DECISION_MARGIN,
+		)
 	) {
 		return match;
 	}

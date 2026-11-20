@@ -15,11 +15,6 @@
 import { cpus } from "node:os";
 import { Worker } from "node:worker_threads";
 import {
-	getCV,
-	loadOpenCV,
-	type Mat,
-} from "../../app/features/scanner/core/cv";
-import {
 	type MatchRequest,
 	type MatchSteps,
 	runSync,
@@ -37,15 +32,15 @@ function templateStats(id) {
 	if (s) return s;
 	const t = images[id];
 	const n = t.rows * t.cols;
-	const sum = new Array(t.ch).fill(0);
-	const sq = new Array(t.ch).fill(0);
-	for (let i = 0; i < n; i++) for (let c = 0; c < t.ch; c++) {
-		const v = t.data[i * t.ch + c];
+	const sum = new Array(t.channels).fill(0);
+	const sq = new Array(t.channels).fill(0);
+	for (let i = 0; i < n; i++) for (let c = 0; c < t.channels; c++) {
+		const v = t.data[i * t.channels + c];
 		sum[c] += v;
 		sq[c] += v * v;
 	}
 	let varInt = 0;
-	for (let c = 0; c < t.ch; c++) varInt += n * sq[c] - sum[c] * sum[c];
+	for (let c = 0; c < t.channels; c++) varInt += n * sq[c] - sum[c] * sum[c];
 	s = { n, sum, varInt };
 	stats.set(id, s);
 	return s;
@@ -60,7 +55,7 @@ function normalize(num, wvar, tvar) {
 	return 0;
 }
 function windowMax(img, t, s, lo, hi) {
-	const ch = img.ch;
+	const ch = img.channels;
 	const rowLen = t.cols * ch;
 	let best = -Infinity;
 	for (let y = 0; y + t.rows <= img.rows; y++) {
@@ -110,24 +105,8 @@ if (!options) {
 	process.exit(1);
 }
 
-await loadOpenCV();
-const cv = getCV();
 const corpus = loadMatchCorpus(options.dir);
-const mats = new Map<number, Mat>();
-const matOf = (id: number): Mat => {
-	let mat = mats.get(id);
-	if (!mat) {
-		const image = corpus.images[id]!;
-		mat = new cv.Mat(
-			image.rows,
-			image.cols,
-			image.ch === 1 ? cv.CV_8UC1 : cv.CV_8UC3,
-		);
-		mat.data.set(image.data);
-		mats.set(id, mat);
-	}
-	return mat;
-};
+const imageOf = (id: number) => corpus.images[id]!;
 
 const matcher = await createGpuMatcher(nodeGpu(), { timestamps: true });
 // warm-up (pipeline compilation, template upload), then a clean timed pass
@@ -198,8 +177,8 @@ process.exit(mismatches === 0 ? 0 : 1);
 function* replay(run: number, out: number[]): MatchSteps<void> {
 	for (const step of corpus.runs[run]!.steps) {
 		const batch: MatchRequest[] = step.map((r) => ({
-			image: matOf(r.image),
-			templates: r.templates.map(matOf),
+			image: imageOf(r.image),
+			templates: r.templates.map(imageOf),
 			windows: r.windows,
 			key: r.key,
 		}));

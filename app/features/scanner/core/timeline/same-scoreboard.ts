@@ -11,6 +11,11 @@ import type { ScoreboardBattleLogReplayData } from "../detectors/scoreboard-batt
 import { areDifferentReplayCodes } from "../replay-code";
 import { nameSimilarity } from "../text";
 
+/** What only the history screens read of a game. */
+type HistoryIdentity = Partial<
+	Pick<ScoreboardBattleLogReplayData, "timestamp" | "replayCode">
+>;
+
 /** Paint totals are reliable per-match fingerprints; compared only when both read this many of 8 rows. */
 const PAINT_MIN_READ = 6;
 
@@ -128,8 +133,8 @@ function statLine(player: ScoreboardData["players"][number]): string | null {
 }
 
 /** The non-null paint values, order-free (winner side can flip between reads). */
-function paints(data: Partial<ScoreboardData>): number[] {
-	return (data.players ?? [])
+function paints(data: ScoreboardData): number[] {
+	return data.players
 		.map((p) => p.paint)
 		.filter((p): p is number => p !== null);
 }
@@ -138,41 +143,31 @@ function paints(data: Partial<ScoreboardData>): number[] {
  * Whether two scoreboard events plausibly show the same match. Fields are
  * only compared when both sides read them, so a null read never splits.
  */
-export function sameScoreboardMatch(a: unknown, b: unknown): boolean {
-	const da = a as Partial<ScoreboardData> &
-		Partial<ScoreboardBattleLogReplayData>;
-	const db = b as Partial<ScoreboardData> &
-		Partial<ScoreboardBattleLogReplayData>;
-
+export function sameScoreboardMatch(
+	a: ScoreboardData & HistoryIdentity,
+	b: ScoreboardData & HistoryIdentity,
+): boolean {
 	// the battle log revealing X Battle's real names: a view of its own, which
 	// a more confident alias read must not swallow
-	if (
-		da.players &&
-		db.players &&
-		renamedRows(da as ScoreboardData, db as ScoreboardData)
-	) {
-		return false;
-	}
+	if (renamedRows(a, b)) return false;
 
-	const stageA = da.stage ?? null;
-	const stageB = db.stage ?? null;
-	if (stageA !== null && stageB !== null && stageA !== stageB) return false;
+	if (a.stage !== null && b.stage !== null && a.stage !== b.stage) return false;
 
 	// replay detail screens: the recording timestamp and the replay code
 	// both identify the replay (timestamp reads are shape-validated, so a
 	// garbled read comes back null rather than as a different valid time)
-	const tsA = da.timestamp ?? null;
-	const tsB = db.timestamp ?? null;
+	const tsA = a.timestamp ?? null;
+	const tsB = b.timestamp ?? null;
 	if (tsA !== null && tsB !== null && tsA !== tsB) return false;
-	const codeA = da.replayCode ?? null;
-	const codeB = db.replayCode ?? null;
+	const codeA = a.replayCode ?? null;
+	const codeB = b.replayCode ?? null;
 	if (codeA !== null && codeB !== null && areDifferentReplayCodes(codeA, codeB))
 		return false;
 
 	// same lobby, different map: names stay identical, but the paint totals
 	// are distinctive per match — near-zero overlap means a different board
-	const pa = paints(da);
-	const pb = paints(db);
+	const pa = paints(a);
+	const pb = paints(b);
 	if (
 		pa.length >= PAINT_MIN_READ &&
 		pb.length >= PAINT_MIN_READ &&

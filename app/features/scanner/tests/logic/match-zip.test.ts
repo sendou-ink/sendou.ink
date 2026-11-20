@@ -5,7 +5,9 @@ import type { ScanEvent } from "../../components/session-data";
 import type { ExportClip } from "../../core/csv/matches";
 import type { DeathData } from "../../core/detectors/death/index";
 import type { ScoreboardData } from "../../core/detectors/scoreboard/index";
+import * as EventVersion from "../../core/event-version";
 import { buildScannerMatches } from "../../core/match-builder";
+import * as ScanLog from "../../core/scan-log";
 
 const WEBP_BYTES = new Uint8Array([1, 2, 3, 4]);
 const PNG_BYTES = new Uint8Array([5, 6, 7]);
@@ -13,14 +15,14 @@ const PNG_BYTES = new Uint8Array([5, 6, 7]);
 const mapStart: ScanEvent = {
 	type: "MapStart",
 	t: 100,
-	confidence: 0.9,
+	scores: { read: 0.9 },
 	data: { mode: "SZ", stage: 0 },
 };
 
 const death: ScanEvent = {
 	type: "Death",
 	t: 162,
-	confidence: 0.9,
+	scores: { read: 0.9 },
 	data: {
 		weaponId: 40,
 		weaponType: "MAIN",
@@ -32,7 +34,7 @@ const death: ScanEvent = {
 const scoreboard: ScanEvent = {
 	type: "Scoreboard",
 	t: 400,
-	confidence: 0.9,
+	scores: { read: 0.9 },
 	data: {
 		lobby: "PRIVATE",
 		mode: "SZ",
@@ -57,7 +59,10 @@ const FRAMES = new Map<ScanEvent, Blob>([
 	[scoreboard, new Blob([PNG_BYTES], { type: "image/png" })],
 ]);
 
-async function unzipMatch(clips: readonly ExportClip[] = []) {
+async function unzipMatch(
+	clips: readonly ExportClip[] = [],
+	scanLog?: ScanLog.ScanLog,
+) {
 	const [built] = buildScannerMatches([mapStart, death, scoreboard]);
 	const zip = await matchZip(
 		built!,
@@ -66,6 +71,7 @@ async function unzipMatch(clips: readonly ExportClip[] = []) {
 			return frame ? () => Promise.resolve(frame) : undefined;
 		},
 		clips,
+		scanLog,
 	);
 	return unzipSync(zip);
 }
@@ -102,6 +108,9 @@ describe("matchZip", () => {
 			["Death", "frames/002-Death-1m02s"],
 			["Scoreboard", "frames/003-Scoreboard-5m00s"],
 		]);
+		expect(events.map((event: { v: number }) => event.v)).toEqual(
+			events.map(() => EventVersion.CURRENT),
+		);
 	});
 
 	test("includes the built match", async () => {
@@ -122,5 +131,27 @@ describe("matchZip", () => {
 			{ kills: 1, start: 160, end: 170 },
 			{ kills: 3, start: 300, end: 325 },
 		]);
+	});
+
+	test("carries the scan's log as scan-log.json", async () => {
+		const scanLog = ScanLog.create([{ tStart: 0, tEnd: 600 }]);
+		ScanLog.record(scanLog, 0, 100, {
+			detector: "map-start",
+			pass: true,
+			parsed: true,
+			reads: ScanLog.readsOf([mapStart]),
+		});
+
+		const files = await unzipMatch([], scanLog);
+
+		expect(
+			ScanLog.parse(JSON.parse(strFromU8(files["scan-log.json"]!))),
+		).toEqual(scanLog);
+	});
+
+	test("has no scan-log.json for a game whose scan kept no log", async () => {
+		const files = await unzipMatch();
+
+		expect(files["scan-log.json"]).toBeUndefined();
 	});
 });

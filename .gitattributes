@@ -1,3 +1,6 @@
 # Set the default behavior, in case people don't have core.autocrlf set.
 * text=auto
 
+
+# recorded scanner event tapes and their golden files
+app/features/scanner/tests/tapes/** linguist-generated

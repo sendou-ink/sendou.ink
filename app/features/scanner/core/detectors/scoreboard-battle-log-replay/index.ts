@@ -5,12 +5,14 @@
  * VICTORY/DEFEAT tags keep `players`/`matchScores` winners-first. Reuses the
  * scoreboard helpers with glyph sets rescaled to this screen.
  */
-import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
 	cropRoi,
 	frameGray,
 	frameRgb,
+	type Image,
 	maxBrightness,
 	maxChannel,
 	meanBrightness,
@@ -20,6 +22,7 @@ import {
 import { RESULT_TAG_ENTRIES } from "../../localized";
 import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import { closestBy } from "../../text";
+import { sameScoreboardMatch } from "../../timeline/same-scoreboard";
 import {
 	FULL_COUNT_TEAM_SCORE,
 	KO_MATCH_SCORE,
@@ -33,8 +36,14 @@ import type {
 	ScoreboardRowDebug,
 } from "../scoreboard/index";
 import { findPovIndex } from "../scoreboard/pov";
-import { parseScoreboardRowSteps, type RowRois } from "../scoreboard/row";
-import type { DetectedEvent, Detector, GateResult } from "../types";
+import {
+	parseScoreboardRowSteps,
+	playerScores,
+	type RowRois,
+	rowsComplete,
+} from "../scoreboard/row";
+import { HISTORY_SCREEN_MIN_MEAN_SCORE } from "../scoreboard-battle-log/detector";
+import type { Detector, EventKind, EventOf, GateResult } from "../types";
 import { codeCharsetOf, parseReplayCodeSteps } from "./code";
 import { parseReplayHeaderSteps } from "./header";
 import {
@@ -82,6 +91,28 @@ export interface ScoreboardBattleLogReplayData extends ScoreboardData {
 export const SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE =
 	"ScoreboardBattleLogReplay";
 
+export const SCOREBOARD_BATTLE_LOG_REPLAY_EVENT: EventKind<
+	typeof SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
+	ScoreboardBattleLogReplayData
+> = {
+	type: SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
+	sameData: sameScoreboardMatch,
+	minMeanScore: HISTORY_SCREEN_MIN_MEAN_SCORE,
+	complete: ({ data, scores }) =>
+		rowsComplete(data.players, scores) &&
+		data.lobby !== null &&
+		data.mode !== null &&
+		data.stage !== null &&
+		data.timestamp !== null &&
+		data.replayCode !== null &&
+		data.matchScores.every((score) => score !== null),
+	match: "closes",
+};
+
+type ScoreboardBattleLogReplayEvent = EventOf<
+	typeof SCOREBOARD_BATTLE_LOG_REPLAY_EVENT
+>;
+
 /** Replay pills are mid-gray (~61), not near-black; see matchWeapon docs. */
 const REPLAY_INK_THRESHOLD = 90;
 
@@ -105,16 +136,13 @@ interface PanelParse {
 	result: PanelResult | null;
 	resultReading: string;
 	resultScore: number;
-	confidences: number[];
+	/** per row, keyed by the row's own fields */
+	rowScores: { scores: FieldScores.FieldScores }[];
 }
 
 /** Fraction of ROI pixels matching the replay code's green (RGBA frame). */
-function greenFraction(frame: Mat, roi: Roi): number {
-	const cv = getCV();
-	const view = cropRoi(frame, roi);
-	const cont = new cv.Mat();
-	view.copyTo(cont);
-	view.delete();
+function greenFraction(frame: Image, roi: Roi): number {
+	const cont = cropRoi(frame, roi);
 	const d = cont.data;
 	const n = cont.rows * cont.cols;
 	let green = 0;
@@ -125,13 +153,12 @@ function greenFraction(frame: Mat, roi: Roi): number {
 		)
 			green++;
 	}
-	cont.delete();
 	return n > 0 ? green / n : 0;
 }
 
 export function createScoreboardBattleLogReplayDetector(
 	resources: ScoreboardResources,
-): Detector<ScoreboardBattleLogReplayData> {
+): Detector<ScoreboardBattleLogReplayEvent> {
 	const scaled = (set: GlyphSet | null, height: number): GlyphSet | null =>
 		set ? scaleGlyphSet(set, height / set.height) : null;
 
@@ -160,7 +187,18 @@ export function createScoreboardBattleLogReplayDetector(
 				)
 			: null;
 
-	function gate(frame: Mat): GateResult {
+	const gateRois = [
+		...PANEL_XS.flatMap((dx) =>
+			ROW_CENTERS.flatMap((cy) => [
+				gateFlatProbe(cy, dx),
+				paintSuffixRoi(cy, dx),
+			]),
+		),
+		...GATE_GAP_PROBES,
+		REPLAY_CODE_ROI,
+	];
+
+	function gate(frame: Image): GateResult {
 		const gray = frameGray(frame);
 
 		let flatOk = 0;
@@ -168,14 +206,39 @@ export function createScoreboardBattleLogReplayDetector(
 		for (const dx of PANEL_XS) {
 			for (const cy of ROW_CENTERS) {
 				const flat = meanBrightness(frame, gateFlatProbe(cy, dx));
-				if (flat >= GATE_FLAT_MIN_MEAN && flat <= GATE_FLAT_MAX_MEAN) flatOk++;
-				if (maxBrightness(gray, paintSuffixRoi(cy, dx)) > GATE_TEXT_MIN_MAX)
+				if (
+					Decisions.atLeast(
+						"scoreboard-battle-log-replay:GATE_FLAT_MIN_MEAN",
+						flat,
+						GATE_FLAT_MIN_MEAN,
+					) &&
+					Decisions.atMost(
+						"scoreboard-battle-log-replay:GATE_FLAT_MAX_MEAN",
+						flat,
+						GATE_FLAT_MAX_MEAN,
+					)
+				)
+					flatOk++;
+				if (
+					Decisions.above(
+						"scoreboard-battle-log-replay:GATE_TEXT_MIN_MAX",
+						maxBrightness(gray, paintSuffixRoi(cy, dx)),
+						GATE_TEXT_MIN_MAX,
+					)
+				)
 					suffixOk++;
 			}
 		}
 		let gapOk = 0;
 		for (const roi of GATE_GAP_PROBES) {
-			if (meanBrightness(frame, roi) < GATE_GAP_MAX_MEAN) gapOk++;
+			if (
+				Decisions.below(
+					"scoreboard-battle-log-replay:GATE_GAP_MAX_MEAN",
+					meanBrightness(frame, roi),
+					GATE_GAP_MAX_MEAN,
+				)
+			)
+				gapOk++;
 		}
 		const codeFraction = greenFraction(frame, REPLAY_CODE_ROI);
 
@@ -190,14 +253,18 @@ export function createScoreboardBattleLogReplayDetector(
 			flatOk >= 7 &&
 			suffixOk >= 7 &&
 			gapOk === 2 &&
-			codeFraction >= GATE_CODE_MIN_FRACTION;
+			Decisions.atLeast(
+				"scoreboard-battle-log-replay:GATE_CODE_MIN_FRACTION",
+				codeFraction,
+				GATE_CODE_MIN_FRACTION,
+			);
 		// browsing between replays never drops this gate, so fingerprint what
 		// differs between battles (timestamp, code, names) for the scheduler
 		const signature = pass ? contentSignature(gray) : undefined;
 		return { pass, score, signature };
 	}
 
-	function contentSignature(gray: Mat): number[] {
+	function contentSignature(gray: Image): number[] {
 		const signature = roiSignature(gray, HEADER_TOP_BAND, 32, 2);
 		signature.push(...roiSignature(gray, REPLAY_CODE_ROI, 32, 1));
 		for (const dx of PANEL_XS) {
@@ -210,8 +277,8 @@ export function createScoreboardBattleLogReplayDetector(
 
 	/** One panel's rows, totals and result tag, all read in one lockstep. */
 	function* parsePanelSteps(
-		gray: Mat,
-		rgb: Mat,
+		gray: Image,
+		rgb: Image,
 		dx: number,
 		speculative: boolean,
 	): MatchSteps<PanelParse> {
@@ -234,7 +301,18 @@ export function createScoreboardBattleLogReplayDetector(
 		// bottom row (gate's flatOk >= 7 tolerates it); skip it, no phantom player
 		const rowCenters = ROW_CENTERS.filter((cy) => {
 			const flat = meanBrightness(rgb, gateFlatProbe(cy, dx));
-			return flat >= GATE_FLAT_MIN_MEAN && flat <= GATE_FLAT_MAX_MEAN;
+			return (
+				Decisions.atLeast(
+					"scoreboard-battle-log-replay:GATE_FLAT_MIN_MEAN#rowPresent",
+					flat,
+					GATE_FLAT_MIN_MEAN,
+				) &&
+				Decisions.atMost(
+					"scoreboard-battle-log-replay:GATE_FLAT_MAX_MEAN#rowPresent",
+					flat,
+					GATE_FLAT_MAX_MEAN,
+				)
+			);
 		});
 		// the point total is read only to recognize a knockout below (only a
 		// knockout's full count reaches 500); never emitted as a score
@@ -290,22 +368,19 @@ export function createScoreboardBattleLogReplayDetector(
 					)
 				: done(null),
 		]);
-		teamCrop?.delete();
-		matchCrop?.delete();
-		bright?.delete();
-
-		const confidences = rowReads.flatMap((row) => row.confidences);
-		if (teamScore) confidences.push(teamScore.confidence);
 
 		let matchScore: ParsedNumber | null = matchRead;
 		if (matchScore) {
 			if (
-				matchScore.confidence < MATCH_SCORE_MIN_CONF ||
+				Decisions.below(
+					"scoreboard-battle-log-replay:MATCH_SCORE_MIN_CONF",
+					matchScore.confidence,
+					MATCH_SCORE_MIN_CONF,
+				) ||
 				(matchScore.value !== null && matchScore.value > KO_MATCH_SCORE)
 			) {
 				matchScore = { ...matchScore, value: null };
 			}
-			confidences.push(matchScore.confidence);
 			// no number + a full team count = the KNOCKOUT! burst sits where the score
 			// would be; an unreadable banner on a lesser total stays null
 			if (
@@ -329,7 +404,13 @@ export function createScoreboardBattleLogReplayDetector(
 				);
 				if (match) {
 					resultScore = match.score;
-					if (match.score >= RESULT_MIN_SCORE)
+					if (
+						Decisions.atLeast(
+							"scoreboard-battle-log-replay:RESULT_MIN_SCORE",
+							match.score,
+							RESULT_MIN_SCORE,
+						)
+					)
 						result = match.entry.canonical as PanelResult;
 				}
 			}
@@ -343,16 +424,16 @@ export function createScoreboardBattleLogReplayDetector(
 			result,
 			resultReading,
 			resultScore,
-			confidences,
+			rowScores: rowReads,
 		};
 	}
 
 	function* parseSteps(
-		frame: Mat,
+		frame: Image,
 		t: number,
 		_gate: GateResult | undefined,
 		speculative: boolean,
-	): MatchSteps<DetectedEvent<ScoreboardBattleLogReplayData>[]> {
+	): MatchSteps<ScoreboardBattleLogReplayEvent[]> {
 		const gray = frameGray(frame);
 		const rgb = frameRgb(frame);
 
@@ -390,22 +471,19 @@ export function createScoreboardBattleLogReplayDetector(
 			[...winner.rows, ...loser.rows].map((r) => r.povFraction),
 		);
 
-		const confidences = [
-			...winner.confidences,
-			...loser.confidences,
-			...(header ? [header.confidence] : []),
-			...(code ? [code.confidence] : []),
-		];
-		const confidence =
-			confidences.length > 0
-				? confidences.reduce((a, b) => a + b, 0) / confidences.length
-				: 0;
-
 		return [
 			{
 				type: SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
 				t,
-				confidence,
+				scores: {
+					...playerScores([...winner.rowScores, ...loser.rowScores]),
+					...header?.scores,
+					...FieldScores.of({
+						replayCode: code?.confidence,
+						"matchScores.0": winner.matchScore?.confidence,
+						"matchScores.1": loser.matchScore?.confidence,
+					}),
+				},
 				data: {
 					lobby: header?.lobby ?? null,
 					mode: header?.mode ?? null,
@@ -449,11 +527,10 @@ export function createScoreboardBattleLogReplayDetector(
 		];
 	}
 
-	// no rearm cooldown: browsed replays are told apart by content signature.
-	// sufficientConfidence just under the clean-read floor (fixtures 0.808-0.890)
+	// no rearm cooldown: browsed replays are told apart by content signature
 	return {
 		id: "scoreboard-battle-log-replay",
-		sufficientConfidence: 0.8,
+		gateRois,
 		gate,
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),

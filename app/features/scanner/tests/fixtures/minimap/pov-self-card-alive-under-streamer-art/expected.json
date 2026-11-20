@@ -1,0 +1,22 @@
+{
+	"event": "Minimap",
+	"data": {
+		"spectator": false,
+		"teammates": [
+			{ "self": false, "dead": false },
+			{ "self": false, "dead": false },
+			{ "self": false, "dead": true },
+			{ "self": true, "dead": false }
+		],
+		"enemies": [
+			{ "dead": false },
+			{ "dead": true },
+			{ "dead": false },
+			{ "dead": false }
+		]
+	},
+	"options": {
+		"incomplete": true,
+		"notes": "XHXYlzu4Zt8 (1080p S3 POV, X Battle), t=6722.25. The streamer's drawn character covers the left half of the self card; the POV player respawned a second earlier, so the card is alive. Its saturated, line-drawn art made the old cross-out probe read the self card struck (0.42 saturated at 53 |Laplacian|). The right teammate (Towel) and the second enemy row are struck. Only the dead flags are asserted (the covered self name does not read)."
+	}
+}

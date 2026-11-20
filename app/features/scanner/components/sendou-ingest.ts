@@ -12,8 +12,8 @@
 
 import * as R from "remeda";
 import type { IngestResponse } from "~/features/scanner-ingest/scanner-ingest-schemas";
-import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
-import type { DetectedEvent } from "../core/detectors/types";
+import type { DetectedEvent } from "../core/events";
+import { isScoreboardEvent } from "../core/events";
 import type { BuiltMatch } from "../core/match-builder";
 import { ingestSkipReasons } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";
@@ -158,9 +158,7 @@ export function unsentMatches(built: BuiltMatch<ScanEvent>): boolean {
  * screen.
  */
 export function unsentScoreboardMatches(built: BuiltMatch<ScanEvent>): boolean {
-	return !built.sources.some(
-		(e) => SCOREBOARD_EVENT_TYPES.includes(e.type) && isSentOrSending(e),
-	);
+	return !built.sources.some((e) => isScoreboardEvent(e) && isSentOrSending(e));
 }
 
 /** Match selector: matches stored without a game to link to, or whose send failed, with their next retry due. */
@@ -179,7 +177,7 @@ export function retryDueMatches(built: BuiltMatch<ScanEvent>): boolean {
  */
 export function unsentClosedMatches(built: BuiltMatch<ScanEvent>): boolean {
 	return (
-		built.sources.some((e) => SCOREBOARD_EVENT_TYPES.includes(e.type)) &&
+		built.sources.some(isScoreboardEvent) &&
 		built.sources.every((e) => e.send === undefined)
 	);
 }

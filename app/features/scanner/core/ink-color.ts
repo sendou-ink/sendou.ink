@@ -4,8 +4,8 @@
  * color, fixed for the game and picked to contrast — a per-frame team identity
  * signal where screen position is not one (casts reorder HUD sides).
  */
-import type { Mat } from "./cv";
-import { copyRoi, type Roi } from "./image";
+import * as Decisions from "./decisions";
+import { cropRoi, type Image, type Roi } from "./image";
 
 export interface InkRgb {
 	r: number;
@@ -25,7 +25,7 @@ const MIN_INK_PIXELS = 30;
  * saturated pixels keeps dark/white surroundings from washing the hue out.
  */
 export function meanInkColor(
-	frame: Mat,
+	frame: Image,
 	rois: readonly Roi[],
 	minSaturation: number = INK_MIN_SATURATION,
 ): InkRgb | null {
@@ -34,9 +34,9 @@ export function meanInkColor(
 	let b = 0;
 	let count = 0;
 	for (const roi of rois) {
-		const crop = copyRoi(frame, roi);
+		const crop = cropRoi(frame, roi);
 		const { data } = crop;
-		const channels = crop.channels();
+		const channels = crop.channels;
 		for (let i = 0; i < data.length; i += channels) {
 			const pr = data[i]!;
 			const pg = data[i + 1]!;
@@ -48,9 +48,10 @@ export function meanInkColor(
 			b += pb;
 			count++;
 		}
-		crop.delete();
 	}
-	if (count < MIN_INK_PIXELS) return null;
+	if (Decisions.below("ink-color:MIN_INK_PIXELS#mean", count, MIN_INK_PIXELS)) {
+		return null;
+	}
 	return {
 		r: Math.round(r / count),
 		g: Math.round(g / count),
@@ -71,14 +72,14 @@ const DOMINANT_INK_MIN_VALUE = 105;
  * which a plain mean would pull off the team's hue. Null on too little ink.
  */
 export function dominantInkColor(
-	frame: Mat,
+	frame: Image,
 	rois: readonly Roi[],
 ): InkRgb | null {
 	const pixels: { r: number; g: number; b: number; hue: number }[] = [];
 	for (const roi of rois) {
-		const crop = copyRoi(frame, roi);
+		const crop = cropRoi(frame, roi);
 		const { data } = crop;
-		const channels = crop.channels();
+		const channels = crop.channels;
 		for (let i = 0; i < data.length; i += channels) {
 			const color = { r: data[i]!, g: data[i + 1]!, b: data[i + 2]! };
 			const max = Math.max(color.r, color.g, color.b);
@@ -86,9 +87,16 @@ export function dominantInkColor(
 			if (spread < INK_MIN_SATURATION || max < DOMINANT_INK_MIN_VALUE) continue;
 			pixels.push({ ...color, hue: hueOf(color) });
 		}
-		crop.delete();
 	}
-	if (pixels.length < MIN_INK_PIXELS) return null;
+	if (
+		Decisions.below(
+			"ink-color:MIN_INK_PIXELS#dominant",
+			pixels.length,
+			MIN_INK_PIXELS,
+		)
+	) {
+		return null;
+	}
 
 	const bins = new Array<number>(360 / HUE_BIN_DEGREES).fill(0);
 	for (const { hue } of pixels) {
@@ -110,7 +118,15 @@ export function dominantInkColor(
 	const near = pixels.filter(
 		(pixel) => hueDistance(pixel.hue, modeHue) <= DOMINANT_HUE_TOLERANCE,
 	);
-	if (near.length < MIN_INK_PIXELS) return null;
+	if (
+		Decisions.below(
+			"ink-color:MIN_INK_PIXELS#nearModeHue",
+			near.length,
+			MIN_INK_PIXELS,
+		)
+	) {
+		return null;
+	}
 	return {
 		r: Math.round(near.reduce((sum, p) => sum + p.r, 0) / near.length),
 		g: Math.round(near.reduce((sum, p) => sum + p.g, 0) / near.length),

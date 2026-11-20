@@ -86,9 +86,9 @@ interface AssembledResources {
 }
 
 /**
- * Requires loadOpenCV() to have resolved. One unreadable icon (a weapon added
- * to in-game-lists before the assets repo has its image) only drops that
- * template, the caller decides whether that is fatal.
+ * One unreadable icon (a weapon added to in-game-lists before the assets
+ * repo has its image) only drops that template, the caller decides whether
+ * that is fatal.
  */
 export async function assembleScoreboardResources(
 	io: ResourceIO,

@@ -4,97 +4,41 @@
  */
 
 import { downloadBlob as download } from "~/utils/download";
-import {
-	DEATH_EVENT_TYPE,
-	type DeathData,
-} from "../core/detectors/death/index";
-import { KILL_EVENT_TYPE, type KillData } from "../core/detectors/kill/index";
-import {
-	MAP_START_EVENT_TYPE,
-	type MapStartData,
-} from "../core/detectors/map-start/index";
-import {
-	MINIMAP_EVENT_TYPE,
-	type MinimapData,
-} from "../core/detectors/minimap/index";
-import {
-	OBJECTIVE_EVENT_TYPE,
-	type ObjectiveData,
-} from "../core/detectors/objective/index";
+import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
+import { KILL_EVENT_TYPE } from "../core/detectors/kill/index";
+import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
+import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
+import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
 import {
 	PLAYER_STATUS_EVENT_TYPE,
-	type PlayerStatusData,
+	statusFlagsOf,
 } from "../core/detectors/objective/player-status";
-import {
-	STRIP_WEAPONS_EVENT_TYPE,
-	type StripWeaponsData,
-} from "../core/detectors/objective/strip-weapons";
+import { STRIP_WEAPONS_EVENT_TYPE } from "../core/detectors/objective/strip-weapons";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type { ScoreboardBattleLogReplayData } from "../core/detectors/scoreboard-battle-log-replay/index";
-import {
-	SCOREBOARD_OWN_EVENT_TYPE,
-	type ScoreboardOwnData,
-} from "../core/detectors/scoreboard-own/index";
-import {
-	X_RANK_POSITION_EVENT_TYPE,
-	type XRankPositionData,
-} from "../core/detectors/x-rank/position";
-import {
-	X_SET_COUNT_EVENT_TYPE,
-	type XSetCountData,
-} from "../core/detectors/x-rank/set-count";
-import {
-	X_SET_RESULT_EVENT_TYPE,
-	type XSetResultData,
-} from "../core/detectors/x-rank/set-result";
+import { SCOREBOARD_OWN_EVENT_TYPE } from "../core/detectors/scoreboard-own/index";
+import { type DetectedEvent, isXBattleCardEvent } from "../core/events";
 import { mainWeaponLabel, stageLabel, weaponLabel } from "../core/labels";
 
 /** Scoreboard data with the replay extras present when the event has them. */
-export type CardData = ScoreboardData &
+type CardData = ScoreboardData &
 	Partial<Pick<ScoreboardBattleLogReplayData, "timestamp" | "replayCode">>;
 
-/** Any detector's event payload that can prefill a fixture. */
-export type FixtureData =
-	| CardData
-	| DeathData
-	| MapStartData
-	| ScoreboardOwnData
-	| MinimapData
-	| ObjectiveData
-	| PlayerStatusData
-	| StripWeaponsData
-	| KillData
-	| XSetCountData
-	| XSetResultData
-	| XRankPositionData;
-
-/** The X Battle cards' data is already in its fixture form. */
-const AS_IS_EVENT_TYPES: readonly string[] = [
-	X_SET_COUNT_EVENT_TYPE,
-	X_SET_RESULT_EVENT_TYPE,
-	X_RANK_POSITION_EVENT_TYPE,
-];
-
-function isDeath(_data: FixtureData, eventType: string): _data is DeathData {
-	return eventType === DEATH_EVENT_TYPE;
-}
-
-/** A detection's expected.json, prefilled from the detector's output. Null data = negative-fixture form. */
-export function buildExpectedJson(
-	data: FixtureData | null,
-	eventType = "Scoreboard",
-): string {
-	if (!data) {
+/** A detection's expected.json, prefilled from the detector's output. Null = negative-fixture form. */
+export function buildExpectedJson(event: DetectedEvent | null): string {
+	if (!event) {
 		return `${JSON.stringify({ event: "none" }, null, 2)}\n`;
 	}
-	if (AS_IS_EVENT_TYPES.includes(eventType)) {
-		return `${JSON.stringify({ event: eventType, data }, null, 2)}\n`;
+	// the X Battle cards' data is already in its fixture form
+	if (isXBattleCardEvent(event)) {
+		return `${JSON.stringify({ event: event.type, data: event.data }, null, 2)}\n`;
 	}
-	if (isDeath(data, eventType)) {
+	if (event.type === DEATH_EVENT_TYPE) {
+		const { data } = event;
 		const label = weaponLabel(data.weaponType, data.weaponId);
 		return `${JSON.stringify(
 			{
-				event: eventType,
+				event: event.type,
 				data: {
 					...(label !== null && { weaponLabel: label }),
 					...(data.weaponId !== null && { weaponId: data.weaponId }),
@@ -107,11 +51,11 @@ export function buildExpectedJson(
 			2,
 		)}\n`;
 	}
-	if (eventType === SCOREBOARD_OWN_EVENT_TYPE) {
-		const own = data as ScoreboardOwnData;
+	if (event.type === SCOREBOARD_OWN_EVENT_TYPE) {
+		const own = event.data;
 		return `${JSON.stringify(
 			{
-				event: eventType,
+				event: event.type,
 				data: {
 					...(own.lobby !== null && { lobby: own.lobby }),
 					...(own.mode !== null && { mode: own.mode }),
@@ -130,11 +74,11 @@ export function buildExpectedJson(
 			2,
 		)}\n`;
 	}
-	if (eventType === MINIMAP_EVENT_TYPE) {
-		const minimap = data as MinimapData;
+	if (event.type === MINIMAP_EVENT_TYPE) {
+		const minimap = event.data;
 		return `${JSON.stringify(
 			{
-				event: eventType,
+				event: event.type,
 				data: {
 					...(minimap.stage !== null && {
 						stage: minimap.stage,
@@ -164,11 +108,11 @@ export function buildExpectedJson(
 			2,
 		)}\n`;
 	}
-	if (eventType === OBJECTIVE_EVENT_TYPE) {
-		const objective = data as ObjectiveData;
+	if (event.type === OBJECTIVE_EVENT_TYPE) {
+		const objective = event.data;
 		return `${JSON.stringify(
 			{
-				event: eventType,
+				event: event.type,
 				data:
 					objective.mode === "SZ"
 						? {
@@ -190,27 +134,28 @@ export function buildExpectedJson(
 			2,
 		)}\n`;
 	}
-	if (eventType === PLAYER_STATUS_EVENT_TYPE) {
-		const status = data as PlayerStatusData;
+	if (event.type === PLAYER_STATUS_EVENT_TYPE) {
+		const status = event.data;
+		const flags = statusFlagsOf(status);
 		return `${JSON.stringify(
 			{
-				event: eventType,
+				event: event.type,
 				data: {
 					cast: status.cast,
 					time: status.time,
-					special: status.special,
-					dead: status.dead,
+					special: flags.special,
+					dead: flags.dead,
 				},
 			},
 			null,
 			2,
 		)}\n`;
 	}
-	if (eventType === STRIP_WEAPONS_EVENT_TYPE) {
-		const strip = data as StripWeaponsData;
+	if (event.type === STRIP_WEAPONS_EVENT_TYPE) {
+		const strip = event.data;
 		return `${JSON.stringify(
 			{
-				event: eventType,
+				event: event.type,
 				data: {
 					time: strip.time,
 					// the top candidate per slot; hand-correct to the true weapons
@@ -228,21 +173,19 @@ export function buildExpectedJson(
 			2,
 		)}\n`;
 	}
-	if (eventType === KILL_EVENT_TYPE) {
-		const kill = data as KillData;
+	if (event.type === KILL_EVENT_TYPE) {
+		const kill = event.data;
 		return `${JSON.stringify(
-			{ event: eventType, data: { time: kill.time, names: kill.names } },
+			{ event: event.type, data: { time: kill.time, names: kill.names } },
 			null,
 			2,
 		)}\n`;
 	}
-	// NB: not a type-predicate helper — CardData is structurally assignable to
-	// MapStartData, so a predicate would narrow the fall-through case to never
-	if (eventType === MAP_START_EVENT_TYPE) {
-		const mapStart = data as MapStartData;
+	if (event.type === MAP_START_EVENT_TYPE) {
+		const mapStart = event.data;
 		return `${JSON.stringify(
 			{
-				event: eventType,
+				event: event.type,
 				data: {
 					...(mapStart.mode !== null && { mode: mapStart.mode }),
 					...(mapStart.stage !== null && {
@@ -255,10 +198,10 @@ export function buildExpectedJson(
 			2,
 		)}\n`;
 	}
-	const card = data as CardData;
+	const card: CardData = event.data;
 	return `${JSON.stringify(
 		{
-			event: eventType,
+			event: event.type,
 			data: {
 				...(card.lobby !== null && { lobby: card.lobby }),
 				...(card.mode !== null && { mode: card.mode }),
@@ -284,14 +227,11 @@ export function buildExpectedJson(
 	)}\n`;
 }
 
-/** expected.json alone, for a frame already on disk (Screenshot page). Null data = negative-fixture form. */
-export function downloadExpectedJson(
-	data: FixtureData | null,
-	eventType?: string,
-): void {
+/** expected.json alone, for a frame already on disk (Screenshot page). Null = negative-fixture form. */
+export function downloadExpectedJson(event: DetectedEvent | null): void {
 	download(
 		"expected.json",
-		new Blob([buildExpectedJson(data, eventType)], {
+		new Blob([buildExpectedJson(event)], {
 			type: "application/json",
 		}),
 	);

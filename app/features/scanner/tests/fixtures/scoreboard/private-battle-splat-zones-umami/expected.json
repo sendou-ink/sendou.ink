@@ -19,7 +19,7 @@
         "s": 3
       },
       {
-        "name": "Mathis♪・“",
+        "name": "Mathis♪™",
         "weaponId": 2070,
         "paint": 1566,
         "ka": 14,
@@ -51,7 +51,7 @@
         "s": 6
       },
       {
-        "name": "Rιppιng_H",
+        "name": "Rιppιηg_H",
         "weaponId": 8020,
         "paint": 1315,
         "ka": 9,
@@ -75,5 +75,8 @@
         "s": 5
       }
     ]
+  },
+  "options": {
+    "notes": "players.5.name: the 'n' is a Greek η, drawn with its right leg four rows under the baseline (the ι beside it is Greek too). players.1.name: the ™ is a superscript whose T and M segment apart; the atlas carries this frame's ™, the font's matches it too poorly for the two to merge."
   }
 }

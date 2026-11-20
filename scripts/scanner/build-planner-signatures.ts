@@ -6,14 +6,13 @@
  * in OVER/MINI/ITEMS). Each PLANNER_TYPE render is reduced to the
  * ink-invariant structural signature (core/detectors/minimap/stage.ts) and
  * packed, quantized to uint8, into one grayscale atlas PNG plus a manifest
- * (keys "<stageId>-<MODE>"). Output goes to SCANNER_ASSETS_DIR/planner;
+ * (keys "<stageId>-<MODE>"). Output goes to PLANNER_DIR;
  * shipping a regen means pushing the assets repo.
  *
  *   pnpm scanner:build-planner-signatures
  */
 import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import {
 	PLANNER_SIG_H,
 	PLANNER_SIG_W,
@@ -22,10 +21,10 @@ import {
 } from "../../app/features/scanner/core/detectors/minimap/stage";
 import {
 	type FrameData,
+	imageFromFrameData,
 	normalizeFrame,
-	toMat,
 } from "../../app/features/scanner/core/image";
-import { SCANNER_ASSETS_DIR } from "../../app/features/scanner/node/assets-dir";
+import { PLANNER_DIR } from "../../app/features/scanner/node/assets-dir";
 import { readImage, writePng } from "../../app/features/scanner/node/image-io";
 
 /** which render variant the signatures are built from */
@@ -33,11 +32,8 @@ const PLANNER_TYPE = process.env.SCANNER_PLANNER_TYPE ?? "MINI";
 const SRC_DIR =
 	process.env.SCANNER_PLANNER_MAPS_DIR ??
 	new URL("../../../assets/assets/planner-maps", import.meta.url).pathname;
-const OUT_DIR =
-	process.env.SCANNER_PLANNER_OUT_DIR ?? join(SCANNER_ASSETS_DIR, "planner");
+const OUT_DIR = process.env.SCANNER_PLANNER_OUT_DIR ?? PLANNER_DIR;
 const COLS = 5;
-
-await loadOpenCV();
 
 const files = readdirSync(SRC_DIR)
 	.filter((f) => f.endsWith(`-${PLANNER_TYPE}.png`))
@@ -65,11 +61,9 @@ for (let i = 0; i < files.length; i++) {
 	const key = file.replace(`-${PLANNER_TYPE}.png`, "");
 	keys.push(key);
 
-	const img = toMat(await readImage(join(SRC_DIR, file)));
+	const img = imageFromFrameData(await readImage(join(SRC_DIR, file)));
 	const norm = normalizeFrame(img);
 	const sig = plannerSignature(norm);
-	img.delete();
-	norm.delete();
 
 	// quantize to uint8 (load re-normalizes to unit L2, so the scale is free)
 	let max = 0;

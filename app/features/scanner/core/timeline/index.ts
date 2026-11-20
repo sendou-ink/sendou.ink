@@ -1,159 +1,112 @@
 /**
- * TimelineBuilder: same-type events within a merge window collapse into one
- * (highest confidence kept); events below a confidence floor are dropped.
- * Sampled types (per-frame state reads) keep the ends of every same-state run
- * instead, see `sampledTypes`.
+ * TimelineBuilder: same-type events within a merge window collapse into one,
+ * each of its scored fields voted across the run's reads; a read whose field
+ * scores average under a floor is dropped. Each event kind declares its own
+ * window, content guard, floor and how a run becomes the read kept
+ * (`EventKind` in detectors/types.ts, listed in events.ts); per-frame state
+ * reads are all kept.
+ * A scan has one timeline, pushed to by its frame pass (detectors/frame-pass.ts):
+ * the analyzer worker's or the CLI's. Everything else follows it through the
+ * keyed changes its pushes report.
  */
 
-import { KILL_EVENT_TYPE, sameKillData } from "../detectors/kill/index";
-import {
-	MINIMAP_EVENT_TYPE,
-	sameMinimapStatusData,
-} from "../detectors/minimap/index";
-import {
-	OBJECTIVE_EVENT_TYPE,
-	sameObjectiveData,
-} from "../detectors/objective/index";
-import {
-	PLAYER_STATUS_EVENT_TYPE,
-	samePlayerStatusData,
-} from "../detectors/objective/player-status";
-import { STRIP_WEAPONS_EVENT_TYPE } from "../detectors/objective/strip-weapons";
-import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/quick-scoreboard-battle-log/index";
-import { SCOREBOARD_EVENT_TYPE } from "../detectors/scoreboard/index";
-import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/scoreboard-battle-log/index";
-import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../detectors/scoreboard-battle-log-replay/index";
-import type { DetectedEvent } from "../detectors/types";
-import {
-	X_RANK_POSITION_EVENT_TYPE,
-	xRankPositionProgress,
-} from "../detectors/x-rank/position";
-import {
-	X_SET_COUNT_EVENT_TYPE,
-	xSetCountProgress,
-} from "../detectors/x-rank/set-count";
-import {
-	X_SET_RESULT_EVENT_TYPE,
-	xSetResultCarryOver,
-	xSetResultProgress,
-} from "../detectors/x-rank/set-result";
-import { sameScoreboardMatch } from "./same-scoreboard";
+import type { DetectedEvent } from "../events";
+import { isComplete, kindOf } from "../events";
+import * as FieldScores from "../field-scores";
 
 export interface TimelineOptions {
-	/** same-type events closer than this (seconds) merge */
+	/** same-type events closer than this (seconds) merge, unless the kind sets its own window */
 	mergeWindow: number;
-	/** per-type overrides: repeatable events need a window shorter than the spacing between two real occurrences */
-	mergeWindowByType: Record<string, number>;
-	/**
-	 * per-type content guard: same-type events inside the window merge only when
-	 * this returns true for their data — screens whose distinct occurrences can
-	 * appear seconds apart (replay browsing) need content, not time, to split.
-	 */
-	sameEventDataByType: Record<string, (a: unknown, b: unknown) => boolean>;
-	/** events below this confidence are dropped */
-	minConfidence: number;
-	/** per-type floor overrides: evidence events scored on a different scale (raw NCC peaks) opt out of the shared floor, history screens raise it */
-	minConfidenceByType: Record<string, number>;
-	/**
-	 * per-frame state samples, where every read carries state at its instant
-	 * and a run of same-state reads is a series rather than one repeated
-	 * screen. Instead of collapsing the run into its first read, the builder
-	 * keeps that first read, the latest read (re-placed as the run grows —
-	 * `extended`) and one read per merge window in between, so the run's ends
-	 * are exact and a lone misread stays flanked by the reads either side of
-	 * it for the match builder's smoothing. Confidence never moves a sample.
-	 */
-	sampledTypes: readonly string[];
-	/**
-	 * types whose first read is the event: their content guard only merges
-	 * identical repeats, so a more confident one carries nothing new except a
-	 * later `t` — and a kill-feed row is re-read over its whole ~5s+ life, so
-	 * taking it over would move the kill to when the row was about to leave.
-	 */
-	firstReadTypes: readonly string[];
-	/**
-	 * per-type animation order for screens that count toward their final
-	 * value (X Battle cards): positive when `b` is further along than `a`.
-	 * Every frame of the count reads equally well, so instead of confidence a
-	 * further-along read replaces the kept one and an earlier one merges into
-	 * it; only reads level on the animation fall back to confidence.
-	 */
-	animationProgressByType: Record<string, (a: unknown, b: unknown) => number>;
-	/**
-	 * per-type data a further-along read takes over from the read it replaces:
-	 * an earlier frame of the animation can show what the later one has moved
-	 * past (the X Power before the change).
-	 */
-	carryOverByType: Record<string, (kept: unknown, further: unknown) => unknown>;
+	/** reads whose field scores average under this are dropped, unless the kind sets its own floor */
+	minMeanScore: number;
 }
 
 const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 	mergeWindow: 30,
-	// Death: the overlay shows ~5s and respawn takes ~8.5s, so repeat frames of
-	// one death land inside while consecutive deaths fall outside. Minimap:
-	// players flick the map open for 1-3s and each open is a fresh sample, so
-	// frames merge only within one open (a mid-open dead/special flip stays its
-	// own event via the content guard). Objective: reads repeat every second; the
-	// content guard keeps every change while static stretches collapse.
-	// PlayerStatus: sampled (see `sampledTypes`); the window is how often a
-	// standing state is re-confirmed, under the renderer's 15s unknown-gap rule.
-	// StripWeapons: sampled every ~5s, each distinct evidence.
-	// Kill: the same stack re-read while it shows merges; a splatted player
-	// can't re-enter the feed before respawning (~8.5s), so the window stays
-	// under that and the content guard splits a growing stack.
-	mergeWindowByType: {
-		Death: 8,
-		[MINIMAP_EVENT_TYPE]: 5,
-		[OBJECTIVE_EVENT_TYPE]: 10,
-		[PLAYER_STATUS_EVENT_TYPE]: 5,
-		[STRIP_WEAPONS_EVENT_TYPE]: 2,
-		[KILL_EVENT_TYPE]: 8,
-	},
-	sameEventDataByType: {
-		[SCOREBOARD_EVENT_TYPE]: sameScoreboardMatch,
-		[SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE]: sameScoreboardMatch,
-		[SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: sameScoreboardMatch,
-		[QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: sameScoreboardMatch,
-		[MINIMAP_EVENT_TYPE]: sameMinimapStatusData,
-		[OBJECTIVE_EVENT_TYPE]: sameObjectiveData,
-		[PLAYER_STATUS_EVENT_TYPE]: samePlayerStatusData,
-		[KILL_EVENT_TYPE]: sameKillData,
-	},
-	minConfidence: 0.6,
-	// history screens: clean reads score 0.81+, and a read under that floor
-	// would form a card of its own when its fingerprint can't match the game
-	minConfidenceByType: {
-		[STRIP_WEAPONS_EVENT_TYPE]: 0,
-		[SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE]: 0.75,
-		[SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: 0.75,
-		[QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: 0.75,
-	},
-	sampledTypes: [PLAYER_STATUS_EVENT_TYPE],
-	firstReadTypes: [KILL_EVENT_TYPE],
-	animationProgressByType: {
-		[X_SET_COUNT_EVENT_TYPE]: xSetCountProgress,
-		[X_SET_RESULT_EVENT_TYPE]: xSetResultProgress,
-		[X_RANK_POSITION_EVENT_TYPE]: xRankPositionProgress,
-	},
-	carryOverByType: {
-		[X_SET_RESULT_EVENT_TYPE]: xSetResultCarryOver,
-	},
+	minMeanScore: 0.6,
 };
 
+/**
+ * What a push did. `key` names the slot a kept read holds: a new one when
+ * added, the replaced read's own otherwise, so a copy of the timeline kept
+ * elsewhere (another thread, a store) follows it by key.
+ */
 export type TimelineAction =
-	| { action: "added"; event: DetectedEvent }
-	| { action: "replaced"; event: DetectedEvent; replaced: DetectedEvent }
-	/** a sampled run's trailing read moved forward: same stored slot, no new frame worth keeping */
-	| { action: "extended"; event: DetectedEvent; replaced: DetectedEvent }
+	| { action: "added"; key: number; event: DetectedEvent }
+	| {
+			action: "replaced";
+			key: number;
+			event: DetectedEvent;
+			replaced: DetectedEvent;
+	  }
+	/** a read outvoted fields of the kept one, which stays the slot's frame and `t` */
+	| {
+			action: "amended";
+			key: number;
+			event: DetectedEvent;
+			replaced: DetectedEvent;
+	  }
 	| { action: "merged"; into: DetectedEvent }
-	| { action: "dropped"; reason: "low-confidence" };
+	| { action: "dropped"; reason: "low-score" };
+
+/** An action that changed the timeline, as its owner reports it to whoever mirrors it. */
+export interface TimelineChange {
+	action: "added" | "replaced" | "amended";
+	key: number;
+	event: DetectedEvent;
+}
+
+/** Whether the change's read is the one its slot's frame shows (the other changes keep the slot's frame). */
+export function bringsFrame(action: TimelineChange["action"]): boolean {
+	return action === "added" || action === "replaced";
+}
+
+/** The kept read a pushed one now belongs to; null when it was dropped. */
+export function standingOf(action: TimelineAction): DetectedEvent | null {
+	if (action.action === "dropped") return null;
+	return action.action === "merged" ? action.into : action.event;
+}
+
+/** One value read for a field, with the score its reads back it with. */
+interface Candidate {
+	value: unknown;
+	/** summed score of the reads holding the value */
+	weight: number;
+	/** the best single score among them */
+	best: number;
+}
+
+/** The votes of a kept read's run. */
+interface Run {
+	/** the read whose `t` and unscored data the kept read shows */
+	base: DetectedEvent;
+	/** per field, every value read for it by its JSON */
+	candidates: Map<string, Map<string, Candidate>>;
+}
+
+/** One lane of a scan split into time slices: what its own timeline held. */
+interface TimelineLane<E extends DetectedEvent> {
+	/** seconds; where the lane's slice starts */
+	tStart: number;
+	events: readonly E[];
+}
 
 export class TimelineBuilder {
-	readonly #events: DetectedEvent[] = [];
+	readonly #events: DetectedEvent[];
 	readonly #options: TimelineOptions;
+	readonly #keys = new WeakMap<DetectedEvent, number>();
+	/** by slot key; a slot without one (an event held from an earlier timeline) starts from its kept read */
+	readonly #runs = new Map<number, Run>();
+	#nextKey = 0;
 
-	constructor(options: Partial<TimelineOptions> = {}) {
+	/** `held`: events of an earlier timeline, taken as they are. */
+	constructor(
+		options: Partial<TimelineOptions> = {},
+		held: readonly DetectedEvent[] = [],
+	) {
 		this.#options = { ...DEFAULT_TIMELINE_OPTIONS, ...options };
+		this.#events = held.toSorted((a, b) => a.t - b.t);
+		for (const event of this.#events) this.#keys.set(event, this.#nextKey++);
 	}
 
 	get events(): readonly DetectedEvent[] {
@@ -161,92 +114,218 @@ export class TimelineBuilder {
 	}
 
 	push(event: DetectedEvent): TimelineAction {
-		const minConfidence =
-			this.#options.minConfidenceByType[event.type] ??
-			this.#options.minConfidence;
-		if (event.confidence < minConfidence) {
-			return { action: "dropped", reason: "low-confidence" };
+		const floor =
+			kindOf(event.type)?.minMeanScore ?? this.#options.minMeanScore;
+		if (FieldScores.mean(event.scores) < floor) {
+			return { action: "dropped", reason: "low-score" };
 		}
-		const window =
-			this.#options.mergeWindowByType[event.type] ?? this.#options.mergeWindow;
-		const same = this.#options.sameEventDataByType[event.type];
-		if (this.#options.sampledTypes.includes(event.type)) {
-			return this.#pushSample(event, window, same);
-		}
+		return this.pushKept(event);
+	}
+
+	/** `push` for a read another timeline already kept: the floor is not asked again. */
+	pushKept(event: DetectedEvent): TimelineAction {
+		const kind = kindOf(event.type);
+		const window = this.windowOf(event.type);
+		const same = (a: DetectedEvent, b: DetectedEvent) =>
+			kind?.sameData?.(a.data, b.data) ?? true;
+		if (kind?.keep === "every") return this.#add(event);
 		const near = this.#events.find(
 			(e) =>
 				e.type === event.type &&
 				Math.abs(e.t - event.t) <= window &&
-				(same?.(e.data, event.data) ?? true),
+				same(e, event),
 		);
-		if (!near) {
-			this.#events.push(event);
-			this.#events.sort((a, b) => a.t - b.t);
-			return { action: "added", event };
-		}
-		const progress =
-			this.#options.animationProgressByType[event.type]?.(
-				near.data,
-				event.data,
-			) ?? 0;
+		if (!near) return this.#add(event);
+		const progress = kind?.progress?.(near.data, event.data) ?? 0;
 		if (progress < 0) return { action: "merged", into: near };
 		if (progress > 0) {
-			const carryOver = this.#options.carryOverByType[event.type];
+			// what the earlier frames read is behind the animation: their votes go
+			this.#runs.delete(this.#keys.get(near)!);
 			return this.#replace(
 				near,
-				carryOver
-					? { ...event, data: carryOver(near.data, event.data) }
+				kind?.carryOver
+					? // the kind's own data shape, erased by the lookup
+						({
+							...event,
+							data: kind.carryOver(near.data, event.data),
+						} as DetectedEvent)
 					: event,
 			);
 		}
-		if (
-			event.confidence > near.confidence &&
-			!this.#options.firstReadTypes.includes(event.type)
-		) {
-			return this.#replace(near, event);
-		}
-		return { action: "merged", into: near };
+		if (kind?.keep === "first") return { action: "merged", into: near };
+		return this.#vote(near, event);
 	}
 
-	#replace(kept: DetectedEvent, event: DetectedEvent): TimelineAction {
-		this.#events[this.#events.indexOf(kept)] = event;
-		this.#events.sort((a, b) => a.t - b.t);
-		return { action: "replaced", event, replaced: kept };
+	/** Seconds within which reads of `type` merge. */
+	windowOf(type: string): number {
+		return kindOf(type)?.mergeWindowS ?? this.#options.mergeWindow;
+	}
+
+	#add(event: DetectedEvent): TimelineAction {
+		const key = this.#nextKey++;
+		this.#keys.set(event, key);
+		// reads arrive mostly in order; after every read at the same `t`, as a stable sort would place it
+		let at = this.#events.length;
+		while (at > 0 && this.#events[at - 1]!.t > event.t) at--;
+		this.#events.splice(at, 0, event);
+		return { action: "added", key, event };
 	}
 
 	/**
-	 * Same-state neighbours (by `t`) decide a sample's fate: none within the
-	 * window → added; already bracketed by two → merged (a late-arriving VoD
-	 * read); following the run's trailing read while the kept read before it is
-	 * still within the window → extends, replacing that trailing read; otherwise
-	 * added as the run's new trailing read.
+	 * Adds `event`'s votes to the run `kept` stands for. The read kept is the
+	 * run's base (the read agreeing with the vote on the most fields, the
+	 * earlier one on a tie) showing every field's winner. A read that moves
+	 * neither the base nor a field's value is merged, unless it completes the
+	 * kept read: rescoring alone would otherwise re-store it on every frame.
 	 */
-	#pushSample(
+	#vote(kept: DetectedEvent, event: DetectedEvent): TimelineAction {
+		const key = this.#keys.get(kept)!;
+		const run = this.#runs.get(key) ?? runOf(kept);
+		this.#runs.set(key, run);
+		castVotes(run, event);
+		const winners = winnersOf(run);
+		const rebased = agreement(event, winners) > agreement(run.base, winners);
+		if (rebased) run.base = event;
+		const standing = withWinners(run.base, winners);
+		if (
+			!rebased &&
+			sameJson(standing.data, kept.data) &&
+			(isComplete(kept) || !isComplete(standing))
+		) {
+			return { action: "merged", into: kept };
+		}
+		return this.#replace(kept, standing, rebased ? "replaced" : "amended");
+	}
+
+	#replace(
+		kept: DetectedEvent,
 		event: DetectedEvent,
-		window: number,
-		same: ((a: unknown, b: unknown) => boolean) | undefined,
+		action: "replaced" | "amended" = "replaced",
 	): TimelineAction {
-		const continues = (earlier: DetectedEvent, later: DetectedEvent) =>
-			later.t - earlier.t <= window &&
-			(same?.(earlier.data, later.data) ?? true);
-		const sameType = this.#events.filter((e) => e.type === event.type);
-		const nextIndex = sameType.findIndex((e) => e.t > event.t);
-		const before = nextIndex === -1 ? sameType : sameType.slice(0, nextIndex);
-		const next = nextIndex === -1 ? undefined : sameType[nextIndex];
-		const prev = before.at(-1);
-		const kept = before.at(-2);
-		if (prev && continues(prev, event)) {
-			if (prev.t === event.t || (next && continues(event, next))) {
-				return { action: "merged", into: prev };
-			}
-			if (kept && continues(kept, prev) && continues(kept, event)) {
-				this.#events[this.#events.indexOf(prev)] = event;
-				this.#events.sort((a, b) => a.t - b.t);
-				return { action: "extended", event, replaced: prev };
+		const key = this.#keys.get(kept)!;
+		this.#keys.set(event, key);
+		this.#events[this.#events.indexOf(kept)] = event;
+		this.#events.sort((a, b) => a.t - b.t);
+		return { action, key, event, replaced: kept };
+	}
+}
+
+function runOf(event: DetectedEvent): Run {
+	const run: Run = { base: event, candidates: new Map() };
+	castVotes(run, event);
+	return run;
+}
+
+/** A field left unread casts no vote: its score says how badly it read, not that it is empty. */
+function castVotes(run: Run, event: DetectedEvent): void {
+	for (const [field, score] of Object.entries(event.scores)) {
+		const value = FieldScores.valueAt(event.data, field);
+		if (!FieldScores.isRead(value)) continue;
+		const values = run.candidates.get(field) ?? new Map<string, Candidate>();
+		run.candidates.set(field, values);
+		const id = JSON.stringify(value);
+		const candidate = values.get(id);
+		if (candidate) {
+			candidate.weight += score;
+			candidate.best = Math.max(candidate.best, score);
+		} else {
+			values.set(id, { value, weight: score, best: score });
+		}
+	}
+}
+
+/** Per field the value backed by the most score; the one read first on a tie. */
+function winnersOf(run: Run): Map<string, Candidate> {
+	const winners = new Map<string, Candidate>();
+	for (const [field, values] of run.candidates) {
+		let winner: Candidate | undefined;
+		for (const candidate of values.values()) {
+			if (!winner || candidate.weight > winner.weight) winner = candidate;
+		}
+		if (winner) winners.set(field, winner);
+	}
+	return winners;
+}
+
+/** How many fields the read holds the winning value of. */
+function agreement(
+	event: DetectedEvent,
+	winners: ReadonlyMap<string, Candidate>,
+): number {
+	let agreed = 0;
+	for (const [field, winner] of winners) {
+		if (!(field in event.scores)) continue;
+		if (sameJson(FieldScores.valueAt(event.data, field), winner.value)) {
+			agreed++;
+		}
+	}
+	return agreed;
+}
+
+/** `base` showing every field's winner, scored at the winner's best read; `base` itself when it already does. */
+function withWinners(
+	base: DetectedEvent,
+	winners: ReadonlyMap<string, Candidate>,
+): DetectedEvent {
+	let data: unknown = base.data;
+	const scores: Record<string, number> = { ...base.scores };
+	let rescored = false;
+	for (const [field, winner] of winners) {
+		if (!sameJson(FieldScores.valueAt(data, field), winner.value)) {
+			data = FieldScores.withValueAt(data, field, winner.value);
+		}
+		if (scores[field] === winner.best) continue;
+		scores[field] = winner.best;
+		rescored = true;
+	}
+	if (data === base.data && !rescored) return base;
+	// `type` and `data` stay one member of the union: only values of its own fields were exchanged
+	return { ...base, data, scores } as DetectedEvent;
+}
+
+function sameJson(a: unknown, b: unknown): boolean {
+	return a === b || JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** The action as a change to mirror; null when the push left the timeline as it was. */
+export function changeOf(action: TimelineAction): TimelineChange | null {
+	if (action.action === "merged" || action.action === "dropped") return null;
+	return { action: action.action, key: action.key, event: action.event };
+}
+
+/**
+ * One timeline out of the timelines of consecutive slices of the same footage
+ * (a VoD's lanes, each scanned by its own worker). A lane's timeline is exact
+ * within its slice; a screen standing across a seam was read on both sides,
+ * so the reads a lane kept within their merge window of the next lane's start
+ * are pushed into that lane's timeline, where they merge as later reads of
+ * one scan would. A read made of two (fields voted, or data carried over) is
+ * a new object: `onCarriedOver` gets it with the read whose `t` it kept.
+ */
+export function stitchLanes<E extends DetectedEvent>(
+	lanes: readonly TimelineLane<E>[],
+	onCarriedOver?: (event: E, from: E) => void,
+): E[] {
+	let stitched: E[] = [];
+	for (const [i, lane] of lanes.entries()) {
+		if (i === 0) {
+			stitched = [...lane.events];
+			continue;
+		}
+		// the generic record type survives the timeline: it stores the pushed objects, and a carry-over spreads the pushed one
+		const timeline = new TimelineBuilder({}, lane.events);
+		const reaches = (event: E) =>
+			lane.tStart - event.t <= timeline.windowOf(event.type);
+		const before = stitched.filter((event) => !reaches(event));
+		for (const event of stitched.filter(reaches)) {
+			const action = timeline.pushKept(event);
+			if (action.action === "replaced" && action.event !== event) {
+				onCarriedOver?.(action.event as E, event);
+			} else if (action.action === "amended") {
+				onCarriedOver?.(action.event as E, action.replaced as E);
 			}
 		}
-		this.#events.push(event);
-		this.#events.sort((a, b) => a.t - b.t);
-		return { action: "added", event };
+		stitched = [...before, ...(timeline.events as readonly E[])];
 	}
+	return stitched.sort((a, b) => a.t - b.t);
 }

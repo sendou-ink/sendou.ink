@@ -6,10 +6,11 @@ import {
 	type TrackObjectiveData,
 } from "../../core/detectors/objective/index";
 import {
+	FLAGGED_STATE_EVIDENCE,
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
 } from "../../core/detectors/objective/player-status";
-import type { DetectedEvent } from "../../core/detectors/types";
+import type { DetectedEvent } from "../../core/events";
 import * as GameCues from "../../core/GameCues";
 
 const LIME = { hue: 76, ink: { r: 163, g: 198, b: 67 } };
@@ -18,14 +19,19 @@ const ORANGE = { hue: 18, ink: { r: 191, g: 86, b: 40 } };
 
 type Team = typeof LIME;
 
-const NO_FLAGS = [false, false, false, false] as const;
+const ALL_ALIVE = [
+	FLAGGED_STATE_EVIDENCE.alive,
+	FLAGGED_STATE_EVIDENCE.alive,
+	FLAGGED_STATE_EVIDENCE.alive,
+	FLAGGED_STATE_EVIDENCE.alive,
+] satisfies PlayerStatusData["slots"][0];
 
 type ZonesObjectiveData = Exclude<ObjectiveData, TrackObjectiveData>;
 
 const mapStart = (t: number): DetectedEvent => ({
 	type: MAP_START_EVENT_TYPE,
 	t,
-	confidence: 1,
+	scores: { read: 1 },
 	data: { mode: "SZ", stage: 1 },
 });
 
@@ -45,7 +51,7 @@ const hud = (
 	{
 		type: OBJECTIVE_EVENT_TYPE,
 		t,
-		confidence: 1,
+		scores: { read: 1 },
 		data: {
 			mode: "SZ",
 			time,
@@ -58,11 +64,10 @@ const hud = (
 	{
 		type: PLAYER_STATUS_EVENT_TYPE,
 		t,
-		confidence: 1,
+		scores: { read: 1 },
 		data: {
 			time,
-			special: [[...NO_FLAGS], [...NO_FLAGS]],
-			dead: [[...NO_FLAGS], [...NO_FLAGS]],
+			slots: [ALL_ALIVE, ALL_ALIVE],
 			cast: null,
 			teamHue: [teams[0]?.hue ?? null, teams[1]?.hue ?? null],
 			teamInk: [teams[0]?.ink ?? null, teams[1]?.ink ?? null],

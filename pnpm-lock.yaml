@@ -6,7 +6,6 @@ settings:
 
 patchedDependencies:
   '@react-router/serve@8.1.0': f7425beb70a2ce35ca7235672d8df524901983a27c25aa7de489bc559d54d7f1
-  '@techstark/opencv-js@5.0.0-release.1': 810344500e8099b2f8d80c7c3fc28977abfcd115a2616abd1329f7f89f0534b6
   i18next@26.3.6: 34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a
   kysely@0.29.0: c4db877b7832e81d7eb0b710c902cee526020b0bcd4f577c696f0935a2fd1364
   react-i18next@17.0.11: 1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158f27466a269
@@ -58,9 +57,6 @@ importers:
       '@sapphi-red/web-noise-suppressor':
         specifier: 0.4.1
         version: 0.4.1
-      '@techstark/opencv-js':
-        specifier: 5.0.0-release.1
-        version: 5.0.0-release.1(patch_hash=810344500e8099b2f8d80c7c3fc28977abfcd115a2616abd1329f7f89f0534b6)
       '@tldraw/tldraw':
         specifier: 3.12.1
         version: 3.12.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -3246,9 +3242,6 @@ packages:
     resolution: {integrity: sha512-2KmDUfqIv0g4lrWtnyR5xw82NvdsEwUHON43JAe55XRlLWnk1V1troiyJiM9fccENtl524kVRBnD7RMohmUyyQ==}
     engines: {node: '>=0.10.0', npm: '>2.7.0'}
     os: [aix, darwin, freebsd, linux, macos, openbsd, sunos, win32, windows]
-
-  '@techstark/opencv-js@5.0.0-release.1':
-    resolution: {integrity: sha512-PIm+eB0MFtieXoNC2GRao0dv/02sehG+Nv2nSW5D6pQm6J/4WqvDHm0RyoqOmGYQm67jdGiaOdIeTShCY3PIUg==}
 
   '@tiptap/core@2.27.2':
     resolution: {integrity: sha512-ABL1N6eoxzDzC1bYvkMbvyexHacszsKdVPYqhl5GwHLOvpZcv9VE9QaKwDILTyz5voCA0lGcAAXZp+qnXOk5lQ==}
@@ -9147,8 +9140,6 @@ snapshots:
     dependencies:
       '@stdlib/utils-constructor-name': 0.2.3
       '@stdlib/utils-global': 0.2.3
-
-  '@techstark/opencv-js@5.0.0-release.1(patch_hash=810344500e8099b2f8d80c7c3fc28977abfcd115a2616abd1329f7f89f0534b6)': {}
 
   '@tiptap/core@2.27.2(@tiptap/pm@2.27.2)':
     dependencies:

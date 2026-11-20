@@ -7,12 +7,14 @@ import {
 	unsentScoreboardMatches,
 } from "../../components/sendou-ingest";
 import type { ScanEvent } from "../../components/session-data";
+import type { EventType } from "../../core/events";
 import type { BuiltMatch } from "../../core/match-builder";
 import type {
 	ScannerMatch,
 	ScannerMatchPlayer,
 } from "../../core/scanner-match";
 import type { SendStatus } from "../../store/events";
+import { stubEvent } from "../stub-event";
 
 const NOW = 1_800_000_000_000;
 
@@ -195,8 +197,11 @@ describe("sendMatches", () => {
 	);
 });
 
-function event(send: SendStatus | undefined, type = "Scoreboard"): ScanEvent {
-	return { type, t: 0, confidence: 1, data: null, send };
+function event(
+	send: SendStatus | undefined,
+	type: EventType = "Scoreboard",
+): ScanEvent {
+	return stubEvent({ type, t: 0, scores: { read: 1 }, data: null, send });
 }
 
 const PLAYER: ScannerMatchPlayer = {

@@ -7,18 +7,22 @@
  */
 import type { ScoreboardResources } from "../scoreboard/index";
 import {
+	battleLogEventKind,
 	createBattleLogDetector,
-	type ScoreboardBattleLogData,
 } from "../scoreboard-battle-log/detector";
-import type { Detector } from "../types";
+import type { Detector, EventOf } from "../types";
 import { ROIS } from "./rois";
 
 export const QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE =
 	"QuickScoreboardBattleLog";
 
+export const QUICK_SCOREBOARD_BATTLE_LOG_EVENT = battleLogEventKind(
+	QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
+);
+
 export function createQuickScoreboardBattleLogDetector(
 	resources: ScoreboardResources,
-): Detector<ScoreboardBattleLogData> {
+): Detector<EventOf<typeof QUICK_SCOREBOARD_BATTLE_LOG_EVENT>> {
 	return createBattleLogDetector(resources, {
 		id: "quick-scoreboard-battle-log",
 		eventType: QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE,

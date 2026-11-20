@@ -10,7 +10,8 @@
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
-import { getCV, type Mat } from "../../cv";
+import * as Decisions from "../../decisions";
+import * as FieldScores from "../../field-scores";
 import {
 	type GlyphSet,
 	type RecognizedChar,
@@ -18,7 +19,7 @@ import {
 	recognizeTextSteps,
 	scaleGlyphSet,
 } from "../../glyphs";
-import { copyRoi } from "../../image";
+import { cropRoi, type Image } from "../../image";
 import { ALL_LOBBY_ENTRIES, MODE_STAGE_COMBOS } from "../../localized";
 import { all, done, type MatchSteps } from "../../match-steps";
 import { closestBy } from "../../text";
@@ -35,8 +36,8 @@ export interface ParsedHeader {
 	lobby: ScannerLobby | null;
 	mode: ModeShort | null;
 	stage: StageId | null;
-	/** min of the closed-set match scores that were attempted */
-	confidence: number;
+	/** the closed-set match score of each line: the lobby's, and the mode and stage's */
+	scores: FieldScores.FieldScores;
 	debug: {
 		lobbyReading: string;
 		lineReading: string;
@@ -66,7 +67,7 @@ const TAG_RECOGNIZE_OPTIONS: RecognizeOptions = {
  * dark photo edge can fake a short run first); zero-width when no tag.
  */
 function tagExtent(
-	crop: Mat,
+	crop: Image,
 	darkMax: number,
 	maxLeadIn: number,
 	columnFraction: number,
@@ -120,7 +121,7 @@ export interface TagBandOptions extends RecognizeOptions {
 
 /** OCR one header band: trim to the black-tag extent, recognize as a single line. */
 export function* readTagBandSteps(
-	gray: Mat,
+	gray: Image,
 	band: { x: number; y: number; w: number; h: number },
 	glyphs: GlyphSet,
 	options: TagBandOptions = {},
@@ -139,12 +140,12 @@ export function* readTagBandSteps(
 
 /** `readTagBandSteps` that also hands the trimmed band and its recognized glyphs to `inspect` before the band is freed. */
 export function* readTagBandGlyphsSteps<T>(
-	gray: Mat,
+	gray: Image,
 	band: { x: number; y: number; w: number; h: number },
 	glyphs: GlyphSet,
 	options: TagBandOptions,
 	speculative: boolean,
-	inspect: (trimmed: Mat, chars: readonly RecognizedChar[]) => T,
+	inspect: (trimmed: Image, chars: readonly RecognizedChar[]) => T,
 ): MatchSteps<{ text: string; inspected: T | null }> {
 	const trimmed = trimTagBand(gray, band, options);
 	if (!trimmed) return { text: "", inspected: null };
@@ -155,7 +156,6 @@ export function* readTagBandGlyphsSteps<T>(
 		speculative,
 	);
 	const inspected = inspect(trimmed, result.chars);
-	trimmed.delete();
 	return { text: result.text.trim(), inspected };
 }
 
@@ -165,7 +165,7 @@ export function* readTagBandGlyphsSteps<T>(
  * downscaled read from it on.
  */
 function* readLobbyBandSteps(
-	gray: Mat,
+	gray: Image,
 	glyphs: GlyphSet,
 	speculative: boolean,
 ): MatchSteps<string[]> {
@@ -180,7 +180,6 @@ function* readLobbyBandSteps(
 			speculative,
 		),
 	]);
-	trimmed.delete();
 	const joined = (chars: RecognizedChar[]) => chars.map((c) => c.char).join("");
 	const splits = small.chars.flatMap((paren, i) =>
 		paren.char === "("
@@ -193,32 +192,25 @@ function* readLobbyBandSteps(
 }
 
 function trimTagBand(
-	gray: Mat,
+	gray: Image,
 	band: { x: number; y: number; w: number; h: number },
 	options: TagBandOptions,
-): Mat | null {
-	const crop = copyRoi(gray, band);
+): Image | null {
+	const crop = cropRoi(gray, band);
 	const { start, end } = tagExtent(
 		crop,
 		options.tagDarkMax ?? TAG_DARK_MAX,
 		options.tagLeadInMax ?? TAG_GAP_TOLERANCE,
 		options.tagColumnFraction ?? TAG_COLUMN_FRACTION,
 	);
-	if (end - start < 12) {
-		crop.delete();
+	if (Decisions.below("scoreboard/header:tagMinWidth", end - start, 12)) {
 		return null;
 	}
-	const cv = getCV();
-	const view = crop.roi(new cv.Rect(start, 0, end - start, crop.rows));
-	const trimmed = new cv.Mat();
-	view.copyTo(trimmed);
-	view.delete();
-	crop.delete();
-	return trimmed;
+	return cropRoi(crop, { x: start, y: 0, w: end - start, h: crop.rows });
 }
 
 export function* parseHeaderSteps(
-	gray: Mat,
+	gray: Image,
 	glyphs: HeaderGlyphs,
 	speculative = false,
 ): MatchSteps<ParsedHeader> {
@@ -241,10 +233,14 @@ export function* parseHeaderSteps(
 	}
 	const latinLineMatch = snapLine(latinLine);
 
-	const unsnapped = (match: { score: number } | null) =>
-		(match?.score ?? 0) < MIN_MATCH_SCORE;
+	const unsnapped = (match: { score: number } | null, site: string) =>
+		Decisions.below(
+			`scoreboard/header:MIN_MATCH_SCORE#${site}`,
+			match?.score ?? 0,
+			MIN_MATCH_SCORE,
+		);
 	const [jaLobby, jaLine] = yield* all([
-		glyphs.lobbyJa && unsnapped(latinLobbyMatch)
+		glyphs.lobbyJa && unsnapped(latinLobbyMatch, "latinLobby")
 			? readTagBandSteps(
 					gray,
 					HEADER_LOBBY_BAND,
@@ -253,7 +249,7 @@ export function* parseHeaderSteps(
 					speculative,
 				)
 			: done(""),
-		glyphs.lineJa && unsnapped(latinLineMatch)
+		glyphs.lineJa && unsnapped(latinLineMatch, "latinLine")
 			? readTagBandSteps(gray, HEADER_LINE_BAND, glyphs.lineJa, {}, speculative)
 			: done(""),
 	]);
@@ -268,22 +264,37 @@ export function* parseHeaderSteps(
 	const lineMatch = jaLineWins ? jaLineMatch : latinLineMatch;
 
 	const lobby =
-		lobbyMatch && lobbyMatch.score >= MIN_MATCH_SCORE
+		lobbyMatch &&
+		Decisions.atLeast(
+			"scoreboard/header:MIN_MATCH_SCORE#lobby",
+			lobbyMatch.score,
+			MIN_MATCH_SCORE,
+		)
 			? lobbyMatch.entry.lobby
 			: null;
 	let mode: ModeShort | null = null;
 	let stage: StageId | null = null;
-	if (lineMatch && lineMatch.score >= MIN_MATCH_SCORE) {
+	if (
+		lineMatch &&
+		Decisions.atLeast(
+			"scoreboard/header:MIN_MATCH_SCORE#line",
+			lineMatch.score,
+			MIN_MATCH_SCORE,
+		)
+	) {
 		mode = lineMatch.entry.mode;
 		stage = lineMatch.entry.stageId;
 	}
 
-	const attempted = [lobbyMatch?.score ?? 0, lineMatch?.score ?? 0];
+	const lineScore = lineMatch?.score ?? 0;
 	return {
 		lobby,
 		mode,
 		stage,
-		confidence: Math.min(...attempted),
+		scores: FieldScores.of({
+			lobby: lobbyMatch?.score ?? 0,
+			"mode,stage": lineScore,
+		}),
 		debug: {
 			lobbyReading,
 			lineReading,

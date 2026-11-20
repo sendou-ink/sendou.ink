@@ -4,6 +4,7 @@
  * A session's raw events (and frames) leave the `events` store in the same
  * transaction its games arrive here, so it is always in exactly one of them.
  */
+import * as EventVersion from "../core/event-version";
 import type { BuiltMatch } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";
 import {
@@ -62,7 +63,11 @@ export function compactSessions(
 	);
 }
 
-/** Games of the sessions keyed at or after `since` (every compacted game by default), chronological. */
+/**
+ * Games of the sessions keyed at or after `since` (every compacted game by
+ * default), chronological. Their sources come in the current event shapes
+ * (`EventVersion.readable`); `match` stays as it was built.
+ */
 export async function listCompactedMatches(
 	since = 0,
 ): Promise<CompactedMatch[]> {
@@ -74,9 +79,12 @@ export async function listCompactedMatches(
 				.index("sessionKey")
 				.getAll(IDBKeyRange.lowerBound(since)) as IDBRequest<CompactedMatch[]>,
 	);
-	return matches.sort(
-		(a, b) => a.session.key - b.session.key || a.index - b.index,
-	);
+	return matches
+		.map((match) => ({
+			...match,
+			sources: EventVersion.readable(match.sources),
+		}))
+		.sort((a, b) => a.session.key - b.session.key || a.index - b.index);
 }
 
 /** Sets (or clears) the send status of the given games, on every source they kept. */

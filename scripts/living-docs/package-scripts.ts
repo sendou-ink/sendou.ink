@@ -4,9 +4,9 @@ import * as R from "remeda";
 import { lineOf, parseFile, ROOT } from "./ast.ts";
 
 const PACKAGE_FILE = "package.json";
-/** A repo script a command runs, e.g. `vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/report.ts`. */
+/** A repo script a command runs, e.g. `vite-node scripts/scanner/report.ts`. */
 const SCRIPT_FILE_REGEX =
-	/\b(?:node|vite-node)\s+(?:-c\s+\S+\s+)?(?:\.\/)?((?:scripts|e2e|app)\/\S+\.ts)\b/;
+	/\b(?:node|vite-node)\s+(?:\.\/)?((?:scripts|e2e|app)\/\S+\.ts)\b/;
 const ENV_ASSIGNMENT_REGEX = /(?:^|\s)([A-Z][A-Z0-9_]*)=("[^"]*"|\S*)/g;
 const CHAINED_SCRIPT_REGEX = /\bpnpm\s+(?:run\s+)?([a-z][\w:-]*)/g;
 const MAX_DESCRIPTION_LENGTH = 160;

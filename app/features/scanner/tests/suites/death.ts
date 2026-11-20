@@ -7,16 +7,16 @@
  */
 
 import assert from "node:assert/strict";
-import { loadOpenCV } from "../../core/cv";
-import {
-	createDeathDetector,
-	type DeathData,
-} from "../../core/detectors/death/index";
+import { createDeathDetector } from "../../core/detectors/death/index";
 import { createScoreboardDetector } from "../../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../../core/detectors/scoreboard-battle-log-replay/index";
-import type { Detector } from "../../core/detectors/types";
-import { type FrameData, normalizeFrame, toMat } from "../../core/image";
 import {
+	type FrameData,
+	imageFromFrameData,
+	normalizeFrame,
+} from "../../core/image";
+import {
+	assertCompleteness,
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
@@ -29,7 +29,6 @@ export async function runDeathSuite(
 	shard: number,
 	shardCount: number,
 ): Promise<void> {
-	await loadOpenCV();
 	const resources = await loadScoreboardResources();
 	const detector = createDeathDetector(resources);
 	const fixtures = loadFixtures("death");
@@ -44,10 +43,7 @@ export async function runDeathSuite(
 
 	for (const fixture of mine(fixtures)) {
 		test(`death/${fixture.name}`, async (t) => {
-			const { gate, events } = await runDetectorOnFixture<DeathData>(
-				detector,
-				fixture,
-			);
+			const { gate, events } = await runDetectorOnFixture(detector, fixture);
 			const expectPositive = fixture.expected.event === "Death";
 
 			await t.test("gate", () => {
@@ -62,6 +58,10 @@ export async function runDeathSuite(
 			const event = events[0];
 			assert.ok(event, "gate passed but no event parsed");
 			const expected = fixture.expected.data ?? {};
+
+			await t.test("completeness", () => {
+				assertCompleteness(fixture, event);
+			});
 
 			await t.test(
 				"weapon",
@@ -178,15 +178,13 @@ export async function runDeathSuite(
 }
 
 function parseKillerName(
-	detector: Detector<DeathData>,
+	detector: ReturnType<typeof createDeathDetector>,
 	image: FrameData,
 ): string | null | undefined {
-	const src = toMat(image);
+	const src = imageFromFrameData(image);
 	const frame = normalizeFrame(src);
-	src.delete();
 	const gate = detector.gate(frame);
 	const events = gate.pass ? detector.parse(frame, 0, gate) : [];
-	frame.delete();
 	return events[0]?.data.name;
 }
 

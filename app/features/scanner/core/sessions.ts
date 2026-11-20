@@ -11,7 +11,7 @@ import * as CoachEvents from "./CoachEvents";
 import { OBJECTIVE_EVENT_TYPE } from "./detectors/objective/index";
 import { PLAYER_STATUS_EVENT_TYPE } from "./detectors/objective/player-status";
 import { STRIP_WEAPONS_EVENT_TYPE } from "./detectors/objective/strip-weapons";
-import type { DetectedEvent } from "./detectors/types";
+import type { DetectedEvent } from "./events";
 import { isHistoryOnly } from "./match-builder";
 import type { ScannerMatch } from "./scanner-match";
 import { xBattleCards } from "./x-battle";

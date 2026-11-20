@@ -4,6 +4,7 @@
  * window, the sum of template·image products over all channels, ~10x the
  * speed of the same loop in JS. Null where WebAssembly SIMD is unavailable.
  */
+import type { Image } from "./image";
 
 /** cross-sums.c compiled with clang --target=wasm32 -O3 -msimd128, base64 */
 const CROSS_SUMS_WASM =
@@ -11,20 +12,13 @@ const CROSS_SUMS_WASM =
 
 const PAGE_BYTES = 65536;
 
-interface Pixels {
-	rows: number;
-	cols: number;
-	ch: number;
-	data: Uint8Array;
-}
-
 export interface CrossSums {
 	/**
 	 * Cross sums of `template` against `image` for placements x in [lo, hi] of
 	 * every row: entry (y · (hi − lo + 1) + x − lo). A view into the module's
 	 * memory, valid until the next call.
 	 */
-	compute(image: Pixels, template: Pixels, lo: number, hi: number): Uint32Array;
+	compute(image: Image, template: Image, lo: number, hi: number): Uint32Array;
 }
 
 let loaded: CrossSums | null | undefined;
@@ -64,14 +58,14 @@ export function simdCrossSums(): CrossSums | null {
 				bytes.set(template.data, templateOffset);
 				crossSums(
 					0,
-					image.cols * image.ch,
+					image.cols * image.channels,
 					templateOffset,
 					template.rows,
-					template.cols * template.ch,
+					template.cols * template.channels,
 					rows,
 					lo,
 					hi,
-					image.ch,
+					image.channels,
 					outOffset,
 				);
 				return new Uint32Array(memory.buffer, outOffset, rows * width);

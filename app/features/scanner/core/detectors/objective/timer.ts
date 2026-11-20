@@ -5,14 +5,20 @@
  * exactly three full-height digits; each glyph size is tried (digits render
  * bigger on upscaled 720p) and the most confident valid read wins.
  */
-import type { Mat } from "../../cv";
+import * as Decisions from "../../decisions";
 import {
 	type GlyphSet,
 	type RecognizedChar,
 	recognizeTextSteps,
 	scaleGlyphSet,
 } from "../../glyphs";
-import { copyRoi, maxBrightness, meanBrightness } from "../../image";
+import {
+	cropRoi,
+	type Image,
+	maxBrightness,
+	meanBrightness,
+	type Roi,
+} from "../../image";
 import { all, type MatchSteps } from "../../match-steps";
 import type { ScoreboardResources } from "../scoreboard/index";
 import {
@@ -50,21 +56,35 @@ export function timerGlyphSets(resources: ScoreboardResources): GlyphSet[] {
 	);
 }
 
+/** What timerBoxChecks and timerColonVisible read. */
+export const TIMER_GATE_ROIS: readonly Roi[] = [
+	...TIMER_DARK_PROBES,
+	TIMER_DIGIT_ROI,
+	...TIMER_COLON_DOT_ROIS,
+	TIMER_COLON_GAP_ROI,
+];
+
 /** Per-probe presence checks of the timer box: dark surround, then bright digits. */
-export function timerBoxChecks(gray: Mat): boolean[] {
+export function timerBoxChecks(gray: Image): boolean[] {
 	return [
-		...TIMER_DARK_PROBES.map(
-			(roi) => meanBrightness(gray, roi) <= GATE_TIMER_MAX_MEAN,
+		...TIMER_DARK_PROBES.map((roi) =>
+			Decisions.atMost(
+				"objective/timer:GATE_TIMER_MAX_MEAN",
+				meanBrightness(gray, roi),
+				GATE_TIMER_MAX_MEAN,
+			),
 		),
-		maxBrightness(gray, TIMER_DIGIT_ROI) >= GATE_TIMER_MIN_MAX_BRIGHTNESS,
+		Decisions.atLeast(
+			"objective/timer:GATE_TIMER_MIN_MAX_BRIGHTNESS",
+			maxBrightness(gray, TIMER_DIGIT_ROI),
+			GATE_TIMER_MIN_MAX_BRIGHTNESS,
+		),
 	];
 }
 
 /** The timer box showing "Overtime!" in place of the M:SS (see `OVERTIME_WARM_MIN_FRACTION`). */
-export function overtimeBoxVisible(frame: Mat): boolean {
-	const crop = copyRoi(frame, TIMER_DIGIT_ROI);
-	const { data } = crop;
-	const channels = crop.channels();
+export function overtimeBoxVisible(frame: Image): boolean {
+	const { data, channels } = cropRoi(frame, TIMER_DIGIT_ROI);
 	let warm = 0;
 	for (let i = 0; i < data.length; i += channels) {
 		const r = data[i]!;
@@ -77,28 +97,39 @@ export function overtimeBoxVisible(frame: Mat): boolean {
 		}
 	}
 	const pixels = data.length / channels;
-	crop.delete();
 
-	return warm / pixels >= OVERTIME_WARM_MIN_FRACTION;
+	return Decisions.atLeast(
+		"objective/timer:OVERTIME_WARM_MIN_FRACTION",
+		warm / pixels,
+		OVERTIME_WARM_MIN_FRACTION,
+	);
 }
 
 /** The M:SS colon's two dots, dark between them. */
-export function timerColonVisible(gray: Mat): boolean {
+export function timerColonVisible(gray: Image): boolean {
 	return (
-		TIMER_COLON_DOT_ROIS.every(
-			(roi) => meanBrightness(gray, roi) >= GATE_TIMER_COLON_MIN_DOT_MEAN,
+		TIMER_COLON_DOT_ROIS.every((roi) =>
+			Decisions.atLeast(
+				"objective/timer:GATE_TIMER_COLON_MIN_DOT_MEAN",
+				meanBrightness(gray, roi),
+				GATE_TIMER_COLON_MIN_DOT_MEAN,
+			),
 		) &&
-		meanBrightness(gray, TIMER_COLON_GAP_ROI) <= GATE_TIMER_COLON_MAX_GAP_MEAN
+		Decisions.atMost(
+			"objective/timer:GATE_TIMER_COLON_MAX_GAP_MEAN",
+			meanBrightness(gray, TIMER_COLON_GAP_ROI),
+			GATE_TIMER_COLON_MAX_GAP_MEAN,
+		)
 	);
 }
 
 /** The match timer at every glyph size (read in one lockstep), best read kept. */
 export function* readMatchTimerSteps(
-	gray: Mat,
+	gray: Image,
 	timerSets: readonly GlyphSet[],
 	speculative = false,
 ): MatchSteps<TimerRead> {
-	const band = copyRoi(gray, TIMER_DIGIT_ROI);
+	const band = cropRoi(gray, TIMER_DIGIT_ROI);
 	let best: TimerRead & { score: number } = {
 		value: null,
 		reading: "",
@@ -122,8 +153,16 @@ export function* readMatchTimerSteps(
 		const raw = raws[setIndex]!;
 		if (!best.reading) best = { ...best, reading: raw.text };
 		const isTimerDigit = (c: RecognizedChar) =>
-			c.score >= TIMER_DIGIT_MIN_CONF &&
-			c.y1 - c.y0 >= timerSet.height * TIMER_DIGIT_MIN_HEIGHT_RATIO;
+			Decisions.atLeast(
+				"objective/timer:TIMER_DIGIT_MIN_CONF",
+				c.score,
+				TIMER_DIGIT_MIN_CONF,
+			) &&
+			Decisions.atLeast(
+				"objective/timer:TIMER_DIGIT_MIN_HEIGHT_RATIO",
+				c.y1 - c.y0,
+				timerSet.height * TIMER_DIGIT_MIN_HEIGHT_RATIO,
+			);
 		const chars = raw.chars.filter(isTimerDigit);
 		const digits = chars.map((c) => Number(c.char));
 		if (digits.length !== 3 || digits.some(Number.isNaN)) continue;
@@ -142,6 +181,5 @@ export function* readMatchTimerSteps(
 			};
 		}
 	}
-	band.delete();
 	return { value: best.value, reading: best.reading };
 }

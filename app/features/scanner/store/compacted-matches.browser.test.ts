@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import * as EventVersion from "../core/event-version";
 import type { ScannerMatch } from "../core/scanner-match";
+import { stubEvent } from "../tests/stub-event";
 import {
 	type CompactedMatch,
 	compactSessions,
@@ -22,22 +24,22 @@ function compacted(
 		index,
 		match: MATCH,
 		sources: [
-			{
+			stubEvent({
 				id,
 				type: "MapStart",
 				t: 0,
 				detectedAt: sessionKey,
-				confidence: 1,
+				scores: { read: 1 },
 				data: null,
-			},
-			{
+			}),
+			stubEvent({
 				id: id + 1,
 				type: "Death",
 				t: 1,
 				detectedAt: sessionKey,
-				confidence: 1,
+				scores: { read: 1 },
 				data: null,
-			},
+			}),
 		],
 	};
 }
@@ -52,12 +54,9 @@ describe("compactSessions()", () => {
 	beforeEach(clearAll);
 
 	test("stores the games and deletes the raw events they replace", async () => {
-		const id = await saveEvent({
-			type: "Objective",
-			t: 0,
-			confidence: 1,
-			data: null,
-		});
+		const id = await saveEvent(
+			stubEvent({ type: "Objective", t: 0, scores: { read: 1 }, data: null }),
+		);
 
 		await compactSessions([compacted(10, 1_000, 0)], [id]);
 
@@ -87,6 +86,20 @@ describe("listCompactedMatches()", () => {
 		expect(
 			(await listCompactedMatches(2_000)).map((match) => match.id),
 		).toEqual([20, 30]);
+	});
+});
+
+describe("listCompactedMatches() event versions", () => {
+	beforeEach(clearAll);
+
+	test("reads sources stored before the version stamp and leaves out a newer version's", async () => {
+		const game = compacted(10, 1_000, 0);
+		game.sources[1]!.v = EventVersion.CURRENT + 1;
+		await compactSessions([game], []);
+
+		const [listed] = await listCompactedMatches();
+
+		expect(listed!.sources.map((source) => source.id)).toEqual([10]);
 	});
 });
 

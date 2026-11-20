@@ -8,7 +8,7 @@ import type {
 	BroadcastObjectiveRead,
 } from "~/features/broadcast/broadcast-types";
 import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
-import type { DetectedEvent } from "./detectors/types";
+import type { DetectedEvent } from "./events";
 import type { BuiltMatch } from "./match-builder";
 import type {
 	ScannerMatchObjective,

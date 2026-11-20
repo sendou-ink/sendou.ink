@@ -4,8 +4,8 @@
  * pure-yellow blob there (team-ink yellows are duller), so a color-mask pixel
  * count decides.
  */
-import { getCV, type Mat } from "../../cv";
-import { cropRoi, type Roi } from "../../image";
+import * as Decisions from "../../decisions";
+import { cropRoi, type Image, type Roi } from "../../image";
 
 const YELLOW_R_MIN = 190;
 const YELLOW_G_MIN = 180;
@@ -18,13 +18,9 @@ const POV_MIN_FRACTION = 0.05;
 /** A runner-up row at this share of the best means ambient team-ink yellow, not the arrow. */
 const POV_RUNNER_UP_MAX_RATIO = 0.5;
 
-/** Fraction of `roi` pixels that are arrow-yellow. `rgb` is a 3-channel RGB mat. */
-export function povYellowFraction(rgb: Mat, roi: Roi): number {
-	const cv = getCV();
-	const view = cropRoi(rgb, roi);
-	const cont = new cv.Mat();
-	view.copyTo(cont);
-	view.delete();
+/** Fraction of `roi` pixels that are arrow-yellow. `rgb` is a 3-channel RGB image. */
+export function povYellowFraction(rgb: Image, roi: Roi): number {
+	const cont = cropRoi(rgb, roi);
 	const d = cont.data;
 	const n = cont.rows * cont.cols;
 	let yellow = 0;
@@ -41,7 +37,6 @@ export function povYellowFraction(rgb: Mat, roi: Roi): number {
 			yellow++;
 		}
 	}
-	cont.delete();
 	return n > 0 ? yellow / n : 0;
 }
 
@@ -51,11 +46,23 @@ export function findPovIndex(fractions: readonly number[]): number | null {
 	for (let i = 0; i < fractions.length; i++) {
 		if (best < 0 || fractions[i]! > fractions[best]!) best = i;
 	}
-	if (best < 0 || fractions[best]! < POV_MIN_FRACTION) return null;
+	if (
+		best < 0 ||
+		Decisions.below(
+			"scoreboard/pov:POV_MIN_FRACTION",
+			fractions[best]!,
+			POV_MIN_FRACTION,
+		)
+	)
+		return null;
 	for (let i = 0; i < fractions.length; i++) {
 		if (
 			i !== best &&
-			fractions[i]! > fractions[best]! * POV_RUNNER_UP_MAX_RATIO
+			Decisions.above(
+				"scoreboard/pov:POV_RUNNER_UP_MAX_RATIO",
+				fractions[i]!,
+				fractions[best]! * POV_RUNNER_UP_MAX_RATIO,
+			)
 		)
 			return null;
 	}

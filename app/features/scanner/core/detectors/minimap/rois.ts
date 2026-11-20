@@ -19,9 +19,29 @@ export interface CardLayout {
 	subTile: Roi;
 	/** the three main-ability badge centers, 48px pitch */
 	badges: readonly (readonly [number, number])[];
-	/** cross-out probe at card center: name/pill are unsaturated, X core isn't */
-	cross: Roi;
+	/** the respawn cross-out's strokes */
+	cross: CrossArms;
 }
+
+/**
+ * The respawn cross-out: two strokes crossing at (`x`, `y`) and running out
+ * `reach` px to either side, rising and falling CROSS_ARM_SLOPE px per px. The
+ * game draws it at the same place on every card of a layout.
+ */
+export interface CrossArms {
+	x: number;
+	y: number;
+	reach: number;
+	/** rows read on either side of a stroke's center line: the stroke and some of what it covers */
+	halfWidth: number;
+}
+
+export const CROSS_ARM_SLOPE = 0.245;
+/** Where the strokes cross they overlap, so the first px out from the crossing are left out. */
+export const CROSS_ARM_GAP = 8;
+
+/** Card strokes are 13px wide (fill and outline) and reach past the card's ends. */
+const CARD_CROSS_EXTENT = { reach: 140, halfWidth: 12 } as const;
 
 /**
  * Right card = left +1352px (verified only on the struck fixture). Self card: avatar leftmost,
@@ -38,7 +58,7 @@ export const CARD_LAYOUTS: readonly CardLayout[] = [
 			[1114, 114],
 			[1162, 114],
 		],
-		cross: { x: 925, y: 78, w: 60, h: 32 },
+		cross: { x: 997, y: 89.5, ...CARD_CROSS_EXTENT },
 	},
 	{
 		self: false,
@@ -50,7 +70,7 @@ export const CARD_LAYOUTS: readonly CardLayout[] = [
 			[440, 564],
 			[488, 564],
 		],
-		cross: { x: 258, y: 524, w: 60, h: 32 },
+		cross: { x: 323, y: 540, ...CARD_CROSS_EXTENT },
 	},
 	{
 		self: false,
@@ -62,7 +82,7 @@ export const CARD_LAYOUTS: readonly CardLayout[] = [
 			[1792, 564],
 			[1840, 564],
 		],
-		cross: { x: 1610, y: 524, w: 60, h: 32 },
+		cross: { x: 1674, y: 540.5, ...CARD_CROSS_EXTENT },
 	},
 	{
 		self: true,
@@ -74,7 +94,7 @@ export const CARD_LAYOUTS: readonly CardLayout[] = [
 			[368, 1014],
 			[416, 1014],
 		],
-		cross: { x: 255, y: 968, w: 60, h: 32 },
+		cross: { x: 250, y: 986.5, ...CARD_CROSS_EXTENT },
 	},
 ];
 
@@ -88,9 +108,21 @@ export function enemySubTileRoi(cy: number): Roi {
 	return { x: 1602, y: cy - 20, w: 39, h: 40 };
 }
 export const ENEMY_BADGE_XS = [1730, 1778, 1826] as const;
-/** X arms meet in the dark gap between special tile and first badge (unsaturated when clean). */
-export function enemyCrossRoi(cy: number): Roi {
-	return { x: 1685, y: cy - 12, w: 28, h: 24 };
+
+/** The row's X crosses in the gap between special tile and first badge; its strokes are 9px wide. */
+export function enemyCrossArms(cy: number): CrossArms {
+	return { x: 1690, y: cy, reach: 90, halfWidth: 9 };
+}
+
+/** The box the cross-out's sampled strokes span, for drawing it. */
+export function crossArmsBox({ x, y, reach, halfWidth }: CrossArms): Roi {
+	const rise = Math.ceil(reach * CROSS_ARM_SLOPE) + halfWidth;
+	return {
+		x: Math.round(x - reach),
+		y: Math.round(y - rise),
+		w: reach * 2 + 1,
+		h: rise * 2 + 1,
+	};
 }
 
 /** Badge search box (badges ⌀~44; the box height keeps larger sets out). */
@@ -116,26 +148,16 @@ export const NAME_BIN_SURFACE_MARGIN = 31;
 /** A fullwidth bracket reads level with its ASCII twin ("[K]yo!" 0.015 apart). */
 export const NAME_PLAIN_TIE_MARGIN = 0.02;
 
-/** Cross-out probe: fraction of saturated+bright HSV pixels. Struck 0.26-0.38, clean <=0.01. */
-export const CROSS_SATURATION_MIN = 110;
-export const CROSS_VALUE_MIN = 110;
-export const CROSS_MIN_FRACTION = 0.08;
 /**
- * Saturation alone is not a cross-out: the POV map screen bleeds team ink
- * through the cards (phantom fractions 0.56-0.70 at mean |Laplacian| 22-42 on
- * the Um'ami and Triton cup VoDs, everyone alive), while the X is crisp
- * (clean cards read up to ~62 of line art, but at fraction ~0). The X is drawn
- * in the card owner's pale team tint, so over a bright team-colored scene
- * (Triton cup VoD, yellow team) its strokes soften: 21 struck cards and rows
- * there read 41-65 at fractions 0.11-0.34. Bleed saturates far more of the
- * probe, so past CROSS_BLEED_MIN_FRACTION only the crisp floor counts — the
- * two soft struck reads up there (0.56 at 55, 0.66 at 33) stay lost. Margins
- * are THIN (bleed 0.56 at 41.6 vs struck 0.15 at 41.5) — re-measure before
- * moving any.
+ * A cross-out is told by its shape: along each arm the stroke's profile across
+ * it (outline, fill, outline) repeats whatever it covers and however the scene
+ * tints it, while a live card's name, icons and badges, scene bleed or a
+ * streamer's art average out to no profile (crossStrokeCoherence). Measured
+ * on ~7,000 POV card reads of five VoDs and ~4,000 spectator ones: live cards
+ * read 0.070 at most, a settled X 0.167 at least (0.44 on the fixtures);
+ * between them only an X fading in.
  */
-export const CROSS_MIN_LAPLACIAN = 40;
-export const CROSS_BLEED_MIN_FRACTION = 0.5;
-export const CROSS_BLEED_MIN_LAPLACIAN = 65;
+export const CROSS_MIN_STROKE_COHERENCE = 0.12;
 
 /** Sub-tile silhouettes matched shape-only (specials.ts) to split near-tied main-weapon icons. */
 export const SUB_TILE_TEMPLATE_SIZES = [24, 27, 30, 33, 36] as const;
@@ -175,9 +197,12 @@ export const SPECIAL_READY_WEAPON_MIN_SCORE = 0.42;
  * surfaces to ~95-137): both template sets are tried under the camo floor since
  * bleed depresses NCC too (true matches 0.55-0.66; E-liter wins as light 0.611
  * over misranked dark 0.599 — THIN, re-measure before touching). Dark cards
- * (corners <=77) keep the plain dark match.
+ * (corners <=77) keep the plain dark match. A pale backdrop behind the POV
+ * card while the map pops in reads 89.8 (the Blaster of
+ * pov-humpback-superjump-map-pale-backdrop-gate-missed, unread under the old
+ * cut of 90), so the cut sits between the two.
  */
-export const WEAPON_BLEED_MIN_CORNER_MEAN = 90;
+export const WEAPON_BLEED_MIN_CORNER_MEAN = 84;
 
 /** Overlay is crisp over a blurred scene: mean |Laplacian| separates drawn elements from background. */
 export const PRESENCE_MIN_LAPLACIAN = 8;
@@ -275,7 +300,7 @@ export function spectatorCardLayout(
 			[438 + dx, 374 + dy],
 			[486 + dx, 374 + dy],
 		],
-		cross: { x: 344 + dx, y: 362 + dy, w: 20, h: 24 },
+		cross: { x: 322 + dx, y: 351 + dy, ...CARD_CROSS_EXTENT },
 	};
 }
 

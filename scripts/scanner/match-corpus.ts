@@ -7,19 +7,12 @@
  */
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { getCV, type Mat } from "../../app/features/scanner/core/cv";
 import type { StepsRunner } from "../../app/features/scanner/core/detectors/frame-pass";
+import type { Image } from "../../app/features/scanner/core/image";
 import type {
 	MatchScores,
 	MatchSteps,
 } from "../../app/features/scanner/core/match-steps";
-
-export interface CorpusImage {
-	rows: number;
-	cols: number;
-	ch: number;
-	data: Uint8Array;
-}
 
 export interface CorpusRequest {
 	image: number;
@@ -29,7 +22,7 @@ export interface CorpusRequest {
 }
 
 export interface MatchCorpus {
-	images: CorpusImage[];
+	images: Image[];
 	runs: { steps: CorpusRequest[][] }[];
 }
 
@@ -46,15 +39,12 @@ export function recordingRunner(inner: StepsRunner, dir: string) {
 	const chunks: Uint8Array[] = [];
 	let dataLength = 0;
 	const byHash = new Map<string, number>();
-	const templateIds = new Map<Mat, number>();
+	const templateIds = new Map<Image, number>();
 	const runs: MatchCorpus["runs"] = [];
 
-	const blobOf = (mat: Mat): number => {
-		const copy = new (getCV().Mat)();
-		mat.copyTo(copy);
-		const data = new Uint8Array(copy.data);
-		const meta = { rows: copy.rows, cols: copy.cols, ch: copy.channels() };
-		copy.delete();
+	const blobOf = (image: Image): number => {
+		const { data } = image;
+		const meta = { rows: image.rows, cols: image.cols, ch: image.channels };
 		const hash = createHash("sha1")
 			.update(`${meta.rows}x${meta.cols}x${meta.ch}`)
 			.update(data)
@@ -62,16 +52,16 @@ export function recordingRunner(inner: StepsRunner, dir: string) {
 		const known = byHash.get(hash);
 		if (known !== undefined) return known;
 		blobs.push({ ...meta, off: dataLength });
-		chunks.push(data);
+		chunks.push(data.slice());
 		dataLength += data.length;
 		byHash.set(hash, blobs.length - 1);
 		return blobs.length - 1;
 	};
-	const templateOf = (mat: Mat) => {
-		let id = templateIds.get(mat);
+	const templateOf = (image: Image) => {
+		let id = templateIds.get(image);
 		if (id === undefined) {
-			id = blobOf(mat);
-			templateIds.set(mat, id);
+			id = blobOf(image);
+			templateIds.set(image, id);
 		}
 		return id;
 	};
@@ -129,7 +119,7 @@ export function loadMatchCorpus(dir: string): MatchCorpus {
 		images: index.blobs.map(({ rows, cols, ch, off }) => ({
 			rows,
 			cols,
-			ch,
+			channels: ch,
 			data: data.subarray(off, off + rows * cols * ch),
 		})),
 		runs: index.runs,
