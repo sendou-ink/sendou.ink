@@ -190,6 +190,67 @@ describe("SendouQ flow", () => {
 		]);
 	});
 
+	test("Q16 timelines: stored compressed apart from the JSON, shown on the match page", async () => {
+		const w = await sendouqWorld();
+		await w.conclude();
+		const special: [boolean, boolean, boolean, boolean] = [
+			true,
+			false,
+			false,
+			false,
+		];
+		const none: [boolean, boolean, boolean, boolean] = [
+			false,
+			false,
+			false,
+			false,
+		];
+
+		await ingest(w.povUser, [
+			w.scanned(w.maps[0]!, {
+				objective: {
+					mode: "SZ",
+					samples: [
+						{
+							t: 100,
+							time: 290,
+							score: [100, 90],
+							penalty: [null, null],
+							control: 0,
+						},
+					],
+				},
+				playerStatus: {
+					samples: [
+						{ t: 100, time: 290, special: [special, none], dead: [none, none] },
+					],
+				},
+			}),
+		]);
+
+		const [raw] = await db.selectFrom("IngestedMatch").selectAll().execute();
+		expect(raw!.data).not.toHaveProperty("objective");
+		expect(raw!.data).not.toHaveProperty("playerStatus");
+		expect(raw!.timelines).not.toBeNull();
+		const scoreboard = (await qMatchPage(w.match.id)).ingestedScoreboards[0]!;
+		expect(scoreboard.data.objective).toEqual({
+			mode: "SZ",
+			samples: [
+				{
+					t: 0,
+					time: 290,
+					score: [100, 90],
+					penalty: [null, null],
+					control: 0,
+				},
+			],
+		});
+		expect(scoreboard.data.playerStatus!.samples[0]!.special).toEqual([
+			special,
+			none,
+		]);
+	});
+
 	test("Q2 send before report, resend after: hint first, link on the resend", async () => {
 		const w = await sendouqWorld();
 		const scan = w.scanned(w.maps[0]!);
@@ -954,12 +1015,12 @@ describe("abuse limits", () => {
 		const user = await createUser();
 		const request = (requestIndex: number) =>
 			R.range(0, 32).map((i) => maxSizeScan(requestIndex * 32 + i));
-		await ingest(user, request(0));
-		await ingest(user, request(1));
-		await ingest(user, request(2));
+		for (const requestIndex of R.range(0, 4)) {
+			await ingest(user, request(requestIndex));
+		}
 
-		await expect(ingest(user, request(3))).rejects.toThrow("429");
-		expect(await fetchIngestedMatches()).toHaveLength(96);
+		await expect(ingest(user, request(4))).rejects.toThrow("429");
+		expect(await fetchIngestedMatches()).toHaveLength(128);
 	});
 });
 

@@ -11,6 +11,7 @@ import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as Matches from "./core/Matches";
 import type { IngestableGame } from "./core/Scoreboards";
+import * as StoredMatches from "./core/StoredMatches.server";
 import { NAMES, scannerMatch, WEAPONS } from "./core/tests/fixtures";
 import * as ScannerIngestRepository from "./ScannerIngestRepository.server";
 
@@ -609,12 +610,15 @@ async function setupSendouqMatch(options: { isConcluded?: boolean } = {}) {
 	return { match, maps, users };
 }
 
-function fetchIngestedMatches() {
-	return db
+/** Every stored match, timelines decompressed back into `data`. */
+async function fetchIngestedMatches() {
+	const rows = await db
 		.selectFrom("IngestedMatch")
 		.selectAll()
 		.orderBy("id", "asc")
 		.execute();
+
+	return rows.map((row) => ({ ...row, data: StoredMatches.fromStored(row) }));
 }
 
 function fetchLinks() {

@@ -119,6 +119,10 @@ opens it, for anyone, through the same handoff Inspect uses.
   `/ingest` refuses (429) a sender past their quota (stored matches per
   hour, stored size per day), a game links at most one read per sender, and
   a daily routine deletes linkable reads still unlinked after 30 days.
+  A stored match's `objective` and `playerStatus` timelines, ~95% of its
+  size, live Brotli-compressed in `IngestedMatch.timelines` apart from the
+  `data` JSON (`scanner-ingest/core/StoredMatches.server.ts`, ~30 KB → ~1.8
+  KB).
   Per-event send
   statuses back the cards' upload status button (`UploadStatus.tsx`) and its
   Retry/Upload. VoD scans never upload: their reads carry no wall clock, and

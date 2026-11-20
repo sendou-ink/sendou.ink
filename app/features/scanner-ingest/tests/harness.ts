@@ -34,6 +34,7 @@ import {
 import { invariant } from "~/utils/invariant";
 import { withUserId, wrappedAction, wrappedLoader } from "~/utils/Test";
 import { action } from "../actions/scanner-ingest.server";
+import * as StoredMatches from "../core/StoredMatches.server";
 import type {
 	IngestResponse,
 	ingestBodySchema,
@@ -431,12 +432,15 @@ export function tournamentMatchPage(tournamentId: number, matchId: number) {
 	});
 }
 
-export function fetchIngestedMatches() {
-	return db
+/** Every stored match, timelines decompressed back into `data`. */
+export async function fetchIngestedMatches() {
+	const rows = await db
 		.selectFrom("IngestedMatch")
 		.selectAll()
 		.orderBy("id", "asc")
 		.execute();
+
+	return rows.map((row) => ({ ...row, data: StoredMatches.fromStored(row) }));
 }
 
 export function fetchLinks() {

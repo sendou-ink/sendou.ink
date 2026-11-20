@@ -28,8 +28,8 @@ const CONTENT_RESOLUTION_WINDOW_DAYS = 365;
 
 /** Real senders store a few dozen matches an hour at most. */
 const MAX_STORED_MATCHES_PER_HOUR = 200;
-/** Real senders store a megabyte or two a day at most. */
-const MAX_STORED_BYTES_PER_DAY = 20 * 1024 * 1024;
+/** Real senders store a couple hundred kilobytes a day at most (timelines compressed). */
+const MAX_STORED_BYTES_PER_DAY = 2 * 1024 * 1024;
 
 export const action = defineAction(
 	{ body: ingestBodySchema, onInvalidBody: "badRequest" },

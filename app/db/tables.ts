@@ -58,7 +58,7 @@ import type {
 import type { TierName } from "~/features/mmr/mmr-constants";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
-import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
+import type { StoredScannerMatch } from "~/features/scanner-ingest/core/StoredMatches.server";
 import type { SplatoonRotationType } from "~/features/splatoon-rotations/splatoon-rotations-constants";
 import type {
 	MemberRole,
@@ -630,7 +630,10 @@ interface IngestedMatch {
 	submitterUserId: number | null;
 	/** database timestamp (seconds) the match was played at, when known */
 	playedAt: number | null;
-	data: JSONColumnType<ScannerMatch>;
+	/** the match without its timelines, see `StoredMatches.toStored` */
+	data: JSONColumnType<StoredScannerMatch>;
+	/** Brotli-compressed JSON of the match's `objective` and `playerStatus`; null when neither was read */
+	timelines: Uint8Array | null;
 	matchHash: string;
 	/** server-resolved tournament the match probably belongs to; aids future linking */
 	tournamentIdHint: number | null;

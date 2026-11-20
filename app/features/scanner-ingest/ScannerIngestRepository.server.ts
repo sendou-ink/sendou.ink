@@ -18,6 +18,7 @@ import type {
 	IngestContext,
 } from "./core/Scoreboards";
 import * as Scoreboards from "./core/Scoreboards";
+import * as StoredMatches from "./core/StoredMatches.server";
 
 const opponentOneId = sql<number>`"TournamentMatch"."opponentOne" ->> '$.id'`;
 const opponentTwoId = sql<number>`"TournamentMatch"."opponentTwo" ->> '$.id'`;
@@ -378,6 +379,7 @@ export async function findScoreboardsByTournamentMatchIds(
 			opponentOneId.as("opponentOneId"),
 			opponentTwoId.as("opponentTwoId"),
 			"IngestedMatch.data",
+			"IngestedMatch.timelines",
 			"IngestedMatch.povUserId",
 		])
 		.where("TournamentMatchGameResult.matchId", "in", tournamentMatchIds)
@@ -405,7 +407,7 @@ export async function findScoreboardsByTournamentMatchIds(
 
 		const data = Scoreboards.deriveScoreboardData({
 			linked: gameRows.map((row) => ({
-				data: row.data,
+				data: StoredMatches.fromStored(row),
 				povUserId: row.povUserId,
 			})),
 			winnerTeamId: first.winnerTeamId,
@@ -441,6 +443,7 @@ export async function findScoreboardsByGroupMatchId(groupMatchId: number) {
 			"GroupMatch.alphaGroupId",
 			"GroupMatch.bravoGroupId",
 			"IngestedMatch.data",
+			"IngestedMatch.timelines",
 			"IngestedMatch.povUserId",
 		])
 		.where("GroupMatchMap.matchId", "=", groupMatchId)
@@ -467,7 +470,7 @@ export async function findScoreboardsByGroupMatchId(groupMatchId: number) {
 
 		const data = Scoreboards.deriveScoreboardData({
 			linked: mapRows.map((row) => ({
-				data: row.data,
+				data: StoredMatches.fromStored(row),
 				povUserId: row.povUserId,
 			})),
 			winnerTeamId: winnerGroupId,
@@ -496,6 +499,7 @@ export async function findScoreboardsByLobbyId(lobbyId: number) {
 			"LobbyGame.index as mapIndex",
 			"LobbyGame.winnerSide",
 			"IngestedMatch.data",
+			"IngestedMatch.timelines",
 			"IngestedMatch.povUserId",
 		])
 		.where("LobbySet.lobbyId", "=", lobbyId)
@@ -518,7 +522,7 @@ export async function findScoreboardsByLobbyId(lobbyId: number) {
 
 		const data = Scoreboards.deriveScoreboardData({
 			linked: gameRows.map((row) => ({
-				data: row.data,
+				data: StoredMatches.fromStored(row),
 				povUserId: row.povUserId,
 			})),
 			winnerTeamId: LOBBY_SIDE_TEAM_ID[winnerSide],
@@ -651,11 +655,12 @@ export async function findUnlinkedMatchesByHint({
 }) {
 	if (povUserIds.length === 0) return [];
 
-	return db
+	const rows = await db
 		.selectFrom("IngestedMatch")
 		.select([
 			"IngestedMatch.id",
 			"IngestedMatch.data",
+			"IngestedMatch.timelines",
 			"IngestedMatch.povUserId",
 		])
 		.where((eb) => {
@@ -697,6 +702,12 @@ export async function findUnlinkedMatchesByHint({
 		.orderBy("IngestedMatch.playedAt", "asc")
 		.limit(UNLINKED_MATCHES_LIMIT)
 		.execute();
+
+	return rows.map((row) => ({
+		id: row.id,
+		data: StoredMatches.fromStored(row),
+		povUserId: row.povUserId,
+	}));
 }
 
 /** The matches the user stored in the last hour and the size of those stored in the last day, as the ingest quota counts them. */
@@ -719,7 +730,12 @@ export async function findIngestQuotaUsage({
 				.filterWhere("createdAt", ">=", hourStart)
 				.as("matchesInHour"),
 			eb.fn
-				.coalesce(eb.fn.sum<number>(eb.fn("length", ["data"])), sql.lit(0))
+				.coalesce(
+					eb.fn.sum<number>(
+						sql`length("data") + coalesce(length("timelines"), 0)`,
+					),
+					sql.lit(0),
+				)
 				.as("bytesInDay"),
 		])
 		.where("povUserId", "=", povUserId)
@@ -829,6 +845,7 @@ async function addOrMergeMatch(
 		.select([
 			"id",
 			"data",
+			"timelines",
 			"tournamentIdHint",
 			"groupMatchIdHint",
 			"lobbySetIdHint",
@@ -837,7 +854,11 @@ async function addOrMergeMatch(
 		.executeTakeFirst();
 	if (identical) {
 		await backfillHints(trx, identical, hints);
-		return { id: identical.id, data: identical.data, outcome: "unchanged" };
+		return {
+			id: identical.id,
+			data: StoredMatches.fromStored(identical),
+			outcome: "unchanged",
+		};
 	}
 
 	const stored = await findMergeCandidate(trx, {
@@ -852,7 +873,7 @@ async function addOrMergeMatch(
 				povUserId,
 				submitterUserId,
 				playedAt: toDbTimestamp(canonical.playedAt),
-				data: JSON.stringify(canonical),
+				...storedColumns(canonical),
 				matchHash: hash,
 				...hints,
 			})
@@ -873,7 +894,7 @@ async function addOrMergeMatch(
 		.updateTable("IngestedMatch")
 		.set({
 			playedAt: toDbTimestamp(mergedCanonical.playedAt),
-			data: JSON.stringify(mergedCanonical),
+			...storedColumns(mergedCanonical),
 			matchHash: matchHash({ povUserId, match: mergedCanonical }),
 			tournamentIdHint: stored.tournamentIdHint ?? hints.tournamentIdHint,
 			groupMatchIdHint: stored.groupMatchIdHint ?? hints.groupMatchIdHint,
@@ -971,10 +992,12 @@ async function findMergeCandidate(
 	if (unloadedIds.length > 0) {
 		const loaded = await trx
 			.selectFrom("IngestedMatch")
-			.select(["id", "data"])
+			.select(["id", "data", "timelines"])
 			.where("id", "in", unloadedIds)
 			.execute();
-		for (const row of loaded) storedDataById.set(row.id, row.data);
+		for (const row of loaded) {
+			storedDataById.set(row.id, StoredMatches.fromStored(row));
+		}
 	}
 
 	const sameMatchId = candidateIds.find((id) => {
@@ -1351,7 +1374,10 @@ async function linkedPlayerNamesByTarget(
 
 	for (const row of rows) {
 		if (row.targetId === null || result.has(row.targetId)) continue;
-		const names = Scoreboards.recognizablePlayerNames(row.data);
+		// names only, the timelines are left compressed
+		const names = Scoreboards.recognizablePlayerNames(
+			StoredMatches.fromStored({ data: row.data, timelines: null }),
+		);
 		if (names) result.set(row.targetId, names);
 	}
 
@@ -1602,4 +1628,10 @@ async function lobbySetRosters(setIds: number[]) {
 	}
 
 	return result;
+}
+
+function storedColumns(match: ScannerMatch) {
+	const { data, timelines } = StoredMatches.toStored(match);
+
+	return { data: JSON.stringify(data), timelines };
 }
