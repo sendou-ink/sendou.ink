@@ -8,3 +8,6 @@ patchedDependencies:
   kysely@0.29.0: patches/kysely@0.29.0.patch
   react-i18next@17.0.11: patches/react-i18next@17.0.11.patch
   react-router@8.5.0: patches/react-router@8.5.0.patch
+overrides:
+  # Starlight pins satteri 0.10 while Astro uses 0.11; two copies make the bundled docs build load the other version's native binding
+  satteri: 0.11.7
