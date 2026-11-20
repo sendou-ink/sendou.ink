@@ -71,7 +71,11 @@ describe("PlanCamera.zoomAt", () => {
 	});
 
 	test.each([
-		{ why: "in to the zoom limit", factor: 100, expectedScale: 0.5 * 8 },
+		{
+			why: "in to the zoom limit",
+			factor: 100,
+			expectedScale: 0.5 * PlanCamera.MAX_ZOOM,
+		},
 		{ why: "out to fitting the map", factor: 0.01, expectedScale: 0.5 },
 	])("stops zooming $why", ({ factor, expectedScale }) => {
 		const zoomed = PlanCamera.zoomAt(
@@ -82,6 +86,28 @@ describe("PlanCamera.zoomAt", () => {
 		);
 
 		expect(zoomed.scale).toBe(expectedScale);
+	});
+
+	test("zooming in past the limit keeps the map point under the anchor in place", () => {
+		const camera = { scale: 1, x: -400, y: -200 };
+		const anchor: [number, number] = [300, 500];
+
+		const zoomed = PlanCamera.zoomAt(camera, TALL, anchor, 100);
+
+		const [mapX, mapY] = PlanCamera.toMap(camera, anchor);
+		expect(mapX * zoomed.scale + zoomed.x).toBeCloseTo(anchor[0]);
+		expect(mapY * zoomed.scale + zoomed.y).toBeCloseTo(anchor[1]);
+	});
+
+	test("zooming in at the limit leaves the camera where it is", () => {
+		const atLimit = PlanCamera.zoomAt(
+			{ scale: 1, x: -400, y: -200 },
+			TALL,
+			[300, 500],
+			100,
+		);
+
+		expect(PlanCamera.zoomAt(atLimit, TALL, [600, 200], 1.2)).toEqual(atLimit);
 	});
 
 	test("zooming out to fitting the map centers it", () => {
@@ -108,6 +134,32 @@ describe("PlanCamera.panBy", () => {
 		expect(
 			PlanCamera.panBy({ scale: 1, x: -300, y: -200 }, WIDE, [500, -900]),
 		).toEqual({ scale: 1, x: 0, y: 400 - 1080 });
+	});
+});
+
+describe("PlanCamera.centerOn", () => {
+	test("puts the point in the middle of the viewport", () => {
+		const camera = PlanCamera.centerOn(
+			{ scale: 1, x: 0, y: 0 },
+			WIDE,
+			[960, 540],
+		);
+
+		expect(PlanCamera.toMap(camera, [WIDE.width / 2, WIDE.height / 2])).toEqual(
+			[960, 540],
+		);
+	});
+
+	test("keeps the zoom", () => {
+		expect(
+			PlanCamera.centerOn({ scale: 1.2, x: 0, y: 0 }, WIDE, [960, 540]).scale,
+		).toBe(1.2);
+	});
+
+	test("stops at the map's edges for a point near a corner", () => {
+		expect(
+			PlanCamera.centerOn({ scale: 1, x: -300, y: -200 }, WIDE, [10, 10]),
+		).toEqual({ scale: 1, x: 0, y: 0 });
 	});
 });
 

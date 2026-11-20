@@ -19,6 +19,7 @@ export const meta: MetaFunction = (args) => {
 	});
 };
 
+// XXX: move the planner's translations from the plans.* keys of common.json to their own plans.json namespace, listed in handle.i18n
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({
 		imgPath: navIconUrl("plans"),

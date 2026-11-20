@@ -11,11 +11,16 @@ import { StagePicker } from "./StagePicker";
 export function ActionBar({
 	editor,
 	document,
+	isMapShown,
+	onMapPicked,
 	onFitView,
 	className,
 }: {
 	editor: PlanEditor;
 	document: PlanDocument;
+	/** `false` while no map has been picked yet: the map is blank and the stage picker starts open. */
+	isMapShown: boolean;
+	onMapPicked: () => void;
 	onFitView: () => void;
 	className?: string;
 }) {
@@ -23,7 +28,12 @@ export function ActionBar({
 
 	return (
 		<div className={clsx(styles.actionBar, className)}>
-			<StagePicker editor={editor} document={document} />
+			<StagePicker
+				editor={editor}
+				document={document}
+				isMapShown={isMapShown}
+				onMapPicked={onMapPicked}
+			/>
 			<SendouButton
 				variant="minimal"
 				shape="square"

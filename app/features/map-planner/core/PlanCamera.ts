@@ -8,7 +8,7 @@ import { MAP_SIZE, type Point } from "./PlanDocument";
  * How far in the camera zooms, relative to fitting the whole map.
  * @internal
  */
-export const MAX_ZOOM = 8;
+export const MAX_ZOOM = 4;
 
 /** Screen point = map point × `scale` + (`x`, `y`). */
 export interface Camera {
@@ -30,8 +30,7 @@ export function fit(viewport: Viewport): Camera {
 
 /** The camera moved and zoomed back inside the map's edges and the zoom limits. */
 export function clamp(camera: Camera, viewport: Viewport): Camera {
-	const minScale = fitScale(viewport);
-	const scale = Math.min(Math.max(camera.scale, minScale), minScale * MAX_ZOOM);
+	const scale = clampScale(camera.scale, viewport);
 
 	return {
 		scale,
@@ -49,7 +48,7 @@ export function zoomAt(
 ): Camera {
 	const [anchorX, anchorY] = anchor;
 	const [mapX, mapY] = toMap(camera, anchor);
-	const scale = camera.scale * factor;
+	const scale = clampScale(camera.scale * factor, viewport);
 
 	return clamp(
 		{ scale, x: anchorX - mapX * scale, y: anchorY - mapY * scale },
@@ -69,20 +68,39 @@ export function panBy(
 	);
 }
 
+/** The camera moved to show `point` in the middle of the viewport, as far as the map's edges allow. */
+export function centerOn(
+	camera: Camera,
+	viewport: Viewport,
+	[mapX, mapY]: Point,
+): Camera {
+	return clamp(
+		{
+			...camera,
+			x: viewport.width / 2 - mapX * camera.scale,
+			y: viewport.height / 2 - mapY * camera.scale,
+		},
+		viewport,
+	);
+}
+
 /** Whether the camera shows the whole map, i.e. is at the smallest zoom. */
 export function isFitted(camera: Camera, viewport: Viewport) {
 	return camera.scale <= fitScale(viewport) + Number.EPSILON;
 }
 
-/**
- * The map point under a screen point.
- * @internal
- */
+/** The map point under a screen point. */
 export function toMap(camera: Camera, [screenX, screenY]: Point): Point {
 	return [
 		(screenX - camera.x) / camera.scale,
 		(screenY - camera.y) / camera.scale,
 	];
+}
+
+function clampScale(scale: number, viewport: Viewport) {
+	const minScale = fitScale(viewport);
+
+	return Math.min(Math.max(scale, minScale), minScale * MAX_ZOOM);
 }
 
 function fitScale(viewport: Viewport) {

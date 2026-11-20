@@ -1,24 +1,51 @@
 // Draws a plan on a Konva stage inside a container element and redraws it
 // on every change of the editor's document. Plain Konva and DOM, no React,
 // so any UI framework can host it. Owns the camera: wheel and pinch zoom,
-// pans by dragging, never past the map's edges.
+// pans by dragging the map, never past the map's edges.
 
 import Konva from "konva";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { stageMinimapImageUrlWithEnding } from "~/utils/urls";
 import * as PlanCamera from "../core/PlanCamera";
-import { MAP_SIZE, type PlanDocument, type Point } from "../core/PlanDocument";
+import * as PlanCommands from "../core/PlanCommands";
+import {
+	MAP_SIZE,
+	type PlanDocument,
+	type Point,
+	type SlotIndex,
+	teamOfSlot,
+} from "../core/PlanDocument";
 import type { PlanEditor } from "../core/PlanEditor";
+import type { PlanSelection } from "../core/PlanSelection";
+import * as TokenGhost from "./TokenGhost";
+import * as TokenLayer from "./TokenLayer";
 
 const WHEEL_ZOOM_SPEED = 0.002;
 /** Trackpad pinches arrive as wheel events with small deltas and `ctrlKey` set. */
 const PINCH_WHEEL_ZOOM_SPEED = 0.01;
 const WHEEL_LINE_HEIGHT_PX = 16;
 const MIDDLE_MOUSE_BUTTON = 1;
+/** How far a pointer may move between down and up for it to count as a tap, in screen pixels. */
+const TAP_MAX_DISTANCE = 4;
 
 /** See {@link create}. */
 export interface PlanCanvas {
 	/** Shows the whole map. */
 	fitView: () => void;
+	/** Moves the view to show the map point in the middle, if zoomed in. */
+	centerOn: (point: Point) => void;
+	/**
+	 * Gives the slot a player with the weapon and lets the pointer carry its token onto the map,
+	 * from a drag that started outside the canvas (e.g. in the weapon picker). Released over the
+	 * map it is placed there, anywhere else on its team's side. One undo step.
+	 */
+	dragNewPlayer: (args: {
+		slot: SlotIndex;
+		weaponId: MainWeaponId;
+		clientPoint: Point;
+	}) => void;
+	/** Shows or hides the map image, e.g. hidden until the user picked a map. */
+	setMapShown: (shown: boolean) => void;
 	/** Removes the stage and every listener from the page. */
 	destroy: () => void;
 }
@@ -27,9 +54,14 @@ export interface PlanCanvas {
 export function create({
 	container,
 	editor,
+	selection,
+	isMapShown: initialIsMapShown = true,
 }: {
 	container: HTMLDivElement;
 	editor: PlanEditor;
+	selection: PlanSelection;
+	/** `false` leaves the map blank (and its image unloaded) until {@link PlanCanvas.setMapShown}. */
+	isMapShown?: boolean;
 }): PlanCanvas {
 	const stage = new Konva.Stage({
 		container,
@@ -57,6 +89,9 @@ export function create({
 		stage.position({ x: camera.x, y: camera.y });
 	};
 
+	let isMapShown = initialIsMapShown;
+	mapImage.visible(isMapShown);
+
 	let shownMapUrl: string | null = null;
 	const showMap = (url: string) => {
 		if (url === shownMapUrl) return;
@@ -72,7 +107,7 @@ export function create({
 	};
 
 	const render = (document: PlanDocument, previous?: PlanDocument) => {
-		showMap(mapImageUrl(document));
+		if (isMapShown) showMap(mapImageUrl(document));
 		if (
 			previous &&
 			(previous.stageId !== document.stageId ||
@@ -103,20 +138,133 @@ export function create({
 	resizeObserver.observe(container);
 
 	const fitView = () => setCamera(PlanCamera.fit(viewport()));
-	const removeCameraInput = listenToCameraInput({
+	let tokenLayer: TokenLayer.TokenLayer | null = null;
+	const cameraInput = listenToCameraInput({
 		container,
 		getCamera: () => camera,
 		setCamera: (next) => setCamera(PlanCamera.clamp(next, viewport())),
 		viewport,
 		fitView,
+		isOnToken: (point) => tokenLayer?.hitsToken(point) ?? false,
+		onTapMap: () => selection.set(null),
 	});
+	tokenLayer = TokenLayer.create({
+		stage,
+		editor,
+		selection,
+		isPanning: cameraInput.isPanning,
+	});
+
+	/** The map point under a point of the page, `null` off the canvas or off the map. */
+	const clientToMap = ([clientX, clientY]: Point): Point | null => {
+		const rect = container.getBoundingClientRect();
+		const containerPoint: Point = [clientX - rect.left, clientY - rect.top];
+		if (
+			containerPoint[0] < 0 ||
+			containerPoint[1] < 0 ||
+			containerPoint[0] > rect.width ||
+			containerPoint[1] > rect.height
+		) {
+			return null;
+		}
+
+		const [x, y] = PlanCamera.toMap(camera, containerPoint);
+		if (x < 0 || y < 0 || x > MAP_SIZE.width || y > MAP_SIZE.height) {
+			return null;
+		}
+		return [x, y];
+	};
+
+	const dragNewPlayer: PlanCanvas["dragNewPlayer"] = ({
+		slot,
+		weaponId,
+		clientPoint,
+	}) => {
+		editor.beginGroup();
+		editor.apply(
+			PlanCommands.setWeapon(editor.getDocument(), slot, weaponId, {
+				onMap: false,
+			}),
+		);
+		selection.set({ type: "player", slot });
+
+		const player = editor.getDocument().slots[slot];
+		if (!player) {
+			editor.endGroup();
+			return;
+		}
+
+		const rect = container.getBoundingClientRect();
+		const ghost = TokenGhost.create({
+			player,
+			isEnemy: teamOfSlot(slot) === 1,
+			scale: camera.scale,
+			pixelOrigin: [rect.left, rect.top],
+		});
+		/** Over the map the ghost sits exactly where the token will be dropped, on whole map pixels. */
+		const dropPointOf = (pointer: Point) => {
+			const mapPoint = clientToMap(pointer);
+			if (!mapPoint) return { mapPoint: null, ghostCenter: pointer };
+
+			const rounded: Point = [Math.round(mapPoint[0]), Math.round(mapPoint[1])];
+			return {
+				mapPoint: rounded,
+				ghostCenter: [
+					rect.left + camera.x + rounded[0] * camera.scale,
+					rect.top + camera.y + rounded[1] * camera.scale,
+				] as Point,
+			};
+		};
+		ghost.moveTo(dropPointOf(clientPoint).ghostCenter);
+		const previousCursor = document.documentElement.style.cursor;
+		document.documentElement.style.cursor = "grabbing";
+
+		const onMove = (event: PointerEvent) =>
+			ghost.moveTo(dropPointOf([event.clientX, event.clientY]).ghostCenter);
+		const onEnd = (event: PointerEvent) => {
+			window.removeEventListener("pointermove", onMove);
+			window.removeEventListener("pointerup", onEnd);
+			window.removeEventListener("pointercancel", onEnd);
+			document.documentElement.style.cursor = previousCursor;
+
+			const position =
+				event.type === "pointerup"
+					? dropPointOf([event.clientX, event.clientY]).mapPoint
+					: null;
+			editor.apply(
+				PlanCommands.placePlayer(
+					editor.getDocument(),
+					slot,
+					position ?? undefined,
+				),
+			);
+			editor.endGroup();
+			// the token layer draws in the next animation frame, the ghost goes in that same frame
+			requestAnimationFrame(() => ghost.destroy());
+		};
+
+		window.addEventListener("pointermove", onMove);
+		window.addEventListener("pointerup", onEnd);
+		window.addEventListener("pointercancel", onEnd);
+	};
 
 	return {
 		fitView,
+		centerOn: (point) => {
+			if (PlanCamera.isFitted(camera, viewport())) return;
+			setCamera(PlanCamera.centerOn(camera, viewport(), point));
+		},
+		dragNewPlayer,
+		setMapShown: (shown) => {
+			isMapShown = shown;
+			mapImage.visible(shown);
+			if (shown) showMap(mapImageUrl(editor.getDocument()));
+		},
 		destroy: () => {
 			unsubscribe();
 			resizeObserver.disconnect();
-			removeCameraInput();
+			cameraInput.remove();
+			tokenLayer?.destroy();
 			stage.destroy();
 		},
 	};
@@ -133,8 +281,9 @@ function mapImageUrl(document: PlanDocument) {
 }
 
 /**
- * Wheel zooms around the pointer; dragging with one pointer pans, with two it pinches. Space held
- * or the middle mouse button pan whatever the pointer is over. Shift+1 fits the map.
+ * Wheel zooms around the pointer; dragging the map with one pointer pans, with two it pinches.
+ * Space held or the middle mouse button pan whatever the pointer is over, tokens included.
+ * Shift+1 fits the map.
  */
 function listenToCameraInput({
 	container,
@@ -142,15 +291,22 @@ function listenToCameraInput({
 	setCamera,
 	viewport,
 	fitView,
+	isOnToken,
+	onTapMap,
 }: {
 	container: HTMLDivElement;
 	getCamera: () => PlanCamera.Camera;
 	setCamera: (camera: PlanCamera.Camera) => void;
 	viewport: () => PlanCamera.Viewport;
 	fitView: () => void;
+	/** Whether a token is under the container point, which the pointer then drags instead of panning. */
+	isOnToken: (point: Point) => boolean;
+	/** A pointer went down and up on the map without moving, away from tokens. */
+	onTapMap: () => void;
 }) {
 	const pointers = new Map<number, Point>();
 	let spaceHeld = false;
+	let tapStart: Point | null = null;
 
 	container.style.touchAction = "none";
 
@@ -159,9 +315,10 @@ function listenToCameraInput({
 		return [event.clientX - rect.left, event.clientY - rect.top];
 	};
 
+	/** A press that may still turn out to be a tap shows no grabbing cursor, so clicking the map doesn't flash it. */
 	const updateCursor = () => {
-		container.style.cursor =
-			pointers.size > 0 ? "grabbing" : spaceHeld ? "grab" : "";
+		const isPanning = pointers.size > 0 && tapStart === null;
+		container.style.cursor = isPanning ? "grabbing" : spaceHeld ? "grab" : "";
 	};
 
 	const onWheel = (event: WheelEvent) => {
@@ -184,10 +341,14 @@ function listenToCameraInput({
 	};
 
 	const onPointerDown = (event: PointerEvent) => {
+		const point = localPoint(event);
+		const isPanButton = event.button === MIDDLE_MOUSE_BUTTON || spaceHeld;
 		if (event.button === MIDDLE_MOUSE_BUTTON) event.preventDefault();
+		if (!isPanButton && isOnToken(point)) return;
 
+		tapStart = pointers.size === 0 && !isPanButton ? point : null;
 		container.setPointerCapture(event.pointerId);
-		pointers.set(event.pointerId, localPoint(event));
+		pointers.set(event.pointerId, point);
 		updateCursor();
 	};
 
@@ -198,6 +359,13 @@ function listenToCameraInput({
 		const others = [...pointers].filter(([id]) => id !== event.pointerId);
 		const after = localPoint(event);
 		pointers.set(event.pointerId, after);
+		if (
+			others.length > 0 ||
+			(tapStart && distance(tapStart, after) > TAP_MAX_DISTANCE)
+		) {
+			tapStart = null;
+			updateCursor();
+		}
 
 		if (others.length === 0) {
 			setCamera(
@@ -227,7 +395,12 @@ function listenToCameraInput({
 	};
 
 	const onPointerEnd = (event: PointerEvent) => {
-		pointers.delete(event.pointerId);
+		if (!pointers.delete(event.pointerId)) return;
+
+		if (event.type === "pointerup" && tapStart && pointers.size === 0) {
+			onTapMap();
+		}
+		tapStart = null;
 		updateCursor();
 	};
 
@@ -266,15 +439,19 @@ function listenToCameraInput({
 	window.addEventListener("keyup", onKeyUp);
 	window.addEventListener("blur", onBlur);
 
-	return () => {
-		container.removeEventListener("wheel", onWheel);
-		container.removeEventListener("pointerdown", onPointerDown);
-		container.removeEventListener("pointermove", onPointerMove);
-		container.removeEventListener("pointerup", onPointerEnd);
-		container.removeEventListener("pointercancel", onPointerEnd);
-		window.removeEventListener("keydown", onKeyDown);
-		window.removeEventListener("keyup", onKeyUp);
-		window.removeEventListener("blur", onBlur);
+	return {
+		/** Whether the pointer pans whatever it is over right now. */
+		isPanning: () => spaceHeld,
+		remove: () => {
+			container.removeEventListener("wheel", onWheel);
+			container.removeEventListener("pointerdown", onPointerDown);
+			container.removeEventListener("pointermove", onPointerMove);
+			container.removeEventListener("pointerup", onPointerEnd);
+			container.removeEventListener("pointercancel", onPointerEnd);
+			window.removeEventListener("keydown", onKeyDown);
+			window.removeEventListener("keyup", onKeyUp);
+			window.removeEventListener("blur", onBlur);
+		},
 	};
 }
 

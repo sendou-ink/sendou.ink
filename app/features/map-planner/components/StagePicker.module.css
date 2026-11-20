@@ -27,6 +27,19 @@
 	}
 }
 
+.triggerPlaceholder {
+	display: grid;
+	place-items: center;
+	width: 64px;
+	height: 36px;
+	color: var(--color-text-high);
+
+	& svg {
+		width: 1.25rem;
+		height: 1.25rem;
+	}
+}
+
 .triggerMode {
 	position: absolute;
 	right: var(--s-0-5);

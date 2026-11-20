@@ -6,24 +6,193 @@
 
 .team {
 	display: flex;
-	gap: var(--s-2);
+	gap: var(--s-1);
+}
+
+.column {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+	width: 4.5rem;
+
+	&::after {
+		content: "";
+		order: 1;
+		width: 1.5rem;
+		height: 3px;
+		border-radius: 999px;
+		background-color: transparent;
+	}
+
+	&:has(.slot[aria-pressed="true"])::after {
+		background-color: var(--color-text);
+	}
+}
+
+.frame {
+	position: relative;
+
+	&:hover .removeButton,
+	&:focus-within .removeButton {
+		opacity: 1;
+	}
 }
 
 .slot {
-	--slot-shape: polygon(50% 0, 100% 25%, 100% 100%, 0 100%, 0 25%);
-
 	position: relative;
+	display: grid;
+	place-items: center;
 	width: 3.5rem;
 	height: 4rem;
-	border-bottom: 3px solid var(--team-color);
-	background-color: var(--color-border);
-	clip-path: var(--slot-shape);
+	padding: var(--s-2) 0 0;
+	border: none;
+	background: none;
+	color: var(--color-text-high);
+	cursor: pointer;
 
-	&::before {
-		content: "";
-		position: absolute;
-		inset: var(--border-width) var(--border-width) 0;
-		background-color: var(--color-bg-high);
-		clip-path: var(--slot-shape);
+	& > :not(.slotShape) {
+		position: relative;
 	}
+
+	&:hover .slotOutline,
+	&:focus-visible .slotOutline {
+		stroke: var(--team-color);
+	}
+
+	&:focus-visible {
+		outline: none;
+	}
+
+	&[aria-pressed="true"] .slotOutline {
+		stroke: var(--team-color);
+		stroke-width: 3;
+	}
+
+	&[data-on-map="false"] img {
+		opacity: 0.5;
+	}
+
+	&[data-status="dead"] img,
+	&[data-status="dead"] [role="img"] {
+		filter: grayscale(1);
+	}
+
+	&[data-status="sharking"] img {
+		opacity: 0.6;
+	}
+}
+
+.slotShape {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+}
+
+.slotOutline {
+	fill: var(--color-bg-high);
+	stroke: var(--color-border);
+	stroke-width: 1.5;
+}
+
+.slotTeamBar {
+	fill: none;
+	stroke: var(--team-color);
+	stroke-width: 3;
+}
+
+.addIcon {
+	width: 1.25rem;
+	height: 1.25rem;
+}
+
+.badge {
+	position: absolute;
+	right: calc(var(--s-1) * -1);
+	bottom: calc(var(--s-1) * -1);
+	display: grid;
+	place-items: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	border: var(--border-style);
+	border-radius: 999px;
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	pointer-events: none;
+}
+
+.hiddenBadge {
+	right: auto;
+	left: calc(var(--s-1) * -1);
+}
+
+.badgeIcon {
+	width: 0.75rem;
+	height: 0.75rem;
+}
+
+.removeButton {
+	position: absolute;
+	top: 0;
+	right: calc(var(--s-1-5) * -1);
+	display: grid;
+	place-items: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	padding: 0;
+	border: var(--border-style);
+	border-radius: 999px;
+	background-color: var(--color-bg);
+	color: var(--color-text-high);
+	opacity: 0;
+	cursor: pointer;
+
+	&:hover,
+	&:focus-visible {
+		color: var(--color-text);
+		opacity: 1;
+	}
+
+	& svg {
+		width: 0.75rem;
+		height: 0.75rem;
+	}
+}
+
+.label {
+	order: 2;
+	width: 100%;
+	height: 1.25rem;
+	padding: 0 var(--s-0-5);
+	border: none;
+	border-radius: var(--radius-field);
+	background: none;
+	color: var(--color-text);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	text-align: center;
+	text-overflow: ellipsis;
+
+	&::placeholder {
+		color: var(--color-text-high);
+		opacity: 0;
+	}
+
+	&:hover::placeholder,
+	&:focus::placeholder {
+		opacity: 1;
+	}
+
+	&:hover,
+	&:focus {
+		background-color: var(--color-bg-high);
+		outline: none;
+	}
+}
+
+.pickerPopover {
+	width: min(36rem, var(--floating-available-width, 100vw));
+	max-width: none;
 }

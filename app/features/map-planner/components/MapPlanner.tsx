@@ -1,7 +1,9 @@
 import * as React from "react";
 import * as PlanCanvas from "../canvas/PlanCanvas";
+import * as PlanCommands from "../core/PlanCommands";
 import * as PlanDocument from "../core/PlanDocument";
 import * as PlanEditor from "../core/PlanEditor";
+import * as PlanSelection from "../core/PlanSelection";
 import { ActionBar } from "./ActionBar";
 import styles from "./MapPlanner.module.css";
 import { SlotBar } from "./SlotBar";
@@ -13,10 +15,13 @@ export function MapPlanner() {
 	const [editor] = React.useState(() =>
 		PlanEditor.create(PlanDocument.empty(INITIAL_MAP)),
 	);
+	const [selection] = React.useState(() => PlanSelection.create());
 	const document = React.useSyncExternalStore(
 		editor.subscribe,
 		editor.getDocument,
 	);
+	// XXX: start shown when autosave restores a plan or a link opens one
+	const [isMapShown, setIsMapShown] = React.useState(false);
 	const canvasRef = React.useRef<PlanCanvas.PlanCanvas | null>(null);
 	const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -26,6 +31,8 @@ export function MapPlanner() {
 		const canvas = PlanCanvas.create({
 			container: containerRef.current,
 			editor,
+			selection,
+			isMapShown: false,
 		});
 		canvasRef.current = canvas;
 
@@ -33,11 +40,29 @@ export function MapPlanner() {
 			canvas.destroy();
 			canvasRef.current = null;
 		};
-	}, [editor]);
+	}, [editor, selection]);
+
+	React.useEffect(() => {
+		canvasRef.current?.setMapShown(isMapShown);
+	}, [isMapShown]);
 
 	return (
 		<div className={styles.planner}>
-			<SlotBar document={document} className={styles.slotBar} />
+			<SlotBar
+				editor={editor}
+				document={document}
+				selection={selection}
+				onPlayerClick={(slot) => {
+					editor.apply(PlanCommands.placePlayer(editor.getDocument(), slot));
+					selection.set({ type: "player", slot });
+					const position = editor.getDocument().slots[slot]?.position;
+					if (position) canvasRef.current?.centerOn(position);
+				}}
+				onWeaponDragOut={(slot, weaponId, clientPoint) =>
+					canvasRef.current?.dragNewPlayer({ slot, weaponId, clientPoint })
+				}
+				className={styles.slotBar}
+			/>
 			<ToolSidebar editor={editor} className={styles.toolSidebar} />
 			<div
 				ref={containerRef}
@@ -47,6 +72,8 @@ export function MapPlanner() {
 			<ActionBar
 				editor={editor}
 				document={document}
+				isMapShown={isMapShown}
+				onMapPicked={() => setIsMapShown(true)}
 				onFitView={() => canvasRef.current?.fitView()}
 				className={styles.actionBar}
 			/>

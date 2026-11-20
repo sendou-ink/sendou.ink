@@ -1,3 +1,4 @@
+import { Map as MapIcon } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -18,16 +19,24 @@ const WATER_LEVELS = [
 	labelKey: string;
 }>;
 
-/** Picks the map: a row of modes, the water level where a stage has one and a grid of stages. */
+/**
+ * Picks the map: a row of modes, the water level where a stage has one and a grid of stages.
+ * Opens by itself while no map has been picked yet.
+ */
 export function StagePicker({
 	editor,
 	document,
+	isMapShown,
+	onMapPicked,
 }: {
 	editor: PlanEditor;
 	document: PlanDocument;
+	/** `false` while no map has been picked yet. */
+	isMapShown: boolean;
+	onMapPicked: () => void;
 }) {
 	const { t } = useTranslation(["common", "game-misc"]);
-	const [isOpen, setIsOpen] = React.useState(false);
+	const [isOpen, setIsOpen] = React.useState(!isMapShown);
 	const mode = document.objective.mode;
 
 	return (
@@ -43,7 +52,13 @@ export function StagePicker({
 					aria-label={t("common:plans.changeMap")}
 					data-testid="plan-stage-picker-button"
 				>
-					<StageImage stageId={document.stageId} width={64} />
+					{isMapShown ? (
+						<StageImage stageId={document.stageId} width={64} />
+					) : (
+						<span className={styles.triggerPlaceholder}>
+							<MapIcon />
+						</span>
+					)}
 					<ModeImage mode={mode} size={20} className={styles.triggerMode} />
 				</button>
 			}
@@ -99,9 +114,10 @@ export function StagePicker({
 							key={stageId}
 							type="button"
 							className={styles.stage}
-							aria-pressed={stageId === document.stageId}
+							aria-pressed={isMapShown && stageId === document.stageId}
 							onClick={() => {
 								editor.apply(PlanCommands.switchMap(document, { stageId }));
+								onMapPicked();
 								setIsOpen(false);
 							}}
 							data-testid={`plan-stage-${stageId}`}
