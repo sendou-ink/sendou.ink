@@ -105,6 +105,7 @@ export default function ContributionsPage() {
 				<li>Centritide - {t("contributions:centritide")}</li>
 				<li>Antariska, yaga & harryXYZ - {t("contributions:antariska")}</li>
 				<li>aza & marcus - {t("contributions:stageVideos")}</li>
+				<li>ely - {t("contributions:ely")}</li>
 				<li>
 					<a href={SPLATOON_3_INK} target="_blank" rel="noreferrer">
 						splatoon3.ink

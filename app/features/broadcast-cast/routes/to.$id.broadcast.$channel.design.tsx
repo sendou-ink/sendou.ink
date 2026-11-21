@@ -60,7 +60,7 @@ export { action } from "../actions/to.$id.broadcast.$channel.server";
 export { loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["broadcast"],
+	i18n: ["broadcast", "contributions"],
 };
 
 type Stylesheet = (typeof BROADCAST_THEME_STYLESHEETS)[number];
@@ -92,7 +92,7 @@ const SCENE_STYLESHEETS: Record<CastScene, Stylesheet> = {
  * default styles, as the broadcast's custom CSS.
  */
 export default function BroadcastDesignPage() {
-	const { t } = useTranslation(["broadcast", "common"]);
+	const { t } = useTranslation(["broadcast", "common", "contributions"]);
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
 	const pageArgs = { tournamentId: tournament.ctx.id, slug: data.channel.slug };
@@ -263,6 +263,11 @@ export default function BroadcastDesignPage() {
 					isTooLong={isTooLong}
 				/>
 			</div>
+
+			<footer className="stack xs text-xs text-lighter">
+				<span>aza & marcus - {t("contributions:stageVideos")}</span>
+				<span>ely - {t("contributions:ely")}</span>
+			</footer>
 		</div>
 	);
 }
