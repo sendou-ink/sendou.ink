@@ -44,6 +44,8 @@ const config = {
 		"!scripts/benchmark-db/**!",
 		"!vite-css-plugins.ts!",
 		"!docs/site/src/plugins/**!",
+		// linked from html fixtures, which knip doesn't read
+		"!.claude/skills/*/selftest/**",
 	],
 	compilers: {
 		css: (text: string, path: string) => {

@@ -143,7 +143,7 @@ import {
 	SEED_NUMBERED_LOGO_COUNT,
 } from "../seed-art-urls";
 
-/** Discord's limit on a display name (`global_name`), what `discordName` holds for most users. */
+/** Discord's limit on a display name (`global_name`), what `defaultName` holds for most users. */
 const DISCORD_DISPLAY_NAME_MAX_LENGTH = 32;
 /** Discord's limit on a username, lowercase letters, digits, `_` and `.` only. */
 const DISCORD_USERNAME_MAX_LENGTH = 32;
@@ -209,9 +209,9 @@ const ALL_LANGUAGES = languagesUnified.map((language) => language.code);
 const CALENDAR_EVENT_TAGS = CALENDAR_EVENT.TAGS.filter(
 	(tag) => tag !== "LEAGUE",
 );
-/** Tournaments derive their team size tag instead. */
+/** Tournaments derive their team size and LAN tags instead. */
 const TOURNAMENT_TAGS = CALENDAR_EVENT_TAGS.filter(
-	(tag) => !CalendarEvent.isVersusTag(tag),
+	(tag) => !CalendarEvent.isDerivedTournamentTag(tag),
 );
 const LARGEST_LOBBY_ROOM_SIZE = (PLAYERS_PER_SET +
 	Math.max(...LOBBY_SPECTATOR_COUNTS)) as LobbyRoomSize;
@@ -295,7 +295,7 @@ async function seedUsers(targets: StressTarget[]): Promise<StressUsers> {
 
 	const unbrokenUser = await UserFactory.create(
 		{
-			discordName: unbroken(DISCORD_DISPLAY_NAME_MAX_LENGTH),
+			defaultName: unbroken(DISCORD_DISPLAY_NAME_MAX_LENGTH),
 			discordUniqueName: WIDE_LOWERCASE_CHARACTER.repeat(
 				DISCORD_USERNAME_MAX_LENGTH,
 			),
@@ -321,7 +321,7 @@ async function seedUsers(targets: StressTarget[]): Promise<StressUsers> {
 
 	const wordsUser = await UserFactory.create(
 		{
-			discordName: words(DISCORD_DISPLAY_NAME_MAX_LENGTH),
+			defaultName: words(DISCORD_DISPLAY_NAME_MAX_LENGTH),
 			discordUniqueName: tagged(
 				WIDE_LOWERCASE_CHARACTER.repeat(DISCORD_USERNAME_MAX_LENGTH),
 				"2",
@@ -343,7 +343,7 @@ async function seedUsers(targets: StressTarget[]): Promise<StressUsers> {
 	);
 
 	const minimalUser = await UserFactory.create({
-		discordName: WIDE_CHARACTER,
+		defaultName: WIDE_CHARACTER,
 		profile: { customName: WIDE_CHARACTER },
 		friendCode: null,
 	});
@@ -416,7 +416,7 @@ async function createPoolUser(shape: Shape, index: number) {
 
 	const user = await UserFactory.create(
 		{
-			discordName: name(DISCORD_DISPLAY_NAME_MAX_LENGTH),
+			defaultName: name(DISCORD_DISPLAY_NAME_MAX_LENGTH),
 			discordUniqueName: tagged(
 				WIDE_LOWERCASE_CHARACTER.repeat(DISCORD_USERNAME_MAX_LENGTH),
 				`${shape === "unbroken" ? "u" : "w"}${tag}`,
@@ -1571,7 +1571,7 @@ async function seedScripts(targets: StressTarget[]) {
 	for (const [index, { script, text }] of SCRIPT_NAMES.entries()) {
 		const user = await UserFactory.create(
 			{
-				discordName: fitted(text, DISCORD_DISPLAY_NAME_MAX_LENGTH),
+				defaultName: fitted(text, DISCORD_DISPLAY_NAME_MAX_LENGTH),
 				discordUniqueName: `polish_script_${index + 1}`,
 				profile: {
 					customName: fitted(text, USER.CUSTOM_NAME_MAX_LENGTH),
