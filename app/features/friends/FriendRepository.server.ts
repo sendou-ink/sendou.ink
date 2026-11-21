@@ -116,16 +116,10 @@ function withLfgJoins<QB extends SelectQueryBuilder<any, any, any>>(qb: QB) {
 		)
 		.leftJoin("Tournament", "Tournament.id", "TournamentTeam.tournamentId")
 		.leftJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
-		.leftJoin(
-			"CalendarEventDate",
-			"CalendarEventDate.eventId",
-			"CalendarEvent.id",
-		)
 		.select((eb) => [
 			...commonUserSelect(eb),
 			"CalendarEvent.name as tournamentName",
 			"TournamentTeam.tournamentId",
-			"CalendarEventDate.startsAt as tournamentStartTime",
 			sql<
 				number | null
 			>`(SELECT COUNT(*) FROM "TournamentTeamMember" "ttm" WHERE "ttm"."tournamentTeamId" = "TournamentTeam"."id")`.as(
@@ -334,8 +328,7 @@ export async function findFriendRequestByIdAndReceiver({
 }) {
 	return db
 		.selectFrom("FriendRequest")
-		.innerJoin("User", "User.id", "FriendRequest.senderId")
-		.select(["FriendRequest.senderId", "User.username as senderUsername"])
+		.select("FriendRequest.senderId")
 		.where("FriendRequest.id", "=", id)
 		.where("FriendRequest.receiverId", "=", receiverId)
 		.executeTakeFirst();

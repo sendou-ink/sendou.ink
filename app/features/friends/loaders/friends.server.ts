@@ -8,12 +8,7 @@ import {
 	friendActivitySortValue,
 	friendSectionSortValue,
 } from "../friends-constants";
-import {
-	resolveFriendActivity,
-	resolveSendouQMatchStreams,
-	resolveUpcomingLobbiesOfFriends,
-	resolveVisibleActiveLobbiesOfFriends,
-} from "../friends-utils.server";
+import { friendActivityResolver } from "../friends-utils.server";
 
 export type FriendsLoaderData = typeof loader;
 
@@ -31,56 +26,55 @@ export const loader = async () => {
 	const incomingRequests = await FriendRepository.findPendingReceivedRequests(
 		user.id,
 	);
-	const streamedSendouQMatches = await resolveSendouQMatchStreams();
-	const upcomingLobbiesOfFriends = await resolveUpcomingLobbiesOfFriends(
-		user.id,
-	);
-	const visibleLobbies = await resolveVisibleActiveLobbiesOfFriends({
+	const friendIds = unique.map((f) => f.id);
+	const resolveActivity = await friendActivityResolver({
 		viewerId: user.id,
-		friendIds: unique.map((f) => f.id),
+		friendIds,
 	});
 	const schedules = await ScheduleViews.friendWeeks({
-		userIds: unique.map((f) => f.id),
+		userIds: friendIds,
 		timezone: getViewerTimezone() ?? "UTC",
 		viewerId: user.id,
 	});
 
-	const friends = R.sortBy(
-		unique
-			.filter((f) => f.friendshipId !== null)
-			.map((friend) => {
-				const activity = resolveFriendActivity({
-					friendId: friend.id,
-					tournamentId: friend.tournamentId,
-					tournamentName: friend.tournamentName,
-					teamMemberCount: friend.teamMemberCount,
-					tournamentMinTeamSize: friend.tournamentMinTeamSize,
-					sendouQMatchStreams: streamedSendouQMatches,
-					visibleLobbies,
-					upcomingLobby: upcomingLobbiesOfFriends.get(friend.id),
-				});
+	const listed = unique.map((row) => {
+		const activity = resolveActivity(row);
 
-				return {
-					id: friend.id,
-					friendshipId: friend.friendshipId as number,
-					username: friend.username,
-					avatar: friend.avatar,
-					url: userPage({
-						id: friend.id,
-						customUrl: friend.customUrl,
-					}),
-					subtitle: activity.subtitle,
-					badge: activity.badge,
-					activityType: activity.type,
-					matchId: activity.matchId,
-					tournamentId: activity.tournamentId ?? friend.tournamentId,
-					lobbyId: activity.lobbyId,
-					stream: activity.stream,
-					friendshipCreatedAt: friend.friendshipCreatedAt,
-					isPinned: Boolean(friend.isPinned),
-					schedule: schedules.get(friend.id) ?? null,
-				};
-			}),
+		return {
+			row,
+			base: {
+				id: row.id,
+				username: row.username,
+				avatar: row.avatar,
+				url: userPage({
+					id: row.id,
+					customUrl: row.customUrl,
+				}),
+				subtitle: activity.subtitle,
+				badge: activity.badge,
+				activityType: activity.type,
+				matchId: activity.matchId,
+				tournamentId: activity.tournamentId,
+				lobbyId: activity.lobbyId,
+				stream: activity.stream,
+				schedule: schedules.get(row.id) ?? null,
+			},
+		};
+	});
+
+	const friends = R.sortBy(
+		listed.flatMap(({ row, base }) =>
+			row.friendshipId === null
+				? []
+				: [
+						{
+							...base,
+							friendshipId: row.friendshipId,
+							friendshipCreatedAt: row.friendshipCreatedAt,
+							isPinned: Boolean(row.isPinned),
+						},
+					],
+		),
 		[(friend) => friendSectionSortValue(friend), "asc"],
 		[(friend) => friendActivitySortValue(friend.activityType), "desc"],
 		[(friend) => (friend.schedule ? 1 : 0), "desc"],
@@ -88,39 +82,9 @@ export const loader = async () => {
 	);
 
 	const teamMembers = R.sortBy(
-		unique
-			.filter((f) => f.friendshipId === null)
-			.map((tm) => {
-				const activity = resolveFriendActivity({
-					friendId: tm.id,
-					tournamentId: tm.tournamentId,
-					tournamentName: tm.tournamentName,
-					teamMemberCount: tm.teamMemberCount,
-					tournamentMinTeamSize: tm.tournamentMinTeamSize,
-					sendouQMatchStreams: streamedSendouQMatches,
-					visibleLobbies,
-					upcomingLobby: upcomingLobbiesOfFriends.get(tm.id),
-				});
-
-				return {
-					id: tm.id,
-					username: tm.username,
-					avatar: tm.avatar,
-					url: userPage({
-						id: tm.id,
-						customUrl: tm.customUrl,
-					}),
-					subtitle: activity.subtitle,
-					badge: activity.badge,
-					activityType: activity.type,
-					matchId: activity.matchId,
-					tournamentId: activity.tournamentId ?? tm.tournamentId,
-					lobbyId: activity.lobbyId,
-					stream: activity.stream,
-					isPinned: false,
-					schedule: schedules.get(tm.id) ?? null,
-				};
-			}),
+		listed.flatMap(({ row, base }) =>
+			row.friendshipId === null ? [{ ...base, isPinned: false }] : [],
+		),
 		[(tm) => friendActivitySortValue(tm.activityType), "desc"],
 		[(tm) => (tm.schedule ? 1 : 0), "desc"],
 	);

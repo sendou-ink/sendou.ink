@@ -24,11 +24,8 @@ import {
 } from "~/features/friends/friends-constants";
 import {
 	type FriendActivity,
-	isJoinableFriendLobby,
-	resolveFriendActivity,
-	resolveSendouQMatchStreams,
-	resolveUpcomingLobbiesOfFriends,
-	resolveVisibleActiveLobbiesOfFriends,
+	friendActivityResolver,
+	type ResolvedFriendActivity,
 } from "~/features/friends/friends-utils.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
@@ -120,13 +117,6 @@ export async function resolveSidebarData(user: AuthenticatedUser | undefined) {
 		await SavedCalendarEventRepository.findAllUpcomingByUserId(userId);
 	const incomingFriendRequestIds =
 		await FriendRepository.findPendingReceivedRequestIds(userId);
-	const streamedSendouQMatches = await resolveSendouQMatchStreams();
-	const upcomingLobbiesOfFriends =
-		await resolveUpcomingLobbiesOfFriends(userId);
-	const visibleLobbies = await resolveVisibleActiveLobbiesOfFriends({
-		viewerId: userId,
-		friendIds: friendsWithActivity.map((friend) => friend.id),
-	});
 	const lobbies = await findUpcomingLobbies(userId);
 	const teamEvents = await findUpcomingTeamEvents(userId);
 	const leagueMatches = await findUpcomingLeagueMatches(userId);
@@ -174,11 +164,9 @@ export async function resolveSidebarData(user: AuthenticatedUser | undefined) {
 		.sort((a, b) => a.startsAt - b.startsAt)
 		.slice(0, MAX_EVENTS_VISIBLE);
 
-	const friends = resolveFriends({
+	const friends = await resolveFriends({
+		viewerId: userId,
 		friendsWithActivity,
-		streamedSendouQMatches,
-		visibleLobbies,
-		upcomingLobbiesOfFriends,
 	});
 
 	const savedTournamentIds = savedTournaments.map((t) => t.id);
@@ -365,34 +353,21 @@ type FriendWithActivity = Awaited<
 	ReturnType<typeof FriendRepository.findByUserIdWithActivity>
 >[number];
 
-function resolveFriends({
+async function resolveFriends({
+	viewerId,
 	friendsWithActivity,
-	streamedSendouQMatches,
-	visibleLobbies,
-	upcomingLobbiesOfFriends,
 }: {
+	viewerId: number;
 	friendsWithActivity: FriendWithActivity[];
-	streamedSendouQMatches: Awaited<
-		ReturnType<typeof resolveSendouQMatchStreams>
-	>;
-	visibleLobbies: Awaited<
-		ReturnType<typeof resolveVisibleActiveLobbiesOfFriends>
-	>;
-	upcomingLobbiesOfFriends: Awaited<
-		ReturnType<typeof resolveUpcomingLobbiesOfFriends>
-	>;
 }) {
-	const entries = R.uniqueBy(friendsWithActivity, (f) => f.id).map((row) => {
-		const activity = resolveFriendActivity({
-			friendId: row.id,
-			tournamentId: row.tournamentId,
-			tournamentName: row.tournamentName,
-			teamMemberCount: row.teamMemberCount,
-			tournamentMinTeamSize: row.tournamentMinTeamSize,
-			sendouQMatchStreams: streamedSendouQMatches,
-			visibleLobbies,
-			upcomingLobby: upcomingLobbiesOfFriends.get(row.id),
-		});
+	const uniqueFriends = R.uniqueBy(friendsWithActivity, (f) => f.id);
+	const resolveActivity = await friendActivityResolver({
+		viewerId,
+		friendIds: uniqueFriends.map((friend) => friend.id),
+	});
+
+	const entries = uniqueFriends.map((row) => {
+		const activity = resolveActivity(row);
 
 		return {
 			row,
@@ -404,11 +379,7 @@ function resolveFriends({
 	});
 
 	return orderSidebarFriends(entries).map(({ row, activity }) =>
-		rowToSidebarFriend({
-			row,
-			activity,
-			isInJoinableLobby: isJoinableFriendLobby({ activity, visibleLobbies }),
-		}),
+		rowToSidebarFriend({ row, activity }),
 	);
 }
 
@@ -470,11 +441,9 @@ export function orderSidebarFriends<T extends OrderableFriend>(entries: T[]) {
 function rowToSidebarFriend({
 	row,
 	activity,
-	isInJoinableLobby,
 }: {
 	row: FriendWithActivity;
-	activity: FriendActivity;
-	isInJoinableLobby: boolean;
+	activity: ResolvedFriendActivity;
 }): SidebarFriend {
 	return {
 		id: row.id,
@@ -485,9 +454,9 @@ function rowToSidebarFriend({
 		badge: activity.badge,
 		activityType: activity.type,
 		matchId: activity.matchId,
-		tournamentId: activity.tournamentId ?? row.tournamentId,
+		tournamentId: activity.tournamentId,
 		lobbyId: activity.lobbyId,
-		isInJoinableLobby,
+		isInJoinableLobby: activity.isInJoinableLobby,
 		stream: activity.stream,
 	};
 }

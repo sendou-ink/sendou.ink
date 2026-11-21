@@ -25,13 +25,64 @@ export interface FriendActivity {
 	stream: FriendActivityStream | null;
 }
 
+export interface ResolvedFriendActivity extends FriendActivity {
+	/** Present in a lobby with a free spot the viewer isn't in */
+	isInJoinableLobby: boolean;
+}
+
 interface FriendActivityStream {
 	url: string;
 	platform: StreamPlatform;
 }
 
+interface FriendActivityRow {
+	id: number;
+	tournamentId: number | null;
+	tournamentName: string | null;
+	teamMemberCount: number | null;
+	tournamentMinTeamSize: number | null;
+}
+
+/**
+ * Fetches once per request what resolving the activity of the viewer's friends (and team members) needs and returns
+ * the resolver of a single friend's row: their activity and whether the viewer could join them in their lobby.
+ */
+export async function friendActivityResolver({
+	viewerId,
+	friendIds,
+}: {
+	viewerId: number;
+	friendIds: number[];
+}) {
+	const sendouQMatchStreams = await resolveSendouQMatchStreams();
+	const upcomingLobbies = await resolveUpcomingLobbiesOfFriends(viewerId);
+	const visibleLobbies = await resolveVisibleActiveLobbiesOfFriends({
+		viewerId,
+		friendIds,
+	});
+
+	return (row: FriendActivityRow): ResolvedFriendActivity => {
+		const activity = resolveFriendActivity({
+			friendId: row.id,
+			tournamentId: row.tournamentId,
+			tournamentName: row.tournamentName,
+			teamMemberCount: row.teamMemberCount,
+			tournamentMinTeamSize: row.tournamentMinTeamSize,
+			sendouQMatchStreams,
+			visibleLobbies,
+			upcomingLobby: upcomingLobbies.get(row.id),
+		});
+
+		return {
+			...activity,
+			tournamentId: activity.tournamentId ?? row.tournamentId,
+			isInJoinableLobby: isJoinableFriendLobby({ activity, visibleLobbies }),
+		};
+	};
+}
+
 /** The soonest upcoming lobby each friend of the viewer signed up for that the viewer may see and join, keyed by friend id. */
-export async function resolveUpcomingLobbiesOfFriends(viewerId: number) {
+async function resolveUpcomingLobbiesOfFriends(viewerId: number) {
 	const rows = await LobbyRepository.findAllUpcomingOfFriendsByUserId(viewerId);
 
 	const result = new Map<number, (typeof rows)[number]>();
@@ -43,7 +94,7 @@ export async function resolveUpcomingLobbiesOfFriends(viewerId: number) {
 }
 
 /** Lobbies the friends are present in that the viewer may see, keyed by id. */
-export async function resolveVisibleActiveLobbiesOfFriends({
+async function resolveVisibleActiveLobbiesOfFriends({
 	viewerId,
 	friendIds,
 }: {
@@ -71,7 +122,7 @@ type VisibleLobby = Awaited<
 >[number];
 
 /** Whether the viewer could join the friend in the lobby they're present in: a spot is free and the viewer isn't in it already. */
-export function isJoinableFriendLobby({
+function isJoinableFriendLobby({
 	activity,
 	visibleLobbies,
 }: {
@@ -85,8 +136,8 @@ export function isJoinableFriendLobby({
 	return Boolean(lobby?.hasOpenSlot && !lobby.isUserParticipant);
 }
 
-/** Stream of each ongoing SendouQ match, keyed by match id. Resolved once per request, activity being resolved per friend. */
-export async function resolveSendouQMatchStreams() {
+/** Stream of each ongoing SendouQ match, keyed by match id. */
+async function resolveSendouQMatchStreams() {
 	const streams = await cachedStreams();
 
 	const result = new Map<number, FriendActivityStream>();
@@ -103,7 +154,7 @@ export async function resolveSendouQMatchStreams() {
  * What a friend is currently doing: an ongoing SendouQ or tournament match first, then being in a lobby, then
  * looking for members and last an upcoming lobby the viewer could join.
  */
-export function resolveFriendActivity({
+function resolveFriendActivity({
 	friendId,
 	tournamentId,
 	tournamentName,
