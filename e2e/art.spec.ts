@@ -62,13 +62,13 @@ test.describe("Art", () => {
 			});
 		});
 
-		test("a patron's art shows without waiting for approval", async ({
+		test("a supporter's art shows without waiting for approval", async ({
 			page,
 			factories,
 		}) => {
 			await factories.UserFactory.grant(NZAP_TEST_ID, {
 				roles: ["ARTIST"],
-				patronTier: 1,
+				patronTier: 2,
 			});
 
 			await impersonate(page, NZAP_TEST_ID);

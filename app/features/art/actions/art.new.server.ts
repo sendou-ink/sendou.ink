@@ -55,7 +55,9 @@ export const action = defineAction(
 			const addedArt = await ArtRepository.insert({
 				description: body.description,
 				url: await uploadArtImage(body.img),
-				validatedAt: user.patronTier ? databaseTimestampNow() : null,
+				validatedAt: user.roles.includes("SUPPORTER")
+					? databaseTimestampNow()
+					: null,
 				linkedUsers,
 				tags: body.tags,
 			});
