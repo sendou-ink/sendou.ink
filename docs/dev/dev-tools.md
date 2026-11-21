@@ -26,6 +26,7 @@ Needs the dev server running. The server is found from `--url=...`, `DEV_SERVER_
 pnpm run dev:tools scenarios                     # list, with parameters
 pnpm run dev:tools scenario tournament-organizer --teams=16 --format=swiss
 pnpm run dev:tools scenario tournament-broadcast --role=streamer
+pnpm run dev:tools scenario tournament-broadcast-design
 pnpm run dev:tools requests 10                   # latest requests with query counts
 pnpm run dev:tools request 42                    # every query of one request
 pnpm run dev:tools log-in-as 274 /admin          # link that logs in as user 274
@@ -38,6 +39,8 @@ pnpm run dev:tools refresh-caches
 A scenario prints a link that logs in as its user and opens its page, so it works for a person and for an agent driving a browser alike. Some print more pages of the scenario below it.
 
 `tournament-broadcast` sets up the broadcast overlays: an organization's tournament (so `BROADCAST_ORG_IDS` must be `*`, the dev default) with a match cast on the `sendouink` Twitch channel. It lands you, the organizer or with `--role=streamer` a streamer, on the channel's broadcast dashboard and also prints your OBS URL for the channel (`/broadcast/program?key=…`, pointed at its broadcast), the one to paste into an OBS browser source. Takes `--teams` and `--format` like the other tournament scenarios, plus `--roundsPlayed`.
+
+`tournament-broadcast-design` skips all that for theme work: just an organization's tournament with the `sendouink` channel, no teams or bracket (the designer previews a mock broadcast). It lands you, the organizer, on the channel's design page.
 
 ## Safety
 

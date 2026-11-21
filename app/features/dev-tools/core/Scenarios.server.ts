@@ -19,6 +19,7 @@ import type { TournamentSettings } from "~/db/tables-json";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import {
 	broadcastDashboardPage,
+	broadcastDesignPage,
 	broadcastProgramPage,
 } from "~/features/broadcast/broadcast-urls";
 import { isBroadcastEnabled } from "~/features/broadcast/broadcast-utils.server";
@@ -412,6 +413,41 @@ const SCENARIOS: Scenario[] = [
 						path: broadcastProgramPage(tournament.programKey),
 					},
 				],
+			};
+		},
+	}),
+	defineScenario({
+		id: "tournament-broadcast-design",
+		title: "Designing broadcast overlays",
+		description:
+			"An organization's tournament with only a Twitch cast channel, no teams or bracket, as the designer previews a mock broadcast. You organize it and land on the channel's broadcast design page.",
+		category: "Tournaments",
+		params: {},
+		run: async () => {
+			const [organizerId] = await freshUserIds(1);
+			const organization = await TournamentOrganizationFactory.create({
+				ownerId: organizerId,
+				name: `Broadcast org ${freshSuffix()}`,
+			});
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId,
+				organizationId: organization.id,
+			});
+			await TournamentFactory.addCastAccount({
+				tournamentId: tournament.id,
+				twitchAccount: BROADCAST_SCENARIO_TWITCH_ACCOUNT,
+			});
+			invariant(
+				isBroadcastEnabled(await tournamentFromDB(tournament.id)),
+				"Broadcasts are off for new organizations, set BROADCAST_ORG_IDS=* in .env",
+			);
+
+			return {
+				userId: organizerId,
+				path: broadcastDesignPage({
+					tournamentId: tournament.id,
+					slug: BROADCAST_SCENARIO_TWITCH_ACCOUNT,
+				}),
 			};
 		},
 	}),

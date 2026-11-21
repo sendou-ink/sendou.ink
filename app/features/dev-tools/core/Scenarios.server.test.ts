@@ -5,6 +5,8 @@ import {
 	findProgram,
 	isBroadcastProducer,
 } from "~/features/broadcast/broadcast-utils.server";
+import * as BroadcastHub from "~/features/broadcast/core/BroadcastHub.server";
+import { CAST_LAYOUT } from "~/features/broadcast-cast/broadcast-cast-layout.server";
 import * as LobbySet from "~/features/lobbies/core/LobbySet";
 import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
@@ -96,6 +98,25 @@ describe("Scenarios.run", () => {
 			expect(program?.account).toBe(slug);
 		},
 	);
+
+	test("tournament-broadcast-design lands a producer on the design page of a channel the tournament casts on", async () => {
+		const outcome = await Scenarios.run("tournament-broadcast-design");
+		if (outcome.status !== "ok") throw new Error(outcome.status);
+
+		const [, , tournamentId, , slug, page] = outcome.result.path.split("/");
+		const tournament = await tournamentFromDB(Number(tournamentId));
+		const built = await BroadcastHub.buildState({
+			tournamentId: Number(tournamentId),
+			slug,
+			layout: CAST_LAYOUT,
+		});
+
+		expect(page).toBe("design");
+		expect(isBroadcastProducer(tournament, { id: outcome.result.userId })).toBe(
+			true,
+		);
+		expect(built?.channel.account).toBe(slug);
+	});
 
 	test.each([
 		{ state: "reporting", can: LobbySet.canReport },
