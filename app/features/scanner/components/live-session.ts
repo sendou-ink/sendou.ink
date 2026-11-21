@@ -260,10 +260,7 @@ export async function startCapture(): Promise<void> {
 		if (desktop?.track) stream.addTrack(desktop.track);
 		const videoTrack = stream.getVideoTracks()[0];
 		videoTrack?.addEventListener("ended", () => onSourceEnded(opened.stream));
-		video = document.createElement("video");
-		video.muted = true;
-		video.playsInline = true;
-		video.srcObject = stream;
+		video = createSourceVideo(stream);
 		await video.play();
 
 		// the worker first: a failed init must not leave the camera on
@@ -454,8 +451,27 @@ function release(): void {
 	ring = null;
 	client?.dispose();
 	client = null;
-	if (video) video.srcObject = null;
+	if (video) {
+		video.srcObject = null;
+		video.remove();
+	}
 	video = null;
+}
+
+/**
+ * Kept in the document while capturing: a detached element's play() gets
+ * aborted in some Chrome setups ("media was removed from the document").
+ */
+function createSourceVideo(stream: MediaStream): HTMLVideoElement {
+	const element = document.createElement("video");
+	element.muted = true;
+	element.playsInline = true;
+	element.ariaHidden = "true";
+	element.style.cssText =
+		"position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none";
+	element.srcObject = stream;
+	document.body.append(element);
+	return element;
 }
 
 /**
