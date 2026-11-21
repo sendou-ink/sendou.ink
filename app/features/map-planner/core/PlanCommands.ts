@@ -1,6 +1,7 @@
 // User actions expressed as the operations they apply, often on more than one
 // object. Applied together through the editor they are one undo step.
 
+import * as R from "remeda";
 import { stagesObj } from "~/modules/in-game-lists/stage-ids";
 import type {
 	MainWeaponId,
@@ -11,6 +12,7 @@ import {
 	DRAWING_TEXT_MAX_LENGTH,
 	type DrawingSize,
 	emptyObjective,
+	type InkCell,
 	MAP_SIZE,
 	type MapVariant,
 	newId,
@@ -23,6 +25,7 @@ import {
 	SLOTS_PER_TEAM,
 	type SlotIndex,
 	TEXT_SCALE_LIMITS,
+	type TeamIndex,
 	teamOfSlot,
 } from "./PlanDocument";
 import * as PlanGeometry from "./PlanGeometry";
@@ -95,6 +98,59 @@ export function switchMode(
 	if (document.objective.mode === mode) return [];
 
 	return [{ type: "setObjective", objective: emptyObjective(mode) }];
+}
+
+/**
+ * Turns the plan into `next`, e.g. one opened from a file or a link, so that undo brings the
+ * plan from before back. Nothing when they are the same.
+ */
+export function replacePlan(
+	document: PlanDocument,
+	next: PlanDocument,
+): PlanOperation[] {
+	if (R.isDeepEqual(document, next)) return [];
+
+	const changedInk = next.ink.flatMap(
+		(value, index): Array<[number, InkCell]> =>
+			document.ink[index] === value ? [] : [[index, value]],
+	);
+
+	return [
+		{
+			type: "updateBoard",
+			patch: { stageId: next.stageId, variant: next.variant },
+		},
+		...next.teams.map(
+			(team, index): PlanOperation => ({
+				type: "updateTeam",
+				team: index as TeamIndex,
+				patch: { color: team.color },
+			}),
+		),
+		...next.slots.flatMap((player, index): PlanOperation[] =>
+			R.isDeepEqual(player, document.slots[index])
+				? []
+				: [{ type: "setPlayer", slot: index as SlotIndex, player }],
+		),
+		...document.markers.map(
+			(marker): PlanOperation => ({ type: "removeMarker", id: marker.id }),
+		),
+		...next.markers.map(
+			(marker): PlanOperation => ({ type: "addMarker", marker }),
+		),
+		...document.drawings.map(
+			(drawing): PlanOperation => ({ type: "removeDrawing", id: drawing.id }),
+		),
+		...next.drawings.map(
+			(drawing): PlanOperation => ({ type: "addDrawing", drawing }),
+		),
+		...(changedInk.length > 0
+			? [{ type: "setInk", cells: changedInk } satisfies PlanOperation]
+			: []),
+		...(R.isDeepEqual(document.objective, next.objective)
+			? []
+			: [{ type: "setObjective", objective: next.objective } as PlanOperation]),
+	];
 }
 
 /**

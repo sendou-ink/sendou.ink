@@ -68,6 +68,11 @@ export interface PlanCanvas {
 	}) => void;
 	/** Shows or hides the map image, e.g. hidden until the user picked a map. */
 	setMapShown: (shown: boolean) => void;
+	/**
+	 * The whole map with everything on it as a PNG at the render's size, whatever the zoom. A
+	 * label being typed is saved first, the selection is left out.
+	 */
+	exportImage: () => Promise<Blob>;
 	/** Removes the stage and every listener from the page. */
 	destroy: () => void;
 }
@@ -131,16 +136,21 @@ export function create({
 	mapImage.visible(isMapShown);
 
 	let shownMapUrl: string | null = null;
+	/** Settles once the map image shown has loaded, or failed to. */
+	let mapImageLoaded = Promise.resolve();
 	const showMap = (url: string) => {
 		if (url === shownMapUrl) return;
 		shownMapUrl = url;
 
 		const image = new window.Image();
 		image.crossOrigin = "anonymous";
-		image.onload = () => {
-			if (shownMapUrl !== url) return;
-			mapImage.image(image);
-		};
+		mapImageLoaded = new Promise((resolve) => {
+			image.onload = () => {
+				if (shownMapUrl === url) mapImage.image(image);
+				resolve();
+			};
+			image.onerror = () => resolve();
+		});
 		image.src = url;
 	};
 
@@ -415,6 +425,36 @@ export function create({
 			isMapShown = shown;
 			mapImage.visible(shown);
 			if (shown) showMap(mapImageUrl(editor.getDocument()));
+		},
+		exportImage: async () => {
+			textEditor?.close();
+			await mapImageLoaded;
+
+			overlayLayer.visible(false);
+			stage.scale({ x: 1, y: 1 });
+			stage.position({ x: 0, y: 0 });
+			let image: HTMLCanvasElement;
+			try {
+				image = stage.toCanvas({
+					x: 0,
+					y: 0,
+					width: MAP_SIZE.width,
+					height: MAP_SIZE.height,
+					pixelRatio: 1,
+				});
+			} finally {
+				stage.scale({ x: camera.scale, y: camera.scale });
+				stage.position({ x: camera.x, y: camera.y });
+				overlayLayer.visible(true);
+			}
+
+			return new Promise((resolve, reject) =>
+				image.toBlob(
+					(blob) =>
+						blob ? resolve(blob) : reject(new Error("Empty plan image")),
+					"image/png",
+				),
+			);
 		},
 		destroy: () => {
 			unsubscribe();

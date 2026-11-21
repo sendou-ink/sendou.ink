@@ -162,6 +162,7 @@ function setUp(plan = PlanDocument.empty({ stageId: 0, mode: "SZ" })) {
 	};
 
 	return {
+		canvas,
 		container,
 		editor,
 		selection,
@@ -596,6 +597,63 @@ describe("PlanCanvas select tool", () => {
 		expect(selection.get()).toBeNull();
 	});
 });
+
+describe("PlanCanvas.exportImage", () => {
+	test("is the whole map at the render's size, whatever the zoom", async () => {
+		const { canvas, container } = setUp({
+			...PlanDocument.empty({ stageId: 0, mode: "SZ" }),
+			drawings: [LINE],
+		});
+		await nextFrame();
+		container.dispatchEvent(
+			new WheelEvent("wheel", {
+				bubbles: true,
+				cancelable: true,
+				deltaY: -400,
+				clientX: container.getBoundingClientRect().left + 10,
+				clientY: container.getBoundingClientRect().top + 10,
+			}),
+		);
+
+		const pixels = await pixelsOf(await canvas.exportImage());
+
+		expect([pixels.width, pixels.height]).toEqual([
+			PlanDocument.MAP_SIZE.width,
+			PlanDocument.MAP_SIZE.height,
+		]);
+		expect(pixels.at([1200, 600])).toEqual([255, 77, 77, 255]);
+		expect(pixels.at([1200, 640])[3]).toBe(0);
+	});
+
+	test("saves a label being typed into it", async () => {
+		const { canvas, container, tools, drag, editor } = setUp();
+		tools.set({ tool: "text" });
+		await drag([[400, 300]]);
+		const field = container.querySelector("textarea");
+		await vi.waitFor(() => expect(document.activeElement).toBe(field));
+		await userEvent.keyboard("push");
+
+		await canvas.exportImage();
+
+		expect(editor.getDocument().drawings).toMatchObject([{ text: "push" }]);
+	});
+});
+
+async function pixelsOf(blob: Blob) {
+	const bitmap = await createImageBitmap(blob);
+	const context = new OffscreenCanvas(bitmap.width, bitmap.height).getContext(
+		"2d",
+	)!;
+	context.drawImage(bitmap, 0, 0);
+
+	return {
+		width: bitmap.width,
+		height: bitmap.height,
+		at: ([x, y]: PlanDocument.Point) => [
+			...context.getImageData(x, y, 1, 1).data,
+		],
+	};
+}
 
 function konvaContent(container: HTMLElement) {
 	return container.querySelector<HTMLElement>(".konvajs-content") ?? container;

@@ -217,17 +217,22 @@ describe("PlanEncoding.decode", () => {
 		});
 	});
 
+	test("tells an old tldraw planner file apart", () => {
+		const tldrawFile = JSON.stringify({
+			tldrawFileFormatVersion: 1,
+			schema: {},
+			records: [],
+		});
+
+		expect(PlanEncoding.decode(tldrawFile)).toEqual({
+			ok: false,
+			error: "tldraw",
+		});
+	});
+
 	test.each([
 		{ why: "not JSON", text: "{" },
 		{ why: "not an object", text: "[1, 2]" },
-		{
-			why: "an old tldraw file",
-			text: JSON.stringify({
-				tldrawFileFormatVersion: 1,
-				schema: {},
-				records: [],
-			}),
-		},
 		{
 			why: "unknown weapon",
 			text: withStored((stored) => {

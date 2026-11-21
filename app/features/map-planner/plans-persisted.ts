@@ -19,3 +19,11 @@ export const importedPlansPersisted = PersistedState.defineMap({
 	),
 	default: null,
 });
+
+/** The plan being edited in the planner as `PlanEncoding.encode` text, restored when the planner opens again. */
+export const autosavedPlanPersisted = PersistedState.define({
+	key: "map-planner-plan",
+	storage: "local",
+	schema: v.nullable(v.string()),
+	default: null,
+});

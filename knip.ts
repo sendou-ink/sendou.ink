@@ -1,7 +1,7 @@
 const config = {
 	tags: ["-lintignore"],
 	ignoreBinaries: ["ffmpeg", "ffprobe", "yt-dlp"],
-	// XXX: remove once the planner uses the whole core (player, drawing and autosave steps of the map planner epic)
+	// XXX: remove once the planner uses the whole core (ink and objective steps of the map planner epic)
 	ignore: [
 		"app/features/map-planner/core/Plan{Document,Editor,Encoding,Operation}.ts",
 	],

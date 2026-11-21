@@ -12,7 +12,7 @@ import type {
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { PLANNER_URL } from "~/utils/urls";
 import { importedPlansPersisted } from "../plans-persisted";
-import { plansSearchParams } from "../plans-search-params";
+import { tldrawPlansSearchParams } from "../plans-search-params";
 
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 
@@ -59,7 +59,7 @@ export async function openInNewTab({
 	}
 
 	window.open(
-		plansSearchParams.href(PLANNER_URL, {
+		tldrawPlansSearchParams.href(PLANNER_URL, {
 			import: key,
 			...(stageId !== null ? { stage: stageId } : {}),
 			...(mode !== null ? { mode } : {}),

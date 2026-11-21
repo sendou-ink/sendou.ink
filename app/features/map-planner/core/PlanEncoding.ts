@@ -217,10 +217,13 @@ type StoredPlan = v.InferOutput<typeof storedPlanObjectSchema>;
 type StoredPlayer = v.InferOutput<typeof storedPlayerSchema>;
 type StoredDrawing = v.InferOutput<typeof storedDrawingSchema>;
 
-/** A decoded plan, or why there is none: not a plan at all, or one of a version this code can't read. */
+/**
+ * A decoded plan, or why there is none: not a plan at all, one of a version this code can't read
+ * or a file of the old tldraw planner.
+ */
 export type DecodeResult =
 	| { ok: true; document: PlanDocument }
-	| { ok: false; error: "invalid" | "unsupportedVersion" };
+	| { ok: false; error: "invalid" | "unsupportedVersion" | "tldraw" };
 
 /**
  * The plan as JSON text, the contents of a plan file. Always something {@link decode} accepts:
@@ -259,6 +262,9 @@ export function fromUrlParam(value: string): DecodeResult {
 }
 
 function fromStored(json: unknown): DecodeResult {
+	if (R.isPlainObject(json) && "tldrawFileFormatVersion" in json) {
+		return { ok: false, error: "tldraw" };
+	}
 	if (
 		R.isPlainObject(json) &&
 		typeof json.v === "number" &&

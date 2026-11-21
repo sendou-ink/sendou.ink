@@ -37,7 +37,14 @@ export function StagePicker({
 }) {
 	const { t } = useTranslation(["common", "game-misc"]);
 	const [isOpen, setIsOpen] = React.useState(!isMapShown);
+	const [wasMapShown, setWasMapShown] = React.useState(isMapShown);
 	const mode = document.objective.mode;
+
+	// a plan opened from a file brings its map, so there is none left to pick
+	if (isMapShown !== wasMapShown) {
+		setWasMapShown(isMapShown);
+		if (isMapShown) setIsOpen(false);
+	}
 
 	return (
 		<SendouPopover

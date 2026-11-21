@@ -126,6 +126,57 @@ describe("PlanCommands.switchMode", () => {
 	});
 });
 
+describe("PlanCommands.replacePlan", () => {
+	const otherPlan = () => {
+		const plan = typicalPlan();
+		plan.stageId = 3;
+		plan.variant = undefined;
+		plan.teams[1] = { color: "#ff00ff" };
+		plan.slots[0] = null;
+		plan.slots[1] = { ...plan.slots[1]!, status: "dead" };
+		plan.markers = [plan.markers[2], plan.markers[0]];
+		plan.drawings = plan.drawings.slice(4, 8);
+		plan.ink = plan.ink.map((cell, index) => (index < 300 ? 2 : cell));
+		plan.objective = { mode: "CB", openBasket: 1 };
+		return plan;
+	};
+
+	test("turns the plan into the other one", () => {
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(PlanCommands.replacePlan(editor.getDocument(), otherPlan()));
+
+		expect(editor.getDocument()).toEqual(otherPlan());
+	});
+
+	test("is undone in one step", () => {
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(PlanCommands.replacePlan(editor.getDocument(), otherPlan()));
+		editor.undo();
+
+		expect(editor.getDocument()).toEqual(typicalPlan());
+		expect(editor.canUndo()).toBe(false);
+	});
+
+	test("replaces a plan with markers and drawings of the same ids", () => {
+		const editor = PlanEditor.create(
+			PlanDocument.empty({ stageId: 0, mode: "SZ" }),
+		);
+		editor.apply(PlanCommands.replacePlan(editor.getDocument(), typicalPlan()));
+		const moved = typicalPlan();
+		moved.markers[0] = { ...moved.markers[0], position: [10, 10] };
+
+		editor.apply(PlanCommands.replacePlan(editor.getDocument(), moved));
+
+		expect(editor.getDocument()).toEqual(moved);
+	});
+
+	test("is nothing for the same plan", () => {
+		expect(PlanCommands.replacePlan(typicalPlan(), typicalPlan())).toEqual([]);
+	});
+});
+
 describe("PlanCommands.setWeapon", () => {
 	test("fills an empty slot with a new player on their team's side of the map", () => {
 		const plan = PlanDocument.empty({ stageId: 0, mode: "SZ" });
