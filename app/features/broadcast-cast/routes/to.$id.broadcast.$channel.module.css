@@ -453,16 +453,3 @@
 	border: 2px solid var(--color-border);
 	border-radius: 50%;
 }
-
-.casterVolume {
-	display: grid;
-	grid-template-columns: auto 1fr 5ch;
-	align-items: center;
-	gap: var(--s-2);
-}
-
-.casterVolumeValue {
-	text-align: end;
-	font-size: var(--font-xs);
-	font-variant-numeric: tabular-nums;
-}

@@ -56,7 +56,12 @@ export function BroadcastProgram<State extends BroadcastState>({
 
 	return (
 		<BroadcastClipsContext.Provider
-			value={{ urls: clips.urls, isMuted: preview, clockOffsetMs }}
+			value={{
+				urls: clips.urls,
+				isMuted: preview,
+				clockOffsetMs,
+				reportFeeds: clips.sendFeeds,
+			}}
 		>
 			{/* a crash shows nothing over the footage, tried again with the next state */}
 			<ClientErrorBoundary fallback={null} resetKeys={[state]}>

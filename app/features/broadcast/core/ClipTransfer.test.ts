@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type {
+	BroadcastAudioFeed,
 	BroadcastOwnPeer,
 	BroadcastSessionDescription,
 	BroadcastStreamMessage,
@@ -91,6 +92,21 @@ describe("ClipTransfer", () => {
 		);
 	});
 
+	test("carries the overlay's audio feeds back to every dashboard", async () => {
+		const sender = network.sender("dashboard", []);
+		const other = network.sender("other-dashboard", []);
+		const overlay = network.receiver();
+		await vi.waitFor(() =>
+			expect(network.openChannelCount()).toBeGreaterThanOrEqual(4),
+		);
+
+		const feeds = [{ id: 1, isConnected: true, loudness: 30 }];
+		overlay.sendFeeds(feeds);
+
+		await vi.waitFor(() => expect(sender.feeds()).toEqual(feeds));
+		expect(other.feeds()).toEqual(feeds);
+	});
+
 	test("waits for the channel to drain before buffering more than 8 MB", async () => {
 		const size = MAX_BUFFERED_BYTES + 4 * CHUNK_BYTES;
 		network.sender("dashboard", [network.clip("big", size)]);
@@ -176,12 +192,16 @@ function createNetwork() {
 		sender(id: string, clips: ClipTransfer.ClipSource[]) {
 			const self = { id, token: `${id}-token` };
 			let statuses: ClipTransfer.ClipPeerStatus[] = [];
+			let feeds: BroadcastAudioFeed[] | null = null;
 			const createdBefore = channels.length;
 			const sender = ClipTransfer.createSender({
 				signalUrl: SIGNAL_URL,
 				clips,
 				onChange: (changed) => {
 					statuses = changed;
+				},
+				onFeeds: (_peerId, reported) => {
+					feeds = reported;
 				},
 			});
 			peers.set(id, { token: self.token, ...sender });
@@ -197,6 +217,7 @@ function createNetwork() {
 
 			return {
 				statuses: () => statuses,
+				feeds: () => feeds,
 				sentClipIds: () =>
 					sentMessages(ownChannels()).flatMap((message) =>
 						message.type === "clip" ? [message.id] : [],
@@ -225,6 +246,7 @@ function createNetwork() {
 
 			return {
 				urls: () => urls,
+				sendFeeds: receiver.sendFeeds,
 				blob,
 				clip: async (clipId: string) =>
 					new Uint8Array(await blob(clipId).arrayBuffer()),
@@ -234,6 +256,9 @@ function createNetwork() {
 			return channels
 				.filter((channel) => channel.isOfferer)
 				.flatMap((channel) => channel.sentChunkSizes);
+		},
+		openChannelCount() {
+			return channels.filter((channel) => channel.readyState === "open").length;
 		},
 		maxBufferedBytes() {
 			return Math.max(...channels.map((channel) => channel.maxBufferedAmount));

@@ -177,6 +177,15 @@ export interface BroadcastSessionDescription {
 	sdp: string;
 }
 
+/** A sound an OBS overlay plays, e.g. a caster's VDO.ninja camera, as the overlay reports it to the dashboards. */
+export interface BroadcastAudioFeed {
+	/** E.g. the caster's user id. */
+	id: number;
+	isConnected: boolean;
+	/** Loudest since the overlay's last report, as VDO.ninja measures it (0 silent, ~100 loudest). */
+	loudness: number;
+}
+
 export interface BroadcastHealth {
 	/** OBS browser sources showing the overlay. */
 	sources: number;

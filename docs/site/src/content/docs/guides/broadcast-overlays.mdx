@@ -45,7 +45,8 @@ Your URL shows the channel's broadcast in one tournament at a time, the one wher
 Add the casters in the dashboard's **Setup** tab, each with their VDO.ninja view link (`https://vdo.ninja/?view=…`):
 
 - The Casters scene shows their camera. With **No camera** on it shows their avatar, ringed while they speak. Without a link, just the avatar.
-- They're heard on every scene, so don't also add their audio to OBS. Each caster's **Volume** slider applies right away.
+- They're heard on every scene, so don't also add their audio to OBS.
+- The **Mixer** under the live preview has a fader for each caster that applies right away, next to a meter of how loud they are on air at that volume, so you can match the casters' levels. If a caster's VDO.ninja connection drops, their strip turns red and a warning shows at the top of the dashboard. It shows **Not in OBS** while no OBS source has the overlay open.
 - Check **Control audio via OBS** on the browser source, or they won't reach the stream.
 
 The dashboard's previews and the designer show placeholders and play no sound. Anyone with a view link can watch it, so add `&password=` in VDO.ninja if needed.

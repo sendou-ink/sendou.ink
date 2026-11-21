@@ -93,6 +93,7 @@ import {
 	roundLabel,
 } from "~/features/broadcast/broadcast-utils";
 import { BroadcastPreview } from "~/features/broadcast/components/BroadcastPreview";
+import * as AudioFeeds from "~/features/broadcast/core/AudioFeeds";
 import type * as ClipTransfer from "~/features/broadcast/core/ClipTransfer";
 import * as Producer from "~/features/broadcast/core/Producer";
 import {
@@ -112,7 +113,6 @@ import {
 	BROADCAST_DASHBOARD_TABS,
 	BROADCAST_PROTOTYPE_CLIPS,
 	BROADCAST_SCENE_DURATIONS_MS,
-	BROADCAST_VOLUME_SAVE_INTERVAL_MS,
 	CAST_PRODUCER_RULES,
 } from "../broadcast-cast-constants";
 import { ADVANCE_ICONS, SCENE_ICONS } from "../broadcast-cast-icons";
@@ -123,12 +123,12 @@ import {
 } from "../broadcast-cast-schemas";
 import { broadcastDashboardSearchParams } from "../broadcast-cast-search-params";
 import type {
-	BroadcastCaster,
 	CastBroadcastState,
 	CastProducerState,
 	CastScene,
 } from "../broadcast-cast-types";
 import { needsFeaturedMatch } from "../broadcast-cast-utils";
+import { CasterFeedsHealth, CasterMixer } from "../components/CasterMixer";
 import { ScenePicker, useSceneHotkeys } from "../components/ScenePicker";
 import * as BracketFocus from "../core/BracketFocus";
 import * as CastChannel from "../core/CastChannel";
@@ -148,9 +148,6 @@ export const handle: SendouRouteHandle = {
 };
 
 type DashboardTab = (typeof BROADCAST_DASHBOARD_TABS)[number];
-
-/** How long a released volume slider keeps its value at most while waiting for the state with it saved. */
-const RELEASED_VOLUME_HOLD_MS = 3000;
 
 const TAB_ICONS: Record<DashboardTab, LucideIcon> = {
 	setup: Cable,
@@ -175,9 +172,11 @@ function BroadcastDashboard() {
 	const data = useLoaderData<typeof loader>();
 	const pageArgs = { tournamentId: tournament.ctx.id, slug: data.channel.slug };
 	const channels = CastChannel.list(tournament.ctx.castAccounts);
+	const [feedStore] = React.useState(AudioFeeds.createStore);
 	const clipSender = useClipSender({
 		signalUrl: broadcastSignalUrl(pageArgs),
 		clips: BROADCAST_PROTOTYPE_CLIPS,
+		onFeeds: feedStore.report,
 	});
 	const { state, isConnected, clockOffsetMs } = useBroadcastStream({
 		url: broadcastStreamUrl({ ...pageArgs, role: "dashboard" }),
@@ -185,6 +184,7 @@ function BroadcastDashboard() {
 		onMessage: clipSender.onMessage,
 	});
 	const nextPreviewRef = React.useRef<HTMLIFrameElement>(null);
+	const mixerRef = React.useRef<HTMLElement>(null);
 	const settingsRef = React.useRef<HTMLDivElement>(null);
 	useRevalidateOnFeaturedMatchChange(state.match?.id ?? null);
 	const now = useServerNow(clockOffsetMs);
@@ -238,6 +238,16 @@ function BroadcastDashboard() {
 						{isConnected ? (
 							<ScannerHealth state={state} onClick={showSetup} />
 						) : null}
+						<CasterFeedsHealth
+							casters={state.casters}
+							feedStore={feedStore}
+							onClick={() =>
+								mixerRef.current?.scrollIntoView({
+									behavior: "smooth",
+									block: "center",
+								})
+							}
+						/>
 					</div>
 				</div>
 				<FeaturedMatch state={state} />
@@ -261,6 +271,11 @@ function BroadcastDashboard() {
 							isTimed={take.remainingMs !== null}
 						/>
 						<OnAirControls state={state} />
+						<CasterMixer
+							ref={mixerRef}
+							casters={state.casters}
+							feedStore={feedStore}
+						/>
 						<ShowInfo state={state} />
 					</div>
 				</section>
@@ -564,78 +579,6 @@ function ShowInfo({ state }: { state: CastBroadcastState }) {
 		<div className={styles.onAir}>
 			<HeadlineForm headline={state.settings.headline} />
 		</div>
-	);
-}
-
-/** How loud the caster's VDO.ninja camera is on air, changed as the slider moves without saving the form. */
-function CasterVolume({ caster }: { caster: BroadcastCaster }) {
-	const { t } = useTranslation(["broadcast"]);
-	const { submit } = useActionSubmit(broadcastActionSchema);
-	// the slider's value while it is moved and after, until the state with it saved arrives
-	const [draft, setDraft] = React.useState<{
-		volume: number;
-		isReleased: boolean;
-	} | null>(null);
-	const lastSaveAt = React.useRef(0);
-	const pendingSave = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-	const volume =
-		draft && (!draft.isReleased || draft.volume !== caster.volume)
-			? draft.volume
-			: caster.volume;
-
-	const save = (newVolume: number) => {
-		if (pendingSave.current) clearTimeout(pendingSave.current);
-		pendingSave.current = null;
-		lastSaveAt.current = Date.now();
-		submit("SET_CASTER_VOLUME", { userId: caster.userId, volume: newVolume });
-	};
-
-	const change = (newVolume: number) => {
-		setDraft({ volume: newVolume, isReleased: false });
-
-		const sinceLastSave = Date.now() - lastSaveAt.current;
-		if (sinceLastSave >= BROADCAST_VOLUME_SAVE_INTERVAL_MS) {
-			save(newVolume);
-		} else {
-			if (pendingSave.current) clearTimeout(pendingSave.current);
-			pendingSave.current = setTimeout(
-				() => save(newVolume),
-				BROADCAST_VOLUME_SAVE_INTERVAL_MS - sinceLastSave,
-			);
-		}
-	};
-
-	const release = () => {
-		if (!draft || draft.isReleased) return;
-
-		if (pendingSave.current) save(draft.volume);
-		const released = { ...draft, isReleased: true };
-		setDraft(released);
-		// a save that never comes back (or a volume changed by someone else since) shows the saved volume after all
-		setTimeout(
-			() => setDraft((current) => (current === released ? null : current)),
-			RELEASED_VOLUME_HOLD_MS,
-		);
-	};
-
-	return (
-		<label className={styles.casterVolume}>
-			<span className="text-sm font-semi-bold">
-				{t("broadcast:dashboard.casterVolume")}
-			</span>
-			<input
-				type="range"
-				min={0}
-				max={100}
-				value={volume}
-				onChange={(event) => change(Number(event.target.value))}
-				onPointerUp={release}
-				onKeyUp={release}
-				onBlur={release}
-				data-testid={`broadcast-caster-volume-${caster.userId}`}
-			/>
-			<span className={styles.casterVolumeValue}>{volume}%</span>
-		</label>
 	);
 }
 
@@ -1551,10 +1494,8 @@ function HeadlineForm({ headline }: { headline: string }) {
 	);
 }
 
-/** The casters and their VDO.ninja links, saved with the form. A saved caster's camera volume applies right away. */
+/** The casters and their VDO.ninja links, saved with the form. Their volume is set in the mixer, see `CasterMixer`. */
 function CastersForm({ state }: { state: CastBroadcastState }) {
-	const { t } = useTranslation(["broadcast"]);
-
 	return (
 		<SendouForm
 			schema={broadcastCastersFormSchema}
@@ -1570,27 +1511,13 @@ function CastersForm({ state }: { state: CastBroadcastState }) {
 		>
 			{({ FormField }) => (
 				<FormField name="casters">
-					{({ itemName, values }: ArrayItemRenderContext) => {
-						const casterOnCamera = state.casters.find(
-							(caster) => caster.userId === values.userId && caster.vdoNinjaUrl,
-						);
-
-						return (
-							<div className="stack sm">
-								<FormField name={`${itemName}.userId`} />
-								<FormField name={`${itemName}.vdoNinjaUrl`} />
-								<FormField name={`${itemName}.isAudioOnly`} />
-								{casterOnCamera ? (
-									<div className="stack xs">
-										<CasterVolume caster={casterOnCamera} />
-										<span className="text-xs text-lighter">
-											{t("broadcast:dashboard.casterVolumeHint")}
-										</span>
-									</div>
-								) : null}
-							</div>
-						);
-					}}
+					{({ itemName }: ArrayItemRenderContext) => (
+						<div className="stack sm">
+							<FormField name={`${itemName}.userId`} />
+							<FormField name={`${itemName}.vdoNinjaUrl`} />
+							<FormField name={`${itemName}.isAudioOnly`} />
+						</div>
+					)}
 				</FormField>
 			)}
 		</SendouForm>

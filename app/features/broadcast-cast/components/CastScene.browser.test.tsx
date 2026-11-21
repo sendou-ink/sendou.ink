@@ -1,7 +1,11 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
-import { BroadcastClipsContext } from "~/features/broadcast/broadcast-clips-context";
+import {
+	type BroadcastClips,
+	BroadcastClipsContext,
+} from "~/features/broadcast/broadcast-clips-context";
+import type { BroadcastAudioFeed } from "~/features/broadcast/broadcast-types";
 import { BroadcastOverlay } from "~/features/broadcast/components/BroadcastOverlay";
 import { CALENDAR_EVENT } from "~/features/calendar/calendar-constants";
 import { TEAM } from "~/features/team/team-constants";
@@ -213,7 +217,12 @@ describe("CastScene", () => {
 
 		await render(
 			<BroadcastClipsContext.Provider
-				value={{ urls: new Map(), isMuted: false, clockOffsetMs: 0 }}
+				value={{
+					urls: new Map(),
+					isMuted: false,
+					clockOffsetMs: 0,
+					reportFeeds: () => {},
+				}}
 			>
 				<BroadcastOverlay
 					sceneSet={CAST_SCENE_SET}
@@ -240,7 +249,12 @@ describe("CastScene", () => {
 
 		await render(
 			<BroadcastClipsContext.Provider
-				value={{ urls: new Map(), isMuted: false, clockOffsetMs: 0 }}
+				value={{
+					urls: new Map(),
+					isMuted: false,
+					clockOffsetMs: 0,
+					reportFeeds: () => {},
+				}}
 			>
 				<BroadcastOverlay
 					sceneSet={CAST_SCENE_SET}
@@ -263,6 +277,68 @@ describe("CastScene", () => {
 		expect(cameras).toHaveLength(2);
 		expect(cameras[0].querySelector("iframe")?.src).toContain("view=1");
 		expect(getComputedStyle(cameras[0]).visibility).toBe("hidden");
+	});
+
+	test("reports how loud each caster is and that their stream connected", async () => {
+		const reports: BroadcastAudioFeed[][] = [];
+		const [first] = await renderCasterCameras({
+			isMuted: false,
+			reportFeeds: (feeds) => reports.push(feeds),
+		});
+
+		postFromIframe(first.iframe, { action: "view-connection", value: true });
+		postFromIframe(first.iframe, { loudness: { abc: 12 } });
+		postFromIframe(first.iframe, { loudness: { abc: 30 } });
+
+		await vi.waitFor(() =>
+			expect(reports.at(-1)).toContainEqual({
+				id: first.userId,
+				isConnected: true,
+				loudness: 30,
+			}),
+		);
+		const reportsBefore = reports.length;
+		// the loudest read goes out once, the next report starts over
+		await vi.waitFor(() =>
+			expect(reports.length).toBeGreaterThan(reportsBefore),
+		);
+		expect(reports.at(-1)).toContainEqual({
+			id: first.userId,
+			isConnected: true,
+			loudness: 0,
+		});
+	});
+
+	test("reports a caster whose stream dropped as disconnected", async () => {
+		const reports: BroadcastAudioFeed[][] = [];
+		const [first, second] = await renderCasterCameras({
+			isMuted: false,
+			reportFeeds: (feeds) => reports.push(feeds),
+		});
+		postFromIframe(first.iframe, { action: "view-connection", value: true });
+		postFromIframe(second.iframe, { streamIDs: { abc: false } });
+		await vi.waitFor(() =>
+			expect(reports.at(-1)?.every((feed) => feed.isConnected)).toBe(true),
+		);
+
+		postFromIframe(first.iframe, { action: "view-connection", value: false });
+		postFromIframe(second.iframe, { streamIDs: {} });
+
+		await vi.waitFor(() =>
+			expect(reports.at(-1)?.map((feed) => feed.isConnected)).toEqual([
+				false,
+				false,
+			]),
+		);
+	});
+
+	test("reports no casters outside OBS", async () => {
+		const reportFeeds = vi.fn();
+		await renderCasterCameras({ isMuted: true, reportFeeds });
+
+		await new Promise((resolve) => setTimeout(resolve, 400));
+
+		expect(reportFeeds).not.toHaveBeenCalled();
 	});
 
 	test("reports a name cut off without an ellipsis", async () => {
@@ -295,6 +371,45 @@ describe("CastScene", () => {
 		expect(problems).toContainEqual(expect.stringContaining("sticks out"));
 	});
 });
+
+/** The casters' cameras under a scene other than theirs, each with a VDO.ninja link that stays off the network. */
+async function renderCasterCameras(
+	clips: Pick<BroadcastClips, "isMuted" | "reportFeeds">,
+) {
+	const state = stateOf({ ...SCENARIO, scene: "game", casters: 2 });
+
+	await render(
+		<BroadcastClipsContext.Provider
+			value={{ urls: new Map(), clockOffsetMs: 0, ...clips }}
+		>
+			<BroadcastOverlay
+				sceneSet={CAST_SCENE_SET}
+				state={{
+					...state,
+					casters: state.casters.map((caster) => ({
+						...caster,
+						vdoNinjaUrl: `https://vdo.invalid/?view=${caster.userId}`,
+					})),
+				}}
+				view="live"
+			/>
+		</BroadcastClipsContext.Provider>,
+	);
+
+	return state.casters.map((caster) => ({
+		userId: caster.userId,
+		iframe: canvas().querySelector<HTMLIFrameElement>(
+			`iframe[src*="view=${caster.userId}"]`,
+		),
+	}));
+}
+
+/** A message as the VDO.ninja page in the iframe posts it to the overlay. */
+function postFromIframe(iframe: HTMLIFrameElement | null, data: unknown) {
+	window.dispatchEvent(
+		new MessageEvent("message", { data, source: iframe?.contentWindow }),
+	);
+}
 
 function stateOf(scenario: DesignScenario.Scenario): CastBroadcastState {
 	const state = DesignScenario.build({

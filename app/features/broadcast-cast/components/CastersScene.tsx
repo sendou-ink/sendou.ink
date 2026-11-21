@@ -4,7 +4,10 @@ import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import { BroadcastClipsContext } from "~/features/broadcast/broadcast-clips-context";
 import { BROADCAST_CANVAS } from "~/features/broadcast/broadcast-constants";
-import type { BroadcastView } from "~/features/broadcast/broadcast-types";
+import type {
+	BroadcastAudioFeed,
+	BroadcastView,
+} from "~/features/broadcast/broadcast-types";
 import { combineStyles } from "~/features/broadcast/broadcast-utils";
 import type { BroadcastSceneLayer } from "~/features/broadcast/components/BroadcastOverlay";
 import type {
@@ -16,6 +19,7 @@ import {
 	scenePart,
 	vdoNinjaEmbedUrl,
 } from "../broadcast-cast-utils";
+import * as VdoNinjaMessage from "../core/VdoNinjaMessage";
 import layout from "./CastersScene.layout.module.css";
 import look from "./CastersScene.module.css";
 import { Matchup } from "./Matchup";
@@ -32,6 +36,10 @@ const SPEAKING_LOUDNESS = 10;
 const SPEAKING_LOUDNESS_RANGE = 40;
 /** How long a caster still counts as speaking after the last loud read, so the ring doesn't flicker between words. */
 const SPEAKING_HOLD_MS = 400;
+/** How often the program reports the casters' feeds to the dashboards, their loudest read in between. */
+const FEED_REPORT_INTERVAL_MS = 150;
+/** How often the embed is asked whether the caster's stream is connected, on top of it telling as it (dis)connects. */
+const CONNECTION_POLL_INTERVAL_MS = 2_000;
 
 /** Frames when no casters are named, the usual duo. */
 const DEFAULT_FRAME_COUNT = 2;
@@ -117,7 +125,8 @@ export function CastersScene({
  * What shows through the casters scene's frames, under the scenes: each caster's VDO.ninja camera, or their avatar
  * lighting up as they speak when they're audio only or have no VDO.ninja link. Mounted on every scene so the casters
  * stay connected and are heard all show long, only seen while the casters scene is. Outside OBS (the dashboard's
- * previews, the designer) nothing connects nor plays sound: a placeholder stands in for each camera.
+ * previews, the designer) nothing connects nor plays sound: a placeholder stands in for each camera. In OBS how
+ * loud each caster is and whether they're connected goes to the dashboards' mixer.
  */
 export function CasterCameras({
 	state,
@@ -129,6 +138,7 @@ export function CasterCameras({
 	layers: BroadcastSceneLayer<CastBroadcastState>[];
 }) {
 	const frames = framesOf(state.casters);
+	const feeds = useFeedReports(state.casters);
 	const castersLayer = layers.find(
 		(layer) => layer.state[view].scene === "casters",
 	);
@@ -148,7 +158,15 @@ export function CasterCameras({
 						style={frameStyle(frames[i])}
 						{...camerasPart("caster-camera")}
 					>
-						<CasterFeed caster={caster} />
+						<CasterFeed
+							caster={caster}
+							onLoudness={(loudness) =>
+								feeds.hearLoudness(caster.userId, loudness)
+							}
+							onConnection={(isConnected) =>
+								feeds.hearConnection(caster.userId, isConnected)
+							}
+						/>
 					</div>
 				) : null,
 			)}
@@ -156,13 +174,79 @@ export function CasterCameras({
 	);
 }
 
-function CasterFeed({ caster }: { caster: BroadcastCaster }) {
+/**
+ * Reports what the program hears of each caster with a VDO.ninja link to the dashboards a few times a second: their
+ * loudest read since the last report and whether their stream is connected. The previews and the designer, which
+ * connect to no one, report nothing.
+ */
+function useFeedReports(casters: BroadcastCaster[]) {
+	const { isMuted, reportFeeds } = React.useContext(BroadcastClipsContext);
+	const heard = React.useRef(
+		new Map<number, { isConnected: boolean; loudness: number }>(),
+	);
+	const latest = React.useRef({ casters, reportFeeds });
+	React.useLayoutEffect(() => {
+		latest.current = { casters, reportFeeds };
+	});
+
+	React.useEffect(() => {
+		if (isMuted) return;
+
+		const interval = setInterval(() => {
+			const feeds: BroadcastAudioFeed[] = [];
+			for (const caster of latest.current.casters) {
+				if (!caster.vdoNinjaUrl) continue;
+
+				const heardCaster = heard.current.get(caster.userId);
+				feeds.push({
+					id: caster.userId,
+					isConnected: heardCaster?.isConnected ?? false,
+					loudness: heardCaster?.loudness ?? 0,
+				});
+				if (heardCaster) heardCaster.loudness = 0;
+			}
+			latest.current.reportFeeds(feeds);
+		}, FEED_REPORT_INTERVAL_MS);
+
+		return () => clearInterval(interval);
+	}, [isMuted]);
+
+	const heardOf = (userId: number) => {
+		let caster = heard.current.get(userId);
+		if (!caster) {
+			caster = { isConnected: false, loudness: 0 };
+			heard.current.set(userId, caster);
+		}
+
+		return caster;
+	};
+
+	return {
+		hearLoudness(userId: number, loudness: number) {
+			const caster = heardOf(userId);
+			caster.loudness = Math.max(caster.loudness, loudness);
+		},
+		hearConnection(userId: number, isConnected: boolean) {
+			heardOf(userId).isConnected = isConnected;
+		},
+	};
+}
+
+function CasterFeed({
+	caster,
+	onLoudness,
+	onConnection,
+}: {
+	caster: BroadcastCaster;
+	onLoudness: (loudness: number) => void;
+	onConnection: (isConnected: boolean) => void;
+}) {
 	const { isMuted } = React.useContext(BroadcastClipsContext);
 	const [isSpeaking, setIsSpeaking] = React.useState(false);
 	const ringRef = React.useRef<HTMLDivElement>(null);
 	const quietTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	const hearLoudness = (loudness: number) => {
+	const ringLoudness = (loudness: number) => {
 		ringRef.current?.style.setProperty(
 			"--caster-level",
 			String(speakingLevel(loudness)),
@@ -189,6 +273,9 @@ function CasterFeed({ caster }: { caster: BroadcastCaster }) {
 				key={caster.vdoNinjaUrl}
 				caster={caster}
 				vdoNinjaUrl={caster.vdoNinjaUrl}
+				isAudioOnly={false}
+				onLoudness={onLoudness}
+				onConnection={onConnection}
 			/>
 		);
 	}
@@ -200,7 +287,12 @@ function CasterFeed({ caster }: { caster: BroadcastCaster }) {
 					key={`${caster.vdoNinjaUrl}-audio`}
 					caster={caster}
 					vdoNinjaUrl={caster.vdoNinjaUrl}
-					onLoudness={hearLoudness}
+					isAudioOnly
+					onLoudness={(loudness) => {
+						ringLoudness(loudness);
+						onLoudness(loudness);
+					}}
+					onConnection={onConnection}
 				/>
 			)}
 			<CasterAvatar caster={caster} isSpeaking={isSpeaking} ringRef={ringRef} />
@@ -208,29 +300,33 @@ function CasterFeed({ caster }: { caster: BroadcastCaster }) {
 	);
 }
 
-/** The caster's VDO.ninja view link playing in the frame, only their sound (reporting how loud it is) when given `onLoudness`. */
+/**
+ * The caster's VDO.ninja view link playing in the frame (only their sound when audio only), telling how loud they are
+ * and whether their stream is connected.
+ */
 function VdoNinjaEmbed({
 	caster,
 	vdoNinjaUrl,
+	isAudioOnly,
 	onLoudness,
+	onConnection,
 }: {
 	caster: BroadcastCaster;
 	vdoNinjaUrl: string;
-	onLoudness?: (loudness: number) => void;
+	isAudioOnly: boolean;
+	onLoudness: (loudness: number) => void;
+	onConnection: (isConnected: boolean) => void;
 }) {
 	const iframeRef = React.useRef<HTMLIFrameElement>(null);
 	// a new src would connect again, so later volume changes are posted to it instead
 	const [src] = React.useState(() =>
-		vdoNinjaEmbedUrl({
-			url: vdoNinjaUrl,
-			volume: caster.volume,
-			isAudioOnly: Boolean(onLoudness),
-		}),
+		vdoNinjaEmbedUrl({ url: vdoNinjaUrl, volume: caster.volume, isAudioOnly }),
 	);
 	const origin = new URL(src).origin;
-	const onLoudnessRef = React.useRef(onLoudness);
-	onLoudnessRef.current = onLoudness;
-	const isListening = Boolean(onLoudness);
+	const listeners = React.useRef({ onLoudness, onConnection });
+	React.useLayoutEffect(() => {
+		listeners.current = { onLoudness, onConnection };
+	});
 
 	React.useEffect(() => {
 		iframeRef.current?.contentWindow?.postMessage(
@@ -240,24 +336,34 @@ function VdoNinjaEmbed({
 	}, [caster.volume, origin]);
 
 	React.useEffect(() => {
-		if (!isListening) return;
+		listeners.current.onConnection(false);
 
 		const onMessage = (event: MessageEvent) => {
-			if (
-				event.source !== iframeRef.current?.contentWindow ||
-				typeof event.data?.loudness !== "object" ||
-				event.data.loudness === null
-			) {
-				return;
-			}
+			if (event.source !== iframeRef.current?.contentWindow) return;
 
-			const levels = Object.values(event.data.loudness).map(Number);
-			onLoudnessRef.current?.(Math.max(0, ...levels.filter(Number.isFinite)));
+			const message = VdoNinjaMessage.parse(event.data);
+			if (message?.type === "loudness") {
+				listeners.current.onLoudness(message.loudness);
+			} else if (message?.type === "connection") {
+				listeners.current.onConnection(message.isConnected);
+			}
 		};
+		// it tells as the stream (dis)connects, asked too so a missed message doesn't stick
+		const poll = setInterval(
+			() =>
+				iframeRef.current?.contentWindow?.postMessage(
+					{ getStreamIDs: true },
+					origin,
+				),
+			CONNECTION_POLL_INTERVAL_MS,
+		);
 
 		window.addEventListener("message", onMessage);
-		return () => window.removeEventListener("message", onMessage);
-	}, [isListening]);
+		return () => {
+			window.removeEventListener("message", onMessage);
+			clearInterval(poll);
+		};
+	}, [origin]);
 
 	return (
 		<iframe
@@ -268,14 +374,12 @@ function VdoNinjaEmbed({
 			allow="autoplay"
 			// VDO.ninja's page runs its own scripts on its own origin to connect, nothing more
 			sandbox="allow-scripts allow-same-origin"
-			onLoad={() => {
-				if (!isListening) return;
-
+			onLoad={() =>
 				iframeRef.current?.contentWindow?.postMessage(
 					{ getLoudness: true },
 					origin,
-				);
-			}}
+				)
+			}
 		/>
 	);
 }

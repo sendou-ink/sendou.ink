@@ -2,7 +2,11 @@ import * as React from "react";
 import { HEARTBEAT_INTERVAL_MS } from "~/features/events/events-types";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useHydrated } from "~/hooks/useHydrated";
-import type { BroadcastState, BroadcastStreamMessage } from "./broadcast-types";
+import type {
+	BroadcastAudioFeed,
+	BroadcastState,
+	BroadcastStreamMessage,
+} from "./broadcast-types";
 import * as ClipTransfer from "./core/ClipTransfer";
 
 // a connection dropped while the machine was suspended raises no error of its own
@@ -116,21 +120,29 @@ export function useServerNow(clockOffsetMs: number) {
 export function useClipSender({
 	signalUrl,
 	clips,
+	onFeeds,
 }: {
 	signalUrl: string;
 	/** Kept the same between renders, a new array starts over. */
 	clips: ReadonlyArray<ClipTransfer.ClipSource>;
+	/** Gets the audio feeds an overlay reports, `null` once it's gone. */
+	onFeeds?: (peerId: string, feeds: BroadcastAudioFeed[] | null) => void;
 }) {
 	const [statuses, setStatuses] = React.useState<ClipTransfer.ClipPeerStatus[]>(
 		[],
 	);
 	const senderRef = React.useRef<ClipTransfer.ClipSender | null>(null);
+	const onFeedsRef = React.useRef(onFeeds);
+	React.useLayoutEffect(() => {
+		onFeedsRef.current = onFeeds;
+	});
 
 	React.useEffect(() => {
 		const sender = ClipTransfer.createSender({
 			signalUrl,
 			clips,
 			onChange: setStatuses,
+			onFeeds: (peerId, feeds) => onFeedsRef.current?.(peerId, feeds),
 		});
 		senderRef.current = sender;
 
@@ -169,8 +181,10 @@ export function useClipReceiver({ signalUrl }: { signalUrl: string }) {
 
 	const onMessage = (message: BroadcastStreamMessage) =>
 		receiverRef.current?.handleMessage(message);
+	const sendFeeds = (feeds: BroadcastAudioFeed[]) =>
+		receiverRef.current?.sendFeeds(feeds);
 
-	return { urls, onMessage };
+	return { urls, onMessage, sendFeeds };
 }
 
 const FIT_TEXT_STEP_PX = 2;

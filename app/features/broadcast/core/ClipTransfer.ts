@@ -1,5 +1,6 @@
 import { logger } from "~/utils/logger";
 import type {
+	BroadcastAudioFeed,
 	BroadcastOwnPeer,
 	BroadcastPeer,
 	BroadcastSessionDescription,
@@ -24,7 +25,9 @@ type ClipChannelMessage =
 	/** Sender → receiver, followed by `size` bytes of binary chunks. */
 	| { type: "clip"; id: string; size: number; mimeType: string }
 	/** Receiver → sender once the clip is whole. */
-	| { type: "received"; id: string };
+	| { type: "received"; id: string }
+	/** Receiver → sender, a few times a second: what its audio feeds sound like. */
+	| { type: "feeds"; feeds: BroadcastAudioFeed[] };
 
 export interface ClipSource {
 	id: string;
@@ -49,16 +52,19 @@ export type ClipReceiver = ReturnType<typeof createReceiver>;
 /**
  * Sends the clips to every overlay connected to the broadcast's stream (the dashboard's previews included), each
  * over a WebRTC data channel of its own. The stream's messages are fed to `handleMessage`: they tell who the
- * overlays are and carry their answers.
+ * overlays are and carry their answers. The overlays report their audio feeds back over the same channels to
+ * `onFeeds`, `null` once the overlay is gone.
  */
 export function createSender({
 	signalUrl,
 	clips,
 	onChange,
+	onFeeds,
 }: {
 	signalUrl: string;
 	clips: ReadonlyArray<ClipSource>;
 	onChange: (statuses: ClipPeerStatus[]) => void;
+	onFeeds?: (peerId: string, feeds: BroadcastAudioFeed[] | null) => void;
 }) {
 	let self: BroadcastOwnPeer | null = null;
 	let peers: BroadcastPeer[] = [];
@@ -86,6 +92,7 @@ export function createSender({
 	const disconnect = (peerId: string) => {
 		connections.get(peerId)?.pc.close();
 		connections.delete(peerId);
+		onFeeds?.(peerId, null);
 	};
 
 	const loadClip = (clip: ClipSource) => {
@@ -172,6 +179,9 @@ export function createSender({
 				sendMissing(peer.id, channel, message.clipIds).catch((error) =>
 					logger.error("Sending clips failed", error),
 				);
+			} else if (message.type === "feeds") {
+				if (connections.get(peer.id)?.pc === pc)
+					onFeeds?.(peer.id, message.feeds);
 			} else if (message.type === "received") {
 				const status = connections.get(peer.id)?.status;
 				if (!status) return;
@@ -271,7 +281,8 @@ export function createSender({
 
 /**
  * Receives clips from the dashboards sending them, answering their offers. `onChange` gets the object URLs of
- * every clip received so far by clip id, kept over reconnects until `close`.
+ * every clip received so far by clip id, kept over reconnects until `close`. `sendFeeds` reports the overlay's
+ * audio feeds to every dashboard connected.
  */
 export function createReceiver({
 	signalUrl,
@@ -282,10 +293,13 @@ export function createReceiver({
 }) {
 	let self: BroadcastOwnPeer | null = null;
 	const connections = new Map<string, RTCPeerConnection>();
+	const channels = new Set<RTCDataChannel>();
 	const urls = new Map<string, string>();
 
 	const receive = (channel: RTCDataChannel) => {
 		channel.binaryType = "arraybuffer";
+		channels.add(channel);
+		channel.addEventListener("close", () => channels.delete(channel));
 
 		let incoming: {
 			id: string;
@@ -364,6 +378,7 @@ export function createReceiver({
 	const closeConnections = () => {
 		for (const pc of connections.values()) pc.close();
 		connections.clear();
+		channels.clear();
 	};
 
 	return {
@@ -376,6 +391,13 @@ export function createReceiver({
 				message.description.type === "offer"
 			) {
 				void answer(message.from, message.description);
+			}
+		},
+		sendFeeds(feeds: BroadcastAudioFeed[]) {
+			for (const channel of channels) {
+				if (channel.readyState === "open") {
+					sendJson(channel, { type: "feeds", feeds });
+				}
 			}
 		},
 		close() {
