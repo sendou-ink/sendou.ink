@@ -24,29 +24,24 @@ export const BROADCAST_SCENES = [
 ] as const;
 
 /**
- * Scenes without footage of their own to last as long as, which can be given a duration instead: the one they get
- * when picked (`null` until a Take) and the ones the dashboard offers. Starting soon counts its duration down on air.
- * The others stay on air until a Take.
+ * Scenes without footage of their own to last as long as, which can be given one of these durations instead. They
+ * stay on air until a Take unless the producer picks one. Starting soon counts its duration down on air.
  */
 export const BROADCAST_SCENE_DURATIONS_MS: Partial<
-	Record<CastScene, { defaultMs: number | null; optionsMs: readonly number[] }>
+	Record<CastScene, { optionsMs: readonly number[] }>
 > = {
 	starting: {
-		defaultMs: null,
 		optionsMs: [
 			60_000, 120_000, 180_000, 300_000, 600_000, 900_000, 1_200_000, 1_800_000,
 		],
 	},
 	results: {
-		defaultMs: null,
 		optionsMs: [10_000, 15_000, 20_000, 30_000, 45_000, 60_000],
 	},
 	bracket: {
-		defaultMs: 15_000,
 		optionsMs: [10_000, 15_000, 20_000, 30_000, 45_000, 60_000],
 	},
 	team: {
-		defaultMs: 20_000,
 		optionsMs: [10_000, 15_000, 20_000, 30_000, 45_000, 60_000],
 	},
 };
@@ -439,8 +434,6 @@ export const CAST_PRODUCER_RULES: Producer.Rules<CastProducerState> = {
 		ending: "starting",
 	},
 	gameScene: "game",
-	defaultDurationMs: (scene) =>
-		BROADCAST_SCENE_DURATIONS_MS[scene]?.defaultMs ?? null,
 	lengthMs: (item) => {
 		if (item.scene === "replays") {
 			return (

@@ -24,8 +24,6 @@ export interface Rules<Item extends ProducerState> {
 	sceneAfter: Record<Item["scene"], Item["scene"]>;
 	/** The scene showing the game itself: goes on air as the scanner sees the game start, the scene after it as the game ends. */
 	gameScene: Item["scene"];
-	/** Duration a scene gets when picked, `null` runs until a Take. */
-	defaultDurationMs(scene: Item["scene"]): number | null;
 	/** How long the item's scene runs, when some scenes last as long as their footage instead of a given duration. */
 	lengthMs?(item: Item): number | null;
 	/** The item without what doesn't carry over to the item following it (e.g. a clip picked for it). */
@@ -323,7 +321,7 @@ export function stagedItems<Item extends ProducerState>(
 
 /**
  * Changes a staged item, `null` when it is not staged anymore (e.g. a Take put it on air). Picking another scene
- * gives the item that scene's default duration and advance, and one staying on air until a Take (see
+ * clears the item's duration (it runs until a Take) and gives it that scene's default advance, and one staying on air until a Take (see
  * `Rules.staysUntilTake`) makes the item staged after it wait for a Take.
  */
 export function editItem<Item extends ProducerState>(
@@ -357,7 +355,7 @@ export function editItem<Item extends ProducerState>(
 				...item,
 				...(isSceneChanged && patch.scene
 					? {
-							durationMs: rules.defaultDurationMs(patch.scene),
+							durationMs: null,
 							advance: defaultAdvance(rules, before, { scene: patch.scene }),
 						}
 					: {}),
@@ -449,7 +447,7 @@ function followingItem<Item extends ProducerState>(
 		...followed,
 		id,
 		scene,
-		durationMs: rules.defaultDurationMs(scene),
+		durationMs: null,
 		advance: defaultAdvance(rules, item, { scene }),
 	};
 }

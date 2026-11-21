@@ -571,18 +571,13 @@ describe("Producer.editItem", () => {
 		expect(edited?.next.clipId).toBeNull();
 	});
 
-	test("gives a scene picked its default duration", () => {
-		const state = stateWith({});
-
-		expect(
-			Producer.editItem(rules, state, 2, { scene: "bracket" })?.next.durationMs,
-		).toBe(15_000);
+	test("runs a scene picked until a Take", () => {
 		expect(
 			Producer.editItem(
 				rules,
 				stateWith({ next: item(2, { scene: "bracket", durationMs: 30_000 }) }),
 				2,
-				{ scene: "game" },
+				{ scene: "team" },
 			)?.next.durationMs,
 		).toBeNull();
 	});
