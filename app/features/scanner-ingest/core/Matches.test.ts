@@ -431,13 +431,6 @@ describe("playerStatus", () => {
 			scannerMatch({ winner: null, matchScores: null, playerStatus: null }),
 			incoming,
 		);
-		expect(merged.playerStatus!.samples[0]!.dead).toEqual([
-			[false, true, false, false],
-			[false, false, false, false],
-		]);
-		expect(merged.playerStatus!.samples[0]!.special).toEqual([
-			[false, false, false, false],
-			[true, false, false, false],
-		]);
+		expect(merged.playerStatus).toEqual(STATUS);
 	});
 });

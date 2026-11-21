@@ -1,8 +1,10 @@
 import * as R from "remeda";
-import type {
-	ScannerMatch,
-	ScannerMatchObjective,
-	ScannerMatchPlayerStatus,
+import {
+	type ScannerMatch,
+	type ScannerMatchObjective,
+	type ScannerMatchPlayerStatus,
+	swapObjectiveSampleSides,
+	swapPlayerStatusSampleSides,
 } from "~/features/scanner/core/scanner-match";
 import {
 	isLinkableLobby,
@@ -411,32 +413,13 @@ function winnerFirstObjective(
 ): ScannerMatchObjective | null {
 	if (!objective || objective.samples.length === 0) return null;
 
-	const winnerFirst = <T>(pair: [T, T]): [T, T] =>
-		winner === 0 ? [pair[0], pair[1]] : [pair[1], pair[0]];
-
 	return {
 		mode: objective.mode,
-		samples: objective.samples.map((sample) => ({
-			t: sample.t - firstT,
-			time: sample.time,
-			score: winnerFirst(sample.score),
-			penalty: winnerFirst(sample.penalty),
-			control:
-				winner === 0 || sample.control === null
-					? sample.control
-					: sample.control === 0
-						? 1
-						: 0,
-			// a track position is measured toward the end the first side pushes to
-			...(sample.position !== undefined
-				? {
-						position:
-							winner === 1 && sample.position !== null
-								? 0 - sample.position
-								: sample.position,
-					}
-				: null),
-		})),
+		samples: objective.samples.map((sample) => {
+			const winnerFirst =
+				winner === 1 ? swapObjectiveSampleSides(sample) : sample;
+			return { ...winnerFirst, t: sample.t - firstT };
+		}),
 	};
 }
 
@@ -448,16 +431,12 @@ function winnerFirstPlayerStatus(
 ): ScannerMatchPlayerStatus | null {
 	if (!playerStatus || playerStatus.samples.length === 0) return null;
 
-	const winnerFirst = <T>(pair: [T, T]): [T, T] =>
-		winner === 0 ? [pair[0], pair[1]] : [pair[1], pair[0]];
-
 	return {
-		samples: playerStatus.samples.map((sample) => ({
-			t: sample.t - firstT,
-			time: sample.time,
-			special: winnerFirst(sample.special),
-			dead: winnerFirst(sample.dead),
-		})),
+		samples: playerStatus.samples.map((sample) => {
+			const winnerFirst =
+				winner === 1 ? swapPlayerStatusSampleSides(sample) : sample;
+			return { ...winnerFirst, t: sample.t - firstT };
+		}),
 	};
 }
 

@@ -1,4 +1,3 @@
-import * as R from "remeda";
 import { describe, expect, test } from "vitest";
 import type {
 	ScannerMatch,
@@ -14,7 +13,7 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import * as Scoreboards from "./Scoreboards";
-import { NAMES } from "./tests/fixtures";
+import { NAMES, sideSwapped } from "./tests/fixtures";
 
 const WINNER_TEAM_ID = 100;
 const LOSER_TEAM_ID = 200;
@@ -165,49 +164,6 @@ function testPlayerStatus(): ScannerMatchPlayerStatus {
 				],
 			},
 		],
-	};
-}
-
-/** The same game reported with sides in the other on-screen order. */
-function swapSides(match: ScannerMatch): ScannerMatch {
-	return {
-		...match,
-		teams: [match.teams[1], match.teams[0]],
-		objective:
-			match.objective === null
-				? null
-				: {
-						...match.objective,
-						samples: match.objective.samples.map((sample) => ({
-							...sample,
-							score: [sample.score[1], sample.score[0]],
-							penalty: [sample.penalty[1], sample.penalty[0]],
-							control:
-								sample.control === null ? null : sample.control === 0 ? 1 : 0,
-							...(R.isNonNullish(sample.position)
-								? { position: 0 - sample.position }
-								: null),
-						})),
-					},
-		playerStatus:
-			match.playerStatus === null
-				? null
-				: {
-						samples: match.playerStatus.samples.map((sample) => ({
-							...sample,
-							special: [sample.special[1], sample.special[0]],
-							dead: [sample.dead[1], sample.dead[0]],
-						})),
-					},
-		winner: match.winner === null ? null : match.winner === 0 ? 1 : 0,
-		matchScores:
-			match.matchScores === null
-				? null
-				: [match.matchScores[1], match.matchScores[0]],
-		pov:
-			match.pov === null
-				? null
-				: { ...match.pov, team: match.pov.team === 0 ? 1 : 0 },
 	};
 }
 
@@ -543,7 +499,9 @@ describe("deriveScoreboardData", () => {
 
 	test("a winner-1 match derives identically to its winner-0 mirror", () => {
 		const straight = derive([{ data: testMatch(), povUserId: null }]);
-		const swapped = derive([{ data: swapSides(testMatch()), povUserId: null }]);
+		const swapped = derive([
+			{ data: sideSwapped(testMatch()), povUserId: null },
+		]);
 
 		expect(swapped).toEqual(straight);
 	});
@@ -587,7 +545,7 @@ describe("deriveScoreboardData", () => {
 		]);
 		const swapped = derive([
 			{
-				data: swapSides(testMatch({ objective: testObjective() })),
+				data: sideSwapped(testMatch({ objective: testObjective() })),
 				povUserId: null,
 			},
 		]);
@@ -601,7 +559,7 @@ describe("deriveScoreboardData", () => {
 		]);
 		const swapped = derive([
 			{
-				data: swapSides(testMatch({ objective: testTrackObjective() })),
+				data: sideSwapped(testMatch({ objective: testTrackObjective() })),
 				povUserId: null,
 			},
 		]);
@@ -635,7 +593,7 @@ describe("deriveScoreboardData", () => {
 		]);
 		const swapped = derive([
 			{
-				data: swapSides(testMatch({ playerStatus: testPlayerStatus() })),
+				data: sideSwapped(testMatch({ playerStatus: testPlayerStatus() })),
 				povUserId: null,
 			},
 		]);
@@ -707,7 +665,7 @@ describe("deriveScoreboardData", () => {
 
 	test("attributes a losing-side POV of a winner-1 match to the right row", () => {
 		const data = derive([
-			{ data: swapSides(testMatch({ povIndex: 6 })), povUserId: 42 },
+			{ data: sideSwapped(testMatch({ povIndex: 6 })), povUserId: 42 },
 		]);
 
 		expect(data!.players[6]!.userId).toBe(42);
@@ -716,7 +674,7 @@ describe("deriveScoreboardData", () => {
 	test("attributes each linked POV onto the merged scoreboard", () => {
 		const data = derive([
 			{ data: testMatch({ povIndex: 0 }), povUserId: 42 },
-			{ data: swapSides(testMatch({ povIndex: 5 })), povUserId: 43 },
+			{ data: sideSwapped(testMatch({ povIndex: 5 })), povUserId: 43 },
 		]);
 
 		expect(data!.players[0]!.userId).toBe(42);
@@ -764,7 +722,7 @@ describe("deriveScoreboardData", () => {
 describe("recognizablePlayerNames", () => {
 	test("returns names winner-first with unread names empty", () => {
 		const names = Scoreboards.recognizablePlayerNames(
-			swapSides(
+			sideSwapped(
 				testMatch({ names: ["w1", "", "w3", "w4", "l1", "l2", "l3", "l4"] }),
 			),
 		);

@@ -1,4 +1,7 @@
-import * as R from "remeda";
+import {
+	swapObjectiveSampleSides,
+	swapPlayerStatusSampleSides,
+} from "~/features/scanner/core/scanner-match";
 import type {
 	IngestedScoreboardData,
 	IngestedScoreboardPlayer,
@@ -104,27 +107,12 @@ function toTimelineObjective(
 ): ObjectiveTimelineEvent[] | undefined {
 	if (!objective) return undefined;
 
-	const alphaFirst = <T>(pair: [T, T]): [T, T] =>
-		alphaIsWinner ? pair : [pair[1], pair[0]];
-
-	return objective.samples.map((sample) => ({
-		t: sample.t,
-		data: {
-			time: sample.time,
-			score: alphaFirst(sample.score),
-			penalty: alphaFirst(sample.penalty),
-			control:
-				alphaIsWinner || sample.control === null
-					? sample.control
-					: sample.control === 0
-						? 1
-						: 0,
-			position:
-				!alphaIsWinner && R.isNonNullish(sample.position)
-					? 0 - sample.position
-					: sample.position,
-		},
-	}));
+	return objective.samples.map((sample) => {
+		const { t, ...data } = alphaIsWinner
+			? sample
+			: swapObjectiveSampleSides(sample);
+		return { t, data };
+	});
 }
 
 /** Stored status samples are winner-first; the timeline charts alpha-first. */
@@ -134,12 +122,10 @@ function toTimelinePlayerStatus(
 ): PlayerStatusTimelineSample[] | undefined {
 	if (!playerStatus) return undefined;
 
-	const alphaFirst = <T>(pair: [T, T]): [T, T] =>
-		alphaIsWinner ? pair : [pair[1], pair[0]];
-
-	return playerStatus.samples.map((sample) => ({
-		t: sample.t,
-		special: alphaFirst(sample.special),
-		dead: alphaFirst(sample.dead),
-	}));
+	return playerStatus.samples.map((sample) => {
+		const { t, special, dead } = alphaIsWinner
+			? sample
+			: swapPlayerStatusSampleSides(sample);
+		return { t, special, dead };
+	});
 }

@@ -1,12 +1,14 @@
 /** Pure logic for stored scanner matches: canonical serialization (hashing), same-game identity of two partials, and merging a partial into a stored one. */
 import * as R from "remeda";
 import { isSameReplayCode } from "~/features/scanner/core/replay-code";
-import type {
-	ScannerMatch,
-	ScannerMatchObjective,
-	ScannerMatchPlayer,
-	ScannerMatchPlayerStatus,
-	ScannerMatchTeam,
+import {
+	type ScannerMatch,
+	type ScannerMatchObjective,
+	type ScannerMatchPlayer,
+	type ScannerMatchPlayerStatus,
+	type ScannerMatchTeam,
+	swapObjectiveSampleSides,
+	swapPlayerStatusSampleSides,
 } from "~/features/scanner/core/scanner-match";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 
@@ -338,25 +340,12 @@ function swapSides(match: ScannerMatch): ScannerMatch {
 				? null
 				: {
 						mode: match.objective.mode,
-						samples: match.objective.samples.map((sample) => ({
-							...sample,
-							score: [sample.score[1], sample.score[0]],
-							penalty: [sample.penalty[1], sample.penalty[0]],
-							control:
-								sample.control === null ? null : sample.control === 0 ? 1 : 0,
-							...(R.isNonNullish(sample.position)
-								? { position: 0 - sample.position }
-								: null),
-						})),
+						samples: match.objective.samples.map(swapObjectiveSampleSides),
 					},
 		playerStatus: R.isNullish(match.playerStatus)
 			? null
 			: {
-					samples: match.playerStatus.samples.map((sample) => ({
-						...sample,
-						special: [sample.special[1], sample.special[0]],
-						dead: [sample.dead[1], sample.dead[0]],
-					})),
+					samples: match.playerStatus.samples.map(swapPlayerStatusSampleSides),
 				},
 	};
 }

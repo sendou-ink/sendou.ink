@@ -4,6 +4,7 @@
  * scannerMatchSchema (../scanner-schemas.ts). Every field is nullable: a match
  * may be partial (features/scanner-ingest merges partials).
  */
+import * as R from "remeda";
 import type {
 	AbilityWithUnknown,
 	MainWeaponId,
@@ -151,6 +152,32 @@ export interface ScannerMatch {
 	winner: 0 | 1 | null;
 	/** the POV player's seat, when a scoreboard identified it */
 	pov: { team: 0 | 1; index: number } | null;
+}
+
+/** The counter read seen from the other side: per-team pairs exchanged, control flipped, track position mirrored. */
+export function swapObjectiveSampleSides(
+	sample: ScannerMatchObjectiveSample,
+): ScannerMatchObjectiveSample {
+	return {
+		...sample,
+		score: [sample.score[1], sample.score[0]],
+		penalty: [sample.penalty[1], sample.penalty[0]],
+		control: sample.control === null ? null : sample.control === 0 ? 1 : 0,
+		...(R.isNonNullish(sample.position)
+			? { position: 0 - sample.position }
+			: null),
+	};
+}
+
+/** The icon-strip read seen from the other side: per-team flags exchanged. */
+export function swapPlayerStatusSampleSides(
+	sample: ScannerMatchPlayerStatusSample,
+): ScannerMatchPlayerStatusSample {
+	return {
+		...sample,
+		special: [sample.special[1], sample.special[0]],
+		dead: [sample.dead[1], sample.dead[0]],
+	};
 }
 
 /** The enemy slot a kill-feed name belongs to; null when no row clearly matches. */

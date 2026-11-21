@@ -1,7 +1,9 @@
 import * as R from "remeda";
-import type {
-	ScannerMatch,
-	ScannerMatchPlayer,
+import {
+	type ScannerMatch,
+	type ScannerMatchPlayer,
+	swapObjectiveSampleSides,
+	swapPlayerStatusSampleSides,
 } from "~/features/scanner/core/scanner-match";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 
@@ -69,6 +71,10 @@ export function sideSwapped(match: ScannerMatch): ScannerMatch {
 		...match,
 		teams: [match.teams[1], match.teams[0]],
 		winner: match.winner === null ? null : match.winner === 0 ? 1 : 0,
+		pov:
+			match.pov === null
+				? null
+				: { ...match.pov, team: match.pov.team === 0 ? 1 : 0 },
 		matchScores:
 			match.matchScores === null
 				? null
@@ -78,16 +84,12 @@ export function sideSwapped(match: ScannerMatch): ScannerMatch {
 				? null
 				: {
 						...match.objective,
-						samples: match.objective.samples.map((sample) => ({
-							...sample,
-							score: [sample.score[1], sample.score[0]],
-							penalty: [sample.penalty[1], sample.penalty[0]],
-							control:
-								sample.control === null ? null : sample.control === 0 ? 1 : 0,
-							...(R.isNonNullish(sample.position)
-								? { position: 0 - sample.position }
-								: null),
-						})),
+						samples: match.objective.samples.map(swapObjectiveSampleSides),
 					},
+		playerStatus: R.isNullish(match.playerStatus)
+			? null
+			: {
+					samples: match.playerStatus.samples.map(swapPlayerStatusSampleSides),
+				},
 	};
 }

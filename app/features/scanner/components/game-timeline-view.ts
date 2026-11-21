@@ -1,10 +1,14 @@
 /** Prop derivation for rendering a ScannerMatch with the shared <GameTimeline />. */
 
 import type { ComponentProps } from "react";
-import * as R from "remeda";
 import type { GameTimeline } from "~/components/GameTimeline";
 import type { PlayerStatusTimelineTeam } from "~/components/PlayerStatusTimeline";
-import { type ScannerMatch, victimSlot } from "../core/scanner-match";
+import {
+	type ScannerMatch,
+	swapObjectiveSampleSides,
+	swapPlayerStatusSampleSides,
+	victimSlot,
+} from "../core/scanner-match";
 
 const PLAYER_SLOTS = [0, 1, 2, 3] as const;
 
@@ -53,25 +57,16 @@ export function gameTimelineProps(
 	];
 
 	return {
-		objectiveEvents: (match.objective?.samples ?? []).map((sample) => ({
-			t: sample.t - origin,
-			data: {
-				time: sample.time,
-				score: ordered(sample.score),
-				penalty: ordered(sample.penalty),
-				control:
-					sample.control === null ? null : sample.control === first ? 0 : 1,
-				position:
-					first === 1 && R.isNonNullish(sample.position)
-						? 0 - sample.position
-						: sample.position,
-			},
-		})),
-		playerStatusSamples: (match.playerStatus?.samples ?? []).map((sample) => ({
-			t: sample.t - origin,
-			special: ordered(sample.special),
-			dead: ordered(sample.dead),
-		})),
+		objectiveEvents: (match.objective?.samples ?? []).map((sample) => {
+			const { t, ...data } =
+				first === 1 ? swapObjectiveSampleSides(sample) : sample;
+			return { t: t - origin, data };
+		}),
+		playerStatusSamples: (match.playerStatus?.samples ?? []).map((sample) => {
+			const { t, special, dead } =
+				first === 1 ? swapPlayerStatusSampleSides(sample) : sample;
+			return { t: t - origin, special, dead };
+		}),
 		teams: ordered(match.teams).map(
 			(team, side): PlayerStatusTimelineTeam => ({
 				label: labels[side]!,
