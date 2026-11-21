@@ -16,7 +16,7 @@ export interface StationsDisplayMatch {
 	sides: [StationsDisplaySide, StationsDisplaySide];
 	/** Games won by each team so far. */
 	score: [number, number];
-	/** When the match is expected to start, only for a station's next match. */
+	/** When the match is expected to start, for every match except a station's now match. */
 	eta: EtaSimulation.EtaRange | null;
 }
 
@@ -61,7 +61,7 @@ export function build({
 			displaySide({ tournament, match, side: "opponent2", feeders }),
 		],
 		score: match.score,
-		eta: match.slot === "NEXT" ? (matchStarts.get(match.id) ?? null) : null,
+		eta: match.slot === "NOW" ? null : (matchStarts.get(match.id) ?? null),
 	});
 	const inSlot = (
 		station: StationsBoard.StationsBoardStation,

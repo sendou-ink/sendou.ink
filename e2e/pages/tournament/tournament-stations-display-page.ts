@@ -11,6 +11,8 @@ export class TournamentStationsDisplayPage {
 		this.page = page;
 		this.locators = {
 			waiting: page.getByTestId("display-waiting"),
+			waitingMatches: page.getByTestId("display-waiting-match"),
+			waitingMore: page.getByTestId("display-waiting-more"),
 			lastUpdated: page.getByTestId("display-last-updated"),
 			noStationsNotice: page.getByText("This tournament has no stations."),
 		};

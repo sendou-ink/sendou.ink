@@ -175,7 +175,9 @@ async function resolveTournamentStatus(
 	switch (status.type) {
 		case "MATCH":
 			return {
-				state: "TO_MATCH",
+				state: isWaitingForStation(stationsState, status.matchId)
+					? "TO_WAITING_FOR_STATION"
+					: "TO_MATCH",
 				url: tournamentMatchPage({ tournamentId, matchId: status.matchId }),
 				logoUrl,
 				tournamentName,
@@ -228,6 +230,16 @@ async function resolveTournamentStatus(
 				tournamentName,
 			};
 	}
+}
+
+/** A playable match of a LAN with stations that isn't queued on one (or is held in Waiting) waits for one. */
+function isWaitingForStation(
+	state: TournamentStationsState | null,
+	matchId: number,
+) {
+	if (!state || state.stations.length === 0) return false;
+
+	return !state.stationByMatchId.has(matchId);
 }
 
 function lanMatchInfo(

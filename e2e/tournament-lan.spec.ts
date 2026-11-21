@@ -451,6 +451,43 @@ test.describe("LAN tournament station display screen", () => {
 		await displayContext.close();
 	});
 
+	test("shows a logged out viewer as many waiting matches as fit the screen, counting the rest", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+		});
+		await factories.CalendarEventVenueFactory.create({
+			eventId: tournament.eventId,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(32));
+		const station = await factories.TournamentStationFactory.create({
+			tournamentId: tournament.id,
+			name: "Station 1",
+			autoAssign: false,
+		});
+		const [first] = await factories.TournamentFactory.startBracket(
+			tournament.id,
+		);
+		await factories.TournamentMatchStationFactory.create({
+			matchId: first.id,
+			stationId: station.id,
+		});
+
+		await page.setViewportSize({ width: 1280, height: 720 });
+		const display = new TournamentStationsDisplayPage(page);
+		await display.goto(tournament.id);
+
+		// 16 first round matches, one of them on the station
+		await expect(display.locators.waitingMore).toBeVisible();
+		const hiddenCount = Number(
+			(await display.locators.waitingMore.textContent())?.match(/\d+/)?.[0],
+		);
+		await expect(display.locators.waitingMatches).toHaveCount(15 - hiddenCount);
+		expect(hiddenCount).toBeGreaterThan(1);
+	});
+
 	test("tells a logged out viewer a tournament without stations has none", async ({
 		page,
 		factories,

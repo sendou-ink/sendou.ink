@@ -88,7 +88,11 @@ describe("StationsDisplay.build", () => {
 			{ name: "Station 2", now: null, next: null },
 		]);
 		expect(display.waiting).toMatchObject([
-			{ id: second, sides: [{ type: "TEAM" }, { type: "TEAM" }], eta: null },
+			{
+				id: second,
+				sides: [{ type: "TEAM" }, { type: "TEAM" }],
+				eta: { earliest: expect.any(Number), latest: expect.any(Number) },
+			},
 		]);
 	});
 

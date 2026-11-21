@@ -3208,6 +3208,20 @@ const GLOBAL_STATUS_EXAMPLES: Array<{
 		},
 	},
 	{
+		id: "to-waiting-for-station",
+		name: "Tournament waiting for a station",
+		status: {
+			state: "TO_WAITING_FOR_STATION",
+			url: tournamentPage(1),
+			roundName: "Winners Round 2",
+			eta: {
+				earliest: Date.now() + 15 * 60 * 1000,
+				latest: Date.now() + 25 * 60 * 1000,
+			},
+			...SEED_TOURNAMENT,
+		},
+	},
+	{
 		id: "to-match",
 		name: "Tournament match",
 		status: {

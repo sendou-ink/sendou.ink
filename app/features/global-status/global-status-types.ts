@@ -8,6 +8,7 @@ export type GlobalStatusState =
 	| "TO_MATCH"
 	| "TO_WAITING_FOR_MATCH"
 	| "TO_WAITING_FOR_CAST"
+	| "TO_WAITING_FOR_STATION"
 	| "LOBBY_WAITING"
 	| "LOBBY_READY_CHECK"
 	| "LOBBY_IN_ROOM"

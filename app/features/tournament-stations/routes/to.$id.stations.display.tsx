@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Clock } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { type MetaFunction, useLoaderData, useRevalidator } from "react-router";
@@ -121,11 +122,13 @@ function StationCard({ station }: { station: StationsDisplayStation }) {
 				className={styles.slot}
 				data-testid={`display-station-${station.id}-now`}
 			>
-				<span className={clsx(styles.slotLabel, styles.slotLabelNow)}>
-					{t("tournament:stations.board.now")}
-				</span>
 				{station.now ? (
-					<DisplayMatch match={station.now} showScore />
+					<>
+						<span className={clsx(styles.slotLabel, styles.slotLabelNow)}>
+							{t("tournament:stations.board.now")}
+						</span>
+						<DisplayMatch match={station.now} showScore />
+					</>
 				) : (
 					<span className={styles.free}>
 						{t("tournament:stations.display.free")}
@@ -218,28 +221,98 @@ function SideName({ side }: { side: StationsDisplaySide }) {
 	);
 }
 
+/** The waiting matches in play order, as many as fit the screen's remaining space, the rest counted in a last cell. */
 function WaitingStrip({ matches }: { matches: StationsDisplayMatch[] }) {
 	const { t } = useTranslation(["tournament"]);
+	const listRef = React.useRef<HTMLOListElement>(null);
+	const cells = useVisibleGridCells(listRef);
+
+	const shownCount =
+		cells === null || matches.length <= cells
+			? matches.length
+			: Math.max(cells - 1, 0);
+	const hiddenCount = matches.length - shownCount;
 
 	return (
 		<section className={styles.waiting} data-testid="display-waiting">
 			<h2 className={styles.waitingTitle}>
 				{t("tournament:stations.display.waiting")}
 			</h2>
-			<ol className={styles.waitingList}>
-				{matches.map((match) => (
-					<li key={match.id} className={styles.waitingMatch}>
-						<span className={styles.matchName}>{match.name}</span>
-						<span className={styles.waitingTeams}>
-							<SideName side={match.sides[0]} />
-							<span className={styles.vs}>{t("tournament:team.vs")}</span>
-							<SideName side={match.sides[1]} />
-						</span>
-					</li>
+			<ol ref={listRef} className={styles.waitingList}>
+				{matches.slice(0, shownCount).map((match) => (
+					<WaitingMatch key={match.id} match={match} />
 				))}
+				{hiddenCount > 0 ? (
+					<li
+						className={clsx(styles.waitingMatch, styles.waitingMore)}
+						data-testid="display-waiting-more"
+					>
+						{t("tournament:stations.display.moreWaiting", {
+							number: hiddenCount,
+						})}
+					</li>
+				) : null}
 			</ol>
 		</section>
 	);
+}
+
+function WaitingMatch({ match }: { match: StationsDisplayMatch }) {
+	const { t } = useTranslation(["tournament", "common"]);
+	const startsIn = useStartsInText(match.eta);
+
+	return (
+		<li className={styles.waitingMatch} data-testid="display-waiting-match">
+			<span className={styles.waitingMeta}>
+				<span className={styles.matchName}>{match.name}</span>
+				{startsIn ? (
+					<span
+						className={clsx(styles.eta, styles.waitingEta)}
+						title={t("common:startsIn.explanation")}
+					>
+						<Clock className={styles.etaIcon} aria-hidden />
+						{startsIn}
+					</span>
+				) : null}
+			</span>
+			<span className={styles.waitingTeams}>
+				<SideName side={match.sides[0]} />
+				<span className={styles.vs}>{t("tournament:team.vs")}</span>
+				<SideName side={match.sides[1]} />
+			</span>
+		</li>
+	);
+}
+
+/** How many cells of the grid fit its height (its whole rows times its columns), `null` until measured. */
+function useVisibleGridCells(ref: React.RefObject<HTMLElement | null>) {
+	const [cells, setCells] = React.useState<number | null>(null);
+
+	React.useEffect(() => {
+		const element = ref.current;
+		if (!element) return;
+
+		const measure = () => {
+			const style = getComputedStyle(element);
+			const columns = style.gridTemplateColumns.split(" ").length;
+			const rowHeight = Number.parseFloat(style.gridAutoRows);
+			const rowGap = Number.parseFloat(style.rowGap) || 0;
+			if (!rowHeight) return;
+
+			const rows = Math.max(
+				Math.floor((element.clientHeight + rowGap) / (rowHeight + rowGap)),
+				1,
+			);
+			setCells(columns * rows);
+		};
+
+		const observer = new ResizeObserver(measure);
+		observer.observe(element);
+
+		return () => observer.disconnect();
+	}, [ref]);
+
+	return cells;
 }
 
 /**
@@ -269,6 +342,10 @@ function useStationsDisplayStream({
 			source.onopen = () => {
 				lastMessageAt = Date.now();
 				onChanged();
+			};
+			// the stream refusing to open (e.g. the tournament got finalized) is only learned of by refetching
+			source.onerror = () => {
+				if (source?.readyState === EventSource.CLOSED) onChanged();
 			};
 			source.onmessage = (event) => {
 				lastMessageAt = Date.now();

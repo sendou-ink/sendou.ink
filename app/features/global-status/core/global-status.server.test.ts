@@ -496,8 +496,14 @@ describe("resolveGlobalStatus in a LAN tournament", () => {
 		await refreshSendouQInstance();
 	});
 
-	/** The semifinals of a started LAN, the first on its lone station, with a player of each. */
-	const lanWithFirstSemifinalOnStation = async () => {
+	/**
+	 * The semifinals of a started LAN, the first on its lone station, with a player of each. The second is on no
+	 * station unless held in Waiting by hand or queued after the first.
+	 */
+	const lanWithFirstSemifinalOnStation = async ({
+		holdSecondInWaiting = false,
+		queueSecondOnStation = false,
+	} = {}) => {
 		const {
 			tournamentId,
 			stationIds: [stationId],
@@ -512,6 +518,12 @@ describe("resolveGlobalStatus in a LAN tournament", () => {
 			matchId: semifinalIds[0],
 			stationId,
 		});
+		if (holdSecondInWaiting || queueSecondOnStation) {
+			await TournamentMatchStationFactory.create({
+				matchId: semifinalIds[1],
+				stationId: queueSecondOnStation ? stationId : null,
+			});
+		}
 
 		const tournament = await tournamentFromDB(tournamentId);
 		RunningTournaments.add(tournament);
@@ -524,15 +536,15 @@ describe("resolveGlobalStatus in a LAN tournament", () => {
 		};
 
 		return {
-			onStation: playerOf(semifinalIds[0]),
-			onNoStation: playerOf(semifinalIds[1]),
+			firstPlayer: playerOf(semifinalIds[0]),
+			secondPlayer: playerOf(semifinalIds[1]),
 		};
 	};
 
 	test("shows the station the match is queued on, without an ETA when first in its queue", async () => {
-		const { onStation } = await lanWithFirstSemifinalOnStation();
+		const { firstPlayer } = await lanWithFirstSemifinalOnStation();
 
-		const status = await resolveGlobalStatus(onStation);
+		const status = await resolveGlobalStatus(firstPlayer);
 
 		expect(status?.state).toBe("TO_MATCH");
 		expect(status?.station).toEqual({
@@ -543,13 +555,57 @@ describe("resolveGlobalStatus in a LAN tournament", () => {
 		expect(status?.eta).toBeUndefined();
 	});
 
-	test("shows no station for a match on none, only when it's expected to start", async () => {
-		const { onNoStation } = await lanWithFirstSemifinalOnStation();
+	test("resolves a playable match on no station as waiting for one, with its ETA", async () => {
+		const { secondPlayer } = await lanWithFirstSemifinalOnStation();
 
-		const status = await resolveGlobalStatus(onNoStation);
+		const status = await resolveGlobalStatus(secondPlayer);
 
+		expect(status?.state).toBe("TO_WAITING_FOR_STATION");
 		expect(status?.station).toBeUndefined();
 		// the lone station plays the other semifinal first
 		expect(status?.eta?.earliest).toBeGreaterThan(Date.now());
+	});
+
+	test("resolves a match held in Waiting by hand as waiting for a station", async () => {
+		const { secondPlayer } = await lanWithFirstSemifinalOnStation({
+			holdSecondInWaiting: true,
+		});
+
+		const status = await resolveGlobalStatus(secondPlayer);
+
+		expect(status?.state).toBe("TO_WAITING_FOR_STATION");
+		expect(status?.station).toBeUndefined();
+	});
+
+	test("resolves a match queued behind another on its station as an ongoing one, with its station and ETA", async () => {
+		const { secondPlayer } = await lanWithFirstSemifinalOnStation({
+			queueSecondOnStation: true,
+		});
+
+		const status = await resolveGlobalStatus(secondPlayer);
+
+		expect(status?.state).toBe("TO_MATCH");
+		expect(status?.station).toEqual({ name: "Station 1", locationNote: null });
+		expect(status?.eta?.earliest).toBeGreaterThan(Date.now());
+	});
+
+	test("resolves a playable match as an ongoing one when the LAN has no stations", async () => {
+		const { tournamentId, semifinalIds } = await createStartedLanTournament({
+			authorId: lanUsers.id(1),
+			teamRosters: R.chunk(lanUsers.ids().slice(1), 4),
+			stationNames: [],
+		});
+		const tournament = await tournamentFromDB(tournamentId);
+		RunningTournaments.add(tournament);
+		const match = tournament.brackets[0].data.match.find(
+			(candidate) => candidate.id === semifinalIds[0],
+		)!;
+
+		const status = await resolveGlobalStatus(
+			tournament.teamById(match.opponent1!.id!)!.memberUserIds[0],
+		);
+
+		expect(status?.state).toBe("TO_MATCH");
+		expect(status?.station).toBeUndefined();
 	});
 });

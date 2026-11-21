@@ -60,6 +60,7 @@
 	"globalStatus.TO_MATCH": "In match",
 	"globalStatus.TO_WAITING_FOR_MATCH": "Waiting for match",
 	"globalStatus.TO_WAITING_FOR_CAST": "Waiting for cast",
+	"globalStatus.TO_WAITING_FOR_STATION": "Waiting for a station",
 	"globalStatus.LOBBY_WAITING": "Waiting for a room",
 	"globalStatus.LOBBY_READY_CHECK": "Spot open",
 	"globalStatus.LOBBY_IN_ROOM": "In lobby",

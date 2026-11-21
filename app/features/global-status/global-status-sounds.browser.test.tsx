@@ -37,6 +37,8 @@ const transitionTo = async (
 	await screen.rerender(<Sounds status={to} />);
 };
 
+const tournamentMatchPage = "/to/1/matches/1";
+
 const queued = (overrides: Partial<GlobalStatus> = {}): GlobalStatus => ({
 	state: "SQ_QUEUED",
 	url: SENDOUQ_LOOKING_PAGE,
@@ -84,6 +86,24 @@ describe("useGlobalStatusSounds", () => {
 		});
 
 		expect(mocks.playSound).not.toHaveBeenCalled();
+	});
+
+	test("stays silent when a LAN match starts waiting for a station", async () => {
+		await transitionTo(
+			{ state: "TO_WAITING_FOR_MATCH", url: tournamentMatchPage },
+			{ state: "TO_WAITING_FOR_STATION", url: tournamentMatchPage },
+		);
+
+		expect(mocks.playSound).not.toHaveBeenCalled();
+	});
+
+	test("plays the tournament match sound when a LAN match gets its station", async () => {
+		await transitionTo(
+			{ state: "TO_WAITING_FOR_STATION", url: tournamentMatchPage },
+			{ state: "TO_MATCH", url: tournamentMatchPage },
+		);
+
+		expect(mocks.playSound).toHaveBeenCalledWith("tournament_match");
 	});
 
 	test("plays the like sound when the queued group's likes grow", async () => {

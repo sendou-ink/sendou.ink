@@ -1,4 +1,7 @@
 .screen {
+	--display-columns: repeat(auto-fill, minmax(max(18rem, 22cqi), 1fr));
+	--waiting-row-height: 3.4em;
+
 	container-type: inline-size;
 	color-scheme: dark;
 	width: 100%;
@@ -11,6 +14,7 @@
 	background-color: var(--color-bg);
 	color: var(--color-text);
 	font-size: clamp(1rem, 1.6cqi, 3rem);
+	line-height: 1.25;
 }
 
 .header {
@@ -48,17 +52,19 @@
 
 .grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(max(18rem, 22cqi), 1fr));
+	grid-template-columns: var(--display-columns);
 	gap: 1.2cqi;
 	align-content: start;
-	flex-grow: 1;
 }
 
+/* header, now and next rows shared by the cards side by side, so their slots line up */
 .station {
-	display: flex;
-	flex-direction: column;
-	gap: 0.8em;
-	padding: 1em 1.2em;
+	display: grid;
+	grid-row: span 3;
+	grid-template-rows: subgrid;
+	row-gap: 0.6em;
+	align-content: start;
+	padding: 0.8em 1.2em;
 	border: var(--border-style);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
@@ -67,12 +73,18 @@
 
 .stationHeader {
 	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	column-gap: 0.5em;
+	flex-direction: column;
+	gap: 0.2em;
+	min-width: 0;
 }
 
 .stationName {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow: hidden;
+	overflow-wrap: anywhere;
 	margin: 0;
 	font-size: 1.8em;
 	font-weight: var(--weight-extra);
@@ -80,18 +92,18 @@
 }
 
 .locationNote {
-	flex-basis: 100%;
 	color: var(--color-text-high);
 }
 
 .slot {
 	display: flex;
 	flex-direction: column;
-	gap: 0.3em;
+	gap: 0.2em;
+	min-width: 0;
 }
 
 .slotNext {
-	padding-top: 0.8em;
+	padding-top: 0.6em;
 	border-top: var(--border-style);
 	color: var(--color-text-high);
 	font-size: 0.85em;
@@ -114,14 +126,15 @@
 }
 
 .free {
-	font-size: 1.2em;
+	font-size: 1.3em;
+	font-weight: var(--weight-bold);
 	color: var(--color-text-high);
 }
 
 .match {
 	display: flex;
 	flex-direction: column;
-	gap: 0.2em;
+	gap: 0.1em;
 	min-width: 0;
 }
 
@@ -139,6 +152,9 @@
 }
 
 .matchName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-width: 0;
 	color: var(--color-text-high);
 	font-size: 0.85em;
 }
@@ -173,7 +189,10 @@
 	color: var(--color-fg-accent);
 }
 
+/* takes the rest of the screen, the list showing as many matches as fit in it */
 .waiting {
+	flex: 1 1 0;
+	min-height: 0;
 	display: flex;
 	flex-direction: column;
 	gap: 0.6em;
@@ -191,9 +210,14 @@
 }
 
 .waitingList {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.8em;
+	flex: 1 1 0;
+	min-height: var(--waiting-row-height);
+	display: grid;
+	grid-template-columns: var(--display-columns);
+	grid-auto-rows: var(--waiting-row-height);
+	gap: 0.6em 1.2cqi;
+	align-content: start;
+	overflow: hidden;
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -202,11 +226,43 @@
 .waitingMatch {
 	display: flex;
 	flex-direction: column;
-	padding: 0.5em 0.9em;
+	justify-content: center;
+	box-sizing: border-box;
+	padding: 0.3em 0.9em;
 	border: var(--border-style);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
-	max-width: 100%;
+	line-height: 1.3;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.waitingMore {
+	align-items: center;
+	font-size: 1.2em;
+	font-weight: var(--weight-extra);
+	color: var(--color-text-high);
+}
+
+.waitingMeta {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.6em;
+	min-width: 0;
+	white-space: nowrap;
+}
+
+.waitingEta {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25em;
+	flex-shrink: 0;
+}
+
+.etaIcon {
+	width: 1em;
+	height: 1em;
 }
 
 .waitingTeams {
@@ -216,6 +272,7 @@
 	font-size: 1.1em;
 	font-weight: var(--weight-bold);
 	min-width: 0;
+	white-space: nowrap;
 }
 
 .vs {
