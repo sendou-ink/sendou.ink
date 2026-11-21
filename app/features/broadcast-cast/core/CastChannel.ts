@@ -4,13 +4,23 @@ import * as LiveStream from "~/features/live-streams/core/LiveStream";
 import type { StreamAccount } from "~/features/live-streams/live-streams-constants";
 import { mySlugify } from "~/utils/urls";
 
-/** The tournament's broadcast channels, one per cast account. */
+/** The tournament's broadcast channels, one per cast account, each with a slug no other channel of the tournament has. */
 export function list(castAccounts: CastAccount[] | null): BroadcastChannel[] {
-	return (castAccounts ?? []).map((castAccount) => ({
+	const accounts = castAccounts ?? [];
+	const takenSlugs = new Set(
+		accounts
+			.filter((castAccount) => castAccount.platform === "TWITCH")
+			.map(twitchSlug),
+	);
+
+	return accounts.map((castAccount) => ({
 		platform: castAccount.platform,
 		account: castAccount.account,
 		name: castAccount.name,
-		slug: slug(castAccount),
+		slug:
+			castAccount.platform === "TWITCH"
+				? twitchSlug(castAccount)
+				: claimYouTubeSlug(castAccount, takenSlugs),
 	}));
 }
 
@@ -41,10 +51,19 @@ export function featuredMatchId({
 	);
 }
 
-/** Twitch logins are readable URL keys as is, YouTube's account is an opaque channel id so its name is used instead. */
-function slug(castAccount: CastAccount) {
-	if (castAccount.platform === "TWITCH")
-		return castAccount.account.toLowerCase();
+/** Twitch logins are readable URL keys as is and unique among the cast accounts. */
+function twitchSlug(castAccount: CastAccount) {
+	return castAccount.account.toLowerCase();
+}
 
-	return mySlugify(castAccount.name) || castAccount.account.toLowerCase();
+/** YouTube's account is an opaque channel id so its name is used instead, unless another channel already has that slug. */
+function claimYouTubeSlug(castAccount: CastAccount, takenSlugs: Set<string>) {
+	const nameSlug = mySlugify(castAccount.name);
+	const slug =
+		nameSlug && !takenSlugs.has(nameSlug)
+			? nameSlug
+			: castAccount.account.toLowerCase();
+
+	takenSlugs.add(slug);
+	return slug;
 }

@@ -36,6 +36,52 @@ describe("CastChannel.findBySlug", () => {
 
 		expect(channel?.account).toBe(expected?.account);
 	});
+
+	const twitchOfSameBrand: CastAccount = {
+		platform: "TWITCH",
+		account: "squidboards",
+		name: "squidboards",
+	};
+	const youtubeOfSameBrand: CastAccount = {
+		platform: "YOUTUBE",
+		account: "UCxxxxxxxxxxxxxxxxxxxxxx",
+		name: "Squidboards",
+	};
+	const youtubeWithSameTitle: CastAccount = {
+		platform: "YOUTUBE",
+		account: "UCyyyyyyyyyyyyyyyyyyyyyy",
+		name: "Squidboards",
+	};
+
+	test.each([
+		{
+			why: "a Twitch login and a YouTube channel named the same",
+			castAccounts: [twitchOfSameBrand, youtubeOfSameBrand],
+		},
+		{
+			why: "a YouTube channel listed before a Twitch login of the same name",
+			castAccounts: [youtubeOfSameBrand, twitchOfSameBrand],
+		},
+		{
+			why: "two YouTube channels with the same title",
+			castAccounts: [youtubeOfSameBrand, youtubeWithSameTitle],
+		},
+	])("reaches every channel by its own slug: $why", ({ castAccounts }) => {
+		const reached = CastChannel.list(castAccounts).map(
+			(channel) => CastChannel.findBySlug(castAccounts, channel.slug)?.account,
+		);
+
+		expect(reached).toEqual(castAccounts.map((account) => account.account));
+	});
+
+	test("keeps the Twitch login as the slug when a YouTube channel has the same name", () => {
+		const channel = CastChannel.findBySlug(
+			[youtubeOfSameBrand, twitchOfSameBrand],
+			"squidboards",
+		);
+
+		expect(channel?.platform).toBe("TWITCH");
+	});
 });
 
 describe("CastChannel.featuredMatchId", () => {
