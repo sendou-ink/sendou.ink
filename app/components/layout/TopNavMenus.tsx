@@ -31,6 +31,8 @@ const NAV_CATEGORIES = [
 			{ name: "comp-analyzer", url: "comp-analyzer" },
 			{ name: "object-damage-calculator", url: "object-damage-calculator" },
 			{ name: "plans", url: "plans" },
+			// XXX: remove once the new planner replaces the old one at /plans (last step of the map planner epic)
+			{ name: "plans-next", url: "plans/next", icon: "plans" as const },
 			{ name: "maps", url: "maps" },
 			{ name: "tier-list-maker", url: "tier-list-maker" },
 			{ name: "xsearch", url: "xsearch" },

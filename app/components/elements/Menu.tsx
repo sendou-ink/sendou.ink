@@ -1,6 +1,8 @@
 import clsx from "clsx";
 import * as React from "react";
 import { Link } from "react-router";
+import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
+import { useLatestRef } from "~/hooks/useLatestRef";
 import {
 	type FocusMove,
 	focusMoveForKey,
@@ -131,6 +133,117 @@ export function SendouMenu({
 							{children}
 						</MenuContext>
 					) : null}
+				</div>
+			</div>
+		</>
+	);
+}
+
+/**
+ * A menu opened at a point of the page instead of by a trigger, e.g. by a right click. Shown
+ * while rendered: the parent renders it to open it and stops rendering it on `onClose`, called
+ * when an item is picked, on Escape, on a press anywhere outside it and when focus leaves it.
+ */
+export function SendouContextMenu({
+	clientPoint,
+	...rest
+}: {
+	/** Where the menu opens, in viewport pixels. */
+	clientPoint: { x: number; y: number };
+	onClose: () => void;
+	children: React.ReactNode;
+	"aria-label"?: string;
+	"data-testid"?: string;
+}) {
+	return (
+		<ContextMenuAtPoint
+			key={`${clientPoint.x},${clientPoint.y}`}
+			clientPoint={clientPoint}
+			{...rest}
+		/>
+	);
+}
+
+function ContextMenuAtPoint({
+	clientPoint,
+	onClose,
+	children,
+	...rest
+}: React.ComponentProps<typeof SendouContextMenu>) {
+	const popoverRef = React.useRef<HTMLDivElement>(null);
+	const anchorRef = React.useRef<HTMLSpanElement>(null);
+	const onCloseRef = useLatestRef(onClose);
+
+	useIsomorphicLayoutEffect(() => {
+		const popover = popoverRef.current;
+		if (!popover) return;
+
+		popover.showPopover();
+		popover.focus();
+
+		const closeOnPressOutside = (event: PointerEvent) => {
+			if (event.target instanceof Node && popover.contains(event.target)) {
+				return;
+			}
+			onCloseRef.current();
+		};
+		const close = () => onCloseRef.current();
+		document.addEventListener("pointerdown", closeOnPressOutside, true);
+		window.addEventListener("blur", close);
+
+		return () => {
+			document.removeEventListener("pointerdown", closeOnPressOutside, true);
+			window.removeEventListener("blur", close);
+			if (popover.matches(":popover-open")) popover.hidePopover();
+		};
+	}, []);
+
+	useFloatingLayer({
+		isOpen: true,
+		floatingRef: popoverRef,
+		getAnchor: () => anchorRef.current,
+		placement: "bottom start",
+	});
+
+	const onKeyDown = (event: React.KeyboardEvent) => {
+		if (event.key === "Escape") {
+			event.preventDefault();
+			onClose();
+			return;
+		}
+		const move = focusMoveForKey(event.key);
+		if (!move) return;
+		event.preventDefault();
+		focusItem(popoverRef.current, move);
+	};
+
+	const onBlur = (event: React.FocusEvent) => {
+		if (focusLeftTo(event, [popoverRef.current])) onClose();
+	};
+
+	return (
+		<>
+			<span
+				ref={anchorRef}
+				className={styles.contextMenuAnchor}
+				style={{ left: clientPoint.x, top: clientPoint.y }}
+			/>
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: keydown steers the menu items inside */}
+			<div
+				ref={popoverRef}
+				popover="manual"
+				tabIndex={-1}
+				className={styles.popover}
+				onKeyDown={onKeyDown}
+				onBlur={onBlur}
+				data-testid={rest["data-testid"]}
+			>
+				<div
+					className={styles.itemsContainer}
+					role="menu"
+					aria-label={rest["aria-label"]}
+				>
+					<MenuContext value={{ close: onClose }}>{children}</MenuContext>
 				</div>
 			</div>
 		</>

@@ -7,7 +7,7 @@ Popovers, menus, selects, and dialogs are native top layer elements, meaning the
 
 ## Floating layer
 
-`useFloatingLayer` places a popover next to its anchor. Used by Popover, Menu and Select, but anything new that is anchored should use it too.
+`useFloatingLayer` places a popover next to its anchor. Used by Popover, Menu, Select and the context menu, but anything new that is anchored should use it too.
 
 ```tsx
 useFloatingLayer({
@@ -58,6 +58,10 @@ The settings for the hook are global CSS properties in `vars.css`:
 - **The far edge stutters while scrolling.** When scrolling the popover resizing can sometimes look a bit laggy/stuttery. This is acceptable, no possible workaround (all UI libs have this).
 
 The calculations live in `floating-layer.ts` as pure functions.
+
+## Context menu
+
+`SendouContextMenu` opens a menu at a point of the page (a right click, a long press) instead of next to a trigger: the parent renders it to open it and stops on `onClose`. Its anchor is a 1px fixed element at the point. It is a `manual` popover that closes itself on a press outside, Escape, focus leaving and window blur, because the browser's light dismiss would close an `auto` popover opened by a right click when the button is released.
 
 ## Scroll lock
 

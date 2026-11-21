@@ -1,6 +1,10 @@
 const config = {
 	tags: ["-lintignore"],
 	ignoreBinaries: ["ffmpeg", "ffprobe", "yt-dlp"],
+	// XXX: remove once the planner uses the whole core (ink and objective steps of the map planner epic)
+	ignore: [
+		"app/features/map-planner/core/Plan{Document,Editor,Encoding,Operation}.ts",
+	],
 	astro: {
 		config: ["docs/site/astro.config.ts"],
 		entry: [

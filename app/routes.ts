@@ -195,6 +195,7 @@ export default [
 	route("/upload/admin", "features/img-upload/routes/upload.admin.tsx"),
 
 	route("/plans", "features/map-planner/routes/plans.tsx"),
+	route("/plans/next", "features/map-planner/routes/plans.next.tsx"),
 
 	route("/analyzer", "features/build-analyzer/routes/analyzer.tsx"),
 

@@ -108,6 +108,7 @@ export default defineConfig((config) => {
 				"@epic-web/cachified",
 				"@react-router/node",
 				"@tldraw/tldraw",
+				"konva",
 				"@zumer/snapdom",
 				"compressorjs",
 				"date-fns/locale/da",

@@ -4,11 +4,25 @@ import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import { modeShort, numericEnum } from "~/utils/schema";
 import {
+	PLAN_URL_PARAM_MAX_LENGTH,
 	PLANNER_BACKGROUND_STYLES,
 	STAGE_WATER_LEVELS,
 } from "./plans-constants";
 
+/** What a link opens the planner with, read once when it opens and then removed from the URL. */
 export const plansSearchParams = SearchParams.define({
+	/** A whole plan, `PlanEncoding.toUrlParam` */
+	plan: SP.param(
+		v.nullable(v.pipe(v.string(), v.maxLength(PLAN_URL_PARAM_MAX_LENGTH))),
+		{ loader: false },
+	),
+	/** With `mode`, an empty plan on that map */
+	stage: SP.param(v.nullable(numericEnum(stageIds)), { loader: false }),
+	mode: SP.param(v.nullable(modeShort), { loader: false }),
+});
+
+// XXX: delete with the tldraw planner
+export const tldrawPlansSearchParams = SearchParams.define({
 	stage: SP.param(numericEnum(stageIds), {
 		default: stageIds[0],
 		loader: false,

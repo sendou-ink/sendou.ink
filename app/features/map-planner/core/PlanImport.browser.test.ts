@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { plansSearchParams } from "../plans-search-params";
+import { tldrawPlansSearchParams } from "../plans-search-params";
 import * as PlanImport from "./PlanImport";
 
 const BACKGROUND = new Blob([new Uint8Array([1, 2, 3])], {
@@ -20,7 +20,7 @@ async function openAndGetParams(
 		...stageAndMode,
 	});
 	const url = new URL(String(open.mock.calls[0]![0]), window.location.origin);
-	return plansSearchParams.parse(url);
+	return tldrawPlansSearchParams.parse(url);
 }
 
 async function openAndGetKey(): Promise<string> {
