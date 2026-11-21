@@ -13,7 +13,7 @@ import {
 import { COMPACTED_MATCHES_STORE, EVENTS_STORE } from "../store/db";
 import { type SendStatus, updateEventsSend } from "../store/events";
 import { getFeed, refreshFeed, refreshFeedEvents } from "./events-feed";
-import { type SendResult, sendMatches } from "./sendou-ingest";
+import { sendMatches } from "./sendou-ingest";
 import type { ScanEvent } from "./session-data";
 import { readSettings } from "./settings";
 
@@ -62,10 +62,7 @@ export function uploadEnabled(): boolean {
  * keyed `since` on, as the feed has them built; the feed re-reads the events
  * whose status changed.
  */
-export function sendLive(
-	include: MatchSelector,
-	since: number,
-): Promise<SendResult | null> {
+export function sendLive(include: MatchSelector, since: number): Promise<void> {
 	return send(
 		EVENTS_STORE,
 		{ include, since },
@@ -93,7 +90,7 @@ export function sendLive(
 export function sendCompacted(
 	include: MatchSelector,
 	sessionKey: number,
-): Promise<SendResult | null> {
+): Promise<void> {
 	return send(
 		COMPACTED_MATCHES_STORE,
 		{ include, since: sessionKey },
@@ -114,8 +111,8 @@ async function send(
 	key: string,
 	request: SendRequest,
 	target: SendTarget,
-): Promise<SendResult | null> {
-	if (!isLoggedIn()) return null;
+): Promise<void> {
+	if (!isLoggedIn()) return;
 	let sender = senders.get(key);
 	if (!sender) {
 		sender = { sending: false, pending: [] };
@@ -123,24 +120,21 @@ async function send(
 	}
 	if (sender.sending) {
 		sender.pending.push(request);
-		return null;
+		return;
 	}
 	sender.sending = true;
-	const result: SendResult = { sentMatches: 0, failedMatches: 0 };
 	let sentSince = request.since;
 	try {
 		let next: SendRequest | undefined = request;
 		while (next) {
 			const { since } = next;
 			sentSince = Math.min(sentSince, since);
-			const pass = await sendMatches({
+			await sendMatches({
 				matches: await target.load(since),
 				include: next.include,
 				onStatus: () => target.onStatus?.(since),
 				writeSend: target.writeSend,
 			});
-			result.sentMatches += pass.sentMatches;
-			result.failedMatches += pass.failedMatches;
 			const pending = sender.pending;
 			sender.pending = [];
 			next =
@@ -155,5 +149,4 @@ async function send(
 		sender.sending = false;
 		target.onStatus?.(sentSince);
 	}
-	return result;
 }

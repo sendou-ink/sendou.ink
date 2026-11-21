@@ -46,11 +46,6 @@ const STALE_SENDING_MS = 2 * INGEST_TIMEOUT_MS;
 /** Browsers refuse keepalive requests over 64 KiB; bigger ones go out without it. */
 const KEEPALIVE_MAX_BODY_BYTES = 64 * 1024;
 
-export interface SendResult {
-	sentMatches: number;
-	failedMatches: number;
-}
-
 /**
  * POSTs the ingestable `matches` (a whole session or file, which
  * the skip rules look across) that `include` selects, and records the outcome
@@ -76,10 +71,9 @@ export async function sendMatches({
 		matches: readonly BuiltMatch<ScanEvent>[],
 		send: SendStatus,
 	) => Promise<void>;
-}): Promise<SendResult> {
+}): Promise<void> {
 	const selected = ingestableBuilt(matches).filter(include);
 
-	const result: SendResult = { sentMatches: 0, failedMatches: 0 };
 	for (const request of R.chunk(selected, MAX_INGEST_MATCHES_PER_REQUEST)) {
 		await writeSend(request, { state: "sending", at: Date.now() });
 		onStatus();
@@ -102,7 +96,6 @@ export async function sendMatches({
 					...(unlinked ? { attempts: nextAttempt(built) } : null),
 				});
 			}
-			result.sentMatches += request.length;
 		} catch (err) {
 			const error = err instanceof Error ? err.message : String(err);
 			for (const built of request) {
@@ -113,11 +106,9 @@ export async function sendMatches({
 					attempts: nextAttempt(built),
 				});
 			}
-			result.failedMatches += request.length;
 		}
 		onStatus();
 	}
-	return result;
 }
 
 /** Match selector: the match built from the given stored event. */
