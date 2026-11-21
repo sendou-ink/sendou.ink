@@ -4,7 +4,7 @@
  * who can remove them.
  */
 import { sub } from "date-fns";
-import type { Kysely } from "kysely";
+import type { Kysely, Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
@@ -190,26 +190,10 @@ export function insert({ userId, ...associationArgs }: InsertArgs) {
 			.returning("id")
 			.executeTakeFirstOrThrow();
 
-		await trx
-			.insertInto("AssociationMember")
-			.values({ userId, associationId: association.id, role: "ADMIN" })
-			.execute();
-
-		const { count, patronTier } = await trx
-			.selectFrom("AssociationMember")
-			.innerJoin("User", "User.id", "AssociationMember.userId")
-			.select((eb) => [eb.fn.countAll<number>().as("count"), "User.patronTier"])
-			.where("AssociationMember.userId", "=", userId)
-			.executeTakeFirstOrThrow();
-
-		if (
-			count >
-			Association.maxMembershipCount({
-				isSupporter: isSupporter({ patronTier }),
-			})
-		) {
-			throw new LimitReachedError("Max amount of associations reached");
-		}
+		await insertMemberWithinLimit(
+			{ userId, associationId: association.id, role: "ADMIN" },
+			trx,
+		);
 
 		return association;
 	});
@@ -224,18 +208,45 @@ export function refreshInviteCode(associationId: number) {
 		.execute();
 }
 
-/** Adds the user as a regular member. Limits are checked by the caller. */
-export function insertMember({
-	associationId,
-	userId,
-}: {
-	associationId: number;
-	userId: number;
-}) {
+/** Adds the user as a regular member. Throws `LimitReachedError` if that takes them past their association count limit. */
+export function insertMember(args: { associationId: number; userId: number }) {
 	return db
+		.transaction()
+		.execute((trx) =>
+			insertMemberWithinLimit({ ...args, role: "MEMBER" }, trx),
+		);
+}
+
+async function insertMemberWithinLimit(
+	{
+		associationId,
+		userId,
+		role,
+	}: {
+		associationId: number;
+		userId: number;
+		role: Tables["AssociationMember"]["role"];
+	},
+	trx: Transaction<DB>,
+) {
+	await trx
 		.insertInto("AssociationMember")
-		.values({ associationId, userId, role: "MEMBER" })
+		.values({ associationId, userId, role })
 		.execute();
+
+	const { count, patronTier } = await trx
+		.selectFrom("AssociationMember")
+		.innerJoin("User", "User.id", "AssociationMember.userId")
+		.select((eb) => [eb.fn.countAll<number>().as("count"), "User.patronTier"])
+		.where("AssociationMember.userId", "=", userId)
+		.executeTakeFirstOrThrow();
+
+	if (
+		count >
+		Association.maxMembershipCount({ isSupporter: isSupporter({ patronTier }) })
+	) {
+		throw new LimitReachedError("Max amount of associations reached");
+	}
 }
 
 /** Stars (`MANAGER`) or unstars (`MEMBER`) a member, or makes them the admin. */

@@ -1,13 +1,16 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as AssociationFactory from "~/db/seed/factories/AssociationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { SUPPORTER_MIN_PATRON_TIER } from "~/modules/permissions/utils";
 import type { SerializeFrom } from "~/utils/remix";
 import {
 	assertResponseErrored,
 	wrappedAction,
 	wrappedLoader,
 } from "~/utils/Test";
+import * as AssociationRepository from "../AssociationRepository.server";
 import { action } from "../actions/associations.server";
+import { ASSOCIATION } from "../associations-constants";
 import type { associationsPageActionSchema } from "../associations-schemas";
 import { loader } from "../loaders/associations.server";
 
@@ -228,4 +231,53 @@ describe("Associations page action", () => {
 			adminId(),
 		);
 	});
+
+	test("can't join past the association count limit", async () => {
+		for (let i = 0; i < ASSOCIATION.MAX_COUNT_REGULAR_USER; i++) {
+			await AssociationFactory.create({ userId: memberId() });
+		}
+
+		const response = await joinNewAssociation();
+
+		assertResponseErrored(response, "maximum number of associations");
+		const { associations } = await associationsLoader({ user: memberId() });
+		expect(associations).toHaveLength(ASSOCIATION.MAX_COUNT_REGULAR_USER);
+	});
+
+	test("supporter can join past the regular user limit up to the supporter limit", async () => {
+		await UserFactory.grant(memberId(), {
+			patronTier: SUPPORTER_MIN_PATRON_TIER,
+		});
+		for (let i = 0; i < ASSOCIATION.MAX_COUNT_REGULAR_USER; i++) {
+			await AssociationFactory.create({ userId: memberId() });
+		}
+
+		for (
+			let i = ASSOCIATION.MAX_COUNT_REGULAR_USER;
+			i < ASSOCIATION.MAX_COUNT_SUPPORTER;
+			i++
+		) {
+			await joinNewAssociation();
+		}
+		const response = await joinNewAssociation();
+
+		assertResponseErrored(response, "maximum number of associations");
+		const { associations } = await associationsLoader({ user: memberId() });
+		expect(associations).toHaveLength(ASSOCIATION.MAX_COUNT_SUPPORTER);
+	});
 });
+
+async function joinNewAssociation() {
+	const owner = await UserFactory.create();
+	const association = await AssociationFactory.create({ userId: owner.id });
+
+	return associationsAction(
+		{
+			_action: "JOIN_ASSOCIATION",
+			inviteCode: await AssociationRepository.findInviteCodeById(
+				association.id,
+			),
+		},
+		{ user: memberId() },
+	);
+}

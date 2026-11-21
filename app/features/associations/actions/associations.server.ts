@@ -4,8 +4,10 @@ import * as Association from "~/features/associations/core/Association";
 import { requireUser } from "~/features/auth/core/user.server";
 import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
+import { LimitReachedError } from "~/utils/errors";
 import {
 	badRequestIfFalsy,
+	errorToast,
 	errorToastIfFalsy,
 	successToast,
 } from "~/utils/remix.server";
@@ -91,20 +93,17 @@ export const action = defineAction(
 					"Association is full",
 				);
 
-				const maxAssociationCount = Association.maxMembershipCount({
-					isSupporter: user.roles.includes("SUPPORTER"),
-				});
-
-				errorToastIfFalsy(
-					(await AssociationRepository.findByMemberUserId(user.id)).actual
-						.length < maxAssociationCount,
-					`Regular users can only be a member of ${maxAssociationCount} associations (supporters ${ASSOCIATION.MAX_COUNT_SUPPORTER})`,
-				);
-
-				await AssociationRepository.insertMember({
-					userId: user.id,
-					associationId: associationToJoin.id,
-				});
+				try {
+					await AssociationRepository.insertMember({
+						userId: user.id,
+						associationId: associationToJoin.id,
+					});
+				} catch (error) {
+					if (error instanceof LimitReachedError) {
+						errorToast("You have reached the maximum number of associations");
+					}
+					throw error;
+				}
 
 				break;
 			}

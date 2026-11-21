@@ -4,6 +4,7 @@ import * as AssociationFactory from "~/db/seed/factories/AssociationFactory";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { db } from "~/db/sql";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import * as AssociationRepository from "./AssociationRepository.server";
@@ -332,5 +333,33 @@ describe("deleteById", () => {
 
 		expect(isDeleted).toBe(true);
 		expect(await AssociationRepository.findById(association.id)).toBeNull();
+	});
+});
+
+describe("insert", () => {
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test("refuses past the association count limit and keeps no half-made association", async () => {
+		for (let i = 0; i < ASSOCIATION.MAX_COUNT_REGULAR_USER; i++) {
+			await AssociationFactory.create({ userId: adminId() });
+		}
+
+		await expect(
+			AssociationRepository.insert({ name: "One too many", userId: adminId() }),
+		).rejects.toThrow(LimitReachedError);
+
+		const { actual } = await AssociationRepository.findByMemberUserId(
+			adminId(),
+		);
+		expect(actual).toHaveLength(ASSOCIATION.MAX_COUNT_REGULAR_USER);
+		expect(
+			await db
+				.selectFrom("Association")
+				.select("id")
+				.where("name", "=", "One too many")
+				.executeTakeFirst(),
+		).toBeUndefined();
 	});
 });
