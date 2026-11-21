@@ -13,11 +13,30 @@ const MAX_RATE_LIMIT_RETRIES = 3;
 
 export type DiscordTokens = OAuth2Strategy.VerifyOptions["tokens"];
 
+/** Discord answers `invalid_scope` to `role_connections.write` requested with PKCE (discord-api-docs#5751). */
+class WithoutPKCEOAuth2Strategy<User> extends OAuth2Strategy<User> {
+	protected override createAuthorizationURL() {
+		const result = super.createAuthorizationURL();
+		result.url.searchParams.delete("code_challenge");
+		result.url.searchParams.delete("code_challenge_method");
+
+		return result;
+	}
+
+	protected override validateAuthorizationCode(code: string) {
+		return this.client.validateAuthorizationCode(
+			this.options.tokenEndpoint.toString(),
+			code,
+			null,
+		);
+	}
+}
+
 /**
  * OAuth flow of the linked role verification URL. Separate from log in: it asks for the
  * `role_connections.write` scope and the tokens are stored to update the metadata later.
  */
-export const linkedRoleStrategy = new OAuth2Strategy<DiscordTokens>(
+export const linkedRoleStrategy = new WithoutPKCEOAuth2Strategy<DiscordTokens>(
 	{
 		clientId: ServerConfig.discord.clientId,
 		clientSecret: ServerConfig.discord.clientSecret,
