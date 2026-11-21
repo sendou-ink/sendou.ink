@@ -1,4 +1,4 @@
-import { add, sub } from "date-fns";
+import { add, type Duration, sub } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
 import * as CalendarEventVenueFactory from "~/db/seed/factories/CalendarEventVenueFactory";
@@ -450,6 +450,88 @@ describe("findAllUpcomingWithVenue", () => {
 		const [lan] = await CalendarRepository.findAllUpcomingWithVenue();
 
 		expect(lan.url).toBe(tournamentPage(tournament.id));
+	});
+
+	describe("multi-day tournaments", () => {
+		const createLanTournament = async ({
+			name,
+			startedAgo,
+			bracketStartedAgo,
+			isFinalized = false,
+		}: {
+			name: string;
+			startedAgo: Duration;
+			bracketStartedAgo?: Duration;
+			isFinalized?: boolean;
+		}) => {
+			const overrides = {
+				authorId: authorId(),
+				name,
+				startTimes: [dateToDatabaseTimestamp(sub(new Date(), startedAgo))],
+				bracketProgression: [
+					{
+						name: "Bracket",
+						type: "single_elimination" as const,
+						requiresCheckIn: false,
+						settings: {},
+						startTime: bracketStartedAgo
+							? dateToDatabaseTimestamp(sub(new Date(), bracketStartedAgo))
+							: undefined,
+					},
+				],
+			};
+			const tournament = isFinalized
+				? await TournamentFactory.createPlayed(overrides, {
+						teamRosters: [
+							[1, 2, 3, 4].map((n) => users.id(n)),
+							[5, 6, 7, 8].map((n) => users.id(n)),
+						],
+						playedOut: "all",
+					})
+				: await TournamentFactory.create(overrides);
+			await CalendarEventVenueFactory.create({ eventId: tournament.eventId });
+		};
+
+		beforeEach(async () => {
+			await users.create(8);
+		});
+
+		test("keeps a tournament on its second day until it's finalized", async () => {
+			await createLanTournament({
+				name: "Second day",
+				startedAgo: { days: 1, hours: 6 },
+			});
+			await createLanTournament({
+				name: "Finalized",
+				startedAgo: { days: 1, hours: 6 },
+				isFinalized: true,
+			});
+			await createLanTournament({
+				name: "Forgotten",
+				startedAgo: { days: 2, hours: 1 },
+			});
+
+			const events = await CalendarRepository.findAllUpcomingWithVenue();
+
+			expect(events.map((event) => event.name)).toEqual(["Second day"]);
+		});
+
+		test("keeps a tournament until two days after its last bracket's start time", async () => {
+			await createLanTournament({
+				name: "Bracket today",
+				startedAgo: { days: 3 },
+				bracketStartedAgo: { hours: 2 },
+			});
+			await createLanTournament({
+				name: "Bracket long ago",
+				startedAgo: { days: 4 },
+				bracketStartedAgo: { days: 3 },
+			});
+
+			const events = await CalendarRepository.findAllUpcomingWithVenue();
+
+			expect(events.map((event) => event.name)).toEqual(["Bracket today"]);
+		});
 	});
 });
 

@@ -53,6 +53,10 @@ import type {
 import { calendarEventSorter } from "./calendar-utils";
 
 const RECENT_TOURNAMENTS_SHOWN = 10;
+/** How long a LAN stays on the LAN map after its last day (or a tournament's last bracket) started. */
+const LAN_MAP_EVENT_SHOWN_FOR = { days: 1 };
+/** Longer for a tournament, as its later days' brackets don't need a start time: until finalized, up to this. */
+const LAN_MAP_TOURNAMENT_SHOWN_FOR = { days: 2 };
 
 const VENUE_COLUMNS = [
 	"CalendarEventVenue.name",
@@ -327,9 +331,10 @@ function findAllBetweenTwoTimestampsMapped(
 }
 
 /**
- * Every listed (not draft or test, see `hidden`) event with a venue that is upcoming or still running (its last day
- * started under a day ago), the LANs of the LAN map. A tournament has one day, a plain event one or more: one row
- * per event either way. Soonest first, `startsAt` is the event's first day.
+ * Every listed (not draft or test, see `hidden`) event with a venue that is upcoming or still running, the LANs of the
+ * LAN map. A plain event is running until a day after its last day started. A tournament until it's finalized, at most
+ * two days after its last start (its day or a later bracket's start time), so a multi-day LAN stays on its later days.
+ * One row per event. Soonest first, `startsAt` is the event's first day.
  */
 export async function findAllUpcomingWithVenue() {
 	const rows = await db
@@ -344,6 +349,7 @@ export async function findAllUpcomingWithVenue() {
 			"CalendarEventDate.eventId",
 			"CalendarEvent.id",
 		)
+		.leftJoin("Tournament", "Tournament.id", "CalendarEvent.tournamentId")
 		.select((eb) => [
 			"CalendarEvent.id",
 			"CalendarEvent.name",
@@ -358,11 +364,34 @@ export async function findAllUpcomingWithVenue() {
 			"CalendarEventVenue.timezone",
 		])
 		.where("CalendarEvent.hidden", "=", 0)
+		.where((eb) =>
+			eb.or([
+				eb("Tournament.id", "is", null),
+				eb("Tournament.isFinalized", "=", 0),
+			]),
+		)
 		.groupBy("CalendarEvent.id")
-		.having(
-			(eb) => eb.fn.max("CalendarEventDate.startsAt"),
-			">=",
-			dateToDatabaseTimestamp(sub(new Date(), { days: 1 })),
+		.having((eb) =>
+			eb.or([
+				eb.and([
+					eb("Tournament.id", "is", null),
+					eb(
+						eb.fn.max("CalendarEventDate.startsAt"),
+						">=",
+						dateToDatabaseTimestamp(sub(new Date(), LAN_MAP_EVENT_SHOWN_FOR)),
+					),
+				]),
+				eb.and([
+					eb("Tournament.id", "is not", null),
+					eb(
+						sql<number>`max(${eb.fn.max("CalendarEventDate.startsAt")}, coalesce(${latestBracketStartTime()}, 0))`,
+						">=",
+						dateToDatabaseTimestamp(
+							sub(new Date(), LAN_MAP_TOURNAMENT_SHOWN_FOR),
+						),
+					),
+				]),
+			]),
 		)
 		.orderBy("startsAt", "asc")
 		.execute();
@@ -1079,4 +1108,11 @@ export async function upsertVenue(
 /** Deletes the event, and its tournament if it has one. */
 export function deleteById(eventId: number) {
 	return db.deleteFrom("CalendarEvent").where("id", "=", eventId).execute();
+}
+
+/** The latest bracket start time of the joined `Tournament`'s progression, `null` when none has one. */
+function latestBracketStartTime() {
+	return sql<
+		number | null
+	>`(select max(json_extract("bracket"."value", '$.startTime')) from json_each("Tournament"."settings", '$.bracketProgression') as "bracket")`;
 }
