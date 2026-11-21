@@ -318,7 +318,7 @@ describe("findAllBetweenTwoTimestamps", () => {
 		expect(tagsOf("Tournament")).toEqual(["SPECIAL"]);
 	});
 
-	test("gives a LAN its venue's timezone, city and country, an online event none", async () => {
+	test("gives a LAN its venue's city and country, an online event none", async () => {
 		const lan = await TournamentFactory.create({
 			authorId: authorId(),
 			name: "LAN",
@@ -339,7 +339,6 @@ describe("findAllBetweenTwoTimestamps", () => {
 			days.flatMap((day) => day.events).find((event) => event.name === name);
 
 		expect(eventOf("LAN")?.venue).toEqual({
-			timezone: "America/Chicago",
 			city: "Austin",
 			countryCode: "US",
 		});

@@ -7,12 +7,11 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Flag } from "~/components/Flag";
 import { Image, ModeImage } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
 import { TierPill } from "~/components/TierPill";
-import { VenueLocaleTime } from "~/components/VenueLocaleTime";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import type { TrophyModelLoaderData } from "~/features/trophies/routes/trophies.$id.model";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
-import { useVenueTimeFormat } from "~/hooks/intl/useVenueTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSpoilerFree } from "~/hooks/useSpoilerFree";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -40,10 +39,6 @@ export function TournamentCard({
 	const isHydrated = useHydrated();
 	const formatDistanceToNow = useFormatDistanceToNow();
 	const { isCensored, reveal } = useSpoilerFree();
-	const { format: formatVenueTime } = useVenueTimeFormat(
-		{ weekday: "short", hour: "numeric", minute: "numeric" },
-		tournament.venue?.timezone,
-	);
 
 	const isShowcase = tournament.type === "showcase";
 	const isCalendar = tournament.type === "calendar";
@@ -56,11 +51,6 @@ export function TournamentCard({
 	const startDate = isShowcase
 		? databaseTimestampToDate(tournament.startsAt)
 		: null;
-	// the calendar groups events under the viewer's time already, a LAN's own only shows when it differs
-	const calendarVenueTime =
-		tournament.type === "calendar" && tournament.venue
-			? { at: tournament.at, ...formatVenueTime(new Date(tournament.at)) }
-			: null;
 
 	return (
 		<div
@@ -117,10 +107,8 @@ export function TournamentCard({
 				</div>
 				{startDate ? (
 					timeFormat === "absolute" ? (
-						// XXX: on the front page a LAN's venue + viewer time lines wrap, making the card taller than its fixed-height container so it overflows
-						<VenueLocaleTime
+						<LocaleTime
 							date={startDate}
-							venueTimezone={tournament.venue?.timezone}
 							className={styles.time}
 							options={{
 								month: "short",
@@ -143,17 +131,8 @@ export function TournamentCard({
 						</time>
 					)
 				) : null}
-				{calendarVenueTime?.viewer ? (
-					<time
-						className={styles.time}
-						dateTime={new Date(calendarVenueTime.at).toISOString()}
-					>
-						{calendarVenueTime.venue}
-					</time>
-				) : null}
 				{isCalendar ? (
 					<div className="stack sm items-center my-2">
-						{tournament.venue ? <LanChip venue={tournament.venue} /> : null}
 						<Tags tags={tournament.tags} small centered maxVisible={2} />
 					</div>
 				) : null}
@@ -165,9 +144,7 @@ export function TournamentCard({
 				) : null}
 			</Link>
 			<div className="stack horizontal justify-between items-center">
-				{isShowcase && tournament.venue ? (
-					<LanChip venue={tournament.venue} className={styles.lanChipFooter} />
-				) : null}
+				{tournament.venue ? <LanChip venue={tournament.venue} /> : null}
 				{isShowcase &&
 				tournament.firstPlacers.length > 0 &&
 				isCensored(tournament.id) ? (
@@ -176,7 +153,7 @@ export function TournamentCard({
 				{isShowcase && "hasVods" in tournament && tournament.hasVods ? (
 					<div className={styles.vodIndicator}>📺 VODs</div>
 				) : null}
-				{modes ? <ModesRow modes={modes} /> : null}
+				{modes && !tournament.venue ? <ModesRow modes={modes} /> : null}
 				<div className={styles.pillsContainer}>
 					{tournament.trophyId !== null ||
 					(tournament.badges && tournament.badges.length > 0) ? (
@@ -198,17 +175,11 @@ export function TournamentCard({
 	);
 }
 
-function LanChip({
-	venue,
-	className,
-}: {
-	venue: NonNullable<CalendarEvent["venue"]>;
-	className?: string;
-}) {
+function LanChip({ venue }: { venue: NonNullable<CalendarEvent["venue"]> }) {
 	const { t } = useTranslation(["common"]);
 
 	return (
-		<div className={clsx(styles.lanChip, className)} data-testid="lan-chip">
+		<div className={styles.lanChip} data-testid="lan-chip">
 			<span className={styles.lanChipText}>
 				{t("common:tag.name.LAN")}
 				{venue.city ? ` · ${venue.city}` : null}

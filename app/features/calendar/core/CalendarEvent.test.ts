@@ -83,7 +83,6 @@ describe("CalendarEvent.applyFilters", () => {
 						makeEvent({
 							id: 1,
 							venue: {
-								timezone: "America/Chicago",
 								city: "Austin",
 								countryCode: "US",
 							},

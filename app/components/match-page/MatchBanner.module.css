@@ -158,6 +158,7 @@
 }
 
 .joinInfoButton {
+	align-self: flex-start;
 	height: auto;
 	padding: 0;
 	color: inherit;
