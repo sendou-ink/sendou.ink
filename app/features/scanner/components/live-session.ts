@@ -48,10 +48,10 @@ import { getClips, refreshClips } from "./clips-feed";
 import { describeError } from "./errors";
 import {
 	currentSession,
-	findSession,
 	getFeed,
 	newestSessionKey,
 	refreshFeed,
+	sessionClips,
 	subscribeFeed,
 } from "./events-feed";
 import { saveFrame } from "./fixture-export";
@@ -654,13 +654,8 @@ function cutWindows(clipRing: ClipRingBuffer, nowT: number): void {
 	const feed = getFeed();
 	const session = currentSession(feed);
 	if (!session) return;
-	const saved: LiveCut[] = getClips()
-		.filter(
-			(clip) =>
-				clip.source.kind === "live" &&
-				findSession(feed, clip.source.sessionKey) === session &&
-				!ownClipIds.has(clip.id),
-		)
+	const saved: LiveCut[] = sessionClips(feed, session, getClips())
+		.filter((clip) => !ownClipIds.has(clip.id))
 		.map((clip) => ({
 			start: clip.start,
 			end: clip.end,

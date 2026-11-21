@@ -25,7 +25,7 @@ import { deleteClip, loadClipBlob, type ScannerClip } from "../store/clips";
 import styles from "./ClipDialog.module.css";
 import { ClipTrimBar } from "./ClipTrimBar";
 import { ClipVideo } from "./ClipVideo";
-import { refreshClips } from "./clips-feed";
+import { clipFileName, refreshClips } from "./clips-feed";
 
 export function ClipDialog({
 	clip,
@@ -327,13 +327,4 @@ function useClipBlob(id: number): { blob: Blob; url: string } | null {
 		};
 	}, [id]);
 	return loaded;
-}
-
-function clipFileName(clip: ScannerClip): string {
-	const source =
-		clip.source.kind === "vod"
-			? clip.source.name.replace(/\.[^.]+$/, "")
-			: new Date(clip.createdAt).toISOString().slice(0, 10);
-	const at = formatPosition(clip.t).replaceAll(":", "-");
-	return `${source}-${at}-${clip.kills}-splats.mp4`;
 }

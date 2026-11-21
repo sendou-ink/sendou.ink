@@ -17,14 +17,13 @@ import {
 	useSearchParamsTyped,
 } from "~/modules/search-params/hooks";
 import { SCANNER_PAGE } from "~/utils/urls";
-import { sessionByKey } from "../core/sessions";
 import { scannerSearchParams } from "../scanner-search-params";
 import { MAX_HISTORY_CLIPS, type ScannerClip } from "../store/clips";
 import { newInspectKey, putInspectFrame } from "../store/inspect";
 import { ClipDialog } from "./ClipDialog";
 import { ClipStrip } from "./ClipStrip";
 import { useClips } from "./clips-feed";
-import { useFeed } from "./events-feed";
+import { type FeedSnapshot, sessionClips, useFeed } from "./events-feed";
 import styles from "./LandingView.module.css";
 import { getLiveSession, startCapture, useLiveSession } from "./live-session";
 import { SettingsPopover } from "./SettingsPopover";
@@ -63,7 +62,7 @@ export function LandingView() {
 
 	const canCapture = supportsCapture();
 	const history = clips.filter((clip) => clip.bucket === "history");
-	const rows = sessionRows(feed.sessions, vods, clips);
+	const rows = sessionRows(feed, vods, clips);
 
 	const startLive = async () => {
 		if (live.status === "running") {
@@ -292,20 +291,16 @@ function rowKey(row: SessionRow): string {
 }
 
 function sessionRows(
-	sessions: ReturnType<typeof useFeed>["sessions"],
+	feed: FeedSnapshot,
 	vods: ReturnType<typeof useVods>,
 	clips: readonly ScannerClip[],
 ): SessionRow[] {
-	const liveRows: SessionRow[] = sessions.map((session) => ({
+	const liveRows: SessionRow[] = feed.sessions.map((session) => ({
 		kind: "live",
 		key: session.key,
 		startedAt: session.startedAt,
 		endedAt: session.endedAt,
-		clips: clips.filter(
-			(clip) =>
-				clip.source.kind === "live" &&
-				sessionByKey(sessions, clip.source.sessionKey) === session,
-		).length,
+		clips: sessionClips(feed, session, clips).length,
 	}));
 	const vodRows: SessionRow[] = vods.map((vod) => ({
 		kind: "vod",

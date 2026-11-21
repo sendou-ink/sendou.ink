@@ -16,8 +16,9 @@ import { EventFeed } from "./EventFeed";
 import { ExportMenu } from "./ExportMenu";
 import {
 	currentSession,
-	findSession,
+	isReadingGame,
 	newestSessionKey,
+	sessionClips,
 	useFeed,
 } from "./events-feed";
 import styles from "./LiveView.module.css";
@@ -34,9 +35,6 @@ import type { ScanEvent } from "./session-data";
 import { useScannerSettings } from "./settings";
 import { sendLive } from "./upload";
 
-/** a game is "being read" while its newest event is this fresh */
-const READING_WINDOW_MS = 60_000;
-
 export function LiveView() {
 	const live = useLiveSession();
 	const feed = useFeed();
@@ -47,18 +45,8 @@ export function LiveView() {
 
 	const session = currentSession(feed);
 	const events = session?.events ?? [];
-	const sessionClips = clips.filter(
-		(clip) =>
-			clip.bucket === "session" &&
-			clip.source.kind === "live" &&
-			session !== null &&
-			findSession(feed, clip.source.sessionKey) === session,
-	);
 	const newest = session?.built.at(-1);
-	const reading =
-		newest !== undefined &&
-		newest.match.winner === null &&
-		Date.now() - (session?.endedAt ?? 0) < READING_WINDOW_MS;
+	const reading = isReadingGame(session);
 	const uploadNote = !user
 		? "Upload off (log in)"
 		: settings.upload
@@ -96,7 +84,9 @@ export function LiveView() {
 			built={session?.built ?? []}
 			events={events}
 			originT={session?.originT ?? 0}
-			clips={sessionClips}
+			clips={sessionClips(feed, session, clips).filter(
+				(clip) => clip.bucket === "session",
+			)}
 			clipsTitle="Clips this session"
 			running
 			canUpload={Boolean(user)}

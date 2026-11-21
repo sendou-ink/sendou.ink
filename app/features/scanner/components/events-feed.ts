@@ -32,6 +32,7 @@ import {
 	sessionSummary,
 	splitSessions,
 } from "../core/sessions";
+import type { ScannerClip } from "../store/clips";
 import {
 	type CompactedMatch,
 	compactedBuilt,
@@ -71,6 +72,9 @@ export interface FeedSnapshot {
 }
 
 const EMPTY: FeedSnapshot = { loaded: false, sessions: [] };
+
+/** a game is "being read" while its newest event is this fresh */
+const READING_WINDOW_MS = 60_000;
 
 /** How far behind the last read's start the next one reaches: a save stamped just before a read can commit just after it. */
 const READ_OVERLAP_MS = 5_000;
@@ -206,6 +210,34 @@ export function findSession(
 	key: number,
 ): LiveSession | null {
 	return sessionByKey(feed.sessions, key);
+}
+
+/** The live clips cut in `session`, whichever bucket holds them. */
+export function sessionClips(
+	feed: FeedSnapshot,
+	session: LiveSession | null,
+	clips: readonly ScannerClip[],
+): ScannerClip[] {
+	if (!session) return [];
+	return clips.filter(
+		(clip) =>
+			clip.source.kind === "live" &&
+			findSession(feed, clip.source.sessionKey) === session,
+	);
+}
+
+/** Whether the session's newest game is still gathering events: no winner yet and the session's last event under a minute old. */
+export function isReadingGame(
+	session: LiveSession | null,
+	now = Date.now(),
+): boolean {
+	const newest = session?.built.at(-1);
+	return (
+		session !== null &&
+		newest !== undefined &&
+		newest.match.winner === null &&
+		now - session.endedAt < READING_WINDOW_MS
+	);
 }
 
 /**

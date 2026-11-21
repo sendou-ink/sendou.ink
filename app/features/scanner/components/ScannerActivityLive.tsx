@@ -12,7 +12,12 @@ import {
 } from "../scanner-activity";
 import { useBroadcastLink } from "./broadcast-link";
 import { useClips } from "./clips-feed";
-import { currentSession, findSession, useFeed } from "./events-feed";
+import {
+	currentSession,
+	isReadingGame,
+	sessionClips,
+	useFeed,
+} from "./events-feed";
 import {
 	settleClipStore,
 	startCapture,
@@ -22,9 +27,6 @@ import {
 import { ScannerActivityPanel } from "./ScannerActivityPanel";
 import { aggregateSendStatus } from "./sendou-ingest";
 import { setUploadUser } from "./upload";
-
-/** a game is "being read" while its newest event is this fresh */
-const READING_WINDOW_MS = 60_000;
 
 export function ScannerActivityLive({
 	pageBroadcast,
@@ -44,10 +46,7 @@ export function ScannerActivityLive({
 		(match) => aggregateSendStatus(match.sources)?.state,
 	);
 	const newest = built.at(-1);
-	const isReading =
-		newest !== undefined &&
-		newest.match.winner === null &&
-		Date.now() - (session?.endedAt ?? 0) < READING_WINDOW_MS;
+	const isReading = isReadingGame(session);
 	const latestScore = newest?.match.objective?.samples.findLast(
 		(sample) => sample.score[0] !== null && sample.score[1] !== null,
 	)?.score as [number, number] | undefined;
@@ -74,12 +73,8 @@ export function ScannerActivityLive({
 						uploaded: sendStates.filter(
 							(state) => state === "sent" || state === "unlinked",
 						).length,
-						clips: clips.filter(
-							(clip) =>
-								clip.bucket === "session" &&
-								clip.source.kind === "live" &&
-								session !== null &&
-								findSession(feed, clip.source.sessionKey) === session,
+						clips: sessionClips(feed, session, clips).filter(
+							(clip) => clip.bucket === "session",
 						).length,
 					}
 				: null,

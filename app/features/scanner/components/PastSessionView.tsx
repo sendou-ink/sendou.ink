@@ -13,7 +13,7 @@ import { deleteCompactedSessions } from "../store/compacted-matches";
 import { deleteEvents, loadEventFrame } from "../store/events";
 import { useClips } from "./clips-feed";
 import { ExportMenu } from "./ExportMenu";
-import { findSession, refreshFeed, useFeed } from "./events-feed";
+import { findSession, refreshFeed, sessionClips, useFeed } from "./events-feed";
 import { NotFound } from "./NotFound";
 import styles from "./PastSessionView.module.css";
 import { SessionHeader } from "./SessionHeader";
@@ -36,12 +36,6 @@ export function PastSessionView() {
 			<NotFound>This session is gone — sessions are kept for 30 days.</NotFound>
 		) : null;
 	}
-	const sessionClips = clips.filter(
-		(clip) =>
-			clip.bucket !== "vod" &&
-			clip.source.kind === "live" &&
-			findSession(feed, clip.source.sessionKey) === session,
-	);
 
 	const remove = async () => {
 		if (session.compacted) {
@@ -63,7 +57,7 @@ export function PastSessionView() {
 			built={session.built}
 			events={session.events}
 			originT={session.originT}
-			clips={sessionClips}
+			clips={sessionClips(feed, session, clips)}
 			clipsTitle="Clips"
 			running={false}
 			canUpload={Boolean(user)}

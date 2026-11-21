@@ -3,6 +3,7 @@
  * history), refreshed after each save/delete/roll and readable through a hook.
  */
 import { useSyncExternalStore } from "react";
+import { formatPosition } from "../core/format";
 import { listClips, type ScannerClip } from "../store/clips";
 
 const EMPTY: ScannerClip[] = [];
@@ -42,4 +43,14 @@ export function getClips(): ScannerClip[] {
 function subscribe(listener: () => void): () => void {
 	listeners.add(listener);
 	return () => listeners.delete(listener);
+}
+
+/** The clip's download name: its file's name (or the day it was cut live), position and kill count. */
+export function clipFileName(clip: ScannerClip): string {
+	const source =
+		clip.source.kind === "vod"
+			? clip.source.name.replace(/\.[^.]+$/, "")
+			: new Date(clip.createdAt).toISOString().slice(0, 10);
+	const at = formatPosition(clip.t).replaceAll(":", "-");
+	return `${source}-${at}-${clip.kills}-splats.mp4`;
 }

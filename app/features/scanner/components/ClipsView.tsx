@@ -24,7 +24,7 @@ import {
 import { ClipDialog } from "./ClipDialog";
 import styles from "./ClipsView.module.css";
 import { ClipVideo } from "./ClipVideo";
-import { refreshClips, useClips } from "./clips-feed";
+import { clipFileName, refreshClips, useClips } from "./clips-feed";
 import { useEventDateTimeFormatter } from "./format";
 import { SessionHeader } from "./SessionHeader";
 
@@ -214,13 +214,4 @@ function useStorageUsage(clipCount: number): number | null {
 function formatBytes(bytes: number): string {
 	if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
 	return `${Math.round(bytes / 1024 ** 2)} MB`;
-}
-
-function clipFileName(clip: ScannerClip): string {
-	const source =
-		clip.source.kind === "vod"
-			? clip.source.name.replace(/\.[^.]+$/, "")
-			: new Date(clip.createdAt).toISOString().slice(0, 10);
-	const at = formatPosition(clip.t).replaceAll(":", "-");
-	return `${source}-${at}-${clip.kills}-splats.mp4`;
 }
