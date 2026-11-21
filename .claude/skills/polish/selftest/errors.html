@@ -1,0 +1,31 @@
+<!-- biome-ignore-all lint/a11y: the defects on this page are planted, they are what the self-test looks for -->
+<!-- biome-ignore-all lint/nursery/useControlLabel: same -->
+<!-- biome-ignore-all lint/suspicious/noConsole: same -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="polish-expect" content="js-error,hydration-mismatch,console-error,failed-request">
+<title>Polish fixture</title>
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<div data-testid="hydrated" data-router-idle="true" hidden></div>
+<main>
+<section data-case="plain" data-expect="">
+	<p class="e1" style="margin:0">A page whose scripts go wrong.</p>
+</section>
+</main>
+<script>
+setTimeout(() => {
+	throw new Error("Minified React error #418; visit https://react.dev/errors/418 for the full message");
+}, 20);
+setTimeout(() => {
+	throw new Error("boom");
+}, 30);
+console.error("something logged as an error");
+fetch("/missing.json").catch(() => {});
+</script>
+</body>
+</html>

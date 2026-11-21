@@ -14,6 +14,7 @@ import {
 	loadFactories,
 	resetForTest,
 } from "./factories";
+import { startPolishProbes } from "./polish";
 import { postRetryingTransientFailures } from "./request";
 
 try {
@@ -105,10 +106,12 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 		const visitedPathnames = trackVisitedPathnames(context);
 		const apiExchanges = recordApiExchanges(context);
 		if (process.env.LIVING_DOCS_CAPTURE) livingDocsContext = context;
+		const finishPolishProbes = await startPolishProbes(context, testInfo);
 
 		await use(context);
 
 		livingDocsContext = null;
+		finishPolishProbes?.();
 
 		if (visitedPathnames) {
 			await testInfo.attach(LIVING_DOCS_VISITS_ATTACHMENT, {

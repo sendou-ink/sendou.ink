@@ -4,7 +4,10 @@ import type { TeamPickSettings } from "~/db/tables-json";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
-import { TEAM_PICK_POOLS } from "~/features/tournament/tournament-constants";
+import {
+	TEAM_PICK_POOLS,
+	TOURNAMENT,
+} from "~/features/tournament/tournament-constants";
 import {
 	addressSearchOptional,
 	array,
@@ -389,7 +392,8 @@ function calendarNewSyncRefine(
 		data.toToolsEnabled &&
 		data.minMembersPerTeam === "4" &&
 		data.maxMembersPerTeam &&
-		(data.maxMembersPerTeam < 4 || data.maxMembersPerTeam > 10)
+		(data.maxMembersPerTeam < 4 ||
+			data.maxMembersPerTeam > TOURNAMENT.MAX_MEMBERS_PER_TEAM_UPPER_LIMIT)
 	) {
 		ctx.addIssue({
 			path: ["maxMembersPerTeam"],

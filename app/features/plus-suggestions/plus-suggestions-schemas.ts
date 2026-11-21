@@ -7,20 +7,20 @@ import {
 	userSearch,
 } from "~/form/fields";
 import { _action, actualNumber, preprocess } from "~/utils/schema";
-import { PLUS_TIERS } from "./plus-suggestions-constants";
+import { PLUS_SUGGESTION, PLUS_TIERS } from "./plus-suggestions-constants";
 
 export const followUpCommentFormSchema = v.object({
 	tier: idConstant(),
 	suggestedId: idConstant(),
 	comment: textArea({
 		label: "labels.comment",
-		maxLength: 280,
+		maxLength: PLUS_SUGGESTION.FOLLOW_UP_COMMENT_MAX_LENGTH,
 	}),
 });
 
 const suggestionTextFormFieldSchema = textArea({
 	label: "labels.comment",
-	maxLength: 500,
+	maxLength: PLUS_SUGGESTION.TEXT_MAX_LENGTH,
 });
 
 export const newSuggestionFormSchema = v.object({

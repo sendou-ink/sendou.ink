@@ -265,8 +265,6 @@ export const scrimIdActionSchema = v.union([
 	pickMapFormSchema,
 ]);
 
-const MAX_SCRIM_POST_TEXT_LENGTH = 500;
-
 export const scrimRequestFormSchema = v.object({
 	_action: stringConstant("NEW_REQUEST"),
 	scrimPostId: idConstant(),
@@ -320,7 +318,7 @@ export const scrimsNewFormSchema = v.pipe(
 		from: customField({ initialValue: null }, fromSchema),
 		postText: textAreaOptional({
 			label: "labels.text",
-			maxLength: MAX_SCRIM_POST_TEXT_LENGTH,
+			maxLength: SCRIM.POST_TEXT_MAX_LENGTH,
 		}),
 		managedByAnyone: toggle({
 			label: "labels.scrimManagedByAnyone",

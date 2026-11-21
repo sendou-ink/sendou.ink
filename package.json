@@ -22,6 +22,7 @@
 		"check-css-vars": "node scripts/check-css-vars.ts",
 		"bench:db": "cross-env DB_PATH=db-sandbox.sqlite3 VITE_PROD_MODE=true vite-node scripts/benchmark-db.ts",
 		"replay:brackets": "cross-env DB_PATH=db-sandbox.sqlite3 VITE_PROD_MODE=true vite-node scripts/replay-brackets.ts",
+		"polish:db": "cross-env DB_PATH=db-polish.sqlite3 VITE_E2E_TEST_RUN=true vite-node scripts/polish/build-db.ts",
 		"compute-luti-divs": "vite-node scripts/compute-luti-divs.ts",
 		"weapon-roll:data": "vite-node scripts/compute-weapon-roll-data.ts",
 		"vods:download": "cross-env DB_PATH=db-sandbox.sqlite3 VITE_PROD_MODE=true vite-node scripts/download-tournament-vods.ts",

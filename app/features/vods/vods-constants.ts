@@ -8,3 +8,8 @@ export const videoMatchTypes = [
 ] as const;
 
 export const VODS_PAGE_BATCH_SIZE = 24;
+
+export const VOD = {
+	TITLE_MAX_LENGTH: 100,
+	POV_NAME_MAX_LENGTH: 100,
+};

@@ -1,0 +1,17 @@
+<!-- biome-ignore-all lint/a11y: the defects on this page are planted, they are what the self-test looks for -->
+<!-- biome-ignore-all lint/nursery/useControlLabel: same -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="polish-expect" content="client-redirect">
+<title>Polish fixture redirect</title>
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<main><p class="x1">Shown for a moment, then gone.</p></main>
+<script>
+setTimeout(() => location.replace("widths.html"), 150);
+</script>
+</body>
+</html>

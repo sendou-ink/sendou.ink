@@ -1,0 +1,43 @@
+<!-- biome-ignore-all lint/a11y: the defects on this page are planted, they are what the self-test looks for -->
+<!-- biome-ignore-all lint/nursery/useControlLabel: same -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polish fixture</title>
+<link rel="stylesheet" href="base.css">
+<style>
+.bar { position: fixed; left: 0; right: 0; background: #234; padding: 0 16px; }
+.bar-top { top: 0; height: 50px; }
+.bar-bottom { bottom: 0; height: 56px; }
+body { padding-bottom: 0; }
+</style>
+</head>
+<body>
+<div data-testid="hydrated" data-router-idle="true" hidden></div>
+<header class="bar bar-top">Header</header>
+<nav class="bar bar-bottom">Bottom navigation</nav>
+<main>
+
+<section data-case="focus-obscured" data-expect="focus-obscured" style="margin-left:200px">
+	<a class="lnk p1" href="#target">A link under the header</a>
+</section>
+
+<section data-case="hscroll" data-expect="horizontal-scroll" style="margin-top:80px">
+	<div class="p2" style="white-space:nowrap">An_unbroken_name_that_goes_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on_and_on</div>
+</section>
+
+<div class="filler"></div>
+
+<section data-case="anchor" data-expect="anchor-under-header">
+	<h2 id="target" class="p3">Jump target</h2>
+</section>
+
+<section data-case="under-bar" data-expect="content-under-fixed-bar" style="margin:0">
+	<p class="p4" style="margin:0">The last line of the page</p>
+</section>
+
+</main>
+</body>
+</html>

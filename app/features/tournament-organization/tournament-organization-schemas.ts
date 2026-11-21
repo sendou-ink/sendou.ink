@@ -22,8 +22,8 @@ import { mySlugify } from "~/utils/urls";
 
 const orgNameField = textField({
 	label: "labels.name",
-	minLength: 2,
-	maxLength: 64,
+	minLength: TOURNAMENT_ORGANIZATION.NAME_MIN_LENGTH,
+	maxLength: TOURNAMENT_ORGANIZATION.NAME_MAX_LENGTH,
 	validate: {
 		func: (val) => mySlugify(val).length > 0,
 		message: "forms:errors.noOnlySpecialCharacters",
@@ -45,7 +45,7 @@ export const organizationEditFormSchema = v.pipe(
 		members: array({
 			label: "labels.members",
 			bottomText: "bottomTexts.orgMembersInfo",
-			max: 32,
+			max: TOURNAMENT_ORGANIZATION.MAX_MEMBERS,
 			field: fieldset({
 				fields: v.object({
 					userId: userSearch({ label: "labels.user" }),
@@ -58,25 +58,29 @@ export const organizationEditFormSchema = v.pipe(
 					}),
 					roleDisplayName: textFieldOptional({
 						label: "labels.orgMemberRoleDisplayName",
-						maxLength: 32,
+						maxLength:
+							TOURNAMENT_ORGANIZATION.MEMBER_ROLE_DISPLAY_NAME_MAX_LENGTH,
 					}),
 				}),
 			}),
 		}),
 		socials: array({
 			label: "labels.orgSocialLinks",
-			max: 10,
-			field: textField({ validate: "url", maxLength: 100 }),
+			max: TOURNAMENT_ORGANIZATION.MAX_SOCIAL_LINKS,
+			field: textField({
+				validate: "url",
+				maxLength: TOURNAMENT_ORGANIZATION.SOCIAL_LINK_MAX_LENGTH,
+			}),
 		}),
 		series: array({
 			label: "labels.orgSeries",
-			max: 10,
+			max: TOURNAMENT_ORGANIZATION.MAX_SERIES,
 			field: fieldset({
 				fields: v.object({
 					name: textField({
 						label: "labels.orgSeriesName",
 						minLength: 1,
-						maxLength: 32,
+						maxLength: TOURNAMENT_ORGANIZATION.SERIES_NAME_MAX_LENGTH,
 					}),
 					description: textAreaOptional({
 						label: "labels.description",

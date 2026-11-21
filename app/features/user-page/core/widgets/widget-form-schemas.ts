@@ -166,9 +166,9 @@ export const linksSchema = v.object({
 	links: array({
 		label: "labels.urls",
 		min: 1,
-		max: 10,
+		max: USER.LINKS_WIDGET_MAX_LINKS,
 		field: textField({
-			maxLength: 150,
+			maxLength: USER.LINKS_WIDGET_LINK_MAX_LENGTH,
 			validate: "url",
 		}),
 	}),

@@ -1,0 +1,91 @@
+<!-- biome-ignore-all lint/a11y: the defects on this page are planted, they are what the self-test looks for -->
+<!-- biome-ignore-all lint/nursery/useControlLabel: same -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polish fixture actions</title>
+<link rel="stylesheet" href="base.css">
+<style>
+html:has(dialog[open]) { overflow: hidden; }
+.dlg { position: fixed; left: -60px; top: 40px; margin: 0; width: 300px; background: #222; color: #eee; border: 1px solid #777; }
+</style>
+</head>
+<body>
+<div data-testid="hydrated" data-router-idle="true" hidden></div>
+<main>
+<div id="banner-slot"></div>
+<h2 class="a0">Above the tabs</h2>
+
+<section data-case="tabs" data-expect="shift-on-action,control-moved">
+	<div role="tablist" class="tabs">
+		<button type="button" role="tab" aria-selected="true" class="btn tab">One</button>
+		<button type="button" role="tab" class="btn tab">Two</button>
+		<button type="button" role="tab" class="btn tab" id="third">Three</button>
+	</div>
+	<div class="panel">The panel</div>
+</section>
+
+<section data-case="dialog" data-expect="shift-on-action,overlay-offscreen,text-clipped">
+	<div class="right" style="margin-left:auto;width:140px">Right aligned</div>
+	<button type="button" class="btn d1" id="open-dialog">Open the dialog</button>
+	<dialog class="dlg" aria-label="Fixture dialog">
+		<div class="d2" style="width:100px;overflow:hidden;white-space:nowrap">Clipped text inside the dialog here</div>
+		<button type="button" class="btn d3" id="close-dialog">Close</button>
+	</dialog>
+</section>
+
+<section data-case="reveal" data-expect="text-clipped">
+	<button type="button" class="btn r1" id="more">Show the details</button>
+	<div id="details" hidden><div class="r2" style="width:90px;overflow:hidden;white-space:nowrap">Details text that is cut off here</div></div>
+</section>
+
+<section data-case="submit" data-expect="junk-text">
+	<form id="form">
+		<input class="s0" name="name" aria-label="Team name" value="Team" style="font:inherit">
+		<button type="submit" class="btn s1">Save the team</button>
+		<p id="error" class="s2" hidden>Error: undefined</p>
+	</form>
+</section>
+
+<section data-case="write" data-expect="">
+	<button type="button" class="btn w1" id="write">Delete everything</button>
+</section>
+
+<div class="filler"></div>
+
+<section data-case="scroll-jump" data-expect="scroll-jump">
+	<nav><a class="lnk j1" id="next" href="?page=2">Next page</a></nav>
+</section>
+
+<div style="height:600px"></div>
+</main>
+<script>
+const byId = (id) => document.getElementById(id);
+byId("third").onclick = () => {
+	byId("banner-slot").innerHTML = '<div class="banner" style="height:40px">A banner that arrived</div>';
+};
+byId("open-dialog").onclick = () => document.querySelector("dialog").showModal();
+byId("close-dialog").onclick = () => document.querySelector("dialog").close();
+byId("more").onclick = () => {
+	byId("details").hidden = false;
+};
+byId("form").onsubmit = (event) => {
+	event.preventDefault();
+	byId("error").hidden = false;
+};
+byId("write").onclick = () => {
+	fetch("/write", { method: "POST" }).catch(() => {
+		document.body.insertAdjacentHTML("beforeend", '<p class="w2">undefined</p>');
+	});
+};
+// what a client side router does with a link to the same page
+byId("next").onclick = (event) => {
+	event.preventDefault();
+	history.pushState({}, "", "?page=2");
+	scrollTo(0, 0);
+};
+</script>
+</body>
+</html>

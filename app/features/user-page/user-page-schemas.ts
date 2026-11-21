@@ -1,4 +1,5 @@
 import * as v from "valibot";
+import { BUILD } from "~/features/builds/builds-constants";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import {
 	OBJECT_PRONOUNS,
@@ -262,7 +263,7 @@ export const newBuildBaseSchema = v.object({
 		label: "labels.buildWeapons",
 		bottomText: "bottomTexts.buildWeapons",
 		minCount: 1,
-		maxCount: 5,
+		maxCount: BUILD.MAX_WEAPONS,
 		insertInGameOrder: true,
 		disableFavorites: true,
 		disableAltSkinDuplicates: true,
@@ -282,11 +283,11 @@ export const newBuildBaseSchema = v.object({
 	),
 	title: textField({
 		label: "labels.buildTitle",
-		maxLength: 50,
+		maxLength: BUILD.TITLE_MAX_LENGTH,
 	}),
 	description: textAreaOptional({
 		label: "labels.description",
-		maxLength: 280,
+		maxLength: BUILD.DESCRIPTION_MAX_LENGTH,
 	}),
 	modes: checkboxGroup({
 		label: "labels.buildModes",

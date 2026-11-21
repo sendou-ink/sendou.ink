@@ -1,6 +1,7 @@
 import { db } from "~/db/sql";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { invariant } from "~/utils/invariant";
+import { actAs } from "../core/actAs";
 import { defineFactory } from "../core/defineFactory";
 
 type InsertArgs = Omit<
@@ -18,6 +19,8 @@ type Options = {
 	isMatchmade?: boolean;
 	/** Groups that have liked this one. */
 	likedByGroupIds?: number[];
+	/** Public notes of the members keyed by user id, each written by the member themselves. */
+	notes?: Record<number, string>;
 };
 
 /** First of `memberUserIds` is the creator, the rest join like in production. */
@@ -54,7 +57,16 @@ export const { create } = defineFactory({
 			],
 		};
 	},
-	applyOptions: async (group, { isMatchmade, likedByGroupIds }: Options) => {
+	applyOptions: async (
+		group,
+		{ isMatchmade, likedByGroupIds, notes }: Options,
+	) => {
+		for (const [userId, value] of Object.entries(notes ?? {})) {
+			await actAs(Number(userId), () =>
+				SQGroupRepository.updateOwnMemberNote({ groupId: group.id, value }),
+			);
+		}
+
 		for (const likerGroupId of likedByGroupIds ?? []) {
 			const liker = await db
 				.selectFrom("GroupMember")

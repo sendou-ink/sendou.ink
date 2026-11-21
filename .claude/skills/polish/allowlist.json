@@ -1,0 +1,7 @@
+[
+	{
+		"rule": "broken-image",
+		"match": "img.youtube.com/vi/vod",
+		"reason": "seeded VoDs have made up YouTube ids, their thumbnails don't exist"
+	}
+]

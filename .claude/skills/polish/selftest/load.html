@@ -1,0 +1,65 @@
+<!-- biome-ignore-all lint/a11y: the defects on this page are planted, they are what the self-test looks for -->
+<!-- biome-ignore-all lint/nursery/useControlLabel: same -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polish fixture load</title>
+<link rel="stylesheet" href="base.css">
+<style>
+section { height: 70px; overflow: hidden; }
+.box { width: 120px; height: 30px; background: #333; }
+</style>
+</head>
+<body>
+<div data-testid="hydrated" data-router-idle="true" hidden></div>
+<main>
+
+<section data-case="load-shift" data-expect="shift-on-load">
+	<div id="late"></div>
+	<div class="box l1">Pushed down</div>
+</section>
+
+<section data-case="idle-shift" data-expect="shift-on-idle">
+	<div id="idle"></div>
+	<div class="box l2">A timer</div>
+</section>
+
+<section data-case="appears" data-expect="">
+	<div class="box l4" id="appearing" style="width:0;height:0;overflow:hidden">Arrives late, moves nothing</div>
+</section>
+
+<div class="filler" style="height:2000px"></div>
+
+<section data-case="scroll-shift" data-expect="shift-on-scroll">
+	<div id="lazy"></div>
+	<div class="box l3">Under lazy content</div>
+	<div id="sentinel" style="height:1px"></div>
+</section>
+
+<div class="filler"></div>
+</main>
+<script>
+const byId = (id) => document.getElementById(id);
+// 6px: far under what a layout shift score of 0.01 notices
+setTimeout(() => {
+	byId("late").style.height = "6px";
+}, 300);
+setTimeout(() => {
+	byId("idle").style.height = "10px";
+}, 2700);
+// something showing up in room kept for it is no shift
+setTimeout(() => {
+	byId("appearing").style.cssText = "width:120px;height:30px";
+}, 350);
+new IntersectionObserver((entries, observer) => {
+	if (!entries.some((entry) => entry.isIntersecting)) return;
+	observer.disconnect();
+	setTimeout(() => {
+		byId("lazy").style.height = "24px";
+	}, 80);
+}).observe(byId("sentinel"));
+</script>
+</body>
+</html>

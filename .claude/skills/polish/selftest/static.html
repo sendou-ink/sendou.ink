@@ -1,0 +1,262 @@
+<!-- biome-ignore-all lint/a11y: the defects on this page are planted, they are what the self-test looks for -->
+<!-- biome-ignore-all lint/nursery/useControlLabel: same -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="polish-expect" content="failed-request">
+<title>Polish fixture</title>
+<link rel="stylesheet" href="base.css">
+<style>
+.c10::placeholder { color: #555; opacity: 1; }
+.c39 { display: inline-block; background: #333; padding: 6px 12px; }
+.c39:hover { background: #555; }
+.c39:active { background: #666; }
+</style>
+</head>
+<body>
+<div data-testid="hydrated" data-router-idle="true" hidden></div>
+<main>
+
+<section data-case="clip-no-ellipsis" data-expect="text-clipped">
+	<div class="c1" style="width:120px;overflow:hidden;white-space:nowrap">A long line of text that does not fit the box</div>
+</section>
+
+<section data-case="ellipsis-fine" data-expect="">
+	<div class="c2w" style="display:flex;width:300px;gap:8px">
+		<div class="c2" style="flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">A long line of text that does not fit the box at all, really</div>
+		<div class="c2b" style="width:120px;background:#333">Neighbour</div>
+	</div>
+</section>
+
+<section data-case="ellipsis-never-shows" data-expect="text-clipped">
+	<div class="c3" style="display:flex;width:160px;overflow:hidden">
+		<div class="c3a" style="flex-shrink:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">This name is far too long for the card it is in</div>
+	</div>
+</section>
+
+<section data-case="spill" data-expect="text-spill">
+	<div class="c4" style="width:80px;border:1px solid #888;white-space:nowrap">Sticks out of its box</div>
+</section>
+
+<section data-case="overlap" data-expect="text-overlap">
+	<div class="c5a">First line of text here</div>
+	<div class="c5b" style="margin-top:-14px">Second line on top of it</div>
+</section>
+
+<section data-case="text-under-button" data-expect="text-under-control">
+	<div class="k1" style="display:flex;align-items:center;width:280px"><span class="k1a" style="white-space:nowrap">A username that keeps on going</span><button type="button" class="btn k1b" aria-label="Edit" style="margin-left:-70px;display:inline-flex;align-items:center"><svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="9" fill="#eee"/></svg></button></div>
+</section>
+
+<section data-case="text-beside-button" data-expect="">
+	<div class="k2" style="display:flex;align-items:center;gap:8px;width:280px"><span class="k2a">A short name</span><button type="button" class="btn k2b" aria-label="Edit" style="display:inline-flex;align-items:center"><svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="9" fill="#eee"/></svg></button></div>
+</section>
+
+<section data-case="contrast-low" data-expect="low-contrast">
+	<div class="c6" style="background:#333;color:#666;padding:4px">Hard to read text</div>
+</section>
+
+<section data-case="contrast-fine" data-expect="">
+	<div class="c7" style="background:#333;color:#fff;padding:4px">Easy to read text</div>
+</section>
+
+<section data-case="contrast-over-gradient" data-expect="low-contrast">
+	<div class="c8" style="background:linear-gradient(90deg,#777,#999);color:#aaa;padding:4px">Text over a gradient</div>
+</section>
+
+<section data-case="contrast-over-gradient-fine" data-expect="">
+	<div class="c9" style="background:linear-gradient(90deg,#111,#333);color:#fff;padding:4px">Text over a dark gradient</div>
+</section>
+
+<section data-case="placeholder-low" data-expect="low-contrast">
+	<input class="c10" style="background:#333;color:#fff;border:1px solid #999;font:inherit" placeholder="Search players" aria-label="Search">
+</section>
+
+<section data-case="image-distorted" data-expect="distorted-image">
+	<img class="c11" data-gen="200x100" style="width:60px;height:60px" alt="x">
+</section>
+
+<section data-case="image-blurry" data-expect="blurry-image">
+	<img class="c12" data-gen="20x20" style="width:120px;height:120px" alt="x">
+</section>
+
+<section data-case="image-fine" data-expect="">
+	<img class="c13" data-gen="240x240" style="width:60px;height:60px" alt="x">
+</section>
+
+<section data-case="image-broken" data-expect="broken-image">
+	<img class="c14" src="missing.png" style="width:40px;height:40px" alt="x">
+</section>
+
+<section data-case="raw-key" data-expect="raw-translation-key">
+	<span class="c15">common:actions.saveChanges</span>
+</section>
+
+<section data-case="junk" data-expect="junk-text">
+	<span class="c16">Score: undefined</span>
+</section>
+
+<section data-case="unlabeled" data-expect="unlabeled-control">
+	<button type="button" class="btn c17" style="display:inline-flex;align-items:center"><svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="8" fill="#eee"/></svg></button>
+</section>
+
+<section data-case="tap-small" data-expect="small-tap-target">
+	<a class="lnk c18a" href="#a" aria-label="first" style="display:inline-block;width:16px;height:16px;background:#39f"></a><a class="lnk c18b" href="#b" aria-label="second" style="display:inline-block;width:16px;height:16px;background:#3f9"></a>
+</section>
+
+<section data-case="center-box-off" data-expect="off-center">
+	<button type="button" class="btn c19" aria-label="x" style="width:40px;height:40px;padding:0 0 0 6px;display:flex;align-items:center;justify-content:flex-start"><svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="10" fill="#eee"/></svg></button>
+</section>
+
+<section data-case="center-ink-off" data-expect="off-center">
+	<button type="button" class="btn c20" aria-label="x" style="width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20"><rect x="1" y="6" width="12" height="12" fill="#eee"/></svg></button>
+</section>
+
+<section data-case="center-number-off" data-expect="off-center">
+	<span class="c23" style="display:inline-block;background:#333;border-radius:10px;padding:7px 10px 0;font-size:14px">12</span>
+</section>
+
+<section data-case="center-fine" data-expect="">
+	<button type="button" class="btn c21" aria-label="x" style="width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20"><rect x="4" y="4" width="16" height="16" fill="#eee"/></svg></button>
+	<span class="c22" style="display:inline-block;background:#333;border-radius:10px;padding:2px 10px;font-size:14px">LIVE</span>
+</section>
+
+<section data-case="label-wraps" data-expect="label-wraps">
+	<button type="button" class="btn c24" style="width:86px">Save all changes</button>
+</section>
+
+<section data-case="mid-word" data-expect="mid-word-break">
+	<h2 class="c25" style="width:60px;overflow-wrap:anywhere">Settings</h2>
+</section>
+
+<section data-case="orphan" data-expect="orphan-word">
+	<h2 class="c26" style="width:31.5ch;font:14px monospace">Tournament settings and options now</h2>
+</section>
+
+<section data-case="heading-fine" data-expect="">
+	<h2 class="c26b">A heading on one line</h2>
+</section>
+
+<section data-case="truncated-room" data-expect="truncated-with-room">
+	<div class="c27w" style="display:flex;width:300px"><span class="c27" style="max-width:90px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Long player name here</span></div>
+</section>
+
+<section data-case="squashed" data-expect="squashed">
+	<select class="c28" style="width:44px" aria-label="Pick"><option>Tournament of champions</option></select>
+	<span class="c29" style="display:inline-flex;width:16px;height:6px"><svg class="c29s" viewBox="0 0 24 24" style="width:100%;height:100%"><circle cx="12" cy="12" r="10" fill="#eee"/></svg></span>
+	<img class="c30" data-gen="160x160" style="width:48px;height:30px;border-radius:50%;object-fit:cover" alt="x">
+</section>
+
+<section data-case="near-miss" data-expect="near-miss-alignment">
+	<div class="rows"><div class="row">Row one</div><div class="row">Row two</div><div class="row" style="margin-left:4px">Row three</div><div class="row">Row four</div></div>
+</section>
+
+<section data-case="row-text-off" data-expect="misaligned-row">
+	<div class="c32" style="display:flex;align-items:center;gap:12px"><span class="c32a">Players</span><span class="c32b" style="padding-top:5px">Teams</span></div>
+</section>
+
+<section data-case="touching" data-expect="touching-text">
+	<div class="c33" style="display:flex"><div class="c33a">12 Aug - 14 Aug</div><div class="c33b">2400.5</div></div>
+</section>
+
+<section data-case="uneven-gaps" data-expect="uneven-gaps">
+	<div class="c34" style="display:flex;gap:8px"><span class="chip">One</span><span class="chip">Two</span><span class="chip" style="margin-left:5px">Three</span><span class="chip">Four</span><span class="chip">Five</span></div>
+</section>
+
+<section data-case="even-gaps" data-expect="">
+	<div class="c34b" style="display:flex;gap:8px"><span class="chip">One</span><span class="chip">Two</span><span class="chip">Three</span><span class="chip">Four</span></div>
+</section>
+
+<section data-case="accidental-scroll" data-expect="accidental-scroll">
+	<div class="c35" style="height:60px;overflow:auto;background:#222"><div class="c35a" style="height:66px">Six pixels too tall</div></div>
+</section>
+
+<section data-case="nested-scroll" data-expect="nested-scroll">
+	<div class="c36" style="height:200px;overflow:auto;background:#222"><div class="c36a" style="height:700px">A long list inside a scroll box</div></div>
+</section>
+
+<section data-case="hover-none" data-expect="no-hover-feedback,no-press-feedback">
+	<button type="button" class="c37" style="background:#333;color:#eee;border:1px solid #777;padding:6px 12px;font:inherit;-webkit-tap-highlight-color:transparent">No feedback</button>
+</section>
+
+<section data-case="hover-fine" data-expect="">
+	<button type="button" class="btn c38">Has feedback</button>
+</section>
+
+<section data-case="cursor" data-expect="cursor-not-pointer">
+	<div role="button" tabindex="0" class="c39">Div button</div>
+</section>
+
+<section data-case="focus-none" data-expect="no-focus-indicator">
+	<button type="button" class="btn c40" style="outline:none">No ring</button>
+</section>
+
+<section data-case="focus-clipped" data-expect="focus-ring-clipped">
+	<div class="c41w" style="overflow:hidden;width:200px;padding:0 20px"><button type="button" class="btn c41" style="display:block;width:100%">Ring cut off</button></div>
+</section>
+
+<section data-case="focus-fine" data-expect="">
+	<button type="button" class="btn c42">Ring shows</button>
+</section>
+
+<section data-case="focus-hidden" data-expect="focus-not-visible">
+	<a class="lnk c43" href="#x" style="opacity:0">Hidden but focusable</a>
+</section>
+
+<!-- what earlier versions of the probes got wrong -->
+
+<section data-case="icon-in-taller-box" data-expect="">
+	<button type="button" class="btn n1" aria-label="x" style="display:inline-flex;align-items:center"><svg class="n1s" viewBox="0 0 24 24" height="24" style="width:18px"><circle cx="12" cy="12" r="9" fill="#eee"/></svg></button>
+</section>
+
+<section data-case="url-breaks" data-expect="">
+	<p class="n2" style="width:200px;margin:0;overflow-wrap:anywhere">Read it at https://example.com/to/12345/brackets?idx=0&amp;group=1&amp;source=discord</p>
+</section>
+
+<section data-case="logo-parts" data-expect="">
+	<a class="lnk n3" href="#home" style="display:inline-flex"><span class="n3a" style="font-weight:700">S</span><span class="n3b">ink</span></a>
+</section>
+
+<section data-case="marquee" data-expect="">
+	<div class="n4" style="width:220px;overflow:hidden"><div class="n4t" style="display:flex;gap:12px;width:max-content;transform:translateX(-40px)"><span class="chip n4a">A chip in a marquee</span><span class="chip n4b">Another chip in it</span><span class="chip n4c">And a third one</span></div></div>
+</section>
+
+<section data-case="hidden-radio" data-expect="">
+	<input type="radio" name="n5" id="n5" class="n5i" style="position:absolute;opacity:0;width:1px;height:1px"><label for="n5" class="btn n5l" style="display:inline-block">A label standing in for its radio</label>
+</section>
+
+<section data-case="lead-gap" data-expect="">
+	<div class="n6" style="display:flex;gap:8px"><span class="n6a" style="margin-right:6px">Fill:</span><span class="chip">One</span><span class="chip">Two</span><span class="chip">Three</span><span class="chip">Four</span></div>
+</section>
+
+<section data-case="tile-label" data-expect="">
+	<label class="n7" style="display:inline-block;width:90px;height:76px;background:#333;border-radius:8px;text-align:center"><input type="checkbox" class="n7i"> Mincemeat Metalworks</label>
+</section>
+
+<section data-case="flowing-chips" data-expect="">
+	<div class="n8" style="width:260px;text-align:center"><a class="lnk n8a" href="#1">Sheldon</a> <a class="lnk n8a" href="#2">Corwin the Fifth</a> <a class="lnk n8a" href="#3">Allene</a> <a class="lnk n8a" href="#4">Marquis of Inkopolis</a> <a class="lnk n8a" href="#5">Li</a> <a class="lnk n8a" href="#6">Bartholomew</a></div>
+</section>
+
+<section data-case="off-token" data-expect="">
+	<p class="c44" style="font-size:13px;margin:0">Thirteen pixels, one off the scale</p>
+</section>
+
+<div class="filler"></div>
+</main>
+<script>
+for (const image of document.querySelectorAll("img[data-gen]")) {
+	const [width, height] = image.dataset.gen.split("x").map(Number);
+	const canvas = document.createElement("canvas");
+	canvas.width = width;
+	canvas.height = height;
+	const context = canvas.getContext("2d");
+	context.fillStyle = "#3a6";
+	context.fillRect(0, 0, width, height);
+	context.fillStyle = "#fd4";
+	context.fillRect(width / 4, height / 4, width / 2, height / 2);
+	image.src = canvas.toDataURL("image/png");
+}
+</script>
+</body>
+</html>

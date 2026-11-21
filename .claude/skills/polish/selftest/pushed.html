@@ -1,0 +1,23 @@
+<!-- biome-ignore-all lint/a11y: the defects on this page are planted, they are what the self-test looks for -->
+<!-- biome-ignore-all lint/nursery/useControlLabel: same -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polish fixture pushed</title>
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<div data-testid="hydrated" data-router-idle="true" hidden></div>
+<main>
+<section>
+	<!-- the long name is the cause, the button it pushes off the screen is not -->
+	<div class="q0" style="display:flex;gap:8px;align-items:center">
+		<span class="q1" data-case="pusher" data-expect="horizontal-scroll" style="white-space:nowrap">WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW</span>
+		<button type="button" class="btn q2" data-case="pushed" data-expect="" style="flex-shrink:0">Remove</button>
+	</div>
+</section>
+</main>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!-- biome-ignore-all lint/a11y: the defects on this page are planted, they are what the self-test looks for -->
+<!-- biome-ignore-all lint/nursery/useControlLabel: same -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polish fixture widths</title>
+<link rel="stylesheet" href="base.css">
+<style>
+@media (min-width: 450px) and (max-width: 650px) {
+	.w1 { width: 900px; }
+}
+</style>
+</head>
+<body>
+<div data-testid="hydrated" data-router-idle="true" hidden></div>
+<main>
+<section data-case="between" data-expect="horizontal-scroll">
+	<div class="w1" style="background:#333">Only too wide between the two viewports</div>
+</section>
+</main>
+</body>
+</html>

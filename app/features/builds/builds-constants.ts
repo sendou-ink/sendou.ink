@@ -60,6 +60,9 @@ export const RECENT_PATCHES: Array<Patch> = PATCHES.filter(
 
 export const BUILD = {
 	MAX_COUNT: 250,
+	TITLE_MAX_LENGTH: 50,
+	DESCRIPTION_MAX_LENGTH: 280,
+	MAX_WEAPONS: 5,
 } as const;
 
 export const BUILDS_PAGE_SIZE = 24;

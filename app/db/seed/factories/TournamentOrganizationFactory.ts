@@ -7,6 +7,8 @@ import * as ImageFactory from "./ImageFactory";
 type Member = {
 	userId: number;
 	role: Tables["TournamentOrganizationMember"]["role"];
+	/** Shown in place of the role's name. */
+	roleDisplayName?: string | null;
 };
 
 type InsertArgs = Parameters<typeof TournamentOrganizationRepository.insert>[0];
@@ -112,7 +114,7 @@ async function applyUpdate(
 			})),
 			...(members ?? []).map((member) => ({
 				...member,
-				roleDisplayName: null,
+				roleDisplayName: member.roleDisplayName ?? null,
 			})),
 		],
 		series: series ?? [],

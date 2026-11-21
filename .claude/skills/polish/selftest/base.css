@@ -1,0 +1,79 @@
+/* Shared by the self-test fixtures: a dark page with a few design tokens and a button that does everything right. */
+:root {
+	color-scheme: dark;
+	--font-lg: 20px;
+	--font-md: 16px;
+	--font-sm: 14px;
+	--weight-normal: 400;
+	--weight-bold: 700;
+	--radius-box: 8px;
+	--radius-field: 6px;
+	--s-1: 4px;
+	--s-2: 8px;
+	--s-3: 12px;
+}
+
+html {
+	background: #111;
+	color: #eee;
+	font:
+		16px / 1.4 Arial,
+		sans-serif;
+}
+
+body {
+	margin: 0;
+	padding: 16px;
+}
+
+section {
+	margin: 0 0 24px;
+	min-height: 30px;
+}
+
+h2 {
+	margin: 0;
+	font-size: 20px;
+}
+
+.btn {
+	background: #333;
+	color: #eee;
+	border: 1px solid #777;
+	border-radius: 6px;
+	padding: 6px 12px;
+	font: inherit;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+
+	&:hover {
+		background: #555;
+	}
+
+	&:active {
+		background: #666;
+	}
+
+	&:focus-visible {
+		outline: 2px solid #6cf;
+		outline-offset: 2px;
+	}
+}
+
+.lnk {
+	color: #8cf;
+
+	&:hover {
+		color: #fff;
+	}
+}
+
+.chip {
+	background: #333;
+	border-radius: 10px;
+	padding: 2px 8px;
+}
+
+.filler {
+	height: 1500px;
+}

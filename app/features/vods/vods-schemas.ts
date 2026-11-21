@@ -16,7 +16,7 @@ import {
 } from "~/form/fields";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { id, nonEmptyString } from "~/utils/schema";
-import { videoMatchTypes } from "./vods-constants";
+import { VOD, videoMatchTypes } from "./vods-constants";
 import { extractYoutubeIdFromVideoUrl } from "./vods-utils";
 
 export const HOURS_MINUTES_SECONDS_REGEX = /^(\d{1,2}:)?\d{1,2}:\d{2}$/;
@@ -28,7 +28,7 @@ const povSchema = v.union([
 	}),
 	v.object({
 		type: v.literal("NAME"),
-		name: v.pipe(nonEmptyString, v.maxLength(100)),
+		name: v.pipe(nonEmptyString, v.maxLength(VOD.POV_NAME_MAX_LENGTH)),
 	}),
 ]);
 
@@ -81,7 +81,7 @@ export const vodFormBaseSchema = v.object({
 	}),
 	title: textField({
 		label: "labels.vodTitle",
-		maxLength: 100,
+		maxLength: VOD.TITLE_MAX_LENGTH,
 	}),
 	date: dayMonthYearField({
 		label: "labels.vodDate",

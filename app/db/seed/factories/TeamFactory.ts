@@ -29,7 +29,11 @@ type Options = {
 	roles?: Record<number, MemberRole | CustomRole>;
 	/** Members who may edit the team like the owner does, saved as the roster page saves them. */
 	managerUserIds?: number[];
+	/** Bio, tag and Bluesky handle, saved as the team edit page saves them. */
+	profile?: Partial<Pick<UpdateArgs, "bio" | "tag" | "bsky">>;
 };
+
+type UpdateArgs = Parameters<typeof TeamRepository.update>[0];
 
 type CustomRole = { customRole: string; roleType: MemberRoleType };
 
@@ -64,6 +68,7 @@ export const { create } = defineFactory({
 			mapModePreferences,
 			roles,
 			managerUserIds,
+			profile,
 		}: Options,
 	) => {
 		if (roles || managerUserIds) {
@@ -86,23 +91,26 @@ export const { create } = defineFactory({
 			});
 		}
 
-		if (!hasAvatar && !avatarUrl) return;
+		if (!hasAvatar && !avatarUrl && !profile) return;
 
-		const image = await ImageFactory.create(
-			avatarUrl
-				? { submitterUserId: team.ownerUserId, url: avatarUrl }
-				: { submitterUserId: team.ownerUserId },
-			{ isValidated: true },
-		);
+		const image =
+			hasAvatar || avatarUrl
+				? await ImageFactory.create(
+						avatarUrl
+							? { submitterUserId: team.ownerUserId, url: avatarUrl }
+							: { submitterUserId: team.ownerUserId },
+						{ isValidated: true },
+					)
+				: null;
 
 		// the team edit page saves the whole profile at once; the rest is still empty on a fresh insert
 		await TeamRepository.update({
 			id: team.id,
 			name: team.name,
-			bio: null,
-			bsky: null,
-			tag: null,
-			avatarImgId: image.id,
+			bio: profile?.bio ?? null,
+			bsky: profile?.bsky ?? null,
+			tag: profile?.tag ?? null,
+			avatarImgId: image?.id ?? null,
 			bannerImgId: null,
 		});
 	},

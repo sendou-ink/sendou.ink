@@ -7,7 +7,7 @@ import { ASSOCIATION } from "./associations-constants";
 export const createNewAssociationSchema = v.object({
 	name: textField({
 		label: "labels.name",
-		maxLength: 100,
+		maxLength: ASSOCIATION.NAME_MAX_LENGTH,
 	}),
 });
 
