@@ -19,9 +19,12 @@ import {
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { tournamentMatchChannel } from "~/features/tournament-match/tournament-match-utils";
 import { modesShort } from "~/modules/in-game-lists/modes";
+import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import { avatarUrl } from "~/utils/urls";
 import * as BroadcastCastRepository from "../BroadcastCastRepository.server";
 import {
+	BROADCAST_FINISHED_SET_SHOWN_MS,
+	BROADCAST_OTHER_MATCHES_MIN_COUNT,
 	CAST_PRODUCER_RULES,
 	DEFAULT_CAST_BROADCAST_SETTINGS,
 } from "../broadcast-cast-constants";
@@ -104,6 +107,10 @@ export async function build({
 		});
 	};
 	const teams = { live: await teamOf("live"), next: await teamOf("next") };
+	const elsewhere = await otherMatches({
+		tournament,
+		featuredMatchId: match?.id,
+	});
 
 	return {
 		channel,
@@ -119,7 +126,7 @@ export async function build({
 			match,
 			bracket: { live: bracketOf("live"), next: bracketOf("next") },
 			team: teams,
-			otherMatches: otherMatches({ tournament, featuredMatchId: match?.id }),
+			otherMatches: elsewhere.matches,
 		},
 		eventChannels: R.unique([
 			tournamentChannel(tournamentId),
@@ -135,7 +142,11 @@ export async function build({
 						: [],
 				),
 			),
+			...elsewhere.matches.flatMap((other) =>
+				other.winner === null ? [matchEventChannel(tournament, other.id)] : [],
+			),
 		]),
+		staleAt: elsewhere.staleAt,
 	};
 }
 
@@ -250,71 +261,127 @@ function bracketTeam(
 	};
 }
 
-// xxx: mocked with matches of Paddling Pool 393, make live: the matches of every bracket being played (and maybe
-// just finished) with their event channels in `eventChannels` as their scores are only sent to their bracket's channel
-function otherMatches({
+/**
+ * The tournament's sets being played right now (0-0 ones too) and the ones finished in the last
+ * {@link BROADCAST_FINISHED_SET_SHOWN_MS}, topped up with the most recently finished ones to
+ * {@link BROADCAST_OTHER_MATCHES_MIN_COUNT} when there are fewer (e.g. only losers finals left), leaving out the ones a
+ * channel is casting or holding back for a cast, in bracket order. Their round names say the bracket too when the sets
+ * are of more than one. `staleAt` is when the first recently finished set is due to leave.
+ */
+async function otherMatches({
 	tournament,
 	featuredMatchId,
 }: {
 	tournament: Tournament;
 	featuredMatchId: number | undefined;
-}): BroadcastOtherMatch[] {
-	if (tournament.ctx.id !== 4733) return [];
+}): Promise<{ matches: BroadcastOtherMatch[]; staleAt: number | null }> {
+	const castMatchIds = new Set([
+		featuredMatchId,
+		...(tournament.ctx.castedMatchesInfo?.castedMatches ?? []).map(
+			(match) => match.matchId,
+		),
+		...(tournament.ctx.castedMatchesInfo?.lockedMatches ?? []).map(
+			(match) => match.matchId,
+		),
+	]);
 
-	const matches: BroadcastOtherMatch[] = [
-		{
-			id: 160993,
-			roundName: "WB Semis",
-			teams: [
-				{ name: "flower man", seed: 1 },
-				{ name: "piscine paddling poutine pool", seed: 13 },
-			],
-			scores: [1, 0],
-			winner: null,
-		},
-		{
-			id: 161016,
-			roundName: "LB Round 4",
-			teams: [
-				{ name: "zuun forgot to wake up", seed: 7 },
-				{ name: "Scream", seed: 6 },
-			],
-			scores: [1, 1],
-			winner: null,
-		},
-		{
-			id: 161017,
-			roundName: "LB Round 4",
-			teams: [
-				{ name: "Socks & Sandals", seed: 11 },
-				{ name: "labiteamomooo", seed: 10 },
-			],
-			scores: [0, 2],
-			winner: 1,
-		},
-		{
-			id: 161018,
-			roundName: "LB Round 4",
-			teams: [
-				{ name: "PEZ", seed: 8 },
-				{ name: "Monëy so big", seed: 4 },
-			],
-			scores: [1, 1],
-			winner: null,
-		},
-		{
-			id: 161019,
-			roundName: "LB Round 4",
-			teams: [
-				{ name: "Poker", seed: 5 },
-				{ name: "jsp jsp jsp", seed: 9 },
-			],
-			scores: [1, 0],
-			winner: null,
-		},
-	];
+	const candidatesByBracket = tournament.brackets.flatMap((bracket) => {
+		// a league's scheduled sets are played over weeks, not right now
+		if (bracket.preview || bracket.hasScheduling) return [];
 
-	return matches.filter((match) => match.id !== featuredMatchId);
+		const statuses = bracket.matchStatuses();
+		const groupNumberById = new Map(
+			bracket.data.group.map((group) => [group.id, group.number]),
+		);
+		const roundNumberById = new Map(
+			bracket.data.round.map((round) => [round.id, round.number]),
+		);
+		const candidates = bracket.data.match.filter(
+			(match) =>
+				!castMatchIds.has(match.id) &&
+				(statuses.get(match.id) === "STARTED" || Boolean(match.winnerSide)),
+		);
+
+		return [
+			R.sortBy(
+				candidates,
+				(match) => groupNumberById.get(match.groupId) ?? 0,
+				(match) => roundNumberById.get(match.roundId) ?? 0,
+				(match) => match.number,
+			),
+		];
+	});
+
+	const now = Date.now();
+	const candidates = candidatesByBracket.flat();
+	const lastReportedAts =
+		await BroadcastCastRepository.findAllLastGameReportedAtByMatchIds(
+			candidates.filter((match) => match.winnerSide).map((match) => match.id),
+		);
+	// a set won against a BYE has no games, so it never shows
+	const finished = lastReportedAts.map((row) => ({
+		matchId: row.matchId,
+		leavesAt:
+			databaseTimestampToJavascriptTimestamp(row.lastReportedAt) +
+			BROADCAST_FINISHED_SET_SHOWN_MS,
+	}));
+	const recent = finished.filter((set) => set.leavesAt > now);
+	const fillCount = Math.max(
+		0,
+		BROADCAST_OTHER_MATCHES_MIN_COUNT -
+			candidates.filter((match) => !match.winnerSide).length -
+			recent.length,
+	);
+	const fill = R.sortBy(
+		finished.filter((set) => set.leavesAt <= now),
+		[(set) => set.leavesAt, "desc"],
+	).slice(0, fillCount);
+	const shownFinishedIds = new Set(
+		[...recent, ...fill].map((set) => set.matchId),
+	);
+
+	const shownByBracket = candidatesByBracket
+		.map((ofBracket) =>
+			ofBracket.filter(
+				(match) => !match.winnerSide || shownFinishedIds.has(match.id),
+			),
+		)
+		.filter((shown) => shown.length > 0);
+	const isOfManyBrackets = shownByBracket.length > 1;
+
+	const matches = shownByBracket.flat().map((match): BroadcastOtherMatch => {
+		const names = tournament.matchContextNamesById(match.id);
+		const team = (id: number | null | undefined) => {
+			const tournamentTeam =
+				typeof id === "number" ? tournament.teamById(id) : null;
+
+			return tournamentTeam
+				? { name: tournamentTeam.name, seed: tournamentTeam.seed }
+				: null;
+		};
+
+		return {
+			id: match.id,
+			roundName:
+				roundLabel({
+					bracketName: isOfManyBrackets ? names.bracketName : null,
+					roundName: names.roundNameWithoutMatchIdentifier ?? null,
+				}) || null,
+			teams: [team(match.opponent1?.id), team(match.opponent2?.id)],
+			scores: [match.opponent1?.score ?? 0, match.opponent2?.score ?? 0],
+			winner: match.winnerSide
+				? match.winnerSide === "opponent1"
+					? 0
+					: 1
+				: null,
+		};
+	});
+
+	return {
+		matches,
+		staleAt:
+			recent.length > 0 ? Math.min(...recent.map((set) => set.leavesAt)) : null,
+	};
 }
 
 async function casters(

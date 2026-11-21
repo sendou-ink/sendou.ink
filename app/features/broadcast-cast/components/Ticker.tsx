@@ -15,8 +15,8 @@ const styles = combineStyles(look, layout);
 const part = scenePart("ticker");
 
 /**
- * "Elsewhere": the tournament's other matches scrolling by with their seeds and set scores. Nothing without other
- * matches. The `bar` variant has no surface or label of its own, for inside another bar.
+ * "Elsewhere": the tournament's other matches scrolling by with their seeds and set scores, the finished ones tagged
+ * final. Nothing without other matches. The `bar` variant has no surface or label of its own, for inside another bar.
  */
 export function Ticker({
 	matches,
@@ -64,6 +64,7 @@ export function Ticker({
 }
 
 function TickerMatch({ match }: { match: BroadcastOtherMatch }) {
+	const { t } = useTranslation(["broadcast"]);
 	const standing = (index: 0 | 1) => ({
 		"data-winner": match.winner === index || undefined,
 		"data-loser":
@@ -95,6 +96,11 @@ function TickerMatch({ match }: { match: BroadcastOtherMatch }) {
 				))}
 			</span>
 			<TickerTeam team={match.teams[1]} {...standing(1)} />
+			{match.winner === null ? null : (
+				<span className={styles.final} {...part("ticker-final")}>
+					{t("broadcast:overlay.final")}
+				</span>
+			)}
 		</div>
 	);
 }

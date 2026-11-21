@@ -296,6 +296,22 @@ export async function castMatch({
 	clearTournamentDataCache(tournamentId);
 }
 
+/** Holds a match back for a cast by a Twitch account, adding the account to the cast accounts first like the stream page does. */
+export async function lockMatch({
+	tournamentId,
+	matchId,
+	twitchAccount,
+}: {
+	tournamentId: number;
+	matchId: number;
+	twitchAccount: string;
+}) {
+	const castAccount = await addCastAccount({ tournamentId, twitchAccount });
+	await TournamentRepository.lockMatch({ tournamentId, matchId, castAccount });
+
+	clearTournamentDataCache(tournamentId);
+}
+
 /**
  * A tournament with its first bracket started, `roundsPlayed` rounds of it played, and its first playable match cast
  * on a Twitch account whose broadcast `programUserId`'s OBS URL shows (the author's by default): a broadcast ready to

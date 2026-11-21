@@ -35,6 +35,8 @@ export interface Built<State extends BroadcastState = BroadcastState> {
 	channel: BroadcastChannel;
 	/** Event channels whose events change the state. */
 	eventChannels: string[];
+	/** When the state changes with no event to say so (e.g. a finished set leaving the ticker), `null` when it doesn't. */
+	staleAt: number | null;
 }
 
 /**

@@ -75,6 +75,16 @@
 	}
 }
 
+.final {
+	padding: 2px 8px;
+	border-radius: var(--bc-radius-small);
+	background: var(--bc-surface-high);
+	color: var(--bc-text-muted);
+	font-size: 13px;
+	font-weight: var(--bc-weight-bold);
+	text-transform: uppercase;
+}
+
 /* the matches moving along, one copy of them per loop */
 @keyframes :global(bc-ticker) {
 	to {

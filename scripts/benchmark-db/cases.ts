@@ -334,6 +334,12 @@ export function buildCases(fx: Fixtures): {
 			BroadcastCastRepository.findAllGameResultsByMatchIds(matchIds),
 	);
 	add(
+		"BroadcastCastRepository.findAllLastGameReportedAtByMatchIds",
+		fx.manyTournamentMatchIds,
+		(matchIds) =>
+			BroadcastCastRepository.findAllLastGameReportedAtByMatchIds(matchIds),
+	);
+	add(
 		"BroadcastCastRepository.findMapPoolByTournamentTeamId",
 		fx.heavyTournamentTeamId,
 		(tournamentTeamId) =>

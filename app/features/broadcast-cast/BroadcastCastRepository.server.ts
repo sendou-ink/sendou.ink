@@ -35,6 +35,21 @@ export function findAllGameResultsByMatchIds(matchIds: number[]) {
 		.execute();
 }
 
+/** When each of the matches had its last game reported, matches with no games left out. */
+export function findAllLastGameReportedAtByMatchIds(matchIds: number[]) {
+	if (matchIds.length === 0) return Promise.resolve([]);
+
+	return db
+		.selectFrom("TournamentMatchGameResult")
+		.select(({ fn }) => [
+			"TournamentMatchGameResult.matchId",
+			fn.max("TournamentMatchGameResult.createdAt").as("lastReportedAt"),
+		])
+		.where("TournamentMatchGameResult.matchId", "in", matchIds)
+		.groupBy("TournamentMatchGameResult.matchId")
+		.execute();
+}
+
 /** Maps the team picked for the tournament's map lists. */
 export function findMapPoolByTournamentTeamId(tournamentTeamId: number) {
 	return db

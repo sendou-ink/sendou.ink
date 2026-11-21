@@ -65,6 +65,8 @@ interface Hub extends HubKey {
 	autoTakeTimer: ReturnType<typeof setTimeout> | null;
 	/** Retries a failed build while there is no state to show yet. */
 	retryTimer: ReturnType<typeof setTimeout> | null;
+	/** Rebuilds the state once it goes stale by itself, see `BroadcastSnapshot.Built.staleAt`. */
+	staleTimer: ReturnType<typeof setTimeout> | null;
 	failedBuildCount: number;
 	isBuilding: boolean;
 	isDirty: boolean;
@@ -337,6 +339,7 @@ function createHub(key: HubKey & { layout: Layout }): Hub {
 		rebuildTimer: null,
 		autoTakeTimer: null,
 		retryTimer: null,
+		staleTimer: null,
 		failedBuildCount: 0,
 		isBuilding: false,
 		isDirty: false,
@@ -356,6 +359,7 @@ function disconnect(hub: Hub, client: Client) {
 	if (hub.rebuildTimer) clearTimeout(hub.rebuildTimer);
 	if (hub.autoTakeTimer) clearTimeout(hub.autoTakeTimer);
 	if (hub.retryTimer) clearTimeout(hub.retryTimer);
+	if (hub.staleTimer) clearTimeout(hub.staleTimer);
 	if (hubs.get(hubId(hub)) === hub) hubs.delete(hubId(hub));
 }
 
@@ -399,6 +403,7 @@ async function rebuild(hub: Hub) {
 			hub.snapshot = built.snapshot;
 			hub.failedBuildCount = 0;
 			scheduleAutoTake(hub);
+			scheduleStaleRebuild(hub, built.staleAt);
 			if (!R.isDeepEqual(built.eventChannels, hub.eventChannels)) {
 				hub.eventChannels = built.eventChannels;
 				hub.resubscribe.abort();
@@ -426,6 +431,20 @@ function scheduleFirstBuildRetry(hub: Hub) {
 		hub.retryTimer = null;
 		void rebuild(hub);
 	}, delay);
+}
+
+function scheduleStaleRebuild(hub: Hub, staleAt: number | null) {
+	if (hub.staleTimer) clearTimeout(hub.staleTimer);
+	hub.staleTimer = null;
+	if (staleAt === null || hub.stop.signal.aborted) return;
+
+	hub.staleTimer = setTimeout(
+		() => {
+			hub.staleTimer = null;
+			void rebuild(hub);
+		},
+		Math.max(0, staleAt - Date.now()),
+	);
 }
 
 /**

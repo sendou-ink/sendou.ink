@@ -104,6 +104,24 @@ describe("BroadcastHub.connect", () => {
 	});
 });
 
+describe("BroadcastHub stale rebuild", () => {
+	test("rebuilds when the built state goes stale by itself", async () => {
+		const build = vi.fn(async () => ({
+			...built(snapshot()),
+			staleAt: Date.now() + 60_000,
+		}));
+		connect({ build });
+		await vi.advanceTimersByTimeAsync(0);
+		build.mockClear();
+
+		await vi.advanceTimersByTimeAsync(59_999);
+		expect(build).not.toHaveBeenCalled();
+
+		await vi.advanceTimersByTimeAsync(1);
+		expect(build).toHaveBeenCalledOnce();
+	});
+});
+
 describe("BroadcastHub first build retry", () => {
 	test("retries a failing first build, waiting twice as long each time up to 30 seconds", async () => {
 		const build = vi.fn(() =>
@@ -373,6 +391,7 @@ function built(
 		snapshot: state,
 		channel,
 		eventChannels: [tournamentChannel(tournamentId)],
+		staleAt: null,
 	};
 }
 

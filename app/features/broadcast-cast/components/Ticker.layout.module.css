@@ -60,7 +60,8 @@
 	align-items: center;
 	gap: 8px;
 
-	&:last-child {
+	/* the second team, mirrored */
+	.scores + & {
 		flex-direction: row-reverse;
 	}
 }

@@ -63,6 +63,12 @@ export const BROADCAST_DASHBOARD_TABS = ["setup", "theme"] as const;
 /** The staged item is highlighted for this long before it goes on air by itself. */
 export const BROADCAST_AUTO_TAKE_IMMINENT_MS = 5_000;
 
+/** A finished set stays in the other matches' ticker for this long after its last game. */
+export const BROADCAST_FINISHED_SET_SHOWN_MS = 10 * 60_000;
+
+/** With fewer other matches than this to show, the ticker is topped up with the most recently finished sets. */
+export const BROADCAST_OTHER_MATCHES_MIN_COUNT = 5;
+
 // xxx: prototype, these come from the scanner eventually
 /** Replay clips the dashboard sends to the overlays over WebRTC. */
 export const BROADCAST_PROTOTYPE_CLIPS = [
@@ -351,6 +357,7 @@ export const BROADCAST_SCENE_PARTS = {
 		"ticker-team-seed",
 		"ticker-team-name",
 		"ticker-team-score",
+		"ticker-final",
 	],
 	cameras: [
 		"caster-camera",
