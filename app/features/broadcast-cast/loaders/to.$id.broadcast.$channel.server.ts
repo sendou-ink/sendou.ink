@@ -13,6 +13,8 @@ import * as TournamentMatchRepository from "~/features/tournament-match/Tourname
 import { resolveJoinInfo } from "~/features/tournament-match/tournament-match-utils";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { CAST_LAYOUT } from "../broadcast-cast-layout.server";
+import type { BroadcastBracketSide } from "../broadcast-cast-types";
+import * as BracketFocus from "../core/BracketFocus";
 import * as CastChannel from "../core/CastChannel";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -47,6 +49,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			broadcastId: broadcast?.id,
 		}),
 		featuredMatchId,
+		featuredMatchBracketIdx: featuredMatchId
+			? tournament.matchIdToBracketIdx(featuredMatchId)
+			: null,
+		eliminationRoundNames: eliminationRoundNames({
+			tournament,
+			featuredMatchId,
+		}),
 		joinInfo: featuredMatch
 			? featuredMatchJoinInfo({ tournament, match: featuredMatch })
 			: null,
@@ -106,6 +115,47 @@ function channelName({
 			LiveStream.isSameAccount(candidate, channel),
 		)?.name ?? channel.account
 	);
+}
+
+/** Names of the rounds of each side of the elimination brackets the bracket scene can show, by bracket index. */
+function eliminationRoundNames({
+	tournament,
+	featuredMatchId,
+}: {
+	tournament: Tournament;
+	featuredMatchId: number | null;
+}) {
+	const result: Record<
+		number,
+		Record<BroadcastBracketSide["type"], string[]>
+	> = {};
+	for (const idx of BracketFocus.showableBracketIdxs(tournament)) {
+		const bracket = tournament.bracketByIdx(idx);
+		if (
+			bracket?.type !== "single_elimination" &&
+			bracket?.type !== "double_elimination"
+		) {
+			continue;
+		}
+
+		const args = {
+			type: bracket.type,
+			data: bracket.data,
+			groupId: BracketFocus.resolveGroupId({
+				data: bracket.data,
+				featuredMatchId,
+			}),
+		};
+		result[idx] = {
+			winners: BracketFocus.sideRoundNames({ ...args, side: "winners" }),
+			losers:
+				bracket.type === "double_elimination"
+					? BracketFocus.sideRoundNames({ ...args, side: "losers" })
+					: [],
+		};
+	}
+
+	return result;
 }
 
 function featuredMatchJoinInfo({

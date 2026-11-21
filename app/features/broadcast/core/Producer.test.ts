@@ -34,7 +34,7 @@ const item = (
 	swapSides: false,
 	transition: "stinger",
 	bracketIdx: null,
-	bracketFocus: "remaining",
+	bracketSides: { winners: "remaining", losers: "remaining" },
 	clipId: null,
 	teamPick: "left",
 	durationMs: null,
@@ -76,7 +76,7 @@ describe("Producer.take", () => {
 					scene: "game",
 					swapSides: true,
 					bracketIdx: 1,
-					bracketFocus: "losers",
+					bracketSides: { winners: "hidden", losers: 2 },
 				}),
 			}),
 			{ liveResults: { matchId: 1, count: 2 }, now: 5, hasMatch: true },
@@ -89,13 +89,13 @@ describe("Producer.take", () => {
 				scene: "game",
 				swapSides: true,
 				bracketIdx: 1,
-				bracketFocus: "losers",
+				bracketSides: { winners: "hidden", losers: 2 },
 			}),
 			next: item(3, {
 				scene: "results",
 				swapSides: true,
 				bracketIdx: 1,
-				bracketFocus: "losers",
+				bracketSides: { winners: "hidden", losers: 2 },
 				advance: "game",
 			}),
 			queue: [],
@@ -692,5 +692,22 @@ describe("Producer.withDefaults", () => {
 		expect(Producer.withDefaults(rules, stored)).toEqual(
 			Producer.initialState(rules),
 		);
+	});
+
+	test("fills in the fields of queued items stored before them", () => {
+		const stored = stateWith({
+			queue: [
+				R.omit(item(3, { scene: "bracket" }), [
+					"bracketSides",
+				]) as CastProducerState,
+			],
+		});
+
+		expect(Producer.withDefaults(rules, stored).queue).toEqual([
+			item(3, {
+				scene: "bracket",
+				bracketSides: rules.initial.next.bracketSides,
+			}),
+		]);
 	});
 });

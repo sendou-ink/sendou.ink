@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as R from "remeda";
 import { HEARTBEAT_INTERVAL_MS } from "~/features/events/events-types";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useHydrated } from "~/hooks/useHydrated";
@@ -260,7 +261,8 @@ const MIN_ZOOM_SCALE = 1.35;
 /**
  * Frames the element in its parent like a camera: an overview scaled to fill the parent within its padding, then
  * zoomed in on the `zoomTarget` elements inside it (as far in as they all still fit within the padding), centering
- * them in the parent's whole box as far as the `zoomedOut` element stays above the view. Without a target the overview stays put. Sets the `--camera-overview` and `--camera-zoom`
+ * them in the parent's whole box as far as the `zoomedOut` element stays above the view and no empty space shows
+ * past the element's edges (an element smaller than the box is centered as a whole). Without a target the overview stays put. Sets the `--camera-overview` and `--camera-zoom`
  * transforms on the element for its animation between them. Framed again whenever `content` changes.
  */
 export function useCamera<T extends HTMLElement>({
@@ -306,6 +308,7 @@ export function useCamera<T extends HTMLElement>({
 			);
 			const overview = cameraTransform({
 				box: contentBox,
+				size,
 				scale: overviewScale,
 				center: { x: size.width / 2, y: size.height / 2 },
 			});
@@ -326,6 +329,7 @@ export function useCamera<T extends HTMLElement>({
 							width: parent.clientWidth,
 							height: parent.clientHeight,
 						},
+						size,
 						scale: Math.max(
 							overviewScale,
 							Math.min(
@@ -360,26 +364,67 @@ export function useCamera<T extends HTMLElement>({
 
 /**
  * Transform (origin top left) showing the element at the scale with its point `center` in the middle of the box,
- * moved up when needed to keep its part above `hiddenAbove` out of the box.
+ * its part above `hiddenAbove` kept out of the box. Along an axis the rest of the element fits in, it is centered
+ * instead, along one it doesn't, moved no further than its edge reaches the box's.
  */
 function cameraTransform({
 	box,
+	size,
 	scale,
 	center,
 	hiddenAbove = 0,
 }: {
 	box: { x: number; y: number; width: number; height: number };
+	size: { width: number; height: number };
 	scale: number;
 	center: { x: number; y: number };
 	hiddenAbove?: number;
 }) {
-	const x = box.x + box.width / 2 - center.x * scale;
-	const y = Math.min(
-		box.y + box.height / 2 - center.y * scale,
-		box.y - hiddenAbove * scale,
-	);
+	const x = cameraOffset({
+		boxStart: box.x,
+		boxLength: box.width,
+		shownStart: 0,
+		shownEnd: size.width,
+		center: center.x,
+		scale,
+	});
+	const y = cameraOffset({
+		boxStart: box.y,
+		boxLength: box.height,
+		shownStart: hiddenAbove,
+		shownEnd: size.height,
+		center: center.y,
+		scale,
+	});
 
 	return `translate(${x}px, ${y}px) scale(${scale})`;
+}
+
+/** Offset along one axis of the element's part from `shownStart` to `shownEnd`, see {@link cameraTransform}. */
+function cameraOffset({
+	boxStart,
+	boxLength,
+	shownStart,
+	shownEnd,
+	center,
+	scale,
+}: {
+	boxStart: number;
+	boxLength: number;
+	shownStart: number;
+	shownEnd: number;
+	center: number;
+	scale: number;
+}) {
+	const shownLength = (shownEnd - shownStart) * scale;
+	if (shownLength <= boxLength) {
+		return boxStart + (boxLength - shownLength) / 2 - shownStart * scale;
+	}
+
+	return R.clamp(boxStart + boxLength / 2 - center * scale, {
+		min: boxStart + boxLength - shownEnd * scale,
+		max: boxStart - shownStart * scale,
+	});
 }
 
 /** Box around the elements in the coordinates of their ancestor's layout box, transforms not counted. */

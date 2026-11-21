@@ -12,7 +12,7 @@ import { TEAM } from "~/features/team/team-constants";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { USER } from "~/features/user-page/user-page-constants";
 import {
-	BROADCAST_BRACKET_FOCUSES,
+	BROADCAST_DESIGN_BRACKET_FOCUSES,
 	BROADCAST_DESIGN_BRACKETS,
 	BROADCAST_HEADLINE_MAX_LENGTH,
 	BROADCAST_SCENES,
@@ -62,7 +62,7 @@ const SCENE_CASES = BROADCAST_SCENES.flatMap((scene) =>
 );
 
 const BRACKET_CASES = BROADCAST_DESIGN_BRACKETS.flatMap((bracket) =>
-	BROADCAST_BRACKET_FOCUSES.filter(
+	BROADCAST_DESIGN_BRACKET_FOCUSES.filter(
 		(focus) =>
 			bracket === "double_elimination" ||
 			focus === "remaining" ||

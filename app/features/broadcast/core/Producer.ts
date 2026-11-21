@@ -75,6 +75,7 @@ export function withDefaults<Item extends ProducerState>(
 		...stored,
 		live: { ...initial.live, ...stored.live },
 		next: { ...initial.next, ...stored.next },
+		queue: (stored.queue ?? []).map((item) => ({ ...initial.next, ...item })),
 	};
 }
 

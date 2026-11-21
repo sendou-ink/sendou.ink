@@ -6,9 +6,9 @@ import {
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import {
-	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_DASHBOARD_TABS,
 	BROADCAST_DESIGN_BEST_OF,
+	BROADCAST_DESIGN_BRACKET_FOCUSES,
 	BROADCAST_DESIGN_BRACKETS,
 	BROADCAST_DESIGN_FOOTAGE,
 	BROADCAST_DESIGN_MAX_OTHER_MATCHES,
@@ -89,7 +89,7 @@ export const broadcastDesignSearchParams = SearchParams.define({
 		default: "double_elimination",
 		loader: false,
 	}),
-	bracketFocus: SP.param(v.picklist(BROADCAST_BRACKET_FOCUSES), {
+	bracketFocus: SP.param(v.picklist(BROADCAST_DESIGN_BRACKET_FOCUSES), {
 		default: "remaining",
 		loader: false,
 	}),

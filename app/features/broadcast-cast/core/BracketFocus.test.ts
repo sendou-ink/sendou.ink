@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import type {
-	BroadcastBracketFocus,
+	BroadcastBracketSidesFocus,
 	BroadcastEliminationBracket,
 } from "../broadcast-cast-types";
 import * as BracketFocus from "./BracketFocus";
@@ -30,24 +30,78 @@ describe("BracketFocus.layout", () => {
 		expect(bracket.sides.map((side) => side.slotCount)).toEqual([4, 2]);
 	});
 
-	test("hides the rounds every match of which is over when focused on the remaining teams", () => {
+	test("hides the rounds every match of which is over when focused on the remaining rounds", () => {
 		const data = reportAll(doubleElimination(8), firstRoundIds);
 
-		expect(roundNamesOf(layout({ data, focus: "remaining" }))).toEqual({
+		expect(roundNamesOf(layout({ data }))).toEqual({
 			winners: ["WB Semis", "WB Finals", "Grand Finals", "Bracket Reset"],
 			losers: ["LB Round 1", "LB Round 2", "LB Semis", "LB Finals"],
 		});
-		expect(roundNamesOf(layout({ data, focus: "whole" })).winners).toContain(
-			"WB Round 1",
-		);
+		expect(
+			roundNamesOf(layout({ data, focus: { winners: 0, losers: 0 } })).winners,
+		).toContain("WB Round 1");
 	});
 
-	test.each<{ focus: BroadcastBracketFocus; sides: string[] }>([
-		{ focus: "remaining", sides: ["winners", "losers"] },
-		{ focus: "winners", sides: ["winners"] },
-		{ focus: "losers", sides: ["losers"] },
-		{ focus: "whole", sides: ["winners", "losers"] },
-	])("shows the sides of the $focus focus", ({ focus, sides }) => {
+	test("focuses each side on its own", () => {
+		const data = reportAll(doubleElimination(8), firstRoundIds);
+
+		expect(
+			roundNamesOf(layout({ data, focus: { winners: 0, losers: 2 } })),
+		).toEqual({
+			winners: [
+				"WB Round 1",
+				"WB Semis",
+				"WB Finals",
+				"Grand Finals",
+				"Bracket Reset",
+			],
+			losers: ["LB Semis", "LB Finals"],
+		});
+	});
+
+	test("skips the rounds before the one focused on, finished or not", () => {
+		const data = reportAll(
+			reportAll(doubleElimination(8), firstRoundIds),
+			secondRoundIds,
+		);
+
+		expect(
+			roundsOf(layout({ data, focus: { winners: 1, losers: "hidden" } })),
+		).toEqual({
+			winners: [
+				["WB Semis", 2, "pairs"],
+				["WB Finals", 1, "straight"],
+				["Grand Finals", 1, "straight"],
+				["Bracket Reset", 1, null],
+			],
+		});
+		expect(
+			layout({
+				data,
+				focus: { winners: 1, losers: "hidden" },
+			}).sides[0].rounds[0].matches.every((match) => !match?.isFed),
+		).toBe(true);
+	});
+
+	test("shows the last round of a side focused on a round past its end", () => {
+		expect(
+			roundNamesOf(
+				layout({
+					data: doubleElimination(8),
+					focus: { winners: "hidden", losers: 99 },
+				}),
+			),
+		).toEqual({ losers: ["LB Finals"] });
+	});
+
+	test.each<{ focus: BroadcastBracketSidesFocus; sides: string[] }>([
+		{
+			focus: { winners: "remaining", losers: "remaining" },
+			sides: ["winners", "losers"],
+		},
+		{ focus: { winners: 0, losers: "hidden" }, sides: ["winners"] },
+		{ focus: { winners: "hidden", losers: "remaining" }, sides: ["losers"] },
+	])("shows the sides not hidden: $sides", ({ focus, sides }) => {
 		expect(
 			layout({ data: doubleElimination(8), focus }).sides.map(
 				(side) => side.type,
@@ -55,11 +109,11 @@ describe("BracketFocus.layout", () => {
 		).toEqual(sides);
 	});
 
-	test.each<{ focus: BroadcastBracketFocus }>([
-		{ focus: "remaining" },
-		{ focus: "losers" },
+	test.each<{ focus: BroadcastBracketSidesFocus }>([
+		{ focus: { winners: "remaining", losers: "remaining" } },
+		{ focus: { winners: "hidden", losers: "remaining" } },
 	])(
-		"lays out single elimination as one side with the $focus focus",
+		"lays out single elimination as one side with winners $focus.winners",
 		({ focus }) => {
 			const bracket = layout({
 				type: "single_elimination",
@@ -146,6 +200,21 @@ describe("BracketFocus.layout", () => {
 	});
 });
 
+describe("BracketFocus.sideRoundNames", () => {
+	test("names the rounds of a side in order", () => {
+		const data = doubleElimination(8);
+
+		expect(
+			BracketFocus.sideRoundNames({
+				type: "double_elimination",
+				side: "losers",
+				data,
+				groupId: data.group[0]?.id,
+			}),
+		).toEqual(["LB Round 1", "LB Round 2", "LB Semis", "LB Finals"]);
+	});
+});
+
 describe("BracketFocus.resolveBracketIdx", () => {
 	test.each([
 		{
@@ -196,12 +265,12 @@ function doubleElimination(teamCount: number) {
 function layout({
 	type = "double_elimination",
 	data,
-	focus = "remaining",
+	focus = { winners: "remaining", losers: "remaining" },
 	featured = null,
 }: {
 	type?: Parameters<typeof BracketFocus.layout>[0]["type"];
 	data: BracketData;
-	focus?: BroadcastBracketFocus;
+	focus?: BroadcastBracketSidesFocus;
 	featured?: Parameters<typeof BracketFocus.layout>[0]["featured"];
 }) {
 	return BracketFocus.layout({
@@ -226,6 +295,16 @@ function firstRoundIds(data: BracketData) {
 			(match) =>
 				match.roundId === firstRound?.id && match.opponent1 && match.opponent2,
 		)
+		.map((match) => match.id);
+}
+
+function secondRoundIds(data: BracketData) {
+	const secondRound = data.round.find(
+		(round) => round.section === "winners" && round.number === 2,
+	);
+
+	return data.match
+		.filter((match) => match.roundId === secondRound?.id)
 		.map((match) => match.id);
 }
 

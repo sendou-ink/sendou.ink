@@ -110,7 +110,6 @@ import type { SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentAdminPage, tournamentMatchPage } from "~/utils/urls";
 import {
-	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_DASHBOARD_TABS,
 	BROADCAST_OBS_WEBSOCKET_DEFAULT_PORT,
 	BROADCAST_PROTOTYPE_CLIPS,
@@ -126,6 +125,8 @@ import {
 } from "../broadcast-cast-schemas";
 import { broadcastDashboardSearchParams } from "../broadcast-cast-search-params";
 import type {
+	BroadcastBracketSide,
+	BroadcastBracketSideFocus,
 	CastBroadcastState,
 	CastProducerState,
 	CastScene,
@@ -1155,7 +1156,7 @@ function SceneEditor({
 					<SwapSides match={state.match} selected={selected} />
 				) : null}
 				{selected.scene === "bracket" ? (
-					<BracketProperties selected={selected} />
+					<BracketProperties state={state} selected={selected} />
 				) : null}
 				{selected.scene === "replays" ? (
 					<ClipProperty selected={selected} />
@@ -1244,8 +1245,15 @@ function SwapSides({
 	);
 }
 
-function BracketProperties({ selected }: { selected: CastProducerState }) {
+function BracketProperties({
+	state,
+	selected,
+}: {
+	state: CastBroadcastState;
+	selected: CastProducerState;
+}) {
 	const { t } = useTranslation(["broadcast"]);
+	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 	const { submit } = useActionSubmit(broadcastActionSchema);
 	const showableIdxs = BracketFocus.showableBracketIdxs(tournament);
@@ -1260,37 +1268,31 @@ function BracketProperties({ selected }: { selected: CastProducerState }) {
 		);
 	}
 
-	const hasDoubleElimination = showableIdxs.some(
-		(idx) => tournament.bracketsMeta[idx].type === "double_elimination",
-	);
+	const shownIdx = BracketFocus.resolveBracketIdx({
+		pickedIdx: selected.bracketIdx,
+		featuredMatchBracketIdx:
+			state.match?.id === data.featuredMatchId
+				? data.featuredMatchBracketIdx
+				: null,
+		showableIdxs,
+	});
+	const roundNames =
+		shownIdx === null ? undefined : data.eliminationRoundNames[shownIdx];
+	const eliminationType =
+		shownIdx === null ? null : tournament.bracketsMeta[shownIdx].type;
+	const sides: Array<{
+		side: BroadcastBracketSide["type"];
+		label: string;
+	}> =
+		eliminationType === "double_elimination"
+			? [
+					{ side: "winners", label: t("broadcast:dashboard.bracket.winners") },
+					{ side: "losers", label: t("broadcast:dashboard.bracket.losers") },
+				]
+			: [{ side: "winners", label: t("broadcast:dashboard.bracket.rounds") }];
 
 	return (
 		<>
-			{hasDoubleElimination ? (
-				<Property label={t("broadcast:dashboard.bracket.focus")}>
-					<SendouChipRadioGroup
-						aria-label={t("broadcast:dashboard.bracket.focus")}
-						wrap
-					>
-						{BROADCAST_BRACKET_FOCUSES.map((focus) => (
-							<SendouChipRadio
-								key={focus}
-								name="broadcast-bracket-focus"
-								value={focus}
-								checked={selected.bracketFocus === focus}
-								onChange={() =>
-									submit("SET_BRACKET_FOCUS", { itemId: selected.id, focus })
-								}
-							>
-								{t(`broadcast:bracketFocus.${focus}`)}
-							</SendouChipRadio>
-						))}
-					</SendouChipRadioGroup>
-					<span className="text-xs text-lighter">
-						{t("broadcast:dashboard.bracket.explanation")}
-					</span>
-				</Property>
-			) : null}
 			{showableIdxs.length > 1 ? (
 				<Property label={t("broadcast:dashboard.bracket.bracket")}>
 					<SendouChipRadioGroup
@@ -1321,7 +1323,100 @@ function BracketProperties({ selected }: { selected: CastProducerState }) {
 					</SendouChipRadioGroup>
 				</Property>
 			) : null}
+			{roundNames
+				? sides.map(({ side, label }) => (
+						<BracketSideProperty
+							key={side}
+							label={label}
+							side={side}
+							roundNames={roundNames[side]}
+							canHide={
+								eliminationType === "double_elimination" &&
+								selected.bracketSides[
+									side === "winners" ? "losers" : "winners"
+								] !== "hidden"
+							}
+							selected={selected}
+						/>
+					))
+				: null}
 		</>
+	);
+}
+
+function BracketSideProperty({
+	label,
+	side,
+	roundNames,
+	canHide,
+	selected,
+}: {
+	label: string;
+	side: BroadcastBracketSide["type"];
+	/** See `BracketFocus.sideRoundNames`. */
+	roundNames: string[];
+	canHide: boolean;
+	selected: CastProducerState;
+}) {
+	const { t } = useTranslation(["broadcast"]);
+	const { submit } = useActionSubmit(broadcastActionSchema);
+	const focus = selected.bracketSides[side];
+	const items: Array<{ id: BroadcastBracketSideFocus; name: string }> = [
+		...(canHide
+			? [
+					{
+						id: "hidden" as const,
+						name: t("broadcast:dashboard.bracket.hidden"),
+					},
+				]
+			: []),
+		{ id: "remaining", name: t("broadcast:dashboard.bracket.remaining") },
+		{ id: 0, name: t("broadcast:dashboard.bracket.allRounds") },
+		...roundNames.slice(1).map((round, roundIdx) => ({
+			id: roundIdx + 1,
+			name: t("broadcast:dashboard.bracket.fromRound", { round }),
+		})),
+	];
+	const selectedKey =
+		typeof focus === "number"
+			? Math.min(focus, Math.max(roundNames.length - 1, 0))
+			: focus === "hidden" && !canHide
+				? "remaining"
+				: focus;
+
+	return (
+		<Property label={label}>
+			<SendouSelect
+				aria-label={label}
+				items={items}
+				selectedKey={selectedKey}
+				onSelectionChange={(key) => {
+					if (
+						typeof key === "number" ||
+						key === "hidden" ||
+						key === "remaining"
+					) {
+						submit("SET_BRACKET_SIDE", {
+							itemId: selected.id,
+							side,
+							focus: key,
+						});
+					}
+				}}
+				data-testid={`broadcast-bracket-${side}-select`}
+			>
+				{(item) => (
+					<SendouSelectItem key={item.id} id={item.id}>
+						{item.name}
+					</SendouSelectItem>
+				)}
+			</SendouSelect>
+			{side === "winners" ? (
+				<span className="text-xs text-lighter">
+					{t("broadcast:dashboard.bracket.explanation")}
+				</span>
+			) : null}
+		</Property>
 	);
 }
 

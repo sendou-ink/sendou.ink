@@ -35,8 +35,8 @@ import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { BROADCAST_OVERLAYS_DOC_LINK } from "~/utils/urls";
 import {
-	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_DESIGN_BEST_OF,
+	BROADCAST_DESIGN_BRACKET_FOCUSES,
 	BROADCAST_DESIGN_BRACKETS,
 	BROADCAST_DESIGN_FOOTAGE,
 	BROADCAST_DESIGN_MAX_OTHER_MATCHES,
@@ -442,7 +442,7 @@ function ScenarioControls({
 				<Choice
 					label={t("broadcast:dashboard.bracket.focus")}
 					value={scenario.bracketFocus}
-					options={BROADCAST_BRACKET_FOCUSES.map((bracketFocus) => ({
+					options={BROADCAST_DESIGN_BRACKET_FOCUSES.map((bracketFocus) => ({
 						value: bracketFocus,
 						label: t(`broadcast:bracketFocus.${bracketFocus}`),
 					}))}

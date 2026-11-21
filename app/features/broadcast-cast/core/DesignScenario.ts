@@ -22,6 +22,7 @@ import type {
 	BroadcastBracketMatch,
 	BroadcastBracketRound,
 	BroadcastBracketSide,
+	BroadcastBracketSidesFocus,
 	BroadcastBracketTeam,
 	BroadcastCaster,
 	BroadcastOtherMatch,
@@ -36,6 +37,17 @@ export type Scenario = Omit<
 	SearchParamsValues<typeof broadcastDesignSearchParams.shape>,
 	"footage"
 >;
+
+/** The producer's per side bracket focus each of the designer's focuses stands for. */
+const BRACKET_SIDES: Record<
+	Scenario["bracketFocus"],
+	BroadcastBracketSidesFocus
+> = {
+	remaining: { winners: "remaining", losers: "remaining" },
+	winners: { winners: "remaining", losers: "hidden" },
+	losers: { winners: "hidden", losers: "remaining" },
+	whole: { winners: 0, losers: 0 },
+};
 
 /**
  * Made up in the manner of the names teams really go by: lowercase, in-jokes, a sentence, other languages. The first
@@ -493,7 +505,7 @@ export function build({
 		swapSides: scenario.swapSides,
 		transition: scenario.transition,
 		bracketIdx: null,
-		bracketFocus: scenario.bracketFocus,
+		bracketSides: BRACKET_SIDES[scenario.bracketFocus],
 		clipId: null,
 		teamPick: "left",
 		durationMs: scenario.scene === "starting" ? 5 * 60_000 : null,

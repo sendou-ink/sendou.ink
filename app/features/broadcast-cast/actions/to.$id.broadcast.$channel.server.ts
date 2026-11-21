@@ -110,8 +110,17 @@ export const action = defineAction(
 				await editItem(body.itemId, { bracketIdx: body.bracketIdx ?? null });
 				break;
 			}
-			case "SET_BRACKET_FOCUS": {
-				await editItem(body.itemId, { bracketFocus: body.focus });
+			case "SET_BRACKET_SIDE": {
+				await updateProducer((state) => {
+					const item = Producer.stagedItems(state).find(
+						(staged) => staged.id === body.itemId,
+					);
+					if (!item) return null;
+
+					return Producer.editItem(CAST_PRODUCER_RULES, state, item.id, {
+						bracketSides: { ...item.bracketSides, [body.side]: body.focus },
+					});
+				});
 				break;
 			}
 			case "SET_TEAM": {

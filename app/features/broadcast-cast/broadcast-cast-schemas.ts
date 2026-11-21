@@ -16,7 +16,6 @@ import {
 } from "~/form/fields";
 import { _action, coerceNumber, id } from "~/utils/schema";
 import {
-	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_HEADLINE_MAX_LENGTH,
 	BROADCAST_MAX_CASTERS,
 	BROADCAST_OBS_INPUT_NAME_MAX_LENGTH,
@@ -126,9 +125,11 @@ export const broadcastActionSchema = v.union([
 		bracketIdx: v.optional(nonNegativeInteger),
 	}),
 	v.object({
-		_action: _action("SET_BRACKET_FOCUS"),
+		_action: _action("SET_BRACKET_SIDE"),
 		itemId: id,
-		focus: v.picklist(BROADCAST_BRACKET_FOCUSES),
+		side: v.picklist(["winners", "losers"]),
+		/** See `BroadcastBracketSideFocus`. */
+		focus: v.union([v.picklist(["hidden", "remaining"]), nonNegativeInteger]),
 	}),
 	v.object({
 		_action: _action("SET_TEAM"),

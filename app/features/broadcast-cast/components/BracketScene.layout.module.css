@@ -151,6 +151,15 @@
 	overflow: hidden;
 }
 
+/* zoomed in, the header is out of view, also when the bracket left under it is small enough to be centered */
+.camera:has([data-featured]) .header {
+	animation:
+		var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		var(--scene-enter-delay) both,
+		var(--bc-anim-fade-out) var(--camera-duration) ease
+		calc(var(--scene-enter-delay) + var(--camera-hold)) both;
+}
+
 /* the rest dim once the camera has settled, the featured match (and its teams' standings) standing out */
 .camera:has([data-featured]) :is(.match, .standing):not([data-featured]) {
 	animation: var(--bc-anim-dim) var(--bc-enter-duration) ease

@@ -47,10 +47,10 @@ export const BROADCAST_SCENE_DURATIONS_MS: Partial<
 };
 
 /**
- * Part of the bracket the bracket scene shows: the rounds still being played of both sides (`remaining`), of one
- * side, or every round of both.
+ * Bracket scene focuses the theme designer previews: the rounds still being played of both sides (`remaining`), of
+ * one side, or every round of both.
  */
-export const BROADCAST_BRACKET_FOCUSES = [
+export const BROADCAST_DESIGN_BRACKET_FOCUSES = [
 	"remaining",
 	"winners",
 	"losers",
@@ -415,7 +415,7 @@ const DEFAULT_CAST_ITEM: Omit<CastProducerState, "id"> = {
 	swapSides: false,
 	transition: "stinger",
 	bracketIdx: null,
-	bracketFocus: "remaining",
+	bracketSides: { winners: "remaining", losers: "remaining" },
 	clipId: null,
 	teamPick: "left",
 	durationMs: null,

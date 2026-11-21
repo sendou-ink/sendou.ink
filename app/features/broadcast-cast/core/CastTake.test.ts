@@ -122,7 +122,7 @@ function item(patch: Partial<CastProducerState> = {}): CastProducerState {
 		swapSides: false,
 		transition: "cut",
 		bracketIdx: null,
-		bracketFocus: "remaining",
+		bracketSides: { winners: "remaining", losers: "remaining" },
 		clipId: null,
 		teamPick: "left",
 		durationMs: null,

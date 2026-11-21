@@ -30,7 +30,7 @@ import {
 } from "../broadcast-cast-constants";
 import type {
 	BroadcastBracket,
-	BroadcastBracketFocus,
+	BroadcastBracketSidesFocus,
 	BroadcastBracketTeam,
 	BroadcastCaster,
 	BroadcastCasterSetting,
@@ -87,7 +87,7 @@ export async function build({
 
 		return bracketLayout({
 			...shown,
-			focus: state[view].bracketFocus,
+			focus: state[view].bracketSides,
 			featured: match ? { id: match.id, progress: match.progress[view] } : null,
 			teamById: (id) => bracketTeam(tournament, id),
 		});
@@ -170,9 +170,10 @@ function shownBracket({
 	const bracket = idx === null ? null : tournament.bracketByIdx(idx);
 	if (idx === null || !bracket) return null;
 
-	const groupId =
-		bracket.data.match.find((candidate) => candidate.id === match?.id)
-			?.groupId ?? bracket.data.group[0]?.id;
+	const groupId = BracketFocus.resolveGroupId({
+		data: bracket.data,
+		featuredMatchId: match?.id ?? null,
+	});
 
 	return {
 		bracket,
@@ -197,7 +198,7 @@ function bracketLayout({
 }: {
 	bracket: Bracket;
 	groupId: number | undefined;
-	focus: BroadcastBracketFocus;
+	focus: BroadcastBracketSidesFocus;
 	featured: BracketFocus.FeaturedMatch | null;
 	teamById: (id: number) => BroadcastBracketTeam | null;
 }): BroadcastBracket | null {

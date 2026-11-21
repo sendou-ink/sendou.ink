@@ -14,14 +14,21 @@ import type {
 	MainWeaponId,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import type {
-	BROADCAST_BRACKET_FOCUSES,
-	BROADCAST_SCENES,
-} from "./broadcast-cast-constants";
+import type { BROADCAST_SCENES } from "./broadcast-cast-constants";
 
 export type CastScene = (typeof BROADCAST_SCENES)[number];
 
-export type BroadcastBracketFocus = (typeof BROADCAST_BRACKET_FOCUSES)[number];
+/**
+ * What the bracket scene shows of one side of an elimination bracket: nothing, the rounds still being played, or
+ * every round from the one at this index of the side on (`0` every round).
+ */
+export type BroadcastBracketSideFocus = "hidden" | "remaining" | number;
+
+/** Of single elimination only `winners` applies, its one side never hidden. */
+export type BroadcastBracketSidesFocus = Record<
+	BroadcastBracketSide["type"],
+	BroadcastBracketSideFocus
+>;
 
 type BroadcastTeamPick = "left" | "right" | number;
 
@@ -29,7 +36,7 @@ type BroadcastTeamPick = "left" | "right" | number;
 export interface CastProducerState extends ProducerState<CastScene> {
 	/** Bracket of the bracket scene, `null` follows the featured match's. */
 	bracketIdx: number | null;
-	bracketFocus: BroadcastBracketFocus;
+	bracketSides: BroadcastBracketSidesFocus;
 	/** Clip the replays scene plays, `null` leaves the footage under it to OBS. */
 	clipId: string | null;
 	/** Team of the team scene: one of the featured match's by its side (following the match cast), or any by its id. */

@@ -10,10 +10,11 @@ import type {
 import { getRounds } from "~/features/tournament-bracket/core/rounds";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type {
-	BroadcastBracketFocus,
 	BroadcastBracketMatch,
 	BroadcastBracketRound,
 	BroadcastBracketSide,
+	BroadcastBracketSideFocus,
+	BroadcastBracketSidesFocus,
 	BroadcastBracketTeam,
 	BroadcastEliminationBracket,
 } from "../broadcast-cast-types";
@@ -31,20 +32,11 @@ export interface FeaturedMatch {
 	progress: Pick<MatchProgress, "resultCount" | "scores" | "isOver">;
 }
 
-const SIDES_IN_FOCUS: Record<
-	BroadcastBracketFocus,
-	Array<BroadcastBracketSide["type"]>
-> = {
-	remaining: ["winners", "losers"],
-	winners: ["winners"],
-	losers: ["losers"],
-	whole: ["winners", "losers"],
-};
-
 /**
- * Lays out an elimination bracket for the bracket scene: of double elimination the sides in focus, compactified to
- * the rounds still being played unless the whole bracket is in focus. The featured match is shown as far as the view
- * shows it, so a result not on air yet doesn't spoil it, neither does its winner advancing in the bracket.
+ * Lays out an elimination bracket for the bracket scene: of double elimination the sides not hidden, each
+ * compactified to the rounds still being played or from the round its focus starts at on (always at least its last
+ * round). The featured match is shown as far as the view shows it, so a result not on air yet doesn't spoil it,
+ * neither does its winner advancing in the bracket.
  */
 export function layout({
 	idx,
@@ -62,22 +54,29 @@ export function layout({
 	data: BracketData;
 	/** Group shown of a bracket split into groups. */
 	groupId: number | undefined;
-	focus: BroadcastBracketFocus;
+	focus: BroadcastBracketSidesFocus;
 	featured: FeaturedMatch | null;
 	teamById: (id: number) => BroadcastBracketTeam | null;
 }): BroadcastEliminationBracket {
 	const bracketData = asOnAir(data, featured);
 
-	const sideTypes =
+	const sideFocuses: Array<
+		[BroadcastBracketSide["type"], BroadcastBracketSideFocus]
+	> =
 		type === "single_elimination"
-			? (["winners"] as const)
-			: SIDES_IN_FOCUS[focus];
-	const sides = sideTypes.flatMap((sideType) => {
+			? [["winners", focus.winners === "hidden" ? "remaining" : focus.winners]]
+			: [
+					["winners", focus.winners],
+					["losers", focus.losers],
+				];
+	const sides = sideFocuses.flatMap(([sideType, sideFocus]) => {
+		if (sideFocus === "hidden") return [];
+
 		const rounds = sideRounds({
 			type: type === "single_elimination" ? "single" : sideType,
 			bracketData,
 			groupId,
-			isCompactified: focus !== "whole",
+			focus: sideFocus,
 		}).map((round, roundIdx, visibleRounds) =>
 			toBroadcastRound({
 				round,
@@ -122,6 +121,20 @@ export function resolveBracketIdx({
 	return showableIdxs.at(-1) ?? null;
 }
 
+/** Group the bracket scene shows of the bracket: the featured match's, or else the first. */
+export function resolveGroupId({
+	data,
+	featuredMatchId,
+}: {
+	data: BracketData;
+	featuredMatchId: number | null;
+}) {
+	return (
+		data.match.find((match) => match.id === featuredMatchId)?.groupId ??
+		data.group[0]?.id
+	);
+}
+
 /** Brackets the bracket scene can show: the elimination, round robin and Swiss ones that have started. */
 export function showableBracketIdxs(
 	tournament: Pick<Tournament, "bracketsMeta">,
@@ -134,6 +147,28 @@ export function showableBracketIdxs(
 		.map((bracket) => bracket.idx);
 }
 
+/**
+ * Names of the rounds of one side of an elimination bracket in order, what a side's focus picks its first round
+ * from (a number focus is an index of these).
+ */
+export function sideRoundNames({
+	type,
+	side,
+	data,
+	groupId,
+}: {
+	type: "single_elimination" | "double_elimination";
+	side: BroadcastBracketSide["type"];
+	data: BracketData;
+	groupId: number | undefined;
+}) {
+	return getRounds({
+		type: type === "single_elimination" ? "single" : side,
+		bracketData: data,
+		groupId,
+	}).map((round) => round.name);
+}
+
 interface SideRound {
 	id: number;
 	name: string;
@@ -144,22 +179,27 @@ function sideRounds({
 	type,
 	bracketData,
 	groupId,
-	isCompactified,
+	focus,
 }: {
 	type: BroadcastBracketSide["type"] | "single";
 	bracketData: BracketData;
 	groupId: number | undefined;
-	isCompactified: boolean;
+	focus: Exclude<BroadcastBracketSideFocus, "hidden">;
 }): SideRound[] {
 	const rounds = getRounds({ type, bracketData, groupId });
 	const { hiddenRoundIds, compactedFirstRoundId } = EliminationLayout.resolve({
 		rounds,
 		bracketData,
-		isCompactified,
+		isCompactified: focus === "remaining",
 	});
+	const firstRoundIdx =
+		focus === "remaining" ? 0 : Math.min(focus, rounds.length - 1);
 
 	return rounds
-		.filter((round) => !hiddenRoundIds.has(round.id))
+		.filter(
+			(round, roundIdx) =>
+				roundIdx >= firstRoundIdx && !hiddenRoundIds.has(round.id),
+		)
 		.map((round) => ({
 			id: round.id,
 			name: round.name,
