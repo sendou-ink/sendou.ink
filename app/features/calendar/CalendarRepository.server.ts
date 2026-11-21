@@ -574,23 +574,7 @@ export async function insert(args: CreateArgs) {
 	return db.transaction().execute(async (trx) => {
 		let tournamentId: number | null = null;
 		if (args.isFullTournament) {
-			invariant(args.bracketProgression, "Expected bracketProgression");
-			const settings: Tables["Tournament"]["settings"] = {
-				bracketProgression: args.bracketProgression,
-				isRanked: args.isRanked,
-				isTest: args.isTest,
-				isLeague: args.isLeague,
-				isDraft: args.isDraft,
-				isInvitational: args.isInvitational,
-				enableNoScreenToggle: args.enableNoScreenToggle,
-				enableSubs: args.enableSubs,
-				autonomousSubs: args.autonomousSubs,
-				regClosesAt: args.regClosesAt,
-				requireInGameNames: args.requireInGameNames,
-				minMembersPerTeam: args.minMembersPerTeam,
-				maxMembersPerTeam: args.maxMembersPerTeam,
-				teamPick: teamPickSettings(args),
-			};
+			const settings = buildTournamentSettings(args, { isTest: args.isTest });
 
 			tournamentId = (
 				await trx
@@ -646,7 +630,7 @@ export async function insert(args: CreateArgs) {
 	});
 }
 
-type UpdateArgs = Omit<CreateArgs, "createTournament" | "isFullTournament"> & {
+type UpdateArgs = Omit<CreateArgs, "isFullTournament"> & {
 	eventId: number;
 };
 export async function update(args: UpdateArgs) {
@@ -668,19 +652,9 @@ export async function update(args: UpdateArgs) {
 			.executeTakeFirstOrThrow();
 
 		if (tournamentId) {
-			await updateTournamentTables(args, trx, tournamentId);
-		}
+			const { isTest } = await updateTournamentTables(args, trx, tournamentId);
 
-		if (tournamentId) {
-			const { settings: existingSettings } = await trx
-				.selectFrom("Tournament")
-				.select(["settings"])
-				.where("id", "=", tournamentId)
-				.executeTakeFirstOrThrow();
-
-			const hidden = toDBBoolean(
-				Boolean(existingSettings.isTest || args.isDraft),
-			);
+			const hidden = toDBBoolean(Boolean(isTest || args.isDraft));
 			await trx
 				.updateTable("CalendarEvent")
 				.set({ hidden })
@@ -715,8 +689,6 @@ async function updateTournamentTables(
 	trx: Transaction<DB>,
 	tournamentId: number,
 ) {
-	invariant(args.bracketProgression, "Expected bracketProgression");
-
 	const { settings: existingSettings, mapPickingStyle: existingStyle } =
 		await trx
 			.selectFrom("Tournament")
@@ -724,32 +696,21 @@ async function updateTournamentTables(
 			.where("id", "=", tournamentId)
 			.executeTakeFirstOrThrow();
 
-	const teamPick = teamPickSettings({ ...args, isFullTournament: true });
-
-	const settings: Tables["Tournament"]["settings"] = {
-		bracketProgression: args.bracketProgression,
-		isRanked: args.isRanked,
-		isTest: existingSettings.isTest, // this one is not editable after creation
-		isLeague: args.isLeague,
-		isDraft: args.isDraft,
-		isInvitational: args.isInvitational,
-		enableNoScreenToggle: args.enableNoScreenToggle,
-		enableSubs: args.enableSubs,
-		autonomousSubs: args.autonomousSubs,
-		regClosesAt: args.regClosesAt,
-		requireInGameNames: args.requireInGameNames,
-		minMembersPerTeam: args.minMembersPerTeam,
-		maxMembersPerTeam: args.maxMembersPerTeam,
-		teamPick,
-	};
+	const settings = buildTournamentSettings(args, {
+		// not editable after creation
+		isTest: existingSettings.isTest,
+	});
 
 	const changedFormat = Progression.changedBracketProgressionFormat(
 		existingSettings.bracketProgression,
-		args.bracketProgression,
+		settings.bracketProgression,
 	);
 	const changedMapPickingStyle =
 		existingStyle !== args.mapPickingStyle ||
-		!R.isDeepEqual(existingSettings.teamPick ?? null, teamPick ?? null);
+		!R.isDeepEqual(
+			existingSettings.teamPick ?? null,
+			settings.teamPick ?? null,
+		);
 
 	await trx
 		.updateTable("Tournament")
@@ -780,7 +741,7 @@ async function updateTournamentTables(
 		changedFormat ||
 		Progression.changedStartingBrackets(
 			existingSettings.bracketProgression,
-			args.bracketProgression,
+			settings.bracketProgression,
 		)
 	) {
 		await trx
@@ -789,6 +750,8 @@ async function updateTournamentTables(
 			.where("tournamentId", "=", tournamentId)
 			.execute();
 	}
+
+	return { isTest: existingSettings.isTest };
 }
 
 /**
@@ -832,10 +795,34 @@ async function resetTeamMapPicks(
 		.execute();
 }
 
+function buildTournamentSettings(
+	args: Omit<CreateArgs, "isFullTournament">,
+	{ isTest }: { isTest: boolean | undefined },
+): Tables["Tournament"]["settings"] {
+	invariant(args.bracketProgression, "Expected bracketProgression");
+
+	return {
+		bracketProgression: args.bracketProgression,
+		isRanked: args.isRanked,
+		isTest,
+		isLeague: args.isLeague,
+		isDraft: args.isDraft,
+		isInvitational: args.isInvitational,
+		enableNoScreenToggle: args.enableNoScreenToggle,
+		enableSubs: args.enableSubs,
+		autonomousSubs: args.autonomousSubs,
+		regClosesAt: args.regClosesAt,
+		requireInGameNames: args.requireInGameNames,
+		minMembersPerTeam: args.minMembersPerTeam,
+		maxMembersPerTeam: args.maxMembersPerTeam,
+		teamPick: teamPickSettings(args),
+	};
+}
+
 function teamPickSettings(
-	args: Pick<CreateArgs, "mapPickingStyle" | "teamPick" | "isFullTournament">,
+	args: Pick<CreateArgs, "mapPickingStyle" | "teamPick">,
 ) {
-	if (!args.isFullTournament || args.mapPickingStyle !== "AUTO") {
+	if (args.mapPickingStyle !== "AUTO") {
 		return undefined;
 	}
 
