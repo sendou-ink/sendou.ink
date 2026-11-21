@@ -686,7 +686,7 @@ async function scanChunk({
 				await done;
 			};
 
-			for (;;) {
+			while (true) {
 				// every sample before the next due time is certainly skipped
 				stream.floor(scheduler!.nextDueT());
 				const item = queue.shift() ?? (exhausted ? null : await timedNext());
@@ -722,7 +722,7 @@ async function scanChunk({
 		const skimTo = async (targetT: number): Promise<Pulled | null> => {
 			const stream = openSource();
 			stream.seek(targetT);
-			for (;;) {
+			while (true) {
 				const item = queue.shift() ?? (exhausted ? null : await timedNext());
 				if (!item) return null;
 				if (item.t < targetT) {

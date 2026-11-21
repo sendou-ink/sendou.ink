@@ -4,7 +4,7 @@ allowBuilds:
   esbuild: true
 patchedDependencies:
   '@react-router/serve@8.1.0': patches/@react-router__serve@8.1.0.patch
-  i18next@26.3.6: patches/i18next@26.3.6.patch
+  i18next@27.0.1: patches/i18next@27.0.1.patch
   kysely@0.29.0: patches/kysely@0.29.0.patch
   react-i18next@17.0.11: patches/react-i18next@17.0.11.patch
   react-router@8.5.0: patches/react-router@8.5.0.patch

@@ -87,7 +87,7 @@ export function all<T>(steps: readonly MatchSteps<T>[]): MatchSteps<T[]>;
 export function* all<T>(steps: readonly MatchSteps<T>[]): MatchSteps<T[]> {
 	const results = new Array<T>(steps.length);
 	let active = steps.map((gen, index) => ({ gen, index, step: gen.next() }));
-	for (;;) {
+	while (true) {
 		active = active.filter(({ index, step }) => {
 			if (step.done) results[index] = step.value;
 			return !step.done;

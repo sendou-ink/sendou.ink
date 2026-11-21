@@ -629,7 +629,7 @@ async function* decodeFrames(
 		Symbol.asyncIterator
 	]();
 	const nextStamp = async (): Promise<number> => {
-		for (;;) {
+		while (true) {
 			const line = await stamps.next();
 			if (line.done) throw new Error("ffmpeg gave a frame no timestamp");
 			const stamp = /^frame:\d+\s+pts:\S+\s+pts_time:(\S+)/.exec(line.value);

@@ -65,7 +65,7 @@ const lookingAction = wrappedAction<typeof lookingSchema>({
 
 /** Confirms every member of both groups as ready, which is what creates the match. */
 const confirmEveryoneReady = async (groupId: number) => {
-	for (;;) {
+	while (true) {
 		const readyCheck = await SQGroupRepository.findReadyCheckByGroupId(groupId);
 		if (!readyCheck) return;
 

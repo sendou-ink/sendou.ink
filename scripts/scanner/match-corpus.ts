@@ -70,7 +70,7 @@ export function recordingRunner(inner: StepsRunner, dir: string) {
 		const run: MatchCorpus["runs"][number] = { steps: [] };
 		runs.push(run);
 		let scores: MatchScores[] | undefined;
-		for (;;) {
+		while (true) {
 			const step = scores === undefined ? steps.next() : steps.next(scores);
 			if (step.done) return step.value;
 			run.steps.push(

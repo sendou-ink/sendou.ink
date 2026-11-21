@@ -160,7 +160,7 @@ function* timed<T>(
 	report: (ms: number) => void,
 ): MatchSteps<T> {
 	let scores: MatchScores[] | undefined;
-	for (;;) {
+	while (true) {
 		const start = performance.now();
 		const step = scores === undefined ? steps.next() : steps.next(scores);
 		report(performance.now() - start);

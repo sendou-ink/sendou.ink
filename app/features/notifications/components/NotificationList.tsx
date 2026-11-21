@@ -42,7 +42,7 @@ export function NotificationItem({
 			<div className={styles.itemHeader}>
 				{t(
 					`common:notifications.text.${notification.type}`,
-					notificationMeta(notification),
+					notificationMeta(notification) ?? {},
 				)}
 			</div>
 			<div className={styles.timestamp}>

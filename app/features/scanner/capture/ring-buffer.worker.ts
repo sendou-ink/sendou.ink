@@ -244,7 +244,7 @@ class Ring {
 
 	async #pumpVideo(stream: ReadableStream<VideoFrame>): Promise<void> {
 		const reader = stream.getReader();
-		for (;;) {
+		while (true) {
 			const { value: frame, done } = await reader.read();
 			if (done || !frame) break;
 			const encoder = this.#videoEncoder;
@@ -275,7 +275,7 @@ class Ring {
 	async #pumpAudio(stream: ReadableStream<AudioData>): Promise<void> {
 		const reader = stream.getReader();
 		let configured = false;
-		for (;;) {
+		while (true) {
 			const { value: data, done } = await reader.read();
 			if (done || !data) break;
 			const now = Date.now() / 1000;

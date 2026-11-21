@@ -418,7 +418,7 @@ function playOut(
 ): BracketData {
 	let data = initial;
 
-	for (;;) {
+	while (true) {
 		const statuses = Engine.matchStatuses(data);
 		const playable = data.match.find(
 			(match) => statuses.get(match.id) === "STARTED",

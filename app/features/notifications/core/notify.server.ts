@@ -258,7 +258,7 @@ function pushNotificationOptions(
 		title: t(`common:notifications.title.${notification.type}`),
 		body: t(
 			`common:notifications.text.${notification.type}`,
-			notificationMeta(notification),
+			notificationMeta(notification) ?? {},
 		),
 		icon: notification.pictureUrl ?? APP_ICON_URL,
 		data: { url: notificationLink(notification, recipient) },
