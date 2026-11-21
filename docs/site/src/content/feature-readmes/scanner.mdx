@@ -1062,7 +1062,10 @@ The GPU is an accelerator only: the same algorithms make the same decisions.
   lockstep of their steps on the GPU — and record results in registry order.
   Scheduler decisions within a frame depend only on each detector's own
   state, so this equals gating and parsing one detector at a time.
-- **Matcher** (`worker/gpu-matcher.ts`): each step is one submit of three
+- **Matcher** (`worker/gpu-matcher.ts`): each step is one submit (split
+  where its buffers would pass 128 MiB or the device's limits: a name read
+  can ask for ~80k crops in one step, and an oversized buffer once failed
+  validation silently, its stale pool buffer garbling every later score) of three
   passes — per-image integral images (window sums), a score pass (one thread
   per 4 vertically adjacent placements; cross sums as packed u8 dot products;
   an f32 estimate folded into the job's max) and a select pass returning the
@@ -1084,7 +1087,7 @@ The GPU is an accelerator only: the same algorithms make the same decisions.
   converts the same.
 - **Worker** (`worker/analyzer.worker.ts`): creates the matcher (and scaler on
   its device) at init when enabled and an adapter exists; a failed creation
-  or a device lost mid-run (`device.lost`, or a failed readback) hands the
+  or a device lost mid-run (`device.lost`, a failed readback, or a dispatch failing validation) hands the
   pending step to `runSync`, so the generators still run exactly once and no
   event is dropped or duplicated, and later frames stay on the CPU. A device
   whose submit → `mapAsync` round trip is slow (`hasFastReadback`; Firefox

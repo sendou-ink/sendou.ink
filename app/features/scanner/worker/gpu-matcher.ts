@@ -48,6 +48,8 @@ const MAX_IMAGE_COLS = 4096;
 const WINDOW_KEYS = MAX_IMAGE_COLS * MAX_IMAGE_COLS;
 /** Words after each packed image: the funnel-shifted reads run one word past a row (those bytes only meet zero template padding). */
 const IMAGE_PAD_WORDS = 2;
+/** Largest per-dispatch buffer a step's jobs are split to fit (WebGPU's default binding limit); bigger ones fail validation on many GPUs. */
+const MAX_DISPATCH_BUFFER_BYTES = 128 * 1024 * 1024;
 /** readback round trips tried before the GPU is judged too slow, and the bar each is held to */
 const READBACK_PROBES = 3;
 const FAST_READBACK_MS = 20;
@@ -460,6 +462,14 @@ export async function createGpuMatcher(
 		return templateBuffer;
 	};
 
+	const bufferBudget = largestPowerOfTwoAtMost(
+		Math.min(
+			device.limits.maxStorageBufferBindingSize,
+			device.limits.maxBufferSize,
+			MAX_DISPATCH_BUFFER_BYTES,
+		),
+	);
+
 	const pool = new Map<string, GPUBuffer>();
 	const pooled = (name: string, bytes: number, usage: number) => {
 		const have = pool.get(name);
@@ -561,6 +571,10 @@ export async function createGpuMatcher(
 		}
 		stats.placements += total;
 
+		// an invalid buffer fails the whole submit silently: the readback would
+		// map stale scores, so a dispatch the device rejects is thrown instead
+		device.pushErrorScope("out-of-memory");
+		device.pushErrorScope("validation");
 		const tplBuffer = syncTemplates();
 		const imgBuffer = pooled(
 			"img",
@@ -644,9 +658,17 @@ export async function createGpuMatcher(
 			jobs.length * OUT_U32 * 4,
 		);
 		device.queue.submit([encoder.finish()]);
+		const validationError = device.popErrorScope();
+		const memoryError = device.popErrorScope();
 		const waitStart = performance.now();
 		const readBytes = jobs.length * OUT_U32 * 4;
-		await readBuffer.mapAsync(MAP_MODE_READ, 0, readBytes);
+		const mapping = readBuffer.mapAsync(MAP_MODE_READ, 0, readBytes);
+		const rejected = (await validationError) ?? (await memoryError);
+		if (rejected) {
+			mapping.catch(() => {});
+			throw new Error(`matcher dispatch: ${rejected.message}`);
+		}
+		await mapping;
 		stats.gpuWaitMs += performance.now() - waitStart;
 		const out = new Uint32Array(
 			readBuffer.getMappedRange(0, readBytes).slice(0),
@@ -728,7 +750,9 @@ export async function createGpuMatcher(
 			);
 			if (jobs.length > 0) {
 				try {
-					await dispatch(jobs);
+					for (const chunk of dispatchChunks(jobs, bufferBudget)) {
+						await dispatch(chunk);
+					}
 				} catch (error) {
 					// a lost device fails the readback, sometimes before `device.lost` settles
 					lostReason ??= String(error);
@@ -855,6 +879,56 @@ function entriesOf<V>(cache: Map<string, Map<number, V>>, key: string) {
 		cache.set(key, entries);
 	}
 	return entries;
+}
+
+/**
+ * `jobs` split, in order, into runs whose dispatch buffers (packed images,
+ * their integral images, placements, meta, results) each stay within
+ * `budget` bytes. A glyph read can ask for tens of thousands of crops in one
+ * step; a job too big on its own still goes out alone.
+ */
+function* dispatchChunks(jobs: Job[], budget: number): Generator<Job[]> {
+	let chunk: Job[] = [];
+	let images = new Set<Image>();
+	let used = { image: 0, sat: 0, meta: 0, scratch: 0, out: 0 };
+	for (const job of jobs) {
+		let cost = dispatchCost(job, !images.has(job.image));
+		const overflows = (Object.keys(used) as (keyof typeof used)[]).some(
+			(buffer) => used[buffer] + cost[buffer] > budget,
+		);
+		if (chunk.length > 0 && overflows) {
+			yield chunk;
+			chunk = [];
+			images = new Set();
+			used = { image: 0, sat: 0, meta: 0, scratch: 0, out: 0 };
+			cost = dispatchCost(job, true);
+		}
+		chunk.push(job);
+		images.add(job.image);
+		for (const buffer of Object.keys(used) as (keyof typeof used)[]) {
+			used[buffer] += cost[buffer];
+		}
+	}
+	if (chunk.length > 0) yield chunk;
+}
+
+/** Bytes `job` adds to each dispatch buffer; its image's only when the chunk does not hold it yet. */
+function dispatchCost({ image, template, lo, hi }: Job, newImage: boolean) {
+	return {
+		image: newImage
+			? (Math.ceil(image.data.length / 4) + IMAGE_PAD_WORDS) * 4
+			: 0,
+		sat: newImage
+			? (image.rows + 1) * (image.cols + 1) * (image.channels + 1) * 4
+			: 0,
+		meta: (JOB_U32 + 2 + (newImage ? IMAGE_U32 : 0)) * 4,
+		scratch: (image.rows - template.image.rows + 1) * (hi - lo + 1) * 4,
+		out: (1 + OUT_U32) * 4,
+	};
+}
+
+function largestPowerOfTwoAtMost(value: number): number {
+	return 2 ** Math.floor(Math.log2(value));
 }
 
 /** Workgroup grid for `count` workgroups, split over y past the per-dimension limit. */
