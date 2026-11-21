@@ -163,7 +163,6 @@ const persisting = new Set<Promise<unknown>>();
 // counter reads are lookalike misreads and are not collected at all (the icon
 // strip's reads are real in every mode)
 let objectiveBlocked = false;
-/** windows already cut, `${match first source id}:${window t}` */
 /**
  * Footage cut this capture, plus (at tick time) the session's saved clips
  * from earlier captures — the session outlives a capture, so its windows

@@ -34,8 +34,9 @@ export const MONTAGES_STORE = "montages";
  * their data. v2 added the clip stores and moved live event times onto the
  * wall clock, so a v1 database's live events (stamped on the page clock)
  * are dropped; v3 added the compacted matches, v4 the montages, v5 the VoD
- * minimaps, v6 the VoD scan logs. Changing an existing store's
- * shape needs a real migration here. The shape of an event's `type`/`data`
+ * minimaps, v6 the VoD scan logs. Older databases still carry an unused `t`
+ * index on events; the next bump can `deleteIndex` it. Changing an existing
+ * store's shape needs a real migration here. The shape of an event's `type`/`data`
  * is not this version's business: event records carry their own `v` stamp and
  * are upgraded as they are read (`core/event-version.ts`), so a detector
  * change needs no DB_VERSION bump.
@@ -53,7 +54,6 @@ function upgrade(database: IDBDatabase, oldVersion: number): void {
 			keyPath: "id",
 			autoIncrement: true,
 		});
-		events.createIndex("t", "t");
 		events.createIndex("detectedAt", "detectedAt");
 	}
 

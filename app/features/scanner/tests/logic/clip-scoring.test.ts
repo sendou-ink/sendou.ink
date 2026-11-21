@@ -22,6 +22,13 @@ function kill(t: number, time: number | null = null): ScannerMatchKill {
 
 const kills = (...ts: number[]) => ({ kills: ts.map((t) => kill(t)) });
 
+/** the live setting's default streak length unless a test picks its own */
+const windowsOf = (
+	match: Parameters<typeof scoreWindows>[0],
+	deaths: readonly number[],
+	options: Partial<Parameters<typeof scoreWindows>[2]> = {},
+) => scoreWindows(match, deaths, { minKills: 4, ...options });
+
 const windowOf = (start: number, end: number, count: number, t: number) => ({
 	start,
 	end,
@@ -40,42 +47,41 @@ function stripped(windows: ReturnType<typeof scoreWindows>) {
 }
 
 test("no window below the kill threshold", () => {
-	assert.deepEqual(scoreWindows(kills(100, 105, 110), []), []);
+	assert.deepEqual(windowsOf(kills(100, 105, 110), []), []);
 	assert.deepEqual(
-		stripped(scoreWindows(kills(100, 105, 110), [], { minKills: 3 })),
+		stripped(windowsOf(kills(100, 105, 110), [], { minKills: 3 })),
 		[windowOf(95, 113, 3, 110)],
 	);
 });
 
 test("a run of close kills is one window with lead and tail", () => {
-	assert.deepEqual(stripped(scoreWindows(kills(100, 110, 125, 130), [])), [
+	assert.deepEqual(stripped(windowsOf(kills(100, 110, 125, 130), [])), [
 		windowOf(95, 133, 4, 130),
 	]);
 });
 
 test("the clip start clamps to the stream start", () => {
-	assert.deepEqual(stripped(scoreWindows(kills(2, 4, 6, 8), [])), [
+	assert.deepEqual(stripped(windowsOf(kills(2, 4, 6, 8), [])), [
 		windowOf(0, 11, 4, 8),
 	]);
 });
 
 test("a long pause splits the streak", () => {
 	assert.deepEqual(
-		stripped(scoreWindows(kills(100, 105, 110, 115, 140, 145, 150, 155), [])),
+		stripped(windowsOf(kills(100, 105, 110, 115, 140, 145, 150, 155), [])),
 		[windowOf(95, 118, 4, 115), windowOf(135, 158, 4, 155)],
 	);
 });
 
 test("a death between two kills ends the streak", () => {
-	assert.deepEqual(scoreWindows(kills(100, 105, 110, 115), [107.5]), []);
-	assert.deepEqual(
-		stripped(scoreWindows(kills(100, 105, 110, 115, 120), [116])),
-		[windowOf(95, 118, 4, 115)],
-	);
+	assert.deepEqual(windowsOf(kills(100, 105, 110, 115), [107.5]), []);
+	assert.deepEqual(stripped(windowsOf(kills(100, 105, 110, 115, 120), [116])), [
+		windowOf(95, 118, 4, 115),
+	]);
 });
 
 test("a death on a kill's second (a trade) counts after that kill", () => {
-	assert.deepEqual(stripped(scoreWindows(kills(100, 105, 110, 115), [115])), [
+	assert.deepEqual(stripped(windowsOf(kills(100, 105, 110, 115), [115])), [
 		windowOf(95, 118, 4, 115),
 	]);
 });
@@ -83,7 +89,7 @@ test("a death on a kill's second (a trade) counts after that kill", () => {
 test("a streak is cut where its clip would outgrow the cap", () => {
 	assert.deepEqual(
 		stripped(
-			scoreWindows(kills(100, 115, 130, 145, 160, 175, 190, 205, 220), [], {
+			windowsOf(kills(100, 115, 130, 145, 160, 175, 190, 205, 220), [], {
 				maxSeconds: 60,
 			}),
 		),
@@ -92,15 +98,15 @@ test("a streak is cut where its clip would outgrow the cap", () => {
 });
 
 test("the score ranks the longer streak first, the tighter one second", () => {
-	const [loose] = scoreWindows(kills(100, 110, 120, 130), []);
-	const [tight] = scoreWindows(kills(100, 102, 104, 106), []);
-	const [longer] = scoreWindows(kills(100, 110, 120, 130, 140), []);
+	const [loose] = windowsOf(kills(100, 110, 120, 130), []);
+	const [tight] = windowsOf(kills(100, 102, 104, 106), []);
+	const [longer] = windowsOf(kills(100, 110, 120, 130, 140), []);
 	assert.ok(tight!.score > loose!.score);
 	assert.ok(longer!.score > tight!.score);
 });
 
 test("the window carries its last kill's timer reading", () => {
-	const [window] = scoreWindows(
+	const [window] = windowsOf(
 		{ kills: [kill(100, 200), kill(103, 197), kill(106, 194), kill(109, 191)] },
 		[],
 	);
@@ -108,7 +114,7 @@ test("the window carries its last kill's timer reading", () => {
 });
 
 test("a window closes once the streak gap has passed its last kill", () => {
-	const [window] = scoreWindows(kills(100, 105, 110, 115), []);
+	const [window] = windowsOf(kills(100, 105, 110, 115), []);
 	assert.equal(windowClosed(window!, 129), false);
 	assert.equal(windowClosed(window!, 130), true);
 });
@@ -144,7 +150,7 @@ test("a minimap read striking out the POV card is a POV death", () => {
 	];
 	assert.deepEqual(povDeathTimes(events), [50, 107]);
 	assert.deepEqual(
-		scoreWindows(kills(100, 105, 110, 115), povDeathTimes(events)),
+		windowsOf(kills(100, 105, 110, 115), povDeathTimes(events)),
 		[],
 	);
 });

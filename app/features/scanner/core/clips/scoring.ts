@@ -4,7 +4,7 @@
  * player's own kills feed it: a streak is a run of consecutive kills with no
  * POV death between them and no pause longer than `STREAK_MAX_GAP_S`, cut
  * where its clip would outgrow `MAX_CLIP_SECONDS` so every clip fits and its
- * kill count stays honest. A streak of `MIN_KILLS` or more is a window,
+ * kill count stays honest. A streak of `minKills` or more is a window,
  * scored by streak length first and density second.
  */
 import { DEATH_EVENT_TYPE } from "../detectors/death/index";
@@ -12,8 +12,6 @@ import { MINIMAP_EVENT_TYPE } from "../detectors/minimap/index";
 import type { DetectedEvent } from "../events";
 import type { ScannerMatch, ScannerMatchKill } from "../scanner-match";
 
-/** the default; the settings popover lets the player pick 3, 4 or 5 */
-const MIN_KILLS = 4;
 export const MAX_CLIP_SECONDS = 60;
 /** footage kept before the first kill: the approach */
 const CLIP_LEAD_S = 5;
@@ -46,7 +44,10 @@ export interface ClipWindow {
 export function scoreWindows(
 	match: Pick<ScannerMatch, "kills">,
 	deaths: readonly number[],
-	{ minKills = MIN_KILLS, maxSeconds = MAX_CLIP_SECONDS } = {},
+	{
+		minKills,
+		maxSeconds = MAX_CLIP_SECONDS,
+	}: { minKills: number; maxSeconds?: number },
 ): ClipWindow[] {
 	const sortedDeaths = deaths.toSorted((a, b) => a - b);
 	const windows: ClipWindow[] = [];

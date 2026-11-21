@@ -31,7 +31,7 @@ running capture (`LiveView`), a past session (`PastSessionView`) and a
 scanned VoD (`VodView`): header, clip strip, then match cards
 (`components/MatchCard.tsx`) newest first. Views are picked by the `view`
 search param (`scanner-search-params.ts`: `live`, `session&id=`,
-`vod&name=`, `coach&name=` (a scanned file's coach events beside its video), `clips`, `debug` and the dev-only `fixtures` and `montage`). Nothing links to
+`vod&name=`, `coach&name=` (a scanned file's coach events beside its video), `clips`, `debug` and the dev-only `montage`). Nothing links to
 the `debug` screenshot view: dropping an image on the landing's File card
 opens it, for anyone, through the same handoff Inspect uses.
 
@@ -144,7 +144,7 @@ opens it, for anyone, through the same handoff Inspect uses.
   `Save frame as fixture` (Settings → Debug, live only) and
   `?telemetry=true`. The screenshot view (`ScreenshotPage.tsx`) is not
   gated (drop a frame from a game data zip on the landing to inspect it);
-  the fixtures and montage views are dev-only.
+  the montage view is dev-only.
 
 ## Clips
 
@@ -152,8 +152,8 @@ Clips are real video with audio, cut in the browser. `core/clips/scoring.ts`
 is the pure, swappable scorer: only the POV player's own kills feed it
 (`ScannerMatch.kills`, off the kill feed); a streak is consecutive kills with
 no POV death between them and no pause over `STREAK_MAX_GAP_S`, cut where the
-clip would outgrow `MAX_CLIP_SECONDS`; `MIN_KILLS` (4) makes it a window,
-scored `kills² + kills / span`. Both controllers run windows → cut →
+clip would outgrow `MAX_CLIP_SECONDS`; the `clipMinKills` setting (live) or
+the VoD criteria's `minKills` makes it a window, scored `kills² + kills / span`. Both controllers run windows → cut →
 `store/clips.ts` over the
 session's matches plus the stretches no scoreboard or minimap backs
 (`buildScannerMatches(…, { unbacked: true })`, `LiveSession.clipMatches`):
