@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { DetectedEvent } from "../core/events";
-import { sessionSummary } from "../core/sessions";
 import { deleteEvents, listEvents, loadEventFrame, saveEvent } from "./events";
 import { trimFrames } from "./frames";
 import {
@@ -79,8 +78,6 @@ describe("trimFrames", () => {
 			{
 				name: "game.mp4",
 				savedAt: Date.now(),
-				duration: 60,
-				summary: sessionSummary([]),
 			},
 			[{ ...mapStart, frame: frameOf(80) }],
 		);

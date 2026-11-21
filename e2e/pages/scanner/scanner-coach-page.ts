@@ -1,7 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
 import type { DetectedEvent } from "~/features/scanner/core/events";
-import { buildScannerMatches } from "~/features/scanner/core/match-builder";
-import { sessionSummary } from "~/features/scanner/core/sessions";
 import { scannerSearchParams } from "~/features/scanner/scanner-search-params";
 import { SCANNER_PAGE } from "~/utils/urls";
 import { expect, expectIsHydrated, navigate } from "../../helpers/playwright";
@@ -65,19 +63,14 @@ export class ScannerCoachPage {
 	 */
 	async seedScan({
 		name,
-		duration,
 		events,
 	}: {
 		name: string;
-		duration: number;
 		events: readonly DetectedEvent[];
 	}) {
 		const vod = {
 			name,
 			savedAt: Date.now(),
-			duration,
-			eventCount: events.length,
-			summary: sessionSummary(buildScannerMatches(events)),
 		};
 
 		await this.page.evaluate(

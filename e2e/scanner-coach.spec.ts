@@ -30,7 +30,6 @@ const COACH_EVENTS: DetectedEvent[] = EventVersion.readable(
 );
 const COACH_VOD_NAME = "scanner-coach-vod.webm";
 const COACH_VOD_PATH = path.join(__dirname, "fixtures", COACH_VOD_NAME);
-const COACH_VOD_DURATION = 315;
 const CAST_GAME_STARTS_AT = 215;
 
 test.describe("Scanner coach mode", () => {
@@ -73,7 +72,6 @@ test.describe("Scanner coach mode", () => {
 
 		await coach.seedScan({
 			name: COACH_VOD_NAME,
-			duration: COACH_VOD_DURATION,
 			events: COACH_EVENTS,
 		});
 		await coach.reload();

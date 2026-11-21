@@ -24,7 +24,6 @@ import {
 import { ModeImage } from "~/components/Image";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start";
 import type { XRankPositionData } from "../core/detectors/x-rank/position";
-import type { IngestSkipReason } from "../core/match-builder";
 import {
 	type BuiltMatch,
 	ingestSkipReasons,
@@ -64,12 +63,10 @@ const LOBBY_GROUP_LABELS: Record<LobbyGroup, string> = {
 export interface SessionInfo {
 	/** chronological */
 	built: BuiltMatch<ScanEvent>[];
-	summary: SessionSummary;
 	/** `8 games · 5–3 · K/D 1.4 · 3 clips` */
 	summaryLine: string;
 	/** aligned with `built` */
 	clipsByMatch: ScannerClip[][];
-	skipReasons: Map<BuiltMatch<ScanEvent>, IngestSkipReason>;
 }
 
 export function SessionView({
@@ -126,13 +123,10 @@ export function SessionView({
 	const clipsByMatch = built.map((b, index) =>
 		clipsOf(b.match, built[index + 1]?.match, clips),
 	);
-	const summary = sessionSummary(built);
 	const info: SessionInfo = {
 		built,
-		summary,
-		summaryLine: summaryLine(summary, clips.length),
+		summaryLine: summaryLine(sessionSummary(built), clips.length),
 		clipsByMatch,
-		skipReasons,
 	};
 	const justFormedKeys = useJustFormedKeys(built.map(keyOf));
 	// the game being played is the only one still gathering events; a newer

@@ -22,12 +22,8 @@ import {
 } from "../core/detectors/telemetry";
 import { detectionOf } from "../core/events";
 import { formatPosition } from "../core/format";
-import {
-	buildScannerMatches,
-	withoutInvalidObjectives,
-} from "../core/match-builder";
+import { withoutInvalidObjectives } from "../core/match-builder";
 import * as ScanLog from "../core/scan-log";
-import { sessionSummary } from "../core/sessions";
 import { bringsFrame, stitchLanes } from "../core/timeline/index";
 import {
 	loadVodEventFrame,
@@ -527,8 +523,6 @@ export async function startVodScan(
 			{
 				name: file.name,
 				savedAt: Date.now(),
-				duration,
-				summary: sessionSummary(buildScannerMatches(events)),
 			},
 			events.map((event) => ({
 				...detectionOf(event),

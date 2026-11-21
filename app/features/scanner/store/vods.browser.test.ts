@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as EventVersion from "../core/event-version";
 import * as ScanLog from "../core/scan-log";
-import { sessionSummary } from "../core/sessions";
 import { stubEvent } from "../tests/stub-event";
 import { tx, VOD_EVENTS_STORE } from "./db";
 import {
@@ -25,8 +24,6 @@ function saveWithMinimaps(name: string, ts: number[]): Promise<void> {
 		{
 			name,
 			savedAt: Date.now(),
-			duration: 60,
-			summary: sessionSummary([]),
 		},
 		[],
 		ts.map(minimapAt),
@@ -46,12 +43,7 @@ function logWithFrameAt(t: number): ScanLog.ScanLog {
 }
 
 function saveWithScanLog(log?: ScanLog.ScanLog): Promise<void> {
-	return saveVod(
-		{ name: NAME, savedAt: 0, duration: 60, summary: sessionSummary([]) },
-		[],
-		[],
-		log,
-	);
+	return saveVod({ name: NAME, savedAt: 0 }, [], [], log);
 }
 
 async function minimapTimes(name: string): Promise<number[]> {
@@ -81,10 +73,7 @@ describe("loadVodEvents", () => {
 	});
 
 	test("stamps saved events with the current event version", async () => {
-		await saveVod(
-			{ name: NAME, savedAt: 0, duration: 60, summary: sessionSummary([]) },
-			[DEATH],
-		);
+		await saveVod({ name: NAME, savedAt: 0 }, [DEATH]);
 
 		expect((await loadVodEvents(NAME)).map((event) => event.v)).toEqual([
 			EventVersion.CURRENT,

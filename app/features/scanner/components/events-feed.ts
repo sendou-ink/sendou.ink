@@ -26,10 +26,8 @@ import {
 	expiredCompactedSessionKeys,
 	SESSION_COMPACT_AFTER_MS,
 	SESSION_GAP_MS,
-	type SessionSummary,
 	sessionByKey,
 	sessionKey,
-	sessionSummary,
 	splitSessions,
 } from "../core/sessions";
 import type { ScannerClip } from "../store/clips";
@@ -58,7 +56,6 @@ export interface LiveSession {
 	built: BuiltMatch<StoredEvent>[];
 	/** `built` plus the unbacked kill-feed stretches (match-builder.ts), chronological — clip material only */
 	clipMatches: BuiltMatch<StoredEvent>[];
-	summary: SessionSummary;
 	startedAt: number;
 	endedAt: number;
 	/** stream second the session's positions count from */
@@ -308,7 +305,6 @@ function addCompactedSessions(matches: readonly CompactedMatch[]): void {
 			events: built.flatMap((b) => b.sources).toSorted((a, b) => a.t - b.t),
 			built,
 			clipMatches: built,
-			summary: sessionSummary(built),
 			startedAt: session.key,
 			endedAt: session.endedAt,
 			originT: session.originT,
@@ -361,7 +357,6 @@ async function rawSessions(events: StoredEvent[]): Promise<LiveSession[]> {
 			events: sorted,
 			built,
 			clipMatches,
-			summary: sessionSummary(built),
 			startedAt: key,
 			endedAt: sessionEvents.at(-1)!.detectedAt,
 			originT: sorted[0]!.t,

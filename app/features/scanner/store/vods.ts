@@ -1,6 +1,6 @@
 /**
  * Persistence for scanned VoDs, keyed by file name so a video can be reopened
- * without re-decoding. The summary lives in `vods`, detections in
+ * without re-decoding. The name and save time live in `vods`, detections in
  * `vod-events` under a `vod` index, full-res frames in `vod-frames` under the event id
  * (loadVodEventFrame), so listing stays cheap. The map opens' downscaled
  * frames live in `vod-minimaps` for coach mode, kept as long as the VoD, as is
@@ -12,7 +12,6 @@
 import * as EventVersion from "../core/event-version";
 import type { DetectedEvent } from "../core/events";
 import type { ScanLog } from "../core/scan-log";
-import type { SessionSummary } from "../core/sessions";
 import {
 	readwrite,
 	tx,
@@ -29,11 +28,6 @@ export interface VodSummary {
 	name: string;
 	/** wall-clock time the scan (or its last resumption) finished */
 	savedAt: number;
-	/** video duration in seconds */
-	duration: number;
-	eventCount: number;
-	/** the header numbers, computed at save time so listing needs no events */
-	summary: SessionSummary;
 }
 
 export type StoredVodEvent = DetectedEvent & {
@@ -106,7 +100,7 @@ function clearVodMinimaps(
 
 /** Saves a scan over any earlier one of `meta.name`; without a `scanLog` the VoD has none. */
 export async function saveVod(
-	meta: Omit<VodSummary, "eventCount">,
+	meta: VodSummary,
 	events: VodEventToSave[],
 	minimaps: VodMinimap[] = [],
 	scanLog?: ScanLog,
@@ -133,9 +127,7 @@ export async function saveVod(
 				}) as IDBRequest<number>;
 				if (frame) add.onsuccess = () => frameStore.put(frame, add.result);
 			}
-			transaction
-				.objectStore(VODS_STORE)
-				.put({ ...meta, eventCount: events.length });
+			transaction.objectStore(VODS_STORE).put(meta);
 		});
 	});
 	await trimFrames();

@@ -24,11 +24,10 @@ type StoredVod =
 	| { state: "missing" }
 	| {
 			state: "ready";
-			summary: VodSummary;
 			events: ScanEvent[];
 	  };
 
-/** Loads a saved VoD's summary and events. */
+/** Loads a saved VoD's events; `missing` when no VoD of `name` is saved. */
 export function useStoredVod(name: string): StoredVod {
 	const [loaded, setLoaded] = useState<{
 		name: string;
@@ -51,11 +50,7 @@ export function useStoredVod(name: string): StoredVod {
 
 	if (!loaded || loaded.name !== name) return { state: "loading" };
 	if (!loaded.summary) return { state: "missing" };
-	return {
-		state: "ready",
-		summary: loaded.summary,
-		events: loaded.events,
-	};
+	return { state: "ready", events: loaded.events };
 }
 
 /** A saved map-open frame, loaded as an object URL. */
