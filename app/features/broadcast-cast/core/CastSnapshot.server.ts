@@ -122,6 +122,7 @@ export async function build({
 			tournament: {
 				name: tournament.ctx.name,
 				logoUrl: tournament.ctx.logoUrl,
+				organizationName: tournament.ctx.organization?.name ?? null,
 			},
 			match,
 			bracket: { live: bracketOf("live"), next: bracketOf("next") },

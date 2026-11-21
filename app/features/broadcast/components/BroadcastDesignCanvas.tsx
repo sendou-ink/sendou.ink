@@ -51,6 +51,7 @@ export function BroadcastDesignCanvas<State extends BroadcastState>({
 				state={design.state}
 				view="live"
 				rehearsals={design.rehearsals}
+				stinger={design.stinger}
 			/>
 		</ClientErrorBoundary>
 	);

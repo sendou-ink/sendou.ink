@@ -692,7 +692,7 @@ async function findMatch(matchId: number) {
 	return match;
 }
 
-/** Adds a Twitch account to the tournament's cast accounts with its broadcast chat room, as the stream page does. Doesn't clear the tournament data cache. */
+/** Adds a Twitch account to the tournament's cast accounts (unless already one) with its broadcast chat room, as the stream page does. Doesn't clear the tournament data cache. */
 export async function addCastAccount({
 	tournamentId,
 	twitchAccount,
@@ -704,14 +704,20 @@ export async function addCastAccount({
 	invariant(tournament, `Tournament ${tournamentId} not found`);
 
 	const castAccount = { platform: "TWITCH" as const, account: twitchAccount };
+	const castAccounts = tournament.castAccounts ?? [];
 
-	await TournamentRepository.updateCastAccounts({
-		tournamentId,
-		castAccounts: [
-			...(tournament.castAccounts ?? []),
-			{ ...castAccount, name: twitchAccount },
-		],
-	});
+	if (
+		!castAccounts.some(
+			(existing) =>
+				existing.platform === castAccount.platform &&
+				existing.account === castAccount.account,
+		)
+	) {
+		await TournamentRepository.updateCastAccounts({
+			tournamentId,
+			castAccounts: [...castAccounts, { ...castAccount, name: twitchAccount }],
+		});
+	}
 	await TournamentBroadcastFactory.create({
 		tournamentId,
 		channel: castAccount,

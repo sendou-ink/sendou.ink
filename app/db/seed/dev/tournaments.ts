@@ -19,6 +19,7 @@ import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
+import { invariant } from "~/utils/invariant";
 import { NZAP_YOUTUBE_ID } from "../constants";
 import { faker, unique } from "../core/faker";
 import * as showcaseNames from "../core/showcaseNames";
@@ -417,12 +418,13 @@ async function seedInTheZone({
 	};
 }
 
-/** #2 double elim + underground, team picked SZ ×6 + TC ×3 from a custom pool, ranked — started, nothing reported. N-ZAP is seeded past the byes so he has a match going. */
-async function seedPaddlingPool({ users, rosters }: Ctx) {
+/** #2 double elim + underground, team picked SZ ×6 + TC ×3 from a custom pool, ranked, hosted by sendou.ink — started, nothing reported, WB 1.2 cast on paddling_cast so its broadcast has a match. N-ZAP is seeded past the byes so he has a match going. */
+async function seedPaddlingPool({ users, organizations, rosters }: Ctx) {
 	const tournament = await TournamentFactory.create(
 		{
 			name: nameFor("Paddling Pool"),
 			authorId: users.adminId,
+			organizationId: organizations[0]?.id,
 			avatarImgId: await validatedLogoImgId("paddling-pool.png", users.adminId),
 			startTimes: [dateToDatabaseTimestamp(hoursAgo(1))],
 			mapPickingStyle: "AUTO",
@@ -449,6 +451,11 @@ async function seedPaddlingPool({ users, rosters }: Ctx) {
 	});
 
 	await TournamentFactory.startBracket(tournament.id);
+	await TournamentFactory.castMatch({
+		tournamentId: tournament.id,
+		matchId: await winnersRoundOneMatchId(tournament.id, 2),
+		twitchAccount: PADDLING_POOL_CAST_ACCOUNTS[0].account,
+	});
 	await seedSubs(tournament.id, users);
 }
 
@@ -1395,4 +1402,20 @@ function venueWallClock({
 
 function hoursAgo(hours: number) {
 	return new Date(Date.now() - hours * 60 * 60 * 1000);
+}
+
+async function winnersRoundOneMatchId(tournamentId: number, number: number) {
+	const tournament = await tournamentFromDB(tournamentId);
+	const data = tournament.bracketByIdx(0)!.data;
+	const winnersGroup = data.group.find((group) => group.number === 1);
+	const roundOne = data.round.find(
+		(round) => round.groupId === winnersGroup?.id && round.number === 1,
+	);
+	const match = data.match.find(
+		(candidate) =>
+			candidate.roundId === roundOne?.id && candidate.number === number,
+	);
+	invariant(match, `Winners round 1 has no match ${number}`);
+
+	return match.id;
 }

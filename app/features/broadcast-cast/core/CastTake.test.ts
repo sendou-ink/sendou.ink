@@ -105,7 +105,11 @@ describe("CastTake.status", () => {
 function stateOf(): CastBroadcastState {
 	const state = DesignScenario.build({
 		scenario: broadcastDesignSearchParams.parse(new URLSearchParams()),
-		tournament: { name: "In The Zone", logoUrl: "/logo.png" },
+		tournament: {
+			name: "In The Zone",
+			logoUrl: "/logo.png",
+			organizationName: "Sendou.ink",
+		},
 		settings: DEFAULT_CAST_BROADCAST_SETTINGS,
 		takenAt: TAKEN_AT,
 	});

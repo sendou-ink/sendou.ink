@@ -10,10 +10,12 @@ import {
 	BROADCAST_DESIGN_MESSAGE,
 	BROADCAST_DESIGN_READY_MESSAGE,
 	BROADCAST_INK_COLORS,
-	BROADCAST_TRANSITIONS,
 	BROADCAST_WEAPON_IMAGES,
 } from "~/features/broadcast/broadcast-constants";
-import type { BroadcastDesignMessage } from "~/features/broadcast/broadcast-types";
+import type {
+	BroadcastDesignMessage,
+	BroadcastStingerVariant,
+} from "~/features/broadcast/broadcast-types";
 import {
 	broadcastDashboardPage,
 	broadcastDesignCanvasPage,
@@ -43,6 +45,7 @@ import {
 	BROADCAST_DESIGN_MAX_PLAYERS,
 	BROADCAST_DESIGN_NAME_LENGTHS,
 	BROADCAST_DESIGN_SET_STAGES,
+	BROADCAST_DESIGN_TRANSITIONS,
 	BROADCAST_MAX_CASTERS,
 	BROADCAST_THEME_STYLESHEETS,
 } from "../broadcast-cast-constants";
@@ -195,6 +198,7 @@ export default function BroadcastDesignPage() {
 						}
 						state={state}
 						rehearsals={rehearsals}
+						stinger={DesignScenario.stingerOf(scenario)}
 					/>
 					<ScenePicker
 						selected={scenario.scene}
@@ -212,9 +216,9 @@ export default function BroadcastDesignPage() {
 						<Choice
 							label={t("broadcast:dashboard.transition")}
 							value={scenario.transition}
-							options={BROADCAST_TRANSITIONS.map((transition) => ({
+							options={BROADCAST_DESIGN_TRANSITIONS.map((transition) => ({
 								value: transition,
-								label: t(`broadcast:transition.${transition}`),
+								label: t(`broadcast:design.transition.${transition}`),
 							}))}
 							onChange={(transition) => setScenario({ transition })}
 						/>
@@ -295,15 +299,17 @@ function DesignPreview({
 	footageUrl,
 	state,
 	rehearsals,
+	stinger,
 }: {
 	src: string;
 	footageUrl: string | null;
 	state: CastBroadcastState;
 	rehearsals: number;
+	stinger: BroadcastStingerVariant;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const iframeRef = React.useRef<HTMLIFrameElement>(null);
-	const latest = useLatestRef({ state, rehearsals });
+	const latest = useLatestRef({ state, rehearsals, stinger });
 
 	React.useEffect(() => {
 		const onMessage = (event: MessageEvent) => {
@@ -326,8 +332,8 @@ function DesignPreview({
 
 	React.useEffect(() => {
 		const iframeWindow = iframeRef.current?.contentWindow;
-		if (iframeWindow) postDesign(iframeWindow, { state, rehearsals });
-	}, [state, rehearsals]);
+		if (iframeWindow) postDesign(iframeWindow, { state, rehearsals, stinger });
+	}, [state, rehearsals, stinger]);
 
 	return (
 		<BroadcastPreview
@@ -341,12 +347,17 @@ function DesignPreview({
 
 function postDesign(
 	iframeWindow: Window,
-	{ state, rehearsals }: Pick<BroadcastDesignMessage, "state" | "rehearsals">,
+	{
+		state,
+		rehearsals,
+		stinger,
+	}: Pick<BroadcastDesignMessage, "state" | "rehearsals" | "stinger">,
 ) {
 	const message: BroadcastDesignMessage = {
 		type: BROADCAST_DESIGN_MESSAGE,
 		state,
 		rehearsals,
+		stinger,
 	};
 
 	iframeWindow.postMessage(message, window.location.origin);

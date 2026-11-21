@@ -469,3 +469,7 @@
 [data-part="stinger-title-card"] [data-part="stinger-tournament-name"] {
 	text-shadow: none;
 }
+
+[data-part="stinger-title-backdrop"] {
+	display: none;
+}

@@ -3,6 +3,7 @@ import type {
 	BroadcastMap,
 	BroadcastMatch,
 	BroadcastScannedGame,
+	BroadcastStingerVariant,
 	BroadcastTeam,
 	MatchProgress,
 } from "~/features/broadcast/broadcast-types";
@@ -479,6 +480,13 @@ const SWISS_POOLS: Array<{
 	},
 ];
 
+/** The stinger the scenario's transition previews, whichever scenes it goes between. */
+export function stingerOf(
+	scenario: Pick<Scenario, "transition">,
+): BroadcastStingerVariant {
+	return scenario.transition === "tournamentStinger" ? "tournament" : "teams";
+}
+
 /**
  * A broadcast's whole state made up for the designer: the scene on air in the scenario's situation, with mock teams,
  * players, casters, brackets and other matches.
@@ -503,7 +511,10 @@ export function build({
 		id: 1,
 		scene: scenario.scene,
 		swapSides: scenario.swapSides,
-		transition: scenario.transition,
+		transition:
+			scenario.transition === "fade" || scenario.transition === "cut"
+				? scenario.transition
+				: "stinger",
 		bracketIdx: null,
 		bracketSides: BRACKET_SIDES[scenario.bracketFocus],
 		clipId: null,

@@ -3,6 +3,7 @@ import { useEffect, useEffectEvent } from "react";
 import { useTranslation } from "react-i18next";
 import type {
 	BroadcastMatch,
+	BroadcastStingerVariant,
 	BroadcastView,
 } from "~/features/broadcast/broadcast-types";
 import {
@@ -13,7 +14,8 @@ import {
 } from "~/features/broadcast/broadcast-utils";
 import { SetLength } from "~/features/broadcast/components/SetLength";
 import { TeamLogo } from "~/features/broadcast/components/TeamLogo";
-import type { CastBroadcastState } from "../broadcast-cast-types";
+import { CAST_PRODUCER_RULES } from "../broadcast-cast-constants";
+import type { CastBroadcastState, CastScene } from "../broadcast-cast-types";
 import { scenePart } from "../broadcast-cast-utils";
 import layout from "./Stinger.layout.module.css";
 import look from "./Stinger.module.css";
@@ -37,20 +39,32 @@ const PANELS: Array<"a" | "b" | null> = [
 	null,
 ];
 
+/** Rows drifting behind the tournament's title card, each its text this many times over. */
+const TITLE_BACKDROP_ROW_COUNT = 3;
+const TITLE_BACKDROP_REPEATS = 4;
+
 /**
- * Full screen transition with the upcoming match's teams, replacing a pre-rendered stinger video. Calls `onCovered`
+ * Full screen transition replacing a pre-rendered stinger video, in `data-variant`: going into or out of the game the
+ * featured match's teams, otherwise (and without a match) a title card of the tournament. Calls `onCovered`
  * once nothing of the scene underneath shows, the moment to change it, and `onDone` once the new scene is revealed.
  * Its timing is all CSS, scaled by `--bc-stinger-duration` and placed by `--bc-stinger-covered-at`/`--bc-stinger-reveal-at`/`--bc-stinger-entrance-at`.
  */
 export function Stinger({
 	state,
 	view,
+	fromScene,
+	variant = isIntoOrOutOfGame(fromScene, state[view].scene)
+		? "teams"
+		: "tournament",
 	onCovered,
 	onDone,
 }: {
 	/** The state going on air. */
 	state: CastBroadcastState;
 	view: BroadcastView;
+	/** The scene the stinger covers. */
+	fromScene: CastScene;
+	variant?: BroadcastStingerVariant;
 	onCovered: () => void;
 	onDone: () => void;
 }) {
@@ -63,10 +77,12 @@ export function Stinger({
 		return () => clearTimeout(timeout);
 	}, []);
 
+	const teamsMatch = variant === "teams" ? state.match : null;
+
 	return (
 		<div
 			className={styles.stinger}
-			data-has-match={state.match ? true : undefined}
+			data-variant={teamsMatch ? "teams" : "tournament"}
 			{...part("stinger")}
 			onAnimationEnd={(event) => {
 				if (event.target === event.currentTarget) onDone();
@@ -80,7 +96,11 @@ export function Stinger({
 				}}
 			/>
 			<Panels />
-			<Card state={state} view={view} />
+			{teamsMatch ? (
+				<TeamsCard state={state} view={view} match={teamsMatch} />
+			) : (
+				<TitleCard state={state} />
+			)}
 		</div>
 	);
 }
@@ -99,42 +119,19 @@ function Panels() {
 	));
 }
 
-/**
- * The teams facing each other over a header with the tournament, which going into the game also has the round.
- * Without a match, a title card of the tournament.
- */
-function Card({
+/** The teams facing each other over a header with the tournament, which going into the game also has the round. */
+function TeamsCard({
 	state,
 	view,
+	match,
 }: {
 	state: CastBroadcastState;
 	view: BroadcastView;
+	match: BroadcastMatch;
 }) {
 	const { t } = useTranslation(["broadcast"]);
-	const match = state.match;
-	const sides = match ? matchSides(match, view, state[view]) : null;
-	const showScores = (match?.progress[view].resultCount ?? 0) > 0;
-
-	if (!match || !sides) {
-		return (
-			<div className={styles.card} {...part("stinger-card")}>
-				<div className={styles.titleCard} {...part("stinger-title-card")}>
-					<img
-						className={styles.titleCardLogo}
-						src={state.tournament.logoUrl}
-						alt=""
-						{...part("stinger-tournament-logo")}
-					/>
-					<div
-						className={styles.titleCardName}
-						{...part("stinger-tournament-name")}
-					>
-						{state.tournament.name}
-					</div>
-				</div>
-			</div>
-		);
-	}
+	const sides = matchSides(match, view, state[view]);
+	const showScores = match.progress[view].resultCount > 0;
 
 	return (
 		<div className={styles.card} {...part("stinger-card")}>
@@ -150,6 +147,59 @@ function Card({
 				match={match}
 				showRound={state[view].scene === "game"}
 			/>
+		</div>
+	);
+}
+
+/**
+ * The tournament's logo and name on the theme's own colors instead of the teams', drifting behind in rows its name
+ * alternating with its organization's.
+ */
+function TitleCard({ state }: { state: CastBroadcastState }) {
+	const { name, organizationName } = state.tournament;
+	const backdropRows = Array.from(
+		{ length: TITLE_BACKDROP_ROW_COUNT },
+		(_, row) => {
+			const text = organizationName && row % 2 === 1 ? organizationName : name;
+
+			return Array.from({ length: TITLE_BACKDROP_REPEATS }, () => text).join(
+				" · ",
+			);
+		},
+	);
+
+	return (
+		<div className={styles.card} {...part("stinger-card")}>
+			<div
+				className={styles.titleBackdrop}
+				aria-hidden
+				{...part("stinger-title-backdrop")}
+			>
+				{backdropRows.map((text, row) => (
+					<div
+						key={row}
+						className={styles.titleBackdropRow}
+						data-index={row}
+						{...part("stinger-title-backdrop-row")}
+					>
+						{text}
+					</div>
+				))}
+			</div>
+			<div className={styles.titleCard} {...part("stinger-title-card")}>
+				<img
+					className={styles.titleCardLogo}
+					src={state.tournament.logoUrl}
+					alt=""
+					{...part("stinger-tournament-logo")}
+				/>
+				<div
+					className={styles.titleCardName}
+					{...part("stinger-tournament-name")}
+				>
+					{state.tournament.name}
+				</div>
+			</div>
 		</div>
 	);
 }
@@ -220,5 +270,12 @@ function StingerTeam({
 				</span>
 			) : null}
 		</div>
+	);
+}
+
+function isIntoOrOutOfGame(fromScene: CastScene, toScene: CastScene) {
+	return (
+		fromScene === CAST_PRODUCER_RULES.gameScene ||
+		toScene === CAST_PRODUCER_RULES.gameScene
 	);
 }

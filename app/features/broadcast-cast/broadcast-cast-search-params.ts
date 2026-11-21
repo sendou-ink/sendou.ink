@@ -1,8 +1,5 @@
 import * as v from "valibot";
-import {
-	BROADCAST_INK_COLORS,
-	BROADCAST_TRANSITIONS,
-} from "~/features/broadcast/broadcast-constants";
+import { BROADCAST_INK_COLORS } from "~/features/broadcast/broadcast-constants";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import {
@@ -15,6 +12,7 @@ import {
 	BROADCAST_DESIGN_MAX_PLAYERS,
 	BROADCAST_DESIGN_NAME_LENGTHS,
 	BROADCAST_DESIGN_SET_STAGES,
+	BROADCAST_DESIGN_TRANSITIONS,
 	BROADCAST_MAX_CASTERS,
 	BROADCAST_SCENES,
 } from "./broadcast-cast-constants";
@@ -44,8 +42,8 @@ export const broadcastDesignSearchParams = SearchParams.define({
 		),
 		{ default: "gameplay", loader: false },
 	),
-	transition: SP.param(v.picklist(BROADCAST_TRANSITIONS), {
-		default: "stinger",
+	transition: SP.param(v.picklist(BROADCAST_DESIGN_TRANSITIONS), {
+		default: "teamsStinger",
 		loader: false,
 	}),
 	names: SP.param(v.picklist(BROADCAST_DESIGN_NAME_LENGTHS), {

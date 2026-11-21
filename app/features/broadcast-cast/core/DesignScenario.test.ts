@@ -12,7 +12,11 @@ const DEFAULT_SCENARIO = broadcastDesignSearchParams.parse(
 const build = (scenario: Partial<DesignScenario.Scenario> = {}) =>
 	DesignScenario.build({
 		scenario: { ...DEFAULT_SCENARIO, ...scenario },
-		tournament: { name: "In The Zone", logoUrl: "/logo.png" },
+		tournament: {
+			name: "In The Zone",
+			logoUrl: "/logo.png",
+			organizationName: "Sendou.ink",
+		},
 		settings: {
 			css: "",
 			weaponImages: "default",
@@ -96,7 +100,7 @@ describe("DesignScenario.build", () => {
 	])("gives a tournament with $why the In The Zone logo", ({ logoUrl }) => {
 		const state = DesignScenario.build({
 			scenario: DEFAULT_SCENARIO,
-			tournament: { name: "In The Zone", logoUrl },
+			tournament: { name: "In The Zone", logoUrl, organizationName: null },
 			settings: {
 				css: "",
 				weaponImages: "default",

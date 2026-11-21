@@ -378,7 +378,7 @@ function snapshot(
 		...state,
 		v: 1,
 		settings: { ...DEFAULT_BROADCAST_SETTINGS, ...settings },
-		tournament: { name: "Tournament", logoUrl: "" },
+		tournament: { name: "Tournament", logoUrl: "", organizationName: null },
 		match: null,
 	};
 }

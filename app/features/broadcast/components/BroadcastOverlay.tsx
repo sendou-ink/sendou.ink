@@ -6,6 +6,7 @@ import {
 } from "../broadcast-theme";
 import type {
 	BroadcastState,
+	BroadcastStingerVariant,
 	BroadcastTransition,
 	BroadcastView,
 } from "../broadcast-types";
@@ -21,11 +22,14 @@ export interface BroadcastSceneSet<State extends BroadcastState> {
 	Scene: React.ComponentType<{ state: State; view: BroadcastView }>;
 	/**
 	 * Covers the screen as a stinger Take plays, the scene underneath changing once it calls `onCovered`. Calls
-	 * `onDone` once it has revealed the new scene.
+	 * `onDone` once it has revealed the new scene. Picks what it shows by `fromScene`, the scene it covers, unless
+	 * given its `variant`.
 	 */
 	Stinger: React.ComponentType<{
 		state: State;
 		view: BroadcastView;
+		fromScene: State[BroadcastView]["scene"];
+		variant?: BroadcastStingerVariant;
 		onCovered: () => void;
 		onDone: () => void;
 	}>;
@@ -68,6 +72,8 @@ interface Stage<State extends BroadcastState> {
 	} | null;
 	/** Id the scene layer takes once the playing stinger covers the screen. */
 	stingerId: number | null;
+	/** The scene the playing stinger covers: what was on air, or on next what is on air as the staged state goes on air after it. */
+	stingerFromScene: State[BroadcastView]["scene"];
 }
 
 /**
@@ -80,6 +86,7 @@ export function BroadcastOverlay<State extends BroadcastState>({
 	state,
 	view,
 	rehearsals = 0,
+	stinger,
 }: {
 	sceneSet: BroadcastSceneSet<State>;
 	state: State;
@@ -87,6 +94,8 @@ export function BroadcastOverlay<State extends BroadcastState>({
 	view: BroadcastView;
 	/** Bumping it plays the staged transition again without a Take, to preview it. */
 	rehearsals?: number;
+	/** The stinger to play whatever the scenes, otherwise the scene set's Stinger picks it. */
+	stinger?: BroadcastStingerVariant;
 }) {
 	const producer = state[view];
 	const cue = view === "live" ? String(state.takeId) : producer.scene;
@@ -99,6 +108,7 @@ export function BroadcastOverlay<State extends BroadcastState>({
 		frozen: null,
 		leaving: null,
 		stingerId: null,
+		stingerFromScene: producer.scene,
 	});
 
 	if (stage.cue !== cue || stage.rehearsals !== rehearsals) {
@@ -159,6 +169,8 @@ export function BroadcastOverlay<State extends BroadcastState>({
 						key={`stinger-${stingerId}`}
 						state={state}
 						view={view}
+						fromScene={stage.stingerFromScene}
+						variant={stinger}
 						onCovered={() =>
 							setStage((current) =>
 								current.stingerId === stingerId && current.layerId !== stingerId
@@ -216,7 +228,13 @@ function nextStage<State extends BroadcastState>({
 	switch (transition) {
 		case "stinger":
 			// a stinger started before the last one covered the screen keeps the scene that was on air frozen
-			return { ...base, frozen: outgoing, stingerId: nextId };
+			return {
+				...base,
+				frozen: outgoing,
+				stingerId: nextId,
+				stingerFromScene:
+					view === "live" ? outgoing.live.scene : state.live.scene,
+			};
 		case "fade":
 			return {
 				...base,

@@ -5,7 +5,10 @@ import {
 	type BroadcastClips,
 	BroadcastClipsContext,
 } from "~/features/broadcast/broadcast-clips-context";
-import type { BroadcastAudioFeed } from "~/features/broadcast/broadcast-types";
+import type {
+	BroadcastAudioFeed,
+	BroadcastStingerVariant,
+} from "~/features/broadcast/broadcast-types";
 import { BroadcastOverlay } from "~/features/broadcast/components/BroadcastOverlay";
 import { CALENDAR_EVENT } from "~/features/calendar/calendar-constants";
 import { TEAM } from "~/features/team/team-constants";
@@ -19,7 +22,7 @@ import {
 	DEFAULT_CAST_BROADCAST_SETTINGS,
 } from "../broadcast-cast-constants";
 import { BROADCAST_THEME_PRESETS } from "../broadcast-cast-theme-presets";
-import type { CastBroadcastState } from "../broadcast-cast-types";
+import type { CastBroadcastState, CastScene } from "../broadcast-cast-types";
 import * as DesignScenario from "../core/DesignScenario";
 import { CAST_SCENE_SET } from "./CastScene";
 
@@ -27,7 +30,7 @@ import "~/styles/fonts.css";
 
 const SCENARIO: DesignScenario.Scenario = {
 	scene: "game",
-	transition: "stinger",
+	transition: "teamsStinger",
 	names: "long",
 	set: "decider",
 	bestOf: 7,
@@ -144,6 +147,79 @@ describe("CastScene", () => {
 
 		expect(await overflowsOfStinger({ ...state, match: null })).toEqual([]);
 	});
+
+	test.each([
+		{ from: "rosters", to: "game", variant: "teams" },
+		{ from: "game", to: "results", variant: "teams" },
+		{ from: "results", to: "maps", variant: "tournament" },
+		{ from: "bracket", to: "rosters", variant: "tournament" },
+	] as const)(
+		"plays the $variant stinger from $from to $to",
+		async ({ from, to, variant }) => {
+			await playStinger(stateOf({ ...SCENARIO, scene: to }), { from });
+
+			expect(stingerVariantOnScreen()).toEqual({
+				variant,
+				hasTeams: variant === "teams",
+				hasTitleCard: variant === "tournament",
+			});
+		},
+	);
+
+	test("plays the stinger it is given whatever the scenes", async () => {
+		await playStinger(stateOf({ ...SCENARIO, scene: "game" }), {
+			stinger: "tournament",
+		});
+
+		expect(stingerVariantOnScreen().variant).toBe("tournament");
+	});
+
+	test.each([
+		{
+			organizationName: "Sendou.ink",
+			rows: ["In The Zone 50", "Sendou.ink", "In The Zone 50"],
+		},
+		{
+			organizationName: null,
+			rows: ["In The Zone 50", "In The Zone 50", "In The Zone 50"],
+		},
+	])(
+		"alternates the tournament's name with its organization's ($organizationName) behind the tournament stinger",
+		async ({ organizationName, rows }) => {
+			const state = stateOf({ ...SCENARIO, scene: "results" });
+
+			await playStinger(
+				{ ...state, tournament: { ...state.tournament, organizationName } },
+				{ stinger: "tournament" },
+			);
+
+			const shownRows = Array.from(
+				stingerOnScreen().querySelectorAll(
+					'[data-part="stinger-title-backdrop-row"]',
+				),
+				(row) => row.textContent?.split(" · ")[0],
+			);
+			expect(shownRows).toEqual(rows);
+		},
+	);
+
+	test("fits the tournament stinger with the longest names", async () => {
+		const state = withLongestTexts(stateOf({ ...SCENARIO, scene: "results" }));
+
+		expect(await overflowsOfStinger(state, "tournament")).toEqual([]);
+	});
+
+	test.each(BROADCAST_THEME_PRESETS.map((preset) => preset.key))(
+		"fits the tournament stinger with the longest names in the %s preset",
+		async (preset) => {
+			const state = withPreset(
+				withLongestTexts(stateOf({ ...SCENARIO, scene: "results" })),
+				preset,
+			);
+
+			expect(await overflowsOfStinger(state, "tournament")).toEqual([]);
+		},
+	);
 
 	test.each(PRESET_CASES)(
 		"fits $scene with $variant in the $preset preset",
@@ -484,7 +560,11 @@ function postFromIframe(iframe: HTMLIFrameElement | null, data: unknown) {
 function stateOf(scenario: DesignScenario.Scenario): CastBroadcastState {
 	const state = DesignScenario.build({
 		scenario,
-		tournament: { name: "In The Zone 50", logoUrl: IMAGE_URL },
+		tournament: {
+			name: "In The Zone 50",
+			logoUrl: IMAGE_URL,
+			organizationName: "Sendou.ink",
+		},
 		settings: {
 			...DEFAULT_CAST_BROADCAST_SETTINGS,
 			headline: "Top 8 starts at 18:00 CEST",
@@ -536,6 +616,7 @@ function withLongestTexts(state: CastBroadcastState): CastBroadcastState {
 		tournament: {
 			...longest.tournament,
 			name: wordsOfLength(CALENDAR_EVENT.NAME_MAX_LENGTH),
+			organizationName: wordsOfLength(CALENDAR_EVENT.NAME_MAX_LENGTH),
 		},
 		settings: {
 			...longest.settings,
@@ -588,20 +669,14 @@ async function overflowsOnAir(state: CastBroadcastState) {
 }
 
 /** Overflows of the stinger's card while it covers the screen, as a stinger Take plays. */
-async function overflowsOfStinger(state: CastBroadcastState) {
-	const screen = await render(
-		<BroadcastOverlay sceneSet={CAST_SCENE_SET} state={state} view="live" />,
-	);
-	await screen.rerender(
-		<BroadcastOverlay
-			sceneSet={CAST_SCENE_SET}
-			state={{ ...state, takeId: state.takeId + 1 }}
-			view="live"
-		/>,
-	);
+async function overflowsOfStinger(
+	state: CastBroadcastState,
+	variant?: BroadcastStingerVariant,
+) {
+	await playStinger(state, { stinger: variant });
 	await document.fonts.ready;
 
-	const stinger = canvas().querySelector<HTMLElement>('[data-part="stinger"]')!;
+	const stinger = stingerOnScreen();
 	const stingerDurationMs = Number.parseFloat(
 		getComputedStyle(stinger).getPropertyValue("--bc-stinger-duration"),
 	);
@@ -613,6 +688,47 @@ async function overflowsOfStinger(state: CastBroadcastState) {
 	await nextFrame();
 
 	return overflows({ root: stinger, marquees: new Set() });
+}
+
+/** Renders the `from` scene on air (the state's own by default), then takes the state to play its stinger. */
+async function playStinger(
+	state: CastBroadcastState,
+	{
+		from = state.live.scene,
+		stinger,
+	}: { from?: CastScene; stinger?: BroadcastStingerVariant } = {},
+) {
+	const screen = await render(
+		<BroadcastOverlay
+			sceneSet={CAST_SCENE_SET}
+			state={{ ...state, live: { ...state.live, scene: from } }}
+			view="live"
+			stinger={stinger}
+		/>,
+	);
+	await screen.rerender(
+		<BroadcastOverlay
+			sceneSet={CAST_SCENE_SET}
+			state={{ ...state, takeId: state.takeId + 1 }}
+			view="live"
+			stinger={stinger}
+		/>,
+	);
+}
+
+function stingerOnScreen() {
+	return canvas().querySelector<HTMLElement>('[data-part="stinger"]')!;
+}
+
+function stingerVariantOnScreen() {
+	const stinger = stingerOnScreen();
+
+	return {
+		variant: stinger.dataset.variant,
+		hasTeams: stinger.querySelector('[data-part="stinger-teams"]') !== null,
+		hasTitleCard:
+			stinger.querySelector('[data-part="stinger-title-card"]') !== null,
+	};
 }
 
 function rostersPart(name: string) {

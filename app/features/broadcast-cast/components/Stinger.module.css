@@ -5,8 +5,9 @@
 	--stinger-score-size: 150px;
 	--stinger-versus-size: 180px;
 	--stinger-versus-text-size: 72px;
-	--stinger-title-logo-size: 360px;
-	--stinger-title-size: 76px;
+	--stinger-title-logo-size: 340px;
+	--stinger-title-size: 92px;
+	--stinger-title-backdrop-size: 210px;
 	--stinger-header-bottom: 72px;
 	--stinger-tournament-name-size: 52px;
 	--stinger-header-logo-size: 104px;
@@ -38,16 +39,16 @@
 .panel {
 	background: var(--team-color, var(--bc-bg));
 
-	.stinger:not([data-has-match]) & {
+	.stinger[data-variant="tournament"] & {
 		--team-color: var(--bc-bg);
 	}
 
-	.stinger:not([data-has-match]) &[data-index="1"] {
+	.stinger[data-variant="tournament"] &[data-index="1"] {
 		--team-color: var(--bc-surface);
 	}
 
 	/* an accent stripe on the seam */
-	.stinger:not([data-has-match]) &[data-index="2"] {
+	.stinger[data-variant="tournament"] &[data-index="2"] {
 		--team-color: var(--bc-accent);
 	}
 }
@@ -67,6 +68,17 @@
 @keyframes :global(bc-panel-slide-out) {
 	to {
 		transform: translateX(var(--to, var(--from))) var(--panel-shape, scale(1));
+	}
+}
+
+/* A row of the tournament stinger's backdrop sliding sideways by --drift as the stinger plays. */
+@keyframes :global(bc-drift) {
+	from {
+		transform: translateX(0);
+	}
+
+	to {
+		transform: translateX(var(--drift, -10%));
 	}
 }
 
@@ -125,19 +137,36 @@
 	font-weight: var(--bc-weight-bold);
 }
 
+/* the tournament stinger: its name faint and huge, drifting behind the card */
+.titleBackdrop {
+	color: color-mix(in oklch, var(--bc-text) 5%, transparent);
+	font-size: var(--stinger-title-backdrop-size);
+	font-weight: var(--bc-weight-heavy);
+	/* the glyphs fit the rows, tilted they'd stick out sideways */
+	line-height: normal;
+	text-transform: uppercase;
+}
+
+.titleBackdropRow[data-index="1"] {
+	color: color-mix(in oklch, var(--bc-accent) 14%, transparent);
+}
+
 .titleCardLogo {
 	border-radius: 50%;
 	object-fit: cover;
 	box-shadow:
-		0 0 0 var(--bc-border-width) var(--bc-border),
+		0 0 0 var(--bc-border-width) var(--bc-bg),
+		0 0 0 calc(var(--bc-border-width) + 10px) var(--bc-accent),
+		0 0 120px color-mix(in oklch, var(--bc-accent) 45%, transparent),
 		0 32px 96px rgb(0 0 0 / 0.5);
 }
 
 .titleCardName {
 	color: var(--bc-text);
 	font-size: var(--stinger-title-size);
-	font-weight: var(--bc-weight-bold);
+	font-weight: var(--bc-weight-heavy);
 	line-height: 1.1;
+	text-transform: uppercase;
 	text-shadow: 0 4px 24px rgb(0 0 0 / 0.6);
 }
 

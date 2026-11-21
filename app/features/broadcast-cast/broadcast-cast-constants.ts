@@ -148,6 +148,14 @@ export const BROADCAST_DESIGN_BRACKETS = [
 
 export const BROADCAST_DESIGN_BEST_OF = [3, 5, 7] as const;
 
+/** The designer's transitions: the stinger as each of its variants, which on air follow the scenes it goes between. */
+export const BROADCAST_DESIGN_TRANSITIONS = [
+	"teamsStinger",
+	"tournamentStinger",
+	"fade",
+	"cut",
+] as const;
+
 export const BROADCAST_DESIGN_MAX_PLAYERS = 4;
 
 export const BROADCAST_DESIGN_MAX_OTHER_MATCHES = 8;
@@ -377,6 +385,8 @@ export const BROADCAST_SCENE_PARTS = {
 		"stinger-team-score",
 		"stinger-vs",
 		"stinger-title-card",
+		"stinger-title-backdrop",
+		"stinger-title-backdrop-row",
 		"stinger-tournament-logo",
 		"stinger-header",
 		"stinger-tournament-name",

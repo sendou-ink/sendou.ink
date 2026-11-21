@@ -37,6 +37,8 @@ Most of making the overlays your own is plain CSS, the language every website is
 
 That's all OBS needs: the browser source switches scenes by itself, and mutes the capture card on every scene but Game, unmuting it once the game is back on. It only touches the source you named, the rest of your audio stays as it is. Switch scenes and watch the capture card in OBS's audio mixer to check it works: with a stinger it changes once the stinger covers the screen. Leave the name empty to have the browser source not touch the capture card's audio, which unmutes it. On the dashboard, **Next** is what you have staged and **Take** puts it on air (Live) with the transition you picked. Queue scenes to go on air one after another, on a timer or as games start and end.
 
+The stinger picks what it shows by itself: the match's teams facing off when going into or out of a game, and the tournament's logo and name between other scenes.
+
 Your URL shows one broadcast at a time, the one where you last pressed **Show this broadcast**. For the next tournament or another channel, open that channel's dashboard and press **Show this broadcast** in the **Setup** tab: the OBS sources using your URL switch over right away, nothing to change in OBS. They stop showing the broadcast they showed before, so the dashboard asks first when your URL shows another one. Between tournaments it keeps showing the last broadcast. A channel's new broadcast starts with the theme and show info of the channel's last broadcast in the same organization.
 
 **Generate new URL** makes the old URL stop working, the OBS sources using it disconnect. Paste the new one into OBS afterwards.
@@ -70,7 +72,7 @@ Alpha is the team on the left of the overlays, the same team the game's HUD show
 
 ## The designer
 
-The dashboard's **Theme** tab opens the designer: the overlay over a gameplay screenshot on the left, its CSS on the right. Pick a scene and a situation (short or long names, how far the set is, ink colors, missing logos, …) to see your theme where it is most likely to break, and **Play transition** to watch the stinger.
+The dashboard's **Theme** tab opens the designer: the overlay over a gameplay screenshot on the left, its CSS on the right. Pick a scene and a situation (short or long names, how far the set is, ink colors, missing logos, …) to see your theme where it is most likely to break, and **Play transition** to watch the stinger, VS or tournament.
 
 - **Preset**: ready-made themes (Zine, Matchday, Capsule, Teletext). Picking one loads its CSS into Custom CSS for you to make your own from. Their CSS is also the best example of how far a theme can go, see [the presets' source](https://github.com/sendou-ink/sendou.ink/tree/main/app/features/broadcast-cast/presets).
 - **Stylesheet**: each part of the overlay's default styles to edit in place, e.g. `GameScene`. Its look first, with the sizes and spots everything follows at the top. Turn on **Show layout & motion stylesheets** for how the parts are laid out and animated.
@@ -84,7 +86,7 @@ The overlay is a 1920×1080 canvas, `[data-broadcast]`. You style it with four t
 
 - **Variables**: colors, fonts, corners, sizes, spots and animation timing, e.g. `--bc-accent` or `--game-bar-height`. Set them on `[data-broadcast]`. Most themes are mostly this.
 - **Scenes and parts**: `[data-scene="game"]` is on each scene, `[data-part="team-name"]` on the things in it. `[data-part="team-name"]` alone styles the team names of every scene.
-- **State attributes**, next to the parts: `data-team` (`a` left, `b` right), `data-winner`, `data-loser`, `data-status` (e.g. a map's `played`, `current`, `upcoming`, `skipped`), `data-result` (`win`, `loss`), `data-featured`, `data-tbd`.
+- **State attributes**, next to the parts: `data-team` (`a` left, `b` right), `data-winner`, `data-loser`, `data-status` (e.g. a map's `played`, `current`, `upcoming`, `skipped`), `data-result` (`win`, `loss`), `data-featured`, `data-tbd`, and the stinger's `data-variant` (`teams`, `tournament`).
 - **Keyframes**: the animations, `bc-enter`, `bc-reveal`, … Redefine one to change everything using it, or point a `--bc-anim-*` variable at keyframes of your own.
 
 Custom CSS beats the default styles without `!important` or specificity tricks. The designer's stylesheet edits refer to the default styles' classes as `.Stylesheet-class`, e.g. `.GameScene-infoCard`; they work in Custom CSS too, for the few elements that have no part.
@@ -217,7 +219,17 @@ Scores flip in when they change.
 ```css
 [data-part="stinger-card"] { display: none; }
 ```
-Stinger without the card in its middle (the teams, or the tournament without a match).
+Stinger without the card in its middle (the teams, or the tournament's logo and name).
+
+```css
+[data-part="stinger"][data-variant="tournament"] [data-part="stinger-tournament-logo"] { border-radius: 0; }
+```
+The tournament stinger's logo square instead of round.
+
+```css
+[data-part="stinger-title-backdrop"] { display: none; }
+```
+Tournament stinger without the tournament and organization names drifting in the background.
 
 ## Good to know
 

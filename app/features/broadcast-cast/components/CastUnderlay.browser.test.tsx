@@ -178,7 +178,7 @@ function layer(
 			bracket: "double_elimination",
 			bracketFocus: "remaining",
 		},
-		tournament: { name: "In The Zone", logoUrl: "" },
+		tournament: { name: "In The Zone", logoUrl: "", organizationName: null },
 		settings: DEFAULT_CAST_BROADCAST_SETTINGS,
 		takenAt: Date.now(),
 	});

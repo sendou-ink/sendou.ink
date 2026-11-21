@@ -57,7 +57,7 @@
 	}
 
 	/* an accent stripe on the seam */
-	.stinger:not([data-has-match]) &[data-index="2"] {
+	.stinger[data-variant="tournament"] &[data-index="2"] {
 		display: block;
 		clip-path: polygon(56.4% 0, 58% 0, 44% 100%, 42.4% 100%);
 	}
@@ -129,7 +129,7 @@
 		var(--content-out-at) forwards;
 }
 
-/* without a match, the tournament on the theme's own colors instead of the teams' */
+/* the tournament stinger, and without a match: the tournament on the theme's own colors instead of the teams' */
 .titleCard {
 	--bc-enter-y: calc(var(--bc-enter-distance) * 3);
 	--bc-exit-y: calc(var(--bc-enter-distance) * -1);
@@ -144,6 +144,34 @@
 		var(--bc-anim-enter) var(--content-in) var(--bc-ease) var(--content-at) both,
 		var(--bc-anim-exit) var(--content-out) var(--bc-ease-in)
 		var(--content-out-at) forwards;
+}
+
+/* tilted past the corners, the rows drifting in turns one way and the other */
+.titleBackdrop {
+	position: absolute;
+	inset: -240px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	rotate: -8deg;
+	pointer-events: none;
+	animation:
+		var(--bc-anim-fade-in) var(--content-in) ease var(--content-at) both,
+		var(--bc-anim-fade-out) var(--content-out) var(--bc-ease-in)
+		var(--content-out-at) forwards;
+}
+
+.titleBackdropRow {
+	--drift: -12%;
+
+	width: max-content;
+	white-space: nowrap;
+	animation: var(--bc-anim-drift) var(--d) linear both;
+
+	&[data-index="1"] {
+		margin-left: -40%;
+		animation-direction: reverse;
+	}
 }
 
 .titleCardLogo {

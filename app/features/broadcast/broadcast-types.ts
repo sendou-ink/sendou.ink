@@ -17,6 +17,9 @@ import type {
 
 export type BroadcastTransition = (typeof BROADCAST_TRANSITIONS)[number];
 
+/** What a stinger shows: the featured match's teams, or the tournament's own title card. */
+export type BroadcastStingerVariant = "teams" | "tournament";
+
 export type BroadcastAdvance = (typeof BROADCAST_ADVANCES)[number];
 
 export type BroadcastWeaponImages = (typeof BROADCAST_WEAPON_IMAGES)[number];
@@ -135,6 +138,8 @@ export interface BroadcastState<
 	tournament: {
 		name: string;
 		logoUrl: string;
+		/** Name of the organization hosting the tournament, `null` without one. */
+		organizationName: string | null;
 	};
 	/** The match the broadcast features, e.g. the one cast on the channel or the next one locked for it. */
 	match: BroadcastMatch | null;
@@ -149,6 +154,8 @@ export interface BroadcastDesignMessage<
 	state: State;
 	/** Bumped to play the scene's transition again. */
 	rehearsals: number;
+	/** The stinger to play whatever the scenes, the designer previewing either. */
+	stinger: BroadcastStingerVariant;
 }
 
 export type BroadcastStreamMessage<
