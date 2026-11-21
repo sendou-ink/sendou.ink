@@ -172,8 +172,14 @@ export function insertMany(vods: Omit<Tables["TournamentMatchVod"], "id">[]) {
 		.execute();
 }
 
+/**
+ * Finalized tournaments due a VoD sync: never synced yet while their VoDs are still shown (multi-day tournaments
+ * finalize well after their start), or synced once 3-6 hours ago to catch VoDs published late.
+ */
 export function findTournamentsNeedingVodSync() {
-	const oneDayAgo = dateToDatabaseTimestamp(subDays(new Date(), 1));
+	const vodVisibilityCutoff = dateToDatabaseTimestamp(
+		subDays(new Date(), TOURNAMENT.VOD_VISIBILITY_DAYS),
+	);
 	const threeHoursAgo = dateToDatabaseTimestamp(subHours(new Date(), 3));
 	const sixHoursAgo = dateToDatabaseTimestamp(subHours(new Date(), 6));
 
@@ -190,7 +196,7 @@ export function findTournamentsNeedingVodSync() {
 		.where(({ or, and, eb }) =>
 			or([
 				and([
-					eb("CalendarEventDate.startsAt", ">", oneDayAgo),
+					eb("CalendarEventDate.startsAt", ">", vodVisibilityCutoff),
 					eb("Tournament.vodsSyncCount", "=", 0),
 				]),
 				and([
