@@ -591,8 +591,7 @@ function InkColors({
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const ink = gameInk(state, "live");
-	const isFlipped = ink?.isFlipped ?? false;
-	const colors = inkColorVars({ ink, swapSides: state.live.swapSides });
+	const colors = inkColorVars(ink);
 	const sides = matchSides(match, "live", state.live);
 	const gameOnAir = {
 		matchId: match.id,
@@ -617,54 +616,32 @@ function InkColors({
 						</span>
 					</span>
 				))}
-				{/* rendered without ink colors too, only hidden, so picking them doesn't shift the layout */}
-				<ActionButton
-					schema={broadcastActionSchema}
-					action="SET_INK"
-					fields={{ key: ink?.key, isFlipped: !isFlipped, ...gameOnAir }}
-					variant="minimal"
-					size="miniscule"
-					shape="square"
-					icon={<ArrowLeftRight />}
-					className={clsx({ [styles.invisible]: !ink })}
-					formClassName={styles.inkFlip}
-					title={t("broadcast:dashboard.ink.flip")}
-					aria-label={t("broadcast:dashboard.ink.flip")}
-					testId="broadcast-ink-flip"
-				/>
 			</div>
 			<div className={styles.inkSwatches}>
-				{BROADCAST_INK_COLORS.map((color) => {
-					// each swatch is split the way the teams are on air, left team's color on the left
-					const swatch = inkColorVars({
-						ink: { key: color.key, isFlipped },
-						swapSides: state.live.swapSides,
-					});
-
-					return (
-						<ActionButton
-							key={color.key}
-							schema={broadcastActionSchema}
-							action="SET_INK"
-							fields={{ key: color.key, isFlipped, ...gameOnAir }}
-							variant="minimal"
-							className={clsx(styles.inkSwatch, {
-								[styles.inkSwatchSelected]: ink?.key === color.key,
-							})}
-							formClassName={styles.inkSwatchForm}
-							title={t(`broadcast:ink.${color.key}`)}
-							aria-label={t(`broadcast:ink.${color.key}`)}
-							testId={`broadcast-ink-${color.key}`}
-						>
-							<span style={{ background: swatch["--bc-team-a"] }} />
-							<span style={{ background: swatch["--bc-team-b"] }} />
-						</ActionButton>
-					);
-				})}
+				{/* each swatch split the way the game's HUD has it, Alpha's color on the left */}
+				{BROADCAST_INK_COLORS.map((color) => (
+					<ActionButton
+						key={color.key}
+						schema={broadcastActionSchema}
+						action="SET_INK"
+						fields={{ key: color.key, ...gameOnAir }}
+						variant="minimal"
+						className={clsx(styles.inkSwatch, {
+							[styles.inkSwatchSelected]: ink?.key === color.key,
+						})}
+						formClassName={styles.inkSwatchForm}
+						title={t(`broadcast:ink.${color.key}`)}
+						aria-label={t(`broadcast:ink.${color.key}`)}
+						testId={`broadcast-ink-${color.key}`}
+					>
+						<span style={{ background: color.a }} />
+						<span style={{ background: color.b }} />
+					</ActionButton>
+				))}
 				<ActionButton
 					schema={broadcastActionSchema}
 					action="SET_INK"
-					fields={{ isFlipped: false, ...gameOnAir }}
+					fields={gameOnAir}
 					variant="minimal"
 					icon={<X />}
 					className={clsx(styles.inkSwatch, styles.inkClear, {

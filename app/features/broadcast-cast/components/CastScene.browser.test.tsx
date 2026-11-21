@@ -241,6 +241,28 @@ describe("CastScene", () => {
 		},
 	);
 
+	test("colors the team swapped to the scoreboard's left, Alpha, in the ink pair's first color", async () => {
+		const state = stateOf({
+			...SCENARIO,
+			ink: "lockYellowPurple",
+			swapSides: true,
+		});
+
+		await render(
+			<BroadcastOverlay sceneSet={CAST_SCENE_SET} state={state} view="live" />,
+		);
+
+		const left = canvas().querySelector<HTMLElement>(
+			'[data-scene="game"] [data-part="team"][data-team="a"]',
+		)!;
+		expect(left.querySelector('[data-part="team-name"]')?.textContent).toBe(
+			state.match!.teams[1]!.name,
+		);
+		expect(
+			getComputedStyle(left).getPropertyValue("--team-color").toUpperCase(),
+		).toBe("#F0EB24");
+	});
+
 	test("shows a placeholder in place of a caster's camera outside OBS and an audio only caster's avatar", async () => {
 		await render(
 			<BroadcastOverlay

@@ -32,61 +32,56 @@ describe("GameResult.resolve", () => {
 			scannedGame: scanned({
 				inks: [DARK_BLUE, YELLOW],
 				teams: [named(BRAVO), named(ALPHA)],
-				ink: yellowDarkBlue({ isFlipped: false }),
+				ink: yellowDarkBlue(),
 			}),
 		});
 
 		expect(playerNames(result)).toEqual([ALPHA_NAMES, BRAVO_NAMES]);
 	});
 
-	test("gives the pair's first color to the team the producer flipped it to", () => {
+	test("gives the pair's first color to the team the producer put on the left as Alpha", () => {
 		const result = resolve({
 			scannedGame: scanned({
 				inks: [YELLOW, DARK_BLUE],
 				teams: [named(BRAVO), named(ALPHA)],
-				ink: yellowDarkBlue({ isFlipped: true }),
+				ink: yellowDarkBlue(),
 			}),
+			swapSides: true,
 		});
 
 		expect(playerNames(result)).toEqual([ALPHA_NAMES, BRAVO_NAMES]);
 	});
 
-	test("follows the ink colors the producer flipped after the game ended", () => {
+	test("follows the sides the producer swapped after the game ended", () => {
 		const result = resolve({
 			scannedGame: scanned({
 				inks: [YELLOW, DARK_BLUE],
 				teams: [unnamed(), unnamed()],
 				winner: 0,
-				ink: yellowDarkBlue({ isFlipped: false }),
+				ink: yellowDarkBlue(),
 			}),
-			ink: {
-				...yellowDarkBlue({ isFlipped: true }),
-				matchId: 1,
-				resultCount: 0,
-			},
+			swapSides: true,
 		});
 
-		expect(result?.ink).toEqual(yellowDarkBlue({ isFlipped: true }));
 		expect(result?.winner).toBe(1);
+	});
+
+	test("follows the ink colors the producer picked after the game ended", () => {
+		const result = resolve({
+			scannedGame: scanned({ ink: yellowDarkBlue() }),
+			ink: { key: "greenPink", matchId: 1, resultCount: 0 },
+		});
+
+		expect(result?.ink).toEqual({ key: "greenPink" });
 	});
 
 	test("keeps the ink colors the game ended in once the next game's are picked", () => {
 		const result = resolve({
-			scannedGame: scanned({
-				inks: [YELLOW, DARK_BLUE],
-				teams: [unnamed(), unnamed()],
-				winner: 0,
-				ink: yellowDarkBlue({ isFlipped: false }),
-			}),
-			ink: {
-				...yellowDarkBlue({ isFlipped: true }),
-				matchId: 1,
-				resultCount: 1,
-			},
+			scannedGame: scanned({ ink: yellowDarkBlue() }),
+			ink: { key: "greenPink", matchId: 1, resultCount: 1 },
 		});
 
-		expect(result?.ink).toEqual(yellowDarkBlue({ isFlipped: false }));
-		expect(result?.winner).toBe(0);
+		expect(result?.ink).toEqual(yellowDarkBlue());
 	});
 
 	test("puts the scanned teams in bracket order by their names over the game's ink, keeping the colors picked", () => {
@@ -94,12 +89,12 @@ describe("GameResult.resolve", () => {
 			scannedGame: scanned({
 				inks: [YELLOW, DARK_BLUE],
 				teams: [named(BRAVO), named(ALPHA, ["Nodle", "InkJet"])],
-				ink: yellowDarkBlue({ isFlipped: false }),
+				ink: yellowDarkBlue(),
 			}),
 		});
 
 		expect(playerNames(result)?.[1]).toEqual(BRAVO_NAMES);
-		expect(result?.ink).toEqual(yellowDarkBlue({ isFlipped: false }));
+		expect(result?.ink).toEqual(yellowDarkBlue());
 	});
 
 	test("goes by the game's ink when the names read barely tell the teams apart", () => {
@@ -107,12 +102,12 @@ describe("GameResult.resolve", () => {
 			scannedGame: scanned({
 				inks: [YELLOW, DARK_BLUE],
 				teams: [named(BRAVO, ["Kraken"]), unnamed()],
-				ink: yellowDarkBlue({ isFlipped: false }),
+				ink: yellowDarkBlue(),
 			}),
 		});
 
 		expect(result?.teams[0].players[0]?.name).toBe("Kraken");
-		expect(result?.ink).toEqual(yellowDarkBlue({ isFlipped: false }));
+		expect(result?.ink).toEqual(yellowDarkBlue());
 	});
 
 	test("puts the scanned teams in bracket order by their names without the game's ink", () => {
@@ -174,7 +169,7 @@ describe("GameResult.resolve", () => {
 			scannedGame: scanned({
 				inks: [DARK_BLUE, YELLOW],
 				teams: [unnamed(), unnamed()],
-				ink: yellowDarkBlue({ isFlipped: false }),
+				ink: yellowDarkBlue(),
 				objective: [
 					{ t: 0, score: [100, 100], control: null },
 					{ t: 30, score: [80, 64], control: 1 },
@@ -313,7 +308,7 @@ describe("GameResult.resolve", () => {
 	});
 
 	test("shows the game in the ink colors picked for it", () => {
-		const ink = yellowDarkBlue({ isFlipped: true });
+		const ink = yellowDarkBlue();
 
 		expect(resolve({ scannedGame: scanned({ ink }) })?.ink).toEqual(ink);
 	});
@@ -326,12 +321,12 @@ describe("GameResult.resolve", () => {
 			],
 			resultCount: 2,
 			scannedGame: null,
-			ink: { key: "greenPink", isFlipped: false, matchId: 1, resultCount: 1 },
+			ink: { key: "greenPink", matchId: 1, resultCount: 1 },
 		});
 
 		expect(result).toEqual({
 			gameNumber: 2,
-			ink: { key: "greenPink", isFlipped: false },
+			ink: { key: "greenPink" },
 			map: RAINMAKER_HAGGLEFISH,
 			winner: 1,
 			isKnockout: false,
@@ -352,11 +347,13 @@ function resolve({
 	resultCount = 0,
 	scannedGame,
 	ink = null,
+	swapSides = false,
 }: {
 	games?: BroadcastGame[];
 	resultCount?: number;
 	scannedGame: BroadcastScannedGame | null;
 	ink?: BroadcastStoredState["ink"];
+	swapSides?: boolean;
 }) {
 	const progress: MatchProgress = {
 		resultCount,
@@ -376,11 +373,17 @@ function resolve({
 		progress: { live: progress, next: progress },
 	};
 
-	return GameResult.resolve({ match, view: "live", scannedGame, ink });
+	return GameResult.resolve({
+		match,
+		view: "live",
+		scannedGame,
+		ink,
+		swapSides,
+	});
 }
 
-function yellowDarkBlue({ isFlipped }: { isFlipped: boolean }): BroadcastInk {
-	return { key: "yellowDarkBlue", isFlipped };
+function yellowDarkBlue(): BroadcastInk {
+	return { key: "yellowDarkBlue" };
 }
 
 function game(overrides: Partial<BroadcastGame>): BroadcastGame {

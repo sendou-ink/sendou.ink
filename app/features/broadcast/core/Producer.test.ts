@@ -16,7 +16,6 @@ const rules = CAST_PRODUCER_RULES;
 
 const ink = {
 	key: "lockYellowPurple",
-	isFlipped: false,
 	matchId: 1,
 	resultCount: 1,
 } as const;
@@ -381,25 +380,9 @@ describe("Producer.applyGameSignal", () => {
 		expect(applied?.liveResults).toEqual(liveResults);
 		expect(applied?.ink).toEqual({
 			key: "greenPink",
-			isFlipped: false,
 			matchId: 1,
 			resultCount: 2,
 		});
-	});
-
-	test("keeps the sides the teams had earlier in the set", () => {
-		const state = {
-			...stateWith({ next: item(2, { advance: "game" }) }),
-			ink: { ...ink, isFlipped: true },
-		};
-
-		const applied = Producer.applyGameSignal(rules, state, {
-			signal: { type: "start", inks: greenPink },
-			liveResults,
-			now: 5,
-		});
-
-		expect(applied?.ink?.isFlipped).toBe(true);
 	});
 
 	test("keeps what was read of the game that ended, which game of the set it was, and puts the scene after it on air", () => {
@@ -436,10 +419,7 @@ describe("Producer.applyGameSignal", () => {
 			},
 		);
 
-		expect(applied?.scannedGame?.ink).toEqual({
-			key: ink.key,
-			isFlipped: ink.isFlipped,
-		});
+		expect(applied?.scannedGame?.ink).toEqual({ key: ink.key });
 	});
 
 	test("cuts nothing for a game ending without what was read of it", () => {

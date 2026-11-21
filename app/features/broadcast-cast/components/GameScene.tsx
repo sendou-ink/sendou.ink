@@ -29,7 +29,7 @@ const part = scenePart("game");
 /**
  * Over the game feed, clear of the game's own HUD: the round and casters in the top left corner, each new game's map
  * under them for its first seconds, and a bar along the bottom with the teams in the game's ink colors, their set
- * scores and rosters, the other matches' ticker scrolling between them.
+ * scores and rosters, the other matches' ticker scrolling between them. The left team is Alpha, as on the game's HUD.
  */
 export function GameScene({
 	state,
@@ -57,10 +57,7 @@ export function GameScene({
 			{match || state.otherMatches.length > 0 ? (
 				<div
 					className={styles.scoreboard}
-					style={inkColorVars({
-						ink: gameInk(state, view),
-						swapSides: state[view].swapSides,
-					})}
+					style={inkColorVars(gameInk(state, view))}
 					{...part("scoreboard")}
 				>
 					{match

@@ -29,9 +29,9 @@ const FULL_COUNT = 100;
  * The game the results scene shows in the view: the featured match's last game the scanner read (`scannedGame`),
  * whichever of the set's games it was, else the last one reported with the teams' rosters. A scanned game is the
  * set's game with its map and mode, the one played last when several have them. Its teams are put in bracket order by
- * the names read matching the rosters when they clearly tell, else by the game's ink colors (the pair's first color
- * going to the team the producer gave it, see `BroadcastInk.isFlipped`). Its ink colors are the ones picked for the
- * game now, as the producer may flip them after it ended. Names not read are filled in from the roster
+ * the names read matching the rosters when they clearly tell, else by the game's ink colors (the pair's first color,
+ * Alpha's, going to the team the view has on the left, see `ProducerState.swapSides`). Its ink colors are the ones
+ * picked for the game now, as the producer may pick them after it ended. Names not read are filled in from the roster
  * players no read name matched. Its winner is the scanner's, from a results screen or the counter, else the reported
  * one of the set's game it was. `null` when the match has no game to show.
  */
@@ -40,11 +40,14 @@ export function resolve({
 	view,
 	scannedGame,
 	ink,
+	swapSides,
 }: {
 	match: BroadcastMatch;
 	view: BroadcastView;
 	scannedGame: BroadcastStoredState["scannedGame"];
 	ink: BroadcastStoredState["ink"];
+	/** Of the view, which team is Alpha. */
+	swapSides: boolean;
 }): BroadcastGameResult | null {
 	const progress = match.progress[view];
 
@@ -56,9 +59,8 @@ export function resolve({
 			match,
 			progress,
 			scannedGame,
-			ink: isScannedGameInk
-				? { key: ink.key, isFlipped: ink.isFlipped }
-				: scannedGame.ink,
+			ink: isScannedGameInk ? { key: ink.key } : scannedGame.ink,
+			swapSides,
 		});
 	}
 
@@ -71,7 +73,7 @@ export function resolve({
 
 	return {
 		gameNumber: lastReportedIdx + 1,
-		ink: isGameInk ? { key: ink.key, isFlipped: ink.isFlipped } : null,
+		ink: isGameInk ? { key: ink.key } : null,
 		map: reported.map,
 		winner: reported.winner,
 		isKnockout: false,
@@ -85,11 +87,13 @@ function fromScannedGame({
 	progress,
 	scannedGame,
 	ink,
+	swapSides,
 }: {
 	match: BroadcastMatch;
 	progress: MatchProgress;
 	scannedGame: BroadcastScannedGame;
 	ink: BroadcastInk | null;
+	swapSides: boolean;
 }): BroadcastGameResult {
 	const map =
 		scannedGame.mode && scannedGame.stageId !== null
@@ -100,6 +104,7 @@ function fromScannedGame({
 		scannedGame,
 		teams: match.teams,
 		ink,
+		swapSides,
 	});
 	const bracketOrder = <T>([first, second]: [T, T]): [T, T] =>
 		isSwapped ? [second, first] : [first, second];
@@ -174,10 +179,12 @@ function isScannedSwapped({
 	scannedGame,
 	teams,
 	ink,
+	swapSides,
 }: {
 	scannedGame: BroadcastScannedGame;
 	teams: BroadcastMatch["teams"];
 	ink: BroadcastInk | null;
+	swapSides: boolean;
 }) {
 	const [first, second] = scannedGame.teams.map((team) => team.players);
 	const [firstRoster, secondRoster] = teams.map((team) => team?.players ?? []);
@@ -192,7 +199,8 @@ function isScannedSwapped({
 	const isInPairOrder = ink
 		? InkColor.isInPairOrder(scannedGame.inks, ink.key)
 		: null;
-	if (ink && isInPairOrder !== null) return isInPairOrder === ink.isFlipped;
+	// the scanner's first team in the pair's first color is Alpha
+	if (isInPairOrder !== null) return isInPairOrder === swapSides;
 
 	return swapped > straight;
 }

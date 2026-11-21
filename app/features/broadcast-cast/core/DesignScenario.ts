@@ -514,7 +514,6 @@ export function build({
 		ink: scenario.ink
 			? {
 					key: scenario.ink,
-					isFlipped: false,
 					matchId: match.id,
 					resultCount: match.progress.live.resultCount,
 				}
@@ -712,7 +711,7 @@ function mockScannedGame({
 	return {
 		matchId: match.id,
 		resultCount,
-		ink: ink ? { key: ink, isFlipped: false } : null,
+		ink: ink ? { key: ink } : null,
 		mode: map.mode,
 		stageId: map.stageId,
 		isKnockout: false,

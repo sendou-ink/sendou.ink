@@ -23,11 +23,9 @@ export type BroadcastWeaponImages = (typeof BROADCAST_WEAPON_IMAGES)[number];
 
 export type BroadcastInkColorKey = (typeof BROADCAST_INK_COLORS)[number]["key"];
 
-/** The teams' in-game ink colors. */
+/** The teams' in-game ink colors, the pair's first one Alpha's (see {@link ProducerState.swapSides}). */
 export interface BroadcastInk {
 	key: BroadcastInkColorKey;
-	/** The featured match's second team has the pair's first color. */
-	isFlipped: boolean;
 }
 
 /** Ink colors of one game: the featured match's game played after its first `resultCount` results. */
@@ -48,7 +46,10 @@ export interface ProducerState<Scene extends string = string> {
 	/** Identifies the item as it moves from the queue to air, never reused (see `BroadcastStoredState.lastItemId`). */
 	id: number;
 	scene: Scene;
-	/** Shows the featured match's second team on the left. */
+	/**
+	 * Shows the featured match's second team on the left. The left team is Alpha (the game's HUD has it on the left,
+	 * in the ink pair's first color), so it also says which team has which ink color.
+	 */
 	swapSides: boolean;
 	/** How a Take puts this state on air, kept on `live` so the overlay knows how the last Take played. */
 	transition: BroadcastTransition;

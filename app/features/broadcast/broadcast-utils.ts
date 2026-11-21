@@ -78,29 +78,19 @@ export function gameInk(
 }
 
 /**
- * Ink colors as the team color variables, the left team's as `a`. Text on each color is black or white,
- * whichever reads better. Empty without ink colors, keeping the theme's.
+ * Ink colors as the team color variables: the pair's first color, Alpha's, as `a` (the left team's, see
+ * `ProducerState.swapSides`). Text on each color is black or white, whichever reads better. Empty without ink
+ * colors, keeping the theme's.
  */
-export function inkColorVars({
-	ink,
-	swapSides,
-}: {
-	ink: BroadcastInk | null;
-	swapSides: boolean;
-}): Record<string, string> {
+export function inkColorVars(ink: BroadcastInk | null): Record<string, string> {
 	const pair = BROADCAST_INK_COLORS.find((color) => color.key === ink?.key);
-	if (!ink || !pair) return {};
-
-	const colorOf = (index: 0 | 1) =>
-		(index === 0) !== ink.isFlipped ? pair.a : pair.b;
-	const left = colorOf(swapSides ? 1 : 0);
-	const right = colorOf(swapSides ? 0 : 1);
+	if (!pair) return {};
 
 	return {
-		"--bc-team-a": left,
-		"--bc-team-a-text": readableTextOn(left),
-		"--bc-team-b": right,
-		"--bc-team-b-text": readableTextOn(right),
+		"--bc-team-a": pair.a,
+		"--bc-team-a-text": readableTextOn(pair.a),
+		"--bc-team-b": pair.b,
+		"--bc-team-b-text": readableTextOn(pair.b),
 	};
 }
 

@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { BroadcastMatch, MatchProgress } from "./broadcast-types";
 import { gameInk, inkColorVars } from "./broadcast-utils";
 
-const ink = { key: "lockYellowPurple", isFlipped: false } as const;
+const ink = { key: "lockYellowPurple" } as const;
 
 describe("gameInk", () => {
 	const gameOneInk = { ...ink, matchId: 1, resultCount: 0 };
@@ -36,8 +36,8 @@ describe("gameInk", () => {
 });
 
 describe("inkColorVars", () => {
-	test("colors the left team with the first color and picks readable text", () => {
-		expect(inkColorVars({ ink, swapSides: false })).toEqual({
+	test("colors the left team, Alpha, with the first color and picks readable text", () => {
+		expect(inkColorVars(ink)).toEqual({
 			"--bc-team-a": "#F0EB24",
 			"--bc-team-a-text": "#15131f",
 			"--bc-team-b": "#6236DF",
@@ -45,18 +45,8 @@ describe("inkColorVars", () => {
 		});
 	});
 
-	test.each([
-		{
-			why: "flipped",
-			args: { ink: { ...ink, isFlipped: true }, swapSides: false },
-		},
-		{ why: "sides swapped", args: { ink, swapSides: true } },
-	])("gives the left team the second color when $why", ({ args }) => {
-		expect(inkColorVars(args)["--bc-team-a"]).toBe("#6236DF");
-	});
-
 	test("keeps the theme's colors without ink colors", () => {
-		expect(inkColorVars({ ink: null, swapSides: false })).toEqual({});
+		expect(inkColorVars(null)).toEqual({});
 	});
 });
 

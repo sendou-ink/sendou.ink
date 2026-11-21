@@ -212,7 +212,6 @@ describe("BroadcastRepository.updateState", () => {
 		const key = await createBroadcastKey();
 		const ink = {
 			key: "lockYellowPurple",
-			isFlipped: true,
 			matchId: 5,
 			resultCount: 2,
 		} as const;

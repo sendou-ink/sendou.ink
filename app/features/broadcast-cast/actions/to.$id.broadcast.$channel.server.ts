@@ -91,7 +91,6 @@ export const action = defineAction(
 						ink: body.key
 							? {
 									key: body.key,
-									isFlipped: body.isFlipped,
 									matchId: body.matchId,
 									resultCount: body.resultCount,
 								}

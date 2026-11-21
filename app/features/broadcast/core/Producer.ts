@@ -236,8 +236,7 @@ export function advanceOptions<Item extends ProducerState>(
 
 /**
  * What the scanner seeing a game start or end changes. The ink read (with the start or after it) colors the game
- * (Color Lock carrying over from the broadcast's previous game, see `InkColor.closestPair`), the teams keeping the
- * sides they had earlier in the set (the pair's first color always goes to the same lobby team). A start or end
+ * (Color Lock carrying over from the broadcast's previous game, see `InkColor.closestPair`). A start or end
  * the staged item waits for puts it on air right away, not when the item can't go on air (see {@link canTake}). A game ending cuts only along with what the scanner read of it,
  * which is kept as `scannedGame` with the game's ink colors. `null` when nothing changes.
  */
@@ -295,7 +294,7 @@ function withGameReads<Item extends ProducerState>(
 	const { matchId, count: resultCount } = liveResults;
 	const gameInk =
 		state.ink?.matchId === matchId && state.ink.resultCount === resultCount
-			? { key: state.ink.key, isFlipped: state.ink.isFlipped }
+			? { key: state.ink.key }
 			: null;
 
 	return {
@@ -304,8 +303,6 @@ function withGameReads<Item extends ProducerState>(
 			? {
 					ink: {
 						key: inkKey,
-						isFlipped:
-							state.ink?.matchId === matchId ? state.ink.isFlipped : false,
 						matchId,
 						resultCount,
 					},

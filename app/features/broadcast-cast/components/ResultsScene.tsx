@@ -72,6 +72,7 @@ export function ResultsScene({
 				view,
 				scannedGame: state.scannedGame,
 				ink: state.ink,
+				swapSides: state[view].swapSides,
 			})
 		: null;
 	if (!match || !result) {
@@ -85,10 +86,7 @@ export function ResultsScene({
 		<div
 			className={styles.results}
 			// the game just played, still in its ink colors
-			style={inkColorVars({
-				ink: result.ink,
-				swapSides: state[view].swapSides,
-			})}
+			style={inkColorVars(result.ink)}
 		>
 			<SceneBackdrop />
 			<MapPanel
