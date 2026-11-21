@@ -12,8 +12,6 @@ import { TournamentMatchPage } from "./pages/tournament/tournament-match-page";
 
 const CAST_ACCOUNT = "broadcast_cast";
 const OTHER_CAST_ACCOUNT = "broadcast_other";
-const STREAM_DECK_KEY_COUNT = 15;
-const STREAM_DECK_KEYS = { casters: 5, bracket: 6, queueItem: 12, take: 14 };
 const TEAM_COUNT = 2;
 
 test.describe("Broadcast", () => {
@@ -298,44 +296,6 @@ test.describe("Broadcast", () => {
 
 		await obs.close();
 	});
-
-	test("runs the broadcast from a Stream Deck", async ({ page, factories }) => {
-		const tournament = await createBroadcasting(factories, {
-			authorId: NZAP_TEST_ID,
-		});
-
-		await impersonate(page, NZAP_TEST_ID);
-		await page.addInitScript(installFakeStreamDeck);
-		const dashboard = new BroadcastDashboardPage(page, pageArgs(tournament.id));
-		await dashboard.goto();
-		await expect(dashboard.viewHeading("next", "game")).toBeVisible();
-		await expect
-			.poll(() => page.evaluate(() => window.fakeStreamDeck.drawnKeyCount()))
-			.toBe(STREAM_DECK_KEY_COUNT);
-
-		await page.evaluate(
-			(key) => window.fakeStreamDeck.press(key),
-			STREAM_DECK_KEYS.casters,
-		);
-		await expect(dashboard.viewHeading("next", "casters")).toBeVisible();
-
-		await page.evaluate(
-			(key) => window.fakeStreamDeck.press(key),
-			STREAM_DECK_KEYS.take,
-		);
-		await expect(dashboard.viewHeading("live", "casters")).toBeVisible();
-
-		await page.evaluate(
-			(key) => window.fakeStreamDeck.press(key),
-			STREAM_DECK_KEYS.queueItem,
-		);
-		await expect(dashboard.queueItem(1)).toBeVisible();
-		await page.evaluate(
-			(key) => window.fakeStreamDeck.press(key),
-			STREAM_DECK_KEYS.bracket,
-		);
-		await expect(dashboard.queueItem(1)).toContainText("Bracket");
-	});
 });
 
 function pageArgs(tournamentId: number) {
@@ -393,67 +353,4 @@ async function openObsSource({
 	await program.goto(programKey);
 
 	return { program, close: () => context.close() };
-}
-
-declare global {
-	interface Window {
-		fakeStreamDeck: {
-			drawnKeyCount: () => number;
-			press: (keyIndex: number) => void;
-		};
-	}
-}
-
-/** A Stream Deck MK.2 the browser was allowed to use before, on `navigator.hid` (runs in the page). */
-function installFakeStreamDeck() {
-	const KEY_INPUT_OFFSET = 3;
-	const IMAGE_REPORT_ID = 0x02;
-	const drawnKeys = new Set<number>();
-	const device = Object.assign(new EventTarget(), {
-		vendorId: 0x0fd9,
-		productId: 0x80,
-		productName: "Stream Deck MK.2",
-		opened: false,
-		collections: [],
-		async open() {
-			device.opened = true;
-		},
-		async close() {
-			device.opened = false;
-		},
-		async forget() {
-			device.opened = false;
-		},
-		async sendReport(reportId: number, data: Uint8Array) {
-			if (reportId === IMAGE_REPORT_ID) drawnKeys.add(data[1]);
-		},
-		async sendFeatureReport() {},
-		async receiveFeatureReport() {
-			return new DataView(new ArrayBuffer(32));
-		},
-	});
-	const inputReport = (data: Uint8Array) =>
-		device.dispatchEvent(
-			Object.assign(new Event("inputreport"), {
-				reportId: 0x01,
-				data: new DataView(data.buffer),
-			}),
-		);
-
-	Object.defineProperty(navigator, "hid", {
-		configurable: true,
-		value: Object.assign(new EventTarget(), {
-			getDevices: async () => [device],
-			requestDevice: async () => [device],
-		}),
-	});
-	window.fakeStreamDeck = {
-		drawnKeyCount: () => drawnKeys.size,
-		press: (keyIndex) => {
-			const down = new Uint8Array(32);
-			down[KEY_INPUT_OFFSET + keyIndex] = 1;
-			inputReport(down);
-			inputReport(new Uint8Array(32));
-		},
-	};
 }

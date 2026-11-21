@@ -19,7 +19,7 @@ import {
 import type { BroadcastAdvance } from "~/features/broadcast/broadcast-types";
 import type { CastScene } from "./broadcast-cast-types";
 
-/** Each scene's icon on the dashboard's scene tiles, queue tabs and Stream Deck keys. */
+/** Each scene's icon on the dashboard's scene tiles and queue tabs. */
 export const SCENE_ICONS: Record<CastScene, LucideIcon> = {
 	starting: Clock,
 	casters: Mic,

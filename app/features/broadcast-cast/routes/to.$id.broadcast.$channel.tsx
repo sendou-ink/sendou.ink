@@ -104,9 +104,6 @@ import { SendouForm } from "~/form/SendouForm";
 import type { ArrayItemRenderContext } from "~/form/types";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import { StreamDeckKeys } from "~/modules/stream-deck/components/StreamDeckKeys";
-import { StreamDeckSetup } from "~/modules/stream-deck/components/StreamDeckSetup";
-import type * as StreamDeck from "~/modules/stream-deck/stream-deck";
 import type { SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentAdminPage, tournamentMatchPage } from "~/utils/urls";
@@ -118,7 +115,6 @@ import {
 	BROADCAST_VOLUME_SAVE_INTERVAL_MS,
 	CAST_PRODUCER_RULES,
 } from "../broadcast-cast-constants";
-import { useStreamDeckFaces } from "../broadcast-cast-hooks";
 import { ADVANCE_ICONS, SCENE_ICONS } from "../broadcast-cast-icons";
 import {
 	broadcastActionSchema,
@@ -136,7 +132,6 @@ import { needsFeaturedMatch } from "../broadcast-cast-utils";
 import { ScenePicker, useSceneHotkeys } from "../components/ScenePicker";
 import * as BracketFocus from "../core/BracketFocus";
 import * as CastChannel from "../core/CastChannel";
-import * as CastStreamDeck from "../core/CastStreamDeck";
 import * as CastTake from "../core/CastTake";
 import { loader } from "../loaders/to.$id.broadcast.$channel.server";
 import styles from "./to.$id.broadcast.$channel.module.css";
@@ -210,40 +205,6 @@ function BroadcastDashboard() {
 		onSelect: (scene) =>
 			submitScene("SET_SCENE", { itemId: selected.id, scene }),
 	});
-	const streamDeckKeys = CastStreamDeck.keys({ state, selected, now });
-	const streamDeckFaces = useStreamDeckFaces(streamDeckKeys);
-
-	const pressStreamDeckKey = (key: CastStreamDeck.Key) => {
-		switch (key.type) {
-			case "scene":
-				if (key.scene !== selected.scene) {
-					submitScene("SET_SCENE", { itemId: selected.id, scene: key.scene });
-				}
-				return;
-			case "take":
-				submitScene("TAKE", {
-					takeId: state.takeId,
-					matchId: state.match?.id,
-					resultCount: state.match?.progress.next.resultCount,
-				});
-				return;
-			case "queueItem":
-				if (key.nextItemId === null) {
-					submitScene("ADD_TO_QUEUE");
-					// the item queued gets the id after the last one given
-					setSelectedItemId(state.lastItemId + 1);
-				} else {
-					setSelectedItemId(key.nextItemId);
-				}
-				return;
-			case "advance":
-				submitScene("SET_ADVANCE", {
-					itemId: key.itemId,
-					advance: key.nextAdvance,
-				});
-				return;
-		}
-	};
 
 	const rehearse = () =>
 		nextPreviewRef.current?.contentWindow?.postMessage(
@@ -258,10 +219,6 @@ function BroadcastDashboard() {
 
 	return (
 		<div className={clsx("stack lg", styles.dashboard)}>
-			<StreamDeckKeys
-				faces={streamDeckFaces}
-				onPress={(keyIndex) => pressStreamDeckKey(streamDeckKeys[keyIndex])}
-			/>
 			<header className="stack sm">
 				<div className="stack horizontal sm items-center justify-between flex-wrap">
 					<div className="stack horizontal md items-center flex-wrap">
@@ -393,7 +350,6 @@ function BroadcastDashboard() {
 							scannerLink={pageArgs}
 							statuses={clipSender.statuses}
 							areClipsOnSources={areClipsOnSources}
-							streamDeckFaces={streamDeckFaces}
 						/>
 					</SendouTabPanel>
 					<SendouTabPanel id="theme">
@@ -1647,7 +1603,6 @@ function Setup({
 	scannerLink,
 	statuses,
 	areClipsOnSources,
-	streamDeckFaces,
 }: {
 	state: CastBroadcastState;
 	/** The user's OBS URL for the channel, `null` until generated. */
@@ -1655,7 +1610,6 @@ function Setup({
 	scannerLink: { tournamentId: number; slug: string };
 	statuses: ClipTransfer.ClipPeerStatus[];
 	areClipsOnSources: boolean;
-	streamDeckFaces: StreamDeck.KeyFace[];
 }) {
 	const { t } = useTranslation(["broadcast", "common"]);
 	const sourceCount = state.health.sources;
@@ -1813,12 +1767,6 @@ function Setup({
 						? t("broadcast:dashboard.setup.unlinkScanner")
 						: t("broadcast:dashboard.setup.linkScanner")}
 				</SendouButton>
-			</section>
-			<section className="stack md">
-				<h2 className={styles.panelHeader}>{t("common:streamDeck.header")}</h2>
-				<StreamDeckSetup faces={streamDeckFaces}>
-					{t("broadcast:dashboard.streamDeck.explanation")}
-				</StreamDeckSetup>
 			</section>
 		</div>
 	);
