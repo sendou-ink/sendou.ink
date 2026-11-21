@@ -32,6 +32,7 @@ body:has(.planner) :is(nav, header, footer) {
 }
 
 .canvas {
+	position: relative;
 	grid-area: map;
 	overflow: hidden;
 }

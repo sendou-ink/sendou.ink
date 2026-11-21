@@ -113,4 +113,43 @@ describe("PlanContextMenu", () => {
 			"mrk00003",
 		]);
 	});
+
+	test("a drawing's menu brings it to the front", async () => {
+		const { screen, editor } = await renderMenu({
+			type: "drawings",
+			ids: ["arrow000"],
+		});
+
+		await screen.getByTestId("plan-menu-bring-to-front").click();
+
+		expect(editor.getDocument().drawings.at(-1)?.id).toBe("arrow000");
+	});
+
+	test("a drawing's menu can't send back what already is at the back", async () => {
+		const { screen } = await renderMenu({
+			type: "drawings",
+			ids: ["stroke00", "stroke01"],
+		});
+
+		await expect
+			.element(screen.getByTestId("plan-menu-send-to-back"))
+			.toBeDisabled();
+	});
+
+	test("a drawing's menu deletes the drawings", async () => {
+		const { screen, editor } = await renderMenu({
+			type: "drawings",
+			ids: ["rect0001", "text0001"],
+		});
+
+		await screen.getByTestId("plan-menu-delete-drawings").click();
+
+		expect(
+			editor
+				.getDocument()
+				.drawings.some((drawing) =>
+					["rect0001", "text0001"].includes(drawing.id),
+				),
+		).toBe(false);
+	});
 });

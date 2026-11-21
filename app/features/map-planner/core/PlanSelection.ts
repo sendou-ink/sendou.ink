@@ -3,8 +3,11 @@
 
 import type { SlotIndex } from "./PlanDocument";
 
-/** The selected object, `null` for nothing. */
-export type Selection = { type: "player"; slot: SlotIndex } | null;
+/** The selected player or drawings, `null` for nothing. A selection never mixes the two. */
+export type Selection =
+	| { type: "player"; slot: SlotIndex }
+	| { type: "drawings"; ids: string[] }
+	| null;
 
 /** See {@link create}. */
 export interface PlanSelection {
@@ -22,9 +25,11 @@ export function create(): PlanSelection {
 	return {
 		get: () => selection,
 		set: (next) => {
-			if (isSame(selection, next)) return;
+			const normalized =
+				next?.type === "drawings" && next.ids.length === 0 ? null : next;
+			if (isSame(selection, normalized)) return;
 
-			selection = next;
+			selection = normalized;
 			for (const listener of listeners) listener();
 		},
 		subscribe: (listener) => {
@@ -39,6 +44,18 @@ export function selectedSlot(selection: Selection) {
 	return selection?.type === "player" ? selection.slot : null;
 }
 
+/** Ids of the selected drawings, none when a player or nothing is selected. */
+export function selectedDrawingIds(selection: Selection): string[] {
+	return selection?.type === "drawings" ? selection.ids : [];
+}
+
 function isSame(a: Selection, b: Selection) {
-	return selectedSlot(a) === selectedSlot(b);
+	if (a === null || b === null) return a === b;
+	if (a.type === "player" || b.type === "player") {
+		return selectedSlot(a) === selectedSlot(b);
+	}
+
+	return (
+		a.ids.length === b.ids.length && a.ids.every((id) => b.ids.includes(id))
+	);
 }

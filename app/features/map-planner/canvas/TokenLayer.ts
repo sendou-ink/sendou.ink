@@ -28,13 +28,16 @@ export function create({
 	editor,
 	selection,
 	isPanning,
+	canGrab,
 	onContextMenu,
 }: {
 	parent: Konva.Container;
 	editor: PlanEditor;
 	selection: PlanSelection.PlanSelection;
-	/** Whether the pointer pans the camera now (e.g. Space held), so tokens don't drag. */
+	/** Whether the pointer pans the camera now (e.g. Space held), so tokens don't open their menu. */
 	isPanning: () => boolean;
+	/** Whether tokens can be selected and dragged now, not while panning or drawing over them. */
+	canGrab: () => boolean;
 	/** The token of `slot` was right clicked or long pressed at a point of the page. */
 	onContextMenu: (slot: SlotIndex, clientPoint: Point) => void;
 }): TokenLayer {
@@ -59,7 +62,7 @@ export function create({
 		});
 
 		group.on("pointerdown", (event) => {
-			if (isPanning()) return;
+			if (!canGrab()) return;
 			selection.set({ type: "player", slot });
 			longPress.pointerDown(event.evt);
 		});
@@ -74,7 +77,7 @@ export function create({
 		group.on("dragstart", (event) => {
 			const button = (event.evt as MouseEvent | undefined)?.button;
 			if (
-				isPanning() ||
+				!canGrab() ||
 				longPress.didFire() ||
 				(button !== undefined && button !== LEFT_MOUSE_BUTTON)
 			) {
@@ -100,10 +103,10 @@ export function create({
 			editor.endGroup();
 		});
 		group.on("mouseenter", () => {
-			parent.getStage()!.container().style.cursor = "grab";
+			if (canGrab()) parent.getStage()!.container().style.cursor = "grab";
 		});
 		group.on("mouseleave", () => {
-			parent.getStage()!.container().style.cursor = "";
+			if (canGrab()) parent.getStage()!.container().style.cursor = "";
 		});
 
 		root.add(group);

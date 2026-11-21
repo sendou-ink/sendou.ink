@@ -26,11 +26,11 @@ export type ObjectivePatch = {
 }[PlanObjective["mode"]];
 
 /** Properties of one kind of drawing, its `id` and `type` fixed. */
-export type DrawingPatch = {
-	[Type in PlanDrawing["type"]]: Partial<
-		Omit<Extract<PlanDrawing, { type: Type }>, "id" | "type">
-	>;
-}[PlanDrawing["type"]];
+export type DrawingPatch = PatchOf<PlanDrawing>;
+
+type PatchOf<Drawing> = Drawing extends unknown
+	? Partial<Omit<Drawing, "id" | "type">>
+	: never;
 
 /** One edit of one object of a plan. */
 export type PlanOperation =
@@ -70,8 +70,9 @@ type OperationTarget =
 /**
  * Applies an operation to a plan without mutating it. Returns the new plan and the operation
  * undoing it, computed against the plan it was applied to. An operation on something that
- * doesn't exist (an update of a removed drawing, a marker added twice) changes nothing and
- * has no inverse, so operations arriving late or twice are harmless.
+ * doesn't exist (an update of a removed drawing, a marker added twice) or an update to the
+ * values already there changes nothing and has no inverse, so operations arriving late or
+ * twice are harmless and leave no empty undo steps.
  */
 export function apply(
 	document: PlanDocument,
@@ -79,6 +80,8 @@ export function apply(
 ): { document: PlanDocument; inverse: PlanOperation | null } {
 	switch (operation.type) {
 		case "updateBoard": {
+			if (!changes(document, operation.patch)) return unchanged(document);
+
 			return {
 				document: { ...document, ...operation.patch },
 				inverse: {
@@ -89,6 +92,7 @@ export function apply(
 		}
 		case "updateTeam": {
 			const team = document.teams[operation.team];
+			if (!changes(team, operation.patch)) return unchanged(document);
 			const teams = [...document.teams] as PlanDocument["teams"];
 			teams[operation.team] = { ...team, ...operation.patch };
 
@@ -113,7 +117,9 @@ export function apply(
 		}
 		case "updatePlayer": {
 			const player = document.slots[operation.slot];
-			if (!player) return unchanged(document);
+			if (!player || !changes(player, operation.patch)) {
+				return unchanged(document);
+			}
 
 			return {
 				document: withSlot(document, operation.slot, {
@@ -164,6 +170,7 @@ export function apply(
 			);
 			if (index === -1) return unchanged(document);
 			const updated = document.markers[index];
+			if (!changes(updated, operation.patch)) return unchanged(document);
 
 			return {
 				document: {
@@ -217,6 +224,9 @@ export function apply(
 			);
 			if (index === -1) return unchanged(document);
 			const updated = document.drawings[index];
+			if (!changes(updated, operation.patch as Partial<PlanDrawing>)) {
+				return unchanged(document);
+			}
 
 			return {
 				document: {
@@ -262,7 +272,10 @@ export function apply(
 			};
 		}
 		case "updateObjective": {
-			if (operation.patch.mode !== document.objective.mode) {
+			if (
+				operation.patch.mode !== document.objective.mode ||
+				!changes(document.objective, operation.patch as Partial<PlanObjective>)
+			) {
 				return unchanged(document);
 			}
 
@@ -320,6 +333,13 @@ export function targetOf(operation: PlanOperation): OperationTarget {
 
 function unchanged(document: PlanDocument) {
 	return { document, inverse: null };
+}
+
+/** Whether applying the patch would change any value of `current`. */
+function changes<T extends object>(current: T, patch: Partial<T>) {
+	return (Object.keys(patch) as Array<keyof T>).some(
+		(key) => !R.isDeepEqual(current[key], patch[key]),
+	);
 }
 
 function previousValues<T extends object>(current: T, patch: Partial<T>) {

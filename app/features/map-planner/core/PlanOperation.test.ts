@@ -118,6 +118,38 @@ describe("PlanOperation.apply", () => {
 		).toEqual(plan);
 	});
 
+	test.each<{ why: string; operation: PlanOperation.PlanOperation }>([
+		{
+			why: "a drawing moved to where it is",
+			operation: {
+				type: "updateDrawing",
+				id: "rect0001",
+				patch: { from: [880, 420], to: [1040, 560] },
+			},
+		},
+		{
+			why: "a player given its status",
+			operation: { type: "updatePlayer", slot: 6, patch: { status: "dead" } },
+		},
+		{
+			why: "a marker moved to where it is",
+			operation: {
+				type: "updateMarker",
+				id: "mrk00001",
+				patch: { position: [520, 410] },
+			},
+		},
+		{
+			why: "the board given its stage",
+			operation: { type: "updateBoard", patch: { stageId: 9 } },
+		},
+	])("changes nothing and has no inverse for $why", ({ operation }) => {
+		const result = PlanOperation.apply(plan, operation);
+
+		expect(result.document).toBe(plan);
+		expect(result.inverse).toBeNull();
+	});
+
 	test("does not mutate the plan it is given", () => {
 		const before = structuredClone(plan);
 

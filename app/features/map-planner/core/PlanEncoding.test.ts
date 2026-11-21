@@ -46,6 +46,26 @@ describe("PlanEncoding.encode", () => {
 		});
 	});
 
+	test("round trips a resized text, rounding its scale", () => {
+		const plan = PlanDocument.empty({ stageId: 0, mode: "SZ" });
+		plan.drawings = [
+			{
+				id: "text",
+				type: "text",
+				color: "#ffffff",
+				size: "M",
+				position: [10, 20],
+				text: "push",
+				scale: 1.5049,
+			},
+		];
+
+		expect(decoded(PlanEncoding.encode(plan)).drawings[0]).toEqual({
+			...plan.drawings[0],
+			scale: 1.5,
+		});
+	});
+
 	test("rounds coordinates to whole map pixels", () => {
 		const plan = PlanDocument.empty({ stageId: 0, mode: "SZ" });
 		plan.slots[0] = {

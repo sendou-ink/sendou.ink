@@ -475,6 +475,243 @@ describe("PlanCommands.moveMarker", () => {
 	});
 });
 
+describe("PlanCommands.moveDrawings", () => {
+	test("moves every drawing by the same delta from where they were", () => {
+		const editor = PlanEditor.create(typicalPlan());
+		const originals = editor
+			.getDocument()
+			.drawings.filter((drawing) =>
+				["rect0001", "text0001"].includes(drawing.id),
+			);
+
+		editor.apply(PlanCommands.moveDrawings(originals, [10.4, -20]));
+		editor.apply(PlanCommands.moveDrawings(originals, [30, 40]));
+
+		const moved = editor
+			.getDocument()
+			.drawings.filter((drawing) => originals.includes(drawing) === false)
+			.filter((drawing) => ["rect0001", "text0001"].includes(drawing.id));
+		expect(moved).toMatchObject([
+			{ from: [910, 460], to: [1070, 600] },
+			{ position: [930, 420] },
+		]);
+	});
+
+	test("a move the map's edge stops entirely leaves no undo step", () => {
+		const plan = typicalPlan();
+		const editor = PlanEditor.create(plan);
+		const originals = plan.drawings.filter(
+			(drawing) => drawing.id === "rect0001",
+		);
+		editor.apply(PlanCommands.moveDrawings(originals, [0, -1000]));
+		const atEdge = editor.getDocument();
+		const undoneOnce = () => {
+			editor.undo();
+			return editor.getDocument();
+		};
+
+		editor.beginGroup();
+		editor.apply(
+			PlanCommands.moveDrawings(
+				atEdge.drawings.filter((drawing) => drawing.id === "rect0001"),
+				[0, -50],
+			),
+		);
+		editor.endGroup();
+
+		expect(editor.getDocument()).toBe(atEdge);
+		expect(undoneOnce()).toEqual(plan);
+	});
+
+	test("stops the drawings at the map's edge, keeping their arrangement", () => {
+		const plan = typicalPlan();
+		const originals = plan.drawings.filter((drawing) =>
+			["rect0001", "text0001"].includes(drawing.id),
+		);
+
+		const operations = PlanCommands.moveDrawings(originals, [0, -1000]);
+
+		expect(operations).toEqual([
+			{
+				type: "updateDrawing",
+				id: "rect0001",
+				patch: { from: [880, 40], to: [1040, 180] },
+			},
+			{ type: "updateDrawing", id: "text0001", patch: { position: [900, 0] } },
+		]);
+	});
+});
+
+describe("PlanCommands.reorderDrawings", () => {
+	const idsOf = (document: PlanDocument.PlanDocument) =>
+		document.drawings.map((drawing) => drawing.id);
+	const plan = () => ({
+		...PlanDocument.empty({ stageId: 0, mode: "SZ" }),
+		drawings: ["a", "b", "c", "d"].map(
+			(id): PlanDocument.PlanDrawing => ({
+				id,
+				type: "line",
+				color: "#ffffff",
+				size: "M",
+				from: [0, 0],
+				to: [10, 10],
+			}),
+		),
+	});
+
+	test.each([
+		{ ids: ["b"], place: "front" as const, expected: ["a", "c", "d", "b"] },
+		{ ids: ["c"], place: "back" as const, expected: ["c", "a", "b", "d"] },
+		{
+			ids: ["c", "a"],
+			place: "front" as const,
+			expected: ["b", "d", "a", "c"],
+		},
+		{
+			ids: ["d", "b"],
+			place: "back" as const,
+			expected: ["b", "d", "a", "c"],
+		},
+	])(
+		"$place $ids → $expected, undone in one step",
+		({ ids, place, expected }) => {
+			const editor = PlanEditor.create(plan());
+
+			editor.apply(
+				PlanCommands.reorderDrawings(editor.getDocument(), ids, place),
+			);
+			expect(idsOf(editor.getDocument())).toEqual(expected);
+
+			editor.undo();
+			expect(editor.getDocument()).toEqual(plan());
+		},
+	);
+
+	test.each([
+		{ ids: ["c", "d"], place: "front" as const },
+		{ ids: ["a"], place: "back" as const },
+		{ ids: ["gone"], place: "front" as const },
+	])(
+		"changes nothing when $ids already are at the $place",
+		({ ids, place }) => {
+			expect(PlanCommands.reorderDrawings(plan(), ids, place)).toEqual([]);
+		},
+	);
+});
+
+describe("PlanCommands.styleDrawings", () => {
+	test("restyles only the drawings that differ", () => {
+		const plan = typicalPlan();
+
+		expect(
+			PlanCommands.styleDrawings(plan, ["rect0001", "arrow000", "gone"], {
+				color: "#ffffff",
+				size: "S",
+			}),
+		).toEqual([
+			{
+				type: "updateDrawing",
+				id: "arrow000",
+				patch: { color: "#ffffff", size: "S" },
+			},
+		]);
+	});
+});
+
+describe("PlanCommands.removeDrawings", () => {
+	test("removes the drawings as one undo step", () => {
+		const editor = PlanEditor.create(typicalPlan());
+
+		editor.apply(
+			PlanCommands.removeDrawings(editor.getDocument(), [
+				"rect0001",
+				"text0001",
+				"gone",
+			]),
+		);
+		expect(
+			editor.getDocument().drawings.map((drawing) => drawing.id),
+		).not.toContain("rect0001");
+
+		editor.undo();
+		expect(editor.getDocument()).toEqual(typicalPlan());
+	});
+});
+
+describe("PlanCommands.setText", () => {
+	test("sets the text of a label", () => {
+		expect(PlanCommands.setText(typicalPlan(), "text0001", "go")).toEqual([
+			{ type: "updateDrawing", id: "text0001", patch: { text: "go" } },
+		]);
+	});
+
+	test("removes a label left blank", () => {
+		expect(PlanCommands.setText(typicalPlan(), "text0001", "  ")).toEqual([
+			{ type: "removeDrawing", id: "text0001" },
+		]);
+	});
+
+	test("changes nothing for the same text or a drawing that isn't a label", () => {
+		const plan = typicalPlan();
+
+		expect(
+			PlanCommands.setText(plan, "text0001", "push left after the wipe"),
+		).toEqual([]);
+		expect(PlanCommands.setText(plan, "rect0001", "x")).toEqual([]);
+	});
+});
+
+describe("PlanCommands.resizeShape", () => {
+	test("spans the shape over the box, kept on the map", () => {
+		expect(
+			PlanCommands.resizeShape(typicalPlan(), "rect0001", {
+				x: -10.2,
+				y: 20.6,
+				width: 100,
+				height: 50,
+			}),
+		).toEqual([
+			{
+				type: "updateDrawing",
+				id: "rect0001",
+				patch: { from: [0, 21], to: [90, 71] },
+			},
+		]);
+	});
+
+	test("changes nothing for a drawing that isn't a rectangle or an ellipse", () => {
+		expect(
+			PlanCommands.resizeShape(typicalPlan(), "arrow000", {
+				x: 0,
+				y: 0,
+				width: 10,
+				height: 10,
+			}),
+		).toEqual([]);
+	});
+});
+
+describe("PlanCommands.scaleText", () => {
+	test.each([
+		{ scale: 2, expected: 2 },
+		{ scale: 0.01, expected: PlanDocument.TEXT_SCALE_LIMITS.min },
+		{ scale: 100, expected: PlanDocument.TEXT_SCALE_LIMITS.max },
+	])("scales a label by $scale to $expected", ({ scale, expected }) => {
+		expect(
+			PlanCommands.scaleText(typicalPlan(), "text0001", {
+				position: [10, 20],
+				scale,
+			}),
+		).toEqual([
+			{
+				type: "updateDrawing",
+				id: "text0001",
+				patch: { position: [10, 20], scale: expected },
+			},
+		]);
+	});
+});
+
 function distance([ax, ay]: PlanDocument.Point, [bx, by]: PlanDocument.Point) {
 	return Math.hypot(ax - bx, ay - by);
 }

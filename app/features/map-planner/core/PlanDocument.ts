@@ -42,6 +42,9 @@ export const DRAWING_TEXT_MAX_LENGTH = 200;
 /** Stroke width or font size of a drawing, the pixels decided by the renderer. */
 export const DRAWING_SIZES = ["S", "M", "L"] as const;
 
+/** How far a text label can be shrunk or grown from its size's font. */
+export const TEXT_SCALE_LIMITS = { min: 0.25, max: 8 } as const;
+
 /** Default team colours: blue and yellow, a pair told apart with every kind of colour blindness. */
 // XXX: take the pair from the game's ink colour pairs (`BROADCAST_INK_COLORS` of the broadcast feature), one fixed pair or rotating per plan
 export const DEFAULT_TEAM_COLORS = ["#3d63f5", "#f5c518"] as const;
@@ -117,6 +120,8 @@ export interface TextDrawing extends DrawingBase {
 	type: "text";
 	position: Point;
 	text: string;
+	/** Resized from its size's font by this factor, `1` when left out. */
+	scale?: number;
 }
 
 /** Anything drawn with the drawing tools. */

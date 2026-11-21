@@ -1,7 +1,8 @@
 // Draws a plan on a Konva stage inside a container element and redraws it
 // on every change of the editor's document. Plain Konva and DOM, no React,
-// so any UI framework can host it. Owns the camera: wheel and pinch zoom,
-// pans by dragging the map, never past the map's edges.
+// so any UI framework can host it. Owns the camera (wheel and pinch zoom,
+// pans with Space, the middle button or two fingers, never past the map's
+// edges) and hands every other press to the drawing tool in hand.
 
 import Konva from "konva";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -16,9 +17,13 @@ import {
 	teamOfSlot,
 } from "../core/PlanDocument";
 import type { PlanEditor } from "../core/PlanEditor";
-import type { PlanSelection } from "../core/PlanSelection";
+import * as PlanSelection from "../core/PlanSelection";
+import type { PlanTools, Tool } from "../core/PlanTools";
+import * as DrawingLayer from "./DrawingLayer";
+import * as DrawingTools from "./DrawingTools";
 import * as MarkerLayer from "./MarkerLayer";
 import * as RadiusLayer from "./RadiusLayer";
+import * as TextEditor from "./TextEditor";
 import * as TokenGhost from "./TokenGhost";
 import * as TokenLayer from "./TokenLayer";
 
@@ -28,13 +33,22 @@ const PINCH_WHEEL_ZOOM_SPEED = 0.01;
 const WHEEL_LINE_HEIGHT_PX = 16;
 const MIDDLE_MOUSE_BUTTON = 1;
 const RIGHT_MOUSE_BUTTON = 2;
-/** How far a pointer may move between down and up for it to count as a tap, in screen pixels. */
-const TAP_MAX_DISTANCE = 4;
+const TOOL_CURSORS: Record<Tool, string> = {
+	select: "",
+	pen: "crosshair",
+	eraser: "crosshair",
+	arrow: "crosshair",
+	line: "crosshair",
+	text: "text",
+	rectangle: "crosshair",
+	ellipse: "crosshair",
+};
 
 /** What a context menu opened on the map is about. */
 export type ContextMenuTarget =
 	| { type: "player"; slot: SlotIndex }
-	| { type: "marker"; id: string };
+	| { type: "marker"; id: string }
+	| { type: "drawings"; ids: string[] };
 
 /** See {@link create}. */
 export interface PlanCanvas {
@@ -63,15 +77,17 @@ export function create({
 	container,
 	editor,
 	selection,
+	tools,
 	isMapShown: initialIsMapShown = true,
 	onContextMenu,
 }: {
 	container: HTMLDivElement;
 	editor: PlanEditor;
-	selection: PlanSelection;
+	selection: PlanSelection.PlanSelection;
+	tools: PlanTools;
 	/** `false` leaves the map blank (and its image unloaded) until {@link PlanCanvas.setMapShown}. */
 	isMapShown?: boolean;
-	/** A token or marker was right clicked or long pressed at a point of the page. */
+	/** A token, marker or drawing was right clicked (tokens and markers also long pressed) at a point of the page. */
 	onContextMenu: (target: ContextMenuTarget, clientPoint: Point) => void;
 }): PlanCanvas {
 	const stage = new Konva.Stage({
@@ -86,9 +102,13 @@ export function create({
 		height: MAP_SIZE.height,
 	});
 	mapLayer.add(mapImage);
+	const drawingLayer = new Konva.Layer();
 	/** Radii, markers and tokens, in this order. Only markers and tokens listen. */
 	const pieceLayer = new Konva.Layer();
-	stage.add(mapLayer, pieceLayer);
+	/** What the tools show over everything: the selection and its handles. */
+	const overlayLayer = new Konva.Layer();
+	// XXX: ink and objective layers go between the map and the drawings, callouts between the pieces and the overlay
+	stage.add(mapLayer, drawingLayer, pieceLayer, overlayLayer);
 
 	const viewport = (): PlanCamera.Viewport => ({
 		width: stage.width(),
@@ -96,10 +116,15 @@ export function create({
 	});
 	let camera = PlanCamera.fit(viewport());
 
+	let drawings: DrawingLayer.DrawingLayer | null = null;
+	let textEditor: TextEditor.TextEditor | null = null;
 	const setCamera = (next: PlanCamera.Camera) => {
+		const zoomChanged = next.scale !== camera.scale;
 		camera = next;
 		stage.scale({ x: camera.scale, y: camera.scale });
 		stage.position({ x: camera.x, y: camera.y });
+		if (zoomChanged) drawings?.onZoom();
+		textEditor?.reposition();
 	};
 
 	let isMapShown = initialIsMapShown;
@@ -151,15 +176,117 @@ export function create({
 	resizeObserver.observe(container);
 
 	const fitView = () => setCamera(PlanCamera.fit(viewport()));
-	const cameraInput = listenToCameraInput({
+	drawings = DrawingLayer.create({
+		parent: drawingLayer,
+		overlay: overlayLayer,
+		editor,
+		selection,
+	});
+	textEditor = TextEditor.create({
+		container,
+		editor,
+		selection,
+		tools,
+		getCamera: () => camera,
+		onEditingChange: (id) => drawings?.setHidden(id),
+	});
+	const toolContext: DrawingTools.ToolContext = {
+		editor,
+		selection,
+		tools,
+		drawings,
+		textEditor,
+		toMap: (point) => PlanCamera.toMap(camera, point),
+		zoom: () => camera.scale,
+	};
+	const pointerInput = listenToPointerInput({
 		container,
 		getCamera: () => camera,
 		setCamera: (next) => setCamera(PlanCamera.clamp(next, viewport())),
 		viewport,
 		fitView,
-		isOnPiece: ([x, y]) => pieceLayer.getIntersection({ x, y }) !== null,
-		onTapMap: () => selection.set(null),
+		toolCursor: () => TOOL_CURSORS[tools.get().tool],
+		startToolGesture: (point, event) => {
+			if (tools.get().tool === "select") {
+				const [x, y] = point;
+				if (
+					drawings?.isOnHandle(point) ||
+					pieceLayer.getIntersection({ x, y }) !== null
+				) {
+					return null;
+				}
+			}
+			return DrawingTools.startGesture(toolContext, point, event);
+		},
 	});
+	/** Tokens and markers are dragged with the select tool, every other tool draws over them. */
+	const canGrabPieces = () =>
+		!pointerInput.isPanning() && tools.get().tool === "select";
+
+	const onDoubleClick = (event: MouseEvent) => {
+		if (tools.get().tool !== "select" || isOnTextField(event)) return;
+
+		const point = localPoint(container, event);
+		if (pieceLayer.getIntersection({ x: point[0], y: point[1] })) return;
+
+		const id = drawings?.drawingAt(point);
+		if (id) textEditor?.openExisting(id);
+	};
+	container.addEventListener("dblclick", onDoubleClick);
+
+	/**
+	 * A right click on a drawing opens the menu of the selection when it is part of it, otherwise
+	 * of the drawing alone, selecting it with the select tool. Tokens and markers open their own.
+	 */
+	const onDrawingContextMenu = (event: MouseEvent) => {
+		if (isOnTextField(event)) return;
+
+		const point = localPoint(container, event);
+		if (pieceLayer.getIntersection({ x: point[0], y: point[1] })) return;
+
+		const id = drawings?.drawingAt(point);
+		if (!id) return;
+
+		const selectedIds = PlanSelection.selectedDrawingIds(selection.get());
+		const ids = selectedIds.includes(id) ? selectedIds : [id];
+		if (tools.get().tool === "select") {
+			selection.set({ type: "drawings", ids });
+		}
+		onContextMenu({ type: "drawings", ids }, [event.clientX, event.clientY]);
+	};
+	container.addEventListener("contextmenu", onDrawingContextMenu);
+
+	const onKeyDown = (event: KeyboardEvent) => {
+		if (isTyping(event)) return;
+
+		if (event.key === "Escape") {
+			if (!pointerInput.cancelToolGesture()) selection.set(null);
+			return;
+		}
+		if (event.key !== "Delete" && event.key !== "Backspace") return;
+
+		const ids = PlanSelection.selectedDrawingIds(selection.get());
+		if (ids.length === 0) return;
+
+		event.preventDefault();
+		editor.apply(PlanCommands.removeDrawings(editor.getDocument(), ids));
+	};
+	window.addEventListener("keydown", onKeyDown);
+
+	let toolInHand = tools.get().tool;
+	const unsubscribeTools = tools.subscribe(() => {
+		const { tool } = tools.get();
+		if (tool === toolInHand) return;
+
+		toolInHand = tool;
+		textEditor?.close();
+		pointerInput.cancelToolGesture();
+		pointerInput.updateCursor();
+		if (tool !== "select" && selection.get()?.type === "drawings") {
+			selection.set(null);
+		}
+	});
+
 	const radiusLayer = RadiusLayer.create({
 		parent: pieceLayer,
 		editor,
@@ -167,7 +294,8 @@ export function create({
 	const markerLayer = MarkerLayer.create({
 		parent: pieceLayer,
 		editor,
-		isPanning: cameraInput.isPanning,
+		isPanning: pointerInput.isPanning,
+		canGrab: canGrabPieces,
 		onContextMenu: (id, clientPoint) =>
 			onContextMenu({ type: "marker", id }, clientPoint),
 	});
@@ -175,7 +303,8 @@ export function create({
 		parent: pieceLayer,
 		editor,
 		selection,
-		isPanning: cameraInput.isPanning,
+		isPanning: pointerInput.isPanning,
+		canGrab: canGrabPieces,
 		onContextMenu: (slot, clientPoint) =>
 			onContextMenu({ type: "player", slot }, clientPoint),
 	});
@@ -289,8 +418,14 @@ export function create({
 		},
 		destroy: () => {
 			unsubscribe();
+			unsubscribeTools();
 			resizeObserver.disconnect();
-			cameraInput.remove();
+			pointerInput.remove();
+			container.removeEventListener("dblclick", onDoubleClick);
+			container.removeEventListener("contextmenu", onDrawingContextMenu);
+			window.removeEventListener("keydown", onKeyDown);
+			textEditor?.destroy();
+			drawings?.destroy();
 			radiusLayer.destroy();
 			markerLayer.destroy();
 			tokenLayer.destroy();
@@ -310,44 +445,56 @@ function mapImageUrl(document: PlanDocument) {
 }
 
 /**
- * Wheel zooms around the pointer; dragging the map with one pointer pans, with two it pinches.
- * Space held or the middle mouse button pan whatever the pointer is over, tokens and markers
- * included. The right button is left to context menus. Shift+1 fits the map.
+ * Wheel zooms around the pointer, two pointers pinch and pan, and so do Space held or the middle
+ * mouse button with one. Any other press with the left button or one finger goes to the tool in
+ * hand (unless `startToolGesture` leaves it to Konva, e.g. to drag a token); a second finger
+ * landing during it cancels it and pinches instead. The right button is left to context menus.
+ * Shift+1 fits the map.
  */
-function listenToCameraInput({
+function listenToPointerInput({
 	container,
 	getCamera,
 	setCamera,
 	viewport,
 	fitView,
-	isOnPiece,
-	onTapMap,
+	toolCursor,
+	startToolGesture,
 }: {
 	container: HTMLDivElement;
 	getCamera: () => PlanCamera.Camera;
 	setCamera: (camera: PlanCamera.Camera) => void;
 	viewport: () => PlanCamera.Viewport;
 	fitView: () => void;
-	/** Whether a token or marker is under the container point, which the pointer then drags instead of panning. */
-	isOnPiece: (point: Point) => boolean;
-	/** A pointer went down and up on the map without moving, away from tokens and markers. */
-	onTapMap: () => void;
+	/** The cursor of the tool in hand. */
+	toolCursor: () => string;
+	/** The tool's gesture for a press at a container point, `null` to leave the press to Konva. */
+	startToolGesture: (
+		point: Point,
+		event: PointerEvent,
+	) => DrawingTools.Gesture | null;
 }) {
-	const pointers = new Map<number, Point>();
+	/** Pointers panning or pinching the camera, by pointer id. */
+	const panPointers = new Map<number, Point>();
+	let toolPress: {
+		pointerId: number;
+		gesture: DrawingTools.Gesture;
+		last: Point;
+	} | null = null;
 	let spaceHeld = false;
-	let tapStart: Point | null = null;
 
 	container.style.touchAction = "none";
 
-	const localPoint = (event: MouseEvent): Point => {
-		const rect = container.getBoundingClientRect();
-		return [event.clientX - rect.left, event.clientY - rect.top];
+	const updateCursor = () => {
+		container.style.cursor =
+			panPointers.size > 0 ? "grabbing" : spaceHeld ? "grab" : toolCursor();
 	};
 
-	/** A press that may still turn out to be a tap shows no grabbing cursor, so clicking the map doesn't flash it. */
-	const updateCursor = () => {
-		const isPanning = pointers.size > 0 && tapStart === null;
-		container.style.cursor = isPanning ? "grabbing" : spaceHeld ? "grab" : "";
+	const cancelToolGesture = () => {
+		if (!toolPress) return false;
+
+		toolPress.gesture.cancel();
+		toolPress = null;
+		return true;
 	};
 
 	const onWheel = (event: WheelEvent) => {
@@ -363,40 +510,54 @@ function listenToCameraInput({
 			PlanCamera.zoomAt(
 				getCamera(),
 				viewport(),
-				localPoint(event),
+				localPoint(container, event),
 				Math.exp(-deltaY * speed),
 			),
 		);
 	};
 
 	const onPointerDown = (event: PointerEvent) => {
-		if (event.button === RIGHT_MOUSE_BUTTON) return;
+		if (event.button === RIGHT_MOUSE_BUTTON || isOnTextField(event)) return;
 
-		const point = localPoint(event);
+		const point = localPoint(container, event);
+		if (toolPress) {
+			if (event.pointerType !== "touch") return;
+
+			const { pointerId, last } = toolPress;
+			cancelToolGesture();
+			panPointers.set(pointerId, last);
+		}
+
 		const isPanButton = event.button === MIDDLE_MOUSE_BUTTON || spaceHeld;
 		if (event.button === MIDDLE_MOUSE_BUTTON) event.preventDefault();
-		if (!isPanButton && isOnPiece(point)) return;
 
-		tapStart = pointers.size === 0 && !isPanButton ? point : null;
-		container.setPointerCapture(event.pointerId);
-		pointers.set(event.pointerId, point);
+		if (!isPanButton && panPointers.size === 0) {
+			const gesture = startToolGesture(point, event);
+			if (!gesture) return;
+
+			toolPress = { pointerId: event.pointerId, gesture, last: point };
+			capturePointer(container, event.pointerId);
+			return;
+		}
+
+		capturePointer(container, event.pointerId);
+		panPointers.set(event.pointerId, point);
 		updateCursor();
 	};
 
 	const onPointerMove = (event: PointerEvent) => {
-		const before = pointers.get(event.pointerId);
+		const after = localPoint(container, event);
+		if (toolPress?.pointerId === event.pointerId) {
+			toolPress.last = after;
+			toolPress.gesture.move(after);
+			return;
+		}
+
+		const before = panPointers.get(event.pointerId);
 		if (!before) return;
 
-		const others = [...pointers].filter(([id]) => id !== event.pointerId);
-		const after = localPoint(event);
-		pointers.set(event.pointerId, after);
-		if (
-			others.length > 0 ||
-			(tapStart && distance(tapStart, after) > TAP_MAX_DISTANCE)
-		) {
-			tapStart = null;
-			updateCursor();
-		}
+		const others = [...panPointers].filter(([id]) => id !== event.pointerId);
+		panPointers.set(event.pointerId, after);
 
 		if (others.length === 0) {
 			setCamera(
@@ -426,12 +587,15 @@ function listenToCameraInput({
 	};
 
 	const onPointerEnd = (event: PointerEvent) => {
-		if (!pointers.delete(event.pointerId)) return;
-
-		if (event.type === "pointerup" && tapStart && pointers.size === 0) {
-			onTapMap();
+		if (toolPress?.pointerId === event.pointerId) {
+			const { gesture } = toolPress;
+			toolPress = null;
+			if (event.type === "pointerup") gesture.end(localPoint(container, event));
+			else gesture.cancel();
+			return;
 		}
-		tapStart = null;
+
+		if (!panPointers.delete(event.pointerId)) return;
 		updateCursor();
 	};
 
@@ -461,7 +625,9 @@ function listenToCameraInput({
 		updateCursor();
 	};
 
-	const onContextMenu = (event: MouseEvent) => event.preventDefault();
+	const onContextMenu = (event: MouseEvent) => {
+		if (!isOnTextField(event)) event.preventDefault();
+	};
 
 	container.addEventListener("wheel", onWheel, { passive: false });
 	container.addEventListener("pointerdown", onPointerDown);
@@ -472,10 +638,14 @@ function listenToCameraInput({
 	window.addEventListener("keydown", onKeyDown);
 	window.addEventListener("keyup", onKeyUp);
 	window.addEventListener("blur", onBlur);
+	updateCursor();
 
 	return {
 		/** Whether the pointer pans whatever it is over right now. */
 		isPanning: () => spaceHeld,
+		updateCursor,
+		/** Stops the tool's press under way, returning whether there was one. */
+		cancelToolGesture,
 		remove: () => {
 			container.removeEventListener("wheel", onWheel);
 			container.removeEventListener("pointerdown", onPointerDown);
@@ -488,6 +658,29 @@ function listenToCameraInput({
 			window.removeEventListener("blur", onBlur);
 		},
 	};
+}
+
+/** A point of the page as a point of the container. */
+function localPoint(container: HTMLElement, event: MouseEvent): Point {
+	const rect = container.getBoundingClientRect();
+	return [event.clientX - rect.left, event.clientY - rect.top];
+}
+
+/** Whether the event happened in a label's text field, which handles its own pointer and menu. */
+function isOnTextField(event: Event) {
+	return (
+		event.target instanceof HTMLElement &&
+		event.target.closest("textarea") !== null
+	);
+}
+
+/** Keeps the pointer's events coming while it is outside the container, unless it is already gone. */
+function capturePointer(container: HTMLElement, pointerId: number) {
+	try {
+		container.setPointerCapture(pointerId);
+	} catch {
+		// released before its pointerdown reached us
+	}
 }
 
 function isTyping(event: KeyboardEvent) {

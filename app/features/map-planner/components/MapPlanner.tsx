@@ -4,6 +4,7 @@ import * as PlanCommands from "../core/PlanCommands";
 import * as PlanDocument from "../core/PlanDocument";
 import * as PlanEditor from "../core/PlanEditor";
 import * as PlanSelection from "../core/PlanSelection";
+import * as PlanTools from "../core/PlanTools";
 import { ActionBar } from "./ActionBar";
 import styles from "./MapPlanner.module.css";
 import { PlanContextMenu } from "./PlanContextMenu";
@@ -17,6 +18,7 @@ export function MapPlanner() {
 		PlanEditor.create(PlanDocument.empty(INITIAL_MAP)),
 	);
 	const [selection] = React.useState(() => PlanSelection.create());
+	const [tools] = React.useState(() => PlanTools.create());
 	const document = React.useSyncExternalStore(
 		editor.subscribe,
 		editor.getDocument,
@@ -39,6 +41,7 @@ export function MapPlanner() {
 			container: containerRef.current,
 			editor,
 			selection,
+			tools,
 			isMapShown: false,
 			onContextMenu: (target, clientPoint) =>
 				setContextMenu({ target, clientPoint }),
@@ -49,7 +52,7 @@ export function MapPlanner() {
 			canvas.destroy();
 			canvasRef.current = null;
 		};
-	}, [editor, selection]);
+	}, [editor, selection, tools]);
 
 	React.useEffect(() => {
 		canvasRef.current?.setMapShown(isMapShown);
@@ -77,7 +80,12 @@ export function MapPlanner() {
 				}
 				className={styles.slotBar}
 			/>
-			<ToolSidebar editor={editor} className={styles.toolSidebar} />
+			<ToolSidebar
+				editor={editor}
+				selection={selection}
+				tools={tools}
+				className={styles.toolSidebar}
+			/>
 			<div
 				ref={containerRef}
 				className={styles.canvas}

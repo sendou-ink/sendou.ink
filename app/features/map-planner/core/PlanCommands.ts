@@ -8,19 +8,24 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import {
+	DRAWING_TEXT_MAX_LENGTH,
+	type DrawingSize,
 	emptyObjective,
 	MAP_SIZE,
 	type MapVariant,
 	newId,
 	newPlayer,
 	type PlanDocument,
+	type PlanDrawing,
 	type PlanMarker,
 	type PlayerStatus,
 	type Point,
 	SLOTS_PER_TEAM,
 	type SlotIndex,
+	TEXT_SCALE_LIMITS,
 	teamOfSlot,
 } from "./PlanDocument";
+import * as PlanGeometry from "./PlanGeometry";
 import * as PlanKit from "./PlanKit";
 import type { PlanOperation } from "./PlanOperation";
 
@@ -296,6 +301,177 @@ export function moveMarker(
 	];
 }
 
+/**
+ * Moves drawings by `delta` from where they were in `originals` (e.g. at the start of a drag),
+ * the same delta for all so they keep their arrangement, shortened so that none of them leaves
+ * the map.
+ */
+export function moveDrawings(
+	originals: PlanDrawing[],
+	delta: Point,
+): PlanOperation[] {
+	const [dx, dy] = PlanGeometry.deltaKeepingOnMap(
+		originals.flatMap(PlanGeometry.anchorsOf),
+		delta,
+	);
+
+	return originals.map((original): PlanOperation => {
+		const moved = PlanGeometry.translated(original, [
+			Math.round(dx),
+			Math.round(dy),
+		]);
+
+		switch (moved.type) {
+			case "stroke":
+				return {
+					type: "updateDrawing",
+					id: moved.id,
+					patch: { points: moved.points },
+				};
+			case "text":
+				return {
+					type: "updateDrawing",
+					id: moved.id,
+					patch: { position: moved.position },
+				};
+			default:
+				return {
+					type: "updateDrawing",
+					id: moved.id,
+					patch: { from: moved.from, to: moved.to },
+				};
+		}
+	});
+}
+
+/** Removes the drawings of `ids` that exist. */
+export function removeDrawings(
+	document: PlanDocument,
+	ids: string[],
+): PlanOperation[] {
+	return document.drawings
+		.filter((drawing) => ids.includes(drawing.id))
+		.map(
+			(drawing): PlanOperation => ({ type: "removeDrawing", id: drawing.id }),
+		);
+}
+
+/**
+ * Brings the drawings of `ids` in front of every other drawing or sends them behind all of them,
+ * keeping their order among themselves. Only drawings move this way: they stay under the radii,
+ * markers and tokens. Nothing when they already are there.
+ */
+export function reorderDrawings(
+	document: PlanDocument,
+	ids: string[],
+	place: "front" | "back",
+): PlanOperation[] {
+	const moved = document.drawings.filter((drawing) => ids.includes(drawing.id));
+	const others = document.drawings.filter(
+		(drawing) => !ids.includes(drawing.id),
+	);
+	const reordered =
+		place === "front" ? [...others, ...moved] : [...moved, ...others];
+	if (
+		reordered.every((drawing, index) => drawing === document.drawings[index])
+	) {
+		return [];
+	}
+
+	return moved.flatMap((drawing, index): PlanOperation[] => [
+		{ type: "removeDrawing", id: drawing.id },
+		{
+			type: "addDrawing",
+			drawing,
+			...(place === "back" ? { index } : {}),
+		},
+	]);
+}
+
+/** Gives the drawings of `ids` a colour or size, leaving out those already having it. */
+export function styleDrawings(
+	document: PlanDocument,
+	ids: string[],
+	style: { color?: string; size?: DrawingSize },
+): PlanOperation[] {
+	return document.drawings.flatMap((drawing): PlanOperation[] => {
+		if (!ids.includes(drawing.id)) return [];
+
+		const patch = {
+			...(style.color && style.color !== drawing.color
+				? { color: style.color }
+				: {}),
+			...(style.size && style.size !== drawing.size
+				? { size: style.size }
+				: {}),
+		};
+		if (Object.keys(patch).length === 0) return [];
+
+		return [{ type: "updateDrawing", id: drawing.id, patch }];
+	});
+}
+
+/** Sets the text of a text drawing, removing it when nothing but whitespace is left. */
+export function setText(
+	document: PlanDocument,
+	id: string,
+	text: string,
+): PlanOperation[] {
+	const drawing = drawingOf(document, id);
+	if (drawing?.type !== "text") return [];
+	if (text.trim() === "") return [{ type: "removeDrawing", id }];
+
+	const nextText = text.slice(0, DRAWING_TEXT_MAX_LENGTH);
+	if (nextText === drawing.text) return [];
+
+	return [{ type: "updateDrawing", id, patch: { text: nextText } }];
+}
+
+/** Spans a rectangle or an ellipse over `box`, kept on the map. */
+export function resizeShape(
+	document: PlanDocument,
+	id: string,
+	box: PlanGeometry.Box,
+): PlanOperation[] {
+	const drawing = drawingOf(document, id);
+	if (drawing?.type !== "rectangle" && drawing?.type !== "ellipse") return [];
+
+	return [
+		{
+			type: "updateDrawing",
+			id,
+			patch: {
+				from: clampedToMap([box.x, box.y]),
+				to: clampedToMap([box.x + box.width, box.y + box.height]),
+			},
+		},
+	];
+}
+
+/** Moves a text drawing's top left corner to `position` and resizes it by `scale`, within {@link TEXT_SCALE_LIMITS}. */
+export function scaleText(
+	document: PlanDocument,
+	id: string,
+	{ position, scale }: { position: Point; scale: number },
+): PlanOperation[] {
+	const drawing = drawingOf(document, id);
+	if (drawing?.type !== "text") return [];
+
+	return [
+		{
+			type: "updateDrawing",
+			id,
+			patch: {
+				position: clampedToMap(position),
+				scale: Math.min(
+					Math.max(scale, TEXT_SCALE_LIMITS.min),
+					TEXT_SCALE_LIMITS.max,
+				),
+			},
+		},
+	];
+}
+
 /** Whether the slot's token is on the map: placed and not hidden. */
 export function isOnMap(document: PlanDocument, slot: SlotIndex) {
 	const player = document.slots[slot];
@@ -362,6 +538,10 @@ function nextMarkerPosition(
 		position[0] + Math.cos(angle) * MARKER_DISTANCE,
 		position[1] + Math.sin(angle) * MARKER_DISTANCE,
 	]);
+}
+
+function drawingOf(document: PlanDocument, id: string) {
+	return document.drawings.find((drawing) => drawing.id === id);
 }
 
 function newMarker(marker: Omit<PlanMarker, "id">): PlanOperation {

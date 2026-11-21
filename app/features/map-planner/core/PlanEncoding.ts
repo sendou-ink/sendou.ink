@@ -27,6 +27,7 @@ import {
 	type RainmakerState,
 	SLOTS_PER_TEAM,
 	type SpanDrawing,
+	TEXT_SCALE_LIMITS,
 	type TeamIndex,
 } from "./PlanDocument";
 
@@ -132,6 +133,14 @@ const storedDrawingSchema = v.variant("t", [
 		t: v.literal(DRAWING_TYPE_KEYS.text),
 		p: storedPoint,
 		x: v.pipe(v.string(), v.maxLength(DRAWING_TEXT_MAX_LENGTH)),
+		/** scale, left out when 1 */
+		k: v.optional(
+			v.pipe(
+				v.number(),
+				v.minValue(TEXT_SCALE_LIMITS.min),
+				v.maxValue(TEXT_SCALE_LIMITS.max),
+			),
+		),
 	}),
 ]);
 
@@ -353,13 +362,20 @@ function toStoredDrawing(drawing: PlanDrawing): StoredDrawing {
 					.slice(0, MAX_STROKE_POINTS)
 					.flat(),
 			};
-		case "text":
+		case "text": {
+			const scale = R.clamp(Math.round((drawing.scale ?? 1) * 100) / 100, {
+				min: TEXT_SCALE_LIMITS.min,
+				max: TEXT_SCALE_LIMITS.max,
+			});
+
 			return {
 				...style,
 				t: DRAWING_TYPE_KEYS.text,
 				p: roundPoint(drawing.position),
 				x: drawing.text.slice(0, DRAWING_TEXT_MAX_LENGTH),
+				...(scale !== 1 ? { k: scale } : {}),
 			};
+		}
 		default:
 			return {
 				...style,
@@ -477,7 +493,13 @@ function toDrawing(stored: StoredDrawing): PlanDrawing {
 				points: R.chunk(stored.p, 2) as Point[],
 			};
 		case DRAWING_TYPE_KEYS.text:
-			return { ...style, type: "text", position: stored.p, text: stored.x };
+			return {
+				...style,
+				type: "text",
+				position: stored.p,
+				text: stored.x,
+				...(stored.k !== undefined ? { scale: stored.k } : {}),
+			};
 		default: {
 			const type = R.keys(DRAWING_TYPE_KEYS).find(
 				(key) => DRAWING_TYPE_KEYS[key] === stored.t,

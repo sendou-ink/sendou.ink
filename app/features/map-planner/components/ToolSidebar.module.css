@@ -7,3 +7,81 @@
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 }
+
+.group {
+	display: grid;
+	grid-template-columns: repeat(2, auto);
+	gap: var(--s-1);
+	justify-items: center;
+
+	& + & {
+		padding-top: var(--s-1);
+		border-top: var(--border-style);
+	}
+}
+
+.sizes {
+	grid-template-columns: repeat(3, auto);
+}
+
+.toggle[aria-pressed="true"] {
+	background-color: var(--color-bg-higher);
+	color: var(--color-accent);
+}
+
+.swatch,
+.size {
+	display: grid;
+	place-items: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	padding: 0;
+	border: 2px solid transparent;
+	border-radius: 999px;
+	background: none;
+	cursor: pointer;
+
+	&[aria-pressed="true"] {
+		border-color: var(--color-accent);
+	}
+
+	&::before {
+		content: "";
+		border-radius: 999px;
+	}
+}
+
+.swatch {
+	--swatch-color: transparent;
+}
+
+.swatch::before {
+	width: 1.125rem;
+	height: 1.125rem;
+	background-color: var(--swatch-color);
+	box-shadow: 0 0 0 1px var(--color-border-high);
+}
+
+.size {
+	width: 1.5rem;
+	height: 1.5rem;
+
+	&::before {
+		background-color: var(--color-text);
+	}
+
+	&[data-size="S"]::before {
+		width: 0.25rem;
+		height: 0.25rem;
+	}
+
+	&[data-size="M"]::before {
+		width: 0.5rem;
+		height: 0.5rem;
+	}
+
+	&[data-size="L"]::before {
+		width: 0.875rem;
+		height: 0.875rem;
+	}
+}

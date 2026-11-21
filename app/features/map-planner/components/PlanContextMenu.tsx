@@ -1,10 +1,12 @@
 import {
 	ArrowLeftRight,
+	BringToFront,
 	ChevronsUp,
 	Eye,
 	EyeOff,
 	Radius,
 	Repeat,
+	SendToBack,
 	Trash2,
 	User,
 	Waves,
@@ -40,7 +42,7 @@ const STATUS_ICONS: Record<PlayerStatus, React.ComponentType> = {
 	dead: X,
 };
 
-/** The menu of a player or a marker, opened by a right click or a long press on it or its slot. */
+/** The menu of a player, a marker or drawings, opened by a right click (or for players and markers a long press) on it or a player's slot. */
 export function PlanContextMenu({
 	editor,
 	document,
@@ -58,6 +60,18 @@ export function PlanContextMenu({
 	onSwitchWeapon: (slot: SlotIndex) => void;
 }) {
 	const point = { x: clientPoint[0], y: clientPoint[1] };
+
+	if (target.type === "drawings") {
+		return (
+			<DrawingsMenu
+				editor={editor}
+				document={document}
+				ids={target.ids}
+				clientPoint={point}
+				onClose={onClose}
+			/>
+		);
+	}
 
 	if (target.type === "marker") {
 		return (
@@ -251,6 +265,70 @@ function MarkerMenu({
 					data-testid="plan-menu-remove-marker"
 				>
 					{t("common:actions.remove")}
+				</SendouMenuItem>
+			</SendouMenuSection>
+		</SendouContextMenu>
+	);
+}
+
+function DrawingsMenu({
+	editor,
+	document,
+	ids,
+	clientPoint,
+	onClose,
+}: {
+	editor: PlanEditor;
+	document: PlanDocument;
+	ids: string[];
+	clientPoint: { x: number; y: number };
+	onClose: () => void;
+}) {
+	const { t } = useTranslation(["common"]);
+	const toFront = PlanCommands.reorderDrawings(document, ids, "front");
+	const toBack = PlanCommands.reorderDrawings(document, ids, "back");
+
+	return (
+		<SendouContextMenu
+			clientPoint={clientPoint}
+			onClose={onClose}
+			aria-label={t("common:plans.menu.drawings")}
+			data-testid="plan-context-menu"
+		>
+			<SendouMenuSection>
+				<SendouMenuItem
+					icon={<BringToFront />}
+					isDisabled={toFront.length === 0}
+					onAction={() =>
+						editor.apply(
+							PlanCommands.reorderDrawings(editor.getDocument(), ids, "front"),
+						)
+					}
+					data-testid="plan-menu-bring-to-front"
+				>
+					{t("common:plans.menu.bringToFront")}
+				</SendouMenuItem>
+				<SendouMenuItem
+					icon={<SendToBack />}
+					isDisabled={toBack.length === 0}
+					onAction={() =>
+						editor.apply(
+							PlanCommands.reorderDrawings(editor.getDocument(), ids, "back"),
+						)
+					}
+					data-testid="plan-menu-send-to-back"
+				>
+					{t("common:plans.menu.sendToBack")}
+				</SendouMenuItem>
+				<SendouMenuItem
+					icon={<Trash2 />}
+					isDestructive
+					onAction={() =>
+						editor.apply(PlanCommands.removeDrawings(editor.getDocument(), ids))
+					}
+					data-testid="plan-menu-delete-drawings"
+				>
+					{t("common:actions.delete")}
 				</SendouMenuItem>
 			</SendouMenuSection>
 		</SendouContextMenu>
