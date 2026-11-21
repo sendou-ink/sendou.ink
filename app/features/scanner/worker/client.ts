@@ -11,7 +11,7 @@
 import { Config } from "../../../config";
 import type { ScanTelemetry } from "../core/detectors/telemetry";
 import { frameEvictionIndex } from "./frame-queue";
-import type { WorkerResponse } from "./protocol";
+import type { WorkerRequest, WorkerResponse } from "./protocol";
 
 export type ResultHandler = (
 	result: Extract<WorkerResponse, { kind: "result" }>,
@@ -64,11 +64,13 @@ export class AnalyzerClient {
 		onError: ErrorHandler = console.error,
 		onDone?: DoneHandler,
 		options: {
+			/** let the scheduler thin out checks of a detector whose reads stop changing the timeline (default true) */
 			suppressSteadyFrames?: boolean;
+			/** accumulate scan telemetry counters and time the detectors (default false) */
 			collectTelemetry?: boolean;
 			/** max frames buffered while a frame is in flight (0 = drop them) */
 			frameQueueLimit?: number;
-			/** match templates on WebGPU when the browser has an adapter (settings `webgpu`) */
+			/** match templates on WebGPU when the browser has an adapter (settings `webgpu`, default false) */
 			webgpu?: boolean;
 			/** ship the analyzed frame's image on results (default true) */
 			attachFrames?: boolean;
@@ -129,7 +131,7 @@ export class AnalyzerClient {
 		this.#worker.onmessageerror = () => {
 			this.#fail("worker message deserialization failed");
 		};
-		this.#worker.postMessage({
+		this.#post({
 			kind: "init",
 			assetsBaseUrl: Config.staticAssetsUrl,
 			suppressSteadyFrames: options.suppressSteadyFrames ?? true,
@@ -181,7 +183,7 @@ export class AnalyzerClient {
 			return false;
 		}
 		this.#busy = true;
-		this.#worker.postMessage({ kind: "frame", bitmap, t }, [bitmap]);
+		this.#post({ kind: "frame", bitmap, t }, [bitmap]);
 		return true;
 	}
 
@@ -199,13 +201,13 @@ export class AnalyzerClient {
 		this.#busy = true;
 		return new Promise((resolve, reject) => {
 			this.#chunk = { resolve, reject, onProgress };
-			this.#worker.postMessage({ kind: "scanChunk", ...request });
+			this.#post({ kind: "scanChunk", ...request });
 		});
 	}
 
 	/** Ask a running chunk scan to stop; it resolves after the current frame. */
 	abortChunk(): void {
-		if (this.#chunk) this.#worker.postMessage({ kind: "abortChunk" });
+		if (this.#chunk) this.#post({ kind: "abortChunk" });
 	}
 
 	dispose(): void {
@@ -213,13 +215,16 @@ export class AnalyzerClient {
 		this.#worker.terminate();
 	}
 
+	#post(request: WorkerRequest, transfer: Transferable[] = []): void {
+		this.#worker.postMessage(request, transfer);
+	}
+
 	#settle(): void {
 		const next = this.#frameQueue.shift();
 		if (next) {
-			this.#worker.postMessage(
-				{ kind: "frame", bitmap: next.bitmap, t: next.t },
-				[next.bitmap],
-			);
+			this.#post({ kind: "frame", bitmap: next.bitmap, t: next.t }, [
+				next.bitmap,
+			]);
 			return;
 		}
 		this.#busy = false;

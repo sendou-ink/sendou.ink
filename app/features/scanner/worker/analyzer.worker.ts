@@ -191,11 +191,11 @@ function post(
 
 async function init({
 	assetsBaseUrl,
-	suppressSteadyFrames = true,
-	collectTelemetry: collect = false,
-	webgpu = false,
-	attachFrames: attach = true,
-	snapshotMinimaps: snapshot = false,
+	suppressSteadyFrames,
+	collectTelemetry: collect,
+	webgpu,
+	attachFrames: attach,
+	snapshotMinimaps: snapshot,
 }: InitRequest): Promise<void> {
 	// VoD scans need the helper workers: start them booting alongside init
 	if (typeof VideoDecoder !== "undefined") {

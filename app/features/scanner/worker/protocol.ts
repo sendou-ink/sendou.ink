@@ -9,18 +9,18 @@ export interface InitRequest {
 	assetsBaseUrl: string;
 	/**
 	 * skip parse() for a detector whose gate keeps firing without its reads
-	 * changing the timeline and let the scheduler thin out checks; default true — one-shot
+	 * changing the timeline and let the scheduler thin out checks — one-shot
 	 * consumers like the screenshot harness turn it off
 	 */
-	suppressSteadyFrames?: boolean;
-	/** accumulate scan telemetry counters and time the detectors; default false (VoD telemetry panel opts in) */
-	collectTelemetry?: boolean;
-	/** match templates (and upscale sub-1080p frames) on WebGPU when an adapter exists; default false */
-	webgpu?: boolean;
-	/** encode the analyzed frame onto results whose events fired; default true */
-	attachFrames?: boolean;
-	/** downscale every frame of a map open onto the minimap's results (`minimapSnapshot`); default false */
-	snapshotMinimaps?: boolean;
+	suppressSteadyFrames: boolean;
+	/** accumulate scan telemetry counters and time the detectors (VoD telemetry panel opts in) */
+	collectTelemetry: boolean;
+	/** match templates (and upscale sub-1080p frames) on WebGPU when an adapter exists */
+	webgpu: boolean;
+	/** encode the analyzed frame onto results whose events fired */
+	attachFrames: boolean;
+	/** downscale every frame of a map open onto the minimap's results (`minimapSnapshot`) */
+	snapshotMinimaps: boolean;
 }
 
 export interface AnalyzeRequest {
