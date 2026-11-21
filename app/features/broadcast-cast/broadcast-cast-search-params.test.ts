@@ -28,7 +28,7 @@ describe("broadcastDesignSearchParams", () => {
 			scene: ["game", "bracket", "starting"],
 			footage: ["gameplay", "minimap", "none"],
 			transition: ["stinger", "fade", "cut"],
-			names: ["short", "typical", "long"],
+			names: ["short", "typical", "long", "mixed"],
 			set: ["start", "ongoing", "decider", "over"],
 			bestOf: [3, 5, 7],
 			ink: [null, "lockYellowPurple", "pinkGreen"],

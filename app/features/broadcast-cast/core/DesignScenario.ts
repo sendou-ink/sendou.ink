@@ -541,17 +541,17 @@ function mockTeams({
 	scenario: Scenario;
 	tournament: CastBroadcastState["tournament"];
 }): BroadcastTeam[] {
-	const playerNames = PLAYER_NAMES[scenario.names];
-	const hasRealNames = scenario.names === "typical";
-
-	return TEAM_NAMES[scenario.names].map((name, teamIdx) => {
+	return TEAM_NAMES.typical.map((_name, teamIdx) => {
+		const nameLength = nameLengthOf({ scenario, teamIdx });
+		const playerNames = PLAYER_NAMES[nameLength];
+		const hasRealNames = nameLength === "typical";
 		const featured = FEATURED.includes(teamIdx)
 			? FEATURED_TEAMS[FEATURED.indexOf(teamIdx)]
 			: null;
 
 		return {
 			id: teamIdx + 1,
-			name,
+			name: TEAM_NAMES[nameLength][teamIdx],
 			logoUrl: logoUrlOf({ scenario, tournament, featured }),
 			seed: scenario.seeds ? teamIdx + 1 : null,
 			players: Array.from({ length: scenario.players }, (_, playerIdx) => {
@@ -571,6 +571,19 @@ function mockTeams({
 			}),
 		};
 	});
+}
+
+/** With `mixed` names the featured match is a long name against a typical one, and so on down the teams. */
+function nameLengthOf({
+	scenario,
+	teamIdx,
+}: {
+	scenario: Scenario;
+	teamIdx: number;
+}): keyof typeof TEAM_NAMES {
+	if (scenario.names !== "mixed") return scenario.names;
+
+	return teamIdx % 2 === 0 ? "long" : "typical";
 }
 
 function withLogo(

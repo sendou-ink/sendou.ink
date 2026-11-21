@@ -1,6 +1,7 @@
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { WeaponImage } from "~/components/Image";
+import { useFitText } from "~/features/broadcast/broadcast-hooks";
 import type {
 	BroadcastPlayer,
 	BroadcastView,
@@ -97,6 +98,8 @@ function RosterTeam({
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const players = side.team?.players ?? [];
+	const name = side.team?.name ?? t("broadcast:overlay.tbd");
+	const nameRef = useFitText<HTMLHeadingElement>({ text: name });
 
 	return (
 		<section className={styles.team} data-team={side.side} {...part("team")}>
@@ -107,8 +110,8 @@ function RosterTeam({
 					{...part("team-logo")}
 				/>
 				<div className={styles.teamTitle}>
-					<h2 className={styles.teamName} {...part("team-name")}>
-						{side.team?.name ?? t("broadcast:overlay.tbd")}
+					<h2 ref={nameRef} className={styles.teamName} {...part("team-name")}>
+						{name}
 					</h2>
 					{side.team?.seed ? (
 						<span className={styles.seed} {...part("team-seed")}>

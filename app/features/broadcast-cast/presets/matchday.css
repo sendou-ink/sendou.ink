@@ -371,13 +371,16 @@
  * The teams one over the other, each a strip: its name on a plate at the outer end, its players in a grid next to it.
  */
 [data-scene="rosters"] [data-part="teams"] {
+	grid-template-rows: none;
 	grid-template-columns: minmax(0, 1fr);
 	align-content: center;
 	gap: 76px;
 }
 
 [data-scene="rosters"] [data-part="team"] {
+	display: flex;
 	flex-direction: row;
+	grid-row: auto;
 	gap: 20px;
 
 	&[data-team="b"] {
@@ -409,16 +412,8 @@
 	justify-self: end;
 }
 
-/* on two lines when it is long */
 [data-scene="rosters"] [data-part="team-name"] {
-	display: -webkit-box;
-	-webkit-box-orient: vertical;
-	-webkit-line-clamp: 2;
-	line-clamp: 2;
-	overflow: hidden;
-	overflow-wrap: anywhere;
 	line-height: 1;
-	white-space: normal;
 }
 
 [data-scene="rosters"] [data-part="players"] {
@@ -473,6 +468,8 @@
 /* between the two strips */
 [data-scene="rosters"] :is([data-part="versus"], [data-part="score"]) {
 	top: calc(50% - var(--rosters-versus-size) / 2);
+	bottom: auto;
+	grid-area: auto;
 	min-width: calc(var(--rosters-versus-size) + 60px);
 	font-size: 34px;
 }

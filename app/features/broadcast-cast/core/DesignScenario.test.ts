@@ -53,6 +53,17 @@ describe("DesignScenario.build", () => {
 		expect(long.length).toBeGreaterThan(short.length);
 	});
 
+	test("gives the featured match a long and a typical name with mixed names", () => {
+		const [teamA, teamB] = build({ names: "mixed" }).match!.teams;
+		const long = build({ names: "long" }).match!.teams;
+		const typical = build({ names: "typical" }).match!.teams;
+
+		expect(teamA!.name).toBe(long[0]!.name);
+		expect(teamB!.name).toBe(typical[1]!.name);
+		expect(teamA!.players[0]!.name).toBe(long[0]!.players[0]!.name);
+		expect(teamB!.players[0]!.name).toBe("Sendou");
+	});
+
 	test("gives the teams as many players as the scenario has", () => {
 		expect(build({ players: 2 }).match!.teams[1]!.players).toHaveLength(2);
 	});

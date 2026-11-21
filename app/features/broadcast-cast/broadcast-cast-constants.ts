@@ -121,11 +121,12 @@ export const BROADCAST_DESIGN_FOOTAGE = {
 	none: null,
 } as const;
 
-/** How long the designer's mock team and player names are. */
+/** How long the designer's mock team and player names are, `mixed` being long and typical ones by turns. */
 export const BROADCAST_DESIGN_NAME_LENGTHS = [
 	"short",
 	"typical",
 	"long",
+	"mixed",
 ] as const;
 
 /** How far the designer's mock set is. */

@@ -102,6 +102,12 @@ describe("CastScene", () => {
 		},
 	);
 
+	test.each(BROADCAST_SCENES)("fits %s with mixed names", async (scene) => {
+		const state = stateOf({ ...SCENARIO, scene, names: "mixed" });
+
+		expect(await overflowsOnAir(state)).toEqual([]);
+	});
+
 	test.each(BRACKET_CASES)(
 		"fits the $bracket bracket, $bracketFocus, with $variant",
 		async ({ bracket, bracketFocus, variant }) => {
@@ -192,6 +198,48 @@ describe("CastScene", () => {
 		expect(rostersPart("score")?.textContent).toBe("2–1");
 		expect(rostersPart("versus")).toBeNull();
 	});
+
+	test.each(["versus", "score"] as const)(
+		"keeps the rosters' headers level with the %s on their line when one name wraps",
+		async (middle) => {
+			await render(
+				<BroadcastOverlay
+					sceneSet={CAST_SCENE_SET}
+					state={stateOf({
+						...SCENARIO,
+						scene: "rosters",
+						names: "mixed",
+						set: middle === "versus" ? "start" : "ongoing",
+					})}
+					view="live"
+				/>,
+			);
+			await settle();
+
+			const names = canvas().querySelectorAll<HTMLElement>(
+				'[data-scene="rosters"] [data-part="team-name"]',
+			);
+			const headers = Array.from(
+				canvas().querySelectorAll<HTMLElement>(
+					'[data-scene="rosters"] [data-part="team-header"]',
+				),
+				(header) => header.getBoundingClientRect(),
+			);
+			const middleBox = rostersPart(middle)!.getBoundingClientRect();
+			const headerBorder = Number.parseFloat(
+				getComputedStyle(rostersPart("team-header")!).borderBottomWidth,
+			);
+
+			expect(names[0].getBoundingClientRect().height).toBeGreaterThan(
+				names[1].getBoundingClientRect().height * 1.5,
+			);
+			expect(headers[0].bottom).toBeCloseTo(headers[1].bottom, 0);
+			expect(middleBox.top + middleBox.height / 2).toBeCloseTo(
+				headers[0].bottom - headerBorder / 2,
+				0,
+			);
+		},
+	);
 
 	test("shows a placeholder in place of a caster's camera outside OBS and an audio only caster's avatar", async () => {
 		await render(
@@ -348,7 +396,7 @@ describe("CastScene", () => {
 			...state,
 			settings: {
 				...state.settings,
-				css: '[data-scene="rosters"] [data-part="team-name"] { text-overflow: clip; }',
+				css: '[data-scene="rosters"] [data-part="player-name"] { text-overflow: clip; }',
 			},
 		});
 
@@ -364,7 +412,7 @@ describe("CastScene", () => {
 			...state,
 			settings: {
 				...state.settings,
-				css: '[data-scene="rosters"] [data-part="team-name"] { overflow: visible; }',
+				css: '[data-scene="rosters"] [data-part="player-name"] { overflow: visible; }',
 			},
 		});
 
