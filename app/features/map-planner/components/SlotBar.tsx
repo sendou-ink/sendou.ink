@@ -88,6 +88,7 @@ export function SlotBar({
 	onPlayerClick,
 	onPlayerContextMenu,
 	onWeaponDragOut,
+	labelInputs,
 	className,
 }: {
 	editor: PlanEditor;
@@ -106,6 +107,8 @@ export function SlotBar({
 		weaponId: MainWeaponId,
 		clientPoint: Point,
 	) => void;
+	/** Filled with the label field of every filled slot, e.g. to focus one from a hotkey. */
+	labelInputs: React.RefObject<Map<SlotIndex, HTMLInputElement>>;
 	className?: string;
 }) {
 	const selectedSlot = React.useSyncExternalStore(
@@ -150,10 +153,9 @@ export function SlotBar({
 												isSelected={selectedSlot === slot}
 												onClick={() => onPlayerClick(slot)}
 												onDoubleClick={() => onPickerSlotChange(slot)}
-												onContextMenu={(clientPoint) => {
-													selection.set({ type: "player", slot });
-													onPlayerContextMenu(slot, clientPoint);
-												}}
+												onContextMenu={(clientPoint) =>
+													onPlayerContextMenu(slot, clientPoint)
+												}
 												onRemove={() => {
 													editor.apply(
 														PlanCommands.emptySlot(editor.getDocument(), slot),
@@ -167,6 +169,15 @@ export function SlotBar({
 														patch: { label },
 													})
 												}
+												labelInputRef={(input) => {
+													if (!input) return;
+													labelInputs.current.set(slot, input);
+													return () => {
+														if (labelInputs.current.get(slot) === input) {
+															labelInputs.current.delete(slot);
+														}
+													};
+												}}
 											/>
 										) : (
 											<EmptySlot
@@ -232,6 +243,7 @@ function FilledSlot({
 	onContextMenu,
 	onRemove,
 	onLabelChange,
+	labelInputRef,
 }: {
 	slot: SlotIndex;
 	player: PlanPlayer;
@@ -242,6 +254,7 @@ function FilledSlot({
 	onContextMenu: (clientPoint: Point) => void;
 	onRemove: () => void;
 	onLabelChange: (label: string) => void;
+	labelInputRef: React.RefCallback<HTMLInputElement>;
 }) {
 	const { t } = useTranslation(["common"]);
 	const onContextMenuRef = useLatestRef(onContextMenu);
@@ -334,6 +347,7 @@ function FilledSlot({
 			</div>
 			<input
 				key={player.label}
+				ref={labelInputRef}
 				className={styles.label}
 				defaultValue={player.label}
 				maxLength={PLAYER_LABEL_MAX_LENGTH}

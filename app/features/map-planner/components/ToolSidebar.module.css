@@ -85,3 +85,23 @@
 		height: 0.875rem;
 	}
 }
+
+.expandButton {
+	display: none;
+}
+
+@container planner (width < 48rem) or (height < 32rem) {
+	.expandButton {
+		display: flex;
+		justify-self: center;
+	}
+
+	.sidebar[data-expanded="false"] .collapsible {
+		display: none;
+	}
+
+	.sidebar[data-expanded="false"] .collapsible + .group {
+		padding-top: 0;
+		border-top: none;
+	}
+}

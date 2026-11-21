@@ -71,7 +71,7 @@ export function create({
 		group.on("contextmenu", (event) => {
 			event.evt.preventDefault();
 			if (isPanning()) return;
-			selection.set({ type: "player", slot });
+			if (canGrab()) selection.set({ type: "player", slot });
 			onContextMenu(slot, [event.evt.clientX, event.evt.clientY]);
 		});
 		group.on("dragstart", (event) => {

@@ -8,3 +8,21 @@
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 }
+
+.collapsible {
+	display: contents;
+}
+
+.expandButton {
+	display: none;
+}
+
+@container planner (width < 48rem) or (height < 32rem) {
+	.expandButton {
+		display: flex;
+	}
+
+	.actionBar[data-expanded="false"] .collapsible {
+		display: none;
+	}
+}

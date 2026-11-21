@@ -1,5 +1,4 @@
 import { Map as MapIcon } from "lucide-react";
-import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Image, ModeImage, StageImage } from "~/components/Image";
@@ -21,35 +20,31 @@ const WATER_LEVELS = [
 
 /**
  * Picks the map: a row of modes, the water level where a stage has one and a grid of stages.
- * Opens by itself while no map has been picked yet.
+ * Picking a stage closes it, picking only a mode leaves it open.
  */
 export function StagePicker({
 	editor,
 	document,
 	isMapShown,
 	onMapPicked,
+	isOpen,
+	onOpenChange,
 }: {
 	editor: PlanEditor;
 	document: PlanDocument;
 	/** `false` while no map has been picked yet. */
 	isMapShown: boolean;
 	onMapPicked: () => void;
+	isOpen: boolean;
+	onOpenChange: (isOpen: boolean) => void;
 }) {
 	const { t } = useTranslation(["common", "game-misc"]);
-	const [isOpen, setIsOpen] = React.useState(!isMapShown);
-	const [wasMapShown, setWasMapShown] = React.useState(isMapShown);
 	const mode = document.objective.mode;
-
-	// a plan opened from a file brings its map, so there is none left to pick
-	if (isMapShown !== wasMapShown) {
-		setWasMapShown(isMapShown);
-		if (isMapShown) setIsOpen(false);
-	}
 
 	return (
 		<SendouPopover
 			isOpen={isOpen}
-			onOpenChange={setIsOpen}
+			onOpenChange={onOpenChange}
 			placement="bottom end"
 			popoverClassName={styles.popover}
 			trigger={
@@ -125,7 +120,7 @@ export function StagePicker({
 							onClick={() => {
 								editor.apply(PlanCommands.switchMap(document, { stageId }));
 								onMapPicked();
-								setIsOpen(false);
+								onOpenChange(false);
 							}}
 							data-testid={`plan-stage-${stageId}`}
 						>

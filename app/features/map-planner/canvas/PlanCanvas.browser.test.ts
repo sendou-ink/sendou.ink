@@ -167,6 +167,7 @@ function setUp(plan = PlanDocument.empty({ stageId: 0, mode: "SZ" })) {
 		editor,
 		selection,
 		tools,
+		fire,
 		drag,
 		rightClick,
 		dragHandle,
@@ -243,6 +244,44 @@ describe("PlanCanvas drawing tools", () => {
 		expect(editor.getDocument().slots[0]?.position).toEqual([600, 600]);
 		expect(selection.get()).toBeNull();
 		expect(editor.getDocument().drawings).toHaveLength(1);
+	});
+
+	test("another tool than select takes the selected player out of the selection", async () => {
+		const plan = PlanDocument.empty({ stageId: 0, mode: "SZ" });
+		plan.slots[0] = { ...PlanDocument.newPlayer(40), position: [600, 600] };
+		const { selection, tools } = setUp(plan);
+		selection.set({ type: "player", slot: 0 });
+
+		tools.set({ tool: "pen" });
+
+		expect(selection.get()).toBeNull();
+	});
+
+	test("selecting a player takes the select tool", async () => {
+		const plan = PlanDocument.empty({ stageId: 0, mode: "SZ" });
+		plan.slots[0] = { ...PlanDocument.newPlayer(40), position: [600, 600] };
+		const { selection, tools } = setUp(plan);
+		tools.set({ tool: "pen" });
+
+		selection.set({ type: "player", slot: 0 });
+
+		expect(tools.get().tool).toBe("select");
+	});
+
+	test("a right click on a token with the pen opens its menu without selecting it", async () => {
+		const plan = PlanDocument.empty({ stageId: 0, mode: "SZ" });
+		plan.slots[0] = { ...PlanDocument.newPlayer(40), position: [600, 600] };
+		const { selection, tools, rightClick, onContextMenu } = setUp(plan);
+		tools.set({ tool: "pen" });
+
+		await rightClick([600, 600]);
+
+		expect(onContextMenu).toHaveBeenCalledWith(
+			{ type: "player", slot: 0 },
+			expect.any(Array),
+		);
+		expect(selection.get()).toBeNull();
+		expect(tools.get().tool).toBe("pen");
 	});
 
 	test("the eraser removes every drawing it passes over, one undo step", async () => {
@@ -454,10 +493,10 @@ describe("PlanCanvas resize handles", () => {
 });
 
 describe("PlanCanvas select tool", () => {
-	test("a click selects a drawing, Shift+click adds another, Delete removes them", async () => {
+	test("a click selects a drawing, Shift+click adds another", async () => {
 		const plan = PlanDocument.empty({ stageId: 0, mode: "SZ" });
 		plan.drawings = [RECTANGLE, LINE];
-		const { editor, selection, drag } = setUp(plan);
+		const { selection, drag } = setUp(plan);
 
 		await drag([[200, 250]]);
 		expect(selection.get()).toEqual({ type: "drawings", ids: ["rect"] });
@@ -467,10 +506,6 @@ describe("PlanCanvas select tool", () => {
 			type: "drawings",
 			ids: ["rect", "line"],
 		});
-
-		await userEvent.keyboard("{Delete}");
-		expect(editor.getDocument().drawings).toEqual([]);
-		expect(selection.get()).toBeNull();
 	});
 
 	test("a box selects the drawings it touches", async () => {
@@ -539,6 +574,39 @@ describe("PlanCanvas select tool", () => {
 			{ type: "drawings", ids: ["rect", "line"] },
 			expect.any(Array),
 		);
+	});
+
+	test("a long press on a drawing opens its menu instead of moving it", async () => {
+		const plan = PlanDocument.empty({ stageId: 0, mode: "SZ" });
+		plan.drawings = [RECTANGLE];
+		const { editor, selection, fire, onContextMenu } = setUp(plan);
+		const touch = { pointerType: "touch" };
+		await nextFrame();
+
+		fire("pointerdown", [200, 250], touch);
+		await waitForLongPress();
+		fire("pointermove", [300, 350], touch);
+		fire("pointerup", [300, 350], touch);
+
+		expect(selection.get()).toEqual({ type: "drawings", ids: ["rect"] });
+		expect(onContextMenu).toHaveBeenCalledWith(
+			{ type: "drawings", ids: ["rect"] },
+			expect.any(Array),
+		);
+		expect(editor.getDocument().drawings).toEqual([RECTANGLE]);
+	});
+
+	test("a second finger landing cancels the long press", async () => {
+		const plan = PlanDocument.empty({ stageId: 0, mode: "SZ" });
+		plan.drawings = [RECTANGLE];
+		const { fire, onContextMenu } = setUp(plan);
+		await nextFrame();
+
+		fire("pointerdown", [200, 250], { pointerType: "touch" });
+		fire("pointerdown", [600, 600], { pointerType: "touch", pointerId: 2 });
+		await waitForLongPress();
+
+		expect(onContextMenu).not.toHaveBeenCalled();
 	});
 
 	test("a right click on the empty map opens no menu", async () => {
@@ -661,4 +729,9 @@ function konvaContent(container: HTMLElement) {
 
 function nextFrame() {
 	return new Promise((resolve) => requestAnimationFrame(resolve));
+}
+
+/** Longer than a press has to be held to count as a long press. */
+function waitForLongPress() {
+	return new Promise((resolve) => setTimeout(resolve, 600));
 }

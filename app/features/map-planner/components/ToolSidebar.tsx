@@ -16,9 +16,11 @@ import {
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
+import * as Hotkeys from "../canvas/Hotkeys";
 import * as PlanCommands from "../core/PlanCommands";
 import { DRAWING_SIZES, type DrawingSize } from "../core/PlanDocument";
 import type { PlanEditor } from "../core/PlanEditor";
+import * as PlanHotkeys from "../core/PlanHotkeys";
 import * as PlanSelection from "../core/PlanSelection";
 import * as PlanTools from "../core/PlanTools";
 import styles from "./ToolSidebar.module.css";
@@ -46,7 +48,8 @@ const COLOR_NAMES = {
 /**
  * The drawing tools on the left of the map: the tool in hand, the colour and size of what it
  * draws, deleting the selection, undo and redo. With drawings selected the colour and size
- * show and restyle theirs (none pressed when they differ).
+ * show and restyle theirs (none pressed when they differ). On narrow screens the tools, colours
+ * and sizes fold away behind a button showing the tool in hand.
  */
 export function ToolSidebar({
 	editor,
@@ -60,6 +63,8 @@ export function ToolSidebar({
 	className?: string;
 }) {
 	const { t } = useTranslation(["common"]);
+	const [isExpanded, setIsExpanded] = React.useState(false);
+	const [isMac] = React.useState(Hotkeys.isMac);
 	const canUndo = React.useSyncExternalStore(editor.subscribe, editor.canUndo);
 	const canRedo = React.useSyncExternalStore(editor.subscribe, editor.canRedo);
 	const document = React.useSyncExternalStore(
@@ -73,46 +78,53 @@ export function ToolSidebar({
 	);
 
 	const selectedIds = PlanSelection.selectedDrawingIds(currentSelection);
-	const selectedDrawings = document.drawings.filter((drawing) =>
-		selectedIds.includes(drawing.id),
-	);
-	const hasSelectedDrawings = selectedDrawings.length > 0;
-	const shownColor = hasSelectedDrawings
-		? sharedValue(selectedDrawings, "color")
-		: toolState.color;
-	const shownSize = hasSelectedDrawings
-		? sharedValue(selectedDrawings, "size")
-		: toolState.size;
+	const shown = PlanTools.shownStyle({
+		document,
+		selection: currentSelection,
+		toolState,
+	});
 
-	const applyStyle = (style: { color?: string; size?: DrawingSize }) => {
-		tools.set(style);
-		editor.apply(
-			PlanCommands.styleDrawings(editor.getDocument(), selectedIds, style),
-		);
-	};
+	const applyStyle = (style: { color?: string; size?: DrawingSize }) =>
+		PlanTools.applyStyle({ tools, editor, selection }, style);
+	const ToolInHandIcon = TOOL_ICONS[toolState.tool];
 
 	return (
-		<div className={clsx(styles.sidebar, className)}>
-			<div className={styles.group}>
+		<div className={clsx(styles.sidebar, className)} data-expanded={isExpanded}>
+			<SendouButton
+				variant="minimal"
+				shape="square"
+				icon={<ToolInHandIcon />}
+				aria-label={t("common:plans.drawingTools")}
+				title={t("common:plans.drawingTools")}
+				aria-expanded={isExpanded}
+				className={styles.expandButton}
+				onClick={() => setIsExpanded(!isExpanded)}
+				testId="plan-tools-expand-button"
+			/>
+			<div className={clsx(styles.group, styles.collapsible)}>
 				{PlanTools.TOOLS.map((tool) => {
 					const Icon = TOOL_ICONS[tool];
+					const name = t(`common:plans.tool.${tool}`);
 					return (
 						<SendouButton
 							key={tool}
 							variant="minimal"
 							shape="square"
 							icon={<Icon />}
-							aria-label={t(`common:plans.tool.${tool}`)}
-							title={t(`common:plans.tool.${tool}`)}
+							aria-label={name}
+							title={`${name} (${PlanHotkeys.hint({ type: "tool", tool }, { isMac })})`}
 							aria-pressed={toolState.tool === tool}
 							className={styles.toggle}
-							onClick={() => tools.set({ tool })}
+							onClick={() => {
+								tools.set({ tool });
+								setIsExpanded(false);
+							}}
 							testId={`plan-tool-${tool}`}
 						/>
 					);
 				})}
 			</div>
-			<div className={styles.group}>
+			<div className={clsx(styles.group, styles.collapsible)}>
 				{PlanTools.DRAWING_COLORS.map((color) => (
 					<button
 						key={color}
@@ -121,14 +133,14 @@ export function ToolSidebar({
 						style={{ "--swatch-color": color } as React.CSSProperties}
 						aria-label={t(`common:plans.color.${COLOR_NAMES[color]}`)}
 						title={t(`common:plans.color.${COLOR_NAMES[color]}`)}
-						aria-pressed={shownColor === color}
+						aria-pressed={shown.color === color}
 						onMouseDown={keepFocus}
 						onClick={() => applyStyle({ color })}
 						data-testid={`plan-color-${COLOR_NAMES[color]}`}
 					/>
 				))}
 			</div>
-			<div className={clsx(styles.group, styles.sizes)}>
+			<div className={clsx(styles.group, styles.sizes, styles.collapsible)}>
 				{DRAWING_SIZES.map((size) => (
 					<button
 						key={size}
@@ -137,7 +149,7 @@ export function ToolSidebar({
 						data-size={size}
 						aria-label={t(`common:plans.size.${size}`)}
 						title={t(`common:plans.size.${size}`)}
-						aria-pressed={shownSize === size}
+						aria-pressed={shown.size === size}
 						onMouseDown={keepFocus}
 						onClick={() => applyStyle({ size })}
 						data-testid={`plan-size-${size}`}
@@ -150,7 +162,7 @@ export function ToolSidebar({
 					shape="square"
 					icon={<Undo2 />}
 					aria-label={t("common:plans.undo")}
-					title={t("common:plans.undo")}
+					title={`${t("common:plans.undo")} (${PlanHotkeys.hint({ type: "undo" }, { isMac })})`}
 					isDisabled={!canUndo}
 					onClick={editor.undo}
 					testId="plan-undo-button"
@@ -160,7 +172,7 @@ export function ToolSidebar({
 					shape="square"
 					icon={<Redo2 />}
 					aria-label={t("common:plans.redo")}
-					title={t("common:plans.redo")}
+					title={`${t("common:plans.redo")} (${PlanHotkeys.hint({ type: "redo" }, { isMac })})`}
 					isDisabled={!canRedo}
 					onClick={editor.redo}
 					testId="plan-redo-button"
@@ -187,15 +199,4 @@ export function ToolSidebar({
 /** Keeps the focus where it is, e.g. in a label being typed, which the style then applies to. */
 function keepFocus(event: React.MouseEvent) {
 	event.preventDefault();
-}
-
-/** The value all the drawings have in common, `null` when they differ or there are none. */
-function sharedValue<Key extends "color" | "size">(
-	drawings: Array<{ color: string; size: DrawingSize }>,
-	key: Key,
-) {
-	const values = new Set(drawings.map((drawing) => drawing[key]));
-	return values.size === 1
-		? (drawings[0][key] as (typeof drawings)[0][Key])
-		: null;
 }

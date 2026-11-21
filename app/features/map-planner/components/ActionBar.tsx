@@ -1,12 +1,16 @@
 import clsx from "clsx";
 import {
 	Download,
+	EllipsisVertical,
 	FileDown,
 	FolderOpen,
+	Fullscreen,
 	ImageDown,
+	Keyboard,
 	Link2,
 	LogOut,
-	Maximize,
+	Minimize,
+	Scan,
 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -19,6 +23,7 @@ import * as PlanCommands from "../core/PlanCommands";
 import type { PlanDocument } from "../core/PlanDocument";
 import type { PlanEditor } from "../core/PlanEditor";
 import * as PlanEncoding from "../core/PlanEncoding";
+import type { useFullScreen } from "../hooks/useFullScreen";
 import { planLinkPath } from "../plans-urls";
 import { planFileName } from "../plans-utils";
 import styles from "./ActionBar.module.css";
@@ -41,9 +46,12 @@ export function ActionBar({
 	document,
 	isMapShown,
 	onMapPicked,
-	onPlanOpened,
+	isStagePickerOpen,
+	onStagePickerOpenChange,
 	onFitView,
-	exportImage,
+	fullScreen,
+	onShowHotkeys,
+	fileActions,
 	className,
 }: {
 	editor: PlanEditor;
@@ -51,13 +59,117 @@ export function ActionBar({
 	/** `false` while no map has been picked yet: the map is blank and the stage picker starts open. */
 	isMapShown: boolean;
 	onMapPicked: () => void;
-	/** A plan file replaced the plan. */
-	onPlanOpened: () => void;
+	isStagePickerOpen: boolean;
+	onStagePickerOpenChange: (isOpen: boolean) => void;
 	onFitView: () => void;
-	exportImage: () => Promise<Blob>;
+	fullScreen: ReturnType<typeof useFullScreen>;
+	/** Opens the cheat sheet of the keyboard shortcuts. */
+	onShowHotkeys: () => void;
+	fileActions: PlanFileActions;
 	className?: string;
 }) {
 	const { t } = useTranslation(["common"]);
+	const [isExpanded, setIsExpanded] = React.useState(false);
+	const fullScreenLabel = fullScreen.isFullScreen
+		? t("common:plans.exitFullScreen")
+		: t("common:plans.fullScreen");
+
+	return (
+		<div
+			className={clsx(styles.actionBar, className)}
+			data-expanded={isExpanded}
+		>
+			<StagePicker
+				editor={editor}
+				document={document}
+				isMapShown={isMapShown}
+				onMapPicked={onMapPicked}
+				isOpen={isStagePickerOpen}
+				onOpenChange={onStagePickerOpenChange}
+			/>
+			<SendouButton
+				variant="minimal"
+				shape="square"
+				icon={<EllipsisVertical />}
+				aria-label={t("common:plans.moreActions")}
+				title={t("common:plans.moreActions")}
+				aria-expanded={isExpanded}
+				className={styles.expandButton}
+				onClick={() => setIsExpanded(!isExpanded)}
+				testId="plan-more-actions-button"
+			/>
+			<div className={styles.collapsible}>
+				<SendouButton
+					variant="minimal"
+					shape="square"
+					icon={<Scan />}
+					aria-label={t("common:plans.fitView")}
+					title={t("common:plans.fitView")}
+					onClick={onFitView}
+					testId="plan-fit-view-button"
+				/>
+				{fullScreen.isSupported ? (
+					<SendouButton
+						variant="minimal"
+						shape="square"
+						icon={fullScreen.isFullScreen ? <Minimize /> : <Fullscreen />}
+						aria-label={fullScreenLabel}
+						title={fullScreenLabel}
+						onClick={fullScreen.toggle}
+						testId="plan-full-screen-button"
+					/>
+				) : null}
+				<SendouButton
+					variant="minimal"
+					shape="square"
+					icon={<Link2 />}
+					aria-label={t("common:plans.link.copy")}
+					title={t("common:plans.link.copy")}
+					onClick={fileActions.copyLink}
+					isDisabled={!isMapShown}
+					testId="plan-copy-link-button"
+				/>
+				<PlanFileMenu isMapShown={isMapShown} fileActions={fileActions} />
+				<SendouButton
+					variant="minimal"
+					shape="square"
+					icon={<Keyboard />}
+					aria-label={t("common:plans.hotkeys.title")}
+					title={t("common:plans.hotkeys.title")}
+					onClick={onShowHotkeys}
+					testId="plan-hotkeys-button"
+				/>
+				<LinkButton
+					to="/"
+					variant="minimal"
+					shape="square"
+					icon={<LogOut />}
+					aria-label={t("common:plans.leave")}
+				/>
+			</div>
+		</div>
+	);
+}
+
+/** See {@link usePlanFileActions}. */
+export type PlanFileActions = ReturnType<typeof usePlanFileActions>;
+
+/**
+ * Sharing and files, for the action bar's buttons and the hotkeys alike: copy the link of the
+ * plan, download it as an image or a file, open a file (`fileInput` has to be rendered for that).
+ */
+export function usePlanFileActions({
+	editor,
+	exportImage,
+	onPlanOpened,
+}: {
+	editor: PlanEditor;
+	exportImage: () => Promise<Blob>;
+	/** A plan file replaced the plan. */
+	onPlanOpened: () => void;
+}) {
+	const { t } = useTranslation(["common"]);
+	const fileInputRef = React.useRef<HTMLInputElement>(null);
 
 	const copyLink = () => {
 		const path = planLinkPath(editor.getDocument());
@@ -80,64 +192,6 @@ export function ActionBar({
 				() => {},
 			);
 	};
-
-	return (
-		<div className={clsx(styles.actionBar, className)}>
-			<StagePicker
-				editor={editor}
-				document={document}
-				isMapShown={isMapShown}
-				onMapPicked={onMapPicked}
-			/>
-			<SendouButton
-				variant="minimal"
-				shape="square"
-				icon={<Maximize />}
-				aria-label={t("common:plans.fitView")}
-				title={t("common:plans.fitView")}
-				onClick={onFitView}
-				testId="plan-fit-view-button"
-			/>
-			<SendouButton
-				variant="minimal"
-				shape="square"
-				icon={<Link2 />}
-				aria-label={t("common:plans.link.copy")}
-				title={t("common:plans.link.copy")}
-				onClick={copyLink}
-				isDisabled={!isMapShown}
-				testId="plan-copy-link-button"
-			/>
-			<PlanFileMenu
-				editor={editor}
-				isMapShown={isMapShown}
-				onPlanOpened={onPlanOpened}
-				exportImage={exportImage}
-			/>
-			<LinkButton
-				to="/"
-				variant="minimal"
-				shape="square"
-				icon={<LogOut />}
-				aria-label={t("common:plans.leave")}
-			/>
-		</div>
-	);
-}
-
-function PlanFileMenu({
-	editor,
-	isMapShown,
-	onPlanOpened,
-	exportImage,
-}: {
-	editor: PlanEditor;
-	isMapShown: boolean;
-	onPlanOpened: () => void;
-	exportImage: () => Promise<Blob>;
-}) {
-	const { t } = useTranslation(["common"]);
-	const fileInputRef = React.useRef<HTMLInputElement>(null);
 
 	const downloadImage = async () => {
 		try {
@@ -186,6 +240,34 @@ function PlanFileMenu({
 		onPlanOpened();
 	};
 
+	return {
+		copyLink,
+		downloadImage,
+		downloadFile,
+		/** Asks for a plan file to open. */
+		openFile: () => fileInputRef.current?.click(),
+		fileInput: (
+			<input
+				ref={fileInputRef}
+				type="file"
+				accept=".json,.tldr"
+				onChange={openFile}
+				hidden
+				data-testid="plan-file-input"
+			/>
+		),
+	};
+}
+
+function PlanFileMenu({
+	isMapShown,
+	fileActions,
+}: {
+	isMapShown: boolean;
+	fileActions: PlanFileActions;
+}) {
+	const { t } = useTranslation(["common"]);
+
 	return (
 		<>
 			<SendouMenu
@@ -203,7 +285,7 @@ function PlanFileMenu({
 			>
 				<SendouMenuItem
 					icon={<ImageDown />}
-					onAction={downloadImage}
+					onAction={fileActions.downloadImage}
 					isDisabled={!isMapShown}
 					data-testid="plan-download-image"
 				>
@@ -211,7 +293,7 @@ function PlanFileMenu({
 				</SendouMenuItem>
 				<SendouMenuItem
 					icon={<FileDown />}
-					onAction={downloadFile}
+					onAction={fileActions.downloadFile}
 					isDisabled={!isMapShown}
 					data-testid="plan-download-file"
 				>
@@ -219,20 +301,13 @@ function PlanFileMenu({
 				</SendouMenuItem>
 				<SendouMenuItem
 					icon={<FolderOpen />}
-					onAction={() => fileInputRef.current?.click()}
+					onAction={fileActions.openFile}
 					data-testid="plan-open-file"
 				>
 					{t("common:plans.file.open")}
 				</SendouMenuItem>
 			</SendouMenu>
-			<input
-				ref={fileInputRef}
-				type="file"
-				accept=".json,.tldr"
-				onChange={openFile}
-				hidden
-				data-testid="plan-file-input"
-			/>
+			{fileActions.fileInput}
 		</>
 	);
 }

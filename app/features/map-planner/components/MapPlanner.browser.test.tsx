@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
-import { afterEach, describe, expect, test, vi } from "vitest";
-import { userEvent } from "vitest/browser";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { toastQueue } from "~/components/elements/Toast";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
@@ -149,5 +149,131 @@ describe("MapPlanner", () => {
 				variant: "error",
 			}),
 		);
+	});
+});
+
+async function renderWithPlan() {
+	PersistedState.write(
+		autosavedPlanPersisted,
+		PlanEncoding.encode(typicalPlan()),
+	);
+	return renderPlanner();
+}
+
+describe("MapPlanner hotkeys", () => {
+	beforeEach(async () => {
+		await page.viewport(1280, 800);
+	});
+
+	test("a number key on an empty slot opens its weapon picker, the search focused", async () => {
+		const screen = await renderPlanner();
+		await screen.getByTestId("plan-stage-3").click();
+
+		await userEvent.keyboard("2");
+
+		await expect
+			.element(screen.getByTestId("plan-weapon-search"))
+			.toHaveFocus();
+	});
+
+	test("state letters change the selected player, and Ctrl+Z undoes them", async () => {
+		const screen = await renderWithPlan();
+		const slot = screen.getByTestId("plan-slot-0");
+
+		await userEvent.keyboard("1");
+		await expect.element(slot).toHaveAttribute("aria-pressed", "true");
+		await userEvent.keyboard("d");
+		await expect.element(slot).toHaveAttribute("data-status", "dead");
+
+		await userEvent.keyboard("{Control>}z{/Control}");
+		await expect.element(slot).toHaveAttribute("data-status", "normal");
+	});
+
+	test("hotkeys don't fire while typing a label, which Enter starts", async () => {
+		const screen = await renderWithPlan();
+		const label = screen.getByTestId("plan-slot-0-label");
+
+		await userEvent.keyboard("1");
+		await userEvent.keyboard("{Enter}");
+		await expect.element(label).toHaveFocus();
+		await userEvent.keyboard("d");
+
+		await expect
+			.element(screen.getByTestId("plan-slot-0"))
+			.toHaveAttribute("data-status", "normal");
+	});
+
+	test("select all and Delete remove every drawing", async () => {
+		await renderWithPlan();
+
+		await userEvent.keyboard("{Control>}a{/Control}");
+		await userEvent.keyboard("{Delete}");
+
+		await vi.waitFor(() => expect(autosavedPlan()?.drawings).toEqual([]));
+	});
+
+	test("a tool's key takes it in hand", async () => {
+		const screen = await renderWithPlan();
+
+		await userEvent.keyboard("p");
+
+		await expect
+			.element(screen.getByTestId("plan-tool-pen"))
+			.toHaveAttribute("aria-pressed", "true");
+	});
+
+	test("? opens the cheat sheet", async () => {
+		const screen = await renderWithPlan();
+
+		await userEvent.keyboard("?");
+
+		await expect.element(screen.getByTestId("plan-hotkey-sheet")).toBeVisible();
+	});
+
+	test("the full screen button and F put the page in full screen", async () => {
+		const requestFullscreen = vi
+			.spyOn(document.documentElement, "requestFullscreen")
+			.mockResolvedValue();
+		const screen = await renderWithPlan();
+
+		await screen.getByTestId("plan-full-screen-button").click();
+		await userEvent.keyboard("f");
+
+		expect(requestFullscreen).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe("MapPlanner on a narrow screen", () => {
+	beforeEach(async () => {
+		await page.viewport(375, 667);
+	});
+
+	test("the action bar folds away behind a button, leaving the stage picker", async () => {
+		const screen = await renderWithPlan();
+
+		await expect
+			.element(screen.getByTestId("plan-stage-picker-button"))
+			.toBeVisible();
+		await expect
+			.element(screen.getByTestId("plan-copy-link-button"))
+			.not.toBeVisible();
+
+		await screen.getByTestId("plan-more-actions-button").click();
+
+		await expect
+			.element(screen.getByTestId("plan-copy-link-button"))
+			.toBeVisible();
+	});
+
+	test("the tools fold away behind the tool in hand, folding again once one is picked", async () => {
+		const screen = await renderWithPlan();
+		const pen = screen.getByTestId("plan-tool-pen");
+		await expect.element(pen).not.toBeVisible();
+
+		await screen.getByTestId("plan-tools-expand-button").click();
+		await pen.click();
+
+		await expect.element(pen).not.toBeVisible();
+		await expect.element(pen).toHaveAttribute("aria-pressed", "true");
 	});
 });

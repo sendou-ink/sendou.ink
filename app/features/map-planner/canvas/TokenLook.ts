@@ -14,9 +14,9 @@ import type { PlanPlayer } from "../core/PlanDocument";
 import * as PlanKit from "../core/PlanKit";
 
 /** Width and height of a token's weapon image in map coordinates. */
-const TOKEN_IMAGE_SIZE = 51;
+const TOKEN_IMAGE_SIZE = 56;
 /** Grabbable area around the token's center, in map coordinates. */
-const TOKEN_RADIUS = 29;
+const TOKEN_RADIUS = 32;
 /** The ▼ above the selected token: width, height and gap to the weapon image. */
 const POINTER_SIZE = { width: 20, height: 14, gap: 2, cornerRadius: 3 };
 const POINTER_STROKE_WIDTH = 2;
@@ -32,17 +32,17 @@ const ENEMY_TINT = [255, 40, 40] as const;
 const DEAD_OPACITY = 0.8;
 const SHARKING_OPACITY = 0.45;
 /** Half the length of a dead token's cross arms along each axis. */
-const CROSS_HALF_SIZE = 17;
+const CROSS_HALF_SIZE = 19;
 const CROSS_COLOR = "#ef4444";
 const OUTLINE_COLOR = "rgba(0, 0, 0, 0.75)";
 /** The ink ripple under a sharking token: rings of these half widths, flattened to look lying on the ground. */
-const RIPPLE_RADII = [16, 27];
+const RIPPLE_RADII = [18, 30];
 const RIPPLE_FLATTENING = 0.38;
-const RIPPLE_CENTER_Y = 16;
+const RIPPLE_CENTER_Y = 18;
 /** The weapon shown small at the bottom right of a token in special: its center and size. */
-const WEAPON_BADGE = { x: 17, y: 17, size: 26 };
+const WEAPON_BADGE = { x: 19, y: 19, size: 29 };
 /** The jumping badge at the token's top right. */
-const JUMP_BADGE = { x: 19, y: -17, radius: 10 };
+const JUMP_BADGE = { x: 21, y: -19, radius: 11 };
 
 /** Loaded images by url, shared so a token drawn anywhere finds its image already loaded. */
 const images = new Map<string, HTMLImageElement>();

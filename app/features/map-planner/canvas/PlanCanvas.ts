@@ -17,10 +17,13 @@ import {
 	teamOfSlot,
 } from "../core/PlanDocument";
 import type { PlanEditor } from "../core/PlanEditor";
+import * as PlanHotkeys from "../core/PlanHotkeys";
 import * as PlanSelection from "../core/PlanSelection";
 import type { PlanTools, Tool } from "../core/PlanTools";
 import * as DrawingLayer from "./DrawingLayer";
 import * as DrawingTools from "./DrawingTools";
+import * as Hotkeys from "./Hotkeys";
+import * as LongPress from "./LongPress";
 import * as MarkerLayer from "./MarkerLayer";
 import * as RadiusLayer from "./RadiusLayer";
 import * as TextEditor from "./TextEditor";
@@ -56,6 +59,10 @@ export interface PlanCanvas {
 	fitView: () => void;
 	/** Moves the view to show the map point in the middle, if zoomed in. */
 	centerOn: (point: Point) => void;
+	/** Stops the drawing tool's press under way, returning whether there was one. */
+	cancelGesture: () => boolean;
+	/** Starts editing the text of a label. */
+	editText: (id: string) => void;
 	/**
 	 * Gives the slot a player with the weapon and lets the pointer carry its token onto the map,
 	 * from a drag that started outside the canvas (e.g. in the weapon picker). Released over the
@@ -92,7 +99,7 @@ export function create({
 	tools: PlanTools;
 	/** `false` leaves the map blank (and its image unloaded) until {@link PlanCanvas.setMapShown}. */
 	isMapShown?: boolean;
-	/** A token, marker or drawing was right clicked (tokens and markers also long pressed) at a point of the page. */
+	/** A token, marker or drawing was right clicked or long pressed at a point of the page. */
 	onContextMenu: (target: ContextMenuTarget, clientPoint: Point) => void;
 }): PlanCanvas {
 	const stage = new Konva.Stage({
@@ -214,7 +221,6 @@ export function create({
 		getCamera: () => camera,
 		setCamera: (next) => setCamera(PlanCamera.clamp(next, viewport())),
 		viewport,
-		fitView,
 		toolCursor: () => TOOL_CURSORS[tools.get().tool],
 		startToolGesture: (point, event) => {
 			if (tools.get().tool === "select") {
@@ -245,43 +251,58 @@ export function create({
 	container.addEventListener("dblclick", onDoubleClick);
 
 	/**
-	 * A right click on a drawing opens the menu of the selection when it is part of it, otherwise
-	 * of the drawing alone, selecting it with the select tool. Tokens and markers open their own.
+	 * Opens the menu of the drawing at a point of the page: of the selection when the drawing is
+	 * part of it, otherwise of the drawing alone, selecting it with the select tool. Returns
+	 * whether there was a drawing there (tokens and markers open their own menus).
 	 */
-	const onDrawingContextMenu = (event: MouseEvent) => {
-		if (isOnTextField(event)) return;
-
-		const point = localPoint(container, event);
-		if (pieceLayer.getIntersection({ x: point[0], y: point[1] })) return;
+	const openDrawingMenu = (clientPoint: Point) => {
+		const point = localPoint(container, {
+			clientX: clientPoint[0],
+			clientY: clientPoint[1],
+		});
+		if (pieceLayer.getIntersection({ x: point[0], y: point[1] })) return false;
 
 		const id = drawings?.drawingAt(point);
-		if (!id) return;
+		if (!id) return false;
 
 		const selectedIds = PlanSelection.selectedDrawingIds(selection.get());
 		const ids = selectedIds.includes(id) ? selectedIds : [id];
 		if (tools.get().tool === "select") {
 			selection.set({ type: "drawings", ids });
 		}
-		onContextMenu({ type: "drawings", ids }, [event.clientX, event.clientY]);
+		onContextMenu({ type: "drawings", ids }, clientPoint);
+		return true;
+	};
+	const onDrawingContextMenu = (event: MouseEvent) => {
+		if (isOnTextField(event)) return;
+		openDrawingMenu([event.clientX, event.clientY]);
 	};
 	container.addEventListener("contextmenu", onDrawingContextMenu);
 
-	const onKeyDown = (event: KeyboardEvent) => {
-		if (isTyping(event)) return;
+	/** A long press with the select tool opens a drawing's menu like a right click, instead of moving it. */
+	const drawingLongPress = LongPress.create((clientPoint) => {
+		if (tools.get().tool !== "select" || pointerInput.isPanning()) return;
+		if (openDrawingMenu(clientPoint)) pointerInput.cancelToolGesture();
+	});
+	const touchPointers = new Set<number>();
+	const onTouchDown = (event: PointerEvent) => {
+		if (event.pointerType !== "touch") return;
 
-		if (event.key === "Escape") {
-			if (!pointerInput.cancelToolGesture()) selection.set(null);
-			return;
+		touchPointers.add(event.pointerId);
+		if (touchPointers.size === 1 && !isOnTextField(event)) {
+			drawingLongPress.pointerDown(event);
+		} else {
+			drawingLongPress.cancel();
 		}
-		if (event.key !== "Delete" && event.key !== "Backspace") return;
-
-		const ids = PlanSelection.selectedDrawingIds(selection.get());
-		if (ids.length === 0) return;
-
-		event.preventDefault();
-		editor.apply(PlanCommands.removeDrawings(editor.getDocument(), ids));
 	};
-	window.addEventListener("keydown", onKeyDown);
+	const onTouchEnd = (event: PointerEvent) => {
+		touchPointers.delete(event.pointerId);
+		drawingLongPress.cancel();
+	};
+	container.addEventListener("pointerdown", onTouchDown);
+	container.addEventListener("pointermove", drawingLongPress.pointerMove);
+	container.addEventListener("pointerup", onTouchEnd);
+	container.addEventListener("pointercancel", onTouchEnd);
 
 	let toolInHand = tools.get().tool;
 	const unsubscribeTools = tools.subscribe(() => {
@@ -292,8 +313,12 @@ export function create({
 		textEditor?.close();
 		pointerInput.cancelToolGesture();
 		pointerInput.updateCursor();
-		if (tool !== "select" && selection.get()?.type === "drawings") {
-			selection.set(null);
+		if (tool !== "select") selection.set(null);
+	});
+	/** Selecting a player (from its slot, a hotkey, the weapon picker) takes the select tool, the only one showing a selection. */
+	const unsubscribeSelection = selection.subscribe(() => {
+		if (selection.get()?.type === "player" && tools.get().tool !== "select") {
+			tools.set({ tool: "select" });
 		}
 	});
 
@@ -420,6 +445,8 @@ export function create({
 			if (PlanCamera.isFitted(camera, viewport())) return;
 			setCamera(PlanCamera.centerOn(camera, viewport(), point));
 		},
+		cancelGesture: pointerInput.cancelToolGesture,
+		editText: (id) => textEditor?.openExisting(id),
 		dragNewPlayer,
 		setMapShown: (shown) => {
 			isMapShown = shown;
@@ -459,11 +486,19 @@ export function create({
 		destroy: () => {
 			unsubscribe();
 			unsubscribeTools();
+			unsubscribeSelection();
 			resizeObserver.disconnect();
 			pointerInput.remove();
 			container.removeEventListener("dblclick", onDoubleClick);
 			container.removeEventListener("contextmenu", onDrawingContextMenu);
-			window.removeEventListener("keydown", onKeyDown);
+			container.removeEventListener("pointerdown", onTouchDown);
+			container.removeEventListener(
+				"pointermove",
+				drawingLongPress.pointerMove,
+			);
+			container.removeEventListener("pointerup", onTouchEnd);
+			container.removeEventListener("pointercancel", onTouchEnd);
+			drawingLongPress.cancel();
 			textEditor?.destroy();
 			drawings?.destroy();
 			radiusLayer.destroy();
@@ -489,14 +524,12 @@ function mapImageUrl(document: PlanDocument) {
  * mouse button with one. Any other press with the left button or one finger goes to the tool in
  * hand (unless `startToolGesture` leaves it to Konva, e.g. to drag a token); a second finger
  * landing during it cancels it and pinches instead. The right button is left to context menus.
- * Shift+1 fits the map.
  */
 function listenToPointerInput({
 	container,
 	getCamera,
 	setCamera,
 	viewport,
-	fitView,
 	toolCursor,
 	startToolGesture,
 }: {
@@ -504,7 +537,6 @@ function listenToPointerInput({
 	getCamera: () => PlanCamera.Camera;
 	setCamera: (camera: PlanCamera.Camera) => void;
 	viewport: () => PlanCamera.Viewport;
-	fitView: () => void;
 	/** The cursor of the tool in hand. */
 	toolCursor: () => string;
 	/** The tool's gesture for a press at a container point, `null` to leave the press to Konva. */
@@ -640,13 +672,9 @@ function listenToPointerInput({
 	};
 
 	const onKeyDown = (event: KeyboardEvent) => {
-		if (isTyping(event)) return;
-
-		if (event.code === "Digit1" && event.shiftKey) {
-			fitView();
+		if (!PlanHotkeys.isPanKey(event) || Hotkeys.isForFocusedElement(event)) {
 			return;
 		}
-		if (event.code !== "Space" || isOnButton(event)) return;
 
 		event.preventDefault();
 		spaceHeld = true;
@@ -654,7 +682,7 @@ function listenToPointerInput({
 	};
 
 	const onKeyUp = (event: KeyboardEvent) => {
-		if (event.code !== "Space") return;
+		if (!PlanHotkeys.isPanKey(event)) return;
 
 		spaceHeld = false;
 		updateCursor();
@@ -701,7 +729,10 @@ function listenToPointerInput({
 }
 
 /** A point of the page as a point of the container. */
-function localPoint(container: HTMLElement, event: MouseEvent): Point {
+function localPoint(
+	container: HTMLElement,
+	event: Pick<MouseEvent, "clientX" | "clientY">,
+): Point {
 	const rect = container.getBoundingClientRect();
 	return [event.clientX - rect.left, event.clientY - rect.top];
 }
@@ -721,24 +752,6 @@ function capturePointer(container: HTMLElement, pointerId: number) {
 	} catch {
 		// released before its pointerdown reached us
 	}
-}
-
-function isTyping(event: KeyboardEvent) {
-	const target = event.target;
-	if (!(target instanceof HTMLElement)) return false;
-
-	return (
-		target.isContentEditable ||
-		target.closest("input, textarea, select, [popover], dialog") !== null
-	);
-}
-
-/** Space presses a focused button or link, so it doesn't start a pan there. */
-function isOnButton(event: KeyboardEvent) {
-	return (
-		event.target instanceof HTMLElement &&
-		event.target.closest("button, a") !== null
-	);
 }
 
 function midpoint([ax, ay]: Point, [bx, by]: Point): Point {

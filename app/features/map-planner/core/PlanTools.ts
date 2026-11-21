@@ -2,7 +2,10 @@
 // user like the selection, not part of the plan: shared by the canvas and the
 // chrome, framework-free.
 
-import type { DrawingSize } from "./PlanDocument";
+import * as PlanCommands from "./PlanCommands";
+import type { DrawingSize, PlanDocument } from "./PlanDocument";
+import type { PlanEditor } from "./PlanEditor";
+import * as PlanSelection from "./PlanSelection";
 
 /** The tools of the drawing sidebar, in its order. */
 export const TOOLS = [
@@ -73,4 +76,56 @@ export function create(): PlanTools {
 			return () => listeners.delete(listener);
 		},
 	};
+}
+
+/**
+ * The colour and size the palette shows: those of the selected drawings, `null` where they
+ * differ, or the tools' when no drawing is selected.
+ */
+export function shownStyle({
+	document,
+	selection,
+	toolState,
+}: {
+	document: PlanDocument;
+	selection: PlanSelection.Selection;
+	toolState: ToolState;
+}): { color: string | null; size: DrawingSize | null } {
+	const ids = PlanSelection.selectedDrawingIds(selection);
+	const selected = document.drawings.filter((drawing) =>
+		ids.includes(drawing.id),
+	);
+	if (selected.length === 0) {
+		return { color: toolState.color, size: toolState.size };
+	}
+
+	const colors = new Set(selected.map((drawing) => drawing.color));
+	const sizes = new Set(selected.map((drawing) => drawing.size));
+	return {
+		color: colors.size === 1 ? selected[0].color : null,
+		size: sizes.size === 1 ? selected[0].size : null,
+	};
+}
+
+/** Makes the colour or size the tools' and restyles the selected drawings with it. */
+export function applyStyle(
+	{
+		tools,
+		editor,
+		selection,
+	}: {
+		tools: PlanTools;
+		editor: PlanEditor;
+		selection: PlanSelection.PlanSelection;
+	},
+	style: { color?: string; size?: DrawingSize },
+) {
+	tools.set(style);
+	editor.apply(
+		PlanCommands.styleDrawings(
+			editor.getDocument(),
+			PlanSelection.selectedDrawingIds(selection.get()),
+			style,
+		),
+	);
 }

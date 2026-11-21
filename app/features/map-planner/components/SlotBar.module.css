@@ -219,3 +219,27 @@
 	width: min(36rem, var(--floating-available-width, 100vw));
 	max-width: none;
 }
+
+@container planner (width < 48rem) or (height < 32rem) {
+	.slotBar {
+		gap: var(--s-3);
+	}
+
+	.team {
+		gap: 0;
+	}
+
+	.column {
+		gap: 0;
+		width: 2.75rem;
+	}
+
+	.frame {
+		zoom: 0.7;
+	}
+
+	.label {
+		height: 1rem;
+		font-size: 0.6rem;
+	}
+}
