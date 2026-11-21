@@ -530,17 +530,25 @@ describe("Tournament match page", () => {
 			expect((await loadMatchData()).results).toHaveLength(0);
 		});
 
-		test("sets an active roster", async () => {
+		test("sets an active roster of a match they don't play in", async () => {
+			const roster = users.ids(5).slice(1);
+
 			const res = await tournamentMatchAction(
 				{
 					_action: "SET_ACTIVE_ROSTER",
-					roster: activeRoster(),
+					roster,
 					teamId: teamOne.id,
 				},
 				{ user: poolCaptainId(), params: matchParams() },
 			);
 
 			expect(res).toBe(null);
+			const team = await db
+				.selectFrom("TournamentTeam")
+				.select("activeRosterUserIds")
+				.where("id", "=", teamOne.id)
+				.executeTakeFirstOrThrow();
+			expect(team.activeRosterUserIds).toEqual(roster);
 		});
 
 		test("a streamer reports a score too", async () => {

@@ -223,7 +223,7 @@
 	"options.orgRole.STREAMER": "Streamer",
 	"labels.staffRole": "Role",
 	"bottomTexts.staffRolesInfo": "Organizer has the same permissions as you except they can't add/remove staff. Streamer can talk in chats, see room password/pool and report scores.",
-	"bottomTexts.staffRolesInfoLan": "Organizer has the same permissions as you except they can't add/remove staff. Streamer can talk in chats, see room password/pool and report scores. Pool captain can only report and undo scores of any match.",
+	"bottomTexts.staffRolesInfoLan": "Organizer has the same permissions as you except they can't add/remove staff. Streamer can talk in chats, see room password/pool and report scores. Pool captain can only report and undo scores of any match, picking which members play when a team has subs.",
 	"options.staffRole.ORGANIZER": "Organizer",
 	"options.staffRole.STREAMER": "Streamer",
 	"options.staffRole.POOL_CAPTAIN": "Pool captain",

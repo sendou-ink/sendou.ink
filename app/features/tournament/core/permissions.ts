@@ -6,7 +6,7 @@ import type { TournamentOrganizationRole } from "~/features/tournament-organizat
  * The half of a tournament's permissions (docs/site/src/content/docs/dev/permissions.mdx) depending only on author,
  * organization members and staff, for callers not loading the whole tournament. `ADMIN`: full
  * control, `ORGANIZE`: running it, `MANAGE_MATCHES`: casting, locking and admining matches,
- * `REPORT_SCORES`: reporting and undoing game results of any match.
+ * `REPORT_SCORES`: reporting and undoing game results of any match, and picking the active rosters it needs.
  */
 export function organizerPermissions(args: {
 	authorId: number;
