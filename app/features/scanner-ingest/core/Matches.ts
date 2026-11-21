@@ -201,6 +201,14 @@ function canonicalPlayerStatus(
 			time: sample.time,
 			special: [[...sample.special[0]], [...sample.special[1]]],
 			dead: [[...sample.dead[0]], [...sample.dead[1]]],
+			...(sample.spectated !== undefined
+				? {
+						spectated: sample.spectated && {
+							team: sample.spectated.team,
+							index: sample.spectated.index,
+						},
+					}
+				: null),
 		})),
 	};
 }

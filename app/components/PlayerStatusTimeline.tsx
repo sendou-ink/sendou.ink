@@ -2,8 +2,9 @@
  * Per-player splatted / special-held bands over a game's scanned icon-strip reads, rendered above
  * the ObjectiveTimeline on the same `t` axis (pass `domain` to share the range). Reads re-confirm
  * an unchanged state every few seconds; a longer gap means the HUD was not observed, so bands never
- * bridge across one. A known POV player gets a highlighted row with their kills as ticks, and the
- * splatted bands those kills opened stand out on the victims' rows.
+ * bridge across one. A known POV player gets a highlighted row; each player whose kills the
+ * footage's kill feed showed (the POV player, or on a cast whoever the camera was on) gets them as
+ * ticks, and the splatted bands those kills opened stand out on the victims' rows.
  */
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
@@ -48,11 +49,12 @@ export interface PlayerStatusTimelineTeam {
 	weapons: (MainWeaponId | null)[];
 }
 
-/** The player whose point of view the footage is, with their kills. */
-export interface PlayerStatusTimelinePov {
+/** A player with the kills the footage credits them, highlighted when the footage is their point of view. */
+export interface PlayerStatusTimelineKiller {
 	side: 0 | 1;
 	slot: number;
 	kills: readonly PlayerStatusTimelineKill[];
+	pov: boolean;
 }
 
 export interface PlayerStatusTimelineKill {
@@ -68,13 +70,13 @@ export function PlayerStatusTimeline({
 	samples,
 	teams,
 	domain,
-	pov,
+	killers = [],
 }: {
 	samples: readonly PlayerStatusTimelineSample[];
 	teams: readonly [PlayerStatusTimelineTeam, PlayerStatusTimelineTeam];
 	/** x-axis range override, to share the objective chart's axis */
 	domain?: [number, number];
-	pov?: PlayerStatusTimelinePov;
+	killers?: readonly PlayerStatusTimelineKiller[];
 }) {
 	const { t } = useTranslation(["common"]);
 	const sorted = samples.toSorted((a, b) => a.t - b.t);
@@ -91,12 +93,14 @@ export function PlayerStatusTimeline({
 		`${((span.end - span.start) / range) * 100}%`;
 	const titleOf = (label: string, span: StatusSpan) =>
 		`${label} · ${formatElapsed(span.start)}–${formatElapsed(span.end)}`;
-	const isPovRow = (side: 0 | 1, slot: number) =>
-		pov?.side === side && pov.slot === slot;
+	const killerAt = (side: 0 | 1, slot: number) =>
+		killers.find((killer) => killer.side === side && killer.slot === slot);
 	const killsOfVictim = (side: 0 | 1, slot: number) =>
-		pov && pov.side !== side
-			? pov.kills.filter((kill) => kill.victimSlot === slot)
-			: [];
+		killers
+			.filter((killer) => killer.side !== side)
+			.flatMap((killer) => killer.kills)
+			.filter((kill) => kill.victimSlot === slot);
+	const allKills = killers.flatMap((killer) => killer.kills);
 
 	return (
 		<div
@@ -116,13 +120,13 @@ export function PlayerStatusTimeline({
 					<span className={styles.legendSwatchSpecial} />
 					{t("common:playerStatusTimeline.specialReady")}
 				</span>
-				{pov && pov.kills.length > 0 ? (
+				{allKills.length > 0 ? (
 					<span className={styles.legendItem}>
 						<span className={styles.legendSwatchKill} />
 						{t("common:playerStatusTimeline.kill")}
 					</span>
 				) : null}
-				{pov?.kills.some((kill) => kill.victimSlot !== null) ? (
+				{allKills.some((kill) => kill.victimSlot !== null) ? (
 					<span className={styles.legendItem}>
 						<span className={styles.legendSwatchSplattedByPov} />
 						{t("common:playerStatusTimeline.splattedByPov")}
@@ -149,7 +153,7 @@ export function PlayerStatusTimeline({
 								<div className={styles.trackArea}>
 									<div
 										className={clsx(styles.track, {
-											[styles.trackPov]: isPovRow(side, slot),
+											[styles.trackPov]: killerAt(side, slot)?.pov,
 										})}
 									>
 										{deadSpans.map((span, i) => (
@@ -188,16 +192,14 @@ export function PlayerStatusTimeline({
 											/>
 										))}
 									</div>
-									{isPovRow(side, slot)
-										? pov!.kills.map((kill, i) => (
-												<div
-													key={i}
-													className={styles.killTick}
-													style={{ left: leftOf(kill.t) }}
-													title={`${t("common:playerStatusTimeline.kill")} · ${kill.name ?? "?"} · ${formatElapsed(kill.t)}`}
-												/>
-											))
-										: null}
+									{(killerAt(side, slot)?.kills ?? []).map((kill, i) => (
+										<div
+											key={i}
+											className={styles.killTick}
+											style={{ left: leftOf(kill.t) }}
+											title={`${t("common:playerStatusTimeline.kill")} · ${kill.name ?? "?"} · ${formatElapsed(kill.t)}`}
+										/>
+									))}
 								</div>
 							</div>
 						);

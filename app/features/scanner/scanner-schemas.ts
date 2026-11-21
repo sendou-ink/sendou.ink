@@ -92,11 +92,17 @@ const playerFlagsSchema = v.tuple([
 	v.boolean(),
 ]);
 
+const seatSchema = v.object({
+	team: teamIndexSchema,
+	index: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(3)),
+});
+
 const scannerMatchPlayerStatusSampleSchema = v.object({
 	t: v.pipe(v.number(), v.integer(), v.minValue(0)),
 	time: v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))),
 	special: v.tuple([playerFlagsSchema, playerFlagsSchema]),
 	dead: v.tuple([playerFlagsSchema, playerFlagsSchema]),
+	spectated: v.optional(v.nullable(seatSchema)),
 });
 
 const scannerMatchPlayerStatusSchema = v.object({
@@ -142,12 +148,7 @@ export const scannerMatchSchema = v.object({
 	),
 	teams: v.tuple([scannerMatchTeamSchema, scannerMatchTeamSchema]),
 	winner: v.nullable(teamIndexSchema),
-	pov: v.nullable(
-		v.object({
-			team: teamIndexSchema,
-			index: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(3)),
-		}),
-	),
+	pov: v.nullable(seatSchema),
 });
 
 /** An OCR'd text no game screen could show reads as unread instead of failing the whole upload. */

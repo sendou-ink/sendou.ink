@@ -1,0 +1,10 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"cast": true,
+		"spectated": { "side": 0, "slot": 2 }
+	},
+	"options": {
+		"notes": "Casted stream (SWS26 REWOUND, Rush vs Let's Go Brother [HK7e3p94G3s]) at ~440s, yellow team left at a wide pitch (~98). The spectated triangle sits under the third slot from the outside (left of the Y badge) over pink-inked scenery; the inner slot's 'Remaining' plate (white text on yellow) reads as a weak triangle of its own. Statuses and time unlabeled."
+	}
+}

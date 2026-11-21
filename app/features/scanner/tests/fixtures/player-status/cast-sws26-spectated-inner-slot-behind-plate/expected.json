@@ -1,0 +1,10 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"cast": true,
+		"spectated": { "side": 0, "slot": 3 }
+	},
+	"options": {
+		"notes": "Casted stream (SWS26 REWOUND, Rush vs Let's Go Brother [HK7e3p94G3s]) at ~464s, yellow team left at the even pitch, A/B/Y/X badges drawn. No triangle shows under the outer three slots: the camera is on the inner slot (crossed out; the view shows that player's splat, 'Ouch...' over the crossed-out name), whose triangle hides behind the 'Remaining 57' plate hanging under it. Statuses and time unlabeled."
+	}
+}

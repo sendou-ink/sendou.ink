@@ -373,6 +373,53 @@ export const STATUS_WHITE_MIN_VALUE = 215;
 export const STATUS_WHITE_MAX_SPREAD = 40;
 export const STATUS_CAST_MIN_DPAD_WHITE = 0.25;
 
+/**
+ * Spectated player (player-status.ts readSpectated): the spectator HUD marks
+ * whose camera is on with a small triangle under that player's icon, apex up,
+ * a white outline around a fill of the team's ink. Only the left strip draws
+ * it, as the specced player's team is always the left plate. At pitch p it
+ * scales by p / STATUS_REFERENCE_PITCH about STATUS_ICON_CENTER_Y like the
+ * icon, its outline's apex and base this far below that center (reference
+ * px), centered under the icon. Measured on the SWS26 REWOUND and Switzerland
+ * #62 VoDs at pitches 75-102.
+ */
+export const STATUS_SPECTATED_APEX_DY = 62;
+export const STATUS_SPECTATED_BASE_DY = 81;
+export const STATUS_SPECTATED_HALF_BASE = 19.5;
+
+/**
+ * The triangle bobs up and down (~7px over a ~0.6s cycle) about its rest
+ * height, searched at these offsets (px), and at these scales: the strip fit's
+ * pitch can be off, and the triangle follows the real one.
+ */
+export const STATUS_SPECTATED_SEARCH_UP = 8;
+export const STATUS_SPECTATED_SEARCH_DOWN = 6;
+export const STATUS_SPECTATED_SCALES = [0.84, 0.92, 1, 1.08, 1.16];
+
+/** Band every searched triangle falls within. */
+export const STATUS_SPECTATED_BAND: Roi = { x: 440, y: 106, w: 480, h: 72 };
+
+/**
+ * Outline pixels are white (bright, spread under this share of the value);
+ * fill pixels are team ink within this hue distance of the side's (blended
+ * over the scene, so less saturated than the icons).
+ */
+export const STATUS_SPECTATED_WHITE_MIN_VALUE = 200;
+export const STATUS_SPECTATED_WHITE_MAX_SPREAD = 0.35;
+export const STATUS_SPECTATED_INK_MIN_VALUE = 80;
+export const STATUS_SPECTATED_INK_MIN_SATURATION = 0.3;
+export const STATUS_SPECTATED_INK_MAX_HUE_DIST = 30;
+
+/**
+ * A slot's best triangle at or above this score is the spectated one; without
+ * the badges proving a cast, at or above the stricter one. Real triangles
+ * score >=0.5 bar a few on a backdrop of their own ink (SWS26 VoDs); outside
+ * casts a TC/RM track's ink dots and checkpoint marker on a pale backdrop
+ * reach 0.47, inside them the plate- and badge-free backdrop 0.38.
+ */
+export const STATUS_SPECTATED_MIN_SCORE = 0.45;
+export const STATUS_SPECTATED_UNPROVEN_MIN_SCORE = 0.6;
+
 // Tower Control / Rainmaker track overlay (track.ts): a dotted track under the
 // icon strip, end to end x514..1405 at y155 in both modes, with the objective's
 // icon riding it and each team's "Remaining" plate hanging under the point its

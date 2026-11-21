@@ -214,6 +214,7 @@ function CardsPanel({ montage }: { montage: MontageSnapshot }) {
 				kind: "ribbon",
 				vod: ribbonVod,
 				weaponId: ribbonSample?.weaponId ?? null,
+				playerName: ribbonSample?.playerName ?? null,
 			}
 		: card;
 
@@ -301,6 +302,7 @@ function RibbonPreview({
 		<MontageRibbonPreview
 			vod={vod}
 			weaponId={sample?.weaponId ?? null}
+			playerName={sample?.playerName ?? null}
 			background={background}
 		/>
 	);

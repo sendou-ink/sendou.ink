@@ -1,0 +1,10 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"cast": true,
+		"spectated": { "side": 0, "slot": 1 }
+	},
+	"options": {
+		"notes": "Casted stream (SWS26 REWOUND, Rush vs Let's Go Brother [HK7e3p94G3s]) at ~472s, purple team left (the camera switched to it) at a narrow pitch (~75), D-pad badges under it. The spectated triangle (purple fill, white outline) sits under the second slot from the outside, over a pale sky. Statuses and time unlabeled."
+	}
+}

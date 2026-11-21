@@ -425,6 +425,35 @@ describe("playerStatus", () => {
 		expect(kept.merged.playerStatus).toEqual(STATUS);
 	});
 
+	test.each([
+		{ why: "a spectated seat", spectated: { team: 1 as const, index: 3 } },
+		{ why: "an unread seat", spectated: null },
+		{ why: "no seat field", spectated: undefined },
+	])("canonicalMatch keeps $why on a status sample", ({ spectated }) => {
+		const sample = {
+			...STATUS.samples[0]!,
+			...(spectated !== undefined ? { spectated } : null),
+		};
+		const canonical = Matches.canonicalMatch(
+			scannerMatch({ playerStatus: { samples: [sample] } }),
+		).playerStatus!.samples[0]!;
+		expect(canonical).toEqual(sample);
+		expect("spectated" in canonical).toBe(spectated !== undefined);
+	});
+
+	test("side-aligning an incoming match swaps its spectated seat too", () => {
+		const status = {
+			samples: [
+				{ ...STATUS.samples[0]!, spectated: { team: 0 as const, index: 2 } },
+			],
+		};
+		const { merged } = Matches.mergeMatches(
+			scannerMatch({ winner: null, matchScores: null, playerStatus: null }),
+			sideSwapped(scannerMatch({ playerStatus: status })),
+		);
+		expect(merged.playerStatus).toEqual(status);
+	});
+
 	test("side-aligning an incoming match swaps its status samples too", () => {
 		const incoming = sideSwapped(scannerMatch({ playerStatus: STATUS }));
 		const { merged } = Matches.mergeMatches(

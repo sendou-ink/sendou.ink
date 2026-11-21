@@ -32,9 +32,10 @@ import {
 	criteriaWindows,
 	withDefaultCaps,
 } from "../core/clips/criteria";
-import { povDeathTimes } from "../core/clips/scoring";
+import { streakGame } from "../core/clips/scoring";
 import { buildScannerMatches } from "../core/match-builder";
 import {
+	candidatePlayer,
 	candidateTeamIds,
 	DEFAULT_MONTAGE_CRITERIA,
 	INTRO_CARD_SECONDS,
@@ -88,6 +89,8 @@ export type MontageGraphic =
 			kind: "ribbon";
 			vod: MontageManifestVod;
 			weaponId: MainWeaponId | null;
+			/** a cast's specced player (`MontageCandidate.playerName`) */
+			playerName: string | null;
 	  };
 
 /** resolves to the graphic as a PNG, with where its revealed items are */
@@ -377,6 +380,7 @@ export async function renderMontageVideo(): Promise<void> {
 						kind: "ribbon",
 						vod: pick.vod,
 						weaponId: pick.weaponId,
+						playerName: pick.playerName,
 					}),
 				});
 			}
@@ -523,9 +527,9 @@ async function connect(directory: FileSystemDirectoryHandle): Promise<void> {
 		const scanned = new Map(Object.entries(stored?.games ?? {}));
 		const saved = new Set((await listVods()).map((vod) => vod.name));
 		for (const vod of vods) {
-			// games stored before the POV weapon and lineups were kept are built again
+			// games stored before the cast's camera and both lineups were kept are built again
 			const games = scanned.get(vod.file);
-			const stale = !games || games.some((game) => !("lineups" in game));
+			const stale = !games || games.some((game) => !("teams" in game));
 			if (stale && saved.has(vod.file)) {
 				scanned.set(vod.file, await scannedGames(vod));
 			}
@@ -604,7 +608,7 @@ function outdatedManifestError(manifest: MontageManifest): string {
 async function scannedGames(vod: MontageManifestVod): Promise<MontageGame[]> {
 	const events = await loadVodEvents(vod.file);
 	return buildScannerMatches(events).map(({ match, sources }) => ({
-		kills: match.kills,
+		...streakGame({ match, sources }),
 		mode: match.mode,
 		stage: match.stage,
 		povWeaponId: match.pov
@@ -616,7 +620,7 @@ async function scannedGames(vod: MontageManifestVod): Promise<MontageGame[]> {
 					opponent: lineupOf(match.teams[match.pov.team === 0 ? 1 : 0]),
 				}
 			: null,
-		deaths: povDeathTimes(sources),
+		teams: [lineupOf(match.teams[0]), lineupOf(match.teams[1])],
 	}));
 }
 
@@ -640,7 +644,7 @@ function candidatesOf(
 					window,
 					mode: game.mode,
 					stage: game.stage,
-					weaponId: game.povWeaponId,
+					...candidatePlayer(game, window, vod),
 					duration: playbackDuration(playbackSegments(window)),
 					teamIds,
 				})),
@@ -682,6 +686,7 @@ function currentPicks(
 			...pick,
 			vod,
 			weaponId: pick.weaponId ?? null,
+			playerName: pick.playerName ?? null,
 			teamIds: candidateTeamIds(vod, topTeamIds),
 		};
 		return [{ ...candidate, teamId }];

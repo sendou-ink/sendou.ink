@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+	candidatePlayer,
 	candidatesByBaseWeapon,
 	candidateTeamIds,
 	FAST_FORWARD_SPEED,
@@ -140,5 +141,61 @@ describe("montageTeamSections", () => {
 			[2, []],
 			[1, ["a", "c"]],
 		]);
+	});
+});
+
+describe("candidatePlayer", () => {
+	const game = {
+		povWeaponId: 40,
+		teams: [
+			[{ name: "Ally", weaponId: 10 }],
+			[
+				{ name: "Foe", weaponId: 20 },
+				{ name: null, weaponId: 30 },
+			],
+		],
+	} as const;
+	const pov = { team: { id: 1, name: "Team 1" } };
+	const cast = { team: null };
+
+	test.each([
+		{
+			why: "a POV VoD credits the POV weapon",
+			vod: pov,
+			player: { team: 1 as const, index: 0 },
+			expected: { weaponId: 40, playerName: null },
+		},
+		{
+			why: "a cast credits the specced player's row",
+			vod: cast,
+			player: { team: 1 as const, index: 0 },
+			expected: { weaponId: 20, playerName: "Foe" },
+		},
+		{
+			why: "a cast's specced row with an unread name keeps its weapon",
+			vod: cast,
+			player: { team: 1 as const, index: 1 },
+			expected: { weaponId: 30, playerName: null },
+		},
+		{
+			why: "a cast streak with no specced player credits no one",
+			vod: cast,
+			player: null,
+			expected: { weaponId: null, playerName: null },
+		},
+		{
+			why: "a seat past the rows read credits no one",
+			vod: cast,
+			player: { team: 0 as const, index: 3 },
+			expected: { weaponId: null, playerName: null },
+		},
+	])("$why", ({ vod, player, expected }) => {
+		expect(
+			candidatePlayer(
+				game as unknown as Parameters<typeof candidatePlayer>[0],
+				{ player },
+				vod,
+			),
+		).toEqual(expected);
 	});
 });

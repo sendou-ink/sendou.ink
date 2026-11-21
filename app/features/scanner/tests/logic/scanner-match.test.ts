@@ -72,4 +72,33 @@ describe("swapPlayerStatusSampleSides", () => {
 			dead: [sample.dead[1], sample.dead[0]],
 		});
 	});
+
+	test.each([
+		{
+			why: "a spectated seat moves to the other team",
+			spectated: { team: 0 as const, index: 2 },
+			expected: { team: 1, index: 2 },
+		},
+		{ why: "no seat read stays unread", spectated: null, expected: null },
+		{ why: "a sample without the field gets none", spectated: undefined },
+	])("$why", ({ spectated, expected }) => {
+		const swapped = swapPlayerStatusSampleSides({
+			t: 60,
+			time: 240,
+			special: [
+				[false, false, false, false],
+				[false, false, false, false],
+			],
+			dead: [
+				[false, false, false, false],
+				[false, false, false, false],
+			],
+			...(spectated !== undefined ? { spectated } : null),
+		});
+		if (spectated === undefined) {
+			expect("spectated" in swapped).toBe(false);
+		} else {
+			expect(swapped.spectated).toEqual(expected);
+		}
+	});
 });

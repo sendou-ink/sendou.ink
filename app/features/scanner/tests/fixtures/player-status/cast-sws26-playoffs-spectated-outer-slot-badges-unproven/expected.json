@@ -1,0 +1,10 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"cast": null,
+		"spectated": { "side": 0, "slot": 0 }
+	},
+	"options": {
+		"notes": "Casted stream (Splat World Series 2026 Playoffs Day 1 [oXvh4tBNuu8]) at 3114s, magenta team left. The spectated triangle sits under the left team's outer slot, but the right team's camera badges fail their probes, so the read has no cast proof and the triangle must clear the stricter score. Statuses and time unlabeled."
+	}
+}

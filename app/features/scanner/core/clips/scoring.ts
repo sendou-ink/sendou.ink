@@ -4,13 +4,21 @@
  * player's own kills feed it: a streak is a run of consecutive kills with no
  * POV death between them and no pause longer than `STREAK_MAX_GAP_S`, cut
  * where its clip would outgrow `MAX_CLIP_SECONDS` so every clip fits and its
- * kill count stays honest. A streak of `minKills` or more is a window,
- * scored by streak length first and density second.
+ * kill count stays honest. On a cast the kill feed follows the camera, so a
+ * camera switch between two kills ends the streak too (the kills are another
+ * player's), and the specced player's splat counts as the POV death. A streak
+ * of `minKills` or more is a window, scored by streak length first and
+ * density second.
  */
 import { DEATH_EVENT_TYPE } from "../detectors/death/index";
 import { MINIMAP_EVENT_TYPE } from "../detectors/minimap/index";
 import type { DetectedEvent } from "../events";
-import type { ScannerMatch, ScannerMatchKill } from "../scanner-match";
+import {
+	killerSeat,
+	type ScannerMatch,
+	type ScannerMatchKill,
+	type ScannerMatchSeat,
+} from "../scanner-match";
 
 export const MAX_CLIP_SECONDS = 60;
 /** footage kept before the first kill: the approach */
@@ -33,6 +41,28 @@ export interface ClipWindow {
 	/** seconds into the stream/file of each kill, chronological */
 	killTimes: number[];
 	score: number;
+	/** whose streak it is: the POV player, or on a cast the specced one; null when unknown */
+	player: ScannerMatchSeat | null;
+}
+
+/** A kill as streak scoring sees it: whose it is, when known (`killerSeat`). */
+interface StreakKill extends ScannerMatchKill {
+	player?: ScannerMatchSeat | null;
+}
+
+/** Where the spectator camera was at a status read (cast matches only). */
+interface CameraRead {
+	t: number;
+	seat: ScannerMatchSeat;
+}
+
+/** A game as streak scoring reads it (`streakGame`). */
+export interface StreakGame {
+	kills: StreakKill[] | null;
+	/** the POV (on a cast: specced) player's death times */
+	deaths: number[];
+	/** cast only: the camera over the game; a switch between two kills ends the streak */
+	camera?: CameraRead[];
 }
 
 /**
@@ -42,7 +72,7 @@ export interface ClipWindow {
  * second as a kill (a trade) counts after that kill.
  */
 export function scoreWindows(
-	match: Pick<ScannerMatch, "kills">,
+	game: Pick<StreakGame, "kills" | "camera">,
 	deaths: readonly number[],
 	{
 		minKills,
@@ -51,17 +81,22 @@ export function scoreWindows(
 ): ClipWindow[] {
 	const sortedDeaths = deaths.toSorted((a, b) => a - b);
 	const windows: ClipWindow[] = [];
-	let run: ScannerMatchKill[] = [];
+	let run: StreakKill[] = [];
 	const flush = () => {
 		if (run.length >= minKills) windows.push(scoreRun(run));
 		run = [];
 	};
-	for (const kill of (match.kills ?? []).toSorted((a, b) => a.t - b.t)) {
+	for (const kill of (game.kills ?? []).toSorted((a, b) => a.t - b.t)) {
 		const last = run.at(-1);
 		if (
 			last &&
 			(kill.t - last.t > STREAK_MAX_GAP_S ||
 				diedBetween(sortedDeaths, last.t, kill.t) ||
+				!samePlayer(
+					run.findLast((other) => other.player)?.player,
+					kill.player,
+				) ||
+				cameraSwitched(game.camera ?? [], last.t, kill.t) ||
 				clipEnd(kill) - clipStart(run[0]!) > maxSeconds)
 		) {
 			flush();
@@ -70,6 +105,38 @@ export function scoreWindows(
 	}
 	flush();
 	return windows;
+}
+
+/**
+ * A built match as `scoreWindows` reads it: its kills with whose they are,
+ * its POV deaths and, on a cast, the camera's seat at every status read plus
+ * the specced player's splats (the strip's dead flag of the seat the camera
+ * is on) as deaths.
+ */
+export function streakGame({
+	match,
+	sources,
+}: {
+	match: ScannerMatch;
+	sources: readonly DetectedEvent[];
+}): StreakGame {
+	const camera = (match.playerStatus?.samples ?? []).flatMap((sample) =>
+		sample.spectated ? [{ t: sample.t, seat: sample.spectated }] : [],
+	);
+	const castDeaths = (match.playerStatus?.samples ?? []).flatMap((sample) =>
+		sample.spectated &&
+		sample.dead[sample.spectated.team][sample.spectated.index]
+			? [sample.t]
+			: [],
+	);
+	return {
+		kills: (match.kills ?? []).map((kill) => ({
+			...kill,
+			player: killerSeat(match, kill),
+		})),
+		deaths: [...povDeathTimes(sources), ...castDeaths],
+		...(match.cast ? { camera } : null),
+	};
 }
 
 /**
@@ -91,7 +158,7 @@ export function povDeathTimes(events: readonly DetectedEvent[]): number[] {
 }
 
 /** `kills² + kills / span`: the streak decides, density breaks ties. */
-function scoreRun(kills: readonly ScannerMatchKill[]): ClipWindow {
+function scoreRun(kills: readonly StreakKill[]): ClipWindow {
 	const first = kills[0]!;
 	const last = kills.at(-1)!;
 	const span = Math.max(1, last.t - first.t);
@@ -103,6 +170,7 @@ function scoreRun(kills: readonly ScannerMatchKill[]): ClipWindow {
 		kills: kills.length,
 		killTimes: kills.map((kill) => kill.t),
 		score: kills.length ** 2 + kills.length / span,
+		player: kills.find((kill) => kill.player)?.player ?? null,
 	};
 }
 
@@ -136,4 +204,26 @@ function diedBetween(
 	until: number,
 ): boolean {
 	return sortedDeaths.some((t) => t >= from && t < until);
+}
+
+/** Unknown players match anyone. */
+function samePlayer(
+	a: ScannerMatchSeat | null | undefined,
+	b: ScannerMatchSeat | null | undefined,
+): boolean {
+	return !a || !b || (a.team === b.team && a.index === b.index);
+}
+
+function cameraSwitched(
+	camera: readonly CameraRead[],
+	from: number,
+	until: number,
+): boolean {
+	let seat: ScannerMatchSeat | null = null;
+	for (const read of camera) {
+		if (read.t < from || read.t > until) continue;
+		if (seat && !samePlayer(seat, read.seat)) return true;
+		seat = read.seat;
+	}
+	return false;
 }

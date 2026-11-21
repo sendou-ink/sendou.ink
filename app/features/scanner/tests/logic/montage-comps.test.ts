@@ -27,6 +27,7 @@ function game(own: number[], opponent: number[] | null): MontageGame {
 		deaths: [],
 		povWeaponId: own[0] ?? null,
 		lineups: opponent ? { pov: lineup(own), opponent: lineup(opponent) } : null,
+		teams: [lineup(own), lineup(opponent ?? [])],
 	} as MontageGame;
 }
 

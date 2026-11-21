@@ -75,6 +75,18 @@ for (const fixture of fixtures) {
 		);
 
 		await t.test(
+			"spectated",
+			fieldTestOptions(fixture, "spectated", expected.spectated !== undefined),
+			() => {
+				assert.deepEqual(
+					event.data.spectated,
+					expected.spectated,
+					`spectated mismatch (${debug()})`,
+				);
+			},
+		);
+
+		await t.test(
 			"time",
 			fieldTestOptions(fixture, "time", expected.time !== undefined),
 			() => {

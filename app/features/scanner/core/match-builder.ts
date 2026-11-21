@@ -85,6 +85,7 @@ import {
 	type ScannerMatchPlayer,
 	type ScannerMatchPlayerStatus,
 	type ScannerMatchPlayerStatusSample,
+	type ScannerMatchSeat,
 	type ScannerMatchTeam,
 	victimSlot,
 } from "./scanner-match";
@@ -133,6 +134,13 @@ const EARLY_END_MARGIN_SECONDS = 10;
 /** Game clock lengths: a full game's results screen comes no sooner after its intro. */
 const TURF_WAR_CLOCK_SECONDS = 180;
 const RANKED_CLOCK_SECONDS = 300;
+
+/**
+ * A spectated seat read once between two reads agreeing on another seat this
+ * close together (seconds) is a misread: status reads come about a second
+ * apart, a camera switch holds the new seat over several.
+ */
+const SPECTATED_LONE_SEAT_SPAN_S = 4;
 
 /**
  * Minimum hue distance between the two team inks before color orients counter
@@ -1099,6 +1107,14 @@ function toBuiltMatch<E extends DetectedEvent>(open: Game<E>): BuiltMatch<E> {
 		(read) => counterKindOfRead(read.data) === counterKind,
 	);
 	const minimapColors = minimapTeamColors(minimaps);
+	// layout alone cannot flag a broadcast (S3 POV footage draws both narrow
+	// strip geometries), so only the spectator map screen or badge-proven
+	// strips count; a results screen that identified the POV seat disproves
+	// them all — casts never see one
+	const cast =
+		(board?.povIndex ?? null) === null &&
+		(open.minimaps.some((event) => event.data.spectator) ||
+			playerStatuses.some((read) => read.data.cast));
 	const progress = buildProgress(
 		counterReads,
 		counterKind === null
@@ -1122,6 +1138,7 @@ function toBuiltMatch<E extends DetectedEvent>(open: Game<E>): BuiltMatch<E> {
 					povIndex: minimapSelfIndex(minimaps),
 				}
 			: null,
+		cast,
 	);
 
 	const pov: ScannerMatch["pov"] =
@@ -1151,14 +1168,7 @@ function toBuiltMatch<E extends DetectedEvent>(open: Game<E>): BuiltMatch<E> {
 			? board.matchScores
 			: null,
 		replayCode: GameIdentity.historyData(open.scoreboard)?.replayCode ?? null,
-		// layout alone cannot flag a broadcast (S3 POV footage draws both narrow
-		// strip geometries), so only the spectator map screen or badge-proven
-		// strips count; a results screen that identified the POV seat disproves
-		// them all — casts never see one
-		cast:
-			pov === null &&
-			(open.minimaps.some((event) => event.data.spectator) ||
-				playerStatuses.some((read) => read.data.cast)),
+		cast,
 		objective: progress.objective,
 		playerStatus: progress.playerStatus,
 		kills: progress.kills,
@@ -1267,6 +1277,7 @@ function buildProgress(
 	deathTimes: readonly number[],
 	clockSeconds: number,
 	minimapRows: { rows: SlotRowInputs["rows"]; povIndex: number | null } | null,
+	cast: boolean,
 ): {
 	objective: ScannerMatchObjective | null;
 	playerStatus: ScannerMatchPlayerStatus | null;
@@ -1358,31 +1369,39 @@ function buildProgress(
 					}),
 				};
 
+	const orientedStatuses = liveStatuses.map((read) => {
+		const swapped = read.fromMinimap
+			? minimapSwapped
+			: nearestSwapFlag(live, swapFlags, read.t) !== swap;
+		const sources = swapped ? ([1, 0] as const) : ([0, 1] as const);
+		const time =
+			read.data.time ??
+			Clock.position(clock, { t: read.t, time: null }).remaining;
+		return {
+			t: read.t,
+			time: read.data.time,
+			elapsed: time === null ? null : clockSeconds - time,
+			slots: sources.map((source, side) =>
+				applyPermutation(
+					read.data.slots[source]!,
+					readPermutation(perms, read, source, side as 0 | 1),
+				),
+			) as [ReadSide, ReadSide],
+			spectated: spectatedSeatOf(read, sources, perms),
+		};
+	});
+	// only a cast draws the triangle, and a match no read placed the camera
+	// on (event versions before it was read) has nothing to say
+	const spectated = cast ? withoutLoneSeats(orientedStatuses) : [];
+	const placesCamera = spectated.some((seat) => seat !== null);
 	const playerStatus =
 		liveStatuses.length === 0
 			? null
 			: {
-					samples: decodedSamples(
-						liveStatuses.map((read) => {
-							const swapped = read.fromMinimap
-								? minimapSwapped
-								: nearestSwapFlag(live, swapFlags, read.t) !== swap;
-							const [a, b] = swapped ? ([1, 0] as const) : ([0, 1] as const);
-							const time =
-								read.data.time ??
-								Clock.position(clock, { t: read.t, time: null }).remaining;
-							return {
-								t: read.t,
-								time: read.data.time,
-								elapsed: time === null ? null : clockSeconds - time,
-								slots: [a, b].map((source, side) =>
-									applyPermutation(
-										read.data.slots[source]!,
-										readPermutation(perms, read, source, side as 0 | 1),
-									),
-								) as [ReadSide, ReadSide],
-							};
-						}),
+					samples: decodedSamples(orientedStatuses).map((sample, i) =>
+						placesCamera
+							? { ...sample, spectated: spectated[i] ?? null }
+							: sample,
 					),
 				};
 
@@ -1885,6 +1904,54 @@ function decodedSamples(
 	});
 }
 
+/** A strip read's spectated slot as a `teams` seat, through the read's orientation and slot→row permutation. */
+function spectatedSeatOf(
+	read: StatusRead,
+	sources: readonly [0 | 1, 0 | 1],
+	perms: SlotRowPerms | null,
+): ScannerMatchSeat | null {
+	const spectated = read.data.spectated;
+	if (read.fromMinimap || !spectated) return null;
+	const team = sources[0] === spectated.side ? 0 : 1;
+	const row = readPermutation(perms, read, spectated.side, team)[
+		spectated.slot
+	];
+	return row === undefined ? null : { team, index: row };
+}
+
+/**
+ * Each read's spectated seat, a seat read alone between two reads agreeing on
+ * another (within SPECTATED_LONE_SEAT_SPAN_S) dropped: a triangle missed on a
+ * backdrop of its own ink reads as the inner slot for a frame, while a camera
+ * switch holds the new seat over the reads after it.
+ */
+function withoutLoneSeats(
+	reads: readonly { t: number; spectated: ScannerMatchSeat | null }[],
+): (ScannerMatchSeat | null)[] {
+	const placed = reads.flatMap((read, i) => (read.spectated ? [i] : []));
+	const seats = reads.map((read) => read.spectated);
+	for (let k = 1; k < placed.length - 1; k++) {
+		const previous = reads[placed[k - 1]!]!;
+		const current = reads[placed[k]!]!;
+		const next = reads[placed[k + 1]!]!;
+		if (
+			next.t - previous.t <= SPECTATED_LONE_SEAT_SPAN_S &&
+			sameSeat(previous.spectated, next.spectated) &&
+			!sameSeat(previous.spectated, current.spectated)
+		) {
+			seats[placed[k]!] = null;
+		}
+	}
+	return seats;
+}
+
+function sameSeat(
+	a: ScannerMatchSeat | null,
+	b: ScannerMatchSeat | null,
+): boolean {
+	return a?.team === b?.team && a?.index === b?.index;
+}
+
 /** One side of a status read, slots in order; null = a slot the read did not show (a card missing). */
 type ReadSide = (SlotEvidence | null)[];
 
@@ -1898,6 +1965,8 @@ interface StatusRead {
 	data: {
 		time: number | null;
 		slots: [ReadSide, ReadSide];
+		/** strip reads only: the spectated slot, sides as read */
+		spectated?: PlayerStatusData["spectated"];
 	};
 }
 

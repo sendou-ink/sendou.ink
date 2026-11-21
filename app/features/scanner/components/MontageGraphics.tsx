@@ -143,6 +143,7 @@ export function MontageGraphicStage({
 					<RibbonGraphic
 						vod={request.graphic.vod}
 						weaponId={request.graphic.weaponId}
+						playerName={request.graphic.playerName}
 					/>
 				) : (
 					<CardGraphic
@@ -179,10 +180,12 @@ export function MontageCardPreview(props: {
 export function MontageRibbonPreview({
 	vod,
 	weaponId,
+	playerName,
 	background,
 }: {
 	vod: MontageManifestVod;
 	weaponId: MainWeaponId | null;
+	playerName: string | null;
 	/** a frame of the clip, else a plain backdrop */
 	background: string | null;
 }) {
@@ -207,7 +210,11 @@ export function MontageRibbonPreview({
 						borderRadius: RIBBON_GLASS.radius / RIBBON_SCALE,
 					}}
 				>
-					<RibbonGraphic vod={vod} weaponId={weaponId} />
+					<RibbonGraphic
+						vod={vod}
+						weaponId={weaponId}
+						playerName={playerName}
+					/>
 				</div>
 			</div>
 		</div>
@@ -515,9 +522,12 @@ function ResultsCard({
 function RibbonGraphic({
 	vod,
 	weaponId,
+	playerName,
 }: {
 	vod: MontageManifestVod;
 	weaponId: MainWeaponId | null;
+	/** a cast's specced player, named in place of the channel */
+	playerName: string | null;
 }) {
 	return (
 		<div className={styles.ribbon}>
@@ -547,7 +557,7 @@ function RibbonGraphic({
 				<div className={styles.ribbonPovText}>
 					<div className={styles.ribbonLabel}>{vod.pov ? "POV" : "Cast"}</div>
 					<div className={styles.ribbonPovName}>
-						{vod.pov?.name ?? `twitch.tv/${vod.account}`}
+						{vod.pov?.name ?? playerName ?? `twitch.tv/${vod.account}`}
 					</div>
 				</div>
 				{vod.pov ? (

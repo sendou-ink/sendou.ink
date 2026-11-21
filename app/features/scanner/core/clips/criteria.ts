@@ -4,8 +4,12 @@
  * longer. The tournament montage lists its candidates with it and a scanned
  * VoD cuts its clips with it, both re-reading the saved scan when it changes.
  */
-import type { ScannerMatch } from "../scanner-match";
-import { type ClipWindow, MAX_CLIP_SECONDS, scoreWindows } from "./scoring";
+import {
+	type ClipWindow,
+	MAX_CLIP_SECONDS,
+	type StreakGame,
+	scoreWindows,
+} from "./scoring";
 
 /** the last one also covers longer streaks */
 export const CLIP_CRITERIA_KILL_COUNTS = [2, 3, 4, 5] as const;
@@ -34,7 +38,7 @@ export interface ClipCriteria {
  * in 25 s) the best-scoring reading wins and no splat is in two windows.
  */
 export function criteriaWindows(
-	game: { kills: ScannerMatch["kills"]; deaths: readonly number[] },
+	game: StreakGame,
 	criteria: ClipCriteria,
 ): ClipWindow[] {
 	const windows = CLIP_CRITERIA_KILL_COUNTS.filter(

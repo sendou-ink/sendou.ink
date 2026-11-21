@@ -153,7 +153,13 @@ is the pure, swappable scorer: only the POV player's own kills feed it
 (`ScannerMatch.kills`, off the kill feed); a streak is consecutive kills with
 no POV death between them and no pause over `STREAK_MAX_GAP_S`, cut where the
 clip would outgrow `MAX_CLIP_SECONDS`; the `clipMinKills` setting (live) or
-the VoD criteria's `minKills` makes it a window, scored `kills² + kills / span`. Both controllers run windows → cut →
+the VoD criteria's `minKills` makes it a window, scored `kills² + kills / span`.
+A cast's feed follows the camera, so `streakGame` credits each kill to the
+player the camera was on at it (`killerSeat`, off the status samples'
+`spectated` seat): kills of two players, or a camera switch between two
+kills, are two streaks, and the specced player's splat (the strip's dead flag
+of the seat the camera is on) is the POV death. Each window carries its
+player (`ClipWindow.player`). Both controllers run windows → cut →
 `store/clips.ts` over the
 session's matches plus the stretches no scoreboard or minimap backs
 (`buildScannerMatches(…, { unbacked: true })`, `LiveSession.clipMatches`):
@@ -304,8 +310,9 @@ candidate, best score first (`criteriaWindows`, shared with a VoD's clips): min 
 a length cap per splat count before fast-forwarding (defaults 2: 20 s,
 3: 30 s, 4: 45 s, 5+: 60 s), picked on the page and kept in localStorage.
 Candidates are grouped by the POV player's base weapon (read off the
-game's scoreboard seat, variants folded to their base) and can be filtered
-by team. Only top teams' candidates are listed: a POV VoD's under its team,
+game's scoreboard seat, variants folded to their base; on a cast the
+specced player's, off their row, whose name the clip's ribbon shows in
+place of the channel, `candidatePlayer`) and can be filtered by team. Only top teams' candidates are listed: a POV VoD's under its team,
 a cast's under either side (`candidateTeamIds`), and each pick is added
 under one of them. The scanned games, the picks (stored whole, so changing
 the criteria never drops one) and the folder's handle live in the
@@ -594,7 +601,25 @@ scripts/scanner/<script>.ts` for the ones without a package script).
   (`core/status-decode.ts`, see below). No geometry implies a footage type: the D-pad camera
   badges prove a broadcast, reported as `cast: true | null`, but never
   place the strip, since a white backdrop under a POV strip fakes them now
-  and then. Emitted
+  and then. A cast marks whose camera it is with a small triangle under that
+  player's icon, apex up, a white outline around a fill of team ink, bobbing
+  ~7px; only the left strip draws it (the specced player's team is always
+  the left plate), read as `spectated: { side, slot } | null`. Each outer
+  slot searches its stretch of the strip at five triangle scales and the
+  bob's range (a fit can sit a center 25px off or take the wrong pitch), a
+  triangle scoring its least white outline edge (less the fill's white:
+  white text over team ink is white inside and out) capped by its fill's
+  team-ink share; a badge-less read needs a higher score (a TC/RM track's
+  dots and checkpoint marker over a pale backdrop fake one). The inner
+  slot's triangle hides behind the counter plate hanging under it, so a
+  badge-proven read with no triangle showing is the inner slot's (the
+  overhead map view hides badges and triangle alike). The builder maps the
+  slot through the read's orientation and slot→row permutation onto the
+  status samples (`ScannerMatchPlayerStatusSample.spectated`, a `teams`
+  seat, casts only), dropping a seat read once between two reads agreeing
+  on another; `spectatedSeatAt` / `killerSeat` place a kill on its player,
+  so the match card's timeline pins a cast's kills to the specced rows.
+  Emitted
   with the same `time` value so the two reads pair downstream; its fixtures
   live under `tests/fixtures/player-status/`. Within a side the strip keeps its
   own slot order (it can change every game), while the results scoreboard

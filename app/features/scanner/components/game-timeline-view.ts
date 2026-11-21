@@ -1,10 +1,16 @@
 /** Prop derivation for rendering a ScannerMatch with the shared <GameTimeline />. */
 
 import type { ComponentProps } from "react";
+import * as R from "remeda";
 import type { GameTimeline } from "~/components/GameTimeline";
-import type { PlayerStatusTimelineTeam } from "~/components/PlayerStatusTimeline";
+import type {
+	PlayerStatusTimelineKiller,
+	PlayerStatusTimelineTeam,
+} from "~/components/PlayerStatusTimeline";
 import {
+	killerSeat,
 	type ScannerMatch,
+	type ScannerMatchSeat,
 	swapObjectiveSampleSides,
 	swapPlayerStatusSampleSides,
 	victimSlot,
@@ -40,10 +46,10 @@ export function timelineOrigin(match: ScannerMatch): number {
 
 /**
  * The match's counter and icon-strip reads as <GameTimeline /> props: sides
- * in display order (the POV's team first), `t` shifted to `origin`. With the
- * POV seat known, its row carries the kill feed's kills, each pinned to its
- * victim's row by name. A cast has no seat: its feed follows the camera, so
- * the kills belong to no single row.
+ * in display order (the POV's team first), `t` shifted to `origin`. The kill
+ * feed's kills go on their killer's row (the POV seat's, or on a cast the
+ * row of whoever the camera was on at the kill), each pinned to its victim's
+ * row by name; a cast kill no read placed the camera for belongs to no row.
  */
 export function gameTimelineProps(
 	match: ScannerMatch,
@@ -75,16 +81,37 @@ export function gameTimelineProps(
 				),
 			}),
 		) as [PlayerStatusTimelineTeam, PlayerStatusTimelineTeam],
-		pov: match.pov
-			? {
-					side: 0,
-					slot: match.pov.index,
-					kills: (match.kills ?? []).map((kill) => ({
-						t: kill.t - origin,
-						name: kill.name,
-						victimSlot: victimSlot(kill.name, match.teams[second].players),
-					})),
-				}
-			: undefined,
+		killers: killersOf(match, origin, [first, second]),
 	};
+}
+
+function killersOf(
+	match: ScannerMatch,
+	origin: number,
+	order: readonly [0 | 1, 0 | 1],
+): PlayerStatusTimelineKiller[] {
+	const credited = (match.kills ?? []).flatMap((kill) => {
+		const seat = killerSeat(match, kill);
+		return seat ? [{ seat, kill }] : [];
+	});
+	const seatKey = (seat: ScannerMatchSeat) => `${seat.team}.${seat.index}`;
+	const seats = R.uniqueBy(
+		[...(match.pov ? [match.pov] : []), ...credited.map(({ seat }) => seat)],
+		seatKey,
+	);
+	return seats.map((seat) => ({
+		side: order.indexOf(seat.team) as 0 | 1,
+		slot: seat.index,
+		pov: match.pov !== null,
+		kills: credited
+			.filter((credit) => seatKey(credit.seat) === seatKey(seat))
+			.map(({ kill }) => ({
+				t: kill.t - origin,
+				name: kill.name,
+				victimSlot: victimSlot(
+					kill.name,
+					match.teams[seat.team === 0 ? 1 : 0].players,
+				),
+			})),
+	}));
 }

@@ -162,6 +162,7 @@ function testPlayerStatus(): ScannerMatchPlayerStatus {
 					[false, false, false, false],
 					[false, true, false, false],
 				],
+				spectated: { team: 0, index: 2 },
 			},
 		],
 	};
@@ -602,6 +603,10 @@ describe("deriveScoreboardData", () => {
 			[false, false, false, false],
 			[false, true, false, false],
 		]);
+		expect(straight!.playerStatus!.samples[0]!.spectated).toEqual({
+			team: 0,
+			index: 2,
+		});
 		expect(swapped!.playerStatus).toEqual(straight!.playerStatus);
 	});
 

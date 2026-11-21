@@ -2121,6 +2121,7 @@ function playerStatus(
 		cast = null as true | null,
 		/** per slot evidence, over the flags */
 		evidence = [] as { side: 0 | 1; slot: number; evidence: SlotEvidence }[],
+		spectated = undefined as PlayerStatusData["spectated"],
 	} = {},
 ): DetectedEvent {
 	const slots = dead.map((side, sideIndex) =>
@@ -2139,6 +2140,7 @@ function playerStatus(
 		cast,
 		teamHue: [null, null],
 		teamInk: [null, null],
+		...(spectated !== undefined ? { spectated } : null),
 	};
 	return { type: "PlayerStatus", t, scores: { read: 0.9 }, data };
 }
@@ -2253,6 +2255,81 @@ test("status reads inherit the nearest counter read's cast orientation", () => {
 		[true, false, false, false],
 	]);
 	assert.equal(built[0]!.match.cast, true);
+});
+
+test("a cast's spectated slot lands on its samples as a teams seat through the side swap", () => {
+	const specced = (t: number, slot: number) =>
+		playerStatus(t, { cast: true, spectated: { side: 0, slot } });
+	const built = buildScannerMatches([
+		minimap(0, { teamColors: [GREEN_INK, PURPLE_INK] }),
+		objective(60, { score: [80, 90], teamColor: [GREEN_INK, PURPLE_INK] }),
+		specced(60, 1),
+		specced(61, 1),
+		// a lone misread between two reads of the same seat
+		specced(62, 0),
+		specced(63, 1),
+		// the caster specs a purple player: purple's plate moves left
+		objective(120, { score: [90, 75], teamColor: [PURPLE_INK, GREEN_INK] }),
+		specced(120, 2),
+		minimap(180),
+	]);
+	assert.deepEqual(
+		built[0]!.match.playerStatus!.samples.map((sample) => sample.spectated),
+		[
+			null,
+			{ team: 0, index: 1 },
+			{ team: 0, index: 1 },
+			null,
+			{ team: 0, index: 1 },
+			{ team: 1, index: 2 },
+			null,
+		],
+	);
+});
+
+test.each([
+	{
+		why: "a seat read once between reads too far apart",
+		reads: [
+			[60, 1],
+			[66, 2],
+			[72, 1],
+		],
+		expected: [1, 2, 1],
+	},
+	{
+		why: "a seat read twice in a row",
+		reads: [
+			[60, 1],
+			[61, 2],
+			[62, 2],
+			[63, 1],
+		],
+		expected: [1, 2, 2, 1],
+	},
+])("a cast's camera switch stands: $why", ({ reads, expected }) => {
+	const built = buildScannerMatches([
+		minimap(0, { teamColors: [GREEN_INK, PURPLE_INK] }),
+		objective(60, { score: [80, 90], teamColor: [GREEN_INK, PURPLE_INK] }),
+		...reads.map(([t, slot]) =>
+			playerStatus(t!, { cast: true, spectated: { side: 0, slot: slot! } }),
+		),
+	]);
+	assert.deepEqual(
+		built[0]!.match
+			.playerStatus!.samples.filter((sample) => sample.t >= 60)
+			.map((sample) => sample.spectated?.index),
+		expected,
+	);
+});
+
+test("samples carry no spectated seat outside casts", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		playerStatus(120, { spectated: { side: 0, slot: 1 } }),
+		scoreboard(300),
+	]);
+	assert.equal("spectated" in built[0]!.match.playerStatus!.samples[0]!, false);
 });
 
 test("dead and alive runs shorter than a respawn or a spawn take the states around them", () => {

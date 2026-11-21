@@ -28,7 +28,7 @@ import {
 	PLAYER_STATUS_TAIL_SECONDS,
 	PlayerStatusTimeline,
 	type PlayerStatusTimelineKill,
-	type PlayerStatusTimelinePov,
+	type PlayerStatusTimelineKiller,
 	type PlayerStatusTimelineSample,
 	type PlayerStatusTimelineTeam,
 	statusSpans,
@@ -44,7 +44,7 @@ interface GameTimelineProps {
 	objectiveEvents?: readonly ObjectiveTimelineEvent[];
 	playerStatusSamples?: readonly PlayerStatusTimelineSample[];
 	teams: readonly [PlayerStatusTimelineTeam, PlayerStatusTimelineTeam];
-	pov?: PlayerStatusTimelinePov;
+	killers?: readonly PlayerStatusTimelineKiller[];
 }
 
 interface SeekProps {
@@ -68,7 +68,7 @@ export function GameTimeline({
 	objectiveEvents,
 	playerStatusSamples,
 	teams,
-	pov,
+	killers,
 	onSeek,
 	playhead,
 }: GameTimelineProps & SeekProps) {
@@ -77,7 +77,7 @@ export function GameTimeline({
 
 	const samples = (playerStatusSamples ?? []).toSorted((a, b) => a.t - b.t);
 	const objective = chartedObjective(objectiveEvents, samples);
-	const domain = timelineDomain(objective, samples, pov);
+	const domain = timelineDomain(objective, samples, killers);
 	if (!domain) return null;
 
 	const handlePointer = (event: React.PointerEvent) => {
@@ -119,7 +119,7 @@ export function GameTimeline({
 				objectiveEvents={objectiveEvents}
 				playerStatusSamples={playerStatusSamples}
 				teams={teams}
-				pov={pov}
+				killers={killers}
 			/>
 			<div className={styles.plotOverlay} ref={plotRef}>
 				{playhead !== undefined &&
@@ -137,7 +137,7 @@ export function GameTimeline({
 						objective={objective}
 						samples={samples}
 						teams={teams}
-						pov={samples.length > 0 ? pov : undefined}
+						killers={samples.length > 0 ? killers : undefined}
 					/>
 				) : null}
 			</div>
@@ -152,11 +152,11 @@ const TimelineCharts = memo(function TimelineCharts({
 	objectiveEvents,
 	playerStatusSamples,
 	teams,
-	pov,
+	killers,
 }: GameTimelineProps) {
 	const samples = (playerStatusSamples ?? []).toSorted((a, b) => a.t - b.t);
 	const objective = chartedObjective(objectiveEvents, samples);
-	const domain = timelineDomain(objective, samples, pov);
+	const domain = timelineDomain(objective, samples, killers);
 	if (!domain) return null;
 
 	return (
@@ -166,7 +166,7 @@ const TimelineCharts = memo(function TimelineCharts({
 					samples={samples}
 					teams={teams}
 					domain={domain}
-					pov={pov}
+					killers={killers}
 				/>
 			) : null}
 			{objective.length > 0 ? (
@@ -190,14 +190,14 @@ function ScrubReadout({
 	objective,
 	samples,
 	teams,
-	pov,
+	killers = [],
 }: {
 	scrub: ScrubPosition;
 	domain: [number, number];
 	objective: readonly ObjectiveTimelineEvent[];
 	samples: readonly PlayerStatusTimelineSample[];
 	teams: GameTimelineProps["teams"];
-	pov?: PlayerStatusTimelinePov;
+	killers?: readonly PlayerStatusTimelineKiller[];
 }) {
 	const { t } = useTranslation(["common"]);
 	const [min, max] = domain;
@@ -205,9 +205,11 @@ function ScrubReadout({
 	const objectiveNow = objectiveStateAt(objective, time);
 	const statusNow = playerStatusAt(samples, time);
 	const killRadius = (KILL_READOUT_RADIUS_PX / scrub.width) * (max - min);
-	const killsNow = (pov?.kills ?? []).filter(
-		(kill) => Math.abs(kill.t - time) <= killRadius,
-	);
+	const killsNow = (side: 0 | 1) =>
+		killers
+			.filter((killer) => killer.side === side)
+			.flatMap((killer) => killer.kills)
+			.filter((kill) => Math.abs(kill.t - time) <= killRadius);
 	const flipped = scrub.x > scrub.width * READOUT_FLIP_RATIO;
 
 	return (
@@ -291,7 +293,7 @@ function ScrubReadout({
 								/>
 							</>
 						) : null}
-						{pov?.side === side ? <KillsRow kills={killsNow} /> : null}
+						<KillsRow kills={killsNow(side)} />
 					</div>
 				))}
 			</div>
@@ -387,10 +389,12 @@ function ratioAt([min, max]: [number, number], time: number): number {
 function timelineDomain(
 	objective: readonly ObjectiveTimelineEvent[],
 	samples: readonly PlayerStatusTimelineSample[],
-	pov: PlayerStatusTimelinePov | undefined,
+	killers: readonly PlayerStatusTimelineKiller[] | undefined,
 ): [number, number] | null {
 	const killTimes =
-		samples.length > 0 ? (pov?.kills ?? []).map((kill) => kill.t) : [];
+		samples.length > 0
+			? (killers ?? []).flatMap((killer) => killer.kills.map((kill) => kill.t))
+			: [];
 	const start = Math.min(
 		objective[0]?.t ?? Number.POSITIVE_INFINITY,
 		samples[0]?.t ?? Number.POSITIVE_INFINITY,

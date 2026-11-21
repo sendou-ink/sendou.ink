@@ -23,9 +23,9 @@ import { deleteStaleVodMusicFiles } from "../capture/vod-music";
 import {
 	type ClipWindow,
 	MAX_CLIP_SECONDS,
-	povDeathTimes,
 	STREAK_MAX_GAP_S,
 	scoreWindows,
+	streakGame,
 	windowClosed,
 } from "../core/clips/scoring";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
@@ -663,13 +663,10 @@ function cutWindows(clipRing: ClipRingBuffer, nowT: number): void {
 			clipId: Promise.resolve(clip.id),
 		}));
 	for (const built of session.clipMatches) {
-		for (const window of scoreWindows(
-			built.match,
-			povDeathTimes(built.sources),
-			{
-				minKills: readSettings().clipMinKills,
-			},
-		)) {
+		const game = streakGame(built);
+		for (const window of scoreWindows(game, game.deaths, {
+			minKills: readSettings().clipMinKills,
+		})) {
 			if (!windowClosed(window, nowT)) continue;
 			const overlapping = [...cuts, ...saved].filter(
 				(cut) => window.start < cut.end && window.end > cut.start,

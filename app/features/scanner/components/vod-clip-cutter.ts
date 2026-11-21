@@ -17,7 +17,7 @@ import {
 	maxSecondsFor,
 	withDefaultCaps,
 } from "../core/clips/criteria";
-import { type ClipWindow, povDeathTimes } from "../core/clips/scoring";
+import { type ClipWindow, streakGame } from "../core/clips/scoring";
 import { buildScannerMatches } from "../core/match-builder";
 import { vodClipCriteriaPersisted } from "../scanner-persisted";
 import {
@@ -129,10 +129,10 @@ async function cut(
 	const criteria = readVodClipCriteria();
 	const qualifying = buildScannerMatches(events, undefined, { unbacked: true })
 		.flatMap((built) =>
-			criteriaWindows(
-				{ kills: built.match.kills, deaths: povDeathTimes(built.sources) },
-				criteria,
-			).map((window) => ({ window, built })),
+			criteriaWindows(streakGame(built), criteria).map((window) => ({
+				window,
+				built,
+			})),
 		)
 		.sort((a, b) => b.window.score - a.window.score);
 	const wanted = qualifying.slice(0, MAX_VOD_CLIPS);

@@ -136,6 +136,8 @@ interface ExpectedScoreboard {
 		dead?: [boolean[], boolean[]];
 		/** PlayerStatus only: white camera badges proved a casted spectator HUD */
 		cast?: true | null;
+		/** PlayerStatus only: the slot the spectator camera is on (strip seating, sides as drawn); null = none */
+		spectated?: { side: 0 | 1; slot: number } | null;
 		/** StripWeapons only: true weapon per slot, [left team, right team], null = splatted slot skipped */
 		weapons?: [(MainWeaponId | null)[], (MainWeaponId | null)[]];
 		weaponLabels?: [(string | null)[], (string | null)[]];

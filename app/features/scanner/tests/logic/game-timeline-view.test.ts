@@ -106,18 +106,59 @@ describe("gameTimelineProps", () => {
 				control: 1,
 			},
 		});
-		expect(props.pov?.side).toBe(0);
-		expect(props.pov?.slot).toBe(3);
+		expect(props.killers).toEqual([{ side: 0, slot: 3, pov: true, kills: [] }]);
 	});
 
-	test("has no POV row on footage without a seat", () => {
+	test("has no killer rows on footage without a seat or a camera read", () => {
 		const props = gameTimelineProps(
 			{ ...withKills([{ t: 150, time: 250, name: "Elis" }]), pov: null },
 			100,
 			LABELS,
 		);
 
-		expect(props.pov).toBeUndefined();
+		expect(props.killers).toEqual([]);
+	});
+
+	test("puts a cast's kills on the row the camera was on at each", () => {
+		const sample = (t: number, index: number) => ({
+			t,
+			time: null,
+			special: [
+				[false, false, false, false],
+				[false, false, false, false],
+			] as NonNullable<
+				ScannerMatch["playerStatus"]
+			>["samples"][number]["special"],
+			dead: [
+				[false, false, false, false],
+				[false, false, false, false],
+			] as NonNullable<ScannerMatch["playerStatus"]>["samples"][number]["dead"],
+			spectated: { team: 1 as const, index },
+		});
+		const props = gameTimelineProps(
+			{
+				...withKills([
+					{ t: 150, time: 250, name: "Elis" },
+					{ t: 170, time: 230, name: "Jrod_14" },
+				]),
+				pov: null,
+				cast: true,
+				playerStatus: { samples: [sample(149, 2), sample(169, 0)] },
+			},
+			100,
+			LABELS,
+		);
+
+		expect(
+			props.killers?.map((killer) => ({
+				side: killer.side,
+				slot: killer.slot,
+				victims: killer.kills.map((kill) => kill.victimSlot),
+			})),
+		).toEqual([
+			{ side: 1, slot: 2, victims: [1] },
+			{ side: 1, slot: 0, victims: [0] },
+		]);
 	});
 
 	test.each([
@@ -136,7 +177,7 @@ describe("gameTimelineProps", () => {
 			LABELS,
 		);
 
-		expect(props.pov?.kills[0]?.victimSlot).toBe(victimSlot);
+		expect(props.killers?.[0]?.kills[0]?.victimSlot).toBe(victimSlot);
 	});
 
 	test.each([
@@ -157,6 +198,6 @@ describe("gameTimelineProps", () => {
 			LABELS,
 		);
 
-		expect(props.pov?.kills[0]?.victimSlot).toBe(victimSlot);
+		expect(props.killers?.[0]?.kills[0]?.victimSlot).toBe(victimSlot);
 	});
 });

@@ -1,0 +1,10 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"cast": true,
+		"spectated": { "side": 0, "slot": 1 }
+	},
+	"options": {
+		"notes": "Casted stream (SWS26 REWOUND, Rush vs Let's Go Brother [HK7e3p94G3s]) at ~1096s, yellow team left. The strip fit took pitch ~84 where the badges sit ~97 apart, putting the second slot's center ~26px right of its triangle (under the B badge's left, low in its bob). Over yellow ink the triangle's white outline is tinted pale yellow (255,255,190). Statuses and time unlabeled."
+	}
+}

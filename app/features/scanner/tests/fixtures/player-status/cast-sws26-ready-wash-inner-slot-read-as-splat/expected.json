@@ -1,6 +1,7 @@
 {
 	"event": "PlayerStatus",
 	"data": {
+		"spectated": { "side": 0, "slot": 0 },
 		"time": 161,
 		"cast": true,
 		"special": [

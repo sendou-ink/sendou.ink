@@ -23,6 +23,10 @@ import { rankBy } from "./text";
 const VICTIM_NAME_MIN_SIMILARITY = 0.4;
 const VICTIM_NAME_MIN_MARGIN = 0.25;
 
+/** How far around a moment a status read places the spectator camera at it (seconds). */
+const SPECTATED_LOOKBACK_S = 3;
+const SPECTATED_LOOKAHEAD_S = 1;
+
 export interface ScannerMatchPlayer {
 	/** in-game name; null when unread (e.g. minimap POV enemy rows show none) */
 	name: string | null;
@@ -89,6 +93,12 @@ export interface ScannerMatchPlayerStatusSample {
 	special: [ScannerMatchPlayerFlags, ScannerMatchPlayerFlags];
 	/** splatted per player, same arrangement */
 	dead: [ScannerMatchPlayerFlags, ScannerMatchPlayerFlags];
+	/**
+	 * cast matches only: the player the spectator camera was on, `index` in
+	 * row order; null when the read showed none (the overhead map, hidden
+	 * badges, a minimap read)
+	 */
+	spectated?: ScannerMatchSeat | null;
 }
 
 /**
@@ -151,7 +161,48 @@ export interface ScannerMatch {
 	/** scoreboard-sourced matches know it (0); minimap-only matches don't */
 	winner: 0 | 1 | null;
 	/** the POV player's seat, when a scoreboard identified it */
-	pov: { team: 0 | 1; index: number } | null;
+	pov: ScannerMatchSeat | null;
+}
+
+/** A player's place in `teams`: the team, then the row. */
+export interface ScannerMatchSeat {
+	team: 0 | 1;
+	index: number;
+}
+
+/**
+ * Whose a kill is: the POV player's, or on a cast the player the camera was
+ * on at the kill (`spectatedSeatAt`); null when unknown.
+ */
+export function killerSeat(
+	match: Pick<ScannerMatch, "pov" | "cast" | "playerStatus">,
+	kill: Pick<ScannerMatchKill, "t">,
+): ScannerMatchSeat | null {
+	if (match.pov) return match.pov;
+	return match.cast ? spectatedSeatAt(match, kill.t) : null;
+}
+
+/**
+ * The player the spectator camera was on at `t` (seconds into the
+ * video/stream): the latest read placing it in the SPECTATED_LOOKBACK_S up to
+ * `t` (a feed row or splat shows a moment after it happened), else the first
+ * in the SPECTATED_LOOKAHEAD_S after; null when none did.
+ */
+function spectatedSeatAt(
+	match: Pick<ScannerMatch, "playerStatus">,
+	t: number,
+): ScannerMatchSeat | null {
+	let before: ScannerMatchSeat | null = null;
+	let after: ScannerMatchSeat | null = null;
+	for (const sample of match.playerStatus?.samples ?? []) {
+		if (!sample.spectated) continue;
+		if (sample.t <= t && sample.t >= t - SPECTATED_LOOKBACK_S) {
+			before = sample.spectated;
+		} else if (sample.t > t && sample.t <= t + SPECTATED_LOOKAHEAD_S) {
+			after ??= sample.spectated;
+		}
+	}
+	return before ?? after;
 }
 
 /** The counter read seen from the other side: per-team pairs exchanged, control flipped, track position mirrored. */
@@ -177,6 +228,14 @@ export function swapPlayerStatusSampleSides(
 		...sample,
 		special: [sample.special[1], sample.special[0]],
 		dead: [sample.dead[1], sample.dead[0]],
+		...(sample.spectated
+			? {
+					spectated: {
+						...sample.spectated,
+						team: sample.spectated.team === 0 ? 1 : 0,
+					},
+				}
+			: null),
 	};
 }
 

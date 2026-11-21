@@ -8,11 +8,16 @@ import {
 	clipCovers,
 	povDeathTimes,
 	scoreWindows,
+	streakGame,
 	windowClosed,
 } from "../../core/clips/scoring";
 import { DEATH_EVENT_TYPE } from "../../core/detectors/death/index";
 import { MINIMAP_EVENT_TYPE } from "../../core/detectors/minimap/index";
-import type { ScannerMatchKill } from "../../core/scanner-match";
+import type {
+	ScannerMatch,
+	ScannerMatchKill,
+	ScannerMatchPlayerStatusSample,
+} from "../../core/scanner-match";
 import { test } from "../node-test-compat";
 import { stubEvent } from "../stub-event";
 
@@ -152,5 +157,128 @@ test("a minimap read striking out the POV card is a POV death", () => {
 	assert.deepEqual(
 		windowsOf(kills(100, 105, 110, 115), povDeathTimes(events)),
 		[],
+	);
+});
+
+const seat = (team: 0 | 1, index: number) => ({ team, index });
+
+test("kills credited to two players are two streaks", () => {
+	const credited = {
+		kills: [100, 104, 108, 112, 116, 120, 124, 128].map((t, i) => ({
+			...kill(t),
+			player: seat(0, i < 4 ? 1 : 2),
+		})),
+	};
+	const windows = scoreWindows(credited, [], { minKills: 4 });
+	assert.deepEqual(stripped(windows), [
+		windowOf(95, 115, 4, 112),
+		windowOf(111, 131, 4, 128),
+	]);
+	assert.deepEqual(
+		windows.map((window) => window.player),
+		[seat(0, 1), seat(0, 2)],
+	);
+});
+
+test("a cast's camera leaving the player between two kills ends the streak", () => {
+	const camera = [
+		{ t: 101, seat: seat(0, 1) },
+		{ t: 110, seat: seat(1, 3) },
+		{ t: 112, seat: seat(0, 1) },
+	];
+	assert.deepEqual(
+		scoreWindows({ ...kills(100, 104, 108, 114, 118, 122), camera }, [], {
+			minKills: 3,
+		}).map((window) => window.killTimes),
+		[
+			[100, 104, 108],
+			[114, 118, 122],
+		],
+	);
+});
+
+test("a kill whose player is unknown joins the streak around it", () => {
+	const credited = {
+		kills: [
+			{ ...kill(100), player: seat(0, 1) },
+			{ ...kill(104), player: null },
+			{ ...kill(108), player: seat(0, 1) },
+			{ ...kill(112), player: seat(0, 1) },
+		],
+	};
+	assert.deepEqual(stripped(scoreWindows(credited, [], { minKills: 4 })), [
+		windowOf(95, 115, 4, 112),
+	]);
+});
+
+test("a cast's streak game credits kills to the camera's player and counts their splats", () => {
+	const sample = (
+		t: number,
+		spectated: ReturnType<typeof seat> | null,
+		deadSlot: number | null = null,
+	): ScannerMatchPlayerStatusSample => ({
+		t,
+		time: null,
+		special: [
+			[false, false, false, false],
+			[false, false, false, false],
+		],
+		dead: [
+			[0, 1, 2, 3].map((slot) => slot === deadSlot) as [
+				boolean,
+				boolean,
+				boolean,
+				boolean,
+			],
+			[false, false, false, false],
+		],
+		spectated,
+	});
+	const match = {
+		cast: true,
+		pov: null,
+		kills: [kill(100), kill(130)],
+		playerStatus: {
+			samples: [
+				sample(99, seat(0, 2)),
+				sample(110, seat(0, 2), 2),
+				sample(120, null),
+				sample(129, seat(0, 1)),
+			],
+		},
+	} as unknown as ScannerMatch;
+
+	const game = streakGame({ match, sources: [] });
+
+	assert.deepEqual(
+		game.kills?.map((credited) => credited.player),
+		[seat(0, 2), seat(0, 1)],
+	);
+	assert.deepEqual(game.deaths, [110]);
+	assert.deepEqual(
+		game.camera?.map((read) => read.t),
+		[99, 110, 129],
+	);
+});
+
+test("a kill whose player is unknown never bridges two players' streaks", () => {
+	const credited = {
+		kills: [
+			{ ...kill(100), player: seat(0, 1) },
+			{ ...kill(104), player: seat(0, 1) },
+			{ ...kill(108), player: null },
+			{ ...kill(112), player: seat(0, 2) },
+			{ ...kill(116), player: seat(0, 2) },
+		],
+	};
+	assert.deepEqual(
+		scoreWindows(credited, [], { minKills: 2 }).map((window) => ({
+			killTimes: window.killTimes,
+			player: window.player,
+		})),
+		[
+			{ killTimes: [100, 104, 108], player: seat(0, 1) },
+			{ killTimes: [112, 116], player: seat(0, 2) },
+		],
 	);
 });

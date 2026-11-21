@@ -13,6 +13,7 @@
  * an octoling's dome alike. The previous read's fit holds unless the best
  * beats it clearly. Camera badges only prove a broadcast (`cast`): a white
  * backdrop under a POV strip fakes them now and then, so they never place it.
+ * A cast's triangle under one left icon tells whose camera it is (`spectated`).
  *
  * State reads off the apex core alone, which the wash and the X cover whole:
  * saturated ink of any hue = alive; pale = special ready (the wash pulses from
@@ -59,6 +60,20 @@ import {
 	STATUS_READY_MAX_GREY,
 	STATUS_READY_MIN_PALE,
 	STATUS_REFERENCE_PITCH,
+	STATUS_SPECTATED_APEX_DY,
+	STATUS_SPECTATED_BAND,
+	STATUS_SPECTATED_BASE_DY,
+	STATUS_SPECTATED_HALF_BASE,
+	STATUS_SPECTATED_INK_MAX_HUE_DIST,
+	STATUS_SPECTATED_INK_MIN_SATURATION,
+	STATUS_SPECTATED_INK_MIN_VALUE,
+	STATUS_SPECTATED_MIN_SCORE,
+	STATUS_SPECTATED_SCALES,
+	STATUS_SPECTATED_SEARCH_DOWN,
+	STATUS_SPECTATED_SEARCH_UP,
+	STATUS_SPECTATED_UNPROVEN_MIN_SCORE,
+	STATUS_SPECTATED_WHITE_MAX_SPREAD,
+	STATUS_SPECTATED_WHITE_MIN_VALUE,
 	STATUS_STICKY_SCORE_RATIO,
 	STATUS_TEAM_HUE_MIN_SAMPLES,
 	STATUS_TEAM_HUE_REFINE_DIST,
@@ -95,6 +110,9 @@ const BADGE_ROWS = [
 ];
 
 const PREFIX_FIELDS = 5;
+
+/** The left strip's inner slot, whose spectated triangle the counter plate hides. */
+const PLATE_SLOT = 3;
 
 const PITCH_GEOMETRY: PitchGeometry[] = (() => {
 	const geometries: PitchGeometry[] = [];
@@ -143,6 +161,9 @@ const PITCH_GEOMETRY: PitchGeometry[] = (() => {
 	}
 	return geometries;
 })();
+
+/** The spectated triangle at each searched scale. */
+const TRIANGLE_GEOMETRY = STATUS_SPECTATED_SCALES.map(triangleGeometry);
 
 /** Hue of every 5-bit-per-channel color (at its cell's center), for the per-pixel team test. */
 const HUE_TABLE = (() => {
@@ -206,6 +227,13 @@ export interface PlayerStatusData {
 	teamHue: [number | null, number | null];
 	/** each team's ink color off the same pixels as its hue (per-channel median), `null` along with it */
 	teamInk: [InkRgb | null, InkRgb | null];
+	/**
+	 * the slot the spectator camera is on, off the triangle a cast draws under
+	 * its icon (strip seating, sides as read); null when none shows (POV
+	 * footage, the overhead map view, hidden badges). Absent on reads stored
+	 * before it was read
+	 */
+	spectated?: { side: 0 | 1; slot: number } | null;
 }
 
 /** One side's fitted strip: slot centers left-to-right at `pitch` from the inner icon. */
@@ -267,6 +295,7 @@ export function parsePlayerStatus(
 		sideFit.centers.map((cx) => readSlot(band, cx, sideFit.pitch)),
 	);
 	const cast = BADGE_ROWS.some((probes) => badgesVisible(frame, probes));
+	const spectated = readSpectated(frame, fit[0], band.teamHues[0], cast);
 
 	return {
 		event: {
@@ -290,11 +319,14 @@ export function parsePlayerStatus(
 				cast: cast ? true : null,
 				teamHue: [band.teamHues[0].hue, band.teamHues[1].hue],
 				teamInk: [band.teamHues[0].ink, band.teamHues[1].ink],
+				spectated:
+					spectated.slot === null ? null : { side: 0, slot: spectated.slot },
 			},
 			debug: {
 				pitches: fit.map((sideFit) => sideFit.pitch),
 				centers: fit.map((sideFit) => sideFit.centers),
 				apex: reads.flat().map((read) => read.fractions),
+				spectated: spectated.scores,
 			},
 		},
 		fit,
@@ -824,6 +856,238 @@ function countsMedian(counts: Uint32Array, total: number): number {
 		if (seen > total / 2) return value;
 	}
 	return counts.length - 1;
+}
+
+/**
+ * The left strip's slot the spectator camera is on, off the triangle under
+ * its icon: the outer three slots' best scoring one, when it reaches
+ * STATUS_SPECTATED_MIN_SCORE (the stricter
+ * STATUS_SPECTATED_UNPROVEN_MIN_SCORE where the badges did not prove a cast: a
+ * 1v1 lobby's empty right seats draw none, and a busy backdrop hides them now
+ * and then). The inner slot's triangle hides behind the counter plate hanging
+ * under it (white text on team ink, which only fakes one), so with no
+ * triangle showing while the badges prove the spectator HUD the camera is on
+ * the inner slot. Each slot searches its stretch of the
+ * strip (halfway to its neighbors) at every triangle scale and bob offset,
+ * coarse then fine around the best: a fit can sit a center off by 25px or
+ * take the wrong pitch, which moves the triangle as much. A triangle scores
+ * the outline's white share (its least white edge, less the fill's: white
+ * text over team ink is white inside and out) capped by the fill's team-ink
+ * share.
+ */
+function readSpectated(
+	frame: Image,
+	sideFit: StripSideFit,
+	team: TeamInkHue,
+	cast: boolean,
+): { slot: number | null; scores: number[] } {
+	const masks = spectatedMasks(frame, team.hue ?? team.bin);
+	const { centers, pitch } = sideFit;
+	const { x: bandX, w: bandW } = STATUS_SPECTATED_BAND;
+	const scores = centers.slice(0, PLATE_SLOT).map((cx, slot) => {
+		const from = Math.ceil(
+			slot === 0 ? cx - pitch / 2 : (centers[slot - 1]! + cx) / 2,
+		);
+		const to = Math.floor((cx + centers[slot + 1]!) / 2);
+		let best = { score: 0, x: cx, apex: 0, geometry: TRIANGLE_GEOMETRY[0]! };
+		for (const geometry of TRIANGLE_GEOMETRY) {
+			const xFrom = Math.max(from, bandX + geometry.reach);
+			const xTo = Math.min(to, bandX + bandW - 1 - geometry.reach);
+			for (let x = xFrom; x <= xTo; x += 2) {
+				for (
+					let apex = geometry.apex - STATUS_SPECTATED_SEARCH_UP;
+					apex <= geometry.apex + STATUS_SPECTATED_SEARCH_DOWN;
+					apex += 2
+				) {
+					const score = triangleScore(masks, geometry, x, apex, best.score);
+					if (score > best.score) best = { score, x, apex, geometry };
+				}
+			}
+		}
+		const coarse = best;
+		if (coarse.score === 0) return 0;
+		for (let x = coarse.x - 1; x <= coarse.x + 1; x++) {
+			for (let apex = coarse.apex - 1; apex <= coarse.apex + 1; apex++) {
+				const score = triangleScore(
+					masks,
+					coarse.geometry,
+					x,
+					apex,
+					best.score,
+				);
+				if (score > best.score) best = { ...coarse, score, x, apex };
+			}
+		}
+		return (
+			Math.round(best.score * 10 ** EVIDENCE_DECIMALS) / 10 ** EVIDENCE_DECIMALS
+		);
+	});
+	const bestSlot = scores.indexOf(Math.max(...scores));
+	const found = cast
+		? Decisions.atLeast(
+				"objective/player-status:STATUS_SPECTATED_MIN_SCORE",
+				scores[bestSlot]!,
+				STATUS_SPECTATED_MIN_SCORE,
+			)
+		: Decisions.atLeast(
+				"objective/player-status:STATUS_SPECTATED_UNPROVEN_MIN_SCORE",
+				scores[bestSlot]!,
+				STATUS_SPECTATED_UNPROVEN_MIN_SCORE,
+			);
+	if (found) {
+		return { slot: bestSlot, scores };
+	}
+	return { slot: cast ? PLATE_SLOT : null, scores };
+}
+
+interface TriangleGeometry {
+	/** the apex's row at rest (no bob) */
+	apex: number;
+	/** px either side of the center the segments reach */
+	reach: number;
+	/** row, x0, x1 per segment */
+	fill: Int16Array;
+	/** row, x0, x1, edge (left flank, right flank, base) per segment */
+	outline: Int16Array;
+	fillCount: number;
+	outlineCounts: number[];
+}
+
+/** Per-row prefix counts of the band's white and team-ink pixels (row stride `w + 1`). */
+interface SpectatedMasks {
+	white: Int32Array;
+	ink: Int32Array;
+}
+
+function spectatedMasks(frame: Image, teamHue: number): SpectatedMasks {
+	const { w, h } = STATUS_SPECTATED_BAND;
+	const crop = cropRoi(frame, STATUS_SPECTATED_BAND);
+	const { data, channels } = crop;
+	const white = new Int32Array((w + 1) * h);
+	const ink = new Int32Array((w + 1) * h);
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			const i = (y * w + x) * channels;
+			const red = data[i]!;
+			const green = data[i + 1]!;
+			const blue = data[i + 2]!;
+			const value = maxOf(red, green, blue);
+			const spread = value - minOf(red, green, blue);
+			const o = y * (w + 1) + x;
+			white[o + 1] =
+				white[o]! +
+				(value >= STATUS_SPECTATED_WHITE_MIN_VALUE &&
+				spread <= STATUS_SPECTATED_WHITE_MAX_SPREAD * value
+					? 1
+					: 0);
+			ink[o + 1] =
+				ink[o]! +
+				(value >= STATUS_SPECTATED_INK_MIN_VALUE &&
+				spread >= STATUS_SPECTATED_INK_MIN_SATURATION * value &&
+				hueDistance(
+					HUE_TABLE[((red >> 3) << 10) | ((green >> 3) << 5) | (blue >> 3)]!,
+					teamHue,
+				) <= STATUS_SPECTATED_INK_MAX_HUE_DIST
+					? 1
+					: 0);
+		}
+	}
+	return { white, ink };
+}
+
+/**
+ * One triangle hypothesis (a scale's geometry, center x, apex row) off its
+ * row segments' prefix counts; 0 when its fill's ink share cannot beat
+ * `toBeat`, which is all the score could reach.
+ */
+function triangleScore(
+	masks: SpectatedMasks,
+	geometry: TriangleGeometry,
+	cx: number,
+	apex: number,
+	toBeat: number,
+): number {
+	const stride = STATUS_SPECTATED_BAND.w + 1;
+	const origin =
+		(apex - STATUS_SPECTATED_BAND.y) * stride + cx - STATUS_SPECTATED_BAND.x;
+	const { white, ink } = masks;
+	const { fill, outline } = geometry;
+	let fillWhite = 0;
+	let fillInk = 0;
+	for (let i = 0; i < fill.length; i += 3) {
+		const row = origin + fill[i]! * stride;
+		const a = row + fill[i + 1]!;
+		const b = row + fill[i + 2]! + 1;
+		fillWhite += white[b]! - white[a]!;
+		fillInk += ink[b]! - ink[a]!;
+	}
+	const inkShare = fillInk / geometry.fillCount;
+	if (inkShare <= toBeat) return 0;
+	const outlineWhite = [0, 0, 0];
+	for (let i = 0; i < outline.length; i += 4) {
+		const row = origin + outline[i]! * stride;
+		outlineWhite[outline[i + 3]!]! +=
+			white[row + outline[i + 2]! + 1]! - white[row + outline[i + 1]!]!;
+	}
+	const outlineShare = Math.min(
+		...outlineWhite.map((count, edge) => count / geometry.outlineCounts[edge]!),
+	);
+	return Math.max(
+		0,
+		Math.min(outlineShare - fillWhite / geometry.fillCount, inkShare),
+	);
+}
+
+/**
+ * A triangle at one scale as row segments about its apex (row offsets from
+ * the apex row, x offsets from the center, inclusive): each flank's outline
+ * is the px within 1px (square to it) of the flank, the base's the rows
+ * within 1px of it, the fill what lies 3px or more inside.
+ */
+function triangleGeometry(scale: number): TriangleGeometry {
+	const height = (STATUS_SPECTATED_BASE_DY - STATUS_SPECTATED_APEX_DY) * scale;
+	const slope = (STATUS_SPECTATED_HALF_BASE * scale) / height;
+	// horizontal run of 1px measured square to a flank
+	const margin = Math.hypot(1, slope);
+	const fill: number[] = [];
+	const outline: number[] = [];
+	const outlineCounts = [0, 0, 0];
+	let fillCount = 0;
+	let reach = 0;
+	const add = (row: number, from: number, to: number, edge: number | null) => {
+		const x0 = Math.ceil(from);
+		const x1 = Math.floor(to);
+		if (x1 < x0) return;
+		reach = Math.max(reach, -x0, x1 + 1);
+		if (edge === null) {
+			fill.push(row, x0, x1);
+			fillCount += x1 - x0 + 1;
+		} else {
+			outline.push(row, x0, x1, edge);
+			outlineCounts[edge]! += x1 - x0 + 1;
+		}
+	};
+	for (let row = -2; row <= Math.ceil(height + 2); row++) {
+		const halfWidth = row * slope;
+		const belowBase = row - height;
+		if (Math.abs(belowBase) <= 1) {
+			add(row, -halfWidth - margin, halfWidth + margin, 2);
+		} else if (belowBase < -1) {
+			add(row, -halfWidth - margin, Math.min(-halfWidth + margin, 0), 0);
+			add(row, Math.max(halfWidth - margin, 1), halfWidth + margin, 1);
+			if (belowBase <= -3) {
+				add(row, -halfWidth + 3 * margin, halfWidth - 3 * margin, null);
+			}
+		}
+	}
+	return {
+		apex: Math.round(STATUS_ICON_CENTER_Y + STATUS_SPECTATED_APEX_DY * scale),
+		reach,
+		fill: Int16Array.from(fill),
+		outline: Int16Array.from(outline),
+		fillCount,
+		outlineCounts,
+	};
 }
 
 /** All four badge probes reading white = that casted spectator arrangement. */

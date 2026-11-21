@@ -17,8 +17,7 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import type { ClipCriteria } from "./clips/criteria";
-import type { ClipWindow } from "./clips/scoring";
-import type { ScannerMatch } from "./scanner-match";
+import type { ClipWindow, StreakGame } from "./clips/scoring";
 
 export const MONTAGE_MANIFEST_FILE = "tournament.json";
 export const DEFAULT_MONTAGE_CRITERIA: ClipCriteria = {
@@ -83,14 +82,13 @@ export interface MontageManifestVod {
 }
 
 /** A scanned game, as much of it as clip scoring needs. */
-export interface MontageGame {
-	kills: ScannerMatch["kills"];
+export interface MontageGame extends StreakGame {
 	mode: ModeShort | null;
 	stage: StageId | null;
-	/** the POV player's death times */
-	deaths: number[];
 	/** read off the POV player's scoreboard row; null when no scoreboard placed them */
 	povWeaponId: MainWeaponId | null;
+	/** both sides' rows in `teams` order, for crediting a cast's streak to its specced player */
+	teams: [MontageLineupPlayer[], MontageLineupPlayer[]];
 	/** the scoreboard's two sides, told apart by the POV seat; null without one */
 	lineups: {
 		pov: MontageLineupPlayer[];
@@ -110,8 +108,10 @@ export interface MontageCandidate {
 	window: ClipWindow;
 	mode: ModeShort | null;
 	stage: StageId | null;
-	/** the POV player's weapon off the game's scoreboard */
+	/** the streak's player's weapon: the POV player's off the game's scoreboard, a cast's specced one's off its rows */
 	weaponId: MainWeaponId | null;
+	/** a cast's specced player, as the scan read their name; null on POV footage or when unknown */
+	playerName: string | null;
 	/** seconds the clip lasts in the montage, dead time fast-forwarded */
 	duration: number;
 	/** the top teams the clip can play under (`candidateTeamIds`) */
@@ -127,6 +127,25 @@ export interface PlaybackSegment {
 	/** seconds into the source file */
 	to: number;
 	speed: number;
+}
+
+/**
+ * Who a candidate's streak is credited to: the POV player's weapon, or on a
+ * cast the specced player's name and weapon off the game's rows.
+ */
+export function candidatePlayer(
+	game: Pick<MontageGame, "povWeaponId" | "teams">,
+	window: Pick<ClipWindow, "player">,
+	vod: Pick<MontageManifestVod, "team">,
+): { weaponId: MainWeaponId | null; playerName: string | null } {
+	if (vod.team) return { weaponId: game.povWeaponId, playerName: null };
+	const player = window.player
+		? game.teams[window.player.team][window.player.index]
+		: undefined;
+	return {
+		weaponId: player?.weaponId ?? null,
+		playerName: player?.name ?? null,
+	};
 }
 
 /**
