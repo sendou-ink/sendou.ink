@@ -1,8 +1,10 @@
-import { describe, expect, test, vi } from "vitest";
+import { sub } from "date-fns";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import { wrappedAction } from "~/utils/Test";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { withUserId, wrappedAction } from "~/utils/Test";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { SCRIMS_CHANNEL } from "../scrims-constants";
 import type {
@@ -83,5 +85,71 @@ describe("Scrim posts: live scrims list", () => {
 		expect(ChatSystemMessage.send).toHaveBeenCalledWith({
 			channel: SCRIMS_CHANNEL,
 		});
+	});
+});
+
+describe("Scrim requests: accepting a 'looking now' request", () => {
+	const users = UserFactory.pool();
+	const postOwnerId = () => users.id(1);
+	const requesterId = () => users.id(2);
+	const otherTeamOwnerId = () => users.id(3);
+
+	const minutesAgo = (minutes: number) =>
+		dateToDatabaseTimestamp(sub(new Date(), { minutes }));
+
+	const acceptFirstRequest = async (scrimPostId: number) => {
+		const [request] = (await requestsForPost(scrimPostId)) ?? [];
+		await postAction(
+			{ _action: "ACCEPT_REQUEST", scrimPostRequestId: request!.id },
+			{ user: postOwnerId() },
+		);
+	};
+
+	beforeEach(async () => {
+		await users.create(3);
+	});
+
+	test("deletes the booked requester's own 'looking now' post", async () => {
+		const post = await ScrimPostFactory.create(
+			{
+				startsAt: minutesAgo(5),
+				users: [{ userId: postOwnerId(), isOwner: 1 }],
+			},
+			{ requests: [{ users: [{ userId: requesterId(), isOwner: 1 }] }] },
+		);
+		const requesterPost = await ScrimPostFactory.create({
+			startsAt: minutesAgo(5),
+			users: [{ userId: requesterId(), isOwner: 1 }],
+		});
+
+		await acceptFirstRequest(post.id);
+
+		const listedToOthers = await withUserId(otherTeamOwnerId(), () =>
+			ScrimPostRepository.findAllRelevant(),
+		);
+		expect(listedToOthers.map((listed) => listed.id)).not.toContain(
+			requesterPost.id,
+		);
+	});
+
+	test("withdraws the booked requester's requests to other 'looking now' posts", async () => {
+		const post = await ScrimPostFactory.create(
+			{
+				startsAt: minutesAgo(5),
+				users: [{ userId: postOwnerId(), isOwner: 1 }],
+			},
+			{ requests: [{ users: [{ userId: requesterId(), isOwner: 1 }] }] },
+		);
+		const otherPost = await ScrimPostFactory.create(
+			{
+				startsAt: minutesAgo(3),
+				users: [{ userId: otherTeamOwnerId(), isOwner: 1 }],
+			},
+			{ requests: [{ users: [{ userId: requesterId(), isOwner: 1 }] }] },
+		);
+
+		await acceptFirstRequest(post.id);
+
+		expect(await requestsForPost(otherPost.id)).toHaveLength(0);
 	});
 });

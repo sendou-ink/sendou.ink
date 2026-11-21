@@ -1,4 +1,4 @@
-import { addHours, sub } from "date-fns";
+import { addHours } from "date-fns";
 import { type Insertable, type NotNull, type SqlBool, sql } from "kysely";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
@@ -30,9 +30,12 @@ import type { Unwrapped } from "../../utils/types";
 import type { AssociationVisibility } from "../associations/associations-types";
 import * as Visibility from "../associations/core/Visibility";
 import * as Scrim from "./core/Scrim";
-import { SCRIM } from "./scrims-constants";
 import type { ScrimPost, ScrimPostUser } from "./scrims-types";
-import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
+import {
+	getPostRequestCensor,
+	listedPostsCutoff,
+	parseLutiDiv,
+} from "./scrims-utils";
 
 const CHAT_ROOM_LIFESPAN_HOURS = 24;
 
@@ -259,7 +262,6 @@ function findMany({
 	viewerId: number | null;
 	associationId: number | null;
 }) {
-	const min = sub(new Date(), { hours: SCRIM.LISTED_HOURS_AFTER_START });
 	const now = databaseTimestampNow();
 
 	return baseFindQuery
@@ -267,7 +269,7 @@ function findMany({
 			eb.not(isPublicNow({ entity: "ScrimPost", now })).as("isPrivate"),
 		)
 		.orderBy("startsAt", "asc")
-		.where("ScrimPost.startsAt", ">=", dateToDatabaseTimestamp(min))
+		.where("ScrimPost.startsAt", ">=", listedPostsCutoff())
 		.where((eb) => {
 			const visible = visibleTo({ entity: "ScrimPost", viewerId, now });
 			if (viewerId === null) {
@@ -683,7 +685,7 @@ export async function findAllAcceptedByUserIds({
 }
 
 /**
- * Pending (unaccepted, uncanceled, future) posts and requests involving the users that overlap
+ * Pending (unaccepted, uncanceled, still listed) posts and requests involving the users that overlap
  * [startTime, endTime], for auto-cleaning when a scrim is scheduled: posts come with member ids
  * for notifying, requests are deleted silently.
  */
@@ -707,11 +709,9 @@ export async function findPendingOverlapsForUsers({
 		return { posts: [], requestIds: [] };
 	}
 
-	const now = databaseTimestampNow();
-
 	const rows = await baseFindQuery
 		.where("ScrimPost.canceledAt", "is", null)
-		.where("ScrimPost.startsAt", ">=", now)
+		.where("ScrimPost.startsAt", ">=", listedPostsCutoff())
 		.where((eb) =>
 			eb.or([
 				eb.exists(

@@ -3,14 +3,12 @@
  * the admin manages it, the admin and starred members (`MANAGER`) share its invite link and each member lists
  * who can remove them.
  */
-import { sub } from "date-fns";
 import type { Kysely, Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
-import { SCRIM } from "~/features/scrims/scrims-constants";
+import { listedPostsCutoff } from "~/features/scrims/scrims-utils";
 import { isSupporter } from "~/modules/permissions/utils";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
 import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
@@ -329,9 +327,7 @@ async function countUpcomingContentLimitedToWith(
 	executor: Kysely<DB>,
 	associationId: number,
 ) {
-	const listedSince = dateToDatabaseTimestamp(
-		sub(new Date(), { hours: SCRIM.LISTED_HOURS_AFTER_START }),
-	);
+	const listedSince = listedPostsCutoff();
 
 	const { scrimPostCount, lobbyCount } = await executor
 		.selectFrom("ContentVisibility")

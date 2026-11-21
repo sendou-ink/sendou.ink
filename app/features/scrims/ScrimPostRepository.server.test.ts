@@ -11,6 +11,7 @@ import { DuplicateEntryError } from "~/utils/errors";
 import { withNoUser, withUserId } from "~/utils/Test";
 import type { AssociationVisibility } from "../associations/associations-types";
 import * as ScrimPostRepository from "./ScrimPostRepository.server";
+import { SCRIM } from "./scrims-constants";
 
 const users = UserFactory.pool();
 
@@ -227,6 +228,49 @@ describe("findPendingOverlapsForUsers", () => {
 			});
 
 		expect(requestIds).toHaveLength(0);
+	});
+
+	test("returns a post and request that already started but are still listed", async () => {
+		const startedAt = sub(new Date(), { minutes: 10 });
+		const { id: postId } = await ScrimPostFactory.create(
+			{
+				startsAt: dbTs(startedAt),
+				users: [{ userId: users.id(1), isOwner: 1 }],
+			},
+			{ requests: [{ users: [{ userId: users.id(2), isOwner: 1 }] }] },
+		);
+		const post = await ScrimPostRepository.findById(postId);
+
+		const { posts, requestIds } =
+			await ScrimPostRepository.findPendingOverlapsForUsers({
+				userIds: [users.id(1), users.id(2)],
+				startTime: dbTs(sub(startedAt, { hours: 1 })),
+				endTime: dbTs(add(startedAt, { hours: 1 })),
+				excludePostId: -1,
+			});
+
+		expect(posts.map((p) => p.id)).toEqual([postId]);
+		expect(requestIds).toEqual([post!.requests[0]!.id]);
+	});
+
+	test("does not return a post that is no longer listed", async () => {
+		const startedAt = sub(new Date(), {
+			hours: SCRIM.LISTED_HOURS_AFTER_START,
+			minutes: 10,
+		});
+		await ScrimPostFactory.create({
+			startsAt: dbTs(startedAt),
+			users: [{ userId: users.id(1), isOwner: 1 }],
+		});
+
+		const { posts } = await ScrimPostRepository.findPendingOverlapsForUsers({
+			userIds: [users.id(1)],
+			startTime: dbTs(sub(startedAt, { hours: 1 })),
+			endTime: dbTs(add(startedAt, { hours: 1 })),
+			excludePostId: -1,
+		});
+
+		expect(posts).toHaveLength(0);
 	});
 });
 

@@ -1,4 +1,4 @@
-import { differenceInMinutes } from "date-fns";
+import { differenceInMinutes, sub } from "date-fns";
 import * as R from "remeda";
 import { AVAILABILITY } from "~/features/availability/availability-constants";
 import type { TimeRange } from "~/features/availability/availability-types";
@@ -7,8 +7,15 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import * as Scrim from "./core/Scrim";
-import { LUTI_DIVS } from "./scrims-constants";
+import { LUTI_DIVS, SCRIM } from "./scrims-constants";
 import type { LutiDiv, ScrimPost } from "./scrims-types";
+
+/** Database timestamp of the earliest start a post can have and still be listed. */
+export function listedPostsCutoff() {
+	return dateToDatabaseTimestamp(
+		sub(new Date(), { hours: SCRIM.LISTED_HOURS_AFTER_START }),
+	);
+}
 
 export const getPostRequestCensor =
 	(userId: number) =>
