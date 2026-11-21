@@ -17,7 +17,6 @@ import type { ScannerMatch } from "./scanner-match";
 import { xBattleCards } from "./x-battle";
 
 export const SESSION_GAP_MS = 2 * 60 * 60 * 1000;
-/** @internal */
 export const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 export const MAX_SESSIONS = 20;
 /**
@@ -29,7 +28,7 @@ export const MAX_SESSIONS = 20;
 export const MAX_STORED_EVENTS = 50_000;
 /**
  * Until then a session keeps its raw reads: debugging a misread and rebuilding
- * after a match builder fix both need them, and frames are kept as long.
+ * after a match builder fix both need them, and their frames go with them.
  */
 export const SESSION_COMPACT_AFTER_MS = 72 * 60 * 60 * 1000;
 

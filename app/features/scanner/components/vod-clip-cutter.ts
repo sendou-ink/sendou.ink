@@ -23,6 +23,7 @@ import { vodClipCriteriaPersisted } from "../scanner-persisted";
 import {
 	deleteVodClips,
 	listClips,
+	MAX_HISTORY_CLIPS,
 	type ScannerClip,
 	saveClip,
 } from "../store/clips";
@@ -32,7 +33,7 @@ import type { ScanEvent } from "./session-data";
 import { holdVisitLock, isThisVisitsVodClip, VISIT_ID } from "./visit";
 
 /** A file's clips: the best windows over the whole scan, as many as fit history's cap. */
-export const MAX_VOD_CLIPS = 20;
+export const MAX_VOD_CLIPS = MAX_HISTORY_CLIPS;
 
 export type VodClipsWork =
 	| { state: "cutting"; done: number; total: number }

@@ -5,13 +5,16 @@
  * the tournament/match. The unit of accounting is one ScannerMatch
  * (core/match-builder.ts) — every live source event's IndexedDB record tracks
  * its outcome (the `send` status the match cards display) — while
- * the unit of transport is a request of up to `MAX_MATCHES_PER_REQUEST`.
+ * the unit of transport is a request of up to `MAX_INGEST_MATCHES_PER_REQUEST`.
  * Resends are safe: sendou.ink dedupes by content hash, merges partials, and
  * scoreboards are first-ingest-wins.
  */
 
 import * as R from "remeda";
-import type { IngestResponse } from "~/features/scanner-ingest/scanner-ingest-schemas";
+import {
+	type IngestResponse,
+	MAX_INGEST_MATCHES_PER_REQUEST,
+} from "~/features/scanner-ingest/scanner-ingest-schemas";
 import type { DetectedEvent } from "../core/events";
 import { isScoreboardEvent } from "../core/events";
 import type { BuiltMatch } from "../core/match-builder";
@@ -21,9 +24,6 @@ import type { SendStatus } from "../store/events";
 import type { ScanEvent } from "./session-data";
 
 const INGEST_URL = "/ingest";
-
-/** /ingest accepts at most 50 matches per request (mirrors the server cap) */
-const MAX_MATCHES_PER_REQUEST = 50;
 
 /**
  * Retry delays after each send in a row that didn't land: a live send usually
@@ -80,7 +80,7 @@ export async function sendMatches({
 	const selected = ingestableBuilt(matches).filter(include);
 
 	const result: SendResult = { sentMatches: 0, failedMatches: 0 };
-	for (const request of R.chunk(selected, MAX_MATCHES_PER_REQUEST)) {
+	for (const request of R.chunk(selected, MAX_INGEST_MATCHES_PER_REQUEST)) {
 		await writeSend(request, { state: "sending", at: Date.now() });
 		onStatus();
 		try {

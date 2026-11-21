@@ -1,14 +1,14 @@
 import * as v from "valibot";
 import { scannerMatchSchema } from "~/features/scanner/scanner-schemas";
 
-const MAX_MATCHES_PER_REQUEST = 50;
+export const MAX_INGEST_MATCHES_PER_REQUEST = 50;
 
 /** The ScannerMatch shape comes from ~/features/scanner/scanner-schemas; this only adds the ingest envelope. The POV user is always the session user, never client-supplied. */
 export const ingestBodySchema = v.object({
 	matches: v.pipe(
 		v.array(scannerMatchSchema),
 		v.minLength(1),
-		v.maxLength(MAX_MATCHES_PER_REQUEST),
+		v.maxLength(MAX_INGEST_MATCHES_PER_REQUEST),
 	),
 });
 

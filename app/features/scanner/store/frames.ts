@@ -5,6 +5,7 @@
  * dated by its event's detection, a VoD's by the scan's save. A dropped
  * frame's event stays, marked frameless.
  */
+import { SESSION_COMPACT_AFTER_MS } from "../core/sessions";
 import {
 	EVENTS_STORE,
 	FRAMES_STORE,
@@ -17,7 +18,8 @@ import type { StoredEvent } from "./events";
 import type { StoredVodEvent, VodSummary } from "./vods";
 
 export const MAX_FRAME_BYTES = 500 * 1024 * 1024;
-export const FRAME_MAX_AGE_MS = 72 * 60 * 60 * 1000;
+/** Frames go when their session is compacted. */
+export const FRAME_MAX_AGE_MS = SESSION_COMPACT_AFTER_MS;
 
 const FRAME_STORES = [
 	EVENTS_STORE,

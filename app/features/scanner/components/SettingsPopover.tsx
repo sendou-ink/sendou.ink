@@ -4,6 +4,7 @@
  * (enabling debug mode, saving the live frame, the montage link in development). The source lives on the landing's Live card, the one place
  * it must be right.
  */
+import { millisecondsInDay } from "date-fns/constants";
 import { Bug, Camera, Settings } from "lucide-react";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -15,7 +16,7 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { SCANNER_PAGE } from "~/utils/urls";
-import { MAX_SESSIONS } from "../core/sessions";
+import { MAX_SESSIONS, SESSION_MAX_AGE_MS } from "../core/sessions";
 import { scannerSearchParams } from "../scanner-search-params";
 import { LIVE_CLIPS_MAX_BYTES, MAX_HISTORY_CLIPS } from "../store/clips";
 import { FRAME_MAX_AGE_MS, MAX_FRAME_BYTES } from "../store/frames";
@@ -145,10 +146,11 @@ export function SettingsPopover({
 					{LIVE_CLIPS_MAX_BYTES / 1_000_000_000} GB: the lowest-scoring go
 					first.
 					<br />
-					Sessions: last 30 days or {MAX_SESSIONS} sessions.
+					Sessions: last {SESSION_MAX_AGE_MS / millisecondsInDay} days or{" "}
+					{MAX_SESSIONS} sessions.
 					<br />
-					Game data frames: last {FRAME_MAX_AGE_MS / (24 * 60 * 60 * 1000)}{" "}
-					days, up to {MAX_FRAME_BYTES / (1024 * 1024)} MB.
+					Game data frames: last {FRAME_MAX_AGE_MS / millisecondsInDay} days, up
+					to {MAX_FRAME_BYTES / (1024 * 1024)} MB.
 				</p>
 				{!debug || showSaveFrame || showDevLinks ? (
 					<section className={styles.section}>

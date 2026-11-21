@@ -1,4 +1,5 @@
 /** A past live session: date, range and numbers over the shared SessionView, with Delete session. */
+import { millisecondsInDay } from "date-fns/constants";
 import { Trash2 } from "lucide-react";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -8,6 +9,7 @@ import {
 	useSearchParam,
 	useSearchParamsTyped,
 } from "~/modules/search-params/hooks";
+import { SESSION_MAX_AGE_MS } from "../core/sessions";
 import { scannerSearchParams } from "../scanner-search-params";
 import { deleteCompactedSessions } from "../store/compacted-matches";
 import { deleteEvents, loadEventFrame } from "../store/events";
@@ -33,7 +35,10 @@ export function PastSessionView() {
 	const session = id === null ? null : findSession(feed, id);
 	if (!session) {
 		return feed.loaded ? (
-			<NotFound>This session is gone — sessions are kept for 30 days.</NotFound>
+			<NotFound>
+				This session is gone — sessions are kept for{" "}
+				{SESSION_MAX_AGE_MS / millisecondsInDay} days.
+			</NotFound>
 		) : null;
 	}
 
