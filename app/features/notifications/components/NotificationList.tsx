@@ -1,4 +1,5 @@
 import { formatDistance } from "date-fns";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Image } from "~/components/Image";
@@ -13,11 +14,31 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
 import styles from "./NotificationList.module.css";
 
-export function NotificationsList({ children }: { children: React.ReactNode }) {
-	return <div>{children}</div>;
+export function NotificationsList({
+	notifications,
+	unseenIds,
+}: {
+	notifications: LoaderNotification[];
+	unseenIds: Set<number>;
+}) {
+	return (
+		<div>
+			{notifications.map((notification, i) => (
+				<React.Fragment key={notification.id}>
+					<NotificationItem
+						notification={{
+							...notification,
+							seen: Number(!unseenIds.has(notification.id)),
+						}}
+					/>
+					{i !== notifications.length - 1 ? <NotificationItemDivider /> : null}
+				</React.Fragment>
+			))}
+		</div>
+	);
 }
 
-export function NotificationItem({
+function NotificationItem({
 	notification,
 }: {
 	notification: LoaderNotification;
@@ -58,7 +79,7 @@ export function NotificationItem({
 	);
 }
 
-export function NotificationItemDivider() {
+function NotificationItemDivider() {
 	return <hr className={styles.itemDivider} />;
 }
 

@@ -1,6 +1,6 @@
 import { getUser } from "~/features/auth/core/user.server";
 import * as NotificationRepository from "../NotificationRepository.server";
-import { NOTIFICATIONS } from "../notifications-contants";
+import { NOTIFICATIONS } from "../notifications-constants";
 
 /** The bell popover's notification peek, fetched by `NotificationsProvider` whenever an event says the user's notifications changed. */
 export const loader = async () => {

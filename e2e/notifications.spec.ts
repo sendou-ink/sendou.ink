@@ -1,5 +1,5 @@
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
+import { NOTIFICATIONS } from "~/features/notifications/notifications-constants";
 import { expect, impersonate, navigate, test } from "./helpers/playwright";
 import { NotificationPopover } from "./pages/layout/notification-popover";
 

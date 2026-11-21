@@ -3,7 +3,7 @@ import * as NotificationFactory from "~/db/seed/factories/NotificationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { withUserId } from "~/utils/Test";
 import * as NotificationRepository from "./NotificationRepository.server";
-import { NOTIFICATIONS } from "./notifications-contants";
+import { NOTIFICATIONS } from "./notifications-constants";
 
 const users = UserFactory.pool();
 

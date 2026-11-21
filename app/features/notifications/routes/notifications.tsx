@@ -5,11 +5,7 @@ import { Link, type MetaFunction, useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
 import { metaTags } from "../../../utils/remix";
 import { SETTINGS_PAGE } from "../../../utils/urls";
-import {
-	NotificationItem,
-	NotificationItemDivider,
-	NotificationsList,
-} from "../components/NotificationList";
+import { NotificationsList } from "../components/NotificationList";
 import { loader } from "../loaders/notifications.server";
 import {
 	useMarkNotificationsAsSeen,
@@ -46,26 +42,12 @@ export default function NotificationsPage() {
 				</Link>
 			</div>
 			{data.notifications.length === 0 ? (
-				<div className="layout__notifications__no-notifications">
-					{t("common:notifications.empty")}
-				</div>
+				<div>{t("common:notifications.empty")}</div>
 			) : (
-				<NotificationsList>
-					{data.notifications.map((notification, i) => (
-						<React.Fragment key={notification.id}>
-							<NotificationItem
-								key={notification.id}
-								notification={{
-									...notification,
-									seen: Number(!unseenIds.has(notification.id)),
-								}}
-							/>
-							{i !== data.notifications.length - 1 ? (
-								<NotificationItemDivider />
-							) : null}
-						</React.Fragment>
-					))}
-				</NotificationsList>
+				<NotificationsList
+					notifications={data.notifications}
+					unseenIds={unseenIds}
+				/>
 			)}
 			<div className="text-xs text-lighter mt-6">
 				{t("common:notifications.fullList.explanation")}

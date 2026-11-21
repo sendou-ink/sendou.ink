@@ -4,16 +4,12 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { SendouPopover } from "~/components/elements/Popover";
-import {
-	NotificationItem,
-	NotificationItemDivider,
-	NotificationsList,
-} from "~/features/notifications/components/NotificationList";
+import { NotificationsList } from "~/features/notifications/components/NotificationList";
 import {
 	type NotificationsData,
 	useNotificationsData,
 } from "~/features/notifications/NotificationsProvider";
-import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
+import { NOTIFICATIONS } from "~/features/notifications/notifications-constants";
 import { NOTIFICATIONS_URL } from "~/utils/urls";
 import {
 	useMarkNotificationsAsSeen,
@@ -113,22 +109,10 @@ export function NotificationContent({
 					{t("common:notifications.empty")}
 				</div>
 			) : (
-				<NotificationsList>
-					{notifications.map((notification, i) => (
-						<React.Fragment key={notification.id}>
-							<NotificationItem
-								key={notification.id}
-								notification={{
-									...notification,
-									seen: Number(!stickyUnseenIds.has(notification.id)),
-								}}
-							/>
-							{i !== notifications.length - 1 ? (
-								<NotificationItemDivider />
-							) : null}
-						</React.Fragment>
-					))}
-				</NotificationsList>
+				<NotificationsList
+					notifications={notifications}
+					unseenIds={stickyUnseenIds}
+				/>
 			)}
 			{notifications?.length === NOTIFICATIONS.PEEK_COUNT ? (
 				<NotificationsFooter />

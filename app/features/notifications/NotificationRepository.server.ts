@@ -6,7 +6,7 @@ import type { TablesInsertable } from "~/db/tables";
 import type { NotificationSubscription } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
-import { NOTIFICATIONS } from "./notifications-contants";
+import { NOTIFICATIONS } from "./notifications-constants";
 import type { Notification } from "./notifications-types";
 import { notificationMeta } from "./notifications-utils";
 
