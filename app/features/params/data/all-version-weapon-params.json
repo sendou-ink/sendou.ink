@@ -1,7 +1,7 @@
 {
 	"metadata": {
-		"generatedAt": "2026-08-21T04:38:57.937Z",
-		"latestVersion": "11.3.0",
+		"generatedAt": "2026-11-21T14:48:40.477Z",
+		"latestVersion": "12.0.0",
 		"versions": [
 			"0.9.9",
 			"1.0.0",
@@ -34,7 +34,8 @@
 			"11.0.1",
 			"11.1.0",
 			"11.2.0",
-			"11.3.0"
+			"11.3.0",
+			"12.0.0"
 		]
 	},
 	"weapons": {
@@ -54,8 +55,10 @@
 			"DamageParam": {
 				"ReduceEndFrame": 22,
 				"ReduceStartFrame": 6,
-				"ValueMax": 380,
-				"ValueMin": 190
+				"ValueMax": 400,
+				"ValueMin": 200,
+				"ValueMax@11.3.0": 380,
+				"ValueMin@11.3.0": 190
 			},
 			"MainEffectiveRangeUpParam": {},
 			"MainWeaponSetting": {
@@ -110,7 +113,7 @@
 				"FreeGravityType": "value_0_008"
 			},
 			"WeaponParam": {
-				"InkConsume": 0.008,
+				"InkConsume": 0.0084,
 				"InkRecoverStop": 15,
 				"Jump_DegBiasDecreaseStartFrame": 25,
 				"Jump_DegBiasEndFrame": 70,
@@ -126,6 +129,7 @@
 				"Stand_DegBiasMax": 0.4,
 				"Stand_DegBiasMin": 0.04,
 				"Stand_DegSwerve": 11.66,
+				"InkConsume@11.3.0": 0.008,
 				"Jump_DegSwerve@9.2.0": 18,
 				"Stand_DegSwerve@9.2.0": 12
 			},
@@ -239,8 +243,10 @@
 			"DamageParam": {
 				"ReduceEndFrame": 20,
 				"ReduceStartFrame": 4,
-				"ValueMax": 280,
-				"ValueMin": 140
+				"ValueMax": 290,
+				"ValueMin": 145,
+				"ValueMax@11.3.0": 280,
+				"ValueMin@11.3.0": 140
 			},
 			"MainEffectiveRangeUpParam": {},
 			"MainWeaponSetting": {
@@ -298,7 +304,7 @@
 				"FreeGravityType": "value_0_008"
 			},
 			"WeaponParam": {
-				"InkConsume": 0.008,
+				"InkConsume": 0.0084,
 				"Jump_DegBiasDecreaseStartFrame": 25,
 				"Jump_DegBiasEndFrame": 70,
 				"Jump_DegBiasMax": 0.4,
@@ -311,7 +317,8 @@
 				"Stand_DegBiasDecrease": 0.005,
 				"Stand_DegBiasKf": 0.01,
 				"Stand_DegBiasMin": 0.01,
-				"Stand_DegSwerve": 0
+				"Stand_DegSwerve": 0,
+				"InkConsume@11.3.0": 0.008
 			},
 			"spl__SpawnBulletAdditionMovePlayerParam": {
 				"ZRate": 2
@@ -545,8 +552,10 @@
 			"SplashPaintParam": {
 				"DepthMaxDropHeight": 3,
 				"DepthMinDropHeight": 10,
-				"WidthHalf": 1.495,
-				"WidthHalfNearest": 2.16775
+				"WidthHalf": 1.37,
+				"WidthHalfNearest": 1.99,
+				"WidthHalf@11.3.0": 1.495,
+				"WidthHalfNearest@11.3.0": 2.16775
 			},
 			"SplashSpawnParam": {
 				"ForceSpawnNearestAddNumArray": [2],
@@ -924,7 +933,7 @@
 				"FreeGravityType": "value_0_008"
 			},
 			"WeaponParam": {
-				"InkConsume": 0.016,
+				"InkConsume": 0.015,
 				"Jump_DegBiasDecreaseStartFrame": 25,
 				"Jump_DegBiasEndFrame": 70,
 				"Jump_DegBiasMax": 0.4,
@@ -938,6 +947,7 @@
 				"Stand_DegBiasKf": 0.015,
 				"Stand_DegBiasMin": 0.02,
 				"Stand_DegSwerve": 2.5,
+				"InkConsume@11.3.0": 0.016,
 				"Stand_DegSwerve@2.0.0": 3
 			},
 			"spl__SpawnBulletAdditionMovePlayerParam": {
@@ -1243,7 +1253,8 @@
 				"Mid@4.0.0": 0.5
 			},
 			"spl__SpawnBulletAdditionMovePlayerParam": {
-				"ZRate": 2
+				"ZRate": 1,
+				"ZRate@11.3.0": 2
 			}
 		},
 		"210": {
@@ -1413,7 +1424,8 @@
 				"Mid": 0.5
 			},
 			"spl__SpawnBulletAdditionMovePlayerParam": {
-				"ZRate": 2
+				"ZRate": 1,
+				"ZRate@11.3.0": 2
 			}
 		},
 		"220": {
@@ -1603,7 +1615,8 @@
 			},
 			"spl__PlayerGearSkillParam_MainEffectiveRangeUp": {},
 			"spl__SpawnBulletAdditionMovePlayerParam": {
-				"ZRate": 2
+				"ZRate": 1,
+				"ZRate@11.3.0": 2
 			}
 		},
 		"230": {
@@ -1786,7 +1799,8 @@
 				"Mid": 0.5
 			},
 			"spl__SpawnBulletAdditionMovePlayerParam": {
-				"ZRate": 2
+				"ZRate": 1,
+				"ZRate@11.3.0": 2
 			}
 		},
 		"240": {
@@ -1962,7 +1976,8 @@
 				"Mid": 0.5
 			},
 			"spl__SpawnBulletAdditionMovePlayerParam": {
-				"ZRate": 2
+				"ZRate": 1,
+				"ZRate@11.3.0": 2
 			}
 		},
 		"250": {
@@ -2137,7 +2152,8 @@
 				"Mid": 0.5
 			},
 			"spl__SpawnBulletAdditionMovePlayerParam": {
-				"ZRate": 2
+				"ZRate": 1,
+				"ZRate@11.3.0": 2
 			}
 		},
 		"260": {
@@ -2413,7 +2429,8 @@
 				"Mid@5.0.0": 0.5
 			},
 			"spl__SpawnBulletAdditionMovePlayerParam": {
-				"ZRate": 2
+				"ZRate": 1,
+				"ZRate@11.3.0": 2
 			}
 		},
 		"300": {
@@ -5311,10 +5328,11 @@
 				},
 				"InkConsume": 0.21,
 				"InkConsumeRateDepletion": 0.5,
-				"InkRecoverStop": 55,
+				"InkRecoverStop": 65,
 				"SwingFrame": 45,
 				"SwingMoveSpeed": 0.024,
 				"InkConsume@10.1.0": 0.18,
+				"InkRecoverStop@11.3.0": 55,
 				"InkRecoverStop@4.0.0": 65
 			},
 			"WideSwingUnitGroupParam": {
@@ -17461,7 +17479,7 @@
 			"WeaponParam": {
 				"FrameOffsetMaxDegree": 0,
 				"FrameOffsetMaxMoveLength": 0,
-				"InkConsume": 0.092,
+				"InkConsume": 0.086,
 				"InkRecoverStop": 42,
 				"MoveLmtFrame": 38,
 				"MoveSpeed": 0.07,
@@ -17471,6 +17489,7 @@
 					"Frame": 12
 				},
 				"SwingLiftFrame": 12,
+				"InkConsume@11.3.0": 0.092,
 				"InkConsume@2.0.0": 0.084,
 				"MoveLmtFrame@3.1.0": 33,
 				"RepeatFrame@3.1.0": 33
@@ -20169,12 +20188,13 @@
 				"InkRecoverStop": 70,
 				"MoveLmtFrame": 55,
 				"MoveSpeed": 0.045,
-				"PostDelayFrame": 25,
+				"PostDelayFrame": 22,
 				"RepeatFrame": 55,
 				"ShotGuide": {
 					"Frame": 18
 				},
-				"SwingLiftFrame": 16
+				"SwingLiftFrame": 16,
+				"PostDelayFrame@11.3.0": 25
 			},
 			"spl__SpawnBulletAdditionMovePlayerParam": {
 				"GuideYMinusZero": true,
@@ -24015,9 +24035,12 @@
 					"SpawnSpeedMin": 1.45
 				},
 				"PaintParam": {
-					"WidthHalfMax": 2.8,
-					"WidthHalfMid": 2.8,
-					"WidthHalfMin": 2.8
+					"WidthHalfMax": 3,
+					"WidthHalfMid": 2.5,
+					"WidthHalfMin": 2.5,
+					"WidthHalfMax@11.3.0": 2.8,
+					"WidthHalfMid@11.3.0": 2.8,
+					"WidthHalfMin@11.3.0": 2.8
 				},
 				"SplashPaintParam": {
 					"DepthScaleMax": 1.28,
@@ -25855,19 +25878,6 @@
 					"WeakSwingShotSlashFrame": 9
 				}
 			}
-		},
-		"40000": {
-			"CollisionParam": {},
-			"MoveParam": {
-				"GoStraightStateEndMaxSpeed": 1.4495,
-				"GoStraightToBrakeStateFrame": 4,
-				"SpawnSpeed": 2.2
-			},
-			"WeaponParam": {
-				"ShotGuideFrame": 8
-			},
-			"spl__PlayerGearSkillParam_MainWeaponSetting": {},
-			"spl__SpawnBulletAdditionMovePlayerParam": {}
 		}
 	},
 	"specialPoints": {
@@ -26103,11 +26113,15 @@
 			]
 		},
 		"72": {
-			"current": 180,
+			"current": 190,
 			"history": [
 				{
 					"version": "11.2.0",
 					"value": 190
+				},
+				{
+					"version": "11.3.0",
+					"value": 180
 				}
 			]
 		},
@@ -26199,11 +26213,15 @@
 			"history": []
 		},
 		"210": {
-			"current": 190,
+			"current": 200,
 			"history": [
 				{
 					"version": "11.0.1",
 					"value": 180
+				},
+				{
+					"version": "11.3.0",
+					"value": 190
 				}
 			]
 		},
@@ -26783,8 +26801,13 @@
 			]
 		},
 		"3012": {
-			"current": 180,
-			"history": []
+			"current": 190,
+			"history": [
+				{
+					"version": "11.3.0",
+					"value": 180
+				}
+			]
 		},
 		"3020": {
 			"current": 210,
@@ -27131,11 +27154,15 @@
 			"history": []
 		},
 		"6012": {
-			"current": 180,
+			"current": 170,
 			"history": [
 				{
 					"version": "10.0.0",
 					"value": 190
+				},
+				{
+					"version": "11.3.0",
+					"value": 180
 				}
 			]
 		},

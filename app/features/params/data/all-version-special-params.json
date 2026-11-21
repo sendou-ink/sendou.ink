@@ -1,7 +1,7 @@
 {
 	"metadata": {
-		"generatedAt": "2026-08-21T04:38:57.937Z",
-		"latestVersion": "11.3.0",
+		"generatedAt": "2026-11-21T14:48:40.477Z",
+		"latestVersion": "12.0.0",
 		"versions": [
 			"0.9.9",
 			"1.0.0",
@@ -34,7 +34,8 @@
 			"11.0.1",
 			"11.1.0",
 			"11.2.0",
-			"11.3.0"
+			"11.3.0",
+			"12.0.0"
 		]
 	},
 	"weapons": {
@@ -296,6 +297,7 @@
 				"InitRadiusForPlayer": 0.01
 			},
 			"WeaponParam": {
+				"AttackArmorHP": 600,
 				"InkCapacityRt": 1.5,
 				"InkConsume_Hook": {
 					"High": 0.015,
@@ -438,15 +440,18 @@
 				}
 			},
 			"spl__WeaponSpMultiMissileLaunchParam": {
-				"ShotIntervalTargetArray": [4],
-				"ShotNumOneTargetArray": [10, 5, 4]
+				"ShotIntervalTargetArray": [3],
+				"ShotNumOneTargetArray": [10, 5, 4],
+				"ShotIntervalTargetArray@11.3.0": [4]
 			},
 			"spl__WeaponSpMultiMissileLockOnParam": {
 				"TargetCircleEffectDefaultRadius": 9.3,
 				"TargetInCircleRadius": {
 					"High": 240,
-					"Low": 140,
-					"Mid": 190
+					"Low": 180,
+					"Mid": 210,
+					"Low@11.3.0": 140,
+					"Mid@11.3.0": 190
 				}
 			},
 			"spl__WeaponSpMultiMissilePlayerParam": {
@@ -1321,7 +1326,7 @@
 					},
 					{
 						"Damage": 700,
-						"Distance": 14.9
+						"Distance": 12.7
 					}
 				],
 				"KnockBackParam": {
@@ -1382,6 +1387,16 @@
 					}
 				],
 				"DamageOffsetY@10.1.0": 0,
+				"DistanceDamage@11.3.0": [
+					{
+						"Damage": 2200,
+						"Distance": 9
+					},
+					{
+						"Damage": 700,
+						"Distance": 14.9
+					}
+				],
 				"DistanceDamage@10.1.0": [
 					{
 						"Damage": 2200,
@@ -1567,7 +1582,7 @@
 				"MoveRotDeg": 0.5,
 				"MoveSpeed": 0.405,
 				"MoveSpeed_Aerial": 0.22,
-				"NoDamageFrame_AfterBurst": 28,
+				"NoDamageFrame_AfterBurst": 43,
 				"NoDamageStartFrame_PreMove": 25,
 				"OffsetLocal_DetectPlayer": {
 					"X": 0,
@@ -1590,7 +1605,8 @@
 				"RutPaintRadius": 1.2,
 				"UnrelaxFrame": 28,
 				"MoveFrame@10.1.0": 60,
-				"MoveSpeed@10.1.0": 0.45
+				"MoveSpeed@10.1.0": 0.45,
+				"NoDamageFrame_AfterBurst@11.3.0": 28
 			}
 		},
 		"14": {
@@ -1643,10 +1659,12 @@
 		"15": {
 			"FridgeParam": {
 				"PowerUpFrame": {
-					"High": 1500,
+					"High": 1260,
 					"Low": 1020,
-					"Mid": 1290,
+					"Mid": 1155,
+					"High@11.3.0": 1500,
 					"Low@3.1.0": 900,
+					"Mid@11.3.0": 1290,
 					"Mid@3.1.0": 1200
 				},
 				"PutFrame": 900,
@@ -2175,14 +2193,15 @@
 						"Z": -2
 					}
 				],
-				"SplashSpawnSpan": 45,
+				"SplashSpawnSpan": 15,
 				"StartUpFrame": 60,
 				"TargetSpeedFrame": 300,
 				"WallDepth": 0.25,
 				"WallHeightDown": 4.5,
 				"WallHeightUp": 4.5,
 				"WallWidth": 15,
-				"DamageValue@7.1.0": 300
+				"DamageValue@7.1.0": 300,
+				"SplashSpawnSpan@11.3.0": 45
 			},
 			"spl__SpawnBulletAdditionMovePlayerParam": {
 				"XRate": 1.6,

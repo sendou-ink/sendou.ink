@@ -45,12 +45,12 @@ describe("Analyze build", () => {
 
 		expect(distances(new Map())).toEqual([
 			{ value: 220, distance: 9 },
-			{ value: 70, distance: 14.9 },
+			{ value: 70, distance: 12.7 },
 			{ value: 220, distance: undefined },
 		]);
 		expect(distances(new Map([["SPU", 57]]))).toEqual([
 			{ value: 220, distance: 10.8 },
-			{ value: 70, distance: 17.88 },
+			{ value: 70, distance: 15.24 },
 			{ value: 220, distance: undefined },
 		]);
 	});
@@ -341,13 +341,13 @@ describe("Analyze build", () => {
 	});
 
 	test.each([
-		{ why: "Sploosh 64.995", weaponSplId: 0, iss: 9, ism: 16, expected: 64.99 },
+		{ why: "Sploosh 64.709", weaponSplId: 0, iss: 30, ism: 3, expected: 64.7 },
 		{
-			why: "Sploosh 101.998",
+			why: "Sploosh 78.569",
 			weaponSplId: 0,
-			iss: 15,
-			ism: 57,
-			expected: 101.99,
+			iss: 31,
+			ism: 16,
+			expected: 78.56,
 		},
 		{
 			why: "Jr. just under 100",

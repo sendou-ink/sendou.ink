@@ -11,6 +11,7 @@ type Patch = { patch: string; date: string };
  * the patch history.
  */
 export const PATCHES: Array<Patch> = [
+	{ patch: "12.0.0", date: "2026-11-18" },
 	{ patch: "11.3.0", date: "2026-08-19" },
 	{ patch: "11.2.0", date: "2026-06-10" },
 	{ patch: "11.1.0", date: "2026-03-18" },

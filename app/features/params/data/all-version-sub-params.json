@@ -1,7 +1,7 @@
 {
 	"metadata": {
-		"generatedAt": "2026-08-21T04:38:57.937Z",
-		"latestVersion": "11.3.0",
+		"generatedAt": "2026-11-21T14:48:40.477Z",
+		"latestVersion": "12.0.0",
 		"versions": [
 			"0.9.9",
 			"1.0.0",
@@ -34,7 +34,8 @@
 			"11.0.1",
 			"11.1.0",
 			"11.2.0",
-			"11.3.0"
+			"11.3.0",
+			"12.0.0"
 		]
 	},
 	"weapons": {
@@ -278,6 +279,9 @@
 					"Low": 8000,
 					"Mid": 11500
 				},
+				"MinSetToPrepareFrame": 5,
+				"MinSetToRunStartFrameReceive": 30,
+				"MinThrowToRunStartFrame": 60,
 				"SpawnSpeedY": 0.07,
 				"SpawnSpeedYWorldMin": -0.5,
 				"SpawnSpeedZSpecUp": {
