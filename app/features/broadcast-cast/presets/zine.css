@@ -32,8 +32,10 @@
 
 	/* the theme's own */
 	--zine-headline: "Archivo Black", "Arial Black", sans-serif;
-	--zine-shadow: 8px 8px 0 var(--bc-border);
-	--zine-shadow-small: 5px 5px 0 var(--bc-border);
+	/* lighter than the outlines so a shadow doesn't read as a thicker border */
+	--zine-shadow-color: #b3a27f;
+	--zine-shadow: 8px 8px 0 var(--zine-shadow-color);
+	--zine-shadow-small: 5px 5px 0 var(--zine-shadow-color);
 
 	/* sizes and spots */
 	--game-bar-height: 62px;
@@ -280,12 +282,17 @@
 
 /* ---------- HOLD (starting soon, break...): a poster ---------- */
 [data-part="content"] {
-	inset: 0 0 190px;
+	inset: 0;
 	align-items: center;
 	justify-content: center;
 	gap: 26px;
 	max-width: none;
 	text-align: center;
+}
+
+/* room for the next match under it */
+[data-scene="break"] [data-part="content"] {
+	bottom: 190px;
 }
 
 [data-part="content"] [data-part="tournament-logo"] {
@@ -314,7 +321,7 @@
 	border: 7px solid var(--bc-border);
 	background: var(--bc-accent);
 	color: var(--bc-accent-text);
-	box-shadow: 16px 16px 0 var(--bc-border);
+	box-shadow: 16px 16px 0 var(--zine-shadow-color);
 	font-size: 110px;
 	rotate: -2deg;
 
@@ -353,7 +360,8 @@
 	border-width: 5px;
 	background: var(--team-color);
 	color: var(--team-color-text);
-	box-shadow: var(--zine-shadow);
+	/* straight down, a sideways one would push the VS off center */
+	box-shadow: 0 8px 0 var(--zine-shadow-color);
 	rotate: -1.5deg;
 
 	&[data-team="b"] {
@@ -521,7 +529,7 @@
 
 [data-scene="casters"] [data-part="camera"] {
 	outline-width: 8px;
-	box-shadow: 18px 18px 0 0 var(--bc-border);
+	box-shadow: 18px 18px 0 0 var(--zine-shadow-color);
 }
 
 [data-scene="casters"] [data-part="caster-name"] {
@@ -634,7 +642,7 @@
 
 [data-part="stinger-title-card"] [data-part="stinger-tournament-logo"] {
 	border-width: 8px;
-	box-shadow: 16px 16px 0 var(--bc-border);
+	box-shadow: 16px 16px 0 var(--zine-shadow-color);
 	rotate: -4deg;
 }
 
