@@ -795,6 +795,21 @@ export class Tournament {
 		return this.ctx.settings.isTest ?? false;
 	}
 
+	/** Where the tournament is held in person, `null` for an online tournament. */
+	get venue() {
+		return this.ctx.venue;
+	}
+
+	/** Held in person (has a venue), gating the LAN only features. */
+	get isLan() {
+		return this.ctx.venue !== null;
+	}
+
+	/** LAN only: playable matches are put on free stations without an organizer placing them. */
+	get autoAssignsStations() {
+		return this.ctx.settings.autoAssignStations ?? true;
+	}
+
 	/** Hidden during preparation, must be opened before bracket start. */
 	get isDraft() {
 		return this.ctx.settings.isDraft ?? false;
@@ -958,8 +973,10 @@ export class Tournament {
 		throw new Error("Match not found");
 	}
 
-	/** Whether the match is held back from starting until a cast picks it up. */
+	/** Whether the match is held back from starting until a cast picks it up. Never in a LAN. */
 	isMatchLockedForCast(matchId: number) {
+		if (this.isLan) return false;
+
 		return (
 			this.ctx.castedMatchesInfo?.lockedMatches.some(
 				(lm) => lm.matchId === matchId,
@@ -1626,9 +1643,14 @@ export class Tournament {
 		return hasPermission(this.ctx, "MANAGE_MATCHES", user);
 	}
 
-	/** Reporting and undoing games of any match, and setting the teams' active rosters it needs, e.g. a streamer reporting the game they just cast. */
+	/** Reporting and undoing games of any match, and setting the teams' active rosters it needs, e.g. a streamer reporting the game they just cast or a pool captain running their pool. */
 	canReportAnyScore(user: OptionalIdObject) {
-		return hasPermission(this.ctx, "MANAGE_MATCHES", user);
+		return hasPermission(this.ctx, "REPORT_SCORES", user);
+	}
+
+	/** LAN: viewing the stations board. Moving matches on it is for {@link isOrganizerOrStreamer}. */
+	canSeeStationsBoard(user: OptionalIdObject) {
+		return this.isOrganizerOrStreamer(user) || this.canReportAnyScore(user);
 	}
 
 	/** Live streams of the tournament, empty in the views whose loader did not ship them. */

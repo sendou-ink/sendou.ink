@@ -47,6 +47,9 @@ export async function loadFactories(parallelIndex: number) {
 		CalendarEventResultFactory: await import(
 			"~/db/seed/factories/CalendarEventResultFactory"
 		),
+		CalendarEventVenueFactory: await import(
+			"~/db/seed/factories/CalendarEventVenueFactory"
+		),
 		FriendRequestFactory: await import(
 			"~/db/seed/factories/FriendRequestFactory"
 		),
@@ -95,6 +98,9 @@ export async function loadFactories(parallelIndex: number) {
 		TournamentLFGTeamFactory: await import(
 			"~/db/seed/factories/TournamentLFGTeamFactory"
 		),
+		TournamentMatchStationFactory: await import(
+			"~/db/seed/factories/TournamentMatchStationFactory"
+		),
 		TournamentOrganizationFactory: await import(
 			"~/db/seed/factories/TournamentOrganizationFactory"
 		),
@@ -103,6 +109,9 @@ export async function loadFactories(parallelIndex: number) {
 		),
 		TournamentStaffFactory: await import(
 			"~/db/seed/factories/TournamentStaffFactory"
+		),
+		TournamentStationFactory: await import(
+			"~/db/seed/factories/TournamentStationFactory"
 		),
 		TournamentStreamerFactory: await import(
 			"~/db/seed/factories/TournamentStreamerFactory"
@@ -130,11 +139,11 @@ export async function resetForTest(page: Page, factories: Factories) {
 
 	await factories.UserFactory.createAdmin({
 		discordId: ADMIN_DISCORD_ID,
-		discordName: "Sendou",
+		defaultName: "Sendou",
 	});
 	await factories.UserFactory.createRegular({
 		discordId: NZAP_TEST_DISCORD_ID,
-		discordName: "N-ZAP",
+		defaultName: "N-ZAP",
 	});
 
 	await flushIfDirty(page, { resetDevOverrides: true });

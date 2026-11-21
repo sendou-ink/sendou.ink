@@ -9,7 +9,7 @@
 	grid-template-columns: max-content 1fr;
 
 	& > time {
-		height: 1.25rem;
+		min-height: 1.25rem;
 	}
 }
 

@@ -1,4 +1,5 @@
 import { addHours, addMinutes, subHours, subMinutes } from "date-fns";
+import * as R from "remeda";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
@@ -7,6 +8,7 @@ import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as SQReadyCheckFactory from "~/db/seed/factories/SQReadyCheckFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
+import * as TournamentMatchStationFactory from "~/db/seed/factories/TournamentMatchStationFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as LobbyProgression from "~/features/lobbies/core/LobbyProgression.server";
@@ -15,12 +17,14 @@ import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
+import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	runningTournamentWithMatch,
 	testTournament,
 	tournamentCtxTeam,
 } from "~/features/tournament-bracket/core/tests/test-utils";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
+import { createStartedLanTournament } from "~/features/tournament-stations/tests/fixtures";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -375,6 +379,20 @@ describe("resolveGlobalStatus", () => {
 		);
 	});
 
+	test("resolves a LAN match locked for cast as an ongoing match", async () => {
+		RunningTournaments.add(
+			runningTournamentWithMatch({
+				tournamentId: 1,
+				teamOneUserIds: userIds([1]),
+				teamTwoUserIds: userIds([2]),
+				lockFirstMatchForCast: true,
+				isLan: true,
+			}),
+		);
+
+		expect((await resolveGlobalStatus(users.id(1)))?.state).toBe("TO_MATCH");
+	});
+
 	test("resolves an open regular check-in, closing as the tournament starts", async () => {
 		const tournament = runningTournamentWithOpenCheckIn({
 			tournamentId: 1,
@@ -465,5 +483,129 @@ describe("resolveGlobalStatus", () => {
 		expect((await resolveGlobalStatus(users.id(1)))?.state).toBe(
 			"LOBBY_IN_ROOM",
 		);
+	});
+});
+
+const lanUsers = UserFactory.pool();
+
+describe("resolveGlobalStatus in a LAN tournament", () => {
+	beforeEach(async () => {
+		await lanUsers.create(17);
+		RunningTournaments.clear();
+		PendingCheckIns.clearCache();
+		await refreshSendouQInstance();
+	});
+
+	/**
+	 * The semifinals of a started LAN, the first on its lone station, with a player of each. The second is on no
+	 * station unless held in Waiting by hand or queued after the first.
+	 */
+	const lanWithFirstSemifinalOnStation = async ({
+		holdSecondInWaiting = false,
+		queueSecondOnStation = false,
+	} = {}) => {
+		const {
+			tournamentId,
+			stationIds: [stationId],
+			semifinalIds,
+		} = await createStartedLanTournament({
+			authorId: lanUsers.id(1),
+			teamRosters: R.chunk(lanUsers.ids().slice(1), 4),
+			stationNames: ["Station 1"],
+			autoAssign: false,
+		});
+		await TournamentMatchStationFactory.create({
+			matchId: semifinalIds[0],
+			stationId,
+		});
+		if (holdSecondInWaiting || queueSecondOnStation) {
+			await TournamentMatchStationFactory.create({
+				matchId: semifinalIds[1],
+				stationId: queueSecondOnStation ? stationId : null,
+			});
+		}
+
+		const tournament = await tournamentFromDB(tournamentId);
+		RunningTournaments.add(tournament);
+
+		const playerOf = (matchId: number) => {
+			const match = tournament.brackets[0].data.match.find(
+				(candidate) => candidate.id === matchId,
+			)!;
+			return tournament.teamById(match.opponent1!.id!)!.memberUserIds[0];
+		};
+
+		return {
+			firstPlayer: playerOf(semifinalIds[0]),
+			secondPlayer: playerOf(semifinalIds[1]),
+		};
+	};
+
+	test("shows the station the match is queued on, without an ETA when first in its queue", async () => {
+		const { firstPlayer } = await lanWithFirstSemifinalOnStation();
+
+		const status = await resolveGlobalStatus(firstPlayer);
+
+		expect(status?.state).toBe("TO_MATCH");
+		expect(status?.station).toEqual({
+			name: "Station 1",
+			locationNote: null,
+		});
+		// first in the station's queue, no countdown to it
+		expect(status?.eta).toBeUndefined();
+	});
+
+	test("resolves a playable match on no station as waiting for one, with its ETA", async () => {
+		const { secondPlayer } = await lanWithFirstSemifinalOnStation();
+
+		const status = await resolveGlobalStatus(secondPlayer);
+
+		expect(status?.state).toBe("TO_WAITING_FOR_STATION");
+		expect(status?.station).toBeUndefined();
+		// the lone station plays the other semifinal first
+		expect(status?.eta?.earliest).toBeGreaterThan(Date.now());
+	});
+
+	test("resolves a match held in Waiting by hand as waiting for a station", async () => {
+		const { secondPlayer } = await lanWithFirstSemifinalOnStation({
+			holdSecondInWaiting: true,
+		});
+
+		const status = await resolveGlobalStatus(secondPlayer);
+
+		expect(status?.state).toBe("TO_WAITING_FOR_STATION");
+		expect(status?.station).toBeUndefined();
+	});
+
+	test("resolves a match queued behind another on its station as an ongoing one, with its station and ETA", async () => {
+		const { secondPlayer } = await lanWithFirstSemifinalOnStation({
+			queueSecondOnStation: true,
+		});
+
+		const status = await resolveGlobalStatus(secondPlayer);
+
+		expect(status?.state).toBe("TO_MATCH");
+		expect(status?.station).toEqual({ name: "Station 1", locationNote: null });
+		expect(status?.eta?.earliest).toBeGreaterThan(Date.now());
+	});
+
+	test("resolves a playable match as an ongoing one when the LAN has no stations", async () => {
+		const { tournamentId, semifinalIds } = await createStartedLanTournament({
+			authorId: lanUsers.id(1),
+			teamRosters: R.chunk(lanUsers.ids().slice(1), 4),
+			stationNames: [],
+		});
+		const tournament = await tournamentFromDB(tournamentId);
+		RunningTournaments.add(tournament);
+		const match = tournament.brackets[0].data.match.find(
+			(candidate) => candidate.id === semifinalIds[0],
+		)!;
+
+		const status = await resolveGlobalStatus(
+			tournament.teamById(match.opponent1!.id!)!.memberUserIds[0],
+		);
+
+		expect(status?.state).toBe("TO_MATCH");
+		expect(status?.station).toBeUndefined();
 	});
 });

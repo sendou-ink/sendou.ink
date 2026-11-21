@@ -22,8 +22,8 @@ export interface ReportScoreResult {
 /**
  * Records the winner of one game, advancing the bracket and storing who played. `position` is
  * the game's index in the set; any other index is a page that fell behind and returns `null`
- * rather than erroring, as does a game another request recorded first. The reporter must be
- * tournament staff or on one of the teams; both teams need an active roster (implicit without subs).
+ * rather than erroring, as does a game another request recorded first. The reporter must be on
+ * one of the teams or hold `REPORT_SCORES` (organizers, streamers, pool captains); both teams need an active roster (implicit without subs).
  */
 export async function reportScore({
 	match,

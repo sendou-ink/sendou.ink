@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Eye } from "lucide-react";
+import { Eye, Gamepad2 } from "lucide-react";
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -13,6 +13,7 @@ import { TournamentStream } from "~/features/tournament/components/TournamentStr
 import { useTournamentVods } from "~/features/tournament/routes/to.$id";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
+import { useMatchStation } from "~/features/tournament-stations/match-stations-context";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
@@ -214,6 +215,7 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 		return streamingParticipants.some((p) => matchParticipants.includes(p));
 	};
 	const toBeCasted = !isOver && tournament.isMatchLockedForCast(match.id);
+	const station = useMatchStation(match.id);
 
 	return (
 		<div className={styles.matchHeader}>
@@ -221,7 +223,31 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 				{prefix()}
 				{roundNumber}.{match.number}
 			</div>
-			{toBeCasted ? (
+			{station ? (
+				<SendouPopover
+					placement="top"
+					trigger={
+						<SendouButton
+							className={clsx(
+								styles.matchHeaderBox,
+								styles.matchHeaderBoxButton,
+								styles.matchHeaderStation,
+							)}
+							testId="bracket-match-station"
+						>
+							<Gamepad2 aria-hidden="true" />
+							{station.shortName}
+						</SendouButton>
+					}
+				>
+					<div className="stack xs">
+						<div className="font-bold">{station.name}</div>
+						{station.locationNote ? (
+							<div className="text-sm text-lighter">{station.locationNote}</div>
+						) : null}
+					</div>
+				</SendouPopover>
+			) : toBeCasted ? (
 				<SendouPopover
 					trigger={
 						<SendouButton
@@ -509,6 +535,8 @@ function MatchVods({ vods }: MatchVodsProps) {
 function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 	const tournament = useTournament();
 
+	// LAN matches have no deadline, the stations set the pace
+	if (tournament.isLan) return null;
 	if (bracket.hasScheduling) return null;
 	if (!match.startedAt) return null;
 

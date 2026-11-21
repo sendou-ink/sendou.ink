@@ -1,0 +1,85 @@
+import * as CalendarEventVenueFactory from "~/db/seed/factories/CalendarEventVenueFactory";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentStationFactory from "~/db/seed/factories/TournamentStationFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
+import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+
+/**
+ * A LAN tournament of the four teams of `teamRosters` (seed order) in a started single elimination
+ * bracket: the two semifinals playable, the final not. Has the stations named in `stationNames`, nothing on
+ * them yet, and auto-assigns them unless `autoAssign` is `false`.
+ */
+export async function createStartedLanTournament({
+	authorId,
+	teamRosters,
+	stationNames = ["Station 1", "Station 2"],
+	autoAssign = true,
+}: {
+	authorId: number;
+	teamRosters: number[][];
+	stationNames?: string[];
+	autoAssign?: boolean;
+}) {
+	const tournament = await TournamentFactory.create({ authorId });
+	await CalendarEventVenueFactory.create({ eventId: tournament.eventId });
+
+	for (const memberUserIds of teamRosters) {
+		await TournamentTeamFactory.create(
+			{ tournamentId: tournament.id, memberUserIds },
+			{ isCheckedIn: true },
+		);
+	}
+
+	const stationIds: number[] = [];
+	for (const name of stationNames) {
+		stationIds.push(
+			(
+				await TournamentStationFactory.create({
+					tournamentId: tournament.id,
+					name,
+					autoAssign,
+				})
+			).id,
+		);
+	}
+
+	await TournamentFactory.startBracket(tournament.id);
+
+	const started = await tournamentFromDB(tournament.id);
+	const matches = started.brackets[0].data.match.toSorted(
+		(a, b) => a.roundId - b.roundId || a.number - b.number,
+	);
+
+	return {
+		tournamentId: tournament.id,
+		stationIds,
+		semifinalIds: [matches[0].id, matches[1].id] as const,
+		finalId: matches[2].id,
+	};
+}
+
+/** A LAN tournament of the four teams of `teamRosters` with one station, played out and finalized. */
+export async function createFinalizedLanTournament({
+	authorId,
+	teamRosters,
+}: {
+	authorId: number;
+	teamRosters: number[][];
+}) {
+	const tournament = await TournamentFactory.create({ authorId });
+	await CalendarEventVenueFactory.create({ eventId: tournament.eventId });
+	for (const memberUserIds of teamRosters) {
+		await TournamentTeamFactory.create(
+			{ tournamentId: tournament.id, memberUserIds },
+			{ isCheckedIn: true },
+		);
+	}
+	await TournamentStationFactory.create({
+		tournamentId: tournament.id,
+		name: "Station 1",
+		autoAssign: false,
+	});
+	await TournamentFactory.playOut(tournament.id, "all");
+
+	return { tournamentId: tournament.id };
+}

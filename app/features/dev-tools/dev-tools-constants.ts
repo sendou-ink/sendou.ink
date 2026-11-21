@@ -119,6 +119,26 @@ export const SAMPLE_NOTIFICATIONS: {
 		type: "TO_LEAGUE_MATCH_STARTING_SOON",
 		meta: { tournamentId: 1, matchId: 1, ...SAMPLE_OPPONENT },
 	},
+	TO_MATCH_STATION_ASSIGNED: {
+		type: "TO_MATCH_STATION_ASSIGNED",
+		meta: {
+			tournamentId: 1,
+			matchId: 1,
+			station: "Station 3 (north corner)",
+			matchName: "Winners Round 2.1",
+			...SAMPLE_OPPONENT,
+		},
+	},
+	TO_MATCH_STATION_MOVED: {
+		type: "TO_MATCH_STATION_MOVED",
+		meta: {
+			tournamentId: 1,
+			matchId: 1,
+			station: "Station 5",
+			matchName: "Winners Round 2.1",
+			...SAMPLE_OPPONENT,
+		},
+	},
 	SCRIM_AUTO_DELETED: { type: "SCRIM_AUTO_DELETED", meta: { at: Date.now() } },
 	COMMISSIONS_CLOSED: { type: "COMMISSIONS_CLOSED" },
 	FRIEND_REQUEST_RECEIVED: {

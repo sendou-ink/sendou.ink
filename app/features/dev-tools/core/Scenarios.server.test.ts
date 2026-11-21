@@ -10,6 +10,7 @@ import { CAST_LAYOUT } from "~/features/broadcast-cast/broadcast-cast-layout.ser
 import * as LobbySet from "~/features/lobbies/core/LobbySet";
 import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
 import * as Scenarios from "./Scenarios.server";
 
 const userExists = async (userId: number) =>
@@ -117,6 +118,43 @@ describe("Scenarios.run", () => {
 		);
 		expect(built?.channel.account).toBe(slug);
 	});
+
+	test("tournament-lan lands a player on their match, queued on Station 1", async () => {
+		const outcome = await Scenarios.run("tournament-lan", { role: "player" });
+		if (outcome.status !== "ok") throw new Error(outcome.status);
+
+		const [, , tournamentId, , matchId] = outcome.result.path.split("/");
+		const [station] = await TournamentStationRepository.findAllByTournamentId(
+			Number(tournamentId),
+		);
+		const placements =
+			await TournamentStationRepository.findMatchPlacementsByTournamentId(
+				Number(tournamentId),
+			);
+
+		expect(station.name).toBe("Station 1");
+		expect(
+			placements.find((placement) => placement.stationId === station.id)
+				?.matchId,
+		).toBe(Number(matchId));
+	});
+
+	test.each(["organizer", "pool-captain"])(
+		"tournament-lan lands a %s on the stations board they can see",
+		async (role) => {
+			const outcome = await Scenarios.run("tournament-lan", { role });
+			if (outcome.status !== "ok") throw new Error(outcome.status);
+
+			const [, , tournamentId] = outcome.result.path.split("/");
+			const tournament = await tournamentFromDB(Number(tournamentId));
+
+			expect(outcome.result.path).toMatch(/\/admin\/board$/);
+			expect(tournament.isLan).toBe(true);
+			expect(
+				tournament.canSeeStationsBoard({ id: outcome.result.userId }),
+			).toBe(true);
+		},
+	);
 
 	test.each([
 		{ state: "reporting", can: LobbySet.canReport },

@@ -12,7 +12,7 @@ import {
 	textFieldOptional,
 	toggle,
 	tournamentSearchOptional,
-	userSearch,
+	userSearchOptional,
 } from "~/form/fields";
 import { modeShort, stageId, superRefine } from "~/utils/schema";
 import { IN_GAME_NAME_MAX_LENGTH } from "../user-page/in-game-name";
@@ -20,9 +20,24 @@ import { USER } from "../user-page/user-page-constants";
 /** Safety ceiling for organizer-managed rosters; the tournament's `maxMembersPerTeam` intentionally doesn't apply to them. */
 export const ADMIN_REGISTRATION_MAX_MEMBERS = 12;
 
+/** `ownerId` prefix of a captain that is a new player without an account, who has no user id yet: `new:<name>`. */
+const NEW_PLACEHOLDER_OWNER_ID_PREFIX = "new:";
+
 const memberFieldset = fieldset({
 	fields: v.object({
-		userId: userSearch({ label: "labels.player" }),
+		/** Row of a player without an account (LAN tournaments only, see `User.isPlaceholder`), named by `placeholderName` instead of a user search. */
+		isPlaceholder: customField(
+			{ initialValue: false },
+			v.optional(v.boolean(), false),
+		),
+		/** `null` for a new player without an account. */
+		userId: userSearchOptional({ label: "labels.player" }),
+		/** Name of a player without an account: creates one when `userId` is `null`, renames it otherwise. Ignored on other rows. */
+		placeholderName: textFieldOptional({
+			label: "labels.placeholderName",
+			bottomText: "bottomTexts.placeholderName",
+			maxLength: USER.CUSTOM_NAME_MAX_LENGTH,
+		}),
 		inGameName: textFieldOptional({
 			label: "labels.inGameName",
 			maxLength: IN_GAME_NAME_MAX_LENGTH,
@@ -78,7 +93,22 @@ export const adminRegistrationFormSchema = v.pipe(
 			});
 		}
 
-		const memberIds = data.members.map((member) => member.userId);
+		for (const [index, member] of data.members.entries()) {
+			if (member.isPlaceholder && !member.placeholderName) {
+				ctx.addIssue({
+					message: "forms:errors.required",
+					path: ["members", index, "placeholderName"],
+				});
+			}
+			if (!member.isPlaceholder && typeof member.userId !== "number") {
+				ctx.addIssue({
+					message: "forms:errors.required",
+					path: ["members", index, "userId"],
+				});
+			}
+		}
+
+		const memberIds = data.members.flatMap((member) => member.userId ?? []);
 		if (memberIds.length !== new Set(memberIds).size) {
 			ctx.addIssue({
 				message: "forms:errors.usersMustBeUnique",
@@ -86,7 +116,28 @@ export const adminRegistrationFormSchema = v.pipe(
 			});
 		}
 
-		if (!memberIds.some((memberId) => String(memberId) === data.ownerId)) {
+		const placeholderNames = data.members.map((member) =>
+			member.isPlaceholder && member.placeholderName
+				? placeholderNameKey(member.placeholderName)
+				: null,
+		);
+		for (const [index, name] of placeholderNames.entries()) {
+			if (name !== null && placeholderNames.indexOf(name) !== index) {
+				ctx.addIssue({
+					message: "forms:errors.regPlaceholderNameTaken",
+					path: ["members", index, "placeholderName"],
+				});
+			}
+		}
+
+		const ownerIds = data.members.flatMap((member) => {
+			if (typeof member.userId === "number") return String(member.userId);
+			if (member.isPlaceholder && member.placeholderName) {
+				return newPlaceholderOwnerId(member.placeholderName);
+			}
+			return [];
+		});
+		if (!ownerIds.includes(data.ownerId)) {
 			ctx.addIssue({
 				message: "forms:errors.regOwnerMustBeMember",
 				path: ["ownerId"],
@@ -98,6 +149,16 @@ export const adminRegistrationFormSchema = v.pipe(
 export type AdminRegistrationFormValues = v.InferInput<
 	typeof adminRegistrationFormSchema
 >;
+
+/** Players without an account are told apart by name in the whole tournament, regardless of case. */
+export function placeholderNameKey(placeholderName: string) {
+	return placeholderName.trim().toLowerCase();
+}
+
+/** `ownerId` of a new player without an account, see {@link NEW_PLACEHOLDER_OWNER_ID_PREFIX}. */
+export function newPlaceholderOwnerId(placeholderName: string) {
+	return `${NEW_PLACEHOLDER_OWNER_ID_PREFIX}${placeholderName.trim()}`;
+}
 
 /** Modal importing a roster from another tournament into {@link adminRegistrationFormSchema}. Client-side only, prefills the form. */
 export const importTeamFormSchema = v.pipe(

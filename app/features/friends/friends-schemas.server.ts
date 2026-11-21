@@ -1,5 +1,6 @@
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { superRefineAsync } from "~/utils/schema";
 import * as FriendRepository from "./FriendRepository.server";
 import {
@@ -20,6 +21,15 @@ const sendFriendRequestSchemaServer = v.pipeAsync(
 		if (data.userId === user.id) {
 			ctx.addIssue({
 				message: "forms:errors.cannotFriendSelf",
+				path: ["userId"],
+			});
+			return;
+		}
+
+		// placeholder players can't log in to answer
+		if (!(await UserRepository.findLeanById(data.userId))) {
+			ctx.addIssue({
+				message: "forms:errors.userNotFound",
 				path: ["userId"],
 			});
 			return;

@@ -83,20 +83,24 @@ function AccountInfos() {
 
 			<dt>Discord account created at</dt>
 			<dd>
-				<LocaleTime
-					date={new Date(data.discordAccountCreatedAt)}
-					options={{
-						year: "numeric",
-						month: "numeric",
-						day: "numeric",
-						hour: "2-digit",
-						minute: "2-digit",
-					}}
-				/>
+				{data.discordAccountCreatedAt ? (
+					<LocaleTime
+						date={new Date(data.discordAccountCreatedAt)}
+						options={{
+							year: "numeric",
+							month: "numeric",
+							day: "numeric",
+							hour: "2-digit",
+							minute: "2-digit",
+						}}
+					/>
+				) : (
+					"―"
+				)}
 			</dd>
 
 			<dt>Discord ID</dt>
-			<dd>{data.discordId}</dd>
+			<dd>{data.discordId ?? "―"}</dd>
 
 			<dt>Discord name</dt>
 			<dd>{data.discordUniqueName}</dd>

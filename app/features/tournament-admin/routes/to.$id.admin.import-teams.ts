@@ -48,6 +48,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 				inGameName: member.inGameName,
 				tournamentName: member.tournamentName,
 				isOwner: member.role === "OWNER",
+				isPlaceholder: Boolean(member.isPlaceholder),
 			})),
 			mapPool: importableMapPool(team.mapPool, tournament),
 		})),

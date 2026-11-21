@@ -60,7 +60,11 @@ export const TEAM_PICK_POOLS = ["SENDOUQ", "ALL", "CUSTOM"] as const;
 
 export type TeamPickPool = (typeof TEAM_PICK_POOLS)[number];
 
-export const TOURNAMENT_STAFF_ROLES = ["ORGANIZER", "STREAMER"] as const;
+export const TOURNAMENT_STAFF_ROLES = [
+	"ORGANIZER",
+	"STREAMER",
+	"POOL_CAPTAIN",
+] as const;
 
 export type TournamentStaffRole = (typeof TOURNAMENT_STAFF_ROLES)[number];
 
@@ -75,6 +79,7 @@ export const TOURNAMENT_AUDIT_LOG_TYPES = [
 	"TEAM_DROP_OUT_UNDONE",
 	"UPDATE_IN_GAME_NAME",
 	"UPDATE_TOURNAMENT_NAME",
+	"MATCH_STATION_CHANGED",
 ] as const;
 
 export type TournamentAuditLogType =

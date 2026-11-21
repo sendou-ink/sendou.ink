@@ -10,6 +10,7 @@ import {
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { autoAssignStations } from "~/features/tournament-stations/core/autoAssignStations.server";
 import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy, successToast } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
@@ -111,6 +112,7 @@ export const action = defineAction(
 		}
 
 		clearTournamentDataCache(tournamentId);
+		await autoAssignStations(tournament);
 
 		ChatSystemMessage.send({ channel: tournamentChannel(tournamentId) });
 

@@ -134,7 +134,7 @@ test.describe("User card friend request", () => {
 		factories,
 	}) => {
 		const otherUsername = "FriendTarget";
-		await factories.UserFactory.create({ discordName: otherUsername });
+		await factories.UserFactory.create({ defaultName: otherUsername });
 
 		await impersonate(page);
 

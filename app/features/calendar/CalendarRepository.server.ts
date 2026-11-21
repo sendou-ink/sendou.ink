@@ -2,6 +2,7 @@ import { sub } from "date-fns";
 import type {
 	Expression,
 	ExpressionBuilder,
+	Kysely,
 	NotNull,
 	Transaction,
 } from "kysely";
@@ -52,6 +53,20 @@ import type {
 import { calendarEventSorter } from "./calendar-utils";
 
 const RECENT_TOURNAMENTS_SHOWN = 10;
+/** How long a LAN stays on the LAN map after its last day (or a tournament's last bracket) started. */
+const LAN_MAP_EVENT_SHOWN_FOR = { days: 1 };
+/** Longer for a tournament, as its later days' brackets don't need a start time: until finalized, up to this. */
+const LAN_MAP_TOURNAMENT_SHOWN_FOR = { days: 2 };
+
+const VENUE_COLUMNS = [
+	"CalendarEventVenue.name",
+	"CalendarEventVenue.address",
+	"CalendarEventVenue.city",
+	"CalendarEventVenue.countryCode",
+	"CalendarEventVenue.latitude",
+	"CalendarEventVenue.longitude",
+	"CalendarEventVenue.timezone",
+] as const;
 
 const withMapPool = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
 	return jsonArrayFrom(
@@ -79,6 +94,16 @@ const withTrophy = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
 			.select(["Trophy.id", "Trophy.name", "Trophy.model"])
 			.whereRef("Trophy.id", "=", "CalendarEvent.trophyId"),
 	).as("trophy");
+};
+
+/** The event's venue as a JSON object, `null` for an online event. */
+export const withVenue = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
+	return jsonObjectFrom(
+		eb
+			.selectFrom("CalendarEventVenue")
+			.select(VENUE_COLUMNS)
+			.whereRef("CalendarEventVenue.eventId", "=", "CalendarEvent.id"),
+	).as("venue");
 };
 
 function tournamentOrganization(organizationId: Expression<number | null>) {
@@ -139,9 +164,16 @@ function findAllBetweenTwoTimestampsQuery({
 			"CalendarEventDate.eventId",
 		)
 		.leftJoin("Tournament", "CalendarEvent.tournamentId", "Tournament.id")
+		.leftJoin(
+			"CalendarEventVenue",
+			"CalendarEventVenue.eventId",
+			"CalendarEvent.id",
+		)
 		.select((eb) => [
 			"CalendarEvent.id as eventId",
 			"CalendarEvent.authorId",
+			"CalendarEventVenue.city as venueCity",
+			"CalendarEventVenue.countryCode as venueCountryCode",
 			"CalendarEvent.organizationId",
 			"Tournament.id as tournamentId",
 			"Tournament.settings as tournamentSettings",
@@ -262,6 +294,12 @@ function findAllBetweenTwoTimestampsMapped(
 							: null,
 				badges: row.badges,
 				trophyId: row.trophyId,
+				venue: row.venueCountryCode
+					? {
+							city: row.venueCity,
+							countryCode: row.venueCountryCode,
+						}
+					: null,
 				logoUrl: row.logoUrl,
 				startsAt: row.normalizedStartsAt,
 				isRanked: row.tournamentSettings
@@ -287,6 +325,91 @@ function findAllBetweenTwoTimestampsMapped(
 		.sort((a, b) => a.at - b.at);
 
 	return dates;
+}
+
+/**
+ * Every listed (not draft or test, see `hidden`) event with a venue that is upcoming or still running, the LANs of the
+ * LAN map. A plain event is running until a day after its last day started. A tournament until it's finalized, at most
+ * two days after its last start (its day or a later bracket's start time), so a multi-day LAN stays on its later days.
+ * One row per event. Soonest first, `startsAt` is the event's first day.
+ */
+export async function findAllUpcomingWithVenue() {
+	const rows = await db
+		.selectFrom("CalendarEvent")
+		.innerJoin(
+			"CalendarEventVenue",
+			"CalendarEventVenue.eventId",
+			"CalendarEvent.id",
+		)
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.leftJoin("Tournament", "Tournament.id", "CalendarEvent.tournamentId")
+		.select((eb) => [
+			"CalendarEvent.id",
+			"CalendarEvent.name",
+			"CalendarEvent.tournamentId",
+			eb.fn.min("CalendarEventDate.startsAt").as("startsAt"),
+			tournamentLogoWithDefault(eb).as("logoUrl"),
+			"CalendarEventVenue.name as venueName",
+			"CalendarEventVenue.city",
+			"CalendarEventVenue.countryCode",
+			"CalendarEventVenue.latitude",
+			"CalendarEventVenue.longitude",
+			"CalendarEventVenue.timezone",
+		])
+		.where("CalendarEvent.hidden", "=", 0)
+		.where((eb) =>
+			eb.or([
+				eb("Tournament.id", "is", null),
+				eb("Tournament.isFinalized", "=", 0),
+			]),
+		)
+		.groupBy("CalendarEvent.id")
+		.having((eb) =>
+			eb.or([
+				eb.and([
+					eb("Tournament.id", "is", null),
+					eb(
+						eb.fn.max("CalendarEventDate.startsAt"),
+						">=",
+						dateToDatabaseTimestamp(sub(new Date(), LAN_MAP_EVENT_SHOWN_FOR)),
+					),
+				]),
+				eb.and([
+					eb("Tournament.id", "is not", null),
+					eb(
+						sql<number>`max(${eb.fn.max("CalendarEventDate.startsAt")}, coalesce(${latestBracketStartTime()}, 0))`,
+						">=",
+						dateToDatabaseTimestamp(
+							sub(new Date(), LAN_MAP_TOURNAMENT_SHOWN_FOR),
+						),
+					),
+				]),
+			]),
+		)
+		.orderBy("startsAt", "asc")
+		.execute();
+
+	return rows.map((row) => ({
+		id: row.id,
+		name: row.name,
+		url: row.tournamentId
+			? tournamentPage(row.tournamentId)
+			: calendarEventPage(row.id),
+		logoUrl: row.logoUrl,
+		startsAt: row.startsAt,
+		venue: {
+			name: row.venueName,
+			city: row.city,
+			countryCode: row.countryCode,
+			latitude: row.latitude,
+			longitude: row.longitude,
+			timezone: row.timezone,
+		},
+	}));
 }
 
 export async function findById(
@@ -327,6 +450,7 @@ export async function findById(
 			"CalendarEventDate.startsAt",
 			"CalendarEventDate.eventId",
 			...commonUserSelect(eb, { idAs: "authorId" }),
+			withVenue(eb),
 			tournamentOrganization(eb.ref("CalendarEvent.organizationId")).as(
 				"organization",
 			),
@@ -538,6 +662,8 @@ type CreateArgs = Pick<
 	startTimes: Array<Tables["CalendarEventDate"]["startsAt"]>;
 	badges: Array<Tables["CalendarEventBadge"]["badgeId"]>;
 	trophyId?: Tables["CalendarEvent"]["trophyId"];
+	/** Where the event is held in person, `null` for an online event. */
+	venue?: CalendarEventVenueArgs | null;
 	/** The organizer's map pool: the maps of a "TO" tournament or the custom pool of a team picked one. */
 	mapPoolMaps?: Array<Pick<Tables["MapPoolMap"], "mode" | "stageId">>;
 	isFullTournament: boolean;
@@ -623,6 +749,7 @@ export async function insert(args: CreateArgs) {
 
 		await insertDates({ eventId, startTimes: args.startTimes }, trx);
 		await insertBadges({ eventId, badges: args.badges }, trx);
+		await upsertVenue({ eventId, venue: args.venue ?? null }, trx);
 
 		await upsertMapPool({ eventId, mapPoolMaps: args.mapPoolMaps ?? [] }, trx);
 
@@ -676,6 +803,9 @@ export async function update(args: UpdateArgs) {
 			.where("eventId", "=", args.eventId)
 			.execute();
 		await insertBadges({ eventId: args.eventId, badges: args.badges }, trx);
+		if (args.venue !== undefined) {
+			await upsertVenue({ eventId: args.eventId, venue: args.venue }, trx);
+		}
 
 		await upsertMapPool(
 			{ eventId: args.eventId, mapPoolMaps: args.mapPoolMaps ?? [] },
@@ -699,6 +829,8 @@ async function updateTournamentTables(
 	const settings = buildTournamentSettings(args, {
 		// not editable after creation
 		isTest: existingSettings.isTest,
+		// set on the admin stations page
+		autoAssignStations: existingSettings.autoAssignStations,
 	});
 
 	const changedFormat = Progression.changedBracketProgressionFormat(
@@ -797,7 +929,10 @@ async function resetTeamMapPicks(
 
 function buildTournamentSettings(
 	args: Omit<CreateArgs, "isFullTournament">,
-	{ isTest }: { isTest: boolean | undefined },
+	{
+		isTest,
+		autoAssignStations,
+	}: Pick<Tables["Tournament"]["settings"], "isTest" | "autoAssignStations">,
 ): Tables["Tournament"]["settings"] {
 	invariant(args.bracketProgression, "Expected bracketProgression");
 
@@ -805,6 +940,7 @@ function buildTournamentSettings(
 		bracketProgression: args.bracketProgression,
 		isRanked: args.isRanked,
 		isTest,
+		autoAssignStations,
 		isLeague: args.isLeague,
 		isDraft: args.isDraft,
 		isInvitational: args.isInvitational,
@@ -935,7 +1071,45 @@ async function upsertMapPool(
 		.execute();
 }
 
+type CalendarEventVenueArgs = Omit<Tables["CalendarEventVenue"], "eventId">;
+
+/**
+ * Sets where the event is held in person, `null` makes it an online event. Exported for the venue factory, the app sets it via `insert` / `update`.
+ * @internal
+ */
+export async function upsertVenue(
+	{
+		eventId,
+		venue,
+	}: {
+		eventId: number;
+		venue: CalendarEventVenueArgs | null;
+	},
+	executor: Kysely<DB> = db,
+) {
+	if (!venue) {
+		await executor
+			.deleteFrom("CalendarEventVenue")
+			.where("eventId", "=", eventId)
+			.execute();
+		return;
+	}
+
+	await executor
+		.insertInto("CalendarEventVenue")
+		.values({ ...venue, eventId })
+		.onConflict((oc) => oc.column("eventId").doUpdateSet(venue))
+		.execute();
+}
+
 /** Deletes the event, and its tournament if it has one. */
 export function deleteById(eventId: number) {
 	return db.deleteFrom("CalendarEvent").where("id", "=", eventId).execute();
+}
+
+/** The latest bracket start time of the joined `Tournament`'s progression, `null` when none has one. */
+function latestBracketStartTime() {
+	return sql<
+		number | null
+	>`(select max(json_extract("bracket"."value", '$.startTime')) from json_each("Tournament"."settings", '$.bracketProgression') as "bracket")`;
 }

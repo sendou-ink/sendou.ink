@@ -9,6 +9,7 @@ import {
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { autoAssignStations } from "~/features/tournament-stations/core/autoAssignStations.server";
 import { defineAction } from "~/form/define-action.server";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -377,6 +378,7 @@ export const action = defineAction(
 
 		clearTournamentDataCache(tournamentId);
 
+		await autoAssignStations(tournament);
 		await notifyTournamentStatusChanged(tournamentId, statusChangedUserIds);
 
 		if (emitTournamentUpdate) {

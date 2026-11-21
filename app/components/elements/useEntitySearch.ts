@@ -3,16 +3,22 @@ import { useFetcher } from "react-router";
 import { SEARCH_DEBOUNCE_MS } from "~/features/search/search-constants";
 import { useDebounce } from "~/hooks/useDebounce";
 
-/** Sentinel items rendered in place of real results while loading or when empty. */
-type EntitySearchPlaceholder = { id: "PLACEHOLDER" } | { id: "NO_RESULTS" };
+/** Sentinel items rendered in place of real results while loading, when empty or when the search failed. */
+type EntitySearchPlaceholder =
+	| { id: "PLACEHOLDER" }
+	| { id: "NO_RESULTS" }
+	| { id: "UNAVAILABLE" };
 
 type EntitySearchItem<TItem> = TItem | EntitySearchPlaceholder;
 
 interface UseEntitySearchArgs<TItem extends { id: number }> {
 	/** Builds the loader URL queried (debounced) as the user types. */
 	buildUrl: (query: string) => string;
-	/** Return `null` when the data does not (yet) correspond to the query, showing a placeholder. */
-	parseResults: (data: unknown, query: string) => TItem[] | null;
+	/** Return `null` when the data does not (yet) correspond to the query, showing a placeholder, or `"UNAVAILABLE"` when the search failed. */
+	parseResults: (
+		data: unknown,
+		query: string,
+	) => TItem[] | null | "UNAVAILABLE";
 	/** renders the selection before it is picked from the results (e.g. when editing) */
 	initialItem?: TItem;
 	/** preselected on mount even before its item is resolved */
@@ -98,9 +104,10 @@ export function useEntitySearch<TItem extends { id: number }>({
 }
 
 function toEntitySearchItems<TItem extends { id: number }>(
-	parsed: TItem[] | null,
+	parsed: TItem[] | null | "UNAVAILABLE",
 ): EntitySearchItem<TItem>[] {
 	if (parsed === null) return [{ id: "PLACEHOLDER" }];
+	if (parsed === "UNAVAILABLE") return [{ id: "UNAVAILABLE" }];
 	if (parsed.length === 0) return [{ id: "NO_RESULTS" }];
 	return parsed;
 }

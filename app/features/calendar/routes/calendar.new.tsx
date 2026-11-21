@@ -18,6 +18,7 @@ import { Label } from "~/components/Label";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { useMapPoolQuickFill } from "~/components/MapPoolPicker";
+import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
 import type {
@@ -33,13 +34,15 @@ import {
 	SendouForm,
 	useFormFieldContext,
 	useFormSteps,
+	useFormWallClockZone,
 } from "~/form/SendouForm";
+import type { AddressSearchFieldOptions, SelectOption } from "~/form/types";
 import { errorMessageId } from "~/form/utils";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { databaseTimestampToDate } from "~/utils/dates";
+import { databaseTimestampToDate, zonesReadSameClock } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -53,11 +56,14 @@ import {
 	calendarNewBaseSchema,
 	calendarNewSchema,
 	customTeamPickPool,
+	type FilledVenueName,
 	type TeamPickCountsFormValue,
 	TOURNAMENT_FORM_STEPS,
 	teamPickSettingsFromFormValues,
 	tournamentTagsField,
 	valuesMovedWithStartTime,
+	venueNameAfterAddressPick,
+	venueTimeZoneFromFormValues,
 } from "../calendar-new-schemas";
 import {
 	type BracketFormValue,
@@ -68,6 +74,7 @@ import {
 import { calendarNewSearchParams } from "../calendar-search-params";
 import type { CalendarEventTag } from "../calendar-types";
 import { BracketProgressionBuilder } from "../components/BracketProgressionBuilder";
+import { VenueTimeNotice } from "../components/VenueTimeNotice";
 import { loader } from "../loaders/calendar.new.server";
 
 export { action, loader };
@@ -90,6 +97,11 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["calendar", "game-misc", "tournament"],
 };
+
+const TIMEZONE_OPTIONS: SelectOption[] = TIMEZONES.map((timezone) => ({
+	value: timezone,
+	label: timezone,
+}));
 
 const useBaseEvent = () => {
 	const { eventToEdit, eventToCopy } = useLoaderData<typeof loader>();
@@ -162,6 +174,7 @@ export default function CalendarNewEventPage() {
 					fullWidth
 					steps={data.isAddingTournament ? TOURNAMENT_FORM_STEPS : undefined}
 					submitOnEveryStep={Boolean(data.eventToEdit)}
+					timeZone={venueTimeZoneFromFormValues}
 				>
 					{data.isAddingTournament ? (
 						<TournamentSteps />
@@ -229,6 +242,18 @@ function useDefaultValues() {
 			? String(baseEvent.organization.id)
 			: null,
 		rules: baseEvent?.rules ?? "",
+		isLan: Boolean(baseEvent?.venue),
+		venueAddress: baseEvent?.venue
+			? {
+					address: baseEvent.venue.address,
+					city: baseEvent.venue.city,
+					countryCode: baseEvent.venue.countryCode,
+					latitude: baseEvent.venue.latitude,
+					longitude: baseEvent.venue.longitude,
+				}
+			: null,
+		venueName: baseEvent?.venue?.name ?? "",
+		venueTimezone: baseEvent?.venue?.timezone ?? null,
 		date: data.isAddingTournament
 			? []
 			: (data.eventToEdit?.startTimes?.map((t) =>
@@ -407,6 +432,7 @@ function TournamentSteps() {
 				<div className={styles.stepColumn}>
 					{isEditing ? null : <CopyTournamentPicker />}
 					<FormField name="name" autoFocus={Boolean(data.eventToCopy)} />
+					<VenueFields isEditing={isEditing} />
 					<FormField
 						name="startTime"
 						required
@@ -513,6 +539,7 @@ function TournamentReview() {
 	const data = useLoaderData<typeof loader>();
 	const { values } = useFormFieldContext();
 	const { steps, goToStep } = useFormSteps();
+	const wallClockZone = useFormWallClockZone();
 	const organizationOptions = useOrganizationOptions();
 
 	const fieldLabel = (
@@ -556,10 +583,12 @@ function TournamentReview() {
 						month: "short",
 						hour: "numeric",
 						minute: "numeric",
+						timeZone: wallClockZone,
 					}}
 				/>
 			) : null,
 			organizationName ?? null,
+			values.isLan ? (values.venueName as string) || null : null,
 		],
 		teams: [
 			`${playersCount}v${playersCount}`,
@@ -620,6 +649,65 @@ function TournamentReview() {
 				})}
 			</dl>
 		</SendouSection>
+	);
+}
+
+// a tournament can't switch between LAN and online after it's created
+function VenueFields({ isEditing }: { isEditing: boolean }) {
+	const { t } = useTranslation(["forms"]);
+	const { eventToEdit, eventToCopy } = useLoaderData<typeof loader>();
+	const { values, setValue } = useFormFieldContext();
+	const [filledVenueName, setFilledVenueName] = React.useState<FilledVenueName>(
+		{
+			name: eventToCopy?.venue?.name ?? "",
+			isCopied: true,
+		},
+	);
+	const timeZone = venueTimeZoneFromFormValues(values);
+	const savedTimeZone = eventToEdit?.venue?.timezone ?? null;
+	// the times keep their wall clock, so a new zone moves them
+	const isTimeZoneChanged = Boolean(
+		savedTimeZone && timeZone && !zonesReadSameClock(savedTimeZone, timeZone),
+	);
+
+	const addressOptions: AddressSearchFieldOptions = {
+		onAddressSelected: (address) => {
+			if (!address) return;
+
+			setValue("venueTimezone", address.timezone);
+
+			const { name, filledName } = venueNameAfterAddressPick({
+				currentName:
+					typeof values.venueName === "string" ? values.venueName : "",
+				filledName: filledVenueName,
+				placeName: address.placeName,
+			});
+			setValue("venueName", name);
+			setFilledVenueName(filledName);
+		},
+		tournamentId: eventToEdit?.tournamentId ?? undefined,
+	};
+
+	return (
+		<>
+			{isEditing ? null : <FormField name="isLan" />}
+			{values.isLan ? (
+				<>
+					<FormField name="venueAddress" options={addressOptions} required />
+					<FormField name="venueName" required />
+					<FormField name="venueTimezone" options={TIMEZONE_OPTIONS} required />
+					<VenueTimeNotice timeZone={timeZone} />
+					{isTimeZoneChanged ? (
+						<Alert variation="WARNING" tiny>
+							{t("forms:datetime.venueTimeZoneChanged", {
+								timeZone,
+								previousTimeZone: savedTimeZone,
+							})}
+						</Alert>
+					) : null}
+				</>
+			) : null}
+		</>
 	);
 }
 

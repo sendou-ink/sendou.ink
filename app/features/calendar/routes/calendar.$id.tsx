@@ -8,13 +8,14 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouSection } from "~/components/elements/Section";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
-import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { MapPoolStages } from "~/components/MapPoolStages";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
 import { UserLink } from "~/components/UserLink";
+import { VenueLocaleTime } from "~/components/VenueLocaleTime";
 import { calendarEditPage } from "~/features/calendar/calendar-urls";
+import { VenueInfo } from "~/features/calendar/components/VenueInfo";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
 import { useHasPermission } from "~/modules/permissions/hooks";
@@ -97,8 +98,9 @@ export default function CalendarEventPage() {
 									number: i + 1,
 								})}
 							</span>
-							<LocaleTime
+							<VenueLocaleTime
 								date={startTime}
+								venueTimezone={data.event.venue?.timezone}
 								options={{
 									hour: "numeric",
 									minute: "numeric",
@@ -116,6 +118,7 @@ export default function CalendarEventPage() {
 						<h2>{data.event.name}</h2>
 						<Tags tags={data.event.tags} />
 					</div>
+					{data.event.venue ? <VenueInfo venue={data.event.venue} /> : null}
 					<div className="stack horizontal sm flex-wrap">
 						{data.event.discordUrl ? (
 							<LinkButton

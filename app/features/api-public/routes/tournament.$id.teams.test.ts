@@ -31,7 +31,7 @@ const fetchTeams = async (tournamentId: number, user?: TestUser) => {
 const registeredPlayer = async () => {
 	const organizer = await UserFactory.create();
 	const player = await UserFactory.create({
-		discordName: "xXsplatlordXx",
+		defaultName: "xXsplatlordXx",
 		profile: null,
 	});
 	const tournament = await TournamentFactory.create({

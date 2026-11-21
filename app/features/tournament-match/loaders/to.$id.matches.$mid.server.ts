@@ -24,6 +24,7 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { showsOneGroupAtATime } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { tournamentStationsState } from "~/features/tournament-stations/core/tournamentStationsState.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, ttl } from "~/utils/cache.server";
@@ -173,6 +174,25 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		isParticipant,
 	});
 
+	const stationsState = await tournamentStationsState(tournament);
+	const matchStation = matchIsOver
+		? null
+		: (stationsState?.stationByMatchId.get(matchId) ?? null);
+
+	// station notices go to the teams only
+	if (tournament.isLan && user && isParticipant) {
+		for (const type of [
+			"TO_MATCH_STATION_ASSIGNED",
+			"TO_MATCH_STATION_MOVED",
+		] as const) {
+			await resolveNotifications({
+				userIds: [user.id],
+				type,
+				meta: { matchId },
+			});
+		}
+	}
+
 	const canJoin =
 		!matchIsOver &&
 		R.isNonNullish(match.opponentOne?.id) &&
@@ -229,6 +249,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		),
 		canJoin,
 		schedule,
+		// LAN only
+		station: matchStation,
+		// the match played now on its station needs no countdown
+		eta:
+			matchIsOver || matchStation?.isNow
+				? null
+				: (stationsState?.etas.matchStarts.get(matchId) ?? null),
 		// the views can't derive these themselves, the layout ships no bracket match data
 		bracketContext: {
 			bracketIdx,

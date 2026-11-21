@@ -30,6 +30,7 @@ export function RoundHeader({
 	roundStartedAt?: number | null;
 	matches?: Array<Unpacked<TournamentData["data"]["match"]>>;
 }) {
+	const tournament = useTournament();
 	const leagueRoundStartDate = useLeagueRoundStartDate(bracketIdx, roundId);
 
 	const countPrefix = maps?.type === "PLAY_ALL" ? "Play all " : "Bo";
@@ -51,7 +52,10 @@ export function RoundHeader({
 						{bestOf}
 						{pickBanSuffix}
 					</div>
-					{roundStartedAt && matches && matches.length > 0 ? (
+					{roundStartedAt &&
+					matches &&
+					matches.length > 0 &&
+					!tournament.isLan ? (
 						<RoundTimer
 							startedAt={roundStartedAt}
 							bestOf={bestOf}

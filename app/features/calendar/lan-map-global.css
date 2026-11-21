@@ -1,0 +1,2 @@
+/* layered, so the map's CSS modules can restyle e.g. its popups */
+@import url("maplibre-gl/dist/maplibre-gl.css") layer(base);

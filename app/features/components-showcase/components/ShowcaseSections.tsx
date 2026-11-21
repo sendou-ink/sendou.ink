@@ -1689,6 +1689,7 @@ const USER_CARD_DATA = {
 	customUrl: "sendou",
 	banner: { type: "STAGE", stageId: 5 },
 	shortBio: "Very show bio goes here maybe max two lines that gets clamped.",
+	isPlaceholder: false,
 	customTheme: null,
 	friendCode: "1234-1234-1234",
 	freeAgentPostId: 1,
@@ -3203,6 +3204,20 @@ const GLOBAL_STATUS_EXAMPLES: Array<{
 			state: "TO_WAITING_FOR_CAST",
 			url: tournamentPage(1),
 			roundName: "Grand Finals",
+			...SEED_TOURNAMENT,
+		},
+	},
+	{
+		id: "to-waiting-for-station",
+		name: "Tournament waiting for a station",
+		status: {
+			state: "TO_WAITING_FOR_STATION",
+			url: tournamentPage(1),
+			roundName: "Winners Round 2",
+			eta: {
+				earliest: Date.now() + 15 * 60 * 1000,
+				latest: Date.now() + 25 * 60 * 1000,
+			},
 			...SEED_TOURNAMENT,
 		},
 	},

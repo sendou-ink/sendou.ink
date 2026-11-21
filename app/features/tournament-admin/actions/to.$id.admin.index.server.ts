@@ -20,6 +20,7 @@ import {
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
 import { tournamentMatchChannel } from "~/features/tournament-match/tournament-match-utils";
+import { autoAssignStations } from "~/features/tournament-stations/core/autoAssignStations.server";
 import { defineAction } from "~/form/define-action.server";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -173,6 +174,7 @@ export const action = defineAction(
 
 		clearTournamentDataCache(tournamentId);
 
+		await autoAssignStations(tournament);
 		await notifyTournamentStatusChanged(tournamentId, statusChangedUserIds);
 
 		ChatSystemMessage.send(

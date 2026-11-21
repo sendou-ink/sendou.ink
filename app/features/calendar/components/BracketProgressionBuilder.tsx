@@ -1,3 +1,4 @@
+import { tz } from "@date-fns/tz";
 import {
 	type CollisionDetection,
 	DndContext,
@@ -34,6 +35,7 @@ import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	useFieldRevealer,
 	useFormFieldContext,
+	useFormWallClockZone,
 	useOptionalFormFieldContext,
 } from "~/form/SendouForm";
 import type { ArrayItemRenderContext } from "~/form/types";
@@ -121,10 +123,12 @@ export function BracketProgressionBuilder({
 	isInvitational: boolean;
 }) {
 	const { t } = useTranslation(["calendar", "common", "forms"]);
+	const wallClockZone = useFormWallClockZone();
 	const { formatter: startTimeFormatter } = useDateTimeFormat({
 		weekday: "short",
 		hour: "numeric",
 		minute: "2-digit",
+		timeZone: wallClockZone,
 	});
 	const { formatter: startDateTimeFormatter } = useDateTimeFormat({
 		weekday: "short",
@@ -132,6 +136,7 @@ export function BracketProgressionBuilder({
 		month: "short",
 		hour: "numeric",
 		minute: "2-digit",
+		timeZone: wallClockZone,
 	});
 	const {
 		values: formValues,
@@ -261,7 +266,11 @@ export function BracketProgressionBuilder({
 	const tournamentStartTime =
 		formValues.startTime instanceof Date ? formValues.startTime : null;
 	const isOnTournamentStartDay = (date: Date) =>
-		tournamentStartTime ? isSameDay(date, tournamentStartTime) : false;
+		tournamentStartTime
+			? isSameDay(date, tournamentStartTime, {
+					in: wallClockZone ? tz(wallClockZone) : undefined,
+				})
+			: false;
 
 	const bracketColumns = BracketBuilder.columns(values, minColumns);
 	const lines = BracketBuilder.connections(values);

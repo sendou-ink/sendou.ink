@@ -1,5 +1,6 @@
 import * as React from "react";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
+import { useFormWallClockZone } from "../SendouForm";
 import type { FormFieldProps } from "../types";
 import { ariaAttributes } from "../utils";
 import { FormFieldWrapper } from "./FormFieldWrapper";
@@ -28,6 +29,7 @@ export function DatetimeFormField({
 	disabled,
 }: DatetimeFormFieldProps) {
 	const id = React.useId();
+	const wallClockZone = useFormWallClockZone();
 	const [hasBadInput, setHasBadInput] = React.useState(false);
 	const displayedError =
 		error && hasBadInput ? "forms:errors.invalidDate" : error;
@@ -55,6 +57,7 @@ export function DatetimeFormField({
 				disabled={disabled}
 				value={value ?? null}
 				onChange={handleChange}
+				timeZone={wallClockZone}
 				onBlur={() => onBlur?.()}
 				{...ariaAttributes({
 					name,

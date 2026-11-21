@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { ActionButton } from "~/components/ActionButton";
-import { LocaleTimeRange } from "~/components/LocaleTimeRange";
+import { VenueLocaleTime } from "~/components/VenueLocaleTime";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { bracketSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
@@ -32,14 +32,15 @@ export function BracketCheckIn({ bracketIdx }: { bracketIdx: number }) {
 			) : bracket.startTime && bracket.startTime > new Date() ? (
 				<span className="text-lighter text-xxs">
 					{t("tournament:bracket.checkIn.opens")}{" "}
-					<LocaleTimeRange
-						from={tournament.bracketCheckInStartsAt(bracket.idx)!}
+					<VenueLocaleTime
+						date={tournament.bracketCheckInStartsAt(bracket.idx)!}
 						to={bracket.startTime}
 						options={{
 							hour: "numeric",
 							minute: "numeric",
 							weekday: "short",
 						}}
+						venueTimezone={tournament.venue?.timezone}
 						inline
 					/>
 				</span>

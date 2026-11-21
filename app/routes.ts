@@ -180,6 +180,8 @@ export default [
 	...prefix("/calendar", [
 		index("features/calendar/routes/calendar.tsx"),
 		route("new", "features/calendar/routes/calendar.new.tsx"),
+		route("venue-search", "features/calendar/routes/calendar.venue-search.ts"),
+		route("lan-map", "features/calendar/routes/calendar.lan-map.tsx"),
 		route(":id", "features/calendar/routes/calendar.$id.tsx"),
 		route(
 			":id/report-winners",
@@ -204,6 +206,14 @@ export default [
 	),
 
 	route("/to/search", "features/tournament/routes/to.search.ts"),
+	route(
+		"/to/:id/stations/display",
+		"features/tournament-stations/routes/to.$id.stations.display.tsx",
+	),
+	route(
+		"/to/:id/stations/display/stream",
+		"features/tournament-stations/routes/to.$id.stations.display.stream.ts",
+	),
 	route("/to/:id", "features/tournament/routes/to.$id.tsx", [
 		index("features/tournament/routes/to.$id.index.ts"),
 		route("info", "features/tournament/routes/to.$id.info.tsx"),
@@ -234,6 +244,11 @@ export default [
 				"brackets",
 				"features/tournament-admin/routes/to.$id.admin.brackets.tsx",
 			),
+			route(
+				"stations",
+				"features/tournament-admin/routes/to.$id.admin.stations.tsx",
+			),
+			route("board", "features/tournament-admin/routes/to.$id.admin.board.tsx"),
 			route("audit", "features/tournament-admin/routes/to.$id.admin.audit.tsx"),
 		]),
 		route("results", "features/tournament/routes/to.$id.results.tsx"),

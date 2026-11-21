@@ -7,6 +7,7 @@ import {
 	Eye,
 	EyeOff,
 	Link as LinkIcon,
+	MapPinned,
 } from "lucide-react";
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -14,6 +15,7 @@ import type { MetaFunction } from "react-router";
 import { Link, useLoaderData, useNavigate } from "react-router";
 import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import {
+	LinkButton,
 	SendouButton,
 	type SendouButtonProps,
 } from "~/components/elements/Button";
@@ -31,7 +33,7 @@ import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { DayMonthYear } from "~/utils/schema";
-import { CALENDAR_PAGE, navIconUrl } from "~/utils/urls";
+import { CALENDAR_PAGE, LAN_MAP_PAGE, navIconUrl } from "~/utils/urls";
 import { action } from "../actions/calendar";
 import { daysForCalendar } from "../calendar-utils";
 import { FiltersBar } from "../components/FiltersBar";
@@ -89,6 +91,15 @@ export default function CalendarPage() {
 					/>
 				</div>
 				<div className="stack sm horizontal ml-auto">
+					<LinkButton
+						to={LAN_MAP_PAGE}
+						icon={<MapPinned />}
+						size="small"
+						variant="outlined"
+						testId="lan-map-button"
+					>
+						{t("calendar:lanMap.title")}
+					</LinkButton>
 					<CopyToClipboardPopover
 						trigger={
 							<SendouButton icon={<LinkIcon />} size="small" variant="outlined">

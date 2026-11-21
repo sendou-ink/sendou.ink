@@ -1,0 +1,4 @@
+/* see the map in LanMap.module.css */
+.placeholder {
+	height: min(75dvh, 48rem);
+}

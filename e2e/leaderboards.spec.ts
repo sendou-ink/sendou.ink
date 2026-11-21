@@ -93,10 +93,10 @@ test.describe("Leaderboards", () => {
  */
 async function seedLeaderboards(factories: Factories) {
 	const mates = await factories.UserFactory.createMany(3, (i) => ({
-		discordName: `Alpha Mate ${i + 1}`,
+		defaultName: `Alpha Mate ${i + 1}`,
 	}));
 	const enemies = await factories.UserFactory.createMany(4, (i) => ({
-		discordName: `Bravo Foe ${i + 1}`,
+		defaultName: `Bravo Foe ${i + 1}`,
 	}));
 
 	const alphaUserIds = [ADMIN_ID, ...mates.map((mate) => mate.id)];
@@ -124,7 +124,7 @@ async function seedLeaderboards(factories: Factories) {
 	}
 
 	const tailEnders = await factories.UserFactory.createMany(3, (i) => ({
-		discordName: `Tail Ender ${i + 1}`,
+		defaultName: `Tail Ender ${i + 1}`,
 	}));
 	for (const [i, tailEnder] of tailEnders.entries()) {
 		await factories.SkillFactory.create(

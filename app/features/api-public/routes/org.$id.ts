@@ -1,3 +1,4 @@
+import type { NotNull } from "kysely";
 import type { LoaderFunctionArgs } from "react-router";
 import { db } from "~/db/sql";
 import {
@@ -44,7 +45,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 							"TournamentOrganizationMember.organizationId",
 							"=",
 							organizationId,
-						),
+						)
+						.where("User.discordId", "is not", null)
+						.$narrowType<{ discordId: NotNull }>(),
 				).as("members"),
 			])
 			.where("TournamentOrganization.id", "=", organizationId)

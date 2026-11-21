@@ -1,6 +1,7 @@
 import { addDays } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as BadgeFactory from "~/db/seed/factories/BadgeFactory";
+import * as CalendarEventVenueFactory from "~/db/seed/factories/CalendarEventVenueFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
@@ -9,6 +10,7 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
 import * as XpTrophy from "~/features/trophies/core/XpTrophy";
 import { invariant } from "~/utils/invariant";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
@@ -451,4 +453,219 @@ describe("calendar new action: trophy prize", () => {
 			assertResponseErrored(res, "Trophy does not belong");
 		},
 	);
+});
+
+describe("calendar new action: venue", () => {
+	beforeEach(async () => {
+		await UserFactory.createRegular(null, { roles: ["TOURNAMENT_ORGANIZER"] });
+	});
+
+	const lanFields = {
+		isLan: true,
+		venueAddress: {
+			address: "500 East Cesar Chavez Street, 78701 Austin, TX, United States",
+			city: "Austin",
+			countryCode: "US",
+			latitude: 30.2636,
+			longitude: -97.7397,
+		},
+		venueName: "Hilton Ballroom B",
+		venueTimezone: "America/Chicago",
+	};
+
+	const createdEventId = (res: unknown) => {
+		const location =
+			res instanceof Response ? res.headers.get("Location") : null;
+		invariant(location, "expected a redirect to the created event");
+
+		return Number(location.split("/").at(-1));
+	};
+
+	test("LAN tournament is created with its venue", async () => {
+		const res = await editAction(calendarNewFormValues(lanFields), {
+			user: "regular",
+		});
+
+		const created = await CalendarRepository.findById(createdEventId(res));
+		invariant(created?.tournamentId, "expected a tournament");
+		const tournament = await tournamentFromDB(created.tournamentId);
+
+		expect(created.venue).toEqual({
+			name: "Hilton Ballroom B",
+			...lanFields.venueAddress,
+			timezone: "America/Chicago",
+		});
+		expect(tournament.isLan).toBe(true);
+		expect(tournament.venue?.name).toBe("Hilton Ballroom B");
+	});
+
+	test("tournament doesn't store the LAN tag, its venue implies it", async () => {
+		const res = await editAction(
+			calendarNewFormValues({ ...lanFields, tags: ["LAN", "SPECIAL"] }),
+			{ user: "regular" },
+		);
+
+		expect(
+			(await CalendarRepository.findById(createdEventId(res)))?.tags,
+		).toEqual(["SPECIAL"]);
+	});
+
+	test("online tournament ignores leftover venue fields", async () => {
+		const res = await editAction(
+			calendarNewFormValues({ ...lanFields, isLan: false }),
+			{ user: "regular" },
+		);
+
+		const created = await CalendarRepository.findById(createdEventId(res));
+		invariant(created?.tournamentId, "expected a tournament");
+
+		expect(created.venue).toBeNull();
+		expect((await tournamentFromDB(created.tournamentId)).isLan).toBe(false);
+	});
+
+	test.each([
+		{
+			why: "address",
+			field: "venueAddress",
+			overrides: { venueAddress: null },
+		},
+		{ why: "name", field: "venueName", overrides: { venueName: "" } },
+		{
+			why: "timezone",
+			field: "venueTimezone",
+			overrides: { venueTimezone: null },
+		},
+		{
+			why: "unknown timezone",
+			field: "venueTimezone",
+			overrides: { venueTimezone: "Mars/Olympus_Mons" },
+		},
+	] as const)("LAN requires the venue's $why", async ({ field, overrides }) => {
+		const res = await editAction(
+			calendarNewFormValues({ ...lanFields, ...overrides }),
+			{ user: "regular" },
+		);
+
+		expect(res.fieldErrors[field]).toBe("forms:errors.required");
+	});
+
+	test("calendar event ignores venue fields", async () => {
+		const res = await editAction(
+			calendarNewFormValues({
+				...lanFields,
+				venueName: "",
+				toToolsEnabled: false,
+				date: [addDays(new Date(), 7).toISOString() as never],
+				startTime: null,
+				bracketUrl: "https://example.com",
+			}),
+			{ user: "regular" },
+		);
+
+		expect(
+			(await CalendarRepository.findById(createdEventId(res)))?.venue,
+		).toBeNull();
+	});
+
+	test("editing keeps auto-assign stations turned off", async () => {
+		const eventId = createdEventId(
+			await editAction(calendarNewFormValues(lanFields), { user: "regular" }),
+		);
+		const created = await CalendarRepository.findById(eventId);
+		invariant(created?.tournamentId, "expected a tournament");
+		await TournamentStationRepository.setStations({
+			tournamentId: created.tournamentId,
+			stations: [],
+			autoAssign: false,
+		});
+
+		await editAction(
+			calendarNewFormValues({
+				...lanFields,
+				name: "Renamed",
+				eventToEditId: eventId,
+			}),
+			{ user: "regular" },
+		);
+
+		expect(
+			(await tournamentFromDB(created.tournamentId)).autoAssignsStations,
+		).toBe(false);
+	});
+
+	test.each([
+		{ why: "off", createdAsLan: true },
+		{ why: "on", createdAsLan: false },
+	])("turning LAN $why on edit is rejected", async ({ createdAsLan }) => {
+		const eventId = createdEventId(
+			await editAction(
+				calendarNewFormValues({ ...lanFields, isLan: createdAsLan }),
+				{ user: "regular" },
+			),
+		);
+
+		const res = await editAction(
+			calendarNewFormValues({
+				...lanFields,
+				isLan: !createdAsLan,
+				eventToEditId: eventId,
+			}),
+			{ user: "regular" },
+		);
+
+		assertResponseErrored(res, "can't switch between LAN and online");
+		expect(Boolean((await CalendarRepository.findById(eventId))?.venue)).toBe(
+			createdAsLan,
+		);
+	});
+
+	test("editing a LAN tournament updates its venue", async () => {
+		const eventId = createdEventId(
+			await editAction(calendarNewFormValues(lanFields), { user: "regular" }),
+		);
+
+		await editAction(
+			calendarNewFormValues({
+				...lanFields,
+				venueName: "Hilton Ballroom C",
+				eventToEditId: eventId,
+			}),
+			{ user: "regular" },
+		);
+
+		expect((await CalendarRepository.findById(eventId))?.venue?.name).toBe(
+			"Hilton Ballroom C",
+		);
+	});
+
+	test("editing a calendar event keeps its venue", async () => {
+		const calendarEventFields = {
+			toToolsEnabled: false,
+			date: [addDays(new Date(), 7).toISOString() as never],
+			startTime: null,
+			bracketUrl: "https://example.com",
+		};
+		const eventId = createdEventId(
+			await editAction(calendarNewFormValues(calendarEventFields), {
+				user: "regular",
+			}),
+		);
+		await CalendarEventVenueFactory.create({
+			eventId,
+			...CalendarEventVenueFactory.placeIn("Helsinki"),
+		});
+
+		await editAction(
+			calendarNewFormValues({
+				...calendarEventFields,
+				name: "Renamed",
+				eventToEditId: eventId,
+			}),
+			{ user: "regular" },
+		);
+
+		const edited = await CalendarRepository.findById(eventId);
+		expect(edited?.name).toBe("Renamed");
+		expect(edited?.venue?.city).toBe("Helsinki");
+	});
 });

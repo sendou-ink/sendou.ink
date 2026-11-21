@@ -29,6 +29,7 @@ import {
 	calendarNewSchema,
 	customTeamPickPool,
 	teamPickSettingsFromFormValues,
+	venueFromFormValues,
 } from "../calendar-new-schemas";
 import { formValuesToInputBrackets } from "../calendar-progression-form";
 import type { CalendarEventTag } from "../calendar-types";
@@ -117,6 +118,16 @@ export const action = defineAction(
 			).map((badge) => badge.id),
 		);
 
+		if (tournamentToEdit) {
+			errorToastIfFalsy(
+				data.isLan === tournamentToEdit.isLan,
+				"A tournament can't switch between LAN and online after it's created",
+			);
+		}
+		// plain calendar events can't be given a venue in the form, editing one keeps what it has
+		const venue =
+			eventToEdit && !tournamentToEdit ? undefined : venueFromFormValues(data);
+
 		const dates =
 			isAddingTournament && data.startTime ? [data.startTime] : data.date;
 		const startTimes = dates.map((date) => dateToDatabaseTimestamp(date));
@@ -133,13 +144,16 @@ export const action = defineAction(
 				: data.discordInviteCode,
 			tags: sortedTagsOrNull(
 				isAddingTournament
-					? data.tags.filter((tag) => !CalendarEvent.isVersusTag(tag))
+					? data.tags.filter(
+							(tag) => !CalendarEvent.isDerivedTournamentTag(tag),
+						)
 					: data.tags,
 			),
 			badges: data.trophyId
 				? []
 				: data.badges.filter((badge) => attachableBadgeIds.has(badge)),
 			trophyId: data.trophyId ?? null,
+			venue,
 			// resolved by resolveImages from the `image()` field
 			avatarImgId: data.avatarImgId ?? undefined,
 			toToolsEnabled: data.toToolsEnabled,

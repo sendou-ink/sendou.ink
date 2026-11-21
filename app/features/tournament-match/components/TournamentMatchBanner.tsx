@@ -9,6 +9,7 @@ import {
 	Users,
 	X,
 } from "lucide-react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -20,6 +21,7 @@ import {
 	MultiMatchBanner,
 	preloadStageBanners,
 } from "~/components/match-page/MatchBanner";
+import { MatchBannerArrows } from "~/components/match-page/MatchBannerArrows";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerScheduledTime } from "~/components/match-page/MatchBannerScheduledTime";
 import { MatchBannerStartedAt } from "~/components/match-page/MatchBannerStartedAt";
@@ -28,12 +30,14 @@ import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import { useTournament } from "~/features/tournament/tournament-context";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import { useStartsInText } from "~/features/tournament-stations/tournament-stations-hooks";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import * as LeagueScheduling from "../core/LeagueScheduling";
+import * as MatchMapPreview from "../core/MatchMapPreview";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { useMatch } from "../match-page-context";
 import { resolveHostingTeam } from "../tournament-match-utils";
@@ -57,6 +61,7 @@ export function TournamentMatchBanner({
 		minute: "2-digit",
 	});
 	const tournament = useTournament();
+	const startsIn = useStartsInText(data.eta);
 	const {
 		currentMap,
 		teamsMissingActiveRoster,
@@ -110,6 +115,25 @@ export function TournamentMatchBanner({
 			? !data.noScreen
 			: undefined;
 
+	// players of a LAN meet at the station, no room to join
+	const joinInfo = tournament.isLan
+		? { station: data.station, startsIn }
+		: { joinPool, joinPass, host };
+
+	const showsCurrentMap =
+		Boolean(currentMap) &&
+		!data.matchIsOver &&
+		!data.schedule.hasScheduling &&
+		!matchIsLocked &&
+		!isMissingTeam &&
+		!waitingForPreviousMatch &&
+		teamsMissingActiveRoster.length === 0 &&
+		!pickBanBanner;
+	const mapPreview = useMapPreview({
+		data,
+		current: { gameIndex: scoreSum, isMapShown: showsCurrentMap },
+	});
+
 	const activeRosterByTeamId = (tournamentTeamId: number) => {
 		const team = teams.find((candidate) => candidate?.id === tournamentTeamId);
 		if (!team) return null;
@@ -125,133 +149,146 @@ export function TournamentMatchBanner({
 	return (
 		<MatchBannerContainer>
 			<TournamentMatchBannerTopRow data={data} />
-			{data.matchIsOver ? (
-				droppedOutTeamName ? (
-					<IconBanner
-						icon={<Flag size={32} />}
-						header={t("tournament:match.droppedOut.header")}
-						subtitle={t("tournament:match.droppedOut.subtitle", {
-							team: droppedOutTeamName,
+			<MatchBannerArrows
+				onPrevious={mapPreview?.onPrevious}
+				onNext={mapPreview?.onNext}
+			>
+				{mapPreview?.viewed ? (
+					<MatchBanner
+						{...joinInfo}
+						stageId={mapPreview.viewed.map.stageId}
+						mode={mapPreview.viewed.map.mode}
+						preview={t("tournament:match.mapPreview.upcoming", {
+							number: mapPreview.viewed.gameIndex + 1,
 						})}
 					/>
-				) : data.endedEarly ? (
+				) : data.matchIsOver ? (
+					droppedOutTeamName ? (
+						<IconBanner
+							icon={<Flag size={32} />}
+							header={t("tournament:match.droppedOut.header")}
+							subtitle={t("tournament:match.droppedOut.subtitle", {
+								team: droppedOutTeamName,
+							})}
+						/>
+					) : data.endedEarly ? (
+						<IconBanner
+							icon={<Gavel size={32} />}
+							header={t("tournament:match.endedEarly.header")}
+							subtitle={t("tournament:match.endedEarly.subtitle")}
+						/>
+					) : (
+						<MultiMatchBanner
+							stageIds={data.results.map((result) => result.stageId)}
+						/>
+					)
+				) : schedule.phase === "NOT_OPEN" ? (
 					<IconBanner
-						icon={<Gavel size={32} />}
-						header={t("tournament:match.endedEarly.header")}
-						subtitle={t("tournament:match.endedEarly.subtitle")}
+						{...joinInfo}
+						icon={<CalendarClock size={32} />}
+						header={t("tournament:match.schedule.notOpen.header")}
+						subtitle={t("tournament:match.schedule.notOpen.subtitle", {
+							date: scheduleFormatter.format(
+								databaseTimestampToDate(schedule.opensAt),
+							),
+						})}
+						testId="league-not-open-banner"
 					/>
-				) : (
-					<MultiMatchBanner
-						stageIds={data.results.map((result) => result.stageId)}
+				) : schedule.phase === "UNSCHEDULED" ? (
+					<IconBanner
+						{...joinInfo}
+						icon={<CalendarClock size={32} />}
+						header={t("tournament:match.schedule.unscheduled.header")}
+						subtitle={t("tournament:match.schedule.unscheduled.subtitle")}
+						testId="league-unscheduled-banner"
 					/>
-				)
-			) : schedule.phase === "NOT_OPEN" ? (
-				<IconBanner
-					icon={<CalendarClock size={32} />}
-					header={t("tournament:match.schedule.notOpen.header")}
-					subtitle={t("tournament:match.schedule.notOpen.subtitle", {
-						date: scheduleFormatter.format(
-							databaseTimestampToDate(schedule.opensAt),
-						),
-					})}
-					testId="league-not-open-banner"
-				/>
-			) : schedule.phase === "UNSCHEDULED" ? (
-				<IconBanner
-					icon={<CalendarClock size={32} />}
-					header={t("tournament:match.schedule.unscheduled.header")}
-					subtitle={t("tournament:match.schedule.unscheduled.subtitle")}
-					testId="league-unscheduled-banner"
-				/>
-			) : schedule.phase === "SCHEDULED_LOCKED" && schedule.scheduledAt ? (
-				<IconBanner
-					icon={<Lock size={32} />}
-					header={scheduleFormatter.format(
-						databaseTimestampToDate(schedule.scheduledAt),
-					)}
-					subtitle={
-						leagueRoundStartDate
-							? t("tournament:match.leagueLocked.subtitle", {
-									date:
-										leagueRoundDateFormatter.format(leagueRoundStartDate) ?? "",
-								})
-							: undefined
-					}
-					testId="league-scheduled-locked-banner"
-				/>
-			) : matchIsLocked ? (
-				<IconBanner
-					icon={<Lock size={32} />}
-					header={t("tournament:match.locked.header")}
-					subtitle={t("tournament:match.locked.subtitle")}
-					screenLegal={screenLegal}
-					joinPool={joinPool}
-					joinPass={joinPass}
-					host={host}
-				/>
-			) : isMissingTeam ? (
-				<IconBanner
-					icon={<Hourglass size={32} />}
-					header={t("tournament:match.waitingForTeams.header")}
-					subtitle={t("tournament:match.waitingForTeams.subtitle")}
-				/>
-			) : waitingForPreviousMatch ? (
-				<IconBanner
-					icon={<Hourglass size={32} />}
-					header={t("tournament:match.waitingForPrevious.header")}
-					subtitle={t("tournament:match.waitingForPrevious.subtitle")}
-					screenLegal={screenLegal}
-					joinPool={joinPool}
-					joinPass={joinPass}
-					host={host}
-				/>
-			) : teamsMissingActiveRoster.length > 0 ? (
-				<IconBanner
-					icon={<Users size={32} />}
-					header={t("tournament:match.activeRosterMissing.header")}
-					subtitle={t("tournament:match.activeRosterMissing.subtitle", {
-						teams: teamsMissingActiveRoster.join(" & "),
-					})}
-					screenLegal={screenLegal}
-					joinPool={joinPool}
-					joinPass={joinPass}
-					host={host}
-					testId="active-roster-needed-text"
-				/>
-			) : pickBanBanner ? (
-				<IconBanner
-					icon={pickBanBanner.icon}
-					header={pickBanBanner.header}
-					subtitle={pickBanBanner.subtitle}
-					screenLegal={screenLegal}
-					joinPool={joinPool}
-					joinPass={joinPass}
-					host={host}
-				/>
-			) : currentMap ? (
-				<MatchBanner
-					stageId={currentMap.stageId}
-					mode={currentMap.mode}
-					screenLegal={screenLegal}
-					joinPool={joinPool}
-					joinPass={joinPass}
-					host={host}
-				>
-					<CurrentMapPickInfo
-						source={currentMap.source}
-						results={data.results}
-						opponentIds={
-							opponentOne?.id && opponentTwo?.id
-								? [opponentOne.id, opponentTwo.id]
-								: null
+				) : schedule.phase === "SCHEDULED_LOCKED" && schedule.scheduledAt ? (
+					<IconBanner
+						{...joinInfo}
+						icon={<Lock size={32} />}
+						header={scheduleFormatter.format(
+							databaseTimestampToDate(schedule.scheduledAt),
+						)}
+						subtitle={
+							leagueRoundStartDate
+								? t("tournament:match.leagueLocked.subtitle", {
+										date:
+											leagueRoundDateFormatter.format(leagueRoundStartDate) ??
+											"",
+									})
+								: undefined
 						}
-						pickBan={data.match.roundMaps?.pickBan ?? null}
+						testId="league-scheduled-locked-banner"
 					/>
-				</MatchBanner>
-			) : null}
+				) : matchIsLocked ? (
+					<IconBanner
+						{...joinInfo}
+						icon={<Lock size={32} />}
+						header={t("tournament:match.locked.header")}
+						subtitle={t("tournament:match.locked.subtitle")}
+						screenLegal={screenLegal}
+					/>
+				) : isMissingTeam ? (
+					<IconBanner
+						{...joinInfo}
+						icon={<Hourglass size={32} />}
+						header={t("tournament:match.waitingForTeams.header")}
+						subtitle={t("tournament:match.waitingForTeams.subtitle")}
+					/>
+				) : waitingForPreviousMatch ? (
+					<IconBanner
+						{...joinInfo}
+						icon={<Hourglass size={32} />}
+						header={t("tournament:match.waitingForPrevious.header")}
+						subtitle={t("tournament:match.waitingForPrevious.subtitle")}
+						screenLegal={screenLegal}
+					/>
+				) : teamsMissingActiveRoster.length > 0 ? (
+					<IconBanner
+						{...joinInfo}
+						icon={<Users size={32} />}
+						header={t("tournament:match.activeRosterMissing.header")}
+						subtitle={t("tournament:match.activeRosterMissing.subtitle", {
+							teams: teamsMissingActiveRoster.join(" & "),
+						})}
+						screenLegal={screenLegal}
+						testId="active-roster-needed-text"
+					/>
+				) : pickBanBanner ? (
+					<IconBanner
+						{...joinInfo}
+						icon={pickBanBanner.icon}
+						header={pickBanBanner.header}
+						subtitle={pickBanBanner.subtitle}
+						screenLegal={screenLegal}
+					/>
+				) : currentMap ? (
+					<MatchBanner
+						{...joinInfo}
+						stageId={currentMap.stageId}
+						mode={currentMap.mode}
+						screenLegal={screenLegal}
+					>
+						<CurrentMapPickInfo
+							source={currentMap.source}
+							results={data.results}
+							opponentIds={
+								opponentOne?.id && opponentTwo?.id
+									? [opponentOne.id, opponentTwo.id]
+									: null
+							}
+							pickBan={data.match.roundMaps?.pickBan ?? null}
+						/>
+					</MatchBanner>
+				) : null}
+			</MatchBannerArrows>
 			{data.matchIsOver ? null : (
 				<MatchBannerBottomRow
-					games={resolveBannerGames({ data })}
+					games={resolveBannerGames({
+						data,
+						upcomingMaps: mapPreview?.upcoming,
+					})}
+					previewedGameIndex={mapPreview?.viewed?.gameIndex}
 					activeRosters={
 						opponentOne?.id && opponentTwo?.id
 							? {
@@ -319,7 +356,7 @@ function TournamentMatchBannerTopRow({
 		<MatchBannerTopRow score={score}>
 			{data.matchIsOver ? (
 				<MatchBannerStartedAt time={startedAt} endTime={endedAt} />
-			) : (
+			) : tournament.isLan ? null : (
 				<MatchBannerTimer time={{ currentMinutes, totalMinutes }} />
 			)}
 		</MatchBannerTopRow>
@@ -593,15 +630,19 @@ function resolveDroppedOutTeamName({
 
 function resolveBannerGames({
 	data,
+	upcomingMaps,
 }: {
 	data: TournamentMatchLoaderData;
+	/** Without a map list yet, these are every game from the first one with a settled map. */
+	upcomingMaps?: Array<{ map: { mode: ModeShort } }>;
 }): Array<{ mode: ModeShort | null }> {
-	const playedAndScheduled =
-		data.mapList
-			?.filter((map) => !map.bannedByTournamentTeamId)
-			.map((map) => ({
-				mode: map.mode as ModeShort | null,
-			})) ?? [];
+	const playedAndScheduled = data.mapList
+		? data.mapList
+				.filter((map) => !map.bannedByTournamentTeamId)
+				.map((map) => ({
+					mode: map.mode as ModeShort | null,
+				}))
+		: (upcomingMaps?.map((game) => ({ mode: game.map.mode })) ?? []);
 
 	const placeholderCount = Math.max(
 		0,
@@ -614,4 +655,46 @@ function resolveBannerGames({
 			mode: null,
 		})),
 	];
+}
+
+/** LAN matches: the banner's arrows step through the maps of the match's upcoming games. */
+function useMapPreview({
+	data,
+	current,
+}: {
+	data: TournamentMatchLoaderData;
+	current: { gameIndex: number; isMapShown: boolean };
+}) {
+	const tournament = useTournament();
+	const [viewedGameIndex, setViewedGameIndex] = React.useState<number | null>(
+		null,
+	);
+
+	if (!tournament.isLan || data.matchIsOver) return null;
+
+	const upcoming = MatchMapPreview.upcomingMaps({
+		mapList: data.mapList,
+		roundMaps: data.match.roundMaps,
+		current,
+	});
+
+	// -1 = the live banner
+	const position = upcoming.findIndex(
+		(game) => game.gameIndex === viewedGameIndex,
+	);
+	// the match moved on past the viewed game, so an undo doesn't bring the preview back
+	if (position === -1 && viewedGameIndex !== null) {
+		setViewedGameIndex(null);
+	}
+	const next = upcoming[position + 1];
+
+	return {
+		upcoming,
+		viewed: upcoming[position] ?? null,
+		onPrevious:
+			position >= 0
+				? () => setViewedGameIndex(upcoming[position - 1]?.gameIndex ?? null)
+				: undefined,
+		onNext: next ? () => setViewedGameIndex(next.gameIndex) : undefined,
+	};
 }

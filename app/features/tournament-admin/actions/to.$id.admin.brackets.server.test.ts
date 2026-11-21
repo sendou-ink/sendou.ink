@@ -1,9 +1,12 @@
+import * as R from "remeda";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { TournamentSettings } from "~/db/tables-json";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
+import { createStartedLanTournament } from "~/features/tournament-stations/tests/fixtures";
 import { wrappedAction } from "~/utils/Test";
 import type { adminBracketsActionSchema } from "../tournament-admin-schemas";
 import { action } from "./to.$id.admin.brackets.server";
@@ -85,6 +88,37 @@ describe("UPDATE_TOURNAMENT_PROGRESSION", () => {
 		expect(tournament.ctx.settings.bracketProgression).toEqual(
 			bracketProgression,
 		);
+	});
+});
+
+describe("brackets action in a LAN", () => {
+	beforeEach(async () => {
+		await users.create(17);
+	});
+
+	test("puts the playable matches on the free stations", async () => {
+		const {
+			tournamentId,
+			stationIds: [firstStationId, secondStationId],
+			semifinalIds: [first, second],
+		} = await createStartedLanTournament({
+			authorId: organizerId(),
+			teamRosters: R.chunk(users.ids().slice(1), 4),
+		});
+
+		await updateProgression(
+			tournamentId,
+			(await tournamentFromDB(tournamentId)).ctx.settings.bracketProgression,
+		);
+
+		expect(
+			await TournamentStationRepository.findMatchPlacementsByTournamentId(
+				tournamentId,
+			),
+		).toEqual([
+			{ matchId: first, stationId: firstStationId, isAutoAssigned: 1 },
+			{ matchId: second, stationId: secondStationId, isAutoAssigned: 1 },
+		]);
 	});
 });
 

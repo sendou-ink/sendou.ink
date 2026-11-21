@@ -9,6 +9,7 @@ import * as Bans from "~/features/ban/core/Bans.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
+import { userSkills } from "~/features/mmr/tiered.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
@@ -393,5 +394,58 @@ describe("Account migration", () => {
 			const buildsAfter = await BuildRepository.findAllByUserId(id);
 			expect(buildsAfter.length).toBe(0);
 		}
+	});
+});
+
+describe("Claiming a placeholder", () => {
+	const CLAIMED_SEASON = 1;
+
+	beforeEach(async () => {
+		await createUsers(2);
+	});
+
+	const claimAction = (placeholderUserId: number) =>
+		adminAction(
+			{
+				_action: "CLAIM_PLACEHOLDER",
+				placeholderUserId,
+				user: users.id(1),
+			},
+			{ user: "admin" },
+		);
+
+	test("deletes the claimed placeholder", async () => {
+		const placeholder = await UserFactory.createPlaceholder();
+
+		await claimAction(placeholder.id);
+
+		expect(await UserRepository.findPlaceholderById(placeholder.id)).toBe(
+			undefined,
+		);
+	});
+
+	test("refreshes the tiers of the seasons the placeholder had skill in", async () => {
+		const placeholder = await UserFactory.createPlaceholder();
+		await SkillFactory.create(
+			{ userId: placeholder.id, season: CLAIMED_SEASON },
+			{ matchesCount: MATCHES_COUNT_NEEDED_FOR_LEADERBOARD },
+		);
+		// cached before the claim, like a season whose tiers are already computed
+		await userSkills(CLAIMED_SEASON);
+
+		await claimAction(placeholder.id);
+
+		expect(
+			(await userSkills(CLAIMED_SEASON)).userSkills[users.id(1)],
+		).toBeDefined();
+	});
+
+	test("shows why a claim failed", async () => {
+		const response = await claimAction(users.id(2));
+
+		assertResponseErrored(
+			response,
+			"placeholder is not a player without an account",
+		);
 	});
 });

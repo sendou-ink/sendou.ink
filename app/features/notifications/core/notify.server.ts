@@ -3,6 +3,7 @@ import pLimit from "p-limit";
 import { type Urgency, WebPushError } from "web-push";
 import type { NotificationSubscription } from "~/db/tables-json";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { IS_DEV_BUILD } from "~/utils/dev-build";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { toDBBoolean } from "~/utils/sql";
@@ -46,6 +47,8 @@ const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
 	TO_LEAGUE_TIMES_PROPOSED: "high",
 	TO_LEAGUE_MATCH_SCHEDULED: "high",
 	TO_LEAGUE_MATCH_STARTING_SOON: "high",
+	TO_MATCH_STATION_ASSIGNED: "high",
+	TO_MATCH_STATION_MOVED: "high",
 	SCRIM_AUTO_DELETED: "normal",
 	COMMISSIONS_CLOSED: "normal",
 	FRIEND_REQUEST_RECEIVED: "normal",
@@ -75,6 +78,7 @@ export async function notify({
 	notification,
 	defaultSeenUserIds,
 	skipPushGracePeriod,
+	allowRepeats,
 }: {
 	userIds: Array<number>;
 	/** User ids that get the notification already marked as seen */
@@ -82,14 +86,24 @@ export async function notify({
 	notification: Notification;
 	/** Send push notifications right away and await them (used by the send-test-notification script) */
 	skipPushGracePeriod?: boolean;
+	/** Send it even when the same one went to the same users within the last hour, for a caller that keeps track of what it sent */
+	allowRepeats?: boolean;
 }) {
 	if (userIds.length === 0) {
 		return;
 	}
 
-	const dededuplicatedUserIds = Array.from(new Set(userIds));
+	const dededuplicatedUserIds = await UserRepository.filterOutPlaceholders(
+		Array.from(new Set(userIds)),
+	);
+	if (dededuplicatedUserIds.length === 0) {
+		return;
+	}
 
-	if (isNotificationAlreadySent(notification, dededuplicatedUserIds)) {
+	if (
+		!allowRepeats &&
+		isNotificationAlreadySent(notification, dededuplicatedUserIds)
+	) {
 		return;
 	}
 

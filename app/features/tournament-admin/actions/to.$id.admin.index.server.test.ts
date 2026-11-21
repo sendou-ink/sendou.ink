@@ -1,5 +1,7 @@
+import * as R from "remeda";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentMatchStationFactory from "~/db/seed/factories/TournamentMatchStationFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -9,6 +11,8 @@ import {
 	tournamentTeamChannel,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { tournamentLFGChannel } from "~/features/tournament-lfg/tournament-lfg-utils";
+import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
+import { createStartedLanTournament } from "~/features/tournament-stations/tests/fixtures";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import type { adminTeamsActionSchema } from "../tournament-admin-schemas";
 import { action } from "./to.$id.admin.index.server";
@@ -139,5 +143,42 @@ describe("Admin teams action DELETE_TEAM", () => {
 		expect(ChatSystemMessage.send).toHaveBeenCalledWith({
 			channel: tournamentLFGChannel(tournament.id),
 		});
+	});
+});
+
+describe("Admin teams action DROP_TEAM_OUT", () => {
+	beforeEach(async () => {
+		await users.create(17);
+	});
+
+	test("puts the next playable match on the station the ended match freed", async () => {
+		const {
+			tournamentId,
+			stationIds: [stationId],
+			semifinalIds: [first, second],
+		} = await createStartedLanTournament({
+			authorId: users.id(17),
+			teamRosters: R.chunk(users.ids(16), 4),
+			stationNames: ["Main stage"],
+		});
+		await TournamentMatchStationFactory.create({ matchId: first, stationId });
+		const droppedTeamId = (
+			await tournamentFromDB(tournamentId)
+		).brackets[0].data.match.find((match) => match.id === first)?.opponent2?.id;
+		if (!droppedTeamId) throw new Error("Semifinal has no team");
+
+		await adminTeamsAction(
+			{ _action: "DROP_TEAM_OUT", teamId: droppedTeamId },
+			{ user: users.id(17), params: { id: String(tournamentId) } },
+		);
+
+		expect(
+			await TournamentStationRepository.findMatchPlacementsByTournamentId(
+				tournamentId,
+			),
+		).toEqual([
+			{ matchId: first, stationId, isAutoAssigned: 0 },
+			{ matchId: second, stationId, isAutoAssigned: 1 },
+		]);
 	});
 });

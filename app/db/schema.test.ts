@@ -3,7 +3,13 @@ import { describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
 
 /** Integer primary keys that are some other table's id, not a generated one. */
-const NATURAL_PRIMARY_KEYS = ["PlusTier", "UserDiscordToken"];
+const NATURAL_PRIMARY_KEYS = [
+	"PlusTier",
+	"UserDiscordToken",
+	"CalendarEventVenue",
+	"TournamentMatchStation",
+	"TournamentMatchStationNotification",
+];
 
 /** Integer `...Id` columns that intentionally have no foreign key. Game data ids ending in `SplId` are always exempt. */
 const NOT_FOREIGN_KEYS: Record<string, string> = {
@@ -21,6 +27,8 @@ const NOT_FOREIGN_KEYS: Record<string, string> = {
 		"preserves the identity of a team after it is hard-deleted",
 	"BuildWeapon.ownerId":
 		"mirror of Build.ownerId, deleted along with its build",
+	"TournamentMatchStationNotification.stationId":
+		"the station the teams were told stays known after it's deleted",
 };
 
 /** Tables the app (practically) never deletes from, so a foreign key to them needs no index for the delete's lookup. */

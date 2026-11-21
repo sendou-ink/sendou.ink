@@ -1,0 +1,67 @@
+.container {
+	display: flex;
+	container-type: inline-size;
+}
+
+.venue {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	grid-template-areas:
+		"icon name"
+		"address address"
+		"button button";
+	align-items: center;
+	justify-items: start;
+	gap: var(--s-1) var(--s-2);
+	width: fit-content;
+	max-width: 100%;
+	padding: var(--s-2) var(--s-3);
+	background-color: var(--color-bg-high);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+}
+
+@container (width >= 480px) {
+	.venue {
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-areas:
+			"icon name button"
+			". address button";
+		column-gap: var(--s-3);
+	}
+}
+
+.icon {
+	grid-area: icon;
+	width: 1.25rem;
+	height: 1.25rem;
+	color: var(--color-text-high);
+}
+
+.name {
+	grid-area: name;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+.address {
+	grid-area: address;
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.button {
+	grid-area: button;
+	margin-block-start: var(--s-1);
+
+	@container (width >= 480px) {
+		margin-block-start: 0;
+	}
+}
+
+.externalIcon {
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+	margin-inline-start: var(--s-1-5);
+}

@@ -181,3 +181,182 @@ describe("tournament admin registration - tournament name field", () => {
 			.toHaveValue("Sanu");
 	});
 });
+
+describe("tournament admin registration - players without an account", () => {
+	beforeEach(() => {
+		Object.assign(tournament, { isLan: true });
+		tournament.canEditTournamentNames = () => false;
+	});
+
+	test("a LAN team can be made of a new one, who becomes the captain", async () => {
+		loaderData = { team: null };
+
+		const screen = await renderPage();
+
+		await screen.getByLabelText("Team name").fill("Walk-ins");
+		await screen
+			.getByRole("button", { name: "Add player without account" })
+			.click();
+		await screen.getByLabelText("Player without account").fill("Mika");
+
+		await expect
+			.element(screen.getByRole("option", { name: "Mika" }))
+			.toBeInTheDocument();
+
+		await screen.getByRole("button", { name: "Submit" }).click();
+
+		await expect.poll(() => actionCallCount).toBe(1);
+	});
+
+	test("a new one made captain by default gives way to a player with an account added after", async () => {
+		loaderData = { team: null };
+
+		const screen = await renderPage();
+
+		await screen
+			.getByRole("button", { name: "Add player without account" })
+			.click();
+		await screen.getByLabelText("Player without account").fill("Mika");
+		await expect
+			.element(screen.getByLabelText("Captain"))
+			.toHaveValue("new:Mika");
+
+		await screen.getByRole("button", { name: "Add", exact: true }).click();
+		await userEvent.click(
+			screen.getByRole("button", { name: "Player User search" }),
+		);
+		await userEvent.type(
+			screen.getByTestId("user-search-input").element(),
+			"Jolt",
+		);
+		await screen.getByTestId("user-search-item").click();
+
+		await expect.element(screen.getByLabelText("Captain")).toHaveValue("2");
+	});
+
+	test("a new one picked back as captain by hand stays captain when a player with an account is added", async () => {
+		loaderData = { team: null };
+
+		const screen = await renderPage();
+
+		const addPlaceholder = async (name: string) => {
+			await screen
+				.getByRole("button", { name: "Add player without account" })
+				.click();
+			await screen.getByLabelText("Player without account").last().fill(name);
+		};
+		await addPlaceholder("Mika");
+		await addPlaceholder("Nori");
+		const captain = screen.getByLabelText("Captain");
+		await captain.selectOptions("Nori");
+		await captain.selectOptions("Mika");
+
+		await screen.getByRole("button", { name: "Add", exact: true }).click();
+		await userEvent.click(
+			screen.getByRole("button", { name: "Player User search" }),
+		);
+		await userEvent.type(
+			screen.getByTestId("user-search-input").element(),
+			"Jolt",
+		);
+		await screen.getByTestId("user-search-item").click();
+
+		await expect
+			.element(captain.getByRole("option", { name: "Jolt" }))
+			.toBeInTheDocument();
+		await expect.element(captain).toHaveValue("new:Mika");
+	});
+
+	test("a new one picked as captain stays captain when their name is edited", async () => {
+		loaderData = {
+			team: {
+				id: 10,
+				name: "Walk-ins",
+				team: undefined,
+				pickupAvatarUrl: null,
+				avatarImgId: null,
+				members: [
+					{ userId: 1, username: "sanu", inGameName: null, role: "OWNER" },
+				],
+			},
+		};
+
+		const screen = await renderPage();
+
+		await screen
+			.getByRole("button", { name: "Add player without account" })
+			.click();
+		const nameInput = screen.getByLabelText("Player without account");
+		await nameInput.fill("Mik");
+		await screen.getByLabelText("Captain").selectOptions("Mik");
+		await nameInput.fill("Mika");
+
+		await expect
+			.element(screen.getByLabelText("Captain"))
+			.toHaveValue("new:Mika");
+	});
+
+	test("a row added after one stays a user search", async () => {
+		loaderData = { team: null };
+
+		const screen = await renderPage();
+
+		await screen
+			.getByRole("button", { name: "Add player without account" })
+			.click();
+		await screen.getByRole("button", { name: "Add", exact: true }).click();
+
+		await expect
+			.element(screen.getByLabelText("Player without account"))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByLabelText("Player", { exact: true }))
+			.toBeInTheDocument();
+	});
+
+	test("one on the roster shows their name for editing instead of a user search", async () => {
+		loaderData = {
+			team: {
+				id: 10,
+				name: "Walk-ins",
+				team: undefined,
+				pickupAvatarUrl: null,
+				avatarImgId: null,
+				members: [
+					{
+						userId: 1,
+						username: "Mika",
+						inGameName: null,
+						role: "OWNER",
+						isPlaceholder: 1,
+					},
+				],
+			},
+		};
+
+		const screen = await renderPage();
+
+		await expect
+			.element(screen.getByLabelText("Player without account"))
+			.toHaveValue("Mika");
+		await expect
+			.element(screen.getByLabelText("Player", { exact: true }))
+			.not.toBeInTheDocument();
+	});
+
+	test("can't be added to an online tournament", async () => {
+		Object.assign(tournament, { isLan: false });
+		loaderData = { team: null };
+
+		const screen = await renderPage();
+
+		await expect
+			.element(screen.getByRole("button", { name: "Submit" }))
+			.toBeInTheDocument();
+		await expect
+			.element(
+				screen.getByRole("button", { name: "Add player without account" }),
+			)
+			.not.toBeInTheDocument();
+	});
+});

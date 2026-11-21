@@ -10,9 +10,11 @@ import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { FormField } from "./FormField";
 import {
+	addressSearchOptional,
 	array,
 	checkboxGroup,
 	datetime,
+	datetimeOptional,
 	fieldset,
 	radioGroup,
 	select,
@@ -27,9 +29,14 @@ import {
 	userSearch,
 } from "./fields";
 import { FormStep, SendouForm, useFormFieldContext } from "./SendouForm";
-import type { ArrayItemRenderContext, FormObjectSchema } from "./types";
+import type {
+	ArrayItemRenderContext,
+	FormObjectSchema,
+	FormTimeZone,
+} from "./types";
 
-let mockFetcherData: { fieldErrors?: Record<string, string> } | undefined;
+let mockFetcherData: unknown;
+const mockFetcherSubmit = vi.fn();
 
 /** `fieldset` registers its metadata onto the object it is handed, so anything nested needs a fresh one. */
 const singleTextField = () =>
@@ -96,7 +103,7 @@ vi.mock("react-router", async () => {
 				return mockFetcherData;
 			},
 			state: "idle",
-			submit: vi.fn(),
+			submit: mockFetcherSubmit,
 			load: vi.fn(),
 		}),
 	};
@@ -142,6 +149,7 @@ function renderForm(
 describe("SendouForm", () => {
 	beforeEach(() => {
 		mockFetcherData = undefined;
+		mockFetcherSubmit.mockClear();
 	});
 
 	describe("basic form rendering", () => {
@@ -283,6 +291,146 @@ describe("SendouForm", () => {
 			await expect
 				.element(screen.getByText("Date is incomplete or doesn't exist"))
 				.toBeVisible();
+		});
+	});
+
+	describe("datetime field with a time zone", () => {
+		// 10:00 in Chicago, whatever zone the test browser runs in
+		const CHICAGO_TEN_AM = new Date("2026-11-20T16:00:00.000Z");
+
+		const zonedSchema = () =>
+			v.object({
+				zone: textFieldOptional({ label: "labels.name", maxLength: 100 }),
+				startTime: datetime({ label: "labels.startTime" }),
+				brackets: array({
+					label: "labels.brackets",
+					max: 3,
+					field: fieldset({
+						fields: v.object({
+							startTime: datetimeOptional({ label: "labels.startTime" }),
+						}),
+					}),
+				}),
+			});
+
+		const renderZonedForm = async (
+			timeZone: FormTimeZone,
+			{ withOnApply = true }: { withOnApply?: boolean } = {},
+		) => {
+			const onApply = vi.fn();
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm
+								schema={zonedSchema()}
+								defaultValues={{
+									zone: "America/Chicago",
+									startTime: CHICAGO_TEN_AM,
+									brackets: [{ startTime: CHICAGO_TEN_AM }],
+								}}
+								timeZone={timeZone}
+								onApply={withOnApply ? onApply : undefined}
+							>
+								<FormField name="zone" />
+								<FormField name="startTime" />
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+
+			const screen = await render(<RouterProvider router={router} />);
+			return { screen, onApply };
+		};
+
+		test("shows the wall-clock time of the form's time zone", async () => {
+			const { screen } = await renderZonedForm("America/Chicago");
+
+			await expect
+				.element(screen.getByLabelText("Start time"))
+				.toHaveValue("2026-11-20T10:00");
+		});
+
+		test("submits instants in the form's time zone, nested fields too", async () => {
+			const { screen, onApply } = await renderZonedForm("America/Chicago");
+
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			const values = onApply.mock.calls[0][0];
+			expect(values.startTime.toISOString()).toBe(CHICAGO_TEN_AM.toISOString());
+			expect(values.brackets[0].startTime.toISOString()).toBe(
+				CHICAGO_TEN_AM.toISOString(),
+			);
+		});
+
+		test("sends instants in the form's time zone to the server", async () => {
+			const { screen } = await renderZonedForm("America/Chicago", {
+				withOnApply: false,
+			});
+
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			const submitted = mockFetcherSubmit.mock.calls[0][0];
+			expect(submitted.startTime.toISOString()).toBe(
+				CHICAGO_TEN_AM.toISOString(),
+			);
+			expect(submitted.brackets[0].startTime.toISOString()).toBe(
+				CHICAGO_TEN_AM.toISOString(),
+			);
+		});
+
+		test("keeps a venue time that falls in the browser's spring-forward hour", async () => {
+			const { screen, onApply } = await renderZonedForm("America/Chicago");
+
+			// 03:30 doesn't exist on this day in e.g. Europe/Helsinki
+			await userEvent.fill(
+				screen.getByLabelText("Start time").element(),
+				"2026-03-29T03:30",
+			);
+			await expect
+				.element(screen.getByLabelText("Start time"))
+				.toHaveValue("2026-03-29T03:30");
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply.mock.calls[0][0].startTime.toISOString()).toBe(
+				"2026-03-29T08:30:00.000Z",
+			);
+		});
+
+		test("reads the times in the browser's zone when the zone resolves to none", async () => {
+			const { screen, onApply } = await renderZonedForm(() => null);
+
+			await userEvent.fill(
+				screen.getByLabelText("Start time").element(),
+				"2026-11-20T10:00",
+			);
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply.mock.calls[0][0].startTime).toEqual(
+				new Date(2026, 10, 20, 10, 0),
+			);
+		});
+
+		test("keeps the typed wall-clock time when the time zone changes", async () => {
+			const { screen, onApply } = await renderZonedForm(
+				(values) => values.zone as string,
+			);
+
+			await userEvent.fill(
+				screen.getByLabelText("Name").element(),
+				"Asia/Tokyo",
+			);
+			await expect
+				.element(screen.getByLabelText("Start time"))
+				.toHaveValue("2026-11-20T10:00");
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply.mock.calls[0][0].startTime.toISOString()).toBe(
+				"2026-11-20T01:00:00.000Z",
+			);
 		});
 	});
 
@@ -783,6 +931,23 @@ describe("SendouForm", () => {
 			const fallbackError = screen.getByTestId("fallback-form-error");
 			await expect.element(fallbackError).not.toBeInTheDocument();
 		});
+
+		test("does not show fallback error for an error of an array as a whole", async () => {
+			mockFetcherData = {
+				fieldErrors: { members: "forms:errors.required" },
+			};
+
+			const screen = await renderForm(FIELDSET_ARRAY, {
+				defaultValues: { members: [{ name: "Alice" }] },
+			});
+
+			await expect
+				.element(screen.getByText("This field is required"))
+				.toBeVisible();
+			await expect
+				.element(screen.getByTestId("fallback-form-error"))
+				.not.toBeInTheDocument();
+		});
 	});
 
 	describe("time range field", () => {
@@ -948,6 +1113,196 @@ describe("SendouForm", () => {
 			await expect
 				.element(screen.getByText("This field is required").nth(1))
 				.toBeVisible();
+		});
+	});
+
+	describe("address search field", () => {
+		const ADDRESS_SEARCH = v.object({
+			venue: addressSearchOptional({ label: "labels.venueAddress" }),
+		});
+		const OAKLAND_ADDRESS =
+			"550 10th Street, 94607 Oakland, California, United States";
+
+		test("shows the picked place's address in the trigger, not its name", async () => {
+			mockFetcherData = {
+				query: "oakland",
+				results: [
+					{
+						id: 0,
+						name: `Oakland Convention Center, ${OAKLAND_ADDRESS}`,
+						placeName: "Oakland Convention Center",
+						address: OAKLAND_ADDRESS,
+						city: "Oakland",
+						countryCode: "US",
+						latitude: 37.8013,
+						longitude: -122.2768,
+						timezone: "America/Los_Angeles",
+					},
+				],
+			};
+			const screen = await renderForm(ADDRESS_SEARCH);
+
+			await userEvent.click(screen.getByLabelText("Venue address"));
+			await userEvent.type(
+				screen.getByTestId("address-search-input"),
+				"oakland",
+			);
+			await userEvent.click(screen.getByTestId("address-search-item"));
+
+			const trigger = screen.getByLabelText("Venue address");
+			// the hidden second line of the item holds the address too
+			await expect
+				.element(trigger.getByText(OAKLAND_ADDRESS).first())
+				.toBeVisible();
+			await expect
+				.element(trigger.getByText("Oakland Convention Center"))
+				.not.toBeVisible();
+		});
+
+		const OAKLAND_VALUE = {
+			address: OAKLAND_ADDRESS,
+			city: "Oakland",
+			countryCode: "US",
+			latitude: 37.8013,
+			longitude: -122.2768,
+		};
+
+		const renderAddressForm = async (
+			defaultValues?: Record<string, unknown>,
+		) => {
+			const onApply = vi.fn();
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm
+								schema={ADDRESS_SEARCH}
+								defaultValues={defaultValues}
+								onApply={onApply}
+							>
+								<FormField name="venue" />
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+			const screen = await render(<RouterProvider router={router} />);
+
+			return { screen, onApply };
+		};
+
+		test("shows results for a query cut to the longest one searched", async () => {
+			const longQuery = "oakland ".repeat(40).trim();
+			mockFetcherData = {
+				query: longQuery.slice(0, 200),
+				results: [
+					{
+						id: 0,
+						name: OAKLAND_ADDRESS,
+						placeName: null,
+						address: OAKLAND_ADDRESS,
+						city: "Oakland",
+						countryCode: "US",
+						latitude: 37.8013,
+						longitude: -122.2768,
+						timezone: "America/Los_Angeles",
+					},
+				],
+			};
+			const screen = await renderForm(ADDRESS_SEARCH);
+
+			await userEvent.click(screen.getByLabelText("Venue address"));
+			await userEvent.fill(
+				screen.getByTestId("address-search-input"),
+				longQuery,
+			);
+
+			await expect
+				.element(screen.getByTestId("address-search-item"))
+				.toBeVisible();
+		});
+
+		test("leaves the address empty while one entered by hand is incomplete", async () => {
+			const { screen, onApply } = await renderAddressForm();
+
+			await userEvent.click(screen.getByTestId("address-entry-mode-button"));
+			await userEvent.type(
+				screen.getByLabelText("Venue address"),
+				"1 Main Street, Oakland",
+			);
+			await userEvent.type(
+				screen.getByLabelText("Coordinates"),
+				"37.8, -122.27",
+			);
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({ venue: null });
+		});
+
+		test("shows an address entered by hand as the search's selection", async () => {
+			const { screen } = await renderAddressForm({ venue: OAKLAND_VALUE });
+
+			await userEvent.click(screen.getByTestId("address-entry-mode-button"));
+			const address = screen.getByLabelText("Venue address");
+			await userEvent.clear(address);
+			await userEvent.type(address, "1 Main Street, Oakland");
+			await userEvent.click(screen.getByTestId("address-entry-mode-button"));
+
+			await expect
+				.element(
+					screen
+						.getByLabelText("Venue address")
+						.getByText("1 Main Street, Oakland")
+						.first(),
+				)
+				.toBeVisible();
+		});
+
+		test("tells when the search is unavailable", async () => {
+			mockFetcherData = { query: "oakland", results: [], isUnavailable: true };
+			const screen = await renderForm(ADDRESS_SEARCH);
+
+			await userEvent.click(screen.getByLabelText("Venue address"));
+			await userEvent.type(
+				screen.getByTestId("address-search-input"),
+				"oakland",
+			);
+
+			await expect
+				.element(screen.getByText(/address search isn't available/))
+				.toBeVisible();
+		});
+
+		test("edits the address by hand, starting from the current one", async () => {
+			const { screen, onApply } = await renderAddressForm({
+				venue: OAKLAND_VALUE,
+			});
+
+			await userEvent.click(screen.getByTestId("address-entry-mode-button"));
+			await expect
+				.element(screen.getByLabelText("Venue address"))
+				.toHaveValue(OAKLAND_ADDRESS);
+			const coordinates = screen.getByLabelText("Coordinates");
+			await userEvent.clear(coordinates);
+			await userEvent.type(coordinates, "37.8, nope");
+			await expect
+				.element(screen.getByText(/Write the coordinates as latitude/))
+				.toBeVisible();
+			await userEvent.clear(coordinates);
+			await userEvent.type(coordinates, "37.8, -122.27");
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({
+				venue: {
+					address: OAKLAND_ADDRESS,
+					city: "Oakland",
+					countryCode: "US",
+					latitude: 37.8,
+					longitude: -122.27,
+				},
+			});
 		});
 	});
 

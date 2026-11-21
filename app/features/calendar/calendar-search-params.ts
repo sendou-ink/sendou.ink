@@ -8,6 +8,7 @@ import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import { gamesShortSchema, modeShortWithSpecial } from "~/utils/schema";
+import { VENUE_SEARCH_QUERY_MAX_LENGTH } from "./calendar-constants";
 import { calendarFilterTagsArr } from "./calendar-schemas";
 
 export const VIEW_FILTERS = [
@@ -145,4 +146,16 @@ export const calendarNewSearchParams = SearchParams.define({
 		default: false,
 		loader: true,
 	}),
+});
+
+export const venueSearchSearchParams = SearchParams.define({
+	q: SP.param(v.pipe(v.string(), v.maxLength(VENUE_SEARCH_QUERY_MAX_LENGTH)), {
+		default: "",
+		loader: true,
+	}),
+	/** Tournament being edited, whose editors may search without the right to add tournaments. */
+	tournamentId: SP.param(
+		v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))),
+		{ loader: true },
+	),
 });

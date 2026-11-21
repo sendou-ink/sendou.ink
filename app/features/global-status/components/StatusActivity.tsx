@@ -1,4 +1,4 @@
-import { Hourglass } from "lucide-react";
+import { Clock, Gamepad2, Hourglass } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LinkButton } from "~/components/elements/Button";
 import { Image } from "~/components/Image";
@@ -11,6 +11,7 @@ import {
 	ActivityPanelHeader,
 } from "~/components/layout/ActivityPanel";
 import type { BracketsPageState } from "~/features/tournament-bracket/routes/to.$id.brackets";
+import { useStartsInText } from "~/features/tournament-stations/tournament-stations-hooks";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { navIconUrl, smallImageUrl } from "~/utils/urls";
 import { useGlobalStatus } from "../GlobalStatusProvider";
@@ -27,6 +28,7 @@ const STATE_NAV_ICON: Record<GlobalStatusState, string> = {
 	TO_MATCH: "medal",
 	TO_WAITING_FOR_MATCH: "medal",
 	TO_WAITING_FOR_CAST: "medal",
+	TO_WAITING_FOR_STATION: "medal",
 	LOBBY_WAITING: "lobbies",
 	LOBBY_READY_CHECK: "lobbies",
 	LOBBY_IN_ROOM: "lobbies",
@@ -45,6 +47,7 @@ const WAITING_STATES: GlobalStatusState[] = [
 	"SQ_PREPARING",
 	"TO_WAITING_FOR_MATCH",
 	"TO_WAITING_FOR_CAST",
+	"TO_WAITING_FOR_STATION",
 	"LOBBY_WAITING",
 ];
 
@@ -81,6 +84,7 @@ function StatusPanel({ status }: { status: GlobalStatus }) {
 					</span>
 				}
 			/>
+			<StatusMatchStation status={status} />
 			<LinkButton
 				to={status.url}
 				state={
@@ -100,6 +104,39 @@ function StatusPanel({ status }: { status: GlobalStatus }) {
 					: t("common:globalStatus.goToPage")}
 			</LinkButton>
 		</ActivityPanel>
+	);
+}
+
+/** Where (LAN station) and when (estimated start) the tournament match is played. */
+function StatusMatchStation({ status }: { status: GlobalStatus }) {
+	const { t } = useTranslation(["common"]);
+	const startsIn = useStartsInText(status.eta);
+
+	if (!status.station && !startsIn) return null;
+
+	return (
+		<div className={styles.matchStation} data-testid="status-match-station">
+			{status.station ? (
+				<div className={styles.matchStationRow}>
+					<Gamepad2 aria-hidden="true" />
+					<span>
+						<span className="font-bold">{status.station.name}</span>
+						{status.station.locationNote ? (
+							<span className="text-lighter">
+								{" "}
+								· {status.station.locationNote}
+							</span>
+						) : null}
+					</span>
+				</div>
+			) : null}
+			{startsIn ? (
+				<div className={styles.matchStationRow}>
+					<Clock aria-hidden="true" />
+					{t("common:globalStatus.startsIn", { time: startsIn })}
+				</div>
+			) : null}
+		</div>
 	);
 }
 
@@ -159,6 +196,7 @@ function StatusSubtitle({ status }: { status: GlobalStatus }) {
 				];
 			case "TO_MATCH":
 			case "TO_WAITING_FOR_MATCH":
+			case "TO_WAITING_FOR_STATION":
 				return [status.tournamentName, status.roundName];
 			case "LOBBY_WAITING":
 			case "LOBBY_READY_CHECK":

@@ -1,8 +1,10 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import type { DBBoolean } from "~/db/tables";
 
 export type UserPageUser = {
 	id: number;
 	customUrl: string | null;
+	isPlaceholder: DBBoolean;
 };
 
 export const userPageAsyncLocalStorage = new AsyncLocalStorage<{

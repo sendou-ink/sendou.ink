@@ -1,8 +1,14 @@
+import type { DBBoolean } from "~/db/tables";
 import type {
 	BuildAbilitiesTupleWithUnknown,
 	MainWeaponId,
 } from "~/modules/in-game-lists/types";
-import { type UserLinkArgs, userBuildsPage, userPage } from "~/utils/urls";
+import {
+	type UserLinkArgs,
+	userBuildsPage,
+	userPage,
+	userResultsPage,
+} from "~/utils/urls";
 import type { SeasonStatsTab } from "./user-page-constants";
 import {
 	userBuildsNewSearchParams,
@@ -62,11 +68,25 @@ export const userNewBuildPage = (
 export const userEditBuildPage = (user: UserLinkArgs, buildId: number) =>
 	userBuildsNewSearchParams.href(`${userBuildsPage(user)}/new`, { buildId });
 
+/** Sub pages of a placeholder player (`User.isPlaceholder`), who only has tournament results to show. */
+const PLACEHOLDER_SUB_PAGES = ["results", "admin"];
+
 /**
  * Path the given user page URL should redirect to, or `null` if it already uses the user's
- * preferred identifier (custom URL, falling back to their user id).
+ * preferred identifier (custom URL, falling back to their user id). A placeholder player's
+ * page only has results, its other pages redirect there.
  */
-export function userPageRedirectPath(url: URL, user: UserLinkArgs) {
+export function userPageRedirectPath(
+	url: URL,
+	user: UserLinkArgs & { isPlaceholder?: DBBoolean },
+) {
+	if (user.isPlaceholder) {
+		const subPage = url.pathname.split("/")[3];
+		if (!subPage || !PLACEHOLDER_SUB_PAGES.includes(subPage)) {
+			return userResultsPage(user);
+		}
+	}
+
 	const segments = url.pathname.split("/");
 	const preferredIdentifier = user.customUrl ?? String(user.id);
 

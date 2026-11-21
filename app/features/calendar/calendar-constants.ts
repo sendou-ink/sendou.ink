@@ -60,6 +60,7 @@ export const tags = {
 export const CALENDAR_EVENT = {
 	NAME_MIN_LENGTH: 2,
 	NAME_MAX_LENGTH: 100,
+	VENUE_NAME_MAX_LENGTH: 100,
 	DESCRIPTION_MAX_LENGTH: 6000,
 	RULES_MAX_LENGTH: 15_000,
 	DISCORD_INVITE_CODE_MAX_LENGTH: 50,
@@ -84,3 +85,6 @@ export const CALENDAR_EVENT_RESULT = {
 	MAX_TEAM_PLACEMENT: 256,
 	MAX_PLAYER_NAME_LENGTH: 100,
 } as const;
+
+/** Longer venue search queries are cut to this length. */
+export const VENUE_SEARCH_QUERY_MAX_LENGTH = 200;

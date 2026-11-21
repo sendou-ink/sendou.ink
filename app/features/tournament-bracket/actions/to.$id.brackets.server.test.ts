@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import * as CalendarEventVenueFactory from "~/db/seed/factories/CalendarEventVenueFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentStationFactory from "~/db/seed/factories/TournamentStationFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { TournamentSettings } from "~/db/tables-json";
@@ -7,6 +9,7 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import type { RoundData } from "~/features/tournament-bracket/core/engine/types";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import type { bracketSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { invariant } from "~/utils/invariant";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
@@ -252,6 +255,37 @@ describe("Brackets action START_BRACKET", () => {
 			expect(round.maps?.modes).toEqual(RANKED_MODE_ORDER);
 			expect(round.maps?.list).toBeFalsy();
 		}
+	});
+
+	test("puts the first matches of a LAN on its stations", async () => {
+		const tournament = await createTeamPickedTournament(organizerId());
+		await CalendarEventVenueFactory.create({ eventId: tournament.eventId });
+		const stations = await TournamentStationFactory.createMany(3, (idx) => ({
+			tournamentId: tournament.id,
+			name: `Station ${idx + 1}`,
+		}));
+		const rounds = await previewRounds(tournament.id);
+
+		await bracketsAction(
+			{
+				_action: "START_BRACKET",
+				bracketIdx: 0,
+				thirdPlaceMatchLinked: false,
+				isRealtime: false,
+				maps: rounds.map((round) =>
+					teamPickedRoundMaps(round, RANKED_MODE_ORDER),
+				),
+			},
+			{ user: organizerId(), params: { id: String(tournament.id) } },
+		);
+
+		const placements =
+			await TournamentStationRepository.findMatchPlacementsByTournamentId(
+				tournament.id,
+			);
+		expect(placements.map((row) => row.stationId)).toEqual(
+			stations.map((station) => station.id),
+		);
 	});
 
 	test.each([

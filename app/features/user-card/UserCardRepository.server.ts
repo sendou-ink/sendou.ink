@@ -351,6 +351,7 @@ function userCardDataJsonObject(
 	return jsonBuildObject({
 		...commonUserObjectFields(eb),
 		shortBio: eb.ref("User.shortBio"),
+		isPlaceholder: eb.ref("User.isPlaceholder"),
 		div: eb.ref("User.div"),
 		customTheme: supporterCustomTheme,
 		hiddenCardStats: eb.ref("User.hiddenCardStats"),
@@ -627,6 +628,7 @@ function enrichUserCardData(
 		customUrl: cardData.customUrl,
 		avatar: cardData.avatar,
 		shortBio: cardData.shortBio,
+		isPlaceholder: Boolean(cardData.isPlaceholder),
 		customTheme: cardData.customTheme,
 		banner: enrichBanner(cardData.banner),
 		friendCode: cardData.friendCode,

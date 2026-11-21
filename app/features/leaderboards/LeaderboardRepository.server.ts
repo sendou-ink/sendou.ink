@@ -64,6 +64,19 @@ const teamLeaderboardBySeasonQuery = (season: number, before?: number) =>
 					">=",
 					MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
 				)
+				// shown once the players without an account are claimed
+				.where((teamEb) =>
+					teamEb.not(
+						teamEb.exists(
+							teamEb
+								.selectFrom("SkillTeamUser")
+								.innerJoin("User", "User.id", "SkillTeamUser.userId")
+								.select("SkillTeamUser.userId")
+								.whereRef("SkillTeamUser.skillId", "=", "LatestOfTeam.latestId")
+								.where("User.isPlaceholder", "=", 1),
+						),
+					),
+				)
 				.orderBy("LatestOfTeam.ordinal", "desc")
 				.limit(DEFAULT_LEADERBOARD_MAX_SIZE)
 				.as("Entry"),
@@ -433,6 +446,7 @@ export async function findUserSPLeaderboard(
 			"User.plusSkippedForSeasonNth",
 		])
 		.where("Latest.matchesCount", ">=", MATCHES_COUNT_NEEDED_FOR_LEADERBOARD)
+		.where("User.isPlaceholder", "=", 0)
 		.orderBy("Latest.ordinal", "desc")
 		.execute();
 

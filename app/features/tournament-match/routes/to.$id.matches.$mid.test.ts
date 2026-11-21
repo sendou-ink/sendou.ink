@@ -1,19 +1,26 @@
+import * as R from "remeda";
 import type * as v from "valibot";
 import { beforeEach, describe, expect, test } from "vitest";
+import * as NotificationFactory from "~/db/seed/factories/NotificationFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentMatchStationFactory from "~/db/seed/factories/TournamentMatchStationFactory";
+import * as TournamentStaffFactory from "~/db/seed/factories/TournamentStaffFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { TournamentSettings } from "~/db/tables-json";
 import { action as removeMemberApiAction } from "~/features/api-public/routes/tournament.$id.teams.$teamId.remove-member";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import type { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import { createStartedLanTournament } from "~/features/tournament-stations/tests/fixtures";
 import { cache } from "~/utils/cache.server";
 import type { SerializeFrom } from "~/utils/remix";
 import {
 	assertResponseErrored,
+	type TestUser,
 	wrappedAction,
 	wrappedLoader,
 } from "~/utils/Test";
@@ -38,6 +45,8 @@ const ROSTER_SIZE = 4;
 
 /** Everybody but the organizer, who is created apart from them for their pinned id. */
 const users = UserFactory.pool();
+const poolCaptainId = () => users.id(10);
+const streamerId = () => users.id(11);
 
 let tournamentId: number;
 let matchId: number;
@@ -56,10 +65,12 @@ const reportScoreAction = ({
 	position,
 	params = matchParams(),
 	winnerTeamId = teamOne.id,
+	user = "admin",
 }: {
 	position: number;
 	params?: { id: string; mid: string };
 	winnerTeamId?: number;
+	user?: TestUser;
 }) =>
 	tournamentMatchAction(
 		{
@@ -67,7 +78,19 @@ const reportScoreAction = ({
 			position,
 			winnerTeamId,
 		},
-		{ user: "admin", params },
+		{ user, params },
+	);
+
+const undoReportScoreAction = ({
+	position,
+	user,
+}: {
+	position: number;
+	user: TestUser;
+}) =>
+	tournamentMatchAction(
+		{ _action: "UNDO_REPORT_SCORE", position },
+		{ user, params: matchParams() },
 	);
 
 const setActiveRosterAction = (teamId = teamOne.id, roster = activeRoster()) =>
@@ -107,7 +130,7 @@ const createTournamentTeam = (
 describe("Tournament match page", () => {
 	beforeEach(async () => {
 		organizerId = (await UserFactory.createAdmin()).id;
-		await users.create(9);
+		await users.create(11);
 
 		const tournament = await TournamentFactory.create({
 			authorId: organizerId,
@@ -465,6 +488,79 @@ describe("Tournament match page", () => {
 		});
 	});
 
+	describe("pool captain", () => {
+		beforeEach(async () => {
+			await TournamentStaffFactory.create({
+				tournamentId,
+				userId: poolCaptainId(),
+				role: "POOL_CAPTAIN",
+			});
+			await TournamentStaffFactory.create({
+				tournamentId,
+				userId: streamerId(),
+				role: "STREAMER",
+			});
+			await setActiveRosterAction();
+		});
+
+		test("reports a score of a match they don't play in", async () => {
+			const res = await reportScoreAction({
+				position: 0,
+				user: poolCaptainId(),
+			});
+
+			expect(res).toBe(null);
+			const result = await db
+				.selectFrom("TournamentMatchGameResult")
+				.select("reporterId")
+				.where("matchId", "=", matchId)
+				.executeTakeFirstOrThrow();
+			expect(result.reporterId).toBe(poolCaptainId());
+		});
+
+		test("undoes a reported score", async () => {
+			await reportScoreAction({ position: 0 });
+
+			const res = await undoReportScoreAction({
+				position: 0,
+				user: poolCaptainId(),
+			});
+
+			expect(res).toBe(null);
+			expect((await loadMatchData()).results).toHaveLength(0);
+		});
+
+		test("sets an active roster of a match they don't play in", async () => {
+			const roster = users.ids(5).slice(1);
+
+			const res = await tournamentMatchAction(
+				{
+					_action: "SET_ACTIVE_ROSTER",
+					roster,
+					teamId: teamOne.id,
+				},
+				{ user: poolCaptainId(), params: matchParams() },
+			);
+
+			expect(res).toBe(null);
+			const team = await db
+				.selectFrom("TournamentTeam")
+				.select("activeRosterUserIds")
+				.where("id", "=", teamOne.id)
+				.executeTakeFirstOrThrow();
+			expect(team.activeRosterUserIds).toEqual(roster);
+		});
+
+		test("a streamer reports a score too", async () => {
+			const res = await reportScoreAction({
+				position: 0,
+				user: streamerId(),
+			});
+
+			expect(res).toBe(null);
+		});
+	});
+
 	describe("locked match", () => {
 		test("returns error when reporting score for a match waiting on previous matches", async () => {
 			await setActiveRosterAction();
@@ -729,5 +825,96 @@ describe("Round robin match page with team picked maps", () => {
 		expect(await recentlyPlayedCount(openedBeforeRoundOne)).toBe(
 			await recentlyPlayedCount(openedAfterRoundOne),
 		);
+	});
+});
+
+const lanUsers = UserFactory.pool();
+
+describe("LAN match page", () => {
+	beforeEach(async () => {
+		await lanUsers.create(17);
+	});
+
+	const createLan = () =>
+		createStartedLanTournament({
+			authorId: lanUsers.id(1),
+			teamRosters: R.chunk(lanUsers.ids().slice(1), 4),
+			stationNames: ["Station 1"],
+			autoAssign: false,
+		});
+
+	const loadLanMatch = (lanTournamentId: number, lanMatchId: number) =>
+		tournamentMatchLoader({
+			params: { id: String(lanTournamentId), mid: String(lanMatchId) },
+		});
+
+	test("shows the station the match is queued on and when it's expected to start, unless it's first in the queue", async () => {
+		const {
+			tournamentId: lanTournamentId,
+			stationIds: [stationId],
+			semifinalIds,
+		} = await createLan();
+		for (const semifinalId of semifinalIds) {
+			await TournamentMatchStationFactory.create({
+				matchId: semifinalId,
+				stationId,
+			});
+		}
+
+		const first = await loadLanMatch(lanTournamentId, semifinalIds[0]);
+		const second = await loadLanMatch(lanTournamentId, semifinalIds[1]);
+
+		expect(first.station?.shortName).toBe("1");
+		expect(second.station?.name).toBe("Station 1");
+		// first in the station's queue, no countdown to it
+		expect(first.eta).toBeNull();
+		// played after the first semifinal on the lone station
+		expect(second.eta!.earliest).toBeGreaterThan(Date.now());
+	});
+
+	test("marks the player's station notifications of the match as seen", async () => {
+		const {
+			tournamentId: lanTournamentId,
+			semifinalIds: [first],
+		} = await createLan();
+		const playerId = lanUsers.id(2);
+		for (const type of [
+			"TO_MATCH_STATION_ASSIGNED",
+			"TO_MATCH_STATION_MOVED",
+		] as const) {
+			await NotificationFactory.create({
+				notification: {
+					type,
+					meta: {
+						tournamentId: lanTournamentId,
+						matchId: first,
+						station: "Station 1",
+						matchName: "Semis 1",
+						opponentTeamName: "Team Olive",
+					},
+				},
+				users: [{ userId: playerId, seen: 0 }],
+			});
+		}
+
+		await tournamentMatchLoader({
+			params: { id: String(lanTournamentId), mid: String(first) },
+			user: playerId,
+		});
+
+		expect(
+			(await NotificationRepository.findByUserId(playerId)).map(
+				({ seen }) => seen,
+			),
+		).toEqual([1, 1]);
+	});
+
+	test("shows no station for a match on none", async () => {
+		const { tournamentId: lanTournamentId, semifinalIds } = await createLan();
+
+		const data = await loadLanMatch(lanTournamentId, semifinalIds[0]);
+
+		expect(data.station).toBeNull();
+		expect(data.eta).not.toBeNull();
 	});
 });

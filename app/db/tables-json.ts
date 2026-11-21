@@ -109,6 +109,8 @@ export interface TournamentSettings {
 	isLeague?: boolean;
 	/** Team picked map configuration, always set when `Tournament.mapPickingStyle` is "AUTO". */
 	teamPick?: TeamPickSettings;
+	/** LAN only: put playable matches on free stations automatically, default true */
+	autoAssignStations?: boolean;
 }
 
 export interface TeamPickSettings {
@@ -210,6 +212,11 @@ export interface TournamentAuditLogMetadata {
 	inGameName?: string;
 	/** The new tournament name, for `UPDATE_TOURNAMENT_NAME` events. `null` = it was cleared. */
 	tournamentName?: string | null;
+	/** The match moved, e.g. "Winners Round 2.1", for `MATCH_STATION_CHANGED` events. */
+	matchName?: string;
+	/** Station names when the match was moved, for `MATCH_STATION_CHANGED` events. `null` = no station (Waiting). */
+	fromStationName?: string | null;
+	toStationName?: string | null;
 }
 
 /** E.g. ["W", "L", null] = won the first set, lost the second, did not play the third. */

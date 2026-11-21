@@ -656,7 +656,7 @@ function createClosedTournament(factories: Factories) {
 /** A user who can voice chat in English and German and plays Splattershot. */
 function createPlayerWithMatchProfile(factories: Factories, name: string) {
 	return factories.UserFactory.create(
-		{ discordName: name },
+		{ defaultName: name },
 		{
 			matchProfile: {
 				vc: "YES",
@@ -669,7 +669,7 @@ function createPlayerWithMatchProfile(factories: Factories, name: string) {
 
 /** A user shown on the page by the name given to them. */
 function createNamedUser(factories: Factories, name: string) {
-	return factories.UserFactory.create({ discordName: name });
+	return factories.UserFactory.create({ defaultName: name });
 }
 
 function teamNamed(name: string) {

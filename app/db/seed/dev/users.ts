@@ -46,7 +46,7 @@ export async function seedUsers(): Promise<SeededUsers> {
 	const admin = await UserFactory.createAdmin(
 		{
 			discordId: ADMIN_DISCORD_ID,
-			discordName: "Sendou",
+			defaultName: "Sendou",
 			discordUniqueName: "sendou",
 			discordAvatar: ADMIN_TEST_AVATAR,
 			twitch: "Sendou",
@@ -70,7 +70,7 @@ export async function seedUsers(): Promise<SeededUsers> {
 	const nzap = await UserFactory.createRegular(
 		{
 			discordId: NZAP_TEST_DISCORD_ID,
-			discordName: "N-ZAP",
+			defaultName: "N-ZAP",
 			discordUniqueName: "nzap",
 			discordAvatar: NZAP_TEST_AVATAR,
 			twitch: "nzap_stream",
@@ -124,7 +124,7 @@ export async function seedUsers(): Promise<SeededUsers> {
 
 	const staff = await UserFactory.createStaff({
 		discordId: STAFF_TEST_DISCORD_ID,
-		discordName: "Panda",
+		defaultName: "Panda",
 	});
 
 	return {

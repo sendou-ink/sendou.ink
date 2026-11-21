@@ -9,6 +9,8 @@ import styles from "./MatchBannerBottomRow.module.css";
 
 interface MatchBannerBottomRowProps {
 	games: Array<{ mode: ModeShort | null }>;
+	/** The game whose map the banner shows in place of the current one. */
+	previewedGameIndex?: number | null;
 	activeRosters: {
 		alpha: CommonUser[] | null;
 		bravo: CommonUser[] | null;
@@ -17,19 +19,25 @@ interface MatchBannerBottomRowProps {
 
 export function MatchBannerBottomRow({
 	games,
+	previewedGameIndex = null,
 	activeRosters,
 }: MatchBannerBottomRowProps) {
 	return (
 		<div className={styles.root}>
-			<ModeProgress games={games} />
+			<ModeProgress games={games} previewedGameIndex={previewedGameIndex} />
 			<ActiveRosters activeRosters={activeRosters} />
 		</div>
 	);
 }
 
-function ModeProgress({ games }: Pick<MatchBannerBottomRowProps, "games">) {
+function ModeProgress({
+	games,
+	previewedGameIndex,
+}: Pick<MatchBannerBottomRowProps, "games" | "previewedGameIndex">) {
 	const knownModes = games.flatMap((game) => (game.mode ? [game.mode] : []));
+	// collapsed there's no single game to mark
 	const allSameMode =
+		previewedGameIndex === null &&
 		knownModes.length === games.length &&
 		games.length > 1 &&
 		knownModes.every((mode) => mode === knownModes[0]);
@@ -54,8 +62,11 @@ function ModeProgress({ games }: Pick<MatchBannerBottomRowProps, "games">) {
 				game.mode ? (
 					<div
 						key={i}
-						className={styles.mode}
+						className={clsx(styles.mode, {
+							[styles.modePreviewed]: i === previewedGameIndex,
+						})}
 						data-testid={`mode-progress-${game.mode}`}
+						data-previewed={i === previewedGameIndex || undefined}
 					>
 						<ModeImage mode={game.mode} size={16} />
 					</div>
