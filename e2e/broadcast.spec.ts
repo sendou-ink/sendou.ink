@@ -296,6 +296,36 @@ test.describe("Broadcast", () => {
 
 		await obs.close();
 	});
+
+	test("remembers the capture card source with the OBS URL in the next tournament", async ({
+		page,
+		factories,
+	}) => {
+		const lastWeek = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+		const thisWeek = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		const lastWeekDashboard = new BroadcastDashboardPage(
+			page,
+			pageArgs(lastWeek.id),
+		);
+		await lastWeekDashboard.goto();
+		await lastWeekDashboard.saveCaptureCardSource("Elgato HD60");
+
+		const thisWeekDashboard = new BroadcastDashboardPage(
+			page,
+			pageArgs(thisWeek.id),
+		);
+		await thisWeekDashboard.goto();
+		await thisWeekDashboard.locators.setupTab.click();
+		await expect(thisWeekDashboard.locators.captureCardSourceInput).toHaveValue(
+			"Elgato HD60",
+		);
+	});
 });
 
 function pageArgs(tournamentId: number) {

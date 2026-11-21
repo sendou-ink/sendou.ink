@@ -55,6 +55,7 @@ export class BroadcastDashboardPage {
 			onGameStart: page.getByText("On game start", { exact: true }),
 			themeTab: page.getByRole("tab", { name: "Theme" }),
 			setupTab: page.getByRole("tab", { name: "Setup" }),
+			captureCardSourceInput: page.getByLabel("Capture card source"),
 			programShowsThis: page.getByText(
 				"Your browser source URL shows this broadcast",
 			),
@@ -148,6 +149,18 @@ export class BroadcastDashboardPage {
 		await this.locators.setupTab.click();
 		await this.page.getByTestId("broadcast-point-program-button").click();
 		await submit(this.page, "confirm-button");
+	}
+
+	/** Saves the capture card source the user's OBS URL mutes off the game scene. */
+	async saveCaptureCardSource(inputName: string) {
+		await this.locators.setupTab.click();
+		await this.locators.captureCardSourceInput.fill(inputName);
+		await submit(
+			this.page,
+			this.locators.captureCardSourceInput
+				.locator("xpath=ancestor::form")
+				.getByTestId("submit-button"),
+		);
 	}
 
 	/** Tells the broadcast a game started or ended, as the scanner linked from this dashboard does. Returns the response status. */

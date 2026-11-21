@@ -107,6 +107,15 @@ export interface BroadcastSettings {
 	weaponImages: BroadcastWeaponImages;
 }
 
+/** How the OBS browser source reaches the capture card through OBS's WebSocket server (obs-websocket). */
+export interface BroadcastObsAudio {
+	/** Name of the capture card's source in OBS. */
+	inputName: string;
+	port: number;
+	/** `null` when the WebSocket server asks for none. */
+	password: string | null;
+}
+
 /** The cast account a broadcast is for. */
 export interface BroadcastChannel {
 	platform: StreamPlatform;
@@ -151,6 +160,8 @@ export type BroadcastStreamMessage<
 	| { kind: "reconnect" }
 	/** The OBS URL the page was opened from now shows another broadcast, the page loads again. */
 	| { kind: "reload" }
+	/** The OBS URL the page was opened from now mutes the capture card this way. */
+	| { kind: "obsAudio"; obsAudio: BroadcastObsAudio | null }
 	/**
 	 * First message of every connection: who it is when signaling the clip peer connections, and the server's clock
 	 * (epoch ms) to time the scenes by.

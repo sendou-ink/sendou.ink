@@ -6,6 +6,7 @@ import {
 	pointProgram,
 	regenerateProgramKey,
 	requireBroadcastProducer,
+	updateObsAudio,
 } from "~/features/broadcast/broadcast-utils.server";
 import * as BroadcastHub from "~/features/broadcast/core/BroadcastHub.server";
 import * as Producer from "~/features/broadcast/core/Producer";
@@ -29,6 +30,8 @@ const STALE_TAKE_MESSAGE =
 	"Someone else already pressed Take. Check what is live now.";
 const STALE_ITEM_MESSAGE =
 	"That scene isn't staged anymore. Check what is live and queued now.";
+const NO_PROGRAM_MESSAGE =
+	"Generate your browser source URL first, the capture card settings are saved with it.";
 const STALE_CASTER_MESSAGE =
 	"That caster isn't on the broadcast anymore. Check the casters in the Setup tab.";
 const NO_MATCH_MESSAGE =
@@ -201,7 +204,7 @@ export const action = defineAction(
 				break;
 			}
 			case "REGENERATE_PROGRAM_KEY": {
-				await regenerateProgramKey({ userId: user.id, channel });
+				await regenerateProgramKey(user.id);
 				break;
 			}
 			case "UPDATE_CASTERS": {
@@ -220,6 +223,20 @@ export const action = defineAction(
 						})),
 					},
 				});
+				break;
+			}
+			case "UPDATE_OBS_AUDIO": {
+				const hasProgram = await updateObsAudio({
+					userId: user.id,
+					obsAudio: body.inputName
+						? {
+								inputName: body.inputName,
+								port: body.port,
+								password: body.password,
+							}
+						: null,
+				});
+				errorToastIfFalsy(hasProgram, NO_PROGRAM_MESSAGE);
 				break;
 			}
 			case "SET_CASTER_VOLUME": {

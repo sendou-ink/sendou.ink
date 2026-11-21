@@ -5,6 +5,7 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { CAST_PRODUCER_RULES } from "~/features/broadcast-cast/broadcast-cast-constants";
 import { testTournament } from "~/features/tournament-bracket/core/tests/test-utils";
+import type { BroadcastStreamMessage } from "./broadcast-types";
 import {
 	findProgram,
 	isBroadcastEnabled,
@@ -12,7 +13,9 @@ import {
 	pointProgram,
 	regenerateProgramKey,
 	requireBroadcastProducer,
+	updateObsAudio,
 } from "./broadcast-utils.server";
+import * as BroadcastHub from "./core/BroadcastHub.server";
 
 const ORGANIZER_ID = 1;
 const STREAMER_ID = 2;
@@ -147,22 +150,23 @@ describe("findProgram", () => {
 		const program = await findProgram(programKey);
 
 		expect(program?.userId).toBe(users.id(1));
-		expect(program?.tournament?.ctx.id).toBe(tournamentId);
-		expect(program).toMatchObject({
+		expect(program?.shows?.tournament.ctx.id).toBe(tournamentId);
+		expect(program?.shows?.channel).toEqual({
 			platform: channel.platform,
 			account: channel.account,
 		});
 	});
 
-	test("gives each channel of the tournament its own URL", async () => {
+	test("moves the user's one URL to the other channel it is pointed at", async () => {
 		const tournamentId = await createTournament();
 
 		const firstKey = await point(tournamentId);
 		const otherKey = await point(tournamentId, OTHER_CHANNEL);
 
-		expect(otherKey).not.toBe(firstKey);
-		expect((await findProgram(firstKey))?.account).toBe(channel.account);
-		expect((await findProgram(otherKey))?.account).toBe(OTHER_CHANNEL.account);
+		expect(otherKey).toBe(firstKey);
+		expect((await findProgram(otherKey))?.shows?.channel.account).toBe(
+			OTHER_CHANNEL.account,
+		);
 	});
 
 	test("keeps the key when pointed at the next tournament's broadcast", async () => {
@@ -172,7 +176,7 @@ describe("findProgram", () => {
 		const nextKey = await point(nextTournamentId);
 
 		expect(nextKey).toBe(firstKey);
-		expect((await findProgram(nextKey))?.tournament?.ctx.id).toBe(
+		expect((await findProgram(nextKey))?.shows?.tournament.ctx.id).toBe(
 			nextTournamentId,
 		);
 	});
@@ -188,14 +192,14 @@ describe("findProgram", () => {
 		const program = await findProgram(programKey);
 
 		expect(program?.userId).toBe(users.id(2));
-		expect(program?.tournament).toBeNull();
+		expect(program?.shows).toBeNull();
 	});
 
 	test("shows no broadcast once broadcasts are turned off for its organization", async () => {
 		const programKey = await point(await createTournament());
 		ServerConfig.broadcastOrgIds = [ORGANIZATION_ID];
 
-		expect((await findProgram(programKey))?.tournament).toBeNull();
+		expect((await findProgram(programKey))?.shows).toBeNull();
 	});
 });
 
@@ -209,29 +213,86 @@ describe("regenerateProgramKey", () => {
 		const tournamentId = await createTournament();
 		const oldKey = await point(tournamentId);
 
-		const newKey = await regenerateProgramKey({ userId: users.id(1), channel });
+		const newKey = await regenerateProgramKey(users.id(1));
 
 		expect(newKey).not.toBe(oldKey);
 		expect(await findProgram(oldKey)).toBeNull();
-		expect((await findProgram(newKey))?.tournament?.ctx.id).toBe(tournamentId);
+		expect((await findProgram(newKey))?.shows?.tournament.ctx.id).toBe(
+			tournamentId,
+		);
 	});
 
-	test("keeps the URL of the user's other channel", async () => {
-		const tournamentId = await createTournament();
-		await point(tournamentId);
-		const otherKey = await point(tournamentId, OTHER_CHANNEL);
-
-		await regenerateProgramKey({ userId: users.id(1), channel });
-
-		expect((await findProgram(otherKey))?.account).toBe(OTHER_CHANNEL.account);
-	});
-
-	test("is null before the user generated a URL for the channel", async () => {
-		expect(
-			await regenerateProgramKey({ userId: users.id(1), channel }),
-		).toBeNull();
+	test("is null before the user generated a URL", async () => {
+		expect(await regenerateProgramKey(users.id(1))).toBeNull();
 	});
 });
+
+describe("updateObsAudio", () => {
+	beforeEach(async () => {
+		ServerConfig.broadcastOrgIds = "*";
+		await users.create(1);
+	});
+
+	test("saves it with the user's URL, the same in every tournament", async () => {
+		const programKey = await point(await createTournament());
+		const obsAudio = { inputName: "Capture", port: 4455, password: "pw" };
+
+		await updateObsAudio({ userId: users.id(1), obsAudio });
+		await point(await createTournament(), OTHER_CHANNEL);
+
+		expect((await findProgram(programKey))?.obsAudio).toEqual(obsAudio);
+	});
+
+	test("tells the overlays showing the user's URL right away, null once turned off", async () => {
+		const tournamentId = await createTournament();
+		const program = await findProgram(await point(tournamentId));
+		const overlay = connectOverlay({ tournamentId, programId: program!.id });
+		const obsAudio = { inputName: "Capture", port: 4455, password: null };
+
+		await updateObsAudio({ userId: users.id(1), obsAudio });
+		await updateObsAudio({ userId: users.id(1), obsAudio: null });
+
+		expect(overlay.obsAudios()).toEqual([obsAudio, null]);
+		overlay.disconnect();
+	});
+
+	test("is false before the user generated a URL", async () => {
+		expect(await updateObsAudio({ userId: users.id(1), obsAudio: null })).toBe(
+			false,
+		);
+	});
+});
+
+/** An OBS source connected to the broadcast through the user's OBS URL. */
+function connectOverlay({
+	tournamentId,
+	programId,
+}: {
+	tournamentId: number;
+	programId: number;
+}) {
+	const connection = new AbortController();
+	const messages: BroadcastStreamMessage[] = [];
+	BroadcastHub.connect({
+		tournamentId,
+		slug: channel.slug,
+		layout: { producer: rules, build: async () => null },
+		role: "source",
+		send: (message) => messages.push(JSON.parse(message)),
+		close: () => {},
+		signal: connection.signal,
+		isClipSender: false,
+		programId,
+	});
+
+	return {
+		obsAudios: () =>
+			messages.flatMap((message) =>
+				message.kind === "obsAudio" ? [message.obsAudio] : [],
+			),
+		disconnect: () => connection.abort(),
+	};
+}
 
 async function createTournament() {
 	const { id } = await TournamentFactory.create({ authorId: users.id(1) });

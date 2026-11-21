@@ -177,6 +177,69 @@ describe("SET_CASTER_VOLUME", () => {
 	});
 });
 
+describe("UPDATE_OBS_AUDIO", () => {
+	test("saves how to reach the capture card in OBS with the user's URL", async () => {
+		const tournamentId = await createTournament();
+		await generateUrl(tournamentId);
+
+		await updateObsAudio(tournamentId, {
+			inputName: "Capture Card",
+			port: 4455,
+			password: "hunter2",
+		});
+
+		expect(await storedObsAudio()).toEqual({
+			inputName: "Capture Card",
+			port: 4455,
+			password: "hunter2",
+		});
+	});
+
+	test("turns it off without a capture card name", async () => {
+		const tournamentId = await createTournament();
+		await generateUrl(tournamentId);
+		await updateObsAudio(tournamentId, {
+			inputName: "Capture Card",
+			port: 4455,
+			password: null,
+		});
+
+		await updateObsAudio(tournamentId, {
+			inputName: null,
+			port: 4455,
+			password: null,
+		});
+
+		expect(await storedObsAudio()).toBeNull();
+	});
+
+	test("rejects a port out of range", async () => {
+		const tournamentId = await createTournament();
+		await generateUrl(tournamentId);
+
+		const response = await updateObsAudio(tournamentId, {
+			inputName: "Capture Card",
+			port: 70_000,
+			password: null,
+		});
+
+		expect(response).toHaveProperty("fieldErrors");
+		expect(await storedObsAudio()).toBeNull();
+	});
+
+	test("rejects saving before the user generated their URL", async () => {
+		const tournamentId = await createTournament();
+
+		const response = await updateObsAudio(tournamentId, {
+			inputName: "Capture Card",
+			port: 4455,
+			password: null,
+		});
+
+		assertResponseErrored(response, "Generate your browser source URL first");
+	});
+});
+
 async function createTournament() {
 	const { id } = await TournamentFactory.create(
 		{ authorId: organizerId() },
@@ -209,6 +272,27 @@ function updateCasters(
 				...caster,
 			})),
 		},
+		{ user: organizerId(), params: params(tournamentId) },
+	);
+}
+
+function generateUrl(tournamentId: number) {
+	return broadcast(
+		{ _action: "POINT_PROGRAM" },
+		{ user: organizerId(), params: params(tournamentId) },
+	);
+}
+
+async function storedObsAudio() {
+	return (await BroadcastRepository.findProgram(organizerId()))?.obsAudio;
+}
+
+function updateObsAudio(
+	tournamentId: number,
+	obsAudio: { inputName: string | null; port: number; password: string | null },
+) {
+	return broadcastForm(
+		{ _action: "UPDATE_OBS_AUDIO", ...obsAudio },
 		{ user: organizerId(), params: params(tournamentId) },
 	);
 }

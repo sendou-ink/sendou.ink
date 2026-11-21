@@ -543,5 +543,12 @@
 	"bottomTexts.broadcastVdoNinjaUrl": "The Casters scene shows their camera in the frame and they're heard on every scene. Without a link their avatar shows instead.",
 	"labels.broadcastCasterAudioOnly": "No camera",
 	"bottomTexts.broadcastCasterAudioOnly": "Shows their avatar in place of the camera, lighting up as they speak.",
-	"placeholders.broadcastVdoNinjaUrl": "https://vdo.ninja/?view=..."
+	"placeholders.broadcastVdoNinjaUrl": "https://vdo.ninja/?view=...",
+	"labels.broadcastObsInputName": "Capture card source",
+	"bottomTexts.broadcastObsInputName": "Its name in OBS, exactly as in the Sources list. Leave empty to not touch its audio.",
+	"placeholders.broadcastObsInputName": "Video Capture Device",
+	"labels.broadcastObsPort": "WebSocket server port",
+	"bottomTexts.broadcastObsPort": "Tools → WebSocket Server Settings in OBS, 4455 unless you changed it.",
+	"labels.broadcastObsPassword": "WebSocket server password",
+	"bottomTexts.broadcastObsPassword": "Show Connect Info in the same settings. Leave empty if authentication is off."
 }

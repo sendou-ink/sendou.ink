@@ -16,17 +16,17 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const channels = CastChannel.list(tournament.ctx.castAccounts);
 	if (channels.length === 0) return null;
 
-	const producedChannels =
-		await BroadcastRepository.findProgramChannelsByTournament({
+	const producedChannel =
+		await BroadcastRepository.findProgramChannelByTournament({
 			userId: user.id,
 			tournamentId,
 		});
 	const channel =
-		channels.find((candidate) =>
-			producedChannels.some((produced) =>
-				LiveStream.isSameAccount(candidate, produced),
-			),
-		) ?? channels[0];
+		(producedChannel
+			? channels.find((candidate) =>
+					LiveStream.isSameAccount(candidate, producedChannel),
+				)
+			: undefined) ?? channels[0];
 
 	throw redirect(broadcastDashboardPage({ tournamentId, slug: channel.slug }));
 };

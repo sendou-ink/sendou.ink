@@ -304,17 +304,17 @@ export function buildCases(fx: Fixtures): {
 		BroadcastRepository.findProgramByKey(program.programKey),
 	);
 	add("BroadcastRepository.findProgram", fx.broadcastProgram, (program) =>
-		BroadcastRepository.findProgram(program),
+		BroadcastRepository.findProgram(program.userId),
 	);
 	add(
-		"BroadcastRepository.findProgramChannelsByTournament",
+		"BroadcastRepository.findProgramChannelByTournament",
 		fx.broadcastProgram?.tournamentId
 			? {
 					userId: fx.broadcastProgram.userId,
 					tournamentId: fx.broadcastProgram.tournamentId,
 				}
 			: null,
-		(args) => BroadcastRepository.findProgramChannelsByTournament(args),
+		(args) => BroadcastRepository.findProgramChannelByTournament(args),
 	);
 	add(
 		"BroadcastCastRepository.findAllCastersByUserIds",

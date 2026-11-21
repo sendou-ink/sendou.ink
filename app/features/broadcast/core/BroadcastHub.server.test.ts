@@ -245,6 +245,28 @@ describe("BroadcastHub.reloadProgram", () => {
 	});
 });
 
+describe("BroadcastHub.sendObsAudio", () => {
+	const OBS_AUDIO = { inputName: "Capture", port: 4455, password: null };
+
+	test("tells the overlays of the OBS URL how to mute the capture card", () => {
+		const showing = connect({ programId: 1 });
+
+		BroadcastHub.sendObsAudio({ programId: 1, obsAudio: OBS_AUDIO });
+
+		expect(showing.obsAudios()).toEqual([OBS_AUDIO]);
+	});
+
+	test("leaves out other OBS URLs' pages and a page showing no broadcast, which would load again", () => {
+		const otherUser = connect({ programId: 2 });
+		const standby = connectStandby(1);
+
+		BroadcastHub.sendObsAudio({ programId: 1, obsAudio: OBS_AUDIO });
+
+		expect(otherUser.obsAudios()).toEqual([]);
+		expect(standby.obsAudios()).toBe(0);
+	});
+});
+
 describe("BroadcastHub.closeProgram", () => {
 	test("closes the connections through the OBS URL", () => {
 		const showing = connect({ programId: 1 });
@@ -284,6 +306,8 @@ function connectStandby(programId: number) {
 		close,
 		reloads: () =>
 			messages.filter((message) => message.kind === "reload").length,
+		obsAudios: () =>
+			messages.filter((message) => message.kind === "obsAudio").length,
 	};
 }
 
@@ -321,6 +345,10 @@ function connect({
 			),
 		reloads: () =>
 			messages.filter((message) => message.kind === "reload").length,
+		obsAudios: () =>
+			messages.flatMap((message) =>
+				message.kind === "obsAudio" ? [message.obsAudio] : [],
+			),
 	};
 }
 

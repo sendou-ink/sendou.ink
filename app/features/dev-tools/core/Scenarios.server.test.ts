@@ -94,8 +94,8 @@ describe("Scenarios.run", () => {
 				isBroadcastProducer(tournament, { id: outcome.result.userId }),
 			).toBe(true);
 			expect(program?.userId).toBe(outcome.result.userId);
-			expect(program?.tournament?.ctx.id).toBe(tournament.ctx.id);
-			expect(program?.account).toBe(slug);
+			expect(program?.shows?.tournament.ctx.id).toBe(tournament.ctx.id);
+			expect(program?.shows?.channel.account).toBe(slug);
 		},
 	);
 

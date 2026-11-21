@@ -46,6 +46,7 @@ export default function BroadcastProgramPage() {
 			slug={data.broadcast.slug}
 			initialState={data.broadcast.state}
 			programKey={data.programKey}
+			initialObsAudio={data.obsAudio}
 		/>
 	);
 }

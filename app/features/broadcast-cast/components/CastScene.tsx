@@ -1,5 +1,9 @@
 import type { BroadcastView } from "~/features/broadcast/broadcast-types";
-import type { BroadcastSceneSet } from "~/features/broadcast/components/BroadcastOverlay";
+import type {
+	BroadcastSceneLayer,
+	BroadcastSceneSet,
+} from "~/features/broadcast/components/BroadcastOverlay";
+import { useObsCaptureMute } from "../broadcast-cast-hooks";
 import { CAST_THEME_CLASSES } from "../broadcast-cast-theme";
 import type { CastBroadcastState } from "../broadcast-cast-types";
 import { needsFeaturedMatch } from "../broadcast-cast-utils";
@@ -18,9 +22,24 @@ import { TeamScene } from "./TeamScene";
 export const CAST_SCENE_SET: BroadcastSceneSet<CastBroadcastState> = {
 	Scene: CastScene,
 	Stinger,
-	Underlay: CasterCameras,
+	Underlay: CastUnderlay,
 	themeClasses: CAST_THEME_CLASSES,
 };
+
+/** Under every scene: the casters' cameras (heard on every scene, seen on Casters), and the capture card muted off the Game scene. */
+function CastUnderlay({
+	state,
+	view,
+	layers,
+}: {
+	state: CastBroadcastState;
+	view: BroadcastView;
+	layers: BroadcastSceneLayer<CastBroadcastState>[];
+}) {
+	useObsCaptureMute(layers[0].state[view].scene === "game");
+
+	return <CasterCameras state={state} view={view} layers={layers} />;
+}
 
 /** A scene showing the featured match's teams falls back to the break scene while no match is cast, e.g. as it got uncast on air. */
 function CastScene({

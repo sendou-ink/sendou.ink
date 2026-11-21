@@ -390,6 +390,13 @@ export const BROADCAST_DEFAULT_CASTER_VOLUME = 100;
 /** How often a dragged caster volume slider saves at most. */
 export const BROADCAST_VOLUME_SAVE_INTERVAL_MS = 250;
 
+/** Port OBS's WebSocket server listens on unless changed. */
+export const BROADCAST_OBS_WEBSOCKET_DEFAULT_PORT = 4455;
+
+export const BROADCAST_OBS_INPUT_NAME_MAX_LENGTH = 100;
+
+export const BROADCAST_OBS_PASSWORD_MAX_LENGTH = 100;
+
 export const DEFAULT_CAST_BROADCAST_SETTINGS = {
 	...DEFAULT_BROADCAST_SETTINGS,
 	headline: "",

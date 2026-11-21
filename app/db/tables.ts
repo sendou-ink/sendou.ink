@@ -30,6 +30,7 @@ import type {
 } from "~/db/tables-json";
 import type { ApiTokenType } from "~/features/api/api-types";
 import type {
+	BroadcastObsAudio,
 	BroadcastSettings,
 	BroadcastStoredState,
 } from "~/features/broadcast/broadcast-types";
@@ -1237,17 +1238,16 @@ interface TournamentBroadcast {
 	createdAt: Generated<number>;
 }
 
-/** A user's OBS URL for one cast account, showing the account's tournament broadcast they last pointed it at. */
-interface UserBroadcastProgram {
+/** A user's OBS setup, the same in every tournament: their OBS URL showing the tournament broadcast they last pointed it at. */
+interface UserBroadcastSetup {
 	id: GeneratedAlways<number>;
 	userId: number;
-	platform: StreamPlatform;
-	/** Twitch login or YouTube channel id, as in the cast account */
-	account: string;
 	/** Secret of the URL, OBS has no session */
 	programKey: string;
 	/** `null` until pointed at a broadcast, or after the broadcast was deleted */
 	broadcastId: number | null;
+	/** How the OBS URL mutes the capture card off the game scene, `null` leaves its audio alone */
+	obsAudio: JSONColumnTypeNullable<BroadcastObsAudio>;
 	createdAt: Generated<number>;
 }
 
@@ -1849,7 +1849,7 @@ export interface DB {
 	TournamentOrganizationBannedUser: TournamentOrganizationBannedUser;
 	TournamentStreamer: TournamentStreamer;
 	TournamentBroadcast: TournamentBroadcast;
-	UserBroadcastProgram: UserBroadcastProgram;
+	UserBroadcastSetup: UserBroadcastSetup;
 	TournamentMatchVod: TournamentMatchVod;
 	Trophy: Trophy;
 	TrophyOwner: TrophyOwner;

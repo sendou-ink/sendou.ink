@@ -186,7 +186,6 @@ export interface Fixtures {
 	broadcastProgram: {
 		programKey: string;
 		userId: number;
-		channel: Pick<Tables["UserBroadcastProgram"], "platform" | "account">;
 		/** Tournament of the broadcast it shows. */
 		tournamentId: number | null;
 	} | null;
@@ -1872,21 +1871,19 @@ async function resolveBroadcast() {
 
 async function resolveBroadcastProgram() {
 	const row = await db
-		.selectFrom("UserBroadcastProgram")
+		.selectFrom("UserBroadcastSetup")
 		.leftJoin(
 			"TournamentBroadcast",
 			"TournamentBroadcast.id",
-			"UserBroadcastProgram.broadcastId",
+			"UserBroadcastSetup.broadcastId",
 		)
 		.select([
-			"UserBroadcastProgram.programKey",
-			"UserBroadcastProgram.userId",
-			"UserBroadcastProgram.platform",
-			"UserBroadcastProgram.account",
+			"UserBroadcastSetup.programKey",
+			"UserBroadcastSetup.userId",
 			"TournamentBroadcast.tournamentId",
 		])
-		.orderBy(sql`"UserBroadcastProgram"."broadcastId" is not null`, "desc")
-		.orderBy("UserBroadcastProgram.id", "desc")
+		.orderBy(sql`"UserBroadcastSetup"."broadcastId" is not null`, "desc")
+		.orderBy("UserBroadcastSetup.id", "desc")
 		.limit(1)
 		.executeTakeFirst();
 	if (!row) return null;
@@ -1894,7 +1891,6 @@ async function resolveBroadcastProgram() {
 	return {
 		programKey: row.programKey,
 		userId: row.userId,
-		channel: { platform: row.platform, account: row.account },
 		tournamentId: row.tournamentId,
 	};
 }

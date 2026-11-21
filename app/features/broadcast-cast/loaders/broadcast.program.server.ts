@@ -17,10 +17,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				layout: CAST_LAYOUT,
 			})
 		: null;
-	if (!program.broadcast || !built) return { programKey, broadcast: null };
+	if (!program.broadcast || !built) {
+		return { programKey, obsAudio: null, broadcast: null };
+	}
 
 	return {
 		programKey,
+		obsAudio: program.obsAudio,
 		broadcast: { ...program.broadcast, state: built.state },
 	};
 };

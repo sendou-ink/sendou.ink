@@ -4,8 +4,10 @@ import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { BroadcastClipsContext } from "../broadcast-clips-context";
 import { BROADCAST_REHEARSE_MESSAGE } from "../broadcast-constants";
 import { useBroadcastStream, useClipReceiver } from "../broadcast-hooks";
+import { BroadcastObsAudioContext } from "../broadcast-obs-audio-context";
 import { broadcastOverlaySearchParams } from "../broadcast-search-params";
 import type {
+	BroadcastObsAudio,
 	BroadcastState,
 	BroadcastStreamMessage,
 } from "../broadcast-types";
@@ -20,6 +22,7 @@ import { BroadcastOverlay, type BroadcastSceneSet } from "./BroadcastOverlay";
  * The program page's overlay: the scene set drawing the broadcast's state as its stream pushes it. Opened from a user's
  * OBS URL (`programKey`) it streams through that URL and loads again once the URL is pointed at another broadcast.
  * Otherwise the view and whether it is the dashboard's preview (not counted as an OBS source) come from the search params.
+ * Opened from an OBS URL it also mutes the capture card the way the URL's user set (`initialObsAudio`, then as they change it).
  */
 export function BroadcastProgram<State extends BroadcastState>({
 	sceneSet,
@@ -27,16 +30,19 @@ export function BroadcastProgram<State extends BroadcastState>({
 	slug,
 	initialState,
 	programKey,
+	initialObsAudio = null,
 }: {
 	sceneSet: BroadcastSceneSet<State>;
 	tournamentId: number;
 	slug: string;
 	initialState: State;
 	programKey?: string;
+	initialObsAudio?: BroadcastObsAudio | null;
 }) {
 	const [{ view, preview }] = useSearchParamsTyped(
 		broadcastOverlaySearchParams,
 	);
+	const [obsAudio, setObsAudio] = useState(initialObsAudio);
 	const pageArgs = { tournamentId, slug };
 	const clips = useClipReceiver({ signalUrl: broadcastSignalUrl(pageArgs) });
 	const { state, clockOffsetMs } = useBroadcastStream({
@@ -49,6 +55,7 @@ export function BroadcastProgram<State extends BroadcastState>({
 		initialState,
 		onMessage: (message) => {
 			if (message.kind === "reload") window.location.reload();
+			else if (message.kind === "obsAudio") setObsAudio(message.obsAudio);
 			else clips.onMessage(message);
 		},
 	});
@@ -63,15 +70,17 @@ export function BroadcastProgram<State extends BroadcastState>({
 				reportFeeds: clips.sendFeeds,
 			}}
 		>
-			{/* a crash shows nothing over the footage, tried again with the next state */}
-			<ClientErrorBoundary fallback={null} resetKeys={[state]}>
-				<BroadcastOverlay
-					sceneSet={sceneSet}
-					state={state}
-					view={view}
-					rehearsals={rehearsals}
-				/>
-			</ClientErrorBoundary>
+			<BroadcastObsAudioContext.Provider value={obsAudio}>
+				{/* a crash shows nothing over the footage, tried again with the next state */}
+				<ClientErrorBoundary fallback={null} resetKeys={[state]}>
+					<BroadcastOverlay
+						sceneSet={sceneSet}
+						state={state}
+						view={view}
+						rehearsals={rehearsals}
+					/>
+				</ClientErrorBoundary>
+			</BroadcastObsAudioContext.Provider>
 		</BroadcastClipsContext.Provider>
 	);
 }

@@ -9,7 +9,11 @@ import {
 	BROADCAST_CHAT_ROOM_LIFESPAN_DAYS,
 	LEAGUE_BROADCAST_CHAT_ROOM_LIFESPAN_DAYS,
 } from "./broadcast-constants";
-import type { BroadcastChannel, ProducerState } from "./broadcast-types";
+import type {
+	BroadcastChannel,
+	BroadcastObsAudio,
+	ProducerState,
+} from "./broadcast-types";
 import * as BroadcastHub from "./core/BroadcastHub.server";
 import type * as Producer from "./core/Producer";
 
@@ -51,8 +55,8 @@ export function requireBroadcastProducer<User extends { id: number }>(
 }
 
 /**
- * The OBS URL of the program key: its id, whose and which channel's it is and the tournament broadcast it shows, `null`
- * for an unknown key. `tournament` is `null` while the URL isn't pointed at a broadcast, or once its user can't
+ * The OBS URL of the program key: its id, whose it is, how it mutes the capture card and the tournament broadcast it
+ * shows, `null` for an unknown key. `shows` is `null` while the URL isn't pointed at a broadcast, or once its user can't
  * produce that one anymore.
  */
 export async function findProgram(programKey: string | null) {
@@ -61,19 +65,24 @@ export async function findProgram(programKey: string | null) {
 	const program = await BroadcastRepository.findProgramByKey(programKey);
 	if (!program) return null;
 
-	const { tournamentId, ...rest } = program;
+	const { tournamentId, platform, account, ...rest } = program;
 	const tournament =
 		tournamentId === null ? null : await tournamentFromDB(tournamentId);
-	if (!tournament || !isBroadcastProducer(tournament, { id: rest.userId })) {
-		return { ...rest, tournament: null };
+	if (
+		!tournament ||
+		!platform ||
+		!account ||
+		!isBroadcastProducer(tournament, { id: rest.userId })
+	) {
+		return { ...rest, shows: null };
 	}
 
-	return { ...rest, tournament };
+	return { ...rest, shows: { tournament, channel: { platform, account } } };
 }
 
 /**
- * Points the user's OBS URL for the channel at the channel's broadcast in the tournament (generating the URL if the
- * user has none for the channel), reloading the OBS sources showing it onto this one. Returns the URL's key.
+ * Points the user's OBS URL at the channel's broadcast in the tournament (generating the URL if the user has none),
+ * reloading the OBS sources showing it onto this one. Returns the URL's key.
  */
 export async function pointProgram({
 	userId,
@@ -101,14 +110,27 @@ export async function pointProgram({
 }
 
 /**
- * Gives the user's OBS URL for the channel a new key, disconnecting the OBS sources (and anyone else) watching with the
- * old one. Returns the new key, `null` without a URL.
+ * Sets how the user's OBS URL mutes the capture card, the OBS sources using it following right away. Returns whether
+ * the user has a URL.
  */
-export async function regenerateProgramKey(args: {
+export async function updateObsAudio(args: {
 	userId: number;
-	channel: Pick<BroadcastChannel, "platform" | "account">;
+	obsAudio: BroadcastObsAudio | null;
 }) {
-	const program = await BroadcastRepository.refreshProgramKey(args);
+	const program = await BroadcastRepository.updateObsAudio(args);
+	if (!program) return false;
+
+	BroadcastHub.sendObsAudio({ programId: program.id, obsAudio: args.obsAudio });
+
+	return true;
+}
+
+/**
+ * Gives the user's OBS URL a new key, disconnecting the OBS sources (and anyone else) watching with the old one.
+ * Returns the new key, `null` without a URL.
+ */
+export async function regenerateProgramKey(userId: number) {
+	const program = await BroadcastRepository.refreshProgramKey(userId);
 	if (!program) return null;
 
 	BroadcastHub.closeProgram(program.id);

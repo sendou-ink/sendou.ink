@@ -75,6 +75,7 @@ import type {
 	BroadcastAdvance,
 	BroadcastChannel,
 	BroadcastMatch,
+	BroadcastObsAudio,
 	BroadcastView,
 } from "~/features/broadcast/broadcast-types";
 import {
@@ -111,6 +112,7 @@ import { tournamentAdminPage, tournamentMatchPage } from "~/utils/urls";
 import {
 	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_DASHBOARD_TABS,
+	BROADCAST_OBS_WEBSOCKET_DEFAULT_PORT,
 	BROADCAST_PROTOTYPE_CLIPS,
 	BROADCAST_SCENE_DURATIONS_MS,
 	CAST_PRODUCER_RULES,
@@ -120,6 +122,7 @@ import {
 	broadcastActionSchema,
 	broadcastCastersFormSchema,
 	broadcastHeadlineFormSchema,
+	broadcastObsAudioFormSchema,
 } from "../broadcast-cast-schemas";
 import { broadcastDashboardSearchParams } from "../broadcast-cast-search-params";
 import type {
@@ -1501,6 +1504,29 @@ function CastersForm({ state }: { state: CastBroadcastState }) {
 	);
 }
 
+function ObsAudioForm({ obsAudio }: { obsAudio: BroadcastObsAudio | null }) {
+	return (
+		<SendouForm
+			schema={broadcastObsAudioFormSchema}
+			defaultValues={{
+				inputName: obsAudio?.inputName ?? null,
+				port: obsAudio?.port ?? BROADCAST_OBS_WEBSOCKET_DEFAULT_PORT,
+				password: obsAudio?.password ?? null,
+			}}
+			submitButtonSize="small"
+			fullWidth
+		>
+			{({ FormField }) => (
+				<>
+					<FormField name="inputName" />
+					<FormField name="port" />
+					<FormField name="password" />
+				</>
+			)}
+		</SendouForm>
+	);
+}
+
 function Setup({
 	state,
 	program,
@@ -1547,16 +1573,15 @@ function Setup({
 									size="small"
 									icon={<MonitorUp />}
 									confirm={
-										program.showingTournamentName
+										program.showing
 											? {
 													dialogHeading: t(
 														"broadcast:dashboard.setup.pointProgramHeading",
+														program.showing,
 													),
 													description: t(
 														"broadcast:dashboard.setup.pointProgramDescription",
-														{
-															tournamentName: program.showingTournamentName,
-														},
+														program.showing,
 													),
 													submitButtonText: t(
 														"broadcast:dashboard.setup.pointProgram",
@@ -1614,10 +1639,11 @@ function Setup({
 						<SetupCheck isDone={program.isShowingThis}>
 							{program.isShowingThis
 								? t("broadcast:dashboard.setup.programShowsThis")
-								: program.showingTournamentName
-									? t("broadcast:dashboard.setup.programShowsOther", {
-											tournamentName: program.showingTournamentName,
-										})
+								: program.showing
+									? t(
+											"broadcast:dashboard.setup.programShowsOther",
+											program.showing,
+										)
 									: t("broadcast:dashboard.setup.programShowsNothing")}
 						</SetupCheck>
 					) : null}
@@ -1629,6 +1655,19 @@ function Setup({
 					</SetupCheck>
 				</ul>
 				<ClipOverlays statuses={statuses} />
+				{program ? (
+					<div className="stack sm">
+						<div className="stack horizontal xs items-center">
+							<h3 className="text-sm font-semi-bold">
+								{t("broadcast:dashboard.setup.obsAudioHeader")}
+							</h3>
+							<InfoPopover tiny>
+								{t("broadcast:dashboard.setup.obsAudio")}
+							</InfoPopover>
+						</div>
+						<ObsAudioForm obsAudio={program.obsAudio} />
+					</div>
+				) : null}
 			</section>
 			<section className="stack md">
 				<div className="stack horizontal xs items-center">

@@ -47,5 +47,6 @@ export const JSON_COLUMNS: ReadonlySet<string> = new Set([
 	"User.pronouns",
 	"User.unverifiedPeakXP",
 	"User.weaponPool",
+	"UserBroadcastSetup.obsAudio",
 	"UserWidget.widget",
 ]);

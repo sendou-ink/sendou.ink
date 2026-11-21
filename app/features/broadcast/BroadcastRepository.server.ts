@@ -15,6 +15,7 @@ import {
 } from "./broadcast-constants";
 import type {
 	BroadcastChannel,
+	BroadcastObsAudio,
 	BroadcastSettings,
 	BroadcastStoredState,
 	ProducerState,
@@ -194,62 +195,63 @@ export async function updateSettings<
 		.execute();
 }
 
-/** The OBS URL of the program key: whose and which channel's it is and the broadcast it shows, `undefined` for an unknown key. */
+/**
+ * The OBS URL of the program key: whose it is and the broadcast it shows (its tournament and channel, `null`s before it is
+ * pointed at one) and how it mutes the capture card. `undefined` for an unknown key.
+ */
 export function findProgramByKey(programKey: string) {
 	return db
-		.selectFrom("UserBroadcastProgram")
+		.selectFrom("UserBroadcastSetup")
 		.leftJoin(
 			"TournamentBroadcast",
 			"TournamentBroadcast.id",
-			"UserBroadcastProgram.broadcastId",
+			"UserBroadcastSetup.broadcastId",
 		)
 		.select([
-			"UserBroadcastProgram.id",
-			"UserBroadcastProgram.userId",
-			"UserBroadcastProgram.platform",
-			"UserBroadcastProgram.account",
+			"UserBroadcastSetup.id",
+			"UserBroadcastSetup.userId",
+			"UserBroadcastSetup.obsAudio",
 			"TournamentBroadcast.tournamentId",
+			"TournamentBroadcast.platform",
+			"TournamentBroadcast.account",
 		])
-		.where("UserBroadcastProgram.programKey", "=", programKey)
+		.where("UserBroadcastSetup.programKey", "=", programKey)
 		.executeTakeFirst();
 }
 
 /**
- * The user's OBS URL for the channel: its key and the broadcast it shows with its tournament's name (`null`s before it
- * is pointed at one). `undefined` before the user generated it.
+ * The user's OBS URL: its key, how it mutes the capture card and the broadcast it shows with its channel, its tournament's
+ * name and cast accounts (`null`s before it is pointed at one). `undefined` before the user generated it.
  */
-export function findProgram({
-	userId,
-	channel,
-}: {
-	userId: number;
-	channel: BroadcastKey["channel"];
-}) {
+export function findProgram(userId: number) {
 	return db
-		.selectFrom("UserBroadcastProgram")
+		.selectFrom("UserBroadcastSetup")
 		.leftJoin(
 			"TournamentBroadcast",
 			"TournamentBroadcast.id",
-			"UserBroadcastProgram.broadcastId",
+			"UserBroadcastSetup.broadcastId",
 		)
 		.leftJoin(
 			"CalendarEvent",
 			"CalendarEvent.tournamentId",
 			"TournamentBroadcast.tournamentId",
 		)
+		.leftJoin("Tournament", "Tournament.id", "TournamentBroadcast.tournamentId")
 		.select([
-			"UserBroadcastProgram.programKey",
-			"UserBroadcastProgram.broadcastId",
+			"UserBroadcastSetup.programKey",
+			"UserBroadcastSetup.broadcastId",
+			"UserBroadcastSetup.obsAudio",
+			"TournamentBroadcast.platform",
+			"TournamentBroadcast.account",
 			"CalendarEvent.name as tournamentName",
+			"Tournament.castAccounts as tournamentCastAccounts",
 		])
-		.where("UserBroadcastProgram.userId", "=", userId)
-		.where("UserBroadcastProgram.platform", "=", channel.platform)
-		.where("UserBroadcastProgram.account", "=", channel.account)
+		.where("UserBroadcastSetup.userId", "=", userId)
 		.executeTakeFirst();
 }
 
-/** Channels whose OBS URL of the user shows one of the tournament's broadcasts. */
-export function findProgramChannelsByTournament({
+/** Channel of the tournament's broadcast the user's OBS URL shows, `undefined` when it shows none of them. */
+export function findProgramChannelByTournament({
 	userId,
 	tournamentId,
 }: {
@@ -257,21 +259,21 @@ export function findProgramChannelsByTournament({
 	tournamentId: number;
 }) {
 	return db
-		.selectFrom("UserBroadcastProgram")
+		.selectFrom("UserBroadcastSetup")
 		.innerJoin(
 			"TournamentBroadcast",
 			"TournamentBroadcast.id",
-			"UserBroadcastProgram.broadcastId",
+			"UserBroadcastSetup.broadcastId",
 		)
-		.select(["UserBroadcastProgram.platform", "UserBroadcastProgram.account"])
-		.where("UserBroadcastProgram.userId", "=", userId)
+		.select(["TournamentBroadcast.platform", "TournamentBroadcast.account"])
+		.where("UserBroadcastSetup.userId", "=", userId)
 		.where("TournamentBroadcast.tournamentId", "=", tournamentId)
-		.execute();
+		.executeTakeFirst();
 }
 
 /**
- * Points the user's OBS URL for the channel at the channel's broadcast in the tournament, creating the URL (with a new
- * random key) or the broadcast when missing. Returns the URL's id and key.
+ * Points the user's OBS URL at the channel's broadcast in the tournament, creating the URL (with a new random key) or
+ * the broadcast when missing. Returns the URL's id and key.
  */
 export function pointProgram({
 	userId,
@@ -283,42 +285,40 @@ export function pointProgram({
 		const broadcastId = await insertIfMissing(key, trx);
 
 		return trx
-			.insertInto("UserBroadcastProgram")
-			.values({
-				userId,
-				platform: key.channel.platform,
-				account: key.channel.account,
-				programKey: nanoid(),
-				broadcastId,
-			})
-			.onConflict((oc) =>
-				oc
-					.columns(["userId", "platform", "account"])
-					.doUpdateSet({ broadcastId }),
-			)
-			.returning(["UserBroadcastProgram.id", "UserBroadcastProgram.programKey"])
+			.insertInto("UserBroadcastSetup")
+			.values({ userId, programKey: nanoid(), broadcastId })
+			.onConflict((oc) => oc.column("userId").doUpdateSet({ broadcastId }))
+			.returning(["UserBroadcastSetup.id", "UserBroadcastSetup.programKey"])
 			.executeTakeFirstOrThrow();
 	});
 }
 
 /**
- * Gives the user's OBS URL for the channel a new random key, replacing the one it had. Returns the URL's id and new
- * key, `undefined` without a URL.
+ * Gives the user's OBS URL a new random key, replacing the one it had. Returns the URL's id and new key, `undefined`
+ * without a URL.
  */
-export function refreshProgramKey({
+export function refreshProgramKey(userId: number) {
+	return db
+		.updateTable("UserBroadcastSetup")
+		.set({ programKey: nanoid() })
+		.where("UserBroadcastSetup.userId", "=", userId)
+		.returning(["UserBroadcastSetup.id", "UserBroadcastSetup.programKey"])
+		.executeTakeFirst();
+}
+
+/** Sets how the user's OBS URL mutes the capture card. Returns the URL's id, `undefined` without a URL. */
+export function updateObsAudio({
 	userId,
-	channel,
+	obsAudio,
 }: {
 	userId: number;
-	channel: BroadcastKey["channel"];
+	obsAudio: BroadcastObsAudio | null;
 }) {
 	return db
-		.updateTable("UserBroadcastProgram")
-		.set({ programKey: nanoid() })
-		.where("UserBroadcastProgram.userId", "=", userId)
-		.where("UserBroadcastProgram.platform", "=", channel.platform)
-		.where("UserBroadcastProgram.account", "=", channel.account)
-		.returning(["UserBroadcastProgram.id", "UserBroadcastProgram.programKey"])
+		.updateTable("UserBroadcastSetup")
+		.set({ obsAudio: obsAudio ? JSON.stringify(obsAudio) : null })
+		.where("UserBroadcastSetup.userId", "=", userId)
+		.returning("UserBroadcastSetup.id")
 		.executeTakeFirst();
 }
 

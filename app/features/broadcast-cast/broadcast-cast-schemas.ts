@@ -8,6 +8,7 @@ import { broadcastThemeFormSchema } from "~/features/broadcast/broadcast-schemas
 import {
 	array,
 	fieldset,
+	numberField,
 	stringConstant,
 	textFieldOptional,
 	toggle,
@@ -18,6 +19,8 @@ import {
 	BROADCAST_BRACKET_FOCUSES,
 	BROADCAST_HEADLINE_MAX_LENGTH,
 	BROADCAST_MAX_CASTERS,
+	BROADCAST_OBS_INPUT_NAME_MAX_LENGTH,
+	BROADCAST_OBS_PASSWORD_MAX_LENGTH,
 	BROADCAST_SCENE_DURATIONS_MS,
 	BROADCAST_SCENES,
 	BROADCAST_VDO_NINJA_URL_MAX_LENGTH,
@@ -75,6 +78,28 @@ export const broadcastCastersFormSchema = v.object({
 				}),
 			}),
 		}),
+	}),
+});
+
+export const broadcastObsAudioFormSchema = v.object({
+	_action: stringConstant("UPDATE_OBS_AUDIO"),
+	inputName: textFieldOptional({
+		label: "labels.broadcastObsInputName",
+		bottomText: "bottomTexts.broadcastObsInputName",
+		placeholder: "placeholders.broadcastObsInputName",
+		maxLength: BROADCAST_OBS_INPUT_NAME_MAX_LENGTH,
+	}),
+	port: numberField({
+		label: "labels.broadcastObsPort",
+		bottomText: "bottomTexts.broadcastObsPort",
+		min: 1,
+		max: 65_535,
+	}),
+	password: textFieldOptional({
+		label: "labels.broadcastObsPassword",
+		bottomText: "bottomTexts.broadcastObsPassword",
+		maxLength: BROADCAST_OBS_PASSWORD_MAX_LENGTH,
+		inputType: "password",
 	}),
 });
 
@@ -157,4 +182,5 @@ export const broadcastActionSchema = v.union([
 	broadcastThemeFormSchema,
 	broadcastHeadlineFormSchema,
 	broadcastCastersFormSchema,
+	broadcastObsAudioFormSchema,
 ]);

@@ -29,7 +29,7 @@ export const { create } = defineFactory({
 });
 
 /**
- * Points the user's OBS URL for the channel at its broadcast in the tournament like the dashboard's "Generate URL" and "Show this broadcast"
+ * Points the user's OBS URL at the channel's broadcast in the tournament like the dashboard's "Generate URL" and "Show this broadcast"
  * buttons, returning the URL's key.
  */
 export async function pointProgram(key: BroadcastKey & { userId: number }) {

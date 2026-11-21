@@ -6,6 +6,7 @@ import * as BroadcastRepository from "../BroadcastRepository.server";
 import type {
 	BroadcastGameSignal,
 	BroadcastHealth,
+	BroadcastObsAudio,
 	BroadcastPeer,
 	BroadcastSessionDescription,
 	BroadcastState,
@@ -224,6 +225,25 @@ export function reloadProgram({
 		if (except && client.hub === hubs.get(hubId(except))) continue;
 
 		client.send(RELOAD_MESSAGE);
+	}
+}
+
+/** Tells the overlays connected through a user's OBS URL how it mutes the capture card now. */
+export function sendObsAudio({
+	programId,
+	obsAudio,
+}: {
+	programId: number;
+	obsAudio: BroadcastObsAudio | null;
+}) {
+	const message = JSON.stringify({
+		kind: "obsAudio",
+		obsAudio,
+	} satisfies BroadcastStreamMessage);
+
+	for (const client of programClients(programId)) {
+		// one not pointed at a broadcast shows no overlay, and loads again on any message
+		if (client.hub) client.send(message);
 	}
 }
 
