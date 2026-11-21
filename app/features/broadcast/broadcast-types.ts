@@ -88,6 +88,8 @@ export interface BroadcastStoredState<
 /** A game of the featured match as the scanner read it, whichever of the set's games it was. */
 export interface BroadcastScannedGame extends BroadcastGameSummary {
 	matchId: number;
+	/** The game played after the match's first `resultCount` results, its ink being `BroadcastStoredState.ink` of the same. */
+	resultCount: number;
 	/** Ink colors picked for the game when it ended, `null` when none were. */
 	ink: BroadcastInk | null;
 }

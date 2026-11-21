@@ -31,8 +31,6 @@ import { getFeed, newestSessionKey, refreshFeed } from "./events-feed";
 import { unsentMatches } from "./sendou-ingest";
 import { sendLive, uploadEnabled } from "./upload";
 
-/** How often time passing is checked for a game whose HUD went away. */
-const TICK_MS = 1_000;
 const REOPEN_DELAY_MS = 5_000;
 const SIGNAL_DESCRIPTIONS: Record<BroadcastGameSignal["type"], string> = {
 	start: "the game started",
@@ -61,7 +59,6 @@ const listeners = new Set<() => void>();
 let isCapturing = false;
 let cuesState = GameCues.initialState();
 let stream: EventSource | null = null;
-let tickTimer: ReturnType<typeof setInterval> | null = null;
 let reopenTimer: ReturnType<typeof setTimeout> | null = null;
 /** The signals posted so far, the next one going out after them so the broadcast sees them in order. */
 let posting: Promise<void> = Promise.resolve();
@@ -97,6 +94,16 @@ export function observeEvent(event: DetectedEvent): void {
 	if (!snapshot.target || !isCapturing) return;
 
 	advance({ kind: "event", event });
+}
+
+/**
+ * The capture's frame of `t` was analyzed, after its events: time passing as far as the analysis got, not the clock,
+ * so a parse stall holding the frames back can't count as the HUD gone.
+ */
+export function observeFrameAnalyzed(t: number): void {
+	if (!snapshot.target || !isCapturing) return;
+
+	advance({ kind: "tick", t });
 }
 
 /** The capture's map overlay gate passed at `t`: an observer has the map open over the HUD. */
@@ -136,16 +143,10 @@ function connect(): void {
 	const target = snapshot.target;
 	if (!target) return;
 
-	tickTimer = setInterval(
-		() => advance({ kind: "tick", t: Date.now() / 1000 }),
-		TICK_MS,
-	);
 	openStream(target);
 }
 
 function disconnect(): void {
-	if (tickTimer) clearInterval(tickTimer);
-	tickTimer = null;
 	if (reopenTimer) clearTimeout(reopenTimer);
 	reopenTimer = null;
 	stream?.close();

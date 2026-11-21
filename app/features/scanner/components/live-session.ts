@@ -264,7 +264,7 @@ export async function startCapture(): Promise<void> {
 		await video.play();
 
 		// the worker first: a failed init must not leave the camera on
-		const starting = new AnalyzerClient(onResult, onWorkerError, undefined, {
+		const starting = new AnalyzerClient(onResult, onWorkerError, onAnalyzed, {
 			frameQueueLimit: FRAME_QUEUE_LIMIT,
 			webgpu: settings.webgpu,
 			onFrameError,
@@ -530,6 +530,10 @@ function onFrameError(message: string): void {
 		console.warn("scanner: frame analysis failed", message);
 	}
 	set({ failedFrames: snapshot.failedFrames + 1 });
+}
+
+function onAnalyzed(t: number): void {
+	BroadcastLink.observeFrameAnalyzed(t);
 }
 
 function onResult(

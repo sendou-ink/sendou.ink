@@ -311,7 +311,9 @@ function withGameReads<Item extends ProducerState>(
 					},
 				}
 			: {}),
-		...(summary ? { scannedGame: { ...summary, matchId, ink: gameInk } } : {}),
+		...(summary
+			? { scannedGame: { ...summary, matchId, resultCount, ink: gameInk } }
+			: {}),
 	};
 }
 

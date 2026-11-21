@@ -402,7 +402,7 @@ describe("Producer.applyGameSignal", () => {
 		expect(applied?.ink?.isFlipped).toBe(true);
 	});
 
-	test("keeps what was read of the game that ended and puts the scene after it on air", () => {
+	test("keeps what was read of the game that ended, which game of the set it was, and puts the scene after it on air", () => {
 		const applied = Producer.applyGameSignal(
 			rules,
 			stateWith({
@@ -419,6 +419,7 @@ describe("Producer.applyGameSignal", () => {
 		expect(applied?.scannedGame).toEqual({
 			...summary,
 			matchId: 1,
+			resultCount: 2,
 			ink: null,
 		});
 		expect(applied?.live.id).toBe(2);

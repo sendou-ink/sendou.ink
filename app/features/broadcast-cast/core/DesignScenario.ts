@@ -698,6 +698,7 @@ function mockScannedGame({
 
 	return {
 		matchId: match.id,
+		resultCount,
 		ink: ink ? { key: ink, isFlipped: false } : null,
 		mode: map.mode,
 		stageId: map.stageId,

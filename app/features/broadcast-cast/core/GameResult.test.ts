@@ -51,6 +51,70 @@ describe("GameResult.resolve", () => {
 		expect(playerNames(result)).toEqual([ALPHA_NAMES, BRAVO_NAMES]);
 	});
 
+	test("follows the ink colors the producer flipped after the game ended", () => {
+		const result = resolve({
+			scannedGame: scanned({
+				inks: [YELLOW, DARK_BLUE],
+				teams: [unnamed(), unnamed()],
+				winner: 0,
+				ink: yellowDarkBlue({ isFlipped: false }),
+			}),
+			ink: {
+				...yellowDarkBlue({ isFlipped: true }),
+				matchId: 1,
+				resultCount: 0,
+			},
+		});
+
+		expect(result?.ink).toEqual(yellowDarkBlue({ isFlipped: true }));
+		expect(result?.winner).toBe(1);
+	});
+
+	test("keeps the ink colors the game ended in once the next game's are picked", () => {
+		const result = resolve({
+			scannedGame: scanned({
+				inks: [YELLOW, DARK_BLUE],
+				teams: [unnamed(), unnamed()],
+				winner: 0,
+				ink: yellowDarkBlue({ isFlipped: false }),
+			}),
+			ink: {
+				...yellowDarkBlue({ isFlipped: true }),
+				matchId: 1,
+				resultCount: 1,
+			},
+		});
+
+		expect(result?.ink).toEqual(yellowDarkBlue({ isFlipped: false }));
+		expect(result?.winner).toBe(0);
+	});
+
+	test("puts the scanned teams in bracket order by their names over the game's ink, keeping the colors picked", () => {
+		const result = resolve({
+			scannedGame: scanned({
+				inks: [YELLOW, DARK_BLUE],
+				teams: [named(BRAVO), named(ALPHA, ["Nodle", "InkJet"])],
+				ink: yellowDarkBlue({ isFlipped: false }),
+			}),
+		});
+
+		expect(playerNames(result)?.[1]).toEqual(BRAVO_NAMES);
+		expect(result?.ink).toEqual(yellowDarkBlue({ isFlipped: false }));
+	});
+
+	test("goes by the game's ink when the names read barely tell the teams apart", () => {
+		const result = resolve({
+			scannedGame: scanned({
+				inks: [YELLOW, DARK_BLUE],
+				teams: [named(BRAVO, ["Kraken"]), unnamed()],
+				ink: yellowDarkBlue({ isFlipped: false }),
+			}),
+		});
+
+		expect(result?.teams[0].players[0]?.name).toBe("Kraken");
+		expect(result?.ink).toEqual(yellowDarkBlue({ isFlipped: false }));
+	});
+
 	test("puts the scanned teams in bracket order by their names without the game's ink", () => {
 		const result = resolve({
 			scannedGame: scanned({
@@ -109,6 +173,7 @@ describe("GameResult.resolve", () => {
 		const result = resolve({
 			scannedGame: scanned({
 				inks: [DARK_BLUE, YELLOW],
+				teams: [unnamed(), unnamed()],
 				ink: yellowDarkBlue({ isFlipped: false }),
 				objective: [
 					{ t: 0, score: [100, 100], control: null },
@@ -327,6 +392,7 @@ function scanned(
 ): BroadcastScannedGame {
 	return {
 		matchId: 1,
+		resultCount: 0,
 		ink: null,
 		mode: ZONES_SCORCH.mode,
 		stageId: ZONES_SCORCH.stageId,
@@ -341,6 +407,10 @@ function scanned(
 
 function named(team: BroadcastTeam, names = team.players.map((p) => p.name)) {
 	return { players: names.map((name) => player({ name })) };
+}
+
+function unnamed() {
+	return { players: [player({ name: null })] };
 }
 
 function player(

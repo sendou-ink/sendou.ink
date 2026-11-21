@@ -5,7 +5,8 @@
  * start to 20s after, from 50s before an end, or as far back as the timer's
  * last seconds, to 12s after) and the moment each happened, labelled by hand
  * off the footage: the first frame of the intro splash, the first frame the
- * HUD is gone for "GAME!". Replayed with the link's one-second ticks, every
+ * HUD is gone for "GAME!". Replayed with a tick every second (the link ticks
+ * on each frame it analyzed, twice a second), every
  * cue must put its cut point (`t`) at the label and fire no later than the
  * VoD allows, so tuning the cues can't drift.
  */
@@ -86,7 +87,7 @@ describe("GameCues.step", () => {
 	);
 });
 
-/** The cues the rows give, ticked every whole second as the link does, each with when it was given. */
+/** The cues the rows give, ticked every whole second (no more often than the link), each with when it was given. */
 function replay(rows: Row[]) {
 	let state = GameCues.initialState();
 	const given: Array<GameCues.GameCue & { at: number }> = [];

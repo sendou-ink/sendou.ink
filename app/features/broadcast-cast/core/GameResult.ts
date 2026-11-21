@@ -1,5 +1,6 @@
 import type {
 	BroadcastGameSummaryPlayer,
+	BroadcastInk,
 	BroadcastMap,
 	BroadcastMatch,
 	BroadcastObjectiveRead,
@@ -20,16 +21,19 @@ import type {
 
 /** How alike (1 = the same) a name read off the game must be to a roster player's to count as theirs. */
 const MIN_NAME_SIMILARITY = 0.6;
+/** How much more alike the names read must be to the rosters one way round than the other to tell the teams apart, about two names. */
+const MIN_NAMES_LIKENESS_MARGIN = 1.5;
 const FULL_COUNT = 100;
 
 /**
  * The game the results scene shows in the view: the featured match's last game the scanner read (`scannedGame`),
  * whichever of the set's games it was, else the last one reported with the teams' rosters. A scanned game is the
  * set's game with its map and mode, the one played last when several have them. Its teams are put in bracket order by
- * the game's ink colors (the pair's first color going to the team the producer gave it, see `BroadcastInk.isFlipped`),
- * else by the names read matching the rosters. Names not read are filled in from the roster players no read name
- * matched. Its winner is the scanner's, from a results screen or the counter, else the reported one of the set's game
- * it was. `null` when the match has no game to show.
+ * the names read matching the rosters when they clearly tell, else by the game's ink colors (the pair's first color
+ * going to the team the producer gave it, see `BroadcastInk.isFlipped`). Its ink colors are the ones picked for the
+ * game now, as the producer may flip them after it ended. Names not read are filled in from the roster
+ * players no read name matched. Its winner is the scanner's, from a results screen or the counter, else the reported
+ * one of the set's game it was. `null` when the match has no game to show.
  */
 export function resolve({
 	match,
@@ -45,7 +49,17 @@ export function resolve({
 	const progress = match.progress[view];
 
 	if (scannedGame?.matchId === match.id) {
-		return fromScannedGame({ match, progress, scannedGame });
+		const isScannedGameInk =
+			ink?.matchId === match.id && ink.resultCount === scannedGame.resultCount;
+
+		return fromScannedGame({
+			match,
+			progress,
+			scannedGame,
+			ink: isScannedGameInk
+				? { key: ink.key, isFlipped: ink.isFlipped }
+				: scannedGame.ink,
+		});
 	}
 
 	const lastReportedIdx = progress.resultCount - 1;
@@ -70,17 +84,23 @@ function fromScannedGame({
 	match,
 	progress,
 	scannedGame,
+	ink,
 }: {
 	match: BroadcastMatch;
 	progress: MatchProgress;
 	scannedGame: BroadcastScannedGame;
+	ink: BroadcastInk | null;
 }): BroadcastGameResult {
 	const map =
 		scannedGame.mode && scannedGame.stageId !== null
 			? { mode: scannedGame.mode, stageId: scannedGame.stageId }
 			: null;
 	const gameIdx = map ? setGameIdx(progress, map) : null;
-	const isSwapped = isScannedSwapped({ scannedGame, teams: match.teams });
+	const isSwapped = isScannedSwapped({
+		scannedGame,
+		teams: match.teams,
+		ink,
+	});
 	const bracketOrder = <T>([first, second]: [T, T]): [T, T] =>
 		isSwapped ? [second, first] : [first, second];
 
@@ -110,7 +130,7 @@ function fromScannedGame({
 
 	return {
 		gameNumber: gameIdx === null ? null : gameIdx + 1,
-		ink: scannedGame.ink,
+		ink,
 		map,
 		winner: scannedWinner ?? counterWinner(scores) ?? reportedWinner,
 		isKnockout: scannedGame.isKnockout,
@@ -145,26 +165,34 @@ function setGameIdx(progress: MatchProgress, map: BroadcastMap) {
 	);
 }
 
-/** Whether the scanner's first team is the match's second one. */
+/**
+ * Whether the scanner's first team is the match's second one: as the names read tell when they clearly do, else by
+ * the game's ink colors, else by the names read however little they tell. Names go first as on casts the minimap's
+ * inks (which tell the scanner's teams' colors) don't always line up with its teams.
+ */
 function isScannedSwapped({
 	scannedGame,
 	teams,
+	ink,
 }: {
 	scannedGame: BroadcastScannedGame;
 	teams: BroadcastMatch["teams"];
+	ink: BroadcastInk | null;
 }) {
-	const { ink } = scannedGame;
-	const isInPairOrder = ink
-		? InkColor.isInPairOrder(scannedGame.inks, ink.key)
-		: null;
-	if (ink && isInPairOrder !== null) return isInPairOrder === ink.isFlipped;
-
 	const [first, second] = scannedGame.teams.map((team) => team.players);
 	const [firstRoster, secondRoster] = teams.map((team) => team?.players ?? []);
 	const straight =
 		namesLikeness(first!, firstRoster!) + namesLikeness(second!, secondRoster!);
 	const swapped =
 		namesLikeness(first!, secondRoster!) + namesLikeness(second!, firstRoster!);
+	if (Math.abs(swapped - straight) >= MIN_NAMES_LIKENESS_MARGIN) {
+		return swapped > straight;
+	}
+
+	const isInPairOrder = ink
+		? InkColor.isInPairOrder(scannedGame.inks, ink.key)
+		: null;
+	if (ink && isInPairOrder !== null) return isInPairOrder === ink.isFlipped;
 
 	return swapped > straight;
 }
