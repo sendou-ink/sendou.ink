@@ -194,6 +194,7 @@ export const BROADCAST_SCENE_PARTS = {
 		"caster",
 		"caster-name",
 		"caster-pronouns",
+		"caster-url",
 		"map-intro",
 		"game-number",
 		"mode",
@@ -278,6 +279,7 @@ export const BROADCAST_SCENE_PARTS = {
 		"camera",
 		"caster-name",
 		"caster-pronouns",
+		"caster-url",
 	],
 	bracket: [
 		"header",

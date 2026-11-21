@@ -43,6 +43,8 @@
 	--bc-stagger: 70ms;
 	--bc-transition-duration: 400ms;
 	--bc-stinger-duration: 2200ms;
+	/* how long a caster's pronouns and user page URL each show before taking turns */
+	--bc-caster-details-interval: 6s;
 	/*
 	 * fractions of the stinger's duration: the scene changes once it covers the screen, the stinger starts revealing
 	 * it and the scene's entrance starts once the reveal has cleared most of the screen
@@ -67,6 +69,7 @@
 	--bc-anim-camera: bc-camera;
 	--bc-anim-dim: bc-dim;
 	--bc-anim-glow: bc-glow;
+	--bc-anim-alternate: bc-alternate;
 	color: var(--bc-text);
 	font-family: var(--bc-font-body);
 	-webkit-font-smoothing: antialiased;
@@ -133,6 +136,19 @@
 
 @keyframes :global(bc-fade-out) {
 	to {
+		opacity: 0;
+	}
+}
+
+/* Two things taking turns in one spot: shown the first half of the loop, the second one delayed by half a loop. */
+@keyframes :global(bc-alternate) {
+	0%,
+	45% {
+		opacity: 1;
+	}
+
+	50%,
+	95% {
 		opacity: 0;
 	}
 }

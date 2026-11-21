@@ -358,6 +358,47 @@ describe("CastScene", () => {
 		).not.toBeNull();
 	});
 
+	test.each([
+		{ scene: "casters", plate: "caster-name" },
+		{ scene: "game", plate: "caster" },
+	] as const)(
+		"alternates a caster's pronouns and user page URL only when they have both in the $scene scene",
+		async ({ scene, plate: platePart }) => {
+			await render(
+				<BroadcastOverlay
+					sceneSet={CAST_SCENE_SET}
+					state={stateOf({ ...SCENARIO, scene, casters: 3 })}
+					view="live"
+				/>,
+			);
+
+			const [bothPlate, urlOnlyPlate, pronounsOnlyPlate] = Array.from(
+				canvas().querySelectorAll<HTMLElement>(`[data-part="${platePart}"]`),
+			).map((plate) => ({
+				pronouns: plate.querySelector<HTMLElement>(
+					'[data-part="caster-pronouns"]',
+				),
+				url: plate.querySelector<HTMLElement>('[data-part="caster-url"]'),
+			}));
+			const isLooping = (element: HTMLElement | null) =>
+				element!
+					.getAnimations()
+					.some(
+						(animation) =>
+							animation.effect?.getComputedTiming().iterations ===
+							Number.POSITIVE_INFINITY,
+					);
+
+			expect(isLooping(bothPlate.pronouns)).toBe(true);
+			expect(isLooping(bothPlate.url)).toBe(true);
+			expect(bothPlate.url?.textContent).toBe("/u/lean");
+			expect(urlOnlyPlate.pronouns).toBeNull();
+			expect(isLooping(urlOnlyPlate.url)).toBe(false);
+			expect(pronounsOnlyPlate.url).toBeNull();
+			expect(isLooping(pronounsOnlyPlate.pronouns)).toBe(false);
+		},
+	);
+
 	test("shows the avatar of a caster without a VDO.ninja link", async () => {
 		const state = stateOf({ ...SCENARIO, scene: "casters", casters: 1 });
 
@@ -625,6 +666,9 @@ function withLongestTexts(state: CastBroadcastState): CastBroadcastState {
 		casters: longest.casters.map((caster) => ({
 			...caster,
 			pronouns: { subject: "they", object: "them" },
+			customUrl: caster.customUrl
+				? "w".repeat(USER.CUSTOM_URL_MAX_LENGTH)
+				: null,
 		})),
 		match: longest.match
 			? {

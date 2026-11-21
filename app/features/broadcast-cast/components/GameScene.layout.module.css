@@ -89,9 +89,35 @@
 	text-overflow: ellipsis;
 }
 
-.pronouns {
+/* the pronouns and URL on top of each other, as wide as the wider one so the names stay put as they take turns */
+.casterDetails {
+	display: grid;
 	flex-shrink: 0;
+
+	& > * {
+		grid-area: 1 / 1;
+	}
+
+	&[data-alternating] > * {
+		animation: var(--bc-anim-alternate)
+			calc(var(--bc-caster-details-interval) * 2) ease-in-out infinite;
+	}
+
+	&[data-alternating] > :last-child {
+		animation-delay: calc(var(--bc-caster-details-interval) * -1);
+	}
+}
+
+.pronouns,
+.url {
 	padding: 2px 6px;
+	text-align: center;
+}
+
+.url {
+	max-width: 12em;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 /* the new game's map, until the game is under way: as wide as the info card, its own width left out of the corner's */

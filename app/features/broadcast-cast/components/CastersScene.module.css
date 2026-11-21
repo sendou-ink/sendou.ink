@@ -49,6 +49,13 @@
 	font-weight: var(--bc-weight-semibold);
 }
 
+.url {
+	color: var(--bc-text-muted);
+	text-transform: none;
+	font-size: var(--casters-pronouns-size);
+	font-weight: var(--bc-weight-semibold);
+}
+
 /* shows while a camera connects, its page being see-through, and behind a caster's avatar */
 .camera {
 	background: var(--bc-surface);

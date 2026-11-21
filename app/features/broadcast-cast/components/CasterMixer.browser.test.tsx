@@ -133,6 +133,7 @@ function caster(overrides: Partial<BroadcastCaster>): BroadcastCaster {
 		userId: 1,
 		name: "Caster",
 		pronouns: null,
+		customUrl: null,
 		avatarUrl: null,
 		vdoNinjaUrl: "https://vdo.ninja/?view=abc123",
 		isAudioOnly: false,

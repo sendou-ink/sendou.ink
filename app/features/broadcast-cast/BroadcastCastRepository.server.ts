@@ -11,6 +11,7 @@ export function findAllCastersByUserIds(userIds: number[]) {
 			"User.id as userId",
 			"User.username as name",
 			"User.pronouns",
+			"User.customUrl",
 			userAvatar(eb).as("avatar"),
 		])
 		.where("User.id", "in", userIds)

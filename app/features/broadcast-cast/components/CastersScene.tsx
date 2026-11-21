@@ -103,11 +103,7 @@ export function CastersScene({
 					{casters[i] ? (
 						<div className={styles.name} {...part("caster-name")}>
 							<span className={styles.nameText}>{casters[i].name}</span>
-							{casters[i].pronouns ? (
-								<span className={styles.pronouns} {...part("caster-pronouns")}>
-									{pronounsLabel(casters[i].pronouns)}
-								</span>
-							) : null}
+							<CasterDetails caster={casters[i]} />
 						</div>
 					) : null}
 				</div>
@@ -118,6 +114,29 @@ export function CastersScene({
 				</div>
 			) : null}
 		</div>
+	);
+}
+
+/** The caster's pronouns and user page URL next to their name, taking turns in the same spot when they have both. */
+function CasterDetails({ caster }: { caster: BroadcastCaster }) {
+	if (!caster.pronouns && !caster.customUrl) return null;
+
+	return (
+		<span
+			className={styles.details}
+			data-alternating={(caster.pronouns && caster.customUrl) || undefined}
+		>
+			{caster.pronouns ? (
+				<span className={styles.pronouns} {...part("caster-pronouns")}>
+					{pronounsLabel(caster.pronouns)}
+				</span>
+			) : null}
+			{caster.customUrl ? (
+				<span className={styles.url} {...part("caster-url")}>
+					{`/u/${caster.customUrl}`}
+				</span>
+			) : null}
+		</span>
 	);
 }
 

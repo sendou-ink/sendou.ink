@@ -104,6 +104,36 @@ describe("CastSnapshot.build", () => {
 		]);
 	});
 
+	test("gives the casters' user page custom URLs, null for those without one", async () => {
+		const { id: tournamentId } = await TournamentFactory.create(
+			{ authorId: organizerId() },
+			{ castAccounts: [CAST_ACCOUNT] },
+		);
+		const withCustomUrl = await UserFactory.create({
+			profile: { customUrl: "bee" },
+		});
+		await TournamentBroadcastFactory.setCasters({
+			tournamentId,
+			channel: CAST_ACCOUNT,
+			casters: [withCustomUrl.id, casterId()].map((userId) => ({
+				userId,
+				vdoNinjaUrl: null,
+				isAudioOnly: false,
+				volume: 100,
+			})),
+		});
+
+		const built = await CastSnapshot.build({
+			tournamentId,
+			slug: CastChannel.list([CAST_ACCOUNT])[0].slug,
+		});
+
+		expect(built?.snapshot.casters.map((caster) => caster.customUrl)).toEqual([
+			"bee",
+			null,
+		]);
+	});
+
 	describe("otherMatches", () => {
 		/** A started 16 team single elimination with its first round match 1 cast on the channel, the rest of the first round (7 sets) still to play. */
 		const broadcasting = async () => {

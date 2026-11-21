@@ -403,6 +403,7 @@ async function casters(
 				userId: user.userId,
 				name: user.name,
 				pronouns: user.pronouns,
+				customUrl: user.customUrl,
 				avatarUrl: user.avatar ? avatarUrl(user.avatar, "lg") : null,
 			},
 		];

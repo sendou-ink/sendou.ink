@@ -250,12 +250,16 @@ const MODES: ModeShort[] = ["SZ", "TC", "RM", "CB"];
 
 const STAGES: StageId[] = [10, 2, 5, 8, 13, 17, 20, 1];
 
-/** The first one's camera shows as the placeholder the overlay has outside OBS, the second one is audio only. */
+/**
+ * The first one's camera shows as the placeholder the overlay has outside OBS, the second one is audio only. Their
+ * pronouns and user page URLs cover each case: both taking turns, only a URL and only pronouns.
+ */
 const CASTERS: BroadcastCaster[] = [
 	{
 		userId: 1,
 		name: "Lean",
 		pronouns: { subject: "he", object: "him" },
+		customUrl: "lean",
 		avatarUrl: broadcastDesignImageUrl("mock/avatars/shadowind.webp"),
 		vdoNinjaUrl: "https://vdo.ninja/?view=lean",
 		isAudioOnly: false,
@@ -265,6 +269,7 @@ const CASTERS: BroadcastCaster[] = [
 		userId: 2,
 		name: "Sendou",
 		pronouns: null,
+		customUrl: "sendou",
 		avatarUrl: broadcastDesignImageUrl("mock/avatars/basil.webp"),
 		vdoNinjaUrl: "https://vdo.ninja/?view=sendou",
 		isAudioOnly: true,
@@ -274,6 +279,7 @@ const CASTERS: BroadcastCaster[] = [
 		userId: 3,
 		name: "Brie",
 		pronouns: { subject: "she", object: "her" },
+		customUrl: null,
 		avatarUrl: broadcastDesignImageUrl("mock/avatars/omega.webp"),
 		vdoNinjaUrl: "https://vdo.ninja/?view=brie",
 		isAudioOnly: false,

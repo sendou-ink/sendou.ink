@@ -69,8 +69,41 @@
 	text-overflow: ellipsis;
 }
 
-.pronouns {
+/* the pronouns and URL on top of each other, as wide as the wider one so the name stays put as they take turns */
+.details {
+	display: grid;
+	grid-template-columns: minmax(0, max-content);
 	flex-shrink: 0;
+
+	/* a long URL gives way along with the name */
+	&:has(> .url) {
+		flex-shrink: 1;
+		min-width: 0;
+	}
+
+	& > * {
+		grid-area: 1 / 1;
+		min-width: 0;
+	}
+
+	&[data-alternating] > * {
+		animation: var(--bc-anim-alternate)
+			calc(var(--bc-caster-details-interval) * 2) ease-in-out infinite;
+	}
+
+	&[data-alternating] > :last-child {
+		animation-delay: calc(var(--bc-caster-details-interval) * -1);
+	}
+}
+
+.pronouns {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.url {
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .matchup {

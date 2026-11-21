@@ -49,6 +49,7 @@ Add the casters in the dashboard's **Setup** tab, each with their VDO.ninja view
 
 - The Casters scene shows their camera. With **No camera** on it shows their avatar, ringed while they speak. Without a link, just the avatar.
 - They're heard on every scene, so don't also add their audio to OBS.
+- Next to their names the Casters scene and the game scene's info card show their pronouns and their sendou.ink user page (e.g. `/u/sendou`, if they have set a custom URL on their profile), taking turns when they have both.
 - The **Mixer** under the live preview has a fader for each caster that applies right away, next to a meter of how loud they are on air at that volume, so you can match the casters' levels. If a caster's VDO.ninja connection drops, their strip turns red and a warning shows at the top of the dashboard. It shows **Not in OBS** while no OBS source has the overlay open.
 - Check **Control audio via OBS** on the browser source, or they won't reach the stream.
 
@@ -157,8 +158,14 @@ Game scene without the player names above the nameplates.
 
 ```css
 [data-part="caster-pronouns"] { display: none; }
+[data-part="caster-url"] { animation: none; }
 ```
-No pronouns next to the casters' names.
+No pronouns next to the casters' names, only their user page (without `animation: none` it would still fade out half the time).
+
+```css
+[data-broadcast] { --bc-caster-details-interval: 10s; }
+```
+Casters' pronouns and user pages take turns every 10 seconds.
 
 ```css
 [data-scene="break"] [data-part="ticker"] { display: none; }

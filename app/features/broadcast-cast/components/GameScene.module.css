@@ -57,7 +57,8 @@
 	}
 }
 
-.pronouns {
+.pronouns,
+.url {
 	border-radius: 4px;
 	background: var(--bc-surface-high);
 	color: var(--bc-text-muted);
@@ -66,6 +67,10 @@
 	letter-spacing: 0.05em;
 	line-height: 1.2;
 	text-transform: uppercase;
+}
+
+.url {
+	text-transform: none;
 }
 
 .mapIntro {

@@ -114,12 +114,26 @@ function InfoCard({ state }: { state: CastBroadcastState }) {
 								<span className={styles.casterName} {...part("caster-name")}>
 									{caster.name}
 								</span>
-								{caster.pronouns ? (
+								{caster.pronouns || caster.customUrl ? (
 									<span
-										className={styles.pronouns}
-										{...part("caster-pronouns")}
+										className={styles.casterDetails}
+										data-alternating={
+											(caster.pronouns && caster.customUrl) || undefined
+										}
 									>
-										{pronounsLabel(caster.pronouns)}
+										{caster.pronouns ? (
+											<span
+												className={styles.pronouns}
+												{...part("caster-pronouns")}
+											>
+												{pronounsLabel(caster.pronouns)}
+											</span>
+										) : null}
+										{caster.customUrl ? (
+											<span className={styles.url} {...part("caster-url")}>
+												{`/u/${caster.customUrl}`}
+											</span>
+										) : null}
 									</span>
 								) : null}
 							</span>

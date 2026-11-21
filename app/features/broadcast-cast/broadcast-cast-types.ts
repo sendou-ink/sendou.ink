@@ -108,6 +108,8 @@ export interface BroadcastCaster extends BroadcastCasterSetting {
 	name: string;
 	avatarUrl: string | null;
 	pronouns: Pronouns | null;
+	/** Of their sendou.ink user page, `null` when they haven't set one. */
+	customUrl: string | null;
 }
 
 /** What the bracket scene shows: a single or double elimination bracket, or one group of a round robin or Swiss bracket. */
