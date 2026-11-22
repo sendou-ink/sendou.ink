@@ -512,6 +512,7 @@ function SeriesButton({
 		<LinkButton
 			variant="minimal"
 			size="small"
+			preventScrollReset
 			to={tournamentOrganizationPage({
 				organizationSlug: data.organization.slug,
 				seriesId,

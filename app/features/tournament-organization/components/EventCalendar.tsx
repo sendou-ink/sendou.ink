@@ -128,6 +128,7 @@ function MonthSelector({
 				variant="minimal"
 				aria-label="Previous month"
 				prefetch="intent"
+				preventScrollReset
 				to={tournamentOrganizationPage({
 					organizationSlug,
 					...(month === 0
@@ -150,6 +151,7 @@ function MonthSelector({
 				variant="minimal"
 				aria-label="Following month"
 				prefetch="intent"
+				preventScrollReset
 				to={tournamentOrganizationPage({
 					organizationSlug,
 					...(month === 11
