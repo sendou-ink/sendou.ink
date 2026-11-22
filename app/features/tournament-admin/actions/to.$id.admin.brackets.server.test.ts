@@ -91,6 +91,65 @@ describe("UPDATE_TOURNAMENT_PROGRESSION", () => {
 	});
 });
 
+describe("UPDATE_BRACKET_ORDER", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("saves the order the brackets are shown in", async () => {
+		const tournamentId = await createStartedDivisionsTournament();
+
+		await updateBracketOrder(tournamentId, [2, 0, 1]);
+
+		const tournament = await tournamentFromDB(tournamentId);
+		expect(
+			tournament
+				.visibleBracketsMetaOfDivision(null)
+				.map((bracket) => bracket.name),
+		).toEqual(["Division 3", "Division 1", "Division 2"]);
+	});
+
+	test.each([
+		{ why: "a bracket missing", bracketOrder: [2, 0] },
+		{ why: "a bracket twice", bracketOrder: [2, 0, 0] },
+	])("rejects an order with $why", async ({ bracketOrder }) => {
+		const tournamentId = await createStartedDivisionsTournament();
+
+		await updateBracketOrder(tournamentId, bracketOrder);
+
+		const tournament = await tournamentFromDB(tournamentId);
+		expect(tournament.ctx.settings.bracketOrder).toBeUndefined();
+	});
+
+	test("keeps the order of the remaining brackets when one is removed", async () => {
+		const groups = division("Groups");
+		const topCut = {
+			...division("Top cut"),
+			sources: [{ bracketIdx: 0, placements: [1] }],
+		};
+		const underground = {
+			...division("Underground"),
+			sources: [{ bracketIdx: 0, placements: [2] }],
+		};
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId(),
+			bracketProgression: [groups, underground, topCut],
+		});
+		await updateBracketOrder(tournament.id, [2, 0, 1]);
+
+		await updateProgression(tournament.id, [
+			groups,
+			{ ...topCut, sources: [{ bracketIdx: 0, placements: [1] }] },
+		]);
+
+		expect(
+			(await tournamentFromDB(tournament.id))
+				.visibleBracketsMetaOfDivision(null)
+				.map((bracket) => bracket.name),
+		).toEqual(["Top cut", "Groups"]);
+	});
+});
+
 describe("brackets action in a LAN", () => {
 	beforeEach(async () => {
 		await users.create(17);
@@ -149,6 +208,16 @@ function updateProgression(
 		{
 			_action: "UPDATE_TOURNAMENT_PROGRESSION",
 			bracketProgression: JSON.stringify(bracketProgression) as any,
+		},
+		{ user: organizerId(), params: { id: String(tournamentId) } },
+	);
+}
+
+function updateBracketOrder(tournamentId: number, bracketOrder: number[]) {
+	return bracketsAction(
+		{
+			_action: "UPDATE_BRACKET_ORDER",
+			bracketOrder: JSON.stringify(bracketOrder) as any,
 		},
 		{ user: organizerId(), params: { id: String(tournamentId) } },
 	);

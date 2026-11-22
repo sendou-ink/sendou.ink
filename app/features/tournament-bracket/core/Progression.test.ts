@@ -1586,6 +1586,120 @@ describe("startingBrackets", () => {
 	});
 });
 
+describe("Progression.bracketIdxsInOrder", () => {
+	test.each([
+		{ why: "no order", bracketOrder: undefined, expected: [0, 1, 2] },
+		{ why: "full order", bracketOrder: [2, 0, 1], expected: [2, 0, 1] },
+		{
+			why: "brackets added after the order was saved",
+			bracketOrder: [1, 0],
+			expected: [1, 0, 2],
+		},
+		{
+			why: "idxs the progression no longer has",
+			bracketOrder: [3, 2, -1, 0],
+			expected: [2, 0, 1],
+		},
+		{ why: "duplicate idxs", bracketOrder: [1, 1, 0], expected: [1, 0, 2] },
+	])("handles $why", ({ bracketOrder, expected }) => {
+		expect(Progression.bracketIdxsInOrder(bracketOrder, 3)).toEqual(expected);
+	});
+});
+
+describe("Progression.isBracketOrder", () => {
+	const progression = progressions.lowInk.slice(0, 3);
+
+	test.each([
+		{ why: "every idx once", bracketOrder: [2, 0, 1], expected: true },
+		{ why: "a missing idx", bracketOrder: [2, 0], expected: false },
+		{ why: "a duplicate idx", bracketOrder: [2, 0, 0], expected: false },
+		{ why: "an unknown idx", bracketOrder: [3, 0, 1], expected: false },
+	])("$why -> $expected", ({ bracketOrder, expected }) => {
+		expect(Progression.isBracketOrder(bracketOrder, progression)).toBe(
+			expected,
+		);
+	});
+});
+
+describe("Progression.bracketOrderAfterProgressionChange", () => {
+	const bracket = (name: string) => ({
+		...progressions.singleElimination[0],
+		name,
+	});
+	const ABC = [bracket("A"), bracket("B"), bracket("C")];
+
+	test.each([
+		{
+			why: "no order",
+			bracketOrder: undefined,
+			newProgression: ABC,
+			expected: undefined,
+		},
+		{
+			why: "nothing removed",
+			bracketOrder: [2, 0, 1],
+			newProgression: ABC,
+			expected: [2, 0, 1],
+		},
+		{
+			why: "a bracket added",
+			bracketOrder: [2, 0, 1],
+			newProgression: [...ABC, bracket("D")],
+			expected: [2, 0, 1],
+		},
+		{
+			why: "a bracket removed",
+			bracketOrder: [2, 0, 1],
+			newProgression: [bracket("A"), bracket("C")],
+			expected: [1, 0],
+		},
+		{
+			why: "a bracket removed and another added in one edit",
+			bracketOrder: [2, 0, 1],
+			newProgression: [bracket("A"), bracket("C"), bracket("D")],
+			expected: [1, 0],
+		},
+		{
+			why: "a bracket renamed",
+			bracketOrder: [2, 0, 1],
+			newProgression: [bracket("A"), bracket("B"), bracket("C2")],
+			expected: [0, 1],
+		},
+	])(
+		"follows the brackets by name ($why)",
+		({ bracketOrder, newProgression, expected }) => {
+			expect(
+				Progression.bracketOrderAfterProgressionChange({
+					bracketOrder,
+					oldProgression: ABC,
+					newProgression,
+				}),
+			).toEqual(expected);
+		},
+	);
+
+	test("an order saved before a bracket was added survives removing another later", () => {
+		const withD = [...ABC, bracket("D")];
+		const afterAdd = Progression.bracketOrderAfterProgressionChange({
+			bracketOrder: [2, 0, 1],
+			oldProgression: ABC,
+			newProgression: withD,
+		});
+		const withoutB = [bracket("A"), bracket("C"), bracket("D")];
+		const afterRemove = Progression.bracketOrderAfterProgressionChange({
+			bracketOrder: afterAdd,
+			oldProgression: withD,
+			newProgression: withoutB,
+		});
+
+		expect(
+			Progression.bracketIdxsInOrder(afterRemove, withoutB.length).map(
+				(idx) => withoutB[idx].name,
+			),
+		).toEqual(["C", "A", "D"]);
+	});
+});
+
 describe("destinationsFromBracketIdx", () => {
 	test("returns correct destination (one destination)", () => {
 		expect(

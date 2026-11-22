@@ -10,6 +10,7 @@ import { expect, impersonate, test } from "./helpers/playwright";
 import {
 	createTeams,
 	RR_TO_SE,
+	RR_TO_SE_WITH_UNDERGROUND,
 	startedTournamentTimes,
 	teamSeeds,
 } from "./helpers/tournament";
@@ -18,6 +19,7 @@ import { TournamentAdminBoardPage } from "./pages/tournament/tournament-admin-bo
 import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";
 import { TournamentAdminRegistrationPage } from "./pages/tournament/tournament-admin-registration-page";
 import { TournamentAdminStationsPage } from "./pages/tournament/tournament-admin-stations-page";
+import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
 import { TournamentTeamPage } from "./pages/tournament/tournament-team-page";
 import { TournamentTeamsPage } from "./pages/tournament/tournament-teams-page";
 
@@ -397,6 +399,46 @@ test.describe("Tournament admin bracket progression editing", () => {
 		await expect(admin.locators.bracketNameInputs.nth(1)).toHaveValue(
 			"Top Cut",
 		);
+	});
+});
+
+test.describe("Tournament admin bracket order", () => {
+	test("drags a bracket to the front and the bracket tabs follow", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+			startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+			bracketProgression: RR_TO_SE_WITH_UNDERGROUND,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+		await admin.openBrackets();
+
+		await expect(admin.locators.saveBracketOrderButton).toBeDisabled();
+		await admin.dragBracket({
+			from: "Underground bracket",
+			to: "Groups stage",
+		});
+		await expect(admin.locators.bracketOrderItems).toHaveText([
+			"Underground bracket",
+			"Groups stage",
+			"Final stage",
+		]);
+		await admin.saveBracketOrder();
+		await expect(admin.locators.saveBracketOrderButton).toBeDisabled();
+
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await expect(brackets.locators.bracketTabs).toHaveText([
+			/Underground/,
+			/Groups stage/,
+			/Final stage/,
+		]);
 	});
 });
 

@@ -596,3 +596,62 @@ describe("upsertVenue", () => {
 		expect((await CalendarRepository.findById(event.id))?.venue).toEqual(venue);
 	});
 });
+
+describe("update", () => {
+	const authorId = () => users.id(1);
+
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	const bracket = (name: string) => ({
+		name,
+		type: "single_elimination" as const,
+		requiresCheckIn: false,
+		settings: {},
+	});
+	const progression = [bracket("A"), bracket("B"), bracket("C")];
+
+	test.each([
+		{
+			why: "keeps the bracket order when the progression is unchanged",
+			newProgression: progression,
+			expected: [2, 0, 1],
+		},
+		{
+			why: "moves the bracket order along when a bracket is removed",
+			newProgression: [bracket("A"), bracket("C")],
+			expected: [1, 0],
+		},
+	])("$why", async ({ newProgression, expected }) => {
+		const tournament = await TournamentFactory.create(
+			{ authorId: authorId(), bracketProgression: progression },
+			{ bracketOrder: [2, 0, 1] },
+		);
+		const found = await CalendarRepository.findById(tournament.eventId);
+		invariant(found, "expected the event");
+
+		await CalendarRepository.update({
+			eventId: tournament.eventId,
+			authorId: authorId(),
+			name: found.name,
+			description: found.description,
+			discordInviteCode: found.discordInviteCode,
+			bracketUrl: found.bracketUrl,
+			organizationId: null,
+			tags: null,
+			rules: null,
+			startTimes: found.startTimes,
+			badges: [],
+			mapPickingStyle: "TO",
+			bracketProgression: newProgression,
+		});
+
+		const { settings } = await db
+			.selectFrom("Tournament")
+			.select("settings")
+			.where("id", "=", tournament.id)
+			.executeTakeFirstOrThrow();
+		expect(settings.bracketOrder).toEqual(expected);
+	});
+});

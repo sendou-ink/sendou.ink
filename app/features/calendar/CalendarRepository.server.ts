@@ -826,12 +826,21 @@ async function updateTournamentTables(
 			.where("id", "=", tournamentId)
 			.executeTakeFirstOrThrow();
 
-	const settings = buildTournamentSettings(args, {
+	const builtSettings = buildTournamentSettings(args, {
 		// not editable after creation
 		isTest: existingSettings.isTest,
 		// set on the admin stations page
 		autoAssignStations: existingSettings.autoAssignStations,
 	});
+	const settings: Tables["Tournament"]["settings"] = {
+		...builtSettings,
+		// set on the admin brackets page
+		bracketOrder: Progression.bracketOrderAfterProgressionChange({
+			bracketOrder: existingSettings.bracketOrder,
+			oldProgression: existingSettings.bracketProgression,
+			newProgression: builtSettings.bracketProgression,
+		}),
+	};
 
 	const changedFormat = Progression.changedBracketProgressionFormat(
 		existingSettings.bracketProgression,

@@ -1348,6 +1348,59 @@ export function startingBrackets(progression: ParsedBracket[]): number[] {
 }
 
 /**
+ * Bracket idxs in the order the organizer chose to show the brackets in. Idxs the order doesn't
+ * know of (brackets added after it was saved) follow in progression order, unknown ones are left out.
+ */
+export function bracketIdxsInOrder(
+	bracketOrder: number[] | undefined,
+	bracketCount: number,
+): number[] {
+	const ordered = R.unique(bracketOrder ?? []).filter(
+		(idx) => idx >= 0 && idx < bracketCount,
+	);
+
+	return [
+		...ordered,
+		...R.range(0, bracketCount).filter((idx) => !ordered.includes(idx)),
+	];
+}
+
+/** Is `bracketOrder` every bracket idx of the progression exactly once? */
+export function isBracketOrder(
+	bracketOrder: number[],
+	progression: ParsedBracket[],
+): boolean {
+	return R.isDeepEqual(
+		R.sortBy(bracketOrder, (idx) => idx),
+		R.range(0, progression.length),
+	);
+}
+
+/**
+ * The bracket order to keep after the progression changes, brackets followed by their name as idxs
+ * shift when one is removed. A removed or renamed bracket leaves the order, so it ends up after the
+ * ordered ones like a newly added bracket.
+ */
+export function bracketOrderAfterProgressionChange({
+	bracketOrder,
+	oldProgression,
+	newProgression,
+}: {
+	bracketOrder: number[] | undefined;
+	oldProgression: ParsedBracket[];
+	newProgression: ParsedBracket[];
+}): number[] | undefined {
+	if (!bracketOrder) return undefined;
+
+	return bracketOrder.flatMap((oldIdx) => {
+		const name = oldProgression[oldIdx]?.name;
+		const newIdx = newProgression.findIndex((bracket) => bracket.name === name);
+
+		return newIdx === -1 ? [] : [newIdx];
+	});
+}
+
+/**
  * Orders sources for seeding: a better placement in a shared ancestor bracket seeds above a longer
  * route there, e.g. the top 2 of pools directly over the winners of a redemption bracket sourcing pools
  * placements 3-4. Sources sharing no ancestor keep their relative order.

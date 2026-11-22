@@ -284,14 +284,21 @@ export class Tournament {
 		);
 	}
 
-	/** {@link visibleBracketsMeta} limited to the brackets of one division, if a division is given. */
+	/** {@link visibleBracketsMeta} limited to the brackets of one division, if a division is given, in the order the organizer chose for the tabs. */
 	visibleBracketsMetaOfDivision(divisionIdx: number | null): BracketMeta[] {
 		const visibleIdxs = new Set(
 			this.visibleBracketsMeta.map((bracket) => bracket.idx),
 		);
+		const orderedIdxs = Progression.bracketIdxsInOrder(
+			this.ctx.settings.bracketOrder,
+			this.bracketsMeta.length,
+		);
 
-		return this.bracketsMetaOfDivision(divisionIdx).filter((bracket) =>
-			visibleIdxs.has(bracket.idx),
+		return R.sortBy(
+			this.bracketsMetaOfDivision(divisionIdx).filter((bracket) =>
+				visibleIdxs.has(bracket.idx),
+			),
+			(bracket) => orderedIdxs.indexOf(bracket.idx),
 		);
 	}
 

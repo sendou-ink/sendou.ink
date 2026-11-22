@@ -69,6 +69,8 @@ type Options = {
 	isLeague?: boolean;
 	/** Set like the admin stream page does. */
 	castAccounts?: CastAccount[];
+	/** Set like the admin brackets page does. */
+	bracketOrder?: number[];
 };
 
 /** The maps of each round the factory starts, or one list every round shares; `isPlayableAt` is when a league round opens. */
@@ -110,7 +112,7 @@ export const { create } = defineFactory({
 	},
 	applyOptions: async (
 		tournament,
-		{ tier, tiers, isLeague, castAccounts }: Options,
+		{ tier, tiers, isLeague, castAccounts, bracketOrder }: Options,
 	) => {
 		if (isLeague) {
 			await db
@@ -126,6 +128,13 @@ export const { create } = defineFactory({
 			await TournamentRepository.updateCastAccounts({
 				tournamentId: tournament.id,
 				castAccounts,
+			});
+		}
+
+		if (bracketOrder) {
+			await TournamentRepository.updateBracketOrder({
+				tournamentId: tournament.id,
+				bracketOrder,
 			});
 		}
 

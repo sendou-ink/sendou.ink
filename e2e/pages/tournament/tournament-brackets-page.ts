@@ -26,6 +26,7 @@ export class TournamentBracketsPage {
 			censoredTeamNames: page.getByText("???"),
 			matches: page.locator("[data-match-id]"),
 			rrStandingsTables: page.getByTestId("rr-standings-table"),
+			bracketTabs: page.getByRole("tab"),
 			liveBadges: page.getByTestId("brackets-viewer").getByText("LIVE"),
 			castBadges: page.getByTestId("brackets-viewer").getByText("CAST"),
 			streamPopover: page.getByTestId("stream-popover"),

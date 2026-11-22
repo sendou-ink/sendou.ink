@@ -1212,6 +1212,11 @@ export function updateProgression({
 		const newSettings: Tables["Tournament"]["settings"] = {
 			...existingSettings,
 			bracketProgression,
+			bracketOrder: Progression.bracketOrderAfterProgressionChange({
+				bracketOrder: existingSettings.bracketOrder,
+				oldProgression: existingSettings.bracketProgression,
+				newProgression: bracketProgression,
+			}),
 		};
 
 		await trx
@@ -1227,6 +1232,29 @@ export function updateProgression({
 							)
 						: undefined,
 			})
+			.where("id", "=", tournamentId)
+			.execute();
+	});
+}
+
+/** Sets the order the bracket tabs are shown in, see `TournamentSettings.bracketOrder`. */
+export function updateBracketOrder({
+	tournamentId,
+	bracketOrder,
+}: {
+	tournamentId: number;
+	bracketOrder: number[];
+}) {
+	return db.transaction().execute(async (trx) => {
+		const { settings } = await trx
+			.selectFrom("Tournament")
+			.select("settings")
+			.where("id", "=", tournamentId)
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.updateTable("Tournament")
+			.set({ settings: JSON.stringify({ ...settings, bracketOrder }) })
 			.where("id", "=", tournamentId)
 			.execute();
 	});

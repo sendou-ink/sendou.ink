@@ -1,3 +1,23 @@
+import type { DragEndEvent } from "@dnd-kit/core";
+import {
+	closestCenter,
+	DndContext,
+	KeyboardSensor,
+	PointerSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+	arrayMove,
+	SortableContext,
+	sortableKeyboardCoordinates,
+	useSortable,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import clsx from "clsx";
+import { GripVertical } from "lucide-react";
 import * as React from "react";
 import { useFetcher } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
@@ -22,6 +42,7 @@ import {
 import { BracketProgressionFormFields } from "../../calendar/components/BracketProgressionFormFields";
 import { VenueTimeNotice } from "../../calendar/components/VenueTimeNotice";
 import { adminBracketsActionSchema } from "../tournament-admin-schemas";
+import styles from "./to.$id.admin.brackets.module.css";
 
 export { action } from "../actions/to.$id.admin.brackets.server";
 
@@ -38,6 +59,8 @@ export default function TournamentAdminBracketsPage() {
 		tournament.isAdmin(user) &&
 		tournament.hasStarted &&
 		!tournament.ctx.isFinalized;
+	const showBracketOrder =
+		!tournament.ctx.isFinalized && tournament.bracketsMeta.length > 1;
 
 	if (tournament.ctx.isFinalized && !showReopen) {
 		return <Redirect to={tournamentAdminPage(tournament.ctx.id)} />;
@@ -51,6 +74,12 @@ export default function TournamentAdminBracketsPage() {
 					<BracketProgressionEdit />
 				</>
 			) : null}
+			{showBracketOrder ? (
+				<>
+					<Divider smallText>Bracket order</Divider>
+					<BracketOrder />
+				</>
+			) : null}
 			<Divider smallText>Bracket reset</Divider>
 			<BracketReset />
 			{showReopen ? (
@@ -60,6 +89,118 @@ export default function TournamentAdminBracketsPage() {
 				</>
 			) : null}
 		</div>
+	);
+}
+
+function BracketOrder() {
+	const tournament = useTournament();
+	const savedOrder = Progression.bracketIdxsInOrder(
+		tournament.ctx.settings.bracketOrder,
+		tournament.bracketsMeta.length,
+	);
+
+	return <BracketOrderList key={savedOrder.join()} savedOrder={savedOrder} />;
+}
+
+function BracketOrderList({ savedOrder }: { savedOrder: number[] }) {
+	const tournament = useTournament();
+	const [order, setOrder] = React.useState(savedOrder);
+
+	const sensors = useSensors(
+		useSensor(PointerSensor),
+		useSensor(KeyboardSensor, {
+			coordinateGetter: sortableKeyboardCoordinates,
+		}),
+	);
+
+	const handleDragEnd = ({ active, over }: DragEndEvent) => {
+		if (!over || active.id === over.id) return;
+
+		setOrder((prev) =>
+			arrayMove(
+				prev,
+				prev.indexOf(Number(active.id)),
+				prev.indexOf(Number(over.id)),
+			),
+		);
+	};
+
+	const isChanged = order.some((idx, i) => idx !== savedOrder[i]);
+
+	return (
+		<div className="stack md">
+			<DndContext
+				sensors={sensors}
+				collisionDetection={closestCenter}
+				modifiers={[restrictToVerticalAxis]}
+				onDragEnd={handleDragEnd}
+			>
+				<SortableContext items={order} strategy={verticalListSortingStrategy}>
+					<ol className={styles.bracketOrder}>
+						{order.map((bracketIdx) => (
+							<SortableBracket
+								key={bracketIdx}
+								bracketIdx={bracketIdx}
+								name={tournament.bracketsMeta[bracketIdx].name}
+							/>
+						))}
+					</ol>
+				</SortableContext>
+			</DndContext>
+			<div className="stack horizontal sm items-center justify-between">
+				<FormMessage type="info">
+					Drag to change the order the brackets are shown in on the brackets
+					page. Teams progress between brackets the same as before.
+				</FormMessage>
+				<ActionButton
+					schema={adminBracketsActionSchema}
+					action="UPDATE_BRACKET_ORDER"
+					fields={{ bracketOrder: order }}
+					isDisabled={!isChanged}
+					size="small"
+					testId="save-bracket-order-button"
+				>
+					Save order
+				</ActionButton>
+			</div>
+		</div>
+	);
+}
+
+function SortableBracket({
+	bracketIdx,
+	name,
+}: {
+	bracketIdx: number;
+	name: string;
+}) {
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({ id: bracketIdx });
+
+	return (
+		<li
+			ref={setNodeRef}
+			style={{ transform: CSS.Transform.toString(transform), transition }}
+			className={clsx(styles.bracket, { [styles.isDragging]: isDragging })}
+			data-testid="bracket-order-item"
+		>
+			<button
+				type="button"
+				className={styles.dragHandle}
+				aria-label={`${name} (drag to reorder)`}
+				{...attributes}
+				{...listeners}
+			>
+				<GripVertical aria-hidden />
+			</button>
+			<span className={styles.bracketName}>{name}</span>
+		</li>
 	);
 }
 

@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { addSubForUserFormSchema } from "~/features/tournament-lfg/tournament-lfg-schemas";
 import { tournamentAdminPage } from "~/utils/urls";
 import {
+	dragAndDrop,
 	modalClickConfirmButton,
 	navigate,
 	submit,
@@ -45,6 +46,8 @@ export class TournamentAdminPage {
 			}),
 			bracketNameInputs: page.getByLabel(/^Bracket name *\*?$/),
 			removeBracketButtons: page.getByTestId("brackets-remove-item-button"),
+			bracketOrderItems: page.getByTestId("bracket-order-item"),
+			saveBracketOrderButton: page.getByTestId("save-bracket-order-button"),
 		};
 	}
 
@@ -119,6 +122,18 @@ export class TournamentAdminPage {
 	/** Opens the Brackets tab, where started brackets are locked and the rest of the progression is editable. */
 	async openBrackets() {
 		await this.adminTab("Brackets").click();
+	}
+
+	/** Drags a bracket of the Brackets tab's bracket order list onto another one's spot. */
+	async dragBracket({ from, to }: { from: string; to: string }) {
+		const handle = (name: string) =>
+			this.page.getByRole("button", { name: `${name} (drag to reorder)` });
+
+		await dragAndDrop(this.page, { from: handle(from), to: handle(to) });
+	}
+
+	async saveBracketOrder() {
+		await submit(this.page, "save-bracket-order-button");
 	}
 
 	async renameBracket(nth: number, name: string) {

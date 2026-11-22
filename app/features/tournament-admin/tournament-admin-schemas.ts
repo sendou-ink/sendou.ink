@@ -132,6 +132,10 @@ export const adminBracketsActionSchema = v.union([
 		bracketProgression: bracketProgressionSchema,
 	}),
 	v.object({
+		_action: _action("UPDATE_BRACKET_ORDER"),
+		bracketOrder: preprocess(safeJSONParse, v.array(bracketIdx)),
+	}),
+	v.object({
 		_action: _action("REOPEN_TOURNAMENT"),
 	}),
 ]);

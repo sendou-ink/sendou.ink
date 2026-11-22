@@ -81,6 +81,8 @@ export interface PeakXP {
 
 export interface TournamentSettings {
 	bracketProgression: Progression.ParsedBracket[];
+	/** Idxs of `bracketProgression` in the order the bracket tabs are shown in, display only. Missing = progression order. */
+	bracketOrder?: number[];
 	/** @deprecated use bracketProgression instead */
 	teamsPerGroup?: number;
 	/** @deprecated use bracketProgression instead */

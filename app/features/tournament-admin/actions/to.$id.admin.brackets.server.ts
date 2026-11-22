@@ -90,6 +90,28 @@ export const action = defineAction(
 				message = "Tournament progression updated";
 				break;
 			}
+			case "UPDATE_BRACKET_ORDER": {
+				requireTournamentOrganizer(tournament, user);
+				errorToastIfFalsy(
+					!tournament.ctx.isFinalized,
+					"Tournament is finalized",
+				);
+				errorToastIfFalsy(
+					Progression.isBracketOrder(
+						body.bracketOrder,
+						tournament.ctx.settings.bracketProgression,
+					),
+					"Bracket order must include every bracket once",
+				);
+
+				await TournamentRepository.updateBracketOrder({
+					tournamentId: tournament.ctx.id,
+					bracketOrder: body.bracketOrder,
+				});
+
+				message = "Bracket order updated";
+				break;
+			}
 			case "REOPEN_TOURNAMENT": {
 				requireTournamentAdmin(tournament, user);
 				errorToastIfFalsy(
