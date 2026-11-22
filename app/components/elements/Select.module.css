@@ -30,6 +30,10 @@
 	cursor: pointer;
 	text-align: start;
 
+	&:hover:not(:disabled) {
+		background-color: var(--field-hover-bg);
+	}
+
 	&:focus-visible,
 	&[aria-expanded="true"] {
 		outline: var(--focus-ring);

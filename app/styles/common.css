@@ -96,6 +96,10 @@
 		outline: none;
 		resize: both;
 
+		&:hover:not(:disabled) {
+			background-color: var(--field-hover-bg);
+		}
+
 		&:focus-within {
 			outline: var(--focus-ring);
 			outline-offset: 1px;
@@ -110,6 +114,10 @@
 		height: var(--field-size);
 		font-size: var(--font-sm);
 		outline: none;
+
+		&:hover:not(:has(:disabled)) {
+			background-color: var(--field-hover-bg);
+		}
 
 		&:focus-within {
 			outline: var(--focus-ring);
@@ -167,6 +175,16 @@
 
 		&::placeholder {
 			color: var(--color-text-high);
+		}
+
+		&:hover:not(
+				:disabled,
+				:read-only,
+				[type="checkbox"],
+				[type="radio"],
+				[type="range"]
+			) {
+			background-color: var(--field-hover-bg);
 		}
 
 		&:disabled {
@@ -259,6 +277,14 @@
 			margin-top: 25%;
 		}
 
+		&:hover:not(:checked, :disabled) {
+			background-color: var(--field-hover-bg);
+
+			&::after {
+				background-color: var(--field-hover-bg);
+			}
+		}
+
 		&:checked {
 			border-color: var(--color-fg-accent);
 
@@ -325,6 +351,10 @@
 
 		@supports (appearance: base-select) {
 			appearance: base-select;
+		}
+
+		&:hover:not(:disabled) {
+			background-color: var(--field-hover-bg);
 		}
 
 		&:disabled {

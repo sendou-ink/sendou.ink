@@ -15,6 +15,10 @@
 		margin-right: var(--field-padding);
 	}
 
+	&:hover {
+		background-color: var(--field-hover-bg);
+	}
+
 	&:has(input:user-invalid) {
 		outline: var(--focus-ring-error);
 		outline-offset: 1px;

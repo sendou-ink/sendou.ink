@@ -75,7 +75,11 @@
 	border-color: var(--color-fg-accent);
 	background-color: transparent;
 	color: var(--color-fg-accent);
-	--button-hover-bg: var(--color-bg-accent);
+	--button-hover-bg: color-mix(
+		in oklch,
+		var(--color-fg-accent) 15%,
+		transparent
+	);
 }
 
 .outlinedSuccess {
@@ -83,7 +87,7 @@
 	background-color: transparent;
 	color: var(--color-success);
 	outline-color: var(--color-success);
-	--button-hover-bg: var(--color-success-low);
+	--button-hover-bg: color-mix(in oklch, var(--color-success) 15%, transparent);
 }
 
 .outlinedDestructive {
@@ -91,7 +95,7 @@
 	background-color: transparent;
 	color: var(--color-error);
 	outline-color: var(--color-error);
-	--button-hover-bg: var(--color-error-low);
+	--button-hover-bg: color-mix(in oklch, var(--color-error) 15%, transparent);
 }
 
 .outlinedWarning {
@@ -99,7 +103,7 @@
 	background-color: transparent;
 	color: var(--color-warning);
 	outline-color: var(--color-warning);
-	--button-hover-bg: var(--color-warning-low);
+	--button-hover-bg: color-mix(in oklch, var(--color-warning) 15%, transparent);
 }
 
 .small {
