@@ -41,6 +41,7 @@ import {
 	type DetectorOutcome,
 	runDetectorPass,
 } from "../../app/features/scanner/core/detectors/frame-pass";
+import { JUDD_FLAG_EVENT_TYPE } from "../../app/features/scanner/core/detectors/judd/index";
 import { MAP_START_EVENT_TYPE } from "../../app/features/scanner/core/detectors/map-start/index";
 import { MINIMAP_DETECTOR_ID } from "../../app/features/scanner/core/detectors/minimap/index";
 import { OBJECTIVE_EVENT_TYPE } from "../../app/features/scanner/core/detectors/objective/index";
@@ -792,6 +793,8 @@ function recordCueInputs(
 		for (const event of reads) {
 			if (event.type === MAP_START_EVENT_TYPE) {
 				cueRows.push(["intro", round(event.t)]);
+			} else if (event.type === JUDD_FLAG_EVENT_TYPE) {
+				cueRows.push(["judd", round(event.t)]);
 			} else if (event.type === OBJECTIVE_EVENT_TYPE) {
 				cueRows.push(["time", round(event.t), event.data.time]);
 			} else if (event.type === PLAYER_STATUS_EVENT_TYPE) {

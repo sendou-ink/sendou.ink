@@ -13,6 +13,9 @@ import type {
 } from "../broadcast-types";
 import * as InkColor from "./InkColor";
 
+/** The moment of a game's end the cut away from it belongs at, see {@link applyGameSignal}. */
+const GAME_END_CUT_TRIGGER = "juddFlag";
+
 /**
  * How a scene set's producer moves between its scenes, which the producer functions take first. Its items are the
  * scene set's `ProducerState`, with the fields its scenes are set up with.
@@ -236,8 +239,10 @@ export function advanceOptions<Item extends ProducerState>(
 /**
  * What the scanner seeing a game start or end changes. The ink read (with the start or after it) colors the game
  * (Color Lock carrying over from the broadcast's previous game, see `InkColor.closestPair`). A start or end
- * the staged item waits for puts it on air right away, not when the item can't go on air (see {@link canTake}). A game ending cuts only along with what the scanner read of it,
- * which is kept as `scannedGame` with the game's ink colors. `null` when nothing changes.
+ * the staged item waits for puts it on air right away, not when the item can't go on air (see {@link canTake}). The
+ * scanner reports a game's end once per moment of it (`trigger`), the cut away from the game belonging at Judd
+ * raising the flag for the winner, the moment viewers wait for. What was read of the game, sent with each, is kept as
+ * `scannedGame` with the game's ink colors. `null` when nothing changes.
  */
 export function applyGameSignal<Item extends ProducerState>(
 	rules: Rules<Item>,
@@ -266,7 +271,7 @@ export function applyGameSignal<Item extends ProducerState>(
 	const hasMatch = liveResults !== null;
 	const isWaitedFor =
 		signal.type !== "ink" &&
-		(signal.type !== "end" || signal.summary !== null) &&
+		(signal.type !== "end" || signal.trigger === GAME_END_CUT_TRIGGER) &&
 		effectiveAdvance(rules, state.live, state.next) === "game" &&
 		gameCue(rules, state.live, state.next) === signal.type &&
 		canTake(rules, state, { hasMatch });

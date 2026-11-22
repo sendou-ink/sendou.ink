@@ -36,6 +36,7 @@ const FRAME_HEIGHT_RANGE = [180, 4320] as const;
 
 const EVENT_TYPES = [
 	"Death",
+	"JuddFlag",
 	"Kill",
 	"MapStart",
 	"Minimap",

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { JUDD_FLAG_EVENT_TYPE } from "../../core/detectors/judd/index";
 import { MAP_START_EVENT_TYPE } from "../../core/detectors/map-start/index";
 import {
 	OBJECTIVE_EVENT_TYPE,
@@ -33,6 +34,13 @@ const mapStart = (t: number): DetectedEvent => ({
 	t,
 	scores: { read: 1 },
 	data: { mode: "SZ", stage: 1 },
+});
+
+const juddFlag = (t: number): DetectedEvent => ({
+	type: JUDD_FLAG_EVENT_TYPE,
+	t,
+	scores: { "inks,winnerInk": 1 },
+	data: { inks: [LIME.ink], winnerInk: LIME.ink },
 });
 
 /** One HUD read: the counter, then the icon strip paired with it, as the objective detector emits them. */
@@ -170,14 +178,47 @@ describe("GameCues.step", () => {
 	test("takes back an intro whose HUD never showed", () => {
 		expect(run([mapStart(0), 29, 30])).toEqual([
 			{ type: "start", t: 0, inks: null, at: 0 },
-			{ type: "end", t: 0, isTimeUp: false, at: 30 },
+			{ type: "end", trigger: "hudGone", t: 0, isTimeUp: false, at: 30 },
 		]);
 	});
 
-	test("doesn't take an intro read mid-game for the next game", () => {
-		const cues = run([mapStart(0), hud(10), hud(11), mapStart(12), hud(13)]);
+	test("starts the next game on an intro read after the HUD showed, as a replay watched again", () => {
+		const cues = run([
+			mapStart(0),
+			hud(10),
+			hud(11),
+			mapStart(12),
+			hud(20),
+			hud(21),
+		]);
 
-		expect(cues.map((cue) => cue.type)).toEqual(["start", "ink"]);
+		expect(cues).toEqual([
+			{ type: "start", t: 0, inks: null, at: 0 },
+			{ type: "ink", inks: [LIME.ink, PINK.ink], at: 11 },
+			{ type: "start", t: 12, inks: null, at: 12 },
+			{ type: "ink", inks: [LIME.ink, PINK.ink], at: 21 },
+		]);
+	});
+
+	test("starts the next game as the game clock jumps back up, its intro missed", () => {
+		const cues = run([
+			hud(10, { time: 120 }),
+			hud(11, { time: 119 }),
+			hud(12, { time: 290 }),
+			hud(13, { time: 289 }),
+		]);
+
+		expect(cues).toEqual([
+			{ type: "start", t: 11, inks: [LIME.ink, PINK.ink], at: 11 },
+			{ type: "start", t: 12, inks: null, at: 12 },
+			{ type: "ink", inks: [LIME.ink, PINK.ink], at: 13 },
+		]);
+	});
+
+	test("starts the game once on an intro read several times", () => {
+		const cues = run([mapStart(0), mapStart(0.5), mapStart(1), hud(10)]);
+
+		expect(cues.map((cue) => cue.type)).toEqual(["start"]);
 	});
 
 	test("ends the game shortly after the HUD is gone once the timer ran out", () => {
@@ -189,14 +230,20 @@ describe("GameCues.step", () => {
 			15,
 		]);
 
-		expect(cues.at(-1)).toEqual({ type: "end", t: 12, isTimeUp: true, at: 15 });
+		expect(cues.at(-1)).toEqual({
+			type: "end",
+			trigger: "hudGone",
+			t: 12,
+			isTimeUp: true,
+			at: 15,
+		});
 	});
 
 	test("ends a knocked out game once the HUD has been gone a while", () => {
 		const cues = run([hud(10), hud(11, { time: 120 }), 14, 17]);
 
 		expect(cues.slice(1)).toEqual([
-			{ type: "end", t: 11, isTimeUp: false, at: 17 },
+			{ type: "end", trigger: "hudGone", t: 11, isTimeUp: false, at: 17 },
 		]);
 	});
 
@@ -251,8 +298,70 @@ describe("GameCues.step", () => {
 		expect(cues.map((cue) => cue.type)).toEqual([
 			"start",
 			"end",
+			"end",
 			"start",
 			"ink",
 		]);
+	});
+
+	test("ends the game again as Judd raises the flag after its HUD is gone", () => {
+		const cues = run([
+			hud(10),
+			hud(11, { time: 1 }),
+			hud(12, { time: 0 }),
+			15,
+			juddFlag(20),
+			juddFlag(20.5),
+			40,
+		]);
+
+		expect(cues.slice(1)).toEqual([
+			{ type: "end", trigger: "hudGone", t: 12, isTimeUp: true, at: 15 },
+			{ type: "end", trigger: "juddFlag", t: 20, isTimeUp: true, at: 20 },
+		]);
+	});
+
+	test("ends the game on Judd's flag read before the HUD counts as gone", () => {
+		const cues = run([hud(10), hud(11, { time: 120 }), 13, juddFlag(14)]);
+
+		expect(cues.slice(1)).toEqual([
+			{ type: "end", trigger: "hudGone", t: 11, isTimeUp: false, at: 14 },
+			{ type: "end", trigger: "juddFlag", t: 14, isTimeUp: false, at: 14 },
+		]);
+	});
+
+	test("ignores Judd's flag read with the HUD only just gone", () => {
+		const cues = run([hud(10), hud(11), juddFlag(12), hud(13)]);
+
+		expect(cues.map((cue) => cue.type)).toEqual(["start"]);
+	});
+
+	test("ignores Judd's flag read with no game on", () => {
+		expect(run([juddFlag(10), 20])).toEqual([]);
+	});
+
+	test("gives up on Judd's flag a while after the HUD is gone", () => {
+		const cues = run([hud(10), hud(11, { time: 120 }), 17, 26, 27, 28]);
+
+		expect(cues.slice(1)).toEqual([
+			{ type: "end", trigger: "hudGone", t: 11, isTimeUp: false, at: 17 },
+			{ type: "end", trigger: "juddFlag", t: 27, isTimeUp: false, at: 27 },
+		]);
+	});
+
+	test("gives up on Judd's flag as the next game starts", () => {
+		const cues = run([hud(10), hud(11, { time: 120 }), 17, mapStart(20)]);
+
+		expect(cues.slice(1)).toEqual([
+			{ type: "end", trigger: "hudGone", t: 11, isTimeUp: false, at: 17 },
+			{ type: "end", trigger: "juddFlag", t: 20, isTimeUp: false, at: 20 },
+			{ type: "start", t: 20, inks: null, at: 20 },
+		]);
+	});
+
+	test("waits for no flag after an intro whose HUD never showed", () => {
+		const cues = run([mapStart(0), 30, 60]);
+
+		expect(cues.map((cue) => cue.type)).toEqual(["start", "end"]);
 	});
 });

@@ -8,6 +8,7 @@ import type {
 import type {
 	BROADCAST_ADVANCES,
 	BROADCAST_DESIGN_MESSAGE,
+	BROADCAST_GAME_END_TRIGGERS,
 	BROADCAST_INK_COLORS,
 	BROADCAST_STREAM_ROLES,
 	BROADCAST_TRANSITIONS,
@@ -23,6 +24,8 @@ export type BroadcastStingerVariant = "teams" | "tournament";
 export type BroadcastAdvance = (typeof BROADCAST_ADVANCES)[number];
 
 export type BroadcastWeaponImages = (typeof BROADCAST_WEAPON_IMAGES)[number];
+
+type BroadcastGameEndTrigger = (typeof BROADCAST_GAME_END_TRIGGERS)[number];
 
 export type BroadcastInkColorKey = (typeof BROADCAST_INK_COLORS)[number]["key"];
 
@@ -223,7 +226,9 @@ export type BroadcastGameSignal =
 	| { type: "ink"; inks: [BroadcastInkRgb, BroadcastInkRgb] }
 	| {
 			type: "end";
-			/** What the scanner read of the game, `null` when it has nothing of it (e.g. a misread intro), which cuts nothing. */
+			/** Which moment of the end it is, the scanner reporting each in turn (see `BROADCAST_GAME_END_TRIGGERS`). */
+			trigger: BroadcastGameEndTrigger;
+			/** What the scanner read of the game, `null` when it has nothing of it (e.g. a misread intro). */
 			summary: BroadcastGameSummary | null;
 	  };
 

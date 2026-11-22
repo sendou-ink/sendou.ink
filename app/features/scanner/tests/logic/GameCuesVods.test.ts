@@ -5,14 +5,17 @@
  * start to 20s after, from 50s before an end, or as far back as the timer's
  * last seconds, to 12s after) and the moment each happened, labelled by hand
  * off the footage: the first frame of the intro splash, the first frame the
- * HUD is gone for "GAME!". Replayed with a tick every second (the link ticks
- * on each frame it analyzed, twice a second), every
+ * HUD is gone for "GAME!", and where the footage shows the results screen
+ * after, the first frame of Judd's flag (`flagLabel`, the end windows then
+ * running to 20s after the HUD's). Replayed with a tick every second (the
+ * link ticks on each frame it analyzed, twice a second), every
  * cue must put its cut point (`t`) at the label and fire no later than the
  * VoD allows, so tuning the cues can't drift.
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
+import { JUDD_FLAG_EVENT_TYPE } from "../../core/detectors/judd/index";
 import { MAP_START_EVENT_TYPE } from "../../core/detectors/map-start/index";
 import { OBJECTIVE_EVENT_TYPE } from "../../core/detectors/objective/index";
 import { PLAYER_STATUS_EVENT_TYPE } from "../../core/detectors/objective/player-status";
@@ -22,6 +25,8 @@ import * as GameCues from "../../core/GameCues";
 const FIXTURES_DIR = new URL("../fixtures/game-cues", import.meta.url).pathname;
 /** Seconds the cut point may sit off the label: reads come a quarter to a whole second apart. */
 const CUT_TOLERANCE_SECONDS = 1;
+/** Seconds after the flag's label its end fires at the latest: the flag is read off one frame, a quarter second apart at most. */
+const FLAG_MAX_LATE_SECONDS = 0.5;
 
 type Rgb = [number, number, number];
 
@@ -29,6 +34,7 @@ type Rgb = [number, number, number];
 type Row =
 	| ["intro", number]
 	| ["open", number]
+	| ["judd", number]
 	| ["time", number, number | null]
 	| [
 			"hud",
@@ -44,6 +50,8 @@ interface Window {
 	label: number;
 	/** What happened there, e.g. a knockout or overtime. */
 	note: string;
+	/** An end's: when Judd raised the flag after it, seconds. Absent when the footage cut away before. */
+	flagLabel?: number;
 	rows: Row[];
 }
 
@@ -76,7 +84,11 @@ describe("GameCues.step", () => {
 	test.each(windows)(
 		"$vod: $cue at $label s ($note)",
 		({ cue, label, rows, maxLateSeconds }) => {
-			const first = replay(rows).find((given) => given.type === cue);
+			const first = replay(rows).find(
+				(given) =>
+					given.type === cue &&
+					(given.type !== "end" || given.trigger === "hudGone"),
+			);
 
 			expect(first, "no cue").toBeDefined();
 			expect(Math.abs(first!.t - label)).toBeLessThanOrEqual(
@@ -85,6 +97,22 @@ describe("GameCues.step", () => {
 			expect(first!.at - label).toBeLessThanOrEqual(maxLateSeconds);
 		},
 	);
+
+	test.each(
+		windows.flatMap(({ flagLabel, ...window }) =>
+			flagLabel === undefined ? [] : [{ ...window, flagLabel }],
+		),
+	)("$vod: Judd's flag at $flagLabel s ($note)", ({ flagLabel, rows }) => {
+		const flag = replay(rows).find(
+			(given) => given.type === "end" && given.trigger === "juddFlag",
+		);
+
+		expect(flag, "no cue").toBeDefined();
+		expect(Math.abs(flag!.t - flagLabel)).toBeLessThanOrEqual(
+			CUT_TOLERANCE_SECONDS,
+		);
+		expect(flag!.at - flagLabel).toBeLessThanOrEqual(FLAG_MAX_LATE_SECONDS);
+	});
 });
 
 /** The cues the rows give, ticked every whole second (no more often than the link), each with when it was given. */
@@ -114,6 +142,11 @@ function toInput(row: Row): GameCues.GameCuesInput {
 	switch (row[0]) {
 		case "open":
 			return { kind: "mapOpen", t: row[1] };
+		case "judd":
+			return {
+				kind: "event",
+				event: event(JUDD_FLAG_EVENT_TYPE, row[1], {}),
+			};
 		case "intro":
 			return { kind: "event", event: event(MAP_START_EVENT_TYPE, row[1], {}) };
 		case "time":

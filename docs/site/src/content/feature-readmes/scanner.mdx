@@ -531,7 +531,7 @@ scripts/scanner/<script>.ts` for the ones without a package script).
   `React.lazy` after `useHydrated`; nothing from `core/worker/capture/store`
   may be imported at route-module top level. There is no feature flag: the
   page and `/ingest` are open to everyone (ingest still requires a login).
-- Thirteen detectors: `scoreboard` (results screen),
+- Fourteen detectors: `scoreboard` (results screen),
   `scoreboard-battle-log-replay` (replay-browser detail),
   `scoreboard-battle-log` (Recent Battles detail — same data sans replay
   code, panels stacked), `quick-scoreboard-battle-log` (the same detail as
@@ -545,7 +545,10 @@ scripts/scanner/<script>.ts` for the ones without a package script).
   plates, and the Tower Control / Rainmaker track, see below. Splat Zones and
   Clam Blitz draw the same plates, so a CB read carries `mode: "SZ"` too and
   the match's mode tells them apart; in CB a filled plate means that team's
-  attack window is open, charted as control), `x-set-count`,
+  attack window is open, charted as control), `judd` (the band across the
+  bottom of the screen after a game filling with ink as Judd raises the flag
+  for the winner, which no match is built from: the broadcast link's game
+  cues end the game there too, see `core/GameCues.ts`), `x-set-count`,
   `x-set-result` and `x-rank-position` (the X Battle lobby cards, see
   below), `kill` (the "Splatted &lt;name&gt;!" feed
   bottom-center). The feed is the POV player's — on the SWS26 broadcast the

@@ -38,8 +38,6 @@ export interface ScannerActivityState {
 	broadcast: {
 		tournamentId: number;
 		slug: string;
-		/** the capture holds the broadcast's stream open, so its dashboard counts it */
-		isConnected: boolean;
 		error: string | null;
 	} | null;
 }
@@ -166,13 +164,7 @@ export const SCANNER_OVERRIDE_ACTIONS: ScannerActivityActions = {
 		}),
 	linkBroadcast: (target) =>
 		updateOverride({
-			broadcast: target
-				? {
-						...target,
-						isConnected: override?.status === "running",
-						error: null,
-					}
-				: null,
+			broadcast: target ? { ...target, error: null } : null,
 		}),
 };
 

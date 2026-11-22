@@ -2,6 +2,7 @@
 
 import type { DetectedEvent } from "../events";
 import { createDeathDetector } from "./death/index";
+import { createJuddFlagDetector } from "./judd/index";
 import { createKillDetector } from "./kill/index";
 import { createMapStartDetector } from "./map-start/index";
 import { createMinimapDetector } from "./minimap/index";
@@ -33,6 +34,7 @@ export function createAllDetectors(
 		createMinimapDetector(resources),
 		createObjectiveDetector(resources),
 		createKillDetector(resources),
+		createJuddFlagDetector(),
 		createXSetCountDetector(resources),
 		createXSetResultDetector(resources),
 		createXRankPositionDetector(resources),

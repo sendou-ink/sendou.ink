@@ -82,7 +82,6 @@ export function ScannerActivityLive({
 			? {
 					tournamentId: broadcastLink.target.tournamentId,
 					slug: broadcastLink.target.slug,
-					isConnected: broadcastLink.isConnected,
 					error: broadcastLink.error,
 				}
 			: null,

@@ -5,6 +5,7 @@
  * and the scheduler.
  */
 import { DEATH_EVENT } from "./detectors/death/index";
+import { JUDD_FLAG_EVENT } from "./detectors/judd/index";
 import { KILL_EVENT } from "./detectors/kill/index";
 import { MAP_START_EVENT } from "./detectors/map-start/index";
 import { MINIMAP_EVENT } from "./detectors/minimap/index";
@@ -51,6 +52,7 @@ const EVENT_KINDS = [
 	PLAYER_STATUS_EVENT,
 	STRIP_WEAPONS_EVENT,
 	KILL_EVENT,
+	JUDD_FLAG_EVENT,
 	...X_BATTLE_CARD_EVENT_KINDS,
 ] as const;
 

@@ -148,6 +148,13 @@ export const BROADCAST_STREAM_ROLES = [
  */
 export const BROADCAST_ADVANCES = ["take", "timer", "game"] as const;
 
+/**
+ * The moments of a game's end the scanner reports, each in turn: the HUD going away as the game ends (`hudGone`), and
+ * Judd raising the flag for the winner on the results screen a few seconds later (`juddFlag`), see
+ * `Producer.applyGameSignal`.
+ */
+export const BROADCAST_GAME_END_TRIGGERS = ["hudGone", "juddFlag"] as const;
+
 /** Session descriptions are a few kilobytes, more so with many ICE candidates. */
 export const BROADCAST_SDP_MAX_LENGTH = 50_000;
 

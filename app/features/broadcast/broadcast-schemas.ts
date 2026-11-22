@@ -9,6 +9,7 @@ import { radioGroup, stringConstant, textAreaOptional } from "~/form/fields";
 import { id } from "~/utils/schema";
 import {
 	BROADCAST_CSS_MAX_LENGTH,
+	BROADCAST_GAME_END_TRIGGERS,
 	BROADCAST_GAME_SUMMARY_MAX_OBJECTIVE_READS,
 	BROADCAST_SDP_MAX_LENGTH,
 	BROADCAST_WEAPON_IMAGES,
@@ -90,6 +91,8 @@ export const broadcastGameSignalSchema = v.variant("type", [
 	v.object({ type: v.literal("ink"), inks }),
 	v.object({
 		type: v.literal("end"),
+		// a scanner page loaded before triggers existed reports the HUD going away alone
+		trigger: v.optional(v.picklist(BROADCAST_GAME_END_TRIGGERS), "hudGone"),
 		summary: v.nullable(gameSummary),
 	}),
 ]);

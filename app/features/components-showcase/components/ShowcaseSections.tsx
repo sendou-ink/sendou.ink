@@ -3446,8 +3446,7 @@ function mockScannerActivity(id: ScannerExampleId): ScannerActivityState {
 				? {
 						tournamentId: 1,
 						slug: "sendouink",
-						isConnected: true,
-						error: null,
+						error: "Couldn't tell the broadcast the game started (HTTP 403)",
 					}
 				: null,
 	};

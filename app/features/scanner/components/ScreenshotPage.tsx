@@ -17,6 +17,8 @@ import { CANONICAL_HEIGHT, CANONICAL_WIDTH, type Roi } from "../core/canonical";
 import { eventsToCsv } from "../core/csv/events";
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import * as death from "../core/detectors/death/rois";
+import { JUDD_FLAG_EVENT_TYPE } from "../core/detectors/judd/index";
+import * as judd from "../core/detectors/judd/rois";
 import { KILL_EVENT_TYPE } from "../core/detectors/kill/index";
 import * as kill from "../core/detectors/kill/rois";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
@@ -282,6 +284,13 @@ function gateSummary(result: Result): string | null {
 			const { data } = event;
 			return `${confidence} · ${formatTimer(data.time)} · splatted ${data.names.map((name) => name ?? "?").join(", ")}`;
 		}
+		case JUDD_FLAG_EVENT_TYPE: {
+			const { data } = event;
+			const winner = data.winnerInk
+				? `rgb(${data.winnerInk.r}, ${data.winnerInk.g}, ${data.winnerInk.b})`
+				: "?";
+			return `${confidence} · ${data.inks.length === 1 ? "knockout" : "time up"} · winner ${winner}`;
+		}
 		case PLAYER_STATUS_EVENT_TYPE:
 		case STRIP_WEAPONS_EVENT_TYPE:
 			return confidence;
@@ -431,6 +440,27 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 		rect(xRank.POSITION_NUMBER_ROI, "#f87171");
 		rect(xRank.POSITION_ARROW_ROI, "#60a5fa");
 		for (const roi of xRank.POSITION_DARK_PROBES) rect(roi, "#facc15");
+		return;
+	}
+	if (detector === "judd") {
+		rect(
+			{
+				x: judd.BAND_FIRST_COLUMN,
+				y: judd.BAND_TOP_MIN_Y,
+				w: judd.BAND_LAST_COLUMN - judd.BAND_FIRST_COLUMN,
+				h: judd.BAND_TOP_MAX_Y - judd.BAND_TOP_MIN_Y,
+			},
+			"#facc15",
+		);
+		rect(
+			{
+				x: judd.BAND_FIRST_COLUMN,
+				y: judd.BAND_CORE_TOP,
+				w: judd.BAND_LAST_COLUMN - judd.BAND_FIRST_COLUMN,
+				h: judd.BAND_CORE_BOTTOM - judd.BAND_CORE_TOP,
+			},
+			"#34d399",
+		);
 		return;
 	}
 	if (detector === "map-start") {

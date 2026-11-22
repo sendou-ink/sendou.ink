@@ -393,7 +393,7 @@ describe("Producer.applyGameSignal", () => {
 				next: item(2, { scene: "results", advance: "game" }),
 			}),
 			{
-				signal: { type: "end", summary },
+				signal: { type: "end", trigger: "juddFlag", summary },
 				liveResults,
 				now: 5,
 			},
@@ -413,7 +413,7 @@ describe("Producer.applyGameSignal", () => {
 			rules,
 			{ ...stateWith({}), ink: { ...ink, resultCount: 2 } },
 			{
-				signal: { type: "end", summary },
+				signal: { type: "end", trigger: "hudGone", summary },
 				liveResults,
 				now: 5,
 			},
@@ -422,26 +422,9 @@ describe("Producer.applyGameSignal", () => {
 		expect(applied?.scannedGame?.ink).toEqual({ key: ink.key });
 	});
 
-	test("cuts nothing for a game ending without what was read of it", () => {
-		const applied = Producer.applyGameSignal(
-			rules,
-			stateWith({
-				live: item(1, { scene: "game" }),
-				next: item(2, { scene: "maps", advance: "game" }),
-			}),
-			{
-				signal: { type: "end", summary: null },
-				liveResults,
-				now: 5,
-			},
-		);
-
-		expect(applied).toBeNull();
-	});
-
 	test("leaves what was read of a game without a match out", () => {
 		const applied = Producer.applyGameSignal(rules, stateWith({}), {
-			signal: { type: "end", summary },
+			signal: { type: "end", trigger: "hudGone", summary },
 			liveResults: null,
 			now: 5,
 		});
@@ -470,7 +453,7 @@ describe("Producer.applyGameSignal", () => {
 				next: item(2, { scene: "results", advance: "game" }),
 			}),
 			{
-				signal: { type: "end", summary },
+				signal: { type: "end", trigger: "juddFlag", summary },
 				liveResults: null,
 				now: 5,
 			},
@@ -479,7 +462,7 @@ describe("Producer.applyGameSignal", () => {
 		expect(applied).toBeNull();
 	});
 
-	test("puts the scene after the game on air as it ends", () => {
+	test("puts the scene after the game on air as Judd raises the flag", () => {
 		const applied = Producer.applyGameSignal(
 			rules,
 			stateWith({
@@ -487,7 +470,7 @@ describe("Producer.applyGameSignal", () => {
 				next: item(2, { scene: "maps", advance: "game" }),
 			}),
 			{
-				signal: { type: "end", summary },
+				signal: { type: "end", trigger: "juddFlag", summary },
 				liveResults,
 				now: 5,
 			},
@@ -534,7 +517,7 @@ describe("Producer.applyGameSignal", () => {
 		{
 			why: "the game ending while a game is staged",
 			state: stateWith({ next: item(2, { advance: "game" }) }),
-			signal: { type: "end", summary: null } as const,
+			signal: { type: "end", trigger: "hudGone", summary: null } as const,
 		},
 		{
 			why: "the game starting without ink read while a game is on air",
@@ -552,6 +535,41 @@ describe("Producer.applyGameSignal", () => {
 				now: 5,
 			}),
 		).toBeNull();
+	});
+
+	test("keeps the game on air as its HUD goes away", () => {
+		const applied = Producer.applyGameSignal(
+			rules,
+			stateWith({
+				live: item(1, { scene: "game" }),
+				next: item(2, { scene: "results", advance: "game" }),
+			}),
+			{
+				signal: { type: "end", trigger: "hudGone", summary },
+				liveResults,
+				now: 5,
+			},
+		);
+
+		expect(applied?.live.id).toBe(1);
+		expect(applied?.scannedGame).toMatchObject({ matchId: 1 });
+	});
+
+	test("cuts on the flag without what was read of the game", () => {
+		const applied = Producer.applyGameSignal(
+			rules,
+			stateWith({
+				live: item(1, { scene: "game" }),
+				next: item(2, { scene: "results", advance: "game" }),
+			}),
+			{
+				signal: { type: "end", trigger: "juddFlag", summary: null },
+				liveResults,
+				now: 5,
+			},
+		);
+
+		expect(applied?.live.id).toBe(2);
 	});
 });
 

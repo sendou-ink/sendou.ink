@@ -4,7 +4,8 @@
  * capture put the broadcast's scenes waiting for them on air, timed by when
  * they were seen, and the teams' ink colors the game (GameCues, broadcast's
  * `Producer.applyGameSignal`). Once a game ended, what was read of it
- * follows for the scenes after the game. A cast never shows the results
+ * follows for the scenes after the game, with each moment of its end (the
+ * broadcast cutting away at Judd's flag). A cast never shows the results
  * screen that would send its match, so the game ending sends it instead;
  * every other upload goes on as without a link. While capturing, the link holds the
  * broadcast's stream open, which is how the dashboard knows a scanner is on.
@@ -12,6 +13,7 @@
 import { useSyncExternalStore } from "react";
 import type {
 	BroadcastGameSignal,
+	BroadcastGameSummary,
 	BroadcastStreamMessage,
 } from "~/features/broadcast/broadcast-types";
 import {
@@ -37,7 +39,7 @@ const SIGNAL_DESCRIPTIONS: Record<BroadcastGameSignal["type"], string> = {
 	ink: "the teams' ink colors",
 	end: "the game ended",
 };
-/** How long a game's end waits for what was read of the game: the cut away from it waits along, and is off without it. */
+/** How long a game's end waits for what was read of the game: the cut at its HUD going away waits along, and is off without it. */
 const SUMMARY_TIMEOUT_MS = 5_000;
 
 export interface BroadcastLinkSnapshot {
@@ -62,6 +64,8 @@ let stream: EventSource | null = null;
 let reopenTimer: ReturnType<typeof setTimeout> | null = null;
 /** The signals posted so far, the next one going out after them so the broadcast sees them in order. */
 let posting: Promise<void> = Promise.resolve();
+/** What was read of the game that ended last, which each moment of its end carries (see `endedGameSummary`). */
+let endedSummary: Promise<BroadcastGameSummary | null> = Promise.resolve(null);
 
 if (typeof window !== "undefined") {
 	retarget();
@@ -190,8 +194,10 @@ function advance(input: GameCues.GameCuesInput): void {
 	cuesState = stepped.state;
 
 	for (const cue of stepped.cues) {
+		const isHudGone = cue.type === "end" && cue.trigger === "hudGone";
+		if (isHudGone) endedSummary = endedGameSummary(cue);
 		posting = posting.then(async () => postSignal(await toSignal(cue)));
-		if (cue.type === "end" && uploadEnabled()) {
+		if (isHudGone && uploadEnabled()) {
 			void sendLive(
 				(built) => isMatchAt(built.match, cue.t) && unsentMatches(built),
 				newestSessionKey(),
@@ -202,16 +208,15 @@ function advance(input: GameCues.GameCuesInput): void {
 
 async function toSignal(cue: GameCues.GameCue): Promise<BroadcastGameSignal> {
 	if (cue.type === "ink") return cue;
+	if (cue.type === "start") return { type: "start", inks: cue.inks };
 
-	const summary = cue.type === "end" ? await endedGameSummary(cue) : null;
-	return cue.type === "start"
-		? { type: "start", inks: cue.inks }
-		: { type: "end", summary };
+	return { type: "end", trigger: cue.trigger, summary: await endedSummary };
 }
 
 /**
- * What was read of the game that ended, as the live sessions built it. `null` for an intro whose game never
- * showed, or when building it takes too long.
+ * What was read of the game that ended, as the live sessions built it once its HUD went away. `null` for an intro
+ * whose game never showed, or when building it takes too long: the later moments of the end (Judd's flag) come
+ * seconds after, so none waits longer than the first.
  */
 function endedGameSummary(cue: Extract<GameCues.GameCue, { type: "end" }>) {
 	const since = newestSessionKey();

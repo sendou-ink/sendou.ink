@@ -91,10 +91,10 @@ export function ScannerActivityPanel({
 					isCapturing={isCapturing}
 					onLink={() => actions.linkBroadcast(pageBroadcast)}
 				/>
-			) : activity.broadcast ? (
-				<BroadcastLink
-					broadcast={activity.broadcast}
-					isCapturing={isCapturing}
+			) : activity.broadcast?.error ? (
+				<BroadcastLinkError
+					slug={activity.broadcast.slug}
+					error={activity.broadcast.error}
 					onUnlink={() => actions.linkBroadcast(null)}
 				/>
 			) : null}
@@ -209,36 +209,22 @@ function StatusBlock({ activity }: { activity: ScannerActivityState }) {
 	);
 }
 
-function BroadcastLink({
-	broadcast,
-	isCapturing,
+/** The linked broadcast shows only when something went wrong with it, the broadcast's dashboard tells the rest. */
+function BroadcastLinkError({
+	slug,
+	error,
 	onUnlink,
 }: {
-	broadcast: NonNullable<ScannerActivityState["broadcast"]>;
-	isCapturing: boolean;
+	slug: string;
+	error: string;
 	onUnlink: () => void;
 }) {
 	return (
 		<div className={styles.broadcast}>
 			<RadioTower size={16} className={styles.broadcastIcon} />
 			<div className={styles.gameText}>
-				<span className="text-xs font-semi-bold">
-					Broadcast {broadcast.slug}
-				</span>
-				<span
-					className={clsx(
-						"text-xxs",
-						broadcast.error ? "text-error" : "text-lighter",
-					)}
-				>
-					{!isCapturing
-						? "Connects once capturing"
-						: broadcast.error
-							? broadcast.error
-							: broadcast.isConnected
-								? "Connected: games starting and ending switch its scenes"
-								: "Connecting…"}
-				</span>
+				<span className="text-xs font-semi-bold">Broadcast {slug}</span>
+				<span className="text-xxs text-error">{error}</span>
 			</div>
 			<SendouButton
 				size="miniscule"

@@ -6,6 +6,7 @@
 import * as R from "remeda";
 import { downloadBlob as download } from "~/utils/download";
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
+import { JUDD_FLAG_EVENT_TYPE } from "../core/detectors/judd/index";
 import { KILL_EVENT_TYPE } from "../core/detectors/kill/index";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
@@ -173,6 +174,9 @@ export function buildExpectedJson(event: DetectedEvent | null): string {
 			null,
 			2,
 		)}\n`;
+	}
+	if (event.type === JUDD_FLAG_EVENT_TYPE) {
+		return `${JSON.stringify({ event: event.type, data: event.data }, null, 2)}\n`;
 	}
 	if (event.type === KILL_EVENT_TYPE) {
 		const kill = event.data;

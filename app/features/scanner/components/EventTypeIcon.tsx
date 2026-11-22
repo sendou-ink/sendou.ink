@@ -6,6 +6,7 @@
 import {
 	CircleHelp,
 	Crosshair,
+	Flag,
 	Hash,
 	History,
 	type LucideIcon,
@@ -21,6 +22,7 @@ import {
 	User,
 } from "lucide-react";
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
+import { JUDD_FLAG_EVENT_TYPE } from "../core/detectors/judd/index";
 import { KILL_EVENT_TYPE } from "../core/detectors/kill/index";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
@@ -38,6 +40,7 @@ const EVENT_TYPE_ICONS: Record<string, LucideIcon> = {
 	[MAP_START_EVENT_TYPE]: Play,
 	[DEATH_EVENT_TYPE]: Skull,
 	[KILL_EVENT_TYPE]: Crosshair,
+	[JUDD_FLAG_EVENT_TYPE]: Flag,
 	[MINIMAP_EVENT_TYPE]: MapIcon,
 	[OBJECTIVE_EVENT_TYPE]: Target,
 	[SCOREBOARD_EVENT_TYPE]: Trophy,

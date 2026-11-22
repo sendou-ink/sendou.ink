@@ -1,6 +1,7 @@
 /** The latest reads of a running capture as one-line rows, newest first. */
 import * as R from "remeda";
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
+import { JUDD_FLAG_EVENT_TYPE } from "../core/detectors/judd/index";
 import { KILL_EVENT_TYPE } from "../core/detectors/kill/index";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
@@ -106,6 +107,8 @@ function eventLabel(event: ScanEvent): string | null {
 			const { name } = event.data;
 			return name ? `Splatted by ${name}` : "Splatted";
 		}
+		case JUDD_FLAG_EVENT_TYPE:
+			return "Judd raised the flag";
 		case SCOREBOARD_EVENT_TYPE:
 			return "Results screen read";
 		case SCOREBOARD_OWN_EVENT_TYPE:

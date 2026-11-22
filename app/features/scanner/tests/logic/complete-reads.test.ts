@@ -10,6 +10,8 @@ import type { ScoreboardOwnData } from "../../core/detectors/scoreboard-own/inde
 import { type DetectedEvent, isComplete } from "../../core/events";
 import type { FieldScores } from "../../core/field-scores";
 
+const INK = { r: 192, g: 173, b: 39 };
+
 /** A score every floor of a complete read clears. */
 const CLEAN = 0.9;
 
@@ -367,6 +369,26 @@ describe("isComplete", () => {
 		{
 			why: "a spectator screen with an enemy's name under its floor",
 			event: map(minimap(true, [CARD]), { "enemies.0.name": 0.62 }),
+			expected: false,
+		},
+		{
+			why: "Judd's flag with the band read",
+			event: {
+				type: "JuddFlag",
+				t: 0,
+				scores: { "inks,winnerInk": 0.8 },
+				data: { inks: [INK], winnerInk: INK },
+			},
+			expected: true,
+		},
+		{
+			why: "Judd's flag with the band unscored",
+			event: {
+				type: "JuddFlag",
+				t: 0,
+				scores: {},
+				data: { inks: [INK], winnerInk: INK },
+			},
 			expected: false,
 		},
 		{

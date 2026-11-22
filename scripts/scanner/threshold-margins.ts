@@ -49,6 +49,7 @@ const DETECTOR_ID_BY_FIXTURE_EVENT: Record<
 	PlayerStatus: "objective",
 	StripWeapons: "objective",
 	Kill: "kill",
+	JuddFlag: "judd-flag",
 	XSetCount: "x-set-count",
 	XSetResult: "x-set-result",
 	XRankPosition: "x-rank-position",

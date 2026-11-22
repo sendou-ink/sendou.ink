@@ -75,6 +75,7 @@ interface ExpectedScoreboard {
 		| "PlayerStatus"
 		| "StripWeapons"
 		| "Kill"
+		| "JuddFlag"
 		| "XSetCount"
 		| "XSetResult"
 		| "XRankPosition"
@@ -141,6 +142,10 @@ interface ExpectedScoreboard {
 		/** StripWeapons only: true weapon per slot, [left team, right team], null = splatted slot skipped */
 		weapons?: [(MainWeaponId | null)[], (MainWeaponId | null)[]];
 		weaponLabels?: [(string | null)[], (string | null)[]];
+		/** JuddFlag only: inks the results band shows, 1 after a knockout, 2 when the timer ran out */
+		inkCount?: 1 | 2;
+		/** JuddFlag only: index of the winner's in the band's inks (left first), null = shares too close to tell */
+		winner?: 0 | 1 | null;
 		/** Minimap only: casted 8-player spectator map screen (not parsed yet) */
 		spectator?: boolean;
 		/** Minimap only: own-team callout cards in drawn order */

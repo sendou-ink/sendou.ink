@@ -12,8 +12,22 @@
  * 0 is gone before it's read (and a blurred 100 reads as 0, so the counter
  * can't tell). The cut belongs at the HUD's last read either way. An observer
  * opening the map hides the HUD too, which keeps the game on while it's up.
+ * An intro read after the game's HUD showed starts the next game right away
+ * (a replay watched again, or seeked back to its start), and so does the game
+ * clock jumping back up, which only counts down within a game (the next game
+ * shown with its intro missed): the game before it gets no end then.
+ *
+ * A game ends once per moment of its end (`GAME_END_TRIGGERS`), each `end`
+ * cue naming its own, the broadcast cutting away at the one it waits for
+ * (Judd's flag). The HUD going away is always the first; the
+ * results screen follows it, Judd raising the flag for the winner 8-11s after
+ * the HUD's last read on cast VoDs. A flag read without the HUD gone a moment
+ * is no results screen, and one never read (a missed read, the cast cutting
+ * away) is given up on a while after, so a broadcast waiting for it never gets
+ * stuck on the game.
  */
 
+import { JUDD_FLAG_EVENT_TYPE } from "./detectors/judd/index";
 import { MAP_START_EVENT_TYPE } from "./detectors/map-start/index";
 import { OBJECTIVE_EVENT_TYPE } from "./detectors/objective/index";
 import {
@@ -37,12 +51,23 @@ const HUD_GONE_SECONDS = 3;
  * cast VoDs the HUD went unread mid-game for at most 3s, a knockout's "GAME!" and results for 25s or more.
  */
 const HUD_GONE_SECONDS_WITHOUT_TIME_UP = 6;
+/** Seconds after the HUD's last read Judd's flag is given up on, the flag ending the game then. */
+const JUDD_FLAG_MAX_SECONDS = 16;
+/** Seconds the HUD is gone at least when Judd's flag shows, a flag read with the HUD only just gone is a misread. */
+const JUDD_FLAG_MIN_HUD_GONE_SECONDS = 2;
 /** Seconds after the intro splash its game's HUD shows up at the latest, an intro misread is taken back after it. */
 const INTRO_MAX_SECONDS = 30;
 /** A timer read this low ran out: the last second or two can be missed between reads. */
 const TIME_UP_MAX_SECONDS = 1;
 /** The read before it this low too, so one misread digit doesn't run the timer out mid-game. */
 const TIME_UP_PREVIOUS_MAX_SECONDS = 10;
+/** A timer read this much higher than the game's last one is another game's clock, the timer only counting down. */
+const CLOCK_JUMP_MIN_SECONDS = 10;
+
+/** The moments a game's end is cued at, in the order they come: its HUD going away, Judd raising the flag. */
+const GAME_END_TRIGGERS = ["hudGone", "juddFlag"] as const;
+
+type GameEndTrigger = (typeof GAME_END_TRIGGERS)[number];
 
 export type GameCue =
 	| {
@@ -59,7 +84,12 @@ export type GameCue =
 	  }
 	| {
 			type: "end";
-			/** When the game's HUD was last read, in event time: where the cut away from it belongs. */
+			/** Which moment of the end this is, every game ending once per trigger. */
+			trigger: GameEndTrigger;
+			/**
+			 * When it happened, in event time: where the cut away from the game belongs. The HUD's last read, the flag's
+			 * first, or when the flag was given up on.
+			 */
 			t: number;
 			/** The timer ran out before the HUD went away, otherwise it was a knockout. */
 			isTimeUp: boolean;
@@ -80,6 +110,8 @@ export interface GameCuesState {
 	lastTime: { t: number; time: number; before: number | null } | null;
 	/** The timer ran out: the HUD going away soon after ends the game. */
 	isTimeUp: boolean;
+	/** The game that ended last, while its Judd flag is still to come: when its HUD was last read. */
+	flagAwaited: { hudGoneAt: number; isTimeUp: boolean } | null;
 }
 
 interface InkRead {
@@ -106,6 +138,7 @@ export function initialState(): GameCuesState {
 		lastHudAt: null,
 		lastTime: null,
 		isTimeUp: false,
+		flagAwaited: null,
 	};
 }
 
@@ -121,13 +154,43 @@ export function step(state: GameCuesState, input: GameCuesInput): Stepped {
 
 	const { event } = input;
 	const ended = endIfOver(state, event.t);
-	const read = readEvent(ended.state, event);
+	const restarted = restartOnClockJump(ended.state, event);
+	const read = readEvent(restarted.state, event);
 
-	return { state: read.state, cues: [...ended.cues, ...read.cues] };
+	return {
+		state: read.state,
+		cues: [...ended.cues, ...restarted.cues, ...read.cues],
+	};
+}
+
+/** The game clock read higher than the game's last read: the next game is on, started where this read was. */
+function restartOnClockJump(
+	state: GameCuesState,
+	event: DetectedEvent,
+): Stepped {
+	const time =
+		event.type === OBJECTIVE_EVENT_TYPE ||
+		event.type === PLAYER_STATUS_EVENT_TYPE
+			? event.data.time
+			: null;
+	if (
+		!isLive(state) ||
+		time === null ||
+		state.lastTime === null ||
+		time - state.lastTime.time < CLOCK_JUMP_MIN_SECONDS
+	) {
+		return { state, cues: [] };
+	}
+
+	return {
+		state: { ...initialState(), startedAt: event.t },
+		cues: [{ type: "start", t: event.t, inks: null }],
+	};
 }
 
 function readEvent(state: GameCuesState, event: DetectedEvent): Stepped {
 	if (event.type === MAP_START_EVENT_TYPE) return readIntro(state, event.t);
+	if (event.type === JUDD_FLAG_EVENT_TYPE) return readFlag(state, event.t);
 	if (event.type === OBJECTIVE_EVENT_TYPE) {
 		return { state: readTime(state, event.t, event.data.time), cues: [] };
 	}
@@ -142,14 +205,45 @@ function isLive(state: GameCuesState) {
 	return state.startedAt !== null;
 }
 
-/** The intro splash starts its game. Read while one is on it's the same intro again, or a misread: the HUD is still up. */
+/** The intro splash starts its game. Read before the game's HUD showed, it's the same intro read again. */
 function readIntro(state: GameCuesState, t: number): Stepped {
-	if (isLive(state)) return { state, cues: [] };
+	if (isLive(state) && state.lastHudAt === null) return { state, cues: [] };
 
 	return {
 		state: { ...initialState(), startedAt: t },
-		cues: [{ type: "start", t, inks: null }],
+		cues: [...flagGivenUp(state, t, true), { type: "start", t, inks: null }],
 	};
+}
+
+/**
+ * Judd's flag ends the game that ended last. Read with the game still on, it ends the game with its HUD gone long
+ * enough, a moment earlier than the HUD going away would.
+ */
+function readFlag(state: GameCuesState, t: number): Stepped {
+	if (state.flagAwaited) {
+		return {
+			state: { ...state, flagAwaited: null },
+			cues: [
+				{
+					type: "end",
+					trigger: "juddFlag",
+					t,
+					isTimeUp: state.flagAwaited.isTimeUp,
+				},
+			],
+		};
+	}
+
+	if (
+		state.lastHudAt === null ||
+		t - state.lastHudAt < JUDD_FLAG_MIN_HUD_GONE_SECONDS
+	) {
+		return { state, cues: [] };
+	}
+
+	const ended = hudGone(state, state.lastHudAt);
+	const flagged = readFlag(ended.state, t);
+	return { state: flagged.state, cues: [...ended.cues, ...flagged.cues] };
 }
 
 function readHud(state: GameCuesState, event: PlayerStatusEvent): Stepped {
@@ -194,8 +288,8 @@ function settleInk(
 	}
 
 	return {
-		state: { ...settled, startedAt: t },
-		cues: [{ type: "start", t, inks }],
+		state: { ...settled, startedAt: t, flagAwaited: null },
+		cues: [...flagGivenUp(state, t, true), { type: "start", t, inks }],
 	};
 }
 
@@ -224,16 +318,31 @@ function readTime(
 	};
 }
 
-/** Ends the game once its HUD has been gone long enough, or its HUD never showed after the intro (a misread one). */
+/**
+ * Ends the game once its HUD has been gone long enough, or its HUD never showed after the intro (a misread one, which
+ * has no results screen to wait for). Gives up on the flag of the game that ended last once it's long overdue.
+ */
 function endIfOver(state: GameCuesState, t: number): Stepped {
-	if (state.startedAt === null) return { state, cues: [] };
+	if (state.startedAt === null) {
+		const cues = flagGivenUp(state, t);
+		return cues.length > 0
+			? { state: { ...state, flagAwaited: null }, cues }
+			: { state, cues };
+	}
 
 	if (state.lastHudAt === null) {
 		return t - state.startedAt < INTRO_MAX_SECONDS
 			? { state, cues: [] }
 			: {
 					state: initialState(),
-					cues: [{ type: "end", t: state.startedAt, isTimeUp: false }],
+					cues: [
+						{
+							type: "end",
+							trigger: "hudGone",
+							t: state.startedAt,
+							isTimeUp: false,
+						},
+					],
 				};
 	}
 
@@ -242,10 +351,47 @@ function endIfOver(state: GameCuesState, t: number): Stepped {
 		: HUD_GONE_SECONDS_WITHOUT_TIME_UP;
 	if (t - state.lastHudAt < goneSeconds) return { state, cues: [] };
 
+	return hudGone(state, state.lastHudAt);
+}
+
+/** The game ends with its HUD gone since `hudGoneAt`, its flag awaited. */
+function hudGone(state: GameCuesState, hudGoneAt: number): Stepped {
 	return {
-		state: initialState(),
-		cues: [{ type: "end", t: state.lastHudAt, isTimeUp: state.isTimeUp }],
+		state: {
+			...initialState(),
+			flagAwaited: { hudGoneAt, isTimeUp: state.isTimeUp },
+		},
+		cues: [
+			{
+				type: "end",
+				trigger: "hudGone",
+				t: hudGoneAt,
+				isTimeUp: state.isTimeUp,
+			},
+		],
 	};
+}
+
+/** The awaited flag's end, given up on: once overdue, or at the latest as the next game starts at `t`. */
+function flagGivenUp(
+	state: GameCuesState,
+	t: number,
+	isNextGameStarting = false,
+): GameCue[] {
+	const { flagAwaited } = state;
+	if (!flagAwaited) return [];
+
+	const overdueAt = flagAwaited.hudGoneAt + JUDD_FLAG_MAX_SECONDS;
+	if (t < overdueAt && !isNextGameStarting) return [];
+
+	return [
+		{
+			type: "end",
+			trigger: "juddFlag",
+			t: Math.min(t, overdueAt),
+			isTimeUp: flagAwaited.isTimeUp,
+		},
+	];
 }
 
 function toInkRead(
