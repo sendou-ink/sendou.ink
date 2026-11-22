@@ -645,6 +645,47 @@ test.describe("LAN map", () => {
 		await expect(page).toHaveURL(`/calendar/${helsinki.id}`);
 	});
 
+	test("shows only the next LAN of a venue that hosts several", async ({
+		page,
+		factories,
+	}) => {
+		await page.route("https://tiles.openfreemap.org/**", (route) =>
+			route.fulfill({ json: BLANK_MAP_STYLE }),
+		);
+
+		const seriesEvents = [
+			{ name: "Chicago LAN #3", inDays: 60 },
+			{ name: "Chicago LAN #1", inDays: 5 },
+			{ name: "Chicago LAN #2", inDays: 30 },
+		];
+		for (const { name, inDays } of seriesEvents) {
+			const event = await factories.CalendarEventFactory.create({
+				authorId: ADMIN_ID,
+				name,
+				startTimes: [dateToDatabaseTimestamp(addDays(new Date(), inDays))],
+			});
+			await factories.CalendarEventVenueFactory.create({
+				eventId: event.id,
+				name: "McCormick Place",
+				address: "2301 South King Drive, 60616 Chicago, IL, United States",
+				city: "Chicago",
+				countryCode: "US",
+				latitude: 41.8514,
+				longitude: -87.6157,
+				timezone: "America/Chicago",
+			});
+		}
+
+		await navigate({ page, url: LAN_MAP_PAGE });
+
+		await expect(
+			page.getByRole("button", { name: "Chicago LAN #1" }),
+		).toBeVisible();
+		await expect(page.getByRole("button", { name: /Chicago LAN/ })).toHaveCount(
+			1,
+		);
+	});
+
 	test("says there are no LANs instead of showing an empty map", async ({
 		page,
 	}) => {

@@ -129,6 +129,18 @@ const LAN_MAP_VENUES: Array<
 	},
 ];
 
+/** A local series: several upcoming events at the same venue, sharing one marker on the LAN map. */
+const LAN_MAP_SERIES_VENUE: (typeof LAN_MAP_VENUES)[number] = {
+	name: "McCormick Place",
+	address: "2301 South King Drive, 60616 Chicago, IL, United States",
+	city: "Chicago",
+	countryCode: "US",
+	latitude: 41.8514,
+	longitude: -87.6157,
+	timezone: "America/Chicago",
+};
+const LAN_MAP_SERIES_EVENT_COUNT = 4;
+
 export type SeededCalendarEvents = {
 	/** Result teams N-ZAP played on, in the order they were reported. */
 	nzapResultTeamIds: number[];
@@ -179,6 +191,15 @@ export async function seedCalendarEvents(
 		invariant(eventId, "Not enough upcoming events for the LAN map venues");
 
 		await CalendarEventVenueFactory.create({ eventId, ...venue });
+	}
+	for (let i = 0; i < LAN_MAP_SERIES_EVENT_COUNT; i++) {
+		const eventId = upcomingEventIds[LAN_MAP_VENUES.length + i];
+		invariant(eventId, "Not enough upcoming events for the LAN map series");
+
+		await CalendarEventVenueFactory.create({
+			eventId,
+			...LAN_MAP_SERIES_VENUE,
+		});
 	}
 
 	return { nzapResultTeamIds };
