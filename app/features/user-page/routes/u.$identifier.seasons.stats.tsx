@@ -476,7 +476,12 @@ function StageModeHeatmap({
 				{playedStageIds.map((stageId) => (
 					<React.Fragment key={stageId}>
 						<div className={styles.heatmapStage}>
-							<StageImage stageId={stageId} width={48} className="rounded" />
+							<StageImage
+								stageId={stageId}
+								width={48}
+								className="rounded"
+								containerClassName={styles.heatmapStageImage}
+							/>
 							<span>{t(`game-misc:STAGE_${stageId}`)}</span>
 						</div>
 						{modesShort.map((mode) => (

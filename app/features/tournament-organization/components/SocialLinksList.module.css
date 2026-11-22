@@ -3,7 +3,8 @@
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
-	max-width: max-content;
+	width: fit-content;
+	max-width: 100%;
 
 	& svg {
 		width: 18px;
@@ -16,6 +17,7 @@
 	place-items: center;
 	border-radius: var(--radius-box);
 	padding: var(--s-2);
+	flex-shrink: 0;
 }
 
 .socialLinkTwitch {

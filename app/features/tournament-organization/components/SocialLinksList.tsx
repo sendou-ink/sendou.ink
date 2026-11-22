@@ -34,7 +34,7 @@ function SocialLink({ url }: { url: string }) {
 			>
 				<SocialLinkIcon url={url} />
 			</div>
-			{url}
+			<span className="truncate">{url}</span>
 		</a>
 	);
 }

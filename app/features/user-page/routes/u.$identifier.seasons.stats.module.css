@@ -112,6 +112,10 @@
 	font-size: var(--font-sm);
 }
 
+.heatmapStageImage {
+	flex-shrink: 0;
+}
+
 .heatmapCell {
 	--bucket-color: var(--color-bg-higher);
 
