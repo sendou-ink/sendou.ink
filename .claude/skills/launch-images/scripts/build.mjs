@@ -16,6 +16,7 @@ const DEVICE_SCALE_FACTOR = 5 / 3;
 /** Raw screenshots are captured at 2x, crops are given in their CSS px. */
 const CAPTURE_SCALE = 2;
 const BLUESKY_MAX_BYTES = 1_000_000;
+const VIEWPORT = { width: 1200, height: 2000 };
 const OG_COLORS = { pink: "#fd0075", cyan: "#01d4ff", green: "#21fe00" };
 
 const configPath = process.argv[2];
@@ -46,7 +47,7 @@ fs.mkdirSync(outDir, { recursive: true });
 
 const browser = await chromium.launch();
 const page = await browser.newPage({
-	viewport: { width: 1200, height: 2000 },
+	viewport: VIEWPORT,
 	deviceScaleFactor: DEVICE_SCALE_FACTOR,
 	colorScheme: "dark",
 	reducedMotion: "reduce",
@@ -104,6 +105,12 @@ for (const image of images) {
 		const el = document.querySelector(`[data-out="${current}"]`);
 		return { width: el.offsetWidth, height: el.offsetHeight };
 	}, image.fileName);
+
+	// a clip is cut at the viewport's bottom edge, so the viewport grows to fit a tall canvas
+	await page.setViewportSize({
+		width: VIEWPORT.width,
+		height: Math.max(VIEWPORT.height, size.height),
+	});
 
 	const filePath = path.join(outDir, image.fileName);
 	await page.screenshot({ path: filePath, clip: { x: 0, y: 0, ...size } });
