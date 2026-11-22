@@ -97,6 +97,8 @@ import { BroadcastPreview } from "~/features/broadcast/components/BroadcastPrevi
 import * as AudioFeeds from "~/features/broadcast/core/AudioFeeds";
 import type * as ClipTransfer from "~/features/broadcast/core/ClipTransfer";
 import * as Producer from "~/features/broadcast/core/Producer";
+import { useCapturedBefore } from "~/features/scanner/scanner-activity";
+import type { ScannerClip } from "~/features/scanner/store/clips";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
@@ -110,9 +112,13 @@ import {
 	tournamentMatchPage,
 } from "~/utils/urls";
 import {
+	broadcastClipTitle,
+	useClipSources,
+	useScannerClips,
+} from "../broadcast-cast-clips";
+import {
 	BROADCAST_DASHBOARD_TABS,
 	BROADCAST_OBS_WEBSOCKET_DEFAULT_PORT,
-	BROADCAST_PROTOTYPE_CLIPS,
 	BROADCAST_SCENE_DURATIONS_MS,
 	CAST_PRODUCER_RULES,
 } from "../broadcast-cast-constants";
@@ -133,6 +139,7 @@ import type {
 } from "../broadcast-cast-types";
 import { needsFeaturedMatch } from "../broadcast-cast-utils";
 import { CasterFeedsHealth, CasterMixer } from "../components/CasterMixer";
+import { ClipPicker } from "../components/ClipPicker";
 import { ObsCaptureCardField } from "../components/ObsCaptureCardField";
 import { ScenePicker, useSceneHotkeys } from "../components/ScenePicker";
 import * as BracketFocus from "../core/BracketFocus";
@@ -175,15 +182,18 @@ function BroadcastDashboard() {
 	const pageArgs = { tournamentId: tournament.ctx.id, slug: data.channel.slug };
 	const channels = CastChannel.list(tournament.ctx.castAccounts);
 	const [feedStore] = React.useState(AudioFeeds.createStore);
-	const clipSender = useClipSender({
-		signalUrl: broadcastSignalUrl(pageArgs),
-		clips: BROADCAST_PROTOTYPE_CLIPS,
-		onFeeds: feedStore.report,
-	});
 	const { state, isConnected, clockOffsetMs } = useBroadcastStream({
 		url: broadcastStreamUrl({ ...pageArgs, role: "dashboard" }),
 		initialState: data.state,
-		onMessage: clipSender.onMessage,
+		onMessage: (message) => clipSender.onMessage(message),
+	});
+	const scannerClips = useScannerClips(useCapturedBefore() ? pageArgs : null);
+	// only the browser running the scanner has its clips, the dashboards elsewhere send none
+	const isClipSender = scannerClips.length > 0;
+	const clipSender = useClipSender({
+		signalUrl: broadcastSignalUrl(pageArgs),
+		clips: useClipSources(state, scannerClips),
+		onFeeds: feedStore.report,
 	});
 	const nextPreviewRef = React.useRef<HTMLIFrameElement>(null);
 	const mixerRef = React.useRef<HTMLElement>(null);
@@ -199,7 +209,9 @@ function BroadcastDashboard() {
 	const selected =
 		staged.find((item) => item.id === selectedItemId) ?? state.next;
 	const take = CastTake.status({ state, now });
-	const areClipsOnSources = everySourceHasClips(clipSender.statuses);
+	// elsewhere the OBS sources get the clips from the scanner's browser, out of this dashboard's sight
+	const isClipOnSources = (clipId: string) =>
+		!isClipSender || isOnEverySource(clipSender.statuses, clipId);
 	const { submit: submitScene } = useActionSubmit(broadcastActionSchema);
 	useSceneHotkeys({
 		selected: selected.scene,
@@ -329,9 +341,13 @@ function BroadcastDashboard() {
 							state={state}
 							selected={selected}
 							onSelect={setSelectedItemId}
-							areClipsOnSources={areClipsOnSources}
+							isClipOnSources={isClipOnSources}
 						/>
-						<SceneEditor state={state} selected={selected} />
+						<SceneEditor
+							state={state}
+							selected={selected}
+							scannerClips={isClipSender ? scannerClips : null}
+						/>
 					</div>
 				</section>
 			</div>
@@ -819,12 +835,13 @@ function Queue({
 	state,
 	selected,
 	onSelect,
-	areClipsOnSources,
+	isClipOnSources,
 }: {
 	state: CastBroadcastState;
 	selected: CastProducerState;
 	onSelect: (itemId: number) => void;
-	areClipsOnSources: boolean;
+	/** Whether every OBS source has the clip, one going on air without it shows the OBS footage instead. */
+	isClipOnSources: (clipId: string) => boolean;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const { submit } = useActionSubmit(broadcastActionSchema);
@@ -883,7 +900,7 @@ function Queue({
 								idx={idx}
 								isSelected={item.id === selected.id}
 								onSelect={onSelect}
-								areClipsOnSources={areClipsOnSources}
+								isClipOnSources={isClipOnSources}
 							/>
 						))}
 					</ol>
@@ -915,7 +932,7 @@ function QueueTab({
 	idx,
 	isSelected,
 	onSelect,
-	areClipsOnSources,
+	isClipOnSources,
 }: {
 	state: CastBroadcastState;
 	item: CastProducerState;
@@ -923,7 +940,8 @@ function QueueTab({
 	idx: number;
 	isSelected: boolean;
 	onSelect: (itemId: number) => void;
-	areClipsOnSources: boolean;
+	/** Whether every OBS source has the clip, one going on air without it shows the OBS footage instead. */
+	isClipOnSources: (clipId: string) => boolean;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const tournament = useTournament();
@@ -940,15 +958,19 @@ function QueueTab({
 	const Icon = SCENE_ICONS[item.scene];
 	const warning = isItemMissingMatch(state, item)
 		? t("broadcast:dashboard.needsMatch")
-		: item.scene === "replays" && item.clipId !== null && !areClipsOnSources
+		: item.scene === "replays" && item.clip && !isClipOnSources(item.clip.id)
 			? t("broadcast:dashboard.queue.clipMissing")
 			: null;
-	const detail = itemDetail(
-		item,
-		item.scene === "team"
-			? pickedTeamName({ state, tournament, item })
-			: undefined,
-	);
+	const detail = itemDetail(item, {
+		clipTitle:
+			item.scene === "replays" && item.clip
+				? broadcastClipTitle(t, item.clip)
+				: undefined,
+		teamName:
+			item.scene === "team"
+				? pickedTeamName({ state, tournament, item })
+				: undefined,
+	});
 
 	return (
 		<li
@@ -1118,9 +1140,12 @@ function QueueGap({
 function SceneEditor({
 	state,
 	selected,
+	scannerClips,
 }: {
 	state: CastBroadcastState;
 	selected: CastProducerState;
+	/** `null` when this browser has no clips the scanner cut for the broadcast. */
+	scannerClips: ScannerClip[] | null;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 
@@ -1161,7 +1186,7 @@ function SceneEditor({
 					<BracketProperties state={state} selected={selected} />
 				) : null}
 				{selected.scene === "replays" ? (
-					<ClipProperty selected={selected} />
+					<ClipProperty selected={selected} scannerClips={scannerClips} />
 				) : null}
 				{selected.scene === "team" ? (
 					<TeamProperty state={state} selected={selected} />
@@ -1387,38 +1412,42 @@ function BracketSideProperty({
 	);
 }
 
-function ClipProperty({ selected }: { selected: CastProducerState }) {
+function ClipProperty({
+	selected,
+	scannerClips,
+}: {
+	selected: CastProducerState;
+	scannerClips: ScannerClip[] | null;
+}) {
 	const { t } = useTranslation(["broadcast"]);
 	const { submit } = useActionSubmit(broadcastActionSchema);
+	const picked = selected.clip ?? null;
 
 	return (
 		<Property label={t("broadcast:dashboard.clips.label")}>
-			<SendouChipRadioGroup
-				aria-label={t("broadcast:dashboard.clips.label")}
-				wrap
-			>
-				<SendouChipRadio
-					name="broadcast-clip"
-					value="none"
-					checked={selected.clipId === null}
-					onChange={() => submit("SET_CLIP", { itemId: selected.id })}
-				>
-					{t("broadcast:dashboard.clips.none")}
-				</SendouChipRadio>
-				{BROADCAST_PROTOTYPE_CLIPS.map((clip) => (
-					<SendouChipRadio
-						key={clip.id}
-						name="broadcast-clip"
-						value={clip.id}
-						checked={selected.clipId === clip.id}
-						onChange={() =>
-							submit("SET_CLIP", { itemId: selected.id, clipId: clip.id })
-						}
-					>
-						{clip.name} · {formatClock(clip.durationMs)}
-					</SendouChipRadio>
-				))}
-			</SendouChipRadioGroup>
+			{scannerClips ? (
+				<ClipPicker
+					picked={picked}
+					clips={scannerClips}
+					onPick={(clip) =>
+						submit("SET_CLIP", {
+							itemId: selected.id,
+							clip: clip ?? undefined,
+						})
+					}
+				/>
+			) : (
+				<>
+					<span className="text-sm">
+						{picked
+							? `${broadcastClipTitle(t, picked)} · ${formatClock(picked.durationMs)}`
+							: t("broadcast:dashboard.clips.none")}
+					</span>
+					<span className="text-xs text-lighter">
+						{t("broadcast:dashboard.clips.notScannerBrowser")}
+					</span>
+				</>
+			)}
 			<span className="text-xs text-lighter">
 				{t("broadcast:dashboard.clips.explanation")}
 			</span>
@@ -1789,21 +1818,20 @@ function ClipOverlays({
 					<span key={status.peer.id}>
 						{t(`broadcast:dashboard.clips.role.${status.peer.role}`)} ·{" "}
 						<span className="text-lighter">{status.connectionState}</span>
-						{status.missingCount !== null ? (
+						{status.receivedClipIds !== null && status.clipCount > 0 ? (
 							<>
 								{" "}
 								·{" "}
-								{status.missingCount === 0
-									? t("broadcast:dashboard.clips.upToDate")
+								{!hasEveryClip(status)
+									? t("broadcast:dashboard.clips.progress", {
+											received: status.receivedClipIds.length,
+											total: status.clipCount,
+										})
 									: status.transferMs !== null
-										? t("broadcast:dashboard.clips.transferred", {
-												count: status.missingCount,
+										? t("broadcast:dashboard.clips.lastTransfer", {
 												seconds: (status.transferMs / 1000).toFixed(1),
 											})
-										: t("broadcast:dashboard.clips.progress", {
-												received: status.receivedCount,
-												total: status.missingCount,
-											})}
+										: t("broadcast:dashboard.clips.upToDate")}
 							</>
 						) : null}
 					</span>
@@ -1855,15 +1883,18 @@ function Theme({
 	);
 }
 
-/** Whether every OBS source has every clip, one going on air without it shows the OBS footage instead. */
-function everySourceHasClips(statuses: ClipTransfer.ClipPeerStatus[]) {
+/** Whether every OBS source has the clip. */
+function isOnEverySource(
+	statuses: ClipTransfer.ClipPeerStatus[],
+	clipId: string,
+) {
 	return statuses
 		.filter((status) => status.peer.role === "source")
-		.every(hasEveryClip);
+		.every((status) => status.receivedClipIds?.includes(clipId));
 }
 
 function hasEveryClip(status: ClipTransfer.ClipPeerStatus) {
-	return status.missingCount === 0 || status.transferMs !== null;
+	return status.receivedClipIds?.length === status.clipCount;
 }
 
 /** The dashboard's live and next previews as one row, the one still missing clips if either is. */
@@ -1897,15 +1928,14 @@ function pickedTeamName({
 	].team?.name;
 }
 
-/** Clip or team and length of a staged item, e.g. "4 splats · 0:25". */
-function itemDetail(item: CastProducerState, teamName?: string) {
-	const clip = BROADCAST_PROTOTYPE_CLIPS.find(
-		(prototypeClip) =>
-			item.scene === "replays" && prototypeClip.id === item.clipId,
-	);
+/** Clip or team and length of a staged item, e.g. "Triple splat · 0:25". */
+function itemDetail(
+	item: CastProducerState,
+	{ clipTitle, teamName }: { clipTitle?: string; teamName?: string },
+) {
 	const length = Producer.lengthMs(CAST_PRODUCER_RULES, item);
 
-	return [clip?.name, teamName, length !== null ? formatClock(length) : null]
+	return [clipTitle, teamName, length !== null ? formatClock(length) : null]
 		.filter(Boolean)
 		.join(" · ");
 }

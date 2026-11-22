@@ -17,6 +17,7 @@ import {
 	type WeaponType,
 } from "../core/detectors/death/weapon-names";
 import type { ScannerLobby } from "../scanner-types";
+import type { ClipMoment } from "./clips/moments";
 import type { XRankPositionData } from "./detectors/x-rank/position";
 import type { XSetCountData } from "./detectors/x-rank/set-count";
 import type { XSetResultData } from "./detectors/x-rank/set-result";
@@ -47,6 +48,42 @@ export function stageLabel(stageId: StageId | null): string | null {
 
 export function modeLabel(mode: ModeShort | null): string | null {
 	return mode === null ? null : (MISC[`MODE_LONG_${mode}`] ?? mode);
+}
+
+const OBJECTIVE_MOMENT_LABELS: Record<Exclude<ClipMoment, "splats">, string> = {
+	lead: "Lead taken",
+	push: "Big push",
+};
+
+/** What the clip shows: "Triple splat", "5 splats + Lead taken", "Big push". */
+export function clipTitle(clip: {
+	kills: number;
+	moments?: readonly ClipMoment[];
+}): string {
+	return (clip.moments ?? ["splats"])
+		.map((moment) =>
+			moment === "splats"
+				? splatsLabel(clip.kills)
+				: OBJECTIVE_MOMENT_LABELS[moment],
+		)
+		.join(" + ");
+}
+
+function splatsLabel(kills: number) {
+	if (kills === 2) return "Double splat";
+	if (kills === 3) return "Triple splat";
+	return `${kills} splats`;
+}
+
+/** The clip's title short enough for a chip: its kills ("3k"), else its objective moment. */
+export function clipChipLabel(clip: {
+	kills: number;
+	moments?: readonly ClipMoment[];
+}): string {
+	const objective = clip.moments?.find((moment) => moment !== "splats");
+	if (clip.kills > 0 || !objective) return `${clip.kills}k`;
+
+	return OBJECTIVE_MOMENT_LABELS[objective];
 }
 
 const LOBBY_LABELS: Record<ScannerLobby, string> = {

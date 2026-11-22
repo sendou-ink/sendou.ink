@@ -76,6 +76,11 @@ export function useBroadcastLink(): BroadcastLinkSnapshot {
 	);
 }
 
+/** The broadcast the capture follows right now, `null` when none. */
+export function followedBroadcast(): BroadcastTarget | null {
+	return snapshot.target;
+}
+
 /** The capture started (`true`) or stopped. */
 export function setCapturing(capturing: boolean): void {
 	isCapturing = capturing;

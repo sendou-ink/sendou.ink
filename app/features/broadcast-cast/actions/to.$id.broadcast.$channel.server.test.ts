@@ -5,7 +5,11 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.server";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import type { broadcastActionSchema } from "../broadcast-cast-schemas";
-import type { CastBroadcastSettings } from "../broadcast-cast-types";
+import type {
+	BroadcastClip,
+	CastBroadcastSettings,
+	CastProducerState,
+} from "../broadcast-cast-types";
 import * as CastChannel from "../core/CastChannel";
 import { action as broadcastAction } from "./to.$id.broadcast.$channel.server";
 
@@ -146,6 +150,74 @@ describe("UPDATE_CASTERS", () => {
 		expect(response).toHaveProperty("fieldErrors");
 		expect((await storedSettings(tournamentId))?.casters).toBeUndefined();
 	});
+});
+
+describe("SET_CLIP", () => {
+	const clip = {
+		id: "7-1790000000000",
+		durationMs: 25_000,
+		kills: 3,
+		moments: ["splats", "lead"],
+	} as const;
+
+	test("stages the clip, which times the replays scene", async () => {
+		const tournamentId = await createTournament();
+		await setReplays(tournamentId);
+
+		await setClip(tournamentId, JSON.stringify(clip));
+
+		expect(await stagedClip(tournamentId)).toEqual(clip);
+	});
+
+	test("goes back to the OBS footage without a clip", async () => {
+		const tournamentId = await createTournament();
+		await setReplays(tournamentId);
+		await setClip(tournamentId, JSON.stringify(clip));
+
+		await setClip(tournamentId, undefined);
+
+		expect(await stagedClip(tournamentId)).toBeNull();
+	});
+
+	test("rejects a clip that isn't what the scanner cuts", async () => {
+		const tournamentId = await createTournament();
+		await setReplays(tournamentId);
+
+		const response = await setClip(
+			tournamentId,
+			JSON.stringify({ ...clip, moments: ["ace"] }),
+		);
+
+		assertResponseErrored(response);
+		expect(await stagedClip(tournamentId)).toBeNull();
+	});
+
+	function setReplays(tournamentId: number) {
+		return broadcast(
+			{ _action: "SET_SCENE", itemId: 2, scene: "replays" },
+			{ user: organizerId(), params: params(tournamentId) },
+		);
+	}
+
+	function setClip(tournamentId: number, serializedClip: string | undefined) {
+		return broadcast(
+			{
+				_action: "SET_CLIP",
+				itemId: 2,
+				// the dashboard posts the clip as JSON
+				...(serializedClip
+					? { clip: serializedClip as unknown as BroadcastClip }
+					: {}),
+			},
+			{ user: organizerId(), params: params(tournamentId) },
+		);
+	}
+
+	async function stagedClip(tournamentId: number) {
+		const { next } = await storedState(tournamentId);
+
+		return (next as CastProducerState).clip;
+	}
 });
 
 describe("SET_CASTER_VOLUME", () => {

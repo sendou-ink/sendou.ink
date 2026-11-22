@@ -9,6 +9,7 @@ import type {
 	BroadcastView,
 	ProducerState,
 } from "~/features/broadcast/broadcast-types";
+import type { ClipMoment } from "~/features/scanner/core/clips/moments";
 import type {
 	AbilityWithUnknown,
 	MainWeaponId,
@@ -38,9 +39,19 @@ export interface CastProducerState extends ProducerState<CastScene> {
 	bracketIdx: number | null;
 	bracketSides: BroadcastBracketSidesFocus;
 	/** Clip the replays scene plays, `null` leaves the footage under it to OBS. */
-	clipId: string | null;
+	clip: BroadcastClip | null;
 	/** Team of the team scene: one of the featured match's by its side (following the match cast), or any by its id. */
 	teamPick: BroadcastTeamPick;
+}
+
+/** A clip the scanner cut, as the dashboard in its browser picked it for the replays scene. */
+export interface BroadcastClip {
+	/** The overlays get the clip's video by it, see `ClipTransfer`. */
+	id: string;
+	durationMs: number;
+	kills: number;
+	/** What the clip shows, best first. */
+	moments: ClipMoment[];
 }
 
 export interface CastBroadcastSettings extends BroadcastSettings {

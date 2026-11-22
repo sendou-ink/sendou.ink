@@ -5,6 +5,7 @@ import {
 	BROADCAST_TRANSITIONS,
 } from "~/features/broadcast/broadcast-constants";
 import { broadcastThemeSchema } from "~/features/broadcast/broadcast-schemas";
+import { CLIP_MOMENTS } from "~/features/scanner/core/clips/moments";
 import {
 	array,
 	fieldset,
@@ -15,8 +16,15 @@ import {
 	toggle,
 	userSearch,
 } from "~/form/fields";
-import { _action, coerceNumber, id } from "~/utils/schema";
 import {
+	_action,
+	coerceNumber,
+	id,
+	preprocess,
+	safeJSONParse,
+} from "~/utils/schema";
+import {
+	BROADCAST_CLIP_MAX_DURATION_MS,
 	BROADCAST_HEADLINE_MAX_LENGTH,
 	BROADCAST_MAX_CASTERS,
 	BROADCAST_OBS_INPUT_NAME_MAX_LENGTH,
@@ -30,7 +38,24 @@ import { isVdoNinjaViewUrl } from "./broadcast-cast-utils";
 const nonNegativeInteger = v.pipe(coerceNumber(), v.integer(), v.minValue(0));
 const scene = v.picklist(BROADCAST_SCENES);
 const transition = v.picklist(BROADCAST_TRANSITIONS);
-const clipId = v.pipe(v.string(), v.minLength(1), v.maxLength(100));
+const clip = preprocess(
+	safeJSONParse,
+	v.object({
+		id: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
+		durationMs: v.pipe(
+			v.number(),
+			v.integer(),
+			v.minValue(1),
+			v.maxValue(BROADCAST_CLIP_MAX_DURATION_MS),
+		),
+		kills: v.pipe(v.number(), v.integer(), v.minValue(0)),
+		moments: v.pipe(
+			v.array(v.picklist(CLIP_MOMENTS)),
+			v.minLength(1),
+			v.maxLength(CLIP_MOMENTS.length),
+		),
+	}),
+);
 const durationMs = v.pipe(
 	coerceNumber(),
 	v.picklist(
@@ -142,7 +167,7 @@ export const broadcastActionSchema = v.union([
 		_action: _action("SET_CLIP"),
 		itemId: id,
 		/** `undefined` leaves the replays footage to OBS. */
-		clipId: v.optional(clipId),
+		clip: v.optional(clip),
 	}),
 	v.object({
 		_action: _action("SET_DURATION"),

@@ -4,6 +4,7 @@
  */
 import { useSyncExternalStore } from "react";
 import { formatPosition } from "../core/format";
+import { clipTitle } from "../core/labels";
 import { listClips, type ScannerClip } from "../store/clips";
 
 const EMPTY: ScannerClip[] = [];
@@ -45,12 +46,15 @@ function subscribe(listener: () => void): () => void {
 	return () => listeners.delete(listener);
 }
 
-/** The clip's download name: its file's name (or the day it was cut live), position and kill count. */
+/** The clip's download name: its file's name (or the day it was cut live), position and what it shows. */
 export function clipFileName(clip: ScannerClip): string {
 	const source =
 		clip.source.kind === "vod"
 			? clip.source.name.replace(/\.[^.]+$/, "")
 			: new Date(clip.createdAt).toISOString().slice(0, 10);
 	const at = formatPosition(clip.t).replaceAll(":", "-");
-	return `${source}-${at}-${clip.kills}-splats.mp4`;
+	const shows = clipTitle(clip)
+		.toLowerCase()
+		.replaceAll(/[^a-z0-9]+/g, "-");
+	return `${source}-${at}-${shows}.mp4`;
 }

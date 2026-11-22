@@ -33,8 +33,8 @@ export function ReplaysScene({
 	const progress = state.match?.progress[view];
 	const lastPlayed = progress?.games[progress.resultCount - 1];
 	const clips = React.useContext(BroadcastClipsContext);
-	const clipId = state[view].clipId;
-	const clipUrl = clipId ? clips.urls.get(clipId) : undefined;
+	const clip = state[view].clip;
+	const clipUrl = clip ? clips.urls.get(clip.id) : undefined;
 	const startedAt = view === "live" ? Producer.liveStartedAt(state) : null;
 
 	return (
@@ -44,6 +44,7 @@ export function ReplaysScene({
 					key={clipUrl}
 					url={clipUrl}
 					isMuted={clips.isMuted}
+					isLooping={view === "next"}
 					startedAt={
 						startedAt === null ? null : startedAt - clips.clockOffsetMs
 					}
@@ -77,10 +78,13 @@ export function ReplaysScene({
 function ClipVideo({
 	url,
 	isMuted,
+	isLooping,
 	startedAt,
 }: {
 	url: string;
 	isMuted: boolean;
+	/** The staged scene's preview plays the clip over and over, on air it plays once. */
+	isLooping: boolean;
 	/** When the clip went on air in this clock (epoch ms), `null` plays it from the start. */
 	startedAt: number | null;
 }) {
@@ -96,6 +100,7 @@ function ClipVideo({
 			className={styles.clip}
 			src={url}
 			muted={isMuted}
+			loop={isLooping}
 			playsInline
 			onLoadedMetadata={(event) => {
 				// past its end it stays on the last frame

@@ -8,7 +8,7 @@ import type {
 } from "../broadcast-types";
 
 const RTC_CONFIGURATION: RTCConfiguration = {
-	// peers on the same machine or LAN connect over their host candidates, STUN is for ones further apart
+	// the scanner's browser and OBS are on the same machine (or LAN): host candidates connect them, STUN is for ones further apart
 	iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 // no trickle ICE: a description is posted once its candidates are gathered, or with the ones gathered by then
@@ -18,10 +18,24 @@ const CHANNEL_LABEL = "clips";
 const CHUNK_BYTES = 64 * 1024;
 const MAX_BUFFERED_BYTES = 8 * 1024 * 1024;
 const LOW_BUFFERED_BYTES = 1024 * 1024;
+/**
+ * A connection's first big transfer between two browsers trickles for 10-25 s before going at full speed (measured
+ * locally, a 39 MB clip then took a second), so a connection idle without one gets this many throwaway bytes,
+ * leaving the picked clips to go fast. The overlay ignores bytes not after a clip's header.
+ */
+const WARM_UP_BYTES = 8 * 1024 * 1024;
+/** Who gets a clip first: OBS plays it on air. */
+const PEER_ROLE_ORDER: ReadonlyArray<BroadcastPeer["role"]> = [
+	"source",
+	"preview",
+	"dashboard",
+];
 
 type ClipChannelMessage =
 	/** Receiver → sender as the channel opens, the sender sends the rest. */
 	| { type: "have"; clipIds: string[] }
+	/** Sender → receiver whenever its clips change: the ones it sent before and left out here can go. */
+	| { type: "keep"; clipIds: string[] }
 	/** Sender → receiver, followed by `size` bytes of binary chunks. */
 	| { type: "clip"; id: string; size: number; mimeType: string }
 	/** Receiver → sender once the clip is whole. */
@@ -31,17 +45,18 @@ type ClipChannelMessage =
 
 export interface ClipSource {
 	id: string;
-	url: string;
+	/** The clip's video, read once an overlay needs it. */
+	load: () => Promise<Blob>;
 }
 
 /** How sending the clips to one overlay is going. */
 export interface ClipPeerStatus {
 	peer: BroadcastPeer;
 	connectionState: RTCPeerConnectionState;
-	/** Clips the overlay was missing as the channel opened, `null` before that. */
-	missingCount: number | null;
-	receivedCount: number;
-	/** From the channel opening to the overlay having the last missing clip. */
+	/** The clips being sent that the overlay has, `null` until it told which it has. */
+	receivedClipIds: string[] | null;
+	clipCount: number;
+	/** From sending the overlay its last clip to it arriving, `null` before one did. */
 	transferMs: number | null;
 }
 
@@ -49,15 +64,30 @@ export type ClipSender = ReturnType<typeof createSender>;
 
 export type ClipReceiver = ReturnType<typeof createReceiver>;
 
+interface SenderConnection {
+	pc: RTCPeerConnection;
+	peer: BroadcastPeer;
+	channel: RTCDataChannel;
+	/** What the overlay has, `null` until it said. */
+	has: Set<string> | null;
+	/** Clips sent whole that the overlay hasn't confirmed yet, by when they started being sent (`performance.now()`). */
+	unconfirmed: Map<string, number>;
+	/** Got its first big transfer (a clip, or the throwaway bytes), after which they go fast. */
+	isWarm: boolean;
+	transferMs: number | null;
+}
+
 /**
  * Sends the clips to every overlay connected to the broadcast's stream (the dashboard's previews included), each
  * over a WebRTC data channel of its own. The stream's messages are fed to `handleMessage`: they tell who the
- * overlays are and carry their answers. The overlays report their audio feeds back over the same channels to
+ * overlays are and carry their answers. The clips go in their order, a clip earlier in it cutting in on one being
+ * sent. `setClips` changes the clips without reconnecting: the overlays get the new ones and let go of the ones left
+ * out, one being sent stops. The overlays report their audio feeds back over the same channels to
  * `onFeeds`, `null` once the overlay is gone.
  */
 export function createSender({
 	signalUrl,
-	clips,
+	clips: initialClips,
 	onChange,
 	onFeeds,
 }: {
@@ -68,26 +98,28 @@ export function createSender({
 }) {
 	let self: BroadcastOwnPeer | null = null;
 	let peers: BroadcastPeer[] = [];
-	const connections = new Map<
-		string,
-		{ pc: RTCPeerConnection; status: ClipPeerStatus }
-	>();
+	let clips = initialClips;
+	const connections = new Map<string, SenderConnection>();
 	const clipData = new Map<
 		string,
 		Promise<{ data: ArrayBuffer; mimeType: string }>
 	>();
+	/** Clips whose video couldn't be read (e.g. deleted meanwhile), skipped until the clips change. */
+	const unreadable = new Set<string>();
+	let isSending = false;
 	const reconnectTimeouts = new Set<ReturnType<typeof setTimeout>>();
 
-	const emit = () =>
-		onChange(Array.from(connections.values(), ({ status }) => status));
+	const statusOf = (connection: SenderConnection): ClipPeerStatus => ({
+		peer: connection.peer,
+		connectionState: connection.pc.connectionState,
+		receivedClipIds: connection.has
+			? clips.flatMap((clip) => (connection.has?.has(clip.id) ? [clip.id] : []))
+			: null,
+		clipCount: clips.length,
+		transferMs: connection.transferMs,
+	});
 
-	const update = (peerId: string, patch: Partial<ClipPeerStatus>) => {
-		const connection = connections.get(peerId);
-		if (!connection) return;
-
-		connection.status = { ...connection.status, ...patch };
-		emit();
-	};
+	const emit = () => onChange(Array.from(connections.values(), statusOf));
 
 	const disconnect = (peerId: string) => {
 		connections.get(peerId)?.pc.close();
@@ -98,15 +130,10 @@ export function createSender({
 	const loadClip = (clip: ClipSource) => {
 		let loading = clipData.get(clip.id);
 		if (!loading) {
-			loading = fetch(clip.url)
-				.then((response) => {
-					if (!response.ok) throw new Error(`Fetching ${clip.url} failed`);
-					return response.blob();
-				})
-				.then(async (blob) => ({
-					data: await blob.arrayBuffer(),
-					mimeType: blob.type || "video/mp4",
-				}));
+			loading = clip.load().then(async (blob) => ({
+				data: await blob.arrayBuffer(),
+				mimeType: blob.type || "video/mp4",
+			}));
 			loading.catch(() => clipData.delete(clip.id));
 			clipData.set(clip.id, loading);
 		}
@@ -114,93 +141,178 @@ export function createSender({
 		return loading;
 	};
 
-	const sendMissing = async (
-		peerId: string,
-		channel: RTCDataChannel,
-		have: string[],
-	) => {
-		const missing = clips.filter((clip) => !have.includes(clip.id));
-		update(peerId, { missingCount: missing.length, receivedCount: 0 });
+	const isMissing = (connection: SenderConnection, clipId: string) =>
+		!connection.has?.has(clipId) &&
+		!connection.unconfirmed.has(clipId) &&
+		!unreadable.has(clipId);
 
-		for (const clip of missing) {
-			const { data, mimeType } = await loadClip(clip);
-			if (channel.readyState !== "open") return;
-
-			sendJson(channel, {
-				type: "clip",
-				id: clip.id,
-				size: data.byteLength,
-				mimeType,
-			});
-			for (let offset = 0; offset < data.byteLength; offset += CHUNK_BYTES) {
-				if (channel.bufferedAmount > MAX_BUFFERED_BYTES) {
-					await bufferedAmountLow(channel);
-				}
-				if (channel.readyState !== "open") return;
-
-				channel.send(
-					new Uint8Array(
-						data,
-						offset,
-						Math.min(CHUNK_BYTES, data.byteLength - offset),
-					),
-				);
-			}
+	/**
+	 * What to send next and to which overlay: the first clip some overlay is missing, OBS before the previews, else
+	 * throwaway bytes to an overlay no clip went to yet (`clip` `null`, see `WARM_UP_BYTES`).
+	 */
+	const nextTransfer = () => {
+		const ready = Array.from(connections.values())
+			.filter(
+				(connection) =>
+					connection.has !== null && connection.channel.readyState === "open",
+			)
+			.sort(
+				(a, b) =>
+					PEER_ROLE_ORDER.indexOf(a.peer.role) -
+					PEER_ROLE_ORDER.indexOf(b.peer.role),
+			);
+		for (const clip of clips) {
+			const connection = ready.find((candidate) =>
+				isMissing(candidate, clip.id),
+			);
+			if (connection) return { connection, clip };
 		}
+		const cold = ready.find((connection) => !connection.isWarm);
+
+		return cold ? { connection: cold, clip: null } : null;
+	};
+
+	/** Sends the bytes in chunks, `false` when they stopped part way as something else is due first. */
+	const sendBytes = async (
+		connection: SenderConnection,
+		data: ArrayBuffer,
+		clipId: string | null,
+	) => {
+		const { channel } = connection;
+		for (let offset = 0; offset < data.byteLength; offset += CHUNK_BYTES) {
+			if (channel.bufferedAmount > MAX_BUFFERED_BYTES) {
+				await bufferedAmountLow(channel);
+			}
+			const next = nextTransfer();
+			if (
+				channel.readyState !== "open" ||
+				next?.connection !== connection ||
+				(next.clip?.id ?? null) !== clipId
+			) {
+				return false;
+			}
+
+			channel.send(
+				new Uint8Array(
+					data,
+					offset,
+					Math.min(CHUNK_BYTES, data.byteLength - offset),
+				),
+			);
+		}
+		connection.isWarm = true;
+
+		return true;
+	};
+
+	/** Sends the clip whole, the overlay dropping a part stopped part way at the next clip. */
+	const sendClip = async (connection: SenderConnection, clip: ClipSource) => {
+		const { data, mimeType } = await loadClip(clip);
+		const next = nextTransfer();
+		if (next?.connection !== connection || next.clip?.id !== clip.id) return;
+
+		const sentAt = performance.now();
+		sendJson(connection.channel, {
+			type: "clip",
+			id: clip.id,
+			size: data.byteLength,
+			mimeType,
+		});
+		if (await sendBytes(connection, data, clip.id)) {
+			connection.unconfirmed.set(clip.id, sentAt);
+		}
+	};
+
+	/**
+	 * Sends the clips one transfer at a time until every overlay has them all: several big transfers at once stalled
+	 * one of them for seconds, while one after another each clip took a second or two.
+	 */
+	const pump = async () => {
+		if (isSending) return;
+
+		isSending = true;
+		try {
+			for (let next = nextTransfer(); next; next = nextTransfer()) {
+				const { connection, clip } = next;
+				if (!clip) {
+					// cut off it starts over once nothing else is due, `sendBytes` marks it warm once whole
+					await sendBytes(connection, new ArrayBuffer(WARM_UP_BYTES), null);
+					continue;
+				}
+
+				try {
+					await sendClip(connection, clip);
+				} catch (error) {
+					unreadable.add(clip.id);
+					logger.error("Sending a clip failed", error);
+				}
+			}
+		} finally {
+			isSending = false;
+		}
+	};
+
+	/** Tells the overlay which clips to keep and sends the ones it lacks. */
+	const sync = (connection: SenderConnection) => {
+		const { channel, has } = connection;
+		if (!has || channel.readyState !== "open") return;
+
+		const clipIds = clips.map((clip) => clip.id);
+		sendJson(channel, { type: "keep", clipIds });
+		// the overlay drops the ones left out, so picking one again sends it again
+		for (const id of has) {
+			if (!clipIds.includes(id)) has.delete(id);
+		}
+		for (const id of connection.unconfirmed.keys()) {
+			if (!clipIds.includes(id)) connection.unconfirmed.delete(id);
+		}
+		void pump();
 	};
 
 	const connect = async (peer: BroadcastPeer) => {
 		const pc = new RTCPeerConnection(RTC_CONFIGURATION);
-		connections.set(peer.id, {
-			pc,
-			status: {
-				peer,
-				connectionState: pc.connectionState,
-				missingCount: null,
-				receivedCount: 0,
-				transferMs: null,
-			},
-		});
-		emit();
-
 		const channel = pc.createDataChannel(CHANNEL_LABEL);
 		channel.binaryType = "arraybuffer";
 		channel.bufferedAmountLowThreshold = LOW_BUFFERED_BYTES;
-
-		let openedAt = 0;
-		channel.onopen = () => {
-			openedAt = performance.now();
+		const connection: SenderConnection = {
+			pc,
+			peer,
+			channel,
+			has: null,
+			unconfirmed: new Map(),
+			isWarm: false,
+			transferMs: null,
 		};
+		connections.set(peer.id, connection);
+		emit();
+
 		channel.onmessage = (event) => {
 			if (typeof event.data !== "string") return;
+			if (connections.get(peer.id) !== connection) return;
 
 			const message = JSON.parse(event.data) as ClipChannelMessage;
 			if (message.type === "have") {
-				sendMissing(peer.id, channel, message.clipIds).catch((error) =>
-					logger.error("Sending clips failed", error),
-				);
+				connection.has = new Set(message.clipIds);
+				sync(connection);
+				emit();
 			} else if (message.type === "feeds") {
-				if (connections.get(peer.id)?.pc === pc)
-					onFeeds?.(peer.id, message.feeds);
+				onFeeds?.(peer.id, message.feeds);
 			} else if (message.type === "received") {
-				const status = connections.get(peer.id)?.status;
-				if (!status) return;
+				const sentAt = connection.unconfirmed.get(message.id);
+				// left out meanwhile, the overlay drops it again
+				if (sentAt === undefined) return;
 
-				const receivedCount = status.receivedCount + 1;
-				update(peer.id, {
-					receivedCount,
-					transferMs:
-						receivedCount === status.missingCount
-							? Math.round(performance.now() - openedAt)
-							: null,
-				});
+				connection.unconfirmed.delete(message.id);
+				connection.has?.add(message.id);
+				connection.transferMs = Math.round(performance.now() - sentAt);
+				emit();
 			}
 		};
 
 		pc.onconnectionstatechange = () => {
-			if (connections.get(peer.id)?.pc !== pc) return;
+			if (connections.get(peer.id) !== connection) return;
 
-			update(peer.id, { connectionState: pc.connectionState });
+			emit();
 			if (pc.connectionState !== "failed") return;
 
 			disconnect(peer.id);
@@ -220,7 +332,7 @@ export function createSender({
 		try {
 			await pc.setLocalDescription();
 			const description = await gatheredDescription(pc);
-			if (!self || connections.get(peer.id)?.pc !== pc) return;
+			if (!self || connections.get(peer.id) !== connection) return;
 
 			await postSignal({
 				signalUrl,
@@ -275,14 +387,24 @@ export function createSender({
 				}
 			}
 		},
+		/** The clips to send from now on, the overlays let go of the ones it doesn't list anymore. */
+		setClips(next: ReadonlyArray<ClipSource>) {
+			clips = next;
+			unreadable.clear();
+			for (const id of clipData.keys()) {
+				if (!clips.some((clip) => clip.id === id)) clipData.delete(id);
+			}
+			for (const connection of connections.values()) sync(connection);
+			emit();
+		},
 		close,
 	};
 }
 
 /**
  * Receives clips from the dashboards sending them, answering their offers. `onChange` gets the object URLs of
- * every clip received so far by clip id, kept over reconnects until `close`. `sendFeeds` reports the overlay's
- * audio feeds to every dashboard connected.
+ * every clip received so far by clip id, kept over reconnects until the dashboard that sent it leaves it out or
+ * `close`. `sendFeeds` reports the overlay's audio feeds to every dashboard connected.
  */
 export function createReceiver({
 	signalUrl,
@@ -294,9 +416,27 @@ export function createReceiver({
 	let self: BroadcastOwnPeer | null = null;
 	const connections = new Map<string, RTCPeerConnection>();
 	const channels = new Set<RTCDataChannel>();
-	const urls = new Map<string, string>();
+	/** `from`: the dashboard that sent it, or last listed it to keep. */
+	const clips = new Map<string, { url: string; from: string }>();
 
-	const receive = (channel: RTCDataChannel) => {
+	const publish = () =>
+		onChange(new Map(Array.from(clips, ([id, { url }]) => [id, url])));
+
+	const keepOnly = (from: string, clipIds: string[]) => {
+		let isChanged = false;
+		for (const [id, clip] of clips) {
+			if (clipIds.includes(id)) {
+				clip.from = from;
+			} else if (clip.from === from) {
+				URL.revokeObjectURL(clip.url);
+				clips.delete(id);
+				isChanged = true;
+			}
+		}
+		if (isChanged) publish();
+	};
+
+	const receive = (channel: RTCDataChannel, from: string) => {
 		channel.binaryType = "arraybuffer";
 		channels.add(channel);
 		channel.addEventListener("close", () => channels.delete(channel));
@@ -310,7 +450,7 @@ export function createReceiver({
 		} | null = null;
 
 		const sendHave = () =>
-			sendJson(channel, { type: "have", clipIds: Array.from(urls.keys()) });
+			sendJson(channel, { type: "have", clipIds: Array.from(clips.keys()) });
 		if (channel.readyState === "open") sendHave();
 		else channel.onopen = sendHave;
 
@@ -325,6 +465,11 @@ export function createReceiver({
 						chunks: [],
 						receivedBytes: 0,
 					};
+				} else if (message.type === "keep") {
+					keepOnly(from, message.clipIds);
+					if (incoming && !message.clipIds.includes(incoming.id)) {
+						incoming = null;
+					}
 				}
 				return;
 			}
@@ -335,14 +480,14 @@ export function createReceiver({
 			incoming.receivedBytes += chunk.byteLength;
 			if (incoming.receivedBytes < incoming.size) return;
 
-			if (!urls.has(incoming.id)) {
-				urls.set(
-					incoming.id,
-					URL.createObjectURL(
+			if (!clips.has(incoming.id)) {
+				clips.set(incoming.id, {
+					url: URL.createObjectURL(
 						new Blob(incoming.chunks, { type: incoming.mimeType }),
 					),
-				);
-				onChange(new Map(urls));
+					from,
+				});
+				publish();
 			}
 			sendJson(channel, { type: "received", id: incoming.id });
 			incoming = null;
@@ -356,7 +501,7 @@ export function createReceiver({
 		connections.get(from)?.close();
 		const pc = new RTCPeerConnection(RTC_CONFIGURATION);
 		connections.set(from, pc);
-		pc.ondatachannel = (event) => receive(event.channel);
+		pc.ondatachannel = (event) => receive(event.channel, from);
 
 		try {
 			await pc.setRemoteDescription(description);
@@ -402,8 +547,8 @@ export function createReceiver({
 		},
 		close() {
 			closeConnections();
-			for (const url of urls.values()) URL.revokeObjectURL(url);
-			urls.clear();
+			for (const { url } of clips.values()) URL.revokeObjectURL(url);
+			clips.clear();
 		},
 	};
 }

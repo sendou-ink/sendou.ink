@@ -12,7 +12,7 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { downloadBlob } from "~/utils/download";
 import { SCANNER_PAGE } from "~/utils/urls";
 import { formatPosition } from "../core/format";
-import { modeLabel, stageLabel } from "../core/labels";
+import { clipTitle, modeLabel, stageLabel } from "../core/labels";
 import { scannerSearchParams } from "../scanner-search-params";
 import {
 	deleteClip,
@@ -141,7 +141,7 @@ function ClipCard({
 			)}
 			<div className={styles.cardBody}>
 				<div className={styles.cardTitle}>
-					{clip.kills} splats
+					{clipTitle(clip)}
 					{where ? ` · ${where}` : null}
 				</div>
 				<div className={styles.cardMeta}>

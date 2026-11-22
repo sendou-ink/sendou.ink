@@ -75,11 +75,7 @@
 	border-color: var(--color-fg-accent);
 	background-color: transparent;
 	color: var(--color-fg-accent);
-	--button-hover-bg: color-mix(
-		in oklch,
-		var(--color-fg-accent) 15%,
-		transparent
-	);
+	--button-hover-bg: var(--color-bg-accent-subtle);
 }
 
 .outlinedSuccess {

@@ -7,7 +7,12 @@ import clsx from "clsx";
 import { Play } from "lucide-react";
 import { Link } from "react-router";
 import { formatPosition } from "../core/format";
-import { modeLabel, stageLabel } from "../core/labels";
+import {
+	clipChipLabel,
+	clipTitle,
+	modeLabel,
+	stageLabel,
+} from "../core/labels";
 import type { ScannerClip } from "../store/clips";
 import styles from "./ClipStrip.module.css";
 import { useEventDateTimeFormatter } from "./format";
@@ -78,7 +83,7 @@ function ClipTile({
 			type="button"
 			className={styles.tile}
 			onClick={() => onPlay(clip)}
-			aria-label={`Play clip: ${clip.kills} splats${where ? ` on ${where}` : ""}`}
+			aria-label={`Play clip: ${clipTitle(clip)}${where ? ` on ${where}` : ""}`}
 		>
 			<span
 				className={styles.thumb}
@@ -90,7 +95,7 @@ function ClipTile({
 			>
 				<span className={styles.play}>
 					<Play size={14} aria-hidden />
-					{clip.kills}k
+					{clipChipLabel(clip)}
 				</span>
 				<span className={styles.length}>
 					{formatPosition(clip.end - clip.start)}

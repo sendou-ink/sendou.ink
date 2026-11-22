@@ -68,8 +68,9 @@ export interface StreakGame {
 /**
  * The match's clip-worthy windows, chronological. `deaths` are the POV
  * player's death times (seconds into the stream/file); a death between two
- * kills ends the streak. Kill times are whole seconds, so a death on the same
- * second as a kill (a trade) counts after that kill.
+ * kills ends the streak, as does a pause over `maxGapSeconds`. Kill times are
+ * whole seconds, so a death on the same second as a kill (a trade) counts
+ * after that kill.
  */
 export function scoreWindows(
 	game: Pick<StreakGame, "kills" | "camera">,
@@ -77,7 +78,8 @@ export function scoreWindows(
 	{
 		minKills,
 		maxSeconds = MAX_CLIP_SECONDS,
-	}: { minKills: number; maxSeconds?: number },
+		maxGapSeconds = STREAK_MAX_GAP_S,
+	}: { minKills: number; maxSeconds?: number; maxGapSeconds?: number },
 ): ClipWindow[] {
 	const sortedDeaths = deaths.toSorted((a, b) => a - b);
 	const windows: ClipWindow[] = [];
@@ -90,7 +92,7 @@ export function scoreWindows(
 		const last = run.at(-1);
 		if (
 			last &&
-			(kill.t - last.t > STREAK_MAX_GAP_S ||
+			(kill.t - last.t > maxGapSeconds ||
 				diedBetween(sortedDeaths, last.t, kill.t) ||
 				!samePlayer(
 					run.findLast((other) => other.player)?.player,

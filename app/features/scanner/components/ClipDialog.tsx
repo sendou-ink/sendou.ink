@@ -20,7 +20,7 @@ import { downloadBlob } from "~/utils/download";
 import { muteClipMusic } from "../capture/clip-music";
 import { trimClip } from "../capture/clip-trim";
 import { formatPosition } from "../core/format";
-import { modeLabel, stageLabel } from "../core/labels";
+import { clipTitle, modeLabel, stageLabel } from "../core/labels";
 import { deleteClip, loadClipBlob, type ScannerClip } from "../store/clips";
 import styles from "./ClipDialog.module.css";
 import { ClipTrimBar } from "./ClipTrimBar";
@@ -123,7 +123,7 @@ export function ClipDialog({
 			isDismissable
 			onClose={onClose}
 			className={styles.dialog}
-			heading={`${clip.kills} splats${where ? ` · ${where}` : ""}`}
+			heading={`${clipTitle(clip)}${where ? ` · ${where}` : ""}`}
 		>
 			<div className={styles.body}>
 				{url ? (

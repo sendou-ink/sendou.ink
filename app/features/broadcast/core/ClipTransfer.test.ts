@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type {
 	BroadcastAudioFeed,
@@ -10,6 +11,7 @@ import * as ClipTransfer from "./ClipTransfer";
 const SIGNAL_URL = "/signal";
 const CHUNK_BYTES = 64 * 1024;
 const MAX_BUFFERED_BYTES = 8 * 1024 * 1024;
+const WARM_UP_BYTES = 8 * 1024 * 1024;
 
 const OVERLAY: BroadcastOwnPeer = { id: "overlay", token: "overlay-token" };
 
@@ -68,8 +70,126 @@ describe("ClipTransfer", () => {
 		await vi.waitFor(() => expect(overlay.urls().size).toBe(2));
 		expect(other.sentClipIds()).toEqual(["second"]);
 		expect(other.statuses()).toEqual([
-			expect.objectContaining({ missingCount: 1, receivedCount: 1 }),
+			expect.objectContaining({
+				clipCount: 2,
+				receivedClipIds: ["first", "second"],
+			}),
 		]);
+	});
+
+	test("sends a clip added later without reconnecting", async () => {
+		const first = network.clip("first", 10);
+		const sender = network.sender("dashboard", [first]);
+		const overlay = network.receiver();
+		await vi.waitFor(() => expect(overlay.urls().size).toBe(1));
+		const channelCount = network.openChannelCount();
+
+		sender.setClips([first, network.clip("second", 10)]);
+
+		await vi.waitFor(() =>
+			expect(Array.from(overlay.urls().keys())).toEqual(["first", "second"]),
+		);
+		expect(sender.sentClipIds()).toEqual(["first", "second"]);
+		expect(network.openChannelCount()).toBe(channelCount);
+	});
+
+	test("lets the overlay drop the clips the dashboard stops sending", async () => {
+		const first = network.clip("first", 10);
+		const second = network.clip("second", 10);
+		const sender = network.sender("dashboard", [first, second]);
+		const overlay = network.receiver();
+		await vi.waitFor(() => expect(overlay.urls().size).toBe(2));
+		const firstUrl = overlay.urls().get("first");
+
+		sender.setClips([second]);
+
+		await vi.waitFor(() =>
+			expect(Array.from(overlay.urls().keys())).toEqual(["second"]),
+		);
+		expect(URL.revokeObjectURL).toHaveBeenCalledWith(firstUrl);
+		expect(sender.statuses()).toEqual([
+			expect.objectContaining({ clipCount: 1, receivedClipIds: ["second"] }),
+		]);
+	});
+
+	test("sends a clip again once the overlay dropped it", async () => {
+		const first = network.clip("first", 10);
+		const second = network.clip("second", 10);
+		const sender = network.sender("dashboard", [first]);
+		const overlay = network.receiver();
+		await vi.waitFor(() => expect(overlay.urls().size).toBe(1));
+		sender.setClips([second]);
+		await vi.waitFor(() =>
+			expect(Array.from(overlay.urls().keys())).toEqual(["second"]),
+		);
+
+		sender.setClips([first]);
+
+		await vi.waitFor(() =>
+			expect(Array.from(overlay.urls().keys())).toEqual(["first"]),
+		);
+		expect(sender.sentClipIds()).toEqual(["first", "second", "first"]);
+		expect(sender.statuses()).toEqual([
+			expect.objectContaining({ clipCount: 1, receivedClipIds: ["first"] }),
+		]);
+	});
+
+	test("sends a clip put before the one about to go first", async () => {
+		const prefetched = held(network.clip("prefetched", 10));
+		const sender = network.sender("dashboard", [prefetched.clip]);
+		const overlay = network.receiver();
+		await vi.waitFor(() => expect(prefetched.isLoading()).toBe(true));
+		const picked = network.clip("picked", 10);
+
+		sender.setClips([picked, prefetched.clip]);
+		prefetched.release();
+
+		await vi.waitFor(() => expect(overlay.urls().size).toBe(2));
+		expect(sender.sentClipIds()).toEqual(["picked", "prefetched"]);
+	});
+
+	test("stops sending a clip left out", async () => {
+		const dropped = held(network.clip("dropped", 10));
+		const sender = network.sender("dashboard", [dropped.clip]);
+		network.receiver();
+		await vi.waitFor(() => expect(dropped.isLoading()).toBe(true));
+
+		sender.setClips([]);
+		dropped.release();
+
+		await vi.waitFor(() =>
+			expect(sender.statuses()).toEqual([
+				expect.objectContaining({ clipCount: 0 }),
+			]),
+		);
+		expect(sender.sentClipIds()).toEqual([]);
+	});
+
+	test("warms an idle overlay up with bytes it ignores", async () => {
+		const sender = network.sender("dashboard", []);
+		const overlay = network.receiver();
+
+		await vi.waitFor(() =>
+			expect(R.sum(network.chunkSizes())).toBe(WARM_UP_BYTES),
+		);
+		sender.setClips([network.clip("clip", 10)]);
+
+		await vi.waitFor(() => expect(overlay.urls().size).toBe(1));
+		expect(await overlay.clip("clip")).toEqual(network.bytes("clip"));
+	});
+
+	test("keeps the clips one dashboard sent while another sends none", async () => {
+		network.sender("dashboard", [network.clip("clip", 10)]);
+		const other = network.sender("other-dashboard", []);
+		const overlay = network.receiver();
+		await vi.waitFor(() => expect(overlay.urls().size).toBe(1));
+
+		other.setClips([]);
+		await vi.waitFor(() =>
+			expect(network.keepMessageCount()).toBeGreaterThan(2),
+		);
+
+		expect(Array.from(overlay.urls().keys())).toEqual(["clip"]);
 	});
 
 	test("reports each overlay's progress until it has every clip", async () => {
@@ -84,8 +204,8 @@ describe("ClipTransfer", () => {
 				{
 					peer: { id: OVERLAY.id, role: "source" },
 					connectionState: "connected",
-					missingCount: 2,
-					receivedCount: 2,
+					receivedClipIds: ["first", "second"],
+					clipCount: 2,
 					transferMs: expect.any(Number),
 				},
 			]),
@@ -125,9 +245,31 @@ describe("ClipTransfer", () => {
 	});
 });
 
+/** The clip with its video read only once `release`d, to change the clips while it's on its way. */
+function held(clip: ClipTransfer.ClipSource) {
+	let release = () => {};
+	let isLoading = false;
+	const released = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+
+	return {
+		clip: {
+			...clip,
+			load: async () => {
+				isLoading = true;
+				await released;
+				return clip.load();
+			},
+		},
+		release,
+		isLoading: () => isLoading,
+	};
+}
+
 /**
  * Stands in for the broadcast's stream and signal route: posted descriptions reach the peer they are for as the
- * stream's `signal` message, and clip URLs serve generated bytes.
+ * stream's `signal` message. Clips load generated bytes.
  */
 function createNetwork() {
 	const peers = new Map<
@@ -144,14 +286,7 @@ function createNetwork() {
 	FakeDataChannel.created = channels;
 
 	const fetch = async (url: string, init?: RequestInit) => {
-		if (url !== SIGNAL_URL) {
-			const file = files.get(url);
-			if (!file) return new Response(null, { status: 404 });
-
-			return new Response(file.bytes.slice(), {
-				headers: { "Content-Type": file.mimeType },
-			});
-		}
+		if (url !== SIGNAL_URL) return new Response(null, { status: 404 });
 
 		const body = JSON.parse(String(init?.body)) as {
 			token: string;
@@ -181,13 +316,15 @@ function createNetwork() {
 		clip(id: string, size: number, mimeType = "video/mp4") {
 			const bytes = new Uint8Array(size);
 			for (let i = 0; i < size; i++) bytes[i] = (i * 31 + id.length) % 256;
-			const url = `/clips/${id}`;
-			files.set(url, { bytes, mimeType });
+			files.set(id, { bytes, mimeType });
 
-			return { id, url };
+			return {
+				id,
+				load: async () => new Blob([bytes.slice()], { type: mimeType }),
+			};
 		},
 		bytes(id: string) {
-			return files.get(`/clips/${id}`)!.bytes;
+			return files.get(id)!.bytes;
 		},
 		sender(id: string, clips: ClipTransfer.ClipSource[]) {
 			const self = { id, token: `${id}-token` };
@@ -216,6 +353,7 @@ function createNetwork() {
 				channels.slice(createdBefore).filter((channel) => channel.isOfferer);
 
 			return {
+				setClips: sender.setClips,
 				statuses: () => statuses,
 				feeds: () => feeds,
 				sentClipIds: () =>
@@ -256,6 +394,11 @@ function createNetwork() {
 			return channels
 				.filter((channel) => channel.isOfferer)
 				.flatMap((channel) => channel.sentChunkSizes);
+		},
+		keepMessageCount() {
+			return channels.flatMap((channel) =>
+				channel.sentMessages.filter((message) => message.type === "keep"),
+			).length;
 		},
 		openChannelCount() {
 			return channels.filter((channel) => channel.readyState === "open").length;

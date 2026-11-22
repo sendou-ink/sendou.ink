@@ -265,6 +265,12 @@ html,
 	--color-bg-overlay-high: rgb(0 0 0 / 0.85);
 	--color-bg-badge: oklch(0% 0 0);
 	--color-bg-accent: var(--color-accent-low);
+	/* a faint accent tint, e.g. an outlined button's hover or a picked option */
+	--color-bg-accent-subtle: color-mix(
+		in oklch,
+		var(--color-fg-accent) 15%,
+		transparent
+	);
 	--color-bg-second: var(--color-second-low);
 
 	/* masks, so the color is set by the checkbox */

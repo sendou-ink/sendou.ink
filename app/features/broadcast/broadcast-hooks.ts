@@ -124,7 +124,7 @@ export function useClipSender({
 	onFeeds,
 }: {
 	signalUrl: string;
-	/** Kept the same between renders, a new array starts over. */
+	/** Changing them keeps the connections, the overlays get the new ones and drop the ones left out. */
 	clips: ReadonlyArray<ClipTransfer.ClipSource>;
 	/** Gets the audio feeds an overlay reports, `null` once it's gone. */
 	onFeeds?: (peerId: string, feeds: BroadcastAudioFeed[] | null) => void;
@@ -134,14 +134,16 @@ export function useClipSender({
 	);
 	const senderRef = React.useRef<ClipTransfer.ClipSender | null>(null);
 	const onFeedsRef = React.useRef(onFeeds);
+	const clipsRef = React.useRef(clips);
 	React.useLayoutEffect(() => {
 		onFeedsRef.current = onFeeds;
+		clipsRef.current = clips;
 	});
 
 	React.useEffect(() => {
 		const sender = ClipTransfer.createSender({
 			signalUrl,
-			clips,
+			clips: clipsRef.current,
 			onChange: setStatuses,
 			onFeeds: (peerId, feeds) => onFeedsRef.current?.(peerId, feeds),
 		});
@@ -151,7 +153,13 @@ export function useClipSender({
 			sender.close();
 			senderRef.current = null;
 		};
-	}, [signalUrl, clips]);
+	}, [signalUrl]);
+
+	const clipIds = clips.map((clip) => clip.id).join(",");
+	// the ids say when the clips changed, a new array of the same clips doesn't
+	React.useEffect(() => {
+		senderRef.current?.setClips(clipsRef.current);
+	}, [clipIds]);
 
 	const onMessage = (message: BroadcastStreamMessage) =>
 		senderRef.current?.handleMessage(message);

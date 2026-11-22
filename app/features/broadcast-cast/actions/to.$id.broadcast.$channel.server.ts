@@ -139,7 +139,7 @@ export const action = defineAction(
 				break;
 			}
 			case "SET_CLIP": {
-				await editItem(body.itemId, { clipId: body.clipId ?? null });
+				await editItem(body.itemId, { clip: body.clip ?? null });
 				break;
 			}
 			case "SET_DURATION": {

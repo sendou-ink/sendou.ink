@@ -20,6 +20,7 @@ import {
 	startSampler,
 } from "../capture/sampler";
 import { deleteStaleVodMusicFiles } from "../capture/vod-music";
+import { castMomentWindows, type MomentWindow } from "../core/clips/moments";
 import {
 	type ClipWindow,
 	MAX_CLIP_SECONDS,
@@ -34,7 +35,10 @@ import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
 import { type DetectedEvent, isScoreboardEvent } from "../core/events";
 import type { ScannerMatch } from "../core/scanner-match";
 import { bringsFrame } from "../core/timeline/index";
-import { publishCaptureStatus } from "../scanner-activity";
+import {
+	type BroadcastTarget,
+	publishCaptureStatus,
+} from "../scanner-activity";
 import {
 	deleteClip,
 	requestPersistentStorage,
@@ -662,11 +666,15 @@ function cutWindows(clipRing: ClipRingBuffer, nowT: number): void {
 			score: clip.score,
 			clipId: Promise.resolve(clip.id),
 		}));
+	const broadcast = BroadcastLink.followedBroadcast();
 	for (const built of session.clipMatches) {
 		const game = streakGame(built);
-		for (const window of scoreWindows(game, game.deaths, {
-			minKills: readSettings().clipMinKills,
-		})) {
+		const windows: Array<ClipWindow | MomentWindow> = broadcast
+			? castMomentWindows(game, built.match.objective)
+			: scoreWindows(game, game.deaths, {
+					minKills: readSettings().clipMinKills,
+				});
+		for (const window of windows) {
 			if (!windowClosed(window, nowT)) continue;
 			const overlapping = [...cuts, ...saved].filter(
 				(cut) => window.start < cut.end && window.end > cut.start,
@@ -676,13 +684,14 @@ function cutWindows(clipRing: ClipRingBuffer, nowT: number): void {
 				if (cuts.includes(cut)) cuts.splice(cuts.indexOf(cut), 1);
 				else saved.splice(saved.indexOf(cut), 1);
 			}
-			const clipId = cutClip(
+			const clipId = cutClip({
 				clipRing,
-				session.key,
-				built.match,
+				sessionKey: session.key,
+				match: built.match,
 				window,
-				overlapping,
-			);
+				replaces: overlapping,
+				broadcast,
+			});
 			cuts.push({
 				start: window.start,
 				end: window.end,
@@ -694,13 +703,22 @@ function cutWindows(clipRing: ClipRingBuffer, nowT: number): void {
 }
 
 /** Cuts and saves the window, then drops the clips it `replaces`; resolves to the saved clip's id. */
-async function cutClip(
-	clipRing: ClipRingBuffer,
-	sessionKey: number,
-	match: ScannerMatch,
-	window: ClipWindow,
-	replaces: readonly LiveCut[],
-): Promise<number | null> {
+async function cutClip({
+	clipRing,
+	sessionKey,
+	match,
+	window,
+	replaces,
+	broadcast,
+}: {
+	clipRing: ClipRingBuffer;
+	sessionKey: number;
+	match: ScannerMatch;
+	window: ClipWindow | MomentWindow;
+	replaces: readonly LiveCut[];
+	/** the broadcast the capture follows, whose replays scene the clip is for */
+	broadcast: BroadcastTarget | null;
+}): Promise<number | null> {
 	try {
 		const clip = await clipRing.cut(
 			window.start,
@@ -719,6 +737,8 @@ async function cutClip(
 				time: window.time,
 				score: window.score,
 				kills: window.kills,
+				...("moments" in window ? { moments: window.moments } : null),
+				...(broadcast ? { broadcast } : null),
 				mode: match.mode,
 				stage: match.stage,
 				hasAudio: clip.hasAudio,

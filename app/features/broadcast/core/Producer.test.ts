@@ -1,10 +1,10 @@
 import * as R from "remeda";
 import { describe, expect, test } from "vitest";
-import {
-	BROADCAST_PROTOTYPE_CLIPS,
-	CAST_PRODUCER_RULES,
-} from "~/features/broadcast-cast/broadcast-cast-constants";
-import type { CastProducerState } from "~/features/broadcast-cast/broadcast-cast-types";
+import { CAST_PRODUCER_RULES } from "~/features/broadcast-cast/broadcast-cast-constants";
+import type {
+	BroadcastClip,
+	CastProducerState,
+} from "~/features/broadcast-cast/broadcast-cast-types";
 import type {
 	BroadcastGameSummary,
 	BroadcastInkRgb,
@@ -20,7 +20,12 @@ const ink = {
 	resultCount: 1,
 } as const;
 
-const clip = BROADCAST_PROTOTYPE_CLIPS[0];
+const clip: BroadcastClip = {
+	id: "1-1790000000000",
+	durationMs: 25_180,
+	kills: 4,
+	moments: ["splats"],
+};
 
 const TAKEN_AT = 1_000_000;
 const NOW = 2_000_000;
@@ -34,7 +39,7 @@ const item = (
 	transition: "stinger",
 	bracketIdx: null,
 	bracketSides: { winners: "remaining", losers: "remaining" },
-	clipId: null,
+	clip: null,
 	teamPick: "left",
 	durationMs: null,
 	advance: "timer",
@@ -133,11 +138,11 @@ describe("Producer.take", () => {
 
 		const afterClip = Producer.take(
 			rules,
-			stateWith({ next: item(2, { scene: "replays", clipId: clip.id }) }),
+			stateWith({ next: item(2, { scene: "replays", clip }) }),
 			{ liveResults: null, now: 5, hasMatch: true },
 		);
 
-		expect(afterClip.next).toMatchObject({ scene: "game", clipId: null });
+		expect(afterClip.next).toMatchObject({ scene: "game", clip: null });
 	});
 	test("stages starting soon in place of a scene showing the match's teams without a match", () => {
 		const taken = Producer.take(rules, stateWith({ next: item(2) }), {
@@ -164,15 +169,10 @@ describe("Producer.lengthMs", () => {
 	test.each([
 		{
 			why: "clip",
-			item: item(1, { scene: "replays", clipId: clip.id }),
+			item: item(1, { scene: "replays", clip }),
 			expected: clip.durationMs,
 		},
 		{ why: "OBS footage", item: item(1, { scene: "replays" }), expected: null },
-		{
-			why: "unknown clip",
-			item: item(1, { scene: "replays", clipId: "gone" }),
-			expected: null,
-		},
 		{
 			why: "duration",
 			item: item(1, { scene: "bracket", durationMs: 15_000 }),
@@ -187,7 +187,7 @@ describe("Producer.lengthMs", () => {
 describe("Producer.autoTakeAt", () => {
 	test("hides the end of the clip behind the next stinger", () => {
 		const state = stateWith({
-			live: item(1, { scene: "replays", clipId: clip.id, transition: "cut" }),
+			live: item(1, { scene: "replays", clip, transition: "cut" }),
 			next: item(2, { transition: "stinger" }),
 		});
 
@@ -580,14 +580,11 @@ describe("Producer.editItem", () => {
 			rules,
 			stateWith({ queue: [item(3), item(4)] }),
 			3,
-			{ clipId: clip.id },
+			{ clip },
 		);
 
-		expect(edited?.queue.map((queued) => queued.clipId)).toEqual([
-			clip.id,
-			null,
-		]);
-		expect(edited?.next.clipId).toBeNull();
+		expect(edited?.queue.map((queued) => queued.clip)).toEqual([clip, null]);
+		expect(edited?.next.clip).toBeNull();
 	});
 
 	test("runs a scene picked until a Take", () => {

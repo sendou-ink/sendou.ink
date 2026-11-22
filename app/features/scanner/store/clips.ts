@@ -11,6 +11,8 @@
  * clip is saved into the quota the events need.
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { ClipMoment } from "../core/clips/moments";
+import type { BroadcastTarget } from "../scanner-activity";
 import { CLIP_BLOBS_STORE, CLIPS_STORE, readwrite, tx } from "./db";
 
 export const MAX_HISTORY_CLIPS = 20;
@@ -45,6 +47,10 @@ export interface ScannerClip {
 	time: number | null;
 	score: number;
 	kills: number;
+	/** what a followed broadcast's clip shows (core/clips/moments.ts), best first; absent on kill streak clips */
+	moments?: ClipMoment[];
+	/** the tournament broadcast the capture followed, whose replays scene can play it */
+	broadcast?: BroadcastTarget;
 	mode: ModeShort | null;
 	stage: StageId | null;
 	hasAudio: boolean;

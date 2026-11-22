@@ -522,7 +522,7 @@ export function build({
 				: "stinger",
 		bracketIdx: null,
 		bracketSides: BRACKET_SIDES[scenario.bracketFocus],
-		clipId: null,
+		clip: null,
 		teamPick: "left",
 		durationMs: scenario.scene === "starting" ? 5 * 60_000 : null,
 		advance: "take",

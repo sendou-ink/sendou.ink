@@ -69,28 +69,8 @@ export const BROADCAST_FINISHED_SET_SHOWN_MS = 10 * 60_000;
 /** With fewer other matches than this to show, the ticker is topped up with the most recently finished sets. */
 export const BROADCAST_OTHER_MATCHES_MIN_COUNT = 5;
 
-// xxx: prototype, these come from the scanner eventually
-/** Replay clips the dashboard sends to the overlays over WebRTC. */
-export const BROADCAST_PROTOTYPE_CLIPS = [
-	{
-		id: "498017-56-11",
-		name: "4 splats · Oct 24",
-		url: "/broadcast-clips/2026-10-24-498017-56-11-4-splats.mp4",
-		durationMs: 25_180,
-	},
-	{
-		id: "498089-57-00",
-		name: "4 splats · Oct 27",
-		url: "/broadcast-clips/2026-10-27-498089-57-00-4-splats.mp4",
-		durationMs: 25_260,
-	},
-	{
-		id: "498090-40-26",
-		name: "4 splats · Oct 27 (2)",
-		url: "/broadcast-clips/2026-10-27-498090-40-26-4-splats.mp4",
-		durationMs: 19_593,
-	},
-] as const;
+/** Longest replay clip the replays scene takes, the scanner's are at most a minute. */
+export const BROADCAST_CLIP_MAX_DURATION_MS = 5 * 60_000;
 
 /**
  * The overlays' stylesheets the designer lays out for editing, in its order, named after their `.module.css` files in
@@ -427,7 +407,7 @@ const DEFAULT_CAST_ITEM: Omit<CastProducerState, "id"> = {
 	transition: "stinger",
 	bracketIdx: null,
 	bracketSides: { winners: "remaining", losers: "remaining" },
-	clipId: null,
+	clip: null,
 	teamPick: "left",
 	durationMs: null,
 	advance: "timer",
@@ -460,16 +440,11 @@ export const CAST_PRODUCER_RULES: Producer.Rules<CastProducerState> = {
 	},
 	gameScene: "game",
 	lengthMs: (item) => {
-		if (item.scene === "replays") {
-			return (
-				BROADCAST_PROTOTYPE_CLIPS.find((clip) => clip.id === item.clipId)
-					?.durationMs ?? null
-			);
-		}
+		if (item.scene === "replays") return item.clip?.durationMs ?? null;
 
 		return item.durationMs;
 	},
-	followedBy: (item) => ({ ...item, clipId: null }),
+	followedBy: (item) => ({ ...item, clip: null }),
 	needsMatch: (item) => needsFeaturedMatch(item.scene, item.teamPick),
 	sceneWithoutMatch: "starting",
 	staysUntilTake: (scene) => scene === "technical",

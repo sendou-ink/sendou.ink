@@ -164,7 +164,26 @@ player (`ClipWindow.player`). Both controllers run windows → cut →
 session's matches plus the stretches no scoreboard or minimap backs
 (`buildScannerMatches(…, { unbacked: true })`, `LiveSession.clipMatches`):
 a streak must not wait for a results screen that may never be read, and live
-the ring would have dropped it by then:
+the ring would have dropped it by then.
+
+A capture following a tournament broadcast (`broadcast-link.ts`) cuts the cast's moments instead
+(`core/clips/moments.ts`, `castMomentWindows`), for the broadcast's replays
+scene. Splats: one player's double (2 kills at most 2 s apart), triple (3 at
+most 5 s apart) or streak of 4 or more by the rule above, plus a sequence of 4
+or more kills at most 15 s apart whoever got them (the kill feed follows the
+camera, so an observer cutting to each player's kill makes one long clip).
+Objective: a lead taken (the counter's
+leader changes, confirmed by the next read; the first lead out of a tie is
+not one) and, on TC/RM/CB, a big push (a team's count falls 20 or more with
+no stop over 5 s, one misread smoothed out by a median of three). Moments
+whose clips overlap are cut as one clip up to `MAX_CLIP_SECONDS`, and the
+clip keeps what it shows in `ScannerClip.moments` and the broadcast in
+`ScannerClip.broadcast`. The thresholds were
+picked on the cast tapes, not checked against a full cast. Clips reach the
+overlay as described in the broadcast docs: the broadcast's dashboard in the
+scanner's browser lists the clips cut for it from this store and sends the
+picked ones (then the newest, up to five on each overlay) over WebRTC
+(`broadcast/core/ClipTransfer.ts`).
 
 - One capture per browser profile: `startCapture` holds a Web Lock
   (`CAPTURE_LOCK`) for its lifetime, so a second tab gets an error instead

@@ -39,7 +39,13 @@ import {
 import { clipCovers } from "../core/clips/scoring";
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import { formatClock, formatPosition } from "../core/format";
-import { lobbyLabel, modeLabel, stageLabel, weaponLabel } from "../core/labels";
+import {
+	clipChipLabel,
+	lobbyLabel,
+	modeLabel,
+	stageLabel,
+	weaponLabel,
+} from "../core/labels";
 import type { BuiltMatch } from "../core/match-builder";
 import type {
 	ScannerMatch,
@@ -209,7 +215,7 @@ export function MatchCard({
 									onClick={() => onPlayClip(clip)}
 								>
 									<Play size={11} aria-hidden />
-									{clip.kills}k
+									{clipChipLabel(clip)}
 									{clip.time !== null
 										? ` · ${formatClock(elapsed(match.mode, clip.time))}`
 										: null}

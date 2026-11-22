@@ -56,9 +56,9 @@
 
 .tileSelected {
 	border-color: var(--color-fg-accent);
-	background-color: var(--color-bg-accent);
+	background-color: var(--color-bg-accent-subtle);
 	color: var(--color-fg-accent);
-	--button-hover-bg: var(--color-bg-accent);
+	--button-hover-bg: var(--color-bg-accent-subtle);
 }
 
 .keycap {
