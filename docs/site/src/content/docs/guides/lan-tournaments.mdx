@@ -1,0 +1,51 @@
+---
+title: "LAN tournaments"
+description: "Running an in-person tournament on sendou.ink: what differs from online and how stations get assigned."
+---
+
+A LAN is a tournament with a venue. Turn on **In-person event (LAN)** when [creating the tournament](/guides/tournament-creation/) and fill in the venue. Everything else works like an online tournament, except for the differences below.
+
+## Differences from online
+
+- **LAN or not is decided at creation.** The switch is gone when editing, the venue details stay editable.
+- **Times are in venue time.** Start, registration closing and bracket start times are entered and shown in the venue's timezone. Viewers elsewhere also see their own time.
+- **Stations instead of pools and passwords.** Players are told which station to go to.
+- **No match timers.** Matches and rounds have no deadline, the stations set the pace.
+- **No locking matches for cast.** Casting a match is still marked on the match page like online.
+- **Map preview.** Players can step through the upcoming maps of their match in its banner, e.g. to decide on subs.
+- **Pool captain role.** Extra staff role: reports and undoes scores of any match, picks who plays when a team has subs, sees the stations board read-only. Nothing else.
+- **Players without an account.** On a team's admin page an organizer can add a player by name only. They can make an account later and ask on sendou.ink helpdesk for the results to be moved to it.
+- **On the LAN map.** The tournament shows up on the calendar's LAN map and under the LAN filter, alongside in-person calendar events.
+
+## Stations
+
+A station is a setup at the venue. Add them on the **Stations** admin tab: a name (e.g. "Station 3") and an optional location note (e.g. "North corner"). The list order matters, auto-assignment fills stations from the top. Even a single setup is worth adding to show what's playing now and next.
+
+- **Board** admin tab: one column per station plus **Waiting** (playable matches on no station). Drag matches to move them. Organizers and streamers can edit, pool captains only view.
+- **Display screen** (`/to/<id>/stations/display`, linked from the board): public, live, no login. Put it on a screen at the venue.
+- **Players** see their station on the match page, the bracket and the status in the site header, plus a notification when their match lands on a station (and another if it's moved).
+- **Wait estimate.** Players waiting for their next match see a time range, simulated from the remaining sets and stations.
+- **Reopened match** goes right behind the match being played on its station.
+- **Deleted station:** its matches go back to Waiting.
+
+## Auto-assignment
+
+On by default, toggled with **Auto-assign stations** on the Stations tab. It runs whenever something changes: a bracket starts, a score is reported, a station frees up or a match is moved.
+
+1. **Find the free stations.** A station is free when nothing playable is queued on it. Queued matches that can't be played yet (e.g. a final whose teams aren't known) don't block it, the new match goes in front of them.
+2. **Find the waiting matches.** Playable matches no one has placed on a station.
+3. **Sort by play order.** Each match has a depth: the longest chain of matches before it (Winners Round 1 = 0, Winners Round 2 and Losers Round 1 = 1, and so on; round robin and Swiss: the round). A follow-up bracket continues after the deepest match of the brackets feeding it. Same depth: winners before losers, then match number.
+4. **Go depth by depth, lowest first.** A deeper match never takes a station while a shallower one is still waiting. A ready Winners Round 2 waits while Winners Round 1 matches wait for a station.
+5. **Within a depth, keep teams in place first.** If a team's last match was on a station that's now free, the match goes there.
+6. **Then fill the rest.** Remaining matches of that depth take the free station highest on the list.
+7. **Skip busy teams.** A match waits if one of its teams is still playing on another station.
+8. **One match per station.** A station gets one match at a time. The next one comes when it frees up.
+9. **No free station = Waiting.** The match waits for the first station to free up.
+
+What it never does:
+
+- **Move a match you placed.** Dragging a match onto a station takes it out of auto-assignment's hands for good.
+- **Take a match out of Waiting you put there.** Dragging a match to Waiting holds it there (shown as Held).
+- **Reorder a queue.** The order you set on a station is kept.
+
+Want to place everything by hand? Turn the toggle off and drag matches from Waiting yourself.
