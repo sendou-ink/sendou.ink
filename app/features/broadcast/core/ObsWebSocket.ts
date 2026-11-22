@@ -15,6 +15,26 @@ const OP = {
 /** OBS closes the connection with this code when the password is wrong, trying again won't help. */
 const AUTHENTICATION_FAILED_CLOSE_CODE = 4009;
 
+/** How long `listCaptureCardSources` waits for OBS to answer before calling it unreachable. */
+const LIST_SOURCES_TIMEOUT_MS = 5_000;
+
+/**
+ * Unversioned obs-websocket input kinds a capture card comes in as: video capture devices of each OS (and Blackmagic's
+ * own), and audio input captures for cards whose sound has its own source.
+ */
+const CAPTURE_INPUT_KINDS = new Set([
+	"dshow_input",
+	"av_capture_input",
+	"macos-avcapture",
+	"macos-avcapture-fast",
+	"v4l2_input",
+	"decklink-input",
+	"wasapi_input_capture",
+	"coreaudio_input_capture",
+	"pulse_input_capture",
+	"alsa_input_capture",
+]);
+
 /** A connection to the obs-websocket server of the OBS on this machine, kept open until closed. */
 export interface ObsConnection {
 	/** Sends the request if identified, otherwise drops it: `onIdentified` is the time to send the current state. */
@@ -52,15 +72,10 @@ export function connect({
 
 			switch (message.op) {
 				case OP.HELLO: {
-					current.send(
-						JSON.stringify({
-							op: OP.IDENTIFY,
-							d: await identifyData({
-								password,
-								authentication: message.d.authentication,
-							}),
-						}),
-					);
+					await sendIdentify(current, {
+						password,
+						authentication: message.d.authentication,
+					});
 					break;
 				}
 				case OP.IDENTIFIED: {
@@ -99,12 +114,11 @@ export function connect({
 			if (!socket || !isIdentified) return;
 
 			lastRequestId++;
-			socket.send(
-				JSON.stringify({
-					op: OP.REQUEST,
-					d: { requestType, requestId: String(lastRequestId), requestData },
-				}),
-			);
+			sendRequest(socket, {
+				requestType,
+				requestId: String(lastRequestId),
+				requestData,
+			});
 		},
 		close: () => {
 			isClosed = true;
@@ -112,6 +126,85 @@ export function connect({
 			socket?.close();
 		},
 	};
+}
+
+export type ListCaptureCardSourcesResult =
+	| { type: "sources"; names: string[] }
+	| { type: "unreachable" }
+	| { type: "wrong-password" };
+
+/**
+ * Names of the sources in the OBS on this machine a capture card can be, in OBS's order: its video and audio capture
+ * devices, or every source when none is one (a capture card added some other way). Connects once to the obs-websocket
+ * server, so it only reaches OBS when this page runs on the same computer.
+ */
+export function listCaptureCardSources({
+	port,
+	password,
+}: {
+	port: number;
+	password: string | null;
+}): Promise<ListCaptureCardSourcesResult> {
+	return new Promise((resolve) => {
+		let socket: WebSocket;
+		try {
+			socket = new WebSocket(`ws://127.0.0.1:${port}`);
+		} catch {
+			resolve({ type: "unreachable" });
+			return;
+		}
+
+		let isSettled = false;
+		const settle = (result: ListCaptureCardSourcesResult) => {
+			if (isSettled) return;
+			isSettled = true;
+			clearTimeout(timeout);
+			socket.close();
+			resolve(result);
+		};
+		const timeout = setTimeout(
+			() => settle({ type: "unreachable" }),
+			LIST_SOURCES_TIMEOUT_MS,
+		);
+
+		socket.onmessage = async (event) => {
+			const message = parseMessage(event.data);
+			if (!message) return;
+
+			switch (message.op) {
+				case OP.HELLO: {
+					await sendIdentify(socket, {
+						password,
+						authentication: message.d.authentication,
+					});
+					break;
+				}
+				case OP.IDENTIFIED: {
+					sendRequest(socket, {
+						requestType: "GetInputList",
+						requestId: "1",
+						requestData: {},
+					});
+					break;
+				}
+				case OP.REQUEST_RESPONSE: {
+					settle({
+						type: "sources",
+						names: captureCardSourceNames(message.d.responseData),
+					});
+					break;
+				}
+			}
+		};
+
+		socket.onclose = (event) =>
+			settle({
+				type:
+					event.code === AUTHENTICATION_FAILED_CLOSE_CODE
+						? "wrong-password"
+						: "unreachable",
+			});
+	});
 }
 
 /**
@@ -130,6 +223,37 @@ export async function authenticationString({
 	const secret = await sha256Base64(password + salt);
 
 	return sha256Base64(secret + challenge);
+}
+
+function captureCardSourceNames(responseData: unknown) {
+	const inputs = (
+		(responseData as { inputs?: ObsInput[] } | undefined)?.inputs ?? []
+	).filter((input) => typeof input.inputName === "string");
+	const captureInputs = inputs.filter((input) =>
+		CAPTURE_INPUT_KINDS.has(input.unversionedInputKind ?? input.inputKind),
+	);
+
+	return (captureInputs.length > 0 ? captureInputs : inputs).map(
+		(input) => input.inputName,
+	);
+}
+
+async function sendIdentify(
+	socket: WebSocket,
+	args: Parameters<typeof identifyData>[0],
+) {
+	socket.send(JSON.stringify({ op: OP.IDENTIFY, d: await identifyData(args) }));
+}
+
+function sendRequest(
+	socket: WebSocket,
+	d: {
+		requestType: string;
+		requestId: string;
+		requestData: Record<string, unknown>;
+	},
+) {
+	socket.send(JSON.stringify({ op: OP.REQUEST, d }));
 }
 
 async function identifyData({
@@ -172,8 +296,15 @@ type ObsMessage =
 			d: {
 				requestType: string;
 				requestStatus?: { result: boolean; code: number; comment?: string };
+				responseData?: unknown;
 			};
 	  };
+
+interface ObsInput {
+	inputName: string;
+	inputKind: string;
+	unversionedInputKind?: string;
+}
 
 function parseMessage(data: unknown): ObsMessage | null {
 	if (typeof data !== "string") return null;

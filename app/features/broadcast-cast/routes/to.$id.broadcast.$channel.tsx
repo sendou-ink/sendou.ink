@@ -133,6 +133,7 @@ import type {
 } from "../broadcast-cast-types";
 import { needsFeaturedMatch } from "../broadcast-cast-utils";
 import { CasterFeedsHealth, CasterMixer } from "../components/CasterMixer";
+import { ObsCaptureCardField } from "../components/ObsCaptureCardField";
 import { ScenePicker, useSceneHotkeys } from "../components/ScenePicker";
 import * as BracketFocus from "../core/BracketFocus";
 import * as CastChannel from "../core/CastChannel";
@@ -1613,9 +1614,9 @@ function ObsAudioForm({ obsAudio }: { obsAudio: BroadcastObsAudio | null }) {
 		>
 			{({ FormField }) => (
 				<>
-					<FormField name="inputName" />
 					<FormField name="port" />
 					<FormField name="password" />
+					<ObsCaptureCardField />
 				</>
 			)}
 		</SendouForm>

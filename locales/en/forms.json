@@ -573,6 +573,7 @@
 	"placeholders.broadcastVdoNinjaUrl": "https://vdo.ninja/?view=...",
 	"labels.broadcastObsInputName": "Capture card source",
 	"bottomTexts.broadcastObsInputName": "Its name in OBS, exactly as in the Sources list. Leave empty to not touch its audio.",
+	"bottomTexts.broadcastObsInputNameSelect": "The source the game's sound comes from. Clear it to not touch its audio.",
 	"placeholders.broadcastObsInputName": "Video Capture Device",
 	"labels.broadcastObsPort": "WebSocket server port",
 	"bottomTexts.broadcastObsPort": "Tools → WebSocket Server Settings in OBS, 4455 unless you changed it.",

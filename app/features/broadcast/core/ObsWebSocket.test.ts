@@ -161,3 +161,136 @@ describe("ObsWebSocket.connect", () => {
 		expect(FakeWebSocket.instances).toHaveLength(1);
 	});
 });
+
+describe("ObsWebSocket.listCaptureCardSources", () => {
+	beforeEach(() => {
+		FakeWebSocket.instances = [];
+		vi.useFakeTimers();
+		vi.stubGlobal("WebSocket", FakeWebSocket);
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		vi.unstubAllGlobals();
+	});
+
+	async function answerInputList(inputs: unknown[]) {
+		lastSocket().receive({ op: 0, d: {} });
+		await vi.waitFor(() => expect(lastSocket().sent).toHaveLength(1));
+		lastSocket().receive({ op: 2, d: { negotiatedRpcVersion: 1 } });
+		lastSocket().receive({
+			op: 7,
+			d: {
+				requestType: "GetInputList",
+				requestStatus: { result: true, code: 100 },
+				responseData: { inputs },
+			},
+		});
+	}
+
+	test("asks OBS for its inputs once identified", async () => {
+		void ObsWebSocket.listCaptureCardSources({ port: 4455, password: null });
+
+		lastSocket().receive({ op: 0, d: {} });
+		await vi.waitFor(() => expect(lastSocket().sent).toHaveLength(1));
+		lastSocket().receive({ op: 2, d: { negotiatedRpcVersion: 1 } });
+
+		expect(lastSocket().sent[1]).toEqual({
+			op: 6,
+			d: { requestType: "GetInputList", requestId: "1", requestData: {} },
+		});
+	});
+
+	test("lists only the capture devices", async () => {
+		const result = ObsWebSocket.listCaptureCardSources({
+			port: 4455,
+			password: null,
+		});
+
+		await answerInputList([
+			{
+				inputName: "Overlay",
+				inputKind: "browser_source",
+				unversionedInputKind: "browser_source",
+			},
+			{
+				inputName: "Elgato HD60",
+				inputKind: "av_capture_input_v2",
+				unversionedInputKind: "av_capture_input",
+			},
+			{
+				inputName: "Card audio",
+				inputKind: "wasapi_input_capture",
+				unversionedInputKind: "wasapi_input_capture",
+			},
+		]);
+
+		await expect(result).resolves.toEqual({
+			type: "sources",
+			names: ["Elgato HD60", "Card audio"],
+		});
+	});
+
+	test("lists every source when none is a capture device", async () => {
+		const result = ObsWebSocket.listCaptureCardSources({
+			port: 4455,
+			password: null,
+		});
+
+		await answerInputList([
+			{
+				inputName: "Overlay",
+				inputKind: "browser_source",
+				unversionedInputKind: "browser_source",
+			},
+			{
+				inputName: "NDI feed",
+				inputKind: "ndi_source",
+				unversionedInputKind: "ndi_source",
+			},
+		]);
+
+		await expect(result).resolves.toEqual({
+			type: "sources",
+			names: ["Overlay", "NDI feed"],
+		});
+	});
+
+	test("closes the connection once answered", async () => {
+		const result = ObsWebSocket.listCaptureCardSources({
+			port: 4455,
+			password: null,
+		});
+		const close = vi.spyOn(lastSocket(), "close");
+
+		await answerInputList([]);
+		await result;
+
+		expect(close).toHaveBeenCalledOnce();
+	});
+
+	test.each([
+		{ why: "the password is wrong", code: 4009, type: "wrong-password" },
+		{ why: "OBS isn't reachable", code: 1006, type: "unreachable" },
+	])("tells when $why", async ({ code, type }) => {
+		const result = ObsWebSocket.listCaptureCardSources({
+			port: 4455,
+			password: "x",
+		});
+
+		lastSocket().onclose?.({ code });
+
+		await expect(result).resolves.toEqual({ type });
+	});
+
+	test("gives up when OBS doesn't answer", async () => {
+		const result = ObsWebSocket.listCaptureCardSources({
+			port: 4455,
+			password: null,
+		});
+
+		vi.runOnlyPendingTimers();
+
+		await expect(result).resolves.toEqual({ type: "unreachable" });
+	});
+});

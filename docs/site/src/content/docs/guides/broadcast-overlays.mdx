@@ -31,7 +31,7 @@ Most of making the overlays your own is plain CSS, the language every website is
 3. In OBS, create a new scene collection (Scene Collection → New) so your own setup stays untouched.
 4. Set the canvas to 1920×1080 (Settings → Video).
 5. Add your capture card, and on top of it a **Browser** source with the URL, sized 1920×1080.
-6. So the game isn't heard under the other scenes: in OBS, open Tools → WebSocket Server Settings, check **Enable WebSocket server** and press **Show Connect Info** for its port and password. Fill them in under **Capture card audio** in the dashboard's **Setup** tab (they're saved with your URL, so once is enough), with the name of the source the game's sound comes from, exactly as in OBS's Sources list (the capture card, or its Audio Input Capture if the sound has its own source).
+6. So the game isn't heard under the other scenes: in OBS, open Tools → WebSocket Server Settings, check **Enable WebSocket server** and press **Show Connect Info** for its port and password. Fill them in under **Capture card audio** in the dashboard's **Setup** tab (they're saved with your URL, so once is enough), then pick the source the game's sound comes from (the capture card, or its Audio Input Capture if the sound has its own source). The list comes from OBS when the dashboard is open on the computer OBS runs on; elsewhere, type the source's name exactly as in OBS's Sources list.
 
 </Steps>
 

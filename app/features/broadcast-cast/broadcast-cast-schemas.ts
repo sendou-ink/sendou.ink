@@ -9,6 +9,7 @@ import {
 	array,
 	fieldset,
 	numberField,
+	selectDynamicOptional,
 	stringConstant,
 	textFieldOptional,
 	toggle,
@@ -82,12 +83,6 @@ export const broadcastCastersFormSchema = v.object({
 
 export const broadcastObsAudioFormSchema = v.object({
 	_action: stringConstant("UPDATE_OBS_AUDIO"),
-	inputName: textFieldOptional({
-		label: "labels.broadcastObsInputName",
-		bottomText: "bottomTexts.broadcastObsInputName",
-		placeholder: "placeholders.broadcastObsInputName",
-		maxLength: BROADCAST_OBS_INPUT_NAME_MAX_LENGTH,
-	}),
 	port: numberField({
 		label: "labels.broadcastObsPort",
 		bottomText: "bottomTexts.broadcastObsPort",
@@ -100,6 +95,18 @@ export const broadcastObsAudioFormSchema = v.object({
 		maxLength: BROADCAST_OBS_PASSWORD_MAX_LENGTH,
 		inputType: "password",
 	}),
+	inputName: textFieldOptional({
+		label: "labels.broadcastObsInputName",
+		bottomText: "bottomTexts.broadcastObsInputName",
+		placeholder: "placeholders.broadcastObsInputName",
+		maxLength: BROADCAST_OBS_INPUT_NAME_MAX_LENGTH,
+	}),
+});
+
+/** Renders `broadcastObsAudioFormSchema`'s `inputName` as a dropdown of the sources read from OBS. */
+export const broadcastObsInputNameSelectField = selectDynamicOptional({
+	label: "labels.broadcastObsInputName",
+	bottomText: "bottomTexts.broadcastObsInputNameSelect",
 });
 
 export const broadcastActionSchema = v.union([
