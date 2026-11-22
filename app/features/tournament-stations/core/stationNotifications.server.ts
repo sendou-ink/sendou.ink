@@ -18,6 +18,7 @@ const scheduledByTournamentId = new Map<
 >();
 const timerByTournamentId = new Map<number, NodeJS.Timeout>();
 const passByTournamentId = new Map<number, Promise<void>>();
+const resumedTournamentIds = new Set<number>();
 
 /**
  * Notifies the teams of the LAN tournament's matches that are playable on a station of it, see
@@ -41,12 +42,24 @@ export function updateStationNotifications(tournament: Tournament) {
 	return pass;
 }
 
+/**
+ * Runs {@link updateStationNotifications} the first time the tournament is seen since the server started:
+ * notices scheduled before a restart were only kept in memory.
+ */
+export function resumeStationNotifications(tournament: Tournament) {
+	if (resumedTournamentIds.has(tournament.ctx.id)) return;
+
+	resumedTournamentIds.add(tournament.ctx.id);
+	void updateStationNotifications(tournament);
+}
+
 /** @internal */
 export function clearStationNotificationsForTesting() {
 	for (const timer of timerByTournamentId.values()) clearTimeout(timer);
 	timerByTournamentId.clear();
 	scheduledByTournamentId.clear();
 	passByTournamentId.clear();
+	resumedTournamentIds.clear();
 }
 
 async function runPass(tournament: Tournament) {

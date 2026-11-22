@@ -3,7 +3,7 @@ import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import * as TournamentStationRepository from "../TournamentStationRepository.server";
 import * as EtaSimulation from "./EtaSimulation";
 import * as MatchStations from "./MatchStations";
-import { updateStationNotifications } from "./stationNotifications.server";
+import { resumeStationNotifications } from "./stationNotifications.server";
 
 /** Simulations older than this run again, the sets underway have moved on since. */
 const CACHE_TTL_MS = 60_000;
@@ -37,7 +37,6 @@ type CacheEntry = {
  */
 const cache = new WeakMap<Tournament, CacheEntry>();
 const generationByTournamentId = new Map<number, number>();
-const notificationsCheckedTournamentIds = new Set<number>();
 
 /**
  * Stations of a LAN tournament, where its matches are queued and when they are expected to start
@@ -62,11 +61,7 @@ export async function tournamentStationsState(
 		return cached.state;
 	}
 
-	// station notices scheduled before a restart were only kept in memory
-	if (!notificationsCheckedTournamentIds.has(tournamentId)) {
-		notificationsCheckedTournamentIds.add(tournamentId);
-		void updateStationNotifications(tournament);
-	}
+	resumeStationNotifications(tournament);
 
 	const stations =
 		await TournamentStationRepository.findAllByTournamentId(tournamentId);
