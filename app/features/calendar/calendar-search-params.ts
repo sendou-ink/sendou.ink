@@ -132,6 +132,14 @@ export const calendarEventsSearchParams = SearchParams.define({
 	view: SP.param(v.nullable(v.picklist(VIEW_FILTERS)), { loader: false }),
 });
 
+export const eventsFeedSearchParams = SearchParams.define({
+	/** Secret of the user's personal feed, calendar apps have no session */
+	token: SP.param(v.pipe(v.string(), v.maxLength(100)), {
+		default: "",
+		loader: true,
+	}),
+});
+
 export const calendarNewSearchParams = SearchParams.define({
 	eventId: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
 		loader: true,

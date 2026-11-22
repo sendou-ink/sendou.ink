@@ -108,6 +108,7 @@ export default [
 	route("/user-report/:id", "features/user-report/routes/user-report.$id.ts"),
 
 	route("/events", "features/calendar/routes/events.tsx"),
+	route("/events.ics", "features/calendar/routes/events.ics.tsx"),
 
 	route("/suspended", "features/ban/routes/suspended.tsx"),
 

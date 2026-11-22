@@ -7,6 +7,7 @@ import {
 	calendarEventsSearchParams,
 	calendarNewSearchParams,
 	calendarSearchParams,
+	eventsFeedSearchParams,
 	venueSearchSearchParams,
 } from "./calendar-search-params";
 import * as CalendarEvent from "./core/CalendarEvent";
@@ -97,6 +98,14 @@ describe("calendarEventsSearchParams", () => {
 			["Registered"],
 			[""],
 		]);
+	});
+});
+
+describe("eventsFeedSearchParams", () => {
+	test("round-trips", () => {
+		assertRoundTrips(eventsFeedSearchParams, {
+			token: ["", "V1StGXR8_Z5jdHi6B-myT"],
+		});
 	});
 });
 

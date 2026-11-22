@@ -1,52 +1,94 @@
+/**
+ * iCalendar (.ics) feeds calendar apps subscribe to: the public feed of the
+ * calendar page and each user's personal feed of their own events.
+ */
+import { addHours } from "date-fns";
 import * as ics from "ics";
 import type { CalendarEvent } from "~/features/calendar/calendar-types";
+import type { SidebarEvent } from "~/features/sidebar/core/sidebar.server";
 import { logger } from "~/utils/logger";
 import { SENDOU_INK_BASE_URL } from "~/utils/urls";
 
-export async function getICalendar(events: Array<CalendarEvent>) {
-	// ical doesn't allow calendars with no events
-	if (events.length === 0) {
-		logger.warn("Could not construct ical feed, no events within time period");
-		return null;
-	}
+/** Events without an end of their own get an arbitrary length. */
+const DURATION_HOURS: Record<SidebarEvent["type"], number> = {
+	tournament: 3,
+	scrim: 2,
+	teamEvent: 2,
+	leagueMatch: 1,
+	lobby: 2,
+};
 
-	const { error, value } = eventsAsICal(events);
+export interface Event {
+	/** Stable across fetches so calendar apps update the event instead of duplicating it. */
+	uid: string;
+	title: string;
+	/** Timestamp in milliseconds */
+	startsAt: number;
+	/** Timestamp in milliseconds */
+	endsAt: number;
+	/** Relative URL of the event's page */
+	url: string;
+	categories?: string[];
+}
 
-	if (error) {
-		logger.error(`Error constructing ical feed: ${error}`);
-		return null;
-	}
+/** iCalendar text of a feed, `null` if it couldn't be built. */
+export function feed({
+	productId,
+	name,
+	events,
+}: {
+	productId: string;
+	/** Name calendar apps show for the subscribed calendar, by default the subscription URL */
+	name?: string;
+	events: Array<Event>;
+}) {
+	const { error, value } = ics.createEvents(events.map(toICalEventAttributes), {
+		productId,
+		calName: name,
+	});
 
-	if (!value) {
-		logger.error("Error constructing ical feed: no value returned");
+	if (error || !value) {
+		logger.error(`Error constructing ical feed: ${error ?? "no value"}`);
 		return null;
 	}
 
 	return value;
 }
 
-function eventsAsICal(events: Array<CalendarEvent>): ics.ReturnObject {
-	return ics.createEvents(events.map(eventInfoAsICalEvent));
-}
-
-function eventInfoAsICalEvent(event: CalendarEvent): ics.EventAttributes {
-	const startDate = new Date(event.at);
-	const eventLink = `${SENDOU_INK_BASE_URL}${event.url}`;
-
+/** One day of a calendar page event as a feed event. */
+export function fromCalendarEvent(event: CalendarEvent): Event {
 	return {
 		uid: `event-${event.id}-${event.at}@sendou.ink`,
 		title: event.name,
-		start: [
-			startDate.getUTCFullYear(),
-			startDate.getUTCMonth() + 1,
-			startDate.getUTCDate(),
-			startDate.getUTCHours(),
-			startDate.getUTCMinutes(),
-		],
-		startInputType: "utc",
-		duration: { hours: 3 }, // arbitrary length
-		url: eventLink,
+		startsAt: event.at,
+		endsAt: addHours(event.at, DURATION_HOURS.tournament).getTime(),
+		url: event.url,
 		categories: event.tags,
-		productId: "sendou.ink/calendar",
+	};
+}
+
+/** An event of the user's events page as a feed event. */
+export function fromSidebarEvent(event: SidebarEvent): Event {
+	const startsAt = event.startsAt * 1000;
+
+	return {
+		uid: `${event.type}-${event.id}@sendou.ink`,
+		title: event.type === "scrim" ? `Scrim vs. ${event.name}` : event.name,
+		startsAt,
+		endsAt: event.endsAt
+			? event.endsAt * 1000
+			: addHours(startsAt, DURATION_HOURS[event.type]).getTime(),
+		url: event.url,
+	};
+}
+
+function toICalEventAttributes(event: Event): ics.EventAttributes {
+	return {
+		uid: event.uid,
+		title: event.title,
+		start: event.startsAt,
+		end: event.endsAt,
+		url: `${SENDOU_INK_BASE_URL}${event.url}`,
+		categories: event.categories,
 	};
 }

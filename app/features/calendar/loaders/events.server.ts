@@ -1,81 +1,25 @@
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ScheduleViews from "~/features/availability/core/ScheduleViews.server";
-import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
-import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
-import {
-	findUpcomingLeagueMatches,
-	findUpcomingLobbies,
-	findUpcomingTeamEvents,
-	leagueMatchToSidebarEvent,
-	lobbyToSidebarEvent,
-	scrimToSidebarEvent,
-	teamEventToSidebarEvent,
-	tournamentToSidebarEvent,
-} from "~/features/sidebar/core/sidebar.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
-import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
-import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as CalendarFeedRepository from "../CalendarFeedRepository.server";
+import * as UserEvents from "../core/UserEvents.server";
 
 export type EventsLoaderData = typeof loader;
 
 export const loader = async () => {
 	const user = requireUser();
 
-	const tournamentsData =
-		await ShowcaseTournaments.categorizedTournamentsByUserId(user.id);
-	const scrimsData = await ScrimPostRepository.findUserScrims(user.id);
-	const savedTournaments =
-		await SavedCalendarEventRepository.findAllUpcomingByUserId(user.id);
-	const upcomingTournaments = await ShowcaseTournaments.upcomingTournaments();
-	const userOrganizations = await TournamentOrganizationRepository.findByUserId(
-		user.id,
-	);
+	const events = await UserEvents.byCategory(user.id);
 	const mySchedule = await ScheduleViews.myScheduleData(user.id);
-	const teamEvents = await findUpcomingTeamEvents(user.id);
-	const leagueMatches = await findUpcomingLeagueMatches(user.id);
-	const lobbies = await findUpcomingLobbies(user.id);
 	const myTeams = await TeamRepository.findAllMemberOfByUserId(user.id);
-
-	const registered = [
-		...tournamentsData.participatingFor.map(tournamentToSidebarEvent),
-		...leagueMatches.map(leagueMatchToSidebarEvent),
-		...lobbies.map(lobbyToSidebarEvent),
-	].sort((a, b) => a.startsAt - b.startsAt);
-
-	const hosting = tournamentsData.organizingFor
-		.map(tournamentToSidebarEvent)
-		.sort((a, b) => a.startsAt - b.startsAt);
-
-	const scrims = scrimsData
-		.map(scrimToSidebarEvent)
-		.sort((a, b) => a.startsAt - b.startsAt);
-
-	const team = teamEvents.map(teamEventToSidebarEvent);
-
-	const saved = savedTournaments
-		.map(tournamentToSidebarEvent)
-		.sort((a, b) => a.startsAt - b.startsAt);
-
-	const userOrganizationIds = new Set(userOrganizations.map((org) => org.id));
-	const organization = upcomingTournaments
-		.filter(
-			(tournament) =>
-				!tournament.hidden &&
-				tournament.organizationId !== null &&
-				userOrganizationIds.has(tournament.organizationId),
-		)
-		.map(tournamentToSidebarEvent)
-		.sort((a, b) => a.startsAt - b.startsAt);
+	const calendarFeedToken =
+		(await CalendarFeedRepository.findOwnToken()) ?? null;
 
 	return {
-		registered,
-		hosting,
-		scrims,
-		team,
-		saved,
-		organization,
+		...events,
 		mySchedule,
 		/** Audiences of the schedule visibility picker, alongside the user's friends. */
 		myTeams: myTeams.map((myTeam) => ({ id: myTeam.id, name: myTeam.name })),
+		calendarFeedToken,
 	};
 };

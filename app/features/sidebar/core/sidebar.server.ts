@@ -65,6 +65,8 @@ export type SidebarEvent = {
 	/** Whose avatar the event shows instead of a logo of its own. */
 	user: CommonUser | null;
 	startsAt: number;
+	/** Only for events with a set end, others last an unknown time. */
+	endsAt?: number;
 	type: "tournament" | "scrim" | "teamEvent" | "leagueMatch" | "lobby";
 	scrimStatus?: "booked" | "looking" | "requestPending";
 };
@@ -541,6 +543,7 @@ export function teamEventToSidebarEvent(
 		logoUrl: event.teamAvatarUrl ?? TEAM_ICON_URL,
 		user: null,
 		startsAt: event.startsAt,
+		endsAt: event.endsAt,
 		type: "teamEvent" as const,
 	};
 }

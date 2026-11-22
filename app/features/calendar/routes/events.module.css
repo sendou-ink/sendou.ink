@@ -10,3 +10,7 @@
 .subNav {
 	justify-content: start;
 }
+
+.feedPopover {
+	max-width: 20rem;
+}

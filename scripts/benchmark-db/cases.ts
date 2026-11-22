@@ -12,6 +12,7 @@ import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.s
 import * as BroadcastCastRepository from "~/features/broadcast-cast/BroadcastCastRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { RECENT_PATCHES } from "~/features/builds/builds-constants";
+import * as CalendarFeedRepository from "~/features/calendar/CalendarFeedRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import * as ChatRoomResolver from "~/features/chat/ChatRoomResolver.server";
@@ -492,6 +493,15 @@ export function buildCases(fx: Fixtures): {
 	);
 	addStatic("BuildRepository.countAllPublicByWeaponId", () =>
 		BuildRepository.countAllPublicByWeaponId(),
+	);
+
+	addStatic("CalendarFeedRepository.findOwnToken", () =>
+		CalendarFeedRepository.findOwnToken(),
+	);
+	add(
+		"CalendarFeedRepository.findUserIdByToken",
+		fx.calendarFeedToken,
+		(token) => CalendarFeedRepository.findUserIdByToken(token),
 	);
 
 	add(

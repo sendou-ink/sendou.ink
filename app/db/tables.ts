@@ -1301,6 +1301,15 @@ interface UserBroadcastSetup {
 	createdAt: Generated<number>;
 }
 
+/** The user's personal iCalendar feed of their own events. */
+interface UserCalendarFeed {
+	id: GeneratedAlways<number>;
+	userId: number;
+	/** Secret of the feed URL, calendar apps have no session */
+	token: string;
+	createdAt: Generated<number>;
+}
+
 /** Account seen streaming the tournament while it was running, used to find match VoDs afterwards. */
 interface TournamentStreamer {
 	id: GeneratedAlways<number>;
@@ -1970,4 +1979,5 @@ export interface DB {
 	TeamEvent: TeamEvent;
 	TeamEventMember: TeamEventMember;
 	UserDiscordToken: UserDiscordToken;
+	UserCalendarFeed: UserCalendarFeed;
 }

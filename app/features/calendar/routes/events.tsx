@@ -1,13 +1,19 @@
+import { Check, Clipboard, Link as LinkIcon, RefreshCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, type MetaFunction, useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { EmptyState } from "~/components/EmptyState";
 import { EventsList } from "~/components/EventsList";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { Main } from "~/components/Main";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { action } from "~/features/availability/actions/events.server";
+import { eventsActionSchema } from "~/features/availability/availability-schemas";
 import { scheduleWeekSearchParams } from "~/features/availability/availability-search-params";
 import { MySchedule } from "~/features/availability/components/MySchedule";
 import { timezoneMiddleware } from "~/features/timezone/timezone-middleware.server";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -17,6 +23,7 @@ import {
 	VIEW_FILTERS,
 	type ViewFilter,
 } from "../calendar-search-params";
+import { eventsIcalFeed } from "../calendar-urls";
 import type { EventsLoaderData } from "../loaders/events.server";
 import { loader } from "../loaders/events.server";
 import type { Route } from "./+types/events";
@@ -72,7 +79,10 @@ export default function EventsPage() {
 			/>
 			<div>
 				<div className={styles.eventsListHeader}>
-					<h2 className="text-lg mx-2">{t("calendar:events.title")}</h2>
+					<div className="stack horizontal sm items-center">
+						<h2 className="text-lg mx-2">{t("calendar:events.title")}</h2>
+						<CalendarFeedPopover token={data.calendarFeedToken} />
+					</div>
 					{hasNoEventsAtAll ? null : (
 						<SubNav secondary className={styles.subNav}>
 							{VIEW_FILTERS.map((value) => (
@@ -112,5 +122,67 @@ export default function EventsPage() {
 				)}
 			</div>
 		</Main>
+	);
+}
+
+function CalendarFeedPopover({ token }: { token: string | null }) {
+	const { t } = useTranslation(["calendar", "common"]);
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
+
+	const url = token ? eventsIcalFeed(token) : null;
+
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton icon={<LinkIcon />} size="small" variant="outlined">
+					{t("calendar:icalFeed")}
+				</SendouButton>
+			}
+			popoverClassName={styles.feedPopover}
+		>
+			<div className="stack sm">
+				<p className="text-xs text-lighter">
+					{t("calendar:events.feed.explanation")}
+				</p>
+				{url ? (
+					<>
+						<input
+							key={url}
+							defaultValue={url}
+							readOnly
+							aria-label={t("calendar:icalFeed")}
+						/>
+						<SendouButton
+							size="miniscule"
+							variant="minimal"
+							onClick={() => copyToClipboard(url)}
+							icon={copySuccess ? <Check /> : <Clipboard />}
+						>
+							{t("common:actions.copyToClipboard")}
+						</SendouButton>
+						<p className="text-xs text-lighter">
+							{t("calendar:events.feed.resetExplanation")}
+						</p>
+						<ActionButton
+							schema={eventsActionSchema}
+							action="GENERATE_CALENDAR_FEED_TOKEN"
+							size="miniscule"
+							variant="minimal-destructive"
+							icon={<RefreshCcw />}
+						>
+							{t("calendar:events.feed.reset")}
+						</ActionButton>
+					</>
+				) : (
+					<ActionButton
+						schema={eventsActionSchema}
+						action="GENERATE_CALENDAR_FEED_TOKEN"
+						size="small"
+					>
+						{t("calendar:events.feed.create")}
+					</ActionButton>
+				)}
+			</div>
+		</SendouPopover>
 	);
 }

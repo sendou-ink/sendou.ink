@@ -28,9 +28,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const filtered = CalendarEvent.applyFilters(events, filters);
 
-	const iCalData = await ICal.getICalendar(
-		filtered.flatMap((eventTime) => eventTime.events.shown),
-	);
+	const shownEvents = filtered.flatMap((eventTime) => eventTime.events.shown);
+	if (shownEvents.length === 0) {
+		return new Response(null, { status: 204 });
+	}
+
+	const iCalData = ICal.feed({
+		productId: "sendou.ink/calendar",
+		events: shownEvents.map(ICal.fromCalendarEvent),
+	});
 
 	if (iCalData === null) {
 		return new Response(null, { status: 204 });

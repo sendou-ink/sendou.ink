@@ -1,5 +1,6 @@
 import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as CalendarFeedRepository from "~/features/calendar/CalendarFeedRepository.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
@@ -104,6 +105,11 @@ export const action = defineAction(
 						teams,
 					}),
 				});
+
+				break;
+			}
+			case "GENERATE_CALENDAR_FEED_TOKEN": {
+				await CalendarFeedRepository.upsertOwnToken();
 
 				break;
 			}

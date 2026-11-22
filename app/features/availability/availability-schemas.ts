@@ -77,6 +77,7 @@ export const eventsActionSchema = v.union([
 	saveWeekSchema,
 	dismissScheduleNudgeSchema,
 	saveScheduleVisibilitySchema,
+	v.object({ _action: _action("GENERATE_CALENDAR_FEED_TOKEN") }),
 ]);
 
 const teamEventDurationItems = [

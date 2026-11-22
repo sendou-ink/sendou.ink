@@ -191,6 +191,8 @@ export interface Fixtures {
 	} | null;
 	/** Matches of the tournament with the most matches. */
 	manyTournamentMatchIds: number[] | null;
+	/** Token of the newest personal calendar feed. */
+	calendarFeedToken: string | null;
 }
 
 /**
@@ -297,6 +299,7 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		broadcast: await resolveBroadcast(),
 		broadcastProgram: await resolveBroadcastProgram(),
 		manyTournamentMatchIds: await resolveManyTournamentMatchIds(),
+		calendarFeedToken: await resolveCalendarFeedToken(),
 	};
 
 	const nullFixtures = Object.entries(fixtures)
@@ -1912,4 +1915,15 @@ async function resolveManyTournamentMatchIds() {
 		.execute();
 
 	return rows.length > 0 ? rows.map((row) => row.id) : null;
+}
+
+async function resolveCalendarFeedToken() {
+	const row = await db
+		.selectFrom("UserCalendarFeed")
+		.select("UserCalendarFeed.token")
+		.orderBy("UserCalendarFeed.id", "desc")
+		.limit(1)
+		.executeTakeFirst();
+
+	return row?.token ?? null;
 }
