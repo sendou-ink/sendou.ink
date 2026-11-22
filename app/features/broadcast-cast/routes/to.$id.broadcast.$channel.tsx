@@ -33,8 +33,8 @@ import {
 	Plus,
 	RefreshCw,
 	ScanEye,
+	SquareArrowOutUpRight,
 	TriangleAlert,
-	Unlink,
 	X,
 } from "lucide-react";
 import * as React from "react";
@@ -70,7 +70,6 @@ import {
 	useClipSender,
 	useServerNow,
 } from "~/features/broadcast/broadcast-hooks";
-import { broadcastThemeFormSchema } from "~/features/broadcast/broadcast-schemas";
 import type {
 	BroadcastAdvance,
 	BroadcastChannel,
@@ -98,18 +97,18 @@ import { BroadcastPreview } from "~/features/broadcast/components/BroadcastPrevi
 import * as AudioFeeds from "~/features/broadcast/core/AudioFeeds";
 import type * as ClipTransfer from "~/features/broadcast/core/ClipTransfer";
 import * as Producer from "~/features/broadcast/core/Producer";
-import {
-	linkBroadcast,
-	useLinkedBroadcast,
-} from "~/features/scanner/scanner-activity";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
-import type { ArrayItemRenderContext } from "~/form/types";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { tournamentAdminPage, tournamentMatchPage } from "~/utils/urls";
+import {
+	BROADCAST_OVERLAYS_DOC_LINK,
+	SCANNER_PAGE,
+	tournamentAdminPage,
+	tournamentMatchPage,
+} from "~/utils/urls";
 import {
 	BROADCAST_DASHBOARD_TABS,
 	BROADCAST_OBS_WEBSOCKET_DEFAULT_PORT,
@@ -147,10 +146,7 @@ export { loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["broadcast", "q"],
-	scannerBroadcast: (match) => ({
-		tournamentId: Number(match.params.id),
-		slug: match.params.channel!,
-	}),
+	showScanner: true,
 };
 
 type DashboardTab = (typeof BROADCAST_DASHBOARD_TABS)[number];
@@ -368,9 +364,7 @@ function BroadcastDashboard() {
 						<Setup
 							state={state}
 							program={data.program}
-							scannerLink={pageArgs}
 							statuses={clipSender.statuses}
-							areClipsOnSources={areClipsOnSources}
 						/>
 					</SendouTabPanel>
 					<SendouTabPanel id="theme">
@@ -468,9 +462,9 @@ function Health({
 			onClick={onClick}
 		>
 			{isConnected
-				? t("broadcast:dashboard.health.sources", {
-						count: state.health.sources,
-					})
+				? state.health.sources > 0
+					? t("broadcast:dashboard.health.obsConnected")
+					: t("broadcast:dashboard.health.obsNotConnected")
 				: t("broadcast:dashboard.health.disconnected")}
 		</SendouButton>
 	);
@@ -1557,17 +1551,7 @@ function CastersForm({ state }: { state: CastBroadcastState }) {
 			submitButtonSize="small"
 			fullWidth
 		>
-			{({ FormField }) => (
-				<FormField name="casters">
-					{({ itemName }: ArrayItemRenderContext) => (
-						<div className="stack sm">
-							<FormField name={`${itemName}.userId`} />
-							<FormField name={`${itemName}.vdoNinjaUrl`} />
-							<FormField name={`${itemName}.isAudioOnly`} />
-						</div>
-					)}
-				</FormField>
-			)}
+			{({ FormField }) => <FormField name="casters" />}
 		</SendouForm>
 	);
 }
@@ -1598,34 +1582,32 @@ function ObsAudioForm({ obsAudio }: { obsAudio: BroadcastObsAudio | null }) {
 function Setup({
 	state,
 	program,
-	scannerLink,
 	statuses,
-	areClipsOnSources,
 }: {
 	state: CastBroadcastState;
 	/** The user's OBS URL for the channel, `null` until generated. */
 	program: SerializeFrom<typeof loader>["program"];
-	scannerLink: { tournamentId: number; slug: string };
 	statuses: ClipTransfer.ClipPeerStatus[];
-	areClipsOnSources: boolean;
 }) {
 	const { t } = useTranslation(["broadcast", "common"]);
 	const sourceCount = state.health.sources;
-	const linkedBroadcast = useLinkedBroadcast();
-	const isScannerLinked =
-		linkedBroadcast?.tournamentId === scannerLink.tournamentId &&
-		linkedBroadcast.slug === scannerLink.slug;
 
 	return (
 		<div className="stack xl">
 			<section className="stack md">
-				<div className="stack horizontal xs items-center">
+				<div className="stack horizontal sm items-center justify-between flex-wrap">
 					<h2 className={styles.panelHeader}>
 						{t("broadcast:dashboard.setup.header")}
 					</h2>
-					<InfoPopover tiny>
-						{t("broadcast:dashboard.setup.program")}
-					</InfoPopover>
+					<LinkButton
+						to={`${BROADCAST_OVERLAYS_DOC_LINK}#setting-up-obs`}
+						isExternal
+						size="small"
+						variant="outlined"
+						icon={<SquareArrowOutUpRight />}
+					>
+						{t("broadcast:dashboard.setup.guide")}
+					</LinkButton>
 				</div>
 				{program ? (
 					<div className="stack sm">
@@ -1688,9 +1670,6 @@ function Setup({
 					</div>
 				) : (
 					<div className="stack sm items-start">
-						<p className="text-sm text-lighter">
-							{t("broadcast:dashboard.setup.noProgramKey")}
-						</p>
 						<ActionButton
 							schema={broadcastActionSchema}
 							action="POINT_PROGRAM"
@@ -1716,10 +1695,9 @@ function Setup({
 						</SetupCheck>
 					) : null}
 					<SetupCheck isDone={sourceCount > 0}>
-						{t("broadcast:dashboard.health.sources", { count: sourceCount })}
-					</SetupCheck>
-					<SetupCheck isDone={sourceCount > 0 && areClipsOnSources}>
-						{t("broadcast:dashboard.setup.clipsSynced")}
+						{sourceCount > 0
+							? t("broadcast:dashboard.health.obsConnected")
+							: t("broadcast:dashboard.health.obsNotConnected")}
 					</SetupCheck>
 				</ul>
 				<ClipOverlays statuses={statuses} />
@@ -1749,12 +1727,19 @@ function Setup({
 				<CastersForm state={state} />
 			</section>
 			<section className="stack md">
-				<h2 className={styles.panelHeader}>
-					{t("broadcast:dashboard.setup.scannerHeader")}
-				</h2>
-				<p className="text-sm text-lighter">
-					{t("broadcast:dashboard.setup.scanner")}
-				</p>
+				<div className="stack horizontal sm items-center justify-between flex-wrap">
+					<h2 className={styles.panelHeader}>
+						{t("broadcast:dashboard.setup.scannerHeader")}
+					</h2>
+					<LinkButton
+						to={SCANNER_PAGE}
+						size="small"
+						variant="outlined"
+						icon={<ScanEye />}
+					>
+						{t("broadcast:dashboard.setup.openScanner")}
+					</LinkButton>
+				</div>
 				<ul className={styles.checklist}>
 					<SetupCheck isDone={state.health.scanners > 0}>
 						{state.health.scanners > 0
@@ -1762,22 +1747,6 @@ function Setup({
 							: t("broadcast:dashboard.health.noScanner")}
 					</SetupCheck>
 				</ul>
-				{linkedBroadcast && !isScannerLinked ? (
-					<p className="text-xs text-warning">
-						{t("broadcast:dashboard.setup.scannerLinkedElsewhere")}
-					</p>
-				) : null}
-				<SendouButton
-					size="small"
-					variant="outlined"
-					icon={isScannerLinked ? <Unlink /> : <ScanEye />}
-					onClick={() => linkBroadcast(isScannerLinked ? null : scannerLink)}
-					className="self-start"
-				>
-					{isScannerLinked
-						? t("broadcast:dashboard.setup.unlinkScanner")
-						: t("broadcast:dashboard.setup.linkScanner")}
-				</SendouButton>
 			</section>
 		</div>
 	);
@@ -1844,6 +1813,7 @@ function ClipOverlays({
 	);
 }
 
+/** What theme the overlays wear, its CSS and weapon images being set in the designer. */
 function Theme({
 	state,
 	designUrl,
@@ -1851,33 +1821,36 @@ function Theme({
 	state: CastBroadcastState;
 	designUrl: string;
 }) {
-	const { t } = useTranslation(["broadcast"]);
+	const { t } = useTranslation(["broadcast", "forms"]);
+	const data = useLoaderData<typeof loader>();
+	const { css, weaponImages } = state.settings;
+	const presetKey = data.themePresetKey;
 
 	return (
-		<div className="stack lg">
-			<div className="stack xs items-start">
-				<LinkButton to={designUrl} size="small" icon={<Brush />}>
-					{t("broadcast:dashboard.theme.design")}
-				</LinkButton>
+		<div className="stack md items-start">
+			<div className="stack xs">
+				<span className="text-sm font-semi-bold">
+					{!css
+						? t("broadcast:dashboard.theme.none")
+						: presetKey
+							? t(`broadcast:design.preset.${presetKey}`)
+							: t("broadcast:dashboard.theme.own")}
+				</span>
 				<span className="text-xs text-lighter">
-					{t("broadcast:dashboard.theme.designHint")}
+					{!css
+						? t("broadcast:dashboard.theme.noneHint")
+						: presetKey
+							? t("broadcast:dashboard.theme.presetHint")
+							: t("broadcast:dashboard.theme.ownHint")}
+				</span>
+				<span className="text-xs text-lighter">
+					{t("forms:labels.broadcastWeaponImages")}:{" "}
+					{t(`forms:options.broadcastWeaponImages.${weaponImages}`)}
 				</span>
 			</div>
-			<SendouForm
-				schema={broadcastThemeFormSchema}
-				defaultValues={{
-					weaponImages: state.settings.weaponImages,
-					css: state.settings.css || null,
-				}}
-				fullWidth
-			>
-				{({ FormField }) => (
-					<>
-						<FormField name="weaponImages" />
-						<FormField name="css" />
-					</>
-				)}
-			</SendouForm>
+			<LinkButton to={designUrl} size="small" icon={<Brush />}>
+				{t("broadcast:dashboard.theme.design")}
+			</LinkButton>
 		</div>
 	);
 }

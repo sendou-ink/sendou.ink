@@ -4,7 +4,7 @@ import {
 	BROADCAST_INK_COLORS,
 	BROADCAST_TRANSITIONS,
 } from "~/features/broadcast/broadcast-constants";
-import { broadcastThemeFormSchema } from "~/features/broadcast/broadcast-schemas";
+import { broadcastThemeSchema } from "~/features/broadcast/broadcast-schemas";
 import {
 	array,
 	fieldset,
@@ -48,7 +48,6 @@ export const broadcastHeadlineFormSchema = v.object({
 	_action: stringConstant("UPDATE_HEADLINE"),
 	headline: textFieldOptional({
 		label: "labels.broadcastHeadline",
-		bottomText: "bottomTexts.broadcastHeadline",
 		maxLength: BROADCAST_HEADLINE_MAX_LENGTH,
 	}),
 });
@@ -57,14 +56,12 @@ export const broadcastCastersFormSchema = v.object({
 	_action: stringConstant("UPDATE_CASTERS"),
 	casters: array({
 		label: "labels.broadcastCasters",
-		bottomText: "bottomTexts.broadcastCasters",
 		max: BROADCAST_MAX_CASTERS,
 		field: fieldset({
 			fields: v.object({
 				userId: userSearch({ label: "labels.user" }),
 				vdoNinjaUrl: textFieldOptional({
 					label: "labels.broadcastVdoNinjaUrl",
-					bottomText: "bottomTexts.broadcastVdoNinjaUrl",
 					placeholder: "placeholders.broadcastVdoNinjaUrl",
 					maxLength: BROADCAST_VDO_NINJA_URL_MAX_LENGTH,
 					validate: {
@@ -74,7 +71,6 @@ export const broadcastCastersFormSchema = v.object({
 				}),
 				isAudioOnly: toggle({
 					label: "labels.broadcastCasterAudioOnly",
-					bottomText: "bottomTexts.broadcastCasterAudioOnly",
 				}),
 			}),
 		}),
@@ -186,7 +182,7 @@ export const broadcastActionSchema = v.union([
 		matchId: id,
 		resultCount: nonNegativeInteger,
 	}),
-	broadcastThemeFormSchema,
+	broadcastThemeSchema,
 	broadcastHeadlineFormSchema,
 	broadcastCastersFormSchema,
 	broadcastObsAudioFormSchema,

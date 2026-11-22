@@ -44,7 +44,7 @@ interface Client {
 	send: (message: string) => void;
 	/** Ends the client's connection. */
 	close: () => void;
-	/** Id of the user's OBS URL it connected through, `null` for a producer's own connection. */
+	/** Id of the user's OBS URL it connected through (or a scanner follows), `null` for a producer's own connection. */
 	programId: number | null;
 	peerId: string;
 	token: string;

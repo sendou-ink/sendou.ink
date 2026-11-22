@@ -34,7 +34,7 @@ export interface ScannerActivityState {
 	uploadingCount: number;
 	/** the running session's tallies */
 	stats: { games: number; uploaded: number; clips: number } | null;
-	/** the tournament broadcast the capture is linked to, see `broadcastLinkPersisted` */
+	/** the tournament broadcast the capture follows, see broadcast-link.ts */
 	broadcast: {
 		tournamentId: number;
 		slug: string;
@@ -45,7 +45,12 @@ export interface ScannerActivityState {
 export interface ScannerActivityActions {
 	start: () => void;
 	stop: () => void;
-	linkBroadcast: (target: BroadcastTarget | null) => void;
+}
+
+/** A tournament broadcast, by its tournament and channel. */
+export interface BroadcastTarget {
+	tournamentId: number;
+	slug: string;
 }
 
 /** Set once this browser has captured, from then on the header offers starting a capture from any page. */
@@ -55,33 +60,6 @@ const capturedBeforePersisted = PersistedState.define({
 	schema: v.boolean(),
 	default: false,
 });
-
-/**
- * The tournament broadcast this browser's capture is linked to, set from the
- * broadcast's dashboard: games starting and ending on the capture put its
- * scenes on air (broadcast-link.ts). Read through `linkedBroadcast`, which
- * drops a link made too long ago to still be the same event.
- */
-export const broadcastLinkPersisted = PersistedState.define({
-	key: "scannerBroadcastLink",
-	storage: "local",
-	schema: v.nullable(
-		v.object({
-			tournamentId: v.pipe(v.number(), v.integer()),
-			slug: v.pipe(v.string(), v.maxLength(100)),
-			linkedAt: v.number(),
-		}),
-	),
-	default: null,
-});
-
-const BROADCAST_LINK_MAX_AGE_MS = 24 * 60 * 60 * 1000;
-
-export type LinkedBroadcast = NonNullable<
-	(typeof broadcastLinkPersisted)["default"]
->;
-
-export type BroadcastTarget = Pick<LinkedBroadcast, "tournamentId" | "slug">;
 
 let captureStatus: ScannerCaptureStatus = "idle";
 const statusListeners = new Set<() => void>();
@@ -109,27 +87,6 @@ export function useCaptureStatus() {
 
 export function useCapturedBefore() {
 	return usePersistedState(capturedBeforePersisted)[0];
-}
-
-/** The broadcast the capture is linked to, `null` when none or linked too long ago. */
-export function linkedBroadcast(
-	link = PersistedState.read(broadcastLinkPersisted),
-): LinkedBroadcast | null {
-	return link && Date.now() - link.linkedAt < BROADCAST_LINK_MAX_AGE_MS
-		? link
-		: null;
-}
-
-export function useLinkedBroadcast() {
-	return linkedBroadcast(usePersistedState(broadcastLinkPersisted)[0]);
-}
-
-/** Links the capture to the broadcast, `null` unlinks it. */
-export function linkBroadcast(target: BroadcastTarget | null) {
-	PersistedState.write(
-		broadcastLinkPersisted,
-		target ? { ...target, linkedAt: Date.now() } : null,
-	);
 }
 
 /**
@@ -161,10 +118,6 @@ export const SCANNER_OVERRIDE_ACTIONS: ScannerActivityActions = {
 			game: null,
 			stats: null,
 			stream: null,
-		}),
-	linkBroadcast: (target) =>
-		updateOverride({
-			broadcast: target ? { ...target, error: null } : null,
 		}),
 };
 

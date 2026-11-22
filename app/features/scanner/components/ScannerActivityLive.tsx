@@ -4,12 +4,7 @@
  * code in on pages other than the scanner's own.
  */
 import { useUser } from "~/features/auth/core/user";
-import {
-	type BroadcastTarget,
-	linkBroadcast,
-	linkedBroadcast,
-	type ScannerActivityState,
-} from "../scanner-activity";
+import type { ScannerActivityState } from "../scanner-activity";
 import { useBroadcastLink } from "./broadcast-link";
 import { useClips } from "./clips-feed";
 import {
@@ -28,12 +23,7 @@ import { ScannerActivityPanel } from "./ScannerActivityPanel";
 import { aggregateSendStatus } from "./sendou-ingest";
 import { setUploadUser } from "./upload";
 
-export function ScannerActivityLive({
-	pageBroadcast,
-}: {
-	/** the broadcast the page produces, which a capture started here without a link links to */
-	pageBroadcast: BroadcastTarget | null;
-}) {
+export function ScannerActivityLive() {
 	const live = useLiveSession();
 	const feed = useFeed();
 	const clips = useClips();
@@ -90,19 +80,14 @@ export function ScannerActivityLive({
 	return (
 		<ScannerActivityPanel
 			activity={activity}
-			pageBroadcast={pageBroadcast}
 			actions={{
 				start: () => {
-					if (pageBroadcast && !linkedBroadcast()) {
-						linkBroadcast(pageBroadcast);
-					}
 					// the capture uploads as the user, which the scanner page otherwise tells it
 					setUploadUser(user ? { id: user.id } : null);
 					settleClipStore();
 					void startCapture();
 				},
 				stop: stopCapture,
-				linkBroadcast,
 			}}
 		/>
 	);

@@ -1,6 +1,6 @@
 ---
 title: "Broadcast overlays"
-description: "Set up sendou.ink's tournament overlays in OBS, link the scanner and theme them with CSS."
+description: "Set up sendou.ink's tournament overlays in OBS, connect the scanner and theme them with CSS."
 ---
 
 import { Steps } from "@astrojs/starlight/components";
@@ -55,21 +55,22 @@ Add the casters in the dashboard's **Setup** tab, each with their VDO.ninja view
 
 The dashboard's previews and the designer show placeholders and play no sound. Anyone with a view link can watch it, so add `&password=` in VDO.ninja if needed.
 
-## Linking the scanner
+## The scanner
 
 The scanner watches the game feed and tells the broadcast when games start and end, so scenes set to wait for a game start or end go on air by themselves, in the teams' ink colors.
 
 <Steps>
 
-1. Open the dashboard in the browser that sees the game feed without the overlay over it: your capture card, or OBS Virtual Camera of a scene with only the capture card.
+1. Open sendou.ink, logged in as you, in the browser that sees the game feed without the overlay over it: your capture card, or OBS Virtual Camera of a scene with only the capture card.
 2. Start the scanner from the page's header. The first time, start it on the [scanner page](https://sendou.ink/scanner) instead, where you pick the capture source.
-3. Press **Link scanner** in the dashboard's Setup tab. The dashboard shows "Scanner connected".
 
 </Steps>
 
+There is nothing to link: the scanner follows the broadcast your browser source URL shows, and switches over with it when you press **Show this broadcast**. It does so from a day before the tournament starts until the tournament is finalized, so scanning your own games between tournaments leaves the last broadcast alone. The dashboard shows "Scanner connected" once it's there.
+
 Games still upload to sendou.ink as usual.
 
-Alpha is the team on the left of the overlays, the same team the game's HUD shows on the left. Set it with **Swap** between the two team names under the live preview: it applies to every scene right away, on air and staged alike, so you can fix it mid-game without a Take. Each game's ink colors only need the pair: the scanner reads it, or pick it in the dashboard if the scanner isn't linked or misses it. The pair's first color always goes to Alpha.
+Alpha is the team on the left of the overlays, the same team the game's HUD shows on the left. Set it with **Swap** between the two team names under the live preview: it applies to every scene right away, on air and staged alike, so you can fix it mid-game without a Take. Each game's ink colors only need the pair: the scanner reads it, or pick it in the dashboard if the scanner isn't connected or misses it. The pair's first color always goes to Alpha.
 
 ## The designer
 
@@ -79,7 +80,7 @@ The dashboard's **Theme** tab opens the designer: the overlay over a gameplay sc
 - **Stylesheet**: each part of the overlay's default styles to edit in place, e.g. `GameScene`. Its look first, with the sizes and spots everything follows at the top. Turn on **Show layout & motion stylesheets** for how the parts are laid out and animated.
 - **Custom CSS**: your own CSS, applied after everything else.
 
-Only what you changed from the default styles is saved, at most {cssLimit} characters of it ("CSS to save" shows the count). Nothing changes on air before you **Save**, then every OBS source restyles right away.
+Only what you changed from the default styles is saved, at most {cssLimit} characters of it ("CSS to save" shows the count). Nothing changes on air before you **Save**, then every OBS source restyles right away and you're back on the dashboard. The CSS and the weapon images are only set in the designer. The **Theme** tab shows which theme is on: the default styles, a preset or your own.
 
 ## How theme CSS works
 

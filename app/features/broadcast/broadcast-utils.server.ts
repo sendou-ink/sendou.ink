@@ -1,4 +1,4 @@
-import { addDays, max } from "date-fns";
+import { addDays, max, subDays } from "date-fns";
 import { ServerConfig } from "~/config.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -7,6 +7,7 @@ import { notFound } from "~/utils/remix.server";
 import * as BroadcastRepository from "./BroadcastRepository.server";
 import {
 	BROADCAST_CHAT_ROOM_LIFESPAN_DAYS,
+	BROADCAST_ONGOING_LEAD_DAYS,
 	LEAGUE_BROADCAST_CHAT_ROOM_LIFESPAN_DAYS,
 } from "./broadcast-constants";
 import type {
@@ -139,6 +140,28 @@ export async function regenerateProgramKey(userId: number) {
 }
 
 /**
+ * Whether the tournament's broadcasts are on: from a day before it starts until it is finalized, at most as long as
+ * their chat rooms live. A user's scanner follows the broadcast their OBS URL shows only meanwhile, so scanning their
+ * own games between tournaments doesn't touch an old one.
+ */
+export function isBroadcastOngoing(
+	tournament: {
+		ctx: Pick<Tournament["ctx"], "isFinalized" | "startsAt">;
+		isLeague: boolean;
+	},
+	now = new Date(),
+) {
+	if (tournament.ctx.isFinalized) return false;
+
+	const { startsAt } = tournament.ctx;
+
+	return (
+		now >= subDays(startsAt, BROADCAST_ONGOING_LEAD_DAYS) &&
+		now < addDays(startsAt, lifespanDays(tournament))
+	);
+}
+
+/**
  * Creates the chat room the tournament's organizers and streamers produce the channel's broadcast in, if the
  * tournament can use broadcasts and the room is missing. A broadcast created by it starts with the rules' scenes.
  */
@@ -160,13 +183,17 @@ export async function ensureChatRoom({
 			rules,
 			expiresAt: addDays(
 				max([tournament.ctx.startsAt, new Date()]),
-				tournament.isLeague
-					? LEAGUE_BROADCAST_CHAT_ROOM_LIFESPAN_DAYS
-					: BROADCAST_CHAT_ROOM_LIFESPAN_DAYS,
+				lifespanDays(tournament),
 			),
 		});
 
 	if (isCreated) {
 		ChatSystemMessage.notifyRoomsChangedByRoomIds([chatRoomId]);
 	}
+}
+
+function lifespanDays(tournament: { isLeague: boolean }) {
+	return tournament.isLeague
+		? LEAGUE_BROADCAST_CHAT_ROOM_LIFESPAN_DAYS
+		: BROADCAST_CHAT_ROOM_LIFESPAN_DAYS;
 }

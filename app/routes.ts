@@ -321,6 +321,10 @@ export default [
 		"/broadcast/program/stream",
 		"features/broadcast-cast/routes/broadcast.program.stream.ts",
 	),
+	route(
+		"/broadcast/scanner",
+		"features/broadcast-cast/routes/broadcast.scanner.ts",
+	),
 
 	route("/org/new", "features/tournament-organization/routes/org.new.tsx"),
 	...prefix("/org/:slug", [

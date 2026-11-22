@@ -122,6 +122,8 @@ export default function BroadcastDesignPage() {
 	useUnsavedChangesChecker(
 		(navigation) =>
 			isDirty &&
+			// saving goes back to the dashboard
+			submitState === "idle" &&
 			(!navigation ||
 				navigation.currentLocation.pathname !==
 					navigation.nextLocation.pathname),
@@ -142,7 +144,8 @@ export default function BroadcastDesignPage() {
 		onSelect: (scene) => setScenario({ scene }),
 	});
 
-	const save = () => submit("UPDATE_THEME", { weaponImages, css: css || null });
+	const save = () =>
+		submit("UPDATE_THEME", { weaponImages, css: css || undefined });
 
 	return (
 		<div className={clsx("stack lg", styles.designer)}>

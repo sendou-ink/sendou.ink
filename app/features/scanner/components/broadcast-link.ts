@@ -1,7 +1,8 @@
 /**
- * Links the live capture to the tournament broadcast linked from its
- * dashboard (`broadcastLinkPersisted`): games starting and ending on the
- * capture put the broadcast's scenes waiting for them on air, timed by when
+ * Links the live capture to the tournament broadcast the user's OBS URL shows
+ * while its tournament is on (`BROADCAST_SCANNER_URL`, looked up again when
+ * the URL is pointed elsewhere and every minute): games starting and ending
+ * on the capture put the broadcast's scenes waiting for them on air, timed by when
  * they were seen, and the teams' ink colors the game (GameCues, broadcast's
  * `Producer.applyGameSignal`). Once a game ended, what was read of it
  * follows for the scenes after the game, with each moment of its end (the
@@ -17,23 +18,22 @@ import type {
 	BroadcastStreamMessage,
 } from "~/features/broadcast/broadcast-types";
 import {
+	BROADCAST_SCANNER_URL,
 	broadcastGameUrl,
 	broadcastStreamUrl,
 } from "~/features/broadcast/broadcast-urls";
-import * as PersistedState from "~/modules/persisted-state/persisted-state";
+import type { BroadcastScannerLoaderData } from "~/features/broadcast-cast/routes/broadcast.scanner";
 import { gameSummary } from "../core/broadcast-summary";
 import type { DetectedEvent } from "../core/events";
 import * as GameCues from "../core/GameCues";
-import {
-	broadcastLinkPersisted,
-	type LinkedBroadcast,
-	linkedBroadcast,
-} from "../scanner-activity";
+import type { BroadcastTarget } from "../scanner-activity";
 import { getFeed, newestSessionKey, refreshFeed } from "./events-feed";
 import { unsentMatches } from "./sendou-ingest";
 import { sendLive, uploadEnabled } from "./upload";
 
 const REOPEN_DELAY_MS = 5_000;
+/** Also catches the OBS URL pointed at a broadcast (or its tournament starting) while the capture follows none. */
+const LOOKUP_INTERVAL_MS = 60_000;
 const SIGNAL_DESCRIPTIONS: Record<BroadcastGameSignal["type"], string> = {
 	start: "the game started",
 	ink: "the teams' ink colors",
@@ -43,7 +43,7 @@ const SIGNAL_DESCRIPTIONS: Record<BroadcastGameSignal["type"], string> = {
 const SUMMARY_TIMEOUT_MS = 5_000;
 
 export interface BroadcastLinkSnapshot {
-	target: LinkedBroadcast | null;
+	target: BroadcastTarget | null;
 	/** The broadcast's stream is open, i.e. the dashboard counts this scanner. */
 	isConnected: boolean;
 	error: string | null;
@@ -62,15 +62,11 @@ let isCapturing = false;
 let cuesState = GameCues.initialState();
 let stream: EventSource | null = null;
 let reopenTimer: ReturnType<typeof setTimeout> | null = null;
+let lookupTimer: ReturnType<typeof setInterval> | null = null;
 /** The signals posted so far, the next one going out after them so the broadcast sees them in order. */
 let posting: Promise<void> = Promise.resolve();
 /** What was read of the game that ended last, which each moment of its end carries (see `endedGameSummary`). */
 let endedSummary: Promise<BroadcastGameSummary | null> = Promise.resolve(null);
-
-if (typeof window !== "undefined") {
-	retarget();
-	PersistedState.subscribe(broadcastLinkPersisted, retarget);
-}
 
 export function useBroadcastLink(): BroadcastLinkSnapshot {
 	return useSyncExternalStore(
@@ -84,13 +80,15 @@ export function useBroadcastLink(): BroadcastLinkSnapshot {
 export function setCapturing(capturing: boolean): void {
 	isCapturing = capturing;
 	cuesState = GameCues.initialState();
+	if (lookupTimer) clearInterval(lookupTimer);
+	lookupTimer = null;
 	if (!capturing) {
-		disconnect();
+		retarget(null);
 		return;
 	}
 
-	retarget();
-	connect();
+	void lookUpTarget();
+	lookupTimer = setInterval(() => void lookUpTarget(), LOOKUP_INTERVAL_MS);
 }
 
 /** A detector event of the capture, as it came in. */
@@ -117,9 +115,21 @@ export function observeMapOpen(t: number): void {
 	advance({ kind: "mapOpen", t });
 }
 
-/** Follows the link as it was changed (here or in another tab) or ran out, a running capture switching over right away. */
-function retarget(): void {
-	const target = linkedBroadcast();
+/** Asks which broadcast to follow, keeping the current one when the answer doesn't come. */
+async function lookUpTarget(): Promise<void> {
+	try {
+		const response = await fetch(BROADCAST_SCANNER_URL);
+		if (!response.ok) return;
+
+		const { broadcast } = (await response.json()) as BroadcastScannerLoaderData;
+		if (isCapturing) retarget(broadcast);
+	} catch {
+		// offline for a moment, the next lookup tries again
+	}
+}
+
+/** Follows the broadcast, a running capture switching over right away. */
+function retarget(target: BroadcastTarget | null): void {
 	if (
 		target?.tournamentId === snapshot.target?.tournamentId &&
 		target?.slug === snapshot.target?.slug
@@ -129,7 +139,7 @@ function retarget(): void {
 
 	disconnect();
 	set({ ...UNLINKED, target });
-	if (isCapturing) connect();
+	if (isCapturing && target) openStream(target);
 }
 
 function subscribe(listener: () => void): () => void {
@@ -142,14 +152,6 @@ function set(patch: Partial<BroadcastLinkSnapshot>): void {
 	for (const listener of listeners) listener();
 }
 
-function connect(): void {
-	disconnect();
-	const target = snapshot.target;
-	if (!target) return;
-
-	openStream(target);
-}
-
 function disconnect(): void {
 	if (reopenTimer) clearTimeout(reopenTimer);
 	reopenTimer = null;
@@ -158,13 +160,15 @@ function disconnect(): void {
 	if (snapshot.isConnected) set({ isConnected: false });
 }
 
-function openStream(target: LinkedBroadcast): void {
+function openStream(target: BroadcastTarget): void {
 	stream = new EventSource(broadcastStreamUrl({ ...target, role: "scanner" }));
 	stream.onmessage = (event) => {
 		if (!snapshot.isConnected) set({ isConnected: true, error: null });
 
 		const message = JSON.parse(event.data) as BroadcastStreamMessage;
 		if (message.kind === "reconnect") reopenStream(target, 0);
+		// the OBS URL was pointed at another broadcast
+		if (message.kind === "reload") void lookUpTarget();
 	};
 	stream.onerror = () => {
 		set({ isConnected: false });
@@ -179,7 +183,7 @@ function openStream(target: LinkedBroadcast): void {
 	};
 }
 
-function reopenStream(target: LinkedBroadcast, delayMs: number): void {
+function reopenStream(target: BroadcastTarget, delayMs: number): void {
 	stream?.close();
 	stream = null;
 	if (reopenTimer) clearTimeout(reopenTimer);

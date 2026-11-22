@@ -1,9 +1,14 @@
+import { addDays } from "date-fns";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { ServerConfig } from "~/config.server";
 import * as TournamentBroadcastFactory from "~/db/seed/factories/TournamentBroadcastFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { findCastProgram } from "./broadcast-cast-utils.server";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	findCastProgram,
+	findScannerBroadcast,
+} from "./broadcast-cast-utils.server";
 
 const CAST_ACCOUNT = {
 	platform: "TWITCH" as const,
@@ -58,9 +63,43 @@ describe("findCastProgram", () => {
 	});
 });
 
-function createTournament() {
+describe("findScannerBroadcast", () => {
+	test("follows the broadcast the user's OBS URL shows", async () => {
+		const tournament = await createTournament();
+		await TournamentBroadcastFactory.pointProgram({
+			userId: users.id(1),
+			tournamentId: tournament.id,
+			channel: CAST_ACCOUNT,
+		});
+
+		expect(await findScannerBroadcast(users.id(1))).toEqual({
+			tournamentId: tournament.id,
+			slug: "sendouink",
+		});
+	});
+
+	test("is null without an OBS URL", async () => {
+		expect(await findScannerBroadcast(users.id(1))).toBeNull();
+	});
+
+	test("is null while the tournament is days away", async () => {
+		const tournament = await createTournament(addDays(new Date(), 5));
+		await TournamentBroadcastFactory.pointProgram({
+			userId: users.id(1),
+			tournamentId: tournament.id,
+			channel: CAST_ACCOUNT,
+		});
+
+		expect(await findScannerBroadcast(users.id(1))).toBeNull();
+	});
+});
+
+function createTournament(startsAt = new Date()) {
 	return TournamentFactory.create(
-		{ authorId: users.id(1) },
+		{
+			authorId: users.id(1),
+			startTimes: [dateToDatabaseTimestamp(startsAt)],
+		},
 		{ castAccounts: [CAST_ACCOUNT] },
 	);
 }

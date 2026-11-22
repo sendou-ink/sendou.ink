@@ -242,9 +242,6 @@ export function ThemeEditor({
 					]}
 					onChange={pickPreset}
 				/>
-				<FormMessage type="info" spaced={false}>
-					{t("broadcast:design.presetHint")}
-				</FormMessage>
 			</div>
 			<SendouDialog
 				isOpen={presetToConfirm !== null}
@@ -300,13 +297,13 @@ export function ThemeEditor({
 							</SendouButton>
 						) : null}
 					</div>
-					<FormMessage type="info" spaced={false}>
-						{tab === "custom"
-							? t("broadcast:design.customHint")
-							: isLayout
-								? t("broadcast:design.layoutHint")
-								: t("broadcast:design.stylesheetHint")}
-					</FormMessage>
+					{tab === "custom" || isLayout ? (
+						<FormMessage type="info" spaced={false}>
+							{tab === "custom"
+								? t("broadcast:design.customHint")
+								: t("broadcast:design.layoutHint")}
+						</FormMessage>
+					) : null}
 				</div>
 				<SendouSwitch
 					size="small"

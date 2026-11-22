@@ -128,11 +128,14 @@ test.describe("Broadcast", () => {
 			"7px",
 		);
 
+		await dashboard.locators.themeTab.click();
+		await expect(dashboard.locators.themeName("Default styles")).toBeVisible();
 		await dashboard.saveTheme(
 			"[data-broadcast] { outline: 7px solid rgb(1, 2, 3); }",
 		);
 
 		await expect(obs.program.locators.canvas).toHaveCSS("outline-width", "7px");
+		await expect(dashboard.locators.themeName("Your own theme")).toBeVisible();
 
 		await obs.close();
 	});
@@ -175,6 +178,7 @@ test.describe("Broadcast", () => {
 			"rgb(20, 20, 20)",
 		);
 
+		await design.goto();
 		await design.pickPreset("Teletext");
 		await design.locators.confirmPresetButton.click();
 		await expect(design.locators.presetSelect).toContainText("Teletext");

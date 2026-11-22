@@ -9,6 +9,7 @@ import type { BroadcastStreamMessage } from "./broadcast-types";
 import {
 	findProgram,
 	isBroadcastEnabled,
+	isBroadcastOngoing,
 	isBroadcastProducer,
 	pointProgram,
 	regenerateProgramKey,
@@ -73,6 +74,39 @@ describe("isBroadcastEnabled", () => {
 
 		expect(isBroadcastEnabled(tournament(organizationId))).toBe(expected);
 	});
+});
+
+describe("isBroadcastOngoing", () => {
+	const startsAt = new Date("2026-11-20T18:00:00Z");
+	const HOUR_MS = 60 * 60 * 1000;
+
+	test.each([
+		{ why: "two days before the start", hours: -48, expected: false },
+		{ why: "the evening before the start", hours: -12, expected: true },
+		{ why: "during the tournament", hours: 5, expected: true },
+		{ why: "a week after the start", hours: 7 * 24 + 1, expected: false },
+		{
+			why: "once finalized",
+			hours: 5,
+			isFinalized: 1 as const,
+			expected: false,
+		},
+		{
+			why: "a league a month after the start",
+			hours: 30 * 24,
+			isLeague: true,
+			expected: true,
+		},
+	])(
+		"$why",
+		({ hours, isFinalized = 0 as const, isLeague = false, expected }) => {
+			const now = new Date(startsAt.getTime() + hours * HOUR_MS);
+
+			expect(
+				isBroadcastOngoing({ ctx: { startsAt, isFinalized }, isLeague }, now),
+			).toBe(expected);
+		},
+	);
 });
 
 describe("isBroadcastProducer", () => {

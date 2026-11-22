@@ -50,11 +50,6 @@
 	color: var(--color-fg-accent);
 }
 
-.unlink {
-	flex-shrink: 0;
-	margin-inline-start: auto;
-}
-
 .gameText {
 	display: flex;
 	flex-direction: column;

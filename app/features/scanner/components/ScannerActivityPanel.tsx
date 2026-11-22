@@ -4,14 +4,7 @@
  * tick cost nothing the rest of the time.
  */
 import clsx from "clsx";
-import {
-	Link2,
-	Play,
-	RadioTower,
-	RotateCcw,
-	Square,
-	Unlink,
-} from "lucide-react";
+import { Play, RadioTower, RotateCcw, Square } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -25,7 +18,6 @@ import {
 } from "~/components/layout/ActivityPanel";
 import { navIconUrl, SCANNER_PAGE } from "~/utils/urls";
 import type {
-	BroadcastTarget,
 	ScannerActivityActions,
 	ScannerActivityState,
 } from "../scanner-activity";
@@ -35,19 +27,12 @@ import styles from "./ScannerActivityPanel.module.css";
 export function ScannerActivityPanel({
 	activity,
 	actions,
-	pageBroadcast,
 }: {
 	activity: ScannerActivityState;
 	actions: ScannerActivityActions;
-	/** the broadcast the page produces, offered for linking when the capture isn't linked to it */
-	pageBroadcast: BroadcastTarget | null;
 }) {
 	const isCapturing =
 		activity.status === "running" || activity.status === "starting";
-	const isPageBroadcastLinked =
-		pageBroadcast !== null &&
-		activity.broadcast?.tournamentId === pageBroadcast.tournamentId &&
-		activity.broadcast.slug === pageBroadcast.slug;
 
 	return (
 		<ActivityPanel>
@@ -84,18 +69,10 @@ export function ScannerActivityPanel({
 				<Preview stream={activity.stream} />
 			) : null}
 			<StatusBlock activity={activity} />
-			{pageBroadcast && !isPageBroadcastLinked ? (
-				<BroadcastLinkOffer
-					pageBroadcast={pageBroadcast}
-					linkedSlug={activity.broadcast?.slug ?? null}
-					isCapturing={isCapturing}
-					onLink={() => actions.linkBroadcast(pageBroadcast)}
-				/>
-			) : activity.broadcast?.error ? (
+			{activity.broadcast?.error ? (
 				<BroadcastLinkError
 					slug={activity.broadcast.slug}
 					error={activity.broadcast.error}
-					onUnlink={() => actions.linkBroadcast(null)}
 				/>
 			) : null}
 			{activity.stats ? (
@@ -209,16 +186,8 @@ function StatusBlock({ activity }: { activity: ScannerActivityState }) {
 	);
 }
 
-/** The linked broadcast shows only when something went wrong with it, the broadcast's dashboard tells the rest. */
-function BroadcastLinkError({
-	slug,
-	error,
-	onUnlink,
-}: {
-	slug: string;
-	error: string;
-	onUnlink: () => void;
-}) {
+/** The followed broadcast shows only when something went wrong with it, the broadcast's dashboard tells the rest. */
+function BroadcastLinkError({ slug, error }: { slug: string; error: string }) {
 	return (
 		<div className={styles.broadcast}>
 			<RadioTower size={16} className={styles.broadcastIcon} />
@@ -226,55 +195,6 @@ function BroadcastLinkError({
 				<span className="text-xs font-semi-bold">Broadcast {slug}</span>
 				<span className="text-xxs text-error">{error}</span>
 			</div>
-			<SendouButton
-				size="miniscule"
-				variant="minimal"
-				icon={<Unlink />}
-				onClick={onUnlink}
-				className={styles.unlink}
-			>
-				Unlink
-			</SendouButton>
-		</div>
-	);
-}
-
-function BroadcastLinkOffer({
-	pageBroadcast,
-	linkedSlug,
-	isCapturing,
-	onLink,
-}: {
-	pageBroadcast: BroadcastTarget;
-	/** the other broadcast the capture is linked to */
-	linkedSlug: string | null;
-	isCapturing: boolean;
-	onLink: () => void;
-}) {
-	return (
-		<div className={styles.broadcast}>
-			<RadioTower size={16} className={styles.broadcastIcon} />
-			<div className={styles.gameText}>
-				<span className="text-xs font-semi-bold">
-					Broadcast {pageBroadcast.slug}
-				</span>
-				<span className="text-xxs text-warning">
-					{linkedSlug
-						? `Not linked, games switch the scenes of ${linkedSlug}`
-						: isCapturing
-							? "Not linked, games don't switch its scenes"
-							: "Starting the capture here links it"}
-				</span>
-			</div>
-			<SendouButton
-				size="miniscule"
-				variant="minimal"
-				icon={<Link2 />}
-				onClick={onLink}
-				className={styles.unlink}
-			>
-				Link
-			</SendouButton>
 		</div>
 	);
 }

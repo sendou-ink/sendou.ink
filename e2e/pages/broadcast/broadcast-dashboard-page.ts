@@ -12,6 +12,7 @@ import {
 	submit,
 	waitForPOSTResponse,
 } from "../../helpers/playwright";
+import { BroadcastDesignPage } from "./broadcast-design-page";
 
 const VIEW_LABELS: Record<BroadcastView, string> = {
 	live: "Live",
@@ -54,12 +55,15 @@ export class BroadcastDashboardPage {
 			holdButton: page.getByTestId("broadcast-hold-button"),
 			onGameStart: page.getByText("On game start", { exact: true }),
 			themeTab: page.getByRole("tab", { name: "Theme" }),
+			themeName: (name: string) =>
+				page
+					.getByRole("tabpanel", { name: "Theme" })
+					.getByText(name, { exact: true }),
 			setupTab: page.getByRole("tab", { name: "Setup" }),
 			captureCardSourceInput: page.getByLabel("Capture card source"),
 			programShowsThis: page.getByText(
 				"Your browser source URL shows this broadcast",
 			),
-			cssInput: page.getByLabel("Custom CSS"),
 		};
 	}
 
@@ -137,16 +141,13 @@ export class BroadcastDashboardPage {
 		return submit(this.page, `broadcast-queue-remove-${idx}`);
 	}
 
-	/** Saves custom CSS for the overlays from the theme tab. */
+	/** Saves custom CSS for the overlays through the designer, which goes back to the theme tab. */
 	async saveTheme(css: string) {
-		await this.locators.themeTab.click();
-		await this.locators.cssInput.fill(css);
-		await submit(
-			this.page,
-			this.page
-				.getByRole("tabpanel", { name: "Theme" })
-				.getByTestId("submit-button"),
-		);
+		const design = new BroadcastDesignPage(this.page, this.pageArgs);
+		await design.goto();
+		await design.pickTab("Custom CSS");
+		await design.locators.editor.fill(css);
+		await design.save();
 	}
 
 	/** Points the user's OBS URL at this broadcast, confirming the switch away from the one it shows. */

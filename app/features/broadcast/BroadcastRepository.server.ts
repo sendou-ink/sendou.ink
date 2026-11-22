@@ -222,7 +222,7 @@ export function findProgramByKey(programKey: string) {
 }
 
 /**
- * The user's OBS URL: its key, how it mutes the capture card and the broadcast it shows with its channel, its tournament's
+ * The user's OBS URL: its id and key, how it mutes the capture card and the broadcast it shows with its channel, its tournament's
  * name and cast accounts (`null`s before it is pointed at one). `undefined` before the user generated it.
  */
 export function findProgram(userId: number) {
@@ -240,6 +240,7 @@ export function findProgram(userId: number) {
 		)
 		.leftJoin("Tournament", "Tournament.id", "TournamentBroadcast.tournamentId")
 		.select([
+			"UserBroadcastSetup.id",
 			"UserBroadcastSetup.programKey",
 			"UserBroadcastSetup.broadcastId",
 			"UserBroadcastSetup.obsAudio",

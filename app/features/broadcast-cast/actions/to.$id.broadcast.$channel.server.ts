@@ -1,7 +1,9 @@
+import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.server";
 import { broadcastParamsSchema } from "~/features/broadcast/broadcast-schemas";
 import type { BroadcastStoredState } from "~/features/broadcast/broadcast-types";
+import { broadcastDashboardPage } from "~/features/broadcast/broadcast-urls";
 import {
 	pointProgram,
 	regenerateProgramKey,
@@ -19,6 +21,7 @@ import {
 	CAST_PRODUCER_RULES,
 } from "../broadcast-cast-constants";
 import { broadcastActionSchema } from "../broadcast-cast-schemas";
+import { broadcastDashboardSearchParams } from "../broadcast-cast-search-params";
 import type {
 	BroadcastCasterSetting,
 	CastBroadcastSettings,
@@ -70,6 +73,11 @@ export const action = defineAction(
 			});
 			errorToastIfFalsy(isUpdated, staleMessage);
 		};
+		const refresh = () =>
+			BroadcastHub.refresh({
+				tournamentId: tournament.ctx.id,
+				slug: channel.slug,
+			});
 		const editItem = (
 			itemId: number,
 			patch: Producer.ItemPatch<CastProducerState>,
@@ -202,7 +210,17 @@ export const action = defineAction(
 					...key,
 					patch: { css: body.css ?? "", weaponImages: body.weaponImages },
 				});
-				break;
+				refresh();
+
+				return redirect(
+					broadcastDashboardSearchParams.href(
+						broadcastDashboardPage({
+							tournamentId: tournament.ctx.id,
+							slug: channel.slug,
+						}),
+						{ tab: "theme" },
+					),
+				);
 			}
 			case "UPDATE_HEADLINE": {
 				await BroadcastRepository.updateSettings<CastBroadcastSettings>({
@@ -275,10 +293,7 @@ export const action = defineAction(
 			}
 		}
 
-		BroadcastHub.refresh({
-			tournamentId: tournament.ctx.id,
-			slug: channel.slug,
-		});
+		refresh();
 
 		return null;
 	},

@@ -5,7 +5,7 @@ import {
 	scannerAbilitySchema,
 	stageIdSchema,
 } from "~/features/scanner/scanner-schemas";
-import { radioGroup, stringConstant, textAreaOptional } from "~/form/fields";
+import { stringConstant } from "~/form/fields";
 import { id } from "~/utils/schema";
 import {
 	BROADCAST_CSS_MAX_LENGTH,
@@ -19,21 +19,11 @@ const channelSlug = v.pipe(v.string(), v.minLength(1), v.maxLength(100));
 
 export const broadcastParamsSchema = v.object({ id, channel: channelSlug });
 
-export const broadcastThemeFormSchema = v.object({
+/** The designer saving its theme: the weapon images and the custom CSS (left out when empty). */
+export const broadcastThemeSchema = v.object({
 	_action: stringConstant("UPDATE_THEME"),
-	weaponImages: radioGroup({
-		label: "labels.broadcastWeaponImages",
-		variant: "chip",
-		items: BROADCAST_WEAPON_IMAGES.map((weaponImages) => ({
-			value: weaponImages,
-			label: `options.broadcastWeaponImages.${weaponImages}` as const,
-		})),
-	}),
-	css: textAreaOptional({
-		label: "labels.broadcastCss",
-		bottomText: "bottomTexts.broadcastCss",
-		maxLength: BROADCAST_CSS_MAX_LENGTH,
-	}),
+	weaponImages: v.picklist(BROADCAST_WEAPON_IMAGES),
+	css: v.optional(v.pipe(v.string(), v.maxLength(BROADCAST_CSS_MAX_LENGTH))),
 });
 
 export const broadcastSignalSchema = v.object({

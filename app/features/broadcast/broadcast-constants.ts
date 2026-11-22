@@ -186,3 +186,6 @@ export const BROADCAST_WEAPONS_PER_PLAYER = 3;
 export const BROADCAST_CHAT_ROOM_LIFESPAN_DAYS = 7;
 
 export const LEAGUE_BROADCAST_CHAT_ROOM_LIFESPAN_DAYS = 60;
+
+/** Days before the tournament's start its broadcast counts as on, for the scanner to follow it, see `isBroadcastOngoing`. */
+export const BROADCAST_ONGOING_LEAD_DAYS = 1;

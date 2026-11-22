@@ -14,3 +14,12 @@ export const BROADCAST_THEME_PRESETS = [
 	{ key: "capsule", css: capsule.trim() },
 	{ key: "teletext", css: teletext.trim() },
 ] as const;
+
+/** The preset the custom CSS is, unchanged since loaded in the designer. `null` for no CSS or CSS of one's own. */
+export function presetKeyOf(css: string) {
+	if (!css) return null;
+
+	return (
+		BROADCAST_THEME_PRESETS.find((preset) => preset.css === css)?.key ?? null
+	);
+}

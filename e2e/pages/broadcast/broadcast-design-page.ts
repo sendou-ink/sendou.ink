@@ -18,6 +18,7 @@ export class BroadcastDesignPage {
 		this.pageArgs = pageArgs;
 		this.locators = {
 			presetSelect: page.getByLabel("Preset", { exact: true }),
+			stylesheetSelect: page.getByRole("button", { name: /Stylesheet$/ }),
 			editor: page.getByTestId("broadcast-design-editor"),
 			confirmPresetButton: page.getByTestId("broadcast-design-preset-confirm"),
 			saveButton: page.getByTestId("broadcast-design-save"),
@@ -37,7 +38,15 @@ export class BroadcastDesignPage {
 		await this.page.getByRole("option", { name, exact: true }).click();
 	}
 
+	/** Opens a stylesheet of the editor by its name in the picker, e.g. "Custom CSS". */
+	async pickTab(name: string) {
+		await this.locators.stylesheetSelect.click();
+		await this.page.getByRole("option", { name, exact: true }).click();
+	}
+
+	/** Saves the theme, landing back on the dashboard's theme tab. */
 	async save() {
 		await submit(this.page, this.locators.saveButton);
+		await this.page.waitForURL(/tab=theme/);
 	}
 }

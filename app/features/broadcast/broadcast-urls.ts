@@ -70,6 +70,9 @@ export const broadcastProgramStreamUrl = (programKey: string) =>
 		key: programKey,
 	});
 
+/** The broadcast the logged in user's scanner follows: the one their OBS URL shows, while its tournament is on. */
+export const BROADCAST_SCANNER_URL = "/broadcast/scanner";
+
 /** Where the dashboard and overlays post their WebRTC session descriptions to each other. */
 export const broadcastSignalUrl = (args: BroadcastPageArgs) =>
 	`${broadcastDashboardPage(args)}/signal`;

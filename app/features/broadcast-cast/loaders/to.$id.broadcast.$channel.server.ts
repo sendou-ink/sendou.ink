@@ -13,6 +13,7 @@ import * as TournamentMatchRepository from "~/features/tournament-match/Tourname
 import { resolveJoinInfo } from "~/features/tournament-match/tournament-match-utils";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { CAST_LAYOUT } from "../broadcast-cast-layout.server";
+import { presetKeyOf } from "../broadcast-cast-theme-presets";
 import type { BroadcastBracketSide } from "../broadcast-cast-types";
 import * as BracketFocus from "../core/BracketFocus";
 import * as CastChannel from "../core/CastChannel";
@@ -48,6 +49,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			userId: user.id,
 			broadcastId: broadcast?.id,
 		}),
+		themePresetKey: presetKeyOf(state.settings.css),
 		featuredMatchId,
 		featuredMatchBracketIdx: featuredMatchId
 			? tournament.matchIdToBracketIdx(featuredMatchId)
