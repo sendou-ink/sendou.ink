@@ -63,15 +63,18 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-0-5);
+	min-width: 0;
 }
 
 .membershipName {
 	font-weight: var(--weight-semi);
+	overflow-wrap: anywhere;
 }
 
 .membershipRole {
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
+	overflow-wrap: anywhere;
 }
 
 .peakValue {
@@ -93,6 +96,14 @@
 	color: var(--color-text-high);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
+}
+
+.commissionText {
+	max-width: 100%;
+	font-size: var(--font-sm);
+	color: var(--color-text-high);
+	text-align: center;
+	overflow-wrap: anywhere;
 }
 
 .highlightedResults {
@@ -525,6 +536,8 @@
 }
 
 .countdownTitle {
+	max-width: 100%;
+	overflow-wrap: anywhere;
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
 	text-align: center;

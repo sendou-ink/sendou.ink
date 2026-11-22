@@ -893,7 +893,7 @@ function CommissionsWidget({
 				{isOpen ? t("user:commissions.open") : t("user:commissions.closed")}
 			</div>
 			{data.commissionText ? (
-				<div className={styles.widgetValueFooter}>{data.commissionText}</div>
+				<div className={styles.commissionText}>{data.commissionText}</div>
 			) : null}
 		</div>
 	);
@@ -1112,7 +1112,9 @@ function FriendsWidget({
 	return (
 		<div className={styles.friendsList}>
 			{itemsToDisplay.map((friend) => (
-				<UserLink key={friend.id} user={friend} className={styles.linkRow} />
+				<UserLink key={friend.id} user={friend} className={styles.linkRow}>
+					<span className="truncate">{friend.username}</span>
+				</UserLink>
 			))}
 			{!everythingVisible ? (
 				<div className="mt-4">

@@ -717,7 +717,7 @@ function RowContents({
 							key={`removed-${player.userId}`}
 							className={clsx(styles.playerBadge, styles.playerRemoved)}
 						>
-							{player.username}
+							<span className="truncate">{player.username}</span>
 						</div>
 					))}
 					{team.members.map((member) => {
@@ -730,7 +730,7 @@ function RowContents({
 								})}
 							>
 								<UserCard userId={member.userId}>
-									<span>{member.username}</span>
+									<span className="truncate">{member.username}</span>
 								</UserCard>
 								{isNew ? (
 									<span className={styles.playerNewBadge}>NEW</span>

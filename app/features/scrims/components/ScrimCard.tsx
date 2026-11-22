@@ -234,11 +234,13 @@ function ScrimTeamMemberRow({ user }: { user: ScrimPost["users"][number] }) {
 
 	return (
 		<UserCard userId={user.id} withMutualFriends>
-			<span className="stack horizontal sm items-center">
+			<span
+				className={clsx(styles.teamMember, "stack horizontal sm items-center")}
+			>
 				<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="xs">
 					<Avatar size="xxs" user={user} />
 				</NoteAvatar>
-				{user.username}
+				<span className="truncate">{user.username}</span>
 			</span>
 		</UserCard>
 	);

@@ -313,9 +313,19 @@ function GroupMember({
 	return (
 		<div className="stack xxs" data-testid="sendouq-group-card-member">
 			<div className={styles.member}>
-				<div className="text-main-forced stack xs horizontal items-center">
+				<div
+					className={clsx(
+						styles.memberIdentity,
+						"text-main-forced stack xs horizontal items-center",
+					)}
+				>
 					<UserCard userId={member.id} withMutualFriends>
-						<span className="stack xs horizontal items-center">
+						<span
+							className={clsx(
+								styles.memberIdentity,
+								"stack xs horizontal items-center",
+							)}
+						>
 							<NoteAvatar
 								sentiment={cardData?.privateNote?.sentiment}
 								size="sm"

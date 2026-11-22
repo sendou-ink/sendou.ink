@@ -378,9 +378,7 @@ function OwnEntryPeek({
 						{typeof entry.weaponSplId === "number" ? (
 							<RankTableWeaponImage weaponSplId={entry.weaponSplId} />
 						) : null}
-						<div className={clsx(leaderboardsStyles.tableName, "truncate")}>
-							{entry.username}
-						</div>
+						<div className="truncate">{entry.username}</div>
 						<div className={leaderboardsStyles.tablePower}>{entry.power}</div>
 					</RankTableInnerRow>
 				</RankTableRow>
@@ -433,11 +431,7 @@ function PlayersTable({
 									{typeof entry.weaponSplId === "number" ? (
 										<RankTableWeaponImage weaponSplId={entry.weaponSplId} />
 									) : null}
-									<div
-										className={clsx(leaderboardsStyles.tableName, "truncate")}
-									>
-										{entry.username}
-									</div>
+									<div className="truncate">{entry.username}</div>
 									{entry.pendingPlusTier ? (
 										<div className="text-xs text-theme whitespace-nowrap">
 											➜ +{entry.pendingPlusTier}

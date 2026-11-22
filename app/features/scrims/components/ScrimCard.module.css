@@ -131,3 +131,7 @@
 	font-weight: var(--weight-bold);
 	text-transform: uppercase;
 }
+
+.teamMember {
+	min-width: 0;
+}

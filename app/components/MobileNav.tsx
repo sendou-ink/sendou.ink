@@ -579,7 +579,9 @@ function YouPanel({
 					className={styles.youPanelUser}
 				>
 					<Avatar user={user} size="sm" />
-					<span className={styles.youPanelUsername}>{user.username}</span>
+					<span className={clsx(styles.youPanelUsername, "truncate")}>
+						{user.username}
+					</span>
 				</Link>
 				{user.team ? (
 					<Link

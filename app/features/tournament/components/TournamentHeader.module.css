@@ -61,6 +61,7 @@
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
+	overflow-wrap: anywhere;
 
 	&::before,
 	&::after {
@@ -74,12 +75,14 @@
 	display: inline-flex;
 	align-items: center;
 	gap: var(--s-2);
+	max-width: 100%;
 	color: var(--color-text);
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
 }
 
 .organizerUser {
+	max-width: 100%;
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
 }

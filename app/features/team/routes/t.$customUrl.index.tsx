@@ -459,7 +459,7 @@ function MemberRow({
 								<Avatar user={member} size="md" />
 							</div>
 						</NoteAvatar>
-						{member.username}
+						<span className="truncate">{member.username}</span>
 					</span>
 				</UserCard>
 				<div className="stack horizontal md">

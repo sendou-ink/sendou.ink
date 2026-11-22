@@ -25,10 +25,6 @@
 	padding-inline-start: var(--s-4);
 }
 
-.tableName {
-	max-width: 117px;
-}
-
 .tierHeader {
 	display: flex;
 	align-items: center;

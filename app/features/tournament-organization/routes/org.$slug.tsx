@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import {
 	ChartNoAxesColumn,
 	Link as LinkIcon,
@@ -595,7 +596,7 @@ function EventInfo({
 						height={38}
 					/>
 				) : null}
-				<div>
+				<div className={styles.eventName}>
 					<div>{event.name}</div>
 					<LocaleTime
 						date={event.startsAt}
@@ -636,7 +637,12 @@ function EventWinners({
 		<div className="stack md">
 			{winners.map((winner) => (
 				<div key={winner.id} className="stack xs">
-					<div className="stack horizontal sm items-center font-semi-bold">
+					<div
+						className={clsx(
+							styles.eventWinnerName,
+							"stack horizontal sm items-center font-semi-bold",
+						)}
+					>
 						<Placement placement={1} size={24} />
 						{winner.avatarUrl ? (
 							<img

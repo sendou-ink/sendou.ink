@@ -151,10 +151,19 @@
 	margin-top: var(--s-5);
 	margin-block-end: var(--s-4);
 	width: max-content;
+	max-width: 100%;
 }
 
 .firstPlacersTeamName {
 	max-width: 150px;
+}
+
+.firstPlacersMembers {
+	max-width: 100%;
+
+	& > * {
+		max-width: 100%;
+	}
 }
 
 .badgeNavIcon {

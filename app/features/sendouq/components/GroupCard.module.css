@@ -61,8 +61,11 @@
 	padding-inline-end: var(--s-3);
 }
 
+.memberIdentity {
+	min-width: 0;
+}
+
 .name {
-	max-width: 7.5rem;
 	font-size: var(--font-xs);
 	color: var(--color-text);
 }

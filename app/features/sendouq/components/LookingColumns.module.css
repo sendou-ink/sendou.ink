@@ -94,6 +94,7 @@
 		flex-direction: column;
 		gap: var(--s-2);
 		flex: 0 0 100%;
+		min-width: 0;
 		scroll-snap-align: start;
 	}
 

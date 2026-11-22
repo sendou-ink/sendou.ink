@@ -204,12 +204,14 @@ function OrganizerLink({ tournament }: { tournament: Tournament }) {
 					url={tournament.ctx.organization.logoUrl ?? undefined}
 					size="xxs"
 				/>
-				{tournament.ctx.organization.name}
+				<span className="truncate">{tournament.ctx.organization.name}</span>
 			</Link>
 		);
 	}
 
 	return (
-		<UserLink user={tournament.ctx.author} className={styles.organizerUser} />
+		<UserLink user={tournament.ctx.author} className={styles.organizerUser}>
+			<span className="truncate">{tournament.ctx.author.username}</span>
+		</UserLink>
 	);
 }

@@ -252,13 +252,20 @@ function TournamentFirstPlacerWithMembers({
 					</div>
 				</div>
 			</div>
-			<div className="text-xxs stack items-start mt-1">
+			<div
+				className={clsx(
+					styles.firstPlacersMembers,
+					"text-xxs stack items-start mt-1",
+				)}
+			>
 				{placer.members.map((member) => (
 					<div key={member.id} className="stack horizontal xs items-center">
 						{!censored && member.country ? (
 							<Flag tiny countryCode={member.country} />
 						) : null}
-						{censored ? "???" : member.username}{" "}
+						<span className="truncate">
+							{censored ? "???" : member.username}
+						</span>
 					</div>
 				))}
 				{!censored && placer.notShownMembersCount > 0 ? (

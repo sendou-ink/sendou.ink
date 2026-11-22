@@ -30,10 +30,21 @@
 	font-weight: var(--weight-semi);
 	color: var(--color-text);
 	width: max-content;
+	max-width: 100%;
 
 	& img {
 		border-radius: var(--radius-avatar);
 	}
+}
+
+.eventName {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.eventWinnerName {
+	max-width: 100%;
+	overflow-wrap: anywhere;
 }
 
 .eventInfoTime {

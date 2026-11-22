@@ -2,4 +2,5 @@
 	display: inline-flex;
 	align-items: center;
 	gap: var(--s-2);
+	min-width: 0;
 }

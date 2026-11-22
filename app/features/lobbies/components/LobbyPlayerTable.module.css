@@ -28,7 +28,8 @@
 }
 
 .player {
-	display: inline-flex;
+	display: flex;
 	align-items: center;
 	gap: var(--s-2);
+	contain: inline-size;
 }

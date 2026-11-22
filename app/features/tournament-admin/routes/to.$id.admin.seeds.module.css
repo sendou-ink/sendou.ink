@@ -58,6 +58,7 @@
 
 .playersArea {
 	grid-area: players;
+	min-width: 0;
 }
 
 @container (width >= 640px) {
@@ -148,6 +149,8 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
+	min-width: 0;
+	max-width: 100%;
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-selector);
 	padding: 0 var(--s-2);

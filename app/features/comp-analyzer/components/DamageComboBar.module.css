@@ -55,6 +55,7 @@
 	position: relative;
 	display: flex;
 	flex: 1;
+	min-width: 0;
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-selector);
 	overflow: hidden;
@@ -93,7 +94,9 @@
 	}
 }
 
+/* left out of the segment's fit-content width, so it truncates instead of widening it */
 .damageTypeLabel {
+	contain: inline-size;
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 	text-align: center;

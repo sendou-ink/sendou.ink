@@ -220,7 +220,11 @@ function Results() {
 								<td className="pl-4">
 									<Placement placement={result.placement} />
 								</td>
-								<td>{result.teamName}</td>
+								<td>
+									<div className={styles.resultsTeamName}>
+										{result.teamName}
+									</div>
+								</td>
 								<td>
 									<ul className={styles.resultsPlayers}>
 										{result.players.map((player) => {
@@ -282,7 +286,7 @@ function Description() {
 						user={{ id: data.event.authorId, avatar: data.event.avatar }}
 						size="xs"
 					/>
-					{data.event.username}
+					<span className="truncate">{data.event.username}</span>
 				</div>
 				{data.event.description ? (
 					<div className="whitespace-pre-wrap">{data.event.description}</div>

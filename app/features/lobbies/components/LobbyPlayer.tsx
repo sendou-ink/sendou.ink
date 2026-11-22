@@ -21,7 +21,7 @@ export function LobbyPlayer({
 				<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="xs">
 					<Avatar user={user} size="xxs" />
 				</NoteAvatar>
-				{user.username}
+				<span className="truncate">{user.username}</span>
 			</span>
 		</UserCard>
 	);

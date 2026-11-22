@@ -37,12 +37,19 @@
 	font-weight: var(--weight-bold);
 	color: #fff;
 	display: none;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: var(--s-1);
+}
+
+.bannerNameRow {
+	display: flex;
 	align-items: center;
 	gap: var(--s-3);
-	position: relative;
 }
 
 .bskyLink {
+	flex-shrink: 0;
 	padding: var(--s-1);
 	border: 1px solid;
 	border-radius: 50%;
@@ -111,9 +118,6 @@
 }
 
 .bannerTagDesktop {
-	position: absolute;
-	bottom: 41px;
-	right: 0;
 	display: none;
 }
 

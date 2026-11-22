@@ -107,7 +107,9 @@ function TeamBanner() {
 							{team.tag}
 						</div>
 					) : null}
-					{team.name} <BskyLink />
+					<div className={styles.bannerNameRow}>
+						{team.name} <BskyLink />
+					</div>
 				</div>
 			</div>
 			{team.avatarUrl ? <div className={styles.bannerAvatarSpacer} /> : null}

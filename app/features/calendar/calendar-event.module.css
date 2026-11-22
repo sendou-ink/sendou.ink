@@ -34,17 +34,30 @@
 .author {
 	display: flex;
 	align-items: center;
+	min-width: 0;
 	color: var(--color-text-high);
 	font-weight: var(--weight-semi);
 	gap: var(--s-1);
 }
 
+.resultsTeamName {
+	width: max-content;
+	max-width: min(12rem, 35vw);
+	overflow-wrap: anywhere;
+}
+
 .resultsPlayers {
 	display: flex;
 	flex-wrap: wrap;
+	width: max-content;
+	max-width: min(22rem, 50vw);
 	padding: 0;
 	gap: var(--s-3);
 	list-style: none;
+
+	& :is(li, a) {
+		overflow-wrap: anywhere;
+	}
 }
 
 .resultsSection {
