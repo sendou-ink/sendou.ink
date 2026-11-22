@@ -3,9 +3,9 @@ import type {
 	BroadcastInk,
 	BroadcastMatch,
 	BroadcastState,
+	BroadcastStoredState,
 	BroadcastTeam,
 	BroadcastView,
-	ProducerState,
 } from "./broadcast-types";
 import * as SetProgress from "./core/SetProgress";
 
@@ -44,13 +44,13 @@ export interface MatchSide {
 export function matchSides(
 	match: BroadcastMatch,
 	view: BroadcastView,
-	producer: Pick<ProducerState, "swapSides">,
+	state: Pick<BroadcastStoredState, "swapSides">,
 ): [MatchSide, MatchSide] {
 	const progress = match.progress[view];
 	const winner = SetProgress.winner(progress);
 
 	const side = (index: 0 | 1): MatchSide => ({
-		side: sideOf(index, producer),
+		side: sideOf(index, state),
 		index,
 		team: match.teams[index],
 		score: progress.scores[index],
@@ -58,7 +58,7 @@ export function matchSides(
 		isLoser: winner !== null && winner !== index,
 	});
 
-	return producer.swapSides ? [side(1), side(0)] : [side(0), side(1)];
+	return state.swapSides ? [side(1), side(0)] : [side(0), side(1)];
 }
 
 /**
@@ -79,7 +79,7 @@ export function gameInk(
 
 /**
  * Ink colors as the team color variables: the pair's first color, Alpha's, as `a` (the left team's, see
- * `ProducerState.swapSides`). Text on each color is black or white, whichever reads better. Empty without ink
+ * `BroadcastStoredState.swapSides`). Text on each color is black or white, whichever reads better. Empty without ink
  * colors, keeping the theme's.
  */
 export function inkColorVars(ink: BroadcastInk | null): Record<string, string> {
@@ -110,9 +110,9 @@ export function formatClock(ms: number) {
 
 function sideOf(
 	index: 0 | 1,
-	producer: Pick<ProducerState, "swapSides">,
+	state: Pick<BroadcastStoredState, "swapSides">,
 ): "a" | "b" {
-	return (index === 0) !== producer.swapSides ? "a" : "b";
+	return (index === 0) !== state.swapSides ? "a" : "b";
 }
 
 const DARK_TEXT = "#15131f";

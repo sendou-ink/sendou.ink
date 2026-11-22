@@ -29,7 +29,7 @@ type BroadcastGameEndTrigger = (typeof BROADCAST_GAME_END_TRIGGERS)[number];
 
 export type BroadcastInkColorKey = (typeof BROADCAST_INK_COLORS)[number]["key"];
 
-/** The teams' in-game ink colors, the pair's first one Alpha's (see {@link ProducerState.swapSides}). */
+/** The teams' in-game ink colors, the pair's first one Alpha's (see {@link BroadcastStoredState.swapSides}). */
 export interface BroadcastInk {
 	key: BroadcastInkColorKey;
 }
@@ -52,11 +52,6 @@ export interface ProducerState<Scene extends string = string> {
 	/** Identifies the item as it moves from the queue to air, never reused (see `BroadcastStoredState.lastItemId`). */
 	id: number;
 	scene: Scene;
-	/**
-	 * Shows the featured match's second team on the left. The left team is Alpha (the game's HUD has it on the left,
-	 * in the ink pair's first color), so it also says which team has which ink color.
-	 */
-	swapSides: boolean;
 	/** How a Take puts this state on air, kept on `live` so the overlay knows how the last Take played. */
 	transition: BroadcastTransition;
 	/** How long the scene stays on air before the item after it can go on air by itself, `null` until a Take. */
@@ -88,6 +83,11 @@ export interface BroadcastStoredState<
 	 * Other games, and every other scene, use the theme's team colors.
 	 */
 	ink: BroadcastGameInk | null;
+	/**
+	 * Shows the featured match's second team on the left, on air and staged alike. The left team is Alpha (the game's
+	 * HUD has it on the left, in the ink pair's first color), so it also says which team has which ink color.
+	 */
+	swapSides: boolean;
 	/** The last game the scanner read to its end, what the scenes after a game show of it. */
 	scannedGame: BroadcastScannedGame | null;
 }

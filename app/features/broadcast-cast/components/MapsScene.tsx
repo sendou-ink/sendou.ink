@@ -39,7 +39,7 @@ export function MapsScene({
 	}
 
 	const progress = match.progress[view];
-	const sides = matchSides(match, view, state[view]);
+	const sides = matchSides(match, view, state);
 	const currentMap = progress.isOver
 		? null
 		: progress.games[progress.gameNumber - 1]?.map;

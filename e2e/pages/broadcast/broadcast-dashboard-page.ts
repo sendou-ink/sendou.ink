@@ -105,6 +105,11 @@ export class BroadcastDashboardPage {
 		return submit(this.page, "broadcast-take-button");
 	}
 
+	/** Swaps which team is Alpha (on the left) on every scene, on air right away. */
+	swapSides() {
+		return submit(this.page, "broadcast-swap-sides");
+	}
+
 	/** Keeps next off air until a Take, instead of it going on air by itself. */
 	hold() {
 		return submit(this.page, "broadcast-hold-button");

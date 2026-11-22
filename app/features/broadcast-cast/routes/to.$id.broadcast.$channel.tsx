@@ -90,6 +90,7 @@ import {
 	formatClock,
 	gameInk,
 	inkColorVars,
+	type MatchSide,
 	matchSides,
 	roundLabel,
 } from "~/features/broadcast/broadcast-utils";
@@ -597,30 +598,39 @@ function InkColors({
 	const { t } = useTranslation(["broadcast"]);
 	const ink = gameInk(state, "live");
 	const colors = inkColorVars(ink);
-	const sides = matchSides(match, "live", state.live);
+	const [left, right] = matchSides(match, "live", state);
 	const gameOnAir = {
 		matchId: match.id,
 		resultCount: match.progress.live.resultCount,
 	};
+	const inkTeam = (side: MatchSide) => (
+		<span className={styles.inkTeam} data-side={side.side}>
+			<span
+				className={styles.inkDot}
+				style={{ background: colors[`--bc-team-${side.side}`] }}
+			/>
+			<span className="truncate">
+				{side.team?.name ?? t("broadcast:overlay.tbd")}
+			</span>
+		</span>
+	);
 
 	return (
 		<div className="stack sm">
 			<div className={styles.inkTeams}>
-				{sides.map((side) => (
-					<span
-						key={side.side}
-						className={styles.inkTeam}
-						data-side={side.side}
-					>
-						<span
-							className={styles.inkDot}
-							style={{ background: colors[`--bc-team-${side.side}`] }}
-						/>
-						<span className="truncate">
-							{side.team?.name ?? t("broadcast:overlay.tbd")}
-						</span>
-					</span>
-				))}
+				{inkTeam(left)}
+				<ActionButton
+					schema={broadcastActionSchema}
+					action="SET_SWAP_SIDES"
+					fields={{ swapSides: !state.swapSides }}
+					variant="outlined"
+					size="miniscule"
+					icon={<ArrowLeftRight />}
+					testId="broadcast-swap-sides"
+				>
+					{t("broadcast:dashboard.sides.swap")}
+				</ActionButton>
+				{inkTeam(right)}
 			</div>
 			<div className={styles.inkSwatches}>
 				{/* each swatch split the way the game's HUD has it, Alpha's color on the left */}
@@ -1153,9 +1163,6 @@ function SceneEditor({
 			</div>
 			<div className={styles.properties}>
 				<TransitionProperty selected={selected} />
-				{state.match ? (
-					<SwapSides match={state.match} selected={selected} />
-				) : null}
 				{selected.scene === "bracket" ? (
 					<BracketProperties state={state} selected={selected} />
 				) : null}
@@ -1207,41 +1214,6 @@ function TransitionProperty({ selected }: { selected: CastProducerState }) {
 					</SendouChipRadio>
 				))}
 			</SendouChipRadioGroup>
-		</Property>
-	);
-}
-
-function SwapSides({
-	match,
-	selected,
-}: {
-	match: BroadcastMatch;
-	selected: CastProducerState;
-}) {
-	const { t } = useTranslation(["broadcast"]);
-	const [left, right] = matchSides(match, "next", selected);
-
-	return (
-		<Property label={t("broadcast:dashboard.sides.label")}>
-			<div className="stack horizontal sm items-center flex-wrap">
-				<span className="text-sm font-semi-bold">
-					{left.team?.name ?? t("broadcast:overlay.tbd")}
-				</span>
-				<ActionButton
-					schema={broadcastActionSchema}
-					action="SET_SWAP_SIDES"
-					fields={{ itemId: selected.id, swapSides: !selected.swapSides }}
-					variant="outlined"
-					size="miniscule"
-					icon={<ArrowLeftRight />}
-					testId="broadcast-swap-sides"
-				>
-					{t("broadcast:dashboard.sides.swap")}
-				</ActionButton>
-				<span className="text-sm font-semi-bold">
-					{right.team?.name ?? t("broadcast:overlay.tbd")}
-				</span>
-			</div>
 		</Property>
 	);
 }
@@ -1471,7 +1443,7 @@ function TeamProperty({
 	const tournament = useTournament();
 	const { submit } = useActionSubmit(broadcastActionSchema);
 	const featuredSides = state.match
-		? matchSides(state.match, "next", selected)
+		? matchSides(state.match, "next", state)
 		: null;
 	const featuredItem = (teamPick: "left" | "right", idx: 0 | 1) => ({
 		id: teamPick,
@@ -1947,8 +1919,9 @@ function pickedTeamName({
 	}
 	if (!state.match) return undefined;
 
-	return matchSides(state.match, "next", item)[item.teamPick === "left" ? 0 : 1]
-		.team?.name;
+	return matchSides(state.match, "next", state)[
+		item.teamPick === "left" ? 0 : 1
+	].team?.name;
 }
 
 /** Clip or team and length of a staged item, e.g. "4 splats · 0:25". */

@@ -54,7 +54,7 @@ export function TeamScene({
 
 	const { team, record } = spotlight;
 	const side = state.match
-		? matchSides(state.match, view, state[view]).find(
+		? matchSides(state.match, view, state).find(
 				(candidate) => candidate.team?.id === team.id,
 			)?.side
 		: undefined;

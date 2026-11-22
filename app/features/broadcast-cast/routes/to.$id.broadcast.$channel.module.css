@@ -354,7 +354,7 @@
 
 .inkTeams {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 	align-items: center;
 	gap: var(--s-2);
 	font-size: var(--font-sm);
@@ -432,6 +432,7 @@
 	align-items: center;
 	gap: var(--s-1-5);
 	min-width: 0;
+	max-width: 100%;
 	font-weight: var(--weight-semi);
 
 	&[data-side="b"] {

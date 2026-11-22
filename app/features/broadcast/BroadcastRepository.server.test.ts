@@ -41,13 +41,13 @@ describe("BroadcastRepository.updateProducer", () => {
 		const isUpdated = await BroadcastRepository.updateProducer({
 			...key,
 			change: (state) =>
-				Producer.editItem(rules, state, state.next.id, { swapSides: true }),
+				Producer.editItem(rules, state, state.next.id, { transition: "cut" }),
 		});
 
 		expect(isUpdated).toBe(true);
 		expect((await BroadcastRepository.findByChannel(key))?.state).toEqual({
 			...initial,
-			next: { ...initial.next, swapSides: true },
+			next: { ...initial.next, transition: "cut" },
 		});
 	});
 
@@ -215,7 +215,7 @@ describe("BroadcastRepository.updateState", () => {
 			matchId: 5,
 			resultCount: 2,
 		} as const;
-		await swapSidesOfNext(key);
+		await cutToNext(key);
 		await BroadcastRepository.updateState({ ...key, patch: { ink } });
 
 		await BroadcastRepository.updateState({
@@ -226,7 +226,21 @@ describe("BroadcastRepository.updateState", () => {
 		const broadcast = await BroadcastRepository.findByChannel(key);
 		expect(broadcast?.state.liveResults).toEqual({ matchId: 5, count: 2 });
 		expect(broadcast?.state.ink).toEqual(ink);
-		expect(broadcast?.state.next.swapSides).toBe(true);
+		expect(broadcast?.state.next.transition).toBe("cut");
+	});
+
+	test("swaps the sides of the whole broadcast, leaving its items as they are", async () => {
+		const key = await createBroadcastKey();
+		await cutToNext(key);
+
+		await BroadcastRepository.updateState({
+			...key,
+			patch: { swapSides: true },
+		});
+
+		const broadcast = await BroadcastRepository.findByChannel(key);
+		expect(broadcast?.state.swapSides).toBe(true);
+		expect(broadcast?.state.next.transition).toBe("cut");
 	});
 });
 
@@ -255,7 +269,7 @@ describe("BroadcastRepository.insertChatRoomIfMissing", () => {
 
 	test("gives a room to a broadcast created by earlier writes, keeping its state", async () => {
 		const key = await createBroadcastKey();
-		await swapSidesOfNext(key);
+		await cutToNext(key);
 
 		const { chatRoomId, isCreated } =
 			await BroadcastRepository.insertChatRoomIfMissing({ ...key, expiresAt });
@@ -266,15 +280,15 @@ describe("BroadcastRepository.insertChatRoomIfMissing", () => {
 		]);
 		expect(owner?.account).toBe(channel.account);
 		expect(
-			(await BroadcastRepository.findByChannel(key))?.state.next.swapSides,
-		).toBe(true);
+			(await BroadcastRepository.findByChannel(key))?.state.next.transition,
+		).toBe("cut");
 	});
 });
 
-function swapSidesOfNext(key: Awaited<ReturnType<typeof createBroadcastKey>>) {
+function cutToNext(key: Awaited<ReturnType<typeof createBroadcastKey>>) {
 	return BroadcastRepository.updateProducer({
 		...key,
 		change: (state) =>
-			Producer.editItem(rules, state, state.next.id, { swapSides: true }),
+			Producer.editItem(rules, state, state.next.id, { transition: "cut" }),
 	});
 }

@@ -30,7 +30,7 @@ const FULL_COUNT = 100;
  * whichever of the set's games it was, else the last one reported with the teams' rosters. A scanned game is the
  * set's game with its map and mode, the one played last when several have them. Its teams are put in bracket order by
  * the names read matching the rosters when they clearly tell, else by the game's ink colors (the pair's first color,
- * Alpha's, going to the team the view has on the left, see `ProducerState.swapSides`). Its ink colors are the ones
+ * Alpha's, going to the team on the left, see `BroadcastStoredState.swapSides`). Its ink colors are the ones
  * picked for the game now, as the producer may pick them after it ended. Names not read are filled in from the roster
  * players no read name matched. Its winner is the scanner's, from a results screen or the counter, else the reported
  * one of the set's game it was. `null` when the match has no game to show.
@@ -46,7 +46,7 @@ export function resolve({
 	view: BroadcastView;
 	scannedGame: BroadcastStoredState["scannedGame"];
 	ink: BroadcastStoredState["ink"];
-	/** Of the view, which team is Alpha. */
+	/** Which team is Alpha. */
 	swapSides: boolean;
 }): BroadcastGameResult | null {
 	const progress = match.progress[view];

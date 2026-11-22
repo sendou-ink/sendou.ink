@@ -516,7 +516,6 @@ export function build({
 	const producer: CastProducerState = {
 		id: 1,
 		scene: scenario.scene,
-		swapSides: scenario.swapSides,
 		transition:
 			scenario.transition === "fade" || scenario.transition === "cut"
 				? scenario.transition
@@ -547,6 +546,7 @@ export function build({
 					resultCount: match.progress.live.resultCount,
 				}
 			: null,
+		swapSides: scenario.swapSides,
 		scannedGame: mockScannedGame({ match, ink: scenario.ink }),
 		settings: {
 			...settings,

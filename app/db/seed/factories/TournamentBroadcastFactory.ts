@@ -58,6 +58,18 @@ export function take({
 	});
 }
 
+/** Swaps which team is Alpha on every scene like the dashboard's Swap button. */
+export function setSides({
+	swapSides,
+	...key
+}: BroadcastKey & { swapSides: boolean }) {
+	return BroadcastRepository.updateState({
+		...key,
+		rules: CAST_PRODUCER_RULES,
+		patch: { swapSides },
+	});
+}
+
 /** Sets the broadcast's casters like the dashboard's casters form and volume sliders. */
 export function setCasters({
 	casters,

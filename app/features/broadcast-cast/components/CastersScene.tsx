@@ -110,7 +110,7 @@ export function CastersScene({
 			))}
 			{state.match && frames.length > 1 ? (
 				<div className={styles.matchup}>
-					<Matchup match={state.match} view={view} producer={state[view]} />
+					<Matchup match={state.match} view={view} state={state} />
 				</div>
 			) : null}
 		</div>

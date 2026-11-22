@@ -134,6 +134,35 @@ describe("CastSnapshot.build", () => {
 		]);
 	});
 
+	test.each([
+		{ swapSides: false, teamIdx: 0 },
+		{ swapSides: true, teamIdx: 1 },
+	])(
+		"spotlights the featured match's team on the left in the team scene, the second one with sides swapped ($swapSides)",
+		async ({ swapSides, teamIdx }) => {
+			const tournament = await TournamentFactory.createBroadcasting(
+				{ authorId: organizerId() },
+				{ teamRosters: teamRosters(), twitchAccount: CAST_ACCOUNT.account },
+			);
+			const key = { tournamentId: tournament.id, channel: CAST_ACCOUNT };
+			await TournamentBroadcastFactory.take({
+				...key,
+				next: { scene: "team", teamPick: "left" },
+			});
+			await TournamentBroadcastFactory.setSides({ ...key, swapSides });
+
+			const built = await CastSnapshot.build({
+				tournamentId: tournament.id,
+				slug: CastChannel.list([CAST_ACCOUNT])[0].slug,
+			});
+
+			expect(built?.snapshot.team.live?.team.id).toBe(
+				built?.snapshot.match?.teams[teamIdx]?.id,
+			);
+			expect(built?.snapshot.team.live?.team.id).toEqual(expect.any(Number));
+		},
+	);
+
 	describe("otherMatches", () => {
 		/** A started 16 team single elimination with its first round match 1 cast on the channel, the rest of the first round (7 sets) still to play. */
 		const broadcasting = async () => {

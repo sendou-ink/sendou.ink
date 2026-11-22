@@ -19,7 +19,6 @@
 	"dashboard.sceneGroup.match": "Match",
 	"dashboard.sceneGroup.show": "Show",
 	"dashboard.sceneGroup.hold": "Hold",
-	"dashboard.sides.label": "Alpha / Bravo",
 	"dashboard.mixer.header": "Mixer",
 	"dashboard.mixer.volume": "{{name}} volume",
 	"dashboard.mixer.connected": "Connected",

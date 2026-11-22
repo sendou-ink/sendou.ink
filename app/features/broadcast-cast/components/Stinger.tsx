@@ -130,7 +130,7 @@ function TeamsCard({
 	match: BroadcastMatch;
 }) {
 	const { t } = useTranslation(["broadcast"]);
-	const sides = matchSides(match, view, state[view]);
+	const sides = matchSides(match, view, state);
 	const showScores = match.progress[view].resultCount > 0;
 
 	return (

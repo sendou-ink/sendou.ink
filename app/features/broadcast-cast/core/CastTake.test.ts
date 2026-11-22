@@ -123,7 +123,6 @@ function item(patch: Partial<CastProducerState> = {}): CastProducerState {
 	return {
 		id: 1,
 		scene: "casters",
-		swapSides: false,
 		transition: "cut",
 		bracketIdx: null,
 		bracketSides: { winners: "remaining", losers: "remaining" },

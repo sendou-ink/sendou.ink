@@ -122,7 +122,6 @@ export const broadcastActionSchema = v.union([
 	}),
 	v.object({
 		_action: _action("SET_SWAP_SIDES"),
-		itemId: id,
 		swapSides: booleanString,
 	}),
 	v.object({

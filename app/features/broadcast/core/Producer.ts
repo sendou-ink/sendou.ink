@@ -58,6 +58,7 @@ export function initialState<Item extends ProducerState>(
 		lastItemId: 2,
 		liveResults: null,
 		ink: null,
+		swapSides: false,
 		scannedGame: null,
 	};
 }
@@ -72,10 +73,15 @@ export function withDefaults<Item extends ProducerState>(
 ): BroadcastStoredState<Item> {
 	const initial = initialState(rules);
 	const stored = state as BroadcastStoredState<Item>;
+	// sides were set per item before they applied to the whole broadcast
+	const itemSwapSides = (
+		stored.live as unknown as { swapSides?: boolean } | undefined
+	)?.swapSides;
 
 	return {
 		...initial,
 		...stored,
+		swapSides: stored.swapSides ?? itemSwapSides ?? initial.swapSides,
 		live: { ...initial.live, ...stored.live },
 		next: { ...initial.next, ...stored.next },
 		queue: (stored.queue ?? []).map((item) => ({ ...initial.next, ...item })),
@@ -112,6 +118,7 @@ export function take<Item extends ProducerState>(
 		lastItemId: Math.max(state.lastItemId, next.id),
 		liveResults,
 		ink: state.ink,
+		swapSides: state.swapSides,
 		scannedGame: state.scannedGame,
 	};
 }

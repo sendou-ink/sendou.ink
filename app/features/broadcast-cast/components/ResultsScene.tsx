@@ -72,14 +72,14 @@ export function ResultsScene({
 				view,
 				scannedGame: state.scannedGame,
 				ink: state.ink,
-				swapSides: state[view].swapSides,
+				swapSides: state.swapSides,
 			})
 		: null;
 	if (!match || !result) {
 		return <HoldScene scene="results" state={state} view={view} />;
 	}
 
-	const sides = matchSides(match, view, state[view]);
+	const sides = matchSides(match, view, state);
 	const progress = match.progress[view];
 
 	return (

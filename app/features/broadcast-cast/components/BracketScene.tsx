@@ -13,7 +13,6 @@ import type {
 	BroadcastRoundRobinBracket,
 	BroadcastSwissBracket,
 	CastBroadcastState,
-	CastProducerState,
 } from "../broadcast-cast-types";
 import { scenePart } from "../broadcast-cast-utils";
 import layout from "./BracketScene.layout.module.css";
@@ -88,11 +87,11 @@ export function BracketScene({
 						</div>
 					</header>
 					{bracket.type === "round_robin" || bracket.type === "swiss" ? (
-						<Group group={bracket} producer={state[view]} />
+						<Group group={bracket} state={state} />
 					) : (
 						<div className={styles.sides}>
 							{bracket.sides.map((side) => (
-								<Side key={side.type} side={side} producer={state[view]} />
+								<Side key={side.type} side={side} state={state} />
 							))}
 						</div>
 					)}
@@ -104,10 +103,10 @@ export function BracketScene({
 
 function Side({
 	side,
-	producer,
+	state,
 }: {
 	side: BroadcastBracketSide;
-	producer: Pick<CastProducerState, "swapSides">;
+	state: Pick<CastBroadcastState, "swapSides">;
 }) {
 	return (
 		<section
@@ -117,7 +116,7 @@ function Side({
 			{...part("side")}
 		>
 			{side.rounds.map((round) => (
-				<Round key={round.id} round={round} producer={producer} />
+				<Round key={round.id} round={round} state={state} />
 			))}
 		</section>
 	);
@@ -125,10 +124,10 @@ function Side({
 
 function Round({
 	round,
-	producer,
+	state,
 }: {
 	round: BroadcastBracketRound;
-	producer: Pick<CastProducerState, "swapSides">;
+	state: Pick<CastBroadcastState, "swapSides">;
 }) {
 	return (
 		<div
@@ -147,7 +146,7 @@ function Round({
 						data-bye={match ? undefined : true}
 						data-fed={match?.isFed || undefined}
 					>
-						{match ? <Match match={match} producer={producer} /> : null}
+						{match ? <Match match={match} state={state} /> : null}
 					</li>
 				))}
 			</ol>
@@ -157,10 +156,10 @@ function Round({
 
 function Group({
 	group,
-	producer,
+	state,
 }: {
 	group: BroadcastRoundRobinBracket | BroadcastSwissBracket;
-	producer: Pick<CastProducerState, "swapSides">;
+	state: Pick<CastBroadcastState, "swapSides">;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const matches =
@@ -205,7 +204,7 @@ function Group({
 									data-team={
 										featuredIndex === -1
 											? undefined
-											: featuredSide(featuredIndex as 0 | 1, producer)
+											: featuredSide(featuredIndex as 0 | 1, state)
 									}
 									{...part("standing")}
 								>
@@ -247,7 +246,7 @@ function Group({
 				))}
 			</section>
 			{group.type === "swiss" ? (
-				<SwissRound group={group} producer={producer} />
+				<SwissRound group={group} state={state} />
 			) : (
 				<section className={styles.groupRounds}>
 					{group.rounds.map((round) => (
@@ -255,7 +254,7 @@ function Group({
 							key={round.id}
 							name={t("broadcast:overlay.round", { number: round.number })}
 							matches={round.matches}
-							producer={producer}
+							state={state}
 						/>
 					))}
 				</section>
@@ -266,10 +265,10 @@ function Group({
 
 function SwissRound({
 	group,
-	producer,
+	state,
 }: {
 	group: BroadcastSwissBracket;
-	producer: Pick<CastProducerState, "swapSides">;
+	state: Pick<CastBroadcastState, "swapSides">;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const columns = swissColumnCount(group);
@@ -293,7 +292,7 @@ function SwissRound({
 					key={`${pool.wins}-${pool.losses}`}
 					name={`${pool.wins}–${pool.losses}`}
 					matches={pool.matches}
-					producer={producer}
+					state={state}
 				/>
 			))}
 		</section>
@@ -304,11 +303,11 @@ function SwissRound({
 function GroupRow({
 	name,
 	matches,
-	producer,
+	state,
 }: {
 	name: string;
 	matches: BroadcastBracketMatch[];
-	producer: Pick<CastProducerState, "swapSides">;
+	state: Pick<CastBroadcastState, "swapSides">;
 }) {
 	return (
 		<div className={styles.groupRound} {...part("round")}>
@@ -318,7 +317,7 @@ function GroupRow({
 			<ol className={styles.groupMatches}>
 				{matches.map((match) => (
 					<li key={match.id}>
-						<Match match={match} producer={producer} />
+						<Match match={match} state={state} />
 					</li>
 				))}
 			</ol>
@@ -328,10 +327,10 @@ function GroupRow({
 
 function Match({
 	match,
-	producer,
+	state,
 }: {
 	match: BroadcastBracketMatch;
-	producer: Pick<CastProducerState, "swapSides">;
+	state: Pick<CastBroadcastState, "swapSides">;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 
@@ -358,7 +357,7 @@ function Match({
 						}
 						// the featured match's teams in the colors of their sides on the other scenes
 						data-team={
-							match.isFeatured ? featuredSide(index, producer) : undefined
+							match.isFeatured ? featuredSide(index, state) : undefined
 						}
 						data-tbd={team ? undefined : true}
 						{...part("team")}
@@ -400,9 +399,9 @@ function matchStatus(match: BroadcastBracketMatch) {
 
 function featuredSide(
 	index: 0 | 1,
-	producer: Pick<CastProducerState, "swapSides">,
+	state: Pick<CastBroadcastState, "swapSides">,
 ): "a" | "b" {
-	return (index === 0) !== producer.swapSides ? "a" : "b";
+	return (index === 0) !== state.swapSides ? "a" : "b";
 }
 
 function isEmpty(bracket: BroadcastBracket) {

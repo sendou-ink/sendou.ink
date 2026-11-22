@@ -424,7 +424,6 @@ export const DEFAULT_CAST_BROADCAST_SETTINGS = {
 
 const DEFAULT_CAST_ITEM: Omit<CastProducerState, "id"> = {
 	scene: "rosters",
-	swapSides: false,
 	transition: "stinger",
 	bracketIdx: null,
 	bracketSides: { winners: "remaining", losers: "remaining" },

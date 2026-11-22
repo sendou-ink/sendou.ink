@@ -35,7 +35,7 @@ export function RostersScene({
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const match = state.match;
-	const sides = match ? matchSides(match, view, state[view]) : null;
+	const sides = match ? matchSides(match, view, state) : null;
 	const hasStarted = match ? match.progress[view].resultCount > 0 : false;
 
 	return (

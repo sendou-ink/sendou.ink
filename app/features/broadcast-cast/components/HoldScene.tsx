@@ -69,7 +69,7 @@ export function HoldScene({
 					<Matchup
 						match={nextMatch}
 						view={view}
-						producer={state[view]}
+						state={state}
 						showsScore={false}
 					/>
 				</div>

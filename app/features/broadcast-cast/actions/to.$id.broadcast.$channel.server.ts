@@ -103,7 +103,10 @@ export const action = defineAction(
 				break;
 			}
 			case "SET_SWAP_SIDES": {
-				await editItem(body.itemId, { swapSides: body.swapSides });
+				await BroadcastRepository.updateState({
+					...key,
+					patch: { swapSides: body.swapSides },
+				});
 				break;
 			}
 			case "SET_BRACKET": {

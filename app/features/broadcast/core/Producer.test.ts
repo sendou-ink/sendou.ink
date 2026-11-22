@@ -31,7 +31,6 @@ const item = (
 ): CastProducerState => ({
 	id,
 	scene: "game",
-	swapSides: false,
 	transition: "stinger",
 	bracketIdx: null,
 	bracketSides: { winners: "remaining", losers: "remaining" },
@@ -47,11 +46,13 @@ const stateWith = ({
 	next = item(2),
 	queue = [],
 	takenAt = TAKEN_AT,
+	swapSides = false,
 }: {
 	live?: CastProducerState;
 	next?: CastProducerState;
 	queue?: CastProducerState[];
 	takenAt?: number | null;
+	swapSides?: boolean;
 }): BroadcastStoredState<CastProducerState> => ({
 	takeId: 3,
 	takenAt,
@@ -61,6 +62,7 @@ const stateWith = ({
 	lastItemId: Math.max(live.id, next.id, ...queue.map((queued) => queued.id)),
 	liveResults: null,
 	ink,
+	swapSides,
 	scannedGame: null,
 });
 
@@ -68,16 +70,16 @@ const stagedIds = (state: BroadcastStoredState<CastProducerState> | null) =>
 	state ? Producer.stagedItems(state).map((staged) => staged.id) : null;
 
 describe("Producer.take", () => {
-	test("puts the staged state on air and stages the following scene with the same settings, keeping the ink colors", () => {
+	test("puts the staged state on air and stages the following scene with the same settings, keeping the ink colors and sides", () => {
 		const taken = Producer.take(
 			rules,
 			stateWith({
 				next: item(2, {
 					scene: "game",
-					swapSides: true,
 					bracketIdx: 1,
 					bracketSides: { winners: "hidden", losers: 2 },
 				}),
+				swapSides: true,
 			}),
 			{ liveResults: { matchId: 1, count: 2 }, now: 5, hasMatch: true },
 		);
@@ -87,13 +89,11 @@ describe("Producer.take", () => {
 			takenAt: 5,
 			live: item(2, {
 				scene: "game",
-				swapSides: true,
 				bracketIdx: 1,
 				bracketSides: { winners: "hidden", losers: 2 },
 			}),
 			next: item(3, {
 				scene: "results",
-				swapSides: true,
 				bracketIdx: 1,
 				bracketSides: { winners: "hidden", losers: 2 },
 				advance: "game",
@@ -102,6 +102,7 @@ describe("Producer.take", () => {
 			lastItemId: 3,
 			liveResults: { matchId: 1, count: 2 },
 			ink,
+			swapSides: true,
 			scannedGame: null,
 		});
 	});
@@ -627,7 +628,7 @@ describe("Producer.editItem", () => {
 
 	test("is null for an item no longer staged", () => {
 		expect(
-			Producer.editItem(rules, stateWith({}), 1, { swapSides: true }),
+			Producer.editItem(rules, stateWith({}), 1, { scene: "maps" }),
 		).toBeNull();
 	});
 });
@@ -727,5 +728,35 @@ describe("Producer.withDefaults", () => {
 				bracketSides: rules.initial.next.bracketSides,
 			}),
 		]);
+	});
+
+	test.each([
+		{
+			why: "the on-air item swapped them",
+			itemSwapSides: true,
+			expected: true,
+		},
+		{ why: "the on-air item didn't", itemSwapSides: false, expected: false },
+	])(
+		"keeps the sides of a state that stored them per item when $why",
+		({ itemSwapSides, expected }) => {
+			const { swapSides, ...current } = stateWith({});
+			const stored = {
+				...current,
+				live: { ...current.live, swapSides: itemSwapSides },
+			} as unknown as BroadcastStoredState<CastProducerState>;
+
+			expect(Producer.withDefaults(rules, stored).swapSides).toBe(expected);
+		},
+	);
+
+	test("prefers the broadcast's sides over the ones an item stored", () => {
+		const state = stateWith({ swapSides: false });
+		const stored = {
+			...state,
+			live: { ...state.live, swapSides: true },
+		} as unknown as BroadcastStoredState<CastProducerState>;
+
+		expect(Producer.withDefaults(rules, stored).swapSides).toBe(false);
 	});
 });

@@ -40,6 +40,13 @@ export class BroadcastProgramPage {
 		return this.locators.canvas.locator(`[data-scene="${scene}"]`);
 	}
 
+	/** Name of the team the scene shows on a side, `a` being Alpha on the left. */
+	teamName(scene: CastScene, side: "a" | "b") {
+		return this.scene(scene).locator(
+			`[data-part="team"][data-team="${side}"] [data-part="team-name"]`,
+		);
+	}
+
 	/** The status the OBS URL of the key (or without one, the broadcast's own program page) answers with, for whoever the page is logged in as. */
 	async responseStatus(programKey: string | null) {
 		const response = await this.page.request.get(

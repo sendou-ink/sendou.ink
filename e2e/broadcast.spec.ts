@@ -66,7 +66,7 @@ test.describe("Broadcast", () => {
 		await expect(dashboard.viewHeading("live", "bracket")).toBeVisible();
 	});
 
-	test("cuts to the game on the program when the scanner sees it start", async ({
+	test("cuts to the game on the program when the scanner sees it start and swaps its sides without a Take", async ({
 		page,
 		browser,
 		baseURL,
@@ -93,6 +93,13 @@ test.describe("Broadcast", () => {
 
 		await expect(dashboard.viewHeading("live", "game")).toBeVisible();
 		await expect(obs.program.scene("game")).toBeVisible();
+		await expect(obs.program.teamName("game", "a")).toHaveText("Team 1");
+
+		await dashboard.swapSides();
+
+		await expect(obs.program.teamName("game", "a")).toHaveText("Team 2");
+		await expect(obs.program.teamName("game", "b")).toHaveText("Team 1");
+		await expect(dashboard.viewHeading("live", "game")).toBeVisible();
 
 		await obs.close();
 	});

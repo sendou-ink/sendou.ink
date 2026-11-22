@@ -97,7 +97,12 @@ export async function build({
 		const producer = state[view];
 		if (producer.scene !== "team") return null;
 
-		const teamId = pickedTeamId({ match, view, producer });
+		const teamId = pickedTeamId({
+			match,
+			view,
+			producer,
+			swapSides: state.swapSides,
+		});
 		if (typeof teamId !== "number") return null;
 
 		return teamSpotlight({
@@ -482,16 +487,19 @@ function pickedTeamId({
 	match,
 	view,
 	producer,
+	swapSides,
 }: {
 	match: BroadcastMatch | null;
 	view: BroadcastView;
 	producer: CastProducerState;
+	swapSides: boolean;
 }) {
 	if (typeof producer.teamPick === "number") return producer.teamPick;
 	if (!match) return null;
 
-	return matchSides(match, view, producer)[producer.teamPick === "left" ? 0 : 1]
-		.team?.id;
+	return matchSides(match, view, { swapSides })[
+		producer.teamPick === "left" ? 0 : 1
+	].team?.id;
 }
 
 /** Channel the match's score updates are sent to: its bracket's (or group's), the tournament's when not found. */

@@ -10,7 +10,7 @@ import {
 } from "~/features/broadcast/broadcast-utils";
 import { SetLength } from "~/features/broadcast/components/SetLength";
 import { TeamLogo } from "~/features/broadcast/components/TeamLogo";
-import type { CastProducerState } from "../broadcast-cast-types";
+import type { CastBroadcastState } from "../broadcast-cast-types";
 import { scenePart } from "../broadcast-cast-utils";
 import layout from "./Matchup.layout.module.css";
 import look from "./Matchup.module.css";
@@ -23,16 +23,16 @@ const part = scenePart("matchup");
 export function Matchup({
 	match,
 	view,
-	producer,
+	state,
 	showsScore = true,
 }: {
 	match: BroadcastMatch;
 	view: BroadcastView;
-	producer: Pick<CastProducerState, "swapSides">;
+	state: Pick<CastBroadcastState, "swapSides">;
 	showsScore?: boolean;
 }) {
 	const { t } = useTranslation(["broadcast"]);
-	const sides = matchSides(match, view, producer);
+	const sides = matchSides(match, view, state);
 	const hasStarted = showsScore && match.progress[view].resultCount > 0;
 
 	return (

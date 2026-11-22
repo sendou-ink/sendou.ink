@@ -61,7 +61,7 @@ export function GameScene({
 					{...part("scoreboard")}
 				>
 					{match
-						? matchSides(match, view, state[view]).map((side) => (
+						? matchSides(match, view, state).map((side) => (
 								<TeamPanel key={side.side} side={side} />
 							))
 						: null}
