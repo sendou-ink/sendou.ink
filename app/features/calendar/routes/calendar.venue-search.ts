@@ -14,6 +14,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const canSearch =
 		user.roles.includes("TOURNAMENT_ADDER") ||
+		user.roles.includes("CALENDAR_EVENT_ADDER") ||
 		(await findValidOrganizations(user.id, false)).length > 0 ||
 		(tournamentId !== null &&
 			(await tournamentSharedCached(tournamentId)).canEditEventInfo(user));

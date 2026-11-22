@@ -30,7 +30,8 @@ const users = UserFactory.pool();
 
 const tournamentAdderId = () => users.id(1);
 const authorId = () => users.id(2);
-const otherUserId = () => users.id(3);
+const newAccountUserId = () => users.id(3);
+const calendarEventAdderId = () => users.id(4);
 
 const fetchMock = vi.fn(async () => Response.json(PHOTON_RESPONSE));
 
@@ -53,7 +54,12 @@ const search = ({
 
 describe("venue search loader", () => {
 	beforeEach(async () => {
-		await users.create(3);
+		await users.create(4, (index) =>
+			// a Discord account created now is too new to add calendar events
+			index === 2
+				? { discordId: UserFactory.discordIdCreatedAt(new Date()) }
+				: {},
+		);
 		await UserFactory.grant(tournamentAdderId(), { patronTier: 2 });
 		vi.stubGlobal("fetch", fetchMock);
 		vi.spyOn(logger, "warn").mockImplementation(() => {});
@@ -71,18 +77,26 @@ describe("venue search loader", () => {
 		expect(data.isUnavailable).toBe(false);
 	});
 
-	test("doesn't search for a user who can't add tournaments", async () => {
-		const data = await search({ user: otherUserId() });
+	test("searches for a user who can add calendar events", async () => {
+		const data = await search({ user: calendarEventAdderId() });
+
+		expect(data.results).toHaveLength(1);
+	});
+
+	test("doesn't search for a user who can't add events", async () => {
+		const data = await search({ user: newAccountUserId() });
 
 		expect(data.results).toEqual([]);
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
 
 	test("searches for the author editing their tournament without the right to add new ones", async () => {
-		const tournament = await TournamentFactory.create({ authorId: authorId() });
+		const tournament = await TournamentFactory.create({
+			authorId: newAccountUserId(),
+		});
 
 		const data = await search({
-			user: authorId(),
+			user: newAccountUserId(),
 			tournamentId: tournament.id,
 		});
 
@@ -93,7 +107,7 @@ describe("venue search loader", () => {
 		const tournament = await TournamentFactory.create({ authorId: authorId() });
 
 		const data = await search({
-			user: otherUserId(),
+			user: newAccountUserId(),
 			tournamentId: tournament.id,
 		});
 

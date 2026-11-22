@@ -410,9 +410,7 @@ describe("UserRepository", () => {
 		test("returns empty array for basic user", async () => {
 			await UserFactory.createAdmin();
 
-			const recentDiscordId = String(
-				(BigInt(Date.now() - 1420070400000) << 22n) + 1n,
-			);
+			const recentDiscordId = UserFactory.discordIdCreatedAt(new Date(), 1);
 			const { id } = await UserFactory.create({
 				discordId: recentDiscordId,
 			});
@@ -508,9 +506,7 @@ describe("UserRepository", () => {
 		});
 
 		test("does not return CALENDAR_EVENT_ADDER role for new discord account", async () => {
-			const recentDiscordId = String(
-				(BigInt(Date.now() - 1420070400000) << 22n) + 1n,
-			);
+			const recentDiscordId = UserFactory.discordIdCreatedAt(new Date(), 1);
 
 			const { id } = await UserFactory.create({
 				discordId: recentDiscordId,

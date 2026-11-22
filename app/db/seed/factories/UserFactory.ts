@@ -75,6 +75,10 @@ const EMPTY_CARD: CardArgs = {
 
 const PATRONAGE_LENGTH = { years: 1 };
 
+const DISCORD_EPOCH_MS = 1420070400000n;
+/** Old enough for the roles an aged Discord account gets, e.g. `CALENDAR_EVENT_ADDER`. */
+const FAKE_DISCORD_ACCOUNT_CREATED_AT = new Date("2023-06-01T00:00:00Z");
+
 const EMPTY_MATCH_PROFILE: MatchProfileArgs = {
 	mapModePreferences: { modes: [], pool: [] },
 	vc: "NO",
@@ -151,12 +155,18 @@ function fakeFriendCode() {
 	return `${faker.string.numeric(4)}-${faker.string.numeric(4)}-${faker.string.numeric(4)}`;
 }
 
-/** Snowflake-like: 42 bits of timestamp, `seq` in the low 22. Must stay 10+ chars or `userByIdentifierQuery` reads it as a row id. */
 function fakeDiscordId(seq: number) {
-	const DISCORD_EPOCH_MS = 1420070400000n;
-	const FAKE_CREATED_AT_MS = 1685577600000n; // 2023-06-01
+	return discordIdCreatedAt(FAKE_DISCORD_ACCOUNT_CREATED_AT, seq);
+}
 
-	return String(((FAKE_CREATED_AT_MS - DISCORD_EPOCH_MS) << 22n) + BigInt(seq));
+/**
+ * Discord id (snowflake) of an account created at `date`: 42 bits of timestamp, `seq` in the low 22. Pass a recent
+ * date for an account too new for the aged account roles. Must stay 10+ chars or `userByIdentifierQuery` reads it as a row id.
+ */
+export function discordIdCreatedAt(date: Date, seq = 0) {
+	return String(
+		((BigInt(date.getTime()) - DISCORD_EPOCH_MS) << 22n) + BigInt(seq),
+	);
 }
 
 /** Saves profile fields as the user; like the profile page, fields left out keep their current value. */

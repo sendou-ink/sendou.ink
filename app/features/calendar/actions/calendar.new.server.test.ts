@@ -1,7 +1,6 @@
 import { addDays } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as BadgeFactory from "~/db/seed/factories/BadgeFactory";
-import * as CalendarEventVenueFactory from "~/db/seed/factories/CalendarEventVenueFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
@@ -473,6 +472,13 @@ describe("calendar new action: venue", () => {
 		venueTimezone: "America/Chicago",
 	};
 
+	const calendarEventFields = {
+		toToolsEnabled: false,
+		date: [addDays(new Date(), 7).toISOString() as never],
+		startTime: null,
+		bracketUrl: "https://example.com",
+	};
+
 	const createdEventId = (res: unknown) => {
 		const location =
 			res instanceof Response ? res.headers.get("Location") : null;
@@ -497,17 +503,6 @@ describe("calendar new action: venue", () => {
 		});
 		expect(tournament.isLan).toBe(true);
 		expect(tournament.venue?.name).toBe("Hilton Ballroom B");
-	});
-
-	test("tournament doesn't store the LAN tag, its venue implies it", async () => {
-		const res = await editAction(
-			calendarNewFormValues({ ...lanFields, tags: ["LAN", "SPECIAL"] }),
-			{ user: "regular" },
-		);
-
-		expect(
-			(await CalendarRepository.findById(createdEventId(res)))?.tags,
-		).toEqual(["SPECIAL"]);
 	});
 
 	test("online tournament ignores leftover venue fields", async () => {
@@ -549,22 +544,45 @@ describe("calendar new action: venue", () => {
 		expect(res.fieldErrors[field]).toBe("forms:errors.required");
 	});
 
-	test("calendar event ignores venue fields", async () => {
+	test("LAN calendar event is created with its venue", async () => {
 		const res = await editAction(
-			calendarNewFormValues({
-				...lanFields,
-				venueName: "",
-				toToolsEnabled: false,
-				date: [addDays(new Date(), 7).toISOString() as never],
-				startTime: null,
-				bracketUrl: "https://example.com",
-			}),
+			calendarNewFormValues({ ...lanFields, ...calendarEventFields }),
 			{ user: "regular" },
 		);
 
 		expect(
-			(await CalendarRepository.findById(createdEventId(res)))?.venue,
-		).toBeNull();
+			(await CalendarRepository.findById(createdEventId(res)))?.venue?.name,
+		).toBe("Hilton Ballroom B");
+	});
+
+	test.each([
+		{ why: "tournament", fields: {} },
+		{ why: "calendar event", fields: calendarEventFields },
+	])("$why can't pick the LAN tag, a venue implies it", async ({ fields }) => {
+		const res = await editAction(
+			// a submission the form can't build, its tag type has no LAN
+			calendarNewFormValues({
+				...lanFields,
+				...fields,
+				tags: ["LAN" as never],
+			}),
+			{ user: "regular" },
+		);
+
+		expect(res.fieldErrors["tags[0]"]).toBeDefined();
+	});
+
+	test("LAN calendar event requires its venue", async () => {
+		const res = await editAction(
+			calendarNewFormValues({
+				...lanFields,
+				...calendarEventFields,
+				venueName: "",
+			}),
+			{ user: "regular" },
+		);
+
+		expect(res.fieldErrors.venueName).toBe("forms:errors.required");
 	});
 
 	test("editing keeps auto-assign stations turned off", async () => {
@@ -638,34 +656,33 @@ describe("calendar new action: venue", () => {
 		);
 	});
 
-	test("editing a calendar event keeps its venue", async () => {
-		const calendarEventFields = {
-			toToolsEnabled: false,
-			date: [addDays(new Date(), 7).toISOString() as never],
-			startTime: null,
-			bracketUrl: "https://example.com",
-		};
+	test.each([
+		{ why: "off", createdAsLan: true },
+		{ why: "on", createdAsLan: false },
+	])("editing a calendar event can turn LAN $why", async ({ createdAsLan }) => {
 		const eventId = createdEventId(
-			await editAction(calendarNewFormValues(calendarEventFields), {
-				user: "regular",
-			}),
+			await editAction(
+				calendarNewFormValues({
+					...lanFields,
+					...calendarEventFields,
+					isLan: createdAsLan,
+				}),
+				{ user: "regular" },
+			),
 		);
-		await CalendarEventVenueFactory.create({
-			eventId,
-			...CalendarEventVenueFactory.placeIn("Helsinki"),
-		});
 
 		await editAction(
 			calendarNewFormValues({
+				...lanFields,
 				...calendarEventFields,
-				name: "Renamed",
+				isLan: !createdAsLan,
 				eventToEditId: eventId,
 			}),
 			{ user: "regular" },
 		);
 
-		const edited = await CalendarRepository.findById(eventId);
-		expect(edited?.name).toBe("Renamed");
-		expect(edited?.venue?.city).toBe("Helsinki");
+		expect(Boolean((await CalendarRepository.findById(eventId))?.venue)).toBe(
+			!createdAsLan,
+		);
 	});
 });

@@ -124,9 +124,7 @@ export const action = defineAction(
 				"A tournament can't switch between LAN and online after it's created",
 			);
 		}
-		// plain calendar events can't be given a venue in the form, editing one keeps what it has
-		const venue =
-			eventToEdit && !tournamentToEdit ? undefined : venueFromFormValues(data);
+		const venue = venueFromFormValues(data);
 
 		const dates =
 			isAddingTournament && data.startTime ? [data.startTime] : data.date;
@@ -144,9 +142,7 @@ export const action = defineAction(
 				: data.discordInviteCode,
 			tags: sortedTagsOrNull(
 				isAddingTournament
-					? data.tags.filter(
-							(tag) => !CalendarEvent.isDerivedTournamentTag(tag),
-						)
+					? data.tags.filter((tag) => !CalendarEvent.isVersusTag(tag))
 					: data.tags,
 			),
 			badges: data.trophyId

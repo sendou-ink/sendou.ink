@@ -71,8 +71,8 @@ describe("CalendarEvent.applyFilters", () => {
 	});
 
 	test.each([
-		{ why: "included", key: "tagsIncluded", shown: [1, 2], hidden: [3] },
-		{ why: "excluded", key: "tagsExcluded", shown: [3], hidden: [1, 2] },
+		{ why: "included", key: "tagsIncluded", shown: [1], hidden: [2] },
+		{ why: "excluded", key: "tagsExcluded", shown: [2], hidden: [1] },
 	] as const)(
 		"a venue counts as the LAN tag when $why",
 		({ key, shown, hidden }) => {
@@ -87,8 +87,7 @@ describe("CalendarEvent.applyFilters", () => {
 								countryCode: "US",
 							},
 						}),
-						makeEvent({ id: 2, tags: ["LAN"] }),
-						makeEvent({ id: 3 }),
+						makeEvent({ id: 2 }),
 					],
 				},
 			];

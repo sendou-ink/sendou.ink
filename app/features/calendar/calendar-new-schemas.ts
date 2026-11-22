@@ -44,14 +44,13 @@ import type { CalendarEventTag } from "./calendar-types";
 import { calendarEventMaxDate, calendarEventMinDate } from "./calendar-utils";
 import * as CalendarEvent from "./core/CalendarEvent";
 
-// the league tag is derived from the league setting, never picked by hand
-const PICKABLE_TAGS = CALENDAR_EVENT.TAGS.filter((tag) => tag !== "LEAGUE");
-
-/** The `tags` field as rendered for tournaments, their team size and LAN tags are derived from their settings and venue instead. */
+/** The `tags` field as rendered for tournaments, their team size tag is derived from their settings instead. */
 export const tournamentTagsField = checkboxGroup({
 	label: "labels.tags",
 	items: tagItems(
-		PICKABLE_TAGS.filter((tag) => !CalendarEvent.isDerivedTournamentTag(tag)),
+		CalendarEvent.PICKABLE_TAGS.filter(
+			(tag) => !CalendarEvent.isVersusTag(tag),
+		),
 	),
 });
 
@@ -116,7 +115,7 @@ export const calendarNewBaseSchema = v.object({
 		maxLength: CALENDAR_EVENT.DESCRIPTION_MAX_LENGTH,
 	}),
 	organizationId: selectDynamicOptional({ label: "labels.organization" }),
-	// a tournament with a venue is a LAN, the venue fields are only rendered (and validated) when this is on
+	// an event with a venue is a LAN, the venue fields are only rendered (and validated) when this is on
 	isLan: toggle({ label: "labels.isLan" }),
 	venueAddress: addressSearchOptional({ label: "labels.venueAddress" }),
 	venueName: textFieldOptional({
@@ -159,7 +158,7 @@ export const calendarNewBaseSchema = v.object({
 	}),
 	tags: checkboxGroup({
 		label: "labels.tags",
-		items: tagItems(PICKABLE_TAGS),
+		items: tagItems(CalendarEvent.PICKABLE_TAGS),
 	}),
 	badges: badges({ label: "labels.badges", maxCount: 50 }),
 	trophyId: customField({ initialValue: null }, v.nullish(id)),
@@ -325,7 +324,7 @@ function calendarNewSyncRefine(
 		});
 	}
 
-	if (data.toToolsEnabled && data.isLan) {
+	if (data.isLan) {
 		validateVenue(data, ctx);
 	}
 
@@ -496,7 +495,7 @@ function validateTeamPick(
 
 /** Zone the times of the form are entered in: a LAN's venue zone, `null` (browser's own) otherwise. */
 export function venueTimeZoneFromFormValues(values: Record<string, unknown>) {
-	if (!values.toToolsEnabled || !values.isLan) return null;
+	if (!values.isLan) return null;
 
 	const timeZone = values.venueTimezone;
 	return typeof timeZone === "string" && TIMEZONES.includes(timeZone)
@@ -504,15 +503,14 @@ export function venueTimeZoneFromFormValues(values: Record<string, unknown>) {
 		: null;
 }
 
-/** The venue the form values describe, `null` for an online tournament or a calendar event. */
+/** The venue the form values describe, `null` for an online event. */
 export function venueFromFormValues(
 	data: Pick<
 		v.InferOutput<typeof calendarNewBaseSchema>,
-		"toToolsEnabled" | "isLan" | "venueAddress" | "venueName" | "venueTimezone"
+		"isLan" | "venueAddress" | "venueName" | "venueTimezone"
 	>,
 ) {
 	if (
-		!data.toToolsEnabled ||
 		!data.isLan ||
 		!data.venueAddress ||
 		!data.venueName ||

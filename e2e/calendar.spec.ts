@@ -526,6 +526,54 @@ test.describe("Calendar", () => {
 });
 
 test.describe("LAN map", () => {
+	test.describe("LAN calendar event", () => {
+		// the venue is in Austin, so the form tells a viewer elsewhere its times are in the venue's zone
+		test.use({ timezoneId: "Europe/Helsinki" });
+
+		test("creates a LAN calendar event, its date entered and shown in venue time and the event on the LAN map", async ({
+			page,
+			factories,
+		}) => {
+			await page.route("https://tiles.openfreemap.org/**", (route) =>
+				route.fulfill({ json: BLANK_MAP_STYLE }),
+			);
+			const calendarEventAdder = await factories.UserFactory.create();
+			await impersonate(page, calendarEventAdder.id);
+
+			const newEvent = new CalendarNewEventPage(page);
+			await newEvent.goto();
+
+			await newEvent.form.fill("name", "Austin Calendar LAN");
+			await newEvent.form.check("isLan");
+			await newEvent.pickVenue("Austin Convention Center");
+			await expect(newEvent.locators.venueTimeNotice).toBeVisible();
+
+			// entered as the venue's wall clock: 10:00 in Austin in January is 16:00 UTC
+			await newEvent.setFirstDate(new Date(2027, 0, 15, 10, 0));
+			await newEvent.form.fill("bracketUrl", "https://sendou.ink/test-bracket");
+			await newEvent.form.submit();
+
+			await expect(page).toHaveURL(/\/calendar\/\d+/);
+			const eventId = Number(page.url().match(/\/calendar\/(\d+)/)?.[1]);
+
+			const calendarEvent = new CalendarEventPage(page);
+			await expect(
+				calendarEvent.startTime(new Date(Date.UTC(2027, 0, 15, 16, 0))).first(),
+			).toContainText(/10:00( AM)? local/);
+			await expect(
+				page.getByText("Austin Convention Center").first(),
+			).toBeVisible();
+
+			await navigate({ page, url: LAN_MAP_PAGE });
+			await page.getByRole("button", { name: "Austin Calendar LAN" }).click();
+			await page
+				.getByTestId("lan-card")
+				.getByRole("link", { name: "Austin Calendar LAN" })
+				.click();
+			await expect(page).toHaveURL(calendarEventPage(eventId));
+		});
+	});
+
 	test("shows upcoming LANs and opens their cards", async ({
 		page,
 		factories,

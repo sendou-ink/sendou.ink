@@ -42,7 +42,11 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { databaseTimestampToDate, zonesReadSameClock } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	localTimeZone,
+	zonesReadSameClock,
+} from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -72,9 +76,9 @@ import {
 	shiftBracketStartTimes,
 } from "../calendar-progression-form";
 import { calendarNewSearchParams } from "../calendar-search-params";
-import type { CalendarEventTag } from "../calendar-types";
 import { BracketProgressionBuilder } from "../components/BracketProgressionBuilder";
 import { VenueTimeNotice } from "../components/VenueTimeNotice";
+import * as CalendarEvent from "../core/CalendarEvent";
 import { loader } from "../loaders/calendar.new.server";
 
 export { action, loader };
@@ -265,7 +269,9 @@ function useDefaultValues() {
 			? ""
 			: (data.eventToEdit?.bracketUrl ?? ""),
 		discordInviteCode: baseEvent?.discordInviteCode ?? "",
-		tags: (baseEvent?.tags ?? []).filter(isPickableTag),
+		tags: (baseEvent?.tags ?? []).filter(
+			(tag) => !CalendarEvent.isDerivedTag(tag),
+		),
 		badges: baseEvent?.badgePrizes?.map((b) => b.id) ?? [],
 		trophyId: baseEvent?.trophy?.id ?? null,
 		avatarImgId: existingImage(
@@ -392,8 +398,9 @@ function CalendarEventFields() {
 			{data.organizations.length > 0 ? (
 				<FormField name="organizationId" options={organizationOptions} />
 			) : null}
+			<VenueFields />
 			<FormField name="date" />
-			<FormField name="bracketUrl" />
+			<FormField name="bracketUrl" required />
 			<FormField name="discordInviteCode" />
 			<FormField name="tags" />
 			{data.badgeOptions.length > 0 ? (
@@ -432,7 +439,7 @@ function TournamentSteps() {
 				<div className={styles.stepColumn}>
 					{isEditing ? null : <CopyTournamentPicker />}
 					<FormField name="name" autoFocus={Boolean(data.eventToCopy)} />
-					<VenueFields isEditing={isEditing} />
+					<VenueFields />
 					<FormField
 						name="startTime"
 						required
@@ -652,10 +659,10 @@ function TournamentReview() {
 	);
 }
 
-// a tournament can't switch between LAN and online after it's created
-function VenueFields({ isEditing }: { isEditing: boolean }) {
+function VenueFields() {
 	const { t } = useTranslation(["forms"]);
-	const { eventToEdit, eventToCopy } = useLoaderData<typeof loader>();
+	const { eventToEdit, eventToCopy, isAddingTournament } =
+		useLoaderData<typeof loader>();
 	const { values, setValue } = useFormFieldContext();
 	const [filledVenueName, setFilledVenueName] = React.useState<FilledVenueName>(
 		{
@@ -663,11 +670,16 @@ function VenueFields({ isEditing }: { isEditing: boolean }) {
 			isCopied: true,
 		},
 	);
+	// a tournament can't switch between LAN and online after it's created
+	const isLanLocked = Boolean(eventToEdit) && isAddingTournament;
 	const timeZone = venueTimeZoneFromFormValues(values);
-	const savedTimeZone = eventToEdit?.venue?.timezone ?? null;
+	const savedTimeZone = eventToEdit
+		? (eventToEdit.venue?.timezone ?? localTimeZone())
+		: null;
 	// the times keep their wall clock, so a new zone moves them
 	const isTimeZoneChanged = Boolean(
-		savedTimeZone && timeZone && !zonesReadSameClock(savedTimeZone, timeZone),
+		savedTimeZone &&
+			!zonesReadSameClock(savedTimeZone, timeZone ?? localTimeZone()),
 	);
 
 	const addressOptions: AddressSearchFieldOptions = {
@@ -690,22 +702,27 @@ function VenueFields({ isEditing }: { isEditing: boolean }) {
 
 	return (
 		<>
-			{isEditing ? null : <FormField name="isLan" />}
+			{isLanLocked ? null : <FormField name="isLan" />}
 			{values.isLan ? (
 				<>
 					<FormField name="venueAddress" options={addressOptions} required />
 					<FormField name="venueName" required />
 					<FormField name="venueTimezone" options={TIMEZONE_OPTIONS} required />
 					<VenueTimeNotice timeZone={timeZone} />
-					{isTimeZoneChanged ? (
-						<Alert variation="WARNING" tiny>
-							{t("forms:datetime.venueTimeZoneChanged", {
-								timeZone,
-								previousTimeZone: savedTimeZone,
-							})}
-						</Alert>
-					) : null}
 				</>
+			) : null}
+			{isTimeZoneChanged ? (
+				<Alert variation="WARNING" tiny>
+					{t(
+						isAddingTournament
+							? "forms:datetime.venueTimeZoneChanged"
+							: "forms:datetime.venueTimeZoneChangedDates",
+						{
+							timeZone: timeZone ?? localTimeZone(),
+							previousTimeZone: savedTimeZone,
+						},
+					)}
+				</Alert>
 			) : null}
 		</>
 	);
@@ -880,13 +897,6 @@ function MemberCountFields() {
 			) : null}
 		</>
 	);
-}
-
-/** The league tag is derived from the league setting, so the picker never holds it. */
-function isPickableTag(
-	tag: CalendarEventTag,
-): tag is Exclude<CalendarEventTag, "LEAGUE"> {
-	return tag !== "LEAGUE";
 }
 
 function DraftField() {

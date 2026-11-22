@@ -205,13 +205,9 @@ const LONGEST_PRONOUNS = JSON.stringify({
 const LONGEST_COUNTRY_CODE = longest(COUNTRY_CODES);
 const LONGEST_TIMEZONE = longest(TIMEZONES);
 const ALL_LANGUAGES = languagesUnified.map((language) => language.code);
-/** As the form offers them: every tag but the league one, which is set for leagues only. */
-const CALENDAR_EVENT_TAGS = CALENDAR_EVENT.TAGS.filter(
-	(tag) => tag !== "LEAGUE",
-);
-/** Tournaments derive their team size and LAN tags instead. */
-const TOURNAMENT_TAGS = CALENDAR_EVENT_TAGS.filter(
-	(tag) => !CalendarEvent.isDerivedTournamentTag(tag),
+/** Tournaments derive their team size tag instead. */
+const TOURNAMENT_TAGS = CalendarEvent.PICKABLE_TAGS.filter(
+	(tag) => !CalendarEvent.isVersusTag(tag),
 );
 const LARGEST_LOBBY_ROOM_SIZE = (PLAYERS_PER_SET +
 	Math.max(...LOBBY_SPECTATOR_COUNTS)) as LobbyRoomSize;
@@ -1023,7 +1019,7 @@ async function seedCalendarEvents(users: StressUsers, targets: StressTarget[]) {
 		name: unbroken(CALENDAR_EVENT.NAME_MAX_LENGTH),
 		authorId: users.unbroken.id,
 		description: longText(CALENDAR_EVENT.DESCRIPTION_MAX_LENGTH),
-		tags: CALENDAR_EVENT_TAGS,
+		tags: CalendarEvent.PICKABLE_TAGS,
 		discordInviteCode: unbroken(CALENDAR_EVENT.DISCORD_INVITE_CODE_MAX_LENGTH),
 		bracketUrl: urlOfLength(
 			"https://challonge.com/",
@@ -1074,7 +1070,7 @@ async function seedCalendarEvents(users: StressUsers, targets: StressTarget[]) {
 		name: words(CALENDAR_EVENT.NAME_MAX_LENGTH),
 		authorId: users.words.id,
 		description: longText(CALENDAR_EVENT.DESCRIPTION_MAX_LENGTH),
-		tags: CALENDAR_EVENT_TAGS,
+		tags: CalendarEvent.PICKABLE_TAGS,
 		discordInviteCode: tagged(
 			WIDE_LOWERCASE_CHARACTER.repeat(
 				CALENDAR_EVENT.DISCORD_INVITE_CODE_MAX_LENGTH,

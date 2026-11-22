@@ -121,7 +121,7 @@ describe("ADD_FRIEND", () => {
 
 	test("doesn't add a friend with a new account who set their friend code under a day ago", async () => {
 		const newAccountFriend = await UserFactory.create({
-			discordId: discordIdCreatedAt(new Date()),
+			discordId: UserFactory.discordIdCreatedAt(new Date()),
 		});
 		await FriendshipFactory.create({
 			userOneId: actorId(),
@@ -138,9 +138,3 @@ describe("ADD_FRIEND", () => {
 		expect(SendouQ.findOwnGroup(newAccountFriend.id)).toBeUndefined();
 	});
 });
-
-function discordIdCreatedAt(date: Date) {
-	const DISCORD_EPOCH_MS = 1420070400000n;
-
-	return String((BigInt(date.getTime()) - DISCORD_EPOCH_MS) << 22n);
-}

@@ -7,6 +7,7 @@ import {
 import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
 import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import { assertType } from "~/utils/types";
+import { CALENDAR_EVENT } from "../calendar-constants";
 import type {
 	CalendarEvent,
 	CalendarEventTag,
@@ -44,14 +45,19 @@ assertType<(typeof FILTERS_KEYS)[number], keyof CalendarFilters>();
 assertType<keyof CalendarFilters, (typeof FILTERS_KEYS)[number]>();
 
 /** Whether the tag tells the team size (1v1, 2v2 or 3v3). Tournaments never store these, their tag is derived from `minMembersPerTeam` via {@link versusTag}. */
-function isVersusTag(tag: CalendarEventTag): tag is VersusTag {
+export function isVersusTag(tag: CalendarEventTag): tag is VersusTag {
 	return Object.hasOwn(MEMBERS_PER_TEAM_BY_VERSUS_TAG, tag);
 }
 
-/** Whether tournaments get the tag from their settings instead of storing it: the team size tag (see {@link isVersusTag}) and LAN, implied by a venue. */
-export function isDerivedTournamentTag(tag: CalendarEventTag): boolean {
-	return isVersusTag(tag) || tag === "LAN";
+/** Whether no event stores the tag, it's derived instead: LEAGUE from the league setting, LAN from having a venue. */
+export function isDerivedTag(tag: CalendarEventTag): tag is "LEAGUE" | "LAN" {
+	return tag === "LEAGUE" || tag === "LAN";
 }
+
+/** Tags an organizer picks by hand, every tag but the {@link isDerivedTag derived} ones. */
+export const PICKABLE_TAGS = CALENDAR_EVENT.TAGS.filter(
+	(tag) => !isDerivedTag(tag),
+);
 
 /** The tag telling the team size of a tournament with the given minimum members per team, null for 4v4. */
 export function versusTag(minMembersPerTeam: number): VersusTag | null {
@@ -342,7 +348,5 @@ function orgNameMatches({
 
 // a venue is a virtual LAN tag, cards show it as the venue chip instead
 function tagsWithVenue(event: CalendarEvent): Array<CalendarEventTag> {
-	if (!event.venue || event.tags.includes("LAN")) return event.tags;
-
-	return [...event.tags, "LAN"];
+	return event.venue ? [...event.tags, "LAN"] : event.tags;
 }
