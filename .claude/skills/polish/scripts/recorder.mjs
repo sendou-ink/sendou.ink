@@ -162,6 +162,7 @@ export class Recorder {
 				viewers: new Set(),
 				widths: new Set(),
 				cases: new Set(),
+				components: new Set(),
 			};
 			this.seen.set(key, seen);
 		}
@@ -171,6 +172,8 @@ export class Recorder {
 			context.width ?? VIEWPORTS[context.viewportName]?.viewport.width;
 		if (width) seen.widths.add(width);
 		if (item.caseId) seen.cases.add(item.caseId);
+
+		if (item.component) seen.components.add(stableText(item.component));
 
 		const existing = this.findings.get(key);
 		if (existing) {
@@ -322,7 +325,13 @@ export class Recorder {
 			routesByTitle.set(title, routes);
 		}
 		for (const [title, routes] of routesByTitle) {
-			if (routes.size < 3) continue;
+			// two things of one name (a team and an organization) are a coincidence: three pages of one
+			// section sharing a title are tabs nobody can tell apart
+			const bySection = Map.groupBy(
+				routes.keys(),
+				(route) => route.split("/")[1] ?? "",
+			);
+			if (![...bySection.values()].some((group) => group.length >= 3)) continue;
 			const [first] = routes.values();
 			const finding = this.add(
 				`page-title|shared|${title}`,
@@ -427,6 +436,9 @@ export class Recorder {
 				onStressPage: seen.stress.size > 0,
 				viewers: [...seen.viewers],
 				widths: [...seen.widths].sort((a, b) => a - b),
+				...(seen.components.size > 0
+					? { components: [...seen.components].slice(0, 80) }
+					: {}),
 				...(this.selftest ? { cases: [...seen.cases] } : {}),
 			};
 		});

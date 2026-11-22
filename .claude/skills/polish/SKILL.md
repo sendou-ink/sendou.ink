@@ -23,7 +23,7 @@ Scope from the request: the whole site (default), a feature, a URL, or what a br
 
 | Rule | Meaning | Found by |
 | --- | --- | --- |
-| `shift-on-load` | a component moved while the page loaded or hydrated | `layout-shift` entries on a throttled load, uncached and cached, any move of 3px or more; recorded as a GIF. One finding per component that moved, so a header shifting on every page is one |
+| `shift-on-load` | a component moved while the page loaded or hydrated | `layout-shift` entries on a throttled load, uncached and cached, any move of 3px or more; recorded as a GIF. One finding per component that moved, so a header shifting on every page is one, and everything that moves at the moment the web font arrives is one more |
 | `shift-on-idle`, `shift-on-scroll` | something moved while the page sat untouched, or while it was scrolled | the same entries after the load has settled and while scrolling to the end |
 | `shift-on-action`, `control-moved` | after a click, what is above or beside the control moved, or the control left the pointer | rects of everything on screen before and after: every tab, disclosures, in-section links, and (writes blocked) every other control |
 | `scroll-jump` | the page scrolled (to the top) on a tab, filter or pagination click | `scrollY` before and after the same clicks, done scrolled down |
@@ -38,7 +38,7 @@ Scope from the request: the whole site (default), a feature, a URL, or what a br
 | `overlay-offscreen` | an opened dialog, popover or menu reaching past the screen | the explore pass opens every one; every static rule also runs inside it |
 | `low-contrast`, `low-contrast-ui` | under WCAG AA (4.5:1, large text 3:1; icon-only controls 3:1), per theme: text, field values, placeholders, text over pictures | computed colors over the backgrounds behind; over a picture or gradient the pixels are sampled |
 | `no-hover-feedback`, `cursor-not-pointer` | a clickable thing that does not react to the pointer | style snapshot before/after a real hover, then a pixel compare |
-| `no-press-feedback` | nothing shows while a finger is down (touch viewports, where nothing hovers) | `:active` forced on, compared with the control at rest; passes when the tap highlight is on |
+| `no-press-feedback` | nothing shows while a finger is down (touch viewports, where nothing hovers) | `:active` forced on, compared with the control at rest; passes when the tap highlight is on. One finding per kind of control (links, buttons, the rest) listing its components |
 | `no-focus-indicator`, `focus-ring-clipped` | keyboard focus shows nothing, or a ring cut off by a box around it | pixels focused vs not, and on which sides of the box they differ |
 | `focus-not-visible`, `focus-obscured` | Tab stops on something hidden, or under a sticky bar | Tab pressed through the page |
 | `off-center` | an icon or label off the middle of its button, pill or badge | box gaps, and the drawn pixels (an icon can be off inside its own box) |
@@ -114,7 +114,7 @@ node .claude/skills/polish/scripts/sweep.mjs --run=<name>
 #   --lang=longest | --lang=he      the language with the longest translations; right-to-left
 ```
 
-Writes `scripts/output/polish/<name>/mechanical.json`, evidence under `media/`, `census.json` and `coverage.json`. Run it in the background: the whole site as the admin (203 pages, all six passes) takes well over 10 minutes on 8 workers (static, actions and explore alone take 10, widths and load come after). Read the result with `digest.mjs --run=<name> [--feature=..] [--rule=..] [--new]`.
+Writes `scripts/output/polish/<name>/mechanical.json`, evidence under `media/`, `census.json` and `coverage.json`. Run it in the background: the whole site as the admin (204 pages, all six passes) takes about 20 minutes on 8 workers (static and interactive 3, actions 1.5, explore 4, widths 1.5, load 10) and came back with 669 findings on its first run. `--passes=static,interactive,actions,widths` is the 6 minute version. Read the result with `digest.mjs --run=<name> [--feature=..] [--rule=..] [--new]`.
 
 | Pass | What it does |
 | --- | --- |
@@ -229,6 +229,6 @@ node .claude/skills/polish/scripts/montage.mjs --selector='[class*="_pageHeader_
 - **Logged in pages never go network idle** (the event stream stays open): wait on `[data-testid="hydrated"][data-router-idle="true"]`, which `visit()` and `settle()` of `lib.mjs` do.
 - **Hover, press, focus, centering and sampled contrast are tested once per component signature** across the run, actions once per control per route (controls of the header and navigation once in all): a rerun with `--only` tests them again.
 - **The explore pass never writes, and never sees what a write leads to.** A click whose request was cut off is counted (`writesBlocked` in `coverage.json`) and its page thrown away. Toasts, saved states and what follows a submit come from the e2e hook.
-- **Known over-reporting**, left for the reviewers (and for `verdicts.json` after the first run): views that replace the clicked control (mobile drill-downs, the desktop user page hub), collapsed text behind a "Show more" (`text-clipped`, vertical), secondary text that is dim by design (it does fail AA), drag handles and third party toolbars without a pointer cursor, `no-press-feedback` on nearly every link (one finding and one guardrail, not a hundred), marquee chips cut by their window, scroll boxes that are meant to be (a chat, a sticky filter column), panels that open beside the control and push the header along.
+- **Known over-reporting**, left for the reviewers (and for `verdicts.json` after the first run): views that replace the clicked control (mobile drill-downs, the desktop user page hub), collapsed text behind a "Show more" (`text-clipped`, vertical), secondary text that is dim by design (it does fail AA), drag handles and third party toolbars without a pointer cursor, pagination and "jump to" buttons that scroll the page on purpose (`scroll-jump`), `{{placeholders}}` shown by the translation tool (`junk-text`), a truncated chip in a marquee (`truncated-with-room`), scroll boxes that are meant to be (a chat, a sticky filter column), panels that open beside the control and push the header along.
 - **Known blind spots**, for the reviewers to cover by hand: focus drawn by a sibling element that is not the label, optical alignment the box and pixel checks both pass, anything that needs typing to appear (search results, a filled form), what a hover reveals inside a menu.
 - Adding a probe: a function in `probes.mjs` returning `finding(rule, element, detail)`, registered in `PROBES`, added to the lists at the top of `passes.mjs`, to the sections of `lib.mjs` and to the table above, **with a planted case and a clean case in `selftest/`**. Try it on one page with `shoot.mjs --probe=<name>` first.

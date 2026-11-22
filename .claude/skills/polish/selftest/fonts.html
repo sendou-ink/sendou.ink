@@ -1,0 +1,27 @@
+<!-- biome-ignore-all lint/a11y: the defects on this page are planted, they are what the self-test looks for -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polish fixture fonts</title>
+<link rel="stylesheet" href="base.css">
+<style>
+/* the server holds this font back for half a second: the text is drawn in the fallback first */
+@font-face {
+	font-family: "Late Lexend";
+	src: url("/late-font.woff2") format("woff2");
+	font-display: swap;
+}
+section { height: 70px; overflow: hidden; }
+</style>
+</head>
+<body>
+<div data-testid="hydrated" data-router-idle="true" hidden></div>
+<main>
+<section data-case="font-swap" data-expect="shift-on-load">
+	<span class="f1" style="font-family:'Late Lexend',monospace">The widths of this text change when the font arrives</span><span class="f2" style="display:inline-block;background:#333;margin-left:8px">Pushed along</span>
+</section>
+</main>
+</body>
+</html>

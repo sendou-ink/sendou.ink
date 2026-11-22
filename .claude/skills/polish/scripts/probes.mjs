@@ -64,6 +64,11 @@
 	const styleCache = new WeakMap();
 
 	const shifts = [];
+	/** When a web font finished loading: text drawn in the fallback font until then changes width at that moment. */
+	const fontTimes = [];
+	document.fonts?.addEventListener("loadingdone", () =>
+		fontTimes.push(performance.now()),
+	);
 	try {
 		new PerformanceObserver((list) => {
 			for (const entry of list.getEntries()) {
@@ -1411,6 +1416,8 @@
 			moved.push({
 				nodeId: idOf(element),
 				selector: selectorOf(element),
+				sig: signatureOf(element),
+				inShell: !element.closest("main"),
 				text: snippet(element),
 				dx: Math.round(dx * 10) / 10,
 				dy: Math.round(dy * 10) / 10,
@@ -2137,6 +2144,8 @@
 			}
 			for (const [signature, found] of counts) {
 				if (found.length !== 1 || !isVisible(found[0])) continue;
+				// a part after some text starts wherever that text ends: only one with pictures or nothing before it lines up
+				if (hasTextBefore(found[0], row)) continue;
 				const list = parts.get(signature) ?? [];
 				list.push({ rowIndex, element: found[0] });
 				parts.set(signature, list);
@@ -2184,6 +2193,30 @@
 				`starts ${Math.abs(off)}px to the ${off > 0 ? "right" : "left"} of the same part in ${peers} sibling rows (rows are ragged)`,
 			);
 		}
+	}
+
+	/** Whether any text comes before the part within its row. */
+	function hasTextBefore(part, row) {
+		for (
+			let current = part;
+			current && current !== row;
+			current = current.parentElement
+		) {
+			for (
+				let sibling = current.previousSibling;
+				sibling;
+				sibling = sibling.previousSibling
+			) {
+				const text =
+					sibling.nodeType === 3
+						? sibling.nodeValue
+						: sibling.nodeType === 1
+							? (sibling.innerText ?? "")
+							: "";
+				if (text.trim()) return true;
+			}
+		}
+		return false;
 	}
 
 	/** Texts of one size in a row that centers its items sit on one line. */
@@ -2263,6 +2296,10 @@
 				const lines = lineBoxes(rects);
 				// only the ends of a one line text are known to be its first and last character
 				if (lines.length !== 1) return [];
+				// a cut text ends where its box does, with an ellipsis: nothing touches there
+				const shown = clipToAncestors(element, lines[0]);
+				if (!shown || Math.abs(shown.right - lines[0].right) > 1) return [];
+				if (Math.abs(shown.left - lines[0].left) > 1) return [];
 				return [{ element, rect: lines[0], text }];
 			})
 			.sort((a, b) => a.rect.left - b.rect.left);
@@ -2928,7 +2965,7 @@
 			}
 		}
 		if (right < 0) return null;
-		return {
+		const gaps = {
 			left: (left - border.left + 1) / scale,
 			right: (width - border.right + 1 - (right + 1)) / scale,
 			top: (top - border.top + 1) / scale,
@@ -2936,6 +2973,10 @@
 			inkWidth: (right - left + 1) / scale,
 			inkHeight: (bottom - top + 1) / scale,
 		};
+		// something drawn right at the edge is the box (an inner border, a shadow, an uneven corner), not what it holds
+		if (Math.min(gaps.left, gaps.right, gaps.top, gaps.bottom) < 1.5)
+			return null;
+		return gaps;
 	}
 
 	const CAPS_AND_DIGITS = /^[A-Z0-9 +\-%.:/#!?&]+$/;
@@ -2961,7 +3002,9 @@
 			if (rect.height < 12) continue;
 			const text = (element.innerText ?? "").trim();
 			const icons = element.querySelectorAll("svg, img");
-			const isIconOnly = !text && icons.length === 1;
+			// a picture has its own empty space drawn in: only a vector icon's ink says where it sits
+			const isIconOnly =
+				!text && icons.length === 1 && icons[0].tagName === "svg";
 			const isLabel = text && icons.length === 0 && !text.includes("\n");
 			if (!isIconOnly && !isLabel) continue;
 			const computed = style(element);
@@ -3453,7 +3496,12 @@
 			return findings;
 		},
 		probeNames: () => Object.keys(PROBES),
-		shifts: () => shifts,
+		/** The layout shifts so far, each told whether a web font arrived at that moment. */
+		shifts: () =>
+			shifts.map((shift) => ({
+				...shift,
+				fontSwap: fontTimes.some((time) => Math.abs(shift.time - time) <= 80),
+			})),
 		clearShifts: () => shifts.splice(0, shifts.length),
 		listInteractive,
 		listActions,

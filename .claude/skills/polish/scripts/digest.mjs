@@ -71,6 +71,11 @@ for (const [rule, items] of [...byRule].sort(
 		if (item.viewers?.length > 1)
 			console.log(`    seen by: ${item.viewers.join(", ")}`);
 		if (item.steps?.length) console.log(`    steps: ${item.steps.join("  ")}`);
+		if (item.components?.length) {
+			console.log(
+				`    components (${item.components.length}): ${item.components.join(", ")}`,
+			);
+		}
 		if (item.stress) console.log(`    stressed: ${item.stress}`);
 		if (item.scenario) console.log(`    scenario: ${item.scenario}`);
 		for (const media of item.media)

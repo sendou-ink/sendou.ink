@@ -49,6 +49,11 @@ html:has(dialog[open]) { overflow: hidden; }
 	</form>
 </section>
 
+<section data-case="add-row" data-expect="">
+	<ul id="rows" class="rows" style="margin:0;padding-left:20px"><li class="rw">The first row</li></ul>
+	<button type="button" class="btn g1" id="add-row">Add a row</button>
+</section>
+
 <section data-case="write" data-expect="">
 	<button type="button" class="btn w1" id="write">Delete everything</button>
 </section>
@@ -74,6 +79,9 @@ byId("more").onclick = () => {
 byId("form").onsubmit = (event) => {
 	event.preventDefault();
 	byId("error").hidden = false;
+};
+byId("add-row").onclick = () => {
+	byId("rows").insertAdjacentHTML("beforeend", '<li class="rw">Another row</li>');
 };
 byId("write").onclick = () => {
 	fetch("/write", { method: "POST" }).catch(() => {

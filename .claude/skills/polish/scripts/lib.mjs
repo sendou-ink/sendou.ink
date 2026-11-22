@@ -154,6 +154,8 @@ export async function openSession(
 		...device,
 		colorScheme: theme,
 		serviceWorkers: "block",
+		// a "paste" button clicked by the sweep is not to fail for want of a permission
+		permissions: ["clipboard-read", "clipboard-write"],
 		locale: "en-US",
 		timezoneId: "Europe/Helsinki",
 		...(videoDir
@@ -183,6 +185,8 @@ export async function openSession(
 }
 
 const blockedWrites = new WeakMap();
+/** Requests that are not GETs and change nothing anyone would see: the page telling its event stream what to listen to. */
+const NOT_A_WRITE = [/\/sse\/[^/]+\/topics$/];
 
 /**
  * Lets nothing but reads out of the pages of the context, so any button can be clicked: a request that
@@ -194,12 +198,19 @@ async function blockWrites(context) {
 	blockedWrites.set(context, blocked);
 	await context.route("**/*", (route) => {
 		const request = route.request();
-		if (["GET", "HEAD", "OPTIONS"].includes(request.method())) {
+		if (
+			["GET", "HEAD", "OPTIONS"].includes(request.method()) ||
+			NOT_A_WRITE.some((pattern) => pattern.test(request.url()))
+		) {
 			return route.continue();
 		}
 		blocked.push({ method: request.method(), url: request.url() });
 		return route.abort("blockedbyclient");
 	});
+}
+
+export function isReadOnly(context) {
+	return blockedWrites.has(context);
 }
 
 /** The writes a read-only session cut off so far. */
@@ -546,7 +557,12 @@ export function loadFindings(runDir) {
 	const reviewedDir = path.join(runDir, "reviewed");
 	return fs
 		.readdirSync(reviewedDir)
-		.filter((file) => file.endsWith(".json") && !file.endsWith(".notes.json"))
+		.filter(
+			(file) =>
+				file.endsWith(".json") &&
+				!file.endsWith(".notes.json") &&
+				!file.endsWith(".triage.json"),
+		)
 		.flatMap((file) =>
 			JSON.parse(fs.readFileSync(path.join(reviewedDir, file), "utf8")).map(
 				(finding) => ({ ...finding, reviewer: file.replace(/\.json$/, "") }),

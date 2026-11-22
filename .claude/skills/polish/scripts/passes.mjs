@@ -8,6 +8,7 @@
 // once per component signature), `options` the limits of `defaultOptions`.
 import fs from "node:fs";
 import {
+	isReadOnly,
 	isTouchViewport,
 	makeFlickerGif,
 	SWEEP_WIDTHS,
@@ -142,6 +143,8 @@ export function watchPage(page, ctx) {
 		const text = message.text();
 		// the request itself is reported as failed-request
 		if (/Failed to load resource/.test(text)) return;
+		// the page noticing that a read-only session cut its write off
+		if (isReadOnly(page.context()) && /Failed to fetch/.test(text)) return;
 		consoleErrors.push(text);
 	});
 	page.on("requestfailed", (request) => {
@@ -179,12 +182,17 @@ export function watchPage(page, ctx) {
 			);
 		}
 		for (const message of consoleErrors) {
+			// the same error with another request id or number is the same error, on whatever page
+			const text = message
+				.split("\n")[0]
+				.replace(/^\[[A-Za-z0-9]{5,12}\]\s*/, "")
+				.slice(0, 240);
 			recorder.add(
-				`console-error|${entry.route}|${message.slice(0, 60)}`,
+				`console-error|${text.replace(/\d+/g, "N").slice(0, 80)}`,
 				{
 					rule: "console-error",
-					sig: entry.route,
-					detail: `logged to the console as an error: ${message.split("\n")[0].slice(0, 240)}`,
+					sig: text.slice(0, 80),
+					detail: `logged to the console as an error: ${text}`,
 				},
 				context,
 			);
@@ -563,13 +571,22 @@ export async function pressPass(page, ctx) {
 			) {
 				continue;
 			}
+			// the tap highlight is off for the whole site, so this is one finding per kind of control
+			// with the components it holds for, not one per component
+			const kind =
+				candidate.tag === "a"
+					? "links"
+					: candidate.tag === "button"
+						? "buttons"
+						: "other controls";
 			await recorder.record(
 				page,
 				{
 					...candidate,
 					rule: "no-press-feedback",
-					detail:
-						"nothing changes while a finger is down on it: no :active style, and the tap highlight is turned off",
+					sig: kind,
+					component: candidate.sig,
+					detail: `nothing changes while a finger is down on these ${kind}: no :active style, and the tap highlight is turned off (the components are listed with the finding)`,
 				},
 				context,
 			);
@@ -930,7 +947,7 @@ async function clickAndMeasure(page, ctx, context, action) {
 	return {
 		stem,
 		diff,
-		issues: diff ? actionIssues(diff, page.viewportSize()) : [],
+		issues: diff ? actionIssues(diff, page.viewportSize(), action.kind) : [],
 		caseId: await ctx.recorder.caseOf(page, action.nodeId),
 	};
 }
@@ -978,8 +995,17 @@ async function recordMotion(page, ctx, context, action, measured) {
 	}
 
 	for (const issue of issues) {
+		const layout = viewportClassOf(page.viewportSize().width);
+		// a part of the header or the navigation that moves when a page's control is clicked moves for
+		// every such control: one finding, about what moved
+		const shellMover =
+			issue.rule === "shift-on-action" && !action.inShell
+				? diff.moved.find((moved) => moved.inShell)
+				: null;
 		recorder.add(
-			`${issue.rule}|${action.key}|${action.inShell ? "shell" : entry.route}|${viewportClassOf(page.viewportSize().width)}`,
+			shellMover && shellMover === diff.moved[0]
+				? `shift-on-action|moved:${shellMover.sig}|${layout}`
+				: `${issue.rule}|${action.key}|${action.inShell ? "shell" : entry.route}|${layout}`,
 			{
 				rule: issue.rule,
 				selector: action.selector,
@@ -994,7 +1020,7 @@ async function recordMotion(page, ctx, context, action, measured) {
 	}
 }
 
-function actionIssues(diff, viewport) {
+function actionIssues(diff, viewport, kind) {
 	const maxScrollAfter = Math.max(0, diff.pageHeightAfter - viewport.height);
 	const scrolledBy = diff.scrollAfter - diff.scrollBefore;
 
@@ -1024,7 +1050,15 @@ function actionIssues(diff, viewport) {
 		diff.controlNow && diff.controlNow.width > 1 && diff.controlNow.height > 1;
 	if (diff.controlConnected && diff.controlMoved && controlStillShown) {
 		const { dx, dy } = diff.controlMoved;
-		if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+		// a button under the list it adds to (or removes from) goes where the list's end goes, and one
+		// that jumps to a section scrolls the page: both are what the button is for. A tab or a link has no such excuse
+		const grewBy = diff.pageHeightAfter - diff.pageHeightBefore;
+		const isExplained =
+			["button", "submit"].includes(kind) &&
+			Math.abs(dx) <= 2 &&
+			(Math.abs(scrolledBy) > 2 ||
+				(Math.abs(grewBy) > 2 && Math.abs(dy - grewBy) <= 4));
+		if (!isExplained && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
 			issues.push({
 				rule: "control-moved",
 				detail: `the clicked control moved ${Math.round(dx)}px sideways, ${Math.round(dy)}px down from under the pointer${scrollNote}`,
@@ -1117,13 +1151,18 @@ export async function loadPass(session, ctx) {
 			}));
 			return {
 				...measured,
-				movers: moversOf(measured.shifts, options.minShiftPx),
+				movers: moversOf(
+					measured.shifts.filter((shift) => !shift.fontSwap),
+					options.minShiftPx,
+				),
 			};
 		};
 
 		await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
 		const cold = await load();
 		if (!cold) return;
+
+		await recordFontSwap(page, ctx, context, layout, cold.shifts);
 
 		// pictures of what is new now: the page is about to be scrolled and loaded again
 		const shots = new Map();
@@ -1247,6 +1286,41 @@ export async function loadPass(session, ctx) {
 	}
 	await video.delete().catch(() => {});
 	fs.rmSync(videoPath, { force: true });
+}
+
+/**
+ * What moves when the web font arrives is one finding for the whole site: the cause is the font (text
+ * first drawn in a fallback of other widths), whichever component happens to show it on a page.
+ */
+async function recordFontSwap(page, ctx, context, layout, shifts) {
+	const { recorder, options } = ctx;
+	const [mover] = moversOf(
+		shifts.filter((shift) => shift.fontSwap),
+		options.minShiftPx,
+	);
+	if (!mover) return;
+	const key = `shift-on-load|font-swap|${layout}`;
+	const media = [];
+	if (!recorder.findings.has(key) && recorder.takeEvidence("shift-on-load")) {
+		const file = `${recorder.stem("font-swap", context)}.png`;
+		await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
+		await shootMarked(page, file, { marks: movedMarks(mover), crop: false });
+		media.push(recorder.relative(file));
+	}
+	recorder.add(
+		key,
+		{
+			rule: "shift-on-load",
+			selector: mover.source.selector,
+			sig: "font-swap",
+			component: mover.source.sig,
+			text: mover.source.text,
+			caseId: await recorder.caseOf(page, mover.source.nodeId),
+			detail: `the page shifts when the web font arrives on a first visit: text is drawn in the fallback font first, which has other widths. Here ${describeMove(mover, "at that moment")}. A fallback with matched metrics (size-adjust) or a preloaded font stops it everywhere; the components seen moving are listed with the finding`,
+			media,
+		},
+		context,
+	);
 }
 
 function shiftsOf(page) {

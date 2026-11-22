@@ -165,10 +165,13 @@ function sinceSection() {
 	];
 	if (compare.gone.length > 0) {
 		out.push("<details><summary>Gone</summary>", "");
-		for (const finding of compare.gone) {
+		for (const finding of compare.gone.slice(0, 40)) {
 			out.push(
 				`- \`${finding.rule}\` \`${finding.url}\` (${finding.viewport}): ${text(finding.detail)}`,
 			);
+		}
+		if (compare.gone.length > 40) {
+			out.push(`- and ${compare.gone.length - 40} more (\`compare.json\`)`);
 		}
 		out.push("", "</details>", "");
 	}

@@ -15,6 +15,7 @@ import {
 	OUTPUT_DIR,
 	openSession,
 	parseArgs,
+	ROOT,
 	SKILL_DIR,
 	setHydrationTimeout,
 	writesBlocked,
@@ -37,6 +38,7 @@ import { Recorder } from "./recorder.mjs";
 
 const FIXTURE_DIR = path.join(SKILL_DIR, "selftest");
 const RUN_DIR = path.join(OUTPUT_DIR, "selftest");
+const LATE_FONT = path.join(ROOT, "app/styles/fonts/lexend-latin.woff2");
 const PASSES = {
 	static: staticPass,
 	hover: hoverPass,
@@ -71,6 +73,7 @@ const FIXTURES = [
 		runs: [{ viewport: "desktop", passes: ["explore"], readOnly: true }],
 	},
 	{ file: "load.html", runs: [{ viewport: "desktop", passes: ["load"] }] },
+	{ file: "fonts.html", runs: [{ viewport: "desktop", passes: ["load"] }] },
 	{ file: "errors.html", runs: [{ viewport: "desktop", passes: ["static"] }] },
 	{ file: "widths.html", runs: [{ viewport: "desktop", passes: ["widths"] }] },
 	{ file: "pushed.html", runs: [{ viewport: "mobile", passes: ["static"] }] },
@@ -104,6 +107,15 @@ const server = http.createServer((request, response) => {
 		return;
 	}
 	const name = decodeURIComponent(new URL(request.url, "http://x").pathname);
+	if (name === "/late-font.woff2") {
+		// the app's own font, held back: a page shows its text in the fallback first
+		setTimeout(() => {
+			response
+				.writeHead(200, { "content-type": "font/woff2" })
+				.end(fs.readFileSync(LATE_FONT));
+		}, 500);
+		return;
+	}
 	const file = path.join(FIXTURE_DIR, path.basename(name));
 	if (!fs.existsSync(file) || !MIME[path.extname(file)]) {
 		response.writeHead(404).end("not found");
@@ -130,7 +142,7 @@ let blocked = 0;
 for (const fixture of FIXTURES) {
 	const entry = {
 		url: `${origin}/${fixture.file}`,
-		route: `/${fixture.file}`,
+		route: `/fixtures/${fixture.file}`,
 		feature: "selftest",
 		viewer: null,
 	};
@@ -190,7 +202,7 @@ for (const finding of findings) {
 		continue;
 	}
 	if (finding.cases.length === 0) {
-		const file = finding.route.slice(1);
+		const file = finding.route.replace("/fixtures/", "");
 		if (RUN_LEVEL.includes(finding.rule)) {
 			foundOfPage.set(
 				"run",
@@ -241,7 +253,22 @@ if (between && between.widths.join(",") !== "480,600") {
 		`the width sweep saw the "between" case at ${between.widths.join(", ")}px, it overflows at 480 and 600`,
 	);
 }
-const loadShift = findings.find((finding) => finding.rule === "shift-on-load");
+const fontSwap = findings.find((finding) =>
+	finding.cases.includes("font-swap"),
+);
+if (fontSwap && !fontSwap.key.includes("font-swap")) {
+	failures.push(
+		"the shift a late font causes was not told apart from the others (it is one finding for the whole site)",
+	);
+}
+const press = findings.find((finding) => finding.rule === "no-press-feedback");
+if (press && !press.components?.length) {
+	failures.push("the press feedback finding does not list its components");
+}
+const loadShift = findings.find(
+	(finding) =>
+		finding.rule === "shift-on-load" && finding.cases.includes("load-shift"),
+);
 if (loadShift && !loadShift.media.some((file) => file.endsWith(".gif"))) {
 	failures.push("the load shift has no recording");
 }
