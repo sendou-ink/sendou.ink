@@ -72,7 +72,7 @@ export function PlacementsTable({
 							/>
 						) : null}
 					</RankTableInnerRow>
-					<div>{placement.power.toFixed(1)}</div>
+					<div className={styles.power}>{placement.power.toFixed(1)}</div>
 				</RankTableRow>
 			))}
 		</RankTable>

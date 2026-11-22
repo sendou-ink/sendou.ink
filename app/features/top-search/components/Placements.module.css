@@ -5,7 +5,14 @@
 }
 
 .time {
+	flex: 1;
+	text-align: end;
+	font-variant-numeric: tabular-nums;
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
+}
+
+.power {
+	font-variant-numeric: tabular-nums;
 }

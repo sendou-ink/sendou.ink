@@ -41,6 +41,16 @@
 	margin-inline-start: auto;
 }
 
+.roster {
+	flex: 1;
+}
+
+.avatarPlaceholder {
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
+}
+
 .avatar {
 	min-width: 24px;
 	min-height: 24px;

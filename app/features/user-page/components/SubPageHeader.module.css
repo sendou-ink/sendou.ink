@@ -5,5 +5,5 @@
 .username {
 	font-weight: var(--weight-semi);
 	font-size: var(--font-sm);
-	max-width: 10rem;
+	max-width: min(10rem, 25cqi);
 }

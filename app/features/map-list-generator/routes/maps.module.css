@@ -25,9 +25,28 @@
 }
 
 .mapList {
+	display: grid;
+	grid-template-columns: auto auto auto;
+	column-gap: var(--s-1-5);
+	padding: 0;
+	list-style: none;
+	counter-reset: map-list;
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	margin-block-start: var(--s-4);
+}
+
+.mapListItem {
+	display: grid;
+	grid-template-columns: subgrid;
+	grid-column: 1 / -1;
+	counter-increment: map-list;
+
+	&::before {
+		content: counter(map-list) ".";
+		text-align: end;
+		font-variant-numeric: tabular-nums;
+	}
 }
 
 .modeAbbr {

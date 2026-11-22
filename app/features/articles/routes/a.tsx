@@ -50,6 +50,7 @@ export default function ArticlesMainPage() {
 							})}{" "}
 							•{" "}
 							<LocaleTime
+								inline
 								date={new Date(article.date)}
 								options={{
 									day: "numeric",

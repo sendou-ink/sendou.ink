@@ -161,7 +161,7 @@ function SeasonDates({ season }: { season: number }) {
 	const isCurrent = Seasons.current()?.nth === season;
 
 	return (
-		<>
+		<span>
 			<LocaleTimeRange
 				from={new Date(starts)}
 				to={new Date(ends)}
@@ -177,7 +177,7 @@ function SeasonDates({ season }: { season: number }) {
 						time: formatDistanceToNow(new Date(ends), { addSuffix: true }),
 					})}`
 				: null}
-		</>
+		</span>
 	);
 }
 

@@ -209,7 +209,7 @@ function FriendsListSection() {
 	return (
 		<section className="stack md">
 			<div className={styles.friendsListHeader}>
-				<h2 className="text-lg ml-1">{t("friends:friendsList.title")}</h2>
+				<h2 className="text-lg">{t("friends:friendsList.title")}</h2>
 				<SubNav secondary>
 					{VIEW_FILTERS.map((value) => (
 						<SubNavLink

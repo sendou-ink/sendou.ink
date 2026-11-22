@@ -496,9 +496,11 @@ function TeamTable({
 											className={leaderboardsStyles.avatar}
 										/>
 									</Link>
-								) : null}
+								) : (
+									<div className={leaderboardsStyles.avatarPlaceholder} />
+								)}
 								<div
-									className={clsx("text-xs", {
+									className={clsx("text-xs", leaderboardsStyles.roster, {
 										[leaderboardsStyles.skippedTeam]: entry.isSkipped,
 									})}
 								>
@@ -627,7 +629,11 @@ function XPTable({ entries }: { entries: XPLeaderboardItem[] }) {
 					>
 						<RankTableInnerRow>
 							<RankTableRank>{entry.placementRank}</RankTableRank>
-							{entry.id ? <Avatar size="xxs" user={entry as any} /> : null}
+							{entry.id ? (
+								<Avatar size="xxs" user={entry as any} />
+							) : (
+								<div className={leaderboardsStyles.avatarPlaceholder} />
+							)}
 							<RankTableWeaponImage weaponSplId={entry.weaponSplId} />
 							<div>{entry.name}</div>
 							<div className={leaderboardsStyles.tablePower}>

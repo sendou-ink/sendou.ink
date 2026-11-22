@@ -420,13 +420,14 @@ function ImagePreview({
 			<div>
 				{img}
 				<div
-					className={clsx("stack horizontal justify-between", {
-						"mt-2": canUnlink,
-					})}
+					className={clsx(
+						"stack horizontal justify-between items-center",
+						canUnlink ? "mt-2" : "mt-1",
+					)}
 				>
 					<Link
 						to={userArtPage(art.author, "MADE-BY")}
-						className={clsx("stack sm horizontal text-xs items-center mt-1", {
+						className={clsx("stack sm horizontal text-xs items-center", {
 							invisible: !imageSettled,
 						})}
 					>
@@ -469,9 +470,9 @@ function ImagePreview({
 	return (
 		<Link to={userArtPage(art.author, "MADE-BY")}>
 			{img}
-			<div className="stack horizontal justify-between">
+			<div className="stack horizontal justify-between items-center mt-1">
 				<div
-					className={clsx("stack sm horizontal text-xs items-center mt-1", {
+					className={clsx("stack sm horizontal text-xs items-center", {
 						invisible: !imageSettled,
 					})}
 				>
@@ -480,7 +481,7 @@ function ImagePreview({
 				</div>
 				{uploadDateText ? (
 					<div
-						className={clsx("text-xxs mt-1 text-lighter", {
+						className={clsx("text-xxs text-lighter", {
 							invisible: !imageSettled,
 						})}
 					>

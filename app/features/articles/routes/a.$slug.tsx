@@ -59,6 +59,7 @@ export default function ArticlePage() {
 				<div className="text-sm text-lighter" data-testid="article-byline">
 					by <Author /> •{" "}
 					<LocaleTime
+						inline
 						date={new Date(data.date)}
 						options={{
 							day: "numeric",

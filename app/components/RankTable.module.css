@@ -17,6 +17,7 @@
 	padding: var(--s-2) var(--s-3);
 	align-items: center;
 	justify-content: space-between;
+	gap: var(--s-3);
 	color: var(--color-text);
 	transition: 0.1s ease-in-out background-color;
 	border-radius: 0;

@@ -130,14 +130,14 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 				<>
 					<ol className={styles.mapList}>
 						{mapList.map(({ mode, stageId }, i) => (
-							<li key={i}>
+							<li key={i} className={styles.mapListItem}>
 								<abbr
 									className={styles.modeAbbr}
 									title={t(`game-misc:MODE_LONG_${mode}`)}
 								>
 									{t(`common:modes.short.${mode}`)}
 								</abbr>{" "}
-								{t(`game-misc:STAGE_${stageId}`)}
+								<span>{t(`game-misc:STAGE_${stageId}`)}</span>
 							</li>
 						))}
 					</ol>

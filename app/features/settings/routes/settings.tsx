@@ -74,7 +74,9 @@ export default function SettingsPage() {
 		<Main>
 			<div className="stack md">
 				<div className="stack horizontal justify-between items-center">
-					<h2 className="text-lg">{t("common:pages.settings")}</h2>
+					<h2 className="text-lg whitespace-nowrap">
+						{t("common:pages.settings")}
+					</h2>
 					{user ? (
 						<div className="stack horizontal sm flex-wrap justify-end">
 							<form method="post" action={DISCORD_REFRESH_URL}>

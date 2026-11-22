@@ -140,7 +140,7 @@
 .statCollection {
 	display: grid;
 	gap: var(--s-2);
-	grid-template-columns: repeat(auto-fill, 10rem);
+	grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
 	margin-block-start: var(--s-4);
 }
 
