@@ -69,6 +69,7 @@ const stateWith = ({
 	ink,
 	swapSides,
 	scannedGame: null,
+	music: null,
 });
 
 const stagedIds = (state: BroadcastStoredState<CastProducerState> | null) =>
@@ -109,7 +110,28 @@ describe("Producer.take", () => {
 			ink,
 			swapSides: true,
 			scannedGame: null,
+			music: null,
 		});
+	});
+
+	test("keeps the music playing", () => {
+		const music = {
+			tracks: [],
+			startedAt: 1,
+			pausedAtMs: null,
+			volume: 40,
+			shuffleSeed: null,
+		};
+		const taken = Producer.take(
+			rules,
+			{
+				...stateWith({ next: item(2, { scene: "break" }) }),
+				music,
+			},
+			{ liveResults: null, now: 5, hasMatch: true },
+		);
+
+		expect(taken.music).toBe(music);
 	});
 
 	test("stages the first queued item", () => {

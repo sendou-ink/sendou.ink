@@ -1,0 +1,48 @@
+/* placed by the scene showing it, see `HoldScene` and `CastersScene` */
+.nowPlaying {
+	display: flex;
+	align-items: center;
+	gap: 0.55em;
+	min-width: 0;
+}
+
+.icon {
+	flex-shrink: 0;
+	width: 1em;
+	height: 1em;
+}
+
+/* a track changing fades its words over, the line itself staying */
+.words {
+	display: flex;
+	align-items: baseline;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	animation: var(--bc-anim-fade-in) var(--bc-enter-duration) var(--bc-ease) both;
+}
+
+/* both give way to a long line, the artist first */
+.title {
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.artist {
+	flex: 0 3 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+
+	&::before {
+		margin-inline: 0.45em;
+		content: "·";
+	}
+}
+
+.text {
+	display: block;
+	text-overflow: ellipsis;
+}

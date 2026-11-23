@@ -1,8 +1,10 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ServerConfig } from "~/config.server";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.server";
+import type { BroadcastMusicTrack } from "~/features/broadcast/broadcast-types";
+import * as MusicPlayback from "~/features/broadcast/core/MusicPlayback";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import type { broadcastActionSchema } from "../broadcast-cast-schemas";
 import type {
@@ -31,6 +33,23 @@ const castAccount = {
 	account: "sendouink",
 	name: "sendouink",
 };
+
+const tracks: BroadcastMusicTrack[] = [
+	{
+		id: "a".repeat(32),
+		durationMs: 60_000,
+		title: "First",
+		artist: "Band",
+	},
+	{
+		id: "b".repeat(32),
+		durationMs: 90_000,
+		title: "Second",
+		artist: null,
+	},
+];
+
+const STARTED_AT = new Date("2026-11-21T12:00:00Z").getTime();
 
 const originalBroadcastOrgIds = ServerConfig.broadcastOrgIds;
 
@@ -312,6 +331,168 @@ describe("UPDATE_OBS_AUDIO", () => {
 	});
 });
 
+describe("UPDATE_NOW_PLAYING", () => {
+	test("saves the now playing text", async () => {
+		const tournamentId = await createTournament();
+
+		await updateNowPlaying(tournamentId, "Lofi Squid Beats");
+
+		expect((await storedSettings(tournamentId))?.nowPlaying).toBe(
+			"Lofi Squid Beats",
+		);
+	});
+
+	test("clears it without a text", async () => {
+		const tournamentId = await createTournament();
+		await updateNowPlaying(tournamentId, "Lofi Squid Beats");
+
+		await updateNowPlaying(tournamentId, null);
+
+		expect((await storedSettings(tournamentId))?.nowPlaying).toBe("");
+	});
+});
+
+describe("music", () => {
+	beforeEach(() => {
+		vi.useFakeTimers({ toFake: ["Date"] });
+		vi.setSystemTime(STARTED_AT);
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	test("plays the tracks from the start at the default volume", async () => {
+		const tournamentId = await createTournament();
+
+		await music(tournamentId, { _action: "PLAY_MUSIC", tracks });
+
+		expect((await storedState(tournamentId)).music).toEqual({
+			tracks,
+			startedAt: STARTED_AT,
+			pausedAtMs: null,
+			volume: 50,
+			shuffleSeed: null,
+		});
+	});
+
+	test("plays on from where it was paused", async () => {
+		const tournamentId = await createTournament();
+		await music(tournamentId, { _action: "PLAY_MUSIC", tracks });
+		vi.setSystemTime(STARTED_AT + 10_000);
+		await music(tournamentId, { _action: "PAUSE_MUSIC" });
+		vi.setSystemTime(STARTED_AT + 50_000);
+
+		await music(tournamentId, { _action: "PLAY_MUSIC", tracks });
+
+		expect((await storedState(tournamentId)).music).toMatchObject({
+			startedAt: STARTED_AT + 40_000,
+			pausedAtMs: null,
+		});
+	});
+
+	test("skips to the next track", async () => {
+		const tournamentId = await createTournament();
+		await music(tournamentId, { _action: "PLAY_MUSIC", tracks });
+		vi.setSystemTime(STARTED_AT + 10_000);
+
+		await music(tournamentId, {
+			_action: "SKIP_MUSIC",
+			direction: "next",
+			trackId: tracks[0].id,
+		});
+
+		expect((await storedState(tournamentId)).music).toMatchObject({
+			startedAt: STARTED_AT + 10_000 - 60_000,
+		});
+	});
+
+	test("a skip pressed on a track no longer playing changes nothing", async () => {
+		const tournamentId = await createTournament();
+		await music(tournamentId, { _action: "PLAY_MUSIC", tracks });
+		vi.setSystemTime(STARTED_AT + 70_000);
+
+		await music(tournamentId, {
+			_action: "SKIP_MUSIC",
+			direction: "next",
+			trackId: tracks[0].id,
+		});
+
+		expect((await storedState(tournamentId)).music).toMatchObject({
+			startedAt: STARTED_AT,
+		});
+	});
+
+	test("sets the volume", async () => {
+		const tournamentId = await createTournament();
+		await music(tournamentId, { _action: "PLAY_MUSIC", tracks });
+
+		await music(tournamentId, { _action: "SET_MUSIC_VOLUME", volume: 20 });
+
+		expect((await storedState(tournamentId)).music).toMatchObject({
+			volume: 20,
+		});
+	});
+
+	test("shuffles the tracks, the track playing playing on", async () => {
+		const tournamentId = await createTournament();
+		await music(tournamentId, { _action: "PLAY_MUSIC", tracks });
+		vi.setSystemTime(STARTED_AT + 70_000);
+
+		await setShuffle(tournamentId, true);
+
+		const shuffled = (await storedState(tournamentId)).music!;
+		expect(shuffled.shuffleSeed).toEqual(expect.any(Number));
+		expect(MusicPlayback.current(shuffled, STARTED_AT + 70_000)).toEqual(
+			expect.objectContaining({ track: tracks[1], positionMs: 10_000 }),
+		);
+	});
+
+	test("plays the tracks in order again with shuffle turned off", async () => {
+		const tournamentId = await createTournament();
+		await music(tournamentId, { _action: "PLAY_MUSIC", tracks });
+		await setShuffle(tournamentId, true);
+
+		await setShuffle(tournamentId, false);
+
+		expect((await storedState(tournamentId)).music?.shuffleSeed).toBeNull();
+	});
+
+	test("stops", async () => {
+		const tournamentId = await createTournament();
+		await music(tournamentId, { _action: "PLAY_MUSIC", tracks });
+
+		await music(tournamentId, { _action: "STOP_MUSIC" });
+
+		expect((await storedState(tournamentId)).music).toBeNull();
+	});
+
+	test("changing the tracks of no music playing plays none", async () => {
+		const tournamentId = await createTournament();
+
+		await music(tournamentId, { _action: "SET_MUSIC_TRACKS", tracks });
+
+		expect((await storedState(tournamentId)).music ?? null).toBeNull();
+	});
+
+	test("rejects a track id not of a file's contents", async () => {
+		const tournamentId = await createTournament();
+
+		const response = await music(tournamentId, {
+			_action: "PLAY_MUSIC",
+			tracks: [{ ...tracks[0], id: "../../etc" }],
+		});
+
+		expect(response).not.toBeNull();
+		expect(
+			await BroadcastRepository.findByChannel({
+				tournamentId,
+				channel: castAccount,
+			}),
+		).toBeUndefined();
+	});
+});
+
 async function createTournament() {
 	const { id } = await TournamentFactory.create(
 		{ authorId: organizerId() },
@@ -377,6 +558,30 @@ function setCasterVolume(
 		{ _action: "SET_CASTER_VOLUME", userId, volume },
 		{ user: organizerId(), params: params(tournamentId) },
 	);
+}
+
+function updateNowPlaying(tournamentId: number, nowPlaying: string | null) {
+	return broadcastForm(
+		{ _action: "UPDATE_NOW_PLAYING", nowPlaying },
+		{ user: organizerId(), params: params(tournamentId) },
+	);
+}
+
+function setShuffle(tournamentId: number, isShuffled: boolean) {
+	return broadcast(
+		{ _action: "SET_MUSIC_SHUFFLE", isShuffled },
+		{ user: organizerId(), params: params(tournamentId) },
+	);
+}
+
+function music(
+	tournamentId: number,
+	body: Parameters<typeof broadcastForm>[0],
+) {
+	return broadcastForm(body, {
+		user: organizerId(),
+		params: params(tournamentId),
+	});
 }
 
 function params(tournamentId: number) {

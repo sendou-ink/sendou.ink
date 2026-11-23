@@ -7,15 +7,13 @@ import { SendouButton } from "~/components/elements/Button";
 import type { BroadcastAudioFeed } from "~/features/broadcast/broadcast-types";
 import type * as AudioFeeds from "~/features/broadcast/core/AudioFeeds";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import { BROADCAST_VOLUME_SAVE_INTERVAL_MS } from "../broadcast-cast-constants";
+import { useVolumeFader } from "../broadcast-cast-hooks";
 import { broadcastActionSchema } from "../broadcast-cast-schemas";
 import type { BroadcastCaster } from "../broadcast-cast-types";
 import styles from "./CasterMixer.module.css";
 
 /** Loudness (as VDO.ninja reports it, after the fader) the meter is full at, leaving headroom over a caster speaking up. */
 const FULL_METER_LOUDNESS = 100;
-/** How long a released fader keeps its value at most while waiting for the state with it saved. */
-const RELEASED_VOLUME_HOLD_MS = 3000;
 const NO_FEEDS: ReadonlyMap<number, BroadcastAudioFeed> = new Map();
 
 type FeedStatus = "connected" | "disconnected" | "unknown";
@@ -138,56 +136,15 @@ function Fader({
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const { submit } = useActionSubmit(broadcastActionSchema);
-	// the fader's value while it is moved and after, until the state with it saved arrives
-	const [draft, setDraft] = React.useState<{
-		volume: number;
-		isReleased: boolean;
-	} | null>(null);
-	const lastSaveAt = React.useRef(0);
-	const pendingSave = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-	const volume =
-		draft && (!draft.isReleased || draft.volume !== caster.volume)
-			? draft.volume
-			: caster.volume;
+	const { volume, change, release } = useVolumeFader({
+		saved: caster.volume,
+		save: (newVolume) =>
+			submit("SET_CASTER_VOLUME", { userId: caster.userId, volume: newVolume }),
+	});
 	const level = R.clamp((loudness * volume) / 100 / FULL_METER_LOUDNESS, {
 		min: 0,
 		max: 1,
 	});
-
-	const save = (newVolume: number) => {
-		if (pendingSave.current) clearTimeout(pendingSave.current);
-		pendingSave.current = null;
-		lastSaveAt.current = Date.now();
-		submit("SET_CASTER_VOLUME", { userId: caster.userId, volume: newVolume });
-	};
-
-	const change = (newVolume: number) => {
-		setDraft({ volume: newVolume, isReleased: false });
-
-		const sinceLastSave = Date.now() - lastSaveAt.current;
-		if (sinceLastSave >= BROADCAST_VOLUME_SAVE_INTERVAL_MS) {
-			save(newVolume);
-		} else {
-			if (pendingSave.current) clearTimeout(pendingSave.current);
-			pendingSave.current = setTimeout(
-				() => save(newVolume),
-				BROADCAST_VOLUME_SAVE_INTERVAL_MS - sinceLastSave,
-			);
-		}
-	};
-
-	const release = () => {
-		if (!draft || draft.isReleased) return;
-
-		if (pendingSave.current) save(draft.volume);
-		const released = { ...draft, isReleased: true };
-		setDraft(released);
-		// a save that never comes back (or a volume changed by someone else since) shows the saved volume after all
-		setTimeout(
-			() => setDraft((current) => (current === released ? null : current)),
-			RELEASED_VOLUME_HOLD_MS,
-		);
-	};
 
 	return (
 		<>

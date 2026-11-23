@@ -1,0 +1,61 @@
+.player {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2) var(--s-4);
+	padding: var(--s-2) var(--s-3);
+	border: 2px solid var(--color-border);
+	border-radius: var(--radius-box);
+}
+
+.playing {
+	display: flex;
+	flex: 1 1 12rem;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.volume {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+
+	& input {
+		width: 8rem;
+	}
+}
+
+.tracks {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.track {
+	display: grid;
+	grid-template-columns: 1fr auto auto;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-2);
+	border: 2px solid var(--color-border);
+	border-radius: var(--radius-box);
+}
+
+.fields {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--s-1) var(--s-2);
+	min-width: 0;
+}
+
+.duration {
+	font-variant-numeric: tabular-nums;
+}
+
+.actions {
+	display: flex;
+	gap: var(--s-1);
+}

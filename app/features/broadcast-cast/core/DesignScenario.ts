@@ -1,13 +1,16 @@
 import { Config } from "~/config";
+import { BROADCAST_MUSIC_DEFAULT_VOLUME } from "~/features/broadcast/broadcast-constants";
 import type {
 	BroadcastMap,
 	BroadcastMatch,
+	BroadcastMusicTrack,
 	BroadcastScannedGame,
 	BroadcastStingerVariant,
 	BroadcastTeam,
 	MatchProgress,
 } from "~/features/broadcast/broadcast-types";
 import { broadcastDesignImageUrl } from "~/features/broadcast/broadcast-urls";
+import * as MusicPlayback from "~/features/broadcast/core/MusicPlayback";
 import * as SetProgress from "~/features/broadcast/core/SetProgress";
 import type {
 	Ability,
@@ -336,6 +339,16 @@ const MOCK_ABILITIES: Ability[][] = [
 
 const MOCK_HEADLINE = "Top 8 starts at 18:00 CEST";
 
+const MOCK_NOW_PLAYING_TEXT = "Lofi Squid Beats · Chill Ink";
+
+/** The track the designer's music plays. */
+const DESIGN_MUSIC_TRACK: BroadcastMusicTrack = {
+	id: "design-track",
+	durationMs: 3 * 60_000 + 24_000,
+	title: "Low Tide Groove",
+	artist: "The Inkwells",
+};
+
 /** Teams of the featured match, by their index in the name pools. */
 const FEATURED: [number, number] = [0, 1];
 
@@ -548,9 +561,21 @@ export function build({
 			: null,
 		swapSides: scenario.swapSides,
 		scannedGame: mockScannedGame({ match, ink: scenario.ink }),
+		music:
+			scenario.nowPlaying === "track"
+				? MusicPlayback.start({
+						tracks: [DESIGN_MUSIC_TRACK],
+						volume: BROADCAST_MUSIC_DEFAULT_VOLUME,
+						now: takenAt,
+					})
+				: null,
 		settings: {
 			...settings,
 			headline: scenario.headline ? settings.headline || MOCK_HEADLINE : "",
+			nowPlaying:
+				scenario.nowPlaying === "text"
+					? settings.nowPlaying || MOCK_NOW_PLAYING_TEXT
+					: "",
 		},
 		casters: CASTERS.slice(0, scenario.casters),
 		tournament,

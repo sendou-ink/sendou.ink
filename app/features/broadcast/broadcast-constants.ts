@@ -182,6 +182,17 @@ export const DEFAULT_BROADCAST_SETTINGS = {
 
 export const BROADCAST_WEAPONS_PER_PLAYER = 3;
 
+/** Tracks a music playlist can have, every one of them in each state the stream pushes. */
+export const BROADCAST_MUSIC_MAX_TRACKS = 100;
+
+/** Largest music file the dashboard takes, every one being sent whole to the OBS sources. */
+export const BROADCAST_MUSIC_MAX_FILE_BYTES = 50 * 1024 * 1024;
+
+export const BROADCAST_MUSIC_TITLE_MAX_LENGTH = 150;
+
+/** How loud the music is on air when first played, 0-100. */
+export const BROADCAST_MUSIC_DEFAULT_VOLUME = 50;
+
 /** Days the producers' chat lives from the tournament's start, or from when the channel was set if that's later. */
 export const BROADCAST_CHAT_ROOM_LIFESPAN_DAYS = 7;
 

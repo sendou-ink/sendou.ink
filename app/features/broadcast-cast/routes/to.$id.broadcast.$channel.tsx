@@ -27,6 +27,7 @@ import {
 	KeyRound,
 	type LucideIcon,
 	MonitorUp,
+	Music,
 	Palette,
 	Pause,
 	Play,
@@ -70,6 +71,7 @@ import {
 	useClipSender,
 	useServerNow,
 } from "~/features/broadcast/broadcast-hooks";
+import { useMusicLibrary } from "~/features/broadcast/broadcast-music-hooks";
 import type {
 	BroadcastAdvance,
 	BroadcastChannel,
@@ -127,6 +129,7 @@ import {
 	broadcastActionSchema,
 	broadcastCastersFormSchema,
 	broadcastHeadlineFormSchema,
+	broadcastNowPlayingFormSchema,
 	broadcastObsAudioFormSchema,
 } from "../broadcast-cast-schemas";
 import { broadcastDashboardSearchParams } from "../broadcast-cast-search-params";
@@ -140,6 +143,7 @@ import type {
 import { needsFeaturedMatch } from "../broadcast-cast-utils";
 import { CasterFeedsHealth, CasterMixer } from "../components/CasterMixer";
 import { ClipPicker } from "../components/ClipPicker";
+import { MusicControls, MusicLibraryPanel } from "../components/MusicDashboard";
 import { ObsCaptureCardField } from "../components/ObsCaptureCardField";
 import { ScenePicker, useSceneHotkeys } from "../components/ScenePicker";
 import * as BracketFocus from "../core/BracketFocus";
@@ -160,6 +164,7 @@ type DashboardTab = (typeof BROADCAST_DASHBOARD_TABS)[number];
 
 const TAB_ICONS: Record<DashboardTab, LucideIcon> = {
 	setup: Cable,
+	music: Music,
 	theme: Palette,
 };
 
@@ -182,6 +187,7 @@ function BroadcastDashboard() {
 	const pageArgs = { tournamentId: tournament.ctx.id, slug: data.channel.slug };
 	const channels = CastChannel.list(tournament.ctx.castAccounts);
 	const [feedStore] = React.useState(AudioFeeds.createStore);
+	const musicLibrary = useMusicLibrary();
 	const { state, isConnected, clockOffsetMs } = useBroadcastStream({
 		url: broadcastStreamUrl({ ...pageArgs, role: "dashboard" }),
 		initialState: data.state,
@@ -192,7 +198,7 @@ function BroadcastDashboard() {
 	const isClipSender = scannerClips.length > 0;
 	const clipSender = useClipSender({
 		signalUrl: broadcastSignalUrl(pageArgs),
-		clips: useClipSources(state, scannerClips),
+		clips: [...useClipSources(state, scannerClips), ...musicLibrary.files],
 		onFeeds: feedStore.report,
 	});
 	const nextPreviewRef = React.useRef<HTMLIFrameElement>(null);
@@ -226,10 +232,11 @@ function BroadcastDashboard() {
 			window.location.origin,
 		);
 
-	const showSetup = () => {
-		setTab("setup");
+	const showTab = (shown: DashboardTab) => {
+		setTab(shown);
 		settingsRef.current?.scrollIntoView({ behavior: "smooth" });
 	};
+	const showSetup = () => showTab("setup");
 
 	return (
 		<div className={clsx("stack lg", styles.dashboard)}>
@@ -290,7 +297,18 @@ function BroadcastDashboard() {
 							casters={state.casters}
 							feedStore={feedStore}
 						/>
-						<ShowInfo state={state} />
+						<MusicControls
+							music={state.music}
+							library={musicLibrary}
+							now={now}
+							onShowLibrary={() => showTab("music")}
+						/>
+						<ShowInfo
+							state={state}
+							showsNowPlaying={
+								!state.music && musicLibrary.tracks?.length === 0
+							}
+						/>
 					</div>
 				</section>
 
@@ -382,6 +400,9 @@ function BroadcastDashboard() {
 							program={data.program}
 							statuses={clipSender.statuses}
 						/>
+					</SendouTabPanel>
+					<SendouTabPanel id="music">
+						<MusicLibraryPanel music={state.music} library={musicLibrary} />
 					</SendouTabPanel>
 					<SendouTabPanel id="theme">
 						<Theme state={state} designUrl={broadcastDesignPage(pageArgs)} />
@@ -589,11 +610,23 @@ function OnAirControls({ state }: { state: CastBroadcastState }) {
 	);
 }
 
-/** What every scene shares, on air as soon as it's saved. */
-function ShowInfo({ state }: { state: CastBroadcastState }) {
+/**
+ * What every scene shares, on air as soon as it's saved. The now playing text is for music played some other way,
+ * e.g. on the producer's computer, so it's left out while this browser has music to play from the dashboard.
+ */
+function ShowInfo({
+	state,
+	showsNowPlaying,
+}: {
+	state: CastBroadcastState;
+	showsNowPlaying: boolean;
+}) {
 	return (
 		<div className={styles.onAir}>
 			<HeadlineForm headline={state.settings.headline} />
+			{showsNowPlaying ? (
+				<NowPlayingForm nowPlaying={state.settings.nowPlaying} />
+			) : null}
 		</div>
 	);
 }
@@ -1561,6 +1594,19 @@ function HeadlineForm({ headline }: { headline: string }) {
 			fullWidth
 		>
 			{({ FormField }) => <FormField name="headline" />}
+		</SendouForm>
+	);
+}
+
+function NowPlayingForm({ nowPlaying }: { nowPlaying: string }) {
+	return (
+		<SendouForm
+			schema={broadcastNowPlayingFormSchema}
+			defaultValues={{ nowPlaying: nowPlaying || null }}
+			submitButtonSize="small"
+			fullWidth
+		>
+			{({ FormField }) => <FormField name="nowPlaying" />}
 		</SendouForm>
 	);
 }

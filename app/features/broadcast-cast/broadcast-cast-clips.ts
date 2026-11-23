@@ -89,6 +89,7 @@ export function useClipSources(
 
 		return {
 			id,
+			kind: "clip",
 			load: async () => {
 				const blob = await loadClipBlob(clip.id);
 				if (!blob) throw new Error("The clip was deleted");

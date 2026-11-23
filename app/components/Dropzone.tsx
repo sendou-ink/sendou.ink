@@ -2,25 +2,31 @@ import clsx from "clsx";
 import * as React from "react";
 import styles from "./Dropzone.module.css";
 
-interface DropzoneProps {
+type DropzoneProps = {
 	/** Id of the file input, for an outside `<label htmlFor>`. */
 	id?: string;
 	accept: string;
-	onFile: (file: File) => void;
 	disabled?: boolean;
 	/** The prompt, typically wrapping its "choose a file" part in {@link DropzoneAction}. */
 	children: React.ReactNode;
-}
+} & (
+	| { multiple?: false; onFile: (file: File) => void }
+	| { multiple: true; onFiles: (files: File[]) => void }
+);
 
-/** Drop target for one file that also opens the file picker when clicked; the file input inside is the accessible path. */
-export function Dropzone({
-	id,
-	accept,
-	onFile,
-	disabled,
-	children,
-}: DropzoneProps) {
+/** Drop target for one file (or several) that also opens the file picker when clicked; the file input inside is the accessible path. */
+export function Dropzone(props: DropzoneProps) {
+	const { id, accept, disabled, children } = props;
 	const [isDraggingOver, setIsDraggingOver] = React.useState(false);
+
+	const pick = (fileList: FileList | null | undefined) => {
+		const files = Array.from(fileList ?? []);
+		if (props.multiple) {
+			if (files.length > 0) props.onFiles(files);
+		} else if (files[0]) {
+			props.onFile(files[0]);
+		}
+	};
 
 	return (
 		<label
@@ -41,8 +47,7 @@ export function Dropzone({
 				if (disabled) return;
 				event.preventDefault();
 				setIsDraggingOver(false);
-				const file = event.dataTransfer.files[0];
-				if (file) onFile(file);
+				pick(event.dataTransfer.files);
 			}}
 		>
 			{children}
@@ -50,12 +55,13 @@ export function Dropzone({
 				id={id}
 				type="file"
 				accept={accept}
+				multiple={props.multiple}
 				className={styles.input}
 				disabled={disabled}
 				onChange={(event) => {
-					const file = event.target.files?.[0];
+					const files = event.target.files;
+					pick(files);
 					event.target.value = "";
-					if (file) onFile(file);
 				}}
 			/>
 		</label>

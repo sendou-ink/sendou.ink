@@ -90,6 +90,33 @@ export interface BroadcastStoredState<
 	swapSides: boolean;
 	/** The last game the scanner read to its end, what the scenes after a game show of it. */
 	scannedGame: BroadcastScannedGame | null;
+	/** Music the producer plays from their dashboard, not staged. `null` while none is. */
+	music: BroadcastMusic | null;
+}
+
+/**
+ * The producer's playlist, looping. Where it is follows from when it started, so every overlay plays the same spot
+ * without being told of each track (see `MusicPlayback.current`).
+ */
+export interface BroadcastMusic {
+	tracks: BroadcastMusicTrack[];
+	/** When the first track started (epoch ms of the server), had the playlist played from it without pauses. */
+	startedAt: number;
+	/** How far into the playlist it is paused, `null` while playing. */
+	pausedAtMs: number | null;
+	/** 0-100, of the music on air. */
+	volume: number;
+	/** Shuffled from this seed, every time through the playlist in an order of its own. `null` plays it in order. */
+	shuffleSeed: number | null;
+}
+
+/** A music file of a producer's library, its file sent to the overlays (see `ClipTransfer`) under its id. */
+export interface BroadcastMusicTrack {
+	/** Of the file's contents, the same file being the same track in every library. */
+	id: string;
+	durationMs: number;
+	title: string;
+	artist: string | null;
 }
 
 /** A game of the featured match as the scanner read it, whichever of the set's games it was. */

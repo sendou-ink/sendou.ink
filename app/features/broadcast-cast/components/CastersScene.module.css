@@ -6,6 +6,8 @@
 	--casters-name-size: 34px;
 	--casters-pronouns-size: 26px;
 	--casters-matchup-bottom: 60px;
+	--casters-now-playing-bottom: 18px;
+	--casters-now-playing-left: 80px;
 }
 
 .casters {

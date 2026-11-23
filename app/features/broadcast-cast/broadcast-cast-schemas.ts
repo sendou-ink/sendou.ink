@@ -2,6 +2,8 @@ import * as v from "valibot";
 import {
 	BROADCAST_ADVANCES,
 	BROADCAST_INK_COLORS,
+	BROADCAST_MUSIC_MAX_TRACKS,
+	BROADCAST_MUSIC_TITLE_MAX_LENGTH,
 	BROADCAST_TRANSITIONS,
 } from "~/features/broadcast/broadcast-constants";
 import { broadcastThemeSchema } from "~/features/broadcast/broadcast-schemas";
@@ -27,6 +29,7 @@ import {
 	BROADCAST_CLIP_MAX_DURATION_MS,
 	BROADCAST_HEADLINE_MAX_LENGTH,
 	BROADCAST_MAX_CASTERS,
+	BROADCAST_NOW_PLAYING_MAX_LENGTH,
 	BROADCAST_OBS_INPUT_NAME_MAX_LENGTH,
 	BROADCAST_OBS_PASSWORD_MAX_LENGTH,
 	BROADCAST_SCENE_DURATIONS_MS,
@@ -68,12 +71,50 @@ const booleanString = v.pipe(
 	v.picklist(["true", "false"]),
 	v.transform((value) => value === "true"),
 );
+const volume = v.pipe(
+	coerceNumber(),
+	v.integer(),
+	v.minValue(0),
+	v.maxValue(100),
+);
+const musicTrackId = v.pipe(v.string(), v.regex(/^[0-9a-f]{32}$/));
+const musicText = (maxLength: number) =>
+	v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(maxLength));
+const musicTracks = preprocess(
+	safeJSONParse,
+	v.pipe(
+		v.array(
+			v.object({
+				id: musicTrackId,
+				durationMs: v.pipe(
+					v.number(),
+					v.integer(),
+					v.minValue(1_000),
+					v.maxValue(24 * 60 * 60_000),
+				),
+				title: musicText(BROADCAST_MUSIC_TITLE_MAX_LENGTH),
+				artist: v.nullable(musicText(BROADCAST_MUSIC_TITLE_MAX_LENGTH)),
+			}),
+		),
+		v.minLength(1),
+		v.maxLength(BROADCAST_MUSIC_MAX_TRACKS),
+	),
+);
 
 export const broadcastHeadlineFormSchema = v.object({
 	_action: stringConstant("UPDATE_HEADLINE"),
 	headline: textFieldOptional({
 		label: "labels.broadcastHeadline",
 		maxLength: BROADCAST_HEADLINE_MAX_LENGTH,
+	}),
+});
+
+export const broadcastNowPlayingFormSchema = v.object({
+	_action: stringConstant("UPDATE_NOW_PLAYING"),
+	nowPlaying: textFieldOptional({
+		label: "labels.broadcastNowPlaying",
+		placeholder: "placeholders.broadcastNowPlaying",
+		maxLength: BROADCAST_NOW_PLAYING_MAX_LENGTH,
 	}),
 });
 
@@ -180,10 +221,23 @@ export const broadcastActionSchema = v.union([
 		itemId: id,
 		advance: v.picklist(BROADCAST_ADVANCES),
 	}),
+	v.object({ _action: _action("SET_CASTER_VOLUME"), userId: id, volume }),
+	/** Plays the tracks: from the start, or on from where the music was paused. */
+	v.object({ _action: _action("PLAY_MUSIC"), tracks: musicTracks }),
+	/** Changes the tracks of the music playing (or paused), the track playing playing on. */
+	v.object({ _action: _action("SET_MUSIC_TRACKS"), tracks: musicTracks }),
+	v.object({ _action: _action("PAUSE_MUSIC") }),
+	v.object({ _action: _action("STOP_MUSIC") }),
 	v.object({
-		_action: _action("SET_CASTER_VOLUME"),
-		userId: id,
-		volume: v.pipe(coerceNumber(), v.integer(), v.minValue(0), v.maxValue(100)),
+		_action: _action("SKIP_MUSIC"),
+		direction: v.picklist(["next", "previous"]),
+		/** The track the skip was pressed on, a skip pressed on another one changes nothing. */
+		trackId: musicTrackId,
+	}),
+	v.object({ _action: _action("SET_MUSIC_VOLUME"), volume }),
+	v.object({
+		_action: _action("SET_MUSIC_SHUFFLE"),
+		isShuffled: booleanString,
 	}),
 	v.object({ _action: _action("ADD_TO_QUEUE") }),
 	v.object({ _action: _action("POINT_PROGRAM") }),
@@ -209,6 +263,7 @@ export const broadcastActionSchema = v.union([
 	}),
 	broadcastThemeSchema,
 	broadcastHeadlineFormSchema,
+	broadcastNowPlayingFormSchema,
 	broadcastCastersFormSchema,
 	broadcastObsAudioFormSchema,
 ]);

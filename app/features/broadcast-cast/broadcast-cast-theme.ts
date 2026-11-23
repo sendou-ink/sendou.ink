@@ -13,6 +13,8 @@ import mapsSceneLayout from "./components/MapsScene.layout.module.css";
 import mapsScene from "./components/MapsScene.module.css";
 import matchupLayout from "./components/Matchup.layout.module.css";
 import matchup from "./components/Matchup.module.css";
+import nowPlayingLayout from "./components/NowPlaying.layout.module.css";
+import nowPlaying from "./components/NowPlaying.module.css";
 import replaysSceneLayout from "./components/ReplaysScene.layout.module.css";
 import replaysScene from "./components/ReplaysScene.module.css";
 import resultsSceneLayout from "./components/ResultsScene.layout.module.css";
@@ -48,4 +50,5 @@ export const CAST_THEME_CLASSES: Record<
 	BracketScene: combineStyles(bracketScene, bracketSceneLayout),
 	TeamScene: combineStyles(teamScene, teamSceneLayout),
 	HoldScene: combineStyles(holdScene, holdSceneLayout),
+	NowPlaying: combineStyles(nowPlaying, nowPlayingLayout),
 };

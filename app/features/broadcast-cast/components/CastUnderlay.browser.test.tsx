@@ -175,6 +175,7 @@ function layer(
 			casters: 0,
 			otherMatches: 0,
 			headline: false,
+			nowPlaying: "none",
 			bracket: "double_elimination",
 			bracketFocus: "remaining",
 		},

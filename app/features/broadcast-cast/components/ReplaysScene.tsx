@@ -34,7 +34,7 @@ export function ReplaysScene({
 	const lastPlayed = progress?.games[progress.resultCount - 1];
 	const clips = React.useContext(BroadcastClipsContext);
 	const clip = state[view].clip;
-	const clipUrl = clip ? clips.urls.get(clip.id) : undefined;
+	const clipUrl = clip ? clips.files.clip.get(clip.id) : undefined;
 	const startedAt = view === "live" ? Producer.liveStartedAt(state) : null;
 
 	return (

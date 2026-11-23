@@ -167,33 +167,48 @@ export function useClipSender({
 	return { statuses, onMessage };
 }
 
-/** Object URLs of the clips received from the dashboard by clip id, see `ClipTransfer.createReceiver`. Pass `onMessage` to `useBroadcastStream`. */
-export function useClipReceiver({ signalUrl }: { signalUrl: string }) {
-	const [urls, setUrls] = React.useState<ReadonlyMap<string, string>>(
-		() => new Map(),
-	);
+const NO_CLIPS: ClipTransfer.ReceivedClips = {
+	clip: new Map(),
+	music: new Map(),
+};
+
+/**
+ * Object URLs of the clips received from the dashboard by kind and clip id, see `ClipTransfer.createReceiver`. Pass
+ * `onMessage` to `useBroadcastStream`.
+ */
+export function useClipReceiver({
+	signalUrl,
+	cache,
+}: {
+	signalUrl: string;
+	/** Kept the same between renders. */
+	cache?: ClipTransfer.ClipCache;
+}) {
+	const [clips, setClips] =
+		React.useState<ClipTransfer.ReceivedClips>(NO_CLIPS);
 	const receiverRef = React.useRef<ClipTransfer.ClipReceiver | null>(null);
 
 	React.useEffect(() => {
 		const receiver = ClipTransfer.createReceiver({
 			signalUrl,
-			onChange: setUrls,
+			onChange: setClips,
+			cache,
 		});
 		receiverRef.current = receiver;
 
 		return () => {
 			receiver.close();
 			receiverRef.current = null;
-			setUrls(new Map());
+			setClips(NO_CLIPS);
 		};
-	}, [signalUrl]);
+	}, [signalUrl, cache]);
 
 	const onMessage = (message: BroadcastStreamMessage) =>
 		receiverRef.current?.handleMessage(message);
 	const sendFeeds = (feeds: BroadcastAudioFeed[]) =>
 		receiverRef.current?.sendFeeds(feeds);
 
-	return { urls, onMessage, sendFeeds };
+	return { clips, onMessage, sendFeeds };
 }
 
 const FIT_TEXT_STEP_PX = 2;

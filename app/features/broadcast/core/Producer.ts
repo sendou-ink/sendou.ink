@@ -60,6 +60,7 @@ export function initialState<Item extends ProducerState>(
 		ink: null,
 		swapSides: false,
 		scannedGame: null,
+		music: null,
 	};
 }
 
@@ -120,6 +121,7 @@ export function take<Item extends ProducerState>(
 		ink: state.ink,
 		swapSides: state.swapSides,
 		scannedGame: state.scannedGame,
+		music: state.music,
 	};
 }
 

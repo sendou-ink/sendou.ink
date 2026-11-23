@@ -57,8 +57,8 @@ export const BROADCAST_DESIGN_BRACKET_FOCUSES = [
 	"whole",
 ] as const;
 
-/** Tabs of the dashboard's show settings under the switcher: the OBS setup and the theme. */
-export const BROADCAST_DASHBOARD_TABS = ["setup", "theme"] as const;
+/** Tabs of the dashboard's show settings under the switcher: the OBS setup, the music library and the theme. */
+export const BROADCAST_DASHBOARD_TABS = ["setup", "music", "theme"] as const;
 
 /** The staged item is highlighted for this long before it goes on air by itself. */
 export const BROADCAST_AUTO_TAKE_IMMINENT_MS = 5_000;
@@ -93,6 +93,7 @@ export const BROADCAST_THEME_STYLESHEETS = [
 	"BracketScene",
 	"TeamScene",
 	"HoldScene",
+	"NowPlaying",
 ] as const;
 
 /** Screenshots of the game feed the designer can show under the overlay, by the gameplay they show (paths for `broadcastDesignImageUrl`). */
@@ -136,6 +137,9 @@ export const BROADCAST_DESIGN_TRANSITIONS = [
 	"cut",
 ] as const;
 
+/** What the designer's now playing line shows: a track of the producer's music, their text in its place, or nothing. */
+export const BROADCAST_DESIGN_NOW_PLAYING = ["track", "text", "none"] as const;
+
 export const BROADCAST_DESIGN_MAX_PLAYERS = 4;
 
 export const BROADCAST_DESIGN_MAX_OTHER_MATCHES = 8;
@@ -147,6 +151,19 @@ const BROADCAST_HOLD_SCENES = [
 	"technical",
 	"ending",
 ] as const satisfies ReadonlyArray<(typeof BROADCAST_SCENES)[number]>;
+
+/**
+ * Scenes showing the now playing line, the producer's music being heard only while one of them is on air (faded out
+ * and in as a Take goes to or from another scene).
+ */
+export const BROADCAST_MUSIC_SCENES: ReadonlyArray<
+	(typeof BROADCAST_SCENES)[number]
+> = [...BROADCAST_HOLD_SCENES, "casters"];
+
+/** How long the music fades out or in as it stops or starts being heard. */
+export const BROADCAST_MUSIC_FADE_MS = 1_500;
+
+export const BROADCAST_NOW_PLAYING_MAX_LENGTH = 100;
 
 /** The dashboard's scene buttons, grouped and in the order the number keys 1–9 and 0 pick the first ten. Every scene is in one group. */
 export const BROADCAST_SCENE_GROUPS = [
@@ -161,7 +178,8 @@ export const BROADCAST_SCENE_GROUPS = [
 /**
  * Stable `data-part` hooks of each design for custom CSS, e.g. `[data-scene="game"] [data-part="team-name"]`.
  * `hold` is the design of {@link BROADCAST_HOLD_SCENES}, `matchup` the featured match line some scenes show,
- * `ticker` the other matches' scores along the bottom of the game and hold scenes, `cameras` what the casters scene's frames show from under every scene (a caster's VDO.ninja camera, or their avatar as `caster-audio` with `[data-speaking]` while they speak) and `stinger` the transition over every scene. Every scene has a `backdrop` except game and replays, maps' with a `backdrop-video` of the next map under a `backdrop-vignette` darkening its edges.
+ * `ticker` the other matches' scores along the bottom of the game and hold scenes, `now-playing` the producer's music
+ * (`[data-source="track"]`) or their text in its place (`[data-source="text"]`) on the hold and casters scenes, `cameras` what the casters scene's frames show from under every scene (a caster's VDO.ninja camera, or their avatar as `caster-audio` with `[data-speaking]` while they speak) and `stinger` the transition over every scene. Every scene has a `backdrop` except game and replays, maps' with a `backdrop-video` of the next map under a `backdrop-vignette` darkening its edges.
  * Renaming one breaks users' themes.
  */
 export const BROADCAST_SCENE_PARTS = {
@@ -349,6 +367,13 @@ export const BROADCAST_SCENE_PARTS = {
 		"ticker-team-score",
 		"ticker-final",
 	],
+	nowPlaying: [
+		"now-playing",
+		"now-playing-icon",
+		"now-playing-title",
+		"now-playing-artist",
+		"now-playing-text",
+	],
 	cameras: [
 		"caster-camera",
 		"caster-camera-placeholder",
@@ -399,6 +424,7 @@ export const BROADCAST_OBS_PASSWORD_MAX_LENGTH = 100;
 export const DEFAULT_CAST_BROADCAST_SETTINGS = {
 	...DEFAULT_BROADCAST_SETTINGS,
 	headline: "",
+	nowPlaying: "",
 	casters: [],
 } as const satisfies CastBroadcastSettings;
 

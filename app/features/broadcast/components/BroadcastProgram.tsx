@@ -16,6 +16,7 @@ import {
 	broadcastSignalUrl,
 	broadcastStreamUrl,
 } from "../broadcast-urls";
+import { clipCache } from "../store/clip-cache";
 import { BroadcastOverlay, type BroadcastSceneSet } from "./BroadcastOverlay";
 
 /**
@@ -44,7 +45,11 @@ export function BroadcastProgram<State extends BroadcastState>({
 	);
 	const [obsAudio, setObsAudio] = useState(initialObsAudio);
 	const pageArgs = { tournamentId, slug };
-	const clips = useClipReceiver({ signalUrl: broadcastSignalUrl(pageArgs) });
+	const clips = useClipReceiver({
+		signalUrl: broadcastSignalUrl(pageArgs),
+		// the previews are the dashboard's own, it sends them what they need again quickly
+		cache: preview ? undefined : clipCache,
+	});
 	const { state, clockOffsetMs } = useBroadcastStream({
 		url: programKey
 			? broadcastProgramStreamUrl(programKey)
@@ -64,7 +69,7 @@ export function BroadcastProgram<State extends BroadcastState>({
 	return (
 		<BroadcastClipsContext.Provider
 			value={{
-				urls: clips.urls,
+				files: clips.clips,
 				isMuted: preview,
 				clockOffsetMs,
 				reportFeeds: clips.sendFeeds,

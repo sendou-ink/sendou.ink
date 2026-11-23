@@ -117,6 +117,18 @@
 		calc(var(--scene-enter-delay) + 4 * var(--bc-stagger)) both;
 }
 
+/* low in the left corner, under the frames and the match line of every layout */
+.nowPlaying {
+	--bc-enter-y: var(--bc-enter-distance);
+
+	position: absolute;
+	bottom: var(--casters-now-playing-bottom);
+	left: var(--casters-now-playing-left);
+	max-width: 900px;
+	animation: var(--bc-anim-enter) var(--bc-enter-duration) var(--bc-ease)
+		calc(var(--scene-enter-delay) + 5 * var(--bc-stagger)) both;
+}
+
 /* under the scene layers, seen through the frames only while the casters scene is on screen, fading with it */
 .cameras {
 	position: absolute;

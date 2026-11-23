@@ -1,0 +1,20 @@
+/* Size of the now playing line (hold and casters scenes), the rules below follow it. */
+:global([data-broadcast]) {
+	--now-playing-size: 28px;
+}
+
+.nowPlaying {
+	color: var(--bc-text-muted);
+	font-family: var(--bc-font-display);
+	font-size: var(--now-playing-size);
+	font-weight: var(--bc-weight-semibold);
+	line-height: 1.25;
+}
+
+.icon {
+	color: var(--bc-accent);
+}
+
+.title {
+	color: var(--bc-text);
+}

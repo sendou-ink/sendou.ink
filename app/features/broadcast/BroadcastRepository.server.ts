@@ -119,7 +119,7 @@ export async function updateState({
 	...key
 }: WriteArgs & {
 	patch: Partial<
-		Pick<BroadcastStoredState, "liveResults" | "ink" | "swapSides">
+		Pick<BroadcastStoredState, "liveResults" | "ink" | "swapSides" | "music">
 	>;
 }) {
 	const entries = Object.entries(patch);

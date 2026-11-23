@@ -57,6 +57,8 @@ export interface BroadcastClip {
 export interface CastBroadcastSettings extends BroadcastSettings {
 	/** Message of the full screen scenes, e.g. "Top 8 starts at 18:00 CEST". */
 	headline: string;
+	/** What the now playing line says while no music plays from the dashboard, e.g. the song played on the producer's computer. */
+	nowPlaying: string;
 	/** In the camera frames of the casters scene, one frame per caster. */
 	casters: BroadcastCasterSetting[];
 }

@@ -11,7 +11,7 @@ import {
 describe("broadcastDashboardSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(broadcastDashboardSearchParams, {
-			tab: ["setup", "theme"],
+			tab: ["setup", "music", "theme"],
 		});
 	});
 
@@ -38,6 +38,7 @@ describe("broadcastDesignSearchParams", () => {
 			placeholderLogos: [true, false],
 			players: [4, 1, 3],
 			casters: [2, 0, 3],
+			nowPlaying: ["track", "text", "none"],
 			otherMatches: [4, 0, 8],
 			headline: [true, false],
 			bracket: ["double_elimination", "swiss"],

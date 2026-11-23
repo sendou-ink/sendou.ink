@@ -11,6 +11,7 @@ import {
 	BROADCAST_DESIGN_MAX_OTHER_MATCHES,
 	BROADCAST_DESIGN_MAX_PLAYERS,
 	BROADCAST_DESIGN_NAME_LENGTHS,
+	BROADCAST_DESIGN_NOW_PLAYING,
 	BROADCAST_DESIGN_SET_STAGES,
 	BROADCAST_DESIGN_TRANSITIONS,
 	BROADCAST_MAX_CASTERS,
@@ -83,6 +84,11 @@ export const broadcastDesignSearchParams = SearchParams.define({
 		loader: false,
 	}),
 	headline: SP.param(v.boolean(), { default: true, loader: false }),
+	/** What the now playing line of the hold and casters scenes shows. */
+	nowPlaying: SP.param(v.picklist(BROADCAST_DESIGN_NOW_PLAYING), {
+		default: "track",
+		loader: false,
+	}),
 	bracket: SP.param(v.picklist(BROADCAST_DESIGN_BRACKETS), {
 		default: "double_elimination",
 		loader: false,

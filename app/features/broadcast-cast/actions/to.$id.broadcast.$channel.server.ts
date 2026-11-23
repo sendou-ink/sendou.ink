@@ -1,8 +1,12 @@
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.server";
+import { BROADCAST_MUSIC_DEFAULT_VOLUME } from "~/features/broadcast/broadcast-constants";
 import { broadcastParamsSchema } from "~/features/broadcast/broadcast-schemas";
-import type { BroadcastStoredState } from "~/features/broadcast/broadcast-types";
+import type {
+	BroadcastMusic,
+	BroadcastStoredState,
+} from "~/features/broadcast/broadcast-types";
 import { broadcastDashboardPage } from "~/features/broadcast/broadcast-urls";
 import {
 	pointProgram,
@@ -11,6 +15,7 @@ import {
 	updateObsAudio,
 } from "~/features/broadcast/broadcast-utils.server";
 import * as BroadcastHub from "~/features/broadcast/core/BroadcastHub.server";
+import * as MusicPlayback from "~/features/broadcast/core/MusicPlayback";
 import * as Producer from "~/features/broadcast/core/Producer";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { defineAction } from "~/form/define-action.server";
@@ -77,6 +82,19 @@ export const action = defineAction(
 			BroadcastHub.refresh({
 				tournamentId: tournament.ctx.id,
 				slug: channel.slug,
+			});
+		/** Changes the music as `change` makes of it at the server's now, a `null` music changing nothing. */
+		const updateMusic = (
+			change: (music: BroadcastMusic, now: number) => BroadcastMusic | null,
+		) =>
+			BroadcastRepository.updateProducer({
+				...key,
+				change: (state) => {
+					const music = state.music && change(state.music, Date.now());
+					if (!music || music === state.music) return null;
+
+					return { ...state, music };
+				},
 			});
 		const editItem = (
 			itemId: number,
@@ -150,6 +168,68 @@ export const action = defineAction(
 				await editItem(body.itemId, { advance: body.advance });
 				break;
 			}
+			case "PLAY_MUSIC": {
+				await BroadcastRepository.updateProducer({
+					...key,
+					change: (state) => {
+						const now = Date.now();
+
+						return {
+							...state,
+							music: state.music
+								? MusicPlayback.resume(
+										MusicPlayback.withTracks(state.music, body.tracks, now),
+										now,
+									)
+								: MusicPlayback.start({
+										tracks: body.tracks,
+										volume: BROADCAST_MUSIC_DEFAULT_VOLUME,
+										now,
+									}),
+						};
+					},
+				});
+				break;
+			}
+			case "SET_MUSIC_TRACKS": {
+				await updateMusic((music, now) =>
+					MusicPlayback.withTracks(music, body.tracks, now),
+				);
+				break;
+			}
+			case "PAUSE_MUSIC": {
+				await updateMusic(MusicPlayback.pause);
+				break;
+			}
+			case "STOP_MUSIC": {
+				await BroadcastRepository.updateState({
+					...key,
+					patch: { music: null },
+				});
+				break;
+			}
+			case "SKIP_MUSIC": {
+				await updateMusic((music, now) =>
+					MusicPlayback.current(music, now)?.track.id === body.trackId
+						? MusicPlayback.skip(music, now, body.direction)
+						: null,
+				);
+				break;
+			}
+			case "SET_MUSIC_SHUFFLE": {
+				await updateMusic((music, now) =>
+					MusicPlayback.withShuffle(music, {
+						isShuffled: body.isShuffled,
+						seed: Math.floor(Math.random() * 2 ** 31),
+						now,
+					}),
+				);
+				break;
+			}
+			case "SET_MUSIC_VOLUME": {
+				await updateMusic((music) => ({ ...music, volume: body.volume }));
+				break;
+			}
 			case "ADD_TO_QUEUE": {
 				await updateProducer((state) =>
 					Producer.enqueue(CAST_PRODUCER_RULES, state, { hasMatch }),
@@ -221,6 +301,13 @@ export const action = defineAction(
 						{ tab: "theme" },
 					),
 				);
+			}
+			case "UPDATE_NOW_PLAYING": {
+				await BroadcastRepository.updateSettings<CastBroadcastSettings>({
+					...key,
+					patch: { nowPlaying: body.nowPlaying ?? "" },
+				});
+				break;
 			}
 			case "UPDATE_HEADLINE": {
 				await BroadcastRepository.updateSettings<CastBroadcastSettings>({

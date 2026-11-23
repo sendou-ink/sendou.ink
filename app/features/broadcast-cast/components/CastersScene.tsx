@@ -23,6 +23,7 @@ import * as VdoNinjaMessage from "../core/VdoNinjaMessage";
 import layout from "./CastersScene.layout.module.css";
 import look from "./CastersScene.module.css";
 import { Matchup } from "./Matchup";
+import { NowPlaying } from "./NowPlaying";
 import { SceneBackdrop } from "./SceneBackdrop";
 
 const styles = combineStyles(look, layout);
@@ -65,9 +66,9 @@ interface Frame {
 }
 
 /**
- * Full screen with see-through 16:9 frames for the casters' cameras, their names under them. What a named caster's
- * frame shows comes from {@link CasterCameras} under the scene, the frames of no one named are left to OBS sources under
- * the overlay.
+ * Full screen with see-through 16:9 frames for the casters' cameras, their names under them, and what music is playing
+ * low in the left corner. What a named caster's frame shows comes from {@link CasterCameras} under the scene, the
+ * frames of no one named are left to OBS sources under the overlay.
  */
 export function CastersScene({
 	state,
@@ -113,6 +114,7 @@ export function CastersScene({
 					<Matchup match={state.match} view={view} state={state} />
 				</div>
 			) : null}
+			<NowPlaying state={state} className={styles.nowPlaying} />
 		</div>
 	);
 }

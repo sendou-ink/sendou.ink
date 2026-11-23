@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type {
 	BroadcastAudioFeed,
 	BroadcastOwnPeer,
+	BroadcastPeer,
 	BroadcastSessionDescription,
 	BroadcastStreamMessage,
 } from "../broadcast-types";
@@ -227,6 +228,65 @@ describe("ClipTransfer", () => {
 		expect(other.feeds()).toEqual(feeds);
 	});
 
+	test("sends music only to the program, the dashboard's previews playing no sound", async () => {
+		const sender = network.sender("dashboard", [
+			network.clip("clip", 10),
+			network.clip("track", 10, "audio/mpeg", "music"),
+		]);
+		const preview = network.receiver({ role: "preview" });
+
+		await vi.waitFor(() =>
+			expect(sender.statuses()).toEqual([
+				expect.objectContaining({ receivedClipIds: ["clip"], clipCount: 1 }),
+			]),
+		);
+		expect(sender.sentClipIds()).toEqual(["clip"]);
+		expect(preview.clipCount()).toBe(1);
+	});
+
+	test("sends the music after the other clips", async () => {
+		const sender = network.sender("dashboard", [
+			network.clip("track", 10, "audio/mpeg", "music"),
+			network.clip("clip", 10),
+		]);
+		const overlay = network.receiver();
+
+		await vi.waitFor(() => expect(overlay.clipCount()).toBe(2));
+		expect(sender.sentClipIds()).toEqual(["clip", "track"]);
+	});
+
+	test("keeps the music it receives in its cache, not the replay clips", async () => {
+		const cache = memoryCache();
+		network.sender("dashboard", [
+			network.clip("clip", 10),
+			network.clip("track", 10, "audio/mpeg", "music"),
+		]);
+		const overlay = network.receiver({ cache });
+
+		await vi.waitFor(() => expect(overlay.clipCount()).toBe(2));
+		await vi.waitFor(() =>
+			expect(cache.saved().map((clip) => clip.id)).toEqual(["track"]),
+		);
+	});
+
+	test("isn't sent again what its cache has", async () => {
+		const cache = memoryCache([
+			{
+				id: "track",
+				kind: "music",
+				blob: new Blob([new Uint8Array(10)], { type: "audio/mpeg" }),
+			},
+		]);
+		const overlay = network.receiver({ cache });
+		const sender = network.sender("dashboard", [
+			network.clip("track", 10, "audio/mpeg", "music"),
+			network.clip("other", 10, "audio/mpeg", "music"),
+		]);
+
+		await vi.waitFor(() => expect(overlay.urls("music").size).toBe(2));
+		expect(sender.sentClipIds()).toEqual(["other"]);
+	});
+
 	test("waits for the channel to drain before buffering more than 8 MB", async () => {
 		const size = MAX_BUFFERED_BYTES + 4 * CHUNK_BYTES;
 		network.sender("dashboard", [network.clip("big", size)]);
@@ -244,6 +304,19 @@ describe("ClipTransfer", () => {
 		).toBe(true);
 	});
 });
+
+/** A cache held in memory, see `ClipTransfer.ClipCache`. */
+function memoryCache(initial: ClipTransfer.CachedClip[] = []) {
+	const saved: ClipTransfer.CachedClip[] = [];
+
+	return {
+		load: async () => initial,
+		save: async (clip: ClipTransfer.CachedClip) => {
+			saved.push(clip);
+		},
+		saved: () => saved,
+	};
+}
 
 /** The clip with its video read only once `release`d, to change the clips while it's on its way. */
 function held(clip: ClipTransfer.ClipSource) {
@@ -281,6 +354,7 @@ function createNetwork() {
 		}
 	>();
 	const files = new Map<string, { bytes: Uint8Array; mimeType: string }>();
+	let overlayRole: BroadcastPeer["role"] = "source";
 	const blobs = new Map<string, Blob>();
 	const channels: FakeDataChannel[] = [];
 	FakeDataChannel.created = channels;
@@ -313,13 +387,19 @@ function createNetwork() {
 	return {
 		fetch,
 		blobs,
-		clip(id: string, size: number, mimeType = "video/mp4") {
+		clip(
+			id: string,
+			size: number,
+			mimeType = "video/mp4",
+			kind: ClipTransfer.ClipKind = "clip",
+		): ClipTransfer.ClipSource {
 			const bytes = new Uint8Array(size);
 			for (let i = 0; i < size; i++) bytes[i] = (i * 31 + id.length) % 256;
 			files.set(id, { bytes, mimeType });
 
 			return {
 				id,
+				kind,
 				load: async () => new Blob([bytes.slice()], { type: mimeType }),
 			};
 		},
@@ -346,7 +426,7 @@ function createNetwork() {
 			if (peers.has(OVERLAY.id)) {
 				sender.handleMessage({
 					kind: "peers",
-					peers: [{ id: OVERLAY.id, role: "source" }],
+					peers: [{ id: OVERLAY.id, role: overlayRole }],
 				});
 			}
 			const ownChannels = () =>
@@ -362,13 +442,24 @@ function createNetwork() {
 					),
 			};
 		},
-		receiver() {
-			let urls: ReadonlyMap<string, string> = new Map();
+		receiver({
+			role = "source",
+			cache,
+		}: {
+			role?: BroadcastPeer["role"];
+			cache?: ClipTransfer.ClipCache;
+		} = {}) {
+			overlayRole = role;
+			let received: ClipTransfer.ReceivedClips = {
+				clip: new Map(),
+				music: new Map(),
+			};
 			const receiver = ClipTransfer.createReceiver({
 				signalUrl: SIGNAL_URL,
 				onChange: (changed) => {
-					urls = changed;
+					received = changed;
 				},
+				cache,
 			});
 			peers.set(OVERLAY.id, { token: OVERLAY.token, ...receiver });
 			receiver.handleMessage({ kind: "hello", peer: OVERLAY, now: Date.now() });
@@ -377,13 +468,22 @@ function createNetwork() {
 
 				peer.handleMessage({
 					kind: "peers",
-					peers: [{ id: OVERLAY.id, role: "source" }],
+					peers: [{ id: OVERLAY.id, role }],
 				});
 			}
-			const blob = (clipId: string) => blobs.get(urls.get(clipId)!)!;
+			const urlOf = (clipId: string) =>
+				Object.values(received)
+					.map((kindUrls) => kindUrls.get(clipId))
+					.find(Boolean)!;
+			const blob = (clipId: string) => blobs.get(urlOf(clipId))!;
 
 			return {
-				urls: () => urls,
+				urls: (kind: ClipTransfer.ClipKind = "clip") => received[kind],
+				clipCount: () =>
+					Object.values(received).reduce(
+						(count, kindUrls) => count + kindUrls.size,
+						0,
+					),
 				sendFeeds: receiver.sendFeeds,
 				blob,
 				clip: async (clipId: string) =>

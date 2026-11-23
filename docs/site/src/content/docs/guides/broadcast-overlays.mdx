@@ -30,7 +30,7 @@ Most of making the overlays your own is plain CSS, the language every website is
 2. In the dashboard's **Setup** tab, press **Generate URL**. The URL is yours, the same for every channel and tournament, and has a secret key, so only you can show the overlay. It keeps working until you generate a new one, so you set up OBS once and leave it.
 3. In OBS, create a new scene collection (Scene Collection → New) so your own setup stays untouched.
 4. Set the canvas to 1920×1080 (Settings → Video).
-5. Add your capture card, and on top of it a **Browser** source with the URL, sized 1920×1080.
+5. Add your capture card, and on top of it a **Browser** source with the URL, sized 1920×1080. Check **Control audio via OBS** in its properties, so the casters and the music reach the stream.
 6. So the game isn't heard under the other scenes: in OBS, open Tools → WebSocket Server Settings, check **Enable WebSocket server** and press **Show Connect Info** for its port and password. Fill them in under **Capture card audio** in the dashboard's **Setup** tab (they're saved with your URL, so once is enough), then pick the source the game's sound comes from (the capture card, or its Audio Input Capture if the sound has its own source). The list comes from OBS when the dashboard is open on the computer OBS runs on; elsewhere, type the source's name exactly as in OBS's Sources list.
 
 </Steps>
@@ -54,6 +54,19 @@ Add the casters in the dashboard's **Setup** tab, each with their VDO.ninja view
 - Check **Control audio via OBS** on the browser source, or they won't reach the stream.
 
 The dashboard's previews and the designer show placeholders and play no sound. Anyone with a view link can watch it, so add `&password=` in VDO.ninja if needed.
+
+## Music
+
+The hold scenes (starting soon, break, standby and ending) and the casters scene show what's playing on a **now playing** line behind a note icon: the title and artist of a track of your music, or your own text. On the hold scenes it sits under the title (or the headline), on the casters scene low in the left corner.
+
+- Drop your music files into the dashboard's **Music** tab. They stay in that browser only and go straight from it to your OBS sources, never through sendou.ink. Only add music you have the rights to play on stream.
+- Each track's title and artist come from the file. Edit them there if needed.
+- The tracks play in the library's order, looping, or with **Shuffle** on in a new mixed order each time through (with three or more tracks, never the same track twice in a row). **Play**, **Pause**, skip, shuffle and the volume are under the live preview and apply right away.
+- The music is heard only on those scenes. It fades out as you Take another scene and back in as you return, playing on in the meantime. An OBS source that reloads picks up where the music is, and keeps the files it was sent, so they aren't sent again.
+- Check **Control audio via OBS** on the browser source, or the music won't reach the stream.
+- Playing music on your own computer instead? Type what's playing under **Now playing** below the live preview, next to the flavour text. It shows on the same line while no music plays from the dashboard, and the field is there while no music is in the dashboard's library.
+
+The dashboard's previews and the designer show the line but play no sound.
 
 ## The scanner
 
@@ -178,6 +191,11 @@ Casters' pronouns and user pages take turns every 10 seconds.
 [data-scene="break"] [data-part="ticker"] { display: none; }
 ```
 Break without the other matches' scores.
+
+```css
+[data-part="now-playing"][data-source="text"] { display: none; }
+```
+The now playing card only for music, not for your text.
 
 ```css
 [data-winner] [data-part="team-name"] { color: var(--bc-accent); }

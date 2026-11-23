@@ -14,6 +14,7 @@ import { scenePart } from "../broadcast-cast-utils";
 import layout from "./HoldScene.layout.module.css";
 import look from "./HoldScene.module.css";
 import { Matchup } from "./Matchup";
+import { NowPlaying } from "./NowPlaying";
 import { SceneBackdrop } from "./SceneBackdrop";
 import { Ticker } from "./Ticker";
 
@@ -21,7 +22,7 @@ const styles = combineStyles(look, layout);
 
 const part = scenePart("hold");
 
-/** Full screen of the scenes without gameplay (starting soon, break, technical difficulties, ending): a big title, the headline and, on break, the next match and the other matches' ticker. Starting soon given a duration counts it down. Also the scenes' fallback when they have nothing to show. */
+/** Full screen of the scenes without gameplay (starting soon, break, technical difficulties, ending): a big title, the headline, what music is playing and, on break, the next match and the other matches' ticker. Starting soon given a duration counts it down. Also the scenes' fallback when they have nothing to show. */
 export function HoldScene({
 	scene,
 	state,
@@ -60,6 +61,7 @@ export function HoldScene({
 						{headline}
 					</p>
 				) : null}
+				<NowPlaying state={state} className={styles.nowPlaying} />
 			</div>
 			{scene === "break" && nextMatch ? (
 				<div className={styles.matchup}>

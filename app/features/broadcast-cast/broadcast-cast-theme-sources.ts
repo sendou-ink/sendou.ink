@@ -15,6 +15,8 @@ import mapsSceneLayout from "./components/MapsScene.layout.module.css?raw";
 import mapsScene from "./components/MapsScene.module.css?raw";
 import matchupLayout from "./components/Matchup.layout.module.css?raw";
 import matchup from "./components/Matchup.module.css?raw";
+import nowPlayingLayout from "./components/NowPlaying.layout.module.css?raw";
+import nowPlaying from "./components/NowPlaying.module.css?raw";
 import replaysSceneLayout from "./components/ReplaysScene.layout.module.css?raw";
 import replaysScene from "./components/ReplaysScene.module.css?raw";
 import resultsSceneLayout from "./components/ResultsScene.layout.module.css?raw";
@@ -48,6 +50,7 @@ const SOURCES: Record<Stylesheet, { look: string; layout: string }> = {
 	BracketScene: { look: bracketScene, layout: bracketSceneLayout },
 	TeamScene: { look: teamScene, layout: teamSceneLayout },
 	HoldScene: { look: holdScene, layout: holdSceneLayout },
+	NowPlaying: { look: nowPlaying, layout: nowPlayingLayout },
 };
 
 /** The cast overlay's default styles as theme CSS by source, see `themeDefaults`. */

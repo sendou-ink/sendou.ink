@@ -12,6 +12,7 @@ import { CasterCameras, CastersScene } from "./CastersScene";
 import { GameScene } from "./GameScene";
 import { HoldScene } from "./HoldScene";
 import { MapsScene } from "./MapsScene";
+import { MusicPlayer } from "./MusicPlayer";
 import { ReplaysScene } from "./ReplaysScene";
 import { ResultsScene } from "./ResultsScene";
 import { RostersScene } from "./RostersScene";
@@ -26,7 +27,10 @@ export const CAST_SCENE_SET: BroadcastSceneSet<CastBroadcastState> = {
 	themeClasses: CAST_THEME_CLASSES,
 };
 
-/** Under every scene: the casters' cameras (heard on every scene, seen on Casters), and the capture card muted off the Game scene. */
+/**
+ * Under every scene: the casters' cameras (heard on every scene, seen on Casters), the music player, and the capture
+ * card muted off the Game scene.
+ */
 function CastUnderlay({
 	state,
 	view,
@@ -38,7 +42,12 @@ function CastUnderlay({
 }) {
 	useObsCaptureMute(layers[0].state[view].scene === "game");
 
-	return <CasterCameras state={state} view={view} layers={layers} />;
+	return (
+		<>
+			<CasterCameras state={state} view={view} layers={layers} />
+			<MusicPlayer state={state} view={view} />
+		</>
+	);
 }
 
 /** A scene showing the featured match's teams falls back to the break scene while no match is cast, e.g. as it got uncast on air. */

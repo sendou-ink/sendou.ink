@@ -44,6 +44,7 @@ import {
 	BROADCAST_DESIGN_MAX_OTHER_MATCHES,
 	BROADCAST_DESIGN_MAX_PLAYERS,
 	BROADCAST_DESIGN_NAME_LENGTHS,
+	BROADCAST_DESIGN_NOW_PLAYING,
 	BROADCAST_DESIGN_SET_STAGES,
 	BROADCAST_DESIGN_TRANSITIONS,
 	BROADCAST_MAX_CASTERS,
@@ -443,6 +444,15 @@ function ScenarioControls({
 					value={scenario.otherMatches}
 					options={countOptions({ max: BROADCAST_DESIGN_MAX_OTHER_MATCHES })}
 					onChange={(otherMatches) => setScenario({ otherMatches })}
+				/>
+				<Choice
+					label={t("broadcast:design.nowPlaying")}
+					value={scenario.nowPlaying}
+					options={BROADCAST_DESIGN_NOW_PLAYING.map((nowPlaying) => ({
+						value: nowPlaying,
+						label: t(`broadcast:design.nowPlaying.${nowPlaying}`),
+					}))}
+					onChange={(nowPlaying) => setScenario({ nowPlaying })}
 				/>
 				<Choice
 					label={t("broadcast:design.bracket")}

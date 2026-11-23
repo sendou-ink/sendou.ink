@@ -30,6 +30,15 @@ const PEER_ROLE_ORDER: ReadonlyArray<BroadcastPeer["role"]> = [
 	"preview",
 	"dashboard",
 ];
+// a clip is read from disk this much at a time, then sent in chunks
+const READ_BYTES = 16 * CHUNK_BYTES;
+/** Type of a clip without one of its own. */
+const DEFAULT_MIME_TYPES: Record<ClipKind, string> = {
+	clip: "video/mp4",
+	music: "audio/mpeg",
+};
+/** Kept by a receiver given a cache: the music is the same from show to show, unlike a show's replay clips. */
+const CACHED_KINDS: ReadonlyArray<ClipKind> = ["music"];
 
 type ClipChannelMessage =
 	/** Receiver → sender as the channel opens, the sender sends the rest. */
@@ -37,14 +46,34 @@ type ClipChannelMessage =
 	/** Sender → receiver whenever its clips change: the ones it sent before and left out here can go. */
 	| { type: "keep"; clipIds: string[] }
 	/** Sender → receiver, followed by `size` bytes of binary chunks. */
-	| { type: "clip"; id: string; size: number; mimeType: string }
+	| { type: "clip"; id: string; kind: ClipKind; size: number; mimeType: string }
 	/** Receiver → sender once the clip is whole. */
 	| { type: "received"; id: string }
 	/** Receiver → sender, a few times a second: what its audio feeds sound like. */
 	| { type: "feeds"; feeds: BroadcastAudioFeed[] };
 
+/** What a clip sent to the overlays is: a replay clip or a music track the program plays (the previews get no music). */
+export type ClipKind = "clip" | "music";
+
+/** Object URLs of the clips an overlay has received, by kind and then clip id. */
+export type ReceivedClips = Record<ClipKind, ReadonlyMap<string, string>>;
+
+/** A clip kept by an overlay over page loads, see {@link createReceiver}. */
+export interface CachedClip {
+	id: string;
+	kind: ClipKind;
+	blob: Blob;
+}
+
+/** Where an overlay keeps the clips worth keeping over page loads (e.g. an OBS source reloading), see `CACHED_KINDS`. */
+export interface ClipCache {
+	load: () => Promise<CachedClip[]>;
+	save: (clip: CachedClip) => Promise<void>;
+}
+
 export interface ClipSource {
 	id: string;
+	kind: ClipKind;
 	/** The clip's video, read once an overlay needs it. */
 	load: () => Promise<Blob>;
 }
@@ -78,10 +107,10 @@ interface SenderConnection {
 }
 
 /**
- * Sends the clips to every overlay connected to the broadcast's stream (the dashboard's previews included), each
- * over a WebRTC data channel of its own. The stream's messages are fed to `handleMessage`: they tell who the
- * overlays are and carry their answers. The clips go in their order, a clip earlier in it cutting in on one being
- * sent. `setClips` changes the clips without reconnecting: the overlays get the new ones and let go of the ones left
+ * Sends the clips to every overlay connected to the broadcast's stream (the dashboard's previews included, music
+ * left out), each over a WebRTC data channel of its own. The stream's messages are fed to `handleMessage`: they tell
+ * who the overlays are and carry their answers. The clips go in their order (music last), a clip earlier in it
+ * cutting in on one being sent. `setClips` changes the clips without reconnecting: the overlays get the new ones and let go of the ones left
  * out, one being sent stops. The overlays report their audio feeds back over the same channels to
  * `onFeeds`, `null` once the overlay is gone.
  */
@@ -100,22 +129,24 @@ export function createSender({
 	let peers: BroadcastPeer[] = [];
 	let clips = initialClips;
 	const connections = new Map<string, SenderConnection>();
-	const clipData = new Map<
-		string,
-		Promise<{ data: ArrayBuffer; mimeType: string }>
-	>();
+	const clipData = new Map<string, Promise<Blob>>();
 	/** Clips whose video couldn't be read (e.g. deleted meanwhile), skipped until the clips change. */
 	const unreadable = new Set<string>();
 	let isSending = false;
 	const reconnectTimeouts = new Set<ReturnType<typeof setTimeout>>();
 
+	const clipsFor = (connection: SenderConnection) =>
+		clips.filter((clip) => isSentTo(clip.kind, connection.peer.role));
+
 	const statusOf = (connection: SenderConnection): ClipPeerStatus => ({
 		peer: connection.peer,
 		connectionState: connection.pc.connectionState,
 		receivedClipIds: connection.has
-			? clips.flatMap((clip) => (connection.has?.has(clip.id) ? [clip.id] : []))
+			? clipsFor(connection).flatMap((clip) =>
+					connection.has?.has(clip.id) ? [clip.id] : [],
+				)
 			: null,
-		clipCount: clips.length,
+		clipCount: clipsFor(connection).length,
 		transferMs: connection.transferMs,
 	});
 
@@ -130,10 +161,7 @@ export function createSender({
 	const loadClip = (clip: ClipSource) => {
 		let loading = clipData.get(clip.id);
 		if (!loading) {
-			loading = clip.load().then(async (blob) => ({
-				data: await blob.arrayBuffer(),
-				mimeType: blob.type || "video/mp4",
-			}));
+			loading = clip.load();
 			loading.catch(() => clipData.delete(clip.id));
 			clipData.set(clip.id, loading);
 		}
@@ -147,8 +175,9 @@ export function createSender({
 		!unreadable.has(clipId);
 
 	/**
-	 * What to send next and to which overlay: the first clip some overlay is missing, OBS before the previews, else
-	 * throwaway bytes to an overlay no clip went to yet (`clip` `null`, see `WARM_UP_BYTES`).
+	 * What to send next and to which overlay: the first clip some overlay is missing (the music after the others, being
+	 * big and not needed until the music scenes), OBS before the previews, else throwaway bytes to an overlay no clip
+	 * went to yet (`clip` `null`, see `WARM_UP_BYTES`).
 	 */
 	const nextTransfer = () => {
 		const ready = Array.from(connections.values())
@@ -161,9 +190,14 @@ export function createSender({
 					PEER_ROLE_ORDER.indexOf(a.peer.role) -
 					PEER_ROLE_ORDER.indexOf(b.peer.role),
 			);
-		for (const clip of clips) {
-			const connection = ready.find((candidate) =>
-				isMissing(candidate, clip.id),
+		const musicLast = clips.toSorted(
+			(a, b) => Number(a.kind === "music") - Number(b.kind === "music"),
+		);
+		for (const clip of musicLast) {
+			const connection = ready.find(
+				(candidate) =>
+					isSentTo(clip.kind, candidate.peer.role) &&
+					isMissing(candidate, clip.id),
 			);
 			if (connection) return { connection, clip };
 		}
@@ -175,30 +209,35 @@ export function createSender({
 	/** Sends the bytes in chunks, `false` when they stopped part way as something else is due first. */
 	const sendBytes = async (
 		connection: SenderConnection,
-		data: ArrayBuffer,
+		blob: Blob,
 		clipId: string | null,
 	) => {
 		const { channel } = connection;
-		for (let offset = 0; offset < data.byteLength; offset += CHUNK_BYTES) {
-			if (channel.bufferedAmount > MAX_BUFFERED_BYTES) {
-				await bufferedAmountLow(channel);
-			}
-			const next = nextTransfer();
-			if (
-				channel.readyState !== "open" ||
-				next?.connection !== connection ||
-				(next.clip?.id ?? null) !== clipId
-			) {
-				return false;
-			}
+		for (let readOffset = 0; readOffset < blob.size; readOffset += READ_BYTES) {
+			const data = await blob
+				.slice(readOffset, readOffset + READ_BYTES)
+				.arrayBuffer();
+			for (let offset = 0; offset < data.byteLength; offset += CHUNK_BYTES) {
+				if (channel.bufferedAmount > MAX_BUFFERED_BYTES) {
+					await bufferedAmountLow(channel);
+				}
+				const next = nextTransfer();
+				if (
+					channel.readyState !== "open" ||
+					next?.connection !== connection ||
+					(next.clip?.id ?? null) !== clipId
+				) {
+					return false;
+				}
 
-			channel.send(
-				new Uint8Array(
-					data,
-					offset,
-					Math.min(CHUNK_BYTES, data.byteLength - offset),
-				),
-			);
+				channel.send(
+					new Uint8Array(
+						data,
+						offset,
+						Math.min(CHUNK_BYTES, data.byteLength - offset),
+					),
+				);
+			}
 		}
 		connection.isWarm = true;
 
@@ -207,7 +246,7 @@ export function createSender({
 
 	/** Sends the clip whole, the overlay dropping a part stopped part way at the next clip. */
 	const sendClip = async (connection: SenderConnection, clip: ClipSource) => {
-		const { data, mimeType } = await loadClip(clip);
+		const blob = await loadClip(clip);
 		const next = nextTransfer();
 		if (next?.connection !== connection || next.clip?.id !== clip.id) return;
 
@@ -215,10 +254,11 @@ export function createSender({
 		sendJson(connection.channel, {
 			type: "clip",
 			id: clip.id,
-			size: data.byteLength,
-			mimeType,
+			kind: clip.kind,
+			size: blob.size,
+			mimeType: blob.type || DEFAULT_MIME_TYPES[clip.kind],
 		});
-		if (await sendBytes(connection, data, clip.id)) {
+		if (await sendBytes(connection, blob, clip.id)) {
 			connection.unconfirmed.set(clip.id, sentAt);
 		}
 	};
@@ -236,7 +276,11 @@ export function createSender({
 				const { connection, clip } = next;
 				if (!clip) {
 					// cut off it starts over once nothing else is due, `sendBytes` marks it warm once whole
-					await sendBytes(connection, new ArrayBuffer(WARM_UP_BYTES), null);
+					await sendBytes(
+						connection,
+						new Blob([new ArrayBuffer(WARM_UP_BYTES)]),
+						null,
+					);
 					continue;
 				}
 
@@ -403,24 +447,53 @@ export function createSender({
 
 /**
  * Receives clips from the dashboards sending them, answering their offers. `onChange` gets the object URLs of
- * every clip received so far by clip id, kept over reconnects until the dashboard that sent it leaves it out or
- * `close`. `sendFeeds` reports the overlay's audio feeds to every dashboard connected.
+ * every clip received so far by kind and clip id, kept over reconnects until the dashboard that sent it leaves it out
+ * or `close`. Given a `cache` the music received is kept in it, and the ones it has are not sent again.
+ * `sendFeeds` reports the overlay's audio feeds to every dashboard connected.
  */
 export function createReceiver({
 	signalUrl,
 	onChange,
+	cache,
 }: {
 	signalUrl: string;
-	onChange: (urls: ReadonlyMap<string, string>) => void;
+	onChange: (clips: ReceivedClips) => void;
+	cache?: ClipCache;
 }) {
 	let self: BroadcastOwnPeer | null = null;
 	const connections = new Map<string, RTCPeerConnection>();
 	const channels = new Set<RTCDataChannel>();
-	/** `from`: the dashboard that sent it, or last listed it to keep. */
-	const clips = new Map<string, { url: string; from: string }>();
+	/** `from`: the dashboard that sent it or last listed it to keep, `null` for one loaded from the cache. */
+	const clips = new Map<
+		string,
+		{ kind: ClipKind; url: string; from: string | null }
+	>();
 
-	const publish = () =>
-		onChange(new Map(Array.from(clips, ([id, { url }]) => [id, url])));
+	const publish = () => {
+		const received: Record<ClipKind, Map<string, string>> = {
+			clip: new Map(),
+			music: new Map(),
+		};
+		for (const [id, { kind, url }] of clips) received[kind].set(id, url);
+		onChange(received);
+	};
+
+	const add = ({ id, kind, blob }: CachedClip, from: string | null) => {
+		if (clips.has(id)) return false;
+
+		clips.set(id, { kind, url: URL.createObjectURL(blob), from });
+		publish();
+		return true;
+	};
+
+	const cacheLoaded = cache
+		? cache
+				.load()
+				.then((cached) => {
+					for (const clip of cached) add(clip, null);
+				})
+				.catch((error) => logger.error("Loading cached clips failed", error))
+		: Promise.resolve();
 
 	const keepOnly = (from: string, clipIds: string[]) => {
 		let isChanged = false;
@@ -443,6 +516,7 @@ export function createReceiver({
 
 		let incoming: {
 			id: string;
+			kind: ClipKind;
 			size: number;
 			mimeType: string;
 			chunks: ArrayBuffer[];
@@ -450,7 +524,11 @@ export function createReceiver({
 		} | null = null;
 
 		const sendHave = () =>
-			sendJson(channel, { type: "have", clipIds: Array.from(clips.keys()) });
+			void cacheLoaded.then(() => {
+				if (channel.readyState !== "open") return;
+
+				sendJson(channel, { type: "have", clipIds: Array.from(clips.keys()) });
+			});
 		if (channel.readyState === "open") sendHave();
 		else channel.onopen = sendHave;
 
@@ -458,13 +536,16 @@ export function createReceiver({
 			if (typeof event.data === "string") {
 				const message = JSON.parse(event.data) as ClipChannelMessage;
 				if (message.type === "clip") {
-					incoming = {
-						id: message.id,
-						size: message.size,
-						mimeType: message.mimeType,
-						chunks: [],
-						receivedBytes: 0,
-					};
+					incoming = Object.hasOwn(DEFAULT_MIME_TYPES, message.kind)
+						? {
+								id: message.id,
+								kind: message.kind,
+								size: message.size,
+								mimeType: message.mimeType,
+								chunks: [],
+								receivedBytes: 0,
+							}
+						: null;
 				} else if (message.type === "keep") {
 					keepOnly(from, message.clipIds);
 					if (incoming && !message.clipIds.includes(incoming.id)) {
@@ -480,14 +561,15 @@ export function createReceiver({
 			incoming.receivedBytes += chunk.byteLength;
 			if (incoming.receivedBytes < incoming.size) return;
 
-			if (!clips.has(incoming.id)) {
-				clips.set(incoming.id, {
-					url: URL.createObjectURL(
-						new Blob(incoming.chunks, { type: incoming.mimeType }),
-					),
-					from,
-				});
-				publish();
+			const clip = {
+				id: incoming.id,
+				kind: incoming.kind,
+				blob: new Blob(incoming.chunks, { type: incoming.mimeType }),
+			};
+			if (add(clip, from) && cache && CACHED_KINDS.includes(clip.kind)) {
+				cache
+					.save(clip)
+					.catch((error) => logger.error("Caching a clip failed", error));
 			}
 			sendJson(channel, { type: "received", id: incoming.id });
 			incoming = null;
@@ -551,6 +633,11 @@ export function createReceiver({
 			clips.clear();
 		},
 	};
+}
+
+/** Whether a clip of the kind goes to the overlay: the dashboard's previews play no sound, so get no music. */
+function isSentTo(kind: ClipKind, role: BroadcastPeer["role"]) {
+	return kind !== "music" || role === "source";
 }
 
 async function gatheredDescription(

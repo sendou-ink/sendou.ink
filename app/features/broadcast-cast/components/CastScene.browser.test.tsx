@@ -4,12 +4,15 @@ import { render } from "vitest-browser-react";
 import {
 	type BroadcastClips,
 	BroadcastClipsContext,
+	NO_BROADCAST_CLIPS,
 } from "~/features/broadcast/broadcast-clips-context";
+import { BROADCAST_MUSIC_TITLE_MAX_LENGTH } from "~/features/broadcast/broadcast-constants";
 import type {
 	BroadcastAudioFeed,
 	BroadcastStingerVariant,
 } from "~/features/broadcast/broadcast-types";
 import { BroadcastOverlay } from "~/features/broadcast/components/BroadcastOverlay";
+import * as MusicPlayback from "~/features/broadcast/core/MusicPlayback";
 import { CALENDAR_EVENT } from "~/features/calendar/calendar-constants";
 import { TEAM } from "~/features/team/team-constants";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
@@ -18,6 +21,8 @@ import {
 	BROADCAST_DESIGN_BRACKET_FOCUSES,
 	BROADCAST_DESIGN_BRACKETS,
 	BROADCAST_HEADLINE_MAX_LENGTH,
+	BROADCAST_MUSIC_SCENES,
+	BROADCAST_NOW_PLAYING_MAX_LENGTH,
 	BROADCAST_SCENES,
 	DEFAULT_CAST_BROADCAST_SETTINGS,
 } from "../broadcast-cast-constants";
@@ -43,6 +48,7 @@ const SCENARIO: DesignScenario.Scenario = {
 	casters: 3,
 	otherMatches: 8,
 	headline: true,
+	nowPlaying: "track",
 	bracket: "double_elimination",
 	bracketFocus: "remaining",
 };
@@ -139,6 +145,17 @@ describe("CastScene", () => {
 			const state = VARIANTS[variant](stateOf({ ...SCENARIO, scene: "game" }));
 
 			expect(await overflowsOfStinger(state)).toEqual([]);
+		},
+	);
+
+	test.each(BROADCAST_MUSIC_SCENES)(
+		"fits the longest now playing text on %s",
+		async (scene) => {
+			const state = withLongestTexts(
+				stateOf({ ...SCENARIO, scene, nowPlaying: "text" }),
+			);
+
+			expect(await overflowsOnAir(state)).toEqual([]);
 		},
 	);
 
@@ -248,6 +265,137 @@ describe("CastScene", () => {
 			expect(await overflowsOfStinger(state)).toEqual([]);
 		},
 	);
+
+	test("shows the track playing over the producer's text", async () => {
+		const state = stateOf({ ...SCENARIO, scene: "break" });
+
+		await render(
+			<BroadcastOverlay
+				sceneSet={CAST_SCENE_SET}
+				state={withNowPlayingText(state, "Back in 5")}
+				view="live"
+			/>,
+		);
+
+		expect(nowPlayingLine()?.getAttribute("data-source")).toBe("track");
+		expect(nowPlayingPart("now-playing-title")?.textContent).toBe(
+			state.music!.tracks[0].title,
+		);
+	});
+
+	test("shows the producer's text while the music is paused", async () => {
+		const state = stateOf({ ...SCENARIO, scene: "casters" });
+
+		await render(
+			<BroadcastOverlay
+				sceneSet={CAST_SCENE_SET}
+				state={{
+					...withNowPlayingText(state, "Back in 5"),
+					music: MusicPlayback.pause(state.music!, Date.now()),
+				}}
+				view="live"
+			/>,
+		);
+
+		expect(nowPlayingLine()?.getAttribute("data-source")).toBe("text");
+		expect(nowPlayingPart("now-playing-text")?.textContent).toBe("Back in 5");
+	});
+
+	test.each([1, 2, 3])(
+		"keeps the now playing line off the camera frames with %i casters",
+		async (casters) => {
+			await render(
+				<BroadcastOverlay
+					sceneSet={CAST_SCENE_SET}
+					state={withLongestTexts(
+						stateOf({ ...SCENARIO, scene: "casters", casters }),
+					)}
+					view="live"
+				/>,
+			);
+			await settle();
+
+			const line = nowPlayingLine()!.getBoundingClientRect();
+			const frames = Array.from(
+				canvas().querySelectorAll(
+					'[data-scene="casters"] [data-part="camera"]',
+				),
+				(frame) => frame.getBoundingClientRect(),
+			);
+			expect(frames).toHaveLength(casters);
+			for (const frame of frames) {
+				const overlaps =
+					line.left < frame.right &&
+					line.right > frame.left &&
+					line.top < frame.bottom &&
+					line.bottom > frame.top;
+				expect(overlaps, JSON.stringify({ line, frame })).toBe(false);
+			}
+		},
+	);
+
+	test.each(["starting", "break", "technical", "ending"] as const)(
+		"shows the now playing line in the %s scene's left column",
+		async (scene) => {
+			await render(
+				<BroadcastOverlay
+					sceneSet={CAST_SCENE_SET}
+					state={stateOf({ ...SCENARIO, scene })}
+					view="live"
+				/>,
+			);
+
+			expect(nowPlayingLine()?.closest('[data-part="content"]')).not.toBeNull();
+		},
+	);
+
+	test("keeps the now playing line as the track changes, changing only its words", async () => {
+		const state = stateOf({ ...SCENARIO, scene: "break" });
+		const music = state.music!;
+		const twoTracks = {
+			...music,
+			tracks: [
+				music.tracks[0],
+				{ ...music.tracks[0], id: "second-track", title: "Second" },
+			],
+		};
+		const screen = await render(
+			<BroadcastOverlay
+				sceneSet={CAST_SCENE_SET}
+				state={{ ...state, music: twoTracks }}
+				view="live"
+			/>,
+		);
+		const line = nowPlayingLine();
+
+		await screen.rerender(
+			<BroadcastOverlay
+				sceneSet={CAST_SCENE_SET}
+				state={{
+					...state,
+					music: MusicPlayback.skip(twoTracks, Date.now(), "next"),
+				}}
+				view="live"
+			/>,
+		);
+
+		await vi.waitFor(() =>
+			expect(nowPlayingPart("now-playing-title")?.textContent).toBe("Second"),
+		);
+		expect(nowPlayingLine()).toBe(line);
+	});
+
+	test("shows no now playing line without music or text", async () => {
+		await render(
+			<BroadcastOverlay
+				sceneSet={CAST_SCENE_SET}
+				state={stateOf({ ...SCENARIO, scene: "break", nowPlaying: "none" })}
+				view="live"
+			/>,
+		);
+
+		expect(nowPlayingLine()).toBeNull();
+	});
 
 	test("shows VS between the rosters before the set started", async () => {
 		await render(
@@ -405,7 +553,7 @@ describe("CastScene", () => {
 		await render(
 			<BroadcastClipsContext.Provider
 				value={{
-					urls: new Map(),
+					...NO_BROADCAST_CLIPS,
 					isMuted: false,
 					clockOffsetMs: 0,
 					reportFeeds: () => {},
@@ -437,7 +585,7 @@ describe("CastScene", () => {
 		await render(
 			<BroadcastClipsContext.Provider
 				value={{
-					urls: new Map(),
+					...NO_BROADCAST_CLIPS,
 					isMuted: false,
 					clockOffsetMs: 0,
 					reportFeeds: () => {},
@@ -566,9 +714,7 @@ async function renderCasterCameras(
 	const state = stateOf({ ...SCENARIO, scene: "game", casters: 2 });
 
 	await render(
-		<BroadcastClipsContext.Provider
-			value={{ urls: new Map(), clockOffsetMs: 0, ...clips }}
-		>
+		<BroadcastClipsContext.Provider value={{ ...NO_BROADCAST_CLIPS, ...clips }}>
 			<BroadcastOverlay
 				sceneSet={CAST_SCENE_SET}
 				state={{
@@ -662,6 +808,9 @@ function withLongestTexts(state: CastBroadcastState): CastBroadcastState {
 		settings: {
 			...longest.settings,
 			headline: wordsOfLength(BROADCAST_HEADLINE_MAX_LENGTH),
+			nowPlaying: longest.settings.nowPlaying
+				? "W".repeat(BROADCAST_NOW_PLAYING_MAX_LENGTH)
+				: "",
 		},
 		casters: longest.casters.map((caster) => ({
 			...caster,
@@ -676,7 +825,32 @@ function withLongestTexts(state: CastBroadcastState): CastBroadcastState {
 					bracketName: "W".repeat(TOURNAMENT.BRACKET_NAME_MAX_LENGTH),
 				}
 			: null,
+		music: longest.music
+			? {
+					...longest.music,
+					tracks: longest.music.tracks.map((track) => ({
+						...track,
+						title: "W".repeat(BROADCAST_MUSIC_TITLE_MAX_LENGTH),
+						artist: wordsOfLength(BROADCAST_MUSIC_TITLE_MAX_LENGTH),
+					})),
+				}
+			: null,
 	};
+}
+
+function withNowPlayingText(
+	state: CastBroadcastState,
+	nowPlaying: string,
+): CastBroadcastState {
+	return { ...state, settings: { ...state.settings, nowPlaying } };
+}
+
+function nowPlayingLine() {
+	return canvas().querySelector('[data-part="now-playing"]');
+}
+
+function nowPlayingPart(name: string) {
+	return nowPlayingLine()?.querySelector(`[data-part="${name}"]`) ?? null;
 }
 
 function wordsOfLength(length: number) {
