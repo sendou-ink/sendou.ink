@@ -6,7 +6,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 
 import styles from "./faq.module.css";
 
-const AMOUNT_OF_QUESTIONS = 8;
+const AMOUNT_OF_QUESTIONS = 7;
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({

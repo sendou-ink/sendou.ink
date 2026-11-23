@@ -1,8 +1,7 @@
 {
 	"q1": "Was ist der Plus Server?",
-	"q2": "Wie erhalte ich ein Abzeichen als Preis für mein Event?",
-	"q3": "Ich habe auf Patreon abonniert, sehe aber keine Änderung auf der Webseite?",
-	"a3": "Stelle sicher, dass dein Discord auf Patreon.com verknüpft ist. Danach kann es bis zu 2 Stunden dauern, bis der Status auf der Webseite aktualisiert wird. Sende bei Problemen eine DM an Sendou, um Hilfe zu erhalten.",
-	"q4": "Gibt es eine sendou.ink App?",
-	"a4": "Nein, aber sendou.ink kann als 'Progressive Web App' installiert werden. Dies bietet viele der Vorteile einer App, wie Vollbildmodus, Icon auf dem Homebildschirm oder separater Browser-Prozess. Google nach 'wie pwa auf *deinem browser* installieren' für eine Anleitung."
+	"q2": "Ich habe auf Patreon abonniert, sehe aber keine Änderung auf der Webseite?",
+	"a2": "Stelle sicher, dass dein Discord auf Patreon.com verknüpft ist. Danach kann es bis zu 2 Stunden dauern, bis der Status auf der Webseite aktualisiert wird. Sende bei Problemen eine DM an Sendou, um Hilfe zu erhalten.",
+	"q3": "Gibt es eine sendou.ink App?",
+	"a3": "Nein, aber sendou.ink kann als 'Progressive Web App' installiert werden. Dies bietet viele der Vorteile einer App, wie Vollbildmodus, Icon auf dem Homebildschirm oder separater Browser-Prozess. Google nach 'wie pwa auf *deinem browser* installieren' für eine Anleitung."
 }
