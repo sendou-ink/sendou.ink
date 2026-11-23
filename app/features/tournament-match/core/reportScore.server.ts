@@ -5,12 +5,14 @@ import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
+import { databaseTimestampNow } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { errorIsSqliteUniqueConstraintFailure, toDBBoolean } from "~/utils/sql";
 import type { FindMatchById } from "../TournamentMatchRepository.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
 import { matchIsLocked } from "../tournament-match-utils";
+import * as LeagueScheduling from "./LeagueScheduling";
 
 export interface ReportScoreResult {
 	/** Did this game end the set? */
@@ -24,6 +26,7 @@ export interface ReportScoreResult {
  * the game's index in the set; any other index is a page that fell behind and returns `null`
  * rather than erroring, as does a game another request recorded first. The reporter must be on
  * one of the teams or hold `REPORT_SCORES` (organizers, streamers, pool captains); both teams need an active roster (implicit without subs).
+ * A league set needs an agreed time and a playable round first.
  */
 export async function reportScore({
 	match,
@@ -53,6 +56,7 @@ export async function reportScore({
 	}
 
 	requireCanReportScore({ match, tournament, user });
+	requireLeagueSetPlayable({ match, tournament });
 	errorToastIfFalsy(
 		match.opponentOne?.id === winnerTeamId ||
 			match.opponentTwo?.id === winnerTeamId,
@@ -184,5 +188,25 @@ export function requireCanReportScore({
 			(match.players.some((player) => player.id === user.id) ||
 				tournament.canReportAnyScore(user)),
 		"Unauthorized",
+	);
+}
+
+/** Throws an error toast while a league set waits for an agreed time or for its round to become playable. */
+export function requireLeagueSetPlayable({
+	match,
+	tournament,
+}: {
+	match: FindMatchById;
+	tournament: Tournament;
+}) {
+	const phase = LeagueScheduling.phaseOfMatch({
+		match,
+		hasScheduling: tournament.matchHasScheduling(match.id),
+		now: databaseTimestampNow(),
+	});
+
+	errorToastIfFalsy(
+		!LeagueScheduling.blocksPlay(phase),
+		"Set can't be played before a time is agreed and its round is playable",
 	);
 }

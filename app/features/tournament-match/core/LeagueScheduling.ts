@@ -100,6 +100,11 @@ export function phaseOfMatch({
 	});
 }
 
+/** Whether the set can't be played in `currentPhase`: a league set is played once a time is agreed and its round is playable. */
+export function blocksPlay(currentPhase: Phase) {
+	return currentPhase !== "CLOSED" && currentPhase !== "SCHEDULED";
+}
+
 /** Whether candidate times can be put up and accepted in `currentPhase`. */
 export function isBoardOpen(currentPhase: Phase) {
 	return currentPhase !== "CLOSED" && currentPhase !== "NOT_OPEN";

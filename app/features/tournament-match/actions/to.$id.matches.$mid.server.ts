@@ -49,7 +49,11 @@ import { assertUnreachable } from "~/utils/types";
 import { executeRoll } from "../core/executeRoll.server";
 import * as LeagueScheduling from "../core/LeagueScheduling";
 import { resolveMatchMapList } from "../core/mapList.server";
-import { reportScore, requireCanReportScore } from "../core/reportScore.server";
+import {
+	reportScore,
+	requireCanReportScore,
+	requireLeagueSetPlayable,
+} from "../core/reportScore.server";
 import type { FindMatchById } from "../TournamentMatchRepository.server";
 import { tournamentMatchChannel } from "../tournament-match-utils";
 
@@ -310,6 +314,8 @@ export const action = defineAction(
 				break;
 			}
 			case "BAN_PICK": {
+				requireLeagueSetPlayable({ match, tournament });
+
 				const results =
 					await TournamentMatchRepository.findResultsByMatchId(matchId);
 

@@ -116,9 +116,7 @@ export function MatchPageProvider({
 	});
 
 	const waitingForPreviousMatch = data.match.status === "PENDING";
-	// a league set is played once the teams have agreed on a time and the round is playable
-	const leagueBlocksPlay =
-		data.schedule.phase !== "CLOSED" && data.schedule.phase !== "SCHEDULED";
+	const leagueBlocksPlay = LeagueScheduling.blocksPlay(data.schedule.phase);
 
 	const joinInfo = resolveMatchJoinInfo({ tournament, data, teams });
 

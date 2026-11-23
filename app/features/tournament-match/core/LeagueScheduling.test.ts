@@ -128,6 +128,18 @@ describe("LeagueScheduling.phaseOfMatch", () => {
 	});
 });
 
+describe("LeagueScheduling.blocksPlay", () => {
+	test.each([
+		{ phase: "CLOSED", expected: false },
+		{ phase: "NOT_OPEN", expected: true },
+		{ phase: "UNSCHEDULED", expected: true },
+		{ phase: "SCHEDULED_LOCKED", expected: true },
+		{ phase: "SCHEDULED", expected: false },
+	] as const)("$phase -> $expected", ({ phase, expected }) => {
+		expect(LeagueScheduling.blocksPlay(phase)).toBe(expected);
+	});
+});
+
 describe("LeagueScheduling.isBoardOpen", () => {
 	test.each([
 		{ phase: "CLOSED", expected: false },

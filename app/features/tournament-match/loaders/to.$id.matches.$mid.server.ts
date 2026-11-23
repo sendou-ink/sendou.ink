@@ -198,7 +198,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		R.isNonNullish(match.opponentOne?.id) &&
 		R.isNonNullish(match.opponentTwo?.id) &&
 		(isParticipant || tournament.isOrganizerOrStreamer(user)) &&
-		(schedule.phase === "CLOSED" || schedule.phase === "SCHEDULED");
+		!LeagueScheduling.blocksPlay(schedule.phase);
 
 	return {
 		...(await UserCardRepository.findAllByUserIdsCached({

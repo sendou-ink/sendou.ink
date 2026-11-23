@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentMatchScheduleFactory from "~/db/seed/factories/TournamentMatchScheduleFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
@@ -192,8 +193,19 @@ describe("BracketRepository.resetBracket", () => {
 });
 
 describe("BracketRepository league chat room expiry", () => {
-	const setupLeagueMatch = () =>
-		setupStartedMatch({ bracketProgression: ROUND_ROBIN }, { isLeague: true });
+	/** Its time agreed, so it can be played. */
+	const setupLeagueMatch = async () => {
+		const setup = await setupStartedMatch(
+			{ bracketProgression: ROUND_ROBIN },
+			{ isLeague: true },
+		);
+		await TournamentMatchScheduleFactory.schedule({
+			matchId: setup.matchId,
+			scheduledAt: databaseTimestampNow(),
+		});
+
+		return setup;
+	};
 
 	test("a league match's room lives two months", async () => {
 		const setup = await setupLeagueMatch();

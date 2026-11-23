@@ -1,11 +1,16 @@
 import * as R from "remeda";
 import { beforeEach, describe, expect, test } from "vitest";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentMatchScheduleFactory from "~/db/seed/factories/TournamentMatchScheduleFactory";
 import * as TournamentMatchStationFactory from "~/db/seed/factories/TournamentMatchStationFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import type { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import * as TournamentStationRepository from "~/features/tournament-stations/TournamentStationRepository.server";
 import { createStartedLanTournament } from "~/features/tournament-stations/tests/fixtures";
+import { databaseTimestampNow } from "~/utils/dates";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import { action } from "./to.$id.matches.$mid.server";
 
@@ -17,6 +22,10 @@ const jsonMatchAction = wrappedAction<typeof matchSchema>({
 
 const users = UserFactory.pool();
 const organizerId = () => users.id(1);
+
+const DAY_SECONDS = 24 * 60 * 60;
+const UNPLAYABLE_SET_ERROR =
+	"Set can't be played before a time is agreed and its round is playable";
 
 describe("Match action REPORT_SCORE", () => {
 	beforeEach(async () => {
@@ -57,6 +66,100 @@ describe("Match action REPORT_SCORE", () => {
 			{ matchId: first, stationId, isAutoAssigned: 0 },
 			{ matchId: second, stationId, isAutoAssigned: 1 },
 		]);
+	});
+});
+
+describe("Match actions on a league set", () => {
+	const reporterId = () => users.id(2);
+
+	beforeEach(async () => {
+		await users.create(9);
+	});
+
+	/** A league set between two teams, `reporterId` on team one; its round playable from `isPlayableAt`. */
+	const startLeagueSet = async ({
+		isPlayableAt = null,
+		scheduledAt = null,
+	}: {
+		isPlayableAt?: number | null;
+		scheduledAt?: number | null;
+	}) => {
+		const league = await TournamentFactory.create(
+			{ authorId: organizerId() },
+			{ isLeague: true },
+		);
+		const teamOne = users.ids().slice(1, 5);
+		const teamTwo = users.ids().slice(5, 9);
+		const { id: winnerTeamId } = await TournamentTeamFactory.create(
+			{ tournamentId: league.id, memberUserIds: teamOne },
+			{ isCheckedIn: true },
+		);
+		await TournamentTeamFactory.create(
+			{ tournamentId: league.id, memberUserIds: teamTwo },
+			{ isCheckedIn: true },
+		);
+		const [match] = await TournamentFactory.startBracket(league.id, {
+			isPlayableAt: () => isPlayableAt,
+		});
+		if (scheduledAt !== null) {
+			await TournamentMatchScheduleFactory.schedule({
+				matchId: match.id,
+				scheduledAt,
+			});
+		}
+
+		return {
+			matchId: match.id,
+			winnerTeamId,
+			params: { id: String(league.id), mid: String(match.id) },
+		};
+	};
+
+	test.each([
+		{ why: "no agreed time", isPlayableAt: null, scheduledAt: null },
+		{
+			why: "an agreed time before the round is playable",
+			isPlayableAt: databaseTimestampNow() + 3 * DAY_SECONDS,
+			scheduledAt: databaseTimestampNow() + 4 * DAY_SECONDS,
+		},
+	])("rejects a report on a set with $why", async (set) => {
+		const { matchId, winnerTeamId, params } = await startLeagueSet(set);
+
+		const response = await matchAction(
+			{ _action: "REPORT_SCORE", winnerTeamId, position: 0 },
+			{ user: reporterId(), params },
+		);
+
+		assertResponseErrored(response, UNPLAYABLE_SET_ERROR);
+		expect(
+			await TournamentMatchRepository.findResultsByMatchId(matchId),
+		).toEqual([]);
+	});
+
+	test("records a report on a set with an agreed time in a playable round", async () => {
+		const { matchId, winnerTeamId, params } = await startLeagueSet({
+			scheduledAt: databaseTimestampNow() + DAY_SECONDS,
+		});
+
+		await matchAction(
+			{ _action: "REPORT_SCORE", winnerTeamId, position: 0 },
+			{ user: reporterId(), params },
+		);
+
+		expect(
+			await TournamentMatchRepository.findResultsByMatchId(matchId),
+		).toHaveLength(1);
+	});
+
+	test("rejects a pick/ban on a set with no agreed time", async () => {
+		const { params } = await startLeagueSet({});
+
+		const response = await matchAction(
+			{ _action: "BAN_PICK", mapListIndex: 0 },
+			{ user: reporterId(), params },
+		);
+
+		assertResponseErrored(response, UNPLAYABLE_SET_ERROR);
 	});
 });
 

@@ -19,12 +19,14 @@ import {
 import { resolveMatchMapList } from "~/features/tournament-match/core/mapList.server";
 import { reportScore } from "~/features/tournament-match/core/reportScore.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
+import { databaseTimestampNow } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { actAs } from "../core/actAs";
 import { backdate } from "../core/backdate";
 import { defineFactory } from "../core/defineFactory";
 import { eventDefaults } from "./CalendarEventFactory";
 import * as TournamentBroadcastFactory from "./TournamentBroadcastFactory";
+import * as TournamentMatchScheduleFactory from "./TournamentMatchScheduleFactory";
 import * as TournamentTeamFactory from "./TournamentTeamFactory";
 
 const SINGLE_ELIMINATION: TournamentSettings["bracketProgression"] = [
@@ -423,6 +425,7 @@ export async function playMatches(
 	const played = playableMatches(tournament, filter);
 	for (const match of played) {
 		await setActiveRosters(tournamentId, match);
+		await agreeOnTimeOfLeagueSet(tournament, match.id);
 		await playOutMatch(tournamentId, match, filter.mapCount);
 	}
 
@@ -580,7 +583,7 @@ function playableMatches(
 	});
 }
 
-/** Moves a played match into the past: its start and every reported game, a few minutes apart. */
+/** Moves a played match into the past: its start, its agreed time if it is a league set, and every reported game, a few minutes apart. */
 export async function backdateMatch({
 	matchId,
 	playedAt,
@@ -588,7 +591,11 @@ export async function backdateMatch({
 	matchId: number;
 	playedAt: Date;
 }) {
-	await backdate("TournamentMatch", matchId, { startedAt: playedAt });
+	const match = await findMatch(matchId);
+	await backdate("TournamentMatch", matchId, {
+		startedAt: playedAt,
+		scheduledAt: match.scheduledAt === null ? undefined : playedAt,
+	});
 
 	const results = await TournamentMatchRepository.findResultsByMatchId(matchId);
 	for (const [index, result] of results.entries()) {
@@ -620,6 +627,22 @@ async function setActiveRosters(tournamentId: number, match: PlayedMatch) {
 			),
 		});
 	}
+}
+
+/** A league set is only played once its teams agree on a time, so an unscheduled one gets *now*. */
+async function agreeOnTimeOfLeagueSet(
+	tournament: Awaited<ReturnType<typeof tournamentFromDB>>,
+	matchId: number,
+) {
+	if (!tournament.matchHasScheduling(matchId)) return;
+
+	const match = await findMatch(matchId);
+	if (match.scheduledAt !== null) return;
+
+	await TournamentMatchScheduleFactory.schedule({
+		matchId,
+		scheduledAt: databaseTimestampNow(),
+	});
 }
 
 async function playOutMatch(
