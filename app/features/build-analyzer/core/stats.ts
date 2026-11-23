@@ -39,6 +39,7 @@ import type {
 	MainWeaponInkConsumptionStats,
 	MainWeaponParams,
 	SpecialWeaponParams,
+	Stat,
 	StatFunctionInput,
 	SubWeaponParams,
 	TenacityPlayerDeficit,
@@ -1165,49 +1166,39 @@ function superJumpTimeTotal(
 function shotSpreadAir(
 	args: StatFunctionInput,
 ): AnalyzedBuild["stats"]["shotSpreadAir"] {
-	const SHOT_SPREAD_AIR_ABILITY = "IA";
-	const groundSpread = args.mainWeaponParams.Stand_DegSwerve;
-	const jumpSpread = args.mainWeaponParams.Jump_DegSwerve;
-
-	if (
-		typeof jumpSpread !== "number" ||
-		typeof groundSpread !== "number" ||
-		jumpSpread === groundSpread
-	)
-		return;
-
-	const { effect } = abilityPointsToEffects({
-		abilityPoints: apFromMap({
-			abilityPoints: args.abilityPoints,
-			ability: SHOT_SPREAD_AIR_ABILITY,
-		}),
-		key: "ReduceJumpSwerveRate",
-		weapon: args.mainWeaponParams,
+	return jumpingShotSpread({
+		args,
+		groundSpread: args.mainWeaponParams.Stand_DegSwerve,
+		jumpSpread: args.mainWeaponParams.Jump_DegSwerve,
 	});
-
-	const extraSpread = jumpSpread - groundSpread;
-	const reducedExtraSpread = extraSpread * (1 - effect);
-
-	return {
-		baseValue: R.round(jumpSpread, 2),
-		value: R.round(reducedExtraSpread + groundSpread, 2),
-		modifiedBy: SHOT_SPREAD_AIR_ABILITY,
-	};
 }
 
 function shotAutofireSpreadAir(
 	args: StatFunctionInput,
 ): AnalyzedBuild["stats"]["shotAutofireSpreadAir"] {
-	const SHOT_SPREAD_AIR_ABILITY = "IA";
-	const groundSpread = args.mainWeaponParams.Variable_Stand_DegSwerve;
-	const jumpSpread = args.mainWeaponParams.Variable_Jump_DegSwerve;
+	return jumpingShotSpread({
+		args,
+		groundSpread: args.mainWeaponParams.Variable_Stand_DegSwerve,
+		jumpSpread: args.mainWeaponParams.Variable_Jump_DegSwerve,
+	});
+}
 
-	if (
-		typeof jumpSpread !== "number" ||
-		typeof groundSpread !== "number" ||
-		jumpSpread === groundSpread
-	)
+/** Jumping spread, a plain number when jumping adds no spread for Intensify Action to reduce */
+function jumpingShotSpread({
+	args,
+	groundSpread,
+	jumpSpread,
+}: {
+	args: StatFunctionInput;
+	groundSpread?: number;
+	jumpSpread?: number;
+}): Stat | number | undefined {
+	const SHOT_SPREAD_AIR_ABILITY = "IA";
+
+	if (typeof jumpSpread !== "number" || typeof groundSpread !== "number") {
 		return;
+	}
+	if (jumpSpread === groundSpread) return R.round(jumpSpread, 2);
 
 	const { effect } = abilityPointsToEffects({
 		abilityPoints: apFromMap({

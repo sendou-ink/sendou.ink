@@ -217,7 +217,15 @@ function BuildAnalyzerPage({ mainWeaponId }: { mainWeaponId: MainWeaponId }) {
 	};
 
 	const mainWeaponCategoryItems = [
-		analyzed.stats.shotSpreadAir ? (
+		typeof analyzed.stats.shotSpreadAir === "number" ? (
+			<StatCard
+				context={context}
+				key="jumpShotSpread"
+				stat={analyzed.stats.shotSpreadAir}
+				title={t("analyzer:stat.jumpShotSpread")}
+				suffix="°"
+			/>
+		) : analyzed.stats.shotSpreadAir ? (
 			<StatCard
 				context={context}
 				key="jumpShotSpread"
@@ -236,7 +244,15 @@ function BuildAnalyzerPage({ mainWeaponId }: { mainWeaponId: MainWeaponId }) {
 			/>
 		) : null,
 		// Squeezer
-		analyzed.stats.shotAutofireSpreadAir ? (
+		typeof analyzed.stats.shotAutofireSpreadAir === "number" ? (
+			<StatCard
+				context={context}
+				key="shotAutofireSpreadAir"
+				stat={analyzed.stats.shotAutofireSpreadAir}
+				title={t("analyzer:stat.shotAutofireSpreadAir")}
+				suffix="°"
+			/>
+		) : analyzed.stats.shotAutofireSpreadAir ? (
 			<StatCard
 				context={context}
 				key="shotAutofireSpreadAir"

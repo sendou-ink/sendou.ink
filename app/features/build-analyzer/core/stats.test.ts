@@ -327,6 +327,33 @@ describe("Analyze build", () => {
 		expect(analyzed.stats.squidRollSpeedRetained.value).toBe(100);
 	});
 
+	test("IA reduces the extra shot spread of jumping", () => {
+		const L3_NOZZLENOSE_ID = 300;
+
+		const analyzed = buildStats({
+			weaponSplId: L3_NOZZLENOSE_ID,
+			abilityPoints: new Map([["IA", 57]]),
+			hasTacticooler: false,
+		});
+
+		expect(analyzed.stats.shotSpreadAir).toMatchObject({ baseValue: 6 });
+		expect(
+			(analyzed.stats.shotSpreadAir as { value: number }).value,
+		).toBeLessThan(6);
+	});
+
+	test("Jumping shot spread is a static value when jumping adds no spread", () => {
+		const H3_NOZZLENOSE_ID = 310;
+
+		const analyzed = buildStats({
+			weaponSplId: H3_NOZZLENOSE_ID,
+			abilityPoints: new Map([["IA", 57]]),
+			hasTacticooler: false,
+		});
+
+		expect(analyzed.stats.shotSpreadAir).toBe(1);
+	});
+
 	test("Accounts for Jr. big ink tank with main weapon ink consumption %", () => {
 		const analyzedJr = buildStats({
 			weaponSplId: 10,

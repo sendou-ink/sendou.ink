@@ -353,9 +353,9 @@ export interface AnalyzedBuild {
 		quickRespawnTimeSplattedByRP: Stat;
 		superJumpTimeGroundFrames: Stat;
 		superJumpTimeTotal: Stat;
-		shotSpreadAir?: Stat;
+		shotSpreadAir?: Stat | number;
 		shotSpreadGround?: number;
-		shotAutofireSpreadAir?: Stat;
+		shotAutofireSpreadAir?: Stat | number;
 		shotAutofireSpreadGround?: number;
 		squidSurgeChargeFrames: Stat;
 		squidRollSpeedRetained: Stat;

@@ -159,6 +159,10 @@
 
 .statCardHighlighted {
 	background-color: var(--color-bg-higher);
+
+	& .statCardAbilityContainer {
+		border-top: var(--border-style-high);
+	}
 }
 
 .statCardTitleAndValueContainer {
