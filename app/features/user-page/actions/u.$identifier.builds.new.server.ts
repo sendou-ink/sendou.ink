@@ -3,6 +3,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
+import { LimitReachedError } from "~/utils/errors";
 import { toDBBoolean } from "~/utils/sql";
 import { userBuildsPage } from "~/utils/urls";
 import { newBuildSchemaServer } from "../user-page-schemas.server";
@@ -31,7 +32,14 @@ export const action = defineAction(
 				...commonArgs,
 			});
 		} else {
-			await BuildRepository.insert(commonArgs);
+			try {
+				await BuildRepository.insert(commonArgs);
+			} catch (error) {
+				if (error instanceof LimitReachedError) {
+					return { fieldErrors: { title: "builds:reachBuildMaxCount" } };
+				}
+				throw error;
+			}
 		}
 
 		return redirect(userBuildsPage(user));
