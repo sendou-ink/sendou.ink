@@ -8,7 +8,7 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { inGameNameIsValid } from "~/features/user-page/in-game-name";
 import { defineAction } from "~/form/define-action.server";
-import { badRequestIfFalsy } from "~/utils/remix.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
 import { id } from "~/utils/schema";
 import { wrapActionForApi } from "../api-action-wrapper.server";
 
@@ -24,20 +24,26 @@ const bodySchema = v.object({
 
 export const action = defineAction(
 	{ params: paramsSchema, body: bodySchema, onInvalidBody: "badRequest" },
-	async ({ params: { id: tournamentId }, body: { userId, inGameName } }) =>
+	async ({
+		params: { id: tournamentId, teamId },
+		body: { userId, inGameName },
+	}) =>
 		wrapActionForApi(async () => {
 			const user = requireUser();
 			const tournament = await tournamentFromDB(tournamentId);
 			requireTournamentOrganizer(tournament, user);
 
-			const teamMemberOf = badRequestIfFalsy(
-				tournament.teamMemberOfByUser({ id: userId }),
+			const team = tournament.teamById(teamId);
+			errorToastIfFalsy(team, "Invalid team id");
+			errorToastIfFalsy(
+				team.memberUserIds.includes(userId),
+				"User not in team",
 			);
 
 			await TournamentTeamRepository.updateMemberInGameName({
 				userId,
 				inGameName,
-				tournamentTeamId: teamMemberOf.id,
+				tournamentTeamId: team.id,
 			});
 
 			clearTournamentDataCache(tournamentId);
