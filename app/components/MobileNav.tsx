@@ -18,7 +18,6 @@ import { useUser } from "~/features/auth/core/user";
 import { ScheduleNudge } from "~/features/availability/components/ScheduleNudge";
 import { useChatContext } from "~/features/chat/ChatProvider";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
-import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
 import { useClosePopoversOnNavigation } from "~/hooks/useClosePopoversOnNavigation";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useLayoutSize } from "~/hooks/useLayoutSize";
@@ -134,7 +133,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 
 	const hasFriendToJoin =
 		sidebarData?.friends.some(
-			(f) => f.subtitle === SENDOUQ_ACTIVITY_LABEL || f.isInJoinableLobby,
+			(f) => f.activityType === "SENDOUQ" || f.isInJoinableLobby,
 		) ?? false;
 	const unseenFriendRequests = useUnseenFriendRequests(
 		sidebarData?.incomingFriendRequestIds ?? [],
