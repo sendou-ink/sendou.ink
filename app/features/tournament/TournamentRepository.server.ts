@@ -804,7 +804,8 @@ export function findRelatedUsersByTournamentIds(tournamentIds: number[]) {
 						"TournamentTeam.id",
 					)
 					.select(["TournamentTeamMember.userId"])
-					.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id"),
+					.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+					.where("TournamentTeam.isPlaceholder", "=", 0),
 			).as("teamMembers"),
 		])
 		.where("Tournament.id", "in", tournamentIds)
