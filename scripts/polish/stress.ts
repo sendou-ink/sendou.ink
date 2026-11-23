@@ -25,6 +25,7 @@ import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as TeamEventFactory from "~/db/seed/factories/TeamEventFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
+import * as TournamentBroadcastFactory from "~/db/seed/factories/TournamentBroadcastFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as TournamentStaffFactory from "~/db/seed/factories/TournamentStaffFactory";
@@ -38,6 +39,15 @@ import { ART } from "~/features/art/art-constants";
 import { artPage, userArtPage } from "~/features/art/art-urls";
 import { ASSOCIATION } from "~/features/associations/associations-constants";
 import { AVAILABILITY } from "~/features/availability/availability-constants";
+import {
+	broadcastDashboardPage,
+	broadcastDesignPage,
+	broadcastProgramPage,
+} from "~/features/broadcast/broadcast-urls";
+import {
+	BROADCAST_HEADLINE_MAX_LENGTH,
+	BROADCAST_MAX_CASTERS,
+} from "~/features/broadcast-cast/broadcast-cast-constants";
 import { BUILD } from "~/features/builds/builds-constants";
 import {
 	CALENDAR_EVENT,
@@ -260,6 +270,7 @@ export async function seedStress(): Promise<StressTarget[]> {
 		});
 		// last, so the ids of everything above (and the URLs in older findings) stay what they were
 		await seedScripts(targets);
+		await seedBroadcast({ users, tournaments, targets });
 
 		return targets;
 	});
@@ -1556,6 +1567,69 @@ async function seedFriends(users: StressUsers, targets: StressTarget[]) {
 			"friends: max-name friends, mutual friends, a pending request from a max-name user",
 		viewerId: users.unbroken.id,
 	});
+}
+
+/** The started tournament's in-progress match cast on a max-length channel: max names on every overlay scene. */
+async function seedBroadcast({
+	users,
+	tournaments,
+	targets,
+}: {
+	users: StressUsers;
+	tournaments: StressTournaments;
+	targets: StressTarget[];
+}) {
+	const twitchAccount = WIDE_LOWERCASE_CHARACTER.repeat(
+		TWITCH_USERNAME_MAX_LENGTH,
+	);
+	const broadcast = {
+		tournamentId: tournaments.started.id,
+		channel: { platform: "TWITCH" as const, account: twitchAccount },
+	};
+
+	await TournamentFactory.castMatch({
+		tournamentId: tournaments.started.id,
+		matchId: tournaments.started.inProgressMatchId,
+		twitchAccount,
+	});
+	const programKey = await TournamentBroadcastFactory.pointProgram({
+		...broadcast,
+		userId: users.unbroken.id,
+	});
+	await TournamentBroadcastFactory.setHeadline({
+		...broadcast,
+		headline: unbroken(BROADCAST_HEADLINE_MAX_LENGTH),
+	});
+	await TournamentBroadcastFactory.setCasters({
+		...broadcast,
+		casters: [users.unbroken.id, users.words.id, users.minimal.id].map(
+			(userId) => ({
+				userId,
+				vdoNinjaUrl: null,
+				isAudioOnly: true,
+				volume: 100,
+			}),
+		),
+	});
+
+	const page = { tournamentId: tournaments.started.id, slug: twitchAccount };
+	targets.push(
+		{
+			url: broadcastDashboardPage(page),
+			label: `broadcast dashboard: max tournament, team and channel names, ${BROADCAST_HEADLINE_MAX_LENGTH}-char unbroken flavour text, ${BROADCAST_MAX_CASTERS} casters with max names`,
+			viewerId: users.unbroken.id,
+		},
+		{
+			url: broadcastDesignPage(page),
+			label: "broadcast designer of a max-name tournament",
+			viewerId: users.unbroken.id,
+		},
+		{
+			url: broadcastProgramPage(programKey),
+			label:
+				"broadcast program (OBS overlay): max team, player and tournament names in a set in progress",
+		},
+	);
 }
 
 /**

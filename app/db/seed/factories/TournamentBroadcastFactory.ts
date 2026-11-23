@@ -70,6 +70,18 @@ export function setSides({
 	});
 }
 
+/** Sets the broadcast's flavour text like the dashboard's form. */
+export function setHeadline({
+	headline,
+	...key
+}: BroadcastKey & { headline: string }) {
+	return BroadcastRepository.updateSettings<CastBroadcastSettings>({
+		...key,
+		rules: CAST_PRODUCER_RULES,
+		patch: { headline },
+	});
+}
+
 /** Sets the broadcast's casters like the dashboard's casters form and volume sliders. */
 export function setCasters({
 	casters,

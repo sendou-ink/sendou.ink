@@ -65,6 +65,23 @@ const STATES: Array<{
 	{ scenario: "team-owner" },
 	{ scenario: "banned-user" },
 	{ scenario: "plus-voting" },
+	{
+		scenario: "tournament-broadcast",
+		params: { format: "double_elimination", roundsPlayed: 1, teams: 16 },
+	},
+	{
+		scenario: "tournament-broadcast",
+		params: { format: "swiss", role: "streamer" },
+	},
+	{
+		scenario: "tournament-broadcast",
+		params: { format: "round_robin", roundsPlayed: 1 },
+	},
+	{
+		scenario: "tournament-broadcast",
+		params: { format: "single_elimination" },
+	},
+	{ scenario: "tournament-broadcast-design" },
 ];
 
 /** Builds every state of `STATES` and resolves to the pages showing them, each with the user to view it as. */

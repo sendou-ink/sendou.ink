@@ -13,6 +13,7 @@ What every run of the polish skill covered, and what no run has looked at yet. R
 | Language | English | 2026-11-21 |
 | Data | dev seed plus content stress: 76 pages with user text and counts at the form limits, in an unbroken and a words shape, plus a minimal user, team and org | 2026-11-21 |
 | Rules | all of the table in SKILL.md, and by eye: wrapping, alignment, spacing, truncation | 2026-11-21 |
+| Broadcast | the 15 broadcast pages (dashboard in four formats and with max-length content, broadcast list, designer, design canvas, six program pages) at mobile, tablet, desktop and wide, all six passes, as each page's producer; every scene by hand in the designer canvas at 1920x1080 | 2026-11-22-broadcast |
 | Motion | load shift (throttled, logged in), tabs / disclosures / in-section links clicked, browser back, sub navigation between sibling pages, header menus, the search dialog | 2026-11-21 |
 
 ## Never audited
@@ -22,14 +23,14 @@ Roughly by how much a first look is likely to find. Strike an item when a run co
 1. **Logged out visitors and a regular user without roles.** Most visitors are one of the two, and pages differ for them (log in prompts instead of controls, no admin tabs, no side navigation content). How: `crawl.mjs --as=anon` and `--as=regular`, then `sweep.mjs --as=admin,anon,regular`.
 2. **The inside of things that open, and what a click changes.** Dialogs, popovers, menus, the mobile navigation panels, sections a button reveals. How: the `explore` pass clicks every control with writes blocked and probes what opens. What a hover reveals inside a menu and anything that needs typing first (search results) is still by hand.
 3. **Form states.** Validation errors (the explore pass submits forms as they are, so the client's messages show), a pending submit, disabled states, long values in every input, the forms of the `new` and `edit` routes filled in rather than empty. The filled-in and pending states need the e2e hook (`POLISH_RUN=<name> pnpm run test:e2e`) or a hand.
-4. **States a seed never leaves a page in.** `states.ts` builds 33 with the dev tools' scenarios (SendouQ match states, tournaments of each format before, during and after, lobbies, a new and a banned user). Not there yet: a team without members' data, lists with nothing in them, a tournament during check-in, the broadcast pages.
+4. **States a seed never leaves a page in.** `states.ts` builds 33 with the dev tools' scenarios (SendouQ match states, tournaments of each format before, during and after, lobbies, a new and a banned user). Not there yet: a team without members' data, lists with nothing in them, a tournament during check-in. ~~The broadcast pages~~ (2026-11-22-broadcast: five states).
 5. **The widths between the viewports.** How: the `widths` pass (320 to 1920, the overflow, wrapping and squashing probes only). The full passes at `--viewports=tablet,wide` have not run.
 6. **Other languages.** How: `sweep.mjs --lang=longest` (the language whose translations are longest overall, Spanish today), `--lang=he` for right-to-left, `--lang=ja` for CJK.
 7. **After a write, and without anyone acting.** Toasts, saved states, a match being reported, chat arriving. How: the e2e hook sees every page a test opens, each time it comes to rest.
 8. **Light theme for every rule, and custom themes.** Layout does not depend on the theme, but images, charts, borders and the patron custom themes do: an extreme custom theme (UserFactory `customTheme`) against the contrast probe is cheap once someone writes one that is valid.
 9. **Production-like data.** Real names, real tournament sizes, 10 years of results: `POLISH_DB=db-sandbox.sqlite3` for the server and the crawl (untried: the e2e flavour uses the test season list).
-10. **The routes no page was found for**: `/q`, `/q/preparing`, `/q/ready`, `/plus`, `/suspended`, `/feed/:id`, `/player/:id`, `/to/:id/brackets/finalize`, the four `/to/:id/broadcast/:channel…` pages. Most need a state: a line in `states.ts` with the right viewer. And everything under `/admin`, left out on purpose (`crawl.mjs --include-admin`).
-11. **Content stress gaps**: a SendouQ group that is not full (full ones hide their notes), private user notes, mod notes, scrim request messages, tournament LFG notes, user badges at their maximum, trophies, broadcast headlines, team themes, pictures of extreme shapes (very tall, very wide, transparent), counts in the thousands. Names in other scripts sit on five users and one roster only. Extend `scripts/polish/stress.ts`.
+10. **The routes no page was found for**: `/q`, `/q/preparing`, `/q/ready`, `/plus`, `/suspended`, `/feed/:id`, `/player/:id`, `/to/:id/brackets/finalize`, ~~the four `/to/:id/broadcast/:channel…` pages~~ (2026-11-22-broadcast). Most need a state: a line in `states.ts` with the right viewer. And everything under `/admin`, left out on purpose (`crawl.mjs --include-admin`).
+11. **Content stress gaps**: a SendouQ group that is not full (full ones hide their notes), private user notes, mod notes, scrim request messages, tournament LFG notes, user badges at their maximum, trophies, ~~broadcast headlines~~ (2026-11-22-broadcast, unbroken shape only), team themes, pictures of extreme shapes (very tall, very wide, transparent), counts in the thousands. Names in other scripts sit on five users and one roster only. Extend `scripts/polish/stress.ts`.
 12. **Keyboard beyond the focus ring**: the Tab walk finds stops that are hidden or under a bar; focus order, focus lost after an action, overlays handing focus back and arrow keys in menus are still by hand.
 13. **The shared components in every state**: the docs site's component showcase (`pnpm run dev:docs`, `sweep.mjs --plain --urls=…` with `POLISH_BASE_URL`), where disabled, loading and error variants all sit on a page.
 14. **Reduced motion, 200% text size, ad slots** (the dev server's Triggers app simulates the ads) **and no JavaScript** (one finding on 2026-11-21: no theme without JS).
@@ -48,3 +49,16 @@ Roughly by how much a first look is likely to find. Strike an item when a run co
   - plain links and several shared components have no hover state
 - **Probe mistakes found and fixed after the run** (so the next sweep reports fewer false ones): light theme contrast measured mid transition, wrapped inline text as overlap, legends as spill, hover feedback shown in a sibling, pages scrolled sideways before a click, the hiding mobile header, summaries holding a link, 403s from a viewer without the page's permission.
 - **Not covered:** everything under "Never audited" above; this run struck nothing from it.
+
+### 2026-11-22-broadcast — the tournament broadcast, scoped
+
+- **Scope:** the 15 broadcast pages after adding them to the database (`states.ts`: `tournament-broadcast` in four formats and `tournament-broadcast-design`; `stress.ts`: the started stress tournament's set cast on a max-length channel with a max-length flavour text and three casters). Mobile, tablet, desktop and wide, all six passes, 111 mechanical findings, one reviewer on Opus. Part of a wider hardening review of the feature.
+- **Result:** 9 findings (2 high, 4 medium, 3 low) in `scripts/output/polish/2026-11-22-broadcast/findings.md`; 59 more real ones are the site shell's, known from 2026-11-21.
+- **What it showed:**
+  - the overlays are a 1920x1080 canvas: only `wide` says anything about them, and a shift there is seen by every viewer. `useFitText` shrinking a team name after the scene's enter animation moves the rosters scene on air (the other scenes using it are likely the same)
+  - the dashboard's connection pill is swapped for the health pills when the stream connects, moving the Take area, on every load and every reconnect
+  - light theme status colors as text again (the health pills)
+  - overlay text of 11-15px on a 1080p canvas
+- **Probe mistakes found, not fixed yet:** contrast on a transparent page whose backdrop is an absolutely positioned sibling, contrast and alignment measured during a staggered enter animation, `overflow: clip` with `overflow-clip-margin` read as clipped text, text after a wrapped inline link, the list under a sticky side navigation footer.
+- **Not covered:** the states after a write (Take, queue, saved theme), OBS / scanner / caster connected states, clips, a tournament with several channels, program pages in a scene other than the seeded one (the other scenes were judged in the designer canvas), other languages on the dashboard. Program keys are random, so program URLs change with every `pnpm run polish:db`.
+

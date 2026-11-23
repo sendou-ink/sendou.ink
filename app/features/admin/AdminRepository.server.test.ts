@@ -20,6 +20,7 @@ import {
 	PLUS_DOWNVOTE,
 	PLUS_UPVOTE,
 } from "~/features/plus-voting/plus-voting-constants";
+import { pinClockInsideSeason } from "~/features/sendouq/tests/season-clock";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import * as AdminRepository from "./AdminRepository.server";
@@ -216,6 +217,8 @@ describe("claimPlaceholder", () => {
 	const claimerId = () => users.id(1);
 	const opponentIds = () => users.ids(5).slice(1);
 	const claimerTeammateIds = () => users.ids(8).slice(5);
+
+	pinClockInsideSeason();
 
 	beforeEach(async () => {
 		await users.create(8);

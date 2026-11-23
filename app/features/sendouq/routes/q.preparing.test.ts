@@ -9,6 +9,7 @@ import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import type { lookingSchema, preparingSchema } from "../q-action-schemas";
 import { sqGroupChannel } from "../q-constants";
+import { pinClockInsideSeason } from "../tests/season-clock";
 import { action as rawLookingAction } from "./q.looking";
 import { action as rawPreparingAction } from "./q.preparing";
 
@@ -42,6 +43,8 @@ const preparingGroup = async () => {
 };
 
 describe("SendouQ preparing page", () => {
+	pinClockInsideSeason();
+
 	beforeEach(async () => {
 		await users.create(2);
 		vi.mocked(ChatSystemMessage.send).mockClear();
@@ -71,6 +74,8 @@ describe("SendouQ preparing page", () => {
 });
 
 describe("ADD_FRIEND", () => {
+	pinClockInsideSeason();
+
 	beforeEach(async () => {
 		await users.create(2);
 	});

@@ -7,6 +7,7 @@ import { SENDOUQ_PREPARING_PAGE } from "~/utils/urls";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import type { frontPageSchema } from "../q-action-schemas";
 import { sendouQInviteLink } from "../q-urls";
+import { pinClockInsideSeason } from "../tests/season-clock";
 import { action as rawFrontPageAction } from "./q";
 
 const frontPageAction = wrappedAction<typeof frontPageSchema>({
@@ -14,6 +15,8 @@ const frontPageAction = wrappedAction<typeof frontPageSchema>({
 });
 
 describe("JOIN_TEAM", () => {
+	pinClockInsideSeason();
+
 	test("redirects a member using their own group's invite link to the group", async () => {
 		const admin = await UserFactory.createAdmin();
 		const group = await SQGroupFactory.create({
