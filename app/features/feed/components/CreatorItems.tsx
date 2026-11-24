@@ -7,7 +7,11 @@ import { BuildCard } from "~/components/BuildCard";
 import { ModeImage, StageImage, WeaponImage } from "~/components/Image";
 import { userArtPage } from "~/features/art/art-urls";
 import { BigImageDialog } from "~/features/art/components/ArtGrid";
-import { smallImageFileName, vodVideoPage } from "~/utils/urls";
+import {
+	smallImageFileName,
+	vodVideoPage,
+	youtubeThumbnailUrl,
+} from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
 import styles from "./CreatorItems.module.css";
 import type { FeedItemContent } from "./FeedItemCard";
@@ -121,7 +125,7 @@ export function creatorItemContent(item: FeedItem): FeedItemContent | null {
 					<>
 						<div className={partsStyles.thumb}>
 							<img
-								src={`https://i.ytimg.com/vi/${data.youtubeId}/mqdefault.jpg`}
+								src={youtubeThumbnailUrl(data.youtubeId, "mqdefault")}
 								alt=""
 								loading="lazy"
 							/>

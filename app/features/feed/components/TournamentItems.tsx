@@ -13,6 +13,7 @@ import {
 	tournamentSubsPage,
 	trophyPage,
 	userPage,
+	youtubeThumbnailUrl,
 } from "~/utils/urls";
 import type { FeedItem } from "../core/FeedItems.server";
 import type { FeedItemContent } from "./FeedItemCard";
@@ -433,7 +434,7 @@ export function tournamentItemContent(
 						<div className={partsStyles.thumb}>
 							{data.platform === "YOUTUBE" ? (
 								<img
-									src={`https://i.ytimg.com/vi/${data.platformVideoId}/mqdefault.jpg`}
+									src={youtubeThumbnailUrl(data.platformVideoId, "mqdefault")}
 									alt=""
 									loading="lazy"
 								/>

@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import { twitchUrl, youtubeUrl } from "~/utils/urls";
+import { twitchUrl, youtubeThumbnailUrl, youtubeUrl } from "~/utils/urls";
 import type { StreamAccount } from "../live-streams-constants";
 
 /** Where the stream can be watched: the live video when its id is known, otherwise the channel. */
@@ -27,7 +27,7 @@ export function thumbnailSrc(stream: {
 				.replace("{height}", "360");
 		case "YOUTUBE":
 			return stream.videoId
-				? `https://i.ytimg.com/vi/${stream.videoId}/hqdefault_live.jpg`
+				? youtubeThumbnailUrl(stream.videoId, "hqdefault_live")
 				: stream.thumbnailUrl;
 	}
 }

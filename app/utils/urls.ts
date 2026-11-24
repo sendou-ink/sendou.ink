@@ -109,6 +109,10 @@ export const twitchUrl = (accountName: string) =>
 	`https://twitch.tv/${accountName}`;
 export const youtubeUrl = (channelId: string) =>
 	`https://youtube.com/channel/${channelId}`;
+export const youtubeThumbnailUrl = (
+	videoId: string,
+	variant: "mqdefault" | "hqdefault" | "hqdefault_live",
+) => `https://i.ytimg.com/vi/${videoId}/${variant}.jpg`;
 
 export const LOG_IN_URL = "/auth";
 export const LOG_OUT_URL = "/auth/logout";

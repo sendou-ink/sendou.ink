@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { WeaponImage } from "~/components/Image";
-import { vodVideoPage } from "~/utils/urls";
+import { vodVideoPage, youtubeThumbnailUrl } from "~/utils/urls";
 import type { ListVod } from "../vods-types";
 import styles from "./VodListing.module.css";
 import { PovUser } from "./VodPov";
@@ -21,7 +21,7 @@ export function VodListing({
 				<img
 					className={styles.thumbnail}
 					alt=""
-					src={youtubeIdToThumbnailUrl(vod.youtubeId)}
+					src={youtubeThumbnailUrl(vod.youtubeId, "hqdefault")}
 				/>
 				<h2 className="text-sm text-main-forced">{vod.title}</h2>
 			</Link>
@@ -61,10 +61,6 @@ function WeaponsPeek({ weapons }: { weapons: ListVod["weapons"] }) {
 			) : null}
 		</div>
 	);
-}
-
-function youtubeIdToThumbnailUrl(youtubeId: string) {
-	return `http://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
 }
 
 export function VodListingList({ children }: { children: React.ReactNode }) {
