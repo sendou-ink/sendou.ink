@@ -117,8 +117,8 @@ describe("ThemePalette.build", () => {
 		expect(theme["--_acc-l-6"]).toBe(theme["--_acc-l-4"]);
 	});
 
-	test("gives an amber secondary a bright light mode fill with dark text on it", () => {
-		const theme = built({ accentHue: 253 });
+	test("gives the default theme's amber secondary a bright light mode fill with dark text on it", () => {
+		const theme = built();
 
 		expect(theme["--_second-fill-dark-text"]).toBe(1);
 		expect(theme["--_second-l-6"]).toBeGreaterThan(0.8);
@@ -194,7 +194,6 @@ describe("ThemePalette.fromShareCode", () => {
 		).toEqual(
 			input({
 				baseHue: 180,
-				baseChroma: 0.05,
 				accentHue: 200,
 				accentChroma: 0.1,
 			}),

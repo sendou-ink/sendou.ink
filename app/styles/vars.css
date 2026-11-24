@@ -11,63 +11,63 @@ custom theme with [data-default-theme] (e.g. image export previews)
 */
 html,
 [data-default-theme] {
-	--_base-l: 0.12;
-	--_base-h: 284;
+	--_base-l: 0.17;
+	--_base-h: 268;
 	--_base-c-0: 0;
-	--_base-c-1: 0.0147;
-	--_base-c-2: 0.0186;
-	--_base-c-3: 0.041999999999999996;
-	--_base-c-4: 0.0387;
-	--_base-c-5: 0.0408;
-	--_base-c-6: 0.0387;
-	--_base-c-7: 0.0201;
+	--_base-c-1: 0.02356547860966049;
+	--_base-c-2: 0.031;
+	--_base-c-3: 0.06999999999999999;
+	--_base-c-4: 0.0645;
+	--_base-c-5: 0.068;
+	--_base-c-6: 0.0645;
+	--_base-c-7: 0.0335;
 
-	--_acc-c: 0.26;
-	--_acc-h: 0;
+	--_acc-c: 0.24;
+	--_acc-h: 253;
 	--_acc-l-0: 0.26;
 	--_acc-l-1: 0.52;
 	--_acc-l-2: 0.83;
 	--_acc-l-3: 0.88;
-	--_acc-l-4: 0.5;
+	--_acc-l-4: 0.485;
 	--_acc-l-5: 0.32;
-	--_acc-l-6: 0.5;
-	--_acc-c-0: 0.1053917317907447;
-	--_acc-c-1: 0.21079346358148937;
-	--_acc-c-2: 0.10254450559346437;
-	--_acc-c-3: 0.06881489955139888;
-	--_acc-c-4: 0.2026856380591244;
-	--_acc-c-5: 0.12971520835783962;
-	--_acc-c-6: 0.2026856380591244;
-	--_acc-h-0: 0;
-	--_acc-h-1: 0;
-	--_acc-h-2: 0;
-	--_acc-h-3: 0;
-	--_acc-h-4: 0;
-	--_acc-h-5: 0;
-	--_acc-h-6: 0;
+	--_acc-l-6: 0.485;
+	--_acc-c-0: 0.08016408718561431;
+	--_acc-c-1: 0.1603381743712286;
+	--_acc-c-2: 0.0816;
+	--_acc-c-3: 0.06;
+	--_acc-c-4: 0.14954550878854975;
+	--_acc-c-5: 0.09866579961306376;
+	--_acc-c-6: 0.14954550878854975;
+	--_acc-h-0: 253;
+	--_acc-h-1: 253;
+	--_acc-h-2: 253;
+	--_acc-h-3: 253;
+	--_acc-h-4: 253;
+	--_acc-h-5: 253;
+	--_acc-h-6: 253;
 	--_acc-fill-dark-text: 0;
 
 	--_second-l-0: 0.26;
 	--_second-l-1: 0.52;
-	--_second-l-2: 0.896;
-	--_second-l-3: 0.896;
+	--_second-l-2: 0.83;
+	--_second-l-3: 0.88;
 	--_second-l-4: 0.485;
 	--_second-l-5: 0.32;
-	--_second-c-0: 0.047171778728355845;
-	--_second-c-1: 0.09434355745671169;
-	--_second-c-2: 0.0884;
-	--_second-c-3: 0.065;
-	--_second-c-4: 0.08799351032020225;
-	--_second-c-5: 0.05805757381951489;
-	--_second-h-0: 180;
-	--_second-h-1: 180;
-	--_second-h-2: 180;
-	--_second-h-3: 180;
-	--_second-h-4: 180;
-	--_second-h-5: 180;
-	--_second-l-6: 0.896;
-	--_second-c-6: 0.1624868332814601;
-	--_second-h-6: 180;
+	--_second-c-0: 0.055379201356259726;
+	--_second-c-1: 0.11075840271251945;
+	--_second-c-2: 0.0816;
+	--_second-c-3: 0.06;
+	--_second-c-4: 0.10330351022225373;
+	--_second-c-5: 0.06815901705385813;
+	--_second-h-0: 73;
+	--_second-h-1: 73;
+	--_second-h-2: 73;
+	--_second-h-3: 73;
+	--_second-h-4: 73;
+	--_second-h-5: 73;
+	--_second-l-6: 0.8007;
+	--_second-c-6: 0.1704874227120647;
+	--_second-h-6: 73;
 	--_second-fill-dark-text: 1;
 
 	--_radius-box: 3;
@@ -156,20 +156,20 @@ html.dark [data-custom-theme],
 	--color-warning: oklch(82% 0.14 85);
 	--color-warning-high: oklch(94% 0.05 85);
 
-	--color-error-low: oklch(31% 0.07 27);
-	--color-error: oklch(65% 0.21 27);
-	--color-error-high: oklch(87% 0.065 27);
+	--color-error-low: oklch(31% 0.07 10);
+	--color-error: oklch(65% 0.25 10);
+	--color-error-high: oklch(87% 0.07 10);
 
-	--color-chart-alpha: oklch(64% 0.16 27);
+	--color-chart-alpha: oklch(64% 0.16 10);
 	--color-chart-bravo: oklch(60% 0.17 275);
 	--color-chart-splatted: oklch(66% 0.03 var(--_base-h));
 	--color-chart-special: oklch(80% 0.14 84);
 	--color-chart-kill: oklch(78% 0.19 150);
 
 	/* inlined instead of var() because data URIs can't read custom properties: keep in sync with --color-text-high */
-	--field-icon-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(136, 137, 165)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-	--field-icon-date: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(136, 137, 165)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
-	--field-icon-time: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(136, 137, 165)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpolyline points='12 6 12 12 16 14'%3E%3C/polyline%3E%3C/svg%3E");
+	--field-icon-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(122, 139, 183)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+	--field-icon-date: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(122, 139, 183)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+	--field-icon-time: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(122, 139, 183)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpolyline points='12 6 12 12 16 14'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
 html.light,
@@ -225,20 +225,20 @@ html.light [data-custom-theme],
 	--color-warning: oklch(82.426% 0.15029 82.564);
 	--color-warning-high: oklch(46.236% 0.09033 79.825);
 
-	--color-error-low: oklch(89.949% 0.04928 27);
-	--color-error: oklch(58% 0.21 27);
-	--color-error-high: oklch(41.268% 0.15511 27);
+	--color-error-low: oklch(89.949% 0.04928 355.498);
+	--color-error: oklch(65.223% 0.22164 5.216);
+	--color-error-high: oklch(41.268% 0.15511 8.446);
 
-	--color-chart-alpha: oklch(52% 0.18 27);
+	--color-chart-alpha: oklch(52% 0.18 10);
 	--color-chart-bravo: oklch(47% 0.19 275);
 	--color-chart-splatted: oklch(50% 0.03 var(--_base-h));
 	--color-chart-special: oklch(67% 0.14 72);
 	--color-chart-kill: oklch(55% 0.17 150);
 
 	/* inlined instead of var() because data URIs can't read custom properties: keep in sync with --color-text-high */
-	--field-icon-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(85, 85, 109)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-	--field-icon-date: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(85, 85, 109)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
-	--field-icon-time: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(85, 85, 109)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpolyline points='12 6 12 12 16 14'%3E%3C/polyline%3E%3C/svg%3E");
+	--field-icon-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(72, 87, 124)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+	--field-icon-date: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(72, 87, 124)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+	--field-icon-time: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(72, 87, 124)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpolyline points='12 6 12 12 16 14'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
 /* the vars you mainly want to use */
