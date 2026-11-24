@@ -11,7 +11,12 @@ import {
 	resolveImageFieldDimensions,
 } from "../image-field";
 import type { FormFieldProps } from "../types";
-import { FormFieldWrapper, useTranslatedTexts } from "./FormFieldWrapper";
+import { ariaAttributes, labelId } from "../utils";
+import {
+	FormFieldGroup,
+	FormFieldWrapper,
+	useTranslatedTexts,
+} from "./FormFieldWrapper";
 import styles from "./ImageFormField.module.css";
 
 const IMAGE_QUALITY = 0.8;
@@ -95,6 +100,14 @@ export function ImageFormField({
 		closeCropDialog();
 	};
 
+	const displayedError = processingError ?? error;
+	const bottomTextsJoined = bottomTexts.join(" ");
+	const fieldAria = ariaAttributes({
+		name,
+		error: displayedError,
+		bottomText: bottomTextsJoined,
+	});
+
 	const isBanner =
 		dimensions === "thick-banner" ||
 		(typeof dimensions === "object" && dimensions.width > dimensions.height);
@@ -104,18 +117,25 @@ export function ImageFormField({
 			id={id}
 			name={name}
 			label={label}
-			error={processingError ?? error}
-			bottomText={bottomTexts.join(" ")}
+			error={displayedError}
+			bottomText={bottomTextsJoined}
+			isGroup={Boolean(value)}
 		>
-			<div className="stack sm items-start">
-				{previewUrl ? (
-					<img
-						src={previewUrl}
-						alt=""
-						className={clsx(styles.preview, { [styles.banner]: isBanner })}
-					/>
-				) : null}
-				{value ? (
+			{value ? (
+				<FormFieldGroup
+					labelledBy={label ? labelId(id) : undefined}
+					name={name}
+					error={displayedError}
+					bottomText={bottomTextsJoined}
+					className="stack sm items-start"
+				>
+					{previewUrl ? (
+						<img
+							src={previewUrl}
+							alt=""
+							className={clsx(styles.preview, { [styles.banner]: isBanner })}
+						/>
+					) : null}
 					<SendouButton
 						variant="minimal-destructive"
 						size="small"
@@ -124,12 +144,17 @@ export function ImageFormField({
 					>
 						{t("common:actions.remove")}
 					</SendouButton>
-				) : (
+				</FormFieldGroup>
+			) : (
+				<div className="stack sm items-start">
 					<Dropzone
 						id={id}
 						accept="image/png, image/jpeg, image/webp"
 						onFile={handleFile}
 						disabled={disabled}
+						aria-describedby={fieldAria["aria-describedby"]}
+						aria-invalid={fieldAria["aria-invalid"]}
+						aria-errormessage={fieldAria["aria-errormessage"]}
 					>
 						<Trans
 							t={t}
@@ -137,8 +162,8 @@ export function ImageFormField({
 							components={{ action: <DropzoneAction /> }}
 						/>
 					</Dropzone>
-				)}
-			</div>
+				</div>
+			)}
 			{pickedImage ? (
 				<ImageCropDialog
 					imageUrl={pickedImage.url}

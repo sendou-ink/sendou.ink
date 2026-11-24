@@ -1,6 +1,7 @@
 import { StageSelect } from "~/components/StageSelect";
 import type { StageId } from "~/modules/in-game-lists/types";
 import type { FormFieldProps } from "../types";
+import { ariaAttributes } from "../utils";
 import { FormFieldMessages, useTranslatedTexts } from "./FormFieldWrapper";
 import styles from "./StageSelectFormField.module.css";
 
@@ -34,6 +35,7 @@ export function StageSelectFormField({
 				}}
 				isRequired={required}
 				isDisabled={disabled}
+				{...ariaAttributes({ name, error, bottomText })}
 			/>
 			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 		</div>

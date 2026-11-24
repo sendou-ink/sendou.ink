@@ -16,7 +16,7 @@ import {
 	FormFieldWrapper,
 	useTranslatedTexts,
 } from "~/form/fields/FormFieldWrapper";
-import { errorMessageId } from "~/form/utils";
+import { ariaAttributes, errorMessageId } from "~/form/utils";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { fromSchema } from "../scrims-schemas";
 import styles from "./WithFormField.module.css";
@@ -157,6 +157,10 @@ export function WithFormField({
 		>
 			<SendouSelect
 				label={t("scrims:forms.with.title")}
+				{...ariaAttributes({
+					name,
+					error: fromValue?.mode === "TEAM" ? error : undefined,
+				})}
 				items={options}
 				selectedKey={selectedKey()}
 				onSelectionChange={handleSelectionChange}

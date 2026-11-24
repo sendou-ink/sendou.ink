@@ -3,6 +3,7 @@ import type { TFunction } from "i18next";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import {
+	type SelectFieldAriaProps,
 	type SelectKey,
 	SendouSelect,
 	SendouSelectItem,
@@ -19,7 +20,10 @@ import { weaponCategoryUrl } from "~/utils/urls";
 
 import styles from "./WeaponSelect.module.css";
 
-interface WeaponSelectProps<Clearable extends boolean | undefined = undefined> {
+interface WeaponSelectProps<Clearable extends boolean | undefined = undefined>
+	extends SelectFieldAriaProps {
+	/** Id of the trigger button, for an outside `<label htmlFor>`. */
+	id?: string;
 	label?: string;
 	value?: MainWeaponId | null;
 	initialValue?: MainWeaponId;
@@ -50,6 +54,7 @@ export function WeaponSelect<
 	quickSelectWeaponsIds,
 	isDisabled,
 	placeholder,
+	...triggerProps
 }: WeaponSelectProps<Clearable>) {
 	const { t } = useTranslation(["common"]);
 	const isControlled = value !== undefined;
@@ -76,8 +81,11 @@ export function WeaponSelect<
 	return (
 		<SendouSelect
 			aria-label={
-				!label ? t("common:forms.weaponSearch.placeholder") : undefined
+				!label && !triggerProps["aria-labelledby"]
+					? t("common:forms.weaponSearch.placeholder")
+					: undefined
 			}
+			{...triggerProps}
 			isDisabled={isDisabled}
 			items={items}
 			label={label}
@@ -123,6 +131,7 @@ export function WeaponSelect<
 									variant="build"
 									size={24}
 									className={styles.weaponImg}
+									title=""
 								/>
 								<span
 									className={clsx(styles.weaponLabel, "truncate")}

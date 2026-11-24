@@ -25,18 +25,25 @@ import type { TrophyDisplayProps } from "./TrophyDisplay";
 type TrophyItem = TrophyDisplayProps["trophies"][number];
 
 export function TrophiesSelector({
+	id: selectId,
 	options,
 	selectedTrophies,
 	onChange,
 	onBlur,
 	maxCount,
+	...ariaProps
 }: {
+	/** Id of the trophy select, for an outside `<label htmlFor>`. */
+	id?: string;
 	options: TrophyDisplayProps["trophies"];
 	selectedTrophies: number[];
 	onChange: (newTrophies: number[]) => void;
 	onBlur?: () => void;
 	maxCount?: number;
-}) {
+} & Pick<
+	React.AriaAttributes,
+	"aria-describedby" | "aria-invalid" | "aria-errormessage"
+>) {
 	const { t } = useTranslation(["common"]);
 
 	const selectedTrophiesInOrder = selectedTrophies
@@ -104,6 +111,8 @@ export function TrophiesSelector({
 				</div>
 			) : (
 				<select
+					id={selectId}
+					{...ariaProps}
 					onBlur={() => onBlur?.()}
 					onChange={(e) =>
 						onChange([...selectedTrophies, Number(e.target.value)])

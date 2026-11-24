@@ -153,16 +153,20 @@ export function ModeImage({ mode, testId, title, ...rest }: ModeImageProps) {
 
 type StageImageProps = {
 	stageId: StageId;
+	/** Empty for an image decorating the stage's written name. */
+	alt?: string;
 } & Omit<ImageProps, "path" | "alt" | "title">;
 
-export function StageImage({ stageId, testId, ...rest }: StageImageProps) {
+export function StageImage({ stageId, alt, testId, ...rest }: StageImageProps) {
 	const { t } = useTranslation(["game-misc"]);
+
+	const name = alt ?? t(`game-misc:STAGE_${stageId}`);
 
 	return (
 		<Image
 			{...rest}
-			alt={t(`game-misc:STAGE_${stageId}`)}
-			title={t(`game-misc:STAGE_${stageId}`)}
+			alt={name}
+			title={name || undefined}
 			testId={testId}
 			path={stageImageUrl(stageId)}
 			height={rest.height ?? (rest.width ? rest.width * 0.5625 : undefined)}

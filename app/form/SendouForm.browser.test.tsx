@@ -15,18 +15,27 @@ import {
 	checkboxGroup,
 	datetime,
 	datetimeOptional,
+	dualSelectOptional,
 	fieldset,
+	image,
+	mapPoolOptional,
 	radioGroup,
 	select,
 	selectDynamic,
 	selectOptional,
+	stageSelect,
+	subWeaponSelect,
+	teamSearchOptional,
 	textArea,
 	textAreaOptional,
 	textField,
 	textFieldOptional,
 	timeRangeOptional,
 	toggle as toggleField,
+	tournamentSearchOptional,
 	userSearch,
+	weaponPool,
+	weaponSelect,
 } from "./fields";
 import { FormStep, SendouForm, useFormFieldContext } from "./SendouForm";
 import type {
@@ -1241,6 +1250,23 @@ describe("SendouForm", () => {
 			expect(onApply).toHaveBeenCalledWith({ venue: null });
 		});
 
+		test("ties the address's error to the address input entered by hand", async () => {
+			mockFetcherData = {
+				fieldErrors: { venue: "forms:errors.required" },
+			};
+			const { screen } = await renderAddressForm();
+
+			await userEvent.click(screen.getByTestId("address-entry-mode-button"));
+
+			const address = screen.getByLabelText("Venue address");
+			await expect
+				.element(address)
+				.toHaveAccessibleDescription(
+					"This field is required Street, postcode and city, as you want it shown",
+				);
+			await expect.element(address).toHaveAttribute("aria-invalid", "true");
+		});
+
 		test("shows an address entered by hand as the search's selection", async () => {
 			const { screen } = await renderAddressForm({ venue: OAKLAND_VALUE });
 
@@ -2261,6 +2287,223 @@ describe("SendouForm", () => {
 			await expect.element(screen.getByLabelText("Bio")).toBeVisible();
 			await expect
 				.element(screen.getByText("This field is required"))
+				.toBeVisible();
+		});
+	});
+
+	describe("accessibility wiring", () => {
+		const everyFieldType = () =>
+			v.object({
+				name: textField({ label: "labels.name", maxLength: 100 }),
+				text: textArea({ label: "labels.text", maxLength: 100 }),
+				vc: radioGroup({
+					label: "labels.voiceChat",
+					items: [
+						{ label: "options.voiceChat.yes", value: "YES" },
+						{ label: "options.voiceChat.no", value: "NO" },
+					],
+				}),
+				modes: checkboxGroup({
+					label: "labels.buildModes",
+					items: [{ label: "modes.TW", value: "TW" }],
+					minLength: 1,
+				}),
+				noScreen: toggleField({ label: "labels.noScreen" }),
+				startTime: datetime({ label: "labels.startTime" }),
+				times: timeRangeOptional({
+					label: "labels.weekdayTimes",
+					startLabel: "labels.start",
+					endLabel: "labels.end",
+				}),
+				weapon: weaponSelect({ label: "labels.weapon" }),
+				subWeapon: subWeaponSelect({ label: "labels.subWeapon" }),
+				favoriteStage: stageSelect({ label: "labels.favoriteStage" }),
+				weaponPool: weaponPool({
+					label: "labels.weaponPool",
+					maxCount: 5,
+					minCount: 1,
+				}),
+				user: userSearch({ label: "labels.user" }),
+				member: fieldset({
+					label: "labels.teamEditor",
+					fields: singleTextField(),
+				}),
+				urls: array({
+					label: "labels.urls",
+					min: 0,
+					max: 5,
+					field: textField({ maxLength: 100 }),
+				}),
+			});
+
+		const clockFormatItems = [
+			{ label: "options.clockFormat.auto", value: "auto" },
+			{ label: "options.clockFormat.24h", value: "24h" },
+		] as const;
+
+		/** Always failing dual select, so the form has an error to point at. */
+		const dualSelectInError = () =>
+			dualSelectOptional({
+				fields: [
+					{ label: "labels.start", items: [...clockFormatItems] },
+					{ label: "labels.end", items: [...clockFormatItems] },
+				],
+				validate: { func: () => false, message: "errors.required" },
+			});
+
+		const moreFieldTypes = () =>
+			v.object({
+				format: select({
+					label: "labels.clockFormat",
+					items: [...clockFormatItems],
+				}),
+				searchableFormat: select({
+					label: "labels.clockFormat",
+					items: [...clockFormatItems],
+					searchable: true,
+				}),
+				range: dualSelectInError(),
+				mapPool: mapPoolOptional({ label: "labels.mapPool" }),
+				logo: image({ label: "labels.logo" }),
+				team: teamSearchOptional({ label: "labels.regTeam" }),
+				tournament: tournamentSearchOptional({
+					label: "labels.regImportSourceTournament",
+				}),
+				venue: addressSearchOptional({ label: "labels.venueAddress" }),
+			});
+
+		test.each([
+			{ why: "first set", schema: everyFieldType },
+			{ why: "second set", schema: moreFieldTypes },
+		])(
+			"every label and aria reference points at an element on the page ($why of field types)",
+			async ({ schema }) => {
+				const screen = await renderForm(schema());
+				await screen.getByRole("button", { name: "Submit" }).click();
+				await expect
+					.element(screen.getByText("This field is required").first())
+					.toBeVisible();
+
+				const missingIds: string[] = [];
+				for (const label of screen.container.querySelectorAll("label[for]")) {
+					const id = label.getAttribute("for")!;
+					if (!document.getElementById(id)) missingIds.push(`for=${id}`);
+				}
+				for (const attribute of [
+					"aria-labelledby",
+					"aria-describedby",
+					"aria-errormessage",
+				]) {
+					for (const element of screen.container.querySelectorAll(
+						`[${attribute}]`,
+					)) {
+						for (const id of element.getAttribute(attribute)!.split(" ")) {
+							if (!document.getElementById(id)) {
+								missingIds.push(`${attribute}=${id}`);
+							}
+						}
+					}
+				}
+
+				expect(missingIds).toEqual([]);
+			},
+		);
+
+		test.each([
+			{
+				why: "checkbox group",
+				schema: () => CHECKBOX_GROUP,
+				control: "group",
+				name: "Modes *",
+			},
+			{
+				why: "weapon select",
+				schema: () =>
+					v.object({ weapon: weaponSelect({ label: "labels.weapon" }) }),
+				control: "button",
+				name: "Weapon * Select a weapon",
+			},
+			{
+				why: "dual select",
+				schema: () => v.object({ range: dualSelectInError() }),
+				control: "combobox",
+				name: "Start",
+			},
+			{
+				why: "weapon pool",
+				schema: () =>
+					v.object({
+						weaponPool: weaponPool({
+							label: "labels.weaponPool",
+							maxCount: 5,
+							minCount: 1,
+						}),
+					}),
+				control: "button",
+				name: "Weapon pool Select a weapon",
+			},
+			{
+				why: "user search",
+				schema: () => v.object({ user: userSearch({ label: "labels.user" }) }),
+				control: "button",
+				name: "User * User search",
+			},
+		] as const)(
+			"describes the $why by its error once submitted",
+			async ({ schema, control, name }) => {
+				const screen = await renderForm(schema());
+
+				await screen.getByRole("button", { name: "Submit" }).click();
+				await expect
+					.poll(() => screen.container.querySelector('[id$="-error"]'))
+					.toBeInTheDocument();
+				const errorText =
+					screen.container.querySelector('[id$="-error"]')!.textContent!;
+
+				await expect
+					.element(screen.getByRole(control, { name, exact: true }))
+					.toHaveAccessibleDescription(errorText);
+			},
+		);
+
+		test("marks each checkbox of a group in error invalid", async () => {
+			const screen = await renderForm(CHECKBOX_GROUP);
+
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			await expect
+				.element(screen.getByLabelText("Turf War"))
+				.toHaveAttribute("aria-invalid", "true");
+		});
+
+		test("names the radio group by its label", async () => {
+			const screen = await renderForm(
+				v.object({
+					vc: radioGroup({
+						label: "labels.voiceChat",
+						items: [{ label: "options.voiceChat.yes", value: "YES" }],
+					}),
+				}),
+			);
+
+			await expect
+				.element(screen.getByRole("radiogroup", { name: "Can voice chat *" }))
+				.toBeVisible();
+		});
+
+		test("names a select by its label and the picked option", async () => {
+			const screen = await renderForm(
+				v.object({ weapon: weaponSelect({ label: "labels.weapon" }) }),
+				{ defaultValues: { weapon: 40 } },
+			);
+
+			await expect
+				.element(
+					screen.getByRole("button", {
+						name: "Weapon * Splattershot",
+						exact: true,
+					}),
+				)
 				.toBeVisible();
 		});
 	});

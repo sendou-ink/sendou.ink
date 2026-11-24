@@ -3,7 +3,11 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { smallImageUrl } from "~/utils/urls";
 import styles from "./SearchSelect.module.css";
-import { SendouSelect, SendouSelectItem } from "./Select";
+import {
+	type SelectFieldAriaProps,
+	SendouSelect,
+	SendouSelectItem,
+} from "./Select";
 import type { EntitySearch } from "./useEntitySearch";
 
 const PLACEHOLDER_TEXTS = {
@@ -31,7 +35,7 @@ const PLACEHOLDER_TEXTS = {
 } as const;
 
 /** Field props the entity search components (`UserSearch`, `TeamSearch`, ...) pass straight through. */
-export interface SearchSelectFieldProps {
+export interface SearchSelectFieldProps extends SelectFieldAriaProps {
 	name?: string;
 	label?: string;
 	isRequired?: boolean;
@@ -68,6 +72,7 @@ export function SearchSelect<TItem extends { id: number; name: string }>({
 	className,
 	onBlur,
 	"data-testid": testId,
+	...ariaProps
 }: SearchSelectProps<TItem>) {
 	return (
 		<SendouSelect
@@ -87,6 +92,7 @@ export function SearchSelect<TItem extends { id: number; name: string }>({
 			}}
 			onOpenChange={search.onOpenChange}
 			aria-label={ariaLabel}
+			{...ariaProps}
 			searchInputValue={search.filterText}
 			onSearchInputChange={search.setFilterText}
 			search={{ testId: inputTestId, inputClassName: inputClassName ?? "" }}

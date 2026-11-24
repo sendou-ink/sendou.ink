@@ -1,14 +1,14 @@
 import { ChevronDown, ChevronUp, Plus, Trash } from "lucide-react";
-import type * as React from "react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { isDeepEqual, omit } from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouLabel } from "~/components/elements/Label";
 import { FormMessage } from "~/components/FormMessage";
 import type { FormFieldProps } from "../types";
-import { errorMessageId } from "../utils";
+import { errorMessageId, infoMessageId } from "../utils";
 import styles from "./ArrayFormField.module.css";
-import { useTranslatedTexts } from "./FormFieldWrapper";
+import { FormFieldGroup, useTranslatedTexts } from "./FormFieldWrapper";
 
 type ArrayFormFieldProps = Omit<FormFieldProps<"array">, "field"> & {
 	name: string;
@@ -41,6 +41,7 @@ export function ArrayFormField({
 	disabled,
 }: ArrayFormFieldProps) {
 	const { t } = useTranslation(["common"]);
+	const labelId = React.useId();
 	const { translatedLabel, translatedBottomText, translatedError } =
 		useTranslatedTexts({ label, bottomText, error });
 
@@ -119,9 +120,17 @@ export function ArrayFormField({
 	};
 
 	return (
-		<div className="stack md w-full">
+		<FormFieldGroup
+			labelledBy={translatedLabel ? labelId : undefined}
+			name={name}
+			error={translatedError}
+			bottomText={translatedError ? undefined : translatedBottomText}
+			className="stack md w-full"
+		>
 			{translatedLabel ? (
-				<div className="text-xs font-semi-bold">{translatedLabel}</div>
+				<div id={labelId} className="text-xs font-semi-bold">
+					{translatedLabel}
+				</div>
 			) : null}
 			{isObjectArray
 				? Array.from({ length: visibleCount }).map((_, idx) => (
@@ -170,7 +179,9 @@ export function ArrayFormField({
 				</FormMessage>
 			) : null}
 			{translatedBottomText && !translatedError ? (
-				<FormMessage type="info">{translatedBottomText}</FormMessage>
+				<FormMessage type="info" id={infoMessageId(name)}>
+					{translatedBottomText}
+				</FormMessage>
 			) : null}
 			{addable ? (
 				<SendouButton
@@ -185,7 +196,7 @@ export function ArrayFormField({
 					{t("common:actions.add")}
 				</SendouButton>
 			) : null}
-		</div>
+		</FormFieldGroup>
 	);
 }
 

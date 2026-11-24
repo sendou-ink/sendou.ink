@@ -521,7 +521,8 @@ function undefinedToNull(value: unknown): unknown {
 }
 
 export function actualNumber(value: unknown) {
-	if (value === "") return undefined;
+	// Number(null) is 0, a real id for weapons and stages
+	if (value === "" || value === null) return undefined;
 
 	const parsed = Number(value);
 

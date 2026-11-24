@@ -5,20 +5,27 @@ import {
 } from "~/features/badges/components/BadgeDisplay";
 
 export function BadgesSelector({
+	id,
 	options,
 	selectedBadges,
 	onChange,
 	onBlur,
 	maxCount,
 	disabled,
+	...ariaProps
 }: {
+	/** Id of the badge select, for an outside `<label htmlFor>`. */
+	id?: string;
 	options: BadgeDisplayProps["badges"];
 	selectedBadges: number[];
 	onChange: (newBadges: number[]) => void;
 	onBlur?: () => void;
 	maxCount?: number;
 	disabled?: boolean;
-}) {
+} & Pick<
+	React.AriaAttributes,
+	"aria-describedby" | "aria-invalid" | "aria-errormessage"
+>) {
 	const { t } = useTranslation(["common"]);
 
 	return (
@@ -47,6 +54,8 @@ export function BadgesSelector({
 				</div>
 			) : (
 				<select
+					id={id}
+					{...ariaProps}
 					onBlur={() => onBlur?.()}
 					onChange={(e) =>
 						onChange([...selectedBadges, Number(e.target.value)])

@@ -1,11 +1,19 @@
 import styles from "./ChipRadio.module.css";
 
-interface SendouChipRadioGroupProps {
+interface SendouChipRadioGroupProps
+	extends Pick<
+		React.AriaAttributes,
+		| "aria-label"
+		| "aria-labelledby"
+		| "aria-describedby"
+		| "aria-invalid"
+		| "aria-errormessage"
+		| "aria-required"
+	> {
 	children: React.ReactNode;
 	orientation?: "horizontal" | "vertical";
 	wrap?: boolean;
 	className?: string;
-	"aria-label"?: string;
 }
 
 interface SendouChipRadioProps {
@@ -21,7 +29,7 @@ export function SendouChipRadioGroup({
 	orientation = "horizontal",
 	wrap = false,
 	className,
-	"aria-label": ariaLabel,
+	...ariaProps
 }: SendouChipRadioGroupProps) {
 	return (
 		<div
@@ -29,7 +37,7 @@ export function SendouChipRadioGroup({
 			data-orientation={orientation}
 			data-wrap={wrap}
 			role="radiogroup"
-			aria-label={ariaLabel}
+			{...ariaProps}
 		>
 			{children}
 		</div>

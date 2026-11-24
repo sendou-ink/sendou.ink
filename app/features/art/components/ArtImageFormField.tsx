@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { imageExtensionFromMagicBytes } from "~/features/img-upload/image-signature";
 import type { CustomFieldRenderProps } from "~/form";
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
+import { ariaAttributes } from "~/form/utils";
 import { logger } from "~/utils/logger";
 import { smallImageFileName } from "~/utils/urls";
 import { ART } from "../art-constants";
@@ -86,6 +87,11 @@ export function ArtImageFormField({
 					type="file"
 					accept="image/png, image/jpeg, image/jpg, image/webp"
 					onChange={handleFileChange}
+					{...ariaAttributes({
+						name: "img",
+						error: pickError ?? error,
+						required: true,
+					})}
 				/>
 				{value ? (
 					<img

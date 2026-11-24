@@ -14,7 +14,7 @@ export class LeaderboardsPage {
 			updateInfoText: page.getByText(
 				"Leaderboard is updated once every 30 minutes",
 			),
-			seasonSelect: page.getByRole("button", { name: /^Season \d+ Season$/ }),
+			seasonSelect: page.getByRole("button", { name: /^Season Season \d+$/ }),
 		};
 	}
 

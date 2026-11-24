@@ -2,7 +2,11 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { SkippableRound } from "~/db/tables-json";
 import * as SkippedRounds from "~/features/tournament-bracket/core/SkippedRounds";
-import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
+import {
+	FormFieldGroup,
+	FormFieldWrapper,
+} from "~/form/fields/FormFieldWrapper";
+import { ariaAttributes, labelId } from "~/form/utils";
 import styles from "./RoundsPlayedChecklist.module.css";
 
 /**
@@ -26,6 +30,11 @@ export function RoundsPlayedChecklist({
 }) {
 	const { t } = useTranslation(["forms"]);
 	const id = React.useId();
+	const { "aria-invalid": ariaInvalid } = ariaAttributes({
+		name,
+		error,
+		bottomText: "forms:bottomTexts.roundsPlayed",
+	});
 
 	return (
 		<FormFieldWrapper
@@ -34,8 +43,15 @@ export function RoundsPlayedChecklist({
 			label="forms:labels.roundsPlayed"
 			error={error}
 			bottomText="forms:bottomTexts.roundsPlayed"
+			isGroup
 		>
-			<div className="stack sm items-start">
+			<FormFieldGroup
+				labelledBy={labelId(id)}
+				name={name}
+				error={error}
+				bottomText="forms:bottomTexts.roundsPlayed"
+				className="stack sm items-start"
+			>
 				{SkippedRounds.SKIPPABLE_ROUNDS[type].map((round) => {
 					const isPlayed = !skipped.includes(round);
 					const skippedPrerequisite = SkippedRounds.prerequisitesOf(round).find(
@@ -50,6 +66,7 @@ export function RoundsPlayedChecklist({
 									id={`${id}-${round}`}
 									checked={isPlayed}
 									disabled={disabled}
+									aria-invalid={ariaInvalid}
 									onChange={(event) =>
 										onChange(
 											event.target.checked
@@ -75,7 +92,7 @@ export function RoundsPlayedChecklist({
 						</div>
 					);
 				})}
-			</div>
+			</FormFieldGroup>
 		</FormFieldWrapper>
 	);
 }

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { SendouSwitch } from "~/components/elements/Switch";
 import type { FormFieldProps } from "../types";
+import { ariaAttributes } from "../utils";
 import { FormFieldMessages, useTranslatedTexts } from "./FormFieldWrapper";
 
 type SwitchFormFieldProps = Omit<FormFieldProps<"switch">, "onBlur"> & {
@@ -31,6 +32,7 @@ export function SwitchFormField({
 					isSelected={checked}
 					onChange={onChange}
 					isDisabled={isDisabled}
+					{...ariaAttributes({ name, error, bottomText })}
 				>
 					{translatedLabel}
 				</SendouSwitch>

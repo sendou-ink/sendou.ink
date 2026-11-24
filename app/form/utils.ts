@@ -16,6 +16,11 @@ export function infoMessageId(fieldId: string) {
 	return `${fieldId}-info`;
 }
 
+/** Id of a field's label, for controls and groups that point at it with `aria-labelledby`. */
+export function labelId(controlId: string) {
+	return `${controlId}-label`;
+}
+
 /** Builds a field name (e.g. `members[0].userId`) from an issue path so server and client errors key fields identically. */
 export function buildFieldPath(path: PropertyKey[]): string | null {
 	if (path.length === 0) return null;

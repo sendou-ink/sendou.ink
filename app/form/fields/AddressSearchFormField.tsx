@@ -12,6 +12,7 @@ import type {
 	AddressSearchFieldOptions,
 	FormFieldProps,
 } from "../types";
+import { ariaAttributes } from "../utils";
 import {
 	FormFieldMessages,
 	SearchFormFieldWrapper,
@@ -86,6 +87,8 @@ export function AddressSearchFormField({
 		return (
 			<ManualAddressFields
 				name={name}
+				error={error}
+				bottomText={bottomText}
 				label={translatedLabel}
 				required={required}
 				disabled={disabled}
@@ -110,6 +113,7 @@ export function AddressSearchFormField({
 				label={translatedLabel}
 				isRequired={required}
 				isDisabled={disabled}
+				{...ariaAttributes({ name, error, bottomText })}
 			/>
 			{entryModeFooter}
 		</SearchFormFieldWrapper>
@@ -118,6 +122,8 @@ export function AddressSearchFormField({
 
 function ManualAddressFields({
 	name,
+	error,
+	bottomText,
 	label,
 	required,
 	disabled,
@@ -127,6 +133,9 @@ function ManualAddressFields({
 	footer,
 }: {
 	name: string;
+	/** Error of the address as a whole, rendered in `footer`. */
+	error?: string;
+	bottomText?: string;
 	label?: string;
 	required?: boolean;
 	disabled?: boolean;
@@ -148,6 +157,16 @@ function ManualAddressFields({
 		onChange(manualAddressToValue(updated));
 	};
 
+	const addressInfo = t("common:forms.addressSearch.manual.addressInfo");
+	const addressAria = withFieldMessages(
+		ariaAttributes({
+			name: `${name}.address`,
+			bottomText: addressInfo,
+			required: required ?? false,
+		}),
+		ariaAttributes({ name, error, bottomText }),
+	);
+
 	const hasInvalidCoordinates =
 		manualAddress.coordinates.trim() !== "" &&
 		!parseCoordinates(manualAddress.coordinates);
@@ -157,9 +176,10 @@ function ManualAddressFields({
 			<InputFormField
 				name={`${name}.address`}
 				label={label}
-				bottomText={t("common:forms.addressSearch.manual.addressInfo")}
+				bottomText={addressInfo}
 				required={required ?? false}
 				maxLength={ADDRESS_MAX_LENGTH}
+				aria={addressAria}
 				disabled={disabled}
 				value={manualAddress.address}
 				onChange={(address) => update({ address })}
@@ -208,6 +228,27 @@ function ManualAddressFields({
 			</div>
 		</div>
 	);
+}
+
+/** Points an input of a composite field at the field's own error and help text too. */
+function withFieldMessages(
+	inputAria: ReturnType<typeof ariaAttributes>,
+	fieldAria: ReturnType<typeof ariaAttributes>,
+): ReturnType<typeof ariaAttributes> {
+	const describedBy = [
+		fieldAria["aria-describedby"],
+		inputAria["aria-describedby"],
+	]
+		.filter((ids) => ids !== undefined)
+		.join(" ");
+
+	return {
+		...inputAria,
+		"aria-invalid": inputAria["aria-invalid"] ?? fieldAria["aria-invalid"],
+		"aria-errormessage":
+			inputAria["aria-errormessage"] ?? fieldAria["aria-errormessage"],
+		"aria-describedby": describedBy !== "" ? describedBy : undefined,
+	};
 }
 
 function valueToSearchResult(

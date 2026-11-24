@@ -6,7 +6,7 @@ type LabelProps = Pick<
 		React.LabelHTMLAttributes<HTMLLabelElement>,
 		HTMLLabelElement
 	>,
-	"children" | "htmlFor"
+	"children" | "htmlFor" | "id"
 > & {
 	valueLimits?: {
 		current: number;
@@ -22,12 +22,13 @@ export function Label({
 	required,
 	children,
 	htmlFor,
+	id,
 	className,
 	spaced = true,
 }: LabelProps) {
 	return (
 		<div className={clsx(styles.container, className, { "mb-0": !spaced })}>
-			<label htmlFor={htmlFor}>
+			<label htmlFor={htmlFor} id={id}>
 				{children} {required ? <span className="text-error">*</span> : null}
 			</label>
 			{valueLimits ? (

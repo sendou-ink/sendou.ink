@@ -181,7 +181,10 @@ export function createFormHelpers<T extends v.ObjectEntries>(
 
 		async select(name, optionValue) {
 			const label = getLabel(String(name));
-			const locator = byLabel(label);
+			// a select's listbox carries its label too until the closing popover settles
+			const locator = byLabel(label).and(
+				page.locator(':not([role="listbox"])'),
+			);
 			const tagName = await locator.evaluate((el) => el.tagName.toLowerCase());
 
 			const metadata = getFieldMetadata(String(name));
@@ -244,13 +247,17 @@ export function createFormHelpers<T extends v.ObjectEntries>(
 
 		async setImage(name, filePath) {
 			const label = getLabel(String(name));
-			await page.getByLabel(label).setInputFiles(filePath);
+			// the label also names the group around the picked image's preview
+			const fileInput = page
+				.locator('input[type="file"]')
+				.and(page.getByLabel(label));
+			await fileInput.setInputFiles(filePath);
 			await page
 				.getByRole("dialog", { name: "Edit image" })
 				.getByRole("button", { name: "Apply" })
 				.click();
 			// the crop is applied asynchronously, the file input goes away once the field holds the image
-			await page.getByLabel(label).waitFor({ state: "detached" });
+			await fileInput.waitFor({ state: "detached" });
 		},
 
 		async submit() {

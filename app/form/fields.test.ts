@@ -1,7 +1,13 @@
 import * as v from "valibot";
 import { afterEach, describe, expect, test } from "vitest";
 import { localDateToDayMonthYear } from "~/utils/dates";
-import { dayMonthYear, textField, textFieldOptional } from "./fields";
+import {
+	dayMonthYear,
+	textField,
+	textFieldOptional,
+	weaponSelect,
+	weaponSelectOptional,
+} from "./fields";
 
 describe("textField", () => {
 	const urlSchema = textField({ validate: "url", maxLength: 30 });
@@ -64,5 +70,32 @@ describe("dayMonthYear", () => {
 		const result = v.parse(schema, pickedOnClient);
 
 		expect(result).toEqual({ day: 28, month: 8, year: 2026 });
+	});
+});
+
+describe("weaponSelect", () => {
+	const schema = weaponSelect({ label: "labels.weapon" });
+
+	test.each([
+		{ why: "a weapon", input: 40, success: true },
+		{ why: "weapon id 0", input: 0, success: true },
+		{ why: "nothing picked", input: null, success: false },
+	])("$why -> $success", ({ input, success }) => {
+		expect(v.safeParse(schema, input).success).toBe(success);
+	});
+});
+
+describe("weaponSelectOptional", () => {
+	const schema = weaponSelectOptional({ label: "labels.weapon" });
+
+	test.each([
+		{ why: "a weapon", input: 40, output: 40 },
+		{ why: "cleared", input: null, output: undefined },
+		{ why: "never set", input: undefined, output: undefined },
+	])("$why -> $output", ({ input, output }) => {
+		const result = v.safeParse(schema, input);
+
+		expect(result.success).toBe(true);
+		expect(result.output).toBe(output);
 	});
 });

@@ -1,4 +1,5 @@
 import type { FormFieldItems, FormFieldProps } from "../types";
+import { ariaAttributes } from "../utils";
 import { FormFieldMessages } from "./FormFieldWrapper";
 import { SelectFormField } from "./SelectFormField";
 
@@ -25,6 +26,8 @@ export function DualSelectFormField<V extends string>({
 	fields,
 	disabled,
 }: DualSelectFormFieldProps<V>) {
+	const aria = ariaAttributes({ name, error, bottomText });
+
 	return (
 		<div className="stack xs">
 			<div className="stack horizontal md">
@@ -36,6 +39,7 @@ export function DualSelectFormField<V extends string>({
 					onBlur={onBlur}
 					clearable
 					disabled={disabled}
+					aria={aria}
 				/>
 				<SelectFormField
 					label={fields[1].label}
@@ -45,6 +49,7 @@ export function DualSelectFormField<V extends string>({
 					onBlur={onBlur}
 					clearable
 					disabled={disabled}
+					aria={aria}
 				/>
 			</div>
 			<FormFieldMessages name={name} error={error} bottomText={bottomText} />

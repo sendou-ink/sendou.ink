@@ -18,7 +18,7 @@ export class BroadcastDesignPage {
 		this.pageArgs = pageArgs;
 		this.locators = {
 			presetSelect: page.getByLabel("Preset", { exact: true }),
-			stylesheetSelect: page.getByRole("button", { name: /Stylesheet$/ }),
+			stylesheetSelect: page.getByRole("button", { name: /^Stylesheet / }),
 			editor: page.getByTestId("broadcast-design-editor"),
 			confirmPresetButton: page.getByTestId("broadcast-design-preset-confirm"),
 			saveButton: page.getByTestId("broadcast-design-save"),

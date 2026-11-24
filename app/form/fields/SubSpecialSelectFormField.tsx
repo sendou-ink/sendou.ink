@@ -10,6 +10,7 @@ import {
 	subWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
 import type { FormFieldProps } from "../types";
+import { ariaAttributes } from "../utils";
 import { FormFieldMessages, useTranslatedTexts } from "./FormFieldWrapper";
 import styles from "./SubSpecialSelectFormField.module.css";
 
@@ -59,6 +60,7 @@ export function SubSpecialSelectFormField({
 				isRequired={required}
 				clearable={!required}
 				isDisabled={disabled}
+				{...ariaAttributes({ name, error, bottomText })}
 			>
 				{(option) => (
 					<SendouSelectItem
@@ -71,11 +73,13 @@ export function SubSpecialSelectFormField({
 								<SubWeaponImage
 									subWeaponId={option.id as SubWeaponId}
 									size={24}
+									alt=""
 								/>
 							) : (
 								<SpecialWeaponImage
 									specialWeaponId={option.id as SpecialWeaponId}
 									size={24}
+									alt=""
 								/>
 							)}
 							{option.name}

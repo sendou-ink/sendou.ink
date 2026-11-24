@@ -23,6 +23,8 @@ type SelectFormFieldProps<V extends string> = Omit<
 	clearable?: boolean;
 	searchable?: boolean;
 	disabled?: boolean;
+	/** Overrides the error and help text wiring derived from `name`, e.g. for a select whose messages its parent field renders. */
+	aria?: ReturnType<typeof ariaAttributes>;
 };
 
 export function SelectFormField<V extends string>({
@@ -38,9 +40,11 @@ export function SelectFormField<V extends string>({
 	clearable,
 	searchable,
 	disabled,
+	aria,
 }: SelectFormFieldProps<V>) {
 	const { t, i18n } = useTranslation(["common"]);
 	const id = React.useId();
+	const fieldAria = aria ?? ariaAttributes({ name, error, bottomText });
 
 	const resolveLabel = (itemLabel: FormFieldItems<V>[number]["label"]) =>
 		typeof itemLabel === "function"
@@ -76,6 +80,7 @@ export function SelectFormField<V extends string>({
 				clearable={clearable}
 				disabled={disabled}
 				searchPlaceholder={searchable ? t("common:actions.search") : undefined}
+				aria={fieldAria}
 			/>
 		);
 	}
@@ -103,7 +108,7 @@ export function SelectFormField<V extends string>({
 				onChange={handleChange}
 				onBlur={() => onBlur?.()}
 				disabled={disabled}
-				{...ariaAttributes({ name, error, bottomText })}
+				{...fieldAria}
 			>
 				{clearable ? <option value="">—</option> : null}
 				{groupConsecutive(itemsWithResolvedLabels).map((groupOfItems) => {
@@ -141,6 +146,7 @@ function CustomSelect<V extends string>({
 	clearable,
 	disabled,
 	searchPlaceholder,
+	aria,
 }: {
 	name?: string;
 	label?: string;
@@ -157,6 +163,7 @@ function CustomSelect<V extends string>({
 	clearable?: boolean;
 	disabled?: boolean;
 	searchPlaceholder?: string;
+	aria: ReturnType<typeof ariaAttributes>;
 }) {
 	const { translatedLabel } = useTranslatedTexts({ label });
 
@@ -192,6 +199,9 @@ function CustomSelect<V extends string>({
 				}
 				clearable={clearable && !hasEmptyItem}
 				isDisabled={disabled}
+				aria-describedby={aria["aria-describedby"]}
+				aria-invalid={aria["aria-invalid"]}
+				aria-errormessage={aria["aria-errormessage"]}
 			>
 				{(item) => (
 					<SendouSelectItem

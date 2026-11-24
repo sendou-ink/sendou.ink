@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 import { MapPoolPicker } from "~/components/MapPoolPicker";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { FormFieldProps, MapPoolFieldOptions } from "../types";
-import { FormFieldWrapper } from "./FormFieldWrapper";
+import { labelId } from "../utils";
+import { FormFieldGroup, FormFieldWrapper } from "./FormFieldWrapper";
 
 type MapPoolFormFieldProps = FormFieldProps<"map-pool"> &
 	MapPoolFieldOptions & {
@@ -40,16 +41,24 @@ export function MapPoolFormField({
 			label={label}
 			error={error}
 			bottomText={bottomText}
+			isGroup
 		>
-			<MapPoolPicker
-				mapPool={value ? new MapPool(value) : MapPool.EMPTY}
-				onChange={handleChange}
-				quickFill={quickFill}
-				modes={modes}
-				sendouQFilter={sendouQFilter}
-				disabled={disabled}
-				aria-label={label ? t(label as never) : undefined}
-			/>
+			<FormFieldGroup
+				labelledBy={label ? labelId(id) : undefined}
+				name={name}
+				error={error}
+				bottomText={bottomText}
+			>
+				<MapPoolPicker
+					mapPool={value ? new MapPool(value) : MapPool.EMPTY}
+					onChange={handleChange}
+					quickFill={quickFill}
+					modes={modes}
+					sendouQFilter={sendouQFilter}
+					disabled={disabled}
+					aria-label={label ? t(label as never) : undefined}
+				/>
+			</FormFieldGroup>
 		</FormFieldWrapper>
 	);
 }

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
 import type { BadgeOption, FormFieldProps } from "../types";
+import { ariaAttributes } from "../utils";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 
 type BadgesFormFieldProps = Omit<FormFieldProps<"badges">, "onBlur"> & {
@@ -34,6 +35,8 @@ export function BadgesFormField({
 			bottomText={bottomText}
 		>
 			<BadgesSelector
+				id={id}
+				{...ariaAttributes({ name, error, bottomText })}
 				options={options}
 				selectedBadges={value}
 				onChange={onChange}

@@ -5,7 +5,8 @@ import {
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
 import type { FormFieldItemsWithImage, FormFieldProps } from "../types";
-import { FormFieldWrapper } from "./FormFieldWrapper";
+import { ariaAttributes, labelId } from "../utils";
+import { FormFieldGroup, FormFieldWrapper } from "./FormFieldWrapper";
 
 type RadioGroupFormFieldProps<V extends string> = Omit<
 	FormFieldProps<"radio-group">,
@@ -36,10 +37,19 @@ export function RadioGroupFormField<V extends string>({
 	const itemsWithLabels = useItemsWithResolvedLabels(items);
 
 	const required = typeof minLength !== "number" || minLength > 0;
+	const fieldAria = ariaAttributes({ name, error, bottomText, required });
+	// no aria-errormessage, submit focuses the element carrying it and the group isn't focusable
+	const groupAria = {
+		"aria-labelledby": label ? labelId(id) : undefined,
+		"aria-describedby": fieldAria["aria-describedby"],
+		"aria-invalid": fieldAria["aria-invalid"],
+		"aria-required": fieldAria["aria-required"],
+	};
 
 	return (
 		<FormFieldWrapper
 			id={id}
+			isGroup
 			name={name}
 			label={label}
 			required={required}
@@ -47,7 +57,7 @@ export function RadioGroupFormField<V extends string>({
 			bottomText={bottomText}
 		>
 			{variant === "chip" ? (
-				<SendouChipRadioGroup>
+				<SendouChipRadioGroup {...groupAria}>
 					{itemsWithLabels.map((item) => (
 						<SendouChipRadio
 							key={item.value}
@@ -64,8 +74,8 @@ export function RadioGroupFormField<V extends string>({
 				<div
 					role="radiogroup"
 					aria-orientation="vertical"
-					aria-labelledby={id}
 					className="stack sm items-start"
+					{...groupAria}
 				>
 					{itemsWithLabels.map((item) => (
 						<div key={item.value} className="stack horizontal sm items-center">
@@ -123,6 +133,11 @@ export function CheckboxGroupFormField<V extends string>({
 	const itemsWithLabels = useItemsWithResolvedLabels(items);
 
 	const required = (minLength ?? 0) > 0;
+	const { "aria-invalid": ariaInvalid } = ariaAttributes({
+		name,
+		error,
+		bottomText,
+	});
 
 	const handleChange = (itemValue: V, checked: boolean) => {
 		const newValue = checked
@@ -141,8 +156,15 @@ export function CheckboxGroupFormField<V extends string>({
 			required={required}
 			error={error}
 			bottomText={bottomText}
+			isGroup
 		>
-			<div className="stack sm items-start">
+			<FormFieldGroup
+				labelledBy={label ? labelId(id) : undefined}
+				name={name}
+				error={error}
+				bottomText={bottomText}
+				className="stack sm items-start"
+			>
 				{itemsWithLabels.map((item) => (
 					<div key={item.value} className="stack horizontal sm items-center">
 						<input
@@ -152,6 +174,7 @@ export function CheckboxGroupFormField<V extends string>({
 							checked={value.includes(item.value)}
 							onChange={(e) => handleChange(item.value, e.target.checked)}
 							disabled={disabled}
+							aria-invalid={ariaInvalid}
 						/>
 						<label
 							htmlFor={`${id}-${item.value}`}
@@ -164,7 +187,7 @@ export function CheckboxGroupFormField<V extends string>({
 						</label>
 					</div>
 				))}
-			</div>
+			</FormFieldGroup>
 		</FormFieldWrapper>
 	);
 }

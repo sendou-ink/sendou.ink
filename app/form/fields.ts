@@ -1078,8 +1078,14 @@ export function weaponSelect(
 export function weaponSelectOptional(
 	args: WeaponSelectArgs,
 ): v.OptionalSchema<v.GenericSchema<MainWeaponId>, undefined> {
+	// a cleared select holds null, stored as no weapon
 	return register(
-		v.optional(weaponSplId),
+		v.optional(
+			v.pipe(
+				v.nullable(weaponSplId),
+				v.transform((weaponId) => weaponId ?? undefined),
+			),
+		),
 		weaponSelectMetadata(args, "weapon-select", false),
 	) as never;
 }

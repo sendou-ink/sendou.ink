@@ -3,6 +3,7 @@ import {
 	type TournamentSearchItem,
 } from "~/components/elements/TournamentSearch";
 import type { FormFieldProps } from "../types";
+import { ariaAttributes } from "../utils";
 import {
 	FormFieldMessages,
 	SearchFormFieldWrapper,
@@ -47,6 +48,7 @@ export function TournamentSearchFormField({
 				label={translatedLabel}
 				isRequired={required}
 				isDisabled={disabled}
+				{...ariaAttributes({ name, error, bottomText })}
 			/>
 			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 		</SearchFormFieldWrapper>

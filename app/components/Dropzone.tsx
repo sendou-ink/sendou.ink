@@ -2,7 +2,10 @@ import clsx from "clsx";
 import * as React from "react";
 import styles from "./Dropzone.module.css";
 
-type DropzoneProps = {
+type DropzoneProps = Pick<
+	React.AriaAttributes,
+	"aria-describedby" | "aria-invalid" | "aria-errormessage"
+> & {
 	/** Id of the file input, for an outside `<label htmlFor>`. */
 	id?: string;
 	accept: string;
@@ -10,9 +13,9 @@ type DropzoneProps = {
 	/** The prompt, typically wrapping its "choose a file" part in {@link DropzoneAction}. */
 	children: React.ReactNode;
 } & (
-	| { multiple?: false; onFile: (file: File) => void }
-	| { multiple: true; onFiles: (files: File[]) => void }
-);
+		| { multiple?: false; onFile: (file: File) => void }
+		| { multiple: true; onFiles: (files: File[]) => void }
+	);
 
 /** Drop target for one file (or several) that also opens the file picker when clicked; the file input inside is the accessible path. */
 export function Dropzone(props: DropzoneProps) {
@@ -58,6 +61,9 @@ export function Dropzone(props: DropzoneProps) {
 				multiple={props.multiple}
 				className={styles.input}
 				disabled={disabled}
+				aria-describedby={props["aria-describedby"]}
+				aria-invalid={props["aria-invalid"]}
+				aria-errormessage={props["aria-errormessage"]}
 				onChange={(event) => {
 					const files = event.target.files;
 					pick(files);

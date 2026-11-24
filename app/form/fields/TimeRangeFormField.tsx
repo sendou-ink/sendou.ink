@@ -1,6 +1,8 @@
 import * as React from "react";
 import type { FormFieldProps } from "../types";
+import { ariaAttributes, labelId } from "../utils";
 import {
+	FormFieldGroup,
 	FormFieldMessages,
 	FormFieldWrapper,
 	useTranslatedTexts,
@@ -27,8 +29,14 @@ export function TimeRangeFormField({
 	onChange,
 	disabled,
 }: TimeRangeFormFieldProps) {
+	const id = React.useId();
 	const startId = React.useId();
 	const endId = React.useId();
+	const { "aria-invalid": ariaInvalid } = ariaAttributes({
+		name,
+		error,
+		bottomText,
+	});
 
 	const { translatedLabel } = useTranslatedTexts({ label });
 	const { translatedLabel: translatedStartLabel } = useTranslatedTexts({
@@ -57,9 +65,17 @@ export function TimeRangeFormField({
 	};
 
 	return (
-		<div className="stack xs">
+		<FormFieldGroup
+			labelledBy={translatedLabel ? labelId(id) : undefined}
+			name={name}
+			error={error}
+			bottomText={bottomText}
+			className="stack xs"
+		>
 			{translatedLabel ? (
-				<span className="text-sm font-semi-bold">{translatedLabel}</span>
+				<span id={labelId(id)} className="text-sm font-semi-bold">
+					{translatedLabel}
+				</span>
 			) : null}
 			<div className="stack horizontal sm">
 				<FormFieldWrapper id={startId} label={translatedStartLabel}>
@@ -70,6 +86,7 @@ export function TimeRangeFormField({
 						onChange={handleStartChange}
 						onBlur={() => onBlur?.()}
 						disabled={disabled}
+						aria-invalid={ariaInvalid}
 						className="size-extra-small"
 					/>
 				</FormFieldWrapper>
@@ -81,11 +98,12 @@ export function TimeRangeFormField({
 						onChange={handleEndChange}
 						onBlur={() => onBlur?.()}
 						disabled={disabled}
+						aria-invalid={ariaInvalid}
 						className="size-extra-small"
 					/>
 				</FormFieldWrapper>
 			</div>
 			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
-		</div>
+		</FormFieldGroup>
 	);
 }

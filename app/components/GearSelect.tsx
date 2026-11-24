@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import {
+	type SelectFieldAriaProps,
 	SendouSelect,
 	SendouSelectItem,
 	SendouSelectItemSection,
@@ -17,7 +18,10 @@ import { brandImageUrl, gearImageUrl } from "~/utils/urls";
 
 import styles from "./GearSelect.module.css";
 
-interface GearSelectProps<Clearable extends boolean | undefined = undefined> {
+interface GearSelectProps<Clearable extends boolean | undefined = undefined>
+	extends SelectFieldAriaProps {
+	/** Id of the trigger button, for an outside `<label htmlFor>`. */
+	id?: string;
 	label?: string;
 	value?: number | (Clearable extends true ? null : never);
 	initialValue?: number;
@@ -35,13 +39,19 @@ export function GearSelect<Clearable extends boolean | undefined = undefined>({
 	onChange,
 	clearable,
 	type,
+	...triggerProps
 }: GearSelectProps<Clearable>) {
 	const { t } = useTranslation(["common"]);
 	const items = useGearItems(type);
 
 	return (
 		<SendouSelect
-			aria-label={!label ? t("common:forms.gearSearch.placeholder") : undefined}
+			aria-label={
+				!label && !triggerProps["aria-labelledby"]
+					? t("common:forms.gearSearch.placeholder")
+					: undefined
+			}
+			{...triggerProps}
 			items={items}
 			label={label}
 			placeholder={t("common:forms.gearSearch.placeholder")}

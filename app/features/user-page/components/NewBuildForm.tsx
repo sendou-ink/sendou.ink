@@ -3,8 +3,12 @@ import { useTranslation } from "react-i18next";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { GearSelect } from "~/components/GearSelect";
 import type { CustomFieldRenderProps } from "~/form/FormField";
-import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
+import {
+	FormFieldGroup,
+	FormFieldWrapper,
+} from "~/form/fields/FormFieldWrapper";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import { ariaAttributes, labelId } from "~/form/utils";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type {
 	BuildAbilitiesTupleWithUnknown,
@@ -128,6 +132,9 @@ function GearFormField({
 			error={error}
 		>
 			<GearSelect
+				id={id}
+				aria-labelledby={labelId(id)}
+				{...ariaAttributes({ name, error })}
 				type={type}
 				value={value as number | null}
 				clearable
@@ -149,18 +156,22 @@ function AbilitiesFormField({
 	error: string | undefined;
 }) {
 	const { t } = useTranslation("builds");
+	const id = `${name}-abilities`;
 
 	return (
 		<FormFieldWrapper
-			id={`${name}-abilities`}
+			id={id}
 			name={name}
 			label={t("forms.abilities")}
 			error={error}
+			isGroup
 		>
-			<AbilitiesSelector
-				selectedAbilities={value as BuildAbilitiesTupleWithUnknown}
-				onChange={onChange}
-			/>
+			<FormFieldGroup labelledBy={labelId(id)} name={name} error={error}>
+				<AbilitiesSelector
+					selectedAbilities={value as BuildAbilitiesTupleWithUnknown}
+					onChange={onChange}
+				/>
+			</FormFieldGroup>
 		</FormFieldWrapper>
 	);
 }

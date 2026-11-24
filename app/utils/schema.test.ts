@@ -2,11 +2,25 @@ import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 import {
 	actuallyNonEmptyStringOrNull,
+	actualNumber,
 	hasZalgo,
 	hexCodeWithoutAlpha,
 	normalizeFriendCode,
 	timeString,
 } from "./schema";
+
+describe("actualNumber", () => {
+	test.each([
+		{ why: "numeric string", input: "40", expected: 40 },
+		{ why: "number", input: 0, expected: 0 },
+		{ why: "empty string", input: "", expected: undefined },
+		{ why: "null, not 0", input: null, expected: undefined },
+		{ why: "undefined", input: undefined, expected: undefined },
+		{ why: "non-numeric string", input: "abc", expected: undefined },
+	])("$why", ({ input, expected }) => {
+		expect(actualNumber(input)).toBe(expected);
+	});
+});
 
 describe("normalizeFriendCode", () => {
 	test("returns well formatted friend code as is", () => {

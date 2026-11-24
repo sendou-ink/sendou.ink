@@ -196,4 +196,87 @@ describe("SendouSelect", () => {
 			.element(screen.getByRole("listbox"))
 			.toHaveAttribute("aria-activedescendant", (await option.element()).id);
 	});
+
+	test.each([
+		{
+			why: "label and placeholder",
+			props: { label: "Season" },
+			name: "Season Placeholder",
+		},
+		{
+			why: "label and pick",
+			props: { label: "Season", selectedKey: 1 },
+			name: "Season Season 1",
+		},
+		{
+			why: "aria-label and placeholder",
+			props: { "aria-label": "Pick a season" },
+			name: "Pick a season Placeholder",
+		},
+		{
+			why: "aria-label, placeholder repeating it left out",
+			props: { "aria-label": "Placeholder" },
+			name: "Placeholder",
+		},
+		{
+			why: "aria-label and pick",
+			props: { "aria-label": "Pick a season", selectedKey: 1 },
+			name: "Pick a season Season 1",
+		},
+		{
+			why: "outside label and pick",
+			props: { "aria-labelledby": "outside-label", selectedKey: 1 },
+			name: "Head Season 1",
+		},
+		{
+			why: "no label, pick only",
+			props: { selectedKey: 1 },
+			name: "Season 1",
+		},
+	])("names the trigger from its $why", async ({ props, name }) => {
+		const screen = await render(
+			<>
+				<span id="outside-label">Head</span>
+				<SendouSelect
+					items={SECTIONS[0].items}
+					placeholder="Placeholder"
+					{...props}
+				>
+					{(item) => (
+						<SendouSelectItem key={item.id} id={item.id}>
+							{item.name}
+						</SendouSelectItem>
+					)}
+				</SendouSelect>
+			</>,
+		);
+
+		await expect.element(screen.getByRole("button")).toHaveAccessibleName(name);
+	});
+
+	test("ties the trigger to the field's error text", async () => {
+		const screen = await render(
+			<>
+				<div id="season-error">Pick a season first</div>
+				<SendouSelect
+					label="Season"
+					items={SECTIONS[0].items}
+					aria-describedby="season-error"
+					aria-invalid="true"
+				>
+					{(item) => (
+						<SendouSelectItem key={item.id} id={item.id}>
+							{item.name}
+						</SendouSelectItem>
+					)}
+				</SendouSelect>
+			</>,
+		);
+
+		const trigger = screen.getByRole("button", { name: "Season" });
+		await expect
+			.element(trigger)
+			.toHaveAccessibleDescription("Pick a season first");
+		await expect.element(trigger).toHaveAttribute("aria-invalid", "true");
+	});
 });

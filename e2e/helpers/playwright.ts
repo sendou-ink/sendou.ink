@@ -314,7 +314,10 @@ export async function selectUser({
 	/** Scopes the combobox lookup, for pages carrying the label on more than one element. */
 	within?: Locator;
 }) {
-	const comboboxButton = (within ?? page).getByLabel(labelName, { exact });
+	// a button: array fields carry their label on a group around the items too
+	const comboboxButton = (within ?? page)
+		.getByRole("button")
+		.and(page.getByLabel(labelName, { exact }));
 	const searchInput = page.getByTestId("user-search-input");
 	const option = page
 		.getByRole("listbox")

@@ -2,7 +2,11 @@ import clsx from "clsx";
 import type * as React from "react";
 import styles from "./Switch.module.css";
 
-interface SendouSwitchProps {
+interface SendouSwitchProps
+	extends Pick<
+		React.AriaAttributes,
+		"aria-describedby" | "aria-invalid" | "aria-errormessage"
+	> {
 	id?: string;
 	isSelected?: boolean;
 	defaultSelected?: boolean;
@@ -24,6 +28,7 @@ export function SendouSwitch({
 	"aria-label": ariaLabel,
 	"data-testid": testId,
 	children,
+	...ariaProps
 }: SendouSwitchProps) {
 	return (
 		<label
@@ -43,6 +48,7 @@ export function SendouSwitch({
 				defaultChecked={isSelected === undefined ? defaultSelected : undefined}
 				disabled={isDisabled}
 				aria-label={ariaLabel}
+				{...ariaProps}
 				onChange={(event) => onChange?.(event.currentTarget.checked)}
 			/>
 			<div className={styles.indicator} />

@@ -24,6 +24,7 @@ import { WeaponSelect } from "~/components/WeaponSelect";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
 import type { FormFieldProps } from "../types";
+import { ariaAttributes, labelId } from "../utils";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 
 import styles from "./WeaponPoolFormField.module.css";
@@ -157,6 +158,9 @@ export function WeaponPoolFormField({
 		>
 			<WeaponSelect
 				key={value.length}
+				id={id}
+				aria-labelledby={label ? labelId(id) : undefined}
+				{...ariaAttributes({ name, error, bottomText })}
 				onChange={(weaponId) => {
 					if (weaponId !== null) {
 						handleSelect(weaponId);

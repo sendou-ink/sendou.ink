@@ -1,5 +1,6 @@
 import { UserSearch } from "~/components/elements/UserSearch";
 import type { FormFieldProps, UserSearchFieldOptions } from "../types";
+import { ariaAttributes } from "../utils";
 import {
 	FormFieldMessages,
 	SearchFormFieldWrapper,
@@ -41,6 +42,7 @@ export function UserSearchFormField({
 				label={translatedLabel}
 				isRequired={required}
 				isDisabled={disabled}
+				{...ariaAttributes({ name, error, bottomText })}
 			/>
 			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 		</SearchFormFieldWrapper>

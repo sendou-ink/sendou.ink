@@ -1,5 +1,6 @@
 import { TeamSearch } from "~/components/elements/TeamSearch";
 import type { FormFieldProps, TeamSearchFieldOptions } from "../types";
+import { ariaAttributes } from "../utils";
 import {
 	FormFieldMessages,
 	SearchFormFieldWrapper,
@@ -40,6 +41,7 @@ export function TeamSearchFormField({
 				label={translatedLabel}
 				isRequired={required}
 				isDisabled={disabled}
+				{...ariaAttributes({ name, error, bottomText })}
 			/>
 			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 		</SearchFormFieldWrapper>

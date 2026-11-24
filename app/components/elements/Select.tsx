@@ -74,7 +74,16 @@ const SelectStateContext = React.createContext<SelectState | null>(null);
 /** Inside the trigger an item renders only its content, standing in for the selection. */
 const SelectTriggerContext = React.createContext(false);
 
-export interface SendouSelectProps<T extends object> {
+/** Ties the trigger to an outside label and to the error and help texts of the field it belongs to. */
+export type SelectFieldAriaProps = Pick<
+	React.AriaAttributes,
+	"aria-labelledby" | "aria-describedby" | "aria-invalid" | "aria-errormessage"
+>;
+
+export interface SendouSelectProps<T extends object>
+	extends SelectFieldAriaProps {
+	/** Id of the trigger button, for an outside `<label htmlFor>`. */
+	id?: string;
 	label?: string;
 	/** Renders a required marker next to the label. */
 	labelRequired?: boolean;
@@ -142,6 +151,11 @@ export function SendouSelect<T extends object>({
 	name,
 	"data-testid": testId,
 	"aria-label": ariaLabel,
+	"aria-labelledby": ariaLabelledBy,
+	"aria-describedby": ariaDescribedBy,
+	"aria-invalid": ariaInvalid,
+	"aria-errormessage": ariaErrorMessage,
+	id,
 	className,
 	popoverClassName,
 	search,
@@ -160,9 +174,8 @@ export function SendouSelect<T extends object>({
 	const listboxId = `${uid}-select-listbox`;
 	const labelId = label ? `${uid}-select-label` : undefined;
 	const valueId = `${uid}-select-value`;
-	const triggerId = `${uid}-select-trigger`;
-	const hiddenAriaLabelId =
-		label && ariaLabel ? `${uid}-select-aria-label` : undefined;
+	const triggerId = id ?? `${uid}-select-trigger`;
+	const hiddenAriaLabelId = ariaLabel ? `${uid}-select-aria-label` : undefined;
 
 	const [isControlled] = React.useState(selectedKey !== undefined);
 	const [uncontrolledKey, setUncontrolledKey] =
@@ -471,6 +484,18 @@ export function SendouSelect<T extends object>({
 				? (registeredSelection.getContent() ?? registeredSelection.textValue)
 				: undefined;
 
+	// the name says what the select is for and what is picked (or the placeholder
+	// unless it repeats the aria-label), so a row of selects can be told apart
+	const nameIds = [labelId, ariaLabelledBy, hiddenAriaLabelId].filter(
+		(nameId) => nameId !== undefined,
+	);
+	const valueAddsToName =
+		selectedContent !== undefined ||
+		(placeholder !== undefined && placeholder !== ariaLabel);
+	if (nameIds.length > 0 && valueAddsToName) {
+		nameIds.push(valueId);
+	}
+
 	return (
 		// biome-ignore lint/a11y/noStaticElementInteractions: only observes focus leaving the select
 		<div
@@ -506,14 +531,10 @@ export function SendouSelect<T extends object>({
 				disabled={isDisabled}
 				aria-haspopup="listbox"
 				aria-expanded={open}
-				aria-label={label ? undefined : ariaLabel}
-				aria-labelledby={
-					labelId
-						? hiddenAriaLabelId
-							? `${labelId} ${hiddenAriaLabelId} ${valueId}`
-							: `${valueId} ${labelId}`
-						: undefined
-				}
+				aria-labelledby={nameIds.length > 0 ? nameIds.join(" ") : undefined}
+				aria-describedby={ariaDescribedBy}
+				aria-invalid={ariaInvalid}
+				aria-errormessage={ariaErrorMessage}
 				data-required={isRequired || undefined}
 				{...popoverTriggerProps}
 				onClick={onTriggerClick}
@@ -575,7 +596,7 @@ export function SendouSelect<T extends object>({
 					open={open}
 					listboxRef={listboxRef}
 					id={listboxId}
-					labelId={labelId}
+					labelId={labelId ?? ariaLabelledBy ?? hiddenAriaLabelId}
 				>
 					<SelectRegistryContext value={registry}>
 						<SelectStateContext value={state}>

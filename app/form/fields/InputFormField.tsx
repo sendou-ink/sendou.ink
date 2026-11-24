@@ -10,6 +10,8 @@ type InputFormFieldProps = FormFieldProps<"text-field"> & {
 	labelPopover?: React.ReactNode;
 	value: string;
 	onChange: (value: string) => void;
+	/** Overrides the error and help text wiring derived from `name`, e.g. to also point at messages of a parent field. */
+	aria?: ReturnType<typeof ariaAttributes>;
 };
 
 export function InputFormField({
@@ -30,6 +32,7 @@ export function InputFormField({
 	autoFocus,
 	value,
 	onChange,
+	aria,
 }: InputFormFieldProps) {
 	const id = React.useId();
 	const { t } = useTranslation(["forms"]);
@@ -70,12 +73,13 @@ export function InputFormField({
 					// biome-ignore lint/a11y/noAutofocus: opt-in per call site, used for inline edit forms
 					autoFocus={autoFocus}
 					placeholder={translatedPlaceholder}
-					{...ariaAttributes({
-						name,
-						bottomText,
-						error,
-						required,
-					})}
+					{...(aria ??
+						ariaAttributes({
+							name,
+							bottomText,
+							error,
+							required,
+						}))}
 				/>
 			</div>
 		</FormFieldWrapper>

@@ -1,6 +1,7 @@
 import { WeaponSelect } from "~/components/WeaponSelect";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { FormFieldProps } from "../types";
+import { ariaAttributes } from "../utils";
 import { FormFieldMessages, useTranslatedTexts } from "./FormFieldWrapper";
 import styles from "./WeaponSelectFormField.module.css";
 
@@ -35,6 +36,7 @@ export function WeaponSelectFormField({
 				isRequired={required}
 				clearable={!required}
 				isDisabled={disabled}
+				{...ariaAttributes({ name, error, bottomText })}
 			/>
 			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 		</div>

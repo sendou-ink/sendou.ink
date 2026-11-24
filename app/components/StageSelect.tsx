@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import {
+	type SelectFieldAriaProps,
 	type SelectKey,
 	SendouSelect,
 	SendouSelectItem,
@@ -10,7 +11,8 @@ import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { StageId } from "~/modules/in-game-lists/types";
 import styles from "./StageSelect.module.css";
 
-interface StageSelectProps<Clearable extends boolean | undefined = undefined> {
+interface StageSelectProps<Clearable extends boolean | undefined = undefined>
+	extends SelectFieldAriaProps {
 	label?: string;
 	value?: StageId | null;
 	initialValue?: StageId;
@@ -32,6 +34,7 @@ export function StageSelect<Clearable extends boolean | undefined = undefined>({
 	testId = "stage-select",
 	isRequired,
 	isDisabled,
+	...triggerProps
 }: StageSelectProps<Clearable>) {
 	const { t } = useTranslation(["common", "game-misc"]);
 	const items = useStageItems();
@@ -46,8 +49,11 @@ export function StageSelect<Clearable extends boolean | undefined = undefined>({
 	return (
 		<SendouSelect
 			aria-label={
-				!label ? t("common:forms.stageSearch.placeholder") : undefined
+				!label && !triggerProps["aria-labelledby"]
+					? t("common:forms.stageSearch.placeholder")
+					: undefined
 			}
+			{...triggerProps}
 			items={items}
 			label={label}
 			placeholder={t("common:forms.stageSearch.placeholder")}
@@ -71,6 +77,7 @@ export function StageSelect<Clearable extends boolean | undefined = undefined>({
 							stageId={id as StageId}
 							width={42}
 							className={styles.stageImg}
+							alt=""
 						/>
 						<span
 							className={clsx(styles.stageLabel, "truncate")}

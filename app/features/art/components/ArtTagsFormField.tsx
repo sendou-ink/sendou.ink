@@ -3,7 +3,11 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import type { CustomFieldRenderProps } from "~/form";
-import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
+import {
+	FormFieldGroup,
+	FormFieldWrapper,
+} from "~/form/fields/FormFieldWrapper";
+import { ariaAttributes, labelId } from "~/form/utils";
 import { ART } from "../art-constants";
 import styles from "./ArtTagsFormField.module.css";
 import { TagSelect } from "./TagSelect";
@@ -25,6 +29,10 @@ export function ArtTagsFormField({
 	const { t } = useTranslation(["art", "common"]);
 	const [creationMode, setCreationMode] = React.useState(false);
 	const [newTagValue, setNewTagValue] = React.useState("");
+	const { "aria-invalid": ariaInvalid } = ariaAttributes({
+		name: "tags",
+		error,
+	});
 
 	const handleAddNewTag = () => {
 		const normalizedNewTagValue = newTagValue
@@ -59,8 +67,14 @@ export function ArtTagsFormField({
 			name="tags"
 			label={t("art:forms.tags.title")}
 			error={error}
+			isGroup
 		>
-			<div className="stack xs">
+			<FormFieldGroup
+				labelledBy={labelId(id)}
+				name="tags"
+				error={error}
+				className="stack xs"
+			>
 				{value.length >= ART.TAGS_MAX_LENGTH ? (
 					<div className="text-sm text-warning">
 						{t("art:forms.tags.maxReached")}
@@ -69,9 +83,10 @@ export function ArtTagsFormField({
 					<>
 						<div className="stack horizontal sm items-center">
 							<input
-								id={id}
 								placeholder={t("art:forms.tags.addNew.placeholder")}
 								value={newTagValue}
+								aria-labelledby={labelId(id)}
+								aria-invalid={ariaInvalid}
 								onChange={(e) => setNewTagValue(e.target.value)}
 								onKeyDown={(event) => {
 									if (event.code === "Enter") {
@@ -104,6 +119,7 @@ export function ArtTagsFormField({
 							// empty combobox on select
 							key={value.length}
 							tags={existingTags}
+							aria-invalid={ariaInvalid}
 							disabledKeys={value
 								.map((tag) => tag.id)
 								.filter((tagId) => tagId !== undefined)}
@@ -143,7 +159,7 @@ export function ArtTagsFormField({
 						))}
 					</div>
 				) : null}
-			</div>
+			</FormFieldGroup>
 		</FormFieldWrapper>
 	);
 }
