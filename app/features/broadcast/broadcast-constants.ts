@@ -174,7 +174,7 @@ export const BROADCAST_GAME_END_TRIGGERS = ["hudGone", "juddFlag"] as const;
 /** Session descriptions are a few kilobytes, more so with many ICE candidates. */
 export const BROADCAST_SDP_MAX_LENGTH = 50_000;
 
-export const BROADCAST_CSS_MAX_LENGTH = 20_000;
+export const BROADCAST_CSS_MAX_LENGTH = 30_000;
 
 /** Posted by the dashboard to its Next preview, which plays the staged transition. */
 export const BROADCAST_REHEARSE_MESSAGE = "broadcast:rehearse";
