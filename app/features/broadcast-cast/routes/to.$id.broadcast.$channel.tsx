@@ -16,6 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
+import i18next from "i18next";
 import {
 	ArrowLeftRight,
 	Brush,
@@ -39,7 +40,14 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router";
+import {
+	isRouteErrorResponse,
+	Link,
+	useLoaderData,
+	useNavigate,
+	useRevalidator,
+	data as withStatus,
+} from "react-router";
 import * as R from "remeda";
 import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
@@ -56,6 +64,7 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { toastQueue } from "~/components/elements/Toast";
 import { InfoPopover } from "~/components/InfoPopover";
 import { InviteLinkInput } from "~/components/InviteLinkInput";
 import { Config } from "~/config";
@@ -66,6 +75,7 @@ import {
 	BROADCAST_TRANSITIONS,
 } from "~/features/broadcast/broadcast-constants";
 import {
+	type BroadcastConnection,
 	useBroadcastStream,
 	useClipSender,
 	useServerNow,
@@ -103,6 +113,7 @@ import type { ScannerClip } from "~/features/scanner/store/clips";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
+import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -150,10 +161,38 @@ import * as BracketFocus from "../core/BracketFocus";
 import * as CastChannel from "../core/CastChannel";
 import * as CastTake from "../core/CastTake";
 import { loader } from "../loaders/to.$id.broadcast.$channel.server";
+import type { Route } from "./+types/to.$id.broadcast.$channel";
 import styles from "./to.$id.broadcast.$channel.module.css";
 
 export { action } from "../actions/to.$id.broadcast.$channel.server";
 export { loader };
+
+const NOT_DONE_TOAST_MS = 8_000;
+
+/**
+ * An action the server can't be reached for (it is restarting for a deploy, the network dropped) is told as not done
+ * instead of replacing the dashboard with an error page. Its error status also skips the revalidation, which would
+ * fail the same way.
+ */
+export async function clientAction({ serverAction }: Route.ClientActionArgs) {
+	try {
+		return await serverAction();
+	} catch (error) {
+		// a redirect, e.g. the toast of a stale Take, or an answer such as not logged in anymore
+		if (
+			error instanceof Response ||
+			(isRouteErrorResponse(error) && error.status < 500)
+		) {
+			throw error;
+		}
+
+		toastQueue.add(
+			{ message: i18next.t("broadcast:dashboard.notDone"), variant: "error" },
+			{ timeout: NOT_DONE_TOAST_MS },
+		);
+		return withStatus(null, { status: 503 });
+	}
+}
 
 export const handle: SendouRouteHandle = {
 	i18n: ["broadcast", "q"],
@@ -188,11 +227,12 @@ function BroadcastDashboard() {
 	const channels = CastChannel.list(tournament.ctx.castAccounts);
 	const [feedStore] = React.useState(AudioFeeds.createStore);
 	const musicLibrary = useMusicLibrary();
-	const { state, isConnected, clockOffsetMs } = useBroadcastStream({
-		url: broadcastStreamUrl({ ...pageArgs, role: "dashboard" }),
-		initialState: data.state,
-		onMessage: (message) => clipSender.onMessage(message),
-	});
+	const { state, connection, isConnected, isOutdated, clockOffsetMs } =
+		useBroadcastStream({
+			url: broadcastStreamUrl({ ...pageArgs, role: "dashboard" }),
+			initialState: data.state,
+			onMessage: (message) => clipSender.onMessage(message),
+		});
 	const scannerClips = useScannerClips(useCapturedBefore() ? pageArgs : null);
 	// only the browser running the scanner has its clips, the dashboards elsewhere send none
 	const isClipSender = scannerClips.length > 0;
@@ -215,6 +255,8 @@ function BroadcastDashboard() {
 	const selected =
 		staged.find((item) => item.id === selectedItemId) ?? state.next;
 	const take = CastTake.status({ state, now });
+	// what the dashboard shows may not be what is on air, so nothing is put on air from it
+	const canControl = isConnected && !isOutdated;
 	// elsewhere the OBS sources get the clips from the scanner's browser, out of this dashboard's sight
 	const isClipOnSources = (clipId: string) =>
 		!isClipSender || isOnEverySource(clipSender.statuses, clipId);
@@ -240,6 +282,7 @@ function BroadcastDashboard() {
 
 	return (
 		<div className={clsx("stack lg", styles.dashboard)}>
+			<ConnectionBanner connection={connection} isOutdated={isOutdated} />
 			<header className="stack sm">
 				<div className="stack horizontal sm items-center justify-between flex-wrap">
 					<div className="stack horizontal md items-center flex-wrap">
@@ -253,12 +296,14 @@ function BroadcastDashboard() {
 					<div className="stack horizontal sm items-center flex-wrap">
 						<Health
 							state={state}
-							isConnected={isConnected}
+							isStale={connection.status === "lost"}
 							onClick={showSetup}
 						/>
-						{isConnected ? (
-							<ScannerHealth state={state} onClick={showSetup} />
-						) : null}
+						<ScannerHealth
+							state={state}
+							isStale={connection.status === "lost"}
+							onClick={showSetup}
+						/>
 						<CasterFeedsHealth
 							casters={state.casters}
 							feedStore={feedStore}
@@ -276,7 +321,13 @@ function BroadcastDashboard() {
 
 			<div className={styles.switcher}>
 				<section className={clsx(styles.switcherView, styles.liveView)}>
-					<ViewHeader view="live" state={state} />
+					<ViewHeader
+						view="live"
+						state={state}
+						lastHeardAt={
+							connection.status === "lost" ? connection.lastHeardAt : null
+						}
+					/>
 					<BroadcastPreview
 						src={broadcastOverlayPage({
 							...pageArgs,
@@ -291,7 +342,7 @@ function BroadcastDashboard() {
 							now={now}
 							isTimed={take.remainingMs !== null}
 						/>
-						<OnAirControls state={state} />
+						<OnAirControls state={state} isDisabled={!canControl} />
 						<CasterMixer
 							ref={mixerRef}
 							casters={state.casters}
@@ -315,12 +366,12 @@ function BroadcastDashboard() {
 				<div className={styles.takeColumn}>
 					<TakeButton
 						state={state}
-						canTake={take.canTake}
+						canTake={take.canTake && canControl}
 						clockOffsetMs={clockOffsetMs}
 						className={styles.take}
 						formClassName={styles.takeForm}
 					/>
-					<AutoTake state={state} take={take} />
+					<AutoTake state={state} take={take} isDisabled={!canControl} />
 					<SendouButton
 						size="small"
 						variant="minimal"
@@ -374,10 +425,7 @@ function BroadcastDashboard() {
 									key={dashboardTab}
 									id={dashboardTab}
 									icon={<Icon />}
-									alert={
-										dashboardTab === "setup" &&
-										(!isConnected || state.health.sources === 0)
-									}
+									alert={dashboardTab === "setup" && state.health.sources === 0}
 								>
 									{t(`broadcast:dashboard.tab.${dashboardTab}`)}
 								</SendouTab>
@@ -462,37 +510,83 @@ function useRevalidateOnFeaturedMatchChange(featuredMatchId: number | null) {
 	}, [isStale, revalidate]);
 }
 
-function Health({
-	state,
-	isConnected,
-	onClick,
+/**
+ * Banner over the page while the stream is down (what the dashboard shows may be out of date, the overlays keep their
+ * scene), or while this page's code is older than the server's. Fixed, so it shows up without moving what is under
+ * the pointer.
+ */
+function ConnectionBanner({
+	connection,
+	isOutdated,
 }: {
-	state: CastBroadcastState;
-	isConnected: boolean;
-	onClick: () => void;
+	connection: BroadcastConnection;
+	isOutdated: boolean;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 
-	const variant = !isConnected
-		? "outlined-warning"
-		: state.health.sources > 0
-			? "outlined-success"
-			: "outlined";
+	if (isOutdated) {
+		return (
+			<div className={styles.connectionBanner} role="status">
+				<Alert variation="WARNING" alertClassName={styles.alert}>
+					<span>{t("broadcast:dashboard.connection.outdated")}</span>{" "}
+					<SendouButton
+						size="miniscule"
+						variant="outlined"
+						icon={<RefreshCw />}
+						onClick={() => window.location.reload()}
+					>
+						{t("broadcast:dashboard.connection.refresh")}
+					</SendouButton>
+				</Alert>
+			</div>
+		);
+	}
+
+	if (connection.status !== "lost") return null;
+
+	return (
+		<div
+			className={styles.connectionBanner}
+			role="status"
+			data-testid="broadcast-connection-banner"
+		>
+			<Alert variation="WARNING" alertClassName={styles.alert}>
+				{connection.isRestarting
+					? t("broadcast:dashboard.connection.restarting")
+					: t("broadcast:dashboard.health.disconnected")}{" "}
+				{t("broadcast:dashboard.connection.showKeepsScene")}
+			</Alert>
+		</div>
+	);
+}
+
+/**
+ * Whether an OBS browser source shows the overlay. Dimmed while the stream is down as the count is of before, the
+ * pills staying the same so the controls under them never move.
+ */
+function Health({
+	state,
+	isStale,
+	onClick,
+}: {
+	state: CastBroadcastState;
+	isStale: boolean;
+	onClick: () => void;
+}) {
+	const { t } = useTranslation(["broadcast"]);
+	const isConnected = state.health.sources > 0;
 
 	return (
 		<SendouButton
 			size="small"
-			variant={variant}
-			icon={
-				variant === "outlined-success" ? <CircleCheck /> : <TriangleAlert />
-			}
+			variant={isConnected && !isStale ? "outlined-success" : "outlined"}
+			icon={isConnected ? <CircleCheck /> : <TriangleAlert />}
+			className={clsx({ [styles.staleHealth]: isStale })}
 			onClick={onClick}
 		>
 			{isConnected
-				? state.health.sources > 0
-					? t("broadcast:dashboard.health.obsConnected")
-					: t("broadcast:dashboard.health.obsNotConnected")
-				: t("broadcast:dashboard.health.disconnected")}
+				? t("broadcast:dashboard.health.obsConnected")
+				: t("broadcast:dashboard.health.obsNotConnected")}
 		</SendouButton>
 	);
 }
@@ -500,9 +594,11 @@ function Health({
 /** Whether a scanner is connected, a warning while a staged item waits for a game none is there to see. */
 function ScannerHealth({
 	state,
+	isStale,
 	onClick,
 }: {
 	state: CastBroadcastState;
+	isStale: boolean;
 	onClick: () => void;
 }) {
 	const { t } = useTranslation(["broadcast"]);
@@ -515,13 +611,16 @@ function ScannerHealth({
 		<SendouButton
 			size="small"
 			variant={
-				isConnected
-					? "outlined-success"
-					: isWaitedFor
-						? "outlined-warning"
-						: "outlined"
+				isStale
+					? "outlined"
+					: isConnected
+						? "outlined-success"
+						: isWaitedFor
+							? "outlined-warning"
+							: "outlined"
 			}
 			icon={isConnected ? <CircleCheck /> : <ScanEye />}
+			className={clsx({ [styles.staleHealth]: isStale })}
 			title={
 				!isConnected && isWaitedFor
 					? t("broadcast:dashboard.noScannerHint")
@@ -589,13 +688,19 @@ function FeaturedMatch({ state }: { state: CastBroadcastState }) {
 }
 
 /** Changes to what is on air that apply right away, without a Take. */
-function OnAirControls({ state }: { state: CastBroadcastState }) {
+function OnAirControls({
+	state,
+	isDisabled,
+}: {
+	state: CastBroadcastState;
+	isDisabled: boolean;
+}) {
 	if (!state.match) return null;
 
 	return (
 		<div className={styles.onAir}>
-			<InkColors state={state} match={state.match} />
-			<ResultsNotOnAir match={state.match} />
+			<InkColors state={state} match={state.match} isDisabled={isDisabled} />
+			<ResultsNotOnAir match={state.match} isDisabled={isDisabled} />
 		</div>
 	);
 }
@@ -624,9 +729,11 @@ function ShowInfo({
 function InkColors({
 	state,
 	match,
+	isDisabled,
 }: {
 	state: CastBroadcastState;
 	match: BroadcastMatch;
+	isDisabled: boolean;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 	const ink = gameInk(state, "live");
@@ -659,6 +766,7 @@ function InkColors({
 					variant="outlined"
 					size="miniscule"
 					icon={<ArrowLeftRight />}
+					isDisabled={isDisabled}
 					testId="broadcast-swap-sides"
 				>
 					{t("broadcast:dashboard.sides.swap")}
@@ -680,6 +788,7 @@ function InkColors({
 						formClassName={styles.inkSwatchForm}
 						title={t(`broadcast:ink.${color.key}`)}
 						aria-label={t(`broadcast:ink.${color.key}`)}
+						isDisabled={isDisabled}
 						testId={`broadcast-ink-${color.key}`}
 					>
 						<span style={{ background: color.a }} />
@@ -698,6 +807,7 @@ function InkColors({
 					formClassName={styles.inkSwatchForm}
 					title={t("broadcast:dashboard.ink.clear")}
 					aria-label={t("broadcast:dashboard.ink.clear")}
+					isDisabled={isDisabled}
 					testId="broadcast-ink-clear"
 				/>
 			</div>
@@ -705,7 +815,13 @@ function InkColors({
 	);
 }
 
-function ResultsNotOnAir({ match }: { match: BroadcastMatch }) {
+function ResultsNotOnAir({
+	match,
+	isDisabled,
+}: {
+	match: BroadcastMatch;
+	isDisabled: boolean;
+}) {
 	const { t } = useTranslation(["broadcast"]);
 
 	const { live, next } = match.progress;
@@ -727,6 +843,7 @@ function ResultsNotOnAir({ match }: { match: BroadcastMatch }) {
 				fields={{ matchId: match.id, resultCount: next.resultCount }}
 				size="small"
 				variant="outlined"
+				isDisabled={isDisabled}
 				testId="broadcast-show-results-button"
 			>
 				{t("broadcast:dashboard.showResults")}
@@ -739,23 +856,42 @@ function ViewHeader({
 	view,
 	state,
 	isImminent = false,
+	lastHeardAt = null,
 }: {
 	view: BroadcastView;
 	state: CastBroadcastState;
 	/** Going on air by itself in a moment. */
 	isImminent?: boolean;
+	/** When the server was last heard from while it can't be, what is shown being of then. */
+	lastHeardAt?: number | null;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 
 	return (
-		<h2
-			className={styles.viewHeader}
-			data-view={view}
-			data-imminent={isImminent || undefined}
-		>
-			{t(`broadcast:dashboard.${view}`)} ·{" "}
-			{t(`broadcast:scene.${state[view].scene}`)}
-		</h2>
+		<div className={styles.viewHeaderRow}>
+			<h2
+				className={styles.viewHeader}
+				data-view={view}
+				data-imminent={isImminent || undefined}
+			>
+				{t(`broadcast:dashboard.${view}`)} ·{" "}
+				{t(`broadcast:scene.${state[view].scene}`)}
+			</h2>
+			{lastHeardAt !== null ? <LastUpdate at={lastHeardAt} /> : null}
+		</div>
+	);
+}
+
+function LastUpdate({ at }: { at: number }) {
+	const { t } = useTranslation(["broadcast"]);
+	const now = useAutoRerender("second");
+
+	return (
+		<span className="text-xs text-warning" data-testid="broadcast-last-update">
+			{t("broadcast:dashboard.connection.lastUpdate", {
+				seconds: Math.max(0, Math.round((now.getTime() - at) / 1000)),
+			})}
+		</span>
 	);
 }
 
@@ -803,9 +939,11 @@ function LiveTimer({
 function AutoTake({
 	state,
 	take: { canTake, remainingMs, gameCue },
+	isDisabled,
 }: {
 	state: CastBroadcastState;
 	take: CastTake.TakeStatus;
+	isDisabled: boolean;
 }) {
 	const { t } = useTranslation(["broadcast"]);
 
@@ -845,6 +983,7 @@ function AutoTake({
 				variant="outlined-destructive"
 				icon={<Pause />}
 				title={t("broadcast:dashboard.holdHint")}
+				isDisabled={isDisabled}
 				testId="broadcast-hold-button"
 			>
 				{t("broadcast:dashboard.hold")}

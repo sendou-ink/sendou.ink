@@ -51,7 +51,10 @@ function CastUnderlay({
 	);
 }
 
-/** A scene showing the featured match's teams falls back to the break scene while no match is cast, e.g. as it got uncast on air. */
+/**
+ * A scene showing the featured match's teams falls back to the break scene while no match is cast, e.g. as it got
+ * uncast on air. A scene this code doesn't know, e.g. added by a deploy the page predates, shows nothing.
+ */
 function CastScene({
 	state,
 	view,
@@ -82,7 +85,12 @@ function CastScene({
 			return <BracketScene state={state} view={view} />;
 		case "team":
 			return <TeamScene state={state} view={view} />;
-		default:
+		case "starting":
+		case "break":
+		case "technical":
+		case "ending":
 			return <HoldScene scene={scene} state={state} view={view} />;
+		default:
+			return null;
 	}
 }

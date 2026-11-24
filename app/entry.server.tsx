@@ -13,6 +13,7 @@ import {
 import { ServerConfig } from "~/config.server";
 import { devToolsServerHooks } from "~/features/dev-tools/dev-tools-server-hooks.server";
 import { getI18nInstance } from "~/modules/i18n/i18next.server";
+import * as ServerShutdown from "~/modules/server-shutdown/ServerShutdown.server";
 import {
 	daily,
 	everyHourAt00,
@@ -145,6 +146,9 @@ if (!global.appStartSignal && ServerConfig.isProduction && !IS_E2E_TEST_RUN) {
 		}
 	});
 }
+
+// a deploy's SIGTERM would otherwise wait on the never-ending event streams
+ServerShutdown.exitOnSignals();
 
 process.on("unhandledRejection", (reason: string, p: Promise<any>) => {
 	logger.error("Unhandled Rejection at:", p, "reason:", reason);

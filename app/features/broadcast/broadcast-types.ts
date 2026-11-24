@@ -10,6 +10,7 @@ import type {
 	BROADCAST_DESIGN_MESSAGE,
 	BROADCAST_GAME_END_TRIGGERS,
 	BROADCAST_INK_COLORS,
+	BROADCAST_STATE_VERSION,
 	BROADCAST_STREAM_ROLES,
 	BROADCAST_TAKE_SOURCES,
 	BROADCAST_TRANSITIONS,
@@ -170,7 +171,7 @@ export interface BroadcastState<
 	Item extends ProducerState = ProducerState,
 	Settings extends BroadcastSettings = BroadcastSettings,
 > extends BroadcastStoredState<Item> {
-	v: 1;
+	v: typeof BROADCAST_STATE_VERSION;
 	settings: Settings;
 	tournament: {
 		name: string;
@@ -207,17 +208,23 @@ export type BroadcastStreamMessage<
 	| { kind: "reconnect" }
 	/** The broadcast is gone for the client, e.g. its OBS URL got a new key or its channel was removed: the overlay blanks. */
 	| { kind: "gone" }
+	/** The server is restarting, e.g. for a deploy, and ends the connection: the client opens a new one once it's back. */
+	| { kind: "restart" }
 	/** The OBS URL the page was opened from now mutes the capture card this way. */
 	| { kind: "obsAudio"; obsAudio: BroadcastObsAudio | null }
 	/**
 	 * First message of every connection: who it is when signaling the clip peer connections, the server's clock
-	 * (epoch ms) to time the scenes by and the broadcast it is connected to, `null` for an OBS URL not pointed at one.
+	 * (epoch ms) to time the scenes by, the broadcast it is connected to (`null` for an OBS URL not pointed at one), the
+	 * version of the states it sends (see `BROADCAST_STATE_VERSION`) and the commit the server runs (empty outside
+	 * deployed builds). Only `v` is compared yet, `build` is for the overlays to reload themselves after a deploy.
 	 */
 	| {
 			kind: "hello";
 			peer: BroadcastOwnPeer;
 			now: number;
 			broadcast: BroadcastKey | null;
+			v: number;
+			build: string;
 	  }
 	/** To clip senders only, whenever a client connects or disconnects. */
 	| { kind: "peers"; peers: BroadcastPeer[] }

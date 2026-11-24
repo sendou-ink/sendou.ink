@@ -454,6 +454,8 @@ function createNetwork() {
 				peer: self,
 				now: Date.now(),
 				broadcast: BROADCAST,
+				v: 1,
+				build: "",
 			});
 			if (peers.has(OVERLAY.id)) {
 				sender.handleMessage({
@@ -498,6 +500,8 @@ function createNetwork() {
 				peer: OVERLAY,
 				now: Date.now(),
 				broadcast: BROADCAST,
+				v: 1,
+				build: "",
 			});
 			for (const [id, peer] of peers) {
 				if (id === OVERLAY.id) continue;
@@ -526,6 +530,8 @@ function createNetwork() {
 						peer: OVERLAY,
 						now: Date.now(),
 						broadcast,
+						v: 1,
+						build: "",
 					}),
 				sendFeeds: receiver.sendFeeds,
 				blob,

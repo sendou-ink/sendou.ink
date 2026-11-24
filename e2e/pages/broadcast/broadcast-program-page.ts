@@ -3,10 +3,18 @@ import type { BroadcastStreamRole } from "~/features/broadcast/broadcast-types";
 import {
 	broadcastOverlayPage,
 	broadcastProgramPage,
+	broadcastProgramStreamUrl,
 	broadcastStreamUrl,
 } from "~/features/broadcast/broadcast-urls";
 import type { CastScene } from "~/features/broadcast-cast/broadcast-cast-types";
 import { navigate } from "../../helpers/playwright";
+import { cutStreams, trackStreams } from "./broadcast-streams";
+
+const PROGRAM_STREAM_PATH = new URL(
+	broadcastProgramStreamUrl("key"),
+	"http://localhost",
+).pathname;
+const isProgramStream = (url: URL) => url.pathname === PROGRAM_STREAM_PATH;
 
 interface BroadcastPageArgs {
 	tournamentId: number;
@@ -47,7 +55,13 @@ export class BroadcastProgramPage {
 
 	/** Opens the OBS URL of the program key. */
 	async goto(programKey: string) {
+		await trackStreams(this.page);
 		await navigate({ page: this.page, url: broadcastProgramPage(programKey) });
+	}
+
+	/** Drops the page's stream like a lost connection does, keeping it from connecting again until the returned function is called. */
+	cutStream() {
+		return cutStreams(this.page, isProgramStream);
 	}
 
 	/** The scene drawn on the canvas. */

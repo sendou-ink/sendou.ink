@@ -13,6 +13,7 @@ import {
 	waitForPOSTResponse,
 } from "../../helpers/playwright";
 import { BroadcastDesignPage } from "./broadcast-design-page";
+import { cutStreams, trackStreams } from "./broadcast-streams";
 
 const VIEW_LABELS: Record<BroadcastView, string> = {
 	live: "Live",
@@ -43,6 +44,7 @@ interface BroadcastPageArgs {
 export class BroadcastDashboardPage {
 	private readonly page: Page;
 	private readonly pageArgs: BroadcastPageArgs;
+	private isTrackingStreams = false;
 	readonly locators;
 
 	constructor(page: Page, pageArgs: BroadcastPageArgs) {
@@ -53,6 +55,12 @@ export class BroadcastDashboardPage {
 			featuredMatch: page.getByRole("link", { name: /\d–\d/ }),
 			takeButton: page.getByTestId("broadcast-take-button"),
 			holdButton: page.getByTestId("broadcast-hold-button"),
+			swapSidesButton: page.getByTestId("broadcast-swap-sides"),
+			inkButton: page.getByTestId("broadcast-ink-lockYellowPurple"),
+			connectionBanner: page.getByTestId("broadcast-connection-banner"),
+			lastUpdate: page.getByTestId("broadcast-last-update"),
+			obsHealth: page.getByRole("button", { name: "OBS not connected" }),
+			scannerHealth: page.getByRole("button", { name: "No scanner connected" }),
 			onGameStart: page.getByText("On game start", { exact: true }),
 			themeTab: page.getByRole("tab", { name: "Theme" }),
 			themeName: (name: string) =>
@@ -70,10 +78,21 @@ export class BroadcastDashboardPage {
 	async goto() {
 		// the Setup tab connects to OBS's WebSocket server, never the one of an OBS open where the tests run
 		await this.page.routeWebSocket(/^ws:\/\/127\.0\.0\.1:/, (ws) => ws.close());
+		if (!this.isTrackingStreams) {
+			await trackStreams(this.page);
+			this.isTrackingStreams = true;
+		}
 		await navigate({
 			page: this.page,
 			url: broadcastDashboardPage(this.pageArgs),
 		});
+	}
+
+	/** Drops the dashboard's own stream like a lost connection does, keeping it from connecting again until the returned function is called. */
+	cutStream() {
+		const streamPath = `${broadcastDashboardPage(this.pageArgs)}/stream`;
+
+		return cutStreams(this.page, (url) => url.pathname === streamPath);
 	}
 
 	/** The status the dashboard's page request answers with, for whoever the page is logged in as. */
@@ -109,6 +128,23 @@ export class BroadcastDashboardPage {
 	/** Puts next on air. */
 	take() {
 		return submit(this.page, "broadcast-take-button");
+	}
+
+	/** Presses Take while the server can't be reached: the request fails on the network. */
+	async takeUnreachable() {
+		const isAction = (url: URL) =>
+			url.pathname === `${broadcastDashboardPage(this.pageArgs)}.data`;
+		await this.page.route(isAction, (route) =>
+			route.request().method() === "POST"
+				? route.abort("connectionrefused")
+				: route.continue(),
+		);
+		const failed = this.page.waitForEvent("requestfailed", (request) =>
+			isAction(new URL(request.url())),
+		);
+		await this.locators.takeButton.click();
+		await failed;
+		await this.page.unroute(isAction);
 	}
 
 	/** Swaps which team is Alpha (on the left) on every scene, on air right away. */

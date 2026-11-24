@@ -5,6 +5,7 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.server";
 import type { BroadcastMusicTrack } from "~/features/broadcast/broadcast-types";
+import * as BroadcastHub from "~/features/broadcast/core/BroadcastHub.server";
 import * as MusicPlayback from "~/features/broadcast/core/MusicPlayback";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import type { broadcastActionSchema } from "../broadcast-cast-schemas";
@@ -192,6 +193,7 @@ beforeEach(async () => {
 
 afterEach(() => {
 	ServerConfig.broadcastOrgIds = originalBroadcastOrgIds;
+	vi.restoreAllMocks();
 });
 
 describe("TAKE", () => {
@@ -252,6 +254,19 @@ describe("TAKE", () => {
 
 		assertResponseErrored(response, "Next was just taken");
 		expect((await storedState(tournamentId)).takeId).toBe(1);
+	});
+
+	test("a rejected Take rebuilds what is on air, in case a rebuild missed the last Take", async () => {
+		const tournamentId = await createTournament();
+		await take(tournamentId, { takeId: 0 });
+		const refresh = vi.spyOn(BroadcastHub, "refresh");
+
+		await take(tournamentId, { takeId: 0 });
+
+		expect(refresh).toHaveBeenCalledWith({
+			tournamentId,
+			slug: castAccount.account,
+		});
 	});
 
 	test("rejects a Take of a scene showing the match while none is cast", async () => {
@@ -475,6 +490,36 @@ describe("SET_CASTER_VOLUME", () => {
 		});
 
 		assertResponseErrored(response, "isn't on the broadcast anymore");
+	});
+
+	test("a rejected volume rebuilds the broadcast, in case its casters are out of date", async () => {
+		const tournamentId = await createTournament();
+		const refresh = vi.spyOn(BroadcastHub, "refresh");
+
+		await setCasterVolume(tournamentId, { userId: casterId(), volume: 50 });
+
+		expect(refresh).toHaveBeenCalledWith({
+			tournamentId,
+			slug: castAccount.account,
+		});
+	});
+});
+
+describe("a change to an item no longer staged", () => {
+	test("is rejected and rebuilds the broadcast, in case its queue is out of date", async () => {
+		const tournamentId = await createTournament();
+		const refresh = vi.spyOn(BroadcastHub, "refresh");
+
+		const response = await broadcast(
+			{ _action: "SET_TRANSITION", itemId: 999, transition: "cut" },
+			{ user: organizerId(), params: params(tournamentId) },
+		);
+
+		assertResponseErrored(response, "isn't staged anymore");
+		expect(refresh).toHaveBeenCalledWith({
+			tournamentId,
+			slug: castAccount.account,
+		});
 	});
 });
 

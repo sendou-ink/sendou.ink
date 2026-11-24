@@ -2,12 +2,14 @@ language js
 
 // Route actions parse their inputs through `defineAction` (app/form/define-action.server.ts),
 // so params, body validation and its failure handling are declared the same way everywhere.
+// A `clientAction` runs in the browser around the server's action, reading no request body.
 or {
 	or {
 		`export const $name = $value`,
 		`export const $name: $_ = $value`
 	} as $export where {
 		$name <: r"^(?:action|[a-z][A-Za-z0-9]*Action)\z",
+		$name <: not "clientAction",
 		$value <: not `defineAction($...)`,
 		register_diagnostic(span=$export, message="Define route actions with `defineAction` from `~/form/define-action.server`. See docs/site/src/content/docs/dev/forms.mdx.", severity="error")
 	},
@@ -16,6 +18,7 @@ or {
 		`export function $name($...) { $... }`
 	} as $export where {
 		$name <: r"^(?:action|[a-z][A-Za-z0-9]*Action)\z",
+		$name <: not "clientAction",
 		register_diagnostic(span=$export, message="Define route actions with `defineAction` from `~/form/define-action.server`. See docs/site/src/content/docs/dev/forms.mdx.", severity="error")
 	},
 	`$request.$method()` as $read where {

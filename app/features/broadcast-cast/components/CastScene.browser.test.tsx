@@ -385,6 +385,23 @@ describe("CastScene", () => {
 		expect(nowPlayingLine()).toBe(line);
 	});
 
+	test("shows nothing of a scene it doesn't know, e.g. one a deploy added after the page loaded", async () => {
+		const state = stateOf({ ...SCENARIO, scene: "break" });
+		const screen = await render(
+			<BroadcastOverlay
+				sceneSet={CAST_SCENE_SET}
+				state={{
+					...state,
+					live: { ...state.live, scene: "futureScene" as CastScene },
+				}}
+				view="live"
+			/>,
+		);
+
+		expect(screen.container.querySelector('[data-part="title"]')).toBeNull();
+		expect(screen.container.textContent).not.toMatch(/futureScene/i);
+	});
+
 	test("shows no now playing line without music or text", async () => {
 		await render(
 			<BroadcastOverlay

@@ -8,7 +8,10 @@ import * as EventBus from "~/features/events/core/EventBus.server";
 import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { logger } from "~/utils/logger";
 import * as BroadcastRepository from "../BroadcastRepository.server";
-import { DEFAULT_BROADCAST_SETTINGS } from "../broadcast-constants";
+import {
+	BROADCAST_STATE_VERSION,
+	DEFAULT_BROADCAST_SETTINGS,
+} from "../broadcast-constants";
 import type {
 	BroadcastChannel,
 	BroadcastState,
@@ -57,6 +60,12 @@ afterEach(() => {
 });
 
 describe("BroadcastHub.connect", () => {
+	test("greets the client with the version of the states it sends", () => {
+		const client = connect({ build: buildOf(snapshot()) });
+
+		expect(client.hello()).toMatchObject({ v: BROADCAST_STATE_VERSION });
+	});
+
 	test("sends the built state to the client", async () => {
 		const client = connect({ build: buildOf(snapshot()) });
 
@@ -121,13 +130,13 @@ describe("BroadcastHub stale rebuild", () => {
 	test("rebuilds when the built state goes stale by itself", async () => {
 		const build = vi.fn(async () => ({
 			...built(snapshot()),
-			staleAt: Date.now() + 60_000,
+			staleAt: Date.now() + 30_000,
 		}));
 		connect({ build });
 		await vi.advanceTimersByTimeAsync(0);
 		build.mockClear();
 
-		await vi.advanceTimersByTimeAsync(59_999);
+		await vi.advanceTimersByTimeAsync(29_999);
 		expect(build).not.toHaveBeenCalled();
 
 		await vi.advanceTimersByTimeAsync(1);
@@ -173,8 +182,8 @@ describe("BroadcastHub gone broadcast", () => {
 	});
 });
 
-describe("BroadcastHub first build retry", () => {
-	test("retries a failing first build, waiting twice as long each time up to 30 seconds", async () => {
+describe("BroadcastHub build retry", () => {
+	test("retries a failing first build, waiting twice as long each time up to 10 seconds", async () => {
 		const build = vi.fn(() =>
 			Promise.reject<BroadcastSnapshot.Built<TestState>>(
 				new Error("Build failed"),
@@ -193,10 +202,9 @@ describe("BroadcastHub first build retry", () => {
 		expect(await callsAfter(2_000)).toBe(3);
 		expect(await callsAfter(4_000)).toBe(4);
 		expect(await callsAfter(8_000)).toBe(5);
-		expect(await callsAfter(16_000)).toBe(6);
-		expect(await callsAfter(29_999)).toBe(6);
-		expect(await callsAfter(1)).toBe(7);
-		expect(await callsAfter(30_000)).toBe(8);
+		expect(await callsAfter(9_999)).toBe(5);
+		expect(await callsAfter(1)).toBe(6);
+		expect(await callsAfter(10_000)).toBe(7);
 	});
 
 	test("stops retrying once a build succeeds", async () => {
@@ -208,21 +216,71 @@ describe("BroadcastHub first build retry", () => {
 		await vi.advanceTimersByTimeAsync(1_000);
 		expect(client.states()).toHaveLength(1);
 
-		await vi.advanceTimersByTimeAsync(60_000);
+		await vi.advanceTimersByTimeAsync(30_000);
 		expect(build).toHaveBeenCalledTimes(2);
 	});
 
-	test("doesn't retry a failing rebuild while there is a state to show", async () => {
+	test("retries a failing rebuild and publishes once it succeeds, the clients keeping the last state meanwhile", async () => {
 		const build = buildOf(snapshot());
 		const client = connect({ build });
 		await vi.advanceTimersByTimeAsync(0);
 
-		build.mockRejectedValue(new Error("Build failed"));
+		const taken = snapshot({ ...Producer.initialState(rules), takeId: 1 });
+		build.mockRejectedValueOnce(new Error("Build failed"));
+		build.mockResolvedValue(built(taken));
 		BroadcastHub.refresh(KEY);
-		await vi.advanceTimersByTimeAsync(60_000);
-
-		expect(build).toHaveBeenCalledTimes(2);
+		await vi.advanceTimersByTimeAsync(0);
 		expect(client.states()).toHaveLength(1);
+
+		await vi.advanceTimersByTimeAsync(1_000);
+		expect(client.states().map((state) => state.takeId)).toEqual([0, 1]);
+	});
+
+	test("a client connecting after a failed rebuild gets the state once the retry succeeds", async () => {
+		const build = buildOf(snapshot());
+		connect({ build });
+		await vi.advanceTimersByTimeAsync(0);
+
+		build.mockRejectedValueOnce(new Error("Build failed"));
+		build.mockResolvedValue(
+			built(snapshot({ ...Producer.initialState(rules), takeId: 1 })),
+		);
+		BroadcastHub.refresh(KEY);
+		await vi.advanceTimersByTimeAsync(0);
+		const late = connect({ build });
+		await vi.advanceTimersByTimeAsync(1_000);
+
+		expect(late.states().at(-1)?.takeId).toBe(1);
+	});
+});
+
+describe("BroadcastHub safety rebuild", () => {
+	test("rebuilds every 45 seconds while it has clients, healing a state that missed its event", async () => {
+		const build = buildOf(snapshot());
+		const client = connect({ build });
+		await vi.advanceTimersByTimeAsync(0);
+
+		build.mockResolvedValue(
+			built(snapshot({ ...Producer.initialState(rules), takeId: 1 })),
+		);
+		await vi.advanceTimersByTimeAsync(44_999);
+		expect(client.states()).toHaveLength(1);
+
+		await vi.advanceTimersByTimeAsync(1);
+		expect(client.states().at(-1)?.takeId).toBe(1);
+	});
+
+	test("stops once the last client leaves", async () => {
+		const build = buildOf(snapshot());
+		connect({ build });
+		await vi.advanceTimersByTimeAsync(0);
+
+		for (const connection of connections) {
+			connection.abort();
+		}
+		await vi.advanceTimersByTimeAsync(5 * 60_000);
+
+		expect(build).toHaveBeenCalledOnce();
 	});
 });
 
@@ -557,6 +615,7 @@ function messagesOf(messages: BroadcastStreamMessage<TestState>[]) {
 			messages.flatMap((message) =>
 				message.kind === "state" ? [message.state] : [],
 			),
+		hello: () => messages.find((message) => message.kind === "hello"),
 		hellos: () =>
 			messages.flatMap((message) =>
 				message.kind === "hello" ? [message.broadcast] : [],

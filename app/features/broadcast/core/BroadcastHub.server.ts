@@ -1,8 +1,10 @@
 import * as R from "remeda";
 import * as EventBus from "~/features/events/core/EventBus.server";
 import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { GIT_COMMIT } from "~/utils/git-commit";
 import { logger } from "~/utils/logger";
 import * as BroadcastRepository from "../BroadcastRepository.server";
+import { BROADCAST_STATE_VERSION } from "../broadcast-constants";
 import type {
 	BroadcastGameSignal,
 	BroadcastHealth,
@@ -23,8 +25,10 @@ const REBUILD_DEBOUNCE_MS = 250;
 const AUTO_TAKE_TOLERANCE_MS = 50;
 // an automatic Take due as the server went down still goes on air once it's back, if it's back this soon
 const RESTART_CATCH_UP_MS = 2 * 60_000;
-const FIRST_BUILD_RETRY_BASE_MS = 1_000;
-const FIRST_BUILD_RETRY_MAX_MS = 30_000;
+const BUILD_RETRY_BASE_MS = 1_000;
+const BUILD_RETRY_MAX_MS = 10_000;
+// heals a state that missed an event, e.g. one published while a build was failing
+const SAFETY_REBUILD_INTERVAL_MS = 45_000;
 
 type HubKey = BroadcastKey;
 
@@ -70,9 +74,9 @@ interface Hub extends HubKey {
 	 * the server started catches up on one that came due while it restarted, on its first schedule only.
 	 */
 	catchUp: CatchUp | null;
-	/** Retries a failed build while there is no state to show yet. */
+	/** Retries a failed build, the clients keeping the last state meanwhile. */
 	retryTimer: ReturnType<typeof setTimeout> | null;
-	/** Rebuilds the state once it goes stale by itself, see `BroadcastSnapshot.Built.staleAt`. */
+	/** Rebuilds the state once it goes stale by itself (see `BroadcastSnapshot.Built.staleAt`), or every so often anyway. */
 	staleTimer: ReturnType<typeof setTimeout> | null;
 	failedBuildCount: number;
 	isBuilding: boolean;
@@ -171,6 +175,8 @@ export function connect<State extends BroadcastState>({
 			peer: { id: client.peerId, token: client.token },
 			now: Date.now(),
 			broadcast: { tournamentId: key.tournamentId, slug: key.slug },
+			v: BROADCAST_STATE_VERSION,
+			build: GIT_COMMIT,
 		} satisfies BroadcastStreamMessage),
 	);
 	hub.clients.add(client);
@@ -232,6 +238,8 @@ export function connectStandby({
 			peer: { id: crypto.randomUUID(), token: crypto.randomUUID() },
 			now: Date.now(),
 			broadcast: null,
+			v: BROADCAST_STATE_VERSION,
+			build: GIT_COMMIT,
 		} satisfies BroadcastStreamMessage),
 	);
 	standbyClients.add(client);
@@ -439,6 +447,8 @@ async function rebuild(hub: Hub) {
 
 			hub.snapshot = built.snapshot;
 			hub.failedBuildCount = 0;
+			if (hub.retryTimer) clearTimeout(hub.retryTimer);
+			hub.retryTimer = null;
 			scheduleAutoTake(hub);
 			scheduleStaleRebuild(hub, built.staleAt);
 			if (!R.isDeepEqual(built.eventChannels, hub.eventChannels)) {
@@ -450,18 +460,18 @@ async function rebuild(hub: Hub) {
 		} while (hub.isDirty && !hub.stop.signal.aborted);
 	} catch (error) {
 		logger.error("Building the broadcast state failed", error);
-		if (!hub.snapshot) scheduleFirstBuildRetry(hub);
+		scheduleBuildRetry(hub);
 	} finally {
 		hub.isBuilding = false;
 	}
 }
 
-function scheduleFirstBuildRetry(hub: Hub) {
+function scheduleBuildRetry(hub: Hub) {
 	if (hub.retryTimer || hub.stop.signal.aborted) return;
 
 	const delay = Math.min(
-		FIRST_BUILD_RETRY_BASE_MS * 2 ** hub.failedBuildCount,
-		FIRST_BUILD_RETRY_MAX_MS,
+		BUILD_RETRY_BASE_MS * 2 ** hub.failedBuildCount,
+		BUILD_RETRY_MAX_MS,
 	);
 	hub.failedBuildCount++;
 	hub.retryTimer = setTimeout(() => {
@@ -473,14 +483,17 @@ function scheduleFirstBuildRetry(hub: Hub) {
 function scheduleStaleRebuild(hub: Hub, staleAt: number | null) {
 	if (hub.staleTimer) clearTimeout(hub.staleTimer);
 	hub.staleTimer = null;
-	if (staleAt === null || hub.stop.signal.aborted) return;
+	if (hub.stop.signal.aborted) return;
 
 	hub.staleTimer = setTimeout(
 		() => {
 			hub.staleTimer = null;
 			void rebuild(hub);
 		},
-		Math.max(0, staleAt - Date.now()),
+		Math.min(
+			SAFETY_REBUILD_INTERVAL_MS,
+			Math.max(0, (staleAt ?? Number.POSITIVE_INFINITY) - Date.now()),
+		),
 	);
 }
 

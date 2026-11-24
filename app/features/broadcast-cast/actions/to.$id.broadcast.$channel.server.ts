@@ -19,7 +19,11 @@ import * as MusicPlayback from "~/features/broadcast/core/MusicPlayback";
 import * as Producer from "~/features/broadcast/core/Producer";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { defineAction } from "~/form/define-action.server";
-import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
+import {
+	errorToast,
+	errorToastIfFalsy,
+	notFoundIfNullish,
+} from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import {
 	BROADCAST_DEFAULT_CASTER_VOLUME,
@@ -70,6 +74,18 @@ export const action = defineAction(
 				channel,
 			}) !== null;
 
+		const refresh = () =>
+			BroadcastHub.refresh({
+				tournamentId: tournament.ctx.id,
+				slug: channel.slug,
+			});
+		/** The toast for an action based on a state the dashboard had wrong, which gets what is stored again. */
+		const staleToastIfFalsy = (condition: unknown, message: string) => {
+			if (condition) return;
+
+			refresh();
+			errorToast(message);
+		};
 		const updateProducer = async (
 			change: (
 				state: BroadcastStoredState<CastProducerState>,
@@ -80,13 +96,8 @@ export const action = defineAction(
 				...key,
 				change,
 			});
-			errorToastIfFalsy(isUpdated, staleMessage);
+			staleToastIfFalsy(isUpdated, staleMessage);
 		};
-		const refresh = () =>
-			BroadcastHub.refresh({
-				tournamentId: tournament.ctx.id,
-				slug: channel.slug,
-			});
 		/** Changes the music as `change` makes of it at the server's now, a `null` music changing nothing. */
 		const updateMusic = (
 			change: (music: BroadcastMusic, now: number) => BroadcastMusic | null,
@@ -285,7 +296,7 @@ export const action = defineAction(
 						});
 					},
 				});
-				errorToastIfFalsy(isTaken, message);
+				staleToastIfFalsy(isTaken, message);
 				break;
 			}
 			case "SHOW_RESULTS": {
@@ -370,7 +381,7 @@ export const action = defineAction(
 			}
 			case "SET_CASTER_VOLUME": {
 				const savedCasters = await storedCasters(key);
-				errorToastIfFalsy(
+				staleToastIfFalsy(
 					savedCasters.some((caster) => caster.userId === body.userId),
 					STALE_CASTER_MESSAGE,
 				);

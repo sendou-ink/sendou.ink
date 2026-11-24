@@ -1,5 +1,14 @@
 import type { BroadcastSettings, BroadcastTransition } from "./broadcast-types";
 
+/**
+ * Shape of the state the stream pushes (`BroadcastState.v`). Bumped when a change to it would break the overlays and
+ * dashboards still running the code of before a deploy, which keep their last state of their own version instead.
+ */
+export const BROADCAST_STATE_VERSION = 1;
+
+/** How often the server writes a heartbeat to an open broadcast stream, so the clients notice a silently dead one quickly. */
+export const BROADCAST_HEARTBEAT_INTERVAL_MS = 8_000;
+
 // xxx: do we want all of these?
 /** How a Take puts the staged state on air, in the order of the dashboard's transition buttons. */
 export const BROADCAST_TRANSITIONS = ["stinger", "fade", "cut"] as const;

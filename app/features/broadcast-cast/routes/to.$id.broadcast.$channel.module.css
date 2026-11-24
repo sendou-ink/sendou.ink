@@ -448,3 +448,32 @@
 	border: 2px solid var(--color-border);
 	border-radius: 50%;
 }
+
+/* fixed, so it comes and goes without moving the controls under the pointer */
+.connectionBanner {
+	position: fixed;
+	inset-block-start: var(--s-2);
+	inset-inline: var(--s-2);
+	z-index: 21;
+	display: flex;
+	justify-content: center;
+	pointer-events: none;
+
+	& > * {
+		pointer-events: auto;
+		max-width: 48rem;
+		box-shadow: 0 var(--s-1) var(--s-4) var(--color-bg-overlay);
+		background-color: var(--color-bg-high);
+	}
+}
+
+.staleHealth {
+	opacity: 0.6;
+}
+
+.viewHeaderRow {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--s-2);
+}

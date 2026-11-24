@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as EventBus from "~/features/events/core/EventBus.server";
 import { HEARTBEAT_INTERVAL_MS } from "~/features/events/events-types";
 import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
+import * as ServerShutdown from "~/modules/server-shutdown/ServerShutdown.server";
 import { notFound } from "~/utils/remix.server";
 import type { StationsDisplayStreamMessage } from "../tournament-stations-types";
 import { stationsBoardTopics } from "../tournament-stations-utils";
@@ -41,10 +42,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				HEARTBEAT_INTERVAL_MS,
 			);
 
+			// the browser opens a new connection by itself once it ends
+			const stopOnShutdown = ServerShutdown.onShutdown(() => close());
+
 			close = () => {
 				if (closed) return;
 				closed = true;
 				clearInterval(heartbeat);
+				stopOnShutdown();
 				disconnect.abort();
 				try {
 					controller.close();
@@ -78,6 +83,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			// no-transform keeps compression from buffering the stream
 			"Cache-Control": "no-cache, no-transform",
 			"X-Accel-Buffering": "no",
+			// a socket kept alive after the stream ends would hold up the server closing, e.g. on a deploy
+			Connection: "close",
 		},
 	});
 };

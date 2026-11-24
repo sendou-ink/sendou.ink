@@ -104,6 +104,103 @@ test.describe("Broadcast", () => {
 		await obs.close();
 	});
 
+	test("keeps the dashboard when a Take can't reach the server, and takes once it can", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		const dashboard = new BroadcastDashboardPage(page, pageArgs(tournament.id));
+		await dashboard.goto();
+		await expect(dashboard.viewHeading("live", "rosters")).toBeVisible();
+
+		await dashboard.takeUnreachable();
+
+		await expect(dashboard.locators.takeButton).toBeEnabled();
+		await expect(dashboard.viewHeading("live", "rosters")).toBeVisible();
+
+		await dashboard.take();
+		await expect(dashboard.viewHeading("live", "game")).toBeVisible();
+	});
+
+	test("turns off the on-air controls without moving them while the dashboard's stream is down", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		const dashboard = new BroadcastDashboardPage(page, pageArgs(tournament.id));
+		await dashboard.goto();
+		const { locators } = dashboard;
+		const onAirControls = [
+			locators.takeButton,
+			locators.holdButton,
+			locators.swapSidesButton,
+			locators.inkButton,
+		];
+		for (const control of onAirControls) {
+			await expect(control).toBeEnabled();
+		}
+		await expect(locators.connectionBanner).toBeHidden();
+		const takeBox = await locators.takeButton.boundingBox();
+
+		const restoreStream = await dashboard.cutStream();
+
+		await expect(locators.connectionBanner).toBeVisible();
+		await expect(locators.lastUpdate).toBeVisible();
+		for (const control of onAirControls) {
+			await expect(control).toBeDisabled();
+		}
+		await expect(locators.obsHealth).toBeVisible();
+		await expect(locators.scannerHealth).toBeVisible();
+		expect(await locators.takeButton.boundingBox()).toEqual(takeBox);
+
+		await restoreStream();
+
+		await expect(locators.connectionBanner).toBeHidden({ timeout: 15_000 });
+		for (const control of onAirControls) {
+			await expect(control).toBeEnabled();
+		}
+	});
+
+	test("puts a Take made while the OBS source's stream was down on air once it reconnects", async ({
+		page,
+		browser,
+		baseURL,
+		factories,
+	}) => {
+		const tournament = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		const dashboard = new BroadcastDashboardPage(page, pageArgs(tournament.id));
+		await dashboard.goto();
+		const obs = await openObsSource({
+			browser,
+			baseURL: baseURL!,
+			tournamentId: tournament.id,
+			programKey: tournament.programKey,
+		});
+		await expect(obs.program.scene("rosters")).toBeVisible();
+
+		const restoreStream = await obs.program.cutStream();
+		await dashboard.take();
+		await expect(dashboard.viewHeading("live", "game")).toBeVisible();
+		await expect(obs.program.scene("rosters")).toBeVisible();
+
+		await restoreStream();
+		await expect(obs.program.scene("game")).toBeVisible({ timeout: 15_000 });
+
+		await obs.close();
+	});
+
 	test("shows a saved theme on the program", async ({
 		page,
 		browser,

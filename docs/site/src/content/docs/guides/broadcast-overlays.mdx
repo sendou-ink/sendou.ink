@@ -47,6 +47,12 @@ Your URL shows one broadcast at a time, the one where you last pressed **Show th
 
 If the browser source can't load completely, e.g. while sendou.ink restarts for an update, it shows nothing rather than a broken overlay and loads again by itself once sendou.ink answers. Once loaded, it keeps the last scene on air through any outage and catches up when the connection is back.
 
+### When sendou.ink restarts or the connection drops
+
+sendou.ink restarts for every update, and Wi-Fi can drop. Your show keeps its current scene meanwhile: the overlay in OBS stays as it is and catches up with whatever you did as soon as it is connected again, without you touching OBS. The dashboard shows a banner over the page while it is disconnected ("sendou.ink is restarting for an update" during an update, which takes a few seconds), dims the OBS and scanner pills as they may be out of date, and shows next to **Live** when it last heard from sendou.ink. **Take** and the other buttons changing what is on air are off until it is back, as the dashboard can't show what they did. Anything else you press that doesn't reach sendou.ink says "Not done" and changes nothing, so press it again once it's back.
+
+If sendou.ink was updated in a way the open dashboard can't show, it says so: refresh the page to keep running the show from it.
+
 ## Casters' cameras
 
 Add the casters in the dashboard's **Setup** tab, each with their VDO.ninja view link (`https://vdo.ninja/?view=…`):

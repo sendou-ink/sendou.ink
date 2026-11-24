@@ -1,13 +1,18 @@
-import { HEARTBEAT_INTERVAL_MS } from "~/features/events/events-types";
+import * as ServerShutdown from "~/modules/server-shutdown/ServerShutdown.server";
+import { BROADCAST_HEARTBEAT_INTERVAL_MS } from "./broadcast-constants";
 import type { BroadcastStreamMessage } from "./broadcast-types";
 
 const HEARTBEAT_MESSAGE = JSON.stringify({
 	kind: "heartbeat",
 } satisfies BroadcastStreamMessage);
+const RESTART_MESSAGE = JSON.stringify({
+	kind: "restart",
+} satisfies BroadcastStreamMessage);
 
 /**
  * Server-sent events response of a broadcast's stream: the client connected (e.g. to the broadcast's hub with
- * `BroadcastHub.connect`) until it goes away, heartbeats keeping the connection alive.
+ * `BroadcastHub.connect`) until it goes away, heartbeats keeping the connection alive. Ended with a `restart` as the
+ * server shuts down, so the client knows to wait for the next one.
  */
 export function broadcastStreamResponse({
 	request,
@@ -39,13 +44,18 @@ export function broadcastStreamResponse({
 
 			const heartbeat = setInterval(
 				() => write(HEARTBEAT_MESSAGE),
-				HEARTBEAT_INTERVAL_MS,
+				BROADCAST_HEARTBEAT_INTERVAL_MS,
 			);
+			const stopOnShutdown = ServerShutdown.onShutdown(() => {
+				write(RESTART_MESSAGE);
+				close();
+			});
 
 			close = () => {
 				if (closed) return;
 				closed = true;
 				clearInterval(heartbeat);
+				stopOnShutdown();
 				disconnect.abort();
 				try {
 					controller.close();
@@ -76,6 +86,8 @@ export function broadcastStreamResponse({
 			// no-transform keeps compression from buffering the stream
 			"Cache-Control": "no-cache, no-transform",
 			"X-Accel-Buffering": "no",
+			// a socket kept alive after the stream ends would hold up the server closing, e.g. on a deploy
+			Connection: "close",
 		},
 	});
 }

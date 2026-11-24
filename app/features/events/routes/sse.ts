@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as ServerShutdown from "~/modules/server-shutdown/ServerShutdown.server";
 import * as EventBus from "../core/EventBus.server";
 import * as SseConnections from "../core/SseConnections.server";
 import { HEARTBEAT_INTERVAL_MS, userChannel } from "../events-types";
@@ -34,10 +35,14 @@ export const loader = ({ request }: LoaderFunctionArgs) => {
 				send({ kind: "heartbeat" });
 			}, HEARTBEAT_INTERVAL_MS);
 
+			// the browser opens a new connection by itself once it ends
+			const stopOnShutdown = ServerShutdown.onShutdown(() => close());
+
 			close = () => {
 				if (closed) return;
 				closed = true;
 				clearInterval(heartbeat);
+				stopOnShutdown();
 				SseConnections.unregister(connectionId);
 				resubscribe.abort();
 				try {
@@ -87,6 +92,8 @@ export const loader = ({ request }: LoaderFunctionArgs) => {
 			// no-transform keeps compression from buffering the stream
 			"Cache-Control": "no-cache, no-transform",
 			"X-Accel-Buffering": "no",
+			// a socket kept alive after the stream ends would hold up the server closing, e.g. on a deploy
+			Connection: "close",
 		},
 	});
 };

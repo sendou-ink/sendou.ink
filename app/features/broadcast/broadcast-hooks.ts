@@ -1,8 +1,11 @@
 import * as React from "react";
 import * as R from "remeda";
-import { HEARTBEAT_INTERVAL_MS } from "~/features/events/events-types";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useHydrated } from "~/hooks/useHydrated";
+import {
+	BROADCAST_HEARTBEAT_INTERVAL_MS,
+	BROADCAST_STATE_VERSION,
+} from "./broadcast-constants";
 import type {
 	BroadcastAudioFeed,
 	BroadcastState,
@@ -10,16 +13,31 @@ import type {
 } from "./broadcast-types";
 import * as ClipTransfer from "./core/ClipTransfer";
 
-// a connection dropped while the machine was suspended raises no error of its own
-const SILENT_CONNECTION_TIMEOUT_MS = HEARTBEAT_INTERVAL_MS * 2 + 15_000;
-const LIVENESS_CHECK_INTERVAL_MS = 5_000;
+// a connection dropped while the machine was suspended or the network changed raises no error of its own
+const SILENT_CONNECTION_TIMEOUT_MS = BROADCAST_HEARTBEAT_INTERVAL_MS * 2.5;
+const LIVENESS_CHECK_INTERVAL_MS = 2_000;
 const REOPEN_BASE_DELAY_MS = 1_000;
-const REOPEN_MAX_DELAY_MS = 30_000;
+const REOPEN_MAX_DELAY_MS = 5_000;
+
+/** How the stream of {@link useBroadcastStream} is doing. */
+export type BroadcastConnection =
+	/** As the page loads, before the stream's first message. */
+	| { status: "connecting" }
+	| { status: "connected" }
+	| {
+			status: "lost";
+			/** The server said it is restarting, e.g. for a deploy, rather than the connection dropping. */
+			isRestarting: boolean;
+			/** When the server was last heard from (epoch ms of this clock). */
+			lastHeardAt: number;
+	  };
 
 /**
  * Latest state of the broadcast pushed over its stream, starting from the loader's. The last state is
  * kept while disconnected and the stream is reopened with backoff, the server sends a fresh state on reconnect.
- * Also how far ahead the server's clock is of this one's (`clockOffsetMs`), to time the scenes by.
+ * States of another version than this code's (see `BROADCAST_STATE_VERSION`) are not shown, the last one of its own
+ * staying instead and `isOutdated` telling it apart. Also how far ahead the server's clock is of this one's
+ * (`clockOffsetMs`), to time the scenes by.
  */
 export function useBroadcastStream<
 	Initial extends BroadcastState | null,
@@ -32,11 +50,14 @@ export function useBroadcastStream<
 	url: string;
 	/** `null` while there is none yet, e.g. an OBS URL not pointed at a broadcast. */
 	initialState: Initial;
-	/** Gets the messages other than heartbeats and reconnects, the states too, e.g. for clip signaling. */
+	/** Gets the messages other than heartbeats, reconnects and restarts, the states shown too, e.g. for clip signaling. */
 	onMessage?: (message: BroadcastStreamMessage<State>) => void;
 }) {
 	const [state, setState] = React.useState<State | Initial>(initialState);
-	const [isConnected, setIsConnected] = React.useState(false);
+	const [connection, setConnection] = React.useState<BroadcastConnection>({
+		status: "connecting",
+	});
+	const [isOutdated, setIsOutdated] = React.useState(false);
 	const [clockOffsetMs, setClockOffsetMs] = React.useState(0);
 	const onMessageRef = React.useRef(onMessage);
 	React.useLayoutEffect(() => {
@@ -48,28 +69,64 @@ export function useBroadcastStream<
 		let reopenTimeout: ReturnType<typeof setTimeout> | undefined;
 		let failedReopens = 0;
 		let lastMessageAt = Date.now();
+		// when the current connection was opened or last heard from, what tells a silently dead one
+		let aliveAt = Date.now();
+		let isConnected = false;
+		let isLost = false;
+		let isRestarting = false;
+
+		const lose = () => {
+			if (isLost) return;
+			isLost = true;
+			isConnected = false;
+			setConnection({
+				status: "lost",
+				isRestarting,
+				lastHeardAt: lastMessageAt,
+			});
+		};
 
 		const open = () => {
-			lastMessageAt = Date.now();
+			aliveAt = Date.now();
 			source = new EventSource(url);
 			source.onmessage = (event) => {
 				lastMessageAt = Date.now();
+				aliveAt = lastMessageAt;
 				failedReopens = 0;
-				setIsConnected(true);
 
 				const message = JSON.parse(event.data) as BroadcastStreamMessage<State>;
+				if (message.kind === "restart") {
+					isRestarting = true;
+					lose();
+					reopen();
+					return;
+				}
+				if (!isConnected) {
+					isConnected = true;
+					isLost = false;
+					isRestarting = false;
+					setConnection({ status: "connected" });
+				}
 				if (message.kind === "reconnect") {
 					reopen();
+					return;
+				}
+				// a state of another version, the server's code being newer, isn't this code's to show
+				if (
+					message.kind === "state" &&
+					message.state.v !== BROADCAST_STATE_VERSION
+				) {
 					return;
 				}
 				if (message.kind === "state") setState(message.state);
 				if (message.kind !== "heartbeat") onMessageRef.current?.(message);
 				if (message.kind === "hello") {
 					setClockOffsetMs(message.now - Date.now());
+					setIsOutdated(message.v !== BROADCAST_STATE_VERSION);
 				}
 			};
 			source.onerror = () => {
-				setIsConnected(false);
+				lose();
 				// CLOSED means the browser gave up reconnecting on its own, e.g. after a non-200 response
 				if (source?.readyState === EventSource.CLOSED) reopen();
 			};
@@ -79,38 +136,56 @@ export function useBroadcastStream<
 			source?.close();
 			source = null;
 			clearTimeout(reopenTimeout);
-			reopenTimeout = setTimeout(
-				open,
-				Math.min(
-					REOPEN_BASE_DELAY_MS * 2 ** failedReopens,
-					REOPEN_MAX_DELAY_MS,
-				),
-			);
+			reopenTimeout = setTimeout(open, reopenDelay(failedReopens));
 			failedReopens++;
 		};
 
+		const reopenNow = () => {
+			if (isConnected) return;
+
+			source?.close();
+			clearTimeout(reopenTimeout);
+			failedReopens = 0;
+			open();
+		};
+
 		const livenessCheck = setInterval(() => {
-			if (
-				!source ||
-				Date.now() - lastMessageAt < SILENT_CONNECTION_TIMEOUT_MS
-			) {
+			if (!source || Date.now() - aliveAt < SILENT_CONNECTION_TIMEOUT_MS) {
 				return;
 			}
 
-			setIsConnected(false);
+			lose();
 			reopen();
 		}, LIVENESS_CHECK_INTERVAL_MS);
 
 		open();
+		window.addEventListener("online", reopenNow);
 
 		return () => {
 			clearInterval(livenessCheck);
 			clearTimeout(reopenTimeout);
+			window.removeEventListener("online", reopenNow);
 			source?.close();
 		};
 	}, [url]);
 
-	return { state, isConnected, clockOffsetMs };
+	return {
+		state,
+		connection,
+		isConnected: connection.status === "connected",
+		isOutdated,
+		clockOffsetMs,
+	};
+}
+
+/** Backoff of reopening the stream, jittered so a server coming back isn't hit by every client at once. */
+function reopenDelay(failedReopens: number) {
+	const delay = Math.min(
+		REOPEN_BASE_DELAY_MS * 2 ** failedReopens,
+		REOPEN_MAX_DELAY_MS,
+	);
+
+	return delay / 2 + Math.random() * (delay / 2);
 }
 
 /** The server's clock (epoch ms) ticking every second, `null` until hydrated as the server rendered another time. */
