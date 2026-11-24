@@ -110,8 +110,7 @@ export async function resolveSidebarData(user: AuthenticatedUser | undefined) {
 		};
 	}
 
-	const tournamentsData =
-		await ShowcaseTournaments.categorizedTournamentsByUserId(userId);
+	const tournamentsData = await ShowcaseTournaments.upcomingOfUser(userId);
 	const scrimsData = await ScrimPostRepository.findUserScrims(userId);
 	const friendsWithActivity =
 		await FriendRepository.findByUserIdWithActivity(userId);

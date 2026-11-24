@@ -19,13 +19,6 @@ import {
 import type { CommonUser } from "~/utils/kysely.server";
 import { tournamentPage } from "~/utils/urls";
 
-interface ShowcaseTournamentCollection {
-	participatingFor: ShowcaseCalendarEvent[];
-	organizingFor: ShowcaseCalendarEvent[];
-	showcase: ShowcaseCalendarEvent[];
-	results: ShowcaseCalendarEvent[];
-}
-
 interface ParticipationInfo {
 	participants: Set<ShowcaseCalendarEvent["id"]>;
 	organizers: Set<ShowcaseCalendarEvent["id"]>;
@@ -36,9 +29,27 @@ export async function upcomingTournaments(): Promise<ShowcaseCalendarEvent[]> {
 	return tournaments.upcoming;
 }
 
-export async function categorizedTournamentsByUserId(
-	userId: number | null,
-): Promise<ShowcaseTournamentCollection> {
+/** Front page: the showcased upcoming tournaments and the recent results. */
+export async function frontPageTournaments(): Promise<{
+	showcase: ShowcaseCalendarEvent[];
+	results: ShowcaseCalendarEvent[];
+}> {
+	const tournaments = await cachedTournaments();
+
+	return {
+		showcase: await showcaseTournamentsBetween({
+			from: databaseTimestampSixHoursAgo(),
+			to: databaseTimestampWeekFromNow(),
+		}),
+		results: tournaments.results,
+	};
+}
+
+/** The upcoming tournaments the user organizes and the non-hidden ones they play in. */
+export async function upcomingOfUser(userId: number): Promise<{
+	organizingFor: ShowcaseCalendarEvent[];
+	participatingFor: ShowcaseCalendarEvent[];
+}> {
 	const tournaments = await cachedTournaments();
 	const participation = await cachedParticipationInfo(
 		userId,
@@ -53,19 +64,6 @@ export async function categorizedTournamentsByUserId(
 			(tournament) =>
 				!tournament.hidden && participation.participants.has(tournament.id),
 		),
-		showcase: await resolveShowcaseTournaments(
-			tournaments.upcoming.filter(
-				(tournament) =>
-					!tournament.hidden &&
-					!participation.organizers.has(tournament.id) &&
-					!participation.participants.has(tournament.id),
-			),
-			{
-				from: databaseTimestampSixHoursAgo(),
-				to: databaseTimestampWeekFromNow(),
-			},
-		),
-		results: tournaments.results,
 	};
 }
 
@@ -159,13 +157,9 @@ export async function refreshCachedTournamentCounts(tournamentId: number) {
 }
 
 async function cachedParticipationInfo(
-	userId: number | null,
+	userId: number,
 	tournaments: ShowcaseCalendarEvent[],
 ): Promise<ParticipationInfo> {
-	if (!userId) {
-		return emptyParticipationInfo();
-	}
-
 	if (participationInfoMap) {
 		return participationInfoMap.get(userId) ?? emptyParticipationInfo();
 	}

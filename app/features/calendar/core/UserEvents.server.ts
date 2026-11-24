@@ -24,8 +24,7 @@ export type ByCategory = Record<ViewFilter, Array<SidebarEvent>>;
 
 /** The user's upcoming events split into the views of the events page, each sorted by start time. */
 export async function byCategory(userId: number): Promise<ByCategory> {
-	const tournamentsData =
-		await ShowcaseTournaments.categorizedTournamentsByUserId(userId);
+	const tournamentsData = await ShowcaseTournaments.upcomingOfUser(userId);
 	const scrimsData = await ScrimPostRepository.findUserScrims(userId);
 	const savedTournaments =
 		await SavedCalendarEventRepository.findAllUpcomingByUserId(userId);

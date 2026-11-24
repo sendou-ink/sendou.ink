@@ -39,8 +39,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		};
 	}
 
-	const tournaments =
-		await ShowcaseTournaments.categorizedTournamentsByUserId(null);
+	const tournaments = await ShowcaseTournaments.frontPageTournaments();
 	const changelog = await cachified({
 		key: "front-changelog",
 		cache,
