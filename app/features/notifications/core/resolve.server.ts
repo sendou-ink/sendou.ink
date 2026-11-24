@@ -22,6 +22,7 @@ const RESOLUTION_TRIGGERS = {
 		"responds to the ready check, or it ends (match created or the check expired)",
 	SQ_NEW_MATCH: "visits the match page",
 	TO_ADDED_TO_TEAM: null,
+	TO_TEAM_MEMBER_LEFT: null,
 	TO_BRACKET_STARTED: "visits the tournament's brackets page",
 	TO_CHECK_IN_OPENED: "their team checks in (by a member or the organizer)",
 	TO_TEST_CREATED: null,

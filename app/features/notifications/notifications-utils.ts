@@ -70,6 +70,7 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 		case "COMMISSIONS_CLOSED":
 			return "art";
 		case "TO_ADDED_TO_TEAM":
+		case "TO_TEAM_MEMBER_LEFT":
 		case "TO_BRACKET_STARTED":
 		case "TO_CHECK_IN_OPENED":
 		case "TO_TEST_CREATED":
@@ -158,6 +159,7 @@ export const notificationLink = (
 			});
 		case "TO_TEST_CREATED":
 		case "TO_CHECK_IN_OPENED":
+		case "TO_TEAM_MEMBER_LEFT":
 			return tournamentRegisterPage(notification.meta.tournamentId);
 		case "SCRIM_NEW_REQUEST":
 		case "SCRIM_AUTO_DELETED": {

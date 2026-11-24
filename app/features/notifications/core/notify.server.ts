@@ -25,6 +25,7 @@ const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
 	SQ_NEW_MATCH: "high",
 	SQ_READY_CHECK: "high",
 	TO_ADDED_TO_TEAM: "normal",
+	TO_TEAM_MEMBER_LEFT: "normal",
 	TO_BRACKET_STARTED: "high",
 	TO_CHECK_IN_OPENED: "high",
 	TO_TEST_CREATED: "normal",

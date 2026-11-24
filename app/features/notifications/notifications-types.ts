@@ -23,6 +23,15 @@ export type Notification =
 			}
 	  >
 	| NotificationItem<
+			"TO_TEAM_MEMBER_LEFT",
+			{
+				tournamentId: number;
+				tournamentName: string;
+				teamName: string;
+				leaverUsername: string;
+			}
+	  >
+	| NotificationItem<
 			"TO_BRACKET_STARTED",
 			{
 				tournamentId: number;

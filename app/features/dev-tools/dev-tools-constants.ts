@@ -45,6 +45,14 @@ export const SAMPLE_NOTIFICATIONS: {
 			tournamentTeamId: 1,
 		},
 	},
+	TO_TEAM_MEMBER_LEFT: {
+		type: "TO_TEAM_MEMBER_LEFT",
+		meta: {
+			...SAMPLE_TOURNAMENT,
+			teamName: "Team Olive",
+			leaverUsername: "Sendou",
+		},
+	},
 	TO_BRACKET_STARTED: {
 		type: "TO_BRACKET_STARTED",
 		meta: { ...SAMPLE_TOURNAMENT, bracketIdx: 0, bracketName: "Main bracket" },

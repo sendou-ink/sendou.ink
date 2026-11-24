@@ -1,5 +1,5 @@
 import { addDays, addMinutes, subMinutes } from "date-fns";
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
@@ -8,6 +8,8 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as LobbyActivity from "~/features/lobbies/core/LobbyActivity.server";
+import { clearSentNotificationsForTesting } from "~/features/notifications/core/notify.server";
+import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import {
 	tournamentChannel,
 	tournamentTeamChannel,
@@ -196,5 +198,97 @@ describe("Tournament registration CHECK_IN", () => {
 		expect(ChatSystemMessage.send).toHaveBeenCalledWith({
 			channel: tournamentChannel(tournament.id),
 		});
+	});
+});
+
+describe("Tournament registration LEAVE_TEAM", () => {
+	const LEAVER_USERNAME = "Leaver";
+	const TEAM_NAME = "Chimera";
+
+	beforeEach(() => {
+		clearSentNotificationsForTesting();
+	});
+
+	/** Open tournament with a 4-player team the submitting user is a non-captain member of. */
+	const leaveScenario = async ({
+		isTest = false,
+	}: {
+		isTest?: boolean;
+	} = {}) => {
+		const leaver = await UserFactory.createRegular({
+			defaultName: LEAVER_USERNAME,
+		});
+		const [captain, ...teammates] = await UserFactory.createMany(3);
+		const tournament = await TournamentFactory.create({
+			authorId: captain.id,
+			startTimes: [dateToDatabaseTimestamp(addDays(new Date(), 7))],
+			isTest,
+		});
+		await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			team: { name: TEAM_NAME, prefersNotToHost: 0, teamId: null },
+			memberUserIds: [
+				captain.id,
+				leaver.id,
+				...teammates.map((user) => user.id),
+			],
+		});
+
+		return {
+			tournamentId: tournament.id,
+			leaverId: leaver.id,
+			remainingMemberIds: [captain.id, ...teammates.map((user) => user.id)],
+			leave: async () => {
+				await register(
+					{ _action: "LEAVE_TEAM" },
+					{ user: "regular", params: { id: String(tournament.id) } },
+				);
+
+				expect(await memberCountOfOnlyTeam(tournament.id)).toBe(3);
+			},
+		};
+	};
+
+	const teamMemberLeftNotificationsOf = async (userId: number) =>
+		(await NotificationRepository.findByUserId(userId)).filter(
+			(notification) => notification.type === "TO_TEAM_MEMBER_LEFT",
+		);
+
+	test("notifies the remaining members of who left which team", async () => {
+		const { leave, remainingMemberIds, tournamentId } = await leaveScenario();
+
+		await leave();
+
+		for (const userId of remainingMemberIds) {
+			expect(await teamMemberLeftNotificationsOf(userId)).toEqual([
+				expect.objectContaining({
+					meta: expect.objectContaining({
+						tournamentId,
+						teamName: TEAM_NAME,
+						leaverUsername: LEAVER_USERNAME,
+					}),
+				}),
+			]);
+		}
+	});
+
+	test("does not notify the member who left", async () => {
+		const { leave, leaverId } = await leaveScenario();
+
+		await leave();
+
+		expect(await teamMemberLeftNotificationsOf(leaverId)).toEqual([]);
+	});
+
+	test("does not notify in a test tournament", async () => {
+		const { leave, remainingMemberIds } = await leaveScenario({
+			isTest: true,
+		});
+
+		await leave();
+
+		for (const userId of remainingMemberIds) {
+			expect(await teamMemberLeftNotificationsOf(userId)).toEqual([]);
+		}
 	});
 });

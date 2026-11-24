@@ -2,6 +2,7 @@ import * as R from "remeda";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
@@ -215,6 +216,24 @@ export const action = defineAction(
 
 				PendingCheckIns.clearCache();
 				statusChangedUserIds = [user.id];
+
+				if (!tournament.isTest && !tournament.isDraft) {
+					await notify({
+						userIds: teamMemberOf.memberUserIds.filter(
+							(memberUserId) => memberUserId !== user.id,
+						),
+						notification: {
+							type: "TO_TEAM_MEMBER_LEFT",
+							pictureUrl: teamMemberOf.logoUrl ?? tournament.ctx.logoUrl,
+							meta: {
+								tournamentId,
+								tournamentName: tournament.ctx.name,
+								teamName: teamMemberOf.name,
+								leaverUsername: user.username,
+							},
+						},
+					});
+				}
 
 				break;
 			}
