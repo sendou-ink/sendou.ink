@@ -2,6 +2,7 @@ import { db } from "~/db/sql";
 import { CANCELED_MATCH_SEASON } from "~/features/mmr/mmr-constants";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { actAs } from "../core/actAs";
 import { backdate } from "../core/backdate";
@@ -134,6 +135,10 @@ export const { create } = defineFactory({
 
 		if (createdAt) {
 			await backdateSkills(match.id, createdAt);
+			await backdateGroups(
+				[match.alphaGroup.id, match.bravoGroup.id],
+				createdAt,
+			);
 		}
 
 		if (canceledAt) {
@@ -157,6 +162,19 @@ async function backdateSkills(matchId: number, createdAt: Date) {
 	for (const skill of skills) {
 		await backdate("Skill", skill.id, { createdAt });
 	}
+}
+
+/** Season queries find a match through its members' `GroupMember.createdAt`, so the groups move with the match. */
+async function backdateGroups(groupIds: number[], createdAt: Date) {
+	for (const groupId of groupIds) {
+		await backdate("Group", groupId, { createdAt });
+	}
+
+	await db
+		.updateTable("GroupMember")
+		.set({ createdAt: dateToDatabaseTimestamp(createdAt) })
+		.where("groupId", "in", groupIds)
+		.execute();
 }
 
 async function backdateCancellation(matchId: number, canceledAt: Date) {

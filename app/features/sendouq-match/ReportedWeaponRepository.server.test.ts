@@ -1,3 +1,4 @@
+import { addDays } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as SQReportedWeaponFactory from "~/db/seed/factories/SQReportedWeaponFactory";
@@ -12,7 +13,7 @@ import { invariant } from "~/utils/invariant";
 import * as ReportedWeaponRepository from "./ReportedWeaponRepository.server";
 import * as SQMatchRepository from "./SQMatchRepository.server";
 
-const SEASON = Seasons.currentOrPrevious()!.nth;
+const SEASON = Seasons.currentOrPrevious()!;
 const WEAPON_SPL_ID = 40;
 
 const users = UserFactory.pool();
@@ -147,10 +148,13 @@ function reportWeapons(
 }
 
 async function playFirstMapWithWeapon() {
-	const match = await SQMatchFactory.create({
-		alphaUserIds: users.ids().slice(0, FULL_GROUP_SIZE),
-		bravoUserIds: users.ids().slice(FULL_GROUP_SIZE),
-	});
+	const match = await SQMatchFactory.create(
+		{
+			alphaUserIds: users.ids().slice(0, FULL_GROUP_SIZE),
+			bravoUserIds: users.ids().slice(FULL_GROUP_SIZE),
+		},
+		{ createdAt: addDays(SEASON.starts, 1) },
+	);
 
 	const report = await SQMatchRepository.reportMapWinner({
 		matchId: match.id,
@@ -178,6 +182,6 @@ function usageStatsOn(map: { mode: ModeShort; stageId: StageId }) {
 		userId: playerId(),
 		mode: map.mode,
 		stageId: map.stageId,
-		season: SEASON,
+		season: SEASON.nth,
 	});
 }
