@@ -108,7 +108,8 @@ function TeamBanner() {
 						</div>
 					) : null}
 					<div className={styles.bannerNameRow}>
-						{team.name} <BskyLink />
+						<span className={styles.bannerNameText}>{team.name}</span>
+						<BskyLink />
 					</div>
 				</div>
 			</div>

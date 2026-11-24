@@ -152,7 +152,7 @@ function LogoHeader() {
 				url={data.organization.avatarUrl ?? undefined}
 				loading="eager"
 			/>
-			<div className="stack sm">
+			<div className={clsx("stack sm", styles.logoHeaderText)}>
 				<div className="text-xl font-bold">{data.organization.name}</div>
 				{canEditOrganization || currentMember ? (
 					<div className="stack horizontal sm items-start">

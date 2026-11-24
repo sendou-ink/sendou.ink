@@ -336,7 +336,9 @@ function PostTimezonePill({ timezone }: { timezone: string }) {
 
 function PostLanguagePill({ languages }: { languages: UnifiedLanguageCode[] }) {
 	return (
-		<div className={styles.pill}>{languages.join(" / ").toUpperCase()}</div>
+		<div className={clsx(styles.pill, styles.languagePill)}>
+			{languages.join(" / ").toUpperCase()}
+		</div>
 	);
 }
 

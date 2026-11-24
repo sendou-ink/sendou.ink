@@ -417,7 +417,7 @@ function ImagePreview({
 	// whole thing is not a link so we can preview the image
 	if (enablePreview) {
 		return (
-			<div>
+			<div className="min-w-0">
 				{img}
 				<div
 					className={clsx(
@@ -427,16 +427,21 @@ function ImagePreview({
 				>
 					<Link
 						to={userArtPage(art.author, "MADE-BY")}
-						className={clsx("stack sm horizontal text-xs items-center", {
-							invisible: !imageSettled,
-						})}
+						className={clsx(
+							"stack sm horizontal text-xs items-center min-w-0",
+							{
+								invisible: !imageSettled,
+							},
+						)}
 					>
 						<Avatar user={art.author} size="xxs" />
-						{t("art:madeBy")} {art.author.username}
+						<span className="truncate">
+							{t("art:madeBy")} {art.author.username}
+						</span>
 					</Link>
 					{uploadDateText ? (
 						<div
-							className={clsx("text-xs text-lighter", {
+							className={clsx("text-xs text-lighter whitespace-nowrap", {
 								invisible: !imageSettled,
 							})}
 						>
@@ -468,20 +473,20 @@ function ImagePreview({
 	}
 
 	return (
-		<Link to={userArtPage(art.author, "MADE-BY")}>
+		<Link to={userArtPage(art.author, "MADE-BY")} className="min-w-0">
 			{img}
-			<div className="stack horizontal justify-between items-center mt-1">
+			<div className="stack horizontal sm justify-between items-center mt-1">
 				<div
-					className={clsx("stack sm horizontal text-xs items-center", {
+					className={clsx("stack sm horizontal text-xs items-center min-w-0", {
 						invisible: !imageSettled,
 					})}
 				>
 					<Avatar user={art.author} size="xxs" />
-					{art.author.username}
+					<span className="truncate">{art.author.username}</span>
 				</div>
 				{uploadDateText ? (
 					<div
-						className={clsx("text-xxs text-lighter", {
+						className={clsx("text-xxs text-lighter whitespace-nowrap", {
 							invisible: !imageSettled,
 						})}
 					>

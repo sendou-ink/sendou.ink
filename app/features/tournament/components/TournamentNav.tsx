@@ -115,7 +115,9 @@ export function TournamentNav({
 				<div className={styles.identityText}>
 					<span className={clsx(styles.identityName, "truncate")}>{name}</span>
 					{subtext ? (
-						<span className={styles.identitySubtext}>{subtext}</span>
+						<span className={styles.identitySubtext}>
+							<span className="truncate">{subtext}</span>
+						</span>
 					) : null}
 				</div>
 			</NavLink>

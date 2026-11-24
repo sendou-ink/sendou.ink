@@ -14,6 +14,7 @@
 }
 
 .itemTextsContainer {
+	min-width: 0;
 	line-height: 1.1;
 	font-size: var(--font-sm);
 
@@ -38,8 +39,6 @@
 }
 
 .itemTextsContainerWide {
-	min-width: 0;
-
 	& span {
 		max-width: none;
 	}

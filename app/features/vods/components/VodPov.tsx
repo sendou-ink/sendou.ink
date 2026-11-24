@@ -7,13 +7,13 @@ export function PovUser({ pov }: { pov: Vod["pov"] }) {
 	if (!pov) return null;
 
 	if (typeof pov === "string") {
-		return <div className="text-sm">{pov}</div>;
+		return <div className="text-sm truncate">{pov}</div>;
 	}
 
 	return (
-		<Link to={userVodsPage(pov)} className="stack horizontal xs">
+		<Link to={userVodsPage(pov)} className="stack horizontal xs min-w-0">
 			<Avatar user={pov} size="xxs" />
-			<span className="text-sm font-semi-bold">{pov.username}</span>
+			<span className="text-sm font-semi-bold truncate">{pov.username}</span>
 		</Link>
 	);
 }

@@ -82,6 +82,7 @@
 }
 
 .teamSetRoundName {
+	overflow-wrap: anywhere;
 	font-size: var(--font-lg);
 	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
@@ -112,7 +113,7 @@
 .teamSetOpponent {
 	display: grid;
 	grid-template-areas: "vs team" "vs members";
-	grid-template-columns: max-content 1fr;
+	grid-template-columns: max-content minmax(0, 1fr);
 	column-gap: var(--s-4);
 	row-gap: var(--s-2);
 }
@@ -127,6 +128,7 @@
 
 .teamSetOpponentTeam {
 	grid-area: team;
+	overflow-wrap: anywhere;
 	font-size: var(--font-lg);
 	font-weight: var(--weight-semi);
 	color: var(--color-text);
@@ -142,6 +144,7 @@
 .teamSetOpponentMember {
 	display: inline-flex;
 	align-items: center;
+	overflow-wrap: anywhere;
 	gap: var(--s-1-5);
 	font-size: var(--font-xs);
 }

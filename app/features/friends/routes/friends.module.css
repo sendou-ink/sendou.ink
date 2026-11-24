@@ -2,6 +2,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	gap: var(--s-2);
 	padding: var(--s-1) var(--s-2);
 	border-radius: var(--radius-field);
 }
@@ -10,6 +11,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
+	min-width: 0;
 	font-weight: var(--weight-semi);
 	color: var(--color-text);
 }

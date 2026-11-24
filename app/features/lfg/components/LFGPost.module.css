@@ -1,6 +1,6 @@
 .wideLayout {
 	display: grid;
-	grid-template-columns: 1fr;
+	grid-template-columns: minmax(0, 1fr);
 	align-items: flex-start;
 	column-gap: var(--s-6);
 	row-gap: var(--s-2);
@@ -14,7 +14,7 @@
 
 @container (width >= 640px) {
 	.wideLayout {
-		grid-template-columns: 1fr 2fr;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
 		row-gap: 0;
 	}
 
@@ -98,6 +98,14 @@
 	position: relative;
 	flex-shrink: 0;
 	white-space: nowrap;
+}
+
+.languagePill {
+	height: auto;
+	min-height: var(--selector-size-sm);
+	flex-shrink: 1;
+	min-width: 0;
+	white-space: normal;
 }
 
 .pillPlaceholder {

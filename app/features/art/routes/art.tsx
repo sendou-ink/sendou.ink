@@ -104,7 +104,7 @@ export default function ArtPage() {
 			</div>
 			{filteredTag ? (
 				<div className="text-xs text-lighter stack md horizontal items-center">
-					{t("art:filteringByTag", { tag: filteredTag })}
+					<p>{t("art:filteringByTag", { tag: filteredTag })}</p>
 					<SendouButton
 						size="small"
 						variant="minimal-destructive"

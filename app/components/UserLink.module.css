@@ -2,5 +2,11 @@
 	display: inline-flex;
 	align-items: center;
 	gap: var(--s-1-5);
+	min-width: 0;
+	max-width: 100%;
 	color: var(--color-text);
+}
+
+.username {
+	overflow-wrap: anywhere;
 }

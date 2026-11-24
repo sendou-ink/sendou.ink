@@ -40,7 +40,9 @@ export function UserLink({
 			className={clsx(styles.userLink, className)}
 		>
 			<Avatar user={linkedUser} size={size} />
-			{children ?? linkedUser.username}
+			{children ?? (
+				<span className={styles.username}>{linkedUser.username}</span>
+			)}
 		</Link>
 	);
 }

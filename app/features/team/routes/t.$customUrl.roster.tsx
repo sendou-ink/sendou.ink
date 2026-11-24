@@ -159,7 +159,7 @@ function MemberActions() {
 										data-testid={`member-row-username-${index}`}
 									>
 										{member ? <Avatar size="xs" user={member} /> : null}
-										{member?.username}
+										<span className="truncate">{member?.username}</span>
 									</div>
 									<FormField name={`${itemName}.role`} />
 									{(values as { role: string | null }).role ===

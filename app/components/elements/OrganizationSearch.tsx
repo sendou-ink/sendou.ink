@@ -92,7 +92,7 @@ function OrganizationItem({ item }: { item: OrganizationSearchResult }) {
 			textValue={item.name}
 			testId="organization-search-item"
 		>
-			{item.name}
+			<span>{item.name}</span>
 			<SearchSelectItemAdditionalText>
 				/{item.slug}
 			</SearchSelectItemAdditionalText>

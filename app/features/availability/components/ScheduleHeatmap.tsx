@@ -392,7 +392,7 @@ function MemberChip({
 			data-testid={`heatmap-member-${row.userId}`}
 		>
 			<Avatar user={row.member} size="xxxs" />
-			{row.member.username}
+			<span className="truncate">{row.member.username}</span>
 			{!row.reported ? (
 				<span
 					className={styles.chipUnknown}

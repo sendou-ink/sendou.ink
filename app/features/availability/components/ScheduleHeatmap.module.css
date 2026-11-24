@@ -7,6 +7,8 @@
 /* the chip-radio look, as a multi-select: solid fills, no borders */
 .chip {
 	display: inline-flex;
+	max-width: 100%;
+	min-width: 0;
 	align-items: center;
 	gap: var(--s-1-5);
 	padding: 0 var(--s-2) 0 var(--s-1);

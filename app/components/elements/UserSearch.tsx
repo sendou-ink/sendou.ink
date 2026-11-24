@@ -114,7 +114,7 @@ function UserItem({ item }: { item: UserSearchResult }) {
 			testId="user-search-item"
 			leading={<Avatar user={item} size="xxs" />}
 		>
-			{item.name}
+			<span>{item.name}</span>
 			{additionalText() ? (
 				<SearchSelectItemAdditionalText>
 					{additionalText()}

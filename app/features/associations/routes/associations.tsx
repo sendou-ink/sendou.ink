@@ -259,7 +259,7 @@ function AssociationMember({
 
 	return (
 		<div className="stack horizontal sm items-center justify-between">
-			<div className="stack horizontal sm items-center">
+			<div className="stack horizontal sm items-center min-w-0">
 				<UserLink user={member} />
 				{!canStar && member.role === "MANAGER" ? (
 					<Star

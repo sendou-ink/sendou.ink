@@ -1,3 +1,11 @@
+.logoHeaderText {
+	min-width: 0;
+
+	& > * {
+		overflow-wrap: anywhere;
+	}
+}
+
 .sectionDivider {
 	font-size: var(--font-md);
 	font-weight: var(--weight-bold);
@@ -29,7 +37,7 @@
 	gap: var(--s-2);
 	font-weight: var(--weight-semi);
 	color: var(--color-text);
-	width: max-content;
+	width: fit-content;
 	max-width: 100%;
 
 	& img {
@@ -39,7 +47,10 @@
 
 .eventName {
 	min-width: 0;
-	overflow-wrap: anywhere;
+
+	& > * {
+		overflow-wrap: anywhere;
+	}
 }
 
 .eventWinnerName {

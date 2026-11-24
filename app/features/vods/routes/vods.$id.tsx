@@ -93,8 +93,8 @@ export default function VodPage() {
 					autoplay={autoplay}
 				/>
 				<h2 className="text-sm">{data.vod.title}</h2>
-				<div className="stack horizontal justify-between">
-					<div className="stack horizontal sm items-center">
+				<div className="stack horizontal justify-between sm">
+					<div className="stack horizontal sm items-center min-w-0">
 						<PovUser pov={data.vod.pov} />
 						<LocaleTime
 							date={data.vod.youtubePublishedAt}

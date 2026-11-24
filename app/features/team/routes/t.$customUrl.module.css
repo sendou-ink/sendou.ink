@@ -12,6 +12,7 @@
 	aspect-ratio: 2 / 1;
 	display: grid;
 	grid-template-areas: "flags ." "avatar name";
+	grid-template-columns: auto minmax(0, 1fr);
 	padding: var(--s-5);
 	border-radius: var(--radius-box);
 }
@@ -32,6 +33,7 @@
 	grid-area: name;
 	align-self: flex-end;
 	justify-self: flex-end;
+	max-width: 100%;
 	font-size: 36px;
 	line-height: 1;
 	font-weight: var(--weight-bold);
@@ -46,6 +48,15 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-3);
+}
+
+.bannerNameText {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+	text-align: end;
 }
 
 .bskyLink {
@@ -107,6 +118,9 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
+	max-width: 100%;
+	overflow-wrap: anywhere;
+	text-align: center;
 }
 
 .bannerTag {

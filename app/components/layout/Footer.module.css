@@ -188,10 +188,15 @@
 .legal {
 	display: flex;
 	flex-direction: column;
+	max-width: 100%;
 	color: var(--color-text-high);
 	font-size: var(--font-2xs);
 	text-align: center;
 	padding-inline: var(--s-4);
+
+	& a {
+		overflow-wrap: anywhere;
+	}
 }
 
 .versionLink {
