@@ -465,6 +465,45 @@ describe("CastScene", () => {
 		},
 	);
 
+	test.each([
+		{ hasCounterpicks: true, label: "Counterpick" },
+		{ hasCounterpicks: false, label: "To be decided" },
+	])(
+		"says $label on the maps scene's games whose map isn't known yet",
+		async ({ hasCounterpicks, label }) => {
+			const state = stateOf({ ...SCENARIO, scene: "maps", set: "ongoing" });
+			const match = state.match!;
+			const progress = {
+				...match.progress.live,
+				games: match.progress.live.games.map((game, i) =>
+					i >= match.progress.live.gameNumber ? { ...game, map: null } : game,
+				),
+			};
+
+			await render(
+				<BroadcastOverlay
+					sceneSet={CAST_SCENE_SET}
+					state={{
+						...state,
+						match: {
+							...match,
+							hasCounterpicks,
+							progress: { live: progress, next: progress },
+						},
+					}}
+					view="live"
+				/>,
+			);
+
+			const unknown = Array.from(
+				canvas().querySelectorAll('[data-part="game"][data-unknown]'),
+				(game) => game.textContent?.replace(/^\d+/, ""),
+			);
+			expect(unknown.length).toBeGreaterThan(0);
+			expect(unknown.every((text) => text === label)).toBe(true);
+		},
+	);
+
 	test("colors the team swapped to the scoreboard's left, Alpha, in the ink pair's first color", async () => {
 		const state = stateOf({
 			...SCENARIO,

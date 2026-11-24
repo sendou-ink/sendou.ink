@@ -1,6 +1,6 @@
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
-import { ModeImage, StageImage } from "~/components/Image";
+import { Image, ModeImage, StageImage } from "~/components/Image";
 import { useFitText } from "~/features/broadcast/broadcast-hooks";
 import type {
 	BroadcastGame,
@@ -14,6 +14,7 @@ import {
 } from "~/features/broadcast/broadcast-utils";
 import { SetLength } from "~/features/broadcast/components/SetLength";
 import { TeamLogo } from "~/features/broadcast/components/TeamLogo";
+import { UNKNOWN_STAGE_IMAGE_URL } from "~/utils/urls";
 import type { CastBroadcastState } from "../broadcast-cast-types";
 import { scenePart } from "../broadcast-cast-utils";
 import { HoldScene } from "./HoldScene";
@@ -74,6 +75,7 @@ export function MapsScene({
 						number={i + 1}
 						isCurrent={!progress.isOver && progress.gameNumber === i + 1}
 						isSkipped={progress.isOver && game.winner === null}
+						isCounterpick={match.hasCounterpicks && i > 0}
 						winner={sides.find((side) => side.index === game.winner) ?? null}
 						style={{ "--i": i } as React.CSSProperties}
 					/>
@@ -107,6 +109,7 @@ function GameCard({
 	number,
 	isCurrent,
 	isSkipped,
+	isCounterpick,
 	winner,
 	style,
 }: {
@@ -115,6 +118,8 @@ function GameCard({
 	isCurrent: boolean;
 	/** The set ended before it. */
 	isSkipped: boolean;
+	/** Its map is picked by a team after the game before it. */
+	isCounterpick: boolean;
 	winner: MatchSide | null;
 	style: React.CSSProperties;
 }) {
@@ -147,7 +152,15 @@ function GameCard({
 						containerClassName={styles.stageImage}
 					/>
 				) : isSkipped ? null : (
-					<span className={styles.unknownMark}>?</span>
+					<Image
+						path={UNKNOWN_STAGE_IMAGE_URL}
+						alt=""
+						width={320}
+						height={180}
+						loading="eager"
+						className={styles.stageImage}
+						containerClassName={styles.stageImage}
+					/>
 				)}
 				<span className={styles.gameNumber} {...part("game-number")}>
 					{number}
@@ -168,7 +181,9 @@ function GameCard({
 					<span className={styles.stageName}>
 						{isSkipped
 							? t("broadcast:overlay.notPlayed")
-							: t("broadcast:overlay.toBeDecided")}
+							: isCounterpick
+								? t("broadcast:overlay.counterpick")
+								: t("broadcast:overlay.toBeDecided")}
 					</span>
 				)}
 			</div>

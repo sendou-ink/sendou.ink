@@ -502,6 +502,8 @@ export const modeImageUrl = (mode: ModeShortWithSpecial) =>
 	`${STATIC_ASSETS_URL}/img/modes/${mode}`;
 export const stageImageUrl = (stageId: StageId) =>
 	`${STATIC_ASSETS_URL}/img/stages/${stageId}`;
+/** The game's "?" stage tile, for a map not known yet (e.g. a counterpick still to be picked). */
+export const UNKNOWN_STAGE_IMAGE_URL = `${STATIC_ASSETS_URL}/img/stages/unknown`;
 export const stageVideoUrl = (stageId: StageId) =>
 	`${STATIC_ASSETS_URL}/videos/stages/${stageId}.mp4`;
 export const stageBannerImageUrl = (stageId: StageId) =>

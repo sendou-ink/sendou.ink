@@ -96,12 +96,6 @@
 	object-fit: cover;
 }
 
-.unknownMark {
-	color: var(--bc-text-muted);
-	font-size: 64px;
-	font-weight: var(--bc-weight-bold);
-}
-
 .gameNumber {
 	border-bottom-right-radius: var(--bc-radius-small);
 	background: var(--bc-surface);

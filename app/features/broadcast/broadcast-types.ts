@@ -314,6 +314,8 @@ export interface BroadcastMatch {
 	roundName: string | null;
 	countType: "BEST_OF" | "PLAY_ALL";
 	count: number;
+	/** The teams pick the maps of the games after the first during the set, as counterpicks. */
+	hasCounterpicks: boolean;
 	/** In bracket order: `opponentOne` first. `null` when not decided yet. */
 	teams: [BroadcastTeam | null, BroadcastTeam | null];
 	/** As on air (`live`) and as reported (`next`, which a Take puts on air). */

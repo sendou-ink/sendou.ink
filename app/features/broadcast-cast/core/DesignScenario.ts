@@ -733,6 +733,7 @@ function mockMatch({
 		roundName: featuredRoundName(scenario),
 		countType: "BEST_OF",
 		count: scenario.bestOf,
+		hasCounterpicks: false,
 		teams: [teams[FEATURED[0]], teams[FEATURED[1]]],
 		progress: { live: progress, next: progress },
 	};

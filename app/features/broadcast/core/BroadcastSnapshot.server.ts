@@ -1,3 +1,4 @@
+import type { TournamentRoundMaps } from "~/db/tables-json";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { resolveMatchMapList } from "~/features/tournament-match/core/mapList.server";
@@ -136,6 +137,7 @@ export async function featuredMatch({
 		roundName: names.roundNameWithoutMatchIdentifier ?? null,
 		countType: match.roundMaps.type,
 		count: match.roundMaps.count,
+		hasCounterpicks: hasCounterpicks(match.roundMaps),
 		teams: [team(match.opponentOne), team(match.opponentTwo)],
 		progress: {
 			live: progressAt(
@@ -148,6 +150,21 @@ export async function featuredMatch({
 			next: progressAt(results.length),
 		},
 	};
+}
+
+function hasCounterpicks(maps: TournamentRoundMaps) {
+	switch (maps.pickBan) {
+		case "COUNTERPICK":
+		case "COUNTERPICK_MODE_REPEAT_OK":
+			return true;
+		case "CUSTOM":
+			return (maps.customFlow?.postGame ?? []).some(
+				(step) =>
+					step.action === "PICK" || step.action === "PICK_NO_MODE_REPEAT",
+			);
+		default:
+			return false;
+	}
 }
 
 /** The tournament team as the overlays show it, with its active roster. */

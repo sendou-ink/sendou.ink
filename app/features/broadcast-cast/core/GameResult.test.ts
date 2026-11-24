@@ -369,6 +369,7 @@ function resolve({
 		roundName: null,
 		countType: "BEST_OF",
 		count: 5,
+		hasCounterpicks: false,
 		teams: [ALPHA, BRAVO],
 		progress: { live: progress, next: progress },
 	};

@@ -138,6 +138,14 @@
 	gap: 4px;
 	min-height: 98px;
 	padding: 14px 18px;
+
+	/* a game without a map says why in the middle of the space under its picture */
+	[data-unknown] > & {
+		align-items: center;
+		justify-content: center;
+		margin-block: auto;
+		text-align: center;
+	}
 }
 
 .mode {
