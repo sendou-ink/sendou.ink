@@ -1,7 +1,8 @@
-import { rating } from "openskill";
+import { ordinal, rating } from "openskill";
 import { describe, expect, test } from "vitest";
-import type { PlayerRole } from "./PlayerRoles";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import * as TeamShuffle from "./TeamShuffle";
+import { setOf } from "./tests/fixtures";
 
 const NO_HISTORY = TeamShuffle.teammateHistory([]);
 
@@ -39,6 +40,11 @@ const split = (alpha: TeamShuffle.ShufflePlayer[]) => {
 };
 
 const evenSplit = split(players(4));
+
+const ordinalOf = (
+	ratings: ReturnType<typeof TeamShuffle.ratings>,
+	userId: number,
+) => ordinal(TeamShuffle.ratingOf(ratings, userId));
 
 describe("TeamShuffle.shuffle", () => {
 	test("splits 8 players 4v4 with nobody sitting out", () => {
@@ -212,7 +218,7 @@ describe("TeamShuffle.pickSitOuts", () => {
 });
 
 describe("TeamShuffle.roleStackCost", () => {
-	const withRoles = (userId: number, roles: PlayerRole[]) =>
+	const withRoles = (userId: number, roles: TeamShuffle.PlayerRole[]) =>
 		player(userId, { roles });
 
 	test.each([
@@ -248,8 +254,8 @@ describe("TeamShuffle.roleStackCost", () => {
 		},
 	] as Array<{
 		why: string;
-		alpha: PlayerRole[][];
-		bravo: PlayerRole[][];
+		alpha: TeamShuffle.PlayerRole[][];
+		bravo: TeamShuffle.PlayerRole[][];
 		expected: number;
 	}>)("$why", ({ alpha, bravo, expected }) => {
 		expect(
@@ -348,5 +354,111 @@ describe("TeamShuffle.splitCost", () => {
 				2 * TeamShuffle.BACKLINE_STACK_WEIGHT +
 				2 * TeamShuffle.TACTICOOLER_STACK_WEIGHT,
 		);
+	});
+});
+
+describe("TeamShuffle.ratings", () => {
+	test("everyone starts equal", () => {
+		const ratings = TeamShuffle.ratings([]);
+
+		expect(ordinalOf(ratings, 1)).toBe(ordinalOf(ratings, 5));
+	});
+
+	test("winners go up and losers down", () => {
+		const ratings = TeamShuffle.ratings([
+			setOf({ winners: ["ALPHA", "ALPHA"], confirmed: true }),
+		]);
+
+		const startingOrdinal = ordinalOf(TeamShuffle.ratings([]), 1);
+
+		expect(ordinalOf(ratings, 1)).toBeGreaterThan(startingOrdinal);
+		expect(ordinalOf(ratings, 5)).toBeLessThan(startingOrdinal);
+	});
+
+	test("ignores sets not yet confirmed", () => {
+		const ratings = TeamShuffle.ratings([
+			setOf({ winners: ["ALPHA", "ALPHA"] }),
+		]);
+
+		expect(ratings.size).toBe(0);
+	});
+
+	test("winning 2-1 counts as 3 wins and 1 loss", () => {
+		const twoOne = TeamShuffle.ratings([
+			setOf({ winners: ["ALPHA", "BRAVO", "ALPHA"], confirmed: true }),
+		]);
+		// the same map results in order, the set win being the last "map"
+		const threeWinsOneLoss = TeamShuffle.ratings([
+			setOf({
+				winners: ["ALPHA", "BRAVO", "ALPHA", "ALPHA"],
+				bestOf: 9,
+				confirmed: true,
+			}),
+		]);
+
+		expect(ordinalOf(twoOne, 1)).toBeCloseTo(ordinalOf(threeWinsOneLoss, 1));
+		expect(ordinalOf(twoOne, 5)).toBeCloseTo(ordinalOf(threeWinsOneLoss, 5));
+	});
+
+	test("a forfeit rates the maps played and the set win of the side that stayed", () => {
+		const ratings = TeamShuffle.ratings([
+			setOf({ winners: ["ALPHA"], forfeitingSide: "ALPHA" }),
+		]);
+		const alphaOnly = TeamShuffle.ratings([
+			setOf({ winners: ["ALPHA"], bestOf: 1, confirmed: true }),
+		]);
+
+		// 1 map win and a set loss ends up level-ish, below a clean map + set win
+		expect(ordinalOf(ratings, 1)).toBeLessThan(ordinalOf(alphaOnly, 1));
+		expect(ordinalOf(ratings, 5)).toBeGreaterThan(ordinalOf(alphaOnly, 5));
+	});
+
+	test("players sitting out aren't rated", () => {
+		const ratings = TeamShuffle.ratings([
+			setOf({ winners: ["ALPHA", "ALPHA"], confirmed: true, sittingOut: [9] }),
+		]);
+
+		expect(ratings.has(9)).toBe(false);
+	});
+});
+
+describe("TeamShuffle.ratingOf", () => {
+	test("is the default rating for someone without a rated set", () => {
+		const ratings = TeamShuffle.ratings([
+			setOf({ winners: ["ALPHA", "ALPHA"], confirmed: true }),
+		]);
+
+		expect(TeamShuffle.ratingOf(ratings, 9)).toEqual(rating());
+	});
+});
+
+// 40 Splattershot, 60 Splash-o-matic (Tacticooler), 1020 Dynamo Roller (Tacticooler), 2010 Splat Charger, 4020 Hydra Splatling, 8000 Splatana Stamper
+describe("TeamShuffle.rolesFromWeaponPool", () => {
+	test.each([
+		{ why: "empty pool", pool: [], expected: [] },
+		{ why: "a shooter", pool: [40], expected: [] },
+		{
+			why: "mostly long range",
+			pool: [2010, 4020, 40],
+			expected: ["BACKLINE", "BACKLINE_IN_POOL"],
+		},
+		{
+			why: "half isn't mostly",
+			pool: [2010, 40],
+			expected: ["BACKLINE_IN_POOL"],
+		},
+		{ why: "splatana despite its range", pool: [8000], expected: [] },
+		{
+			why: "mostly Tacticooler kits",
+			pool: [60, 1020, 40],
+			expected: ["TACTICOOLER"],
+		},
+		{ why: "half Tacticooler isn't mostly", pool: [60, 40], expected: [] },
+	] as Array<{
+		why: string;
+		pool: MainWeaponId[];
+		expected: TeamShuffle.PlayerRole[];
+	}>)("$why", ({ pool, expected }) => {
+		expect(TeamShuffle.rolesFromWeaponPool(pool)).toEqual(expected);
 	});
 });

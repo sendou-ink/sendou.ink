@@ -1343,8 +1343,8 @@ test.describe("Lobbies", () => {
 	/**
 	 * The host kicks participants, who are told so and can't sign up for the lobby again, a
 	 * player kicked mid-set forfeiting it for their team. The host also sits players of the
-	 * room out of the sets until resumed, changes the best of from the next set on and ends
-	 * the lobby. The host can hand hosting over to another participant, which
+	 * room out of the sets until resumed, changes the best of from the next set on, edits the
+	 * lobby's settings (other settings kept as they were) and ends the lobby. The host can hand hosting over to another participant, which
 	 * the lobby's chat tells everyone. When the host leaves, the participant who signed up the
 	 * earliest becomes the host and is notified of it.
 	 */
@@ -1557,6 +1557,28 @@ test.describe("Lobbies", () => {
 			});
 		});
 
+		test("the host renames the lobby on its edit page, its other settings kept", async ({
+			page,
+			factories,
+		}) => {
+			await factories.UserFactory.setFriendCode(ADMIN_ID);
+
+			await impersonate(page, ADMIN_ID);
+			const newLobby = new NewLobbyPage(page);
+			await newLobby.goto();
+			await newLobby.form.fill("name", LOBBY_NAME);
+			await newLobby.selectWeaponRandomizer("Balanced");
+			await newLobby.save();
+
+			const lobbyPage = new LobbyPage(page);
+			await lobbyPage.rename("Renamed 8s");
+
+			await expect(lobbyPage.heading("Renamed 8s")).toBeVisible();
+			await expect(lobbyPage.locators.weaponRandomizer).toHaveText(
+				"Balanced random",
+			);
+		});
+
 		test("the host ends the lobby", async ({ page, factories }) => {
 			const host = await factories.UserFactory.create();
 			const lobby = await factories.LobbyFactory.create({
@@ -1678,13 +1700,31 @@ test.describe("Lobbies", () => {
 
 			await expect(lobbyPage.locators.applyButton).toBeVisible();
 		});
+
+		test("no longer requiring applying signs up everyone still waiting", async ({
+			page,
+			factories,
+		}) => {
+			const host = await factories.UserFactory.create();
+			const firstApplicant = await factories.UserFactory.create();
+			const secondApplicant = await factories.UserFactory.create();
+			const lobby = await factories.LobbyFactory.create(
+				{ hostUserId: host.id, isApplicationRequired: true },
+				{ appliedUserIds: [firstApplicant.id, secondApplicant.id] },
+			);
+			const lobbyPage = new LobbyPage(page);
+
+			await impersonate(page, host.id);
+			await lobbyPage.goto(lobby.id);
+			await expect(lobbyPage.locators.applications).toHaveCount(2);
+			await lobbyPage.stopRequiringApplying();
+
+			await isNotVisible(lobbyPage.locators.applicationRequired);
+			await expect(lobbyPage.locators.applications).toHaveCount(0);
+			await expect(lobbyPage.locators.participants).toHaveCount(3);
+		});
 	});
 
-	/**
-	 * A lobby has a chat for everyone in it and one per team, a team's chat reaching only its
-	 * players. Every set starts with fresh team chats while the lobby's chat carries on. The
-	 * lobby page opens a player's two chats side by side.
-	 */
 	/**
 	 * The host picks a weapon randomizer when making the lobby or between sets. When a set starts it rolls 4 weapons
 	 * for each team, its players deciding who plays which: chaotic any weapons, balanced ones that even out the teams.
@@ -1711,28 +1751,6 @@ test.describe("Lobbies", () => {
 			const lobbies = new LobbiesPage(page);
 			await lobbies.goto();
 			await expect(lobbies.weaponRandomizer(LOBBY_NAME)).toHaveText(
-				"Balanced random",
-			);
-		});
-
-		test("the host renames the lobby on its edit page, its other settings kept", async ({
-			page,
-			factories,
-		}) => {
-			await factories.UserFactory.setFriendCode(ADMIN_ID);
-
-			await impersonate(page, ADMIN_ID);
-			const newLobby = new NewLobbyPage(page);
-			await newLobby.goto();
-			await newLobby.form.fill("name", LOBBY_NAME);
-			await newLobby.selectWeaponRandomizer("Balanced");
-			await newLobby.save();
-
-			const lobbyPage = new LobbyPage(page);
-			await lobbyPage.rename("Renamed 8s");
-
-			await expect(lobbyPage.heading("Renamed 8s")).toBeVisible();
-			await expect(lobbyPage.locators.weaponRandomizer).toHaveText(
 				"Balanced random",
 			);
 		});

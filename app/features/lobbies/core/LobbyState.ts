@@ -9,6 +9,7 @@ import {
 	type LobbyParticipantStatus,
 	PLAYERS_PER_SET,
 } from "../lobbies-constants";
+import * as LobbySet from "./LobbySet";
 
 /**
  * - `UPCOMING`: before check-in opens, people sign up
@@ -160,7 +161,7 @@ export function nextHost<T extends { userId: number; joinedAt: number }>(
 	return first?.userId ?? null;
 }
 
-/** What the viewer may do on the lobby page, see {@link viewerActions}. */
+/** What the viewer may do on the lobby page, see {@link viewerState}. */
 export interface ViewerActions {
 	/** Sign up, or apply to a lobby requiring it */
 	SIGN_UP: boolean;
@@ -171,7 +172,75 @@ export interface ViewerActions {
 	DROP_AFTER_SET: boolean;
 }
 
-/** What the viewer may do in the lobby right now. */
+/**
+ * The lobby's status and what the viewer may do in it right now, the one place the lobby page and its action decide
+ * the viewer's gates from. `side` is the viewer's side of the set being played while in the room.
+ */
+export function viewerState({
+	lobby,
+	sets,
+	viewer,
+	hasFriendCode,
+	now,
+}: {
+	lobby: {
+		startsAt: number;
+		endedAt: number | null;
+		checkInOpenedAt: number | null;
+		roomSize: number;
+		participants: Array<{ status: LobbyParticipantStatus }>;
+		/** The host kicked the viewer out of the lobby */
+		isViewerKicked: boolean;
+		/** The viewer's application to the lobby, while it requires applying */
+		viewerApplication: LobbyApplicationState | null;
+	};
+	/** The lobby's sets, oldest first */
+	sets: LobbySet.SetLike[];
+	/** The viewer as a participant of the lobby, `null` if they aren't one */
+	viewer: { id: number; status: LobbyParticipantStatus } | null;
+	hasFriendCode: boolean;
+	now: number;
+}) {
+	const latestSet = sets.at(-1) ?? null;
+	const isPlaying = latestSet !== null && !LobbySet.isFinished(latestSet);
+	const { status: lobbyStatus, isCheckInOpen: checkInOpen } = statusAndCheckIn({
+		lobby,
+		participants: lobby.participants,
+		isPlaying,
+		now,
+	});
+
+	const side =
+		latestSet && viewer?.status === "IN_ROOM"
+			? LobbySet.sideOf(latestSet, viewer.id)
+			: null;
+	const isPlayingUnfinishedSet = isPlaying && side !== null;
+
+	return {
+		status: lobbyStatus,
+		isCheckInOpen: checkInOpen,
+		side,
+		isPlayingUnfinishedSet,
+		actions: viewerActions({
+			status: lobbyStatus,
+			viewer,
+			isPlayingUnfinishedSet,
+			hasFriendCode,
+			isKicked: lobby.isViewerKicked,
+			application: lobby.viewerApplication,
+			isCheckInOpen: checkInOpen,
+			activeCount: activeCount(lobby.participants),
+			roomSize: lobby.roomSize,
+			now,
+			startsAt: lobby.startsAt,
+		}),
+	};
+}
+
+/**
+ * What the viewer may do in the lobby right now. Callers go through {@link viewerState}.
+ * @internal
+ */
 export function viewerActions({
 	status: lobbyStatus,
 	viewer,

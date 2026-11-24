@@ -1,6 +1,12 @@
 /**
  * Splits the players in a lobby's room into two teams of four for the next set.
  *
+ * What it balances with:
+ *
+ * - {@link ratings}: lobby-local skill ratings rebuilt from the lobby's finished sets
+ * - {@link rolesFromWeaponPool}: role tags of a player (Tacticooler, backline) from their match profile weapon pool
+ * - {@link teammateHistory}: who has been whose teammate in the lobby
+ *
  * How it works:
  *
  * 1. If the room has more than 8 players, some sit the set out (see {@link pickSitOuts}).
@@ -20,11 +26,18 @@
  * `test.each` row to `TeamShuffle.test.ts` showing the split it should prefer.
  */
 
-import type { Rating } from "openskill";
+import { predictWin, type Rating, rating } from "openskill";
 import * as R from "remeda";
-import { PLAYERS_PER_SET, PLAYERS_PER_TEAM } from "../lobbies-constants";
-import * as LobbyRating from "./LobbyRating";
-import type { PlayerRole } from "./PlayerRoles";
+import { hasTacticooler } from "~/features/img-export/core/RunComps";
+import { rate } from "~/features/mmr/mmr-utils";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import {
+	type LobbySide,
+	PLAYERS_PER_SET,
+	PLAYERS_PER_TEAM,
+} from "../lobbies-constants";
+import * as LobbySet from "./LobbySet";
+import * as WeaponRoll from "./WeaponRoll";
 
 /**
  * Weight of {@link balanceCost}. Highest priority: a 10 percentage point imbalance costs 10.
@@ -65,9 +78,18 @@ export const TACTICOOLER_STACK_WEIGHT = 0.5;
 /** Costs closer than this count as a tie, picked between randomly. */
 const TIE_EPSILON = 0.000_001;
 
+/**
+ * Roles spread evenly across the teams, see {@link rolesFromWeaponPool}. `TACTICOOLER` and `BACKLINE` make a team lopsided when
+ * stacked on one side, `BACKLINE_IN_POOL` players can fill the backline so each team should get one.
+ */
+export type PlayerRole = "TACTICOOLER" | "BACKLINE" | "BACKLINE_IN_POOL";
+
+/** Share of the weapon pool needing the trait for the player to be tagged, "mostly" = more than half */
+const ROLE_POOL_SHARE_THRESHOLD = 0.5;
+
 export interface ShufflePlayer {
 	userId: number;
-	/** Lobby-local rating, see `LobbyRating` */
+	/** Lobby-local rating, see {@link ratings} */
 	rating: Rating;
 	roles: PlayerRole[];
 	/** How many sets of this lobby the player has sat out */
@@ -175,7 +197,7 @@ export function splitCost(split: Split, history: TeammateHistory) {
  */
 export function balanceCost(split: Split) {
 	return Math.abs(
-		LobbyRating.winProbability(
+		winProbability(
 			split.alpha.map((player) => player.rating),
 			split.bravo.map((player) => player.rating),
 		) - 0.5,
@@ -265,6 +287,78 @@ export function teammateHistory(
 	return { setsTogether, previousSetPairs };
 }
 
+/**
+ * Lobby-local openskill ratings computed from the lobby's game history. Everyone starts at the default rating
+ * and only finished (confirmed or forfeited) sets count, so nothing needs fixing when a set is voided or a
+ * player leaves. Each played map is one rating update and winning the set is one more on top: winning 2–1
+ * counts as 3 wins and 1 loss. A forfeited set rates the maps actually played plus the set win of the side
+ * that didn't forfeit. Never touches the global SendouQ ratings.
+ */
+export function ratings(sets: LobbySet.SetLike[]): Map<number, Rating> {
+	const result = new Map<number, Rating>();
+	const currentRating = (userId: number) => result.get(userId) ?? rating();
+
+	const update = (winners: number[], losers: number[]) => {
+		if (winners.length === 0 || losers.length === 0) return;
+
+		const [newWinnerRatings, newLoserRatings] = rate([
+			winners.map(currentRating),
+			losers.map(currentRating),
+		]);
+
+		for (const [i, userId] of winners.entries()) {
+			result.set(userId, newWinnerRatings[i]);
+		}
+		for (const [i, userId] of losers.entries()) {
+			result.set(userId, newLoserRatings[i]);
+		}
+	};
+
+	for (const set of sets) {
+		if (!LobbySet.isFinished(set)) continue;
+
+		const players = (side: LobbySide) => LobbySet.playersOf(set, side);
+
+		for (const game of set.games) {
+			if (!game.winnerSide) continue;
+
+			update(
+				players(game.winnerSide),
+				players(LobbySet.otherSide(game.winnerSide)),
+			);
+		}
+
+		const setWinner = LobbySet.winnerSide(set);
+		if (setWinner) {
+			update(players(setWinner), players(LobbySet.otherSide(setWinner)));
+		}
+	}
+
+	return result;
+}
+
+/** Rating of the user, the default one for someone who hasn't played a rated set yet. */
+export function ratingOf(ratingsByUserId: Map<number, Rating>, userId: number) {
+	return ratingsByUserId.get(userId) ?? rating();
+}
+
+/**
+ * Role tags of a player derived from their match profile weapon pool: `TACTICOOLER` if the pool is mostly
+ * Tacticooler kits, `BACKLINE` if mostly backline weapons (see `WeaponRoll.tierOf`) and `BACKLINE_IN_POOL` if it has any.
+ * An empty pool has no roles.
+ */
+export function rolesFromWeaponPool(weaponPool: MainWeaponId[]): PlayerRole[] {
+	if (weaponPool.length === 0) return [];
+
+	const roles: PlayerRole[] = [];
+
+	if (isMostly(weaponPool, hasTacticooler)) roles.push("TACTICOOLER");
+	if (isMostly(weaponPool, isBackline)) roles.push("BACKLINE");
+	if (weaponPool.some(isBackline)) roles.push("BACKLINE_IN_POOL");
+
+	return roles;
+}
+
 /** Every way to split 8 players into two teams of 4, the first player always on alpha so mirrors aren't repeated. */
 function allSplits(players: ShufflePlayer[]): Split[] {
 	const [first, ...rest] = players;
@@ -288,4 +382,23 @@ function allSplits(players: ShufflePlayer[]): Split[] {
 	choose(0, []);
 
 	return result;
+}
+
+/** Predicted probability (0-1) of the alpha team beating the bravo team. */
+function winProbability(alpha: Rating[], bravo: Rating[]) {
+	return predictWin([alpha, bravo])[0];
+}
+
+function isMostly(
+	weaponPool: MainWeaponId[],
+	predicate: (weaponSplId: MainWeaponId) => boolean,
+) {
+	return (
+		weaponPool.filter(predicate).length / weaponPool.length >
+		ROLE_POOL_SHARE_THRESHOLD
+	);
+}
+
+function isBackline(weaponSplId: MainWeaponId) {
+	return WeaponRoll.tierOf(weaponSplId) === "BACKLINE";
 }

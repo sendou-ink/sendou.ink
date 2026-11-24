@@ -44,6 +44,7 @@ import {
 } from "../lobbies-constants";
 import rawWeaponRollData from "./weapon-roll-data.json";
 
+/** Knobs of {@link roll}: how many candidates are drawn, how and the weights of the cost terms. */
 export interface WeaponRollOptions {
 	/** Mode of the game, picks the mode specific weapon strengths. `null` uses the all modes ones. */
 	mode: ModeShort | null;
@@ -65,7 +66,7 @@ export interface WeaponRollOptions {
 	repeatFadeSets: number;
 }
 
-// tweak these on the /lobbies/weapon-roll-test page
+/** Options of the balanced randomizer, tweak them on the /lobbies/weapon-roll-test page. */
 export const DEFAULT_WEAPON_ROLL_OPTIONS: WeaponRollOptions = {
 	mode: null,
 	candidates: 20,
@@ -97,7 +98,9 @@ const RANDOMIZER_OPTIONS: Record<
 	BALANCED: DEFAULT_WEAPON_ROLL_OPTIONS,
 };
 
+/** Where on the map a weapon plays, front to back, see {@link tierOf}. */
 export const WEAPON_TIERS = ["FRONTLINE", "MIDLINE", "BACKLINE"] as const;
+/** One of {@link WEAPON_TIERS}. */
 export type WeaponTier = (typeof WEAPON_TIERS)[number];
 
 /** Range from which a weapon counts as backline. Jet Squelcher (21.1) is above, Douser Dualies FF (19.4) below. */
@@ -150,6 +153,7 @@ interface WeaponRollDataWeapon {
 }
 
 // TODO: consider fitting the strengths from scanner ingested matches too (full 4v4 weapons, no partial reports) once there are enough of them
+/** SendouQ usage and strength of every weapon and the share of each team shape, see {@link WeaponRollData}. */
 export const WEAPON_ROLL_DATA: WeaponRollData = rawWeaponRollData;
 
 const MOST_COMMON_SHAPE_SHARE = Math.max(
@@ -170,6 +174,7 @@ interface WeaponRollCost {
 	total: number;
 }
 
+/** The weapons rolled for each side, with what the split costs, see {@link evaluate}. */
 export interface WeaponRollResult {
 	alpha: MainWeaponId[];
 	bravo: MainWeaponId[];

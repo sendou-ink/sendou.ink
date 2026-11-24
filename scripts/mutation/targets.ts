@@ -18,7 +18,6 @@ export const RECOMMENDED_TARGETS = [
 	"app/features/mmr/core/Seasons.ts",
 	"app/modules/tournament-map-list-generator",
 	"app/features/sendouq/core/SendouQ.server.ts",
-	"app/features/lobbies/core/LobbyRating.ts",
 	"app/features/lobbies/core/TeamShuffle.ts",
 	"app/features/lobbies/core/WeaponRoll.ts",
 	"app/features/scrims/core",

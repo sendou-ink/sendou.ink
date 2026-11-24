@@ -299,6 +299,131 @@ describe("LobbyState.viewerActions", () => {
 	});
 });
 
+describe("LobbyState.statusAndCheckIn", () => {
+	test.each([
+		{
+			why: "8 signed up near the start opens check-in",
+			signedUp: 8,
+			now: STARTS_AT - 5 * MINUTE,
+			expected: { status: "CHECK_IN", isCheckInOpen: true },
+		},
+		{
+			why: "7 signed up near the start stays upcoming",
+			signedUp: 7,
+			now: STARTS_AT - 5 * MINUTE,
+			expected: { status: "UPCOMING", isCheckInOpen: false },
+		},
+		{
+			why: "started short of players, check-in not open",
+			signedUp: 7,
+			now: STARTS_AT,
+			expected: { status: "PENDING", isCheckInOpen: false },
+		},
+	] as const)("$why", ({ signedUp, now, expected }) => {
+		expect(
+			LobbyState.statusAndCheckIn({
+				lobby: { startsAt: STARTS_AT, endedAt: null, checkInOpenedAt: null },
+				participants: participantsOf({ signedUp }),
+				isPlaying: false,
+				now,
+			}),
+		).toEqual(expected);
+	});
+});
+
+describe("LobbyState.viewerState", () => {
+	const lobby = {
+		startsAt: STARTS_AT,
+		endedAt: null,
+		checkInOpenedAt: STARTS_AT,
+		roomSize: 8,
+		participants: Array.from({ length: 8 }, () => ({
+			status: "IN_ROOM" as const,
+		})),
+		isViewerKicked: false,
+		viewerApplication: null,
+	};
+	const PLAYER_ID = 1;
+	const SITTING_OUT_ID = 2;
+
+	test.each([
+		{
+			why: "a player of the set being played",
+			viewer: { id: PLAYER_ID, status: "IN_ROOM" },
+			isFinished: false,
+			expected: { side: "ALPHA", isPlayingUnfinishedSet: true },
+		},
+		{
+			why: "one sitting the set out",
+			viewer: { id: SITTING_OUT_ID, status: "IN_ROOM" },
+			isFinished: false,
+			expected: { side: null, isPlayingUnfinishedSet: false },
+		},
+		{
+			why: "a player once the set is confirmed",
+			viewer: { id: PLAYER_ID, status: "IN_ROOM" },
+			isFinished: true,
+			expected: { side: "ALPHA", isPlayingUnfinishedSet: false },
+		},
+		{
+			why: "a visitor",
+			viewer: null,
+			isFinished: false,
+			expected: { side: null, isPlayingUnfinishedSet: false },
+		},
+	] as const)("$why", ({ viewer, isFinished, expected }) => {
+		const state = LobbyState.viewerState({
+			lobby,
+			sets: [
+				{
+					bestOf: 3,
+					forfeitingSide: null,
+					disputedAt: null,
+					confirmedAt: isFinished ? STARTS_AT : null,
+					games: [
+						{ winnerSide: "ALPHA", reportedByUserId: PLAYER_ID },
+						{ winnerSide: "ALPHA", reportedByUserId: PLAYER_ID },
+					],
+					participants: [
+						{ userId: PLAYER_ID, side: "ALPHA" },
+						{ userId: SITTING_OUT_ID, side: null },
+					],
+				},
+			],
+			viewer,
+			hasFriendCode: true,
+			now: STARTS_AT + MINUTE,
+		});
+
+		expect(state).toMatchObject({
+			...expected,
+			status: isFinished ? "PENDING" : "ACTIVE",
+			actions: { DROP_AFTER_SET: expected.isPlayingUnfinishedSet },
+		});
+	});
+});
+
+describe("LobbyState.activeCount", () => {
+	test("counts the checked in and those in the room", () => {
+		expect(
+			LobbyState.activeCount([
+				{ status: "REGISTERED" },
+				{ status: "CHECKED_IN" },
+				{ status: "IN_ROOM" },
+				{ status: "WAITLISTED" },
+			]),
+		).toBe(2);
+	});
+});
+
+describe("LobbyState.signedUpCount", () => {
+	test("counts everyone but the waitlisted", () => {
+		expect(
+			LobbyState.signedUpCount(participantsOf({ signedUp: 8, waitlisted: 2 })),
+		).toBe(8);
+	});
+});
+
 describe("LobbyState.checkInOpensAt", () => {
 	test("opens check-in 10 minutes before the start", () => {
 		expect(LobbyState.checkInOpensAt(STARTS_AT)).toBe(STARTS_AT - 10 * MINUTE);

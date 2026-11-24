@@ -23,7 +23,6 @@ import { lobbiesPage, lobbyPage } from "~/utils/urls";
 import * as LobbyProgression from "../core/LobbyProgression.server";
 import * as LobbySet from "../core/LobbySet";
 import * as LobbyState from "../core/LobbyState";
-import * as LobbyVoice from "../core/LobbyVoice.server";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
 import type { LobbyBestOf } from "../lobbies-constants";
@@ -33,7 +32,7 @@ import {
 } from "../lobbies-schemas";
 import { lobbySearchParams } from "../lobbies-search-params";
 import { visibilityFromForm } from "../lobbies-utils";
-import { lobbyViewerState, mapsFromForm } from "../lobbies-utils.server";
+import { mapsFromForm } from "../lobbies-utils.server";
 
 /** Actions changing what the lobbies list shows, see `LobbyCard`. */
 const LISTING_ACTIONS = new Set<
@@ -78,13 +77,14 @@ export const action = defineAction(
 			return LobbySet.sideOf(set, participant.id) ? set.id : null;
 		};
 		const viewerActions = async () =>
-			lobbyViewerState({
+			LobbyState.viewerState({
 				lobby,
 				sets,
 				viewer: viewer ?? null,
 				hasFriendCode: Boolean(
 					await UserRepository.findCurrentFriendCodeByUserId(user.id),
 				),
+				now,
 			}).actions;
 		const autoAcceptedUserIds: number[] = [];
 		const requireNoConflict = () =>
@@ -202,7 +202,7 @@ export const action = defineAction(
 						authorUserId: user.id,
 					});
 				}
-				LobbyVoice.ejectLeavers({
+				LobbyProgression.ejectLeaversFromCalls({
 					lobby: {
 						chatRoomId: lobby.chatRoomId,
 						participantUserIds: lobby.participants.map(
@@ -373,7 +373,7 @@ export const action = defineAction(
 					userId: target.id,
 					setEnding,
 				});
-				LobbyVoice.ejectLeavers({
+				LobbyProgression.ejectLeaversFromCalls({
 					lobby: {
 						chatRoomId: lobby.chatRoomId,
 						participantUserIds: lobby.participants.map(

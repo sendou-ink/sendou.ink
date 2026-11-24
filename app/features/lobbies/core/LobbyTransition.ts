@@ -1,15 +1,15 @@
 /**
  * Decides the next change a lobby goes through (opening check-in, starting, promoting from the waitlist, filling the
- * room, ready checks, starting a set, passing on the host, ending or deleting) from its current state. Pure,
- * applied by `LobbyProgression`.
+ * room, ready checks and who of the waitlist they give the open slots to, starting a set, passing on the host, ending or
+ * deleting) from its current state. Pure, applied by `LobbyProgression`.
  */
+import * as R from "remeda";
 import {
 	type LobbyParticipantStatus,
 	PLAYERS_PER_SET,
 } from "../lobbies-constants";
 import * as LobbySet from "./LobbySet";
 import * as LobbyState from "./LobbyState";
-import * as Waitlist from "./Waitlist";
 
 /** Everything the next transition of a lobby is decided from. */
 export interface ProgressionState {
@@ -155,6 +155,52 @@ export function waitlist(state: Pick<ProgressionState, "participants">) {
 		.map((p) => p.userId);
 }
 
+/**
+ * Who of the waitlist gets the room's open slots. During the priority window a slot goes to the highest in
+ * the waitlist who confirmed, decided early once nobody above them can still claim it. After the window
+ * everyone who confirmed within it is ranked by waitlist order, then later confirmers first come, first served.
+ *
+ * @param queue user ids of the waitlist in order, highest first
+ * @internal
+ */
+export function slotWinners({
+	slotCount,
+	queue,
+	confirmedAtByUserId,
+	priorityEndsAt,
+	now,
+}: {
+	slotCount: number;
+	queue: number[];
+	confirmedAtByUserId: Map<number, number>;
+	priorityEndsAt: number;
+	now: number;
+}): number[] {
+	if (slotCount <= 0) return [];
+
+	if (now < priorityEndsAt) {
+		// everyone above could still confirm, so only the top slots are certain
+		return queue
+			.slice(0, slotCount)
+			.filter((userId) => confirmedAtByUserId.has(userId));
+	}
+
+	const queuePosition = (userId: number) => queue.indexOf(userId);
+	const confirmers = queue.filter((userId) => confirmedAtByUserId.has(userId));
+
+	return R.sortBy(
+		confirmers,
+		[
+			(userId) =>
+				confirmedAtByUserId.get(userId)! <= priorityEndsAt
+					? queuePosition(userId)
+					: Number.MAX_SAFE_INTEGER,
+			"asc",
+		],
+		[(userId) => confirmedAtByUserId.get(userId)!, "asc"],
+	).slice(0, slotCount);
+}
+
 function roomMemberIds(state: ProgressionState) {
 	return state.participants
 		.filter((p) => p.status === "IN_ROOM")
@@ -188,7 +234,7 @@ function readyCheckTransition(
 		}
 
 		const queue = waitlist(state);
-		const winners = Waitlist.slotWinners({
+		const winners = slotWinners({
 			slotCount,
 			queue,
 			confirmedAtByUserId: new Map(

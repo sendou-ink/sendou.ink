@@ -1,6 +1,7 @@
 /**
  * Applies the transitions `LobbyTransition` decides on to the database, then publishes the change to
- * the lobby's page, updates the chat rooms and sends the notifications.
+ * the lobby's page, updates the chat rooms, ends the voice calls of those no longer in them and sends the
+ * notifications.
  */
 import { addMinutes } from "date-fns";
 import * as R from "remeda";
@@ -8,6 +9,7 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import * as VoiceEject from "~/features/voice/core/VoiceEject.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
@@ -15,18 +17,21 @@ import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
 import {
 	LOBBIES_CHANNEL,
+	LOBBY_SIDES,
 	SLOT_FILL_PRIORITY_MINUTES,
 } from "../lobbies-constants";
 import { lobbyChannel } from "../lobbies-utils";
 import * as LobbyActivity from "./LobbyActivity.server";
 import * as LobbyMapList from "./LobbyMapList.server";
-import * as LobbyRating from "./LobbyRating";
 import * as LobbySet from "./LobbySet";
 import * as LobbyTransition from "./LobbyTransition";
-import * as LobbyVoice from "./LobbyVoice.server";
-import * as PlayerRoles from "./PlayerRoles";
 import * as TeamShuffle from "./TeamShuffle";
 import * as WeaponRoll from "./WeaponRoll";
+
+type SetWithChats = Pick<LobbySet.SetLike, "participants"> & {
+	alphaChatRoomId: number | null;
+	bravoChatRoomId: number | null;
+};
 
 /** Upper bound of transitions applied in one go, a backstop against a transition that doesn't settle. */
 const MAX_TRANSITIONS = 50;
@@ -86,6 +91,29 @@ export function advance(
 	});
 
 	return current;
+}
+
+/** Ends the calls of users no longer in the lobby, in its chat and their team's chat of the latest set. */
+export function ejectLeaversFromCalls({
+	lobby,
+	latestSet,
+	userIds,
+}: {
+	lobby: { chatRoomId: number | null; participantUserIds: number[] };
+	latestSet: SetWithChats | undefined;
+	userIds: number[];
+}) {
+	if (lobby.chatRoomId !== null) {
+		void VoiceEject.ejectUsers({
+			room: {
+				roomId: lobby.chatRoomId,
+				participantUserIds: lobby.participantUserIds,
+			},
+			userIds,
+		});
+	}
+
+	if (latestSet) ejectFromTeamChats({ set: latestSet, userIds });
 }
 
 interface Effects {
@@ -275,7 +303,7 @@ async function apply({
 				lobbyId: lobby.id,
 				userIds: transition.userIds,
 			});
-			LobbyVoice.ejectLeavers({
+			ejectLeaversFromCalls({
 				lobby: { chatRoomId: lobby.chatRoomId, participantUserIds: allUserIds },
 				latestSet: loaded.sets.at(-1),
 				userIds: transition.userIds,
@@ -349,7 +377,7 @@ async function startSet({ lobby, sets }: LoadedState) {
 	const userIds = members.map((member) => member.userId);
 
 	const finishedSets = sets.filter(LobbySet.isFinished);
-	const ratings = LobbyRating.ratings(finishedSets);
+	const ratings = TeamShuffle.ratings(finishedSets);
 	const profiles = await MatchProfileRepository.findAllByUserIds(userIds);
 	const profileOf = (userId: number) =>
 		profiles.find((profile) => profile.userId === userId);
@@ -365,8 +393,8 @@ async function startSet({ lobby, sets }: LoadedState) {
 	const result = TeamShuffle.shuffle({
 		players: members.map((member) => ({
 			userId: member.userId,
-			rating: LobbyRating.ratingOf(ratings, member.userId),
-			roles: PlayerRoles.fromWeaponPool(
+			rating: TeamShuffle.ratingOf(ratings, member.userId),
+			roles: TeamShuffle.rolesFromWeaponPool(
 				profileOf(member.userId)?.weaponPool ?? [],
 			),
 			sitOutCount: sets.filter((set) =>
@@ -427,9 +455,49 @@ async function startSet({ lobby, sets }: LoadedState) {
 	});
 
 	if (previousSet) {
-		LobbyVoice.ejectSittingOut({
+		ejectSittingOutFromCalls({
 			previousSet,
 			playingUserIds: [...result.alpha, ...result.bravo],
+		});
+	}
+}
+
+/** Ends the calls in the previous set's team chats of its players who don't play the next set. */
+function ejectSittingOutFromCalls({
+	previousSet,
+	playingUserIds,
+}: {
+	previousSet: SetWithChats;
+	playingUserIds: number[];
+}) {
+	ejectFromTeamChats({
+		set: previousSet,
+		userIds: previousSet.participants
+			.filter(
+				(participant) =>
+					participant.side !== null &&
+					!playingUserIds.includes(participant.userId),
+			)
+			.map((participant) => participant.userId),
+	});
+}
+
+function ejectFromTeamChats({
+	set,
+	userIds,
+}: {
+	set: SetWithChats;
+	userIds: number[];
+}) {
+	for (const side of LOBBY_SIDES) {
+		const roomId = side === "ALPHA" ? set.alphaChatRoomId : set.bravoChatRoomId;
+		const playerIds = LobbySet.playersOf(set, side);
+		const ejectedIds = userIds.filter((userId) => playerIds.includes(userId));
+		if (roomId === null || ejectedIds.length === 0) continue;
+
+		void VoiceEject.ejectUsers({
+			room: { roomId, participantUserIds: playerIds },
+			userIds: ejectedIds,
 		});
 	}
 }

@@ -9,12 +9,14 @@ import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeap
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as SearchParams from "~/modules/search-params/search-params";
+import { databaseTimestampNow } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFound, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
 import * as Leaderboard from "../core/Leaderboard";
 import * as LobbyMapList from "../core/LobbyMapList.server";
 import * as LobbySet from "../core/LobbySet";
+import * as LobbyState from "../core/LobbyState";
 import * as ScoreboardAttribution from "../core/ScoreboardAttribution";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
@@ -23,7 +25,6 @@ import {
 	LOBBY_SIDE_TEAM_ID,
 } from "../lobbies-constants";
 import { lobbySearchParams } from "../lobbies-search-params";
-import { lobbyViewerState } from "../lobbies-utils.server";
 
 export type LobbyLoaderData = SerializeFrom<typeof loader>;
 
@@ -87,11 +88,12 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 		side: viewerSide,
 		isPlayingUnfinishedSet,
 		actions: viewerActions,
-	} = lobbyViewerState({
+	} = LobbyState.viewerState({
 		lobby,
 		sets,
 		viewer,
 		hasFriendCode,
+		now: databaseTimestampNow(),
 	});
 
 	const viewerTeamChatRoomId =

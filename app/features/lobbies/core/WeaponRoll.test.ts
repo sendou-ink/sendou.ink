@@ -9,6 +9,7 @@ import { seededRandom } from "~/utils/random";
 import * as WeaponRoll from "./WeaponRoll";
 
 const SPLATTERSHOT: MainWeaponId = 40;
+const TENTATEK_SPLATTERSHOT: MainWeaponId = 41;
 const SPLATTERSHOT_PRO: MainWeaponId = 70;
 const JET_SQUELCHER: MainWeaponId = 90;
 const SPLAT_ROLLER: MainWeaponId = 1010;
@@ -401,5 +402,107 @@ describe("WeaponRoll.winProbability", () => {
 			WeaponRoll.winProbability(alpha, bravo, null) +
 				WeaponRoll.winProbability(bravo, alpha, null),
 		).toBeCloseTo(1);
+	});
+});
+
+describe("WeaponRoll.evaluate", () => {
+	const alpha = [SPLATTERSHOT, SPLAT_ROLLER, SLOSHER, SPLAT_CHARGER];
+
+	test("identical teams cost only for their own shape and specials", () => {
+		const { cost, alphaWinProbability } = WeaponRoll.evaluate(
+			{ alpha, bravo: alpha },
+			WeaponRoll.DEFAULT_WEAPON_ROLL_OPTIONS,
+		);
+
+		expect(alphaWinProbability).toBe(0.5);
+		expect(cost.strength).toBe(0);
+		expect(cost.shapeMismatch).toBe(0);
+		expect(cost.total).toBeCloseTo(cost.shape + cost.specialStack);
+	});
+
+	test("every weight 0 costs nothing", () => {
+		const { cost } = WeaponRoll.evaluate(
+			{
+				alpha: [SPLATTERSHOT, SPLATTERSHOT, SPLATTERSHOT, SPLATTERSHOT],
+				bravo: [SPLAT_CHARGER, BAMBOOZLER, JET_SQUELCHER, SPLAT_CHARGER],
+			},
+			NO_BALANCING,
+		);
+
+		expect(cost.total).toBe(0);
+	});
+
+	test("weighs the special stack per stacked weapon", () => {
+		const stacked = [SPLATTERSHOT, SPLATTERSHOT, SPLAT_ROLLER, SPLAT_CHARGER];
+
+		const { cost } = WeaponRoll.evaluate(
+			{ alpha: stacked, bravo: alpha },
+			{ ...NO_BALANCING, specialStackWeight: 2 },
+		);
+
+		expect(cost.specialStack).toBe(
+			2 *
+				(WeaponRoll.specialStackCost(stacked) +
+					WeaponRoll.specialStackCost(alpha)),
+		);
+	});
+});
+
+describe("WeaponRoll.shapeShare", () => {
+	test("a common shape has a bigger share than an unseen one", () => {
+		const balanced = WeaponRoll.shapeKey([
+			SPLATTERSHOT,
+			SPLAT_ROLLER,
+			SPLATTERSHOT_PRO,
+			SPLAT_CHARGER,
+		]);
+
+		expect(WeaponRoll.shapeShare(balanced)).toBeGreaterThan(
+			WeaponRoll.shapeShare("0-0-4"),
+		);
+		expect(WeaponRoll.shapeShare("not-a-shape")).toBeGreaterThan(0);
+	});
+});
+
+describe("WeaponRoll.rangeOf", () => {
+	test("a long range shooter outranges a short range one", () => {
+		expect(WeaponRoll.rangeOf(JET_SQUELCHER)).toBeGreaterThan(
+			WeaponRoll.rangeOf(SPLATTERSHOT),
+		);
+	});
+});
+
+describe("WeaponRoll.strengthOf", () => {
+	test("falls back to the all modes strength without a mode", () => {
+		expect(WeaponRoll.strengthOf(SPLATTERSHOT, null).strength).toBe(
+			strengthById(SPLATTERSHOT),
+		);
+	});
+
+	test("a weapon without data has no strength", () => {
+		expect(WeaponRoll.strengthOf(-1 as MainWeaponId, "SZ")).toEqual({
+			strength: 0,
+			strengthSe: 0,
+		});
+	});
+});
+
+describe("WeaponRoll.usageOf", () => {
+	test("shares add up to every reported weapon", () => {
+		expect(
+			R.sumBy(WeaponRoll.ROLLABLE_WEAPON_IDS, WeaponRoll.usageOf),
+		).toBeCloseTo(1, 1);
+	});
+
+	test("a weapon without data is never used", () => {
+		expect(WeaponRoll.usageOf(-1 as MainWeaponId)).toBe(0);
+	});
+});
+
+describe("WeaponRoll.specialOf", () => {
+	test("alt kits of a weapon can have different specials", () => {
+		expect(WeaponRoll.specialOf(SPLATTERSHOT)).not.toBe(
+			WeaponRoll.specialOf(TENTATEK_SPLATTERSHOT),
+		);
 	});
 });

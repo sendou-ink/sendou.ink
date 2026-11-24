@@ -21,28 +21,16 @@ const hostId = () => users.id(1);
 const memberId = () => users.id(2);
 const outsiderId = () => users.id(3);
 
-describe("LobbyRepository visibility", () => {
+describe("LobbyRepository.findById", () => {
 	beforeEach(async () => {
 		await users.create(3);
 	});
-
-	const associationLobby = async () => {
-		const association = await AssociationFactory.create(
-			{ userId: hostId() },
-			{ memberUserIds: [memberId()] },
-		);
-
-		return LobbyFactory.create({
-			hostUserId: hostId(),
-			visibility: { forAssociation: association.id },
-		});
-	};
 
 	test.each([
 		{ why: "a member sees it", viewer: memberId, expected: true },
 		{ why: "an outsider doesn't", viewer: outsiderId, expected: false },
 		{ why: "the host does", viewer: hostId, expected: true },
-	])("$why", async ({ viewer, expected }) => {
+	])("limited to an association: $why", async ({ viewer, expected }) => {
 		const lobby = await associationLobby();
 
 		const found = await withUserId(viewer(), () =>
@@ -56,15 +44,6 @@ describe("LobbyRepository visibility", () => {
 		expect(
 			listed.upcoming.some((listedLobby) => listedLobby.id === lobby.id),
 		).toBe(expected);
-	});
-
-	test("logged out see public lobbies only", async () => {
-		const publicLobby = await LobbyFactory.create({ hostUserId: hostId() });
-		await associationLobby();
-
-		const listed = await withNoUser(() => LobbyRepository.findAllForIndex());
-
-		expect(listed.upcoming.map((lobby) => lobby.id)).toEqual([publicLobby.id]);
 	});
 
 	test("a signed up participant always sees the lobby", async () => {
@@ -155,26 +134,10 @@ describe("LobbyRepository visibility", () => {
 	});
 
 	test.each([
-		{ why: "a link-only lobby is", visibility: "LINK_ONLY", expected: true },
-		{ why: "a public lobby isn't", visibility: null, expected: false },
-	] as const)("isLinkOnlyById: $why", async ({ visibility, expected }) => {
-		const lobby = await LobbyFactory.create({
-			hostUserId: hostId(),
-			visibility,
-		});
-
-		expect(await LobbyRepository.isLinkOnlyById(lobby.id)).toBe(expected);
-	});
-
-	test("isLinkOnlyById: a missing lobby isn't", async () => {
-		expect(await LobbyRepository.isLinkOnlyById(999_999)).toBe(false);
-	});
-
-	test.each([
 		{ why: "the host gets it", viewer: hostId, hasKey: true },
 		{ why: "a member doesn't", viewer: memberId, hasKey: false },
 	])(
-		"share key of a lobby with visibility: $why",
+		"share key of a lobby limited to an association: $why",
 		async ({ viewer, hasKey }) => {
 			const lobby = await associationLobby();
 
@@ -206,7 +169,60 @@ describe("LobbyRepository visibility", () => {
 		expect(Boolean(found)).toBe(expected);
 	});
 
-	test("edit: opening a lobby to everyone shows it to outsiders", async () => {
+	test("a deleted tournament leaves the lobby its copy of the map pool", async () => {
+		const mapPool = [{ mode: "SZ" as const, stageId: 1 as const }];
+		const tournament = await TournamentFactory.create({
+			authorId: hostId(),
+			mapPoolMaps: mapPool,
+		});
+		const lobby = await LobbyFactory.create({
+			hostUserId: hostId(),
+			modes: ["SZ"],
+			mapPool,
+			mapsTournamentId: tournament.id,
+		});
+
+		await CalendarRepository.deleteById(tournament.eventId);
+
+		const found = await withUserId(hostId(), () =>
+			LobbyRepository.findById(lobby.id),
+		);
+		expect(found).toMatchObject({
+			mapPool,
+			mapsTournamentId: null,
+			mapsTournamentName: null,
+		});
+	});
+});
+
+describe("LobbyRepository.isLinkOnlyById", () => {
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test.each([
+		{ why: "a link-only lobby is", visibility: "LINK_ONLY", expected: true },
+		{ why: "a public lobby isn't", visibility: null, expected: false },
+	] as const)("$why", async ({ visibility, expected }) => {
+		const lobby = await LobbyFactory.create({
+			hostUserId: hostId(),
+			visibility,
+		});
+
+		expect(await LobbyRepository.isLinkOnlyById(lobby.id)).toBe(expected);
+	});
+
+	test("a missing lobby isn't", async () => {
+		expect(await LobbyRepository.isLinkOnlyById(999_999)).toBe(false);
+	});
+});
+
+describe("LobbyRepository.edit", () => {
+	beforeEach(async () => {
+		await users.create(3);
+	});
+
+	test("opening a lobby to everyone shows it to outsiders", async () => {
 		const lobby = await associationLobby();
 
 		await LobbyRepository.edit(
@@ -219,7 +235,7 @@ describe("LobbyRepository visibility", () => {
 		expect(found?.isPrivate).toBe(false);
 	});
 
-	test("edit: making a lobby link-only keeps its share key", async () => {
+	test("making a lobby link-only keeps its share key", async () => {
 		const lobby = await LobbyFactory.create({ hostUserId: hostId() });
 		const shareKey = await hostShareKeyOf(lobby.id);
 
@@ -233,8 +249,14 @@ describe("LobbyRepository visibility", () => {
 			await withUserId(outsiderId(), () => LobbyRepository.findById(lobby.id)),
 		).toBeUndefined();
 	});
+});
 
-	test("resetShareKey: the old key stops working", async () => {
+describe("LobbyRepository.resetShareKey", () => {
+	beforeEach(async () => {
+		await users.create(3);
+	});
+
+	test("the old key stops working", async () => {
 		const lobby = await LobbyFactory.create({
 			hostUserId: hostId(),
 			visibility: "LINK_ONLY",
@@ -249,8 +271,14 @@ describe("LobbyRepository visibility", () => {
 		expect(found).toBeUndefined();
 		expect(await hostShareKeyOf(lobby.id)).not.toBe(oldShareKey);
 	});
+});
 
-	test("findVisibilityRowsById: lists the steps in order with association names", async () => {
+describe("LobbyRepository.findVisibilityRowsById", () => {
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test("lists the steps in order with association names", async () => {
 		const association = await AssociationFactory.create({
 			userId: hostId(),
 			name: "Night owls",
@@ -275,6 +303,19 @@ describe("LobbyRepository visibility", () => {
 	});
 });
 
+/** A lobby of the host limited to an association the member is in. */
+async function associationLobby() {
+	const association = await AssociationFactory.create(
+		{ userId: hostId() },
+		{ memberUserIds: [memberId()] },
+	);
+
+	return LobbyFactory.create({
+		hostUserId: hostId(),
+		visibility: { forAssociation: association.id },
+	});
+}
+
 async function hostShareKeyOf(lobbyId: number) {
 	const lobby = await withUserId(hostId(), () =>
 		LobbyRepository.findById(lobbyId),
@@ -286,6 +327,15 @@ async function hostShareKeyOf(lobbyId: number) {
 describe("LobbyRepository.findAllForIndex", () => {
 	beforeEach(async () => {
 		await users.create(9);
+	});
+
+	test("logged out see public lobbies only", async () => {
+		const publicLobby = await LobbyFactory.create({ hostUserId: hostId() });
+		await associationLobby();
+
+		const listed = await withNoUser(() => LobbyRepository.findAllForIndex());
+
+		expect(listed.upcoming.map((lobby) => lobby.id)).toEqual([publicLobby.id]);
 	});
 
 	test("lists ended lobbies the viewer was in only", async () => {
@@ -514,36 +564,5 @@ describe("LobbyRepository.findAllUpcomingOfFriendsByUserId", () => {
 		expect(rows.map((row) => [row.friendId, row.lobbyId])).toEqual([
 			[hostId(), lobby.id],
 		]);
-	});
-});
-
-describe("LobbyRepository.findById maps tournament", () => {
-	beforeEach(async () => {
-		await users.create(1);
-	});
-
-	test("a deleted tournament leaves the lobby its copy of the map pool", async () => {
-		const mapPool = [{ mode: "SZ" as const, stageId: 1 as const }];
-		const tournament = await TournamentFactory.create({
-			authorId: hostId(),
-			mapPoolMaps: mapPool,
-		});
-		const lobby = await LobbyFactory.create({
-			hostUserId: hostId(),
-			modes: ["SZ"],
-			mapPool,
-			mapsTournamentId: tournament.id,
-		});
-
-		await CalendarRepository.deleteById(tournament.eventId);
-
-		const found = await withUserId(hostId(), () =>
-			LobbyRepository.findById(lobby.id),
-		);
-		expect(found).toMatchObject({
-			mapPool,
-			mapsTournamentId: null,
-			mapsTournamentName: null,
-		});
 	});
 });

@@ -399,6 +399,13 @@ export class LobbyPage {
 		await this.saveEdit();
 	}
 
+	/** As the host, lets anyone sign up without applying on its edit page, accepting everyone still waiting. */
+	async stopRequiringApplying() {
+		await this.openEditPage();
+		await this.editForm.uncheck("isApplicationRequired");
+		await this.saveEdit();
+	}
+
 	/** As the host, changes how many maps the sets are a best of, from the next set on, on its edit page. */
 	async changeBestOf(count: number) {
 		await this.openEditPage();

@@ -1,7 +1,8 @@
 import { addMinutes, subMinutes } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as VoiceEject from "~/features/voice/core/VoiceEject.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -12,6 +13,24 @@ import type { LobbyWeaponRandomizer } from "../lobbies-constants";
 import { editArgs } from "../tests/fixtures";
 import * as LobbyProgression from "./LobbyProgression.server";
 import * as LobbySet from "./LobbySet";
+import { setOf } from "./tests/fixtures";
+
+vi.mock("~/features/voice/core/VoiceEject.server", () => ({
+	ejectUsers: vi.fn(),
+}));
+
+const LOBBY_CHAT_ROOM_ID = 100;
+const ALPHA_CHAT_ROOM_ID = 101;
+const BRAVO_CHAT_ROOM_ID = 102;
+const ALPHA = [1, 2, 3, 4];
+const BRAVO = [5, 6, 7, 8];
+const SITTING_OUT_ID = 9;
+
+const setWithChats = {
+	...setOf({ alpha: ALPHA, bravo: BRAVO, sittingOut: [SITTING_OUT_ID] }),
+	alphaChatRoomId: ALPHA_CHAT_ROOM_ID,
+	bravoChatRoomId: BRAVO_CHAT_ROOM_ID,
+};
 
 const users = UserFactory.pool();
 
@@ -254,6 +273,28 @@ describe("LobbyProgression.advance", () => {
 		expect(LobbySet.sideOf(second, firstSitOut.userId)).not.toBeNull();
 	});
 
+	test("a player sitting out the next set is ejected from their team's call only", async () => {
+		const lobbyId = await startedLobby({ checkedInCount: 9, roomSize: 9 });
+		const first = await latestSet(lobbyId);
+		vi.mocked(VoiceEject.ejectUsers).mockClear();
+
+		await playOut(lobbyId);
+
+		const second = await latestSet(lobbyId);
+		const sittingOutId = second.participants.find(
+			(p) => p.side === null,
+		)!.userId;
+		expect(ejectedRooms()).toEqual([
+			{
+				roomId:
+					LobbySet.sideOf(first, sittingOutId) === "ALPHA"
+						? first.alphaChatRoomId
+						: first.bravoChatRoomId,
+				userIds: [sittingOutId],
+			},
+		]);
+	});
+
 	test("who the host sits out stays out of sets until resumed", async () => {
 		const lobbyId = await startedLobby({ checkedInCount: 9, roomSize: 9 });
 		const sittingOutId = users.id(9);
@@ -441,4 +482,50 @@ async function roomMemberIds(lobbyId: number) {
 	return (state?.participants ?? [])
 		.filter((participant) => participant.status === "IN_ROOM")
 		.map((participant) => participant.userId);
+}
+
+describe("LobbyProgression.ejectLeaversFromCalls", () => {
+	beforeEach(() => {
+		vi.mocked(VoiceEject.ejectUsers).mockClear();
+	});
+
+	test("ejects the leaver from the lobby's call and their team's", () => {
+		LobbyProgression.ejectLeaversFromCalls({
+			lobby: {
+				chatRoomId: LOBBY_CHAT_ROOM_ID,
+				participantUserIds: [...ALPHA, ...BRAVO],
+			},
+			latestSet: setWithChats,
+			userIds: [ALPHA[0]],
+		});
+
+		expect(ejectedRooms()).toEqual([
+			{ roomId: LOBBY_CHAT_ROOM_ID, userIds: [ALPHA[0]] },
+			{ roomId: ALPHA_CHAT_ROOM_ID, userIds: [ALPHA[0]] },
+		]);
+	});
+
+	test("one sitting the set out is ejected from the lobby's call only", () => {
+		LobbyProgression.ejectLeaversFromCalls({
+			lobby: {
+				chatRoomId: LOBBY_CHAT_ROOM_ID,
+				participantUserIds: [...ALPHA, ...BRAVO],
+			},
+			latestSet: setWithChats,
+			userIds: [SITTING_OUT_ID],
+		});
+
+		expect(ejectedRooms()).toEqual([
+			{ roomId: LOBBY_CHAT_ROOM_ID, userIds: [SITTING_OUT_ID] },
+		]);
+	});
+});
+
+function ejectedRooms() {
+	return vi
+		.mocked(VoiceEject.ejectUsers)
+		.mock.calls.map(([{ room, userIds }]) => ({
+			roomId: room.roomId,
+			userIds,
+		}));
 }

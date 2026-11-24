@@ -26,6 +26,8 @@ type Options = {
 	reportedMapCount?: number;
 	/** Bravo disputes the set after the played ones, needs `reportedMapCount` to decide it */
 	isDisputed?: boolean;
+	/** Asked by an open ready check to take a vacant spot in the room, not confirmed yet */
+	readyCheckUserIds?: number[];
 	isEnded?: boolean;
 };
 
@@ -57,6 +59,7 @@ export const { create } = defineFactory({
 			playedSetCount = 0,
 			reportedMapCount = 0,
 			isDisputed,
+			readyCheckUserIds,
 			isEnded,
 		}: Options,
 	) => {
@@ -90,6 +93,17 @@ export const { create } = defineFactory({
 				lobbyId: lobby.id,
 				userId,
 				status: "CHECKED_IN",
+			});
+		}
+
+		if (readyCheckUserIds) {
+			const { insertReadyCheck } = await import(
+				"~/features/lobbies/LobbyMatchRepository.server"
+			);
+			await insertReadyCheck({
+				lobbyId: lobby.id,
+				expiresAt: dateToDatabaseTimestamp(addHours(new Date(), 1)),
+				userIds: readyCheckUserIds,
 			});
 		}
 
