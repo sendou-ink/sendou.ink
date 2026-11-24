@@ -79,18 +79,12 @@ const PRIORITY_ORDER: NavItemKey[] = [
 export function TournamentNav({
 	tournament,
 	streamsCount,
-	isBroadcastEnabled,
 }: {
 	tournament: Tournament;
 	streamsCount: number;
-	isBroadcastEnabled: boolean;
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const navItems = useNavItems({
-		tournament,
-		streamsCount,
-		isBroadcastEnabled,
-	});
+	const navItems = useNavItems({ tournament, streamsCount });
 	const { visibleCount, containerRef, measureRef } = useNavOverflow(
 		navItems.length,
 	);
@@ -193,11 +187,9 @@ export function TournamentNav({
 function useNavItems({
 	tournament,
 	streamsCount,
-	isBroadcastEnabled,
 }: {
 	tournament: Tournament;
 	streamsCount: number;
-	isBroadcastEnabled: boolean;
 }): NavItem[] {
 	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
@@ -305,11 +297,7 @@ function useNavItems({
 		};
 	}
 
-	if (
-		isBroadcastEnabled &&
-		tournament.isOrganizerOrStreamer(user) &&
-		!tournament.everyBracketOver
-	) {
+	if (tournament.isOrganizerOrStreamer(user) && !tournament.everyBracketOver) {
 		items.broadcast = {
 			key: "broadcast",
 			label: t("tournament:nav.broadcast"),

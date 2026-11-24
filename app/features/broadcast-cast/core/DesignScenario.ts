@@ -345,8 +345,8 @@ const MOCK_NOW_PLAYING_TEXT = "Lofi Squid Beats · Chill Ink";
 const DESIGN_MUSIC_TRACK: BroadcastMusicTrack = {
 	id: "design-track",
 	durationMs: 3 * 60_000 + 24_000,
-	title: "Low Tide Groove",
-	artist: "The Inkwells",
+	title: "Ech0 0nslaught",
+	artist: "Free Association",
 };
 
 /** Teams of the featured match, by their index in the name pools. */

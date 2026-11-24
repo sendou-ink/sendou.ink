@@ -1,5 +1,4 @@
 import { addDays, max, subDays } from "date-fns";
-import { ServerConfig } from "~/config.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
@@ -18,41 +17,16 @@ import type {
 import * as BroadcastHub from "./core/BroadcastHub.server";
 import type * as Producer from "./core/Producer";
 
-/** Whether the tournament's organization may use broadcast overlays, rolled out per organization. */
-export function isBroadcastEnabled(tournament: {
-	ctx: Pick<Tournament["ctx"], "organization">;
-}) {
-	if (ServerConfig.broadcastOrgIds === "*") return true;
-
-	const organizationId = tournament.ctx.organization?.id;
-	if (!organizationId) return false;
-
-	return ServerConfig.broadcastOrgIds.includes(organizationId);
-}
-
 /**
  * Producer pages are for the tournament's organizers and streamers.
- * @internal
- */
-export function isBroadcastProducer(
-	tournament: Tournament,
-	user: { id: number } | undefined,
-) {
-	return (
-		isBroadcastEnabled(tournament) && tournament.isOrganizerOrStreamer(user)
-	);
-}
-
-/**
- * See {@link isBroadcastProducer}.
  *
- * @throws {Response} 404 if the user is not one or the tournament can't use broadcasts
+ * @throws {Response} 404 if the user is not one
  */
 export function requireBroadcastProducer<User extends { id: number }>(
 	tournament: Tournament,
 	user: User | undefined,
 ): asserts user is User {
-	if (!isBroadcastProducer(tournament, user)) notFound();
+	if (!tournament.isOrganizerOrStreamer(user)) notFound();
 }
 
 /**
@@ -73,7 +47,7 @@ export async function findProgram(programKey: string | null) {
 		!tournament ||
 		!platform ||
 		!account ||
-		!isBroadcastProducer(tournament, { id: rest.userId })
+		!tournament.isOrganizerOrStreamer({ id: rest.userId })
 	) {
 		return { ...rest, shows: null };
 	}
@@ -162,8 +136,8 @@ export function isBroadcastOngoing(
 }
 
 /**
- * Creates the chat room the tournament's organizers and streamers produce the channel's broadcast in, if the
- * tournament can use broadcasts and the room is missing. A broadcast created by it starts with the rules' scenes.
+ * Creates the chat room the tournament's organizers and streamers produce the channel's broadcast in, if the room is
+ * missing. A broadcast created by it starts with the rules' scenes.
  */
 export async function ensureChatRoom({
 	tournament,
@@ -174,8 +148,6 @@ export async function ensureChatRoom({
 	channel: Pick<BroadcastChannel, "platform" | "account">;
 	rules: Producer.Rules<ProducerState>;
 }) {
-	if (!isBroadcastEnabled(tournament)) return;
-
 	const { chatRoomId, isCreated } =
 		await BroadcastRepository.insertChatRoomIfMissing({
 			tournamentId: tournament.ctx.id,

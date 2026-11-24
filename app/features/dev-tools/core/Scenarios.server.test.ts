@@ -1,10 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
 import { broadcastProgramSearchParams } from "~/features/broadcast/broadcast-search-params";
-import {
-	findProgram,
-	isBroadcastProducer,
-} from "~/features/broadcast/broadcast-utils.server";
+import { findProgram } from "~/features/broadcast/broadcast-utils.server";
 import * as BroadcastHub from "~/features/broadcast/core/BroadcastHub.server";
 import { CAST_LAYOUT } from "~/features/broadcast-cast/broadcast-cast-layout.server";
 import * as LobbySet from "~/features/lobbies/core/LobbySet";
@@ -92,7 +89,7 @@ describe("Scenarios.run", () => {
 			const program = await findProgram(programKey);
 
 			expect(
-				isBroadcastProducer(tournament, { id: outcome.result.userId }),
+				tournament.isOrganizerOrStreamer({ id: outcome.result.userId }),
 			).toBe(true);
 			expect(program?.userId).toBe(outcome.result.userId);
 			expect(program?.shows?.tournament.ctx.id).toBe(tournament.ctx.id);
@@ -113,9 +110,9 @@ describe("Scenarios.run", () => {
 		});
 
 		expect(page).toBe("design");
-		expect(isBroadcastProducer(tournament, { id: outcome.result.userId })).toBe(
-			true,
-		);
+		expect(
+			tournament.isOrganizerOrStreamer({ id: outcome.result.userId }),
+		).toBe(true);
 		expect(built?.channel.account).toBe(slug);
 	});
 

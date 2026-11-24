@@ -1,6 +1,5 @@
 import { addDays } from "date-fns";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { ServerConfig } from "~/config.server";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentBroadcastFactory from "~/db/seed/factories/TournamentBroadcastFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -18,15 +17,8 @@ const CAST_ACCOUNT = {
 
 const users = UserFactory.pool();
 
-const originalBroadcastOrgIds = ServerConfig.broadcastOrgIds;
-
 beforeEach(async () => {
-	ServerConfig.broadcastOrgIds = "*";
 	await users.create(1);
-});
-
-afterEach(() => {
-	ServerConfig.broadcastOrgIds = originalBroadcastOrgIds;
 });
 
 describe("findCastProgram", () => {

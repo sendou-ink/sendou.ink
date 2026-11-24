@@ -1,5 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { ServerConfig } from "~/config.server";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentStaffFactory from "~/db/seed/factories/TournamentStaffFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -17,15 +16,8 @@ const users = UserFactory.pool();
 const organizerId = () => users.id(1);
 const streamerId = () => users.id(2);
 
-const originalBroadcastOrgIds = ServerConfig.broadcastOrgIds;
-
 beforeEach(async () => {
-	ServerConfig.broadcastOrgIds = "*";
 	await users.create(2);
-});
-
-afterEach(() => {
-	ServerConfig.broadcastOrgIds = originalBroadcastOrgIds;
 });
 
 describe("action", () => {

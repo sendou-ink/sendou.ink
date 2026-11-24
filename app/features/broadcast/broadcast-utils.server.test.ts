@@ -1,5 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { ServerConfig } from "~/config.server";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentBroadcastFactory from "~/db/seed/factories/TournamentBroadcastFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -8,9 +7,7 @@ import { testTournament } from "~/features/tournament-bracket/core/tests/test-ut
 import type { BroadcastStreamMessage } from "./broadcast-types";
 import {
 	findProgram,
-	isBroadcastEnabled,
 	isBroadcastOngoing,
-	isBroadcastProducer,
 	pointProgram,
 	regenerateProgramKey,
 	requireBroadcastProducer,
@@ -21,7 +18,6 @@ import * as BroadcastHub from "./core/BroadcastHub.server";
 const ORGANIZER_ID = 1;
 const STREAMER_ID = 2;
 const RANDOM_USER_ID = 3;
-const ORGANIZATION_ID = 10;
 
 const users = UserFactory.pool();
 
@@ -36,45 +32,6 @@ const OTHER_CHANNEL = {
 	slug: "sendouink2",
 };
 const rules = CAST_PRODUCER_RULES;
-
-const originalBroadcastOrgIds = ServerConfig.broadcastOrgIds;
-
-afterEach(() => {
-	ServerConfig.broadcastOrgIds = originalBroadcastOrgIds;
-});
-
-describe("isBroadcastEnabled", () => {
-	test.each([
-		{
-			why: "every org enabled",
-			orgIds: "*",
-			organizationId: null,
-			expected: true,
-		},
-		{
-			why: "org on the list",
-			orgIds: [ORGANIZATION_ID],
-			organizationId: ORGANIZATION_ID,
-			expected: true,
-		},
-		{
-			why: "org not on the list",
-			orgIds: [ORGANIZATION_ID + 1],
-			organizationId: ORGANIZATION_ID,
-			expected: false,
-		},
-		{
-			why: "no org with a list",
-			orgIds: [ORGANIZATION_ID],
-			organizationId: null,
-			expected: false,
-		},
-	] as const)("$why", ({ orgIds, organizationId, expected }) => {
-		ServerConfig.broadcastOrgIds = orgIds === "*" ? "*" : [...orgIds];
-
-		expect(isBroadcastEnabled(tournament(organizationId))).toBe(expected);
-	});
-});
 
 describe("isBroadcastOngoing", () => {
 	const startsAt = new Date("2026-11-20T18:00:00Z");
@@ -109,64 +66,28 @@ describe("isBroadcastOngoing", () => {
 	);
 });
 
-describe("isBroadcastProducer", () => {
-	test.each([
-		{ why: "organizer", userId: ORGANIZER_ID, orgIds: "*", expected: true },
-		{ why: "streamer", userId: STREAMER_ID, orgIds: "*", expected: true },
-		{
-			why: "random user",
-			userId: RANDOM_USER_ID,
-			orgIds: "*",
-			expected: false,
-		},
-		{ why: "logged out", userId: null, orgIds: "*", expected: false },
-		{
-			why: "organizer of an org not enabled",
-			userId: ORGANIZER_ID,
-			orgIds: [ORGANIZATION_ID + 1],
-			expected: false,
-		},
-		{
-			why: "organizer of an enabled org",
-			userId: ORGANIZER_ID,
-			orgIds: [ORGANIZATION_ID],
-			expected: true,
-		},
-	] as const)("$why", ({ userId, orgIds, expected }) => {
-		ServerConfig.broadcastOrgIds = orgIds === "*" ? "*" : [...orgIds];
-		const user = userId === null ? undefined : { id: userId };
-
-		expect(isBroadcastProducer(tournament(ORGANIZATION_ID), user)).toBe(
-			expected,
-		);
-	});
-});
-
 describe("requireBroadcastProducer", () => {
-	test("passes a producer", () => {
-		ServerConfig.broadcastOrgIds = "*";
-
+	test.each([
+		{ why: "the organizer", userId: ORGANIZER_ID },
+		{ why: "a streamer", userId: STREAMER_ID },
+	])("passes $why", ({ userId }) => {
 		expect(() =>
-			requireBroadcastProducer(tournament(ORGANIZATION_ID), {
-				id: STREAMER_ID,
-			}),
+			requireBroadcastProducer(tournament(), { id: userId }),
 		).not.toThrow();
 	});
 
-	test("throws a 404 for anyone else", () => {
-		ServerConfig.broadcastOrgIds = "*";
-
-		expect(() =>
-			requireBroadcastProducer(tournament(ORGANIZATION_ID), {
-				id: RANDOM_USER_ID,
-			}),
-		).toThrow(expect.objectContaining({ status: 404 }));
+	test.each([
+		{ why: "a random user", user: { id: RANDOM_USER_ID } },
+		{ why: "a logged out user", user: undefined },
+	])("throws a 404 for $why", ({ user }) => {
+		expect(() => requireBroadcastProducer(tournament(), user)).toThrow(
+			expect.objectContaining({ status: 404 }),
+		);
 	});
 });
 
 describe("findProgram", () => {
 	beforeEach(async () => {
-		ServerConfig.broadcastOrgIds = "*";
 		await users.create(2);
 	});
 
@@ -228,18 +149,10 @@ describe("findProgram", () => {
 		expect(program?.userId).toBe(users.id(2));
 		expect(program?.shows).toBeNull();
 	});
-
-	test("shows no broadcast once broadcasts are turned off for its organization", async () => {
-		const programKey = await point(await createTournament());
-		ServerConfig.broadcastOrgIds = [ORGANIZATION_ID];
-
-		expect((await findProgram(programKey))?.shows).toBeNull();
-	});
 });
 
 describe("regenerateProgramKey", () => {
 	beforeEach(async () => {
-		ServerConfig.broadcastOrgIds = "*";
 		await users.create(1);
 	});
 
@@ -263,7 +176,6 @@ describe("regenerateProgramKey", () => {
 
 describe("updateObsAudio", () => {
 	beforeEach(async () => {
-		ServerConfig.broadcastOrgIds = "*";
 		await users.create(1);
 	});
 
@@ -343,22 +255,10 @@ function point(tournamentId: number, pointedChannel = channel) {
 	});
 }
 
-function tournament(organizationId: number | null, id = 1) {
+function tournament() {
 	return testTournament({
 		ctx: {
-			id,
-			organization:
-				organizationId === null
-					? null
-					: {
-							id: organizationId,
-							name: "Org",
-							slug: "org",
-							isEstablished: 0,
-							logoUrl: null,
-							members: [],
-							series: [],
-						},
+			id: 1,
 			permissions: {
 				ADMIN: [ORGANIZER_ID],
 				ORGANIZE: [ORGANIZER_ID],

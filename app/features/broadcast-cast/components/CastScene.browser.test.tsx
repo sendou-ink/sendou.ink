@@ -352,13 +352,16 @@ describe("CastScene", () => {
 	test("keeps the now playing line as the track changes, changing only its words", async () => {
 		const state = stateOf({ ...SCENARIO, scene: "break" });
 		const music = state.music!;
-		const twoTracks = {
-			...music,
+		const twoTracks = MusicPlayback.start({
 			tracks: [
 				music.tracks[0],
 				{ ...music.tracks[0], id: "second-track", title: "Second" },
 			],
-		};
+			volume: music.volume,
+			now: Date.now() - 5_000,
+		});
+		// NowPlaying's clock ticks in whole seconds, a skip between them would show only at the next tick
+		const skippedAt = Math.floor(Date.now() / 1000) * 1000;
 		const screen = await render(
 			<BroadcastOverlay
 				sceneSet={CAST_SCENE_SET}
@@ -373,7 +376,7 @@ describe("CastScene", () => {
 				sceneSet={CAST_SCENE_SET}
 				state={{
 					...state,
-					music: MusicPlayback.skip(twoTracks, Date.now(), "next"),
+					music: MusicPlayback.skip(twoTracks, skippedAt, "next"),
 				}}
 				view="live"
 			/>,

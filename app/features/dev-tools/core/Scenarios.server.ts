@@ -25,7 +25,6 @@ import {
 	broadcastDesignPage,
 	broadcastProgramPage,
 } from "~/features/broadcast/broadcast-urls";
-import { isBroadcastEnabled } from "~/features/broadcast/broadcast-utils.server";
 import * as LobbyProgression from "~/features/lobbies/core/LobbyProgression.server";
 import * as LobbySet from "~/features/lobbies/core/LobbySet";
 import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
@@ -39,7 +38,6 @@ import {
 import { runWithoutWebPush } from "~/features/notifications/core/push-suppression.server";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
-import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { toDBBoolean } from "~/utils/sql";
@@ -469,10 +467,6 @@ const SCENARIOS: Scenario[] = [
 					programUserId: role === "streamer" ? streamerId : organizerId,
 				},
 			);
-			invariant(
-				isBroadcastEnabled(await tournamentFromDB(tournament.id)),
-				"Broadcasts are off for new organizations, set BROADCAST_ORG_IDS=* in .env",
-			);
 			if (role === "streamer") {
 				await TournamentStaffFactory.create({
 					tournamentId: tournament.id,
@@ -518,10 +512,6 @@ const SCENARIOS: Scenario[] = [
 				tournamentId: tournament.id,
 				twitchAccount: BROADCAST_SCENARIO_TWITCH_ACCOUNT,
 			});
-			invariant(
-				isBroadcastEnabled(await tournamentFromDB(tournament.id)),
-				"Broadcasts are off for new organizations, set BROADCAST_ORG_IDS=* in .env",
-			);
 
 			return {
 				userId: organizerId,

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ServerConfig } from "~/config.server";
 import * as TournamentBroadcastFactory from "~/db/seed/factories/TournamentBroadcastFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -184,15 +183,11 @@ const EVERY_ACTION: {
 	},
 };
 
-const originalBroadcastOrgIds = ServerConfig.broadcastOrgIds;
-
 beforeEach(async () => {
-	ServerConfig.broadcastOrgIds = "*";
 	await users.create(3);
 });
 
 afterEach(() => {
-	ServerConfig.broadcastOrgIds = originalBroadcastOrgIds;
 	vi.restoreAllMocks();
 });
 
