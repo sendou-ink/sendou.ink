@@ -30,7 +30,8 @@ interface DialogElementProps {
  * Unstyled native `<dialog>` shell: shows itself modally on mount, closes on
  * Escape (and outside clicks when `isDismissable`) and reports every close
  * through `onClose`. The caller owns visibility by mounting/unmounting it.
- * Focus lands on the dialog itself rather than its first control.
+ * Focus lands on the dialog itself rather than its first control, and goes
+ * back to where it was when the dialog unmounts.
  *
  * Portaled to `<body>` so a dialog holding a form can be rendered from inside
  * another form without nesting the `<form>` elements. Renders nothing on the
@@ -38,6 +39,7 @@ interface DialogElementProps {
  */
 export function SendouModal({ ref, ...rest }: DialogElementProps) {
 	const isHydrated = useHydrated();
+	const { dialogRef, rememberFocus } = useReturnFocusOnUnmount();
 	if (!isHydrated) return null;
 
 	return createPortal(
@@ -48,7 +50,9 @@ export function SendouModal({ ref, ...rest }: DialogElementProps) {
 				} else if (ref) {
 					ref.current = dialog;
 				}
+				dialogRef.current = dialog;
 				if (dialog && !dialog.open) {
+					rememberFocus();
 					dialog.showModal();
 					dialog.focus();
 				}
@@ -57,6 +61,39 @@ export function SendouModal({ ref, ...rest }: DialogElementProps) {
 		/>,
 		document.body,
 	);
+}
+
+// Closing natively returns the focus but unmounting an open dialog drops it on <body>
+function useReturnFocusOnUnmount() {
+	const dialogRef = React.useRef<HTMLDialogElement | null>(null);
+	const focusedBeforeOpenRef = React.useRef<Element | null>(null);
+
+	React.useLayoutEffect(() => {
+		return () => {
+			const dialog = dialogRef.current;
+			const focusedBeforeOpen = focusedBeforeOpenRef.current;
+			// after the commit, so Strict Mode's simulated unmount (dialog still connected) is skipped
+			queueMicrotask(() => {
+				if (dialog?.isConnected) return;
+				if (
+					document.activeElement &&
+					document.activeElement !== document.body
+				) {
+					return;
+				}
+				if (focusedBeforeOpen instanceof HTMLElement) {
+					focusedBeforeOpen.focus();
+				}
+			});
+		};
+	}, []);
+
+	return {
+		dialogRef,
+		rememberFocus: () => {
+			focusedBeforeOpenRef.current = document.activeElement;
+		},
+	};
 }
 
 function DialogElement({

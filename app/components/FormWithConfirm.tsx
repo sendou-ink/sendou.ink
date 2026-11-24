@@ -97,13 +97,13 @@ export function FormWithConfirm({
 					)
 				: null}
 			<SendouDialog
+				heading={dialogHeading}
 				isOpen={dialogOpen}
 				onClose={closeDialog}
 				onOpenChange={closeDialog}
 				isDismissable
 			>
 				<div className="stack md">
-					<h2 className="text-md text-center">{dialogHeading}</h2>
 					{description ? (
 						<FormMessage type="info">{description}</FormMessage>
 					) : null}
