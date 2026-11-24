@@ -1,3 +1,4 @@
+import { tz } from "@date-fns/tz";
 import { isToday, isTomorrow } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -8,7 +9,11 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
  */
 export function useRelativeDayFormat() {
 	const { i18n } = useTranslation();
-	const { formatter: timeFormatter } = useDateTimeFormat({
+	const {
+		formatter: timeFormatter,
+		timeZone,
+		isLoaded,
+	} = useDateTimeFormat({
 		hour: "numeric",
 		minute: "numeric",
 	});
@@ -21,7 +26,12 @@ export function useRelativeDayFormat() {
 
 	/** "Today" / "Tomorrow", null for any other day */
 	const relativeDayLabel = (date: Date) => {
-		const daysFromToday = isToday(date) ? 0 : isTomorrow(date) ? 1 : null;
+		const inViewerZone = { in: timeZone ? tz(timeZone) : undefined };
+		const daysFromToday = isToday(date, inViewerZone)
+			? 0
+			: isTomorrow(date, inViewerZone)
+				? 1
+				: null;
 		if (daysFromToday === null) return null;
 
 		const rtf = new Intl.RelativeTimeFormat(i18n.language, { numeric: "auto" });
@@ -41,5 +51,5 @@ export function useRelativeDayFormat() {
 		return dateTimeFormatter.format(date);
 	};
 
-	return { relativeDayLabel, formatRelativeDate };
+	return { relativeDayLabel, formatRelativeDate, isLoaded };
 }

@@ -35,8 +35,6 @@ import styles from "./to.$id.admin.module.css";
 
 export { action } from "../actions/to.$id.admin.index.server";
 
-const HORIZONTAL_TABS_BELOW = 720;
-
 type AdminTab =
 	| "teams"
 	| "seeds"
@@ -112,11 +110,7 @@ export default function TournamentAdminLayout() {
 					</FormWithConfirm>
 				</div>
 			) : null}
-			<SendouTabs
-				orientation="vertical"
-				horizontalBelow={HORIZONTAL_TABS_BELOW}
-				selectedKey={currentTab}
-			>
+			<SendouTabs orientation="vertical" selectedKey={currentTab}>
 				<SendouTabList>
 					{isOrganizer ? (
 						<SendouTab id="teams" href={adminPage} icon={<Users />}>

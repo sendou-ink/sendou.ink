@@ -132,7 +132,16 @@ export function GlobalSearch() {
 					<span className={clsx(styles.searchPlaceholder, "truncate")}>
 						{t("common:search")}
 					</span>
-					<kbd className={styles.searchKbd}>{isMac ? "Cmd+K" : "Ctrl+K"}</kbd>
+					<kbd className={styles.searchKbd}>
+						<span className={styles.searchKbdKeys}>
+							<span className={clsx({ [styles.searchKbdHidden]: isMac })}>
+								Ctrl+K
+							</span>
+							<span className={clsx({ [styles.searchKbdHidden]: !isMac })}>
+								Cmd+K
+							</span>
+						</span>
+					</kbd>
 				</span>
 			</Link>
 			{isOpen ? (

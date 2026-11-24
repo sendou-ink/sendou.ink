@@ -124,7 +124,7 @@ export function BracketProgressionBuilder({
 }) {
 	const { t } = useTranslation(["calendar", "common", "forms"]);
 	const wallClockZone = useFormWallClockZone();
-	const { formatter: startTimeFormatter } = useDateTimeFormat({
+	const { formatter: startTimeFormatter, timeZone } = useDateTimeFormat({
 		weekday: "short",
 		hour: "numeric",
 		minute: "2-digit",
@@ -268,7 +268,7 @@ export function BracketProgressionBuilder({
 	const isOnTournamentStartDay = (date: Date) =>
 		tournamentStartTime
 			? isSameDay(date, tournamentStartTime, {
-					in: wallClockZone ? tz(wallClockZone) : undefined,
+					in: timeZone ? tz(timeZone) : undefined,
 				})
 			: false;
 

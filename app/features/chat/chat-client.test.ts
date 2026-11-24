@@ -39,6 +39,7 @@ function room(overrides: Partial<ChatRoomListItem> = {}): ChatRoomListItem {
 		unreadCount: 0,
 		latestMessageId: null,
 		latestMessageAt: null,
+		voiceJoinable: false,
 		...overrides,
 	};
 }

@@ -37,7 +37,10 @@ export default function OrganizationStatsPage() {
 
 function EstablishedStatus() {
 	const { t } = useTranslation(["org"]);
-	const { formatter } = useDateTimeFormat({ month: "short", year: "numeric" });
+	const { formatter } = useDateTimeFormat(
+		{ month: "short", year: "numeric" },
+		{ wallClock: true },
+	);
 	const { monthlyStats, averageMonthlyParticipants } =
 		useLoaderData<typeof loader>();
 

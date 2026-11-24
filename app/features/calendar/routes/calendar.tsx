@@ -1,5 +1,5 @@
+import { TZDate } from "@date-fns/tz";
 import clsx from "clsx";
-import { isToday } from "date-fns";
 import {
 	Calendar,
 	ChevronLeft,
@@ -28,8 +28,10 @@ import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
 import { calendarSearchParams } from "~/features/calendar/calendar-search-params";
 import { calendarIcalFeed } from "~/features/calendar/calendar-urls";
+import { useUserIntlPreference } from "~/hooks/intl/useUserIntlPreference";
 import { dragToScroll } from "~/hooks/useDragToScroll";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
+import { localDateToDayMonthYear } from "~/utils/dates";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { DayMonthYear } from "~/utils/schema";
@@ -66,8 +68,15 @@ export const handle: SendouRouteHandle = {
 export default function CalendarPage() {
 	const { t } = useTranslation(["calendar", "common"]);
 	const data = useLoaderData<typeof loader>();
+	const { timeZone } = useUserIntlPreference();
 
-	const { previous, shown, next, current } = daysForCalendar(data.dateViewed);
+	const inViewerZone = (date: number) =>
+		timeZone ? new TZDate(date, timeZone) : new Date(date);
+	const today = localDateToDayMonthYear(inViewerZone(Date.now()));
+
+	const { previous, shown, next, current } = daysForCalendar(
+		data.dateViewed ?? today,
+	);
 
 	return (
 		<Main
@@ -124,9 +133,13 @@ export default function CalendarPage() {
 						date={date.day}
 						month={date.month}
 						year={date.year}
-						isToday={isToday(new Date(date.year, date.month, date.day))}
+						isToday={
+							date.day === today.day &&
+							date.month === today.month &&
+							date.year === today.year
+						}
 						eventTimes={data.eventTimes.filter((event) => {
-							const eventDate = new Date(event.at);
+							const eventDate = inViewerZone(event.at);
 
 							return (
 								eventDate.getDate() === date.day &&
@@ -171,6 +184,7 @@ function NavigateButton({
 					to={new Date(year, highestDate.month, highestDate.day)}
 					options={{ day: "numeric", month: "numeric" }}
 					className={styles.navigateArrowButtonRange}
+					wallClock
 				/>
 			</div>
 		</Link>
@@ -305,6 +319,7 @@ function DayHeader(props: {
 					day: "numeric",
 					month: "long",
 				}}
+				wallClock
 			/>
 			<div className={styles.dayHeaderWeekday}>
 				<LocaleTime
@@ -312,6 +327,7 @@ function DayHeader(props: {
 					options={{
 						weekday: "long",
 					}}
+					wallClock
 				/>
 			</div>
 		</div>

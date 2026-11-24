@@ -3,6 +3,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./ExpandableText.module.css";
 
+/** Server-side guess of whether the two line clamp cuts the text, corrected by measuring once mounted */
+const OVERFLOW_GUESS = { length: 80, lines: 2 };
+
 export function ExpandableText({
 	text,
 	className,
@@ -12,13 +15,15 @@ export function ExpandableText({
 }) {
 	const { t } = useTranslation(["common"]);
 	const [isExpanded, setIsExpanded] = useState(false);
-	const [isOverflowing, setIsOverflowing] = useState(false);
+	const [isOverflowing, setIsOverflowing] = useState(
+		() =>
+			text.length > OVERFLOW_GUESS.length ||
+			text.split("\n").length > OVERFLOW_GUESS.lines,
+	);
 
 	const measureRef = (node: HTMLDivElement | null) => {
-		if (!node) return;
-		if (node.scrollHeight - node.clientHeight > 1) {
-			setIsOverflowing(true);
-		}
+		if (!node || isExpanded) return;
+		setIsOverflowing(node.scrollHeight - node.clientHeight > 1);
 	};
 
 	return (

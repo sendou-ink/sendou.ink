@@ -9,6 +9,8 @@ interface LocaleTimeProps {
 	className?: string;
 	/** defaults to block */
 	inline?: boolean;
+	/** The date is built from local date parts, see `useDateTimeFormat` */
+	wallClock?: boolean;
 	"data-testid"?: string;
 }
 
@@ -21,9 +23,10 @@ export function LocaleTime({
 	options,
 	className,
 	inline,
+	wallClock,
 	"data-testid": testId,
 }: LocaleTimeProps) {
-	const { formatter, isLoaded } = useDateTimeFormat(options);
+	const { formatter, isLoaded } = useDateTimeFormat(options, { wallClock });
 
 	const dateObject =
 		typeof date === "number" ? databaseTimestampToDate(date) : date;

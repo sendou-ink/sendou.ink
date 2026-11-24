@@ -22,7 +22,7 @@ import {
 	useUserCardData,
 } from "~/features/user-card/components/UserCard";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
-import { useHydrated } from "~/hooks/useHydrated";
+import { useUserIntlPreference } from "~/hooks/intl/useUserIntlPreference";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -37,8 +37,6 @@ type Post = LFGLoaderData["posts"][number];
 const COLLAPSED_TEXT_HEIGHT = 150;
 /** Server-side guess of whether the text gets clipped, corrected by measuring once mounted */
 const CLIPPED_TEXT_GUESS = { length: 300, lines: 6 };
-
-let cachedViewerTimezone: string | null = null;
 
 export function LFGPost({ post }: { post: Post }) {
 	if (post.team) {
@@ -90,7 +88,7 @@ function TeamLFGPost({
 }: {
 	post: Post & { team: NonNullable<Post["team"]> };
 }) {
-	const isHydrated = useHydrated();
+	const viewerTimezone = useViewerTimezone();
 	const canEdit = useHasPermission(post, "EDIT");
 	const canDelete = useHasPermission(post, "DELETE");
 	const [isExpanded, setIsExpanded] = React.useState(false);
@@ -102,8 +100,11 @@ function TeamLFGPost({
 					<div className="stack horizontal sm items-center justify-between flex-wrap">
 						<PostTeamLogoHeader team={post.team} />
 						<div className="stack horizontal items-center sm flex-wrap">
-							{isHydrated ? (
-								<PostTimezonePill timezone={post.timezone} />
+							{viewerTimezone ? (
+								<PostTimezonePill
+									timezone={post.timezone}
+									viewerTimezone={viewerTimezone}
+								/>
 							) : null}
 							{post.languages ? (
 								<PostLanguagePill languages={post.languages} />
@@ -287,18 +288,18 @@ function PostPills({
 	canEdit?: boolean;
 	post: Post;
 }) {
-	const isHydrated = useHydrated();
+	const viewerTimezone = useViewerTimezone();
 
 	return (
 		<div
 			className={clsx("stack sm xs-row horizontal flex-wrap", {
-				invisible: !isHydrated,
+				invisible: !viewerTimezone,
 			})}
 		>
-			{typeof timezone === "string" && isHydrated ? (
-				<PostTimezonePill timezone={timezone} />
+			{typeof timezone === "string" && viewerTimezone ? (
+				<PostTimezonePill timezone={timezone} viewerTimezone={viewerTimezone} />
 			) : null}
-			{!isHydrated ? <PostTimezonePillPlaceholder /> : null}
+			{!viewerTimezone ? <PostTimezonePillPlaceholder /> : null}
 			{languages ? <PostLanguagePill languages={languages} /> : null}
 			{canEdit ? <PostImageExportDialog post={post} /> : null}
 			{canEdit ? <PostEditButton id={post.id} /> : null}
@@ -310,8 +311,14 @@ function PostTimezonePillPlaceholder() {
 	return <div className={clsx(styles.pill, styles.pillPlaceholder)} />;
 }
 
-function PostTimezonePill({ timezone }: { timezone: string }) {
-	const diff = hourDifferenceBetweenTimezones(viewerTimezone(), timezone);
+function PostTimezonePill({
+	timezone,
+	viewerTimezone,
+}: {
+	timezone: string;
+	viewerTimezone: string;
+}) {
+	const diff = hourDifferenceBetweenTimezones(viewerTimezone, timezone);
 
 	const textColorClass = () => {
 		const absDiff = Math.abs(diff);
@@ -471,7 +478,10 @@ function PostExpandableText({
 	);
 }
 
-function viewerTimezone() {
-	cachedViewerTimezone ??= Intl.DateTimeFormat().resolvedOptions().timeZone;
-	return cachedViewerTimezone;
+/** `null` while unknown: a device's first visit, before hydration */
+function useViewerTimezone() {
+	const { timeZone, isLoaded } = useUserIntlPreference();
+	if (!isLoaded) return null;
+
+	return timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
 }

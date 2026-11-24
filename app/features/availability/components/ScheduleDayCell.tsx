@@ -1,3 +1,4 @@
+import { tz } from "@date-fns/tz";
 import { isSameDay } from "date-fns";
 import { Flag } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -74,7 +75,7 @@ export function ScheduleDayCell({
 
 /** Times only: `formatRange` expands to full dates across days, so a range crossing midnight formats its ends separately. */
 export function useRangeText() {
-	const { formatter } = useDateTimeFormat({
+	const { formatter, timeZone } = useDateTimeFormat({
 		hour: "numeric",
 		minute: "2-digit",
 	});
@@ -83,6 +84,7 @@ export function useRangeText() {
 		isSameDay(
 			databaseTimestampToDate(range.startsAt),
 			databaseTimestampToDate(range.endsAt),
+			{ in: timeZone ? tz(timeZone) : undefined },
 		)
 			? formatter.formatRange(range.startsAt, range.endsAt)
 			: `${formatter.format(range.startsAt)} – ${formatter.format(range.endsAt)}`;

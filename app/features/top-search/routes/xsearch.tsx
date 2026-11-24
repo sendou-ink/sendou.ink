@@ -111,6 +111,7 @@ function MonthYearSpan({ monthYear }: { monthYear: MonthYear }) {
 			to={span.to}
 			options={{ month: "numeric", year: "numeric" }}
 			inline
+			wallClock
 			data-testid={`xsearch-select-option-${monthYearToKey(monthYear)}`}
 		/>
 	);

@@ -126,6 +126,8 @@ export interface ChatRoomListItem {
 	latestMessageId: number | null;
 	/** databaseTimestamp */
 	latestMessageAt: number | null;
+	/** Whether the viewer could join a voice call in the room when it was listed, until the voice client loads the room. */
+	voiceJoinable: boolean;
 }
 
 /** A room a route asks to surface to the viewer, resolved into a `RouteChatRoom` by `RouteChatRooms.resolve`. */

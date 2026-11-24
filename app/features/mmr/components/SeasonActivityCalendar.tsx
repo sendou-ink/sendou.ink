@@ -32,7 +32,10 @@ export function SeasonActivityCalendar({
 	monthNames?: "long" | "short";
 	className?: string;
 }) {
-	const { formatter } = useDateTimeFormat({ month: monthNames });
+	const { formatter } = useDateTimeFormat(
+		{ month: monthNames },
+		{ wallClock: true },
+	);
 
 	const activityByDay = new Map(
 		activeDays.map((day) => [day.date, day.activity]),
@@ -97,7 +100,10 @@ export function SeasonActivityCalendar({
 }
 
 function CalendarWeekdays({ firstWeek }: { firstWeek: Date[] }) {
-	const { formatter } = useDateTimeFormat({ weekday: "short" });
+	const { formatter } = useDateTimeFormat(
+		{ weekday: "short" },
+		{ wallClock: true },
+	);
 
 	return (
 		<div className={clsx(styles.label, styles.calendarWeekdays)}>

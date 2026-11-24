@@ -50,10 +50,13 @@ export function MySchedule({
 		encType: "application/json",
 	});
 	useSavedToast(fetcher);
-	const { formatter: headingFormatter } = useDateTimeFormat({
-		month: "short",
-		day: "numeric",
-	});
+	const { formatter: headingFormatter } = useDateTimeFormat(
+		{
+			month: "short",
+			day: "numeric",
+		},
+		{ wallClock: true },
+	);
 
 	// dirty = editor differs from the loader (a save revalidates it, reading clean again) or the day
 	// popover holds uncommitted edits. Edits survive same-route navigations (view tabs), so only a

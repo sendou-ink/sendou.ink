@@ -85,6 +85,7 @@ function LeagueRoundStartDate({ date }: { date: Date }) {
 						day: "numeric",
 					}}
 					inline
+					wallClock
 				/>{" "}
 				→
 			</div>

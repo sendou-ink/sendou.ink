@@ -17,6 +17,11 @@ describe("LanguageDetection.acceptedLanguages", () => {
 			header: "de;q=0, *, en_US, ja",
 			expected: ["ja"],
 		},
+		{
+			why: "drops tags Intl rejects",
+			header: "en-a, en-x;q=0.9, en-GB;q=0.8",
+			expected: ["en-GB"],
+		},
 	])("$why", ({ header, expected }) => {
 		expect(LanguageDetection.acceptedLanguages(header)).toEqual(expected);
 	});

@@ -96,7 +96,8 @@ export function TournamentNav({
 	);
 	const [overflowOpen, setOverflowOpen] = React.useState(false);
 
-	const overflowItems = navItems.slice(visibleCount);
+	const overflowItems =
+		visibleCount === null ? [] : navItems.slice(visibleCount);
 
 	const { name, subtext } = tournamentNameParts(tournament);
 
@@ -125,14 +126,33 @@ export function TournamentNav({
 			<div className={styles.separator} aria-hidden="true" />
 
 			<div className={styles.itemsWrapper} ref={containerRef}>
-				<ul className={styles.items} ref={measureRef}>
+				<ul
+					className={clsx(styles.items, {
+						[styles.itemsUnmeasured]: visibleCount === null,
+					})}
+					ref={measureRef}
+				>
 					{navItems.map((item, index) => (
 						<li
 							key={item.key}
 							className={styles.itemSlot}
-							data-hidden={index >= visibleCount ? "true" : undefined}
+							data-hidden={
+								visibleCount !== null && index >= visibleCount
+									? "true"
+									: undefined
+							}
 						>
 							<NavItemLink item={item} />
+							{visibleCount === null ? (
+								<SendouButton
+									variant="minimal"
+									size="big"
+									icon={<Menu />}
+									aria-hidden="true"
+									tabIndex={-1}
+									className={styles.overflowHint}
+								/>
+							) : null}
 						</li>
 					))}
 				</ul>
@@ -355,13 +375,17 @@ function NavItemLink({
 	);
 }
 
-// space for the absolutely positioned overflow hamburger: its 28px icon box plus breathing room
+// space for the absolutely positioned overflow hamburger: its 28px icon box plus breathing room, kept in sync with `.itemsUnmeasured`
 const HAMBURGER_WIDTH = 36;
 
+/**
+ * How many items fit before the hamburger, `null` until measured: the server render (and the first one in
+ * the browser) leaves it to CSS, which wraps what does not fit out of view and shows a stand-in hamburger.
+ */
 function useNavOverflow(totalItems: number) {
 	const containerRef = React.useRef<HTMLDivElement>(null);
 	const measureRef = React.useRef<HTMLUListElement>(null);
-	const [visibleCount, setVisibleCount] = React.useState(totalItems);
+	const [visibleCount, setVisibleCount] = React.useState<number | null>(null);
 
 	useIsomorphicLayoutEffect(() => {
 		const container = containerRef.current;
@@ -372,11 +396,13 @@ function useNavOverflow(totalItems: number) {
 
 		const computeVisible = () => {
 			const containerWidth = container.getBoundingClientRect().width;
-			const listLeft = list.getBoundingClientRect().left;
-			// rendered right edges relative to the list start, so the real flex gaps are accounted for
-			const rightEdges = slots.map(
-				(slot) => slot.getBoundingClientRect().right - listLeft,
-			);
+			const gap = Number.parseFloat(getComputedStyle(list).columnGap) || 0;
+			// summed from widths, the unmeasured list wraps so the slots' positions can't be used
+			let rightEdge = -gap;
+			const rightEdges = slots.map((slot) => {
+				rightEdge += gap + slot.getBoundingClientRect().width;
+				return rightEdge;
+			});
 
 			const totalWidth = rightEdges.at(-1) ?? 0;
 			if (totalWidth <= containerWidth) {
@@ -386,8 +412,8 @@ function useNavOverflow(totalItems: number) {
 
 			const available = containerWidth - HAMBURGER_WIDTH;
 			let count = 0;
-			for (const rightEdge of rightEdges) {
-				if (rightEdge <= available) {
+			for (const edge of rightEdges) {
+				if (edge <= available) {
 					count++;
 				} else {
 					break;

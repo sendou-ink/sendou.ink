@@ -78,6 +78,45 @@ describe("VoiceJoin.joinBlock", () => {
 	});
 });
 
+describe("VoiceJoin.joinableRoomIds", () => {
+	test("returns only the rooms the user can join", async () => {
+		const rooms = [
+			room({ roomId: 1 }),
+			room({ roomId: 2, type: "SCRIM" }),
+			room({ roomId: 3, inactive: true }),
+			room({ roomId: 4, participantUserIds: [TEAMMATE_ID] }),
+		];
+
+		expect(await VoiceJoin.joinableRoomIds(rooms, PLAYER_ID)).toEqual(
+			new Set([1]),
+		);
+	});
+
+	test("returns nothing for a banned user", async () => {
+		vi.mocked(Bans.isBanned).mockReturnValue(true);
+
+		expect(await VoiceJoin.joinableRoomIds([room()], PLAYER_ID)).toEqual(
+			new Set(),
+		);
+	});
+
+	test("leaves out a room whose voice feature is unavailable", async () => {
+		vi.mocked(VoiceAvailability.isAvailable).mockResolvedValue(false);
+
+		expect(await VoiceJoin.joinableRoomIds([room()], PLAYER_ID)).toEqual(
+			new Set(),
+		);
+	});
+
+	test("keeps a room the user was kicked from, the client's room load has the last word", async () => {
+		vi.mocked(VoiceRepository.hasBeenKicked).mockResolvedValue(true);
+
+		expect(await VoiceJoin.joinableRoomIds([room()], PLAYER_ID)).toEqual(
+			new Set([1]),
+		);
+	});
+});
+
 function room(overrides: Partial<ResolvedRoom> = {}): ResolvedRoom {
 	return {
 		roomId: 1,

@@ -14,10 +14,8 @@ export const calendarEventMaxDate = () => {
 	return result;
 };
 
-export function daysForCalendar(currentDate?: DayMonthYear) {
-	const anchor = currentDate
-		? dayMonthYearToLocalDate(currentDate)
-		: new Date();
+export function daysForCalendar(currentDate: DayMonthYear) {
+	const anchor = dayMonthYearToLocalDate(currentDate);
 	const weekStart = startOfWeek(anchor, { weekStartsOn: 1 });
 
 	return {

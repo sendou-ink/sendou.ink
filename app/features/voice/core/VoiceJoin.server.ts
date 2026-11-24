@@ -24,3 +24,20 @@ export async function joinBlock(
 
 	return null;
 }
+
+/**
+ * Ids of the rooms the user can join a voice call in, leaving out `joinBlock`'s kick check (a query per room):
+ * lets the header show the voice activity in the server render, the client's room load then has the last word.
+ */
+export async function joinableRoomIds(rooms: ResolvedRoom[], userId: number) {
+	const roomIds = new Set<number>();
+	if (Bans.isBanned(userId)) return roomIds;
+
+	for (const room of rooms) {
+		const feature = VoiceAccess.featureOf(room);
+		if (!feature || !VoiceAccess.canJoin(room, userId)) continue;
+		if (await VoiceAvailability.isAvailable(feature)) roomIds.add(room.roomId);
+	}
+
+	return roomIds;
+}

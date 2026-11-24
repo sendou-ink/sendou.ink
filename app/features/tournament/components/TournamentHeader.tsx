@@ -1,3 +1,5 @@
+import { tz } from "@date-fns/tz";
+import { isThisYear } from "date-fns";
 import { Bookmark, BookmarkCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher } from "react-router";
@@ -13,6 +15,7 @@ import { UserLink } from "~/components/UserLink";
 import { useUser } from "~/features/auth/core/user";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
+import { useUserIntlPreference } from "~/hooks/intl/useUserIntlPreference";
 import { useVenueTimeFormat } from "~/hooks/intl/useVenueTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { SENDOU_INK_BASE_URL, tournamentPage } from "~/utils/urls";
@@ -81,12 +84,14 @@ function StartTime({
 	estimatedEndsAt: number | null;
 	venueTimezone: string | null;
 }) {
+	const { timeZone } = useUserIntlPreference();
 	const options: Intl.DateTimeFormatOptions = {
 		weekday: "long",
 		day: "numeric",
 		month: "long",
-		year:
-			date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
+		year: isThisYear(date, { in: timeZone ? tz(timeZone) : undefined })
+			? undefined
+			: "numeric",
 		hour: "numeric",
 		minute: "numeric",
 	};

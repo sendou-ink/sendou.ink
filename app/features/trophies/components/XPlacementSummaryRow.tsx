@@ -62,6 +62,7 @@ export function XPlacementSummaryRow({
 						to={season.to}
 						options={{ month: "short", year: "numeric" }}
 						inline
+						wallClock
 					/>
 				</div>
 			</div>

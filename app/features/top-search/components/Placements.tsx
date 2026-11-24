@@ -94,6 +94,7 @@ function PlacementSeasonSpan({
 			to={span.to}
 			options={{ month: "numeric", year: "numeric" }}
 			className={className}
+			wallClock
 		/>
 	);
 }

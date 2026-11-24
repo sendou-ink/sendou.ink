@@ -25,7 +25,7 @@ export function SeasonSpChart({
 					})),
 				},
 			]}
-			xAxis={{ type: "date" }}
+			xAxis={{ type: "date", wallClock: true }}
 			formatValue={(sp) => `${sp.toFixed(1)}SP`}
 			area
 			showPeak

@@ -27,7 +27,10 @@ export function acceptedLanguages(header: string | null): string[] {
 
 			return { tag: tag.trim(), quality: quality ? Number(quality) : 1 };
 		})
-		.filter(({ tag, quality }) => LANGUAGE_TAG_REGEX.test(tag) && quality > 0)
+		.filter(
+			({ tag, quality }) =>
+				LANGUAGE_TAG_REGEX.test(tag) && isValidLocale(tag) && quality > 0,
+		)
 		.sort((a, b) => b.quality - a.quality)
 		.map(({ tag }) => tag);
 }
@@ -72,4 +75,14 @@ function matchOne<T extends string>(tag: string, supported: readonly T[]) {
 	);
 
 	return preferredVariant ?? sameLanguage[0] ?? null;
+}
+
+/** `Intl` throws on tags the regex lets through, such as a lone singleton (`en-a`) */
+function isValidLocale(tag: string) {
+	try {
+		Intl.getCanonicalLocales(tag);
+		return true;
+	} catch {
+		return false;
+	}
 }

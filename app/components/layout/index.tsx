@@ -19,7 +19,6 @@ import { useGlobalStatus } from "~/features/global-status/GlobalStatusProvider";
 import { useLayoutData } from "~/features/layout/LayoutDataProvider";
 import { useRelativeDayFormat } from "~/hooks/intl/useRelativeDayFormat";
 import { useClosePopoversOnNavigation } from "~/hooks/useClosePopoversOnNavigation";
-import { useHydrated } from "~/hooks/useHydrated";
 import { MOBILE_LAYOUT_QUERY, useLayoutSize } from "~/hooks/useLayoutSize";
 import { useMediaQuery } from "~/hooks/useMediaQuery";
 import { useScrollLock } from "~/hooks/useScrollLock";
@@ -466,7 +465,7 @@ function SiteTitle() {
 						return (
 							<React.Fragment key={crumb.href}>
 								<span className={styles.separator}>/</span>
-								{isCurrentPage ? (
+								{isCurrentPage || crumb.type !== "IMAGE" ? (
 									<PageIcon crumb={crumb} />
 								) : (
 									<Link
@@ -503,10 +502,9 @@ function SiteLogoContent() {
 
 // own component so that hydration re-renders just the time instead of the whole layout
 function EventStartTime({ startsAt }: { startsAt: number }) {
-	const isHydrated = useHydrated();
-	const { formatRelativeDate } = useRelativeDayFormat();
+	const { formatRelativeDate, isLoaded } = useRelativeDayFormat();
 
-	if (!isHydrated) {
+	if (!isLoaded) {
 		return <span className="invisible">Placeholder</span>;
 	}
 

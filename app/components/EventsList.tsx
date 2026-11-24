@@ -1,8 +1,8 @@
+import { TZDate } from "@date-fns/tz";
 import { useTranslation } from "react-i18next";
 import type { SidebarEvent } from "~/features/sidebar/core/sidebar.server";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useRelativeDayFormat } from "~/hooks/intl/useRelativeDayFormat";
-import { useHydrated } from "~/hooks/useHydrated";
 import styles from "./EventsList.module.css";
 import { ListLink } from "./ListItem";
 
@@ -14,11 +14,14 @@ export function EventsList({ events }: { events: SidebarEvent[] }) {
 		month: "numeric",
 		day: "numeric",
 	});
-	const { formatter: timeFormatter } = useDateTimeFormat({
+	const {
+		formatter: timeFormatter,
+		timeZone,
+		isLoaded,
+	} = useDateTimeFormat({
 		hour: "numeric",
 		minute: "2-digit",
 	});
-	const isHydrated = useHydrated();
 
 	if (events.length === 0) {
 		return (
@@ -44,14 +47,16 @@ export function EventsList({ events }: { events: SidebarEvent[] }) {
 		</ListLink>
 	);
 
-	// which day an event falls on depends on the viewer's timezone, so until
-	// hydration the list is flat rather than absent
-	if (!isHydrated) {
+	// which day an event falls on depends on the viewer's timezone, so while
+	// it is unknown the list is flat rather than absent
+	if (!isLoaded) {
 		return events.map(eventLink);
 	}
 
 	const getDayKey = (timestamp: number) => {
-		const date = new Date(timestamp * 1000);
+		const date = timeZone
+			? new TZDate(timestamp * 1000, timeZone)
+			: new Date(timestamp * 1000);
 		return date.toDateString();
 	};
 

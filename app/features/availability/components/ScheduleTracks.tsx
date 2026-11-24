@@ -106,13 +106,16 @@ function fittedWindow(ranges?: Array<DayTimeRange>) {
 export function ClockAxis({
 	clockWindow,
 	dayStartsAt,
+	wallClock,
 }: {
 	clockWindow: ClockWindow;
 	/** Midnight of any of the shown days, the hour labels are read off it. */
 	dayStartsAt: Date;
+	/** `dayStartsAt` is built from local date parts, see `useDateTimeFormat` */
+	wallClock?: boolean;
 }) {
 	const { t } = useTranslation(["schedule"]);
-	const { formatter } = useDateTimeFormat({ hour: "numeric" });
+	const { formatter } = useDateTimeFormat({ hour: "numeric" }, { wallClock });
 
 	const hourAt = (hour: number) =>
 		new Date(dayStartsAt.getTime() + hour * MINUTES_IN_HOUR * 60 * 1000);

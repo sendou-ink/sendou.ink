@@ -90,14 +90,20 @@ export function WeekAvailabilityEditor({
 	onPendingDraftChange?: (hasPendingDraft: boolean) => void;
 }) {
 	const { t, i18n } = useTranslation(["schedule", "common"]);
-	const { formatter: dayFormatter } = useDateTimeFormat({
-		weekday: "short",
-		day: "numeric",
-	});
-	const { formatter: timeFormatter } = useDateTimeFormat({
-		hour: "numeric",
-		minute: "2-digit",
-	});
+	const { formatter: dayFormatter } = useDateTimeFormat(
+		{
+			weekday: "short",
+			day: "numeric",
+		},
+		{ wallClock: true },
+	);
+	const { formatter: timeFormatter } = useDateTimeFormat(
+		{
+			hour: "numeric",
+			minute: "2-digit",
+		},
+		{ wallClock: true },
+	);
 
 	const clockWindow = useClockWindow({
 		expandTo: [
@@ -562,6 +568,7 @@ export function WeekAvailabilityEditor({
 					<ClockAxis
 						clockWindow={clockWindow}
 						dayStartsAt={dateAt(value[0].date, 0)}
+						wallClock
 					/>
 					{value.map((day, dayIndex) => dayRow(day, dayIndex))}
 				</div>

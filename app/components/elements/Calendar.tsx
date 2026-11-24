@@ -42,19 +42,28 @@ export function SendouCalendar({
 	weekSelection,
 	firstDayOfWeek = "sun",
 }: SendouCalendarProps) {
-	const { formatter: headingFormatter } = useDateTimeFormat({
-		month: "long",
-		year: "numeric",
-	});
-	const { formatter: weekdayFormatter } = useDateTimeFormat({
-		weekday: "narrow",
-	});
-	const { formatter: dayFormatter } = useDateTimeFormat({
-		weekday: "long",
-		day: "numeric",
-		month: "long",
-		year: "numeric",
-	});
+	const { formatter: headingFormatter } = useDateTimeFormat(
+		{
+			month: "long",
+			year: "numeric",
+		},
+		{ wallClock: true },
+	);
+	const { formatter: weekdayFormatter } = useDateTimeFormat(
+		{
+			weekday: "narrow",
+		},
+		{ wallClock: true },
+	);
+	const { formatter: dayFormatter } = useDateTimeFormat(
+		{
+			weekday: "long",
+			day: "numeric",
+			month: "long",
+			year: "numeric",
+		},
+		{ wallClock: true },
+	);
 	const headingId = React.useId();
 
 	const weekStartsOn = firstDayOfWeek === "mon" ? 1 : 0;

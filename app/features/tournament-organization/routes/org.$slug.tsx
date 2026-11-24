@@ -1,3 +1,4 @@
+import { TZDate } from "@date-fns/tz";
 import clsx from "clsx";
 import {
 	ChartNoAxesColumn,
@@ -38,6 +39,7 @@ import {
 	tournamentOrganizationStatsPage,
 } from "~/features/tournament-organization/tournament-organization-urls";
 import { SendouForm } from "~/form/SendouForm";
+import { useUserIntlPreference } from "~/hooks/intl/useUserIntlPreference";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
@@ -533,14 +535,18 @@ function EventsList({
 }) {
 	const { t } = useTranslation(["org"]);
 	const data = useLoaderData<typeof loader>();
+	const { timeZone } = useUserIntlPreference();
 
 	const now = databaseTimestampNow();
 
+	const startMonth = (startsAt: number) =>
+		(timeZone
+			? new TZDate(startsAt * 1000, timeZone)
+			: databaseTimestampToDate(startsAt)
+		).getMonth();
+
 	const events = filteredByMonth
-		? data.events.filter(
-				(event) =>
-					databaseTimestampToDate(event.startsAt).getMonth() === data.month,
-			)
+		? data.events.filter((event) => startMonth(event.startsAt) === data.month)
 		: data.events;
 	const pastEvents = events.filter((event) => event.startsAt < now);
 	const upcomingEvents = events.filter((event) => event.startsAt >= now);

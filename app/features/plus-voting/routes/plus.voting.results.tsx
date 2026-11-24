@@ -40,6 +40,7 @@ export default function PlusVotingResultsPage() {
 						year: "numeric",
 					}}
 					inline
+					wallClock
 				/>
 			</h2>
 			{data.ownScores && data.ownScores.length > 0 ? (

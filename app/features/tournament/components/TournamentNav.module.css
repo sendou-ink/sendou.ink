@@ -70,6 +70,29 @@
 	gap: var(--s-0-5);
 	flex-wrap: nowrap;
 	white-space: nowrap;
+	font-size: var(--font-xs);
+}
+
+/* before measuring, items that don't fit (with room left for the hamburger) wrap onto rows that are cut off */
+.itemsUnmeasured {
+	flex-wrap: wrap;
+	row-gap: 0;
+	height: calc(1lh + 2 * var(--s-1));
+	padding-inline-end: 36px;
+}
+
+/* in every item, lifted a row: only the copies of items on the second row land in view, stacked on each other */
+.overflowHint {
+	position: absolute;
+	inset-inline-end: 0;
+	height: 100%;
+	translate: 0 -100%;
+	background-color: var(--color-bg);
+}
+
+/* as a flex container the item is exactly its link's height, and puts the hint's static position at its own top */
+.itemSlot {
+	display: flex;
 }
 
 .itemSlot[data-hidden="true"] {

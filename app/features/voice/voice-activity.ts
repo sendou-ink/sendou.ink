@@ -133,7 +133,10 @@ function useRealVoiceActivities(): VoiceActivity[] {
 	return rooms.flatMap((room) => {
 		const voiceRoom = voiceRoomsById.get(room.id) ?? null;
 		const roomCall = room === callRoom ? call : null;
-		if (!roomCall && !(voiceRoom?.available && voiceRoom.canJoin)) return [];
+		const isJoinable = voiceRoom
+			? voiceRoom.available && voiceRoom.canJoin
+			: room.voiceJoinable;
+		if (!roomCall && !isJoinable) return [];
 
 		return [
 			toVoiceActivity({

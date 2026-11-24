@@ -10,6 +10,9 @@ import styles from "./Tabs.module.css";
 
 type TabsOrientation = "horizontal" | "vertical";
 
+/** Vertical tabs are laid out horizontally below this width, kept in sync with `Tabs.module.css` */
+const VERTICAL_TABS_MIN_WIDTH = 720;
+
 interface TabsContextValue {
 	selectedKey: string | null;
 	orientation: TabsOrientation;
@@ -39,8 +42,6 @@ interface SendouTabsProps {
 	padded?: boolean;
 	/** Hide tabs if only one tab shown, default true. */
 	disappearing?: boolean;
-	/** Vertical orientation switches to horizontal below this main content width (px). */
-	horizontalBelow?: number;
 	/** Hidden panels stay mounted via `<Activity>`: pre-rendered in the background once the page is idle and state kept across switches, making tab switches instant. Default false. */
 	keepPanelsMounted?: boolean;
 	className?: string;
@@ -70,7 +71,6 @@ export function SendouTabs({
 	onSelectionChange,
 	padded = true,
 	disappearing = true,
-	horizontalBelow,
 	keepPanelsMounted = false,
 	className,
 	orientation = "horizontal",
@@ -87,15 +87,14 @@ export function SendouTabs({
 
 	const tabsRef = React.useRef(new Map<string, HTMLElement>());
 
+	// the layout switches in CSS so the server render is right already, this only follows it for keyboard and a11y
 	const collapsedToHorizontal =
 		orientation === "vertical" &&
-		typeof horizontalBelow === "number" &&
 		mainWidth > 0 &&
-		mainWidth < horizontalBelow;
+		mainWidth < VERTICAL_TABS_MIN_WIDTH;
 	const effectiveOrientation = collapsedToHorizontal
 		? "horizontal"
 		: orientation;
-	const isVertical = effectiveOrientation === "vertical";
 
 	const select = (key: string) => {
 		if (!isControlled) {
@@ -142,17 +141,25 @@ export function SendouTabs({
 		},
 	};
 
+	const tabs = (
+		<div
+			className={clsx(className, styles.root, {
+				[styles.padded]: padded,
+				[styles.disappearing]: disappearing,
+				[styles.vertical]: orientation === "vertical",
+			})}
+		>
+			{children}
+		</div>
+	);
+
 	return (
 		<TabsContext value={context}>
-			<div
-				className={clsx(className, styles.root, {
-					[styles.padded]: padded,
-					[styles.disappearing]: disappearing,
-					[styles.vertical]: isVertical,
-				})}
-			>
-				{children}
-			</div>
+			{orientation === "vertical" ? (
+				<div className={styles.verticalContainer}>{tabs}</div>
+			) : (
+				tabs
+			)}
 		</TabsContext>
 	);
 }

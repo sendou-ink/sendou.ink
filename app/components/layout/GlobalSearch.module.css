@@ -73,6 +73,20 @@
 	font-family: inherit;
 }
 
+/* both shortcuts share one cell, so the cap keeps its width when hydration finds out the platform */
+.searchKbdKeys {
+	display: inline-grid;
+	justify-items: center;
+
+	& > * {
+		grid-area: 1 / 1;
+	}
+}
+
+.searchKbdHidden {
+	visibility: hidden;
+}
+
 .modal {
 	width: calc(100% - 2 * var(--layout-main-padding));
 	max-width: 36rem;

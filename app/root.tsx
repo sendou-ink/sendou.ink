@@ -58,10 +58,12 @@ import {
 	useTheme,
 } from "./features/theme/core/provider";
 import { getThemeSession } from "./features/theme/core/theme-session.server";
+import { getViewerTimezone } from "./features/timezone/timezone-context.server";
 import { timezoneMiddleware } from "./features/timezone/timezone-middleware.server";
 import { TranslationPreview } from "./features/translate/components/TranslationPreview";
 import { VoiceCallHost } from "./features/voice/components/VoiceCallHost";
 import { UnsavedChangesGuard } from "./form/UnsavedChangesGuard";
+import { ServerIntlProvider } from "./hooks/intl/ServerIntl";
 import { useHydrated } from "./hooks/useHydrated";
 import {
 	ALWAYS_LOADED_NAMESPACES,
@@ -73,6 +75,7 @@ import {
 	getLocale,
 	i18nMiddleware,
 } from "./modules/i18n/i18next.server";
+import * as LanguageDetection from "./modules/i18n/LanguageDetection";
 import { localePreloadUrls } from "./modules/i18n/locale-preload.server";
 import { useChangeLanguage } from "./modules/i18n/useChangeLanguage";
 import { isSupporter } from "./modules/permissions/utils";
@@ -169,6 +172,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		chatRoomList: user ? await resolveRoomList(user) : [],
 		i18nPreloadUrls: localePreloadUrls({ locale, gameLanguage }),
 		theme: themeSession.getTheme(),
+		intl: {
+			timezone: getViewerTimezone(),
+			acceptedLanguages: LanguageDetection.acceptedLanguages(
+				request.headers.get("Accept-Language"),
+			),
+		},
 		sidenavCollapsed: sidenavSession.getCollapsed(),
 		user: user
 			? {
@@ -248,7 +257,9 @@ function Document({
 					{IS_E2E_TEST_RUN ? <HydrationTestIndicator /> : null}
 					<React.StrictMode>
 						<UserProvider user={rootData?.user}>
-							<SearchParamsProvider>{children}</SearchParamsProvider>
+							<ServerIntlProvider value={rootData?.intl}>
+								<SearchParamsProvider>{children}</SearchParamsProvider>
+							</ServerIntlProvider>
 						</UserProvider>
 					</React.StrictMode>
 					<Scripts />
@@ -312,26 +323,28 @@ function Document({
 				{IS_E2E_TEST_RUN ? <HydrationTestIndicator /> : null}
 				<React.StrictMode>
 					<UserProvider user={rootData?.user}>
-						<SearchParamsProvider>
-							<SendouToastRegion />
-							<UnsavedChangesGuard />
-							<TranslationPreview />
-							{DevToolbar ? <DevToolbarMount Toolbar={DevToolbar} /> : null}
-							<MyFuse data={rootData} />
-							<ChatProvider
-								user={rootData?.user}
-								roomList={rootData?.chatRoomList}
-							>
-								{rootData?.user ? <VoiceCallHost /> : null}
-								<NotificationsProvider user={rootData?.user}>
-									<LayoutDataProvider data={rootData}>
-										<GlobalStatusProvider user={rootData?.user}>
-											<Layout data={rootData}>{children}</Layout>
-										</GlobalStatusProvider>
-									</LayoutDataProvider>
-								</NotificationsProvider>
-							</ChatProvider>
-						</SearchParamsProvider>
+						<ServerIntlProvider value={rootData?.intl}>
+							<SearchParamsProvider>
+								<SendouToastRegion />
+								<UnsavedChangesGuard />
+								<TranslationPreview />
+								{DevToolbar ? <DevToolbarMount Toolbar={DevToolbar} /> : null}
+								<MyFuse data={rootData} />
+								<ChatProvider
+									user={rootData?.user}
+									roomList={rootData?.chatRoomList}
+								>
+									{rootData?.user ? <VoiceCallHost /> : null}
+									<NotificationsProvider user={rootData?.user}>
+										<LayoutDataProvider data={rootData}>
+											<GlobalStatusProvider user={rootData?.user}>
+												<Layout data={rootData}>{children}</Layout>
+											</GlobalStatusProvider>
+										</LayoutDataProvider>
+									</NotificationsProvider>
+								</ChatProvider>
+							</SearchParamsProvider>
+						</ServerIntlProvider>
 					</UserProvider>
 				</React.StrictMode>
 				<ScrollRestoration />

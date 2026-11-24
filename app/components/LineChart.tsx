@@ -52,8 +52,10 @@ export function LineChart({
 	ariaLabel,
 }: {
 	series: LineChartSeries[];
-	/** "date": `x` values are timestamps in milliseconds; "number": plain numbers shown with an optional `suffix` */
-	xAxis: { type: "date" } | { type: "number"; suffix?: string };
+	/** "date": `x` values are timestamps in milliseconds, `wallClock` when built from local date parts (see `useDateTimeFormat`); "number": plain numbers shown with an optional `suffix` */
+	xAxis:
+		| { type: "date"; wallClock?: boolean }
+		| { type: "number"; suffix?: string };
 	/** Formats `y` values for the tooltip and the peak label */
 	formatValue?: (value: number) => string;
 	/** Gradient fill below the lines */
@@ -69,15 +71,22 @@ export function LineChart({
 	className?: string;
 	ariaLabel: string;
 }) {
-	const { formatter: dateLabelFormatter } = useDateTimeFormat({
-		month: "short",
-		day: "numeric",
-	});
-	const { formatter: tooltipDateFormatter } = useDateTimeFormat({
-		weekday: "short",
-		month: "short",
-		day: "numeric",
-	});
+	const wallClock = xAxis.type === "date" && xAxis.wallClock;
+	const { formatter: dateLabelFormatter } = useDateTimeFormat(
+		{
+			month: "short",
+			day: "numeric",
+		},
+		{ wallClock },
+	);
+	const { formatter: tooltipDateFormatter } = useDateTimeFormat(
+		{
+			weekday: "short",
+			month: "short",
+			day: "numeric",
+		},
+		{ wallClock },
+	);
 	const gradientIdPrefix = React.useId();
 	const { ref: measureRef, size } = useElementSize<HTMLDivElement>();
 	const [hoveredX, setHoveredX] = React.useState<number | null>(null);

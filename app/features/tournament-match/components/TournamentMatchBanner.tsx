@@ -48,11 +48,14 @@ export function TournamentMatchBanner({
 	data: TournamentMatchLoaderData;
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const { formatter: leagueRoundDateFormatter } = useDateTimeFormat({
-		day: "numeric",
-		month: "numeric",
-		year: "numeric",
-	});
+	const { formatter: leagueRoundDateFormatter } = useDateTimeFormat(
+		{
+			day: "numeric",
+			month: "numeric",
+			year: "numeric",
+		},
+		{ wallClock: true },
+	);
 	const { formatter: scheduleFormatter } = useDateTimeFormat({
 		weekday: "short",
 		day: "numeric",

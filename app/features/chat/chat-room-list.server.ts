@@ -1,4 +1,5 @@
 import * as R from "remeda";
+import * as VoiceJoin from "~/features/voice/core/VoiceJoin.server";
 import { hasPermission } from "~/modules/permissions/utils";
 import type { CommonUser } from "~/utils/kysely.server";
 import * as ChatRepository from "./ChatRepository.server";
@@ -27,12 +28,14 @@ export async function roomListItems(
 	);
 	const participantsById = await findParticipantsById(rooms);
 	const statsByRoomId = new Map(messageStats.map((row) => [row.roomId, row]));
+	const voiceJoinableRoomIds = await VoiceJoin.joinableRoomIds(rooms, user.id);
 
 	return rooms.map((room) =>
 		roomListItem(room, {
 			stats: statsByRoomId.get(room.roomId),
 			participantsById,
 			user,
+			voiceJoinable: voiceJoinableRoomIds.has(room.roomId),
 		}),
 	);
 }
@@ -51,10 +54,12 @@ function roomListItem(
 		stats,
 		participantsById,
 		user,
+		voiceJoinable,
 	}: {
 		stats: MessageStats | undefined;
 		participantsById: Map<number, CommonUser>;
 		user: { id: number };
+		voiceJoinable: boolean;
 	},
 ): ChatRoomListItem {
 	return {
@@ -75,5 +80,6 @@ function roomListItem(
 		unreadCount: stats?.unreadCount ?? 0,
 		latestMessageId: stats?.latestMessageId ?? null,
 		latestMessageAt: stats?.latestMessageCreatedAt ?? null,
+		voiceJoinable,
 	};
 }

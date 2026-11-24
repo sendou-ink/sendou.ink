@@ -24,7 +24,8 @@ export function StreamListItems({
 }) {
 	const { t } = useTranslation(["front"]);
 	const formatDistanceToNow = useFormatDistanceToNow();
-	const { formatRelativeDate } = useRelativeDayFormat();
+	const { formatRelativeDate, isLoaded: isRelativeDateLoaded } =
+		useRelativeDayFormat();
 	const isHydrated = useHydrated();
 
 	return (
@@ -64,10 +65,10 @@ export function StreamListItems({
 									</span>
 								) : stream.subtitle ? (
 									stream.subtitle
-								) : !isHydrated ? (
-									<span className="invisible">Placeholder</span>
-								) : isUpcoming ? (
+								) : isUpcoming && isRelativeDateLoaded ? (
 									formatRelativeDate(stream.startsAt)
+								) : isUpcoming || !isHydrated ? (
+									<span className="invisible">Placeholder</span>
 								) : (
 									formatDistanceToNow(startsAtDate, {
 										addSuffix: true,

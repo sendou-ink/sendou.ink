@@ -1,3 +1,4 @@
+import { tz } from "@date-fns/tz";
 import { isSameDay } from "date-fns";
 import {
 	CalendarClock,
@@ -305,7 +306,7 @@ function TeamEvents({ week }: { week: WeekData }) {
 		weekday: "short",
 		day: "numeric",
 	});
-	const { formatter: timeFormatter } = useDateTimeFormat({
+	const { formatter: timeFormatter, timeZone } = useDateTimeFormat({
 		hour: "numeric",
 		minute: "2-digit",
 	});
@@ -358,6 +359,7 @@ function TeamEvents({ week }: { week: WeekData }) {
 								{isSameDay(
 									databaseTimestampToDate(event.startsAt),
 									databaseTimestampToDate(event.endsAt),
+									{ in: timeZone ? tz(timeZone) : undefined },
 								)
 									? timeFormatter.formatRange(
 											databaseTimestampToDate(event.startsAt),

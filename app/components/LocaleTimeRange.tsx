@@ -11,6 +11,8 @@ interface LocaleTimeRangeProps {
 	className?: string;
 	/** defaults to block */
 	inline?: boolean;
+	/** The date is built from local date parts, see `useDateTimeFormat` */
+	wallClock?: boolean;
 	"data-testid"?: string;
 }
 
@@ -25,9 +27,10 @@ export function LocaleTimeRange({
 	options,
 	className,
 	inline,
+	wallClock,
 	"data-testid": testId,
 }: LocaleTimeRangeProps) {
-	const { formatter, isLoaded } = useDateTimeFormat(options);
+	const { formatter, isLoaded } = useDateTimeFormat(options, { wallClock });
 
 	const fromDate =
 		typeof from === "number" ? databaseTimestampToDate(from) : from;
