@@ -150,6 +150,12 @@ function StandingsTable({
 	const qualifiedDividerIdx = advanceThreshold
 		? standings.findIndex((s) => s.stats && s.stats.setWins < advanceThreshold)
 		: -1;
+	const eliminationThreshold = advanceThreshold
+		? Swiss.eliminationThreshold({
+				roundCount: bracket.swissRoundCount,
+				advanceThreshold,
+			})
+		: null;
 	const eliminatedDividerIdx = advanceThreshold
 		? standings.findIndex(
 				(s) =>
@@ -232,11 +238,11 @@ function StandingsTable({
 									columnCount={columnCount}
 								/>
 							) : null}
-							{renderEliminatedRow ? (
+							{renderEliminatedRow && eliminationThreshold ? (
 								<SwissDividerRow
 									key="eliminated"
 									type="eliminated"
-									threshold={bracket.settings!.advanceThreshold!}
+									threshold={eliminationThreshold}
 									columnCount={columnCount}
 								/>
 							) : null}
@@ -276,11 +282,11 @@ function StandingsTable({
 							</tr>
 							{eliminatedDividerIdx === -1 &&
 							i === standings.length - 1 &&
-							bracket.settings?.advanceThreshold ? (
+							eliminationThreshold ? (
 								<SwissDividerRow
 									key="eliminated"
 									type="eliminated"
-									threshold={bracket.settings.advanceThreshold}
+									threshold={eliminationThreshold}
 									columnCount={columnCount}
 								/>
 							) : null}
