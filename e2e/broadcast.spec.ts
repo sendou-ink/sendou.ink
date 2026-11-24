@@ -299,13 +299,76 @@ test.describe("Broadcast", () => {
 			"outline-width",
 			"7px",
 		);
+		// a load of the page would meet a deploy's gateway error, switching over must not load it
+		await obs.program.failPageLoads();
 
 		await dashboard.pointProgram();
 
 		await expect(dashboard.locators.programShowsThis).toBeVisible();
 		await expect(obs.program.locators.canvas).toHaveCSS("outline-width", "7px");
+		await expect(obs.program.scene("rosters")).toBeVisible();
 
 		await obs.close();
+	});
+
+	test("blanks the OBS source once its URL gets a new key", async ({
+		page,
+		browser,
+		baseURL,
+		factories,
+	}) => {
+		const tournament = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+		const obs = await openObsSource({
+			browser,
+			baseURL: baseURL!,
+			tournamentId: tournament.id,
+			programKey: tournament.programKey,
+		});
+		await expect(obs.program.scene("rosters")).toBeVisible();
+
+		await impersonate(page, NZAP_TEST_ID);
+		const dashboard = new BroadcastDashboardPage(page, pageArgs(tournament.id));
+		await dashboard.goto();
+		await dashboard.regenerateProgramKey();
+
+		await expect(obs.program.locators.canvas).toHaveCount(0);
+
+		await obs.close();
+	});
+
+	test("keeps the OBS source empty while a stylesheet failed to load, until the page loaded again", async ({
+		browser,
+		baseURL,
+		factories,
+	}) => {
+		// waits for the page's watchdog
+		test.setTimeout(60_000);
+		const tournament = await createBroadcasting(factories, {
+			authorId: NZAP_TEST_ID,
+		});
+		const context = await browser.newContext({
+			baseURL,
+			viewport: { width: 1920, height: 1080 },
+		});
+		await context.route(/\.css(\?|$)/, (route) => route.abort(), {
+			times: 1,
+		});
+		const program = new BroadcastProgramPage(
+			await context.newPage(),
+			pageArgs(tournament.id),
+		);
+
+		await program.goto(tournament.programKey);
+		await expect(program.locators.shell).toHaveCSS("opacity", "0");
+
+		await expect(program.locators.shell).toHaveCSS("opacity", "1", {
+			timeout: 30_000,
+		});
+		await expect(program.scene("rosters")).toBeVisible();
+
+		await context.close();
 	});
 
 	test("remembers the capture card source with the OBS URL in the next tournament", async ({

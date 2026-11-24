@@ -200,20 +200,35 @@ export type BroadcastStreamMessage<
 > =
 	| { kind: "state"; state: State }
 	| { kind: "heartbeat" }
-	/** The server's code changed under the connection (dev server only), the client opens a new one. */
+	/**
+	 * The client opens a new connection: the server's code changed under it (dev server only), or the OBS URL it came
+	 * through now shows another broadcast.
+	 */
 	| { kind: "reconnect" }
-	/** The OBS URL the page was opened from now shows another broadcast, the page loads again. */
-	| { kind: "reload" }
+	/** The broadcast is gone for the client, e.g. its OBS URL got a new key or its channel was removed: the overlay blanks. */
+	| { kind: "gone" }
 	/** The OBS URL the page was opened from now mutes the capture card this way. */
 	| { kind: "obsAudio"; obsAudio: BroadcastObsAudio | null }
 	/**
-	 * First message of every connection: who it is when signaling the clip peer connections, and the server's clock
-	 * (epoch ms) to time the scenes by.
+	 * First message of every connection: who it is when signaling the clip peer connections, the server's clock
+	 * (epoch ms) to time the scenes by and the broadcast it is connected to, `null` for an OBS URL not pointed at one.
 	 */
-	| { kind: "hello"; peer: BroadcastOwnPeer; now: number }
+	| {
+			kind: "hello";
+			peer: BroadcastOwnPeer;
+			now: number;
+			broadcast: BroadcastKey | null;
+	  }
 	/** To clip senders only, whenever a client connects or disconnects. */
 	| { kind: "peers"; peers: BroadcastPeer[] }
 	| { kind: "signal"; from: string; description: BroadcastSessionDescription };
+
+/** Identifies a broadcast: the tournament's broadcast of a cast channel. */
+export interface BroadcastKey {
+	tournamentId: number;
+	/** See {@link BroadcastChannel.slug}. */
+	slug: string;
+}
 
 export interface BroadcastPeer {
 	id: string;

@@ -1,9 +1,6 @@
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
-import {
-	BroadcastProgram,
-	BroadcastProgramStandby,
-} from "~/features/broadcast/components/BroadcastProgram";
+import { BroadcastProgram } from "~/features/broadcast/components/BroadcastProgram";
 import { fixedLanguageMiddleware } from "~/modules/i18n/i18next.server";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -31,20 +28,15 @@ export const meta: MetaFunction = (args) => {
 
 export const shouldRevalidate = () => false;
 
-/** A user's OBS URL, showing the broadcast it was last pointed at. */
+/** A user's OBS URL, showing the broadcast it is pointed at. */
 export default function BroadcastProgramPage() {
 	const data = useLoaderData<typeof loader>();
-
-	if (!data.broadcast) {
-		return <BroadcastProgramStandby programKey={data.programKey} />;
-	}
 
 	return (
 		<BroadcastProgram
 			sceneSet={CAST_SCENE_SET}
-			tournamentId={data.broadcast.tournamentId}
-			slug={data.broadcast.slug}
-			initialState={data.broadcast.state}
+			broadcast={data.broadcast}
+			initialState={data.state}
 			programKey={data.programKey}
 			initialObsAudio={data.obsAudio}
 		/>

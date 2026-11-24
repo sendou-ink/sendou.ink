@@ -78,7 +78,7 @@ export function Catcher() {
 		const errorText = (() => {
 			if (!(error instanceof Error)) return;
 
-			return `Session ID: ${sessionId}\nTime: ${new Date().toISOString()}\nURL: ${location.pathname}${location.search}\nUser ID: ${user?.id ?? "Not logged in"}\n${error.stack ?? error.message}`;
+			return `Session ID: ${sessionId}\nTime: ${new Date().toISOString()}\nURL: ${location.pathname}\nUser ID: ${user?.id ?? "Not logged in"}\n${error.stack ?? error.message}`;
 		})();
 
 		return (

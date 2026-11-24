@@ -83,7 +83,7 @@ export async function findProgram(programKey: string | null) {
 
 /**
  * Points the user's OBS URL at the channel's broadcast in the tournament (generating the URL if the user has none),
- * reloading the OBS sources showing it onto this one. Returns the URL's key.
+ * switching the OBS sources showing it over to this one. Returns the URL's key.
  */
 export async function pointProgram({
 	userId,
@@ -102,7 +102,7 @@ export async function pointProgram({
 		channel,
 		rules,
 	});
-	BroadcastHub.reloadProgram({
+	BroadcastHub.reconnectProgram({
 		programId: program.id,
 		except: { tournamentId, slug: channel.slug },
 	});

@@ -24,6 +24,11 @@ import {
 } from "react-router";
 import { Config } from "~/config";
 import type { CustomTheme } from "~/db/tables-json";
+import {
+	isOnAirPath,
+	isOverlayPath,
+} from "~/features/broadcast/broadcast-urls";
+import { BroadcastOnAirGuard } from "~/features/broadcast/components/BroadcastOnAirGuard";
 import { devToolsServerHooks } from "~/features/dev-tools/dev-tools-server-hooks.server";
 import { resolveLayoutData } from "~/features/layout/core/layout.server";
 import { useDebounce } from "~/hooks/useDebounce";
@@ -219,6 +224,7 @@ function Document({
 	const customThemeStyle = useCustomThemeVars();
 	const adsShown = useAdsShown(rootData?.user);
 	const isBare = useIsBareRoute();
+	const location = useLocation();
 
 	useChangeLanguage({ locale, gameLanguage });
 	usePreloadTranslation();
@@ -254,6 +260,7 @@ function Document({
 					<Fonts />
 				</head>
 				<body style={{ background: "transparent" }}>
+					{isOnAirPath(location.pathname) ? <BroadcastOnAirGuard /> : null}
 					{IS_E2E_TEST_RUN ? <HydrationTestIndicator /> : null}
 					<React.StrictMode>
 						<UserProvider user={rootData?.user}>
@@ -502,9 +509,13 @@ function useCustomThemeVars() {
 
 function useIsBareRoute() {
 	const matches = useMatches();
+	const location = useLocation();
 
-	return matches.some(
-		(match) => (match.handle as SendouRouteHandle | undefined)?.bare,
+	return (
+		isOverlayPath(location.pathname) ||
+		matches.some(
+			(match) => (match.handle as SendouRouteHandle | undefined)?.bare,
+		)
 	);
 }
 
@@ -525,13 +536,14 @@ export default function App() {
 
 export function ErrorBoundary() {
 	const rootData = useRouteLoaderData<RootLoaderData>("root");
+	const location = useLocation();
+	// drawn over footage, the error page would go on air (the on-air guard loads the page again)
+	const content = isOverlayPath(location.pathname) ? null : <Catcher />;
 
 	if (!rootData) {
 		return (
 			<ThemeProvider themeSource="static" specifiedTheme={Theme.DARK}>
-				<Document>
-					<Catcher />
-				</Document>
+				<Document>{content}</Document>
 			</ThemeProvider>
 		);
 	}
@@ -541,9 +553,7 @@ export function ErrorBoundary() {
 			specifiedTheme={isTheme(rootData.theme) ? rootData.theme : null}
 			themeSource="user-preference"
 		>
-			<Document data={rootData}>
-				<Catcher />
-			</Document>
+			<Document data={rootData}>{content}</Document>
 		</ThemeProvider>
 	);
 }

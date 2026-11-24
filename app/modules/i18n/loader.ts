@@ -51,6 +51,13 @@ export function i18nLoader() {
 		});
 }
 
+/** Whether every namespace the page's routes use loaded, i18next goes on without one that failed to. */
+export function hasLoadedInitialNamespaces() {
+	return getInitialNamespaces().every((namespace) =>
+		i18next.hasResourceBundle(i18next.language, namespace),
+	);
+}
+
 /** Switches the language in-game names are loaded in, already loaded ones need reloading */
 export function setGameLanguage(language: GameLanguageCode) {
 	gameLanguage = language;

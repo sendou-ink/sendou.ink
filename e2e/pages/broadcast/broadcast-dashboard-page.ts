@@ -68,6 +68,8 @@ export class BroadcastDashboardPage {
 	}
 
 	async goto() {
+		// the Setup tab connects to OBS's WebSocket server, never the one of an OBS open where the tests run
+		await this.page.routeWebSocket(/^ws:\/\/127\.0\.0\.1:/, (ws) => ws.close());
 		await navigate({
 			page: this.page,
 			url: broadcastDashboardPage(this.pageArgs),
@@ -154,6 +156,13 @@ export class BroadcastDashboardPage {
 	async pointProgram() {
 		await this.locators.setupTab.click();
 		await this.page.getByTestId("broadcast-point-program-button").click();
+		await submit(this.page, "confirm-button");
+	}
+
+	/** Gives the user's OBS URL a new key, confirming the old one stops working. */
+	async regenerateProgramKey() {
+		await this.locators.setupTab.click();
+		await this.page.getByTestId("broadcast-regenerate-key-button").click();
 		await submit(this.page, "confirm-button");
 	}
 

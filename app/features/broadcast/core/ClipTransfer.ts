@@ -6,6 +6,7 @@ import type {
 	BroadcastSessionDescription,
 	BroadcastStreamMessage,
 } from "../broadcast-types";
+import { broadcastSignalUrl } from "../broadcast-urls";
 
 const RTC_CONFIGURATION: RTCConfiguration = {
 	// the scanner's browser and OBS are on the same machine (or LAN): host candidates connect them, STUN is for ones further apart
@@ -448,19 +449,20 @@ export function createSender({
 /**
  * Receives clips from the dashboards sending them, answering their offers. `onChange` gets the object URLs of
  * every clip received so far by kind and clip id, kept over reconnects until the dashboard that sent it leaves it out
- * or `close`. Given a `cache` the music received is kept in it, and the ones it has are not sent again.
- * `sendFeeds` reports the overlay's audio feeds to every dashboard connected.
+ * or `close` (the replay clips only while connected to the same broadcast). Given a `cache` the music received is kept
+ * in it, and the ones it has are not sent again. `sendFeeds` reports the overlay's audio feeds to every dashboard
+ * connected.
  */
 export function createReceiver({
-	signalUrl,
 	onChange,
 	cache,
 }: {
-	signalUrl: string;
 	onChange: (clips: ReceivedClips) => void;
 	cache?: ClipCache;
 }) {
 	let self: BroadcastOwnPeer | null = null;
+	/** Of the broadcast the stream is connected to, `null` before it says or while it shows none. */
+	let signalUrl: string | null = null;
 	const connections = new Map<string, RTCPeerConnection>();
 	const channels = new Set<RTCDataChannel>();
 	/** `from`: the dashboard that sent it or last listed it to keep, `null` for one loaded from the cache. */
@@ -589,7 +591,7 @@ export function createReceiver({
 			await pc.setRemoteDescription(description);
 			await pc.setLocalDescription();
 			const answerDescription = await gatheredDescription(pc);
-			if (!self || connections.get(from) !== pc) return;
+			if (!self || !signalUrl || connections.get(from) !== pc) return;
 
 			await postSignal({
 				signalUrl,
@@ -608,11 +610,31 @@ export function createReceiver({
 		channels.clear();
 	};
 
+	/** Drops the clips of the kind, all of them without one. Returns whether there were any. */
+	const dropClips = (kind?: ClipKind) => {
+		let isDropped = false;
+		for (const [id, clip] of clips) {
+			if (kind && clip.kind !== kind) continue;
+
+			URL.revokeObjectURL(clip.url);
+			clips.delete(id);
+			isDropped = true;
+		}
+
+		return isDropped;
+	};
+
 	return {
 		handleMessage(message: BroadcastStreamMessage) {
 			if (message.kind === "hello") {
 				closeConnections();
 				self = message.peer;
+				const helloSignalUrl = message.broadcast
+					? broadcastSignalUrl(message.broadcast)
+					: null;
+				// another broadcast's replays are never shown, the music stays the overlay's own
+				if (helloSignalUrl !== signalUrl && dropClips("clip")) publish();
+				signalUrl = helloSignalUrl;
 			} else if (
 				message.kind === "signal" &&
 				message.description.type === "offer"
@@ -629,8 +651,7 @@ export function createReceiver({
 		},
 		close() {
 			closeConnections();
-			for (const { url } of clips.values()) URL.revokeObjectURL(url);
-			clips.clear();
+			dropClips();
 		},
 	};
 }

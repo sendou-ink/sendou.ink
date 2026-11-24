@@ -1,5 +1,6 @@
 import type * as React from "react";
 import { useState } from "react";
+import { useHydrated } from "~/hooks/useHydrated";
 import {
 	type BroadcastThemeClasses,
 	resolveThemeClasses,
@@ -10,7 +11,7 @@ import type {
 	BroadcastTransition,
 	BroadcastView,
 } from "../broadcast-types";
-import { combineStyles } from "../broadcast-utils";
+import { combineStyles, splitLeadingImports } from "../broadcast-utils";
 import layout from "./BroadcastOverlay.layout.module.css";
 import look from "./BroadcastOverlay.module.css";
 
@@ -194,13 +195,32 @@ export function BroadcastOverlay<State extends BroadcastState>({
 					/>
 				) : null}
 			</div>
-			{state.settings.css ? (
-				// unlayered, so it beats the overlays' own (layered) styles without specificity fights
-				<style>
-					{escapeStyleText(
-						resolveThemeClasses(state.settings.css, sceneSet.themeClasses),
-					)}
-				</style>
+			<ThemeStyles css={state.settings.css} classes={sceneSet.themeClasses} />
+		</>
+	);
+}
+
+/**
+ * The custom CSS, unlayered, so it beats the overlays' own (layered) styles without specificity fights. Its `@import`s
+ * (web fonts) load once hydrated: as the page loads, a slow font host would hold up the scripts.
+ */
+function ThemeStyles({
+	css,
+	classes,
+}: {
+	css: string;
+	classes: BroadcastThemeClasses;
+}) {
+	const isHydrated = useHydrated();
+	if (!css) return null;
+
+	const { imports, rest } = splitLeadingImports(css);
+
+	return (
+		<>
+			{imports && isHydrated ? <style>{escapeStyleText(imports)}</style> : null}
+			{rest ? (
+				<style>{escapeStyleText(resolveThemeClasses(rest, classes))}</style>
 			) : null}
 		</>
 	);

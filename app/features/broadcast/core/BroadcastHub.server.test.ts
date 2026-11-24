@@ -100,6 +100,12 @@ describe("BroadcastHub.connect", () => {
 		expect(build).toHaveBeenCalledTimes(2);
 	});
 
+	test("tells the client the broadcast it is connected to", () => {
+		const client = connect({});
+
+		expect(client.hellos()).toEqual([KEY]);
+	});
+
 	test("doesn't resend a state the clients already have", async () => {
 		const client = connect({ build: buildOf(snapshot()) });
 		await vi.advanceTimersByTimeAsync(0);
@@ -126,6 +132,44 @@ describe("BroadcastHub stale rebuild", () => {
 
 		await vi.advanceTimersByTimeAsync(1);
 		expect(build).toHaveBeenCalledOnce();
+	});
+});
+
+describe("BroadcastHub gone broadcast", () => {
+	test("blanks the clients once the broadcast builds to nothing, e.g. its channel was removed", async () => {
+		const build = buildOf(snapshot());
+		const client = connect({ build });
+		await vi.advanceTimersByTimeAsync(0);
+
+		build.mockResolvedValue(null);
+		BroadcastHub.refresh(KEY);
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(client.gones()).toBe(1);
+	});
+
+	test("sends the state again once the broadcast is back", async () => {
+		const build = buildOf(snapshot());
+		const client = connect({ build });
+		await vi.advanceTimersByTimeAsync(0);
+		build.mockResolvedValueOnce(null);
+		BroadcastHub.refresh(KEY);
+		await vi.advanceTimersByTimeAsync(0);
+
+		BroadcastHub.refresh(KEY);
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(client.states()).toHaveLength(2);
+	});
+
+	test("doesn't blank clients that never got a state", async () => {
+		const client = connect({});
+		await vi.advanceTimersByTimeAsync(0);
+
+		BroadcastHub.refresh(KEY);
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(client.gones()).toBe(0);
 	});
 });
 
@@ -379,17 +423,25 @@ describe("BroadcastHub auto-Take", () => {
 	});
 });
 
-describe("BroadcastHub.reloadProgram", () => {
+describe("BroadcastHub.connectStandby", () => {
+	test("tells the page its OBS URL shows no broadcast", () => {
+		const standby = connectStandby(1);
+
+		expect(standby.hellos()).toEqual([null]);
+	});
+});
+
+describe("BroadcastHub.reconnectProgram", () => {
 	const OTHER_KEY = { tournamentId: 2, slug: "other" };
 
-	test("reloads the pages of the OBS URL showing another broadcast or none", () => {
+	test("reconnects the pages of the OBS URL showing another broadcast or none", () => {
 		const elsewhere = connect({ ...OTHER_KEY, programId: 1 });
 		const standby = connectStandby(1);
 
-		BroadcastHub.reloadProgram({ programId: 1, except: KEY });
+		BroadcastHub.reconnectProgram({ programId: 1, except: KEY });
 
-		expect(elsewhere.reloads()).toBe(1);
-		expect(standby.reloads()).toBe(1);
+		expect(elsewhere.reconnects()).toBe(1);
+		expect(standby.reconnects()).toBe(1);
 	});
 
 	test("leaves pages already showing the broadcast, producers' and other OBS URLs' pages as they are", () => {
@@ -397,44 +449,46 @@ describe("BroadcastHub.reloadProgram", () => {
 		const producer = connect({ ...OTHER_KEY, programId: null });
 		const otherUser = connect({ ...OTHER_KEY, programId: 2 });
 
-		BroadcastHub.reloadProgram({ programId: 1, except: KEY });
+		BroadcastHub.reconnectProgram({ programId: 1, except: KEY });
 
-		expect(showing.reloads()).toBe(0);
-		expect(producer.reloads()).toBe(0);
-		expect(otherUser.reloads()).toBe(0);
+		expect(showing.reconnects()).toBe(0);
+		expect(producer.reconnects()).toBe(0);
+		expect(otherUser.reconnects()).toBe(0);
 	});
 });
 
 describe("BroadcastHub.sendObsAudio", () => {
 	const OBS_AUDIO = { inputName: "Capture", port: 4455, password: null };
 
-	test("tells the overlays of the OBS URL how to mute the capture card", () => {
+	test("tells the pages of the OBS URL how to mute the capture card, also one showing no broadcast yet", () => {
 		const showing = connect({ programId: 1 });
-
-		BroadcastHub.sendObsAudio({ programId: 1, obsAudio: OBS_AUDIO });
-
-		expect(showing.obsAudios()).toEqual([OBS_AUDIO]);
-	});
-
-	test("leaves out other OBS URLs' pages and a page showing no broadcast, which would load again", () => {
-		const otherUser = connect({ programId: 2 });
 		const standby = connectStandby(1);
 
 		BroadcastHub.sendObsAudio({ programId: 1, obsAudio: OBS_AUDIO });
 
+		expect(showing.obsAudios()).toEqual([OBS_AUDIO]);
+		expect(standby.obsAudios()).toEqual([OBS_AUDIO]);
+	});
+
+	test("leaves out other OBS URLs' pages", () => {
+		const otherUser = connect({ programId: 2 });
+
+		BroadcastHub.sendObsAudio({ programId: 1, obsAudio: OBS_AUDIO });
+
 		expect(otherUser.obsAudios()).toEqual([]);
-		expect(standby.obsAudios()).toBe(0);
 	});
 });
 
 describe("BroadcastHub.closeProgram", () => {
-	test("closes the connections through the OBS URL", () => {
+	test("blanks and closes the connections through the OBS URL", () => {
 		const showing = connect({ programId: 1 });
 		const standby = connectStandby(1);
 
 		BroadcastHub.closeProgram(1);
 
+		expect(showing.gones()).toBe(1);
 		expect(showing.close).toHaveBeenCalledOnce();
+		expect(standby.gones()).toBe(1);
 		expect(standby.close).toHaveBeenCalledOnce();
 	});
 
@@ -454,7 +508,7 @@ function connectStandby(programId: number) {
 	const connection = new AbortController();
 	connections.push(connection);
 	const close = vi.fn();
-	const messages: BroadcastStreamMessage[] = [];
+	const messages: BroadcastStreamMessage<TestState>[] = [];
 	BroadcastHub.connectStandby({
 		programId,
 		send: (message) => messages.push(JSON.parse(message)),
@@ -462,13 +516,7 @@ function connectStandby(programId: number) {
 		signal: connection.signal,
 	});
 
-	return {
-		close,
-		reloads: () =>
-			messages.filter((message) => message.kind === "reload").length,
-		obsAudios: () =>
-			messages.filter((message) => message.kind === "obsAudio").length,
-	};
+	return { close, ...messagesOf(messages) };
 }
 
 function connect({
@@ -497,14 +545,24 @@ function connect({
 		programId,
 	});
 
+	return { close, ...messagesOf(messages) };
+}
+
+function messagesOf(messages: BroadcastStreamMessage<TestState>[]) {
+	const countOf = (kind: BroadcastStreamMessage["kind"]) =>
+		messages.filter((message) => message.kind === kind).length;
+
 	return {
-		close,
 		states: () =>
 			messages.flatMap((message) =>
 				message.kind === "state" ? [message.state] : [],
 			),
-		reloads: () =>
-			messages.filter((message) => message.kind === "reload").length,
+		hellos: () =>
+			messages.flatMap((message) =>
+				message.kind === "hello" ? [message.broadcast] : [],
+			),
+		reconnects: () => countOf("reconnect"),
+		gones: () => countOf("gone"),
 		obsAudios: () =>
 			messages.flatMap((message) =>
 				message.kind === "obsAudio" ? [message.obsAudio] : [],
@@ -538,7 +596,9 @@ function built(
 }
 
 function buildOf(state: BroadcastSnapshot.Snapshot<TestState>) {
-	return vi.fn(async () => built(state));
+	return vi.fn<BroadcastHub.Layout<TestState>["build"]>(async () =>
+		built(state),
+	);
 }
 
 /** Builds the broadcast as stored like a scene set's layout does. */

@@ -84,3 +84,17 @@ export const broadcastGameUrl = (args: BroadcastPageArgs) =>
 /** An image of the designer's mock broadcast (footage, avatars, logos), in the static assets under `img/broadcast/`. */
 export const broadcastDesignImageUrl = (path: string) =>
 	`${Config.staticAssetsUrl}/img/broadcast/${path}`;
+
+const ON_AIR_PATH =
+	/^\/(broadcast\/program|to\/\d+\/broadcast\/[^/]+\/program)\/?$/;
+const DESIGN_CANVAS_PATH = /^\/to\/\d+\/broadcast\/[^/]+\/design\/canvas\/?$/;
+
+/** Whether the path is of a page OBS shows: a user's OBS URL or a broadcast's own program page. */
+export const isOnAirPath = (pathname: string) => ON_AIR_PATH.test(pathname);
+
+/**
+ * Whether the path is of an overlay page, drawn over footage or the designer's mock (the pages OBS shows and the
+ * designer's canvas). Matched by path as an error can come before the route's own handle is known.
+ */
+export const isOverlayPath = (pathname: string) =>
+	isOnAirPath(pathname) || DESIGN_CANVAS_PATH.test(pathname);

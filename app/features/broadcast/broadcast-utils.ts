@@ -108,6 +108,56 @@ export function formatClock(ms: number) {
 	return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+/**
+ * Custom CSS split into the `@import`s (and `@charset`) it starts with, e.g. web fonts, and the rest. Read off the
+ * text, so it costs the overlay no CSS parser.
+ */
+export function splitLeadingImports(css: string) {
+	let index = 0;
+	let importsEnd = 0;
+	while (index < css.length) {
+		const skipped = /^(\s+|\/\*[\s\S]*?\*\/)/.exec(css.slice(index));
+		if (skipped) {
+			index += skipped[0].length;
+			continue;
+		}
+		if (!/^@(import|charset)\b/i.test(css.slice(index))) break;
+
+		const end = statementEnd(css, index);
+		if (end === -1) break;
+		index = end + 1;
+		importsEnd = index;
+	}
+
+	return {
+		imports: css.slice(0, importsEnd).trim(),
+		rest: css.slice(importsEnd).trim(),
+	};
+}
+
+/** Index of the `;` ending the statement starting at `start`, not one in a string or `url(...)`. -1 without one. */
+function statementEnd(css: string, start: number) {
+	let quote: string | null = null;
+	let depth = 0;
+	for (let i = start; i < css.length; i++) {
+		const char = css[i];
+		if (quote) {
+			if (char === "\\") i++;
+			else if (char === quote) quote = null;
+		} else if (char === '"' || char === "'") {
+			quote = char;
+		} else if (char === "(") {
+			depth++;
+		} else if (char === ")") {
+			depth = Math.max(0, depth - 1);
+		} else if (char === ";" && depth === 0) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 function sideOf(
 	index: 0 | 1,
 	state: Pick<BroadcastStoredState, "swapSides">,

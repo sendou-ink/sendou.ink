@@ -21,17 +21,21 @@ const REOPEN_MAX_DELAY_MS = 30_000;
  * kept while disconnected and the stream is reopened with backoff, the server sends a fresh state on reconnect.
  * Also how far ahead the server's clock is of this one's (`clockOffsetMs`), to time the scenes by.
  */
-export function useBroadcastStream<State extends BroadcastState>({
+export function useBroadcastStream<
+	Initial extends BroadcastState | null,
+	State extends BroadcastState = NonNullable<Initial>,
+>({
 	url,
 	initialState,
 	onMessage,
 }: {
 	url: string;
-	initialState: State;
-	/** Gets the messages other than the state and heartbeats, e.g. clip signaling. */
+	/** `null` while there is none yet, e.g. an OBS URL not pointed at a broadcast. */
+	initialState: Initial;
+	/** Gets the messages other than heartbeats and reconnects, the states too, e.g. for clip signaling. */
 	onMessage?: (message: BroadcastStreamMessage<State>) => void;
 }) {
-	const [state, setState] = React.useState(initialState);
+	const [state, setState] = React.useState<State | Initial>(initialState);
 	const [isConnected, setIsConnected] = React.useState(false);
 	const [clockOffsetMs, setClockOffsetMs] = React.useState(0);
 	const onMessageRef = React.useRef(onMessage);
@@ -59,7 +63,7 @@ export function useBroadcastStream<State extends BroadcastState>({
 					return;
 				}
 				if (message.kind === "state") setState(message.state);
-				else if (message.kind !== "heartbeat") onMessageRef.current?.(message);
+				if (message.kind !== "heartbeat") onMessageRef.current?.(message);
 				if (message.kind === "hello") {
 					setClockOffsetMs(message.now - Date.now());
 				}
@@ -177,20 +181,17 @@ const NO_CLIPS: ClipTransfer.ReceivedClips = {
  * `onMessage` to `useBroadcastStream`.
  */
 export function useClipReceiver({
-	signalUrl,
 	cache,
 }: {
-	signalUrl: string;
 	/** Kept the same between renders. */
 	cache?: ClipTransfer.ClipCache;
-}) {
+} = {}) {
 	const [clips, setClips] =
 		React.useState<ClipTransfer.ReceivedClips>(NO_CLIPS);
 	const receiverRef = React.useRef<ClipTransfer.ClipReceiver | null>(null);
 
 	React.useEffect(() => {
 		const receiver = ClipTransfer.createReceiver({
-			signalUrl,
 			onChange: setClips,
 			cache,
 		});
@@ -201,7 +202,7 @@ export function useClipReceiver({
 			receiverRef.current = null;
 			setClips(NO_CLIPS);
 		};
-	}, [signalUrl, cache]);
+	}, [cache]);
 
 	const onMessage = (message: BroadcastStreamMessage) =>
 		receiverRef.current?.handleMessage(message);
@@ -250,9 +251,11 @@ export function useFitText<T extends HTMLElement>({
 		fit();
 		// the text is measured again with the real font once it has loaded
 		document.fonts.ready.then(fit);
+		document.fonts.addEventListener("loadingdone", fit);
 
 		return () => {
 			isCancelled = true;
+			document.fonts.removeEventListener("loadingdone", fit);
 		};
 	}, [text, minScale]);
 
@@ -376,9 +379,11 @@ export function useCamera<T extends HTMLElement>({
 		frame();
 		// measured again with the real font once it has loaded
 		document.fonts.ready.then(frame);
+		document.fonts.addEventListener("loadingdone", frame);
 
 		return () => {
 			isCancelled = true;
+			document.fonts.removeEventListener("loadingdone", frame);
 		};
 	}, [content, zoomTarget, zoomedOut]);
 

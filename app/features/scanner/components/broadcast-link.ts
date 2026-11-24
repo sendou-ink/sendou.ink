@@ -171,9 +171,11 @@ function openStream(target: BroadcastTarget): void {
 		if (!snapshot.isConnected) set({ isConnected: true, error: null });
 
 		const message = JSON.parse(event.data) as BroadcastStreamMessage;
-		if (message.kind === "reconnect") reopenStream(target, 0);
-		// the OBS URL was pointed at another broadcast
-		if (message.kind === "reload") void lookUpTarget();
+		if (message.kind === "reconnect") {
+			reopenStream(target, 0);
+			// e.g. the OBS URL was pointed at another broadcast
+			void lookUpTarget();
+		}
 	};
 	stream.onerror = () => {
 		set({ isConnected: false });

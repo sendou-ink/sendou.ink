@@ -34,8 +34,7 @@ export default function BroadcastOverlayPage() {
 	return (
 		<BroadcastProgram
 			sceneSet={CAST_SCENE_SET}
-			tournamentId={data.tournamentId}
-			slug={data.slug}
+			broadcast={{ tournamentId: data.tournamentId, slug: data.slug }}
 			initialState={data.state}
 		/>
 	);

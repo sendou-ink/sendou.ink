@@ -2,14 +2,17 @@ import * as R from "remeda";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type {
 	BroadcastAudioFeed,
+	BroadcastKey,
 	BroadcastOwnPeer,
 	BroadcastPeer,
 	BroadcastSessionDescription,
 	BroadcastStreamMessage,
 } from "../broadcast-types";
+import { broadcastSignalUrl } from "../broadcast-urls";
 import * as ClipTransfer from "./ClipTransfer";
 
-const SIGNAL_URL = "/signal";
+const BROADCAST = { tournamentId: 1, slug: "sendouink" };
+const SIGNAL_URL = broadcastSignalUrl(BROADCAST);
 const CHUNK_BYTES = 64 * 1024;
 const MAX_BUFFERED_BYTES = 8 * 1024 * 1024;
 const WARM_UP_BYTES = 8 * 1024 * 1024;
@@ -111,6 +114,30 @@ describe("ClipTransfer", () => {
 		expect(sender.statuses()).toEqual([
 			expect.objectContaining({ clipCount: 1, receivedClipIds: ["second"] }),
 		]);
+	});
+
+	test("drops the replay clips once the overlay connects to another broadcast, keeping its music", async () => {
+		network.sender("dashboard", [
+			network.clip("clip", 10),
+			network.clip("track", 10, "audio/mpeg", "music"),
+		]);
+		const overlay = network.receiver();
+		await vi.waitFor(() => expect(overlay.clipCount()).toBe(2));
+
+		overlay.hello({ tournamentId: 2, slug: "other" });
+
+		expect(overlay.urls("clip").size).toBe(0);
+		expect(overlay.urls("music").size).toBe(1);
+	});
+
+	test("keeps the clips over a reconnect to the same broadcast", async () => {
+		network.sender("dashboard", [network.clip("clip", 10)]);
+		const overlay = network.receiver();
+		await vi.waitFor(() => expect(overlay.urls().size).toBe(1));
+
+		overlay.hello(BROADCAST);
+
+		expect(overlay.urls().size).toBe(1);
 	});
 
 	test("sends a clip again once the overlay dropped it", async () => {
@@ -422,7 +449,12 @@ function createNetwork() {
 				},
 			});
 			peers.set(id, { token: self.token, ...sender });
-			sender.handleMessage({ kind: "hello", peer: self, now: Date.now() });
+			sender.handleMessage({
+				kind: "hello",
+				peer: self,
+				now: Date.now(),
+				broadcast: BROADCAST,
+			});
 			if (peers.has(OVERLAY.id)) {
 				sender.handleMessage({
 					kind: "peers",
@@ -455,14 +487,18 @@ function createNetwork() {
 				music: new Map(),
 			};
 			const receiver = ClipTransfer.createReceiver({
-				signalUrl: SIGNAL_URL,
 				onChange: (changed) => {
 					received = changed;
 				},
 				cache,
 			});
 			peers.set(OVERLAY.id, { token: OVERLAY.token, ...receiver });
-			receiver.handleMessage({ kind: "hello", peer: OVERLAY, now: Date.now() });
+			receiver.handleMessage({
+				kind: "hello",
+				peer: OVERLAY,
+				now: Date.now(),
+				broadcast: BROADCAST,
+			});
 			for (const [id, peer] of peers) {
 				if (id === OVERLAY.id) continue;
 
@@ -484,6 +520,13 @@ function createNetwork() {
 						(count, kindUrls) => count + kindUrls.size,
 						0,
 					),
+				hello: (broadcast: BroadcastKey) =>
+					receiver.handleMessage({
+						kind: "hello",
+						peer: OVERLAY,
+						now: Date.now(),
+						broadcast,
+					}),
 				sendFeeds: receiver.sendFeeds,
 				blob,
 				clip: async (clipId: string) =>

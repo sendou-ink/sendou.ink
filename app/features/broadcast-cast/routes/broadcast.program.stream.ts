@@ -8,7 +8,7 @@ import { findCastProgram } from "../broadcast-cast-utils.server";
 
 /**
  * SSE stream of a user's OBS URL: the state of the cast broadcast it shows, see `BroadcastHub`. Not pointed at one, it
- * only waits to be told to load again.
+ * only waits to be told to connect again once the URL is.
  */
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const program = notFoundIfNullish(

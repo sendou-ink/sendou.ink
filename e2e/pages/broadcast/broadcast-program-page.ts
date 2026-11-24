@@ -27,7 +27,22 @@ export class BroadcastProgramPage {
 		this.pageArgs = pageArgs;
 		this.locators = {
 			canvas: page.locator("[data-broadcast]"),
+			/** Holds the canvas, transparent until the page has loaded well enough to go on air. */
+			shell: page.locator("div:has(> [data-broadcast])"),
 		};
+	}
+
+	/** Answers every later load of the OBS URL's page itself with a gateway's error page, the page's stream left working. */
+	async failPageLoads() {
+		await this.page.route(
+			(url) => url.pathname === "/broadcast/program",
+			(route) =>
+				route.fulfill({
+					status: 502,
+					contentType: "text/html",
+					body: "<html><body><h1>502 Bad gateway</h1></body></html>",
+				}),
+		);
 	}
 
 	/** Opens the OBS URL of the program key. */

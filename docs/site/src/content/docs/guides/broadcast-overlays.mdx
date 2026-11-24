@@ -24,6 +24,8 @@ Most of making the overlays your own is plain CSS, the language every website is
 
 ## Setting up OBS
 
+You need OBS 31 or newer. An older OBS can't run the overlay: its browser source shows a card asking you to update OBS instead.
+
 <Steps>
 
 1. Open the tournament's Broadcast tab and pick the channel. This is the dashboard.
@@ -41,7 +43,9 @@ The stinger picks what it shows by itself: the match's teams facing off when goi
 
 Your URL shows one broadcast at a time, the one where you last pressed **Show this broadcast**. For the next tournament or another channel, open that channel's dashboard and press **Show this broadcast** in the **Setup** tab: the OBS sources using your URL switch over right away, nothing to change in OBS. They stop showing the broadcast they showed before, so the dashboard asks first when your URL shows another one. Between tournaments it keeps showing the last broadcast. A channel's new broadcast starts with the theme and show info of the channel's last broadcast in the same organization.
 
-**Generate new URL** makes the old URL stop working, the OBS sources using it disconnect. Paste the new one into OBS afterwards.
+**Generate new URL** makes the old URL stop working and the OBS sources using it go blank. Paste the new one into OBS afterwards.
+
+If the browser source can't load completely, e.g. while sendou.ink restarts for an update, it shows nothing rather than a broken overlay and loads again by itself once sendou.ink answers. Once loaded, it keeps the last scene on air through any outage and catches up when the connection is back.
 
 ## Casters' cameras
 
@@ -114,7 +118,7 @@ Custom CSS beats the default styles without `!important` or specificity tricks. 
 
 ## Fonts
 
-The overlay uses two fonts: `--bc-font-body` for everything, and `--bc-font-display` for titles, names and scores, which is the body font unless you set it. Any font on the web works, [Google Fonts](https://fonts.google.com/) has plenty free to use:
+The overlay uses two fonts: `--bc-font-body` for everything, and `--bc-font-display` for titles, names and scores, which is the body font unless you set it. The presets' fonts come with the overlay, use them by name without loading anything: `Outfit`, `"Barlow Condensed"`, `"Space Grotesk"`, `"Archivo Black"` and `VT323`. Any font on the web works too, [Google Fonts](https://fonts.google.com/) has plenty free to use:
 
 <Steps>
 
@@ -141,7 +145,7 @@ A font with fewer weights than the overlay uses: set `--bc-weight-semibold`, `--
 [data-broadcast] { --bc-font-display: "My Font", sans-serif; }
 ```
 
-OBS loads the font from the internet each time the browser source starts, so keep a fallback (`sans-serif`) after its name.
+OBS loads the font from the internet each time the browser source starts, just after the overlay is up (so a slow font site never holds up the overlay), and the text shows in the fallback font until then. Keep a fallback (`sans-serif`) after its name.
 
 ## With this CSS → this effect
 

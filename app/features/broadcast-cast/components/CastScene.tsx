@@ -4,6 +4,7 @@ import type {
 	BroadcastSceneSet,
 } from "~/features/broadcast/components/BroadcastOverlay";
 import { useObsCaptureMute } from "../broadcast-cast-hooks";
+import "../broadcast-cast-fonts.css";
 import { CAST_THEME_CLASSES } from "../broadcast-cast-theme";
 import type { CastBroadcastState } from "../broadcast-cast-types";
 import { needsFeaturedMatch } from "../broadcast-cast-utils";

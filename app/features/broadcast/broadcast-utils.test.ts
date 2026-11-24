@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { BroadcastMatch, MatchProgress } from "./broadcast-types";
-import { gameInk, inkColorVars } from "./broadcast-utils";
+import { gameInk, inkColorVars, splitLeadingImports } from "./broadcast-utils";
 
 const ink = { key: "lockYellowPurple" } as const;
 
@@ -65,3 +65,49 @@ function match(
 		},
 	} as BroadcastMatch;
 }
+
+describe("splitLeadingImports", () => {
+	const FONTS =
+		'@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600&display=swap");';
+
+	test.each([
+		{
+			why: "no imports",
+			css: ".a { top: 0; }",
+			imports: "",
+			rest: ".a { top: 0; }",
+		},
+		{
+			why: "an import",
+			css: `${FONTS}\n.a { top: 0; }`,
+			imports: FONTS,
+			rest: ".a { top: 0; }",
+		},
+		{
+			why: "semicolons in an unquoted url",
+			css: "@import url(https://fonts.example/a;b.css);\n.a { top: 0; }",
+			imports: "@import url(https://fonts.example/a;b.css);",
+			rest: ".a { top: 0; }",
+		},
+		{
+			why: "comments and a charset before the imports",
+			css: `/* fonts */\n@charset "utf-8";\n${FONTS}\n@import "b.css";\n.a { top: 0; }`,
+			imports: `/* fonts */\n@charset "utf-8";\n${FONTS}\n@import "b.css";`,
+			rest: ".a { top: 0; }",
+		},
+		{
+			why: "an import after a rule, which the browser ignores anyway",
+			css: `.a { top: 0; }\n${FONTS}`,
+			imports: "",
+			rest: `.a { top: 0; }\n${FONTS}`,
+		},
+		{
+			why: "an unterminated import",
+			css: '@import url("a.css")',
+			imports: "",
+			rest: '@import url("a.css")',
+		},
+	])("splits $why", ({ css, imports, rest }) => {
+		expect(splitLeadingImports(css)).toEqual({ imports, rest });
+	});
+});

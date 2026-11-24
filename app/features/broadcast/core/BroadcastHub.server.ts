@@ -6,6 +6,7 @@ import * as BroadcastRepository from "../BroadcastRepository.server";
 import type {
 	BroadcastGameSignal,
 	BroadcastHealth,
+	BroadcastKey,
 	BroadcastObsAudio,
 	BroadcastPeer,
 	BroadcastSessionDescription,
@@ -25,10 +26,7 @@ const RESTART_CATCH_UP_MS = 2 * 60_000;
 const FIRST_BUILD_RETRY_BASE_MS = 1_000;
 const FIRST_BUILD_RETRY_MAX_MS = 30_000;
 
-interface HubKey {
-	tournamentId: number;
-	slug: string;
-}
+type HubKey = BroadcastKey;
 
 /**
  * What a scene set registers into the hub: how it builds a broadcast's state and how its producer moves between its
@@ -110,8 +108,8 @@ const standbyClients = globalThis.__broadcastStandbyClients;
 const RECONNECT_MESSAGE = JSON.stringify({
 	kind: "reconnect",
 } satisfies BroadcastStreamMessage);
-const RELOAD_MESSAGE = JSON.stringify({
-	kind: "reload",
+const GONE_MESSAGE = JSON.stringify({
+	kind: "gone",
 } satisfies BroadcastStreamMessage);
 for (const hub of hubs.values()) {
 	hub.stop.abort();
@@ -172,6 +170,7 @@ export function connect<State extends BroadcastState>({
 			kind: "hello",
 			peer: { id: client.peerId, token: client.token },
 			now: Date.now(),
+			broadcast: { tournamentId: key.tournamentId, slug: key.slug },
 		} satisfies BroadcastStreamMessage),
 	);
 	hub.clients.add(client);
@@ -220,13 +219,21 @@ export function relaySignal({
 	return true;
 }
 
-/** Keeps a connection through a user's OBS URL while it isn't pointed at a broadcast, see {@link reloadProgram}. */
+/** Keeps a connection through a user's OBS URL while it isn't pointed at a broadcast, see {@link reconnectProgram}. */
 export function connectStandby({
 	signal,
 	...client
 }: StandbyClient & { signal: AbortSignal }) {
 	if (signal.aborted) return;
 
+	client.send(
+		JSON.stringify({
+			kind: "hello",
+			peer: { id: crypto.randomUUID(), token: crypto.randomUUID() },
+			now: Date.now(),
+			broadcast: null,
+		} satisfies BroadcastStreamMessage),
+	);
 	standbyClients.add(client);
 	signal.addEventListener("abort", () => standbyClients.delete(client), {
 		once: true,
@@ -234,10 +241,10 @@ export function connectStandby({
 }
 
 /**
- * Tells the pages connected through a user's OBS URL to load again, e.g. after it was pointed at another broadcast.
- * Ones already showing the broadcast of `except` are left as they are.
+ * Tells the pages connected through a user's OBS URL to connect again, e.g. after it was pointed at another broadcast,
+ * which their new connection shows. Ones already showing the broadcast of `except` are left as they are.
  */
-export function reloadProgram({
+export function reconnectProgram({
 	programId,
 	except,
 }: {
@@ -247,7 +254,7 @@ export function reloadProgram({
 	for (const client of programClients(programId)) {
 		if (except && client.hub === hubs.get(hubId(except))) continue;
 
-		client.send(RELOAD_MESSAGE);
+		client.send(RECONNECT_MESSAGE);
 	}
 }
 
@@ -265,14 +272,14 @@ export function sendObsAudio({
 	} satisfies BroadcastStreamMessage);
 
 	for (const client of programClients(programId)) {
-		// one not pointed at a broadcast shows no overlay, and loads again on any message
-		if (client.hub) client.send(message);
+		client.send(message);
 	}
 }
 
-/** Closes the connections through a user's OBS URL, e.g. after its key was regenerated. */
+/** Blanks the overlays connected through a user's OBS URL and closes their connections, e.g. after its key was regenerated. */
 export function closeProgram(programId: number) {
 	for (const client of programClients(programId)) {
+		client.send(GONE_MESSAGE);
 		client.close();
 	}
 }
@@ -424,7 +431,11 @@ async function rebuild(hub: Hub) {
 			hub.isDirty = false;
 
 			const built = await hub.layout.build(hub);
-			if (!built || hub.stop.signal.aborted) continue;
+			if (hub.stop.signal.aborted) continue;
+			if (!built) {
+				if (hub.snapshot) retire(hub);
+				continue;
+			}
 
 			hub.snapshot = built.snapshot;
 			hub.failedBuildCount = 0;
@@ -571,6 +582,19 @@ function publish(hub: Hub) {
 	}
 
 	return true;
+}
+
+/** The broadcast is gone (e.g. its channel was removed): its clients blank, and get its state again only once it is back. */
+function retire(hub: Hub) {
+	hub.snapshot = null;
+	hub.lastSentMessage = null;
+	if (hub.autoTakeTimer) clearTimeout(hub.autoTakeTimer);
+	hub.autoTakeTimer = null;
+	if (hub.staleTimer) clearTimeout(hub.staleTimer);
+	hub.staleTimer = null;
+	for (const client of hub.clients) {
+		client.send(GONE_MESSAGE);
+	}
 }
 
 /** Tells the clip senders who they can send clips to. */

@@ -4,8 +4,9 @@ import { I18nextProvider } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
 import * as ConsoleCapture from "~/features/dev-tools/core/ConsoleCapture";
 import type { LanguageCode } from "~/modules/i18n/config";
+import { isOnAirPath } from "./features/broadcast/broadcast-urls";
 import { writeViewerTimezoneCookie } from "./features/timezone/timezone-cookie";
-import { i18nLoader } from "./modules/i18n/loader";
+import { hasLoadedInitialNamespaces, i18nLoader } from "./modules/i18n/loader";
 import { loadDateFnsLocale } from "./utils/dates";
 import { logger } from "./utils/logger";
 import { getSessionId } from "./utils/session-id";
@@ -128,12 +129,21 @@ Promise.all([
 	i18nLoader(),
 	loadDateFnsLocale(document.documentElement.lang as LanguageCode),
 ])
-	.then(() =>
+	.then(() => {
+		// on air raw translation keys would show over the footage: the page stays hidden until its guard loads it again
+		if (
+			isOnAirPath(window.location.pathname) &&
+			!hasLoadedInitialNamespaces()
+		) {
+			logger.error("Translations failed to load, not hydrating");
+			return;
+		}
+
 		hydrateRoot(
 			document,
 			<I18nextProvider i18n={i18next}>
 				<HydratedRouter />
 			</I18nextProvider>,
-		),
-	)
+		);
+	})
 	.catch(logger.error);
