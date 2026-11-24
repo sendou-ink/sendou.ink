@@ -1,13 +1,16 @@
 import { add, type Duration, sub } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
+import * as CalendarEventResultFactory from "~/db/seed/factories/CalendarEventResultFactory";
 import * as CalendarEventVenueFactory from "~/db/seed/factories/CalendarEventVenueFactory";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
+import * as ResultHighlightFactory from "~/db/seed/factories/ResultHighlightFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
@@ -653,5 +656,85 @@ describe("update", () => {
 			.where("id", "=", tournament.id)
 			.executeTakeFirstOrThrow();
 		expect(settings.bracketOrder).toEqual(expected);
+	});
+});
+
+describe("upsertReportedScores", () => {
+	const authorId = () => users.id(1);
+	const playerId = () => users.id(2);
+	const otherPlayerId = () => users.id(3);
+
+	beforeEach(async () => {
+		await users.create(3);
+	});
+
+	const teamResult = (teamName: string, placement: number, userId: number) => ({
+		teamName,
+		placement,
+		players: [{ userId, name: null }],
+	});
+
+	const seedHighlightedResults = async () => {
+		const event = await CalendarEventFactory.create({ authorId: authorId() });
+		const { teams } = await CalendarEventResultFactory.create({
+			eventId: event.id,
+			participantCount: 16,
+			results: [
+				teamResult("Team Olive", 1, playerId()),
+				teamResult("Team Rust", 2, otherPlayerId()),
+			],
+		});
+		await ResultHighlightFactory.replaceAll({
+			userId: playerId(),
+			resultTeamIds: [teams[0].id],
+			resultTournamentTeamIds: [],
+		});
+		await ResultHighlightFactory.replaceAll({
+			userId: otherPlayerId(),
+			resultTeamIds: [teams[1].id],
+			resultTournamentTeamIds: [],
+		});
+
+		return event;
+	};
+
+	const highlightedTeamNames = async (userId: number) =>
+		(
+			await UserRepository.findResultsByUserId(userId, {
+				showHighlightsOnly: true,
+			})
+		).map((result) => result.teamName);
+
+	test("keeps players' highlights of the results when they are reported again", async () => {
+		const event = await seedHighlightedResults();
+
+		await CalendarRepository.upsertReportedScores({
+			eventId: event.id,
+			participantCount: 17,
+			results: [
+				teamResult("Team Rust", 1, otherPlayerId()),
+				teamResult("Team Olive (typo fixed)", 2, playerId()),
+			],
+		});
+
+		expect(await highlightedTeamNames(playerId())).toEqual([
+			"Team Olive (typo fixed)",
+		]);
+		expect(await highlightedTeamNames(otherPlayerId())).toEqual(["Team Rust"]);
+	});
+
+	test("drops the highlight of a player no longer in the results", async () => {
+		const event = await seedHighlightedResults();
+
+		await CalendarRepository.upsertReportedScores({
+			eventId: event.id,
+			participantCount: 16,
+			results: [teamResult("Team Rust", 1, otherPlayerId())],
+		});
+
+		expect(await UserRepository.hasHighlightedResultsByUserId(playerId())).toBe(
+			false,
+		);
+		expect(await highlightedTeamNames(otherPlayerId())).toEqual(["Team Rust"]);
 	});
 });

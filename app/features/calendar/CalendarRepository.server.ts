@@ -1022,6 +1022,20 @@ export function upsertReportedScores(args: {
 			})
 			.where("id", "=", args.eventId)
 			.execute();
+
+		const highlighterIds = (
+			await trx
+				.selectFrom("UserResultHighlight")
+				.innerJoin(
+					"CalendarEventResultTeam",
+					"CalendarEventResultTeam.id",
+					"UserResultHighlight.teamId",
+				)
+				.select("UserResultHighlight.userId")
+				.where("CalendarEventResultTeam.eventId", "=", args.eventId)
+				.execute()
+		).map((highlight) => highlight.userId);
+
 		await trx
 			.deleteFrom("CalendarEventResultTeam")
 			.where("eventId", "=", args.eventId)
@@ -1050,6 +1064,18 @@ export function upsertReportedScores(args: {
 		);
 
 		await trx.insertInto("CalendarEventResultPlayer").values(players).execute();
+
+		const keptHighlights = R.unique(highlighterIds).flatMap((userId) => {
+			const player = players.find((candidate) => candidate.userId === userId);
+			return player ? [{ userId, teamId: player.teamId }] : [];
+		});
+
+		if (keptHighlights.length > 0) {
+			await trx
+				.insertInto("UserResultHighlight")
+				.values(keptHighlights)
+				.execute();
+		}
 	});
 }
 
