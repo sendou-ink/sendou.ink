@@ -23,6 +23,22 @@ export function roundSetKey(round: Pick<RoundData, "groupId" | "section">) {
 		: `${round.groupId}`;
 }
 
+/** Default map counts of the group formats (round robin and swiss): every round is a best of 3. */
+export function bestOfThreeForEveryRound(rounds: RoundData[]) {
+	const result: BracketMapCounts = new Map();
+
+	for (const round of rounds) {
+		const key = roundSetKey(round);
+		if (!result.get(key)) {
+			result.set(key, new Map());
+		}
+
+		result.get(key)!.set(round.number, { count: 3, type: "BEST_OF" });
+	}
+
+	return result;
+}
+
 const ELIMINATION_SECTION_PLAY_ORDER: Record<
 	NonNullable<RoundData["section"]>,
 	number

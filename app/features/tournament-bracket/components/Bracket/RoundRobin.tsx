@@ -1,11 +1,10 @@
-import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
 import type { Bracket as BracketType } from "../../core/Bracket";
-import { groupNumberToLetters } from "../../tournament-bracket-utils";
 import {
 	BracketColumn,
 	BracketColumnMatches,
 	BracketColumns,
 } from "./BracketColumns";
+import { bracketGroups } from "./GroupTabs";
 import { Match } from "./Match";
 import { PlacementsTable } from "./PlacementsTable";
 import { RoundHeader } from "./RoundHeader";
@@ -13,11 +12,11 @@ import { useBracketSpoilerCensor } from "./useBracketSpoilerCensor";
 
 export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 	const { censored, matchCensorLevel } = useBracketSpoilerCensor();
-	const groups = getGroups(bracket);
+	const groups = bracketGroups(bracket);
 
 	return (
 		<div className="stack xl">
-			{groups.map(({ groupName, groupId }) => {
+			{groups.map(({ letters, groupId }) => {
 				const rounds = bracket.data.round.filter((r) => r.groupId === groupId);
 
 				const allMatchesFinished = rounds.every((round) => {
@@ -31,8 +30,8 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 				});
 
 				return (
-					<div key={groupName} className="stack lg ml-6">
-						<h2 className="text-lg">{groupName}</h2>
+					<div key={groupId} className="stack lg ml-6">
+						<h2 className="text-lg">{`Group ${letters}`}</h2>
 						<BracketColumns roundCount={rounds.length}>
 							{rounds.flatMap((round) => {
 								const bestOf = round.maps?.count;
@@ -71,7 +70,7 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 														showSimulation={false}
 														bracket={bracket}
 														type="groups"
-														group={groupName.split(" ")[1]}
+														group={letters}
 														spoilerCensor={matchCensorLevel({
 															bracketType: "round_robin",
 															roundNumber: round.number,
@@ -98,26 +97,4 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 			})}
 		</div>
 	);
-}
-
-function getGroups(bracket: BracketType) {
-	const result: Array<{
-		groupName: string;
-		matches: MatchType[];
-		groupId: number;
-	}> = [];
-
-	for (const group of bracket.data.group) {
-		const matches = bracket.data.match.filter(
-			(match) => match.groupId === group.id,
-		);
-
-		result.push({
-			groupName: `Group ${groupNumberToLetters(group.number)}`,
-			matches,
-			groupId: group.id,
-		});
-	}
-
-	return result;
 }

@@ -6,7 +6,7 @@ import type {
 } from "~/features/tournament-bracket/core/engine/types";
 import { invariant } from "~/utils/invariant";
 import * as Progression from "../Progression";
-import { type BracketMapCounts, roundSetKey } from "../toMapList";
+import { bestOfThreeForEveryRound } from "../toMapList";
 import { Bracket, type Standing } from "./Bracket";
 import * as Tiebreakers from "./Tiebreakers";
 
@@ -276,17 +276,6 @@ export class RoundRobinBracket extends Bracket {
 	}
 
 	defaultRoundBestOfs(data: BracketData) {
-		const result: BracketMapCounts = new Map();
-
-		for (const round of data.round) {
-			const key = roundSetKey(round);
-			if (!result.get(key)) {
-				result.set(key, new Map());
-			}
-
-			result.get(key)!.set(round.number, { count: 3, type: "BEST_OF" });
-		}
-
-		return result;
+		return bestOfThreeForEveryRound(data.round);
 	}
 }

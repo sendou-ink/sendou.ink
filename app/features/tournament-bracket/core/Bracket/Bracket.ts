@@ -125,7 +125,7 @@ export abstract class Bracket {
 		settings,
 		requiresCheckIn,
 		startTime,
-	}: Omit<CreateBracketArgs, "format">) {
+	}: CreateBracketArgs) {
 		if (!data && !previewSeeding) {
 			throw new Error("Bracket: previewSeeding or data required");
 		}
