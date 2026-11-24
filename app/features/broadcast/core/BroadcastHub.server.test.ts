@@ -36,8 +36,15 @@ const users = UserFactory.pool();
 
 const connections: AbortController[] = [];
 
+// right after the hub module started, which catches up on an automatic Take due as the server restarted
+const serverStartedAt = Date.now();
+const LONG_AFTER_SERVER_START_MS = 60 * 60_000;
+
 beforeEach(() => {
-	vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+	vi.useFakeTimers({
+		toFake: ["setTimeout", "clearTimeout", "Date"],
+		now: serverStartedAt + LONG_AFTER_SERVER_START_MS,
+	});
 	vi.spyOn(logger, "error").mockImplementation(() => {});
 });
 
@@ -219,6 +226,141 @@ describe("BroadcastHub auto-Take", () => {
 		const state = await storedState(key);
 		expect(state.live.scene).toBe("break");
 		expect(state.takeId).toBe(2);
+	});
+
+	test("doesn't take next for a client connecting long after the live scene ran out", async () => {
+		const key = await createBroadcast();
+		await takeTimed(key);
+		await vi.advanceTimersByTimeAsync(60_000);
+
+		connect({ ...key, build: storedBuild(key) });
+		await vi.advanceTimersByTimeAsync(1_000);
+
+		expect((await storedState(key)).live.scene).toBe("casters");
+	});
+
+	test("doesn't take an item that can go on air by itself only after the live scene ran out", async () => {
+		const key = await createBroadcast();
+		await takeTimed(key);
+		await TournamentBroadcastFactory.setNextAdvance({
+			...key,
+			channel,
+			advance: "take",
+		});
+		connect({ ...key, build: storedBuild(key) });
+		await vi.advanceTimersByTimeAsync(30_000);
+
+		await TournamentBroadcastFactory.setNextAdvance({
+			...key,
+			channel,
+			advance: "timer",
+		});
+		BroadcastHub.refresh(key);
+		await vi.advanceTimersByTimeAsync(1_000);
+
+		expect((await storedState(key)).live.scene).toBe("casters");
+	});
+
+	test("still takes an item resumed within seconds of the live scene running out", async () => {
+		const key = await createBroadcast();
+		await takeTimed(key);
+		await TournamentBroadcastFactory.setNextAdvance({
+			...key,
+			channel,
+			advance: "take",
+		});
+		connect({ ...key, build: storedBuild(key) });
+		await vi.advanceTimersByTimeAsync(12_000);
+
+		await TournamentBroadcastFactory.setNextAdvance({
+			...key,
+			channel,
+			advance: "timer",
+		});
+		BroadcastHub.refresh(key);
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect((await storedState(key)).live.scene).toBe("starting");
+	});
+
+	test("catches up on a Take that came due as the server restarted", async () => {
+		vi.setSystemTime(serverStartedAt - 20_000);
+		const key = await createBroadcast();
+		await takeTimed(key);
+		vi.setSystemTime(serverStartedAt + 30_000);
+
+		connect({ ...key, build: storedBuild(key) });
+		await vi.advanceTimersByTimeAsync(0);
+
+		const state = await storedState(key);
+		expect(state.live.scene).toBe("starting");
+		expect(state.takenBy).toBe("timer");
+	});
+
+	test.each([
+		{
+			why: "came due after the server started, nobody connected",
+			takenAt: serverStartedAt,
+			connectedAt: serverStartedAt + 90_000,
+		},
+		{
+			why: "came due long before the server stopped",
+			takenAt: serverStartedAt - 3 * 60_000,
+			connectedAt: serverStartedAt + 5_000,
+		},
+	])(
+		"doesn't catch up on a Take that $why",
+		async ({ takenAt, connectedAt }) => {
+			vi.setSystemTime(takenAt);
+			const key = await createBroadcast();
+			await takeTimed(key);
+			vi.setSystemTime(connectedAt);
+
+			connect({ ...key, build: storedBuild(key) });
+			await vi.advanceTimersByTimeAsync(1_000);
+
+			expect((await storedState(key)).live.scene).toBe("casters");
+		},
+	);
+
+	test("catches up only on the first schedule after the server started, even one with nothing to time", async () => {
+		vi.setSystemTime(serverStartedAt - 20_000);
+		const key = await createBroadcast();
+		await takeTimed(key);
+		await TournamentBroadcastFactory.setNextAdvance({
+			...key,
+			channel,
+			advance: "take",
+		});
+		vi.setSystemTime(serverStartedAt + 5_000);
+		connect({ ...key, build: storedBuild(key) });
+		await vi.advanceTimersByTimeAsync(30_000);
+
+		await TournamentBroadcastFactory.setNextAdvance({
+			...key,
+			channel,
+			advance: "timer",
+		});
+		BroadcastHub.refresh(key);
+		await vi.advanceTimersByTimeAsync(1_000);
+
+		expect((await storedState(key)).live.scene).toBe("casters");
+	});
+
+	test("takes once when a rebuild lands as the timer fires", async () => {
+		const key = await createBroadcast();
+		await takeTimed(key);
+		connect({ ...key, build: storedBuild(key) });
+
+		await vi.advanceTimersByTimeAsync(9_999);
+		BroadcastHub.refresh(key);
+		await vi.advanceTimersByTimeAsync(1);
+		BroadcastHub.refresh(key);
+		await vi.advanceTimersByTimeAsync(1_000);
+
+		const state = await storedState(key);
+		expect(state.takeId).toBe(2);
+		expect(state.live.scene).toBe("starting");
 	});
 
 	test("cuts to the game as the scanner sees it start", async () => {
@@ -411,6 +553,15 @@ function storedBuild({ tournamentId }: { tournamentId: number }) {
 
 		return built(snapshot(stored.state, stored.settings), tournamentId);
 	};
+}
+
+/** Puts casters on air for 10 seconds, starting soon staged to follow it by itself. */
+function takeTimed(key: { tournamentId: number }) {
+	return TournamentBroadcastFactory.take({
+		...key,
+		channel,
+		next: { scene: "casters", durationMs: 10_000, transition: "cut" },
+	});
 }
 
 async function createBroadcast() {

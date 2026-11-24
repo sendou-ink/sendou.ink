@@ -1,5 +1,9 @@
 import { addDays } from "date-fns";
 import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.server";
+import type {
+	BroadcastAdvance,
+	BroadcastTakeSource,
+} from "~/features/broadcast/broadcast-types";
 import * as Producer from "~/features/broadcast/core/Producer";
 import { CAST_PRODUCER_RULES } from "~/features/broadcast-cast/broadcast-cast-constants";
 import type {
@@ -41,11 +45,18 @@ export async function pointProgram(key: BroadcastKey & { userId: number }) {
 	return program.programKey;
 }
 
-/** Edits the staged item like the dashboard's scene panel and puts it on air with a Take, no match cast on the channel. */
+/**
+ * Edits the staged item like the dashboard's scene panel and puts it on air with a Take, no match cast on the channel.
+ * The producer's Take unless `by` makes it an automatic one.
+ */
 export function take({
 	next,
+	by = "producer",
 	...key
-}: BroadcastKey & { next: Producer.ItemPatch<CastProducerState> }) {
+}: BroadcastKey & {
+	next: Producer.ItemPatch<CastProducerState>;
+	by?: BroadcastTakeSource;
+}) {
 	return BroadcastRepository.updateProducer({
 		...key,
 		rules: CAST_PRODUCER_RULES,
@@ -53,8 +64,28 @@ export function take({
 			Producer.take(
 				CAST_PRODUCER_RULES,
 				Producer.editItem(CAST_PRODUCER_RULES, state, state.next.id, next)!,
-				{ liveResults: null, now: Date.now(), hasMatch: false },
+				{
+					liveResults: null,
+					now: Date.now(),
+					hasMatch: false,
+					by,
+				},
 			),
+	});
+}
+
+/** Sets what puts the staged item on air besides a Take like the dashboard's Hold (`take`) and Resume auto buttons. */
+export function setNextAdvance({
+	advance,
+	...key
+}: BroadcastKey & { advance: BroadcastAdvance }) {
+	return BroadcastRepository.updateProducer({
+		...key,
+		rules: CAST_PRODUCER_RULES,
+		change: (state) =>
+			Producer.editItem(CAST_PRODUCER_RULES, state, state.next.id, {
+				advance,
+			}),
 	});
 }
 

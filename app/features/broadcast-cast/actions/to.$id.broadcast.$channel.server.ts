@@ -35,7 +35,11 @@ import type {
 import * as CastChannel from "../core/CastChannel";
 
 const STALE_TAKE_MESSAGE =
-	"Someone else already pressed Take. Check what is live now.";
+	"Next already went on air (by itself or by another producer). Check what is live now.";
+const TAKE_AFTER_AUTO_TAKE_MESSAGE =
+	"Next just went on air by itself, so your Take was not used. Check what is live now.";
+const TAKE_AFTER_TAKE_MESSAGE =
+	"Next was just taken, so your Take was not used. Check what is live now.";
 const STALE_ITEM_MESSAGE =
 	"That scene isn't staged anymore. Check what is live and queued now.";
 const NO_PROGRAM_MESSAGE =
@@ -253,27 +257,35 @@ export const action = defineAction(
 					body.matchId !== undefined && body.resultCount !== undefined
 						? { matchId: body.matchId, count: body.resultCount }
 						: null;
-				let isMissingMatch = false;
+				let message = STALE_TAKE_MESSAGE;
 				const isTaken = await BroadcastRepository.updateProducer({
 					...key,
 					change: (state) => {
 						if (state.takeId !== body.takeId) return null;
+
+						const now = Date.now();
+						const refusal = Producer.takeRefusal(state, now);
+						if (refusal) {
+							message =
+								refusal === "afterAutoTake"
+									? TAKE_AFTER_AUTO_TAKE_MESSAGE
+									: TAKE_AFTER_TAKE_MESSAGE;
+							return null;
+						}
 						if (!Producer.canTake(CAST_PRODUCER_RULES, state, { hasMatch })) {
-							isMissingMatch = true;
+							message = NO_MATCH_MESSAGE;
 							return null;
 						}
 
 						return Producer.take(CAST_PRODUCER_RULES, state, {
 							liveResults,
-							now: Date.now(),
+							now,
 							hasMatch,
+							by: "producer",
 						});
 					},
 				});
-				errorToastIfFalsy(
-					isTaken,
-					isMissingMatch ? NO_MATCH_MESSAGE : STALE_TAKE_MESSAGE,
-				);
+				errorToastIfFalsy(isTaken, message);
 				break;
 			}
 			case "SHOW_RESULTS": {

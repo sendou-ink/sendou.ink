@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ServerConfig } from "~/config.server";
+import * as TournamentBroadcastFactory from "~/db/seed/factories/TournamentBroadcastFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as BroadcastRepository from "~/features/broadcast/BroadcastRepository.server";
@@ -51,6 +52,137 @@ const tracks: BroadcastMusicTrack[] = [
 
 const STARTED_AT = new Date("2026-11-21T12:00:00Z").getTime();
 
+type ActionBody = Parameters<typeof broadcast>[0];
+
+/**
+ * A valid body of each action, every one of them, `stale` the same based on a staged item gone on air (the first Take
+ * puts item 2 on air) or a Take no longer the latest. Submitted as SendouForm does when `isForm`.
+ */
+const EVERY_ACTION: {
+	[Name in ActionBody["_action"]]: {
+		body: Extract<ActionBody, { _action: Name }>;
+		stale?: Extract<ActionBody, { _action: Name }>;
+		isForm?: boolean;
+	};
+} = {
+	SET_SCENE: {
+		body: { _action: "SET_SCENE", itemId: 2, scene: "bracket" },
+		stale: { _action: "SET_SCENE", itemId: 2, scene: "bracket" },
+	},
+	SET_TRANSITION: {
+		body: { _action: "SET_TRANSITION", itemId: 2, transition: "cut" },
+		stale: { _action: "SET_TRANSITION", itemId: 2, transition: "cut" },
+	},
+	SET_INK: {
+		body: {
+			_action: "SET_INK",
+			key: "greenPink",
+			matchId: 1,
+			resultCount: 0,
+		},
+	},
+	SET_SWAP_SIDES: { body: { _action: "SET_SWAP_SIDES", swapSides: true } },
+	SET_BRACKET: {
+		body: { _action: "SET_BRACKET", itemId: 2, bracketIdx: 0 },
+		stale: { _action: "SET_BRACKET", itemId: 2, bracketIdx: 0 },
+	},
+	SET_BRACKET_SIDE: {
+		body: {
+			_action: "SET_BRACKET_SIDE",
+			itemId: 2,
+			side: "winners",
+			focus: "hidden",
+		},
+		stale: {
+			_action: "SET_BRACKET_SIDE",
+			itemId: 2,
+			side: "winners",
+			focus: "hidden",
+		},
+	},
+	SET_TEAM: {
+		body: { _action: "SET_TEAM", itemId: 2, teamPick: "right" },
+		stale: { _action: "SET_TEAM", itemId: 2, teamPick: "right" },
+	},
+	SET_CLIP: {
+		body: { _action: "SET_CLIP", itemId: 2 },
+		stale: { _action: "SET_CLIP", itemId: 2 },
+	},
+	SET_DURATION: {
+		body: { _action: "SET_DURATION", itemId: 2 },
+		stale: { _action: "SET_DURATION", itemId: 2 },
+	},
+	SET_ADVANCE: {
+		body: { _action: "SET_ADVANCE", itemId: 2, advance: "take" },
+		stale: { _action: "SET_ADVANCE", itemId: 2, advance: "take" },
+	},
+	SET_CASTER_VOLUME: {
+		body: { _action: "SET_CASTER_VOLUME", userId: 1, volume: 50 },
+	},
+	PLAY_MUSIC: { body: { _action: "PLAY_MUSIC", tracks }, isForm: true },
+	SET_MUSIC_TRACKS: {
+		body: { _action: "SET_MUSIC_TRACKS", tracks },
+		isForm: true,
+	},
+	PAUSE_MUSIC: { body: { _action: "PAUSE_MUSIC" }, isForm: true },
+	STOP_MUSIC: { body: { _action: "STOP_MUSIC" }, isForm: true },
+	SKIP_MUSIC: {
+		body: { _action: "SKIP_MUSIC", direction: "next", trackId: tracks[0]!.id },
+		isForm: true,
+	},
+	SET_MUSIC_VOLUME: {
+		body: { _action: "SET_MUSIC_VOLUME", volume: 20 },
+		isForm: true,
+	},
+	SET_MUSIC_SHUFFLE: {
+		body: { _action: "SET_MUSIC_SHUFFLE", isShuffled: true },
+	},
+	ADD_TO_QUEUE: { body: { _action: "ADD_TO_QUEUE" } },
+	POINT_PROGRAM: { body: { _action: "POINT_PROGRAM" } },
+	REGENERATE_PROGRAM_KEY: { body: { _action: "REGENERATE_PROGRAM_KEY" } },
+	REMOVE_FROM_QUEUE: {
+		body: { _action: "REMOVE_FROM_QUEUE", itemId: 2 },
+		stale: { _action: "REMOVE_FROM_QUEUE", itemId: 2 },
+	},
+	MOVE_IN_QUEUE: {
+		body: { _action: "MOVE_IN_QUEUE", itemId: 2, toIndex: 0 },
+		stale: { _action: "MOVE_IN_QUEUE", itemId: 2, toIndex: 0 },
+	},
+	TAKE: {
+		body: { _action: "TAKE", takeId: 0 },
+		stale: { _action: "TAKE", takeId: 0 },
+	},
+
+	SHOW_RESULTS: {
+		body: { _action: "SHOW_RESULTS", matchId: 1, resultCount: 0 },
+	},
+	UPDATE_THEME: {
+		body: { _action: "UPDATE_THEME", weaponImages: "default" },
+		isForm: true,
+	},
+	UPDATE_NOW_PLAYING: {
+		body: { _action: "UPDATE_NOW_PLAYING", nowPlaying: "Lofi Squid Beats" },
+		isForm: true,
+	},
+	UPDATE_HEADLINE: {
+		body: { _action: "UPDATE_HEADLINE", headline: "Top 8" },
+		isForm: true,
+	},
+	UPDATE_CASTERS: {
+		body: { _action: "UPDATE_CASTERS", casters: [] },
+		isForm: true,
+	},
+	UPDATE_OBS_AUDIO: {
+		body: {
+			_action: "UPDATE_OBS_AUDIO",
+			port: 4455,
+			password: null,
+			inputName: null,
+		},
+		isForm: true,
+	},
+};
+
 const originalBroadcastOrgIds = ServerConfig.broadcastOrgIds;
 
 beforeEach(async () => {
@@ -80,10 +212,46 @@ describe("TAKE", () => {
 
 		const response = await take(tournamentId, { takeId: 0 });
 
-		assertResponseErrored(response, "Someone else already pressed Take");
+		assertResponseErrored(response, "Next already went on air");
 		const state = await storedState(tournamentId);
 		expect(state.takeId).toBe(1);
 		expect(state.live.scene).toBe("game");
+	});
+
+	test("rejects a Take right after Next went on air by itself", async () => {
+		const tournamentId = await createTournament();
+		await autoTake(tournamentId);
+
+		const response = await take(tournamentId, { takeId: 1 });
+
+		assertResponseErrored(response, "Next just went on air by itself");
+		expect((await storedState(tournamentId)).takeId).toBe(1);
+	});
+
+	test("takes once the moment after an automatic Take has passed", async () => {
+		vi.useFakeTimers({ toFake: ["Date"] });
+		try {
+			const tournamentId = await createTournament();
+			await autoTake(tournamentId);
+			vi.setSystemTime(Date.now() + 1_500);
+
+			const response = await take(tournamentId, { takeId: 1 });
+
+			expect(response).toBeNull();
+			expect((await storedState(tournamentId)).takeId).toBe(2);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	test("rejects a Take right after the producer's own, e.g. a held key repeating it", async () => {
+		const tournamentId = await createTournament();
+		await take(tournamentId, { takeId: 0 });
+
+		const response = await take(tournamentId, { takeId: 1 });
+
+		assertResponseErrored(response, "Next was just taken");
+		expect((await storedState(tournamentId)).takeId).toBe(1);
 	});
 
 	test("rejects a Take of a scene showing the match while none is cast", async () => {
@@ -100,6 +268,48 @@ describe("TAKE", () => {
 		expect(state.takeId).toBe(0);
 		expect(state.next.scene).toBe("rosters");
 	});
+
+	function autoTake(tournamentId: number) {
+		return TournamentBroadcastFactory.take({
+			tournamentId,
+			channel: castAccount,
+			next: {},
+			by: "timer",
+		});
+	}
+});
+
+describe("every action", () => {
+	test.each(Object.entries(EVERY_ACTION))(
+		"%s is only for the broadcast's producers",
+		async (_name, { body, isForm }) => {
+			const tournamentId = await createTournament();
+			const submit = isForm ? broadcastForm : broadcast;
+
+			await expect(
+				submit(body, { user: casterId(), params: params(tournamentId) }),
+			).rejects.toThrow("404");
+		},
+	);
+
+	test.each(
+		Object.entries(EVERY_ACTION).filter(([, { stale }]) => stale !== undefined),
+	)(
+		"%s is refused for a staged item or Take that's not current anymore",
+		async (_name, { stale }) => {
+			const tournamentId = await createTournament();
+			await take(tournamentId, { takeId: 0 });
+			const before = await storedState(tournamentId);
+
+			const response = await broadcast(stale!, {
+				user: organizerId(),
+				params: params(tournamentId),
+			});
+
+			assertResponseErrored(response);
+			expect(await storedState(tournamentId)).toEqual(before);
+		},
+	);
 });
 
 describe("UPDATE_CASTERS", () => {

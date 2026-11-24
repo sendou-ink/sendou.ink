@@ -8,7 +8,7 @@ import type { CastBroadcastState } from "../broadcast-cast-types";
 export interface TakeStatus {
 	/** Next can go on air, it isn't a match scene waiting for a featured match. */
 	canTake: boolean;
-	/** Time until next goes on air by itself, `null` when it doesn't by a timer. */
+	/** Time until next goes on air by itself, `null` when it doesn't by a timer (anymore). */
 	remainingMs: number | null;
 	/** Next goes on air as the scanner sees this, `null` when it doesn't wait for a game. */
 	gameCue: "start" | "end" | null;
@@ -30,8 +30,12 @@ export function status({
 	const autoTakeAt = Producer.autoTakeAt(CAST_PRODUCER_RULES, state, {
 		hasMatch,
 	});
+	// one whose time passed too long ago waits for a Take, see `Producer.isAutoTakeLapsed`
 	const remainingMs =
-		canTake && autoTakeAt !== null && now !== null
+		canTake &&
+		autoTakeAt !== null &&
+		now !== null &&
+		!Producer.isAutoTakeLapsed(autoTakeAt, { now })
 			? Math.max(0, autoTakeAt - now)
 			: null;
 	const gameCue =

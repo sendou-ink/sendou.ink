@@ -11,6 +11,7 @@ import type {
 	BROADCAST_GAME_END_TRIGGERS,
 	BROADCAST_INK_COLORS,
 	BROADCAST_STREAM_ROLES,
+	BROADCAST_TAKE_SOURCES,
 	BROADCAST_TRANSITIONS,
 	BROADCAST_VIEWS,
 	BROADCAST_WEAPON_IMAGES,
@@ -22,6 +23,8 @@ export type BroadcastTransition = (typeof BROADCAST_TRANSITIONS)[number];
 export type BroadcastStingerVariant = "teams" | "tournament";
 
 export type BroadcastAdvance = (typeof BROADCAST_ADVANCES)[number];
+
+export type BroadcastTakeSource = (typeof BROADCAST_TAKE_SOURCES)[number];
 
 export type BroadcastWeaponImages = (typeof BROADCAST_WEAPON_IMAGES)[number];
 
@@ -56,8 +59,10 @@ export interface ProducerState<Scene extends string = string> {
 	transition: BroadcastTransition;
 	/** How long the scene stays on air before the item after it can go on air by itself, `null` until a Take. */
 	durationMs: number | null;
-	/** What puts it on air besides a Take, see `Producer.effectiveAdvance`. */
+	/** What puts it on air besides a Take, see `Producer.effectiveAdvance`. `take` only when the producer held it. */
 	advance: BroadcastAdvance;
+	/** The producer picked `advance`, which then applies even after a scene staying on air until a Take (see `Producer.Rules.staysUntilTake`). */
+	isAdvancePicked: boolean;
 }
 
 export interface BroadcastStoredState<
@@ -67,6 +72,8 @@ export interface BroadcastStoredState<
 	takeId: number;
 	/** When the last Take was made (epoch ms), what the live scene's length runs from. `null` before the first. */
 	takenAt: number | null;
+	/** What made the last Take, `null` before the first. */
+	takenBy: BroadcastTakeSource | null;
 	live: Item;
 	next: Item;
 	/** Staged to go on air after `next`, in order. */

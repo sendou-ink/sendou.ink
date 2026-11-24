@@ -437,6 +437,7 @@ const DEFAULT_CAST_ITEM: Omit<CastProducerState, "id"> = {
 	teamPick: "left",
 	durationMs: null,
 	advance: "timer",
+	isAdvancePicked: false,
 };
 
 /**

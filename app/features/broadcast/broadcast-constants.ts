@@ -148,6 +148,22 @@ export const BROADCAST_STREAM_ROLES = [
  */
 export const BROADCAST_ADVANCES = ["take", "timer", "game"] as const;
 
+/** What made a Take: the producer, the scene on air running its length (`timer`) or the scanner seeing the game start or end (`game`). */
+export const BROADCAST_TAKE_SOURCES = ["producer", "timer", "game"] as const;
+
+/**
+ * How long after its time an automatic Take still goes on air. One that came while nothing could go on air by itself
+ * (Next held, missing its match, nobody connected) waits for a Take once this passed, so a change made later never
+ * cuts to Next by itself.
+ */
+export const BROADCAST_AUTO_TAKE_GRACE_MS = 5_000;
+
+/** A producer's Take this soon after an automatic one is refused: it was meant for what went on air by itself. */
+export const BROADCAST_TAKE_AFTER_AUTO_TAKE_MS = 1_500;
+
+/** A producer's Take this soon after another one is refused, e.g. a held key repeating it. */
+export const BROADCAST_TAKE_AFTER_TAKE_MS = 500;
+
 /**
  * The moments of a game's end the scanner reports, each in turn: the HUD going away as the game ends (`hudGone`), and
  * Judd raising the flag for the winner on the results screen a few seconds later (`juddFlag`), see

@@ -20,6 +20,8 @@ import * as Producer from "./Producer";
 const REBUILD_DEBOUNCE_MS = 250;
 // timers can fire a little early
 const AUTO_TAKE_TOLERANCE_MS = 50;
+// an automatic Take due as the server went down still goes on air once it's back, if it's back this soon
+const RESTART_CATCH_UP_MS = 2 * 60_000;
 const FIRST_BUILD_RETRY_BASE_MS = 1_000;
 const FIRST_BUILD_RETRY_MAX_MS = 30_000;
 
@@ -63,6 +65,13 @@ interface Hub extends HubKey {
 	rebuildTimer: ReturnType<typeof setTimeout> | null;
 	/** Puts the staged item on air once the live scene has run its length, see `Producer.autoTakeAt`. */
 	autoTakeTimer: ReturnType<typeof setTimeout> | null;
+	/** The automatic Take {@link Hub.autoTakeTimer} is timed for. */
+	armedAutoTake: ArmedAutoTake | null;
+	/**
+	 * Automatic Takes that came due in this window still go on air, see `Producer.isAutoTakeLapsed`: a hub created as
+	 * the server started catches up on one that came due while it restarted, on its first schedule only.
+	 */
+	catchUp: CatchUp | null;
 	/** Retries a failed build while there is no state to show yet. */
 	retryTimer: ReturnType<typeof setTimeout> | null;
 	/** Rebuilds the state once it goes stale by itself, see `BroadcastSnapshot.Built.staleAt`. */
@@ -70,6 +79,16 @@ interface Hub extends HubKey {
 	failedBuildCount: number;
 	isBuilding: boolean;
 	isDirty: boolean;
+}
+
+type CatchUp = NonNullable<
+	Parameters<typeof Producer.isAutoTakeLapsed>[1]["catchUp"]
+>;
+
+interface ArmedAutoTake {
+	takeId: number;
+	takeAt: number;
+	catchUp: CatchUp | null;
 }
 
 /** A connection through a user's OBS URL that isn't pointed at a broadcast, waiting for it to be. */
@@ -85,6 +104,8 @@ declare global {
 globalThis.__broadcastHubs ??= new Map();
 globalThis.__broadcastStandbyClients ??= new Set();
 const hubs = globalThis.__broadcastHubs;
+// the dev server evaluating changed code counts too, its hubs' clients reconnecting as after a restart
+const startedAt = Date.now();
 const standbyClients = globalThis.__broadcastStandbyClients;
 const RECONNECT_MESSAGE = JSON.stringify({
 	kind: "reconnect",
@@ -338,6 +359,11 @@ function createHub(key: HubKey & { layout: Layout }): Hub {
 		resubscribe: new AbortController(),
 		rebuildTimer: null,
 		autoTakeTimer: null,
+		armedAutoTake: null,
+		catchUp:
+			Date.now() - startedAt <= RESTART_CATCH_UP_MS
+				? { from: startedAt - RESTART_CATCH_UP_MS, to: startedAt }
+				: null,
 		retryTimer: null,
 		staleTimer: null,
 		failedBuildCount: 0,
@@ -449,11 +475,16 @@ function scheduleStaleRebuild(hub: Hub, staleAt: number | null) {
 
 /**
  * Times the automatic Take of the staged item after the live scene's length, replacing the one timed before. One
- * overdue, e.g. as the server restarted while a clip played, is taken right away.
+ * overdue goes on air right away only within the grace of `Producer.isAutoTakeLapsed`, or as the first one of a hub
+ * created as the server started (e.g. it restarted while a clip played).
  */
 function scheduleAutoTake(hub: Hub) {
 	if (hub.autoTakeTimer) clearTimeout(hub.autoTakeTimer);
 	hub.autoTakeTimer = null;
+	const armedBefore = hub.armedAutoTake;
+	hub.armedAutoTake = null;
+	const firstCatchUp = hub.catchUp;
+	hub.catchUp = null;
 
 	const snapshot = hub.snapshot;
 	const takeAt = snapshot
@@ -463,10 +494,20 @@ function scheduleAutoTake(hub: Hub) {
 		: null;
 	if (!snapshot || takeAt === null || hub.stop.signal.aborted) return;
 
+	// a rebuild before the timer fired keeps the catch-up of the same Take
+	const isSameAsArmed =
+		armedBefore?.takeId === snapshot.takeId && armedBefore.takeAt === takeAt;
+	const catchUp = isSameAsArmed ? armedBefore.catchUp : firstCatchUp;
+	if (Producer.isAutoTakeLapsed(takeAt, { now: Date.now(), catchUp })) {
+		return;
+	}
+
+	const armed = { takeId: snapshot.takeId, takeAt, catchUp };
+	hub.armedAutoTake = armed;
 	hub.autoTakeTimer = setTimeout(
 		() => {
 			hub.autoTakeTimer = null;
-			autoTake(hub, snapshot.takeId).catch((error) =>
+			autoTake(hub, armed).catch((error) =>
 				logger.error("Automatic Take failed", error),
 			);
 		},
@@ -476,9 +517,13 @@ function scheduleAutoTake(hub: Hub) {
 
 /**
  * Takes like the producer would, unless a Take or a change to the staged item since the take it was timed after
- * made it not due anymore. The results reported by then go on air with it.
+ * made it not due anymore, or its time passed too long ago (see `Producer.isAutoTakeLapsed`). The results reported
+ * by then go on air with it.
  */
-async function autoTake(hub: Hub, takeId: number) {
+async function autoTake(
+	hub: Hub,
+	{ takeId, catchUp }: Pick<ArmedAutoTake, "takeId" | "catchUp">,
+) {
 	const built = await hub.layout.build(hub);
 	if (!built || hub.stop.signal.aborted) return;
 
@@ -495,7 +540,8 @@ async function autoTake(hub: Hub, takeId: number) {
 			if (
 				state.takeId !== takeId ||
 				takeAt === null ||
-				takeAt > now + AUTO_TAKE_TOLERANCE_MS
+				takeAt > now + AUTO_TAKE_TOLERANCE_MS ||
+				Producer.isAutoTakeLapsed(takeAt, { now, catchUp })
 			) {
 				return null;
 			}
@@ -504,6 +550,7 @@ async function autoTake(hub: Hub, takeId: number) {
 				liveResults,
 				now,
 				hasMatch: built.snapshot.match !== null,
+				by: "timer",
 			});
 		},
 	});

@@ -81,6 +81,20 @@ describe("CastTake.status", () => {
 			take: { canTake: true, remainingMs: null, gameCue: "end" },
 		},
 		{
+			why: "the scene on air ran out long ago while next couldn't follow it",
+			setup: (state: CastBroadcastState) => {
+				state.live = item({ scene: "casters", durationMs: 10_000 });
+				state.next = item({ id: 2, scene: "rosters", advance: "timer" });
+			},
+			now: TAKEN_AT + 60_000,
+			take: {
+				canTake: true,
+				remainingMs: null,
+				gameCue: null,
+				isImminent: false,
+			},
+		},
+		{
 			why: "a timed next before the clock is synced",
 			setup: (state: CastBroadcastState) => {
 				state.live = item({ scene: "casters", durationMs: 60_000 });
@@ -130,6 +144,7 @@ function item(patch: Partial<CastProducerState> = {}): CastProducerState {
 		teamPick: "left",
 		durationMs: null,
 		advance: "take",
+		isAdvancePicked: false,
 		...patch,
 	};
 }

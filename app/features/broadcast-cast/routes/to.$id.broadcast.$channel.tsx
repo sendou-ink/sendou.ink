@@ -20,7 +20,6 @@ import {
 	ArrowLeftRight,
 	Brush,
 	Cable,
-	ChevronsLeft,
 	CircleCheck,
 	CircleDashed,
 	Hand,
@@ -146,6 +145,7 @@ import { ClipPicker } from "../components/ClipPicker";
 import { MusicControls, MusicLibraryPanel } from "../components/MusicDashboard";
 import { ObsCaptureCardField } from "../components/ObsCaptureCardField";
 import { ScenePicker, useSceneHotkeys } from "../components/ScenePicker";
+import { TakeButton } from "../components/TakeButton";
 import * as BracketFocus from "../core/BracketFocus";
 import * as CastChannel from "../core/CastChannel";
 import * as CastTake from "../core/CastTake";
@@ -313,23 +313,13 @@ function BroadcastDashboard() {
 				</section>
 
 				<div className={styles.takeColumn}>
-					<ActionButton
-						schema={broadcastActionSchema}
-						action="TAKE"
-						fields={{
-							takeId: state.takeId,
-							matchId: state.match?.id,
-							resultCount: state.match?.progress.next.resultCount,
-						}}
-						size="big"
-						icon={<ChevronsLeft />}
-						isDisabled={!take.canTake}
+					<TakeButton
+						state={state}
+						canTake={take.canTake}
+						clockOffsetMs={clockOffsetMs}
 						className={styles.take}
 						formClassName={styles.takeForm}
-						testId="broadcast-take-button"
-					>
-						{t("broadcast:dashboard.take")}
-					</ActionButton>
+					/>
 					<AutoTake state={state} take={take} />
 					<SendouButton
 						size="small"

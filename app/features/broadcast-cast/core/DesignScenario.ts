@@ -539,6 +539,7 @@ export function build({
 		teamPick: "left",
 		durationMs: scenario.scene === "starting" ? 5 * 60_000 : null,
 		advance: "take",
+		isAdvancePicked: false,
 	};
 	const bracket = mockBracket({ scenario, teams, match });
 	const spotlight = mockSpotlight({ scenario, teams, match });
@@ -547,6 +548,7 @@ export function build({
 		v: 1,
 		takeId: 1,
 		takenAt,
+		takenBy: "producer",
 		live: producer,
 		next: producer,
 		queue: [],

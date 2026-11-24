@@ -1,5 +1,8 @@
 import {
 	BROADCAST_ADVANCES,
+	BROADCAST_AUTO_TAKE_GRACE_MS,
+	BROADCAST_TAKE_AFTER_AUTO_TAKE_MS,
+	BROADCAST_TAKE_AFTER_TAKE_MS,
 	BROADCAST_TRANSITION_TIMING,
 } from "../broadcast-constants";
 import type {
@@ -8,6 +11,7 @@ import type {
 	BroadcastGameSummary,
 	BroadcastInkColorKey,
 	BroadcastStoredState,
+	BroadcastTakeSource,
 	LiveResults,
 	ProducerState,
 } from "../broadcast-types";
@@ -37,7 +41,7 @@ export interface Rules<Item extends ProducerState> {
 	sceneWithoutMatch?: Item["scene"];
 	/**
 	 * Whether the scene stays on air until a Take, whatever happens meanwhile (e.g. technical difficulties): what is
-	 * staged after it waits for a Take unless the producer sets it otherwise.
+	 * staged after it waits for a Take unless the producer picks otherwise for it (see `ProducerState.isAdvancePicked`).
 	 */
 	staysUntilTake?(scene: Item["scene"]): boolean;
 }
@@ -52,6 +56,7 @@ export function initialState<Item extends ProducerState>(
 	return {
 		takeId: 0,
 		takenAt: null,
+		takenBy: null,
 		live: { ...rules.initial.live, id: 1 } as Item,
 		next: { ...rules.initial.next, id: 2 } as Item,
 		queue: [],
@@ -100,7 +105,13 @@ export function take<Item extends ProducerState>(
 		liveResults,
 		now,
 		hasMatch,
-	}: { liveResults: LiveResults | null; now: number; hasMatch: boolean },
+		by,
+	}: {
+		liveResults: LiveResults | null;
+		now: number;
+		hasMatch: boolean;
+		by: BroadcastTakeSource;
+	},
 ): BroadcastStoredState<Item> {
 	const [queued, ...queue] = state.queue;
 	const next =
@@ -111,18 +122,37 @@ export function take<Item extends ProducerState>(
 		});
 
 	return {
+		...state,
 		takeId: state.takeId + 1,
 		takenAt: now,
+		takenBy: by,
 		live: state.next,
 		next,
 		queue,
 		lastItemId: Math.max(state.lastItemId, next.id),
 		liveResults,
-		ink: state.ink,
-		swapSides: state.swapSides,
-		scannedGame: state.scannedGame,
-		music: state.music,
 	};
+}
+
+/**
+ * Why a producer's Take at `now` is refused, as it was most likely meant for what is already on air: it comes right
+ * after Next went on air by itself (`afterAutoTake`), or right after another Take (`afterTake`, e.g. a held key
+ * repeating it). `null` when it goes ahead.
+ */
+export function takeRefusal(
+	state: Pick<BroadcastStoredState, "takenAt" | "takenBy">,
+	now: number,
+): "afterAutoTake" | "afterTake" | null {
+	if (state.takenAt === null) return null;
+
+	const sinceTake = now - state.takenAt;
+	const isAutomatic = state.takenBy === "timer" || state.takenBy === "game";
+	if (isAutomatic && sinceTake < BROADCAST_TAKE_AFTER_AUTO_TAKE_MS) {
+		return "afterAutoTake";
+	}
+	if (sinceTake < BROADCAST_TAKE_AFTER_TAKE_MS) return "afterTake";
+
+	return null;
 }
 
 /** Whether a Take can put the staged item on air: one showing the featured match (see `Rules.needsMatch`) only with one. */
@@ -168,8 +198,9 @@ export function liveEndsAt<Item extends ProducerState>(
 
 /**
  * When the staged item goes on air by itself (epoch ms): its transition timed to hide the scene on air as that one
- * ends. `null` when it waits for a Take or a game event (see {@link applyGameSignal}), or can't go on air (see
- * {@link canTake}).
+ * ends. `null` when it waits for a Take or a game event (see {@link applyGameSignal}), can't go on air (see
+ * {@link canTake}). A time already past goes on air only within the grace of
+ * {@link isAutoTakeLapsed}.
  */
 export function autoTakeAt<Item extends ProducerState>(
 	rules: Rules<Item>,
@@ -193,6 +224,25 @@ export function autoTakeAt<Item extends ProducerState>(
 }
 
 /**
+ * Whether the automatic Take due at `takeAt` (see {@link autoTakeAt}) no longer goes on air by itself at `now`, its
+ * time having passed more than {@link BROADCAST_AUTO_TAKE_GRACE_MS} ago: it came while Next couldn't go on air
+ * (held, missing its match, nobody connected), and a change making it possible later must not cut to Next out of the
+ * blue. One due within `catchUp` (epoch ms, both ends included) still goes on air, e.g. one that came due while the
+ * server restarted.
+ */
+export function isAutoTakeLapsed(
+	takeAt: number,
+	{
+		now,
+		catchUp = null,
+	}: { now: number; catchUp?: { from: number; to: number } | null },
+) {
+	if (catchUp && takeAt >= catchUp.from && takeAt <= catchUp.to) return false;
+
+	return now - takeAt > BROADCAST_AUTO_TAKE_GRACE_MS;
+}
+
+/**
  * Which game event the scanner reporting puts the item on air, given the item before it: the game scene (see
  * `Rules.gameScene`) goes on air as the game starts, the scene after it as the game ends. `null` between two scenes
  * without a game.
@@ -211,13 +261,17 @@ export function gameCue<Item extends ProducerState>(
 
 /**
  * What puts the item on air besides a Take, given the item before it. An advance that can't happen there waits for a
- * Take: a timer after a scene running until a Take, a game event between scenes without a game.
+ * Take: a timer after a scene running until a Take, a game event between scenes without a game. After a scene staying
+ * on air until a Take (see `Rules.staysUntilTake`) only one the producer picked applies.
  */
 export function effectiveAdvance<Item extends ProducerState>(
 	rules: Rules<Item>,
 	before: Item,
 	item: Item,
 ): BroadcastAdvance {
+	if (rules.staysUntilTake?.(before.scene) && !item.isAdvancePicked) {
+		return "take";
+	}
 	if (item.advance === "timer" && lengthMs(rules, before) === null) {
 		return "take";
 	}
@@ -286,7 +340,7 @@ export function applyGameSignal<Item extends ProducerState>(
 		canTake(rules, state, { hasMatch });
 	if (!isWaitedFor) return colored === state ? null : colored;
 
-	return take(rules, colored, { liveResults, now, hasMatch });
+	return take(rules, colored, { liveResults, now, hasMatch, by: "game" });
 }
 
 /** The state with the ink and what was read of the game kept for the featured match, if any. */
@@ -336,8 +390,8 @@ export function stagedItems<Item extends ProducerState>(
 
 /**
  * Changes a staged item, `null` when it is not staged anymore (e.g. a Take put it on air). Picking another scene
- * clears the item's duration (it runs until a Take) and gives it that scene's default advance, and one staying on air until a Take (see
- * `Rules.staysUntilTake`) makes the item staged after it wait for a Take.
+ * clears the item's duration (it runs until a Take) and gives it that scene's default advance, unless the item is
+ * held (it keeps waiting for a Take). An advance given is the producer's pick (see `ProducerState.isAdvancePicked`).
  */
 export function editItem<Item extends ProducerState>(
 	rules: Rules<Item>,
@@ -348,22 +402,14 @@ export function editItem<Item extends ProducerState>(
 	const staged = stagedItems(state);
 	if (!staged.some((item) => item.id === itemId)) return null;
 
-	const editedIdx = staged.findIndex((item) => item.id === itemId);
-	const isHeldUntilTake =
-		patch.scene !== undefined &&
-		patch.scene !== staged[editedIdx]!.scene &&
-		Boolean(rules.staysUntilTake?.(patch.scene));
-
 	return withStaged(
 		state,
 		staged.map((item, idx) => {
-			if (isHeldUntilTake && idx === editedIdx + 1) {
-				return { ...item, advance: "take" };
-			}
 			if (item.id !== itemId) return item;
 
 			const isSceneChanged =
 				patch.scene !== undefined && patch.scene !== item.scene;
+			const isHeld = item.advance === "take";
 			const before = idx === 0 ? state.live : staged[idx - 1]!;
 
 			return {
@@ -371,10 +417,18 @@ export function editItem<Item extends ProducerState>(
 				...(isSceneChanged && patch.scene
 					? {
 							durationMs: null,
-							advance: defaultAdvance(rules, before, { scene: patch.scene }),
+							...(isHeld
+								? {}
+								: {
+										advance: defaultAdvance(rules, before, {
+											scene: patch.scene,
+										}),
+										isAdvancePicked: false,
+									}),
 						}
 					: {}),
 				...patch,
+				...(patch.advance !== undefined ? { isAdvancePicked: true } : {}),
 			};
 		}),
 	);
@@ -464,6 +518,7 @@ function followingItem<Item extends ProducerState>(
 		scene,
 		durationMs: null,
 		advance: defaultAdvance(rules, item, { scene }),
+		isAdvancePicked: false,
 	};
 }
 
@@ -472,7 +527,5 @@ function defaultAdvance<Item extends ProducerState>(
 	before: Pick<Item, "scene">,
 	item: Pick<Item, "scene">,
 ): BroadcastAdvance {
-	if (rules.staysUntilTake?.(before.scene)) return "take";
-
 	return gameCue(rules, before, item) ? "game" : "timer";
 }

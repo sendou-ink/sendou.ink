@@ -5,6 +5,7 @@ import type {
 	BroadcastClip,
 	CastProducerState,
 } from "~/features/broadcast-cast/broadcast-cast-types";
+import { seededRandom } from "~/utils/random";
 import type {
 	BroadcastGameSummary,
 	BroadcastInkRgb,
@@ -43,6 +44,7 @@ const item = (
 	teamPick: "left",
 	durationMs: null,
 	advance: "timer",
+	isAdvancePicked: false,
 	...overrides,
 });
 
@@ -61,6 +63,7 @@ const stateWith = ({
 }): BroadcastStoredState<CastProducerState> => ({
 	takeId: 3,
 	takenAt,
+	takenBy: "producer",
 	live,
 	next,
 	queue,
@@ -87,12 +90,18 @@ describe("Producer.take", () => {
 				}),
 				swapSides: true,
 			}),
-			{ liveResults: { matchId: 1, count: 2 }, now: 5, hasMatch: true },
+			{
+				liveResults: { matchId: 1, count: 2 },
+				now: 5,
+				hasMatch: true,
+				by: "producer",
+			},
 		);
 
 		expect(taken).toEqual({
 			takeId: 4,
 			takenAt: 5,
+			takenBy: "producer",
 			live: item(2, {
 				scene: "game",
 				bracketIdx: 1,
@@ -128,7 +137,7 @@ describe("Producer.take", () => {
 				...stateWith({ next: item(2, { scene: "break" }) }),
 				music,
 			},
-			{ liveResults: null, now: 5, hasMatch: true },
+			{ liveResults: null, now: 5, hasMatch: true, by: "producer" },
 		);
 
 		expect(taken.music).toBe(music);
@@ -141,7 +150,7 @@ describe("Producer.take", () => {
 				next: item(2, { scene: "replays" }),
 				queue: [item(3, { scene: "maps" }), item(4)],
 			}),
-			{ liveResults: null, now: 5, hasMatch: true },
+			{ liveResults: null, now: 5, hasMatch: true, by: "producer" },
 		);
 
 		expect(taken.live.id).toBe(2);
@@ -153,7 +162,7 @@ describe("Producer.take", () => {
 		const taken = Producer.take(
 			rules,
 			stateWith({ next: item(2, { scene: "bracket", durationMs: 20_000 }) }),
-			{ liveResults: null, now: 5, hasMatch: true },
+			{ liveResults: null, now: 5, hasMatch: true, by: "producer" },
 		);
 
 		expect(taken.next).toMatchObject({ scene: "rosters", durationMs: null });
@@ -161,7 +170,7 @@ describe("Producer.take", () => {
 		const afterClip = Producer.take(
 			rules,
 			stateWith({ next: item(2, { scene: "replays", clip }) }),
-			{ liveResults: null, now: 5, hasMatch: true },
+			{ liveResults: null, now: 5, hasMatch: true, by: "producer" },
 		);
 
 		expect(afterClip.next).toMatchObject({ scene: "game", clip: null });
@@ -171,6 +180,7 @@ describe("Producer.take", () => {
 			liveResults: null,
 			now: 5,
 			hasMatch: false,
+			by: "producer",
 		});
 
 		expect(taken.next).toMatchObject({ scene: "starting", advance: "game" });
@@ -180,10 +190,13 @@ describe("Producer.take", () => {
 		const taken = Producer.take(
 			rules,
 			stateWith({ next: item(2, { scene: "technical" }) }),
-			{ liveResults: null, now: 5, hasMatch: true },
+			{ liveResults: null, now: 5, hasMatch: true, by: "producer" },
 		);
 
-		expect(taken.next).toMatchObject({ scene: "game", advance: "take" });
+		expect(taken.next.scene).toBe("game");
+		expect(Producer.effectiveAdvance(rules, taken.live, taken.next)).toBe(
+			"take",
+		);
 	});
 });
 
@@ -267,6 +280,104 @@ describe("Producer.autoTakeAt", () => {
 		},
 	])("is null when $why", ({ state, hasMatch = true }) => {
 		expect(Producer.autoTakeAt(rules, state, { hasMatch })).toBeNull();
+	});
+});
+
+describe("Producer.isAutoTakeLapsed", () => {
+	const catchUp = { from: NOW - 60_000, to: NOW + 1_000 };
+
+	test.each([
+		{ why: "not due yet", now: NOW - 1_000, expected: false },
+		{ why: "just due", now: NOW, expected: false },
+		{ why: "due a few seconds ago", now: NOW + 5_000, expected: false },
+		{ why: "due longer ago", now: NOW + 5_001, expected: true },
+		{
+			why: "due long ago, within the catch-up",
+			now: NOW + 60_000,
+			catchUp,
+			expected: false,
+		},
+		{
+			why: "due long ago, before the catch-up",
+			now: NOW + 60_000,
+			catchUp: { ...catchUp, from: NOW + 1 },
+			expected: true,
+		},
+		{
+			why: "due long ago, after the catch-up",
+			now: NOW + 60_000,
+			catchUp: { ...catchUp, to: NOW - 1 },
+			expected: true,
+		},
+	])("$why", ({ now, catchUp: window, expected }) => {
+		expect(Producer.isAutoTakeLapsed(NOW, { now, catchUp: window })).toBe(
+			expected,
+		);
+	});
+});
+
+describe("Producer.takeRefusal", () => {
+	test.each([
+		{
+			why: "before the first Take",
+			takenBy: null,
+			sinceMs: null,
+			expected: null,
+		},
+		{
+			why: "right after a timer",
+			takenBy: "timer",
+			sinceMs: 1_499,
+			expected: "afterAutoTake",
+		},
+		{
+			why: "right after a game signal",
+			takenBy: "game",
+			sinceMs: 0,
+			expected: "afterAutoTake",
+		},
+		{
+			why: "a while after a timer",
+			takenBy: "timer",
+			sinceMs: 1_500,
+			expected: null,
+		},
+		{
+			why: "right after a producer's Take",
+			takenBy: "producer",
+			sinceMs: 499,
+			expected: "afterTake",
+		},
+		{
+			why: "a moment after a producer's Take",
+			takenBy: "producer",
+			sinceMs: 500,
+			expected: null,
+		},
+	] as const)("$why", ({ takenBy, sinceMs, expected }) => {
+		const state = {
+			takenAt: sinceMs === null ? null : NOW - sinceMs,
+			takenBy,
+		};
+
+		expect(Producer.takeRefusal(state, NOW)).toBe(expected);
+	});
+});
+
+describe("Producer.liveStartedAt", () => {
+	test("is null before the first Take", () => {
+		expect(Producer.liveStartedAt(stateWith({ takenAt: null }))).toBeNull();
+	});
+});
+
+describe("Producer.liveEndsAt", () => {
+	test("is null for a scene without a length", () => {
+		expect(
+			Producer.liveEndsAt(
+				rules,
+				stateWith({ live: item(1, { scene: "game" }) }),
+			),
+		).toBeNull();
 	});
 });
 
@@ -578,6 +689,44 @@ describe("Producer.applyGameSignal", () => {
 		expect(applied?.scannedGame).toMatchObject({ matchId: 1 });
 	});
 
+	test("leaves the ink colors of the game on air alone as it ends", () => {
+		const gameInk = { ...ink, resultCount: 2 };
+		const applied = Producer.applyGameSignal(
+			rules,
+			{
+				...stateWith({ live: item(1, { scene: "game" }) }),
+				ink: gameInk,
+			},
+			{
+				signal: { type: "end", trigger: "hudGone", summary },
+				liveResults,
+				now: 5,
+			},
+		);
+
+		expect(applied?.ink).toEqual(gameInk);
+	});
+
+	test("leaves what was read of the last game alone as the next one starts", () => {
+		const scannedGame = {
+			...summary,
+			matchId: 1,
+			resultCount: 1,
+			ink: null,
+		};
+		const applied = Producer.applyGameSignal(
+			rules,
+			{ ...stateWith({ next: item(2, { advance: "game" }) }), scannedGame },
+			{
+				signal: { type: "start", inks: greenPink },
+				liveResults,
+				now: 5,
+			},
+		);
+
+		expect(applied?.scannedGame).toEqual(scannedGame);
+	});
+
 	test("cuts on the flag without what was read of the game", () => {
 		const applied = Producer.applyGameSignal(
 			rules,
@@ -623,26 +772,116 @@ describe("Producer.editItem", () => {
 	test("makes the item staged after one changed to technical difficulties wait for a Take", () => {
 		const state = stateWith({
 			next: item(2, { scene: "rosters" }),
-			queue: [item(3, { scene: "game", advance: "game" }), item(4)],
+			queue: [item(3, { scene: "game", advance: "game" })],
 		});
 
-		const edited = Producer.editItem(rules, state, 2, { scene: "technical" });
+		const edited = Producer.editItem(rules, state, 2, { scene: "technical" })!;
 
-		expect(edited?.queue.map((queued) => queued.advance)).toEqual([
-			"take",
-			"timer",
-		]);
+		expect(
+			Producer.effectiveAdvance(rules, edited.next, edited.queue[0]!),
+		).toBe("take");
 	});
 
-	test("keeps an advance set for the item after technical difficulties", () => {
+	test("lets the producer pick the game start for the item after technical difficulties", () => {
 		const state = stateWith({
 			next: item(2, { scene: "technical" }),
-			queue: [item(3, { scene: "game", advance: "take" })],
+			queue: [item(3, { scene: "game", advance: "game" })],
 		});
 
-		const edited = Producer.editItem(rules, state, 3, { advance: "game" });
+		const edited = Producer.editItem(rules, state, 3, { advance: "game" })!;
 
-		expect(edited?.queue[0]?.advance).toBe("game");
+		expect(
+			Producer.effectiveAdvance(rules, edited.next, edited.queue[0]!),
+		).toBe("game");
+	});
+
+	test("staging technical difficulties and going back leaves the following item's advance as it was", () => {
+		const state = stateWith({
+			next: item(2, { scene: "game", advance: "game" }),
+			queue: [item(3, { scene: "results", advance: "game" })],
+		});
+
+		const standby = Producer.editItem(rules, state, 2, { scene: "technical" })!;
+		const back = Producer.editItem(rules, standby, 2, { scene: "game" })!;
+
+		expect(Producer.effectiveAdvance(rules, back.next, back.queue[0]!)).toBe(
+			"game",
+		);
+	});
+
+	test("leaves the following item's advance alone as next changes to a scene other than technical difficulties", () => {
+		const state = stateWith({
+			next: item(2, { scene: "rosters" }),
+			queue: [item(3, { scene: "game", advance: "game" })],
+		});
+
+		const edited = Producer.editItem(rules, state, 2, { scene: "maps" })!;
+
+		expect(edited.queue[0]).toEqual(state.queue[0]);
+	});
+
+	test("picking another scene for next after the live scene ran out waits for a Take", () => {
+		const state = stateWith({
+			live: item(1, { scene: "results", durationMs: 10_000 }),
+			next: item(2, { scene: "maps", advance: "take", isAdvancePicked: true }),
+		});
+
+		const edited = Producer.editItem(rules, state, 2, { scene: "casters" })!;
+
+		expect(edited.next.advance).toBe("take");
+		expect(Producer.autoTakeAt(rules, edited, { hasMatch: true })).toBeNull();
+	});
+
+	test("gives a scene picked for an item that isn't held its default advance", () => {
+		const state = stateWith({
+			live: item(1, { scene: "results", durationMs: 10_000 }),
+			next: item(2, { scene: "maps", advance: "game", isAdvancePicked: true }),
+		});
+
+		const edited = Producer.editItem(rules, state, 2, { scene: "casters" })!;
+
+		expect(edited.next).toMatchObject({
+			advance: "timer",
+			isAdvancePicked: false,
+		});
+	});
+
+	test("keeps the duration and Hold of an item given the scene it already has", () => {
+		const state = stateWith({
+			next: item(2, {
+				scene: "bracket",
+				durationMs: 20_000,
+				advance: "take",
+				isAdvancePicked: true,
+			}),
+		});
+
+		const edited = Producer.editItem(rules, state, 2, { scene: "bracket" })!;
+
+		expect(edited.next).toEqual(state.next);
+	});
+
+	test("gives an edited queued item its default advance after the item before it in the queue", () => {
+		const state = stateWith({
+			live: item(1, { scene: "bracket", durationMs: 15_000 }),
+			next: item(2, { scene: "game", advance: "game" }),
+			queue: [item(3, { scene: "maps", advance: "timer" })],
+		});
+
+		const edited = Producer.editItem(rules, state, 3, { scene: "results" })!;
+
+		expect(edited.queue[0]?.advance).toBe("game");
+	});
+
+	test("marks an advance given as the producer's pick", () => {
+		const edited = Producer.editItem(rules, stateWith({}), 2, {
+			advance: "take",
+		})!;
+
+		expect(edited.next).toMatchObject({
+			advance: "take",
+			isAdvancePicked: true,
+		});
 	});
 
 	test("is null for an item no longer staged", () => {
@@ -677,10 +916,10 @@ describe("Producer.enqueue", () => {
 
 		const queued = Producer.enqueue(rules, state, { hasMatch: true });
 
-		expect(queued.queue.at(-1)).toMatchObject({
-			scene: "game",
-			advance: "take",
-		});
+		expect(queued.queue.at(-1)?.scene).toBe("game");
+		expect(
+			Producer.effectiveAdvance(rules, queued.next, queued.queue.at(-1)!),
+		).toBe("take");
 	});
 });
 
@@ -778,4 +1017,160 @@ describe("Producer.withDefaults", () => {
 
 		expect(Producer.withDefaults(rules, stored).swapSides).toBe(false);
 	});
+});
+
+describe("Producer (random sequences)", () => {
+	const SEEDS = 200;
+	const STEPS = 80;
+	const SCENES = Object.keys(rules.sceneAfter) as CastProducerState["scene"][];
+
+	test.each(R.range(1, SEEDS + 1))(
+		"only a Take, a game signal or a timer within the grace of its time changes live (seed %i)",
+		(seed) => {
+			const { randomInteger } = seededRandom(`producer-${seed}`);
+			const pick = <T>(values: readonly T[]) =>
+				values[randomInteger(values.length)]!;
+			let state = stateWith({ takenAt: NOW });
+			let now = NOW;
+			let hasMatch = true;
+
+			const fireDueTimer = () => {
+				const takeAt = Producer.autoTakeAt(rules, state, { hasMatch });
+				if (
+					takeAt === null ||
+					takeAt > now ||
+					Producer.isAutoTakeLapsed(takeAt, { now })
+				) {
+					return;
+				}
+
+				expect(Producer.effectiveAdvance(rules, state.live, state.next)).toBe(
+					"timer",
+				);
+				state = Producer.take(rules, state, {
+					liveResults: null,
+					now,
+					hasMatch,
+					by: "timer",
+				});
+			};
+
+			for (let step = 0; step < STEPS; step++) {
+				const before = state;
+				const staged = Producer.stagedItems(state);
+				const target = pick(staged);
+				const op = pick([
+					"scene",
+					"duration",
+					"advance",
+					"enqueue",
+					"remove",
+					"move",
+					"match",
+					"signal",
+					"take",
+					"wait",
+				] as const);
+
+				let isEdit = true;
+				let advancePatchedId: number | null = null;
+				switch (op) {
+					case "scene":
+						state =
+							Producer.editItem(rules, state, target.id, {
+								scene: pick(SCENES),
+							}) ?? state;
+						break;
+					case "duration":
+						state =
+							Producer.editItem(rules, state, target.id, {
+								durationMs: pick([null, 10_000, 30_000]),
+							}) ?? state;
+						break;
+					case "advance":
+						advancePatchedId = target.id;
+						state =
+							Producer.editItem(rules, state, target.id, {
+								advance: pick(["take", "timer", "game"] as const),
+							}) ?? state;
+						break;
+					case "enqueue":
+						state = Producer.enqueue(rules, state, { hasMatch });
+						break;
+					case "remove":
+						state = Producer.removeItem(state, target.id) ?? state;
+						break;
+					case "move":
+						state =
+							Producer.moveItem(
+								state,
+								target.id,
+								pick(R.range(0, staged.length)),
+							) ?? state;
+						break;
+					case "match":
+						hasMatch = !hasMatch;
+						break;
+					case "signal": {
+						isEdit = false;
+						const applied = Producer.applyGameSignal(rules, state, {
+							signal: pick([
+								{ type: "start", inks: null },
+								{ type: "end", trigger: "juddFlag", summary: null },
+							] as const),
+							liveResults: hasMatch ? { matchId: 1, count: 0 } : null,
+							now,
+						});
+						if (applied && applied.takeId !== state.takeId) {
+							expect(
+								Producer.effectiveAdvance(rules, state.live, state.next),
+							).toBe("game");
+						}
+						state = applied ?? state;
+						break;
+					}
+					case "take":
+						isEdit = false;
+						if (
+							Producer.canTake(rules, state, { hasMatch }) &&
+							Producer.takeRefusal(state, now) === null
+						) {
+							state = Producer.take(rules, state, {
+								liveResults: null,
+								now,
+								hasMatch,
+								by: "producer",
+							});
+						}
+						break;
+					case "wait":
+						isEdit = false;
+						for (let tick = 0; tick < pick([1, 5, 20]); tick++) {
+							now += 1_000;
+							fireDueTimer();
+						}
+						break;
+				}
+
+				if (isEdit) {
+					expect(
+						R.pick(state, ["live", "takeId", "takenAt", "takenBy"]),
+					).toEqual(R.pick(before, ["live", "takeId", "takenAt", "takenBy"]));
+					for (const held of Producer.stagedItems(before)) {
+						const after = Producer.stagedItems(state).find(
+							(candidate) => candidate.id === held.id,
+						);
+						if (
+							held.advance === "take" &&
+							after &&
+							held.id !== advancePatchedId
+						) {
+							expect(after.advance).toBe("take");
+						}
+					}
+				}
+				fireDueTimer();
+			}
+		},
+	);
 });
