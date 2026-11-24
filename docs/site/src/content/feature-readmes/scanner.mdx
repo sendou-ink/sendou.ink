@@ -1215,7 +1215,15 @@ code line and VICTORY/DEFEAT tags FOT-RowdyStd-EB; the JP death message mixes
 condensed Kurokane and Rowdy (`death-weapon-ja`); the Japanese results
 header reads through its own Blitz-kana pair (`scoreboard-header-lobby-ja`,
 `scoreboard-header-line-ja`), tried only on a band the Latin atlases don't
-snap. Regeneration order:
+snap; a line whose mode + stage pair still doesn't snap is snapped as its
+mode and stage apart, as the pair atlas has no kanji (ナメロウ金属), and the
+stage is read again with `scoreboard-header-stage-ja` (BlitzMain kana with
+Kurokane kanji). The Japanese intro splash has its
+own pair too (`map-start-mode-ja`: BlitzBold title kana;
+`map-start-stage-ja`: BlitzMain kana with Kurokane kanji for the stage and
+the ルール label), read when the Latin atlases don't read the label; its title
+lines reach up over sparse rows for their dakuten (`KANA_MARK_REACH`).
+Regeneration order:
 `scanner:bootstrap-atlas` (fixture crops win via tie-break) →
 `scanner:build-glyph-atlas`; localized sets via
 `scanner:build-localized-entries` (expects a splat3 checkout at `../splat3`)

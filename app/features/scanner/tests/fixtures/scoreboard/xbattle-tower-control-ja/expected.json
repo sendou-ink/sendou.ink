@@ -3,11 +3,13 @@
   "data": {
     "lobby": "X",
     "mode": "TC",
-    "stage": 16
+    "stage": 16,
+    "matchScores": [
+      100,
+      0
+    ]
   },
   "options": {
-    "incomplete": true,
-    "skipFields": ["matchScores"],
-    "notes": "-I23PqqYtHQ VoD 0:56:52: Japanese header (Xマッチ / ガチヤグラ コンブトラック), read through the scoreboard-header-*-ja atlases; only the header is labeled"
+    "notes": "-I23PqqYtHQ VoD 0:56:52: Japanese header (Xマッチ / ガチヤグラ コンブトラック), read through the scoreboard-header-*-ja atlases; only the header and the score banner are labeled. A knockout: ノックアウト! on the left, \"0カウント\" (the count before its label) on the right, which the banner read missed until it skipped the label after the digits."
   }
 }

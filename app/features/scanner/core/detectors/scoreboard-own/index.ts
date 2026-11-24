@@ -224,6 +224,7 @@ export function createScoreboardOwnDetector(
 							line: headerLineGlyphs,
 							lobbyJa: resources.headerLobbyJaGlyphs,
 							lineJa: resources.headerLineJaGlyphs,
+							stageJa: resources.headerStageJaGlyphs,
 						},
 						speculative,
 					)

@@ -128,6 +128,7 @@ export function* parseBannerScoreSteps(
 	for (const [i, { set }] of reads.entries()) {
 		const read = trailingDigitRun(raws[i]!, set, {
 			extendMinScore: DIGIT_EXTEND_MIN_CONF,
+			skipLabelSuffix: true,
 		});
 		if (isBetterRead(read, best)) best = read;
 	}
@@ -232,6 +233,11 @@ export interface TrailingDigitOptions {
 	 * 0). Off for banners, where a label/burst letter legitimately borders the digits.
 	 */
 	rejectTruncated?: boolean;
+	/**
+	 * skip short chars after the run: the JA banner sets its label after the
+	 * number ("44カウント"), in kana under the digits' height
+	 */
+	skipLabelSuffix?: boolean;
 }
 
 /** Trailing run of full-height, confident digits; shared by the score banner and objective counters. */
@@ -246,6 +252,7 @@ export function trailingDigitRun(
 		minHeightRatio = DIGIT_MIN_HEIGHT_RATIO,
 		maxValue = KO_MATCH_SCORE,
 		rejectTruncated = false,
+		skipLabelSuffix = false,
 	} = options;
 	const maxGap = Math.max(4, Math.round(set.medianWidth * DIGIT_GAP_MAX_RATIO));
 	const fullHeight = (c: RecognizedChar) =>
@@ -263,6 +270,9 @@ export function trailingDigitRun(
 
 	const run: RecognizedChar[] = [];
 	let i = raw.chars.length - 1;
+	if (skipLabelSuffix) {
+		while (i >= 0 && !fullHeight(raw.chars[i]!)) i--;
+	}
 	for (; i >= 0; i--) {
 		const c = raw.chars[i]!;
 		if (!isRunDigit(c)) break;

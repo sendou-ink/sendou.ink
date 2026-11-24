@@ -1,0 +1,11 @@
+{
+  "event": "MapStart",
+  "data": {
+    "mode": "TC",
+    "stage": 4,
+    "stageLabel": "Mincemeat Metalworks"
+  },
+  "options": {
+    "notes": "User-submitted 1440p OBS recording at t=50.5, the intro of a Japanese Anarchy Open game: label ルール, title ガチ / ヤグラ on two lines, stage ナメロウ金属. The Latin atlases carry no kana, so the label never read and parse dropped every Japanese intro; the map-start-*-ja atlases read it now. The title's dakuten sit over its lines in rows too sparse for the line bands (ガチ read サチ, ヤグラ read ヤワラ) until the Japanese read reached up for them."
+  }
+}

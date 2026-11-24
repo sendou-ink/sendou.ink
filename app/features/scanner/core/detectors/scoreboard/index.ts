@@ -129,6 +129,8 @@ export interface ScoreboardResources {
 	/** the same lines' kana for a Japanese header, read when the Latin read doesn't snap; without them JA headers read null */
 	headerLobbyJaGlyphs?: GlyphSet | null;
 	headerLineJaGlyphs?: GlyphSet | null;
+	/** JA stage kana with Kurokane kanji, re-reading the stage of a JA line the pair atlas can't */
+	headerStageJaGlyphs?: GlyphSet | null;
 	/**
 	 * Replay-browser extras in FOT-RowdyStd (code line, VICTORY/DEFEAT tags); falls back to
 	 * rescaled name/header glyphs.
@@ -160,6 +162,12 @@ export interface ScoreboardResources {
 	 */
 	mapStartModeGlyphs?: GlyphSet | null;
 	mapStartStageGlyphs?: GlyphSet | null;
+	/**
+	 * The JA intro's pair (BlitzBold title kana; BlitzMain kana with Kurokane
+	 * kanji for the stage and the "ルール" label), read when the Latin label doesn't.
+	 */
+	mapStartModeJaGlyphs?: GlyphSet | null;
+	mapStartStageJaGlyphs?: GlyphSet | null;
 	/**
 	 * Kill-feed row glyphs (BlitzMain at the row's ~24px caps, name charset plus
 	 * every language's row text); without them the kill detector emits nothing.
@@ -313,6 +321,7 @@ export function createScoreboardDetector(
 							line: headerLineGlyphs,
 							lobbyJa: resources.headerLobbyJaGlyphs,
 							lineJa: resources.headerLineJaGlyphs,
+							stageJa: resources.headerStageJaGlyphs,
 						},
 						speculative,
 					)

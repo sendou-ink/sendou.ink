@@ -9,6 +9,11 @@ import type { Roi } from "../../canonical";
 /** "MODE" label, kept tight inside its black pill (x≈825-1110): a wider crop picks up background on bright stages. */
 export const MODE_LABEL_ROI: Roi = { x: 850, y: 268, w: 220, h: 62 };
 export const MODE_LABEL_TEXT_HEIGHT = 48;
+/**
+ * The JA label "ルール" renders larger against the stage atlas (~45px tight
+ * kana): read at 48 its "ー" and second "ル" run together on a blurred frame.
+ */
+export const MODE_LABEL_TEXT_HEIGHT_JA = 50;
 
 /**
  * Mode title block, 1-2 lines found by row projection. Ends above the objective
@@ -26,6 +31,13 @@ export const LINE_MIN_ROW_PIXELS = 40;
 export const LINE_ROW_FRACTION = 0.25;
 /** Text rows closer than this merge into one line band. */
 export const LINE_GAP_TOLERANCE = 8;
+/**
+ * A JA title line reaches up this fraction of its height for its dakuten, over
+ * rows of at least MARK_MIN_ROW_PIXELS: ガ's sits in ~35px rows over チ's
+ * top, グ's past a 4-row gap over ヤグラ, ~0.45 of the line up.
+ */
+export const KANA_MARK_REACH = 0.5;
+export const MARK_MIN_ROW_PIXELS = 3;
 /** Discard bands shorter than this (splat-texture speckle, drips). */
 export const LINE_MIN_HEIGHT = 40;
 

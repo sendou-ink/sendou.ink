@@ -4,9 +4,12 @@
  * bg + white text vs the mid-brightness thumbnail), OCR'd as one line and
  * snapped against every language's mode × stage combos (core/localized.ts).
  * The Latin atlases carry no kana, so a band that doesn't snap is read again
- * with the Japanese ones and the better snap wins. The lobby's parenthetical
- * ("(Series)", "(Open)") is set smaller than the rest of the tag, so it is
- * also read with the lobby glyphs scaled down to its size.
+ * with the Japanese ones and the better snap wins. A line whose pair doesn't
+ * snap is snapped as its mode and stage apart: a stage the atlas can't read
+ * (the kanji of a JA name like ナメロウ金属) then costs only the stage, and a
+ * JA line is read again with a stage atlas that carries kanji. The
+ * lobby's parenthetical ("(Series)", "(Open)") is set smaller than the rest of
+ * the tag, so it is also read with the lobby glyphs scaled down to its size.
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
@@ -20,7 +23,12 @@ import {
 	scaleGlyphSet,
 } from "../../glyphs";
 import { cropRoi, type Image } from "../../image";
-import { ALL_LOBBY_ENTRIES, MODE_STAGE_COMBOS } from "../../localized";
+import {
+	ALL_LOBBY_ENTRIES,
+	ALL_MODE_ENTRIES,
+	ALL_STAGE_ENTRIES,
+	MODE_STAGE_COMBOS,
+} from "../../localized";
 import { all, done, type MatchSteps } from "../../match-steps";
 import { closestBy } from "../../text";
 import { HEADER_LINE_BAND, HEADER_LOBBY_BAND } from "./rois";
@@ -30,6 +38,8 @@ export interface HeaderGlyphs {
 	line: GlyphSet;
 	lobbyJa?: GlyphSet | null;
 	lineJa?: GlyphSet | null;
+	/** JA stage kana and kanji, for the stage of a JA line whose pair doesn't snap */
+	stageJa?: GlyphSet | null;
 }
 
 export interface ParsedHeader {
@@ -43,6 +53,8 @@ export interface ParsedHeader {
 		lineReading: string;
 		lobbyScore: number;
 		lineScore: number;
+		/** the JA stage atlas's read of the line, when it ran */
+		stageReading?: string;
 	};
 }
 
@@ -274,6 +286,8 @@ export function* parseHeaderSteps(
 			: null;
 	let mode: ModeShort | null = null;
 	let stage: StageId | null = null;
+	let lineScore = lineMatch?.score ?? 0;
+	let stageReading: string | undefined;
 	if (
 		lineMatch &&
 		Decisions.atLeast(
@@ -284,9 +298,48 @@ export function* parseHeaderSteps(
 	) {
 		mode = lineMatch.entry.mode;
 		stage = lineMatch.entry.stageId;
+	} else {
+		const parts = snapLineParts(lineReading);
+		if (
+			parts &&
+			Decisions.atLeast(
+				"scoreboard/header:MIN_MATCH_SCORE#lineMode",
+				parts.mode.score,
+				MIN_MATCH_SCORE,
+			)
+		) {
+			mode = parts.mode.entry.mode;
+			lineScore = parts.mode.score;
+			if (jaLineWins && glyphs.stageJa) {
+				stageReading = yield* readTagBandSteps(
+					gray,
+					HEADER_LINE_BAND,
+					glyphs.stageJa,
+					{},
+					speculative,
+				);
+			}
+			const kanjiStage = stageReading
+				? snapStage(stageReading.split(" ").at(-1)!)
+				: null;
+			const stageMatch =
+				(kanjiStage?.score ?? 0) > (parts.stage?.score ?? 0)
+					? kanjiStage
+					: parts.stage;
+			if (
+				stageMatch &&
+				Decisions.atLeast(
+					"scoreboard/header:MIN_MATCH_SCORE#lineStage",
+					stageMatch.score,
+					MIN_MATCH_SCORE,
+				)
+			) {
+				stage = stageMatch.entry.stageId;
+				lineScore = Math.min(lineScore, stageMatch.score);
+			}
+		}
 	}
 
-	const lineScore = lineMatch?.score ?? 0;
 	return {
 		lobby,
 		mode,
@@ -300,6 +353,33 @@ export function* parseHeaderSteps(
 			lineReading,
 			lobbyScore: lobbyMatch?.score ?? 0,
 			lineScore: lineMatch?.score ?? 0,
+			stageReading,
 		},
 	};
+}
+
+/**
+ * The line's best split at a space into a mode and a stage, each snapped on
+ * its own; null for a line without a space.
+ */
+function snapLineParts(reading: string) {
+	const words = reading.split(" ");
+	let best: {
+		mode: NonNullable<ReturnType<typeof snapMode>>;
+		stage: ReturnType<typeof snapStage>;
+	} | null = null;
+	for (let i = 1; i < words.length; i++) {
+		const mode = snapMode(words.slice(0, i).join(" "));
+		if (!mode || mode.score <= (best?.mode.score ?? 0)) continue;
+		best = { mode, stage: snapStage(words.slice(i).join(" ")) };
+	}
+	return best;
+}
+
+function snapMode(reading: string) {
+	return closestBy(reading, ALL_MODE_ENTRIES, (e) => e.text);
+}
+
+function snapStage(reading: string) {
+	return closestBy(reading, ALL_STAGE_ENTRIES, (e) => e.text);
 }

@@ -1,0 +1,15 @@
+{
+  "event": "Scoreboard",
+  "data": {
+    "lobby": "OPEN",
+    "mode": "TC",
+    "stage": 4,
+    "matchScores": [
+      66,
+      44
+    ]
+  },
+  "options": {
+    "notes": "User-submitted 1440p OBS recording at t=404: Japanese header (バンカラマッチ(オープン) / ガチヤグラ ナメロウ金属); only the header and the score banner are labeled. The header's JA pair atlas has no kanji, so the line reads \"ナトチヤグラ ナメロワトエ\" and its mode + stage pair scored 0.615, under the 0.62 floor, losing the mode with the stage. The mode now snaps on its own and the stage is read again with scoreboard-header-stage-ja (kana + Kurokane kanji). The score banner is Japanese too (\"44カウント\" / \"66カウント\", the count before a smaller label): the banner read took the digits at the end of the line and the right side's crop stopped short of the 66, so both sides came out unread."
+  }
+}

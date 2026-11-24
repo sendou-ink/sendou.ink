@@ -1,0 +1,11 @@
+{
+  "event": "MapStart",
+  "data": {
+    "mode": "TC",
+    "stage": 4,
+    "stageLabel": "Mincemeat Metalworks"
+  },
+  "options": {
+    "notes": "The same intro as japanese-tower-control-mincemeat-metalworks (t=50.5), downscaled to 1080p the way scan-vod's ffmpeg does. Read with the Latin label's height the blurrier \"ルール\" came out \"ルト\" (its ー and second ル ran together) and parse dropped the frame; the JA label is read at its own, larger height."
+  }
+}

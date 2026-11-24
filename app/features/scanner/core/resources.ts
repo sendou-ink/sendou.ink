@@ -56,6 +56,7 @@ const ATLASES = {
 	headerLineGlyphs: "scoreboard-header-line",
 	headerLobbyJaGlyphs: "scoreboard-header-lobby-ja",
 	headerLineJaGlyphs: "scoreboard-header-line-ja",
+	headerStageJaGlyphs: "scoreboard-header-stage-ja",
 	replayCodeGlyphs: "scoreboard-replay-code",
 	replayResultGlyphs: "scoreboard-replay-result",
 	deathWeaponGlyphs: "death-weapon",
@@ -63,6 +64,8 @@ const ATLASES = {
 	deathTagNameGlyphs: "death-tag-name",
 	mapStartModeGlyphs: "map-start-mode",
 	mapStartStageGlyphs: "map-start-stage",
+	mapStartModeJaGlyphs: "map-start-mode-ja",
+	mapStartStageJaGlyphs: "map-start-stage-ja",
 	killFeedGlyphs: "kill-feed",
 } as const;
 
@@ -230,6 +233,9 @@ export async function assembleScoreboardResources(
 		get headerLineJaGlyphs() {
 			return atlas.headerLineJaGlyphs();
 		},
+		get headerStageJaGlyphs() {
+			return atlas.headerStageJaGlyphs();
+		},
 		get replayCodeGlyphs() {
 			return atlas.replayCodeGlyphs();
 		},
@@ -250,6 +256,12 @@ export async function assembleScoreboardResources(
 		},
 		get mapStartStageGlyphs() {
 			return atlas.mapStartStageGlyphs();
+		},
+		get mapStartModeJaGlyphs() {
+			return atlas.mapStartModeJaGlyphs();
+		},
+		get mapStartStageJaGlyphs() {
+			return atlas.mapStartStageJaGlyphs();
 		},
 		get killFeedGlyphs() {
 			return atlas.killFeedGlyphs();

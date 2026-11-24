@@ -506,6 +506,27 @@ await build("scoreboard-header-line-ja", 24, [
 		),
 	},
 ]);
+// JA header stage: re-read on a line whose mode and stage don't snap as a pair,
+// as the pair atlas has no kanji (ナメロウ金属). Kana in BlitzMain, kanji in
+// Kurokane, both ~22px tight (24-25px renders).
+await build("scoreboard-header-stage-ja", 24, [
+	{
+		family: "BlitzMain",
+		pxs: [24, 25],
+		chars: coveredChars(
+			jaEntries.stages.map((e) => e.text),
+			"BlitzMain",
+		),
+	},
+	{
+		family: "Kurokane",
+		pxs: [23, 24, 25],
+		chars: coveredChars(
+			jaEntries.stages.map((e) => e.text),
+			"Kurokane",
+		).filter(isKanji),
+	},
+]);
 // replay browser: the code line and the VICTORY/DEFEAT panel tags render in
 // FOT-RowdyStd-EB (tight height 25px at ~32px, 30px at ~38px)
 await build("scoreboard-replay-code", 25, [
@@ -538,6 +559,37 @@ await build("map-start-stage", 40, [
 		family: "BlitzMain",
 		pxs: [46, 47, 48],
 		chars: localizedChars([...stageTexts, ...ALL_MODE_LABELS], "BlitzMain"),
+	},
+]);
+// JA intro splash, a separate pair the detector reads with only when the Latin
+// "MODE" label doesn't read (kana would displace Latin matches, see
+// localizedChars). The title kana render at the Latin title's size, the label
+// and stage kana in BlitzMain a little over the Latin stage's, and the stage
+// names' kanji (ナメロウ金属) in Kurokane, which the Blitz cuts have none of.
+await build("map-start-mode-ja", 76, [
+	{
+		family: "BlitzBold",
+		pxs: [99, 100, 101],
+		chars: coveredChars(
+			jaEntries.modes.map((e) => e.text),
+			"BlitzBold",
+		),
+	},
+]);
+const jaStageTexts = [
+	...jaEntries.stages.map((e) => e.text),
+	jaEntries.modeLabel,
+];
+await build("map-start-stage-ja", 40, [
+	{
+		family: "BlitzMain",
+		pxs: [47, 48, 49],
+		chars: coveredChars(jaStageTexts, "BlitzMain"),
+	},
+	{
+		family: "Kurokane",
+		pxs: [46, 47, 48],
+		chars: coveredChars(jaStageTexts, "Kurokane").filter(isKanji),
 	},
 ]);
 // death screen: the localized "Splatted by <weapon>!" burst (tight caps ~28px;
@@ -581,6 +633,10 @@ const deathJaTexts = [
 function coveredChars(texts: readonly string[], family: string): string[] {
 	const covers = fontCoverage[family]!;
 	return charsOf(texts).filter((ch) => covers(ch.codePointAt(0)!));
+}
+function isKanji(ch: string): boolean {
+	const cp = ch.codePointAt(0)!;
+	return cp >= 0x4e00 && cp <= 0x9fff;
 }
 await build("death-weapon-ja", 40, [
 	{

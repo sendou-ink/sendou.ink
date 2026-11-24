@@ -73,11 +73,12 @@ export const NO_CONTEST_GREY_VALUE_RANGE: readonly [number, number] = [80, 140];
 
 /**
  * "Score:" banner sides: left from x~946, right ending x~1691 (x~1712 mid-pop); digits bounce
- * 28-39px as they land.
+ * 28-39px as they land. The JA banner puts the count before a smaller label
+ * ("66カウント"), so the right side's digits start at x~1555.
  */
 export const MATCH_SCORE_ROIS: readonly [Roi, Roi] = [
 	{ x: 935, y: 231, w: 230, h: 50 },
-	{ x: 1600, y: 231, w: 125, h: 50 },
+	{ x: 1540, y: 231, w: 185, h: 50 },
 ];
 
 /** Banner score digit sizes: settled, and the landing bounce's peak. */

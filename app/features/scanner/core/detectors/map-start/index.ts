@@ -47,14 +47,17 @@ import {
 	GATE_TEXT_MAX_FRACTION,
 	GATE_TEXT_MIN_FRACTION,
 	GATE_TEXT_MIN_MAX,
+	KANA_MARK_REACH,
 	LINE_GAP_TOLERANCE,
 	LINE_MIN_HEIGHT,
 	LINE_MIN_ROW_PIXELS,
 	LINE_ROW_FRACTION,
+	MARK_MIN_ROW_PIXELS,
 	MASK_DARK_MAX,
 	MODE_BLOCK_ROI,
 	MODE_LABEL_ROI,
 	MODE_LABEL_TEXT_HEIGHT,
+	MODE_LABEL_TEXT_HEIGHT_JA,
 	MODE_TEXT_HEIGHT,
 	STAGE_BIN_THRESHOLD,
 	STAGE_MASK_RADIUS,
@@ -103,6 +106,15 @@ const LABEL_MIN_SCORE = 0.5;
  */
 const MIN_MATCH_SCORE = 0.62;
 
+/** One script's atlases, scaled to the splash's text heights. */
+interface ScriptGlyphs {
+	mode: GlyphSet | null;
+	stage: GlyphSet | null;
+	label: GlyphSet | null;
+	/** how far the title's lines reach up for marks above them, see findLineBands */
+	markReach: number;
+}
+
 interface LineBand {
 	y0: number;
 	y1: number;
@@ -115,8 +127,13 @@ function maskNearDark(gray: Image, radius: number): Image {
 	return applyMask(gray, near);
 }
 
-/** Find text line bands in a binarized block by row projection. */
-function findLineBands(binary: Image): LineBand[] {
+/**
+ * Find text line bands in a binarized block by row projection. `markReach`
+ * (a fraction of the band's height) lets a band reach up over sparse rows to
+ * take in marks above its glyphs: kana dakuten sit over the line, partly past
+ * a gap, in rows too sparse to keep.
+ */
+function findLineBands(binary: Image, markReach: number): LineBand[] {
 	const { rows, cols, data } = binary;
 	const counts = new Array<number>(rows).fill(0);
 	for (let y = 0; y < rows; y++) {
@@ -156,6 +173,21 @@ function findLineBands(binary: Image): LineBand[] {
 		if (last && band.y0 <= last.y1) last.y1 = Math.max(last.y1, band.y1);
 		else merged.push(band);
 	}
+	if (markReach > 0) {
+		for (const [i, band] of merged.entries()) {
+			const limit = Math.max(
+				merged[i - 1]?.y1 ?? 0,
+				band.y0 - Math.round(markReach * (band.y1 - band.y0)),
+			);
+			let markGap = 0;
+			for (let y = band.y0 - 1; y >= limit; y--) {
+				if (counts[y]! >= MARK_MIN_ROW_PIXELS) {
+					band.y0 = y;
+					markGap = 0;
+				} else if (++markGap > LINE_GAP_TOLERANCE) break;
+			}
+		}
+	}
 	return merged.filter((b) =>
 		Decisions.atLeast(
 			"map-start:LINE_MIN_HEIGHT",
@@ -194,11 +226,28 @@ export function createMapStartDetector(
 		height: number,
 	): GlyphSet | null => (set ? scaleGlyphSet(set, height / set.height) : null);
 
-	const modeGlyphs = scaled(resources.mapStartModeGlyphs, MODE_TEXT_HEIGHT);
-	const stageGlyphs = scaled(resources.mapStartStageGlyphs, STAGE_TEXT_HEIGHT);
-	const labelGlyphs = scaled(
+	const scriptGlyphs = (
+		modeSet: GlyphSet | null | undefined,
+		stageSet: GlyphSet | null | undefined,
+		labelHeight: number,
+		markReach: number,
+	): ScriptGlyphs => ({
+		mode: scaled(modeSet, MODE_TEXT_HEIGHT),
+		stage: scaled(stageSet, STAGE_TEXT_HEIGHT),
+		label: scaled(stageSet, labelHeight),
+		markReach,
+	});
+	const latin = scriptGlyphs(
+		resources.mapStartModeGlyphs,
 		resources.mapStartStageGlyphs,
 		MODE_LABEL_TEXT_HEIGHT,
+		0,
+	);
+	const japanese = scriptGlyphs(
+		resources.mapStartModeJaGlyphs,
+		resources.mapStartStageJaGlyphs,
+		MODE_LABEL_TEXT_HEIGHT_JA,
+		KANA_MARK_REACH,
 	);
 
 	const gateRois = [...GATE_DARK_PROBES, MODE_LABEL_ROI, GATE_INK_BAND];
@@ -274,6 +323,7 @@ export function createMapStartDetector(
 	function* readModeLines(
 		gray: Image,
 		glyphs: GlyphSet,
+		markReach: number,
 		speculative: boolean,
 	): MatchSteps<string[]> {
 		const block = cropRoi(gray, MODE_BLOCK_ROI);
@@ -282,7 +332,7 @@ export function createMapStartDetector(
 		const masked = maskNearDark(block, BLOCK_MASK_RADIUS);
 		const binary = threshold(masked, TEXT_BIN_THRESHOLD);
 		const lineCrops: Image[] = [];
-		for (const band of findLineBands(binary)) {
+		for (const band of findLineBands(binary, markReach)) {
 			const extent = bandExtent(binary, band);
 			if (!extent) continue;
 			const pad = 3;
@@ -308,6 +358,22 @@ export function createMapStartDetector(
 			),
 		);
 		return reads.map((read) => read.text.trim()).filter((text) => text);
+	}
+
+	function* readLabel(
+		gray: Image,
+		glyphs: GlyphSet,
+		speculative: boolean,
+	): MatchSteps<{ label: RecognizedText; labelScore: number }> {
+		const label = yield* recognizeTextSteps(
+			cropRoi(gray, MODE_LABEL_ROI),
+			glyphs,
+			{ binThreshold: TEXT_BIN_THRESHOLD, minCharScore: 0.3 },
+			speculative,
+		);
+		const labelScore =
+			closestBy(label.text, ALL_MODE_LABELS, (l) => l)?.score ?? 0;
+		return { label, labelScore };
 	}
 
 	/**
@@ -372,18 +438,36 @@ export function createMapStartDetector(
 	): MatchSteps<MapStartEvent[]> {
 		const gray = frameGray(frame);
 
-		// 1. confirm the constant label — a gate hit without it is a lookalike
+		// 1. confirm the constant label — a gate hit without it is a lookalike.
+		// The Latin atlases carry no kana, so a label they don't read is read
+		// again with the Japanese ones, which then read the title and stage too.
+		let glyphs = latin;
 		let label: RecognizedText | null = null;
 		let labelScore = 0;
-		if (labelGlyphs) {
-			const crop = cropRoi(gray, MODE_LABEL_ROI);
-			label = yield* recognizeTextSteps(
-				crop,
-				labelGlyphs,
-				{ binThreshold: TEXT_BIN_THRESHOLD, minCharScore: 0.3 },
+		if (latin.label) {
+			({ label, labelScore } = yield* readLabel(
+				gray,
+				latin.label,
 				speculative,
-			);
-			labelScore = closestBy(label.text, ALL_MODE_LABELS, (l) => l)?.score ?? 0;
+			));
+			if (
+				japanese.label &&
+				Decisions.below(
+					"map-start:LABEL_MIN_SCORE#latin",
+					labelScore,
+					LABEL_MIN_SCORE,
+				)
+			) {
+				const japaneseRead = yield* readLabel(
+					gray,
+					japanese.label,
+					speculative,
+				);
+				if (japaneseRead.labelScore > labelScore) {
+					({ label, labelScore } = japaneseRead);
+					glyphs = japanese;
+				}
+			}
 			if (
 				Decisions.below(
 					"map-start:LABEL_MIN_SCORE",
@@ -396,8 +480,10 @@ export function createMapStartDetector(
 		}
 
 		const [modeLines, stageRead] = yield* all([
-			modeGlyphs ? readModeLines(gray, modeGlyphs, speculative) : done(null),
-			stageGlyphs ? readStage(frame, stageGlyphs, speculative) : done(null),
+			glyphs.mode
+				? readModeLines(gray, glyphs.mode, glyphs.markReach, speculative)
+				: done(null),
+			glyphs.stage ? readStage(frame, glyphs.stage, speculative) : done(null),
 		]);
 
 		let mode: ModeShort | null = null;
