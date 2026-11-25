@@ -70,8 +70,13 @@ export function AbilitiesSelector({
 			return AbilitySlots.canMove(selectedAbilities, dragging.from, slot);
 		}
 
-		const ability = dragging?.ability ?? previewAbility;
-		return !ability || AbilitySlots.canPlaceAt(ability, slot);
+		if (dragging) return AbilitySlots.canPlaceAt(dragging.ability, slot);
+
+		return (
+			!previewAbility ||
+			!previewSlot ||
+			AbilitySlots.canPlaceAt(previewAbility, slot)
+		);
 	};
 
 	// switching between abilities is instant, only showing and hiding the preview is delayed
