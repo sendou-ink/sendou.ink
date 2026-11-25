@@ -2,15 +2,12 @@ import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { GraphicContainer } from "~/features/img-export/components/Graphic";
+import * as DragIds from "../core/DragIds";
+import * as TierLabel from "../core/TierLabel";
 import type {
 	TierListItem,
 	TierListMakerTier,
 } from "../tier-list-maker-schemas";
-import {
-	tierListItemId,
-	tierNameFontSize,
-	tierTextColor,
-} from "../tier-list-maker-utils";
 import styles from "./TierListGraphic.module.css";
 import { TierListItemImage } from "./TierListItemImage";
 
@@ -55,17 +52,17 @@ export function TierListGraphic({
 								className={styles.tierLabel}
 								style={{
 									backgroundColor: tier.color,
-									color: tierTextColor(tier.color),
+									color: TierLabel.textColor(tier.color),
 								}}
 							>
-								<span style={{ fontSize: tierNameFontSize(tier.name) }}>
+								<span style={{ fontSize: TierLabel.fontSize(tier.name) }}>
 									{tier.name}
 								</span>
 							</div>
 						) : null}
 						<div className={styles.tierItems}>
 							{tier.items.map((item) => (
-								<TierListItemImage key={tierListItemId(item)} item={item} />
+								<TierListItemImage key={DragIds.itemId(item)} item={item} />
 							))}
 						</div>
 					</div>

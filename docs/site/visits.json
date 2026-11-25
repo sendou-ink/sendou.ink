@@ -909,13 +909,55 @@
 		]
 	},
 	"e2e/tier-list-maker.spec.ts": {
-		"Tier List Maker › click to place mode adds items to the selected tier": [
+		"Tier list maker › Item pool › alt kits and alt skins can be hidden from the main weapons": [
 			"/tier-list-maker"
 		],
-		"Tier List Maker › tiers are reordered by dragging their handle": [
+		"Tier list maker › Item pool › stage + modes are offered only for the modes switched on": [
 			"/tier-list-maker"
 		],
-		"Tier List Maker › toggles work, items can be dragged, and state persists after reload": [
+		"Tier list maker › Item pool › with duplicates allowed a placed item is offered again as a copy": [
+			"/tier-list-maker"
+		],
+		"Tier list maker › Placing items › an item dragged back to the pool is taken out of its tier": [
+			"/tier-list-maker"
+		],
+		"Tier list maker › Placing items › an item dragged into a tier leaves the pool": [
+			"/tier-list-maker"
+		],
+		"Tier list maker › Placing items › an item dragged onto another of its tier takes its place": [
+			"/tier-list-maker"
+		],
+		"Tier list maker › Placing items › clicking items in click to place mode adds them to the selected tier": [
+			"/tier-list-maker"
+		],
+		"Tier list maker › Placing items › items of different types can be placed in the same list": [
+			"/tier-list-maker"
+		],
+		"Tier list maker › Saving and sharing › resetting brings back the default tiers with nothing placed": [
+			"/tier-list-maker"
+		],
+		"Tier list maker › Saving and sharing › the exported image shows the title and who made it": [
+			"/tier-list-maker"
+		],
+		"Tier list maker › Saving and sharing › the placement mode is remembered across visits": [
+			"/tier-list-maker"
+		],
+		"Tier list maker › Saving and sharing › the tier list is restored after a reload": [
+			"/tier-list-maker"
+		],
+		"Tier list maker › Tiers › a new tier is added to the bottom": [
+			"/tier-list-maker"
+		],
+		"Tier list maker › Tiers › a tier is renamed and recolored from its label": [
+			"/tier-list-maker"
+		],
+		"Tier list maker › Tiers › deleting a tier puts its items back in the pool": [
+			"/tier-list-maker"
+		],
+		"Tier list maker › Tiers › hiding the tier headers leaves only the items": [
+			"/tier-list-maker"
+		],
+		"Tier list maker › Tiers › tiers are reordered by dragging their handle": [
 			"/tier-list-maker"
 		]
 	},

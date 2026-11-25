@@ -1,0 +1,29 @@
+import Mermaid from "../../components/Mermaid.astro";
+
+The tier list maker at `/tier-list-maker` lets anyone rank Splatoon 3 weapons, stages, modes or abilities into tiers and export the result as an image to share. It has no database tables and needs no account. The whole tier list is kept in the page's URL, so the link is how a list is saved and shared.
+
+## Vocabulary
+
+- **Tier** (`TierListMakerTier`): one row of the list, with an id, a name and a color. A new list starts with X, S, A, B and C (`DEFAULT_TIERS`).
+- **Item** (`TierListItem`): something to rank. It has a **type** (main weapon, sub weapon, special weapon, stage, mode, stage + mode pair or ability, one tab each) and the game id of the thing. An item is only ever in one tier, so ranking the same thing twice takes **copies**. These differ by their `nth`.
+- **Pool**: the items of the open tab that aren't placed yet, shown under the tiers (`core/ItemPool.ts`).
+- **Placement mode**: how items get into a tier. **Drag & drop** is the default, while **click to place** adds the clicked item to the selected tier, with no dragging needed.
+- **State** (`TierListState`): the tiers and the items placed in each, in the `state` search param.
+
+The rules (what the pool offers, what a deleted tier does with its items, what is kept where) are listed under Behaviour below, each with the tests that establish it.
+
+## Where the tier list lives
+
+<Mermaid code={`flowchart LR
+	url["URL: state, title and pool settings"] -- "page load" --> react["React state (useTierList)"]
+	react -- "drop, click or tier edit" --> url
+	react -. "drag over: moves items live" .-> react
+	storage["localStorage: placement mode"] --> react
+	url -- "QR code" --> image["Exported image"]
+	url -- "pasted query string" --> widget["User page tier list widget"]`} />
+
+The `state` param is JSON, compressed (`lz~…`) so that a full list still fits in a link. While an item is being dragged it moves only in React state. The URL is written once the item is dropped, not on every pointer move. The exported image (made through the `img-export` feature's `ImageExportDialog`) has a QR code linking back to the list. A user can also pin a list to their profile with the tier list widget of the `user-page` feature, which stores the URL's query string. It refuses a query string with no items in it, which is what a pasted link that got cut short decodes to.
+
+## Where to start reading
+
+`routes/tier-list-maker.tsx` lays out the page and sets up drag and drop (`@dnd-kit`). Items and tier rows share one drag context, and its collision detection keeps them from colliding with each other. `hooks/useTierList.ts` holds the state and turns drag events and clicks into the changes of `core/TierList.ts`. The pool comes from `core/ItemPool.ts`. `core/DragIds.ts` is how a drag id tells an item, a tier row and a drop zone apart. `core/TierLabel.ts` sizes and colors a tier's label, both on the page and in the exported image (`components/TierListGraphic.tsx`). What goes in the URL is declared in `tier-list-maker-search-params.ts`.

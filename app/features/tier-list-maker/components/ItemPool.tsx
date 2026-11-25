@@ -1,7 +1,7 @@
 import { useDroppable } from "@dnd-kit/core";
 import { useTierListState } from "../contexts/TierListContext";
+import * as DragIds from "../core/DragIds";
 import type { TierListItem } from "../tier-list-maker-schemas";
-import { tierListItemId } from "../tier-list-maker-utils";
 import { DraggableItem } from "./DraggableItem";
 import styles from "./ItemPool.module.css";
 import { TierListItemImage } from "./TierListItemImage";
@@ -10,7 +10,7 @@ export function ItemPool() {
 	const { availableItems, placementMode, selectedTierId, handleAddItemToTier } =
 		useTierListState();
 	const { setNodeRef } = useDroppable({
-		id: "item-pool",
+		id: DragIds.POOL_ID,
 	});
 
 	return (
@@ -18,7 +18,7 @@ export function ItemPool() {
 			{availableItems.map((item) =>
 				placementMode === "click" ? (
 					<ClickableItem
-						key={tierListItemId(item)}
+						key={DragIds.itemId(item)}
 						item={item}
 						disabled={!selectedTierId}
 						onClick={() =>
@@ -26,7 +26,7 @@ export function ItemPool() {
 						}
 					/>
 				) : (
-					<DraggableItem key={tierListItemId(item)} item={item} />
+					<DraggableItem key={DragIds.itemId(item)} item={item} />
 				),
 			)}
 		</div>
@@ -45,7 +45,7 @@ function ClickableItem({
 	return (
 		<button
 			type="button"
-			data-item-id={tierListItemId(item)}
+			data-item-id={DragIds.itemId(item)}
 			className={styles.clickableItem}
 			onClick={onClick}
 			disabled={disabled}

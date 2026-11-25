@@ -3,7 +3,8 @@ import * as v from "valibot";
 import { ART_SOURCES } from "~/features/art/art-types";
 import { BADGE } from "~/features/badges/badges-constants";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
-import { tierListSearchParamsHaveItems } from "~/features/tier-list-maker/tier-list-maker-utils";
+import * as TierList from "~/features/tier-list-maker/core/TierList";
+import { tierListMakerSearchParams } from "~/features/tier-list-maker/tier-list-maker-search-params";
 import {
 	array,
 	badges,
@@ -183,7 +184,11 @@ export const tierListSchema = v.object({
 		transformValue: pastedTierListUrlToSearchParams,
 		validate: {
 			func: (value) =>
-				tierListSearchParamsHaveItems(pastedTierListUrlToSearchParams(value)),
+				TierList.hasItems(
+					tierListMakerSearchParams.parse(
+						new URLSearchParams(pastedTierListUrlToSearchParams(value)),
+					).state,
+				),
 			message: "forms:errors.tierListUrlIncomplete",
 		},
 	}),

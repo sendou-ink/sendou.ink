@@ -1,7 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import * as DragIds from "../core/DragIds";
 import type { TierListItem } from "../tier-list-maker-schemas";
-import { tierListItemId } from "../tier-list-maker-utils";
 import styles from "./DraggableItem.module.css";
 import { TierListItemImage } from "./TierListItemImage";
 
@@ -10,7 +10,7 @@ interface DraggableItemProps {
 }
 
 export function DraggableItem({ item }: DraggableItemProps) {
-	const uniqueId = tierListItemId(item);
+	const uniqueId = DragIds.itemId(item);
 
 	const {
 		attributes,

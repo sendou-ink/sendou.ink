@@ -13,18 +13,13 @@ import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { useTierListState } from "../contexts/TierListContext";
+import * as DragIds from "../core/DragIds";
+import * as TierLabel from "../core/TierLabel";
 import {
 	PRESET_COLORS,
 	TIER_NAME_MAX_LENGTH,
 } from "../tier-list-maker-constants";
 import type { TierListMakerTier } from "../tier-list-maker-schemas";
-import {
-	isLightColor,
-	tierListItemId,
-	tierNameFontSize,
-	tierSortableId,
-	tierTextColor,
-} from "../tier-list-maker-utils";
 import { DraggableItem } from "./DraggableItem";
 import styles from "./TierRow.module.css";
 
@@ -50,7 +45,7 @@ export function TierRow({ tier }: TierRowProps) {
 	const { setNodeRef, over } = useDroppable({
 		id: tier.id,
 	});
-	const itemIds = items.map(tierListItemId);
+	const itemIds = items.map(DragIds.itemId);
 	const isOver =
 		over !== null && (over.id === tier.id || itemIds.includes(String(over.id)));
 
@@ -67,7 +62,7 @@ export function TierRow({ tier }: TierRowProps) {
 		transform,
 		transition,
 		isDragging: isReordering,
-	} = useSortable({ id: tierSortableId(tier.id) });
+	} = useSortable({ id: DragIds.tierSortableId(tier.id) });
 
 	const isClickMode = placementMode === "click";
 	const isSelected = isClickMode && selectedTierId === tier.id;
@@ -110,8 +105,8 @@ export function TierRow({ tier }: TierRowProps) {
 							<span
 								className={styles.tierName}
 								style={{
-									fontSize: tierNameFontSize(tier.name),
-									color: tierTextColor(tier.color),
+									fontSize: TierLabel.fontSize(tier.name),
+									color: TierLabel.textColor(tier.color),
 								}}
 							>
 								{tier.name}
@@ -156,9 +151,9 @@ export function TierRow({ tier }: TierRowProps) {
 								className={clsx(styles.colorButton, styles.customColorButton, {
 									[styles.colorButtonSelected]: hasCustomColor,
 									[styles.customColorButtonOnLight]:
-										hasCustomColor && isLightColor(tier.color),
+										hasCustomColor && TierLabel.isLightColor(tier.color),
 									[styles.customColorButtonOnDark]:
-										hasCustomColor && !isLightColor(tier.color),
+										hasCustomColor && !TierLabel.isLightColor(tier.color),
 								})}
 								style={
 									hasCustomColor ? { backgroundColor: tier.color } : undefined
@@ -198,7 +193,7 @@ export function TierRow({ tier }: TierRowProps) {
 				) : items.length > 0 ? (
 					<SortableContext items={itemIds} strategy={rectSortingStrategy}>
 						{items.map((item) => (
-							<DraggableItem key={tierListItemId(item)} item={item} />
+							<DraggableItem key={DragIds.itemId(item)} item={item} />
 						))}
 					</SortableContext>
 				) : null}

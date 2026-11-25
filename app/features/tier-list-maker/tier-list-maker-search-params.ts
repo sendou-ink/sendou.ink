@@ -3,17 +3,12 @@ import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { codec, SP } from "~/modules/search-params/search-params";
 import { modeShort } from "~/utils/schema";
-import { DEFAULT_TIERS } from "./tier-list-maker-constants";
+import * as TierList from "./core/TierList";
 import {
 	type TierListState,
 	tierListItemTypeSchema,
 	tierListStateSerializedSchema,
 } from "./tier-list-maker-schemas";
-
-const EMPTY_TIER_LIST_STATE: TierListState = {
-	tiers: DEFAULT_TIERS,
-	tierItems: new Map(),
-};
 
 const tierListState = codec(
 	v.custom<TierListState>(() => true),
@@ -37,7 +32,7 @@ const tierListState = codec(
 
 export const tierListMakerSearchParams = SearchParams.define({
 	state: SP.custom(tierListState, {
-		default: EMPTY_TIER_LIST_STATE,
+		default: TierList.empty(),
 		loader: false,
 		compress: true,
 	}),

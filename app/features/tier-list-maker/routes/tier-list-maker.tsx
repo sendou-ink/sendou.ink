@@ -52,23 +52,22 @@ import {
 	TierListProvider,
 	useTierListState,
 } from "../contexts/TierListContext";
+import * as DragIds from "../core/DragIds";
 import type { TierListPlacementMode } from "../hooks/useTierList";
 import type { TierListItem } from "../tier-list-maker-schemas";
-import {
-	tierIdFromSortableId,
-	tierListMakerPathWithState,
-	tierSortableId,
-} from "../tier-list-maker-utils";
+import { tierListMakerSearchParams } from "../tier-list-maker-search-params";
 import styles from "./tier-list-maker.module.css";
 
 const PLACEMENT_MODES: TierListPlacementMode[] = ["track", "click"];
 
 /** Tier rows and items share one context, so each drag only collides with its own kind of target. */
 const tierAwareCollisionDetection: CollisionDetection = (args) => {
-	const isTierDrag = tierIdFromSortableId(String(args.active.id)) !== null;
+	const isTierDrag =
+		DragIds.tierIdFromSortableId(String(args.active.id)) !== null;
 	const droppableContainers = args.droppableContainers.filter(
 		(container) =>
-			(tierIdFromSortableId(String(container.id)) !== null) === isTierDrag,
+			(DragIds.tierIdFromSortableId(String(container.id)) !== null) ===
+			isTierDrag,
 	);
 
 	if (isTierDrag) return closestCenter({ ...args, droppableContainers });
@@ -98,7 +97,7 @@ const tierAwareCollisionDetection: CollisionDetection = (args) => {
 };
 
 const restrictTierDragToVerticalAxis: Modifier = (args) =>
-	args.active && tierIdFromSortableId(String(args.active.id)) !== null
+	args.active && DragIds.tierIdFromSortableId(String(args.active.id)) !== null
 		? restrictToVerticalAxis(args)
 		: args.transform;
 
@@ -205,7 +204,7 @@ function TierListMakerContent() {
 				<div className="stack">
 					<div className={styles.tierList}>
 						<SortableContext
-							items={state.tiers.map((tier) => tierSortableId(tier.id))}
+							items={state.tiers.map((tier) => DragIds.tierSortableId(tier.id))}
 							strategy={verticalListSortingStrategy}
 						>
 							{state.tiers.map((tier) => (
@@ -365,7 +364,7 @@ function TierListExportDialog() {
 			}
 			heading={t("common:imageExport.export")}
 			filename="tier-list"
-			qrCodePath={tierListMakerPathWithState({
+			qrCodePath={tierListMakerSearchParams.href(TIER_LIST_MAKER_URL, {
 				state,
 				title,
 				showTierHeaders,

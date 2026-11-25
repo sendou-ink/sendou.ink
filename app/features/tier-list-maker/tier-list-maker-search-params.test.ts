@@ -64,4 +64,15 @@ describe("tierListMakerSearchParams", () => {
 		]);
 		assertDecodesToDefault(tierListMakerSearchParams, "type", [[""], ["nope"]]);
 	});
+
+	test("decodes a state cut short, as a too long URL pasted into a maxLength input is, to the default", () => {
+		const [encoded] = SearchParams.encodeParam(
+			tierListMakerSearchParams.shape.state,
+			FILLED_STATE,
+		);
+
+		assertDecodesToDefault(tierListMakerSearchParams, "state", [
+			[encoded.slice(0, Math.floor(encoded.length / 2))],
+		]);
+	});
 });
