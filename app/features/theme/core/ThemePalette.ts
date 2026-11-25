@@ -12,10 +12,10 @@ import { THEME_INPUT_LIMITS, themeInputSchema } from "~/utils/schema";
 export type ThemeInput = v.InferOutput<typeof themeInputSchema>;
 
 export const DEFAULT_THEME_INPUT: ThemeInput = {
-	baseHue: 268,
-	baseChroma: 0.05,
-	accentHue: 253,
-	accentChroma: 0.24,
+	baseHue: 284,
+	baseChroma: 0.03,
+	accentHue: 0,
+	accentChroma: 0.26,
 	bgLightness: THEME_INPUT_LIMITS.BG_LIGHTNESS_DEFAULT,
 	chatHue: null,
 	radiusBox: 3,
@@ -105,11 +105,12 @@ const BRIGHT_FILL = {
 };
 
 /**
- * Hues with a larger gamut than the default accent hue get proportionally more chroma
+ * Hues with a larger gamut than the reference hue get proportionally more chroma
  * so e.g. yellow can be as vivid as blue is at the same slider value.
  */
 const GAMUT_BOOST = {
-	referenceHue: DEFAULT_THEME_INPUT.accentHue,
+	/** blue, the previous default accent the boost was tuned with */
+	referenceHue: 253,
 	max: 2,
 };
 
