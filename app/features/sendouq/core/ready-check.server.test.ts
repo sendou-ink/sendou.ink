@@ -5,6 +5,7 @@ import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { invariant } from "~/utils/invariant";
 import {
@@ -266,6 +267,32 @@ describe("SendouQ ready check", () => {
 				groups.ownGroup.id,
 			),
 		).toHaveLength(0);
+	});
+
+	test("the same groups matching up again right after an expired check are notified again", async () => {
+		const readyCheck = await findReadyCheck(groups.ownGroup.id);
+		invariant(readyCheck);
+
+		await ReadyCheck.expire(readyCheck);
+		await refreshSendouQInstance();
+
+		await ReadyCheck.start({
+			ownGroup: SendouQ.findUncensoredGroupById(groups.ownGroup.id)!,
+			theirGroup: SendouQ.findUncensoredGroupById(groups.theirGroup.id)!,
+			actorUserId: groups.ownMembers[0].id,
+		});
+
+		await vi.waitFor(async () => {
+			const notifications = await NotificationRepository.findByUserId(
+				groups.theirMembers[0].id,
+			);
+			expect(
+				notifications.filter(
+					(notification) =>
+						notification.type === "SQ_READY_CHECK" && !notification.seen,
+				),
+			).toHaveLength(1);
+		});
 	});
 
 	test("getting into a match clears who missed the previous check", async () => {

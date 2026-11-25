@@ -282,6 +282,8 @@ async function apply({
 			effects.notifications.push({
 				userIds: transition.userIds,
 				notification: { type: "LOBBY_PROMOTED", meta: lobbyMeta },
+				// promoted again after leaving and signing up again
+				allowRepeats: true,
 			});
 			break;
 		}
@@ -328,6 +330,8 @@ async function apply({
 			effects.notifications.push({
 				userIds: waitlist,
 				notification: { type: "LOBBY_READY_CHECK", meta: lobbyMeta },
+				// another slot can open for the same waitlist within the hour
+				allowRepeats: true,
 			});
 			break;
 		}
@@ -340,6 +344,7 @@ async function apply({
 			effects.notifications.push({
 				userIds: transition.userIds,
 				notification: { type: "LOBBY_PROMOTED", meta: lobbyMeta },
+				allowRepeats: true,
 			});
 			break;
 		}

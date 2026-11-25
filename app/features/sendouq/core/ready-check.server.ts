@@ -88,6 +88,8 @@ export async function start({
 		notification: {
 			type: "SQ_READY_CHECK",
 		},
+		// the same groups can match up again right after a check expires
+		allowRepeats: true,
 	});
 }
 

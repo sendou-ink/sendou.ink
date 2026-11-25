@@ -2,6 +2,7 @@ import { addMinutes, subMinutes } from "date-fns";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import * as VoiceEject from "~/features/voice/core/VoiceEject.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -397,6 +398,91 @@ describe("LobbyProgression.advance", () => {
 		const state = await LobbyRepository.findProgressionStateById(lobbyId);
 		expect(state?.readyChecks).toHaveLength(1);
 		expect(state?.readyChecks[0].users).toHaveLength(2);
+	});
+
+	test("the waitlist is pinged again when another slot opens soon after", async () => {
+		const lobbyId = await startedLobby({
+			checkedInCount: 8,
+			waitlistedCount: 2,
+		});
+		const waitlistHeadId = users.id(9);
+		const [leaverId, secondLeaverId] = LobbySet.playersOf(
+			await latestSet(lobbyId),
+			"BRAVO",
+		);
+
+		await LobbyRepository.removeParticipant({
+			lobbyId,
+			userId: leaverId,
+			unfinishedSetId: (await latestSet(lobbyId)).id,
+		});
+		await LobbyProgression.advance(lobbyId);
+
+		// the leaver comes back and takes the slot once nobody on the waitlist claimed it
+		await LobbyRepository.insertParticipant({
+			lobbyId,
+			userId: leaverId,
+			status: "CHECKED_IN",
+		});
+		await LobbyFactory.expireReadyChecks(lobbyId);
+		await LobbyProgression.advance(lobbyId);
+
+		await LobbyRepository.removeParticipant({
+			lobbyId,
+			userId: secondLeaverId,
+			unfinishedSetId: (await latestSet(lobbyId)).id,
+		});
+		await LobbyProgression.advance(lobbyId);
+
+		await vi.waitFor(async () => {
+			const notifications =
+				await NotificationRepository.findByUserId(waitlistHeadId);
+			expect(
+				notifications.filter(
+					(notification) => notification.type === "LOBBY_READY_CHECK",
+				),
+			).toHaveLength(2);
+		});
+	});
+
+	test("who signs up again after leaving is notified of their second promotion", async () => {
+		const lobby = await LobbyFactory.create(
+			{ hostUserId: hostId() },
+			{ signedUpUserIds: users.ids(9).slice(1) },
+		);
+		const rejoinerId = users.id(9);
+		const leave = async (userId: number) => {
+			await LobbyRepository.removeParticipant({
+				lobbyId: lobby.id,
+				userId,
+				unfinishedSetId: null,
+			});
+			await LobbyProgression.advance(lobby.id);
+		};
+
+		await leave(users.id(2));
+		await LobbyRepository.insertParticipant({
+			lobbyId: lobby.id,
+			userId: users.id(10),
+			status: "WAITLISTED",
+		});
+		await leave(rejoinerId);
+		await LobbyRepository.insertParticipant({
+			lobbyId: lobby.id,
+			userId: rejoinerId,
+			status: "WAITLISTED",
+		});
+		await leave(users.id(3));
+
+		await vi.waitFor(async () => {
+			const notifications =
+				await NotificationRepository.findByUserId(rejoinerId);
+			expect(
+				notifications.filter(
+					(notification) => notification.type === "LOBBY_PROMOTED",
+				),
+			).toHaveLength(2);
+		});
 	});
 
 	test("the head of the waitlist confirming fills the slot right away", async () => {
