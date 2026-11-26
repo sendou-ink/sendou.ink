@@ -1,0 +1,156 @@
+.popover {
+	width: min(50rem, var(--floating-available-width, 100vw));
+	max-width: none;
+}
+
+.picker {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.trigger {
+	position: relative;
+	padding: 0;
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background: none;
+	overflow: hidden;
+	cursor: pointer;
+
+	& img {
+		display: block;
+	}
+
+	&:hover {
+		border-color: var(--color-border-high);
+	}
+}
+
+.triggerPlaceholder {
+	display: grid;
+	place-items: center;
+	width: 64px;
+	height: 36px;
+	color: var(--color-text-high);
+
+	& svg {
+		width: 1.25rem;
+		height: 1.25rem;
+	}
+}
+
+.triggerMode {
+	position: absolute;
+	right: var(--s-0-5);
+	bottom: var(--s-0-5);
+	filter: drop-shadow(0 0 2px black);
+}
+
+.segments {
+	display: flex;
+	align-self: center;
+	gap: var(--s-0-5);
+	padding: var(--s-0-5);
+	border: var(--border-style);
+	border-radius: 999px;
+	background-color: var(--color-bg-high);
+}
+
+.segment {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	padding: var(--s-1) var(--s-3);
+	border: none;
+	border-radius: 999px;
+	background: none;
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+	cursor: pointer;
+	transition:
+		background-color 0.15s,
+		color 0.15s;
+
+	&:hover {
+		color: var(--color-text);
+	}
+
+	&[aria-pressed="true"] {
+		background-color: var(--color-bg);
+		color: var(--color-text);
+		box-shadow: 0 0 0 var(--border-width) var(--color-border-high);
+
+		& .segmentIcon {
+			filter: none;
+			opacity: 1;
+		}
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
+}
+
+.segmentIcon {
+	display: block;
+	filter: grayscale(1);
+	opacity: 0.6;
+	transition:
+		filter 0.15s,
+		opacity 0.15s;
+
+	.segment:hover & {
+		filter: none;
+		opacity: 1;
+	}
+}
+
+.stages {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+	gap: var(--s-1-5);
+}
+
+.stage {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+	padding: var(--s-1);
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background: none;
+	color: var(--color-text);
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
+
+	&[aria-pressed="true"] {
+		border-color: var(--color-fill-accent);
+		background-color: var(--color-bg-accent);
+	}
+}
+
+.stageImageContainer {
+	width: 100%;
+}
+
+.stageImage {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: var(--radius-field);
+}
+
+.stageName {
+	max-width: 100%;
+	overflow: hidden;
+	font-size: var(--font-2xs);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

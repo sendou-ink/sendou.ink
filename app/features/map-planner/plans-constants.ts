@@ -18,3 +18,6 @@ export const STAGE_WATER_LEVELS = [
 export const OUTLINED_IMAGE_SRC_SUFFIX = "?outline=red";
 
 export const PLAN_FILE_NAME = "plan";
+
+/** Longest plan a link carries, so that links stay well under the request line limits of servers and proxies. */
+export const PLAN_URL_PARAM_MAX_LENGTH = 8_000;

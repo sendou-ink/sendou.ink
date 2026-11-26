@@ -93,6 +93,9 @@ importers:
       isbot:
         specifier: 5.2.3
         version: 5.2.3
+      konva:
+        specifier: 10.9.1
+        version: 10.9.1
       kysely:
         specifier: 0.29.0
         version: 0.29.0(patch_hash=c4db877b7832e81d7eb0b710c902cee526020b0bcd4f577c696f0935a2fd1364)
@@ -4692,6 +4695,17 @@ packages:
     resolution: {integrity: sha512-zp3zXKy2cZWiIttdlWU5fisKxVQaLSU6471ej0KGz1GdHdaHxpzTAO/LIyFNc3gU3v1W7LJaqvYumoO3l/u+6A==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
+
+  konva@10.9.1:
+    resolution: {integrity: sha512-m49x+GatSxEUSvqahYhxpTjgKbtrLtw4P4o4B4iux953ZFpceaK52Ea+CFsAsd7W4I0Y5u6mMoRUsY/eltNZmw==}
+    peerDependencies:
+      canvas: ^3.0.0
+      skia-canvas: ^3.0.0
+    peerDependenciesMeta:
+      canvas:
+        optional: true
+      skia-canvas:
+        optional: true
 
   kysely@0.29.0:
     resolution: {integrity: sha512-LrQfPUeTW7MXbMvT62moEMnpMTuj9TO3lqjCeLKjM975PJ4Alrl/43f2tlDX7xOsNptKgH4LSNGwIbXwEkLg4g==}
@@ -10678,6 +10692,8 @@ snapshots:
       tinyglobby: 0.2.17
       unbash: 6.0.4
       yaml: 2.9.1
+
+  konva@10.9.1: {}
 
   kysely@0.29.0(patch_hash=c4db877b7832e81d7eb0b710c902cee526020b0bcd4f577c696f0935a2fd1364): {}
 

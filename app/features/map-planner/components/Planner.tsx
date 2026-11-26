@@ -89,7 +89,7 @@ import {
 	PLANNER_PERSISTENCE_KEY,
 	STAGE_WATER_LEVELS,
 } from "../plans-constants";
-import { plansSearchParams } from "../plans-search-params";
+import { tldrawPlansSearchParams } from "../plans-search-params";
 import type { StageWaterLevel } from "../plans-types";
 import styles from "./Planner.module.css";
 
@@ -124,22 +124,25 @@ export function Planner() {
 
 	const [editor, setEditor] = React.useState<Editor | null>(null);
 	const [imgOutlined, setImgOutlined] = useSearchParam(
-		plansSearchParams,
+		tldrawPlansSearchParams,
 		"outlined",
 	);
 	const [topCollapsed, setTopCollapsed] = useSearchParam(
-		plansSearchParams,
+		tldrawPlansSearchParams,
 		"hideTop",
 	);
 	const [weaponsCollapsed, setWeaponsCollapsed] = useSearchParam(
-		plansSearchParams,
+		tldrawPlansSearchParams,
 		"hideWeapons",
 	);
 	const [rangesVisible, setRangesVisible] = useSearchParam(
-		plansSearchParams,
+		tldrawPlansSearchParams,
 		"ranges",
 	);
-	const [importKey, setImportKey] = useSearchParam(plansSearchParams, "import");
+	const [importKey, setImportKey] = useSearchParam(
+		tldrawPlansSearchParams,
+		"import",
+	);
 	const rangeCleanupRef = React.useRef<(() => void) | null>(null);
 	const weaponsWrapperRef = React.useRef<HTMLDivElement>(null);
 	const [activeDragItem, setActiveDragItem] = React.useState<{
@@ -826,7 +829,7 @@ function StageBackgroundSelector({
 	const [
 		{ stage: stageId, mode, style: backgroundStyle, water: waterLevel },
 		setParams,
-	] = useSearchParamsTyped(plansSearchParams);
+	] = useSearchParamsTyped(tldrawPlansSearchParams);
 
 	const handleStageIdChange = (newStageId: StageId) => {
 		setParams({

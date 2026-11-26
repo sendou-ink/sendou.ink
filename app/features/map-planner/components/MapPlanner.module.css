@@ -1,0 +1,77 @@
+.planner {
+	container: planner / size;
+	position: fixed;
+	inset: 0;
+	z-index: 10;
+	background-color: var(--color-bg);
+}
+
+.layout {
+	height: 100%;
+	display: grid;
+	grid-template:
+		"slots slots slots" auto
+		"tools map actions" minmax(0, 1fr)
+		/ auto minmax(0, 1fr) auto;
+	gap: var(--s-2);
+	padding: var(--s-2);
+	padding-top: max(var(--s-2), env(safe-area-inset-top));
+	padding-right: max(var(--s-2), env(safe-area-inset-right));
+	padding-bottom: max(var(--s-2), env(safe-area-inset-bottom));
+	padding-left: max(var(--s-2), env(safe-area-inset-left));
+}
+
+html[data-fuse="true"] .planner {
+	bottom: var(--layout-fuse-bottom-height);
+}
+
+body:has(.planner) :is(nav, header, footer) {
+	display: none;
+}
+
+.slotBar {
+	grid-area: slots;
+}
+
+.toolSidebar {
+	grid-area: tools;
+	align-self: start;
+}
+
+.canvas {
+	position: relative;
+	grid-area: map;
+	overflow: hidden;
+}
+
+.actionBar {
+	grid-area: actions;
+	align-self: start;
+}
+
+/* the bars float over the map's corners instead of taking columns of their own */
+@container planner (width < 48rem) or (height < 32rem) {
+	.layout {
+		grid-template:
+			"slots" auto
+			"map" minmax(0, 1fr)
+			/ minmax(0, 1fr);
+		gap: var(--s-1);
+	}
+
+	.toolSidebar,
+	.actionBar {
+		z-index: 1;
+		grid-area: map;
+		max-height: 100%;
+		overflow-y: auto;
+	}
+
+	.toolSidebar {
+		justify-self: start;
+	}
+
+	.actionBar {
+		justify-self: end;
+	}
+}

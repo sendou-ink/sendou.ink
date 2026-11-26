@@ -1,7 +1,8 @@
+import * as React from "react";
 import { describe, expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
-import { SendouMenu, SendouMenuItem } from "./Menu";
+import { SendouContextMenu, SendouMenu, SendouMenuItem } from "./Menu";
 
 function Menu({ onThird }: { onThird?: () => void }) {
 	return (
@@ -112,6 +113,79 @@ describe("SendouMenu", () => {
 		await userEvent.keyboard("{Enter}");
 
 		expect(onThird).toHaveBeenCalledOnce();
+		await expect.element(screen.getByRole("menu")).not.toBeInTheDocument();
+	});
+});
+
+function ContextMenu({ onPick }: { onPick?: () => void }) {
+	const [point, setPoint] = React.useState<{ x: number; y: number } | null>(
+		null,
+	);
+
+	return (
+		<>
+			<button type="button" onClick={() => setPoint({ x: 200, y: 150 })}>
+				Open
+			</button>
+			<button type="button">Outside</button>
+			{point ? (
+				<SendouContextMenu clientPoint={point} onClose={() => setPoint(null)}>
+					<SendouMenuItem onAction={onPick}>Pick</SendouMenuItem>
+					<SendouMenuItem>Other</SendouMenuItem>
+				</SendouContextMenu>
+			) : null}
+		</>
+	);
+}
+
+async function openContextMenu(screen: Awaited<ReturnType<typeof render>>) {
+	await screen.getByRole("button", { name: "Open" }).click();
+	const menu = screen.getByRole("menu");
+	await expect.element(menu).toBeVisible();
+	return menu;
+}
+
+describe("SendouContextMenu", () => {
+	test("opens at the point with focus inside, arrow keys moving through the items", async () => {
+		const screen = await render(<ContextMenu />);
+
+		const menu = await openContextMenu(screen);
+
+		const rect = menu.element().getBoundingClientRect();
+		expect(Math.abs(rect.left - 200)).toBeLessThan(20);
+		expect(Math.abs(rect.top - 150)).toBeLessThan(20);
+		await userEvent.keyboard("{ArrowDown}");
+		await expect
+			.element(screen.getByRole("menuitem", { name: "Pick" }))
+			.toHaveFocus();
+	});
+
+	test("picking an item runs its action and closes the menu", async () => {
+		const onPick = vi.fn();
+		const screen = await render(<ContextMenu onPick={onPick} />);
+
+		await openContextMenu(screen);
+		await screen.getByRole("menuitem", { name: "Pick" }).click();
+
+		expect(onPick).toHaveBeenCalledOnce();
+		await expect.element(screen.getByRole("menu")).not.toBeInTheDocument();
+	});
+
+	test("Escape closes the menu", async () => {
+		const screen = await render(<ContextMenu />);
+
+		await openContextMenu(screen);
+		await userEvent.keyboard("{Escape}");
+
+		await expect.element(screen.getByRole("menu")).not.toBeInTheDocument();
+	});
+
+	test("a press outside closes the menu", async () => {
+		const screen = await render(<ContextMenu />);
+
+		await openContextMenu(screen);
+		await screen.getByRole("button", { name: "Outside" }).click();
+
 		await expect.element(screen.getByRole("menu")).not.toBeInTheDocument();
 	});
 });

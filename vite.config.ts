@@ -109,6 +109,7 @@ export default defineConfig((config) => {
 				"@react-router/node",
 				"@sapphi-red/web-noise-suppressor",
 				"@tldraw/tldraw",
+				"konva",
 				"@zumer/snapdom",
 				"clsx",
 				"compressorjs",

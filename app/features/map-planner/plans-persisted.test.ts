@@ -3,7 +3,12 @@ import {
 	assertDecodesToDefault,
 	assertRoundTrips,
 } from "~/modules/persisted-state/persisted-state-test-utils";
-import { importedPlansPersisted } from "./plans-persisted";
+import * as PlanEncoding from "./core/PlanEncoding";
+import {
+	autosavedPlanPersisted,
+	importedPlansPersisted,
+} from "./plans-persisted";
+import { typicalPlan } from "./tests/fixtures";
 
 describe("importedPlansPersisted", () => {
 	test("round-trips", () => {
@@ -22,5 +27,18 @@ describe("importedPlansPersisted", () => {
 			"not json",
 			'{"background":"x","allies":[999999],"enemies":[]}',
 		]);
+	});
+});
+
+describe("autosavedPlanPersisted", () => {
+	test("round-trips", () => {
+		assertRoundTrips(autosavedPlanPersisted, [
+			null,
+			PlanEncoding.encode(typicalPlan()),
+		]);
+	});
+
+	test("malformed values decode to the default", () => {
+		assertDecodesToDefault(autosavedPlanPersisted, ["1", "[]"]);
 	});
 });

@@ -41,6 +41,8 @@ interface ImageProps {
 	testId?: string;
 	onClick?: () => void;
 	loading?: "lazy" | "eager";
+	/** Loads the image in CORS mode, so a canvas can reuse the loaded image and still read its pixels. */
+	crossOrigin?: "anonymous";
 }
 
 export function Image({
@@ -57,6 +59,7 @@ export function Image({
 	containerStyle,
 	onClick,
 	loading = "lazy",
+	crossOrigin,
 }: ImageProps) {
 	return (
 		// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
@@ -75,6 +78,7 @@ export function Image({
 				style={style}
 				draggable="false"
 				loading={loading}
+				crossOrigin={crossOrigin}
 				data-testid={testId}
 			/>
 		</div>

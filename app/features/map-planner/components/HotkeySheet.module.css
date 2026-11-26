@@ -1,0 +1,71 @@
+.dialog {
+	max-width: 56rem;
+}
+
+.groups {
+	columns: 15rem;
+	column-gap: var(--s-6);
+}
+
+.group {
+	break-inside: avoid;
+	padding-bottom: var(--s-4);
+}
+
+.groupHeading {
+	margin-bottom: var(--s-1-5);
+	font-size: var(--font-sm);
+	color: var(--color-text-high);
+}
+
+.rows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.scope {
+	margin-top: var(--s-1);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+}
+
+.keys {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	gap: var(--s-1);
+}
+
+.separator {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+.keycaps {
+	display: flex;
+	gap: 2px;
+}
+
+.keycap {
+	min-width: 1.25rem;
+	padding: 0 var(--s-1);
+	border: var(--border-style);
+	border-bottom-width: 2px;
+	border-radius: 4px;
+	font-family: inherit;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	line-height: 1.125rem;
+	color: var(--color-text);
+	text-align: center;
+}
