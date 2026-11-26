@@ -34,11 +34,16 @@
 
 .platforms {
 	left: var(--s-2);
-	gap: var(--s-2);
+	gap: var(--s-1);
+	padding-inline: var(--s-1);
 }
 
 .platformLink {
 	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.5rem;
+	height: 1.5rem;
 
 	&:hover {
 		opacity: 0.8;

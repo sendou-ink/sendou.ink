@@ -377,6 +377,7 @@ function TeamEvents({ week }: { week: WeekData }) {
 								<SendouButton
 									variant="minimal"
 									size="miniscule"
+									shape="square"
 									icon={<Pencil />}
 									onClick={() => setEditedEvent(event)}
 									aria-label={t("schedule:events.edit")}
@@ -390,6 +391,7 @@ function TeamEvents({ week }: { week: WeekData }) {
 									fields={{ eventId: event.id }}
 									variant="minimal-destructive"
 									size="miniscule"
+									shape="square"
 									icon={<Trash />}
 									aria-label={t("schedule:events.delete")}
 									testId={`delete-team-event-${event.id}`}
