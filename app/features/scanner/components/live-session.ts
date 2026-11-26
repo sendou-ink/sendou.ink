@@ -8,6 +8,10 @@
  * path a VoD scan runs, fed from a stream instead of a file.
  */
 import { useSyncExternalStore } from "react";
+import {
+	type AudioPassthrough,
+	startAudioPassthrough,
+} from "../capture/audio-passthrough";
 import { ClipRingBuffer, supportsRingBuffer } from "../capture/ring-buffer";
 import {
 	audioInputFor,
@@ -66,7 +70,12 @@ import {
 	unsentMatches,
 	unsentScoreboardMatches,
 } from "./sendou-ingest";
-import { audioDeviceIdOf, readSettings } from "./settings";
+import {
+	audioDeviceIdOf,
+	canPlaySourceAudio,
+	readSettings,
+	subscribeSettings,
+} from "./settings";
 import { sendLive, uploadEnabled } from "./upload";
 import { deleteClosedVisitsVodClips } from "./visit";
 
@@ -156,6 +165,10 @@ let releaseCaptureLock: (() => void) | null = null;
 let captureEnding: Promise<void> = Promise.resolve();
 let clipStoreSettled = false;
 let unsubscribeFeed: (() => void) | null = null;
+/** the capture's audio track the "Play source audio" setting plays; null when its audio is the desktop's or there is none */
+let passthroughTrack: MediaStreamTrack | null = null;
+let passthrough: AudioPassthrough | null = null;
+let unsubscribeSettings: (() => void) | null = null;
 /**
  * The stored event's id per slot (`key`) of the worker's timeline, as of the
  * slot's latest save: a later read of the slot waits for it and takes its id.
@@ -325,6 +338,11 @@ export async function startCapture(): Promise<void> {
 		clipTimer = setInterval(clipTick, CLIP_TICK_MS);
 		audioTimer = setInterval(audioCheck, AUDIO_CHECK_MS);
 		unsubscribeFeed = subscribeFeed(clipTick);
+		passthroughTrack = canPlaySourceAudio(settings.audioSource)
+			? (stream.getAudioTracks()[0] ?? null)
+			: null;
+		syncAudioPassthrough();
+		unsubscribeSettings = subscribeSettings(syncAudioPassthrough);
 		BroadcastLink.setCapturing(true);
 		// a session is only worth coming back to if the browser keeps it
 		requestPersistentStorage();
@@ -450,6 +468,11 @@ function release(): void {
 	audioTimer = null;
 	unsubscribeFeed?.();
 	unsubscribeFeed = null;
+	unsubscribeSettings?.();
+	unsubscribeSettings = null;
+	passthrough?.stop();
+	passthrough = null;
+	passthroughTrack = null;
 	ring?.stop();
 	ring = null;
 	client?.dispose();
@@ -459,6 +482,26 @@ function release(): void {
 		video.remove();
 	}
 	video = null;
+}
+
+/** Starts, stops or re-levels the source audio playback to match the settings, which can change mid-capture. */
+function syncAudioPassthrough(): void {
+	const { playSourceAudio, sourceAudioVolume } = readSettings();
+	if (!playSourceAudio || !passthroughTrack) {
+		passthrough?.stop();
+		passthrough = null;
+		return;
+	}
+	if (passthrough) {
+		passthrough.setVolume(sourceAudioVolume);
+		return;
+	}
+	try {
+		passthrough = startAudioPassthrough(passthroughTrack, sourceAudioVolume);
+	} catch (error) {
+		// biome-ignore lint/suspicious/noConsole: playback is a convenience, the capture carries on without it
+		console.warn("scanner: source audio playback failed", error);
+	}
 }
 
 /**

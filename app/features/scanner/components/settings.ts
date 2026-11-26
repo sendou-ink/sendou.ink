@@ -1,7 +1,8 @@
 /**
  * The scanner's settings, kept in localStorage: the capture source, what
- * clips hear, whether results upload to sendou.ink, whether live clips are
- * saved and whether matching runs on the GPU. Read through a store so the controllers (outside React) and
+ * clips hear, whether that audio also plays on the page, whether results
+ * upload to sendou.ink, whether live clips are saved and whether matching
+ * runs on the GPU. Read through a store so the controllers (outside React) and
  * the views see one value.
  */
 import * as v from "valibot";
@@ -13,6 +14,10 @@ export interface ScannerSettings {
 	sourceDeviceId: string;
 	/** what live clips hear */
 	audioSource: AudioSource;
+	/** play the capture's audio on the page, for when the scanner takes the capture card from OBS and its monitoring goes quiet */
+	playSourceAudio: boolean;
+	/** 0–1 */
+	sourceAudioVolume: number;
 	/** upload results to sendou.ink as games end (needs a login) */
 	upload: boolean;
 	/** keep the live ring buffer and cut clips of the best moments */
@@ -41,6 +46,8 @@ export const AUDIO_OFFSET_LIMIT_MS = 2000;
 const DEFAULT_SETTINGS: ScannerSettings = {
 	sourceDeviceId: "",
 	audioSource: "source",
+	playSourceAudio: false,
+	sourceAudioVolume: 1,
 	upload: true,
 	saveClips: true,
 	clipMinKills: 4,
@@ -60,6 +67,11 @@ export const scannerSettingsPersisted = PersistedState.define({
 		audioSource: v.fallback(
 			v.custom<AudioSource>(isAudioSource),
 			DEFAULT_SETTINGS.audioSource,
+		),
+		playSourceAudio: v.fallback(v.boolean(), DEFAULT_SETTINGS.playSourceAudio),
+		sourceAudioVolume: v.fallback(
+			v.pipe(v.number(), v.minValue(0), v.maxValue(1)),
+			DEFAULT_SETTINGS.sourceAudioVolume,
 		),
 		upload: v.fallback(v.boolean(), DEFAULT_SETTINGS.upload),
 		saveClips: v.fallback(v.boolean(), DEFAULT_SETTINGS.saveClips),
@@ -95,6 +107,11 @@ export function updateSettings(patch: Partial<ScannerSettings>): void {
 	});
 }
 
+/** Calls `listener` whenever the settings change, in this tab or another. */
+export function subscribeSettings(listener: () => void): () => void {
+	return PersistedState.subscribe(scannerSettingsPersisted, listener);
+}
+
 export function useScannerSettings(): ScannerSettings {
 	return usePersistedState(scannerSettingsPersisted)[0];
 }
@@ -102,6 +119,14 @@ export function useScannerSettings(): ScannerSettings {
 /** The `deviceId` a `device:<id>` audio source names; null for the other kinds. */
 export function audioDeviceIdOf(source: AudioSource): string | null {
 	return source.startsWith("device:") ? source.slice("device:".length) : null;
+}
+
+/**
+ * Whether the capture's audio may be played back on the page: desktop audio
+ * would record its own playback and loop.
+ */
+export function canPlaySourceAudio(source: AudioSource): boolean {
+	return source !== "desktop" && source !== "off";
 }
 
 function isAudioSource(value: unknown): value is AudioSource {

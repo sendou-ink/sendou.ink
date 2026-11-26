@@ -1,6 +1,6 @@
 /**
  * The settings popover, opened from ⚙ on the landing and the live header:
- * the upload, clip and GPU toggles, the retention notes, and the debug tools
+ * the upload, clip, game sound and GPU toggles, the retention notes, and the debug tools
  * (enabling debug mode, saving the live frame, the montage link in development). The source lives on the landing's Live card, the one place
  * it must be right.
  */
@@ -23,7 +23,9 @@ import { FRAME_MAX_AGE_MS, MAX_FRAME_BYTES } from "../store/frames";
 import styles from "./SettingsPopover.module.css";
 import {
 	AUDIO_OFFSET_LIMIT_MS,
+	type AudioSource,
 	CLIP_MIN_KILLS_OPTIONS,
+	canPlaySourceAudio,
 	updateSettings,
 	useScannerSettings,
 } from "./settings";
@@ -46,6 +48,7 @@ export function SettingsPopover({
 	const showDevLinks = process.env.NODE_ENV === "development";
 	const showSaveFrame = debug && onSaveFrame !== undefined;
 	const gpuSupported = "gpu" in navigator;
+	const sourceAudioPlayable = canPlaySourceAudio(settings.audioSource);
 
 	return (
 		<SendouPopover
@@ -81,6 +84,38 @@ export function SettingsPopover({
 					>
 						Save clips
 					</SendouSwitch>
+					<SendouSwitch
+						size="small"
+						isSelected={sourceAudioPlayable && settings.playSourceAudio}
+						isDisabled={!sourceAudioPlayable}
+						onChange={(playSourceAudio) => updateSettings({ playSourceAudio })}
+					>
+						{playSourceAudioLabel(settings.audioSource)}
+					</SendouSwitch>
+					{sourceAudioPlayable && settings.playSourceAudio ? (
+						<div className={styles.row}>
+							<label
+								className={styles.rowLabel}
+								htmlFor="scanner-source-audio-volume"
+							>
+								Game sound volume
+							</label>
+							<input
+								id="scanner-source-audio-volume"
+								type="range"
+								className={styles.range}
+								min={0}
+								max={100}
+								step={1}
+								value={Math.round(settings.sourceAudioVolume * 100)}
+								onChange={(e) =>
+									updateSettings({
+										sourceAudioVolume: e.target.valueAsNumber / 100,
+									})
+								}
+							/>
+						</div>
+					) : null}
 					<SendouSwitch
 						size="small"
 						isSelected={gpuSupported && settings.webgpu}
@@ -192,6 +227,15 @@ export function SettingsPopover({
 			</div>
 		</SendouPopover>
 	);
+}
+
+function playSourceAudioLabel(source: AudioSource): string {
+	if (source === "desktop") {
+		return "Play the game sound here (not with desktop audio)";
+	}
+	if (source === "off")
+		return "Play the game sound here (pick an audio source first)";
+	return "Play the game sound here";
 }
 
 /** `2026-09-16 19:02` — the session's start as the matches CSV's source */
