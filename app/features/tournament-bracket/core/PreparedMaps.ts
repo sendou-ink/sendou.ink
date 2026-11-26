@@ -546,7 +546,7 @@ function groupEliminationPlacementSizes({
 	const teamCount = firstRoundMatches
 		.flatMap((match) => [match.opponent1, match.opponent2])
 		.filter((opponent) => opponent !== null).length;
-	const upperBracketRoundCount = Math.log2(firstRoundMatches.length * 2);
+	const roundCounts = Engine.eliminationRoundCounts(data, groupId);
 
 	const eliminations = eliminationRounds({ type, data, groupId }).map(
 		(round) => ({
@@ -570,13 +570,12 @@ function groupEliminationPlacementSizes({
 					(round) => nonByeMatchCount({ data, roundId: round.id }),
 				);
 
-		const losersFinalNumber = (upperBracketRoundCount - 1) * 2;
 		const winnersFinalLoserStaysAlive =
 			!hasGrandFinals &&
 			unbeatenCount === 1 &&
 			!groupRounds.some(
 				(round) =>
-					round.section === "losers" && round.number === losersFinalNumber,
+					round.section === "losers" && round.number === roundCounts.losers,
 			);
 		if (winnersFinalLoserStaysAlive) {
 			return [unbeatenCount, 1, stillInCount - unbeatenCount - 1];
@@ -593,9 +592,7 @@ function groupEliminationPlacementSizes({
 		...stillIn,
 		...eliminations.toReversed().flatMap(({ number, count }) =>
 			// the third place match splits the semi final losers into 3rd and 4th
-			thirdPlaceMatchExists &&
-			number === upperBracketRoundCount - 1 &&
-			count === 2
+			thirdPlaceMatchExists && number === roundCounts.winners - 1 && count === 2
 				? [1, 1]
 				: [count],
 		),

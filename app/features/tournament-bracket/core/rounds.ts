@@ -1,3 +1,4 @@
+import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import { TOURNAMENT } from "../../tournament/tournament-constants";
 
@@ -19,13 +20,10 @@ export function getRounds(args: {
 	const matchesOfRound = (roundId: number) =>
 		args.bracketData.match.filter((match) => match.roundId === roundId);
 
-	const firstRound = groupRounds.find(
-		(round) => round.section === "winners" && round.number === 1,
-	);
-	const upperBracketRoundCount = firstRound
-		? Math.log2(matchesOfRound(firstRound.id).length * 2)
-		: 0;
-	const losersRoundCount = Math.max(0, (upperBracketRoundCount - 1) * 2);
+	const roundCounts =
+		groupId === undefined
+			? { winners: 0, losers: 0 }
+			: Engine.eliminationRoundCounts(args.bracketData, groupId);
 
 	const grandFinal = groupRounds.find(
 		(round) => round.section === "finals" && round.number === 1,
@@ -66,7 +64,7 @@ export function getRounds(args: {
 			}
 
 			// only one match in the group, it decides the winner
-			if (args.type === "winners" && upperBracketRoundCount === 1) {
+			if (args.type === "winners" && roundCounts.winners === 1) {
 				return TOURNAMENT.ROUND_NAMES.GRAND_FINALS;
 			}
 
@@ -74,7 +72,7 @@ export function getRounds(args: {
 				args.type === "winners" ? "WB " : args.type === "losers" ? "LB " : "";
 
 			const sectionRoundCount = Math.max(
-				round.section === "losers" ? losersRoundCount : upperBracketRoundCount,
+				round.section === "losers" ? roundCounts.losers : roundCounts.winners,
 				...groupRounds
 					.filter((candidate) => candidate.section === round.section)
 					.map((candidate) => candidate.number),

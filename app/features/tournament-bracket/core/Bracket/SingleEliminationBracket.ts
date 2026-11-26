@@ -6,6 +6,7 @@ import type {
 	RoundData,
 } from "~/features/tournament-bracket/core/engine/types";
 import { invariant } from "~/utils/invariant";
+import * as Engine from "../engine";
 import { type BracketMapCounts, roundSetKey } from "../toMapList";
 import { Bracket, type MatchExit, type Standing } from "./Bracket";
 import { cumulativeEliminationsByRound, participantIdsOf } from "./utils";
@@ -191,10 +192,8 @@ export class SingleEliminationBracket extends Bracket {
 			const thirdPlaceRound = groupRounds.find(
 				(round) => round.section === "finals",
 			);
-			const firstRoundMatchCount = this.data.match.filter(
-				(match) => match.roundId === winnersRounds[0]?.id,
-			).length;
-			const semifinalsNumber = Math.log2(firstRoundMatchCount * 2) - 1;
+			const semifinalsNumber =
+				Engine.eliminationRoundCounts(this.data, group.id).winners - 1;
 			const lastRound = winnersRounds.at(-1);
 
 			// tiers from the top: teams still in, then the losers of each round, latest first

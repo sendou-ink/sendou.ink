@@ -1,3 +1,7 @@
+import {
+	eliminationRoundCounts,
+	losersRoundOfWinnersRound,
+} from "../elimination-rounds";
 import { matchStatus, winnerSideByScore } from "../status";
 import type {
 	GroupType,
@@ -217,13 +221,14 @@ export class Propagator {
 		groupId: number,
 		section: RoundSection,
 	): number {
-		const upperBracketRoundCount = Math.log2(this.participantCount(groupId));
+		const roundCounts = eliminationRoundCounts(this.store.data, groupId);
+		if (roundCounts.winners === 0) throw new Error("First round not found.");
 
 		switch (section) {
 			case "winners":
-				return upperBracketRoundCount;
+				return roundCounts.winners;
 			case "losers":
-				return Math.max(0, (upperBracketRoundCount - 1) * 2);
+				return roundCounts.losers;
 			case "finals":
 				return stage.type === "double_elimination" ? 2 : 1;
 		}
@@ -275,7 +280,7 @@ export class Propagator {
 			return [winnerMatch ?? null];
 		}
 
-		const roundNumberLB = roundNumber > 1 ? (roundNumber - 1) * 2 : 1;
+		const roundNumberLB = losersRoundOfWinnersRound(roundNumber);
 
 		const method = helpers.getLoserOrdering(participantCount, roundNumberLB);
 		const actualMatchNumberLB = helpers.findLoserMatchNumber(

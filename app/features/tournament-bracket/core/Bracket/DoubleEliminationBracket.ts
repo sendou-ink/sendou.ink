@@ -5,6 +5,7 @@ import type {
 	RoundData,
 } from "~/features/tournament-bracket/core/engine/types";
 import { invariant } from "~/utils/invariant";
+import * as Engine from "../engine";
 import { type BracketMapCounts, roundSetKey } from "../toMapList";
 import { Bracket, type MatchExit, type Standing } from "./Bracket";
 import { cumulativeEliminationsByRound, participantIdsOf } from "./utils";
@@ -247,17 +248,17 @@ export class DoubleEliminationBracket extends Bracket {
 			const losersRounds = roundsOfSection("losers");
 			const [grandFinal, bracketReset] = roundsOfSection("finals");
 
-			const upperBracketRoundCount = Math.log2(
-				this.matchesOfRound(winnersRounds[0]?.id ?? -1).length * 2,
-			);
-			const losersRoundCount = Math.max(0, (upperBracketRoundCount - 1) * 2);
+			const losersRoundCount = Engine.eliminationRoundCounts(
+				this.data,
+				group.id,
+			).losers;
 			const losersRoundNumbers = new Set(
 				losersRounds.map((round) => round.number),
 			);
 			const loserStaysAlive = (winnersRound: RoundData) =>
 				losersRoundCount === 0 ||
 				!losersRoundNumbers.has(
-					winnersRound.number > 1 ? (winnersRound.number - 1) * 2 : 1,
+					Engine.losersRoundOfWinnersRound(winnersRound.number),
 				);
 			const winnersFinal = this.winnersFinalMatch(group.id);
 			const winnersFinalRound = winnersRounds.find(
