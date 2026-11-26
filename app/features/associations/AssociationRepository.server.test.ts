@@ -31,9 +31,7 @@ describe("findById", () => {
 			{ managerUserIds: [managerId()], memberUserIds: [memberId()] },
 		);
 
-		const association = await AssociationRepository.findById(id, {
-			withMembers: true,
-		});
+		const association = await AssociationRepository.findById(id);
 
 		expect(association?.permissions).toEqual({
 			MANAGE: [adminId()],
@@ -47,11 +45,9 @@ describe("findById", () => {
 			{ managerUserIds: [managerId()], memberUserIds: [memberId()] },
 		);
 
-		const association = await AssociationRepository.findById(id, {
-			withMembers: true,
-		});
+		const association = await AssociationRepository.findById(id);
 		const removerIdsOf = (userId: number) =>
-			association?.members?.find((member) => member.id === userId)?.permissions
+			association?.members.find((member) => member.id === userId)?.permissions
 				.REMOVE;
 
 		expect(removerIdsOf(adminId())).toEqual([]);
@@ -64,7 +60,7 @@ describe("findById", () => {
 	});
 });
 
-describe("findByMemberUserId", () => {
+describe("findVisibilityOptionsByUserId", () => {
 	beforeEach(async () => {
 		await users.create(3);
 	});
@@ -77,7 +73,9 @@ describe("findByMemberUserId", () => {
 		);
 		await AssociationFactory.create({ userId: adminId() });
 
-		const result = await AssociationRepository.findByMemberUserId(memberId());
+		const result = await AssociationRepository.findVisibilityOptionsByUserId(
+			memberId(),
+		);
 
 		expect(result.actual.map((association) => association.id)).toEqual([id]);
 		expect(result.virtual).toEqual(["FRIENDS", "+2", "+3"]);
@@ -116,9 +114,7 @@ describe("insert", () => {
 			userId: adminId(),
 		});
 
-		const association = await AssociationRepository.findById(id, {
-			withMembers: true,
-		});
+		const association = await AssociationRepository.findById(id);
 
 		expect(association?.members).toEqual([
 			expect.objectContaining({ id: adminId(), role: "ADMIN" }),
@@ -134,9 +130,7 @@ describe("insert", () => {
 			AssociationRepository.insert({ name: "One too many", userId: adminId() }),
 		).rejects.toThrow(LimitReachedError);
 
-		const { actual } = await AssociationRepository.findByMemberUserId(
-			adminId(),
-		);
+		const actual = await AssociationRepository.findAllByMemberUserId(adminId());
 		expect(actual).toHaveLength(ASSOCIATION.MAX_COUNT_REGULAR_USER);
 	});
 
@@ -148,9 +142,7 @@ describe("insert", () => {
 
 		await AssociationRepository.insert({ name: "One more", userId: adminId() });
 
-		const { actual } = await AssociationRepository.findByMemberUserId(
-			adminId(),
-		);
+		const actual = await AssociationRepository.findAllByMemberUserId(adminId());
 		expect(actual).toHaveLength(ASSOCIATION.MAX_COUNT_REGULAR_USER + 1);
 	});
 });
@@ -172,9 +164,7 @@ describe("deleteMember", () => {
 			newAdminUserId: managerId(),
 		});
 
-		const association = await AssociationRepository.findById(id, {
-			withMembers: true,
-		});
+		const association = await AssociationRepository.findById(id);
 		expect(association?.members).toEqual([
 			expect.objectContaining({ id: managerId(), role: "ADMIN" }),
 		]);
@@ -191,9 +181,7 @@ describe("deleteMember", () => {
 			userId: memberId(),
 		});
 
-		const association = await AssociationRepository.findById(id, {
-			withMembers: true,
-		});
+		const association = await AssociationRepository.findById(id);
 		expect(association?.members).toEqual([
 			expect.objectContaining({ id: adminId(), role: "ADMIN" }),
 		]);
@@ -210,9 +198,7 @@ describe("deleteById", () => {
 
 		await AssociationRepository.deleteById(id);
 
-		const { actual } = await AssociationRepository.findByMemberUserId(
-			adminId(),
-		);
+		const actual = await AssociationRepository.findAllByMemberUserId(adminId());
 		expect(actual).toEqual([]);
 	});
 
@@ -350,9 +336,7 @@ describe("insert", () => {
 			AssociationRepository.insert({ name: "One too many", userId: adminId() }),
 		).rejects.toThrow(LimitReachedError);
 
-		const { actual } = await AssociationRepository.findByMemberUserId(
-			adminId(),
-		);
+		const actual = await AssociationRepository.findAllByMemberUserId(adminId());
 		expect(actual).toHaveLength(ASSOCIATION.MAX_COUNT_REGULAR_USER);
 		expect(
 			await db

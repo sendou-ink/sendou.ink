@@ -3,10 +3,9 @@
  * the admin manages it, the admin and starred members (`MANAGER`) share its invite link and each member lists
  * who can remove them.
  */
-import type { Kysely, Transaction } from "kysely";
+import type { ExpressionBuilder, Kysely, Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
-import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import { listedPostsCutoff } from "~/features/scrims/scrims-utils";
 import { isSupporter } from "~/modules/permissions/utils";
 import { LimitReachedError } from "~/utils/errors";
@@ -14,51 +13,47 @@ import { shortNanoid } from "~/utils/id";
 import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
 import * as Association from "./core/Association";
 
-interface FindOptions {
-	/** Include `members`, without which the permissions are computed from no members (empty). */
-	withMembers: boolean;
+/** The association with its members by its id, `null` if there is none. */
+export async function findById(associationId: number) {
+	const association = await db
+		.selectFrom("Association")
+		.select((eb) => ["Association.id", "Association.name", membersJson(eb)])
+		.where("Association.id", "=", associationId)
+		.executeTakeFirst();
+
+	return association ? withPermissions(association) : null;
 }
 
-/** The association by its id, `null` if there is none. */
-export async function findById(
-	associationId: number,
-	options: FindOptions = { withMembers: false },
-) {
-	const result = await findBy({ type: "association", associationId }, options);
+/** The association with its members whose invite link has the code, `undefined` if the code is unknown or was reset. */
+export async function findByInviteCode(inviteCode: string) {
+	const association = await db
+		.selectFrom("Association")
+		.select((eb) => ["Association.id", "Association.name", membersJson(eb)])
+		.where("Association.inviteCode", "=", inviteCode)
+		.executeTakeFirst();
 
-	return result.at(0) ?? null;
+	return association ? withPermissions(association) : undefined;
 }
 
-/**
- * Everything the user can limit content to: the associations they are a member of (`actual`), the audiences
- * that come without joining one (`virtual`, see `Association.virtualIdentifiersOf`) and their friends' ids.
- */
-export async function findByMemberUserId(
-	userId: number,
-	options: FindOptions = { withMembers: false },
-) {
-	return {
-		actual: await findBy({ type: "user", userId }, options),
-		virtual: await virtualAssociationsByUserId(userId),
-		friendIds: await FriendRepository.findFriendIds(userId),
-	};
+/** The associations the user is a member of, with their members. */
+export async function findAllWithMembersByUserId(userId: number) {
+	const associations = await db
+		.selectFrom("AssociationMember")
+		.innerJoin(
+			"Association",
+			"Association.id",
+			"AssociationMember.associationId",
+		)
+		.select((eb) => ["Association.id", "Association.name", membersJson(eb)])
+		.where("AssociationMember.userId", "=", userId)
+		.execute();
+
+	return associations.map(withPermissions);
 }
 
-/** The association whose invite link has the code, `undefined` if the code is unknown or was reset. */
-export async function findByInviteCode(
-	inviteCode: string,
-	options: FindOptions = { withMembers: false },
-) {
-	const associations = await findBy(
-		{ type: "inviteCode", inviteCode },
-		options,
-	);
-
-	return associations.at(0);
-}
-
-const baseFindQuery = (options: FindOptions) =>
-	db
+/** The ids and names of the associations the user is a member of. */
+export function findAllByMemberUserId(userId: number) {
+	return db
 		.selectFrom("AssociationMember")
 		.innerJoin(
 			"Association",
@@ -66,60 +61,53 @@ const baseFindQuery = (options: FindOptions) =>
 			"AssociationMember.associationId",
 		)
 		.select(["Association.id", "Association.name"])
-		.$if(options.withMembers, (qb) =>
-			qb.select((eb) =>
-				jsonArrayFrom(
-					eb
-						.selectFrom("AssociationMember")
-						.innerJoin("User", "User.id", "AssociationMember.userId")
-						.whereRef("AssociationMember.associationId", "=", "Association.id")
-						.select((memberEb) => [
-							...commonUserSelect(memberEb),
-							"AssociationMember.role",
-						]),
-				).as("members"),
-			),
-		);
+		.where("AssociationMember.userId", "=", userId)
+		.execute();
+}
 
-async function findBy(
-	args:
-		| { type: "user"; userId: number }
-		| { type: "association"; associationId: number }
-		| { type: "inviteCode"; inviteCode: string },
-	options: FindOptions,
-) {
-	const associations =
-		args.type === "user"
-			? await baseFindQuery(options)
-					.where("AssociationMember.userId", "=", args.userId)
-					.execute()
-			: args.type === "inviteCode"
-				? await baseFindQuery(options)
-						.where("Association.inviteCode", "=", args.inviteCode)
-						.execute()
-				: await baseFindQuery(options)
-						.where("Association.id", "=", args.associationId)
-						.execute();
+/**
+ * Everything the user can limit content to: the associations they are a member of (`actual`) and the audiences
+ * that come without joining one (`virtual`, see `Association.virtualIdentifiersOf`).
+ */
+export async function findVisibilityOptionsByUserId(userId: number) {
+	return {
+		actual: await findAllByMemberUserId(userId),
+		virtual: await virtualAssociationsByUserId(userId),
+	};
+}
 
-	return associations.map((a) => {
-		const members = a.members ?? [];
-		const adminIds = memberIdsWithRole(members, "ADMIN");
-		const managerIds = memberIdsWithRole(members, "MANAGER");
+function membersJson(eb: ExpressionBuilder<DB, "Association">) {
+	return jsonArrayFrom(
+		eb
+			.selectFrom("AssociationMember")
+			.innerJoin("User", "User.id", "AssociationMember.userId")
+			.whereRef("AssociationMember.associationId", "=", "Association.id")
+			.select((memberEb) => [
+				...commonUserSelect(memberEb),
+				"AssociationMember.role",
+			]),
+	).as("members");
+}
 
-		return {
-			...a,
-			members: a.members?.map((member) => ({
-				...member,
-				permissions: {
-					REMOVE: memberRemoverIds({ member, adminIds, managerIds }),
-				},
-			})),
+function withPermissions<
+	TMember extends { id: number; role: Tables["AssociationMember"]["role"] },
+>(association: { id: number; name: string; members: Array<TMember> }) {
+	const adminIds = memberIdsWithRole(association.members, "ADMIN");
+	const managerIds = memberIdsWithRole(association.members, "MANAGER");
+
+	return {
+		...association,
+		members: association.members.map((member) => ({
+			...member,
 			permissions: {
-				MANAGE: adminIds,
-				MANAGE_INVITE_LINK: [...adminIds, ...managerIds],
+				REMOVE: memberRemoverIds({ member, adminIds, managerIds }),
 			},
-		};
-	});
+		})),
+		permissions: {
+			MANAGE: adminIds,
+			MANAGE_INVITE_LINK: [...adminIds, ...managerIds],
+		},
+	};
 }
 
 function memberIdsWithRole(

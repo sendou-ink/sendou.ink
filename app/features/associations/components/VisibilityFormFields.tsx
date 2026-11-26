@@ -10,7 +10,7 @@ import { ariaAttributes } from "~/form/utils";
 import type { notFoundVisibilityField } from "../associations-schemas";
 import styles from "./VisibilityFormFields.module.css";
 
-/** Associations of the user the content can be limited to, as returned by `AssociationRepository.findByMemberUserId`. */
+/** Associations of the user the content can be limited to, as returned by `AssociationRepository.findVisibilityOptionsByUserId`. */
 export interface VisibilityAssociations {
 	virtual: string[];
 	actual: Array<{ id: number; name: string }>;

@@ -16,8 +16,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = getUser();
 
 	const associations = user
-		? await AssociationsRepository.findByMemberUserId(user?.id)
-		: null;
+		? await AssociationsRepository.findAllByMemberUserId(user.id)
+		: [];
 
 	const { weekdayTimes, weekendTimes, divs, useDefaults, associationId } =
 		scrimsSearchParams.parse(request);
@@ -32,9 +32,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	// a filter for an association the viewer is not in is ignored rather than showing an empty page
 	const associationFilter =
-		associations?.actual.find(
-			(association) => association.id === associationId,
-		) ?? null;
+		associations.find((association) => association.id === associationId) ??
+		null;
 
 	// the association filter narrows browsing only, the viewer's own and booked posts stay listed
 	const dividedPosts = dividePosts(
@@ -69,14 +68,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			viewerId: user?.id ?? null,
 		}),
 		filters,
-		associationFilter: associationFilter
-			? { id: associationFilter.id, name: associationFilter.name }
-			: null,
-		associationOptions:
-			associations?.actual.map((association) => ({
-				id: association.id,
-				name: association.name,
-			})) ?? [],
+		associationFilter,
+		associationOptions: associations,
 		canSaveAsDefault:
 			user !== undefined &&
 			!R.isDeepEqual(

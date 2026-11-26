@@ -14,7 +14,8 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
 	const { lobbyId } = newLobbySearchParams.parse(url);
 
-	const associations = await AssociationRepository.findByMemberUserId(user.id);
+	const associations =
+		await AssociationRepository.findVisibilityOptionsByUserId(user.id);
 	const hasFriendCode = Boolean(
 		await UserRepository.findCurrentFriendCodeByUserId(user.id),
 	);

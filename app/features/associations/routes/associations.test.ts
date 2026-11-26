@@ -123,7 +123,7 @@ describe("Associations page action", () => {
 		);
 
 		const { associations } = await associationsLoader({ user: memberId() });
-		expect(associations[0]!.members!.map((member) => member.id)).not.toContain(
+		expect(associations[0]!.members.map((member) => member.id)).not.toContain(
 			otherMemberId(),
 		);
 	});
@@ -227,7 +227,7 @@ describe("Associations page action", () => {
 
 		const { associations } = await associationsLoader({ user: memberId() });
 		expect(associations[0]!.permissions.MANAGE).toEqual([memberId()]);
-		expect(associations[0]!.members!.map((member) => member.id)).not.toContain(
+		expect(associations[0]!.members.map((member) => member.id)).not.toContain(
 			adminId(),
 		);
 	});

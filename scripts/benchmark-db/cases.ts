@@ -175,23 +175,35 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	add("AssociationRepository.findById", fx.heavyAssociation, (association) =>
-		AssociationRepository.findById(association.id, { withMembers: true }),
+		AssociationRepository.findById(association.id),
 	);
 	add(
-		"AssociationRepository.findByMemberUserId",
+		"AssociationRepository.findAllWithMembersByUserId",
 		fx.heavyAssociation,
 		(association) =>
-			AssociationRepository.findByMemberUserId(association.memberUserId, {
-				withMembers: true,
-			}),
+			AssociationRepository.findAllWithMembersByUserId(
+				association.memberUserId,
+			),
+	);
+	add(
+		"AssociationRepository.findAllByMemberUserId",
+		fx.heavyAssociation,
+		(association) =>
+			AssociationRepository.findAllByMemberUserId(association.memberUserId),
+	);
+	add(
+		"AssociationRepository.findVisibilityOptionsByUserId",
+		fx.heavyAssociation,
+		(association) =>
+			AssociationRepository.findVisibilityOptionsByUserId(
+				association.memberUserId,
+			),
 	);
 	add(
 		"AssociationRepository.findByInviteCode",
 		fx.heavyAssociation,
 		(association) =>
-			AssociationRepository.findByInviteCode(association.inviteCode, {
-				withMembers: true,
-			}),
+			AssociationRepository.findByInviteCode(association.inviteCode),
 	);
 	add(
 		"AssociationRepository.findInviteCodeById",

@@ -9,11 +9,9 @@ export type AssociationsLoaderData = SerializeFrom<typeof loader>;
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = requireUser();
 
-	const associations = (
-		await AssociationRepository.findByMemberUserId(user.id, {
-			withMembers: true,
-		})
-	).actual;
+	const associations = await AssociationRepository.findAllWithMembersByUserId(
+		user.id,
+	);
 
 	const associationsWithManagerData: Array<
 		(typeof associations)[number] & {
@@ -51,12 +49,10 @@ async function associationToJoin(
 
 	if (!inviteCode) return null;
 
-	const association = await AssociationRepository.findByInviteCode(inviteCode, {
-		withMembers: true,
-	});
+	const association = await AssociationRepository.findByInviteCode(inviteCode);
 	if (!association) return null;
 
-	if (association.members!.some((member) => member.id === userId)) {
+	if (association.members.some((member) => member.id === userId)) {
 		return null;
 	}
 

@@ -29,7 +29,9 @@ export const loader = async () => {
 
 	return {
 		teams,
-		associations: await AssociationRepository.findByMemberUserId(user.id),
+		associations: await AssociationRepository.findVisibilityOptionsByUserId(
+			user.id,
+		),
 		recentPickupRosters: await ScrimPickupRosterRepository.findAllOwnRecent(),
 		schedule: await ScheduleViews.rosterScheduleData({
 			userIds: scheduleUserIds,

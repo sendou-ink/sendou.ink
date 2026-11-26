@@ -23,7 +23,7 @@ export const action = defineAction(
 			case "REMOVE_MEMBER": {
 				const association = await findAssociation(body.associationId);
 				const memberToRemove = badRequestIfFalsy(
-					association.members!.find((member) => member.id === body.userId),
+					association.members.find((member) => member.id === body.userId),
 				);
 
 				requirePermission(memberToRemove, "REMOVE");
@@ -43,7 +43,7 @@ export const action = defineAction(
 				);
 
 				errorToastIfFalsy(
-					association.members!.some(
+					association.members.some(
 						(member) => member.id === body.userId && member.role !== "ADMIN",
 					),
 					"Not a member of the association",
@@ -79,16 +79,14 @@ export const action = defineAction(
 			}
 			case "JOIN_ASSOCIATION": {
 				const associationToJoin = badRequestIfFalsy(
-					await AssociationRepository.findByInviteCode(body.inviteCode, {
-						withMembers: true,
-					}),
+					await AssociationRepository.findByInviteCode(body.inviteCode),
 				);
 				errorToastIfFalsy(
-					associationToJoin.members?.every((member) => member.id !== user.id),
+					associationToJoin.members.every((member) => member.id !== user.id),
 					"You are already a member of this association",
 				);
 				errorToastIfFalsy(
-					associationToJoin.members!.length <
+					associationToJoin.members.length <
 						ASSOCIATION.MAX_ASSOCIATION_MEMBER_COUNT,
 					"Association is full",
 				);
@@ -112,7 +110,7 @@ export const action = defineAction(
 
 				const isAdmin = association.permissions.MANAGE.includes(user.id);
 				const newAdmin = isAdmin
-					? Association.resolveNewAdmin(association.members!)
+					? Association.resolveNewAdmin(association.members)
 					: null;
 
 				errorToastIfFalsy(
@@ -138,9 +136,7 @@ export const action = defineAction(
 );
 
 async function findAssociation(associationId: number) {
-	return badRequestIfFalsy(
-		await AssociationRepository.findById(associationId, { withMembers: true }),
-	);
+	return badRequestIfFalsy(await AssociationRepository.findById(associationId));
 }
 
 async function requireAssociationPermission(

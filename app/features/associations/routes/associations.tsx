@@ -100,7 +100,7 @@ function AssociationSection({
 	const user = useUser();
 	const canManage = useHasPermission(association, "MANAGE");
 	const newAdmin = canManage
-		? Association.resolveNewAdmin(association.members ?? [])
+		? Association.resolveNewAdmin(association.members)
 		: null;
 
 	return (
@@ -138,7 +138,7 @@ function AssociationSection({
 			</div>
 			<div className="text-sm text-lighter">
 				{t("scrims:associations.admin", {
-					username: association.members?.find((m) => m.role === "ADMIN")
+					username: association.members.find((m) => m.role === "ADMIN")
 						?.username,
 				})}
 			</div>
@@ -180,7 +180,7 @@ function AssociationSection({
 				) : null}
 			</div>
 			<div className="stack sm mt-4">
-				{association.members?.map((member) => (
+				{association.members.map((member) => (
 					<AssociationMember
 						key={member.id}
 						member={member}
@@ -248,9 +248,7 @@ function AssociationMember({
 	associationId,
 	canStar,
 }: {
-	member: NonNullable<
-		AssociationsLoaderData["associations"][number]["members"]
-	>[number];
+	member: AssociationsLoaderData["associations"][number]["members"][number];
 	associationId: number;
 	canStar: boolean;
 }) {
