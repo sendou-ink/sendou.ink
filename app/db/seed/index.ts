@@ -16,7 +16,7 @@ import { seedPlus } from "./dev/plus";
 import { seedScrimsAndLFG } from "./dev/scrims-lfg";
 import { seedSendouQ } from "./dev/sendouq";
 import { seedTeams } from "./dev/teams";
-import { seedTournaments } from "./dev/tournaments";
+import { seedTestTournament, seedTournaments } from "./dev/tournaments";
 import { seedSpecialTrophies, seedTrophies } from "./dev/trophies";
 import { seedUsers } from "./dev/users";
 import { seedVods } from "./dev/vods";
@@ -52,6 +52,7 @@ export async function seed() {
 	await runModule(() =>
 		seedAvailability({ users, teams, tournaments, scrims, misc }),
 	);
+	await runModule(() => seedTestTournament(users));
 	await runModule(() => FeedIndexer.run());
 
 	clearAllTournamentDataCache();

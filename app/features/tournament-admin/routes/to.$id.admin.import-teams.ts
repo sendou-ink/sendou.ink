@@ -34,24 +34,30 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	});
 
 	return {
-		teams: fromTournamentTeams.map((team) => ({
-			id: team.id,
-			name: team.name,
-			avatarImgId: team.avatarImgId,
-			pickupAvatarUrl: team.pickupAvatarUrl,
-			linkedTeam: team.team
-				? { id: team.team.id, logoUrl: team.team.logoUrl }
-				: null,
-			members: team.members.map((member) => ({
-				userId: member.userId,
-				username: member.username,
-				inGameName: member.inGameName,
-				tournamentName: member.tournamentName,
-				isOwner: member.role === "OWNER",
-				isPlaceholder: Boolean(member.isPlaceholder),
-			})),
-			mapPool: importableMapPool(team.mapPool, tournament),
-		})),
+		// fake players are shared by every test tournament, they are never copied nor recreated as placeholders
+		teams: fromTournamentTeams.flatMap((team) => {
+			const members = team.members.filter((member) => !member.isFakePlayer);
+			if (members.length === 0) return [];
+
+			return {
+				id: team.id,
+				name: team.name,
+				avatarImgId: team.avatarImgId,
+				pickupAvatarUrl: team.pickupAvatarUrl,
+				linkedTeam: team.team
+					? { id: team.team.id, logoUrl: team.team.logoUrl }
+					: null,
+				members: members.map((member) => ({
+					userId: member.userId,
+					username: member.username,
+					inGameName: member.inGameName,
+					tournamentName: member.tournamentName,
+					isOwner: member.role === "OWNER",
+					isPlaceholder: Boolean(member.isPlaceholder),
+				})),
+				mapPool: importableMapPool(team.mapPool, tournament),
+			};
+		}),
 	};
 };
 

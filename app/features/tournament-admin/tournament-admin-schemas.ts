@@ -7,6 +7,7 @@ import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-sta
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as SkippedRounds from "~/features/tournament-bracket/core/SkippedRounds";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import { numberField, stringConstant } from "~/form/fields";
 import {
 	_action,
 	id,
@@ -38,6 +39,16 @@ export function adminStaffFormSchemaServer({
 	);
 }
 
+/** Test tournaments' "Add fake teams" form of the admin teams page. */
+export const addFakeTeamsFormSchema = v.object({
+	_action: stringConstant("ADD_FAKE_TEAMS"),
+	count: numberField({
+		label: "labels.fakeTeamCount",
+		min: 1,
+		max: TOURNAMENT.FAKE_TEAMS_MAX_TOTAL_TEAMS,
+	}),
+});
+
 export const adminTeamsActionSchema = v.union([
 	v.object({
 		_action: _action("CHECK_IN"),
@@ -60,6 +71,10 @@ export const adminTeamsActionSchema = v.union([
 	v.object({
 		_action: _action("UNDO_DROP_TEAM_OUT"),
 		teamId: id,
+	}),
+	addFakeTeamsFormSchema,
+	v.object({
+		_action: _action("DELETE_FAKE_TEAMS"),
 	}),
 ]);
 

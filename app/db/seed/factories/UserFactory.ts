@@ -142,6 +142,11 @@ export const { create: createPlaceholder } = defineFactory({
 	insert: TournamentTeamRepository.insertPlaceholderPlayer,
 });
 
+/** The fake players of test tournaments (`User.isFakePlayer`), which a migration creates in production. Add them to teams with `TournamentTeamFactory.createFakeTeams`. */
+export function createFakePlayerPool() {
+	return TournamentTeamRepository.insertFakePlayerPool();
+}
+
 /** Sets the user's friend code as submitted by themselves. */
 export function setFriendCode(userId: number, friendCode = fakeFriendCode()) {
 	return UserRepository.insertFriendCode({

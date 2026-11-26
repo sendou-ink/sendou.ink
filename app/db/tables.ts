@@ -1166,6 +1166,8 @@ interface User {
 	isApiAccesser: Generated<DBBoolean>;
 	/** Player without an account, added by a LAN tournament's organizer to a team. Belongs to that one tournament only, can't log in and is left out of searches, leaderboards and notifications until an admin merges it into the real user's account. */
 	isPlaceholder: Generated<DBBoolean>;
+	/** One of the fixed pool of placeholder players (always `isPlaceholder` too) that fill the fake teams of test tournaments. Shared by every test tournament, so it is never claimed into an account. */
+	isFakePlayer: Generated<DBBoolean>;
 	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
 	pronouns: JSONColumnTypeNullable<Pronouns>;
 	patronStartedAt: number | null;

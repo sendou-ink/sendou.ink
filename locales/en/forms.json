@@ -574,5 +574,6 @@
 	"labels.broadcastObsPort": "WebSocket server port",
 	"bottomTexts.broadcastObsPort": "Tools → WebSocket Server Settings in OBS, 4455 unless you changed it.",
 	"labels.broadcastObsPassword": "WebSocket server password",
-	"bottomTexts.broadcastObsPassword": "Show Connect Info in the same settings. Leave empty if authentication is off."
+	"bottomTexts.broadcastObsPassword": "Show Connect Info in the same settings. Leave empty if authentication is off.",
+	"labels.fakeTeamCount": "Add fake teams"
 }

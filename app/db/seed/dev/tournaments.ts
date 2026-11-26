@@ -1,5 +1,12 @@
 import { TZDate } from "@date-fns/tz";
-import { addDays, addHours, addWeeks, sub, subWeeks } from "date-fns";
+import {
+	addDays,
+	addHours,
+	addMinutes,
+	addWeeks,
+	sub,
+	subWeeks,
+} from "date-fns";
 import type {
 	CastAccount,
 	TeamPickSettings,
@@ -107,6 +114,7 @@ const LUTI_MIN_MEMBERS = 4;
 const LUTI_MAX_MEMBERS = 8;
 
 const HISTORICAL_COUNT = 5;
+const TEST_TOURNAMENT_FAKE_TEAM_COUNT = 16;
 /** PICNIC editions from before the series had a trophy, to backfill it for. */
 const PRE_TROPHY_PICNIC_COUNT = 3;
 /** Showcase users seeded into every played tournament, so their results paginate. */
@@ -339,6 +347,30 @@ export async function seedTournaments({
 		castAccounts: PADDLING_POOL_CAST_ACCOUNTS,
 		luti,
 	};
+}
+
+/**
+ * The fake player pool and a test tournament filled with fake teams, swiss → SE with team picked maps, check-in
+ * open and everybody checked in so the bracket can be started right away. Its own module, seeded last, so the
+ * pool's users don't shift the ids of the users the other modules create.
+ */
+export async function seedTestTournament(users: SeededUsers) {
+	await UserFactory.createFakePlayerPool();
+
+	const tournament = await TournamentFactory.create({
+		name: "Format Test",
+		authorId: users.adminId,
+		startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+		mapPickingStyle: "AUTO",
+		teamPick: RANKED_MODES_TEAM_PICK,
+		bracketProgression: SWISS_TO_SINGLE_ELIMINATION,
+		isTest: true,
+	});
+
+	await TournamentTeamFactory.createFakeTeams({
+		tournamentId: tournament.id,
+		count: TEST_TOURNAMENT_FAKE_TEAM_COUNT,
+	});
 }
 
 type Ctx = {

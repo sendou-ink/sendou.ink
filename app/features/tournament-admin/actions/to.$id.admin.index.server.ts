@@ -5,6 +5,7 @@ import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournam
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import type * as Engine from "~/features/tournament-bracket/core/engine";
@@ -26,6 +27,7 @@ import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
+import { addFakeTeams } from "../core/fakeTeams.server";
 import { adminTeamsActionSchema } from "../tournament-admin-schemas";
 
 export const action = defineAction(
@@ -167,6 +169,39 @@ export const action = defineAction(
 
 				break;
 			}
+			case "ADD_FAKE_TEAMS": {
+				errorToastIfFalsy(
+					tournament.isTest,
+					"Fake teams can only be added to test tournaments",
+				);
+				errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
+				errorToastIfFalsy(
+					body.count <= tournament.fakeTeamsAddableCount,
+					`A tournament can have at most ${TOURNAMENT.FAKE_TEAMS_MAX_TOTAL_TEAMS} teams`,
+				);
+
+				await addFakeTeams({ tournament, count: body.count });
+				await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+
+				emitTournamentUpdate = true;
+
+				break;
+			}
+			case "DELETE_FAKE_TEAMS": {
+				errorToastIfFalsy(
+					tournament.isTest,
+					"Fake teams can only be deleted from test tournaments",
+				);
+				errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
+
+				await TournamentTeamRepository.deleteFakeTeams(tournamentId);
+				await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+
+				emitTournamentUpdate = true;
+				emitLfgUpdate = true;
+
+				break;
+			}
 			default: {
 				assertUnreachable(body);
 			}
@@ -185,9 +220,11 @@ export const action = defineAction(
 		if (emitTournamentUpdate) {
 			ChatSystemMessage.send({ channel: tournamentChannel(tournamentId) });
 		}
-		ChatSystemMessage.send({
-			channel: tournamentTeamChannel({ tournamentId, teamId: body.teamId }),
-		});
+		if ("teamId" in body) {
+			ChatSystemMessage.send({
+				channel: tournamentTeamChannel({ tournamentId, teamId: body.teamId }),
+			});
+		}
 		if (emitLfgUpdate) {
 			ChatSystemMessage.send({ channel: tournamentLFGChannel(tournamentId) });
 		}

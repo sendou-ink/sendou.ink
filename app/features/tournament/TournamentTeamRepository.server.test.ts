@@ -6,6 +6,8 @@ import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactor
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { TournamentSettings } from "~/db/tables-json";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { invariant } from "~/utils/invariant";
 import { withUserId } from "~/utils/Test";
 import * as TournamentTeamRepository from "./TournamentTeamRepository.server";
@@ -806,6 +808,284 @@ describe("TournamentTeamRepository", () => {
 				await TournamentTeamRepository.isPickupAvatarImgId(unusedImage.id),
 			).toBe(false);
 		});
+	});
+});
+
+describe("TournamentTeamRepository.insertFakeTeams", () => {
+	beforeEach(async () => {
+		await users.create(1);
+		await UserFactory.createFakePlayerPool();
+	});
+
+	const insertFakeTeams = (
+		args: Partial<
+			Parameters<typeof TournamentTeamRepository.insertFakeTeams>[0]
+		> & {
+			tournamentId: number;
+		},
+	) =>
+		withUserId(organizerId(), () =>
+			TournamentTeamRepository.insertFakeTeams({
+				count: 2,
+				membersPerTeam: 4,
+				mapPool: null,
+				isCheckedIn: false,
+				...args,
+			}),
+		);
+
+	const fakeTeamsOf = (tournamentId: number) =>
+		db
+			.selectFrom("TournamentTeam")
+			.select(["TournamentTeam.id", "TournamentTeam.name"])
+			.where("TournamentTeam.tournamentId", "=", tournamentId)
+			.execute();
+
+	const membersOfTournament = (tournamentId: number) =>
+		db
+			.selectFrom("TournamentTeamMember")
+			.innerJoin(
+				"TournamentTeam",
+				"TournamentTeam.id",
+				"TournamentTeamMember.tournamentTeamId",
+			)
+			.innerJoin("User", "User.id", "TournamentTeamMember.userId")
+			.select([
+				"TournamentTeamMember.userId",
+				"TournamentTeamMember.tournamentTeamId",
+				"TournamentTeamMember.role",
+				"User.isFakePlayer",
+			])
+			.where("TournamentTeam.tournamentId", "=", tournamentId)
+			.execute();
+
+	test.each([1, 2, 4])(
+		"gives every team %i fake players, the first of them its owner",
+		async (membersPerTeam) => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+
+			const teamIds = await insertFakeTeams({
+				tournamentId: tournament.id,
+				count: 3,
+				membersPerTeam,
+			});
+
+			const members = await membersOfTournament(tournament.id);
+			expect(teamIds).toHaveLength(3);
+			for (const teamId of teamIds) {
+				const teamMembers = members.filter(
+					(member) => member.tournamentTeamId === teamId,
+				);
+				expect(teamMembers).toHaveLength(membersPerTeam);
+				expect(teamMembers.every((member) => member.isFakePlayer)).toBe(true);
+				expect(teamMembers.filter((member) => member.role === "OWNER")).toEqual(
+					[
+						expect.objectContaining({
+							userId: Math.min(...teamMembers.map((member) => member.userId)),
+						}),
+					],
+				);
+			}
+		},
+	);
+
+	test("never reuses a fake player within a tournament but does across tournaments", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId(),
+		});
+		const otherTournament = await TournamentFactory.create({
+			authorId: organizerId(),
+		});
+
+		await insertFakeTeams({ tournamentId: tournament.id, count: 3 });
+		await insertFakeTeams({ tournamentId: tournament.id, count: 2 });
+		await insertFakeTeams({ tournamentId: otherTournament.id, count: 1 });
+
+		const userIds = (await membersOfTournament(tournament.id)).map(
+			(member) => member.userId,
+		);
+		expect(userIds).toHaveLength(20);
+		expect(new Set(userIds).size).toBe(20);
+
+		const otherUserIds = (await membersOfTournament(otherTournament.id)).map(
+			(member) => member.userId,
+		);
+		expect(otherUserIds.every((userId) => userIds.includes(userId))).toBe(true);
+	});
+
+	test("names the teams uniquely within the tournament", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId(),
+		});
+
+		await insertFakeTeams({
+			tournamentId: tournament.id,
+			count: 64,
+			membersPerTeam: 1,
+		});
+
+		const names = (await fakeTeamsOf(tournament.id)).map((team) => team.name);
+		expect(new Set(names).size).toBe(64);
+	});
+
+	test("throws when the pool has too few fake players left", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId(),
+		});
+
+		await expect(
+			insertFakeTeams({ tournamentId: tournament.id, count: 257 }),
+		).rejects.toThrow("Not enough fake players left");
+		expect(await fakeTeamsOf(tournament.id)).toHaveLength(0);
+	});
+
+	test("gives each team the map pool drawn and checks it in when asked", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId(),
+		});
+
+		const teamIds = await insertFakeTeams({
+			tournamentId: tournament.id,
+			mapPool: () =>
+				new MapPool([
+					{ mode: "SZ", stageId: 1 },
+					{ mode: "TC", stageId: 2 },
+				]),
+			isCheckedIn: true,
+		});
+
+		const mapPools =
+			await TournamentTeamRepository.findMapPoolsByTeamIds(teamIds);
+		const tournamentData = await tournamentFromDB(tournament.id);
+		for (const teamId of teamIds) {
+			expect(mapPools.get(teamId)).toHaveLength(2);
+			expect(tournamentData.teamById(teamId)?.checkIns).toHaveLength(1);
+		}
+	});
+
+	test("leaves the teams without maps and unchecked otherwise", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId(),
+		});
+
+		const teamIds = await insertFakeTeams({ tournamentId: tournament.id });
+
+		const mapPools =
+			await TournamentTeamRepository.findMapPoolsByTeamIds(teamIds);
+		const tournamentData = await tournamentFromDB(tournament.id);
+		expect(mapPools.size).toBe(0);
+		for (const teamId of teamIds) {
+			expect(tournamentData.teamById(teamId)?.checkIns).toHaveLength(0);
+		}
+	});
+});
+
+describe("TournamentTeamRepository.upsertRegistration of a fake team", () => {
+	beforeEach(async () => {
+		await users.create(1);
+		await UserFactory.createFakePlayerPool();
+	});
+
+	test("leaves the shared fake player's name and tournament name alone", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId(),
+		});
+		const [teamId] = await TournamentTeamFactory.createFakeTeams({
+			tournamentId: tournament.id,
+			count: 1,
+		});
+		const [owner] = (await membersByTeamId(teamId)).filter(
+			(member) => member.role === "OWNER",
+		);
+		const fakePlayerBefore = await db
+			.selectFrom("User")
+			.select(["User.username", "User.tournamentName"])
+			.where("User.id", "=", owner.userId)
+			.executeTakeFirstOrThrow();
+
+		await withUserId(organizerId(), () =>
+			TournamentTeamRepository.upsertRegistration({
+				tournamentTeamId: teamId,
+				tournamentId: tournament.id,
+				name: "Renamed Fakes",
+				teamId: null,
+				avatarImgId: null,
+				ownerUserId: owner.userId,
+				ownerChange: null,
+				membersToAdd: [],
+				membersToRemove: [],
+				placeholderRenames: [{ userId: owner.userId, name: "Alice" }],
+				inGameNameUpdates: [],
+				tournamentNameUpdates: [
+					{ userId: owner.userId, tournamentName: "Alice" },
+				],
+			}),
+		);
+
+		expect(
+			await db
+				.selectFrom("User")
+				.select(["User.username", "User.tournamentName"])
+				.where("User.id", "=", owner.userId)
+				.executeTakeFirstOrThrow(),
+		).toEqual(fakePlayerBefore);
+	});
+});
+
+describe("TournamentTeamRepository.deleteFakeTeams", () => {
+	beforeEach(async () => {
+		await users.create(2);
+		await UserFactory.createFakePlayerPool();
+	});
+
+	test("deletes the teams of only fake players, keeping real ones and ones with a real member", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId(),
+		});
+		const otherTournament = await TournamentFactory.create({
+			authorId: organizerId(),
+		});
+		const realTeam = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [users.id(2)],
+		});
+		await TournamentTeamFactory.createFakeTeams({
+			tournamentId: tournament.id,
+			count: 2,
+		});
+		const lastFakePlayer = await db
+			.selectFrom("User")
+			.select("User.id")
+			.where("User.isFakePlayer", "=", 1)
+			.orderBy("User.id", "desc")
+			.executeTakeFirstOrThrow();
+		const mixedTeam = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [lastFakePlayer.id, organizerId()],
+		});
+		await TournamentTeamFactory.createFakeTeams({
+			tournamentId: otherTournament.id,
+			count: 2,
+		});
+
+		const deletedCount = await withUserId(organizerId(), () =>
+			TournamentTeamRepository.deleteFakeTeams(tournament.id),
+		);
+
+		expect(deletedCount).toBe(2);
+		const remainingIds = (
+			await db
+				.selectFrom("TournamentTeam")
+				.select("TournamentTeam.id")
+				.where("TournamentTeam.tournamentId", "=", tournament.id)
+				.execute()
+		).map((team) => team.id);
+		expect(remainingIds.sort(byId)).toEqual(
+			[realTeam.id, mixedTeam.id].sort(byId),
+		);
+		expect(await teamCountOf(otherTournament.id)).toBe(2);
 	});
 });
 

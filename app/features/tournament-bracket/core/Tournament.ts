@@ -802,6 +802,16 @@ export class Tournament {
 		return this.ctx.settings.isTest ?? false;
 	}
 
+	/** How many fake teams the organizer can still add: test tournaments only, before the start and up to {@link TOURNAMENT.FAKE_TEAMS_MAX_TOTAL_TEAMS} teams in total. */
+	get fakeTeamsAddableCount() {
+		if (!this.isTest || this.hasStarted) return 0;
+
+		return Math.max(
+			0,
+			TOURNAMENT.FAKE_TEAMS_MAX_TOTAL_TEAMS - this.ctx.teams.length,
+		);
+	}
+
 	/** Where the tournament is held in person, `null` for an online tournament. */
 	get venue() {
 		return this.ctx.venue;

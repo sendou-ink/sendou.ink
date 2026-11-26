@@ -166,6 +166,7 @@ export function findLayoutDataById(userId: number, loggedInUserId?: number) {
 			"User.country",
 			"User.inGameName",
 			"User.isPlaceholder",
+			"User.isFakePlayer",
 			"PlusTier.tier as plusTier",
 			"User.commissionText",
 			"User.commissionsOpen",

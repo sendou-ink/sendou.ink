@@ -19,6 +19,12 @@ export const TOURNAMENT = {
 		1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 	],
 	MAX_SAVED_COUNT: 20,
+	/** Most teams, real ones included, a test tournament can be filled up to with fake teams. */
+	FAKE_TEAMS_MAX_TOTAL_TEAMS: 256,
+	/** Size of the fixed fake player pool (`User.isFakePlayer`), enough for the max teams of four. */
+	FAKE_PLAYER_POOL_SIZE: 1024,
+	/** How many fake teams the add form suggests, at most. */
+	FAKE_TEAMS_DEFAULT_COUNT: 8,
 	/** How many days after a tournament ends VOD links are shown on the bracket */
 	VOD_VISIBILITY_DAYS: 7,
 	/** How long before the start regular check-in opens, closing when the tournament starts */

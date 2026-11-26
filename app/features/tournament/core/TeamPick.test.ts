@@ -270,3 +270,38 @@ describe("TeamPick.validateTeamPool", () => {
 		).toBe("TOO_MUCH_STAGE_REPEAT");
 	});
 });
+
+describe("TeamPick.randomTeamPool", () => {
+	const REPEATS = 50;
+
+	test.each([
+		{
+			why: "default ranked modes from the SendouQ pool",
+			teamPick: TeamPick.defaultSettings(["SZ", "TC", "RM", "CB"]),
+			pool: TeamPick.effectivePool(
+				TeamPick.defaultSettings(["SZ", "TC", "RM", "CB"]),
+				[],
+			),
+		},
+		{
+			why: "one mode, six picks out of seven stages",
+			teamPick: uniformSettings(["SZ"], 6),
+			pool: sameStagesPool(["SZ"], 7),
+		},
+		{
+			why: "tight pool where stages must repeat across modes",
+			teamPick: uniformSettings(["SZ", "TC", "RM", "CB"], 4),
+			pool: sameStagesPool(["SZ", "TC", "RM", "CB"], 8),
+		},
+	])("$why -> a valid pool every time", ({ teamPick, pool }) => {
+		for (let i = 0; i < REPEATS; i++) {
+			expect(
+				TeamPick.validateTeamPool({
+					mapPool: TeamPick.randomTeamPool({ teamPick, pool }),
+					teamPick,
+					pool,
+				}),
+			).toBe("VALID");
+		}
+	});
+});

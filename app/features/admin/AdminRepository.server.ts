@@ -433,7 +433,7 @@ interface ClaimArgs {
 async function validateClaim(trx: Transaction<DB>, args: ClaimArgs) {
 	const users = await trx
 		.selectFrom("User")
-		.select(["User.id", "User.isPlaceholder"])
+		.select(["User.id", "User.isPlaceholder", "User.isFakePlayer"])
 		.where("User.id", "in", [args.placeholderUserId, args.userId])
 		.execute();
 	const placeholder = users.find((row) => row.id === args.placeholderUserId);
@@ -441,6 +441,9 @@ async function validateClaim(trx: Transaction<DB>, args: ClaimArgs) {
 
 	if (!placeholder?.isPlaceholder) {
 		return "placeholder is not a player without an account";
+	}
+	if (placeholder.isFakePlayer) {
+		return "placeholder is a fake player of test tournaments";
 	}
 	if (!user || user.isPlaceholder) {
 		return "user claiming it is not a player with an account";

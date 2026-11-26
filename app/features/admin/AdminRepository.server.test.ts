@@ -455,6 +455,20 @@ describe("claimPlaceholder", () => {
 			}),
 			error: "user claiming it is not a player with an account",
 		},
+		{
+			why: "placeholder is a fake player of test tournaments",
+			args: async () => {
+				await UserFactory.createFakePlayerPool();
+				const fakePlayer = await db
+					.selectFrom("User")
+					.select("User.id")
+					.where("User.isFakePlayer", "=", 1)
+					.executeTakeFirstOrThrow();
+
+				return { placeholderUserId: fakePlayer.id, userId: claimerId() };
+			},
+			error: "placeholder is a fake player of test tournaments",
+		},
 	])("rejects when $why", async ({ args, error }) => {
 		expect(await AdminRepository.claimPlaceholder(await args())).toEqual({
 			error,

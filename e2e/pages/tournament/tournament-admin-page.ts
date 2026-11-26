@@ -79,6 +79,22 @@ export class TournamentAdminPage {
 		return new TournamentAdminStreamPage(this.page);
 	}
 
+	/** Adds fake teams through the "Add new team" popover of a test tournament. */
+	async addFakeTeams(count: number) {
+		await this.page.getByRole("button", { name: "Add new team" }).click();
+		await this.page.getByLabel("Add fake teams").fill(String(count));
+		await submit(this.page, "add-fake-teams-button");
+	}
+
+	/** Deletes every fake team through the "Add new team" popover of a test tournament. */
+	async deleteFakeTeams() {
+		await this.page.getByRole("button", { name: "Add new team" }).click();
+		await this.page
+			.getByRole("button", { name: "Delete all fake teams" })
+			.click();
+		await modalClickConfirmButton(this.page);
+	}
+
 	teamName(name: string) {
 		return this.locators.teamNames.filter({ hasText: name });
 	}

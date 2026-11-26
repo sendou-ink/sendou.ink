@@ -1,5 +1,7 @@
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import { addFakeTeams } from "~/features/tournament-admin/core/fakeTeams.server";
+import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { invariant } from "~/utils/invariant";
 import { actAs } from "../core/actAs";
@@ -139,3 +141,18 @@ export const { create } = defineFactory({
 		}
 	},
 });
+
+/** Fills a test tournament with fake teams as its organizer does on the admin page; needs `UserFactory.createFakePlayerPool` first. */
+export async function createFakeTeams({
+	tournamentId,
+	count,
+}: {
+	tournamentId: number;
+	count: number;
+}) {
+	const tournament = await tournamentFromDB(tournamentId);
+
+	return actAs(tournament.ctx.author.id, () =>
+		addFakeTeams({ tournament, count }),
+	);
+}

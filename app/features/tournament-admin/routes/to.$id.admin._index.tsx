@@ -10,11 +10,13 @@ import {
 	RotateCcw,
 	Search,
 	Trash2,
+	UserPlus,
 	X,
 } from "lucide-react";
 import * as React from "react";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
+import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
@@ -28,6 +30,7 @@ import {
 import { Table } from "~/components/Table";
 import { useTopicRevalidation } from "~/features/chat/chat-hooks";
 import { DroppedOutPopover } from "~/features/tournament/components/DroppedOutPopover";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { useTournament } from "~/features/tournament/tournament-context";
 import * as CheckIn from "~/features/tournament-bracket/core/CheckIn";
 import type {
@@ -49,7 +52,10 @@ import {
 import { queryToUserIdentifier } from "~/utils/users";
 import { ExportDialog } from "../components/ExportDialog";
 import type { TournamentAdminTeamsLoaderData } from "../loaders/to.$id.admin.index.server";
-import { adminTeamsActionSchema } from "../tournament-admin-schemas";
+import {
+	addFakeTeamsFormSchema,
+	adminTeamsActionSchema,
+} from "../tournament-admin-schemas";
 
 import styles from "./to.$id.admin._index.module.css";
 
@@ -95,7 +101,15 @@ export default function TournamentAdminTeamsPage() {
 					>
 						Export
 					</SendouButton>
-					{!tournament.hasStarted ? (
+					{tournament.isTest && !tournament.hasStarted ? (
+						<AddTeamPopover
+							fakeTeamCount={
+								teams.filter((team) =>
+									team.members.every((member) => member.isFakePlayer),
+								).length
+							}
+						/>
+					) : !tournament.hasStarted ? (
 						<LinkButton
 							size="small"
 							icon={<Plus />}
@@ -173,6 +187,81 @@ export default function TournamentAdminTeamsPage() {
 				/>
 			) : null}
 		</div>
+	);
+}
+
+/** Test tournaments only: adding a real team or fake ones, and deleting the fake ones (every member a fake player). */
+function AddTeamPopover({ fakeTeamCount }: { fakeTeamCount: number }) {
+	const tournament = useTournament();
+	const [popoverOpen, setPopoverOpen] = React.useState(false);
+	const [confirmingDelete, setConfirmingDelete] = React.useState(false);
+	const addableCount = tournament.fakeTeamsAddableCount;
+
+	return (
+		<>
+			<SendouPopover
+				placement="bottom end"
+				popoverClassName={styles.addTeamPopover}
+				isOpen={popoverOpen}
+				onOpenChange={setPopoverOpen}
+				trigger={
+					<SendouButton size="small" icon={<Plus />}>
+						Add new team
+					</SendouButton>
+				}
+			>
+				<div className="stack md">
+					<LinkButton
+						size="small"
+						variant="outlined"
+						icon={<UserPlus />}
+						to={tournamentAdminRegistrationPage(tournament.ctx.id)}
+					>
+						Add real team
+					</LinkButton>
+					{addableCount > 0 ? (
+						<>
+							<Divider />
+							<SendouForm
+								schema={addFakeTeamsFormSchema}
+								defaultValues={{
+									count: Math.min(
+										TOURNAMENT.FAKE_TEAMS_DEFAULT_COUNT,
+										addableCount,
+									),
+								}}
+								className={styles.fakeTeamsForm}
+								submitButtonText="Add"
+								submitButtonTestId="add-fake-teams-button"
+								onSuccess={() => setPopoverOpen(false)}
+							>
+								{({ FormField }) => <FormField name="count" />}
+							</SendouForm>
+						</>
+					) : null}
+					{fakeTeamCount > 0 ? (
+						<SendouButton
+							size="small"
+							variant="minimal-destructive"
+							icon={<Trash2 />}
+							onClick={() => {
+								setPopoverOpen(false);
+								setConfirmingDelete(true);
+							}}
+						>
+							Delete all fake teams
+						</SendouButton>
+					) : null}
+				</div>
+			</SendouPopover>
+			<FormWithConfirm
+				isOpen={confirmingDelete}
+				onOpenChange={setConfirmingDelete}
+				fields={[["_action", "DELETE_FAKE_TEAMS"]]}
+				dialogHeading={`Delete all ${fakeTeamCount} fake teams?`}
+				submitButtonText="Delete"
+			/>
+		</>
 	);
 }
 

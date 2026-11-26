@@ -86,3 +86,19 @@
 	text-align: center;
 	padding-block: var(--s-6);
 }
+
+.addTeamPopover {
+	width: 16rem;
+}
+
+/* the submit button beside the count input, at the bottom of the field */
+.fakeTeamsForm {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	column-gap: var(--s-2);
+	align-items: end;
+
+	& > :nth-child(n + 3) {
+		grid-column: 1 / -1;
+	}
+}

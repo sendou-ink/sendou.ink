@@ -1,6 +1,7 @@
 import { addDays } from "date-fns";
 import type { NotNull, Transaction } from "kysely";
 import { sql } from "kysely";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
@@ -20,7 +21,9 @@ import {
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
+import { randomTeamName } from "~/utils/team-name";
 import * as TournamentAuditLogRepository from "./TournamentAuditLogRepository.server";
+import { TOURNAMENT } from "./tournament-constants";
 
 const TEAM_CHAT_ROOM_LIFESPAN_DAYS = 7;
 const LEAGUE_TEAM_CHAT_ROOM_LIFESPAN_DAYS = 60;
@@ -288,6 +291,159 @@ export function insertPlaceholderPlayer(
 }
 
 /**
+ * Creates the fake player pool (`User.isFakePlayer`) like the migration that added it does in production. Exported
+ * for the user factory, a wiped database (dev seed, tests) doesn't have it.
+ * @internal
+ */
+export function insertFakePlayerPool() {
+	const createdAt = databaseTimestampNow();
+
+	return db
+		.insertInto("User")
+		.values(
+			Array.from({ length: TOURNAMENT.FAKE_PLAYER_POOL_SIZE }, (_, i) => ({
+				discordId: null,
+				defaultName: `Fake player ${i + 1}`,
+				isPlaceholder: 1 as const,
+				isFakePlayer: 1 as const,
+				createdAt,
+			})),
+		)
+		.execute();
+}
+
+/**
+ * Fills a test tournament with `count` fake teams of `membersPerTeam` fake players (`User.isFakePlayer`) each, taken
+ * in id order from the ones not on any of its teams yet. Every team gets a random name unique in the tournament, its
+ * first player as captain, the map pool `mapPool` draws (if given) and is checked in with `isCheckedIn`.
+ * @returns the ids of the created teams.
+ */
+export function insertFakeTeams({
+	tournamentId,
+	count,
+	membersPerTeam,
+	mapPool,
+	isCheckedIn,
+}: {
+	tournamentId: number;
+	count: number;
+	membersPerTeam: number;
+	/** Draws a team's counterpick map pool, `null` when teams don't pick maps. */
+	mapPool: (() => MapPool) | null;
+	isCheckedIn: boolean;
+}) {
+	return db.transaction().execute(async (trx) => {
+		const playerIds = (
+			await trx
+				.selectFrom("User")
+				.select("User.id")
+				.where("User.isFakePlayer", "=", 1)
+				.where(({ not, exists, selectFrom }) =>
+					not(
+						exists(
+							selectFrom("TournamentTeamMember")
+								.innerJoin(
+									"TournamentTeam",
+									"TournamentTeam.id",
+									"TournamentTeamMember.tournamentTeamId",
+								)
+								.select("TournamentTeamMember.userId")
+								.whereRef("TournamentTeamMember.userId", "=", "User.id")
+								.where("TournamentTeam.tournamentId", "=", tournamentId),
+						),
+					),
+				)
+				.orderBy("User.id", "asc")
+				.limit(count * membersPerTeam)
+				.execute()
+		).map((row) => row.id);
+		invariant(
+			playerIds.length === count * membersPerTeam,
+			"Not enough fake players left",
+		);
+
+		const takenNames = new Set(
+			(
+				await trx
+					.selectFrom("TournamentTeam")
+					.select("TournamentTeam.name")
+					.where("TournamentTeam.tournamentId", "=", tournamentId)
+					.execute()
+			).map((row) => row.name),
+		);
+
+		const teamIds: number[] = [];
+		for (const memberUserIds of R.chunk(playerIds, membersPerTeam)) {
+			let name = randomTeamName();
+			while (takenNames.has(name)) name = randomTeamName();
+			takenNames.add(name);
+
+			const { id } = await trx
+				.insertInto("TournamentTeam")
+				.values({
+					tournamentId,
+					name,
+					inviteCode: shortNanoid(),
+					prefersNotToHost: 0,
+					teamId: null,
+				})
+				.returning("id")
+				.executeTakeFirstOrThrow();
+			teamIds.push(id);
+
+			await trx
+				.insertInto("TournamentTeamMember")
+				.values(
+					memberUserIds.map((userId, i) => ({
+						tournamentTeamId: id,
+						userId,
+						role: i === 0 ? ("OWNER" as const) : ("REGULAR" as const),
+						inGameName: null,
+						isSub: 0 as const,
+						isOrganizerAdded: 1 as const,
+					})),
+				)
+				.execute();
+
+			for (const [i, userId] of memberUserIds.entries()) {
+				await TournamentAuditLogRepository.insert(
+					{
+						type: i === 0 ? "TEAM_REGISTERED" : "MEMBER_ADDED",
+						tournamentTeamId: id,
+						subjectUserId: userId,
+					},
+					trx,
+				);
+			}
+
+			if (mapPool) {
+				await replaceCounterpickMaps(trx, {
+					tournamentTeamId: id,
+					mapPool: mapPool(),
+				});
+			}
+
+			if (isCheckedIn) {
+				await trx
+					.insertInto("TournamentTeamCheckIn")
+					.values({
+						checkedInAt: databaseTimestampNow(),
+						tournamentTeamId: id,
+						bracketIdx: null,
+					})
+					.execute();
+				await TournamentAuditLogRepository.insert(
+					{ type: "TEAM_CHECKED_IN", tournamentTeamId: id },
+					trx,
+				);
+			}
+		}
+
+		return teamIds;
+	});
+}
+
+/**
  * Creates a registration or applies a full-state edit to an existing one (`tournamentTeamId`)
  * in one transaction: name, linked team, owner, members, in-game names, tournament names and
  * counterpick map pool. The caller validates the ops and handles side effects (caches,
@@ -409,6 +565,8 @@ export function upsertRegistration({
 				.set({ defaultName: placeholderName })
 				.where("User.id", "=", userId)
 				.where("User.isPlaceholder", "=", 1)
+				// shared by every test tournament, a rename would show in all of them
+				.where("User.isFakePlayer", "=", 0)
 				.execute();
 		}
 
@@ -524,13 +682,14 @@ export function upsertRegistration({
 			tournamentName: string | null;
 		}> = [];
 		for (const { userId, tournamentName } of tournamentNameUpdates) {
-			const { tournamentName: previousTournamentName } = await trx
+			const { tournamentName: previousTournamentName, isFakePlayer } = await trx
 				.selectFrom("User")
-				.select("User.tournamentName")
+				.select(["User.tournamentName", "User.isFakePlayer"])
 				.where("User.id", "=", userId)
 				.executeTakeFirstOrThrow();
 
-			if (previousTournamentName === tournamentName) continue;
+			// shared by every test tournament, a name would show in all of them
+			if (isFakePlayer || previousTournamentName === tournamentName) continue;
 
 			await trx
 				.updateTable("User")
@@ -983,6 +1142,53 @@ export function deleteById(tournamentTeamId: number): Promise<number[]> {
 			.execute();
 
 		return roomsChangedUserIds;
+	});
+}
+
+/** Deletes the tournament's fake teams, the ones whose every member is a fake player (`User.isFakePlayer`). Resolves to how many were deleted. */
+export function deleteFakeTeams(tournamentId: number) {
+	return db.transaction().execute(async (trx) => {
+		const teams = await trx
+			.selectFrom("TournamentTeam")
+			.select("TournamentTeam.id")
+			.where("TournamentTeam.tournamentId", "=", tournamentId)
+			.where("TournamentTeam.isPlaceholder", "=", 0)
+			.where(({ exists, not, selectFrom }) =>
+				not(
+					exists(
+						selectFrom("TournamentTeamMember")
+							.innerJoin("User", "User.id", "TournamentTeamMember.userId")
+							.select("TournamentTeamMember.userId")
+							.whereRef(
+								"TournamentTeamMember.tournamentTeamId",
+								"=",
+								"TournamentTeam.id",
+							)
+							.where("User.isFakePlayer", "=", 0),
+					),
+				),
+			)
+			.execute();
+
+		for (const team of teams) {
+			await TournamentAuditLogRepository.insert(
+				{ type: "TEAM_UNREGISTERED", tournamentTeamId: team.id },
+				trx,
+			);
+		}
+
+		if (teams.length > 0) {
+			await trx
+				.deleteFrom("TournamentTeam")
+				.where(
+					"TournamentTeam.id",
+					"in",
+					teams.map((team) => team.id),
+				)
+				.execute();
+		}
+
+		return teams.length;
 	});
 }
 

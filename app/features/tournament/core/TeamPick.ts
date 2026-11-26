@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import type { TeamPickSettings } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { SENDOUQ_MAP_POOL } from "~/features/match-profile/banned-maps";
@@ -165,4 +166,41 @@ export function validateTeamPool({
 	if (!everyModeComplete) return "PICKING";
 
 	return "VALID";
+}
+
+/**
+ * A random complete pick that {@link validateTeamPool} accepts, for a team nobody picks maps for (a test
+ * tournament's fake teams). Each pick takes one of the stages used the least so far, so the stage repeat cap holds.
+ */
+export function randomTeamPool({
+	teamPick,
+	pool,
+}: {
+	teamPick: TeamPickSettings;
+	pool: MapPool;
+}): MapPool {
+	const cap = stageRepeatCap({ teamPick, pool });
+	const stageCounts = new Map<StageId, number>();
+	const timesPicked = (stageId: StageId) => stageCounts.get(stageId) ?? 0;
+
+	const picks: Array<{ mode: ModeShort; stageId: StageId }> = [];
+	for (const { mode, count } of teamPick.modes) {
+		const stageIds = R.sortBy(
+			R.shuffle(
+				pool.stageModePairs
+					.filter((pair) => pair.mode === mode)
+					.map((pair) => pair.stageId),
+			),
+			timesPicked,
+		)
+			.filter((stageId) => timesPicked(stageId) < cap)
+			.slice(0, count);
+
+		for (const stageId of stageIds) {
+			stageCounts.set(stageId, timesPicked(stageId) + 1);
+			picks.push({ mode, stageId });
+		}
+	}
+
+	return new MapPool(picks);
 }

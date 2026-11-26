@@ -40,7 +40,11 @@ export default function UserResultsPage() {
 				<PageHeader
 					image={<Avatar user={layoutData.user} size="sm" />}
 					title={layoutData.user.username}
-					subtitle={t("user:placeholder.unclaimed")}
+					subtitle={
+						layoutData.user.isFakePlayer
+							? t("user:placeholder.fakePlayer")
+							: t("user:placeholder.unclaimed")
+					}
 				/>
 			) : (
 				<SubPageHeader user={layoutData.user} title={t("common:results")}>
@@ -51,7 +55,7 @@ export default function UserResultsPage() {
 					) : null}
 				</SubPageHeader>
 			)}
-			{layoutData.user.isPlaceholder ? (
+			{layoutData.user.isPlaceholder && !layoutData.user.isFakePlayer ? (
 				<Alert>
 					<Trans
 						t={t}

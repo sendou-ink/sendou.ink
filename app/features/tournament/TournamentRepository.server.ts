@@ -538,6 +538,7 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
 						"User.country",
 						"User.tournamentName",
 						"User.isPlaceholder",
+						"User.isFakePlayer",
 						"SeedingSkill.ordinal",
 						"TournamentTeamMember.role",
 						"TournamentTeamMember.createdAt",

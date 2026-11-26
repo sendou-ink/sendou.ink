@@ -109,6 +109,69 @@ test.describe("Tournament admin team management", () => {
 		await expect(audit.eventCell("Team registered")).toBeVisible();
 	});
 
+	test("fills a test tournament with fake teams, starts its bracket and reports a match", async ({
+		page,
+		factories,
+	}) => {
+		await factories.UserFactory.createFakePlayerPool();
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+			startTimes: startedTournamentTimes(),
+			mapPickingStyle: "AUTO",
+			isTest: true,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+		await admin.addFakeTeams(4);
+		await expect(admin.locators.teamRows).toHaveCount(4);
+
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await brackets.finalize();
+
+		const match = await brackets.openMatch(1);
+		await match.openTab("action");
+		// teams picking their maps play best of fives by default
+		await match.reportResult({ mapsToReport: 3 });
+		await match.backToBracket();
+		await expect(brackets.matchScores(1)).toHaveText(["3", "0"]);
+	});
+
+	test("deletes all fake teams of a test tournament, keeping the real one", async ({
+		page,
+		factories,
+	}) => {
+		await factories.UserFactory.createFakePlayerPool();
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+			startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+			isTest: true,
+		});
+		const roster = await factories.UserFactory.createMany(ROSTER_SIZE);
+		await factories.TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			team: pickUpTeam("Real Team"),
+			memberUserIds: roster.map((user) => user.id),
+		});
+		await factories.TournamentTeamFactory.createFakeTeams({
+			tournamentId: tournament.id,
+			count: 3,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+		await expect(admin.locators.teamRows).toHaveCount(4);
+
+		await admin.deleteFakeTeams();
+		await expect(admin.locators.teamRows).toHaveCount(1);
+		await expect(admin.teamName("Real Team")).toBeVisible();
+	});
+
 	test("imports a roster from another tournament and registers it", async ({
 		page,
 		factories,
