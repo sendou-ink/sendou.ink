@@ -36,17 +36,17 @@ describe("ChatSystemMessage.send", () => {
 		]);
 	});
 
-	test("delivers every unthrottled type's broadcast, bypassing the throttle", async () => {
+	test("delivers every unthrottled broadcast, bypassing the throttle", async () => {
 		const received = subscribeTo("sq-group__102");
 
 		ChatSystemMessage.send({
 			channel: "sq-group__102",
-			type: "READY_CHECK_STARTED",
+			unthrottled: true,
 			authorUserId: 5,
 		});
 		ChatSystemMessage.send({
 			channel: "sq-group__102",
-			type: "READY_CHECK_STARTED",
+			unthrottled: true,
 			authorUserId: 5,
 		});
 		await flushEvents();
@@ -57,7 +57,7 @@ describe("ChatSystemMessage.send", () => {
 		]);
 	});
 
-	test("throttles rapid untyped broadcasts to the same topic", async () => {
+	test("throttles rapid broadcasts to the same topic", async () => {
 		const received = subscribeTo("tournament__104");
 
 		ChatSystemMessage.send({

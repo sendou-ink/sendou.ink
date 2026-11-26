@@ -37,7 +37,7 @@ import type {
 import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import type {
 	ChatRoomType,
-	PersistedSystemMessageType,
+	SystemMessageType,
 } from "~/features/chat/chat-types";
 import type {
 	FeedFeedbackKind,
@@ -380,7 +380,7 @@ interface ChatMessage {
 	publicId: string;
 	roomId: number;
 	/** `null` = a regular user message. */
-	type: PersistedSystemMessageType | null;
+	type: SystemMessageType | null;
 }
 
 interface ChatMessageReadIndicator {

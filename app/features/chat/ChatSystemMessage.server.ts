@@ -6,11 +6,7 @@ import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import * as ChatRepository from "./ChatRepository.server";
 import * as ChatRoomResolver from "./ChatRoomResolver.server";
-import type {
-	PersistedSystemMessageType,
-	RevalidateScope,
-	UnthrottledSystemMessageType,
-} from "./chat-types";
+import type { RevalidateScope, SystemMessageType } from "./chat-types";
 import { createRevalidateBroadcastThrottle } from "./revalidate-broadcast-throttle";
 
 type RevalidateBroadcast = {
@@ -19,7 +15,8 @@ type RevalidateBroadcast = {
 	/** Actor whose own broadcast clients skip (their submission already reran the loaders), defaults to the request's user. `null` = nobody skips, for changes no page submission made. */
 	authorUserId?: number | null;
 	revalidateScope?: RevalidateScope;
-	type?: UnthrottledSystemMessageType;
+	/** Marks a moment (ready check, match start): delivered at once, never coalesced by the throttle. */
+	unthrottled?: boolean;
 };
 
 const REVALIDATE_BROADCAST_THROTTLE_WINDOW_MS = 2_000;
@@ -36,13 +33,13 @@ const revalidateThrottle = createRevalidateBroadcastThrottle({
 		}),
 });
 
-/** Publishes a contentless revalidate broadcast to the channel(s) so subscribed pages refetch. Noisy kinds are throttled per channel, see {@link createRevalidateBroadcastThrottle}. */
+/** Publishes a contentless revalidate broadcast to the channel(s) so subscribed pages refetch. Throttled per channel unless `unthrottled`, see {@link createRevalidateBroadcastThrottle}. */
 export function send(broadcast: RevalidateBroadcast | RevalidateBroadcast[]) {
 	for (const msg of Array.isArray(broadcast) ? broadcast : [broadcast]) {
-		if (revalidateThrottle.throttles(msg)) {
-			revalidateThrottle.handle(msg);
-		} else {
+		if (msg.unthrottled) {
 			publishRevalidate(msg);
+		} else {
+			revalidateThrottle.handle(msg);
 		}
 	}
 }
@@ -50,7 +47,7 @@ export function send(broadcast: RevalidateBroadcast | RevalidateBroadcast[]) {
 /** Persists a system message (e.g. a reported score) as a chat line and publishes it plus a revalidate broadcast. Fire and forget like {@link send}: failures are logged, never thrown. */
 export function sendPersisted(args: {
 	roomId: number;
-	type: PersistedSystemMessageType;
+	type: SystemMessageType;
 	/** The user the message describes, e.g. who left the group. */
 	authorUserId: number;
 }): Promise<void> {
@@ -61,7 +58,7 @@ export function sendPersisted(args: {
 
 async function persistAndPublish(args: {
 	roomId: number;
-	type: PersistedSystemMessageType;
+	type: SystemMessageType;
 	authorUserId: number;
 }) {
 	const room = await ChatRoomResolver.resolve(args.roomId);

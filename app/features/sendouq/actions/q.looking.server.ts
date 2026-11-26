@@ -42,7 +42,7 @@ export const action = defineAction(
 		const notifyLikeReceived = (groupId: number) =>
 			ChatSystemMessage.send({
 				channel: sqGroupChannel(groupId),
-				type: "LIKE_RECEIVED",
+				unthrottled: true,
 			});
 
 		const ejectFromGroupVoice = (

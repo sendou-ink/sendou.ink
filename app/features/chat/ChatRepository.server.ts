@@ -12,7 +12,7 @@ import {
 	userChatNameHue,
 } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
-import type { ChatRoomType, PersistedSystemMessageType } from "./chat-types";
+import type { ChatRoomType, SystemMessageType } from "./chat-types";
 
 const MESSAGES_DEFAULT_LIMIT = 500;
 
@@ -449,7 +449,7 @@ export async function insertMessage(args: InsertMessageArgs) {
 export function insertSystemMessage(
 	args: {
 		roomId: number;
-		type: PersistedSystemMessageType;
+		type: SystemMessageType;
 		authorUserId: number;
 	},
 	trx?: Transaction<DB>,

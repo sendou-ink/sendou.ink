@@ -61,16 +61,16 @@ export async function start({
 
 	await refreshSendouQInstance();
 
-	// both groups revalidate (→ sent to the ready check by their looking loader) and play
-	// the sound; sent to the groups' topics so it reaches every member, not just chat participants
+	// both groups revalidate (→ sent to the ready check by their looking loader); sent to the
+	// groups' topics so it reaches every member, not just chat participants
 	ChatSystemMessage.send([
 		{
 			channel: sqGroupChannel(ownGroup.id),
-			type: "READY_CHECK_STARTED",
+			unthrottled: true,
 		},
 		{
 			channel: sqGroupChannel(theirGroup.id),
-			type: "READY_CHECK_STARTED",
+			unthrottled: true,
 		},
 		{ channel: SENDOUQ_LOOKING_CHANNEL },
 	]);
@@ -224,11 +224,11 @@ async function createMatch({
 	ChatSystemMessage.send([
 		{
 			channel: sqGroupChannel(readyCheck.alphaGroupId),
-			type: "MATCH_STARTED",
+			unthrottled: true,
 		},
 		{
 			channel: sqGroupChannel(readyCheck.bravoGroupId),
-			type: "MATCH_STARTED",
+			unthrottled: true,
 		},
 		{ channel: SENDOUQ_LOOKING_CHANNEL },
 	]);

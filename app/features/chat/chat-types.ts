@@ -1,6 +1,5 @@
 import type { Tables } from "~/db/tables";
 import type { CommonUser } from "~/utils/kysely.server";
-import type { UNTHROTTLED_SYSTEM_MESSAGE_TYPES } from "./chat-constants";
 
 export type ChatRoomType =
 	| "SQ_GROUP"
@@ -24,9 +23,6 @@ export type SystemMessageType =
 	| "HOST_CHANGED"
 	| "SET_FORFEITED"
 	| "SET_CALLED_OFF"
-	| "MATCH_STARTED"
-	| "READY_CHECK_STARTED"
-	| "LIKE_RECEIVED"
 	| "SCORE_REPORTED"
 	| "SCORE_CONFIRMED"
 	| "SCORE_DISPUTED"
@@ -43,38 +39,6 @@ export type SystemMessageType =
 	| "LEAGUE_RESCHEDULE_DECLINED"
 	| "LEAGUE_TIME_SET_BY_ORGANIZER";
 
-export type PersistedSystemMessageType = Extract<
-	SystemMessageType,
-	| "SCORE_REPORTED"
-	| "SCORE_CONFIRMED"
-	| "SCORE_DISPUTED"
-	| "CANCEL_REPORTED"
-	| "CANCEL_CONFIRMED"
-	| "CANCEL_REFUSED"
-	| "USER_JOINED"
-	| "USER_LEFT"
-	| "USER_LEFT_LOBBY"
-	| "LEAVING_AFTER_SET"
-	| "STAYING_AFTER_SET"
-	| "HOST_CHANGED"
-	| "SET_FORFEITED"
-	| "SET_CALLED_OFF"
-	| "MAP_REPLAYED"
-	| "MAP_PICKED"
-	| "MAP_BANNED"
-	| "MODE_PICKED"
-	| "MODE_BANNED"
-	| "LEAGUE_TIMES_PROPOSED"
-	| "LEAGUE_TIME_PICKED"
-	| "LEAGUE_RESCHEDULE_DECLINED"
-	| "LEAGUE_TIME_SET_BY_ORGANIZER"
->;
-
-export type UnthrottledSystemMessageType = Extract<
-	SystemMessageType,
-	(typeof UNTHROTTLED_SYSTEM_MESSAGE_TYPES)[number]
->;
-
 export interface ChatMessageAuthor extends CommonUser {
 	pronouns: Tables["User"]["pronouns"];
 	chatNameHue: string | null;
@@ -84,7 +48,7 @@ export interface ChatMessageWithAuthor {
 	id: number;
 	roomId: number;
 	authorUserId: number | null;
-	type: PersistedSystemMessageType | null;
+	type: SystemMessageType | null;
 	contents: string | null;
 	publicId: string;
 	/** databaseTimestamp */

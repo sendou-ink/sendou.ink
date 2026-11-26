@@ -26,21 +26,6 @@ describe("createRevalidateBroadcastThrottle", () => {
 		vi.useRealTimers();
 	});
 
-	test("does not throttle broadcasts marking a moment", () => {
-		const { throttle } = setup();
-
-		expect(throttle.throttles({ type: "MATCH_STARTED" })).toBe(false);
-		expect(throttle.throttles({ type: "READY_CHECK_STARTED" })).toBe(false);
-	});
-
-	test("throttles broadcasts of every other type", () => {
-		const { throttle } = setup();
-
-		expect(throttle.throttles({})).toBe(true);
-		expect(throttle.throttles({ type: "SCORE_CONFIRMED" })).toBe(true);
-		expect(throttle.throttles({ type: "MAP_REPLAYED" })).toBe(true);
-	});
-
 	test("first broadcast of a window is delivered immediately", () => {
 		const { throttle, sendLeading, sendTrailing } = setup();
 

@@ -1,13 +1,7 @@
-import { UNTHROTTLED_SYSTEM_MESSAGE_TYPES } from "./chat-constants";
-import type { RevalidateScope, SystemMessageType } from "./chat-types";
-
-const UNTHROTTLED = new Set<SystemMessageType>(
-	UNTHROTTLED_SYSTEM_MESSAGE_TYPES,
-);
+import type { RevalidateScope } from "./chat-types";
 
 interface ThrottleableMessage {
 	channel: string;
-	type?: SystemMessageType;
 	revalidateScope?: RevalidateScope;
 }
 
@@ -29,10 +23,10 @@ export const MAX_ENTRIES = 5_000;
  * Rate limits revalidation broadcasts per channel so a burst (every player of a forming SendouQ
  * match confirming, every reported game of a live tournament) fans out at most twice per window:
  * the first is delivered immediately, the rest coalesce into one trailing broadcast at the
- * window's end whose scope is the broadest seen and which carries no author or type.
+ * window's end whose scope is the broadest seen and which carries no author.
  *
- * The types marking a moment (starting match, ready check) are left alone: coalescing would
- * delay it, and they are rare. The rest are the bulk the throttle exists for.
+ * Broadcasts marking a moment (starting match, ready check) bypass it, see `unthrottled` in
+ * `ChatSystemMessage.send`: coalescing would delay them, and they are rare.
  */
 export function createRevalidateBroadcastThrottle({
 	windowMs,
@@ -60,10 +54,6 @@ export function createRevalidateBroadcastThrottle({
 	};
 
 	return {
-		/** Whether the message is throttled; the ones marking a moment are not. */
-		throttles(msg: Pick<ThrottleableMessage, "type">): boolean {
-			return !msg.type || !UNTHROTTLED.has(msg.type);
-		},
 		handle(msg: ThrottleableMessage): void {
 			const now = Date.now();
 			prune(now);

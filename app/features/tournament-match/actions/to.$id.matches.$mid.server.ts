@@ -2,7 +2,7 @@ import * as R from "remeda";
 import { db } from "~/db/sql";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import type { PersistedSystemMessageType } from "~/features/chat/chat-types";
+import type { SystemMessageType } from "~/features/chat/chat-types";
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
 import type { StreamAccount } from "~/features/live-streams/live-streams-constants";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -1040,7 +1040,7 @@ function leagueTeamOfUser(
 
 function sendLeagueChatMessage(
 	match: NonNullable<FindMatchById>,
-	type: PersistedSystemMessageType,
+	type: SystemMessageType,
 	authorUserId: number,
 ) {
 	if (!match.chatRoomId) return;
@@ -1113,7 +1113,7 @@ function matchResultsRoom(
 /** What the match chat reports the pick/ban as, so both teams see who on the picking team acted. */
 function pickBanChatMessageType(
 	actionType: PickBan.TurnOfResult["action"],
-): PersistedSystemMessageType | null {
+): SystemMessageType | null {
 	switch (actionType) {
 		case "PICK":
 		case "PICK_NO_MODE_REPEAT":
