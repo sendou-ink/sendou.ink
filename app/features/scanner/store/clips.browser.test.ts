@@ -2,8 +2,10 @@ import { beforeEach, describe, expect, test } from "vitest";
 import {
 	type ClipToSave,
 	deleteClip,
+	deleteHistoryClips,
 	deleteVodClips,
 	listClips,
+	loadClipBlob,
 	MAX_HISTORY_CLIPS,
 	rollSessionClipsIntoHistory,
 	saveClip,
@@ -109,6 +111,32 @@ describe("deleteVodClips()", () => {
 
 		await deleteVodClips(() => true);
 		expect((await listClips()).map((c) => c.bucket)).toEqual(["history"]);
+	});
+});
+
+describe("deleteHistoryClips()", () => {
+	beforeEach(clearAll);
+
+	test("drops the history clips and their MP4s, leaving session and VoD clips", async () => {
+		const first = await saveClip(clip({ bucket: "history" }), BLOB);
+		const second = await saveClip(clip({ bucket: "history" }), BLOB);
+		const session = await saveClip(clip(), BLOB);
+		const vod = await saveClip(
+			clip({
+				bucket: "vod",
+				source: { kind: "vod", name: "a.mkv", visit: "v" },
+			}),
+			BLOB,
+		);
+
+		await deleteHistoryClips();
+
+		expect(
+			(await listClips()).map((c) => c.id).toSorted((a, b) => a - b),
+		).toEqual([session!.id, vod!.id]);
+		expect(await loadClipBlob(first!.id)).toBeUndefined();
+		expect(await loadClipBlob(second!.id)).toBeUndefined();
+		expect(await loadClipBlob(session!.id)).toBeDefined();
 	});
 });
 

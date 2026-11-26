@@ -16,6 +16,7 @@ import { clipTitle, modeLabel, stageLabel } from "../core/labels";
 import { scannerSearchParams } from "../scanner-search-params";
 import {
 	deleteClip,
+	deleteHistoryClips,
 	loadClipBlob,
 	MAX_HISTORY_CLIPS,
 	type ScannerClip,
@@ -36,7 +37,32 @@ export function ClipsView() {
 
 	return (
 		<div className={styles.view}>
-			<SessionHeader>
+			<SessionHeader
+				actions={
+					history.length > 0 ? (
+						<FormWithConfirm
+							dialogHeading={
+								history.length === 1
+									? "Delete the only clip?"
+									: `Delete all ${history.length} clips?`
+							}
+							description="Download anything you want to keep first."
+							submitButtonText="Delete all"
+							onConfirm={() => {
+								void deleteHistoryClips().then(() => refreshClips());
+							}}
+						>
+							<SendouButton
+								size="small"
+								variant="minimal-destructive"
+								icon={<Trash2 />}
+							>
+								Delete all
+							</SendouButton>
+						</FormWithConfirm>
+					) : null
+				}
+			>
 				<div className={styles.title}>
 					Clip history{" "}
 					<span className={styles.count}>

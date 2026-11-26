@@ -1,4 +1,4 @@
-import { Bell, Zap } from "lucide-react";
+import { Bell, Clapperboard, Zap } from "lucide-react";
 import * as React from "react";
 import { useFetcher, useLocation } from "react-router";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -6,7 +6,9 @@ import { SendouSection } from "~/components/elements/Section";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { toastQueue } from "~/components/elements/Toast";
 import { useUser } from "~/features/auth/core/user";
+import { scannerSearchParams } from "~/features/scanner/scanner-search-params";
 import { usePersistedState } from "~/modules/persisted-state/hooks";
+import { SCANNER_PAGE } from "~/utils/urls";
 import { postDev } from "../../core/dev-api";
 import type { DEV_ERROR_KINDS } from "../../dev-tools-constants";
 import { simulateAdsPersisted } from "../../dev-tools-persisted";
@@ -17,7 +19,8 @@ import type { DevNotificationsLoaderData } from "../../routes/dev.notifications"
 export const triggersDevApp: DevApp = {
 	id: "triggers",
 	title: "Triggers",
-	description: "Toasts, error pages, notifications and ads on demand",
+	description:
+		"Toasts, error pages, notifications, ads and scanner clips on demand",
 	icon: <Zap />,
 	size: "md",
 	Component: TriggersApp,
@@ -41,6 +44,7 @@ function TriggersApp() {
 			<ErrorPagesSection />
 			<NotificationsSection />
 			<AdsSection />
+			<ScannerClipsSection />
 		</div>
 	);
 }
@@ -217,6 +221,62 @@ function AdsSection() {
 			>
 				Simulate ads
 			</SendouSwitch>
+		</SendouSection>
+	);
+}
+
+const SCANNER_CLIP_COUNTS = [1, 5, 20];
+
+function ScannerClipsSection() {
+	const [pendingCount, setPendingCount] = React.useState<number | null>(null);
+	const [result, setResult] = React.useState<string | null>(null);
+
+	const add = async (count: number) => {
+		setPendingCount(count);
+		setResult(null);
+		try {
+			const { addRandomHistoryClips } = await import(
+				"~/features/scanner/capture/dev-clips"
+			);
+			const saved = await addRandomHistoryClips(count);
+			setResult(`Saved ${saved}`);
+		} catch (error) {
+			setResult(error instanceof Error ? error.message : String(error));
+		} finally {
+			setPendingCount(null);
+		}
+	};
+
+	return (
+		<SendouSection title="Scanner clips">
+			<p className="text-xs text-lighter">
+				Playable random clips into this browser's clip history, the lowest
+				scoring evicted past the cap like ending a live session does (a running
+				session's clips roll in too)
+			</p>
+			<div className="stack horizontal sm flex-wrap items-center">
+				{SCANNER_CLIP_COUNTS.map((count) => (
+					<SendouButton
+						key={count}
+						variant="outlined"
+						size="small"
+						icon={<Clapperboard />}
+						isPending={pendingCount === count}
+						isDisabled={pendingCount !== null && pendingCount !== count}
+						onClick={() => void add(count)}
+					>
+						Add {count}
+					</SendouButton>
+				))}
+				<LinkButton
+					to={scannerSearchParams.href(SCANNER_PAGE, { view: "clips" })}
+					variant="minimal"
+					size="small"
+				>
+					Clip history
+				</LinkButton>
+				{result ? <span className="text-xs text-lighter">{result}</span> : null}
+			</div>
 		</SendouSection>
 	);
 }

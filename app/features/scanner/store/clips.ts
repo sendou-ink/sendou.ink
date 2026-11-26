@@ -187,6 +187,22 @@ export function deleteVodClips(
 	});
 }
 
+/** Drops every clip of the history, leaving a running session's and the VoD clips alone. */
+export function deleteHistoryClips(): Promise<void> {
+	return readwrite([CLIPS_STORE, CLIP_BLOBS_STORE], (transaction) => {
+		const clips = transaction.objectStore(CLIPS_STORE);
+		const blobs = transaction.objectStore(CLIP_BLOBS_STORE);
+		const req = clips.index("bucket").openCursor(IDBKeyRange.only("history"));
+		req.onsuccess = () => {
+			const cursor = req.result;
+			if (!cursor) return;
+			blobs.delete(cursor.primaryKey);
+			cursor.delete();
+			cursor.continue();
+		};
+	});
+}
+
 /** Live clips share one budget, a file's clips (per visit) another. */
 function sameBudget(a: ClipSource, b: ClipSource): boolean {
 	if (a.kind === "live" || b.kind === "live") return a.kind === b.kind;
