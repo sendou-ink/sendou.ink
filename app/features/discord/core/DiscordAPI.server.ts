@@ -1,9 +1,7 @@
 import { setTimeout as sleep } from "node:timers/promises";
-import { OAuth2RequestError, OAuth2Strategy } from "remix-auth-oauth2";
 import * as v from "valibot";
-import { Config } from "~/config";
 import { ServerConfig } from "~/config.server";
-import { IS_E2E_TEST_RUN } from "~/utils/e2e";
+import * as DiscordOAuth from "~/features/auth/core/DiscordOAuth.server";
 import { logger } from "~/utils/logger";
 import { LINKED_ROLE_CALLBACK_URL } from "../discord-constants";
 import type { SendouInkDiscordMetadata } from "../discord-types";
@@ -11,49 +9,28 @@ import type { SendouInkDiscordMetadata } from "../discord-types";
 const API_URL = "https://discord.com/api/v10";
 const MAX_RATE_LIMIT_RETRIES = 3;
 
-export type DiscordTokens = OAuth2Strategy.VerifyOptions["tokens"];
-
-/** Discord answers `invalid_scope` to `role_connections.write` requested with PKCE (discord-api-docs#5751). */
-class WithoutPKCEOAuth2Strategy<User> extends OAuth2Strategy<User> {
-	protected override createAuthorizationURL() {
-		const result = super.createAuthorizationURL();
-		result.url.searchParams.delete("code_challenge");
-		result.url.searchParams.delete("code_challenge_method");
-
-		return result;
-	}
-
-	protected override validateAuthorizationCode(code: string) {
-		return this.client.validateAuthorizationCode(
-			this.options.tokenEndpoint.toString(),
-			code,
-			null,
-		);
-	}
-}
-
 /**
  * OAuth flow of the linked role verification URL. Separate from log in: it asks for the
  * `role_connections.write` scope and the tokens are stored to update the metadata later.
  */
-export const linkedRoleStrategy = new WithoutPKCEOAuth2Strategy<DiscordTokens>(
-	{
-		clientId: ServerConfig.discord.clientId,
-		clientSecret: ServerConfig.discord.clientSecret,
+const LINKED_ROLE_FLOW: DiscordOAuth.Flow = {
+	scopes: ["identify", "role_connections.write"],
+	callbackPath: LINKED_ROLE_CALLBACK_URL,
+	pkce: false,
+	stateCookie: { name: "discord_linked_role", path: "/discord" },
+};
 
-		authorizationEndpoint: "https://discord.com/api/oauth2/authorize",
-		tokenEndpoint: `${API_URL}/oauth2/token`,
-		redirectURI: new URL(LINKED_ROLE_CALLBACK_URL, Config.siteDomain),
+export type DiscordTokens = DiscordOAuth.Tokens;
 
-		scopes: ["identify", "role_connections.write"],
-		cookie: {
-			name: "discord_linked_role",
-			path: "/discord",
-			secure: (ServerConfig.isProduction && !IS_E2E_TEST_RUN) || undefined,
-		},
-	},
-	async ({ tokens }) => tokens,
-);
+/** Starts the linked role OAuth flow, see {@link DiscordOAuth.authorizationRedirect}. */
+export function linkedRoleAuthorizationRedirect() {
+	return DiscordOAuth.authorizationRedirect(LINKED_ROLE_FLOW);
+}
+
+/** Finishes the linked role OAuth flow on its callback, see {@link DiscordOAuth.exchangeCode}. */
+export function exchangeLinkedRoleCode(request: Request) {
+	return DiscordOAuth.exchangeCode(request, LINKED_ROLE_FLOW);
+}
 
 const userSchema = v.object({ id: v.string() });
 const rateLimitSchema = v.object({ retry_after: v.number() });
@@ -77,9 +54,12 @@ export async function refreshTokens(
 	refreshToken: string,
 ): Promise<DiscordTokens | null> {
 	try {
-		return await linkedRoleStrategy.refreshToken(refreshToken);
+		return await DiscordOAuth.refreshTokens(LINKED_ROLE_FLOW, refreshToken);
 	} catch (error) {
-		if (error instanceof OAuth2RequestError && error.code === "invalid_grant") {
+		if (
+			error instanceof DiscordOAuth.OAuthError &&
+			error.code === "invalid_grant"
+		) {
 			return null;
 		}
 

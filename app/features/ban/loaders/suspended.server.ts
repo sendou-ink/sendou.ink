@@ -1,10 +1,10 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import {
+	authSessionStorage,
 	IMPERSONATED_SESSION_KEY,
 	SESSION_KEY,
-} from "~/features/auth/core/authenticator.server";
-import { authSessionStorage } from "~/features/auth/core/session.server";
+} from "~/features/auth/core/session.server";
 import type { Nullish } from "~/utils/types";
 import * as Bans from "../core/Bans.server";
 

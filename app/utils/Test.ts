@@ -8,8 +8,10 @@ import { expect } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { actAs } from "~/db/seed/core/actAs";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { SESSION_KEY } from "~/features/auth/core/authenticator.server";
-import { authSessionStorage } from "~/features/auth/core/session.server";
+import {
+	authSessionStorage,
+	SESSION_KEY,
+} from "~/features/auth/core/session.server";
 import {
 	getUserFromRequest,
 	userAsyncLocalStorage,

@@ -121,8 +121,6 @@
 		"react-i18next": "17.0.11",
 		"react-router": "8.5.0",
 		"remeda": "2.59.0",
-		"remix-auth": "4.2.0",
-		"remix-auth-oauth2": "3.4.1",
 		"slugify": "1.6.9",
 		"swr": "2.5.1",
 		"valibot": "^1.5.0",

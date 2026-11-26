@@ -19,16 +19,16 @@ import {
 import type { AnySyncSchema } from "~/utils/schema";
 import { ADMIN_PAGE, authErrorUrl, SETTINGS_PAGE } from "~/utils/urls";
 import * as LogInLinkRepository from "../LogInLinkRepository.server";
+import * as DiscordAvatar from "./DiscordAvatar.server";
+import * as DiscordLogIn from "./DiscordLogIn.server";
+import * as DiscordOAuth from "./DiscordOAuth.server";
+import * as DiscordRefresh from "./DiscordRefresh.server";
+import type { AuthErrorCode } from "./errors";
 import {
-	authenticator,
+	authSessionStorage,
 	IMPERSONATED_SESSION_KEY,
 	SESSION_KEY,
-} from "./authenticator.server";
-import * as DiscordAvatar from "./DiscordAvatar.server";
-import * as DiscordRefresh from "./DiscordRefresh.server";
-import { upsertUser } from "./DiscordStrategy.server";
-import type { AuthErrorCode } from "./errors";
-import { authSessionStorage } from "./session.server";
+} from "./session.server";
 import { getUser, isImpersonating, requireUser } from "./user.server";
 
 const returnToSchema = v.object({
@@ -49,8 +49,8 @@ export const callbackLoader: LoaderFunction = async ({ request, url }) => {
 	}
 
 	try {
-		const profile = await authenticator.authenticate("discord", request);
-		const userId = await upsertUser(profile);
+		const profile = await DiscordLogIn.authenticate(request);
+		const userId = await DiscordLogIn.upsertUser(profile);
 
 		const session = await authSessionStorage.getSession(
 			request.headers.get(SESSION_KEY),
@@ -96,24 +96,13 @@ export const refreshFromDiscordAction = defineAction(
 			});
 		}
 
-		try {
-			// remix-auth copies the request, which fails once defineAction has consumed its body
-			const bodylessRequest = new Request(request.url, {
-				method: request.method,
-				headers: request.headers,
-			});
-			return await authenticator.authenticate("discord", bodylessRequest);
-		} catch (error) {
-			// starting the OAuth flow always throws the redirect to Discord
-			if (error instanceof Response) {
-				error.headers.append(
-					"Set-Cookie",
-					await DiscordRefresh.flagCookieHeader({ userId: user.id, returnTo }),
-				);
-			}
+		const response = DiscordLogIn.authorizationRedirect({ prompt: "none" });
+		response.headers.append(
+			"Set-Cookie",
+			await DiscordRefresh.flagCookieHeader({ userId: user.id, returnTo }),
+		);
 
-			throw error;
-		}
+		return response;
 	},
 );
 
@@ -126,20 +115,15 @@ export const logOutAction = defineAction(async ({ request }) => {
 	});
 });
 
-export const logInAction = defineAction(async ({ request }) => {
-	try {
-		return await authenticator.authenticate("discord", request);
-	} catch (error) {
-		// a refresh abandoned midway must not turn this log in into one
-		if (error instanceof Response) {
-			error.headers.append(
-				"Set-Cookie",
-				await DiscordRefresh.clearFlagCookieHeader(),
-			);
-		}
+export const logInAction = defineAction(async () => {
+	const response = DiscordLogIn.authorizationRedirect();
+	// a refresh abandoned midway must not turn this log in into one
+	response.headers.append(
+		"Set-Cookie",
+		await DiscordRefresh.clearFlagCookieHeader(),
+	);
 
-		throw error;
-	}
+	return response;
 });
 
 export const impersonateAction = defineAction(
@@ -321,7 +305,7 @@ function classifyAuthError(error: Error): AuthErrorCode {
 
 	if (
 		message.includes("rate limited") ||
-		("status" in error && error.status === 429)
+		(error instanceof DiscordOAuth.TokenRequestError && error.status === 429)
 	) {
 		return "discordOverloaded";
 	}
@@ -330,7 +314,7 @@ function classifyAuthError(error: Error): AuthErrorCode {
 		return "unverifiedEmail";
 	}
 
-	if (message.includes("Missing state")) {
+	if (error instanceof DiscordOAuth.MissingStateError) {
 		return "browserPrivacy";
 	}
 
@@ -393,13 +377,13 @@ async function refreshUserFromDiscord({
 	discordId: string;
 }) {
 	try {
-		const profile = await authenticator.authenticate("discord", request);
+		const profile = await DiscordLogIn.authenticate(request);
 
 		if (profile.user.id !== discordId) {
 			return "The Discord account you authorized is not the one linked to your sendou.ink account";
 		}
 
-		await upsertUser(profile);
+		await DiscordLogIn.upsertUser(profile);
 
 		return null;
 	} catch (error) {

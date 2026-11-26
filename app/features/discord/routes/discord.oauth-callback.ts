@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { OAuth2RequestError } from "remix-auth-oauth2";
+import * as DiscordOAuth from "~/features/auth/core/DiscordOAuth.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { logger } from "~/utils/logger";
 import {
@@ -12,7 +12,7 @@ import * as LinkedRoles from "../core/LinkedRoles.server";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const tokens = await authenticate(request);
 
-	const discordId = await DiscordAPI.fetchUserId(tokens.accessToken());
+	const discordId = await DiscordAPI.fetchUserId(tokens.accessToken);
 	const user = await UserRepository.findIdByIdentifier(discordId);
 	if (!user) {
 		errorToastWithRedirect({
@@ -43,11 +43,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 async function authenticate(request: Request) {
 	try {
-		return await DiscordAPI.linkedRoleStrategy.authenticate(request);
+		return await DiscordAPI.exchangeLinkedRoleCode(request);
 	} catch (error) {
-		if (error instanceof Response) throw error;
-
-		if (error instanceof OAuth2RequestError && error.code === "access_denied") {
+		if (
+			error instanceof DiscordOAuth.OAuthError &&
+			error.code === "access_denied"
+		) {
 			errorToastWithRedirect({ url: "/", message: "Linking was cancelled" });
 		}
 

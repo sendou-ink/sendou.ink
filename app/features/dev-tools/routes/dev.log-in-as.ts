@@ -1,9 +1,9 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
 import {
+	authSessionStorage,
 	IMPERSONATED_SESSION_KEY,
 	SESSION_KEY,
-} from "~/features/auth/core/authenticator.server";
-import { authSessionStorage } from "~/features/auth/core/session.server";
+} from "~/features/auth/core/session.server";
 import { safeReturnTo } from "~/utils/remix.server";
 import { logInAsSearchParams } from "../dev-tools-search-params";
 import { requireDevTools } from "../dev-tools-utils.server";

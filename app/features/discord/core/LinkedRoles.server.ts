@@ -16,9 +16,9 @@ const REFRESH_MARGIN = { minutes: 5 };
 export function saveTokens(userId: number, tokens: DiscordAPI.DiscordTokens) {
 	return DiscordTokenRepository.upsert({
 		userId,
-		accessToken: tokens.accessToken(),
-		refreshToken: tokens.refreshToken(),
-		expiresAt: dateToDatabaseTimestamp(tokens.accessTokenExpiresAt()),
+		accessToken: tokens.accessToken,
+		refreshToken: tokens.refreshToken,
+		expiresAt: dateToDatabaseTimestamp(tokens.expiresAt),
 	});
 }
 
@@ -100,5 +100,5 @@ async function validAccessToken(userId: number) {
 
 	await saveTokens(userId, refreshed);
 
-	return refreshed.accessToken();
+	return refreshed.accessToken;
 }

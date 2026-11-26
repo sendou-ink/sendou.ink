@@ -2,6 +2,9 @@ import { createCookieSessionStorage, type SessionStorage } from "react-router";
 import { ServerConfig } from "~/config.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 
+export const SESSION_KEY = "user";
+export const IMPERSONATED_SESSION_KEY = "impersonated_user";
+
 const ONE_YEAR_IN_SECONDS = 31_536_000;
 const LEGACY_COOKIE_NAME = "__session";
 const LEGACY_COOKIE_DOMAIN = "sendou.ink";

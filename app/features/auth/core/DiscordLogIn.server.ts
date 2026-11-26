@@ -1,12 +1,20 @@
+/**
+ * Log in with Discord: the OAuth flow asking for the user's profile and connections, and creating
+ * or updating the sendou.ink user from them.
+ */
 import { add } from "date-fns";
-import { OAuth2Strategy } from "remix-auth-oauth2";
 import * as v from "valibot";
-import { Config } from "~/config";
-import { ServerConfig } from "~/config.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { logger } from "~/utils/logger";
-import { DISCORD_REFRESH_URL } from "~/utils/urls";
 import * as DiscordAvatar from "./DiscordAvatar.server";
+import * as DiscordOAuth from "./DiscordOAuth.server";
+
+const LOG_IN_FLOW: DiscordOAuth.Flow = {
+	scopes: ["identify", "connections", "email"],
+	callbackPath: "/auth/callback",
+	pkce: true,
+	stateCookie: { name: "oauth2", path: "/" },
+};
 
 let discordApiCooldownUntil: number | null = null;
 
@@ -35,98 +43,35 @@ const discordRateLimitSchema = v.object({
 	retry_after: v.number(),
 });
 
-export const DiscordStrategy = () => {
-	const jsonIfOk = async (res: Response) => {
-		if (res.status === 429) {
-			const body = v.safeParse(
-				discordRateLimitSchema,
-				await res.clone().json(),
-			);
-			const retryAfterSeconds = body.success ? body.output.retry_after : 60;
-			discordApiCooldownUntil = add(new Date(), {
-				seconds: retryAfterSeconds,
-			}).getTime();
-			logger.warn(
-				`Discord API rate limited, cooldown for ${retryAfterSeconds}s${body.success ? "" : " (failed to parse retry_after)"}`,
-			);
-		}
+/**
+ * Starts the log in flow, see {@link DiscordOAuth.authorizationRedirect}. A refresh passes
+ * `prompt: "none"` so users who already authorized the app skip the consent screen.
+ */
+export function authorizationRedirect(options?: { prompt?: "none" }) {
+	return DiscordOAuth.authorizationRedirect(LOG_IN_FLOW, options);
+}
 
-		if (!res.ok) {
-			throw new Error(
-				`Auth related call failed with status code ${res.status}`,
-			);
-		}
+/** Finishes the log in flow on its callback and fetches the user's Discord profile with the tokens. */
+export async function authenticate(request: Request): Promise<DiscordProfile> {
+	const tokens = await DiscordOAuth.exchangeCode(request, LOG_IN_FLOW);
 
-		return res.json();
-	};
+	try {
+		const [user, connections] = v.parse(
+			discordUserDetailsSchema,
+			await fetchProfileViaDiscordApi(tokens.accessToken),
+		);
 
-	const fetchProfileViaDiscordApi = (token: string) => {
-		if (discordApiCooldownUntil && Date.now() < discordApiCooldownUntil) {
-			throw new Error("Discord API is rate limited");
-		}
-
-		const authHeader: [string, string] = ["Authorization", `Bearer ${token}`];
-
-		return Promise.all([
-			fetch("https://discord.com/api/users/@me", {
-				headers: [authHeader],
-			}).then(jsonIfOk),
-			fetch("https://discord.com/api/users/@me/connections", {
-				headers: [authHeader],
-			}).then(jsonIfOk),
-		]);
-	};
-
-	return new DiscordOAuth2Strategy(
-		{
-			clientId: ServerConfig.discord.clientId,
-			clientSecret: ServerConfig.discord.clientSecret,
-
-			authorizationEndpoint: "https://discord.com/api/oauth2/authorize",
-			tokenEndpoint: "https://discord.com/api/oauth2/token",
-			redirectURI: new URL("/auth/callback", Config.siteDomain).toString(),
-
-			scopes: ["identify", "connections", "email"],
-		},
-		async ({ tokens }) => {
-			try {
-				const discordResponses = await fetchProfileViaDiscordApi(
-					tokens.accessToken(),
-				);
-
-				const [user, connections] = v.parse(
-					discordUserDetailsSchema,
-					discordResponses,
-				);
-
-				return { user, connections };
-			} catch (e) {
-				logger.error("Failed to finish authentication:\n", e);
-				throw e;
-			}
-		},
-	);
-};
+		return { user, connections };
+	} catch (e) {
+		logger.error("Failed to finish authentication:\n", e);
+		throw e;
+	}
+}
 
 export type DiscordProfile = {
 	user: v.InferOutput<typeof partialDiscordUserSchema>;
 	connections: v.InferOutput<typeof partialDiscordConnectionsSchema>;
 };
-
-class DiscordOAuth2Strategy extends OAuth2Strategy<DiscordProfile> {
-	protected override authorizationParams(
-		params: URLSearchParams,
-		request: Request,
-	) {
-		const result = new URLSearchParams(params);
-		// already authorized users skip the consent screen
-		if (new URL(request.url).pathname === DISCORD_REFRESH_URL) {
-			result.set("prompt", "none");
-		}
-
-		return result;
-	}
-}
 
 /**
  * Creates or updates the user (name, avatar, connections) from their Discord profile and returns
@@ -192,4 +137,40 @@ function parseConnections(
 	}
 
 	return result;
+}
+
+async function jsonIfOk(res: Response) {
+	if (res.status === 429) {
+		const body = v.safeParse(discordRateLimitSchema, await res.clone().json());
+		const retryAfterSeconds = body.success ? body.output.retry_after : 60;
+		discordApiCooldownUntil = add(new Date(), {
+			seconds: retryAfterSeconds,
+		}).getTime();
+		logger.warn(
+			`Discord API rate limited, cooldown for ${retryAfterSeconds}s${body.success ? "" : " (failed to parse retry_after)"}`,
+		);
+	}
+
+	if (!res.ok) {
+		throw new Error(`Auth related call failed with status code ${res.status}`);
+	}
+
+	return res.json();
+}
+
+function fetchProfileViaDiscordApi(token: string) {
+	if (discordApiCooldownUntil && Date.now() < discordApiCooldownUntil) {
+		throw new Error("Discord API is rate limited");
+	}
+
+	const authHeader: [string, string] = ["Authorization", `Bearer ${token}`];
+
+	return Promise.all([
+		fetch("https://discord.com/api/users/@me", {
+			headers: [authHeader],
+		}).then(jsonIfOk),
+		fetch("https://discord.com/api/users/@me/connections", {
+			headers: [authHeader],
+		}).then(jsonIfOk),
+	]);
 }

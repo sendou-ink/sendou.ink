@@ -3,8 +3,11 @@ import { redirect } from "react-router";
 import * as Bans from "~/features/ban/core/Bans.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { SUSPENDED_PAGE } from "~/utils/urls";
-import { IMPERSONATED_SESSION_KEY, SESSION_KEY } from "./authenticator.server";
-import { authSessionStorage } from "./session.server";
+import {
+	authSessionStorage,
+	IMPERSONATED_SESSION_KEY,
+	SESSION_KEY,
+} from "./session.server";
 
 export type AuthenticatedUser = NonNullable<
 	Awaited<ReturnType<typeof UserRepository.findLeanById>>
