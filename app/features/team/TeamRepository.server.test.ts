@@ -173,6 +173,69 @@ describe("findAllByMemberUserId", () => {
 			"Secondary team",
 		]);
 	});
+
+	describe("withMembers", () => {
+		const users = UserFactory.pool();
+		const userId = () => users.id(1);
+		const teammateId = () => users.id(2);
+
+		beforeEach(async () => {
+			await users.create(2);
+		});
+
+		test("includes each team's roster", async () => {
+			await TeamFactory.create({
+				name: "Secondary team",
+				isMainTeam: false,
+				memberUserIds: [userId()],
+			});
+			await TeamFactory.create({
+				name: "Main team",
+				isMainTeam: true,
+				memberUserIds: [userId(), teammateId()],
+			});
+
+			const teams = await TeamRepository.findAllByMemberUserId(userId(), {
+				withMembers: true,
+			});
+
+			expect(
+				teams.map((team) => ({
+					name: team.name,
+					memberIds: team.members.map((member) => member.id),
+				})),
+			).toEqual([
+				{ name: "Main team", memberIds: [userId(), teammateId()] },
+				{ name: "Secondary team", memberIds: [userId()] },
+			]);
+		});
+
+		test("leaves the roster out by default", async () => {
+			await TeamFactory.create({ memberUserIds: [userId(), teammateId()] });
+
+			const [team] = await TeamRepository.findAllByMemberUserId(userId());
+
+			expect(team).not.toHaveProperty("members");
+		});
+	});
+});
+
+describe("countByMemberUserId", () => {
+	const users = UserFactory.pool();
+	const userId = () => users.id(1);
+	const otherUserId = () => users.id(2);
+
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("counts the teams the user is a member of", async () => {
+		await TeamFactory.create({ isMainTeam: true, memberUserIds: [userId()] });
+		await TeamFactory.create({ isMainTeam: false, memberUserIds: [userId()] });
+		await TeamFactory.create({ memberUserIds: [otherUserId()] });
+
+		expect(await TeamRepository.countByMemberUserId(userId())).toBe(2);
+	});
 });
 
 describe("findMainTeamByUserId", () => {

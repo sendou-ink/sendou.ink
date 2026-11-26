@@ -88,8 +88,19 @@ export function findMainTeamByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
-export function findAllMemberOfByUserId(userId: number) {
-	return db
+interface FindAllByMemberUserIdOptions<WithMembers extends boolean> {
+	/** Include each team's `members` roster. */
+	withMembers?: WithMembers;
+}
+
+/** Teams the user is a member of, main team first. */
+export async function findAllByMemberUserId<
+	WithMembers extends boolean = false,
+>(
+	userId: number,
+	{ withMembers }: FindAllByMemberUserIdOptions<WithMembers> = {},
+) {
+	const rows = await db
 		.selectFrom("TeamMemberWithSecondary")
 		.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
 		.leftJoin("UserSubmittedImage", "UserSubmittedImage.id", "Team.avatarImgId")
@@ -97,19 +108,53 @@ export function findAllMemberOfByUserId(userId: number) {
 			"Team.id",
 			"Team.customUrl",
 			"Team.name",
-			"Team.mapModePreferences",
 			"TeamMemberWithSecondary.role",
 			"TeamMemberWithSecondary.customRole",
-			"TeamMemberWithSecondary.isOwner",
-			"TeamMemberWithSecondary.isManager",
+			"TeamMemberWithSecondary.isMainTeam",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"logoUrl",
 			),
 		])
+		.$if(Boolean(withMembers), (qb) =>
+			qb.select((eb) =>
+				jsonArrayFrom(
+					eb
+						.selectFrom("TeamMemberWithSecondary as m2")
+						.innerJoin("User", "User.id", "m2.userId")
+						.select((memberEb) => [
+							...commonUserSelect(memberEb),
+							"m2.role",
+							"m2.roleType",
+						])
+						.whereRef("TeamMemberWithSecondary.teamId", "=", "m2.teamId")
+						.orderBy("m2.order", "asc"),
+				).as("members"),
+			),
+		)
 		.where("TeamMemberWithSecondary.userId", "=", userId)
 		.orderBy("TeamMemberWithSecondary.isMainTeam", "desc")
 		.orderBy("Team.name", "asc")
 		.execute();
+
+	type Row = (typeof rows)[number];
+
+	return rows as Array<
+		WithMembers extends true ? Required<Row> : Omit<Row, "members">
+	>;
+}
+
+/** How many teams the user is a member of. */
+export async function countByMemberUserId(
+	userId: number,
+	trx?: Transaction<DB>,
+) {
+	const row = await (trx ?? db)
+		.selectFrom("TeamMemberWithSecondary")
+		.select(({ fn }) => fn.countAll<number>().as("count"))
+		.where("TeamMemberWithSecondary.userId", "=", userId)
+		.executeTakeFirstOrThrow();
+
+	return row.count;
 }
 
 export type findByCustomUrl = NonNullable<
@@ -338,36 +383,6 @@ function allMembersById(teamId: number) {
 		.execute();
 }
 
-export async function findAllByMemberUserId(
-	userId: number,
-	trx?: Transaction<DB>,
-) {
-	return (trx ?? db)
-		.selectFrom("TeamMemberWithSecondary")
-		.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
-		.select((eb) => [
-			"TeamMemberWithSecondary.teamId as id",
-			"Team.name",
-			"TeamMemberWithSecondary.isOwner",
-			"TeamMemberWithSecondary.isMainTeam",
-			jsonArrayFrom(
-				eb
-					.selectFrom("TeamMemberWithSecondary as m2")
-					.innerJoin("User", "User.id", "m2.userId")
-					.select((memberEb) => [
-						...commonUserSelect(memberEb),
-						"m2.role",
-						"m2.roleType",
-					])
-					.whereRef("TeamMemberWithSecondary.teamId", "=", "m2.teamId")
-					.orderBy("m2.order", "asc"),
-			).as("members"),
-		])
-		.where("userId", "=", userId)
-		.orderBy("TeamMemberWithSecondary.isMainTeam", "desc")
-		.execute();
-}
-
 export async function insert(
 	args: Pick<Insertable<Tables["Team"]>, "name"> & {
 		ownerUserId: number;
@@ -512,9 +527,11 @@ export async function updateMapModePreferences({
 export function switchOwnMainTeam(teamId: number) {
 	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
-		const currentTeams = await findAllByMemberUserId(userId, trx);
+		const memberships = await membershipsOf(userId, trx);
 
-		const teamToSwitchTo = currentTeams.find((team) => team.id === teamId);
+		const teamToSwitchTo = memberships.find(
+			(membership) => membership.teamId === teamId,
+		);
 		invariant(teamToSwitchTo, "User is not a member of this team");
 
 		await trx
@@ -546,9 +563,11 @@ export function deleteById(teamId: number) {
 
 		// switch main team to a secondary team if they have one
 		for (const member of members) {
-			const currentTeams = await findAllByMemberUserId(member.userId, trx);
+			const memberships = await membershipsOf(member.userId, trx);
 
-			const teamToSwitchTo = currentTeams.find((team) => team.id !== teamId);
+			const teamToSwitchTo = memberships.find(
+				(membership) => membership.teamId !== teamId,
+			);
 
 			if (!teamToSwitchTo) continue;
 
@@ -558,7 +577,7 @@ export function deleteById(teamId: number) {
 					isMainTeam: 1,
 				})
 				.where("userId", "=", member.userId)
-				.where("teamId", "=", teamToSwitchTo.id)
+				.where("teamId", "=", teamToSwitchTo.teamId)
 				.execute();
 		}
 
@@ -601,7 +620,7 @@ export function insertOwnMembership({
 }) {
 	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
-		const teamCount = (await findAllByMemberUserId(userId, trx)).length;
+		const teamCount = await countByMemberUserId(userId, trx);
 
 		if (teamCount >= maxTeamsAllowed) {
 			throw new Error("Trying to exceed allowed team count");
@@ -740,9 +759,11 @@ async function memberLeave(
 		newOwnerUserId,
 	}: { userId: number; teamId: number; newOwnerUserId?: number },
 ) {
-	const currentTeams = await findAllByMemberUserId(userId, trx);
+	const memberships = await membershipsOf(userId, trx);
 
-	const teamToLeave = currentTeams.find((team) => team.id === teamId);
+	const teamToLeave = memberships.find(
+		(membership) => membership.teamId === teamId,
+	);
 	invariant(teamToLeave, "User is not a member of this team");
 	invariant(
 		!teamToLeave.isOwner || newOwnerUserId,
@@ -750,7 +771,9 @@ async function memberLeave(
 	);
 
 	const wasMainTeam = teamToLeave.isMainTeam;
-	const newMainTeam = currentTeams.find((team) => team.id !== teamId);
+	const newMainTeam = memberships.find(
+		(membership) => membership.teamId !== teamId,
+	);
 	if (wasMainTeam && newMainTeam) {
 		await trx
 			.updateTable("AllTeamMember")
@@ -758,7 +781,7 @@ async function memberLeave(
 				isMainTeam: 1,
 			})
 			.where("userId", "=", userId)
-			.where("teamId", "=", newMainTeam.id)
+			.where("teamId", "=", newMainTeam.teamId)
 			.execute();
 	}
 
@@ -784,4 +807,17 @@ async function memberLeave(
 			.where("teamId", "=", teamId)
 			.execute();
 	}
+}
+
+function membershipsOf(userId: number, trx: Transaction<DB>) {
+	return trx
+		.selectFrom("TeamMemberWithSecondary")
+		.select([
+			"TeamMemberWithSecondary.teamId",
+			"TeamMemberWithSecondary.isOwner",
+			"TeamMemberWithSecondary.isMainTeam",
+		])
+		.where("TeamMemberWithSecondary.userId", "=", userId)
+		.orderBy("TeamMemberWithSecondary.isMainTeam", "desc")
+		.execute();
 }

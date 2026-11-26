@@ -97,7 +97,7 @@ export const action = defineAction(
 				break;
 			}
 			case "SAVE_SCHEDULE_VISIBILITY": {
-				const teams = await TeamRepository.findAllMemberOfByUserId(user.id);
+				const teams = await TeamRepository.findAllByMemberUserId(user.id);
 
 				await UserRepository.updateOwnPreferences({
 					scheduleVisibility: ScheduleVisibility.fromSelection({

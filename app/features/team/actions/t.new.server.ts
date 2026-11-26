@@ -12,9 +12,7 @@ export const action = defineAction(
 	async ({ body }) => {
 		const user = requireUser();
 
-		const currentTeamCount = (
-			await TeamRepository.findAllMemberOfByUserId(user.id)
-		).length;
+		const currentTeamCount = await TeamRepository.countByMemberUserId(user.id);
 		errorToastIfFalsy(
 			currentTeamCount < maxTeamCount(user),
 			"Already in max amount of teams",

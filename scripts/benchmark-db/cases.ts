@@ -1808,8 +1808,11 @@ export function buildCases(fx: Fixtures): {
 	add("TeamRepository.findMainTeamByUserId", fx.heavyTeam, (team) =>
 		TeamRepository.findMainTeamByUserId(team.memberUserId),
 	);
-	add("TeamRepository.findAllMemberOfByUserId", fx.heavyTeam, (team) =>
-		TeamRepository.findAllMemberOfByUserId(team.memberUserId),
+	add("TeamRepository.findAllByMemberUserId", fx.heavyTeam, (team) =>
+		TeamRepository.findAllByMemberUserId(team.memberUserId),
+	);
+	add("TeamRepository.countByMemberUserId", fx.heavyTeam, (team) =>
+		TeamRepository.countByMemberUserId(team.memberUserId),
 	);
 	add("TeamRepository.findByCustomUrl", fx.heavyTeam, (team) =>
 		TeamRepository.findByCustomUrl(team.customUrl, {
@@ -1822,8 +1825,13 @@ export function buildCases(fx: Fixtures): {
 	add("TeamRepository.findResultsById", fx.heavyTeam, (team) =>
 		TeamRepository.findResultsById(team.id),
 	);
-	add("TeamRepository.findAllByMemberUserId", fx.heavyTeam, (team) =>
-		TeamRepository.findAllByMemberUserId(team.memberUserId),
+	add(
+		"TeamRepository.findAllByMemberUserId (withMembers)",
+		fx.heavyTeam,
+		(team) =>
+			TeamRepository.findAllByMemberUserId(team.memberUserId, {
+				withMembers: true,
+			}),
 	);
 
 	add("XRankPlacementRepository.isPlayerLinkedByUserId", fx.xrank, (xrank) =>

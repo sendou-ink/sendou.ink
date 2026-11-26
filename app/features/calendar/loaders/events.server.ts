@@ -11,7 +11,7 @@ export const loader = async () => {
 
 	const events = await UserEvents.byCategory(user.id);
 	const mySchedule = await ScheduleViews.myScheduleData(user.id);
-	const myTeams = await TeamRepository.findAllMemberOfByUserId(user.id);
+	const myTeams = await TeamRepository.findAllByMemberUserId(user.id);
 	const calendarFeedToken =
 		(await CalendarFeedRepository.findOwnToken()) ?? null;
 

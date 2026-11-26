@@ -33,7 +33,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			logger.error("Failed to resolve registration availability", error);
 			return null;
 		})) ?? null;
-	const teams = await TeamRepository.findAllMemberOfByUserId(user.id);
+	const teams = await TeamRepository.findAllByMemberUserId(user.id);
 
 	if (!teamMemberOf) {
 		return {

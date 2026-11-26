@@ -66,7 +66,7 @@ export const action = defineAction(
 
 				errorToastIfFalsy(
 					!linkedTeamId ||
-						(await TeamRepository.findAllMemberOfByUserId(user.id)).some(
+						(await TeamRepository.findAllByMemberUserId(user.id)).some(
 							(team) => team.id === linkedTeamId,
 						),
 					"Team id does not match any of the teams you are in",

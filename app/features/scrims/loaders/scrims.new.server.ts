@@ -13,7 +13,9 @@ export type ScrimsNewLoaderData = SerializeFrom<typeof loader>;
 export const loader = async () => {
 	const user = requireUser();
 
-	const teams = await TeamRepository.findAllByMemberUserId(user.id);
+	const teams = await TeamRepository.findAllByMemberUserId(user.id, {
+		withMembers: true,
+	});
 	const friendsAndTeammates = await SQGroupRepository.findFriendsAndTeammates(
 		user.id,
 	);

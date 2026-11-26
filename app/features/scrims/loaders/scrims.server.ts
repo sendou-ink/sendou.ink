@@ -54,7 +54,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		]),
 	);
 
-	const teams = user ? await TeamRepository.findAllByMemberUserId(user.id) : [];
+	const teams = user
+		? await TeamRepository.findAllByMemberUserId(user.id, { withMembers: true })
+		: [];
 
 	return {
 		...(await UserCardRepository.findAllByUserIds({
@@ -86,7 +88,7 @@ async function rosterAvailability({
 	viewerId,
 }: {
 	posts: Array<ScrimPost>;
-	teams: Awaited<ReturnType<typeof TeamRepository.findAllByMemberUserId>>;
+	teams: Awaited<ReturnType<typeof TeamRepository.findAllByMemberUserId<true>>>;
 	viewerId: number | null;
 }) {
 	const userIds = R.unique(

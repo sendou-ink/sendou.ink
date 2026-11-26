@@ -41,7 +41,7 @@ export const WIDGET_LOADERS = {
 		return BadgeRepository.findByManagersList([userId]);
 	},
 	teams: async (userId: number) => {
-		return TeamRepository.findAllMemberOfByUserId(userId);
+		return TeamRepository.findAllByMemberUserId(userId);
 	},
 	organizations: async (userId: number) => {
 		return TournamentOrganizationRepository.findByUserId(userId);

@@ -22,8 +22,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const { code } = teamJoinSearchParams.parse(url);
 	const realInviteCode = team.inviteCode!;
 
-	const teamCount = (await TeamRepository.findAllByMemberUserId(user.id))
-		.length;
+	const teamCount = await TeamRepository.countByMemberUserId(user.id);
 
 	const validation = validateInviteCode({
 		inviteCode: code ?? "",

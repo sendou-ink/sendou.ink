@@ -5,7 +5,7 @@ import { maxTeamCount } from "../team-utils";
 export const loader = async () => {
 	const user = requireUser();
 
-	const teams = await TeamRepository.findAllMemberOfByUserId(user.id);
+	const teamCount = await TeamRepository.countByMemberUserId(user.id);
 
-	return { canAddNewTeam: teams.length < maxTeamCount(user) };
+	return { canAddNewTeam: teamCount < maxTeamCount(user) };
 };
