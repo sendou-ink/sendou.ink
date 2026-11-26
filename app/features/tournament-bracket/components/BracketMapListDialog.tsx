@@ -224,6 +224,24 @@ export function BracketMapListDialog({
 		tournamentRoundMapList: maps,
 	});
 
+	const regenerate = (
+		overrides: Partial<
+			Parameters<typeof generateTournamentRoundMaplist>[0]
+		> = {},
+	) =>
+		generateTournamentRoundMaplist({
+			mapCounts,
+			rounds,
+			roundsWithPickBan,
+			pickBanStyle,
+			patterns,
+			countType,
+			pool: tournament.mapPool.dbList,
+			teamsPickMaps: tournament.teamsPrePickMaps,
+			type: bracket.type,
+			...overrides,
+		});
+
 	const roundsWithNames = roundsWithNamesFor({
 		bracketType: bracket.type,
 		bracketData,
@@ -416,17 +434,10 @@ export function BracketMapListDialog({
 											});
 
 											setMaps(
-												generateTournamentRoundMaplist({
+												regenerate({
 													mapCounts:
 														bracket.defaultRoundBestOfs(newBracketData),
-													pool: tournament.mapPool.dbList,
-													teamsPickMaps: tournament.teamsPrePickMaps,
 													rounds: newBracketData.round,
-													type: bracket.type,
-													roundsWithPickBan,
-													pickBanStyle,
-													patterns,
-													countType,
 												}),
 											);
 											setEliminationTeamCount(newCount);
@@ -475,16 +486,9 @@ export function BracketMapListDialog({
 
 											if (!noPickBanSetBeforeOrAfter) {
 												setMaps(
-													generateTournamentRoundMaplist({
-														mapCounts,
-														pool: tournament.mapPool.dbList,
-														teamsPickMaps: tournament.teamsPrePickMaps,
-														rounds,
-														type: bracket.type,
+													regenerate({
 														roundsWithPickBan: newRoundsWithPickBan,
 														pickBanStyle: newPickBanStyle,
-														patterns,
-														countType,
 													}),
 												);
 											}
@@ -518,21 +522,7 @@ export function BracketMapListDialog({
 									size="small"
 									icon={<RefreshCcw />}
 									variant="outlined"
-									onClick={() =>
-										setMaps(
-											generateTournamentRoundMaplist({
-												mapCounts,
-												pool: tournament.mapPool.dbList,
-												teamsPickMaps: tournament.teamsPrePickMaps,
-												rounds,
-												type: bracket.type,
-												roundsWithPickBan,
-												pickBanStyle,
-												patterns,
-												countType,
-											}),
-										)
-									}
+									onClick={() => setMaps(regenerate())}
 								>
 									{tournament.teamsPrePickMaps
 										? t("tournament:mapList.rerollModeOrder")
@@ -601,19 +591,7 @@ export function BracketMapListDialog({
 													if (globalSelections) {
 														const newMapCounts =
 															mapCountsWithGlobalCount(newCount);
-														setMaps(
-															generateTournamentRoundMaplist({
-																mapCounts: newMapCounts,
-																pool: tournament.mapPool.dbList,
-																teamsPickMaps: tournament.teamsPrePickMaps,
-																rounds,
-																type: bracket.type,
-																roundsWithPickBan,
-																pickBanStyle,
-																patterns,
-																countType,
-															}),
-														);
+														setMaps(regenerate({ mapCounts: newMapCounts }));
 														return;
 													}
 
@@ -646,16 +624,8 @@ export function BracketMapListDialog({
 														count: newCount,
 													});
 
-													const newMap = generateTournamentRoundMaplist({
+													const newMap = regenerate({
 														mapCounts: newMapCounts,
-														pool: tournament.mapPool.dbList,
-														teamsPickMaps: tournament.teamsPrePickMaps,
-														rounds,
-														type: bracket.type,
-														roundsWithPickBan,
-														pickBanStyle,
-														patterns,
-														countType,
 													}).get(round.id);
 
 													setMaps(new Map(maps).set(round.id, newMap!));
@@ -667,16 +637,8 @@ export function BracketMapListDialog({
 															: new Set<number>();
 
 														setMaps(
-															generateTournamentRoundMaplist({
-																mapCounts,
-																pool: tournament.mapPool.dbList,
-																teamsPickMaps: tournament.teamsPrePickMaps,
-																rounds,
-																type: bracket.type,
+															regenerate({
 																roundsWithPickBan: newRoundsWithPickBan,
-																pickBanStyle,
-																patterns,
-																countType,
 															}),
 														);
 														return;
@@ -691,16 +653,8 @@ export function BracketMapListDialog({
 														newRoundsWithPickBan.delete(round.id);
 													}
 
-													const newMap = generateTournamentRoundMaplist({
-														mapCounts,
-														pool: tournament.mapPool.dbList,
-														teamsPickMaps: tournament.teamsPrePickMaps,
-														rounds,
-														type: bracket.type,
+													const newMap = regenerate({
 														roundsWithPickBan: newRoundsWithPickBan,
-														pickBanStyle,
-														patterns,
-														countType,
 													}).get(round.id);
 
 													setMaps(new Map(maps).set(round.id, newMap!));
