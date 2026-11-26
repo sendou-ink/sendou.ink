@@ -1879,6 +1879,9 @@ export function buildCases(fx: Fixtures): {
 	addStatic("TournamentMatchVodRepository.findTournamentsNeedingVodSync", () =>
 		TournamentMatchVodRepository.findTournamentsNeedingVodSync(),
 	);
+	addStatic("TournamentMatchVodRepository.findTwitchVideoIdsDueCheck", () =>
+		TournamentMatchVodRepository.findTwitchVideoIdsDueCheck(500),
+	);
 	add(
 		"TournamentMatchVodRepository.findStreamersByTournamentId",
 		fx.heavyTournamentId,

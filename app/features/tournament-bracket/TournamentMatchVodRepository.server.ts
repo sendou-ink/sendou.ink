@@ -167,9 +167,58 @@ export function insertMany(vods: Omit<Tables["TournamentMatchVod"], "id">[]) {
 				viewCount: eb.ref("excluded.viewCount"),
 				timestampSeconds: eb.ref("excluded.timestampSeconds"),
 				platformVideoId: eb.ref("excluded.platformVideoId"),
+				checkAfter: eb.ref("excluded.checkAfter"),
 			})),
 		)
 		.execute();
+}
+
+/** IDs of the Twitch videos due a check, each once however many matches it covers, longest overdue first. */
+export async function findTwitchVideoIdsDueCheck(limit: number) {
+	const rows = await db
+		.selectFrom("TournamentMatchVod")
+		.select("platformVideoId")
+		.where("platform", "=", "TWITCH")
+		.where("checkAfter", "<=", databaseTimestampNow())
+		.groupBy("platformVideoId")
+		.orderBy((eb) => eb.fn.min("checkAfter"), "asc")
+		.limit(limit)
+		.execute();
+
+	return rows.map((row) => row.platformVideoId);
+}
+
+/**
+ * Saves a check of Twitch videos: the VoDs of `removedVideoIds` are deleted, those of `foundVideos` get the
+ * fresh view count and their next check at `nextCheckAfter`.
+ */
+export function saveTwitchVideoCheck({
+	removedVideoIds,
+	foundVideos,
+	nextCheckAfter,
+}: {
+	removedVideoIds: string[];
+	foundVideos: Array<{ videoId: string; viewCount: number }>;
+	nextCheckAfter: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		if (removedVideoIds.length > 0) {
+			await trx
+				.deleteFrom("TournamentMatchVod")
+				.where("platform", "=", "TWITCH")
+				.where("platformVideoId", "in", removedVideoIds)
+				.execute();
+		}
+
+		for (const video of foundVideos) {
+			await trx
+				.updateTable("TournamentMatchVod")
+				.set({ viewCount: video.viewCount, checkAfter: nextCheckAfter })
+				.where("platform", "=", "TWITCH")
+				.where("platformVideoId", "=", video.videoId)
+				.execute();
+		}
+	});
 }
 
 /**

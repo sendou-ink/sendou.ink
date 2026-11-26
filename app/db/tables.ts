@@ -1341,6 +1341,8 @@ interface TournamentMatchVod {
 	platformVideoId: string;
 	timestampSeconds: number;
 	viewCount: number;
+	/** When to next check the video still exists and refresh its view count, `null` = never (YouTube). */
+	checkAfter: number | null;
 }
 
 interface UserDiscordToken {

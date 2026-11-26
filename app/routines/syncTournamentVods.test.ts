@@ -84,6 +84,34 @@ describe("syncTournamentVods", () => {
 		expect(vods[0].account).toBe("player_stream");
 	});
 
+	test.each([
+		{ broadcasterType: "partner", retentionDays: 60 },
+		{ broadcasterType: "affiliate", retentionDays: 14 },
+		{ broadcasterType: "", retentionDays: 7 },
+	])(
+		"Twitch VOD of a $broadcasterType broadcaster is checked after $retentionDays days",
+		async ({ broadcasterType, retentionDays }) => {
+			await seedTournamentWithMatches();
+			await seedStreamer("player_stream", playerOf(firstMatch.winnerTeamId));
+
+			mockGetUsersByLogin.mockResolvedValue([
+				{
+					id: "twitch-1",
+					login: "player_stream",
+					broadcaster_type: broadcasterType,
+				},
+			]);
+			mockGetArchiveVideos.mockResolvedValue([twitchVideo()]);
+
+			await runProcessOneTournament();
+
+			const [vod] = await findAllVods();
+			expect(vod.checkAfter).toBe(
+				MATCH_START_SECONDS - 600 + retentionDays * 24 * 60 * 60,
+			);
+		},
+	);
+
 	test("cast account in TournamentStreamer without castedMatchHistory does NOT produce VODs", async () => {
 		await seedTournamentWithMatches();
 		await seedStreamer("caster_stream", null);
@@ -244,6 +272,7 @@ describe("syncTournamentVods", () => {
 				platformVideoId: "yt-video1",
 				timestampSeconds: 600 + 180,
 				viewCount: 50,
+				checkAfter: null,
 			},
 		]);
 	});

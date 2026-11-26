@@ -24,6 +24,7 @@ import { NotifyScrimStartingSoonRoutine } from "./notifyScrimStartingSoon";
 import { NotifySeasonEndRoutine } from "./notifySeasonEnd";
 import { NotifySeasonStartRoutine } from "./notifySeasonStart";
 import { OptimizeDatabaseRoutine } from "./optimizeDatabase";
+import { RefreshTournamentVodsRoutine } from "./refreshTournamentVods";
 import { ResolveStaleSQMatchesRoutine } from "./resolveStaleSQMatches";
 import { SetOldGroupsAsInactiveRoutine } from "./setOldGroupsAsInactive";
 import { SyncDiscordLinkedRolesRoutine } from "./syncDiscordLinkedRoles";
@@ -42,6 +43,7 @@ export const everyHourAt00 = [
 	NotifyLeagueMatchStartingSoonRoutine,
 	SyncSplatoonRotationsRoutine,
 	SyncTournamentVodsRoutine,
+	RefreshTournamentVodsRoutine,
 ];
 
 /** hourly at XX:30 */

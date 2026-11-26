@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { parseTwitchDuration } from "./vods";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { archiveVideoCheckAfter, parseTwitchDuration } from "./vods";
 
 describe("parseTwitchDuration()", () => {
 	test("parses hours, minutes and seconds", () => {
@@ -36,5 +37,31 @@ describe("parseTwitchDuration()", () => {
 
 	test("parses large values", () => {
 		expect(parseTwitchDuration("99h59m59s")).toBe(359999);
+	});
+});
+
+describe("archiveVideoCheckAfter()", () => {
+	const createdAt = new Date("2026-11-01T12:00:00Z");
+
+	test.each([
+		{
+			why: "partner",
+			broadcasterType: "partner",
+			expected: "2026-12-31T12:00:00Z",
+		},
+		{
+			why: "affiliate",
+			broadcasterType: "affiliate",
+			expected: "2026-11-15T12:00:00Z",
+		},
+		{
+			why: "regular user",
+			broadcasterType: "",
+			expected: "2026-11-08T12:00:00Z",
+		},
+	])("$why -> $expected", ({ broadcasterType, expected }) => {
+		expect(archiveVideoCheckAfter({ createdAt, broadcasterType })).toBe(
+			dateToDatabaseTimestamp(new Date(expected)),
+		);
 	});
 });

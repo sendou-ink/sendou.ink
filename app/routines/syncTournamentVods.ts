@@ -7,8 +7,10 @@ import type {
 } from "~/features/live-streams/live-streams-constants";
 import type { TournamentRoundSection } from "~/features/tournament/tournament-constants";
 import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
+import type { UsersResponse } from "~/modules/twitch/schemas";
 import { hasTwitchEnvVars } from "~/modules/twitch/utils.server";
 import {
+	archiveVideoCheckAfter,
 	getArchiveVideos,
 	getUsersByLogin,
 	parseTwitchDuration,
@@ -27,6 +29,7 @@ interface ArchivedStream {
 	startSeconds: number;
 	endSeconds: number;
 	viewCount: number;
+	checkAfter: number | null;
 }
 
 interface VodMatchRound {
@@ -156,11 +159,11 @@ async function fetchArchivedStreams(streamAccounts: StreamAccount[]) {
 	const twitchLogins = streamAccounts
 		.filter((streamAccount) => streamAccount.platform === "TWITCH")
 		.map((streamAccount) => streamAccount.account);
-	const twitchUserIdByLogin = new Map(
+	const twitchUserByLogin = new Map(
 		twitchLogins.length > 0
 			? (await getUsersByLogin(twitchLogins)).map((user) => [
 					user.login.toLowerCase(),
-					user.id,
+					user,
 				])
 			: [],
 	);
@@ -169,7 +172,7 @@ async function fetchArchivedStreams(streamAccounts: StreamAccount[]) {
 		try {
 			archivedStreamsByKey.set(
 				LiveStream.key(streamAccount),
-				await fetchAccountArchivedStreams(streamAccount, twitchUserIdByLogin),
+				await fetchAccountArchivedStreams(streamAccount, twitchUserByLogin),
 			);
 		} catch (e) {
 			logger.warn(`Failed to fetch VODs for ${streamAccount.account}: ${e}`);
@@ -182,23 +185,26 @@ async function fetchArchivedStreams(streamAccounts: StreamAccount[]) {
 
 async function fetchAccountArchivedStreams(
 	{ platform, account }: StreamAccount,
-	twitchUserIdByLogin: Map<string, string>,
+	twitchUserByLogin: Map<string, UsersResponse["data"][number]>,
 ): Promise<ArchivedStream[]> {
 	switch (platform) {
 		case "TWITCH": {
-			const twitchUserId = twitchUserIdByLogin.get(account.toLowerCase());
-			if (!twitchUserId) return [];
+			const twitchUser = twitchUserByLogin.get(account.toLowerCase());
+			if (!twitchUser) return [];
 
-			return (await getArchiveVideos(twitchUserId)).map((video) => {
-				const startSeconds = dateToDatabaseTimestamp(
-					new Date(video.created_at),
-				);
+			return (await getArchiveVideos(twitchUser.id)).map((video) => {
+				const createdAt = new Date(video.created_at);
+				const startSeconds = dateToDatabaseTimestamp(createdAt);
 
 				return {
 					videoId: video.id,
 					startSeconds,
 					endSeconds: startSeconds + parseTwitchDuration(video.duration),
 					viewCount: video.view_count,
+					checkAfter: archiveVideoCheckAfter({
+						createdAt,
+						broadcasterType: twitchUser.broadcaster_type,
+					}),
 				};
 			});
 		}
@@ -212,6 +218,7 @@ async function fetchAccountArchivedStreams(
 					? dateToDatabaseTimestamp(stream.endedAt)
 					: nowSeconds,
 				viewCount: stream.viewCount,
+				checkAfter: null,
 			}));
 		}
 	}
@@ -248,5 +255,6 @@ function findMatchingVod(
 			archivedStream.startSeconds +
 			vodTimestampOffsetSeconds(match),
 		viewCount: archivedStream.viewCount,
+		checkAfter: archivedStream.checkAfter,
 	};
 }

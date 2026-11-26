@@ -22,23 +22,28 @@ export const usersSchema = v.object({
 		v.object({
 			id: v.string(),
 			login: v.string(),
+			broadcaster_type: v.string(),
 		}),
 	),
 });
 
+const videoSchema = v.object({
+	id: v.string(),
+	created_at: v.string(),
+	duration: v.string(),
+	view_count: v.number(),
+});
+
 export const videosSchema = v.object({
-	data: v.array(
-		v.object({
-			id: v.string(),
-			created_at: v.string(),
-			duration: v.string(),
-			view_count: v.number(),
-		}),
-	),
+	data: v.array(videoSchema),
 	pagination: v.object({ cursor: v.nullish(v.string()) }),
+});
+
+export const videosByIdSchema = v.object({
+	data: v.array(videoSchema),
 });
 
 export type StreamsResponse = v.InferOutput<typeof streamsSchema>;
 export type RawStream = Unpacked<v.InferOutput<typeof streamsSchema>["data"]>;
 export type UsersResponse = v.InferOutput<typeof usersSchema>;
-export type RawVideo = Unpacked<v.InferOutput<typeof videosSchema>["data"]>;
+export type RawVideo = v.InferOutput<typeof videoSchema>;

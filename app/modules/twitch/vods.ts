@@ -1,12 +1,21 @@
+import { addDays } from "date-fns";
 import * as R from "remeda";
 import * as v from "valibot";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { twitchFetch } from "./fetch";
 import {
 	type RawVideo,
 	type UsersResponse,
 	usersSchema,
+	videosByIdSchema,
 	videosSchema,
 } from "./schemas";
+
+const PARTNER_ARCHIVE_RETENTION_DAYS = 60;
+const AFFILIATE_ARCHIVE_RETENTION_DAYS = 14;
+/** Prime/Turbo users get 60 days too but the API does not tell them apart. */
+const DEFAULT_ARCHIVE_RETENTION_DAYS = 7;
+export const MAX_VIDEO_IDS_PER_REQUEST = 100;
 
 export async function getUsersByLogin(
 	logins: string[],
@@ -66,6 +75,56 @@ export async function getArchiveVideos(userId: string): Promise<RawVideo[]> {
 	return results;
 }
 
+/**
+ * The videos of `ids` (at most 100) that still exist. Twitch leaves removed ones out, answering 404 when every one
+ * of them is gone. Throws on a 429 rather than waiting for the rate limit to reset.
+ */
+export async function getVideosByIds(ids: string[]): Promise<RawVideo[]> {
+	if (ids.length === 0) return [];
+	if (ids.length > MAX_VIDEO_IDS_PER_REQUEST) {
+		throw new Error(
+			`At most ${MAX_VIDEO_IDS_PER_REQUEST} video IDs per request, got ${ids.length}`,
+		);
+	}
+
+	const url = new URL("https://api.twitch.tv/helix/videos");
+	for (const id of ids) {
+		url.searchParams.append("id", id);
+	}
+
+	const res = await twitchFetch(url.toString(), {
+		failOnRateLimit: true,
+		allowNotFound: true,
+	});
+	if (res.status === 404) return [];
+
+	const parsed = v.safeParse(videosByIdSchema, await res.json());
+	if (!parsed.success) {
+		throw new Error(
+			`Twitch videos schema validation failed: ${v.summarize(parsed.issues)}`,
+		);
+	}
+
+	return parsed.output.data;
+}
+
+/**
+ * Database timestamp of the earliest moment Twitch might auto-delete an archive video created at `createdAt`:
+ * Partners keep theirs for 60 days, Affiliates for 14 and everyone else for at least 7.
+ */
+export function archiveVideoCheckAfter({
+	createdAt,
+	broadcasterType,
+}: {
+	createdAt: Date;
+	/** `broadcaster_type` of the Get Users response. */
+	broadcasterType: string;
+}) {
+	const retentionDays = archiveRetentionDays(broadcasterType);
+
+	return dateToDatabaseTimestamp(addDays(createdAt, retentionDays));
+}
+
 const DURATION_REGEX = /(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/;
 
 export function parseTwitchDuration(duration: string): number {
@@ -77,4 +136,15 @@ export function parseTwitchDuration(duration: string): number {
 	const seconds = Number(match[3] ?? 0);
 
 	return hours * 3600 + minutes * 60 + seconds;
+}
+
+function archiveRetentionDays(broadcasterType: string) {
+	switch (broadcasterType) {
+		case "partner":
+			return PARTNER_ARCHIVE_RETENTION_DAYS;
+		case "affiliate":
+			return AFFILIATE_ARCHIVE_RETENTION_DAYS;
+		default:
+			return DEFAULT_ARCHIVE_RETENTION_DAYS;
+	}
 }
