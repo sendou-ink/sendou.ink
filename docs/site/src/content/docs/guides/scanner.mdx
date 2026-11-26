@@ -1,0 +1,181 @@
+---
+title: "Scanner"
+description: "Read your Splatoon 3 games off a capture card or a recorded VoD: results to sendou.ink, clips of your best moments and coach mode."
+---
+
+import { Steps } from "@astrojs/starlight/components";
+
+The [scanner](https://sendou.ink/scanner) watches your Splatoon 3 games in the browser and reads them as they happen: the mode and stage, the scoreboard, the kill feed, the objective and who is alive. It can run in the background while you play, off a capture card, or go through a video file you recorded. From that it:
+
+- uploads the results of your Private Battles to sendou.ink, where they show up on the SendouQ, tournament or lobby match they were played in (X Battles are uploaded too, see [Uploading results](#uploading-results))
+- cuts clips of your splat streaks, real video with sound
+- lists every game with its scoreboard, timeline, splats and deaths
+- opens a recorded VoD in coach mode, jumping between the moments worth reviewing
+- tells a tournament broadcast when games start and end
+
+Everything runs on your computer. No video ever leaves your browser, see [Privacy and storage](#privacy-and-storage).
+
+## What you need
+
+- A desktop browser. Phones and tablets can't drive a capture card, so live capture is off on them.
+- For live capture: a capture card sending the game as a full screen feed (or OBS Virtual Camera of a scene showing only the game, no overlays).
+- For live clips: a Chromium browser (Chrome, Edge, Brave…).
+- A recorded VoD needs none of these, just the file.
+
+Anyone can use the scanner without logging in. Only uploading results needs a sendou.ink account.
+
+## Scanning live
+
+<Steps>
+
+1. Open the [scanner](https://sendou.ink/scanner) and pick your capture card under **Live**. A capture card is picked by default (else OBS Virtual Camera); a webcam is used only when you pick it. The first time, the browser asks for camera permission, which is how it sees the capture card.
+2. Under it, pick what the clips hear (see [Clip audio](#clip-audio)).
+3. Press **Start capture**. The live view shows the feed, whether uploads and clips are on, and each game's card as it ends.
+
+</Steps>
+
+The capture keeps running while you browse the rest of sendou.ink and until you press **Stop**: leaving the scanner page doesn't stop it, closing the tab does. One capture runs per browser at a time.
+
+Once you have captured, the scanner shows up in the site's header on every page: it says whether the capture runs, opens a small panel with a live preview and how many games, uploads and clips the session has, and starts the capture again without visiting the scanner page.
+
+### What gets read
+
+- The mode and stage from the match intro, and the lobby (Private Battle, X Battle, Anarchy, Turf War…)
+- The results screen: names, weapons, splats, deaths, specials, paint and who won
+- Your own results screen: your weapon and gear abilities
+- The battle log (Recent Battles) and the replay list: the same scoreboard, plus the replay's code and when it was recorded
+- X Battles: the set's progress and result, and your estimated X Rank position
+- The death screen: who splatted you, with what weapon, and their gear abilities
+- The kill feed: who splatted whom, with what
+- The objective's progress (zone control, tower, rainmaker, clams) and the score
+- Who is alive, respawning or has their special ready, from the player icons at the top
+- The map when you open it
+
+### Clip audio
+
+- **Source audio**: the capture card's own sound. Most capture cards have it, OBS Virtual Camera doesn't.
+- **Desktop audio**: your computer's sound. A share picker opens when you start: pick a screen and tick **Also share system audio**.
+- Any microphone or audio input of your computer, by name.
+- **No audio**: silent clips.
+
+If the sound of the clips runs ahead of or behind the picture, set **Clip audio offset** in the settings: raise it when the sound is ahead, lower it when it is behind. Desktop audio next to a capture card usually needs a few hundred milliseconds.
+
+## Uploading results
+
+When you are logged in, **Upload results to sendou.ink** is on in the settings by default. Each game is sent as it ends, as reads only: never any video.
+
+- Only Private Battles and X Battles are uploaded. Turf War, Anarchy and other lobbies are never sent.
+- X Battles are only saved for features to come: nothing on sendou.ink shows or uses them yet.
+- Only live captures upload. A recorded VoD has no clock telling when it was played, so its games can't be matched to yours.
+- A Private Battle played as a SendouQ match, a tournament match or a lobby is linked to that match once its score is reported, and shows its scoreboard on the match page. A game reported later than the upload links by itself, and so does a correction of a wrong report.
+
+Each finished game's card has an upload icon beside its expand arrow. Click it to see what happened in words:
+
+| Icon | Meaning |
+| --- | --- |
+| ✓ | Uploaded. Linked to its match, with a link to it, or not part of a known match (yet). |
+| Cloud with an arrow | Uploading. |
+| Hourglass | sendou.ink has the game but its match isn't reported yet. It retries by itself. |
+| Warning | Upload failed. **Retry** sends it again. |
+| Crossed cloud | Not uploaded: upload was off, you weren't logged in, or there was nothing to upload (a disconnect, a game whose results weren't seen, another lobby). **Upload** sends it when it can be sent. |
+
+## Clips
+
+With **Save clips** on in the settings, the scanner cuts a clip whenever you get a streak of splats: splats in a row without being splatted in between and without a long pause. **Clip live games on splats in a row** picks how many it takes.
+
+Clips show on the game's card (each of your splats and deaths gets a ▶ when a clip covers it), in the session's clip strip and under **Clip history** on the landing. Open one to:
+
+- play it, and step to the previous or next clip
+- **Mute music**: takes the battle music out of the clip while keeping the other game sounds. Music the scanner doesn't know (the lobby, your own) stays as it is.
+- **Trim**: drag the yellow frame's handles over the filmstrip to the part you want, then download that part. The saved clip stays as it is.
+- download or delete it
+
+Clips are stored in your browser only and are limited, so download the ones you want to keep:
+
+- The running session keeps all of its clips until you press **Stop**, unless they outgrow 4 GB, when the lowest scoring go first.
+- Then they go to the clip history, which keeps the 20 best. A better clip replaces the lowest one once it's full.
+
+## Scanning a file
+
+Drop a recorded VoD (mp4, mkv, webm, mov, ts…) on the **File** card or **choose file**. Games appear as their results screens are found, and a finished scan says how long it took. Keep the scanner page open until it's done, leaving it cancels the scan. A scanned file stays in the sessions list, so you can come back to its games later without scanning again.
+
+A VoD of a tournament cast works too: the scanner follows the camera, crediting each splat to the player it was on.
+
+A finished scan has these actions in its header:
+
+- **Coach mode**, see [Coach mode](#coach-mode).
+- **Add to VoDs**: opens the [new VoD form](https://sendou.ink/vods/new) filled in with the file's games (modes, stages, weapons and where each game starts). Add the video's link, title and date, and fix anything misread.
+- **Remove music**: saves the whole video again without the battle music, the other game sounds kept. The new file has the music-free sound as its first audio track and the original sound after it. It takes a while for a long VoD; keep the dialog open until it's done.
+- **Delete** removes the saved scan and its clips.
+
+A file's clips follow the **Clip criteria** under its header (the least splats a clip takes, and how long the streak may be for each count), not the live setting. Changing them cuts the clips again from the saved scan, without scanning again. They last for this visit only, the file being on your computer: opening a scanned file on a later visit asks for the file again to cut them.
+
+### Screenshots
+
+Drop a screenshot (png, webp or jpeg) on the **File** card to see what the scanner reads from that one frame: what it recognizes and where on the picture it looks for it.
+
+## Coach mode
+
+Coach mode opens a scanned file's video next to the list of its moments worth reviewing. Open it from the file's header, or from a game's card (the graduation cap) to start at that game. Click a moment to jump the video there, a bit before it happens so you see the lead-up.
+
+The moments are told from your team's side (the team of the player whose video it is), picked by category:
+
+- **Special**: your specials used
+- **Opening**: the opening fight won or lost
+- **Push**, **Zone**: your team's and the enemy's pushes and game-winning pushes, retakes and holds of the zone
+- **Special stack**: two or three of your team's specials used together
+- **Died with special**: splatted with the special ready
+- **Death streak**, **Kill streak**: splats or deaths in a row
+- **Stagger**: your team with fewer players alive than the enemy for 15 seconds or more
+- **Team wipe**: all of your team or all of the enemy splatted
+
+On a cast, pick the team to coach first. Categories following the camera's player don't exist on a cast, as the camera hops between players.
+
+The filters above the list (match type, stage, how the game ended, weapons and players on either side) narrow the games: playback skips the games they hide and the footage between games.
+
+Beside the video is the map as you last opened it in that game, and how long ago that was. Click it to swap it with the video, or open it in the [map planner](https://sendou.ink/plans) from its corner. While the video is paused you can draw over it (or the map), in the color picked in the corner; the drawing goes away as playback continues.
+
+The bar under the video steps through the footage, every button with its hotkey:
+
+| Keys | Step |
+| --- | --- |
+| Space or K | Play and pause |
+| Z / C | Previous / next game |
+| A / D | Previous / next respawn |
+| Q / E | Previous / next event |
+| ← / → | 5 seconds back / forward |
+| S / W | Slower / faster |
+| M | Swap the map and the video |
+
+Only the scan is saved, not the video: opening coach mode for a file not opened this visit asks for the file again.
+
+## Privacy and storage
+
+Everything is processed on your computer: video never leaves the browser. The scanner keeps what it read in this browser only, nothing of it syncs to another browser or computer:
+
+- Sessions: the last 30 days, at most 20 sessions.
+- The frames each game was read from: the last 3 days, up to 500 MB.
+- Clips: see [Clips](#clips).
+
+Download anything you want to keep. Clearing the site's data in the browser deletes it all.
+
+Only the uploads described in [Uploading results](#uploading-results) reach sendou.ink.
+
+## Settings
+
+The ⚙ **Settings** next to the title:
+
+- **Upload results to sendou.ink**: see [Uploading results](#uploading-results).
+- **Save clips** and **Clip live games on splats in a row**: see [Clips](#clips).
+- **Use the graphics card**: on by default where the browser supports it (WebGPU). Part of the reading then runs on the graphics card, which cut the time of a VoD scan by about a quarter in our tests. What gets read is exactly the same either way. Even with it on, the scanner reads on the processor instead:
+  - when the browser is slow to hand results back from the graphics card, as Firefox is: there the processor is far faster
+  - when the graphics card can't be started
+  - when the graphics card fails mid-scan: the rest of that scan or capture runs on the processor
+
+  A video the browser decodes without hardware help (often VP9) gains little, as decoding is then the slow part. Turn the setting off if scans misbehave.
+- **Clip audio offset (ms)**: see [Clip audio](#clip-audio).
+
+## With a tournament broadcast
+
+When you produce a tournament stream with sendou.ink's [broadcast overlays](/guides/broadcast-overlays/#the-scanner), the scanner tells the broadcast when games start and end, so scenes waiting for them go on air by themselves in the teams' ink colors, and cuts clips of the cast's big moments for the replays scene. There is nothing to link: capture the game feed while logged in, and the scanner follows the broadcast your OBS browser source shows, while its tournament is on.
+

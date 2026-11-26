@@ -1,22 +1,22 @@
 /**
- * The landing: title, a "How it works" disclosure, two entry cards (Live / File), the clip history strip and
+ * The landing: title with the guide link and settings, two entry cards (Live / File), the clip history strip and
  * the sessions list. Anyone can capture, scan files and get clips locally;
  * only uploading (live captures) needs a login. Dropping a file anywhere here starts a scan;
  * an image opens the screenshot view instead, through the same handoff
  * Inspect uses.
  */
 import clsx from "clsx";
-import { Play, Upload } from "lucide-react";
+import { Play, SquareArrowOutUpRight, Upload } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { LocaleTime } from "~/components/LocaleTime";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import {
 	useSearchParam,
 	useSearchParamsTyped,
 } from "~/modules/search-params/hooks";
-import { SCANNER_PAGE } from "~/utils/urls";
+import { SCANNER_DOC_LINK, SCANNER_PAGE } from "~/utils/urls";
 import { scannerSearchParams } from "../scanner-search-params";
 import { MAX_HISTORY_CLIPS, type ScannerClip } from "../store/clips";
 import { newInspectKey, putInspectFrame } from "../store/inspect";
@@ -105,11 +105,19 @@ export function LandingView() {
 			}}
 		>
 			<header className={styles.header}>
-				<div className={styles.titleRow}>
-					<h1 className={styles.title}>Scanner</h1>
+				<h1 className={styles.title}>Scanner</h1>
+				<div className={styles.titleActions}>
+					<LinkButton
+						to={SCANNER_DOC_LINK}
+						isExternal
+						variant="minimal"
+						size="small"
+						icon={<SquareArrowOutUpRight />}
+					>
+						Guide
+					</LinkButton>
 					<SettingsPopover />
 				</div>
-				<HowItWorks />
 			</header>
 
 			<div className={styles.cards}>
@@ -203,43 +211,6 @@ export function LandingView() {
 				/>
 			) : null}
 		</div>
-	);
-}
-
-function HowItWorks() {
-	return (
-		<details className={styles.howItWorks}>
-			<summary>How it works</summary>
-			<dl className={styles.facts}>
-				<dt>What you need</dt>
-				<dd>
-					A desktop browser and a capture card sending the game as a full-screen
-					feed. Recorded VoDs don't need a capture card. Clipping live captures
-					needs a Chromium browser (Chrome, Edge, Brave…).
-				</dd>
-				<dt>What gets read</dt>
-				<dd>
-					The mode, stage and lobby, the scoreboard (names, weapons, splats,
-					deaths, specials, paint and the result), the kill feed, objective
-					progress and who is alive or has their special ready.
-				</dd>
-				<dt>Privacy</dt>
-				<dd>
-					Everything is processed on your computer. Video never leaves the
-					browser, and sessions, clips and the screenshots each game was read
-					from are saved in this browser only. This also means you should always
-					download any data you want to keep.
-				</dd>
-				<dt>What gets uploaded</dt>
-				<dd>
-					Only when you are logged in and upload is on in the settings, and only
-					from live captures: the reads of your Private Battles (and X Battles)
-					are sent as each game ends, never any video. Private Battles played in
-					SendouQ or a tournament get linked to their match once it is reported
-					and show up on that match's page. Other lobbies are never uploaded.
-				</dd>
-			</dl>
-		</details>
 	);
 }
 

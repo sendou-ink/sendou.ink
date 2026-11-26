@@ -123,7 +123,7 @@ export function SettingsPopover({
 						onChange={(webgpu) => updateSettings({ webgpu })}
 					>
 						{gpuSupported
-							? "Use the graphics card (faster scans)"
+							? "Use the graphics card"
 							: "Use the graphics card (not supported by this browser)"}
 					</SendouSwitch>
 					<div className={styles.row}>
