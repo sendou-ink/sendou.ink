@@ -1,5 +1,7 @@
 import { TZDate } from "@date-fns/tz";
 import { isWeekend } from "date-fns";
+import * as R from "remeda";
+import * as v from "valibot";
 import {
 	BEST_TIER_NUMBER,
 	WORST_TIER_NUMBER,
@@ -8,6 +10,7 @@ import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
 import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import { assertType } from "~/utils/types";
 import { CALENDAR_EVENT } from "../calendar-constants";
+import { calendarFiltersSearchParamsSchema } from "../calendar-schemas";
 import type {
 	CalendarEvent,
 	CalendarEventTag,
@@ -70,25 +73,9 @@ export function versusTag(minMembersPerTeam: number): VersusTag | null {
 	return null;
 }
 
-/** Default empty calendar filters. */
+/** Default empty calendar filters, the fallbacks of {@link calendarFiltersSearchParamsSchema}. */
 export function defaultFilters(): CalendarFilters {
-	return {
-		preferredStartTime: "ANY",
-		tagsIncluded: [],
-		tagsExcluded: [],
-		isSendou: false,
-		isRanked: false,
-		games: [...gamesShort],
-		modes: [...modesShortWithSpecial],
-		preferredVersus: [...versusShort],
-		modesExact: false,
-		orgsIncluded: [],
-		orgsExcluded: [],
-		authorIdsExcluded: [],
-		minTeamCount: 0,
-		minTier: BEST_TIER_NUMBER,
-		maxTier: WORST_TIER_NUMBER,
-	};
+	return R.clone(v.parse(calendarFiltersSearchParamsSchema, {}));
 }
 
 const defaultFiltersString = filtersToString(defaultFilters());

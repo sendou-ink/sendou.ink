@@ -3,13 +3,18 @@ import {
 	BEST_TIER_NUMBER,
 	WORST_TIER_NUMBER,
 } from "~/features/tournament/core/tiering";
-import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
-import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
-import { gamesShortSchema, modeShortWithSpecial } from "~/utils/schema";
 import { VENUE_SEARCH_QUERY_MAX_LENGTH } from "./calendar-constants";
-import { calendarFilterTagsArr } from "./calendar-schemas";
+import {
+	calendarFilterGamesArr,
+	calendarFilterModesArr,
+	calendarFilterPreferredStartTime,
+	calendarFilterPreferredVersusArr,
+	calendarFiltersPlainStringArr,
+	calendarFilterTagsArr,
+} from "./calendar-schemas";
+import * as CalendarEvent from "./core/CalendarEvent";
 
 export const VIEW_FILTERS = [
 	"registered",
@@ -48,76 +53,72 @@ const yearNumber = v.pipe(
 	v.maxValue(2100),
 );
 
+const FILTER_DEFAULTS = CalendarEvent.defaultFilters();
+
 export const calendarSearchParams = SearchParams.define({
-	modes: SP.param(
-		v.pipe(
-			v.array(modeShortWithSpecial),
-			v.minLength(1),
-			v.maxLength(modesShortWithSpecial.length),
-		),
-		{ default: [...modesShortWithSpecial], loader: true },
-	),
-	modesExact: SP.param(v.boolean(), { default: false, loader: true }),
-	games: SP.param(
-		v.pipe(
-			v.array(gamesShortSchema),
-			v.minLength(1),
-			v.maxLength(gamesShort.length),
-		),
-		{
-			default: [...gamesShort],
-			loader: true,
-		},
-	),
-	preferredVersus: SP.param(
-		v.pipe(
-			v.array(v.picklist(versusShort)),
-			v.minLength(1),
-			v.maxLength(versusShort.length),
-		),
-		{ default: [...versusShort], loader: true },
-	),
-	preferredStartTime: SP.param(v.picklist(["ANY", "EU", "NA", "AU"]), {
-		default: "ANY",
+	modes: SP.param(calendarFilterModesArr, {
+		default: FILTER_DEFAULTS.modes,
+		loader: true,
+	}),
+	modesExact: SP.param(v.boolean(), {
+		default: FILTER_DEFAULTS.modesExact,
+		loader: true,
+	}),
+	games: SP.param(calendarFilterGamesArr, {
+		default: FILTER_DEFAULTS.games,
+		loader: true,
+	}),
+	preferredVersus: SP.param(calendarFilterPreferredVersusArr, {
+		default: FILTER_DEFAULTS.preferredVersus,
+		loader: true,
+	}),
+	preferredStartTime: SP.param(calendarFilterPreferredStartTime, {
+		default: FILTER_DEFAULTS.preferredStartTime,
 		loader: true,
 	}),
 	tagsIncluded: SP.param(calendarFilterTagsArr, {
-		default: [],
+		default: FILTER_DEFAULTS.tagsIncluded,
 		loader: true,
 	}),
 	tagsExcluded: SP.param(calendarFilterTagsArr, {
-		default: [],
+		default: FILTER_DEFAULTS.tagsExcluded,
 		loader: true,
 	}),
-	isSendou: SP.param(v.boolean(), { default: false, loader: true }),
-	isRanked: SP.param(v.boolean(), { default: false, loader: true }),
+	isSendou: SP.param(v.boolean(), {
+		default: FILTER_DEFAULTS.isSendou,
+		loader: true,
+	}),
+	isRanked: SP.param(v.boolean(), {
+		default: FILTER_DEFAULTS.isRanked,
+		loader: true,
+	}),
 	minTeamCount: SP.param(v.pipe(v.number(), v.integer(), v.minValue(0)), {
-		default: 0,
+		default: FILTER_DEFAULTS.minTeamCount,
 		loader: true,
 	}),
-	minTier: SP.param(tierNumber, { default: BEST_TIER_NUMBER, loader: true }),
-	maxTier: SP.param(tierNumber, { default: WORST_TIER_NUMBER, loader: true }),
-	orgsIncluded: SP.param(
-		v.pipe(v.array(v.pipe(v.string(), v.maxLength(100))), v.maxLength(10)),
-		{
-			default: [],
-			loader: true,
-		},
-	),
-	orgsExcluded: SP.param(
-		v.pipe(v.array(v.pipe(v.string(), v.maxLength(100))), v.maxLength(10)),
-		{
-			default: [],
-			loader: true,
-		},
-	),
+	minTier: SP.param(tierNumber, {
+		default: FILTER_DEFAULTS.minTier,
+		loader: true,
+	}),
+	maxTier: SP.param(tierNumber, {
+		default: FILTER_DEFAULTS.maxTier,
+		loader: true,
+	}),
+	orgsIncluded: SP.param(calendarFiltersPlainStringArr, {
+		default: FILTER_DEFAULTS.orgsIncluded,
+		loader: true,
+	}),
+	orgsExcluded: SP.param(calendarFiltersPlainStringArr, {
+		default: FILTER_DEFAULTS.orgsExcluded,
+		loader: true,
+	}),
 	authorIdsExcluded: SP.param(
 		v.pipe(
 			v.array(v.pipe(v.number(), v.integer(), v.gtValue(0))),
 			v.maxLength(10),
 		),
 		{
-			default: [],
+			default: FILTER_DEFAULTS.authorIdsExcluded,
 			loader: true,
 		},
 	),

@@ -24,23 +24,28 @@ export const calendarFilterTagsArr = v.pipe(
 	v.maxLength(CALENDAR_EVENT.TAGS.length),
 );
 
-const calendarFiltersPlainStringArr = v.pipe(
+export const calendarFiltersPlainStringArr = v.pipe(
 	v.array(v.pipe(v.string(), v.maxLength(100))),
 	v.maxLength(10),
 );
 const calendarFiltersIdsArr = v.pipe(v.array(id), v.maxLength(10));
-const calendarFilterGamesArr = v.pipe(
+export const calendarFilterGamesArr = v.pipe(
 	v.array(gamesShortSchema),
 	v.minLength(1),
-	v.maxLength(3),
+	v.maxLength(gamesShort.length),
 );
-const preferredStartTime = v.picklist(["ANY", "EU", "NA", "AU"]);
-const preferredVersus = v.pipe(
+export const calendarFilterPreferredStartTime = v.picklist([
+	"ANY",
+	"EU",
+	"NA",
+	"AU",
+]);
+export const calendarFilterPreferredVersusArr = v.pipe(
 	v.array(v.picklist(versusShort)),
 	v.minLength(1),
 	v.maxLength(versusShort.length),
 );
-const modeArr = v.pipe(
+export const calendarFilterModesArr = v.pipe(
 	v.array(modeShortWithSpecial),
 	v.minLength(1),
 	v.maxLength(modesShortWithSpecial.length),
@@ -52,8 +57,9 @@ const tierNumber = v.pipe(
 	v.maxValue(WORST_TIER_NUMBER),
 );
 
+/** Calendar filters with their defaults as the fallbacks, the one place the defaults are stated. */
 export const calendarFiltersSearchParamsSchema = v.object({
-	preferredStartTime: v.fallback(preferredStartTime, "ANY"),
+	preferredStartTime: v.fallback(calendarFilterPreferredStartTime, "ANY"),
 	tagsIncluded: v.fallback(calendarFilterTagsArr, []),
 	tagsExcluded: v.fallback(calendarFilterTagsArr, []),
 	isSendou: v.fallback(v.boolean(), false),
@@ -62,8 +68,10 @@ export const calendarFiltersSearchParamsSchema = v.object({
 	orgsExcluded: v.fallback(calendarFiltersPlainStringArr, []),
 	authorIdsExcluded: v.fallback(calendarFiltersIdsArr, []),
 	games: v.fallback(calendarFilterGamesArr, [...gamesShort]),
-	preferredVersus: v.fallback(preferredVersus, [...versusShort]),
-	modes: v.fallback(modeArr, [...modesShortWithSpecial]),
+	preferredVersus: v.fallback(calendarFilterPreferredVersusArr, [
+		...versusShort,
+	]),
+	modes: v.fallback(calendarFilterModesArr, [...modesShortWithSpecial]),
 	modesExact: v.fallback(v.boolean(), false),
 	minTeamCount: v.fallback(
 		v.pipe(coerceNumber(), v.integer(), v.minValue(0)),

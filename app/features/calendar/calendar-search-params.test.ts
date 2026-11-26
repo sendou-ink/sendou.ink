@@ -1,4 +1,5 @@
-import { describe, test } from "vitest";
+import * as R from "remeda";
+import { describe, expect, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -39,6 +40,14 @@ describe("calendarSearchParams", () => {
 			month: [null, 0, 11],
 			year: [null, 2015, 2026, 2100],
 		});
+	});
+
+	test("a pristine URL decodes to the default filters", () => {
+		const parsed = calendarSearchParams.parse(new URLSearchParams());
+
+		expect(R.pick(parsed, [...CalendarEvent.FILTERS_KEYS])).toEqual(
+			CalendarEvent.defaultFilters(),
+		);
 	});
 
 	test("decodes garbage to defaults", () => {
