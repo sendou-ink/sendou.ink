@@ -1,13 +1,12 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import * as R from "remeda";
 import {
 	SendouTab,
 	SendouTabList,
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { Flipper } from "~/components/Flipper";
-import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
+import { useSwipeablePanes } from "~/hooks/useSwipeablePanes";
 import styles from "./LookingColumns.module.css";
 
 /**
@@ -40,12 +39,10 @@ export function LookingColumns({
 }) {
 	const { t } = useTranslation(["q"]);
 	const [selectedPane, setSelectedPane] = React.useState("groups");
-	const layoutRef = React.useRef<HTMLDivElement>(null);
-	const stripRef = React.useRef<HTMLDivElement>(null);
-	const clickedPaneRef = React.useRef<string | null>(null);
-	const settledPaneRef = React.useRef("groups");
-	const isTouchingRef = React.useRef(false);
-	const prefersReducedMotion = usePrefersReducedMotion();
+	const swipeablePanes = useSwipeablePanes({
+		selectedKey: selectedPane,
+		onSelectionChange: setSelectedPane,
+	});
 
 	const receivedHeader = t(
 		isFullGroup
@@ -53,98 +50,11 @@ export function LookingColumns({
 			: "q:looking.columns.invitations",
 	);
 
-	const scrollToPane = (pane: string) => {
-		setSelectedPane(pane);
-
-		const strip = stripRef.current;
-		const paneElement = strip?.querySelector(`[data-pane="${pane}"]`);
-		if (!strip || !paneElement) return;
-
-		const offset = offsetFromStripStart(strip, paneElement);
-		// the panes passed on the way would otherwise each take the tab for a moment
-		clickedPaneRef.current = Math.abs(offset) < 1 ? null : pane;
-
-		strip.scrollBy({
-			left: offset,
-			behavior: prefersReducedMotion ? "instant" : "smooth",
-		});
-	};
-
-	const selectPaneInView = () => {
-		const strip = stripRef.current;
-		if (!strip) return;
-
-		const paneInView = closestPane(strip)?.dataset.pane;
-		if (!paneInView) return;
-
-		if (clickedPaneRef.current) {
-			if (paneInView === clickedPaneRef.current) clickedPaneRef.current = null;
-			return;
-		}
-
-		setSelectedPane(paneInView);
-	};
-
-	// panes differ a lot in height, landing on one from deep down another would otherwise show empty space
-	const scrollUpToSettledPane = () => {
-		if (isTouchingRef.current) return;
-
-		const layout = layoutRef.current;
-		const strip = stripRef.current;
-		if (!layout?.isConnected || !strip) return;
-
-		const pane = closestPane(strip);
-		const isAtRest = pane && Math.abs(offsetFromStripStart(strip, pane)) < 1;
-		if (!isAtRest || pane.dataset.pane === settledPaneRef.current) return;
-		settledPaneRef.current = pane.dataset.pane ?? settledPaneRef.current;
-
-		const stickyHeaderHeight = Number.parseFloat(
-			getComputedStyle(document.documentElement).scrollPaddingTop,
-		);
-		const tabList = layout.querySelector("[role='tablist']");
-		const areTabsInView =
-			tabList &&
-			tabList.getBoundingClientRect().bottom > (stickyHeaderHeight || 0);
-		if (areTabsInView) return;
-
-		layout.scrollIntoView({
-			block: "start",
-			inline: "nearest",
-			behavior: prefersReducedMotion ? "instant" : "smooth",
-		});
-	};
-
-	const handleStripScroll = () => {
-		selectPaneInView();
-		scrollUpToSettledPane();
-	};
-
-	// selects right away as a swipe cancelling a tab click's scroll before it moved fires no scroll event
-	const releaseClickedPane = () => {
-		clickedPaneRef.current = null;
-		selectPaneInView();
-	};
-
-	const followScrollPosition = () => {
-		releaseClickedPane();
-		scrollUpToSettledPane();
-	};
-
-	const startTouch = () => {
-		isTouchingRef.current = true;
-		releaseClickedPane();
-	};
-
-	const endTouch = () => {
-		isTouchingRef.current = false;
-		scrollUpToSettledPane();
-	};
-
 	return (
-		<div ref={layoutRef} className={styles.layout}>
+		<div ref={swipeablePanes.layoutRef} className={styles.layout}>
 			<SendouTabs
 				selectedKey={selectedPane}
-				onSelectionChange={scrollToPane}
+				onSelectionChange={swipeablePanes.scrollToPane}
 				className={styles.tabs}
 			>
 				<SendouTabList>
@@ -161,18 +71,7 @@ export function LookingColumns({
 					) : null}
 				</SendouTabList>
 			</SendouTabs>
-			<div
-				ref={stripRef}
-				className={styles.strip}
-				onScroll={handleStripScroll}
-				// biome-ignore lint/suspicious/noUnknownAttribute: a React 19 event Biome doesn't know yet
-				onScrollEnd={followScrollPosition}
-				onPointerDown={releaseClickedPane}
-				onTouchStart={startTouch}
-				onTouchEnd={endTouch}
-				onTouchCancel={endTouch}
-				onWheel={releaseClickedPane}
-			>
+			<div {...swipeablePanes.stripProps} className={styles.strip}>
 				<Flipper flipKey={flipKey} className={styles.columns}>
 					{own ? (
 						<div className={styles.own} data-pane="own">
@@ -221,17 +120,4 @@ export function SortedCard({
 
 function ColumnHeader({ children }: { children: React.ReactNode }) {
 	return <div className={styles.header}>{children}</div>;
-}
-
-function closestPane(strip: HTMLElement) {
-	return R.firstBy(
-		[...strip.querySelectorAll<HTMLElement>("[data-pane]")],
-		(pane) => Math.abs(offsetFromStripStart(strip, pane)),
-	);
-}
-
-function offsetFromStripStart(strip: HTMLElement, element: Element) {
-	return (
-		element.getBoundingClientRect().left - strip.getBoundingClientRect().left
-	);
 }

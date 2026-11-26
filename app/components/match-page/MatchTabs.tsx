@@ -11,12 +11,18 @@ import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { invariant } from "~/utils/invariant";
-import { SendouTab, SendouTabList, SendouTabs } from "../elements/Tabs";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanels,
+	SendouTabs,
+} from "../elements/Tabs";
 import styles from "./MatchTabs.module.css";
 import { matchPageSearchParams } from "./match-page-search-params";
 
 type MatchTabsKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
 interface MatchTabsProps {
+	/** the tabs' panels, in the order of `tabs` as they are swiped between on narrow screens */
 	children: React.ReactNode;
 	tabs: Array<MatchTabsKey>;
 	/** tabs showing a warning-colored alert icon */
@@ -77,7 +83,7 @@ export function MatchTabs({
 				onSelectionChange={(key) => setTab(key as MatchTabsKey)}
 				disappearing={false}
 				padded={false}
-				keepPanelsMounted
+				swipeable
 			>
 				<SendouTabList>
 					{tabs.map((tab) => (
@@ -92,7 +98,7 @@ export function MatchTabs({
 					))}
 				</SendouTabList>
 
-				{children}
+				<SendouTabPanels>{children}</SendouTabPanels>
 			</SendouTabs>
 		</div>
 	);

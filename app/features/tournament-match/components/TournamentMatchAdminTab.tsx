@@ -223,7 +223,7 @@ function CastChannelChipRadio({
 	};
 
 	return (
-		<SendouChipRadioGroup>
+		<SendouChipRadioGroup wrap>
 			<SendouChipRadio
 				name={`cast-channel-${matchId}`}
 				value={NOT_CASTED_VALUE}

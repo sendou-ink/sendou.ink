@@ -84,18 +84,6 @@ export function TournamentMatchTabs({
 				data.schedule.phase === "UNSCHEDULED" ? TAB_KEYS.SCHEDULE : undefined
 			}
 		>
-			{tabs.includes(TAB_KEYS.RESULT) ? (
-				<MatchResultTab
-					teams={resolveTimelineTeams(opponentOneId, opponentTwoId, tournament)}
-					score={{
-						alpha: scores[0],
-						bravo: scores[1],
-					}}
-					maps={timelineMaps}
-					pickBanRowsBySlot={pickBanData?.rowsBySlot}
-					isOngoing={!data.matchIsOver && data.results.length > 0}
-				/>
-			) : null}
 			<TournamentMatchRosterTab data={data} />
 			{tabs.includes(TAB_KEYS.SCHEDULE) ? (
 				<TournamentMatchScheduleTab data={data} />
@@ -114,6 +102,18 @@ export function TournamentMatchTabs({
 			) : null}
 			{tabs.includes(TAB_KEYS.ADMIN) ? (
 				<TournamentMatchAdminTab data={data} />
+			) : null}
+			{tabs.includes(TAB_KEYS.RESULT) ? (
+				<MatchResultTab
+					teams={resolveTimelineTeams(opponentOneId, opponentTwoId, tournament)}
+					score={{
+						alpha: scores[0],
+						bravo: scores[1],
+					}}
+					maps={timelineMaps}
+					pickBanRowsBySlot={pickBanData?.rowsBySlot}
+					isOngoing={!data.matchIsOver && data.results.length > 0}
+				/>
 			) : null}
 		</MatchTabs>
 	);

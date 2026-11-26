@@ -85,28 +85,6 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 
 	return (
 		<MatchTabs tabs={tabs} alertTabs={alertTabs}>
-			{isLocked || hasReportedMaps ? (
-				<MatchResultTab
-					teams={resolveTimelineTeams(data.match, t)}
-					score={{ alpha: alphaWins, bravo: bravoWins }}
-					maps={resolveTimelineMaps(
-						data.match,
-						data.reportedWeapons,
-						data.ingestedScoreboards,
-					)}
-					spChanges={resolveTimelineSpChanges(data.match)}
-					isOngoing={!isLocked && hasReportedMaps}
-				>
-					{data.match.cancelRequestedByUserId ? (
-						<p className="text-lighter text-xxs text-center mt-4">
-							{t("q:match.canceled.detail", {
-								requester: resolveCancelRequesterUsername(data.match),
-								accepter: resolveCancelAccepterUsername(data.match),
-							})}
-						</p>
-					) : null}
-				</MatchResultTab>
-			) : null}
 			<MatchRosterTab
 				minMembersPerTeam={4}
 				canEditSubbedOut={[false, false]}
@@ -135,6 +113,28 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 					}
 					viewerSide={userSide}
 				/>
+			) : null}
+			{isLocked || hasReportedMaps ? (
+				<MatchResultTab
+					teams={resolveTimelineTeams(data.match, t)}
+					score={{ alpha: alphaWins, bravo: bravoWins }}
+					maps={resolveTimelineMaps(
+						data.match,
+						data.reportedWeapons,
+						data.ingestedScoreboards,
+					)}
+					spChanges={resolveTimelineSpChanges(data.match)}
+					isOngoing={!isLocked && hasReportedMaps}
+				>
+					{data.match.cancelRequestedByUserId ? (
+						<p className="text-lighter text-xxs text-center mt-4">
+							{t("q:match.canceled.detail", {
+								requester: resolveCancelRequesterUsername(data.match),
+								accepter: resolveCancelAccepterUsername(data.match),
+							})}
+						</p>
+					) : null}
+				</MatchResultTab>
 			) : null}
 		</MatchTabs>
 	);

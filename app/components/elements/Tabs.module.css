@@ -219,3 +219,37 @@
 		}
 	}
 }
+
+/* swiped between below this width, the looking page's strip (`LookingColumns.module.css`) works the same */
+.swipeable {
+	container: swipeable-tabs / inline-size;
+}
+
+@container swipeable-tabs (width >= 640px) {
+	.swipePane:not([data-selected]) {
+		display: none;
+	}
+}
+
+/* positioned so absolutely positioned bits of the panes (e.g. visually hidden inputs) scroll and clip with the strip instead of widening the page */
+.swipeStrip {
+	position: relative;
+}
+
+@container swipeable-tabs (width < 640px) {
+	.swipeStrip {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--s-4);
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		overscroll-behavior-x: contain;
+		scrollbar-width: none;
+	}
+
+	.swipePane {
+		flex: 0 0 100%;
+		min-width: 0;
+		scroll-snap-align: start;
+	}
+}

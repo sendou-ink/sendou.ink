@@ -2,7 +2,9 @@ import clsx from "clsx";
 import { TriangleAlert } from "lucide-react";
 import * as React from "react";
 import { Link } from "react-router";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
+import { useSwipeablePanes } from "~/hooks/useSwipeablePanes";
 import { focusMoveForKey, rovingFocusIndex } from "~/utils/roving-focus";
 
 import { ButtonLook } from "./Button";
@@ -17,6 +19,8 @@ interface TabsContextValue {
 	selectedKey: string | null;
 	orientation: TabsOrientation;
 	keepPanelsMounted: boolean;
+	swipeable: boolean;
+	swipeStripProps: ReturnType<typeof useSwipeablePanes>["stripProps"];
 	select: (key: string) => void;
 	registerTab: (key: string, element: HTMLElement) => () => void;
 	moveFocus: (
@@ -44,6 +48,8 @@ interface SendouTabsProps {
 	disappearing?: boolean;
 	/** Hidden panels stay mounted via `<Activity>`: pre-rendered in the background once the page is idle and state kept across switches, making tab switches instant. Default false. */
 	keepPanelsMounted?: boolean;
+	/** On narrow screens the panels, wrapped in `SendouTabPanels`, are laid out side by side in a strip swiped between, with the tabs following the swipe. Wider, only the selected panel shows as without it. Implies `keepPanelsMounted`. Default false. */
+	swipeable?: boolean;
 	className?: string;
 	children: React.ReactNode;
 }
@@ -64,6 +70,16 @@ interface SendouTabsProps {
  *     Splat Roller, Dynamo Roller, etc.
  *   </SendouTabPanel>
  * </SendouTabs>
+ *
+ * @example
+ * // swiped between on narrow screens
+ * <SendouTabs swipeable>
+ *   <SendouTabList>...</SendouTabList>
+ *   <SendouTabPanels>
+ *     <SendouTabPanel id="shooter">...</SendouTabPanel>
+ *     <SendouTabPanel id="roller">...</SendouTabPanel>
+ *   </SendouTabPanels>
+ * </SendouTabs>
  */
 export function SendouTabs({
 	selectedKey,
@@ -72,6 +88,7 @@ export function SendouTabs({
 	padded = true,
 	disappearing = true,
 	keepPanelsMounted = false,
+	swipeable = false,
 	className,
 	orientation = "horizontal",
 	children,
@@ -96,12 +113,21 @@ export function SendouTabs({
 		? "horizontal"
 		: orientation;
 
-	const select = (key: string) => {
+	const selectWithoutScrolling = (key: string) => {
 		if (!isControlled) {
 			setUncontrolledKey(key);
 		}
 		onSelectionChange?.(key);
 	};
+
+	const swipeablePanes = useSwipeablePanes({
+		selectedKey: currentKey,
+		onSelectionChange: selectWithoutScrolling,
+	});
+
+	const select = swipeable
+		? swipeablePanes.scrollToPane
+		: selectWithoutScrolling;
 
 	const orderedKeys = () =>
 		[...tabsRef.current.entries()]
@@ -115,7 +141,9 @@ export function SendouTabs({
 	const context: TabsContextValue = {
 		selectedKey: currentKey,
 		orientation: effectiveOrientation,
-		keepPanelsMounted,
+		keepPanelsMounted: keepPanelsMounted || swipeable,
+		swipeable,
+		swipeStripProps: swipeablePanes.stripProps,
 		select,
 		registerTab: (key, element) => {
 			tabsRef.current.set(key, element);
@@ -143,7 +171,9 @@ export function SendouTabs({
 
 	const tabs = (
 		<div
+			ref={swipeable ? swipeablePanes.layoutRef : undefined}
 			className={clsx(className, styles.root, {
+				[styles.swipeable]: swipeable,
 				[styles.padded]: padded,
 				[styles.disappearing]: disappearing,
 				[styles.vertical]: orientation === "vertical",
@@ -179,7 +209,9 @@ function firstTabId(node: React.ReactNode): string | null {
 		const props = node.props as SendouTabProps;
 		return props.isDisabled ? null : props.id;
 	}
-	if (node.type === SendouTabPanel) return null;
+	if (node.type === SendouTabPanel || node.type === SendouTabPanels) {
+		return null;
+	}
 
 	return firstTabId((node.props as { children?: React.ReactNode }).children);
 }
@@ -347,6 +379,19 @@ function scrollTabIntoView(container: HTMLElement, tab: HTMLElement) {
 	}
 }
 
+/** Holds the panels of `swipeable` tabs, the strip swiped between; renders its children as they are otherwise. */
+export function SendouTabPanels({ children }: { children: React.ReactNode }) {
+	const tabs = useTabsContext();
+
+	if (!tabs.swipeable) return children;
+
+	return (
+		<div {...tabs.swipeStripProps} className={styles.swipeStrip}>
+			{children}
+		</div>
+	);
+}
+
 interface SendouTabPanelProps {
 	id: string;
 	className?: string;
@@ -359,16 +404,22 @@ export function SendouTabPanel({
 	children,
 }: SendouTabPanelProps) {
 	const tabs = useTabsContext();
+	const isHydrated = useHydrated();
 
 	const selected = tabs.selectedKey === id;
 	if (!selected && !tabs.keepPanelsMounted) return null;
 
 	const panel = (
 		<div
-			className={clsx(className, styles.tabPanel)}
+			className={clsx(className, styles.tabPanel, {
+				[styles.swipePane]: tabs.swipeable,
+			})}
 			role="tabpanel"
 			id={`tabpanel-${id}`}
 			aria-labelledby={`tab-${id}`}
+			data-pane={tabs.swipeable ? id : undefined}
+			data-selected={selected ? "true" : undefined}
+			inert={tabs.swipeable && !selected}
 		>
 			{children}
 		</div>
@@ -376,8 +427,11 @@ export function SendouTabPanel({
 
 	if (!tabs.keepPanelsMounted) return panel;
 
+	// the server can't know where the strip is scrolled to, so the neighbours are revealed only once hydrated
+	const isVisible = selected || (tabs.swipeable && isHydrated);
+
 	return (
-		<React.Activity mode={selected ? "visible" : "hidden"}>
+		<React.Activity mode={isVisible ? "visible" : "hidden"}>
 			{panel}
 		</React.Activity>
 	);
