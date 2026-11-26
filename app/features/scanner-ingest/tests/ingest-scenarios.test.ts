@@ -1,6 +1,9 @@
 import * as R from "remeda";
 import { describe, expect, test } from "vitest";
+import { backdate } from "~/db/seed/core/backdate";
 import { db } from "~/db/sql";
+import { loader as tournamentMatchesLoader } from "~/features/api-public/routes/tournament.$id.matches";
+import type { GetTournamentMatchesResponse } from "~/features/api-public/schema";
 import type {
 	ScannerMatch,
 	ScannerMatchTeam,
@@ -8,6 +11,7 @@ import type {
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
+import { wrappedLoader } from "~/utils/Test";
 import { linkStoredMatches } from "../core/relink.server";
 import {
 	ALPHA_NAMES,
@@ -30,6 +34,10 @@ import {
 	tournamentWorld,
 	WEAPONS,
 } from "./harness";
+
+const tournamentMatchesApiLoader = wrappedLoader<Response>({
+	loader: tournamentMatchesLoader,
+});
 
 describe("gating & request filtering", () => {
 	test("G2 other lobbies: anarchy and casual matches are skipped entirely", async () => {
@@ -912,7 +920,50 @@ describe("tournament flow", () => {
 		expect(res.linkedGamesCount).toBe(1);
 		expect(await fetchIngestedMatches()).toHaveLength(1);
 	});
+
+	test("T11 replay codes: shown on the match page and in the public API until they expire", async () => {
+		const w = await tournamentWorld();
+		const finalMatch = w.matchesOfTeam(w.championTeamId).at(-1)!;
+		const [game1] = await w.games(finalMatch.id);
+		const replayCode = "RPUJ-64TX-BB8V-S34F";
+
+		await ingest(w.povUser, [w.scanned(game1!, { replayCode })]);
+
+		const page = await tournamentMatchPage(w.tournamentId, finalMatch.id);
+		expect(
+			page.ingestedScoreboards[0]!.data.replays?.map((replay) => replay.code),
+		).toEqual([replayCode]);
+		expect(
+			await apiPlayedMapReplayCodes(w.tournamentId, finalMatch.id),
+		).toEqual([replayCode, null]);
+
+		const [stored] = await fetchIngestedMatches();
+		await backdate("IngestedMatch", stored!.id, { createdAt: daysAgo(31) });
+
+		const expiredPage = await tournamentMatchPage(
+			w.tournamentId,
+			finalMatch.id,
+		);
+		expect(expiredPage.ingestedScoreboards[0]!.data.replays).toBeUndefined();
+		expect(
+			await apiPlayedMapReplayCodes(w.tournamentId, finalMatch.id),
+		).toEqual([null, null]);
+	});
 });
+
+async function apiPlayedMapReplayCodes(
+	tournamentId: number,
+	tournamentMatchId: number,
+) {
+	const response = await tournamentMatchesApiLoader({
+		params: { id: String(tournamentId) },
+	});
+	const matches = (await response.json()) as GetTournamentMatchesResponse;
+
+	return matches
+		.find((match) => match.id === tournamentMatchId)!
+		.playedMaps.map((playedMap) => playedMap.replayCode);
+}
 
 function minimapTeam(team: ScannerMatchTeam): ScannerMatchTeam {
 	return {

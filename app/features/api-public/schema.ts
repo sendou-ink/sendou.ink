@@ -314,7 +314,15 @@ export type GetTournamentMatchesResponse = Array<{
 	/** `null` while the set is in progress. */
 	winnerTeamId: number | null;
 	/** Maps played so far with their results, in the order they were played. Upcoming maps are not included, see GET /api/tournament-match/{matchId} for those. */
-	playedMaps: Array<MapListMap>;
+	playedMaps: Array<
+		MapListMap & {
+			/**
+			 * Code of a player's uploaded replay of the map, read by the sendou.ink scanner. `null` when none was scanned or it can no longer be watched (30 days after the upload or after a game update).
+			 * @example "RPUJ-64TX-BB8V-S34F"
+			 */
+			replayCode: string | null;
+		}
+	>;
 	/** @example "https://sendou.ink/to/9/matches/695" */
 	url: string;
 }>;

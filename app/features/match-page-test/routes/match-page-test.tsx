@@ -622,6 +622,10 @@ export default function MatchPageTestRoute() {
 								scoreboard: {
 									objective: MOCK_OBJECTIVE_EVENTS,
 									playerStatus: MOCK_PLAYER_STATUS_SAMPLES,
+									replays: [
+										{ code: "RPUJ-64TX-BB8V-S34F", playerName: "Sendou" },
+										{ code: "R17L-PFKK-C1Q2-143L", playerName: "Naga" },
+									],
 									scores: [100, 0],
 									alpha: [
 										{

@@ -1,3 +1,4 @@
+import { subDays } from "date-fns";
 import { describe, expect, test } from "vitest";
 import type {
 	ScannerMatch,
@@ -12,6 +13,7 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as Scoreboards from "./Scoreboards";
 import { NAMES, sideSwapped } from "./tests/fixtures";
 
@@ -471,15 +473,31 @@ describe("matchedGames", () => {
 });
 
 describe("deriveScoreboardData", () => {
+	const NOW = new Date("2026-11-25T12:00:00Z");
+	const UPLOADED_DAY_AGO = dateToDatabaseTimestamp(subDays(NOW, 1));
+
 	function derive(
-		linked: Array<{ data: ScannerMatch; povUserId: number | null }>,
+		linked: Array<{
+			data: ScannerMatch;
+			povUserId: number | null;
+			createdAt?: number;
+		}>,
 	) {
 		return Scoreboards.deriveScoreboardData({
-			linked,
+			linked: linked.map((link) => ({
+				createdAt: UPLOADED_DAY_AGO,
+				...link,
+			})),
 			winnerTeamId: WINNER_TEAM_ID,
 			loserTeamId: LOSER_TEAM_ID,
+			now: NOW,
 		});
 	}
+
+	const withReplayCode = (match: ScannerMatch, replayCode: string) => ({
+		...match,
+		replayCode,
+	});
 
 	test("projects a match winner-first into scoreboard data", () => {
 		const data = derive([{ data: testMatch(), povUserId: null }]);
@@ -721,6 +739,56 @@ describe("deriveScoreboardData", () => {
 		]);
 
 		expect(data!.scores).toEqual([100, 52]);
+	});
+
+	test("lists every linked POV's replay code with whose POV it is", () => {
+		const data = derive([
+			{
+				data: withReplayCode(testMatch({ povIndex: 1 }), "RABC-DEFG-HIJK-LMNO"),
+				povUserId: 42,
+			},
+			{
+				data: withReplayCode(
+					sideSwapped(testMatch({ povIndex: 6 })),
+					"RZYX-WVUT-SRQP-ONML",
+				),
+				povUserId: null,
+			},
+		]);
+
+		expect(data!.replays).toEqual([
+			{ code: "RABC-DEFG-HIJK-LMNO", playerName: "w2" },
+			{ code: "RZYX-WVUT-SRQP-ONML", playerName: "l3" },
+		]);
+	});
+
+	test("lists a replay code read twice with OCR jitter once", () => {
+		const data = derive([
+			{
+				data: withReplayCode(testMatch(), "RABC-DEFG-HIJK-LMNO"),
+				povUserId: null,
+			},
+			{
+				data: withReplayCode(testMatch(), "RA8C-DEFG-HIJK-LMN0"),
+				povUserId: null,
+			},
+		]);
+
+		expect(data!.replays).toEqual([
+			{ code: "RABC-DEFG-HIJK-LMNO", playerName: "w1" },
+		]);
+	});
+
+	test("leaves out replay codes that can no longer be watched", () => {
+		const data = derive([
+			{
+				data: withReplayCode(testMatch(), "RABC-DEFG-HIJK-LMNO"),
+				povUserId: null,
+				createdAt: dateToDatabaseTimestamp(subDays(NOW, 30)),
+			},
+		]);
+
+		expect(data!.replays).toBeUndefined();
 	});
 });
 

@@ -45,6 +45,7 @@ export function resolveTimelineScoreboard(
 		bravo: toTimelinePlayers(alphaIsWinner ? loserRows : winnerRows),
 		objective: toTimelineObjective(data.objective, alphaIsWinner),
 		playerStatus: toTimelinePlayerStatus(data.playerStatus, alphaIsWinner),
+		replays: data.replays,
 	};
 }
 

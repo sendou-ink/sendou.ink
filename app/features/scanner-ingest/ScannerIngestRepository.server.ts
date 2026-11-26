@@ -22,6 +22,9 @@ import * as StoredMatches from "./core/StoredMatches.server";
 
 const opponentOneId = sql<number>`"TournamentMatch"."opponentOne" ->> '$.id'`;
 const opponentTwoId = sql<number>`"TournamentMatch"."opponentTwo" ->> '$.id'`;
+const replayCode = sql<
+	string | null
+>`"IngestedMatch"."data" ->> '$.replayCode'`;
 
 /** Max playedAt distance for a stored match to load as a merge candidate; only bounds the query, Matches.isSameMatch checks content. */
 const MERGE_CANDIDATE_PLAYED_AT_WINDOW_DAYS = 1;
@@ -381,6 +384,7 @@ export async function findScoreboardsByTournamentMatchIds(
 			"IngestedMatch.data",
 			"IngestedMatch.timelines",
 			"IngestedMatch.povUserId",
+			"IngestedMatch.createdAt",
 		])
 		.where("TournamentMatchGameResult.matchId", "in", tournamentMatchIds)
 		.orderBy("TournamentMatchGameResult.matchId", "asc")
@@ -396,6 +400,7 @@ export async function findScoreboardsByTournamentMatchIds(
 		byGame.set(row.matchGameResultId, gameRows);
 	}
 
+	const now = new Date();
 	return [...byGame.values()].flatMap((gameRows) => {
 		const first = gameRows[0]!;
 		const loserTeamId =
@@ -409,9 +414,11 @@ export async function findScoreboardsByTournamentMatchIds(
 			linked: gameRows.map((row) => ({
 				data: StoredMatches.fromStored(row),
 				povUserId: row.povUserId,
+				createdAt: row.createdAt,
 			})),
 			winnerTeamId: first.winnerTeamId,
 			loserTeamId,
+			now,
 		});
 		if (!data) return [];
 
@@ -419,6 +426,43 @@ export async function findScoreboardsByTournamentMatchIds(
 			{ tournamentMatchId: first.matchId, mapIndex: first.number - 1, data },
 		];
 	});
+}
+
+/** Replay codes of a tournament's game results' linked ingests, earliest link first per game; `createdAt` tells whether the code still opens (`ReplayCodes.isViewable`). */
+export function findReplayCodesByTournamentId(tournamentId: number) {
+	return db
+		.selectFrom("IngestedMatchLink")
+		.innerJoin(
+			"IngestedMatch",
+			"IngestedMatch.id",
+			"IngestedMatchLink.ingestedMatchId",
+		)
+		.innerJoin(
+			"TournamentMatchGameResult",
+			"TournamentMatchGameResult.id",
+			"IngestedMatchLink.tournamentMatchGameResultId",
+		)
+		.innerJoin(
+			"TournamentMatch",
+			"TournamentMatch.id",
+			"TournamentMatchGameResult.matchId",
+		)
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentMatch.stageId",
+		)
+		.select([
+			"IngestedMatchLink.tournamentMatchGameResultId as matchGameResultId",
+			replayCode.as("replayCode"),
+			"IngestedMatch.createdAt",
+		])
+		.where("TournamentStage.tournamentId", "=", tournamentId)
+		.where(replayCode, "is not", null)
+		.orderBy("IngestedMatchLink.createdAt", "asc")
+		.orderBy("IngestedMatchLink.id", "asc")
+		.$narrowType<{ matchGameResultId: number; replayCode: string }>()
+		.execute();
 }
 
 /** A SendouQ match's ingested scoreboards with 0-based map indexes, derived from each map's linked ingests. */
@@ -445,6 +489,7 @@ export async function findScoreboardsByGroupMatchId(groupMatchId: number) {
 			"IngestedMatch.data",
 			"IngestedMatch.timelines",
 			"IngestedMatch.povUserId",
+			"IngestedMatch.createdAt",
 		])
 		.where("GroupMatchMap.matchId", "=", groupMatchId)
 		.where("GroupMatchMap.winnerGroupId", "is not", null)
@@ -460,6 +505,7 @@ export async function findScoreboardsByGroupMatchId(groupMatchId: number) {
 		byMap.set(row.groupMatchMapId, mapRows);
 	}
 
+	const now = new Date();
 	return [...byMap.values()].flatMap((mapRows) => {
 		const first = mapRows[0]!;
 		const winnerGroupId = first.winnerGroupId!;
@@ -472,9 +518,11 @@ export async function findScoreboardsByGroupMatchId(groupMatchId: number) {
 			linked: mapRows.map((row) => ({
 				data: StoredMatches.fromStored(row),
 				povUserId: row.povUserId,
+				createdAt: row.createdAt,
 			})),
 			winnerTeamId: winnerGroupId,
 			loserTeamId: loserGroupId,
+			now,
 		});
 		if (!data) return [];
 
@@ -501,6 +549,7 @@ export async function findScoreboardsByLobbyId(lobbyId: number) {
 			"IngestedMatch.data",
 			"IngestedMatch.timelines",
 			"IngestedMatch.povUserId",
+			"IngestedMatch.createdAt",
 		])
 		.where("LobbySet.lobbyId", "=", lobbyId)
 		.where("LobbyGame.winnerSide", "is not", null)
@@ -516,6 +565,7 @@ export async function findScoreboardsByLobbyId(lobbyId: number) {
 		byGame.set(row.lobbyGameId, gameRows);
 	}
 
+	const now = new Date();
 	return [...byGame.values()].flatMap((gameRows) => {
 		const first = gameRows[0]!;
 		const winnerSide = first.winnerSide!;
@@ -524,10 +574,12 @@ export async function findScoreboardsByLobbyId(lobbyId: number) {
 			linked: gameRows.map((row) => ({
 				data: StoredMatches.fromStored(row),
 				povUserId: row.povUserId,
+				createdAt: row.createdAt,
 			})),
 			winnerTeamId: LOBBY_SIDE_TEAM_ID[winnerSide],
 			loserTeamId:
 				LOBBY_SIDE_TEAM_ID[winnerSide === "ALPHA" ? "BRAVO" : "ALPHA"],
+			now,
 		});
 		if (!data) return [];
 

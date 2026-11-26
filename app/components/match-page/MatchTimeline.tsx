@@ -2,6 +2,7 @@ import clsx from "clsx";
 import {
 	ArrowRight,
 	ChevronDown,
+	ExternalLink,
 	Gauge,
 	MousePointerClick,
 	RefreshCcw,
@@ -25,7 +26,7 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
-import { abilityImageUrl, navIconUrl } from "~/utils/urls";
+import { abilityImageUrl, navIconUrl, nintendoReplayUrl } from "~/utils/urls";
 import { Ability } from "../Ability";
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
@@ -68,6 +69,12 @@ interface TimelineScoreboardPlayer {
 	abilities?: string[][];
 }
 
+interface TimelineReplay {
+	code: string;
+	/** in-game name of the player whose POV the replay is, null when unknown */
+	playerName: string | null;
+}
+
 export interface TimelineMap {
 	stageId: StageId;
 	mode: ModeShort;
@@ -95,6 +102,8 @@ export interface TimelineMap {
 		objective?: ObjectiveTimelineEvent[];
 		/** [alpha, bravo] per-player splat/special bands charted above the objective chart */
 		playerStatus?: PlayerStatusTimelineSample[];
+		/** replays of the game players uploaded that can still be watched */
+		replays?: TimelineReplay[];
 	};
 }
 
@@ -419,6 +428,7 @@ function TimelineScoreboardSection({
 }) {
 	const { t } = useTranslation(["q"]);
 	const [isExpanded, setIsExpanded] = useState(false);
+	const replays = scoreboard.replays ?? [];
 
 	return (
 		<div className={styles.scoreboard}>
@@ -428,7 +438,9 @@ function TimelineScoreboardSection({
 				onClick={() => setIsExpanded(!isExpanded)}
 				aria-expanded={isExpanded}
 			>
-				{t("q:match.timeline.details")}
+				{replays.length > 0
+					? t("q:match.timeline.detailsAndReplays")
+					: t("q:match.timeline.details")}
 				<ChevronDown
 					size={14}
 					className={clsx(styles.scoreboardChevron, {
@@ -438,6 +450,7 @@ function TimelineScoreboardSection({
 			</button>
 			{isExpanded ? (
 				<div className={styles.scoreboardPanel}>
+					{replays.length > 0 ? <ScoreboardReplays replays={replays} /> : null}
 					<GameTimeline
 						objectiveEvents={scoreboard.objective}
 						playerStatusSamples={scoreboard.playerStatus}
@@ -545,6 +558,35 @@ function ScoreboardTable({
 				))}
 			</tbody>
 		</table>
+	);
+}
+
+function ScoreboardReplays({ replays }: { replays: TimelineReplay[] }) {
+	const { t } = useTranslation(["q"]);
+
+	return (
+		<div className={styles.scoreboardReplays}>
+			<span className={styles.scoreboardReplaysLabel}>
+				{t("q:match.timeline.replays")}
+			</span>
+			{replays.map((replay) => (
+				<a
+					key={replay.code}
+					href={nintendoReplayUrl(replay.code)}
+					target="_blank"
+					rel="noopener noreferrer"
+					className={styles.scoreboardReplay}
+				>
+					<span className={styles.scoreboardReplayCode}>{replay.code}</span>
+					{replay.playerName ? (
+						<span className={styles.scoreboardReplayPlayer}>
+							{replay.playerName}
+						</span>
+					) : null}
+					<ExternalLink size={14} />
+				</a>
+			))}
+		</div>
 	);
 }
 

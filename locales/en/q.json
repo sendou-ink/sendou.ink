@@ -145,6 +145,8 @@
 	"match.timeline.explainer.spChange": "SP updates",
 	"match.timeline.points": "{{points}}p",
 	"match.timeline.details": "Details",
+	"match.timeline.detailsAndReplays": "Details & replays",
+	"match.timeline.replays": "Replays",
 	"match.timeline.stats.paint": "Paint",
 	"match.timeline.stats.kills": "K/A",
 	"match.timeline.stats.deaths": "D",

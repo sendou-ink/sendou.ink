@@ -1459,6 +1459,14 @@ export function buildCases(fx: Fixtures): {
 			ScannerIngestRepository.castedGamesInTournament(tournamentId),
 	);
 	add(
+		"ScannerIngestRepository.findReplayCodesByTournamentId",
+		fx.scannerIngest,
+		(ingest) =>
+			ScannerIngestRepository.findReplayCodesByTournamentId(
+				ingest.tournamentId,
+			),
+	);
+	add(
 		"ScannerIngestRepository.gamesInGroupMatch",
 		fx.heavyGroupMatchId,
 		(groupMatchId) => ScannerIngestRepository.gamesInGroupMatch(groupMatchId),

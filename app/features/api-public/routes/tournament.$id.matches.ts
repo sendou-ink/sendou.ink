@@ -1,6 +1,8 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import { db } from "~/db/sql";
+import * as ReplayCodes from "~/features/scanner-ingest/core/ReplayCodes";
+import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import { tournamentSharedCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
@@ -28,6 +30,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			"TournamentMatch.stageId",
 		)
 		.select(({ eb }) => [
+			"TournamentMatchGameResult.id",
 			"TournamentMatchGameResult.matchId",
 			"TournamentMatchGameResult.stageId",
 			"TournamentMatchGameResult.mode",
@@ -51,6 +54,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		.execute();
 
 	const playedMapsByMatchId = R.groupBy(playedMaps, (map) => map.matchId);
+	const replayCodeByMatchGameResultId = await viewableReplayCodes(tournamentId);
 
 	const result: GetTournamentMatchesResponse = tournament.brackets.flatMap(
 		(bracket, bracketIdx) => {
@@ -99,6 +103,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 								winnerTeamId: playedMap.winnerTeamId,
 								source: parseMaplistSource(playedMap.source),
 								ko: playedMap.ko !== null ? Boolean(playedMap.ko) : null,
+								replayCode:
+									replayCodeByMatchGameResultId.get(playedMap.id) ?? null,
 							}),
 						),
 						url: `https://sendou.ink/to/${tournamentId}/matches/${match.id}`,
@@ -110,3 +116,21 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return Response.json(result);
 };
+
+/** The earliest linked replay code per game result that still opens. */
+async function viewableReplayCodes(tournamentId: number) {
+	const now = new Date();
+	const result = new Map<number, string>();
+
+	for (const row of await ScannerIngestRepository.findReplayCodesByTournamentId(
+		tournamentId,
+	)) {
+		const replayCode = row.replayCode.trim();
+		if (!replayCode || result.has(row.matchGameResultId)) continue;
+		if (!ReplayCodes.isViewable({ uploadedAt: row.createdAt, now })) continue;
+
+		result.set(row.matchGameResultId, replayCode);
+	}
+
+	return result;
+}

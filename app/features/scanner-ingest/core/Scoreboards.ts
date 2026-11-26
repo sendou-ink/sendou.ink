@@ -1,4 +1,5 @@
 import * as R from "remeda";
+import { isSameReplayCode } from "~/features/scanner/core/replay-code";
 import {
 	type ScannerMatch,
 	type ScannerMatchObjective,
@@ -19,6 +20,7 @@ import type {
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import { assertUnreachable } from "~/utils/types";
 import * as Matches from "./Matches";
+import * as ReplayCodes from "./ReplayCodes";
 
 /** Of 8 player rows, how many must share name and position for a match to count as a re-detection (tolerates a couple of OCR misreads). */
 const MIN_LINKED_DUPLICATE_NAME_MATCHES = 6;
@@ -248,23 +250,40 @@ export interface IngestedScoreboardData {
 	objective?: ScannerMatchObjective;
 	/** per-player special/death samples, teams winner-first, `t` on the same origin as `objective`. Absent when the icon strip was never read. */
 	playerStatus?: ScannerMatchPlayerStatus;
+	/** replay codes of the linked POVs that can still be watched, earliest link first. Absent when there are none. */
+	replays?: IngestedReplay[];
+}
+
+/** A POV player's uploaded replay of the game. */
+interface IngestedReplay {
+	code: string;
+	/** the POV player's in-game name as read; null when unread */
+	playerName: string | null;
 }
 
 /**
  * Derives a game's scoreboard from its linked ingests: earliest link is the base, later ones
  * enrich it field-wise (Matches.mergeMatches), projected winner-first, with every linked POV seat
  * attributing its row to the POV user. `winnerTeamId`/`loserTeamId` are the result's sides
- * (tournament team or SendouQ group ids) stamped onto the rows.
+ * (tournament team or SendouQ group ids) stamped onto the rows. Every linked POV's replay code
+ * still viewable at `now` is listed (see `ReplayCodes.isViewable`).
  */
 export function deriveScoreboardData({
 	linked,
 	winnerTeamId,
 	loserTeamId,
+	now,
 }: {
 	/** in link order, earliest first */
-	linked: Array<{ data: ScannerMatch; povUserId: number | null }>;
+	linked: Array<{
+		data: ScannerMatch;
+		povUserId: number | null;
+		/** database timestamp the match was ingested at */
+		createdAt: number;
+	}>;
 	winnerTeamId: number;
 	loserTeamId: number | null;
+	now: Date;
 }): IngestedScoreboardData | null {
 	const [first, ...rest] = linked;
 	if (!first) return null;
@@ -293,11 +312,14 @@ export function deriveScoreboardData({
 
 	attributePovUsers(players, linked);
 
+	const replays = viewableReplays({ players, linked, now });
+
 	return {
 		scores: view.scores,
 		players,
 		...(view.objective ? { objective: view.objective } : null),
 		...(view.playerStatus ? { playerStatus: view.playerStatus } : null),
+		...(replays.length > 0 ? { replays } : null),
 	};
 }
 
@@ -463,6 +485,41 @@ function attributePovUsers(
 
 		players[index] = { ...players[index]!, userId: povUserId };
 	}
+}
+
+function viewableReplays({
+	players,
+	linked,
+	now,
+}: {
+	players: IngestedScoreboardPlayer[];
+	linked: Array<{
+		data: ScannerMatch;
+		povUserId: number | null;
+		createdAt: number;
+	}>;
+	now: Date;
+}): IngestedReplay[] {
+	const result: IngestedReplay[] = [];
+
+	for (const { data, povUserId, createdAt } of linked) {
+		const code = data.replayCode?.trim();
+		if (!code) continue;
+		if (!ReplayCodes.isViewable({ uploadedAt: createdAt, now })) continue;
+		if (result.some((replay) => isSameReplayCode(replay.code, code))) continue;
+
+		const attributedName =
+			povUserId !== null
+				? players.find((player) => player.userId === povUserId)?.name
+				: undefined;
+		const ownPovName = data.pov
+			? data.teams[data.pov.team].players[data.pov.index]?.name?.trim()
+			: undefined;
+
+		result.push({ code, playerName: attributedName || ownPovName || null });
+	}
+
+	return result;
 }
 
 function attributionIndex(

@@ -86,6 +86,9 @@ export const GITHUB_CONTRIBUTORS_URL =
 export const ipLabsMaps = (pool: string) =>
 	`https://maps.iplabs.ink/?3&pool=${pool}`;
 export const SPLATOON_3_INK = "https://splatoon3.ink/";
+/** Opens the replay in the Nintendo Switch app's Splatoon 3 service (SplatNet 3). */
+export const nintendoReplayUrl = (replayCode: string) =>
+	`https://s.nintendo.com/av5ja-lp1/znca/game/4834290508791808?p=${encodeURIComponent(`/replay?code=${replayCode}`)}`;
 export const openStreetMapUrl = ({
 	latitude,
 	longitude,
