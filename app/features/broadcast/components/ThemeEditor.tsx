@@ -1,155 +1,136 @@
 import clsx from "clsx";
-import { CornerDownRight, RotateCcw, Undo2 } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
-import { BROADCAST_CSS_MAX_LENGTH } from "../broadcast-constants";
-import type { BroadcastThemeSource } from "../broadcast-theme-sources";
+import {
+	BROADCAST_CSS_MAX_LENGTH,
+	BROADCAST_WEAPON_IMAGES,
+} from "../broadcast-constants";
+import { BROADCAST_SHARED_SETTINGS } from "../broadcast-theme-sources";
+import type { BroadcastWeaponImages } from "../broadcast-types";
 import * as ThemeCss from "../core/ThemeCss";
+import * as ThemeSettings from "../core/ThemeSettings";
 import { Choice } from "./Choice";
 import styles from "./ThemeEditor.module.css";
 
-/** A scene set's theme as the editor lays it out: its stylesheets in order and their default styles by source (see `themeDefaults`). */
-export interface BroadcastTheme {
-	stylesheets: readonly string[];
-	defaults: Record<BroadcastThemeSource, string>;
+/** A theme as the designer saves it: the settings set in its form and the custom CSS. */
+export interface Theme {
+	css: string;
+	variables: ThemeSettings.ThemeVariables;
 }
 
-/** A ready-made theme the editor loads in place of what is being edited, as the CSS saved for it (see `ThemeCss.compose`). */
-export interface ThemePreset {
+/** A ready-made theme the editor loads in place of what is being edited. */
+export interface ThemePreset extends Theme {
 	key: string;
 	label: string;
-	css: string;
 }
 
-/** The picker's options that aren't presets: the default styles, and the drafts when they are no preset as it is. */
+/** Settings of an overlay stylesheet, shown as a group titled after it. */
+export interface StylesheetSettings {
+	stylesheet: string;
+	settings: ThemeSettings.ThemeSetting[];
+}
+
+/** The picker's options that aren't presets: the default styles, and the theme when it is no preset as it is. */
 const DEFAULT_PRESET_KEY = "default";
 const OWN_PRESET_KEY = "own";
 
-/** A stylesheet's look or layout, or the custom CSS applied after them. */
-export type ThemeEditorTab = BroadcastThemeSource | "custom";
-type EditorTab = ThemeEditorTab;
+/** The shared settings' group open to begin with. */
+const OPEN_SHARED_GROUP = "colors";
 
-interface Draft {
+/** The theme being edited, its custom CSS as typed along with the last of it that parsed. */
+export interface ThemeDraft {
 	text: string;
-	/** What is saved of it, as of the last time it parsed. */
-	edits: string;
+	/** What the preview shows and is saved, the text as of the last time it parsed. */
+	css: string;
 	error: ThemeCss.CssError | null;
+	variables: ThemeSettings.ThemeVariables;
 }
 
-type Drafts = Record<EditorTab, Draft>;
+/** The editor's draft of the theme starting from the saved one, and whether it has changed or can't be saved. */
+export function useThemeDraft(saved: Theme) {
+	const [draft, setDraft] = React.useState(() => draftOf(saved));
+	const isChanged =
+		draft.text !== saved.css ||
+		!R.isDeepEqual(draft.variables, saved.variables);
+	const hasErrors =
+		draft.error !== null ||
+		Object.values(draft.variables).some(
+			(value) => !ThemeSettings.isValidValue(value),
+		);
 
-/**
- * The editor's drafts of the theme starting from the saved CSS, the CSS they compose to and the saved CSS as they
- * compose it, what `css` is compared to for unsaved changes.
- */
-export function useThemeDrafts({
-	theme,
-	saved,
-}: {
-	theme: BroadcastTheme;
-	saved: string;
-}) {
-	const [drafts, setDrafts] = React.useState(() => draftsOfCss(theme, saved));
-	const css = composeCss(theme, drafts);
-	const savedCss = useSavedCss({ theme, saved, drafts });
-	const hasErrors = Object.values(drafts).some((draft) => draft.error);
-
-	return { drafts, setDrafts, css, savedCss, hasErrors };
+	return { draft, setDraft, isChanged, hasErrors };
 }
 
 /**
- * Editor of a scene set's theme: each stylesheet's look and layout as the default styles with the edits made to them,
- * and the custom CSS applied after them. Variables read on the caret's line link to where they are set. A preset
- * picked replaces what is being edited with its CSS, to be edited further.
+ * Editor of a scene set's theme, top to bottom: a preset to start from, the settings (theme variables as form
+ * inputs, the ones of every scene and the ones of the scene previewed) and under "Advanced" the custom CSS, with the
+ * default CSS of the scene previewed to copy from. A preset picked replaces the settings and custom CSS with its own.
  */
 export function ThemeEditor({
-	theme,
 	presets,
-	drafts,
-	setDrafts,
-	tab,
-	setTab,
-	css,
+	draft,
+	setDraft,
+	weaponImages,
+	setWeaponImages,
+	everywhereSettings,
+	sceneLabel,
+	sceneSettings,
+	sceneDefaultCss,
+	fonts,
 	isTooLong,
 }: {
-	theme: BroadcastTheme;
 	presets: ThemePreset[];
-	drafts: Drafts;
-	setDrafts: React.Dispatch<React.SetStateAction<Drafts>>;
-	tab: EditorTab;
-	setTab: (tab: EditorTab) => void;
-	css: string;
+	draft: ThemeDraft;
+	setDraft: React.Dispatch<React.SetStateAction<ThemeDraft>>;
+	weaponImages: BroadcastWeaponImages;
+	setWeaponImages: (weaponImages: BroadcastWeaponImages) => void;
+	/** Settings of parts showing over every scene besides the shared ones, e.g. the stinger's. */
+	everywhereSettings: StylesheetSettings[];
+	sceneLabel: string;
+	/** Settings of the stylesheets of the scene previewed. */
+	sceneSettings: StylesheetSettings[];
+	/** The default styles of the scene previewed as theme CSS, read-only to copy from. */
+	sceneDefaultCss: string;
+	/** Font families the overlays have, suggested for the font settings. */
+	fonts: readonly string[];
 	isTooLong: boolean;
 }) {
-	const { t } = useTranslation(["broadcast", "common"]);
-	const [showsLayout, setShowsLayout] = React.useState(false);
-	/** The preset picked over edits of one's own, loaded once confirmed. */
+	const { t } = useTranslation(["broadcast", "common", "forms"]);
+	/** The preset picked over a theme of one's own, loaded once confirmed. */
 	const [presetToConfirm, setPresetToConfirm] =
 		React.useState<ThemePreset | null>(null);
-	const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-	const [caret, setCaret] = React.useState(0);
-	/** Where to put the selection once the tab it is in shows. */
-	const [pendingSelection, setPendingSelection] = React.useState<{
-		tab: EditorTab;
-		start: number;
-		end: number;
-	} | null>(null);
-	/** Where the last jump to a variable left from. */
-	const [jumpedFrom, setJumpedFrom] = React.useState<{
-		tab: EditorTab;
-		caret: number;
-	} | null>(null);
-	const draft = drafts[tab];
-	const defaultText = tab === "custom" ? null : theme.defaults[tab];
-	const isLayout = tab.endsWith(".layout");
-
-	const tabLabel = (option: EditorTab) => {
-		const name =
-			option === "custom"
-				? t("broadcast:design.custom")
-				: option.endsWith(".layout")
-					? t("broadcast:design.layoutOf", {
-							name: option.replace(".layout", ""),
-						})
-					: option;
-
-		return drafts[option].edits ? t("broadcast:design.edited", { name }) : name;
-	};
-	const shownTabs = [
-		...themeSources(theme).filter(
-			(source) =>
-				!source.endsWith(".layout") ||
-				showsLayout ||
-				source === tab ||
-				drafts[source].edits,
-		),
-		"custom" as const,
-	];
+	const [isAdvancedOpen, setIsAdvancedOpen] = React.useState(
+		() => draft.text !== "",
+	);
+	const fontListId = React.useId();
 
 	const presetOptions: ThemePreset[] = [
 		{
 			key: DEFAULT_PRESET_KEY,
 			label: t("broadcast:design.preset.default"),
 			css: "",
+			variables: {},
 		},
 		...presets,
 	];
-	// a draft that doesn't parse is being worked on, whatever its last edit that did compose to
-	const loadedPreset = Object.values(drafts).some(
-		(candidate) => candidate.error,
-	)
-		? undefined
-		: presetOptions.find((preset) => preset.css === css);
+	// custom CSS that doesn't parse is being worked on, whatever its last text that did is
+	const loadedPreset =
+		draft.error || draft.text !== draft.css
+			? undefined
+			: presetOptions.find(
+					(preset) =>
+						preset.css === draft.css &&
+						R.isDeepEqual(preset.variables, draft.variables),
+				);
 
 	const loadPreset = (preset: ThemePreset) => {
-		setDrafts(draftsOfCss(theme, preset.css));
-		setJumpedFrom(null);
+		setDraft(draftOf(preset));
 		setPresetToConfirm(null);
-		if (preset.css) setTab("custom");
 	};
 
 	const pickPreset = (key: string) => {
@@ -163,86 +144,58 @@ export function ThemeEditor({
 		}
 	};
 
-	const edit = (text: string) =>
-		setDrafts((current) => ({
+	const setVariable = (name: string, value: string | null) =>
+		setDraft((current) => ({
 			...current,
-			[tab]: draftOf(theme, tab, text, current[tab]),
+			variables:
+				value === null
+					? R.omit(current.variables, [name])
+					: { ...current.variables, [name]: value },
 		}));
 
-	React.useEffect(() => {
-		const textarea = textareaRef.current;
-		if (!pendingSelection || pendingSelection.tab !== tab || !textarea) return;
+	const editCss = (text: string) =>
+		setDraft((current) => {
+			const error = ThemeCss.syntaxError(text);
 
-		selectInTextarea(textarea, pendingSelection);
-		setCaret(pendingSelection.start);
-		setPendingSelection(null);
-	}, [pendingSelection, tab]);
+			return { ...current, text, error, css: error ? current.css : text };
+		});
 
-	const select = (selection: {
-		tab: EditorTab;
-		start: number;
-		end: number;
-	}) => {
-		setPendingSelection(selection);
-		if (selection.tab !== tab) setTab(selection.tab);
-	};
+	const fieldOf = (setting: ThemeSettings.ThemeSetting, label: string) => (
+		<SettingField
+			key={setting.name}
+			setting={setting}
+			label={label}
+			value={draft.variables[setting.name]}
+			onChange={(value) => setVariable(setting.name, value)}
+			fontListId={fontListId}
+		/>
+	);
 
-	const goToDefinition = (definition: VariableDefinition) => {
-		setJumpedFrom({ tab, caret });
-		select(definition);
-	};
-
-	const updateCaret = (event: React.SyntheticEvent<HTMLTextAreaElement>) =>
-		setCaret(event.currentTarget.selectionStart);
-
-	const goToClickedVariable = (
-		event: React.MouseEvent<HTMLTextAreaElement>,
-	) => {
-		if (!event.metaKey && !event.ctrlKey) return;
-
-		const clickedAt = event.currentTarget.selectionStart;
-		const reference = ThemeCss.variableReferences(draft.text).findLast(
-			(candidate) => candidate.start <= clickedAt && clickedAt <= candidate.end,
-		);
-		const definition = reference
-			? definitionOf({ theme, name: reference.name, drafts, tab })
-			: null;
-		if (definition) goToDefinition(definition);
-	};
-
-	/** Replaces the `var()` with the value it reads, undoable as if typed. */
-	const inline = (reference: ThemeCss.VariableReference, value: string) => {
-		const textarea = textareaRef.current;
-		if (!textarea) return;
-
-		selectInTextarea(textarea, reference);
-		document.execCommand("insertText", false, value);
-		setCaret(textarea.selectionStart);
-	};
+	const savedCss = [draft.css, ThemeSettings.block(draft.variables)]
+		.filter(Boolean)
+		.join("\n\n");
 
 	return (
 		<section className={clsx("stack md-plus", styles.editor)}>
-			<div className="stack xs">
-				<Choice
-					label={t("broadcast:design.preset")}
-					value={loadedPreset?.key ?? OWN_PRESET_KEY}
-					options={[
-						...presetOptions.map((preset) => ({
-							value: preset.key,
-							label: preset.label,
-						})),
-						...(loadedPreset
-							? []
-							: [
-									{
-										value: OWN_PRESET_KEY,
-										label: t("broadcast:design.preset.own"),
-									},
-								]),
-					]}
-					onChange={pickPreset}
-				/>
-			</div>
+			<Choice
+				label={t("broadcast:design.preset")}
+				value={loadedPreset?.key ?? OWN_PRESET_KEY}
+				options={[
+					...presetOptions.map((preset) => ({
+						value: preset.key,
+						label: preset.label,
+					})),
+					...(loadedPreset
+						? []
+						: [
+								{
+									value: OWN_PRESET_KEY,
+									label: t("broadcast:design.preset.own"),
+								},
+							]),
+				]}
+				onChange={pickPreset}
+			/>
 			<SendouDialog
 				isOpen={presetToConfirm !== null}
 				heading={t("broadcast:design.presetConfirm.heading")}
@@ -273,301 +226,315 @@ export function ThemeEditor({
 					</div>
 				</div>
 			</SendouDialog>
-			<div className="stack sm">
-				<div className="stack xs">
-					<div className="stack horizontal sm items-end justify-between">
-						<Choice
-							label={t("broadcast:design.stylesheet")}
-							value={tab}
-							options={shownTabs.map((option) => ({
-								value: option,
-								label: tabLabel(option),
-							}))}
-							onChange={setTab}
+
+			<datalist id={fontListId}>
+				{fonts.map((font) => (
+					<option key={font} value={font} />
+				))}
+			</datalist>
+
+			<section className="stack md">
+				<h2 className={styles.heading}>
+					{t("broadcast:design.settings.everywhere")}
+				</h2>
+				<Choice
+					label={t("forms:labels.broadcastWeaponImages")}
+					value={weaponImages}
+					options={BROADCAST_WEAPON_IMAGES.map((option) => ({
+						value: option,
+						label: t(`forms:options.broadcastWeaponImages.${option}`),
+					}))}
+					onChange={setWeaponImages}
+				/>
+				{BROADCAST_SHARED_SETTINGS.map(({ group, settings }) => (
+					<SettingsGroup
+						key={group}
+						title={t(`broadcast:design.settings.group.${group}`)}
+						defaultOpen={group === OPEN_SHARED_GROUP}
+					>
+						{settings.map((setting) =>
+							fieldOf(setting, t(`broadcast:design.setting.${setting.key}`)),
+						)}
+					</SettingsGroup>
+				))}
+				{everywhereSettings.map(({ stylesheet, settings }) => (
+					<SettingsGroup key={stylesheet} title={humanize(stylesheet)}>
+						{settings.map((setting) =>
+							fieldOf(setting, labelOf(setting, settings)),
+						)}
+					</SettingsGroup>
+				))}
+			</section>
+
+			<section className="stack md">
+				<h2 className={styles.heading}>
+					{t("broadcast:design.settings.scene", { scene: sceneLabel })}
+				</h2>
+				{sceneSettings.length === 0 ? (
+					<p className="text-sm text-lighter">
+						{t("broadcast:design.settings.sceneNone")}
+					</p>
+				) : null}
+				{sceneSettings.map(({ stylesheet, settings }, i) => (
+					<SettingsGroup
+						key={stylesheet}
+						title={humanize(stylesheet)}
+						defaultOpen={i === 0}
+					>
+						{settings.map((setting) =>
+							fieldOf(setting, labelOf(setting, settings)),
+						)}
+					</SettingsGroup>
+				))}
+			</section>
+
+			<details
+				className={styles.advanced}
+				open={isAdvancedOpen}
+				onToggle={(event) => setIsAdvancedOpen(event.currentTarget.open)}
+			>
+				<summary className={styles.heading}>
+					{t("broadcast:design.advanced")}
+				</summary>
+				<div className="stack md mt-3">
+					<FormMessage type="info" spaced={false}>
+						{t("broadcast:design.customHint")}
+					</FormMessage>
+					<div className="stack xs">
+						<textarea
+							className={styles.code}
+							value={draft.text}
+							onChange={(event) => editCss(event.currentTarget.value)}
+							onKeyDown={insertTabOnTab}
+							spellCheck={false}
+							autoCapitalize="off"
+							autoComplete="off"
+							aria-label={t("broadcast:design.custom")}
+							data-testid="broadcast-design-editor"
 						/>
-						{defaultText !== null ? (
-							<SendouButton
-								size="small"
-								variant="minimal"
-								icon={<RotateCcw />}
-								isDisabled={draft.text === defaultText}
-								onClick={() => edit(defaultText)}
-							>
-								{t("broadcast:design.revert")}
-							</SendouButton>
+						{draft.error ? (
+							<p className="text-xs text-error" role="alert">
+								{t("broadcast:design.syntaxError", {
+									line: draft.error.line,
+									reason: draft.error.reason,
+								})}
+							</p>
 						) : null}
 					</div>
-					{tab === "custom" || isLayout ? (
-						<FormMessage type="info" spaced={false}>
-							{tab === "custom"
-								? t("broadcast:design.customHint")
-								: t("broadcast:design.layoutHint")}
-						</FormMessage>
-					) : null}
+					<details className={styles.result}>
+						<summary className="text-sm font-semi-bold">
+							{t("broadcast:design.defaultCss", { scene: sceneLabel })}
+						</summary>
+						<textarea
+							className={clsx(styles.code, styles.readOnly)}
+							value={sceneDefaultCss}
+							readOnly
+							spellCheck={false}
+							aria-label={t("broadcast:design.defaultCss", {
+								scene: sceneLabel,
+							})}
+						/>
+					</details>
+					<details className={styles.result}>
+						<summary className="text-sm font-semi-bold">
+							{t("broadcast:design.result", {
+								length: draft.css.length,
+								max: BROADCAST_CSS_MAX_LENGTH,
+							})}
+						</summary>
+						<pre className={styles.code}>
+							{savedCss || t("broadcast:design.noChanges")}
+						</pre>
+					</details>
 				</div>
-				<SendouSwitch
-					size="small"
-					isSelected={showsLayout}
-					onChange={setShowsLayout}
-				>
-					{t("broadcast:design.showLayout")}
-				</SendouSwitch>
-			</div>
-			<div className="stack xs">
-				<textarea
-					key={tab}
-					ref={textareaRef}
-					className={styles.code}
-					value={draft.text}
-					onChange={(event) => {
-						edit(event.currentTarget.value);
-						updateCaret(event);
-					}}
-					onKeyDown={insertTabOnTab}
-					onKeyUp={updateCaret}
-					onSelect={updateCaret}
-					onClick={(event) => {
-						updateCaret(event);
-						goToClickedVariable(event);
-					}}
-					spellCheck={false}
-					autoCapitalize="off"
-					autoComplete="off"
-					aria-label={t("broadcast:design.stylesheet")}
-					data-testid="broadcast-design-editor"
-				/>
-				<VariablesOnLine
-					theme={theme}
-					drafts={drafts}
-					tab={tab}
-					caret={caret}
-					jumpedFrom={jumpedFrom}
-					tabLabel={tabLabel}
-					onGoTo={goToDefinition}
-					onInline={inline}
-					onBack={() => {
-						if (!jumpedFrom) return;
-
-						select({
-							tab: jumpedFrom.tab,
-							start: jumpedFrom.caret,
-							end: jumpedFrom.caret,
-						});
-						setJumpedFrom(null);
-					}}
-				/>
-				{draft.error ? (
-					<p className="text-xs text-error" role="alert">
-						{t("broadcast:design.syntaxError", {
-							line: draft.error.line,
-							reason: draft.error.reason,
-						})}
-					</p>
-				) : null}
-			</div>
-			<div className="stack xs">
-				<details className={styles.result}>
-					<summary className="text-sm font-semi-bold">
-						{t("broadcast:design.result", {
-							length: css.length,
-							max: BROADCAST_CSS_MAX_LENGTH,
-						})}
-					</summary>
-					<pre className={styles.code}>
-						{css || t("broadcast:design.noChanges")}
-					</pre>
-				</details>
-				{isTooLong ? (
-					<p className="text-xs text-error" role="alert">
-						{t("broadcast:design.tooLong", { max: BROADCAST_CSS_MAX_LENGTH })}
-					</p>
-				) : null}
-			</div>
+			</details>
+			{isTooLong ? (
+				<p className="text-xs text-error" role="alert">
+					{t("broadcast:design.tooLong", { max: BROADCAST_CSS_MAX_LENGTH })}
+				</p>
+			) : null}
 		</section>
 	);
 }
 
-interface VariableDefinition {
-	tab: EditorTab;
-	name: string;
-	value: string;
-	start: number;
-	end: number;
+function SettingsGroup({
+	title,
+	defaultOpen = false,
+	children,
+}: {
+	title: string;
+	defaultOpen?: boolean;
+	children: React.ReactNode;
+}) {
+	const [isOpen, setIsOpen] = React.useState(defaultOpen);
+
+	return (
+		<details
+			className={styles.group}
+			open={isOpen}
+			onToggle={(event) => setIsOpen(event.currentTarget.open)}
+		>
+			<summary className="text-sm font-semi-bold">{title}</summary>
+			<div className={styles.fields}>{children}</div>
+		</details>
+	);
 }
 
 /**
- * The variables read on the line the caret is on, each with a shortcut to where it is set and one to replace it
- * with its value. Variables set outside the overlays' styles (sendou.ink's own) are left out.
+ * A setting's input, empty while it isn't set (showing its default) and with a button resetting it. A value the
+ * input can't show as its kind (a color picker can't show a gradient, say) is shown as text.
  */
-function VariablesOnLine({
-	theme,
-	drafts,
-	tab,
-	caret,
-	jumpedFrom,
-	tabLabel,
-	onGoTo,
-	onInline,
-	onBack,
+function SettingField({
+	setting,
+	label,
+	value,
+	onChange,
+	fontListId,
 }: {
-	theme: BroadcastTheme;
-	drafts: Drafts;
-	tab: EditorTab;
-	caret: number;
-	jumpedFrom: { tab: EditorTab } | null;
-	tabLabel: (tab: EditorTab) => string;
-	onGoTo: (definition: VariableDefinition) => void;
-	onInline: (reference: ThemeCss.VariableReference, value: string) => void;
-	onBack: () => void;
+	setting: ThemeSettings.ThemeSetting;
+	label: string;
+	value: string | undefined;
+	onChange: (value: string | null) => void;
+	fontListId: string;
 }) {
 	const { t } = useTranslation(["broadcast"]);
-	const text = drafts[tab].text;
-	const lineStart = text.lastIndexOf("\n", caret - 1) + 1;
-	const lineEnd = text.indexOf("\n", caret);
-	const line = text.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
+	const id = React.useId();
+	const isInvalid = value !== undefined && !ThemeSettings.isValidValue(value);
+	const shown = value ?? setting.defaultValue;
 
-	const variables = ThemeCss.variableReferences(line).flatMap((reference) => {
-		const definition = definitionOf({
-			theme,
-			name: reference.name,
-			drafts,
-			tab,
-		});
-		if (!definition) return [];
+	const onText = (text: string) => onChange(text.trim() ? text : null);
 
-		return [
-			{
-				reference: {
-					...reference,
-					start: lineStart + reference.start,
-					end: lineStart + reference.end,
-				},
-				definition,
-			},
-		];
-	});
-	const unique = variables.filter(
-		(variable, i) =>
-			variables.findIndex(
-				(other) => other.reference.name === variable.reference.name,
-			) === i,
-	);
+	const input = () => {
+		const textInput = (
+			<input
+				id={id}
+				className="in-container"
+				value={value ?? ""}
+				placeholder={setting.defaultValue}
+				onChange={(event) => onText(event.currentTarget.value)}
+				list={setting.kind === "font" ? fontListId : undefined}
+				spellCheck={false}
+				aria-invalid={isInvalid || undefined}
+			/>
+		);
+
+		switch (setting.kind) {
+			case "color": {
+				return (
+					<>
+						<span
+							className={styles.swatch}
+							style={{ background: isInvalid ? undefined : shown }}
+						>
+							<input
+								type="color"
+								value={hexOf(shown) ?? "#000000"}
+								onChange={(event) => onChange(event.currentTarget.value)}
+								aria-label={t("broadcast:design.settings.pickColor", {
+									name: label,
+								})}
+								tabIndex={-1}
+							/>
+						</span>
+						{textInput}
+					</>
+				);
+			}
+			case "number": {
+				const number =
+					value === undefined
+						? null
+						: ThemeSettings.numberOf(value, setting.unit);
+				if (value !== undefined && number === null) return textInput;
+
+				return (
+					<>
+						<input
+							id={id}
+							className="in-container"
+							type="number"
+							value={number ?? ""}
+							placeholder={String(
+								ThemeSettings.numberOf(setting.defaultValue, setting.unit) ??
+									setting.defaultValue,
+							)}
+							step={stepOf(setting)}
+							onChange={(event) => {
+								const typed = event.currentTarget.value;
+								onChange(
+									typed === ""
+										? null
+										: ThemeSettings.numberValue(Number(typed), setting.unit),
+								);
+							}}
+						/>
+						{setting.unit ? (
+							<span className={styles.unit}>{setting.unit}</span>
+						) : null}
+					</>
+				);
+			}
+			case "image": {
+				const url = value === undefined ? "" : ThemeSettings.imageUrlOf(value);
+				if (url === null) return textInput;
+
+				return (
+					<input
+						id={id}
+						className="in-container"
+						type="url"
+						value={url}
+						placeholder={t("broadcast:design.settings.imageUrl")}
+						onChange={(event) => {
+							const typed = event.currentTarget.value.trim();
+							onChange(typed ? ThemeSettings.imageValue(typed) : null);
+						}}
+					/>
+				);
+			}
+			default:
+				return textInput;
+		}
+	};
 
 	return (
-		<div className={styles.variables}>
-			{jumpedFrom ? (
+		<div
+			className={styles.field}
+			data-testid={`broadcast-setting-${setting.name}`}
+		>
+			<label htmlFor={id} className={styles.label} title={setting.name}>
+				{label}
+				{setting.hint ? (
+					<span className="text-xxs text-lighter">{setting.hint}</span>
+				) : null}
+			</label>
+			<div className={styles.control}>
+				<div
+					className={clsx("input-container", styles.input, {
+						[styles.invalid]: isInvalid,
+					})}
+				>
+					{input()}
+				</div>
 				<SendouButton
 					size="small"
 					variant="minimal"
-					icon={<Undo2 />}
-					onClick={onBack}
-				>
-					{t("broadcast:design.back", { stylesheet: tabLabel(jumpedFrom.tab) })}
-				</SendouButton>
-			) : null}
-			{unique.length > 0 ? (
-				unique.map(({ reference, definition }) => (
-					<span key={reference.name} className={styles.variable}>
-						<SendouButton
-							size="small"
-							variant="outlined"
-							icon={<CornerDownRight />}
-							onClick={() => onGoTo(definition)}
-							title={t("broadcast:design.goTo", {
-								name: reference.name,
-								stylesheet: tabLabel(definition.tab),
-							})}
-						>
-							<code>{reference.name}</code>
-						</SendouButton>
-						<SendouButton
-							size="small"
-							variant="minimal"
-							onClick={() => onInline(reference, definition.value)}
-							title={t("broadcast:design.inlineHint", {
-								value: definition.value,
-							})}
-						>
-							{t("broadcast:design.inline")}
-						</SendouButton>
-					</span>
-				))
-			) : (
-				<span className="text-xs text-lighter">
-					{t("broadcast:design.variablesHint")}
-				</span>
-			)}
+					shape="square"
+					icon={<RotateCcw />}
+					className={clsx({ [styles.unset]: value === undefined })}
+					onClick={() => onChange(null)}
+					aria-label={t("broadcast:design.settings.reset", {
+						name: label,
+						value: setting.defaultValue,
+					})}
+					title={t("broadcast:design.settings.reset", {
+						name: label,
+						value: setting.defaultValue,
+					})}
+				/>
+			</div>
 		</div>
 	);
-}
-
-/**
- * Where the variable is set: in the open stylesheet if it is set there (as for a scene's own variables), otherwise
- * the first stylesheet setting it (the theme's `--bc-*` ones on the canvas).
- */
-function definitionOf({
-	theme,
-	name,
-	drafts,
-	tab,
-}: {
-	theme: BroadcastTheme;
-	name: string;
-	drafts: Drafts;
-	tab: EditorTab;
-}): VariableDefinition | null {
-	for (const candidate of [tab, ...themeSources(theme), "custom" as const]) {
-		const declaration = ThemeCss.customPropertyDeclarations(
-			drafts[candidate].text,
-		).find((candidateDeclaration) => candidateDeclaration.name === name);
-		if (declaration) return { tab: candidate, ...declaration };
-	}
-
-	return null;
-}
-
-/** Selects the range and scrolls it to the upper part of the textarea. */
-function selectInTextarea(
-	textarea: HTMLTextAreaElement,
-	{ start, end }: { start: number; end: number },
-) {
-	textarea.focus({ preventScroll: true });
-	textarea.setSelectionRange(start, end);
-
-	const lineIdx = textarea.value.slice(0, start).split("\n").length - 1;
-	const lineHeight = Number.parseFloat(getComputedStyle(textarea).lineHeight);
-	// after the browser's own scrolling of the selection into view
-	requestAnimationFrame(() => {
-		textarea.scrollTop = Math.max(
-			0,
-			lineIdx * lineHeight - textarea.clientHeight / 3,
-		);
-	});
-}
-
-/**
- * The saved CSS as the editor composes it, what the drafts are compared to: saved CSS written elsewhere (formatted
- * differently, say) doesn't count as changed by just opening it.
- */
-function useSavedCss({
-	theme,
-	saved,
-	drafts,
-}: {
-	theme: BroadcastTheme;
-	saved: string;
-	drafts: Drafts;
-}) {
-	const [baseline, setBaseline] = React.useState(() => ({
-		saved,
-		composed: composeCss(theme, drafts),
-	}));
-
-	if (baseline.saved !== saved) {
-		setBaseline({ saved, composed: saved });
-	}
-
-	return baseline.saved === saved ? baseline.composed : saved;
 }
 
 /** Tab indents instead of moving focus, `insertText` keeping it undoable. */
@@ -586,52 +553,71 @@ function insertTabOnTab(event: React.KeyboardEvent<HTMLTextAreaElement>) {
 	document.execCommand("insertText", false, "\t");
 }
 
-/** The drafts editing the CSS (saved, or a preset's): each stylesheet with its edits applied, the rest as the custom CSS. */
-function draftsOfCss(theme: BroadcastTheme, css: string): Drafts {
-	const { stylesheets, custom } = ThemeCss.merge({
-		bases: theme.defaults,
-		css,
-	});
+function draftOf(theme: Theme): ThemeDraft {
+	const error = ThemeCss.syntaxError(theme.css);
 
 	return {
-		...Object.fromEntries(
-			themeSources(theme).map((source) => [
-				source,
-				draftOf(theme, source, stylesheets[source]!),
-			]),
-		),
-		custom: draftOf(theme, "custom", custom),
+		text: theme.css,
+		css: error ? "" : theme.css,
+		error,
+		variables: theme.variables,
 	};
 }
 
-/** The draft with its text edited, keeping the edits of the last text that parsed while it doesn't. */
-function draftOf(
-	theme: BroadcastTheme,
-	tab: EditorTab,
-	text: string,
-	previous?: Draft,
-): Draft {
-	const error = ThemeCss.syntaxError(text);
-	if (error) return { text, edits: previous?.edits ?? "", error };
+/** A stylesheet's setting labeled by its name, the part all of the stylesheet's share (`--game-`) left out. */
+function labelOf(
+	setting: ThemeSettings.ThemeSetting,
+	settings: ThemeSettings.ThemeSetting[],
+) {
+	const prefix =
+		settings.length > 1
+			? commonPrefix(settings.map((candidate) => candidate.name))
+			: setting.name.slice(0, setting.name.lastIndexOf("-") + 1);
+	const name = setting.name.slice(prefix.lastIndexOf("-") + 1);
 
-	return {
-		text,
-		edits: tab === "custom" ? text : ThemeCss.diff(theme.defaults[tab]!, text),
-		error: null,
-	};
+	return humanize(name || setting.name.replace(/^--/, ""));
 }
 
-function composeCss(theme: BroadcastTheme, drafts: Drafts) {
-	return ThemeCss.compose({
-		edits: themeSources(theme).map((source) => drafts[source]!.edits),
-		custom: drafts.custom.edits,
+function commonPrefix(names: string[]) {
+	return names.reduce((prefix, name) => {
+		let i = 0;
+		while (i < prefix.length && prefix[i] === name[i]) i++;
+
+		return prefix.slice(0, i);
 	});
 }
 
-/** Each stylesheet's look followed by its layout. */
-function themeSources(theme: BroadcastTheme): BroadcastThemeSource[] {
-	return theme.stylesheets.flatMap((stylesheet) => [
-		stylesheet,
-		`${stylesheet}.layout` as const,
-	]);
+/** `GameScene` or `bar-height` as words: "Game scene", "Bar height". */
+function humanize(name: string) {
+	const words = name
+		.replace(/([a-z])([A-Z])/g, "$1 $2")
+		.replaceAll("-", " ")
+		.toLowerCase();
+
+	return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** The color as `#rrggbb` for the color picker, `null` when it isn't a hex color. */
+function hexOf(color: string) {
+	const hex = /^#([\da-f]{3,8})$/i.exec(color.trim())?.[1];
+	if (!hex) return null;
+	if (hex.length === 3 || hex.length === 4) {
+		return `#${Array.from(hex.slice(0, 3), (digit) => digit + digit).join("")}`;
+	}
+	if (hex.length === 6 || hex.length === 8) return `#${hex.slice(0, 6)}`;
+
+	return null;
+}
+
+function stepOf(setting: ThemeSettings.ThemeSetting) {
+	switch (setting.unit) {
+		case "ms":
+			return 10;
+		case "s":
+			return 0.1;
+		case "px":
+			return 1;
+		default:
+			return Number(setting.defaultValue) % 100 === 0 ? 100 : "any";
+	}
 }

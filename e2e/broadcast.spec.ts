@@ -254,13 +254,16 @@ test.describe("Broadcast", () => {
 
 		await design.pickPreset("Zine");
 		await expect(design.locators.presetSelect).toContainText("Zine");
+		await expect(design.locators.setting("--bc-text")).toHaveValue("#141414");
+		await design.openCustomCss();
 		await expect(design.locators.editor).toHaveValue(/ZINE/);
 
 		const presetCss = await design.locators.editor.inputValue();
 		await design.locators.editor.fill(
-			`${presetCss}\n[data-broadcast] { outline: 7px solid rgb(1, 2, 3); }`,
+			`${presetCss}\n[data-broadcast] { outline: 7px solid rgb(1, 2, 3); --bc-text: rgb(9, 9, 9); }`,
 		);
 		await expect(design.locators.presetSelect).toContainText("Your own");
+		await design.locators.setting("--bc-text").fill("#010203");
 		await design.save();
 
 		const obs = await openObsSource({
@@ -270,15 +273,19 @@ test.describe("Broadcast", () => {
 			programKey: tournament.programKey,
 		});
 		await expect(obs.program.locators.canvas).toHaveCSS("outline-width", "7px");
+		// the setting wins over the same variable set in the custom CSS
 		await expect(obs.program.locators.canvas).toHaveCSS(
 			"color",
-			"rgb(20, 20, 20)",
+			"rgb(1, 2, 3)",
 		);
 
 		await design.goto();
+		await expect(design.locators.setting("--bc-text")).toHaveValue("#010203");
 		await design.pickPreset("Teletext");
 		await design.locators.confirmPresetButton.click();
 		await expect(design.locators.presetSelect).toContainText("Teletext");
+		await expect(design.locators.setting("--bc-text")).toHaveValue("#fff");
+		await design.openCustomCss();
 		await expect(design.locators.editor).toHaveValue(/TELETEXT/);
 
 		await obs.close();

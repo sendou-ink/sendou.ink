@@ -183,7 +183,7 @@ export class BroadcastDashboardPage {
 	async saveTheme(css: string) {
 		const design = new BroadcastDesignPage(this.page, this.pageArgs);
 		await design.goto();
-		await design.pickTab("Custom CSS");
+		await design.openCustomCss();
 		await design.locators.editor.fill(css);
 		await design.save();
 	}

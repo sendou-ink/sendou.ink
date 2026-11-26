@@ -1,6 +1,6 @@
 /* TELETEXT: page 100 of a TV from before the internet. Eight colors, one blocky font, nothing moves smoothly. */
 
-/* 1. Variables: colors, type, shapes and motion of every scene */
+/* 1. Variables. In the designer the ones it has settings for (colors, type, sizes...) load into its form */
 [data-broadcast] {
 	--bc-bg: #000;
 	--bc-surface: #000;

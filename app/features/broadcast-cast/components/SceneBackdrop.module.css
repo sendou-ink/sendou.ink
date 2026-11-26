@@ -1,5 +1,7 @@
 .backdrop {
-	background: var(--bc-bg);
+	background:
+		var(--bc-backdrop-image) center / cover no-repeat,
+		var(--bc-bg);
 }
 
 .video {

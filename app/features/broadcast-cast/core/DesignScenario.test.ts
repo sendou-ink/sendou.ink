@@ -19,6 +19,7 @@ const build = (scenario: Partial<DesignScenario.Scenario> = {}) =>
 		},
 		settings: {
 			css: "",
+			variables: {},
 			weaponImages: "default",
 			headline: "",
 			nowPlaying: "",
@@ -104,6 +105,7 @@ describe("DesignScenario.build", () => {
 			tournament: { name: "In The Zone", logoUrl, organizationName: null },
 			settings: {
 				css: "",
+				variables: {},
 				weaponImages: "default",
 				headline: "",
 				nowPlaying: "",

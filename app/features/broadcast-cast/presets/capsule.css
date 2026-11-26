@@ -1,6 +1,6 @@
 /* CAPSULE: soft and round. Everything floats in a pill of its own, in front of a slow gradient. */
 
-/* 1. Variables: colors, type, shapes and motion of every scene */
+/* 1. Variables. In the designer the ones it has settings for (colors, type, sizes...) load into its form */
 [data-broadcast] {
 	--bc-bg: #0c0e1a;
 	--bc-surface: rgb(255 255 255 / 0.07);

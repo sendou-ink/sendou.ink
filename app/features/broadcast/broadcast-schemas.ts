@@ -11,18 +11,35 @@ import {
 	BROADCAST_CSS_MAX_LENGTH,
 	BROADCAST_GAME_END_TRIGGERS,
 	BROADCAST_GAME_SUMMARY_MAX_OBJECTIVE_READS,
+	BROADCAST_MAX_THEME_VARIABLES,
 	BROADCAST_SDP_MAX_LENGTH,
+	BROADCAST_THEME_VARIABLE_MAX_LENGTH,
 	BROADCAST_WEAPON_IMAGES,
 } from "./broadcast-constants";
+import * as ThemeSettings from "./core/ThemeSettings";
 
 const channelSlug = v.pipe(v.string(), v.minLength(1), v.maxLength(100));
 
 export const broadcastParamsSchema = v.object({ id, channel: channelSlug });
 
-/** The designer saving its theme: the weapon images and the custom CSS (left out when empty). */
+/** The designer saving its theme: the weapon images, the settings (variables set in its form) and the custom CSS (left out when empty). */
 export const broadcastThemeSchema = v.object({
 	_action: stringConstant("UPDATE_THEME"),
 	weaponImages: v.picklist(BROADCAST_WEAPON_IMAGES),
+	variables: v.optional(
+		v.pipe(
+			v.record(
+				v.pipe(v.string(), v.check(ThemeSettings.isValidName)),
+				v.pipe(
+					v.string(),
+					v.maxLength(BROADCAST_THEME_VARIABLE_MAX_LENGTH),
+					v.check(ThemeSettings.isValidValue),
+				),
+			),
+			v.maxEntries(BROADCAST_MAX_THEME_VARIABLES),
+		),
+		{},
+	),
 	css: v.optional(v.pipe(v.string(), v.maxLength(BROADCAST_CSS_MAX_LENGTH))),
 });
 

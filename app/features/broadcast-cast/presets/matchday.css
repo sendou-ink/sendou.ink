@@ -1,6 +1,6 @@
 /* MATCHDAY: the sports channel. Condensed capitals, slanted plates, black on white with the teams' colors. */
 
-/* 1. Variables: colors, type, shapes and motion of every scene */
+/* 1. Variables. In the designer the ones it has settings for (colors, type, sizes...) load into its form */
 [data-broadcast] {
 	--bc-bg: #eef0f4;
 	--bc-surface: #fff;

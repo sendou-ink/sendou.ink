@@ -1,7 +1,9 @@
 import {
+	BROADCAST_SHARED_SETTINGS,
 	BROADCAST_THEME_SOURCES,
 	themeDefaults,
 } from "~/features/broadcast/broadcast-theme-sources";
+import * as ThemeSettings from "~/features/broadcast/core/ThemeSettings";
 import type { BROADCAST_THEME_STYLESHEETS } from "./broadcast-cast-constants";
 import bracketSceneLayout from "./components/BracketScene.layout.module.css?raw";
 import bracketScene from "./components/BracketScene.module.css?raw";
@@ -55,3 +57,23 @@ const SOURCES: Record<Stylesheet, { look: string; layout: string }> = {
 
 /** The cast overlay's default styles as theme CSS by source, see `themeDefaults`. */
 export const BROADCAST_THEME_DEFAULTS = themeDefaults(SOURCES);
+
+/** Settings of each stylesheet: what its variable block at the top (its "sizes and spots") declares. */
+export const BROADCAST_THEME_SETTINGS = Object.fromEntries(
+	Object.entries(SOURCES).map(([stylesheet, { look }]) => [
+		stylesheet,
+		stylesheet === "BroadcastOverlay"
+			? []
+			: ThemeSettings.settingsOf({ source: look }),
+	]),
+) as Record<Stylesheet, ThemeSettings.ThemeSetting[]>;
+
+/** Variable names of every setting of the cast overlay, the shared ones and each stylesheet's. */
+export const BROADCAST_THEME_SETTING_NAMES: ReadonlySet<string> = new Set([
+	...BROADCAST_SHARED_SETTINGS.flatMap(({ settings }) =>
+		settings.map((setting) => setting.name),
+	),
+	...Object.values(BROADCAST_THEME_SETTINGS).flatMap((settings) =>
+		settings.map((setting) => setting.name),
+	),
+]);

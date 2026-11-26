@@ -18,8 +18,13 @@ export class BroadcastDesignPage {
 		this.pageArgs = pageArgs;
 		this.locators = {
 			presetSelect: page.getByLabel("Preset", { exact: true }),
-			stylesheetSelect: page.getByRole("button", { name: /^Stylesheet / }),
+			advancedToggle: page.getByText("Advanced: custom CSS", { exact: true }),
 			editor: page.getByTestId("broadcast-design-editor"),
+			/** The text input of the setting of the variable, e.g. `--bc-text`. */
+			setting: (name: string) =>
+				page
+					.getByTestId(`broadcast-setting-${name}`)
+					.locator("input:not([type=color])"),
 			confirmPresetButton: page.getByTestId("broadcast-design-preset-confirm"),
 			saveButton: page.getByTestId("broadcast-design-save"),
 		};
@@ -38,10 +43,11 @@ export class BroadcastDesignPage {
 		await this.page.getByRole("option", { name, exact: true }).click();
 	}
 
-	/** Opens a stylesheet of the editor by its name in the picker, e.g. "Custom CSS". */
-	async pickTab(name: string) {
-		await this.locators.stylesheetSelect.click();
-		await this.page.getByRole("option", { name, exact: true }).click();
+	/** Opens the custom CSS editor under "Advanced". */
+	async openCustomCss() {
+		if (await this.locators.editor.isVisible()) return;
+
+		await this.locators.advancedToggle.click();
 	}
 
 	/** Saves the theme, landing back on the dashboard's theme tab. */

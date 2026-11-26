@@ -4,6 +4,7 @@ import { parse } from "postcss";
 import { describe, expect, test } from "vitest";
 import { BROADCAST_CSS_MAX_LENGTH } from "~/features/broadcast/broadcast-constants";
 import * as ThemeCss from "~/features/broadcast/core/ThemeCss";
+import * as ThemeSettings from "~/features/broadcast/core/ThemeSettings";
 import {
 	BROADCAST_SCENE_PARTS,
 	BROADCAST_SCENES,
@@ -43,11 +44,7 @@ const DEFAULT_CSS = [
 	)
 	.join("\n")
 	.replaceAll(/:global\(([^)]*)\)/g, "$1");
-const DEFAULT_VARIABLES = new Set(
-	ThemeCss.customPropertyDeclarations(DEFAULT_CSS).map(
-		(declaration) => declaration.name,
-	),
-);
+const DEFAULT_VARIABLES = new Set(variablesOf(DEFAULT_CSS));
 const DEFAULT_KEYFRAMES = new Set(keyframesOf(DEFAULT_CSS));
 
 describe("BROADCAST_THEME_PRESETS", () => {
@@ -58,6 +55,16 @@ describe("BROADCAST_THEME_PRESETS", () => {
 	test.each(PRESETS)("$key parses", ({ css }) => {
 		expect(ThemeCss.syntaxError(css)).toBeNull();
 	});
+
+	test.each(PRESETS)(
+		"$key loads as settings and custom CSS that parses",
+		({ css }) => {
+			const loaded = ThemeSettings.extract({ css, names: DEFAULT_VARIABLES });
+
+			expect(Object.keys(loaded.variables).length).toBeGreaterThan(0);
+			expect(ThemeCss.syntaxError(loaded.css)).toBeNull();
+		},
+	);
 
 	test.each(PRESETS)(
 		"$key leaves room for edits under the character limit",
@@ -108,12 +115,10 @@ describe("BROADCAST_THEME_PRESETS", () => {
 	test.each(PRESETS)(
 		"$key sets only variables of the default styles and its own",
 		({ key, css }) => {
-			const unknown = ThemeCss.customPropertyDeclarations(css)
-				.map((declaration) => declaration.name)
-				.filter(
-					(name) =>
-						!DEFAULT_VARIABLES.has(name) && !name.startsWith(`--${own(key)}-`),
-				);
+			const unknown = variablesOf(css).filter(
+				(name) =>
+					!DEFAULT_VARIABLES.has(name) && !name.startsWith(`--${own(key)}-`),
+			);
 
 			expect(unknown).toEqual([]);
 		},
@@ -167,6 +172,15 @@ function attributeValues(selectors: string, attribute: string) {
 		selectors.matchAll(new RegExp(`\\[${attribute}[$^*]?="([^"]*)"\\]`, "g")),
 		(match) => match[1]!,
 	);
+}
+
+function variablesOf(css: string) {
+	const names: string[] = [];
+	parse(css).walkDecls(/^--/, (declaration) => {
+		names.push(declaration.prop);
+	});
+
+	return names;
 }
 
 function keyframesOf(css: string) {

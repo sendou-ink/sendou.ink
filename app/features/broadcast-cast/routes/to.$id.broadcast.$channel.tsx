@@ -2026,21 +2026,22 @@ function Theme({
 }) {
 	const { t } = useTranslation(["broadcast", "forms"]);
 	const data = useLoaderData<typeof loader>();
-	const { css, weaponImages } = state.settings;
+	const { css, variables, weaponImages } = state.settings;
 	const presetKey = data.themePresetKey;
+	const isDefault = !css && Object.keys(variables).length === 0;
 
 	return (
 		<div className="stack md items-start">
 			<div className="stack xs">
 				<span className="text-sm font-semi-bold">
-					{!css
+					{isDefault
 						? t("broadcast:dashboard.theme.none")
 						: presetKey
 							? t(`broadcast:design.preset.${presetKey}`)
 							: t("broadcast:dashboard.theme.own")}
 				</span>
 				<span className="text-xs text-lighter">
-					{!css
+					{isDefault
 						? t("broadcast:dashboard.theme.noneHint")
 						: presetKey
 							? t("broadcast:dashboard.theme.presetHint")

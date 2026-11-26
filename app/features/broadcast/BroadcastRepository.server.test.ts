@@ -111,6 +111,7 @@ describe("BroadcastRepository.updateSettings", () => {
 		const broadcast = await BroadcastRepository.findByChannel(key);
 		expect(broadcast?.settings).toEqual({
 			css: "body { color: red; }",
+			variables: {},
 			weaponImages: "outlined",
 			headline: "Finals at 18:00",
 			casters: [
@@ -149,6 +150,7 @@ describe("BroadcastRepository new broadcast settings", () => {
 		expect((await BroadcastRepository.findByChannel(next))?.settings).toEqual({
 			...THEME,
 			css: "body { color: blue; }",
+			variables: {},
 		});
 	});
 

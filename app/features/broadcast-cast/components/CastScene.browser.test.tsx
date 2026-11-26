@@ -838,6 +838,7 @@ function withPreset(
 		settings: {
 			...state.settings,
 			css: preset.css.replaceAll(/@import url\("[^"]*"\);/g, ""),
+			variables: preset.variables,
 		},
 	};
 }

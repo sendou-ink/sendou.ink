@@ -77,6 +77,16 @@ export const BROADCAST_CLIP_MAX_DURATION_MS = 5 * 60_000;
  * `components/` (this feature's or `broadcast`'s). Their classes are `.{stylesheet}-{class}` in the custom CSS, e.g. `.GameScene-infoCard`.
  * Renaming one, or a class of one, breaks the themes editing it.
  */
+/** Font families the cast overlay has (`broadcast-cast-fonts.css` and sendou.ink's own Lexend), the designer's suggestions for its font settings. */
+export const BROADCAST_THEME_FONTS = [
+	"lexend, sans-serif",
+	'"Outfit", sans-serif',
+	'"Space Grotesk", sans-serif',
+	'"Barlow Condensed", sans-serif',
+	'"Archivo Black", sans-serif',
+	'"VT323", monospace',
+] as const;
+
 export const BROADCAST_THEME_STYLESHEETS = [
 	"BroadcastOverlay",
 	"Stinger",

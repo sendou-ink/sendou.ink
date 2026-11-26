@@ -185,6 +185,12 @@ export const BROADCAST_SDP_MAX_LENGTH = 50_000;
 
 export const BROADCAST_CSS_MAX_LENGTH = 30_000;
 
+/** How many theme settings (variables set in the designer's form) a theme can have, more than there are. */
+export const BROADCAST_MAX_THEME_VARIABLES = 500;
+
+/** The longest value of a theme setting, room for an image's URL. */
+export const BROADCAST_THEME_VARIABLE_MAX_LENGTH = 1_000;
+
 /** Posted by the dashboard to its Next preview, which plays the staged transition. */
 export const BROADCAST_REHEARSE_MESSAGE = "broadcast:rehearse";
 
@@ -202,6 +208,7 @@ export const BROADCAST_GAME_SUMMARY_MAX_OBJECTIVE_READS = 1_000;
 
 export const DEFAULT_BROADCAST_SETTINGS = {
 	css: "",
+	variables: {},
 	weaponImages: "default",
 } as const satisfies BroadcastSettings;
 

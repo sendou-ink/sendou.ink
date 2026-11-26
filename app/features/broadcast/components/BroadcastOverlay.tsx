@@ -12,6 +12,7 @@ import type {
 	BroadcastView,
 } from "../broadcast-types";
 import { combineStyles, splitLeadingImports } from "../broadcast-utils";
+import * as ThemeSettings from "../core/ThemeSettings";
 import layout from "./BroadcastOverlay.layout.module.css";
 import look from "./BroadcastOverlay.module.css";
 
@@ -195,26 +196,32 @@ export function BroadcastOverlay<State extends BroadcastState>({
 					/>
 				) : null}
 			</div>
-			<ThemeStyles css={state.settings.css} classes={sceneSet.themeClasses} />
+			<ThemeStyles
+				css={state.settings.css}
+				variables={state.settings.variables}
+				classes={sceneSet.themeClasses}
+			/>
 		</>
 	);
 }
 
 /**
- * The custom CSS, unlayered, so it beats the overlays' own (layered) styles without specificity fights. Its `@import`s
- * (web fonts) load once hydrated: as the page loads, a slow font host would hold up the scripts.
+ * The custom CSS, unlayered, so it beats the overlays' own (layered) styles without specificity fights, followed by
+ * the theme settings so a value set in the designer's form wins over the custom CSS. The `@import`s (web fonts) load
+ * once hydrated: as the page loads, a slow font host would hold up the scripts.
  */
 function ThemeStyles({
 	css,
+	variables,
 	classes,
 }: {
 	css: string;
+	variables: ThemeSettings.ThemeVariables;
 	classes: BroadcastThemeClasses;
 }) {
 	const isHydrated = useHydrated();
-	if (!css) return null;
-
 	const { imports, rest } = splitLeadingImports(css);
+	const settings = ThemeSettings.block(variables);
 
 	return (
 		<>
@@ -222,6 +229,7 @@ function ThemeStyles({
 			{rest ? (
 				<style>{escapeStyleText(resolveThemeClasses(rest, classes))}</style>
 			) : null}
+			{settings ? <style>{escapeStyleText(settings)}</style> : null}
 		</>
 	);
 }

@@ -22,6 +22,8 @@
 	--bc-team-b: #6572e4;
 	--bc-team-a-text: #ffffff;
 	--bc-team-b-text: #ffffff;
+	/* under the full screen scenes, over the background color */
+	--bc-backdrop-image: none;
 
 	/* shapes */
 	--bc-font-body: lexend, sans-serif;

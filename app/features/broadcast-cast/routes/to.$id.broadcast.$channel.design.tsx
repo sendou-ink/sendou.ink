@@ -10,7 +10,6 @@ import {
 	BROADCAST_DESIGN_MESSAGE,
 	BROADCAST_DESIGN_READY_MESSAGE,
 	BROADCAST_INK_COLORS,
-	BROADCAST_WEAPON_IMAGES,
 } from "~/features/broadcast/broadcast-constants";
 import type {
 	BroadcastDesignMessage,
@@ -24,10 +23,8 @@ import {
 import { BroadcastPreview } from "~/features/broadcast/components/BroadcastPreview";
 import { Choice } from "~/features/broadcast/components/Choice";
 import {
-	type BroadcastTheme,
 	ThemeEditor,
-	type ThemeEditorTab,
-	useThemeDrafts,
+	useThemeDraft,
 } from "~/features/broadcast/components/ThemeEditor";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { useUnsavedChangesChecker } from "~/form/UnsavedChangesGuard";
@@ -48,12 +45,19 @@ import {
 	BROADCAST_DESIGN_SET_STAGES,
 	BROADCAST_DESIGN_TRANSITIONS,
 	BROADCAST_MAX_CASTERS,
-	BROADCAST_THEME_STYLESHEETS,
+	BROADCAST_THEME_FONTS,
+	type BROADCAST_THEME_STYLESHEETS,
 } from "../broadcast-cast-constants";
 import { broadcastActionSchema } from "../broadcast-cast-schemas";
 import { broadcastDesignSearchParams } from "../broadcast-cast-search-params";
-import { BROADCAST_THEME_PRESETS } from "../broadcast-cast-theme-presets";
-import { BROADCAST_THEME_DEFAULTS } from "../broadcast-cast-theme-sources";
+import {
+	BROADCAST_THEME_PRESETS,
+	withPresetSettings,
+} from "../broadcast-cast-theme-presets";
+import {
+	BROADCAST_THEME_DEFAULTS,
+	BROADCAST_THEME_SETTINGS,
+} from "../broadcast-cast-theme-sources";
 import type { CastBroadcastState, CastScene } from "../broadcast-cast-types";
 import { ScenePicker, useSceneHotkeys } from "../components/ScenePicker";
 import * as DesignScenario from "../core/DesignScenario";
@@ -69,31 +73,37 @@ export const handle: SendouRouteHandle = {
 
 type Stylesheet = (typeof BROADCAST_THEME_STYLESHEETS)[number];
 
-const CAST_THEME: BroadcastTheme = {
-	stylesheets: BROADCAST_THEME_STYLESHEETS,
-	defaults: BROADCAST_THEME_DEFAULTS,
+const HOLD_STYLESHEETS: Stylesheet[] = [
+	"HoldScene",
+	"Matchup",
+	"Ticker",
+	"NowPlaying",
+	"SceneBackdrop",
+];
+
+/** The stylesheets each scene is drawn with, its own first: what the editor shows the settings and default CSS of. */
+const SCENE_STYLESHEETS: Record<CastScene, Stylesheet[]> = {
+	starting: HOLD_STYLESHEETS,
+	casters: ["CastersScene", "Matchup", "NowPlaying", "SceneBackdrop"],
+	rosters: ["RostersScene", "TeamLogo", "SceneBackdrop"],
+	maps: ["MapsScene", "TeamLogo", "SceneBackdrop"],
+	game: ["GameScene", "Ticker", "TeamLogo"],
+	results: ["ResultsScene", "TeamLogo", "SceneBackdrop"],
+	break: HOLD_STYLESHEETS,
+	replays: ["ReplaysScene"],
+	bracket: ["BracketScene", "TeamLogo", "SceneBackdrop"],
+	team: ["TeamScene", "TeamLogo", "SceneBackdrop"],
+	technical: HOLD_STYLESHEETS,
+	ending: HOLD_STYLESHEETS,
 };
 
-/** The stylesheet the editor opens with on each scene. */
-const SCENE_STYLESHEETS: Record<CastScene, Stylesheet> = {
-	starting: "HoldScene",
-	casters: "CastersScene",
-	rosters: "RostersScene",
-	maps: "MapsScene",
-	game: "GameScene",
-	results: "ResultsScene",
-	break: "HoldScene",
-	replays: "ReplaysScene",
-	bracket: "BracketScene",
-	team: "TeamScene",
-	technical: "HoldScene",
-	ending: "HoldScene",
-};
+/** Stylesheets of what shows over every scene, their settings with the ones of every scene. */
+const EVERYWHERE_STYLESHEETS: Stylesheet[] = ["Stinger"];
 
 /**
- * The overlays' every style laid out for editing, previewed live over a game feed screenshot in a mock scenario
- * driven by the search params (scene, name lengths, bracket type...). Saving keeps only what changed from the
- * default styles, as the broadcast's custom CSS.
+ * The overlays' theme laid out for editing, previewed live over a game feed screenshot in a mock scenario driven by
+ * the search params (scene, name lengths, bracket type...): a preset to start from, settings of every scene and of the
+ * scene previewed, and custom CSS for the rest.
  */
 export default function BroadcastDesignPage() {
 	const { t } = useTranslation(["broadcast", "common", "contributions"]);
@@ -103,23 +113,20 @@ export default function BroadcastDesignPage() {
 	const [{ footage, ...scenario }, setScenario] = useSearchParamsTyped(
 		broadcastDesignSearchParams,
 	);
-	const { drafts, setDrafts, css, savedCss, hasErrors } = useThemeDrafts({
-		theme: CAST_THEME,
-		saved: data.settings.css,
-	});
-	const [tab, setTab] = React.useState<ThemeEditorTab>(
-		SCENE_STYLESHEETS[scenario.scene],
-	);
+	const [savedTheme] = React.useState(() => withPresetSettings(data.settings));
+	const { draft, setDraft, isChanged, hasErrors } = useThemeDraft(savedTheme);
 	const [weaponImages, setWeaponImages] = React.useState(
 		data.settings.weaponImages,
 	);
 	const [takenAt] = React.useState(() => Date.now());
 	const [rehearsals, setRehearsals] = React.useState(0);
-	const { submit, state: submitState } = useActionSubmit(broadcastActionSchema);
+	const { submit, state: submitState } = useActionSubmit(
+		broadcastActionSchema,
+		{ encType: "application/json" },
+	);
 
-	const isDirty =
-		css !== savedCss || weaponImages !== data.settings.weaponImages;
-	const isTooLong = css.length > BROADCAST_CSS_MAX_LENGTH;
+	const isDirty = isChanged || weaponImages !== data.settings.weaponImages;
+	const isTooLong = draft.text.length > BROADCAST_CSS_MAX_LENGTH;
 	useUnsavedChangesChecker(
 		(navigation) =>
 			isDirty &&
@@ -136,7 +143,12 @@ export default function BroadcastDesignPage() {
 		tournament: isLogoBroken
 			? { ...data.tournament, logoUrl: "" }
 			: data.tournament,
-		settings: { ...data.settings, css, weaponImages },
+		settings: {
+			...data.settings,
+			css: draft.css,
+			variables: draft.variables,
+			weaponImages,
+		},
 		takenAt,
 	});
 
@@ -146,7 +158,19 @@ export default function BroadcastDesignPage() {
 	});
 
 	const save = () =>
-		submit("UPDATE_THEME", { weaponImages, css: css || undefined });
+		submit("UPDATE_THEME", {
+			weaponImages,
+			variables: draft.variables,
+			css: draft.css || undefined,
+		});
+
+	const sceneStylesheets = SCENE_STYLESHEETS[scenario.scene];
+	const settingsOf = (stylesheets: Stylesheet[]) =>
+		stylesheets.flatMap((stylesheet) =>
+			BROADCAST_THEME_SETTINGS[stylesheet].length > 0
+				? [{ stylesheet, settings: BROADCAST_THEME_SETTINGS[stylesheet] }]
+				: [],
+		);
 
 	return (
 		<div className={clsx("stack lg", styles.designer)}>
@@ -249,25 +273,25 @@ export default function BroadcastDesignPage() {
 							onChange={(key) => setScenario({ footage: key })}
 						/>
 					</div>
-					<ScenarioControls
-						scenario={scenario}
-						setScenario={setScenario}
-						weaponImages={weaponImages}
-						setWeaponImages={setWeaponImages}
-					/>
+					<ScenarioControls scenario={scenario} setScenario={setScenario} />
 				</section>
 
 				<ThemeEditor
-					theme={CAST_THEME}
 					presets={BROADCAST_THEME_PRESETS.map((preset) => ({
-						...preset,
+						key: preset.key,
+						css: preset.css,
+						variables: preset.variables,
 						label: t(`broadcast:design.preset.${preset.key}`),
 					}))}
-					drafts={drafts}
-					setDrafts={setDrafts}
-					tab={tab}
-					setTab={setTab}
-					css={css}
+					draft={draft}
+					setDraft={setDraft}
+					weaponImages={weaponImages}
+					setWeaponImages={setWeaponImages}
+					everywhereSettings={settingsOf(EVERYWHERE_STYLESHEETS)}
+					sceneLabel={t(`broadcast:scene.${scenario.scene}`)}
+					sceneSettings={settingsOf(sceneStylesheets)}
+					sceneDefaultCss={defaultCssOf(sceneStylesheets)}
+					fonts={BROADCAST_THEME_FONTS}
 					isTooLong={isTooLong}
 				/>
 			</div>
@@ -367,20 +391,24 @@ function postDesign(
 	iframeWindow.postMessage(message, window.location.origin);
 }
 
+/** The default styles of the stylesheets as theme CSS, each one's look followed by its layout and motion. */
+function defaultCssOf(stylesheets: Stylesheet[]) {
+	return stylesheets
+		.flatMap((stylesheet) => [
+			`/* ${stylesheet} */\n\n${BROADCAST_THEME_DEFAULTS[stylesheet].trim()}`,
+			`/* ${stylesheet}: layout and motion */\n\n${BROADCAST_THEME_DEFAULTS[`${stylesheet}.layout`].trim()}`,
+		])
+		.join("\n\n");
+}
+
 function ScenarioControls({
 	scenario,
 	setScenario,
-	weaponImages,
-	setWeaponImages,
 }: {
 	scenario: DesignScenario.Scenario;
 	setScenario: (values: Partial<DesignScenario.Scenario>) => void;
-	weaponImages: CastBroadcastState["settings"]["weaponImages"];
-	setWeaponImages: (
-		weaponImages: CastBroadcastState["settings"]["weaponImages"],
-	) => void;
 }) {
-	const { t } = useTranslation(["broadcast", "forms"]);
+	const { t } = useTranslation(["broadcast"]);
 
 	return (
 		<fieldset className={styles.scenario}>
@@ -471,15 +499,6 @@ function ScenarioControls({
 						label: t(`broadcast:bracketFocus.${bracketFocus}`),
 					}))}
 					onChange={(bracketFocus) => setScenario({ bracketFocus })}
-				/>
-				<Choice
-					label={t("forms:labels.broadcastWeaponImages")}
-					value={weaponImages}
-					options={BROADCAST_WEAPON_IMAGES.map((option) => ({
-						value: option,
-						label: t(`forms:options.broadcastWeaponImages.${option}`),
-					}))}
-					onChange={setWeaponImages}
 				/>
 			</div>
 			<div className={styles.switches}>

@@ -145,6 +145,8 @@ export interface LiveResults {
 export interface BroadcastSettings {
 	/** Injected unlayered after the overlays' own styles. */
 	css: string;
+	/** Theme settings, the variables set in the designer's form: applied after `css`, see `ThemeSettings.block`. */
+	variables: Record<string, string>;
 	weaponImages: BroadcastWeaponImages;
 }
 

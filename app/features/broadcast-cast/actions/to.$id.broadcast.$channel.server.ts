@@ -311,7 +311,11 @@ export const action = defineAction(
 			case "UPDATE_THEME": {
 				await BroadcastRepository.updateSettings({
 					...key,
-					patch: { css: body.css ?? "", weaponImages: body.weaponImages },
+					patch: {
+						css: body.css ?? "",
+						variables: body.variables,
+						weaponImages: body.weaponImages,
+					},
 				});
 				refresh();
 

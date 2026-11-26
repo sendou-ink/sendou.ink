@@ -1,6 +1,6 @@
 /* ZINE: cut-and-paste paper. Black outlines, hard shadows, everything a little crooked. */
 
-/* 1. Variables: colors, type, shapes and motion of every scene */
+/* 1. Variables. In the designer the ones it has settings for (colors, type, sizes...) load into its form */
 [data-broadcast] {
 	--bc-bg: #f3ecdc;
 	--bc-surface: #fffdf7;

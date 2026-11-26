@@ -157,7 +157,7 @@ const EVERY_ACTION: {
 		body: { _action: "SHOW_RESULTS", matchId: 1, resultCount: 0 },
 	},
 	UPDATE_THEME: {
-		body: { _action: "UPDATE_THEME", weaponImages: "default" },
+		body: { _action: "UPDATE_THEME", weaponImages: "default", variables: {} },
 		isForm: true,
 	},
 	UPDATE_NOW_PLAYING: {

@@ -49,7 +49,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			userId: user.id,
 			broadcastId: broadcast?.id,
 		}),
-		themePresetKey: presetKeyOf(state.settings.css),
+		themePresetKey: presetKeyOf(state.settings),
 		featuredMatchId,
 		featuredMatchBracketIdx: featuredMatchId
 			? tournament.matchIdToBracketIdx(featuredMatchId)
