@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { actAs } from "~/db/seed/core/actAs";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
@@ -10,6 +10,7 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userIdsToIdentifier } from "~/features/mmr/mmr-utils";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import { pinClockInsideSeason } from "~/features/sendouq/tests/season-clock";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as LeaderboardRepository from "./LeaderboardRepository.server";
@@ -231,6 +232,8 @@ describe("findSeasonPopularUsersWeapon", () => {
 });
 
 describe("LeaderboardRepository.findTeamLeaderboardBySeason", () => {
+	pinClockInsideSeason();
+
 	/** The two rosters share three of their players, both beating the third one. */
 	const topRoster = () => [users.id(1), users.id(2), users.id(3), users.id(4)];
 	const sharedPlayersRoster = () => [
@@ -402,6 +405,56 @@ describe("LeaderboardRepository.findTeamLeaderboardBySeason", () => {
 			[userIdsToIdentifier(topRoster()), 1],
 			[userIdsToIdentifier(beatenRoster()), 2],
 		]);
+	});
+
+	describe("after the season is over", () => {
+		beforeEach(() => {
+			Seasons.DANGEROUS_setSeasonEndedOverride(true);
+		});
+
+		afterEach(() => {
+			Seasons.DANGEROUS_setSeasonEndedOverride(false);
+		});
+
+		test("hides a roster with players short on SendouQ sets", async () => {
+			await playTournamentsWith(notEnoughSetsRoster(), { mu: 100 });
+
+			expect(await placements()).toEqual([
+				[userIdsToIdentifier(topRoster()), 1],
+				[userIdsToIdentifier(beatenRoster()), 2],
+			]);
+		});
+
+		test("hides a skipped roster with players short on SendouQ sets", async () => {
+			await playTournamentsWith(notEnoughSetsRoster(), { mu: 100 });
+			await skipTeam(notEnoughSetsRoster());
+
+			expect(await placements()).toEqual([
+				[userIdsToIdentifier(topRoster()), 1],
+				[userIdsToIdentifier(beatenRoster()), 2],
+			]);
+		});
+
+		test("keeps a skipped team with enough SendouQ sets in its spot without a placement", async () => {
+			await skipTeam(topRoster());
+
+			expect(await placements()).toEqual([
+				[userIdsToIdentifier(topRoster()), null],
+				[userIdsToIdentifier(sharedPlayersRoster()), 1],
+				[userIdsToIdentifier(beatenRoster()), 2],
+			]);
+		});
+
+		test("keeps a roster with players short on SendouQ sets on the all rosters leaderboard", async () => {
+			await playTournamentsWith(notEnoughSetsRoster(), { mu: 100 });
+
+			expect(await allRostersPlacements()).toEqual([
+				[userIdsToIdentifier(notEnoughSetsRoster()), 1, false],
+				[userIdsToIdentifier(topRoster()), 2, false],
+				[userIdsToIdentifier(sharedPlayersRoster()), 3, false],
+				[userIdsToIdentifier(beatenRoster()), 4, false],
+			]);
+		});
 	});
 });
 

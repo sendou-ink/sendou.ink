@@ -154,9 +154,16 @@ export async function findTeamLeaderboardBySeason({
 			? await findAllTeamSkipIdentifiersBySeason(season)
 			: new Set<SkillTeamIdentifier>(),
 	});
-	const withNonSqPlayersHandled = onlyOneEntryPerUser
+	const withNonSqPlayersMarked = onlyOneEntryPerUser
 		? await markNonSqPlayers({ season, entries, before })
 		: entries;
+	// once the season is over, no more sets can be played to qualify
+	const withNonSqPlayersHandled =
+		onlyOneEntryPerUser && Seasons.current()?.nth !== season
+			? withNonSqPlayersMarked.filter(
+					(entry) => entry.userIdsWithoutEnoughSets.length === 0,
+				)
+			: withNonSqPlayersMarked;
 
 	const oneEntryPerUser = onlyOneEntryPerUser
 		? filterOneEntryPerUser(withNonSqPlayersHandled)
